@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
   std::cout << "Reading the start points" << std::endl;
 	MPT->LoadSeedPoints(std::string(argv[2]));
-
+  
   std::cout << "Reading the soma image" << std::endl;
 	MPT->LoadSomaImage(std::string(argv[3]));
   

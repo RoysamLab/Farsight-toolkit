@@ -15,9 +15,12 @@
 #include <float.h>
 #include <limits.h>
 
+
 #include <iostream>
+#include <string>
 using std::ofstream;
 using std::endl;
+using std::string;
 
 int main( int argc, char ** argv )
 {
@@ -35,14 +38,14 @@ int main( int argc, char ** argv )
   typedef itk::Image< itk::RGBPixel< unsigned char >, Dimension > ColorImageType;
 
   typedef itk::ImageFileReader< ImageType >  ReaderType;
-  typedef itk::ImageFileWriter< ColorImageType >  WriterType;
+  typedef itk::ImageFileWriter< ColorImageType >  ColorWriterType;
+  typedef itk::ImageFileWriter< ImageType >  WriterType;
   
   typedef unsigned long LabelType;
   typedef itk::ShapeLabelObject< LabelType, Dimension > LabelObjectType;
   typedef itk::LabelMap< LabelObjectType > LabelMapType;
 
   ReaderType::Pointer reader = ReaderType::New();
-  WriterType::Pointer writer = WriterType::New();
 
   const char * inputFilename  = argv[1];
   int minimumVolume = atoi(argv[2]);
@@ -178,9 +181,30 @@ int main( int argc, char ** argv )
   ColorerType::Pointer colorer = ColorerType::New();
   colorer->SetInput(Somas);
   
+  typedef itk::LabelMapToBinaryImageFilter< LabelMapType, ImageType >
+    BinarizerType;
+  BinarizerType::Pointer binarizer = BinarizerType::New();
+  binarizer->SetInput(Somas);
+  
+  WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( imageOutputFilename );
-  writer->SetInput( colorer->GetOutput() );
+  writer->SetInput( binarizer->GetOutput() );
   writer->Update();
+  
+  string colorOutputFilename(argv[4]);
+  size_t found = colorOutputFilename.rfind(".mhd");
+  if (found != string::npos)
+    {
+    colorOutputFilename.replace(found, 4, "-color.tif");
+    }
+  else
+    {
+    colorOutputFilename += "color";
+    }
+  ColorWriterType::Pointer colorWriter = ColorWriterType::New();
+  colorWriter->SetFileName( colorOutputFilename );
+  colorWriter->SetInput(colorer->GetOutput());
+  colorWriter->Update();
 
   return EXIT_SUCCESS; 
 }

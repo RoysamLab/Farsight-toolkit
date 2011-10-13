@@ -4,15 +4,22 @@
 #include "itkImage.h"
 #include "itkArray.h"
 #include "itkImageFileReader.h"
+//debug purposes only
+#include "itkImageFileWriter.h"
 
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
 
+#include "itkBresenhamLine.h"
+#include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkRobustAutomaticThresholdImageFilter.h"
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkSymmetricSecondRankTensor.h"
 #include "itkMedianImageFilter.h"
 #include "itkMaskNegatedImageFilter.h"
+#include "itkBinaryDilateImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
 #include "vnl/vnl_math.h"
 
 #include <fstream>
@@ -76,11 +83,14 @@ protected:
   std::vector< Node * > ReadListOfPoints(std::string fname);
   std::pair< Node *, Node * > FindClosestOpenNode();
   void MaskAwaySomas();
+  double GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end);
 
 private:
 	CharImageType3D::Pointer SomaImage;
-	ImageType3D::Pointer InputImage, PaddedInputImage, NDXImage;   //Input Image, EK image, CT image
+	ImageType3D::Pointer InputImage, PaddedInputImage, NDXImage, ThresholdedImage;
 	//std::vector<IndexType> StartPoints;
+  itk::BresenhamLine<3> Line;
+
 	unsigned int Padding;
   std::vector< Node * > Open;
   std::vector< Node * > Closed;

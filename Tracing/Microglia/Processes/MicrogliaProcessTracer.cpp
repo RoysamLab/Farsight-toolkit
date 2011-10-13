@@ -65,7 +65,8 @@ void MicrogliaProcessTracer::LoadInputImage(ImageType3D::Pointer &image)
   ImageType3D::SizeType rad = { {1, 1, 1} };
   medfilt->SetRadius(rad);
   medfilt->Update();
-  this->InputImage = medfilt->GetOutput();
+  //this->InputImage = medfilt->GetOutput();
+  this->InputImage = rescaler->GetOutput();
 
   //pad z slices
   itk::Size<3> isz = this->InputImage->GetBufferedRegion().GetSize();
@@ -179,8 +180,6 @@ void MicrogliaProcessTracer::LoadSomaImage(std::string somaFileName)
   somaReader->SetFileName(somaFileName);
   this->SomaImage = somaReader->GetOutput();
   somaReader->Update();
-
-  //debug
   this->SomaImage->SetSpacing(this->InputImage->GetSpacing());
 }
 
@@ -218,7 +217,23 @@ void MicrogliaProcessTracer::RunTracing()
   }
   
   std::cout << "open list size: " << this->Open.size() << std::endl;
-  
+  std::cout << "closed list size: " << this->Closed.size() << std::endl;
+
+  //use RATS to threshold the input image.
+  //this is used in GetDistanceBetweenPoints 
+  typedef itk::GradientMagnitudeRecursiveGaussianImageFilter< ImageType3D, ImageType3D > GradientType;
+  GradientType::Pointer gradient = GradientType::New();
+  gradient->SetInput( this->InputImage );
+  gradient->SetSigma( 0.25 );
+  gradient->Update();
+  typedef itk::RobustAutomaticThresholdImageFilter< ImageType3D, ImageType3D > ThresholdFilterType;
+  ThresholdFilterType::Pointer thresholdFilter = ThresholdFilterType::New();
+  thresholdFilter->SetInput( this->InputImage );
+  thresholdFilter->SetGradientImage( gradient->GetOutput() );
+  thresholdFilter->SetPow( 1.0 );
+  this->ThresholdedImage = thresholdFilter->GetOutput();
+  thresholdFilter->Update();
+ 
   std::cout << "computing adjacency matrix for seed points" << std::endl;
   this->ComputeAdjacencies(this->Closed);
   
@@ -237,8 +252,8 @@ void MicrogliaProcessTracer::CalculateCriticalPoints(void)
   this->NDXImage->Allocate();
   this->NDXImage->FillBuffer(0.0f);
   
-  float power = 0.0;
-  //float power = -0.25;
+  //float power = 0.0;
+  float power = -0.25;
 
   for (unsigned int i = 0; i < 6; ++i)
   {
@@ -258,18 +273,13 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
   gauss->SetSigma( sigma );
   gauss->SetNormalizeAcrossScale(false);
   gauss->GetOutput()->Update();
-
-  float tot = 0.0f, num = 0.0f;
+  
   itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
-  float gamma = 1.6f;
-  float tnorm = vcl_pow(sigma,gamma);
-
+  float tnorm = vcl_pow(sigma, 1.6f);
   for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp) 
   {
     float q = ittemp.Get()*tnorm;
     ittemp.Set(-1.0f*q);
-    tot += q*q;
-    num ++;
   }
 
   // set the diagonal terms in neighborhood iterator
@@ -364,15 +374,6 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
       {
         this->NDXImage->SetPixel(ndx,value);
         ctCnt++;
-
-      if( (ndx[0] == 114 && ndx[1] == 200 && ndx[2] == 28) ||
-      (ndx[0] == 157 && ndx[1] == 131 && ndx[2] == 5) ||
-      (ndx[0] == 132 && ndx[1] == 120 && ndx[2] == 2) ||
-      (ndx[0] == 61 && ndx[1] == 125 && ndx[2] == 23) ||
-      (ndx[0] == 100 && ndx[1] == 265 && ndx[2] == 17))
-        {
-        std::cout << "problem point " << ndx << " found at scale " << sigma << std::endl; 
-        }
       }
     }
     ++it;
@@ -553,13 +554,13 @@ void MicrogliaProcessTracer::BuildTrees()
       this->Open.clear();
       break;
       }
+    
     parent = parentAndChild.first;
     child = parentAndChild.second;
 
     //setup the parent/child relationship between these two nodes
     parent->children.push_back(child);
-    child->parent = parent;
-
+    
     //remove the child node from the Open list
     bool itsThere = false;
     if(std::find(this->Open.begin(), this->Open.end(), child) != this->Open.end())
@@ -585,7 +586,8 @@ void MicrogliaProcessTracer::BuildTrees()
       {
       std::cout << "(Debug) PROBLEM: After deletion, child is still in Open." << std::endl;
       }
-
+    child->parent = parent;
+  
     //and add it to the Closed list
     child->IsOpen = false;
     this->Closed.push_back(child);
@@ -716,9 +718,22 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
 ////////////////////////////////////////////////////////////////////////////////
 void MicrogliaProcessTracer::MaskAwaySomas()
 {
+  typedef itk::BinaryBallStructuringElement<
+      CharImageType3D::PixelType,3>                  StructuringElementType;
+  StructuringElementType structuringElement;
+  structuringElement.SetRadius(5);
+  structuringElement.CreateStructuringElement();
+
+  typedef itk::BinaryDilateImageFilter <CharImageType3D, CharImageType3D, StructuringElementType>
+          BinaryDilateImageFilterType;
+  BinaryDilateImageFilterType::Pointer dilateFilter
+          = BinaryDilateImageFilterType::New();
+  dilateFilter->SetInput( this->SomaImage );
+  dilateFilter->SetKernel(structuringElement);
+
   MaskFilterType::Pointer maskFilter = MaskFilterType::New();
   maskFilter->SetInput( this->InputImage );
-  maskFilter->SetMaskImage( this->SomaImage );
+  maskFilter->SetMaskImage( dilateFilter->GetOutput() );
   maskFilter->SetOutsideValue(0);
   maskFilter->Update();
 
@@ -731,8 +746,7 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
   std::vector< Node * >::iterator nodeItr, nbrItr;
   for(nodeItr = nodes.begin(); nodeItr != nodes.end(); ++nodeItr)
     {
-    itk::Point<double,3> start;
-    this->InputImage->TransformIndexToPhysicalPoint( (*nodeItr)->index, start ); 
+    itk::Index<3> start = (*nodeItr)->index;
     std::list< std::pair< double, Node *> > neighbors;
 
     for(nbrItr = this->Open.begin(); nbrItr != this->Open.end(); ++nbrItr)
@@ -742,22 +756,125 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
         continue;
         }
 
-      itk::Point<double,3> end;
-      this->InputImage->TransformIndexToPhysicalPoint( (*nbrItr)->index, end ); 
+      itk::Index<3> end = (*nbrItr)->index;
       
-      double d = start.EuclideanDistanceTo(end);
-      if( d > this->MaxDistance )
+      itk::Point<double,3> startPoint;
+      itk::Point<double,3> endPoint;
+      this->InputImage->TransformIndexToPhysicalPoint( start, startPoint );
+      this->InputImage->TransformIndexToPhysicalPoint( end, endPoint );
+      double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
+      double scaledDistance = this->GetDistanceBetweenPoints(start, end);
+
+      double thresh = this->MaxDistance * 2; //doubled for intensity scaling
+      if( (*nodeItr)->IsOpen == false )
+        {
+        //thresh += 10;
+        }
+      if( scaledDistance > this->MaxDistance )
+      //if( euclideanDistance > thresh || scaledDistance > this->MaxDistance )
         {
         continue;
         }
       std::pair< double, Node * > nbr;
-      nbr.first = d;
+      nbr.first = euclideanDistance;
       nbr.second = (*nbrItr);
       neighbors.push_front(nbr);
       }
     neighbors.sort(CompareNeighbors);
     this->AdjacencyMap[(*nodeItr)] = neighbors;
-    //std::cout << "Node #" << (*nodeItr)->ID << " found " << neighbors.size() << " neighbors" << std::endl;
     }
 }
 
+double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end)
+{
+  ImageType3D::SizeType imageSize = this->ThresholdedImage->GetLargestPossibleRegion().GetSize();
+
+  //compute Euclidean distance between the two points
+  itk::Point<double,3> startPoint;
+  itk::Point<double,3> endPoint;
+  this->InputImage->TransformIndexToPhysicalPoint( start, startPoint );
+  this->InputImage->TransformIndexToPhysicalPoint( end, endPoint );
+  double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
+ 
+  //analyze the pixels along the line between the start & end points.
+  //the distance returned by this function is typically less than the actual Euclidean distance.
+  //How much less is based on how many "foreground" pixels lie along this line.
+  std::vector< itk::Index<3> > indices = this->Line.BuildLine(start, end);
+  float scaledDistance = 0;
+  float numPixels = 0;
+  float numBackground = 0;
+  for(unsigned int i = 0; i < indices.size(); i++)
+    {
+    float distanceWeight = 0;
+    if(indices[i] == start)
+      {
+      continue;
+      }
+    if(indices[i] == end)
+      {
+      break;
+      }
+
+    //search for foreground pixels in each 3x3x3 neighborhood
+    bool foregroundPixelFound = false;
+    for(int x = indices[i][0] - 1; x < indices[i][0] + 2; x++)
+      {
+      if(x < 0 || x > imageSize[0] - 1) 
+        {
+        continue;
+        }
+      for(int y = indices[i][1] - 1; y < indices[i][1] + 2; y++)
+        {
+        if(y < 0 || y > imageSize[0] - 1) 
+          {
+          continue;
+          }
+        for(int z = indices[i][2] - 1; z < indices[i][2] + 2; z++)
+          {
+          if(z < 0 || z > imageSize[0] - 1)
+            {
+            continue;
+            }
+          //here's where we check for foreground pixels
+          itk::Index<3> nbrIdx = {x, y, z};
+          if(this->ThresholdedImage->GetPixel(nbrIdx) != 0)
+            {
+            foregroundPixelFound = true;
+            break;
+            }
+          }
+        if(foregroundPixelFound)
+          {
+          break;
+          }
+        }
+      if(foregroundPixelFound)
+        {
+        break;
+        }
+      }
+    if(!foregroundPixelFound)
+      {
+      distanceWeight = 1.0;
+      numBackground++;
+      }
+
+    //take image spacing into account
+    itk::Offset<3> diff = indices[i] - indices[i-1];
+    if(diff[2] != 0)
+      {
+      scaledDistance += ( this->InputImage->GetSpacing()[2] * distanceWeight ); 
+      }
+    else if(diff[1] != 0)
+      {
+      scaledDistance += ( this->InputImage->GetSpacing()[1] * distanceWeight ); 
+      }
+    else
+      {
+      scaledDistance += ( this->InputImage->GetSpacing()[0] * distanceWeight ); 
+      }
+    ++numPixels;
+    }
+
+  return scaledDistance;
+}
