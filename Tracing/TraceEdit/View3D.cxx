@@ -2900,10 +2900,11 @@ void View3D::AssociateNeuronToNuclei()
 		for (unsigned int i = 0; i < cellCount; i++)
 		{
 			// search for nucli thats within radii of soma 
-			double distance, somaRadii,  x1, y1, z1; 
+			double distance =0, somaRadii = 0;//,  x1, y1, z1; 
 			double somaPoint[3];
 			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
 			currCell->getSomaCoord(somaPoint);
+			somaRadii = currCell->SomaRadii;
 			bool found = false;
 			vtkIdType nucleiRowIter = 0;
 			while (!found && (nucleiRowIter < nucleiRowSize))
