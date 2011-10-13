@@ -31,6 +31,9 @@ namespace ftk
 
 bool FileExists(std::string filename)
 {
+	/*! 
+	* Check if file Exists in the directory named 
+	*/
 	FILE * pFile = fopen (filename.c_str(),"r");
 	if (pFile==NULL)
 		return false;
@@ -38,9 +41,11 @@ bool FileExists(std::string filename)
 	return true;
 }
 
-//Add new line to the file with the given text
 bool AppendTextFile(std::string filename, std::string text)
 {
+	/*!
+	* Add new line to the file with the given text
+	*/
 	ofstream outFile; 
 	outFile.open(filename.c_str(), ios::app);
 	if ( !outFile.is_open() )
@@ -54,13 +59,19 @@ bool AppendTextFile(std::string filename, std::string text)
 
 std::string NumToString(double d)
 {
+	/*!
+	* Convert a Double to std::String
+	* Default is to use 2 decimal places
+	*/
 	std::stringstream out;
-	out << std::setprecision(2) << std::fixed << d;	//Default is to use 2 decimal places
+	out << std::setprecision(2) << std::fixed << d;	//
 	return out.str();
 }
 
 std::string NumToString(int i)
-{
+{	/*!
+	* Convert a int to std::String
+	*/
 	std::stringstream out;
 	out << i ;	 
 	return out.str();
@@ -68,6 +79,10 @@ std::string NumToString(int i)
 
 std::string NumToString(double d, int p)
 {
+	/*!
+	* Convert a Double to std::String
+	* set the precision decimal places
+	*/
 	std::stringstream out;
 	out << std::setprecision(p) << std::fixed << d;	
 	return out.str();
@@ -75,6 +90,9 @@ std::string NumToString(double d, int p)
 
 std::string TimeStamp()
 {
+	/*!
+	* 
+	*/
 	time_t rawtime;
 	struct tm *timeinfo;
 	time ( &rawtime );
@@ -86,7 +104,10 @@ std::string TimeStamp()
 }
 
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table)
-{
+{	
+	/*!
+	* Write a VTK Table to a file
+	*/
 	if(!table)
 		return false;
 
@@ -122,6 +143,9 @@ bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table)
 
 vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 {
+	/*!
+	*	Read a tab deliminated text file and create a vtkTable
+	*/
 	if( !FileExists(filename.c_str()) )
 		return NULL;
 
@@ -136,7 +160,8 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
 
-	//LOAD THE HEADER INFO:
+	//!LOAD THE HEADER INFO:
+	/**Creates the vtk table header information to reference the columns by*/
 	inFile.getline(line, MAXLINESIZE);
 	char * pch = strtok (line," \t");
 	while (pch != NULL)
@@ -151,7 +176,11 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 		pch = strtok (NULL, " \t");
 	}
 
-	//LOAD THE DATA:
+	//!LOAD THE DATA:
+	/*!
+	* Reads all the data into table
+	* Note: reads in as float but stores as vtkVariant
+	*/
 	inFile.getline(line, MAXLINESIZE);
 	while ( !inFile.eof() ) //Get all values
 	{
@@ -170,7 +199,12 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	return table;
 }
 vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<vtkTable> initialTable , double tx, double ty, double tz)
-{
+{	//!Loads and apends a feature table into montage space
+	/*!
+	* Filename is for the loading the new file
+	* initialTable is the table to append to
+	* tx, ty, tz are the shift value to position into montage
+	*/
 	vtkSmartPointer<vtkTable> outputTable;
 	vtkSmartPointer<vtkTable> newTable = ftk::LoadTable(filename);
 	vtkVariant maxid = 0;
@@ -212,6 +246,10 @@ vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<
 }
 std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
 {
+	/*!
+	* Loads multiple tables into a vector to access
+	* Ie. Time series data tables
+	*/
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	tableVector.clear();
 
@@ -245,7 +283,9 @@ std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
 
 bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage)
 {
-
+	/*!
+	* Saves a series of data tables into a 
+	*/
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	tableVector.clear();
 
@@ -280,8 +320,10 @@ bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable>
 
 vtkSmartPointer<vtkTable> AppendTables(vtkSmartPointer<vtkTable> table_initial,vtkSmartPointer<vtkTable> table_new )
 {
-
-  //fill the table with values
+	/*!
+	* Adds on table to the end of another
+	*/
+  //!fill the table with values
   unsigned int counter = 0;
   for(vtkIdType r = 0; r < table_new->GetNumberOfRows() ; r++ )
     {
@@ -296,6 +338,9 @@ vtkSmartPointer<vtkTable> AppendTables(vtkSmartPointer<vtkTable> table_initial,v
 
 ftk::Image::Pointer LoadXMLImage(std::string filename)
 {
+	/*!
+	* Load a ftk::image from xml file
+	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
 		return false;
@@ -309,7 +354,7 @@ ftk::Image::Pointer LoadXMLImage(std::string filename)
 	std::vector<std::string> chName;
 	std::vector<unsigned char> color;
 
-	//Parents we know of: datafilename,resultfilename,object,parameter
+	//!Parents we know of: datafilename,resultfilename,object,parameter
 	TiXmlElement* parentElement = rootElement->FirstChildElement();
 	while (parentElement)
 	{
@@ -334,9 +379,11 @@ ftk::Image::Pointer LoadXMLImage(std::string filename)
 	return img;
 }
 
-//Loads a time series
 ftk::Image::Pointer LoadImageSeries(std::string filename)
 {
+	/*!
+	* Loads a time series
+	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
 		return false;
@@ -350,7 +397,7 @@ ftk::Image::Pointer LoadImageSeries(std::string filename)
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode	
 
-	//Parents we know of: datafilename,resultfilename,object,parameter
+	//!Parents we know of: datafilename,resultfilename,object,parameter
 	TiXmlElement* parentElement = rootElement->FirstChildElement();
 	ftk::Image::Pointer img = ftk::Image::New();
 	img = LoadXMLImage(std::string(reinterpret_cast<const char*>(parentElement->GetText())));
@@ -396,9 +443,11 @@ std::vector<std::string> GetSeriesPaths(std::string filename){
 
 
 
-//Loads a time series label images
 ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 {
+	/*!
+	* Loads a time series label images
+	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
 		return false;
@@ -412,7 +461,7 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(1); //RELEASE_CONTROL mode	
 
-	//Parents we know of: datafilename,resultfilename,object,parameter
+	//!Parents we know of: datafilename,resultfilename,object,parameter
 	TiXmlElement* parentElement = rootElement->FirstChildElement();
 	ftk::Image::Pointer img = ftk::Image::New();
 
@@ -444,6 +493,9 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 {
+	/*!
+	* save an ftk::image to a multichannel xml file
+	*/
 	size_t pos = filename.find_last_of("/\\");
 	std::string path = filename.substr(0,pos);
 	pos = filename.find_last_of(".");
@@ -565,6 +617,9 @@ std::vector<Channel> ReadChannels(TiXmlElement * inputElement)
 
 std::string GetExtension(std::string filename)
 {
+	/*!
+	* Reads File extensions 
+	*/
 	size_t pos = filename.find_last_of(".");
 	std::string ext;
 	if( pos == std::string::npos )
@@ -577,6 +632,11 @@ std::string GetExtension(std::string filename)
 
 std::string SetExtension(std::string filename, std::string ext)
 {
+	//! Set file to specified extension
+	/*!
+	* Remove old extension
+	* Append a specified file extension to filename
+	*/
 	std::string rName;
 	size_t pos = filename.find_last_of(".");
 
@@ -602,6 +662,9 @@ std::string SetExtension(std::string filename, std::string ext)
 
 std::string GetFilePath(std::string f)
 {
+	/*!
+	* returns the file path portion of a string
+	*/
 	std::string ext;
 	size_t found;
 	found = f.find_last_of("/\\");
@@ -614,6 +677,9 @@ std::string GetFilePath(std::string f)
 
 std::string GetFilenameFromFullPath(std::string f)
 {
+	/*!
+	* returns the file name portion of a string
+	*/
 	std::string ext;
 	size_t found;
 	found = f.find_last_of("/\\");
@@ -645,6 +711,10 @@ std::string GetStringInCaps( std::string in_string ){
 
 vtkSmartPointer<vtkTable> CopyTable(vtkSmartPointer<vtkTable> featureTable )
 {
+	/*!
+	* Make a dupilcate vtkTable 
+	* "deep copy"
+	*/
 	vtkSmartPointer<vtkTable> table_validation  = vtkSmartPointer<vtkTable>::New();
 	table_validation->Initialize();
 
