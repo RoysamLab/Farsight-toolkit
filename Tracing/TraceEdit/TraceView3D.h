@@ -152,11 +152,7 @@ public:
 	void FlipTree(TraceLine* thisLine);
 	void TraceBitImageIntensity(int ImgID);
 	void CloseTreePlots();
-	void HandleHippocampalDataset();
-	void smoothzrecursive(TraceLine*,int);
-	std::vector<int> getHippocampalTraceIDsToDelete(int,int);
-	std::vector<int> getHippocampalTraceIDsToDelete_v2(int,int);
-	void DeleteEmptyLeafNodesRecursive(TraceLine*);
+
 	bool readProject(QString projectFile);
 	//todo: make these private with accessors
 	vtkSmartPointer<vtkRenderer> Renderer;
