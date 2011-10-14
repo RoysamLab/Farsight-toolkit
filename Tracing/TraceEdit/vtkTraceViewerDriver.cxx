@@ -15,7 +15,7 @@ limitations under the License.
 
 #include <iostream>
 
-#include "View3D.h"
+#include "TraceView3D.h"
 #include <QtGui/QApplication>
 #include <QtCore/QObject>
 
@@ -29,7 +29,7 @@ int main (int argc, char* argv[])
 	app.setOrganizationName("FARSIGHT Toolkit");
 	app.setOrganizationDomain("www.farsight-toolkit.org");
 	app.setApplicationName("Trace Editor");
-	app.setApplicationVersion("V1.0");
+	app.setApplicationVersion("V2.0");
 	View3D *View = new View3D();
 	View->show();
 	int retval = app.exec();

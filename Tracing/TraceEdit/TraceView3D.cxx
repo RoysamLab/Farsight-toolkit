@@ -29,7 +29,7 @@ v6: "ALISA" implemented
 v7: new GUI and file control
 */
 
-#include "View3D.h"
+#include "TraceView3D.h"
 
 
 View3D::View3D(QWidget *parent)

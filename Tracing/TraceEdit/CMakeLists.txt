@@ -22,7 +22,7 @@ SET( Libraries
     MCLR
     ${QT_LIBRARIES} )
 
-QT4_WRAP_CPP( GUI_MOC_SRCS View3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
 
 ADD_LIBRARY(Trace
   TraceBit.h        TraceBit.cxx
@@ -36,7 +36,7 @@ ADD_LIBRARY(Trace
   CellTrace.h       CellTrace.cxx
   CellTraceModel.h  CellTraceModel.cxx
   vtkPlotEdges.h    vtkPlotEdges.cxx 
-  View3D.h          View3D.cxx 
+  TraceView3D.h     TraceView3D.cxx 
   cellexport.h	    cellexport.cxx
   screenshot.h	    screenshot.cxx
   ${GUI_MOC_SRCS} 
@@ -51,8 +51,8 @@ TARGET_LINK_LIBRARIES(Trace ${Libraries})
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} Trace)
 
-ADD_EXECUTABLE(merge merge_main.cxx)
-TARGET_LINK_LIBRARIES(merge Trace )
+#ADD_EXECUTABLE(merge merge_main.cxx)
+#TARGET_LINK_LIBRARIES(merge Trace )
 
 if(BUILD_TESTING)
   add_subdirectory(Testing)

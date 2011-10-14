@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#ifndef VIEW3D_H_
-#define VIEW3D_H_
+#ifndef TRACEVIEW3D_H_
+#define TRACEVIEW3D_H_
 
 #include "cellexport.h"
 #include "screenshot.h"
