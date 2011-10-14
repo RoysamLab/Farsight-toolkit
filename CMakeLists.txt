@@ -141,8 +141,8 @@ SUBDIRS( Xml_Generator )
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGraphs )
 SUBDIRS( ftkGraphs )
 
-#INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkAdapSeedDetection )
-#SUBDIRS( ftkAdapSeedDetection )
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkAdapSeedDetection )
+SUBDIRS( ftkAdapSeedDetection )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
