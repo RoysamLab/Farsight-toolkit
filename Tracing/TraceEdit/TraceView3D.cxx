@@ -147,6 +147,44 @@ View3D::View3D(TraceObject *Traces)
 	this->statusBar()->showMessage(tr("Trace Editor Started"));
 }
 
+View3D::~View3D()
+{
+	if(this->QVTK)
+	{
+		delete this->QVTK;
+	}
+	if(this->GapsPlotView)
+	{
+		delete this->GapsPlotView;
+	}
+	if(this->FTKTable)
+	{
+		delete this->FTKTable;
+	}
+	if(this->TreePlot)
+	{
+		delete this->TreePlot;
+	}
+	if(this->FL_MeasurePlot)
+	{
+		delete this->FL_MeasurePlot;
+	}
+	if(this->FL_histo)
+	{
+		delete this->FL_histo;
+	}
+	if(this->FL_MeasureTable)
+	{
+		delete this->FL_MeasureTable;
+	}
+	if(this->GapsTableView)
+	{
+		delete this->GapsTableView;
+	}
+	delete this->tobj;
+	delete this->ImageActors;
+}
+/*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
 {
 	// Create a window that allows files to be loaded
@@ -349,6 +387,7 @@ void View3D::OkToBoot()
 	}
 }
 
+//!Dialogs to Find File Names
 QString View3D::getSomaFile()
 {
 	QString somaDir = this->TraceEditSettings.value("somaDir", ".").toString();
@@ -452,6 +491,7 @@ QString View3D::getImageFile()
 	}
 	return NewImageFile.section('/',-1);
 }
+//! Open and load Data to approprite types
 void View3D::LoadTraces()
 {
 	QString trace = this->getTraceFile();
@@ -775,7 +815,7 @@ void View3D::ShowProjectTable()
 	this->projectFilesDock->show();
 	this->projectFilesTableCreated = true;
 }
-// 2-D projection and raycast (no slice image)
+//! 2-D projection and raycast (no slice image)
 void View3D::choosetoRender(int row, int col)
 {
 	QList<QTableWidgetSelectionRange> ranges = this->projectFilesTable->selectedRanges(); //for future use
@@ -931,43 +971,6 @@ void View3D::TraceBitImageIntensity(int ImgID)
 	}
 }
 
-View3D::~View3D()
-{
-	if(this->QVTK)
-	{
-		delete this->QVTK;
-	}
-	if(this->GapsPlotView)
-	{
-		delete this->GapsPlotView;
-	}
-	if(this->FTKTable)
-	{
-		delete this->FTKTable;
-	}
-	if(this->TreePlot)
-	{
-		delete this->TreePlot;
-	}
-	if(this->FL_MeasurePlot)
-	{
-		delete this->FL_MeasurePlot;
-	}
-	if(this->FL_histo)
-	{
-		delete this->FL_histo;
-	}
-	if(this->FL_MeasureTable)
-	{
-		delete this->FL_MeasureTable;
-	}
-	if(this->GapsTableView)
-	{
-		delete this->GapsTableView;
-	}
-	delete this->tobj;
-	delete this->ImageActors;
-}
 
 void View3D::Initialize()
 {
@@ -1029,7 +1032,7 @@ void View3D::setupLinkedSpace()
 	this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateStatistics()));
 }
 
-/*Set up the components of the interface */
+/*!Set up the components of the interface */
 void View3D::CreateGUIObjects()
 {
 
@@ -1702,7 +1705,7 @@ void View3D::ShowAutomatedEdits()
 	}
 }
 
-/* create interactors*/
+/*! create interactors*/
 void View3D::CreateInteractorStyle()
 {
 	this->Interactor = this->QVTK->GetRenderWindow()->GetInteractor();
