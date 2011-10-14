@@ -243,7 +243,8 @@ void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
 			selectedIDs.insert( *iter);
 		}
 		this->selection->select( selectedIDs);
-		UpdataLookupTable( this->selection->getSelections());
+		std::set<long int> updataIDs =  this->selection->getSelections();
+		UpdataLookupTable( updataIDs);
 	}
 	this->view->GetRenderer()->Render();
 }
