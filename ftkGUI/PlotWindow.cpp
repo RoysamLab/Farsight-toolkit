@@ -13,17 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-//****************************************************************************************
-// Plot window uses scatterview to display a scatterplot of the data in a model.
-// In order for this view to work the model must be set.
-// The window allows the user to change the columns used in the scatterplot.
-//****************************************************************************************
+//////////////////////////////////////////////////////////////////////////////////////////
+/// Plot window uses scatterview to display a scatterplot of the data in a model.
+/// In order for this view to work the model must be set.
+/// The window allows the user to change the columns used in the scatterplot.
+//////////////////////////////////////////////////////////////////////////////////////////
 #include "PlotWindow.h"
 
 //for DBL_MAX...
 #include <float.h>
 
-//Constructor
+//!Constructor
 PlotWindow::PlotWindow(QWidget *parent)
 : QMainWindow(parent)
 {
@@ -32,6 +32,10 @@ PlotWindow::PlotWindow(QWidget *parent)
 
 void PlotWindow::setupUI(void)
 {
+	/**
+	* Set up the GUI for the Scatterplot
+	* This provides signals and slots for changing what is displayed
+	*/
 	resize(500, 500);
 
 	QWidget *centralWidget = new QWidget();
@@ -41,7 +45,7 @@ void PlotWindow::setupUI(void)
 	centralWidget->setLayout(vlayout);
 	this->setCentralWidget(centralWidget);
 
-	//Setup menu:
+	//!Setup menu:
 	optionsMenu = menuBar()->addMenu(tr("&Options"));
 
 	normalizeAction = new QAction(tr("&Normalize"),this);
@@ -50,14 +54,16 @@ void PlotWindow::setupUI(void)
 	normalizeAction->setShortcut(tr("Ctrl+N"));
 	connect(normalizeAction,SIGNAL(toggled(bool)), scatter, SLOT(SetNormalize(bool)));
 	optionsMenu->addAction(normalizeAction);
-
+//!action to change x
 	optionsMenu->addSeparator();
 	xMenu = new QMenu(tr("Set X Axis"));
 	connect(xMenu, SIGNAL(triggered(QAction *)), this, SLOT(xChange(QAction *)));
-	optionsMenu->addMenu(xMenu);
+	menuBar()->addMenu(xMenu);
+//! action to change y
 	yMenu = new QMenu(tr("Set Y Axis"));
 	connect(yMenu, SIGNAL(triggered(QAction *)), this, SLOT(yChange(QAction *)));
-	optionsMenu->addMenu(yMenu);
+	menuBar()->addMenu(yMenu);
+//! action to change color
 	colorMenu = new QMenu(tr("Set Color Column"));
 	connect(colorMenu, SIGNAL(triggered(QAction *)), this, SLOT(colorChange(QAction *)));
 	optionsMenu->addMenu(colorMenu);
@@ -81,9 +87,10 @@ void PlotWindow::setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection * sels
 	updateOptionMenus(tbl);
 }
 
-//Redefine update:
+//!Redefine update:
 void PlotWindow::update()
 {
+	//!detects changes in the linked space 
 	vtkSmartPointer<vtkTable> tbl = scatter->GetTable();
 	if(tbl)
 		this->updateOptionMenus( tbl );
@@ -95,37 +102,42 @@ void PlotWindow::update()
 
 void PlotWindow::closeEvent(QCloseEvent *event)
 {
+	//! Detects window closing and emits signal 
 	emit closing(this);
 	event->accept();
 }
 
 void PlotWindow::xChange(QAction *action)
 {
+	//! Sets the data column for the X axis
 	scatter->SetColForX( action->toolTip().toInt() );
 	action->setChecked(true);
 }
 
 void PlotWindow::yChange(QAction *action)
 {
+	//! Sets the data column for the Y axis
 	scatter->SetColForY( action->toolTip().toInt() );
 	action->setChecked(true);
 }
 
 void PlotWindow::colorChange(QAction *action)
 {
+	//! sets the color coding of the scatter plot
 	scatter->SetColForColor( action->toolTip().toInt() );
 	action->setChecked(true);
 }
 
 void PlotWindow::updateOptionMenus(vtkSmartPointer<vtkTable> tbl)
 {
+	//! populates the menues  
 	if(!scatter) return;
 
 	int xc = scatter->ColForX();
 	int yc = scatter->ColForY();
 	int cc = scatter->ColForColor();
 
-	//Add a new Action for each column for each menu item:
+	//!Add a new Action for each column for each menu item:
 	xMenu->clear();
 	yMenu->clear();
 	colorMenu->clear();
