@@ -56,7 +56,7 @@
 #include <vtkCallbackCommand.h>
 #include <vtkViewUpdater.h>
 #include "ObjectSelection.h"
-#include <vtklookupTable.h>
+#include <vtkLookupTable.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
