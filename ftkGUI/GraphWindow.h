@@ -54,9 +54,9 @@
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
 #include <vtkCallbackCommand.h>
-
+#include <vtkViewUpdater.h>
 #include "ObjectSelection.h"
-
+#include <vtklookupTable.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -66,6 +66,7 @@
 #include <QFile>
 #include <QCoreApplication>
 #include <QTextStream>
+
 class GraphWindow : public QMainWindow
 {
     Q_OBJECT;
@@ -79,23 +80,30 @@ public:
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
 	void ShowGraphWindow();
-	
+	void SetSelectedIds(std::set<long int>& IDs);
+	ObjectSelection * GetSelection();
+	void UpdataLookupTable( std::set<long int>& IDs);
+
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	void SetSelectedIds(std::set<long int>& IDs);
+	void UpdateGraphView();
 
 signals:
 	void selection_Changed();
 
 private:
+	vtkSmartPointer<vtkTable> dataTable;
+	std::set<long int> rootID;
+	ObjectSelection * selection;
+
 	QVTKWidget mainQTRenderWidget;
 	vtkSmartPointer<vtkViewTheme> theme;
 	vtkSmartPointer<vtkTableToGraph> TTG;	
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	//SelectionAdapter * selAdapter;
-	ObjectSelection * selection;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
-
+	unsigned long observerTag;
+	vtkSmartPointer<vtkLookupTable> lookupTable;
 };
 
 #endif

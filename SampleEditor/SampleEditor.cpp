@@ -261,6 +261,11 @@ void SampleEditor::ReadFiles(std::string hname, std::string dname)
 //***********************************************************************************
 void SampleEditor::removeRows(void)
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
 	std::set<long int> sels = selection->getSelections();
 	std::set<long int>::iterator it;
 	for(it=sels.begin(); it!=sels.end(); ++it)
@@ -277,12 +282,14 @@ void SampleEditor::removeRows(void)
 	selection->clear();
 	table->update();
 	plot->update();
-	
-
 }
 
 void SampleEditor::addBlankRow(void)
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
 	//Get the maximum ID:
 	long max = 0;
 	for(int i=0; i<data->GetNumberOfRows(); ++i)
@@ -306,16 +313,23 @@ void SampleEditor::addBlankRow(void)
 	//update views:
 	table->update();
 	plot->update();
-	
-
 }
 
 void SampleEditor::changeRowData(void)
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
 }
 
 void SampleEditor::showStatistics(void)
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
 	this->statisticsDockWidget = new QDockWidget();
 	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
 	
@@ -329,6 +343,11 @@ void SampleEditor::showStatistics(void)
 
 void SampleEditor::updateStatistics(void)
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
 	if (this->flag == 1)
 	{
 		std::cout<< "updattteeeee" << std::endl;
@@ -340,12 +359,17 @@ void SampleEditor::updateStatistics(void)
 
 void SampleEditor::SPDAnalysis()
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
 	SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
 	SPDModel->ParseTraceFile( this->data);
 	std::cout<< "Normalizing" << std::endl;
 	SPDModel->NormalizeData();
 	std::cout<< "clustering" << std::endl;
-	SPDModel->ClusterAgglomerate( 0.7);
+	SPDModel->ClusterAgglomerate( 0.5);
 	//std::cout<< "Merging" << std::endl;
 	//SPDModel->ClusterMerge( 0.9, 0.9);
 	std::cout<< "Generating MST" << std::endl;
