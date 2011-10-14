@@ -651,7 +651,7 @@ bool View3D::readProject(QString projectFile)
 				}
 			} //end if newFileInfo exists
 		}//end of for project size
-		int maxrow;
+		//int maxrow;
 		if (!this->TraceFiles.isEmpty() )
 		{	
 			//this->projectFilesTable->setRowCount(this->TraceFiles.size());
@@ -2809,8 +2809,8 @@ void View3D::DrawROI()
 	extrude->Update();
 	// Setup actor and mapper
 	vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	ROIExtrudedpolydata = extrude->GetOutput();
-	ROImapper->SetInput(ROIExtrudedpolydata);
+	this->ROIExtrudedpolydata = extrude->GetOutput();
+	ROImapper->SetInput(this->ROIExtrudedpolydata);
 
 	this->ROIactor = vtkSmartPointer<vtkActor>::New();
 	ROIactor->SetMapper(ROImapper);
@@ -2825,7 +2825,7 @@ void View3D::DrawROI()
 void View3D::CalculateDistanceToDevice()
 {
 	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
-	cellLocator->SetDataSet(ROIExtrudedpolydata);
+	cellLocator->SetDataSet(this->ROIExtrudedpolydata);
 	cellLocator->BuildLocator();
 	
 	unsigned int cellCount= this->CellModel->getCellCount();
