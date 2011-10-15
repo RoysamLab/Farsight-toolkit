@@ -57,16 +57,8 @@ void MicrogliaProcessTracer::LoadInputImage(ImageType3D::Pointer &image)
   rescaler->SetOutputMinimum(0.0);
   rescaler->SetOutputMaximum(1.0);
   rescaler->SetInput(image);
-  
-  //Median filter 
-  MedianFilterType::Pointer medfilt = MedianFilterType::New();
-  medfilt->SetNumberOfThreads(16);
-  medfilt->SetInput(rescaler->GetOutput());
-  ImageType3D::SizeType rad = { {1, 1, 1} };
-  medfilt->SetRadius(rad);
-  medfilt->Update();
-  //this->InputImage = medfilt->GetOutput();
   this->InputImage = rescaler->GetOutput();
+  rescaler->Update();
 
   //pad z slices
   itk::Size<3> isz = this->InputImage->GetBufferedRegion().GetSize();
@@ -825,13 +817,13 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start, itk
         }
       for(int y = indices[i][1] - 1; y < indices[i][1] + 2; y++)
         {
-        if(y < 0 || y > imageSize[0] - 1) 
+        if(y < 0 || y > imageSize[1] - 1) 
           {
           continue;
           }
         for(int z = indices[i][2] - 1; z < indices[i][2] + 2; z++)
           {
-          if(z < 0 || z > imageSize[0] - 1)
+          if(z < 0 || z > imageSize[2] - 1)
             {
             continue;
             }

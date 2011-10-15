@@ -16,7 +16,6 @@
 #include "itkRobustAutomaticThresholdImageFilter.h"
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkSymmetricSecondRankTensor.h"
-#include "itkMedianImageFilter.h"
 #include "itkMaskNegatedImageFilter.h"
 #include "itkBinaryDilateImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
@@ -54,7 +53,6 @@ public:
 
 	typedef itk::ImageFileReader<ImageType3D> ReaderType;
 	typedef itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D> RescalerType;
-	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	typedef itk::MaskNegatedImageFilter<ImageType3D, CharImageType3D, ImageType3D> MaskFilterType;
 
 	MicrogliaProcessTracer();
