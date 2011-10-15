@@ -205,6 +205,7 @@ void MicrogliaProcessTracer::RunTracing()
       n->ID = this->NodeCounter++;
       n->index = Nit.GetIndex();
       this->Open.push_back(n);
+      this->IndexToNodeMap[n->index] = n;
     }
   }
   
@@ -596,7 +597,6 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
   std::list< std::pair< double, Node * > > *neighborList;
   double minDistance = std::numeric_limits<double>::max();
   std::vector< Node * >::iterator nodeItr, nbrItr;
-  //std::vector< Node * >::iterator nodeItr, nbrItr;
  
   for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
     {
@@ -625,44 +625,6 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
 
  //the child node is closed in the caller function
  return parentAndChild;
-
-/*
-  for(nodeItr = this->Open.begin(); nodeItr != this->Open.end(); ++nodeItr)
-    {
-    itk::Point<double,3> start;
-    this->InputImage->TransformIndexToPhysicalPoint( (*nodeItr)->index, start ); 
-
-    for(nbrItr = this->Closed.begin(); nbrItr != this->Closed.end(); ++nbrItr)
-      {
-      if( (*nodeItr)->ID == (*nbrItr)->ID )
-        {
-        std::cout << "this should never happen" << std::endl;
-        continue;
-        }
-
-      itk::Point<double,3> end;
-      this->InputImage->TransformIndexToPhysicalPoint( (*nbrItr)->index, end ); 
-      
-      double d = start.EuclideanDistanceTo(end);
-      if( d < minDistance )
-        {
-        minDistance = d;
-        parentAndChild.first = (*nbrItr);
-        parentAndChild.second = (*nodeItr);
-        }
-      }
-    }
-  //std::cout << "(Debug) " << minDistance << std::endl;
-  
-  //check distance threshold
-  if(minDistance > this->MaxDistance)
-    {
-    parentAndChild.first = NULL;
-    parentAndChild.second = NULL;
-    }
-
-  return parentAndChild;
-*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -735,43 +697,75 @@ void MicrogliaProcessTracer::MaskAwaySomas()
 ////////////////////////////////////////////////////////////////////////////////
 void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
 {
-  std::vector< Node * >::iterator nodeItr, nbrItr;
+  std::vector< Node * >::iterator nodeItr;
+  Node *nbrNode;
+  
+  ImageType3D::SizeType radius;
+  radius[0] = (unsigned int)
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[0] ) );
+  radius[1] = (unsigned int)
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[1] ) );
+  radius[2] = (unsigned int)
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[2] ) );
+ 
+  itk::ConstNeighborhoodIterator<ImageType3D>
+    nbrItr(radius, this->NDXImage, this->NDXImage->GetBufferedRegion());
+
   for(nodeItr = nodes.begin(); nodeItr != nodes.end(); ++nodeItr)
     {
     itk::Index<3> start = (*nodeItr)->index;
+    itk::Point<double,3> startPoint;
+    this->InputImage->TransformIndexToPhysicalPoint( start, startPoint );
     std::list< std::pair< double, Node *> > neighbors;
 
-    for(nbrItr = this->Open.begin(); nbrItr != this->Open.end(); ++nbrItr)
+    nbrItr.SetLocation(start);
+    itk::Size<3> nbrhdSize = nbrItr.GetSize();
+    unsigned int totalNbrhdSize = nbrhdSize[0] * nbrhdSize[1] * nbrhdSize[2]; 
+    
+    for (unsigned int i=0; i < totalNbrhdSize; ++i)
       {
-      if( (*nodeItr)->ID == (*nbrItr)->ID )
+      if(nbrItr.GetPixel(i) == 0.0)
         {
         continue;
         }
 
-      itk::Index<3> end = (*nbrItr)->index;
-      
-      itk::Point<double,3> startPoint;
+      itk::Index<3> end = nbrItr.GetIndex(i);
+      if(start == end)
+        {
+        continue;
+        }
+
       itk::Point<double,3> endPoint;
-      this->InputImage->TransformIndexToPhysicalPoint( start, startPoint );
       this->InputImage->TransformIndexToPhysicalPoint( end, endPoint );
+
       double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
       double scaledDistance = this->GetDistanceBetweenPoints(start, end);
 
-      double thresh = this->MaxDistance * 2; //doubled for intensity scaling
-      if( (*nodeItr)->IsOpen == false )
-        {
-        //thresh += 10;
-        }
       if( scaledDistance > this->MaxDistance )
-      //if( euclideanDistance > thresh || scaledDistance > this->MaxDistance )
         {
         continue;
         }
-      std::pair< double, Node * > nbr;
-      nbr.first = euclideanDistance;
-      nbr.second = (*nbrItr);
-      neighbors.push_front(nbr);
+
+      std::map<itk::Index<3>, Node *>::iterator mapItr =
+        this->IndexToNodeMap.find(end);
+      if(mapItr == this->IndexToNodeMap.end())
+        {
+        continue;
+        }
+
+      nbrNode = (*mapItr).second; 
+      if( (*nodeItr)->ID == nbrNode->ID )
+        {
+        std::cout << "this should never happen" << std::endl;
+        continue;
+        }
+
+      std::pair< double, Node * > nbrPair;
+      nbrPair.first = euclideanDistance;
+      nbrPair.second = nbrNode;
+      neighbors.push_front(nbrPair);
       }
+
     neighbors.sort(CompareNeighbors);
     this->AdjacencyMap[(*nodeItr)] = neighbors;
     }
