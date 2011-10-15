@@ -316,7 +316,8 @@ void GraphWindow::UpdateGraphView()
 		selection->RemoveAllNodes();
 		selection->AddNode(selectNodeList);
 		annotationLink->SetCurrentSelection( selection);
-		UpdataLookupTable( this->selection->getSelections());
+		std::set<long int> updataIDes =  this->selection->getSelections();
+		UpdataLookupTable( updataIDes);
 
 		this->mainQTRenderWidget.GetRenderWindow()->Render();
 		this->view->GetRenderer()->Render();
