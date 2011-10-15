@@ -23,7 +23,7 @@ template <typename T1, typename T2>
 int writeImage(typename T1::Pointer im, const char* filename)
 {
 	typedef itk::RescaleIntensityImageFilter< T1, T2 > RescaleFilterType;
-	RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+	typename RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
 	rescaleFilter->SetInput( im );
 	rescaleFilter->SetOutputMaximum( 255 );
 	rescaleFilter->SetOutputMinimum( 0 ); 
@@ -92,11 +92,11 @@ typename T1::Pointer readImage( const char* filename )
 		std::cerr << "ExceptionObject caught!" << std::endl;
 		std::cerr << err << std::endl;
 	}
-	T1::Pointer inputImage = reader->GetOutput(); // Pass the readed image to a "regular image"
+	typename T1::Pointer inputImage = reader->GetOutput(); // Pass the readed image to a "regular image"
 
 	// RescaleIntensityImageFilter
 	typedef itk::RescaleIntensityImageFilter< T1, T2 > RescaleFilterType;
-	RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+	typename RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
 	rescaleFilter->SetInput( inputImage );
 	rescaleFilter->SetOutputMaximum( 1.0 );
 	rescaleFilter->SetOutputMinimum( 0.0 ); 
