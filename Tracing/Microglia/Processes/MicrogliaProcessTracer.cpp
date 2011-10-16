@@ -681,8 +681,7 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
       parentID = (*nodeItr)->parent->ID;
       }
     
-    output << (*nodeItr)->ID << " " << (*nodeItr)->type << " " << x << " " << y << " " << z << " " << "1" << " " << parentID << std::endl; 
-    //output << (*nodeItr)->ID << " " << cellType << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
+    output << (*nodeItr)->ID << " " << (*nodeItr)->type << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
     }
   output.close();
 }
