@@ -723,11 +723,11 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
   
   ImageType3D::SizeType radius;
   radius[0] = (unsigned int)
-    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[0] ) );
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[0] ) ) * 2;
   radius[1] = (unsigned int)
-    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[1] ) );
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[1] ) ) * 2;
   radius[2] = (unsigned int)
-    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[2] ) );
+    ceil( (this->MaxDistance / this->InputImage->GetSpacing()[2] ) ) * 2;
  
   itk::ConstNeighborhoodIterator<ImageType3D>
     nbrItr(radius, this->NDXImage, this->NDXImage->GetBufferedRegion());
@@ -765,6 +765,7 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
       //massive discount for soma centroids (just to make sure they get started)
       std::map<itk::Index<3>, Node *>::iterator mapItr =
         this->IndexToNodeMap.find(start);
+      /*
       if(mapItr == this->IndexToNodeMap.end())
         {
         continue;
@@ -774,6 +775,7 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
         {
         scaledDistance /= 10;
         }
+      */
 
       if( scaledDistance > this->MaxDistance )
         {
@@ -808,7 +810,8 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
 double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
                                                         itk::Index<3> end)
 {
-  ImageType3D::SizeType imageSize = this->ThresholdedImage->GetLargestPossibleRegion().GetSize();
+  ImageType3D::SizeType imageSize =
+    this->ThresholdedImage->GetLargestPossibleRegion().GetSize();
 
   //compute Euclidean distance between the two points
   itk::Point<double,3> startPoint;
@@ -818,15 +821,14 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
   double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
  
   //analyze the pixels along the line between the start & end points.
-  //the distance returned by this function is typically less than the actual Euclidean distance.
+  //the distance returned by this function is typically less than the actual
+  //Euclidean distance.
   //How much less is based on how many "foreground" pixels lie along this line.
   std::vector< itk::Index<3> > indices = this->Line.BuildLine(start, end);
   float scaledDistance = 0;
-  float numPixels = 0;
-  float numBackground = 0;
   for(unsigned int i = 0; i < indices.size(); i++)
     {
-    float distanceWeight = 0;
+    float distanceWeight = 0.5;
     if(indices[i] == start)
       {
       continue;
@@ -877,7 +879,6 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
     if(!foregroundPixelFound)
       {
       distanceWeight = 1.0;
-      numBackground++;
       }
 
     //take image spacing into account
@@ -894,7 +895,6 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
       {
       scaledDistance += ( this->InputImage->GetSpacing()[0] * distanceWeight ); 
       }
-    ++numPixels;
     }
 
   return scaledDistance;
