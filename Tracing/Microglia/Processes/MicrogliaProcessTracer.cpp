@@ -192,30 +192,23 @@ void MicrogliaProcessTracer::RunTracing()
     return;
     }
 
-/*
-  if(this->SomaImage)
-    {
-    this->MaskAwaySomas();
-    }
-*/
-
   this->CalculateCriticalPoints();
 
   itk::ImageRegionConstIterator<ImageType3D> Nit(this->NDXImage, this->NDXImage->GetBufferedRegion());
   for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
-  {
-    if (Nit.Get() > 0) 
     {
+    if (Nit.Get() > 0) 
+      {
       Node *n = new Node();
       n->ID = this->NodeCounter++;
       n->index = Nit.GetIndex();
       this->Open.push_back(n);
       this->IndexToNodeMap[n->index] = n;
+      }
     }
-  }
   WriterType::Pointer writer = WriterType::New();
   writer->SetInput(this->NDXImage);
-  writer->SetFileName("/Net/hydra/home5/z/zgalbrea/projects/results/ndx.mhd");
+  writer->SetFileName("/Users/zack/ndx.mhd");
   writer->Update();
  
   //add the centroids to the Index -> Node map too
@@ -388,13 +381,13 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
       switch(w)
         {
         case 0:
-          value = -1 * (ev[1] - ev[2]);
+          value = (ev[1] + ev[2]);
           break;
         case 1:
-          value = -1 * (ev[0] - ev[2]);
+          value = (ev[0] + ev[2]);
           break;
         case 2:
-          value = -1 * (ev[0] - ev[1]);
+          value = (ev[0] + ev[1]);
           break;
         default:
           std::cout << "impossible switch value" << std::endl;
@@ -618,6 +611,9 @@ void MicrogliaProcessTracer::BuildTrees()
 std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
 {
   std::pair< Node *, Node * > parentAndChild;
+  parentAndChild.first = NULL;
+  parentAndChild.second = NULL;
+
   std::pair< double, Node * > distanceAndNeighbor;
   std::list< std::pair< double, Node * > > *neighborList;
   double minDistance = std::numeric_limits<double>::max();
@@ -688,31 +684,6 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
     output << (*nodeItr)->ID << " " << (*nodeItr)->type << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
     }
   output.close();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void MicrogliaProcessTracer::MaskAwaySomas()
-{
-  typedef itk::BinaryBallStructuringElement<
-      CharImageType3D::PixelType,3>                  StructuringElementType;
-  StructuringElementType structuringElement;
-  structuringElement.SetRadius(5);
-  structuringElement.CreateStructuringElement();
-
-  typedef itk::BinaryDilateImageFilter <CharImageType3D, CharImageType3D, StructuringElementType>
-          BinaryDilateImageFilterType;
-  BinaryDilateImageFilterType::Pointer dilateFilter
-          = BinaryDilateImageFilterType::New();
-  dilateFilter->SetInput( this->SomaImage );
-  dilateFilter->SetKernel(structuringElement);
-
-  MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-  maskFilter->SetInput( this->InputImage );
-  maskFilter->SetMaskImage( dilateFilter->GetOutput() );
-  maskFilter->SetOutsideValue(0);
-  maskFilter->Update();
-
-  this->InputImage = maskFilter->GetOutput();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -915,6 +886,8 @@ void MicrogliaProcessTracer::PruneSomaNodes()
   LabelMapType::Pointer labelMap = binaryToLabelConverter->GetOutput();
   binaryToLabelConverter->Update();
 
+  std::vector<Node *> somaBranches;
+
   // Loop over each region
   for(unsigned int i = 0; i < labelMap->GetNumberOfLabelObjects(); i++)
     {
@@ -982,6 +955,7 @@ void MicrogliaProcessTracer::PruneSomaNodes()
         centroidNode->children.push_back(currentNode);
         currentNode->parent = centroidNode;
         currentNode->type = 1;
+        somaBranches.push_back(currentNode);
         }
 
       //the rest are carefully deleted
@@ -1032,5 +1006,113 @@ void MicrogliaProcessTracer::PruneSomaNodes()
       ++itr;
       }
     }
+
+  this->PruneSomaBranches(somaBranches);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::PruneSomaBranches(std::vector< Node *> branches)
+{
+  std::vector< Node * >::iterator branchItr;
+  Node *branch;
+  for(branchItr = branches.begin(); branchItr != branches.end(); ++branchItr)
+    {
+    branch = (*branchItr);
+    bool anyBranchPts = this->AnyBranchPoints( branch );
+    if(!anyBranchPts)
+      {
+      unsigned int depth = this->GetPathDepth( branch );
+      if( depth < 10)
+        {
+        this->DeleteBranch(branch, true);
+        }
+      }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool MicrogliaProcessTracer::AnyBranchPoints( Node *n )
+{
+  if(n->children.size() > 1)
+    {
+    return true;
+    }
+
+  std::vector< Node * >::iterator childItr;
+  for(childItr = n->children.begin(); childItr != n->children.end(); ++childItr)
+    {
+    if(this->AnyBranchPoints( (*childItr) ))
+      {
+      return true;
+      }
+    }
+ 
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+unsigned int MicrogliaProcessTracer::GetPathDepth( Node *n )
+{
+  if(n->children.size() == 0)
+    {
+    return 1;
+    }
+
+  unsigned int maxChildDepth = 1;
+  std::vector< Node * >::iterator childItr;
+  for(childItr = n->children.begin(); childItr != n->children.end(); ++childItr)
+    {
+    unsigned int childDepth = this->GetPathDepth( (*childItr) );
+    if(childDepth > maxChildDepth)
+      {
+      maxChildDepth = childDepth;
+      }
+    }
+  return maxChildDepth + 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::DeleteBranch( Node *n, bool parentSurvives )
+{
+  std::vector< Node *>::iterator rmItr;
+
+  //if your parent is surviving, remove yourself from their list of children
+  if(parentSurvives)
+    {
+    Node *parent = n->parent;
+    rmItr = std::find(parent->children.begin(), parent->children.end(), n);
+    if(rmItr == parent->children.end())
+      {
+      std::cout << "parent / child issues 2..." << std::endl;
+      }
+    else
+      {
+      parent->children.erase(rmItr);
+      }
+    }
+
+  //delete your kids
+  std::vector< Node * >::iterator childItr;
+  for(childItr = n->children.begin(); childItr != n->children.end(); ++childItr)
+    {
+    this->DeleteBranch( (*childItr), false );
+    }
+
+  //remove yourself from the Open and/or Closed lists
+  rmItr =
+    std::find(this->Open.begin(), this->Open.end(), n);
+  if(rmItr != this->Open.end())
+    {
+    this->Open.erase(rmItr);
+    }
+  rmItr =
+    std::find(this->Closed.begin(), this->Closed.end(), n);
+  if(rmItr != this->Closed.end())
+    {
+    this->Closed.erase(rmItr);
+    }
+
+  //bye bye
+  delete n;
+  n = NULL;
+}

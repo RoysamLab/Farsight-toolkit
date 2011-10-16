@@ -99,6 +99,10 @@ protected:
   void MaskAwaySomas();
   double GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end);
   void PruneSomaNodes();
+  void PruneSomaBranches( std::vector<Node *> branches);
+  bool AnyBranchPoints( Node *n );
+  unsigned int GetPathDepth( Node *n );
+  void DeleteBranch( Node *n, bool parentSurvives );
 
 private:
   CharImageType3D::Pointer SomaImage;
