@@ -90,7 +90,7 @@ protected:
   void CalculateCriticalPoints();
   void CalculateCriticalPointsAtScale( float );
   void ComputeAdjacencies( std::vector< Node * > );
-  unsigned int ShapeAnalysis(const itk::FixedArray<float, 3> & );
+  unsigned int GetEigenvalueL1(const itk::FixedArray<float, 3> & );
   bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &);
   float GetRadius(itk::Index<3> pos);
   void BuildTrees();

@@ -337,6 +337,7 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
   itk::Vector<float,3> sp = this->PaddedInputImage->GetSpacing();
 
   long ctCnt = 0;
+  ImageType3D::PointType origin = this->InputImage->GetOrigin();
   while(!nit.IsAtEnd()) 
   {
     itk::Index<3> ndx = it.GetIndex();
@@ -361,81 +362,84 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
     const float thresh2 = 0.001;  // -0.1 percent of range
 
     if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
-    {
-      TensorType h;
-      h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
-      h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
-      h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
-      h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
-      h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
-      h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
-
+      {
+      TensorType hessian;
+      hessian[0] = gauss->GetOutput()->GetPixel( ndx + xp ) +
+                   gauss->GetOutput()->GetPixel( ndx + xn ) -
+                   2*nit.GetPixel( 13 );
+      hessian[3] = gauss->GetOutput()->GetPixel( ndx + yp ) +
+                   gauss->GetOutput()->GetPixel( ndx + yn ) -
+                   2*nit.GetPixel( 13 );
+      hessian[5] = gauss->GetOutput()->GetPixel( ndx + zp ) +
+                   gauss->GetOutput()->GetPixel( ndx + zn ) -
+                   2*nit.GetPixel( 13 );
+      hessian[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) -
+                   nit.GetPixel(xy3) - nit.GetPixel(xy4);
+      hessian[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) -
+                   nit.GetPixel(xz3) - nit.GetPixel(xz4);
+      hessian[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) -
+                   nit.GetPixel(yz3) - nit.GetPixel(yz4);
       EigenValuesArrayType ev;
       EigenVectorMatrixType em;
-      h.ComputeEigenAnalysis (ev, em);
+      hessian.ComputeEigenAnalysis (ev, em);
+      unsigned int w = GetEigenvalueL1(ev);
 
-      unsigned int w = ShapeAnalysis(ev);
-      float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
+      float value = 0.0;
+      switch(w)
+        {
+        case 0:
+          value = -1 * (ev[1] - ev[2]);
+          break;
+        case 1:
+          value = -1 * (ev[0] - ev[2]);
+          break;
+        case 2:
+          value = -1 * (ev[0] - ev[1]);
+          break;
+        default:
+          std::cout << "impossible switch value" << std::endl;
+          break;
+        }
+      value -= ev[w];
+
       if (RegisterIndex(value, ndx, sz)) 
-      {
+        {
         this->NDXImage->SetPixel(ndx,value);
         ctCnt++;
+        }
       }
-    }
     ++it;
     ++nit;
   }
   std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
-  
 }
 
-unsigned int MicrogliaProcessTracer::ShapeAnalysis(const itk::FixedArray<float, 3> &ev)
+////////////////////////////////////////////////////////////////////////////////
+unsigned int MicrogliaProcessTracer::
+  GetEigenvalueL1(const itk::FixedArray<float, 3> &ev)
 {
-  unsigned int w;
-  float L1, L2, L;
-  if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
-  {
-    w = 0;
-    L = ev[0];
-    L1 = ev[1]; 
-    L2 = ev[2];
-    if (ev[1] > ev[2])
-    {
-      L1 = ev[2]; 
-      L2 = ev[1];   
-    }
-  }
+  unsigned int w = 0;
+  float ev1 = abs(ev[0]);
+  float ev2 = abs(ev[1]);
+  float ev3 = abs(ev[2]);
 
-  else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
-  {
+  if ( (ev2 < ev1) && (ev2 < ev3) )
+    {
     w = 1;
-    L = ev[1];
-    L1 = ev[0];
-    L2 = ev[2];
-    if (ev[0] > ev[2]) 
-    {
-      L1 = ev[2];
-      L2 = ev[0];   
     }
-  }
-
-  else  
-  {
+  
+  if ( (ev3 < ev1) && (ev3 < ev2) )
+    {
     w = 2;
-    L = ev[2];
-    L1 = ev[0];
-    L2 = ev[1];
-    if (ev[0] > ev[1]) 
-    {
-      L1 = ev[1];
-      L2 = ev[0];   
     }
-  }
 
   return w;
 }
 
-bool MicrogliaProcessTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz) 
+////////////////////////////////////////////////////////////////////////////////
+bool MicrogliaProcessTracer::RegisterIndex(const float value,
+                                           itk::Index<3> &ndx,
+                                           itk::Size<3>& sz) 
 {
   itk::Index<3> n;
   bool higherPresent = false;
