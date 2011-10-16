@@ -14,12 +14,14 @@ Node::Node()
   {
     this->parent = NULL;
     this->IsOpen = true;
+    this->type = 3;
   }
 
 MicrogliaProcessTracer::MicrogliaProcessTracer()
 {
   this->NodeCounter = 1;
   this->Padding = 1;
+  this->ProcessRadius = 0.3;
 
   //no default distance threshold
   //this means all nodes will be added to a tree
@@ -144,7 +146,7 @@ std::vector< Node * > MicrogliaProcessTracer::ReadListOfPoints(std::string fname
 
   return listOfPoints;
 }
-	
+  
 ////////////////////////////////////////////////////////////////////////////////
 void MicrogliaProcessTracer::LoadSeedPoints(std::string fname)
 {
@@ -155,6 +157,7 @@ void MicrogliaProcessTracer::LoadSeedPoints(std::string fname)
   for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
     {
     (*nodeItr)->IsOpen = false;
+    (*nodeItr)->type = 1;
     }
 }
 
@@ -189,10 +192,12 @@ void MicrogliaProcessTracer::RunTracing()
     return;
     }
 
+/*
   if(this->SomaImage)
     {
     this->MaskAwaySomas();
     }
+*/
 
   this->CalculateCriticalPoints();
 
@@ -208,6 +213,18 @@ void MicrogliaProcessTracer::RunTracing()
       this->IndexToNodeMap[n->index] = n;
     }
   }
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetInput(this->NDXImage);
+  writer->SetFileName("/Net/hydra/home5/z/zgalbrea/projects/results/ndx.mhd");
+  writer->Update();
+ 
+  //add the centroids to the Index -> Node map too
+  std::vector< Node * >::iterator nodeItr;
+  for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
+    {
+    Node *n = (*nodeItr);
+    this->IndexToNodeMap[n->index] = n;
+    }
   
   std::cout << "open list size: " << this->Open.size() << std::endl;
   std::cout << "closed list size: " << this->Closed.size() << std::endl;
@@ -234,6 +251,9 @@ void MicrogliaProcessTracer::RunTracing()
   this->ComputeAdjacencies(this->Open);
   
   this->BuildTrees();
+
+  std::cout << "cleaning up nodes that fall within a soma" << std::endl;
+  this->PruneSomaNodes();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -245,7 +265,6 @@ void MicrogliaProcessTracer::CalculateCriticalPoints(void)
   this->NDXImage->Allocate();
   this->NDXImage->FillBuffer(0.0f);
   
-  //float power = 0.0;
   float power = -0.25;
 
   for (unsigned int i = 0; i < 6; ++i)
@@ -317,12 +336,6 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
   nit.GoToBegin();
   itk::Vector<float,3> sp = this->PaddedInputImage->GetSpacing();
 
-  long win = long(sigma)/2;
-  if (win <2) 
-  {
-    win = 2;
-  }
-  
   long ctCnt = 0;
   while(!nit.IsAtEnd()) 
   {
@@ -363,7 +376,7 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 
       unsigned int w = ShapeAnalysis(ev);
       float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
-      if (RegisterIndex(value, ndx, sz, win)) 
+      if (RegisterIndex(value, ndx, sz)) 
       {
         this->NDXImage->SetPixel(ndx,value);
         ctCnt++;
@@ -422,15 +435,23 @@ unsigned int MicrogliaProcessTracer::ShapeAnalysis(const itk::FixedArray<float, 
   return w;
 }
 
-bool MicrogliaProcessTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
+bool MicrogliaProcessTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz) 
 {
   itk::Index<3> n;
   bool higherPresent = false;
-  for (n[0] = ndx[0]-h; n[0] <= ndx[0]+h; ++n[0]) 
+
+  unsigned int radX = (unsigned int)
+    ceil( (this->ProcessRadius / this->InputImage->GetSpacing()[0] ) );
+  unsigned int radY = (unsigned int)
+    ceil( (this->ProcessRadius / this->InputImage->GetSpacing()[1] ) );
+  unsigned int radZ = (unsigned int)
+    ceil( (this->ProcessRadius / this->InputImage->GetSpacing()[2] ) );
+
+  for (n[0] = ndx[0]-radX; n[0] <= ndx[0]+radX; ++n[0]) 
   {
-    for (n[1] = ndx[1]-h; n[1] <= ndx[1]+h; ++n[1]) 
+    for (n[1] = ndx[1]-radY; n[1] <= ndx[1]+radY; ++n[1]) 
     {
-      for (n[2] = ndx[2]-h; n[2] <= ndx[2]+h; ++n[2]) 
+      for (n[2] = ndx[2]-radZ; n[2] <= ndx[2]+radZ; ++n[2]) 
       {
         if ( (n[0] < 2) || (n[1] < 2) || (n[2] < 2) || (n[0] > (unsigned int)sz[0]) ||
           (n[1] > (unsigned int)sz[1]) || (n[2] > (unsigned int)sz[2]) )
@@ -553,6 +574,7 @@ void MicrogliaProcessTracer::BuildTrees()
 
     //setup the parent/child relationship between these two nodes
     parent->children.push_back(child);
+    child->parent = parent;
     
     //remove the child node from the Open list
     bool itsThere = false;
@@ -579,7 +601,6 @@ void MicrogliaProcessTracer::BuildTrees()
       {
       std::cout << "(Debug) PROBLEM: After deletion, child is still in Open." << std::endl;
       }
-    child->parent = parent;
   
     //and add it to the Closed list
     child->IsOpen = false;
@@ -605,7 +626,6 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
     while(!openNeighborFound && !neighborList->empty())
       {
       distanceAndNeighbor = neighborList->front();
-      //std::cout << "front: " << distanceAndNeighbor.first << ", back: " << neighborList->back().first << std::endl;
       if(!distanceAndNeighbor.second->IsOpen)
         {
         neighborList->pop_front();
@@ -639,7 +659,7 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
   std::ofstream output( fname.c_str() );
   
   std::vector< Node * >::iterator nodeItr;
-	
+  
   ImageType3D::PointType origin = this->InputImage->GetOrigin();
   for(nodeItr = this->Closed.begin(); nodeItr != this->Closed.end(); ++nodeItr)
     {
@@ -648,7 +668,6 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
     float y = idx[1] + origin[1];
     float z = idx[2] + origin[2];
     long parentID;
-    int cellType = 3;
 
     //compute vessel radius at this point
     float r = this->GetRadius( idx );
@@ -656,14 +675,13 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
     if ( (*nodeItr)->parent == NULL )
       {
       parentID = -1;
-      cellType = 1;
       }
     else
       {
       parentID = (*nodeItr)->parent->ID;
       }
     
-    output << (*nodeItr)->ID << " " << cellType << " " << x << " " << y << " " << z << " " << "1" << " " << parentID << std::endl; 
+    output << (*nodeItr)->ID << " " << (*nodeItr)->type << " " << x << " " << y << " " << z << " " << "1" << " " << parentID << std::endl; 
     //output << (*nodeItr)->ID << " " << cellType << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
     }
   output.close();
@@ -698,7 +716,7 @@ void MicrogliaProcessTracer::MaskAwaySomas()
 void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
 {
   std::vector< Node * >::iterator nodeItr;
-  Node *nbrNode;
+  Node *centerNode, *nbrNode;
   
   ImageType3D::SizeType radius;
   radius[0] = (unsigned int)
@@ -740,14 +758,26 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
 
       double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
       double scaledDistance = this->GetDistanceBetweenPoints(start, end);
+     
+      //massive discount for soma centroids (just to make sure they get started)
+      std::map<itk::Index<3>, Node *>::iterator mapItr =
+        this->IndexToNodeMap.find(start);
+      if(mapItr == this->IndexToNodeMap.end())
+        {
+        continue;
+        }
+      centerNode = (*mapItr).second; 
+      if(centerNode->IsOpen == false)
+        {
+        scaledDistance /= 10;
+        }
 
       if( scaledDistance > this->MaxDistance )
         {
         continue;
         }
 
-      std::map<itk::Index<3>, Node *>::iterator mapItr =
-        this->IndexToNodeMap.find(end);
+      mapItr = this->IndexToNodeMap.find(end);
       if(mapItr == this->IndexToNodeMap.end())
         {
         continue;
@@ -771,7 +801,9 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
     }
 }
 
-double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end)
+////////////////////////////////////////////////////////////////////////////////
+double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
+                                                        itk::Index<3> end)
 {
   ImageType3D::SizeType imageSize = this->ThresholdedImage->GetLargestPossibleRegion().GetSize();
 
@@ -864,3 +896,138 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start, itk
 
   return scaledDistance;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::PruneSomaNodes()
+{
+
+  //first thing: need to treat the soma image as a shape label object map
+  typedef itk::ShapeLabelObject< unsigned long, 3 > LabelObjectType;
+  typedef itk::LabelMap< LabelObjectType > LabelMapType;
+
+  typedef itk::BinaryImageToShapeLabelMapFilter<CharImageType3D, LabelMapType>
+    BinaryToLabelType;
+  BinaryToLabelType::Pointer binaryToLabelConverter = BinaryToLabelType::New();
+  binaryToLabelConverter->SetInput(this->SomaImage);
+  LabelMapType::Pointer labelMap = binaryToLabelConverter->GetOutput();
+  binaryToLabelConverter->Update();
+
+  // Loop over each region
+  for(unsigned int i = 0; i < labelMap->GetNumberOfLabelObjects(); i++)
+    {
+    // Get the ith region
+    LabelObjectType::Pointer labelObject = labelMap->GetNthLabelObject(i);
+    ImageType3D::RegionType region = labelObject->GetBoundingBox();
+
+    // Get its centroid and the correponding node
+    const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
+    ImageType3D::IndexType centroidIdx;
+    this->InputImage->TransformPhysicalPointToIndex( centroid, centroidIdx );
+    int prevSize = this->IndexToNodeMap.size();
+    Node *centroidNode = this->IndexToNodeMap[centroidIdx];
+    if(this->IndexToNodeMap.size() != prevSize)
+      {
+      std::cout << "ERROR with soma centroid lookup..." << std::endl;
+      }
+
+    //iterate over this region in NDX image
+    //
+    itk::ImageRegionConstIteratorWithIndex<ImageType3D>
+      itr(this->NDXImage, region);
+    while(!itr.IsAtEnd())
+      {
+      if(itr.Get() == 0.0)
+        {
+        ++itr;
+        continue;
+        }
+      itk::Index<3> idx = itr.GetIndex();
+      if(idx == centroidIdx)
+        {
+        ++itr;
+        continue;
+        }
+      Node *currentNode = this->IndexToNodeMap[idx];
+      std::vector< Node * >::iterator childItr;
+
+      //we only really care if this node is in the Closed list,
+      //as this means it's been added to a tree
+      childItr =
+        std::find(this->Closed.begin(), this->Closed.end(), currentNode);
+      if(childItr == this->Closed.end())
+        {
+        ++itr;
+        continue;
+        }
+
+      bool keepThisNode = false;
+      for(childItr = currentNode->children.begin();
+          childItr != currentNode->children.end();
+          childItr++)
+        {
+        //we only keep soma nodes that are the parent of a non-soma node
+        if( !region.IsInside( (*childItr)->index ) )
+          {
+          keepThisNode = true;
+          break;
+          }
+        }
+
+      //keepers are reassigned to be children of the centroid
+      if(keepThisNode)
+        {
+        centroidNode->children.push_back(currentNode);
+        currentNode->parent = centroidNode;
+        currentNode->type = 1;
+        }
+
+      //the rest are carefully deleted
+      else
+        {
+        //assign all the children to their grandparent
+        Node *grandparent = currentNode->parent;
+        for(childItr = currentNode->children.begin();
+            childItr != currentNode->children.end();
+            childItr++)
+          {
+          (*childItr)->parent = grandparent;
+          grandparent->children.push_back( (*childItr) );
+          }
+
+        //remove the node from its parent's list of children
+        std::vector< Node *>::iterator rmItr = std::find(
+          grandparent->children.begin(), grandparent->children.end(),
+          currentNode);
+        if(rmItr == grandparent->children.end())
+          {
+          std::cout << "parent / child issues..." << std::endl;
+          }
+        else
+          {
+          grandparent->children.erase(rmItr);
+          }
+
+        //remove the node from Open & Closed
+        rmItr =
+          std::find(this->Open.begin(), this->Open.end(), currentNode);
+        if(rmItr != this->Open.end())
+          {
+          this->Open.erase(rmItr);
+          }
+        rmItr =
+          std::find(this->Closed.begin(), this->Closed.end(), currentNode);
+        if(rmItr != this->Closed.end())
+          {
+          this->Closed.erase(rmItr);
+          }
+
+        //now we can actually call delete
+        delete currentNode;
+        //also set the pointer equal to NULL
+        currentNode = NULL;
+        }
+      ++itr;
+      }
+    }
+}
+

@@ -7,8 +7,10 @@
 //debug purposes only
 #include "itkImageFileWriter.h"
 
+
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 
 #include "itkBresenhamLine.h"
 #include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
@@ -19,6 +21,7 @@
 #include "itkMaskNegatedImageFilter.h"
 #include "itkBinaryDilateImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
+#include "itkBinaryImageToShapeLabelMapFilter.h"
 #include "vnl/vnl_math.h"
 
 #include <fstream>
@@ -40,6 +43,7 @@ struct Node
   IndexType index;
   bool IsRoot;
   bool IsOpen;
+  unsigned short type; //soma or non-soma for now
   Node *parent;
   std::vector< Node * > children; //needed for multiple .swc file write mode.
 };
@@ -63,6 +67,7 @@ public:
   typedef itk::Image< unsigned char, 3 > CharImageType3D;
 
   typedef itk::ImageFileReader<ImageType3D> ReaderType;
+  typedef itk::ImageFileWriter<ImageType3D> WriterType;
   typedef itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D> RescalerType;
   typedef itk::MaskNegatedImageFilter<ImageType3D, CharImageType3D, ImageType3D> MaskFilterType;
 
@@ -75,6 +80,7 @@ public:
   void LoadSomaImage(std::string somaFileName);
   void SetPadding(unsigned int i) { this->Padding = i; }
   void SetMaxDistance(double d) { this->MaxDistance = d; }
+  void SetProcessRadius(double d) { this->ProcessRadius = d; }
 
   void RunTracing();
   void WriteSWC( std::string fname );
@@ -85,19 +91,18 @@ protected:
   void CalculateCriticalPointsAtScale( float );
   void ComputeAdjacencies( std::vector< Node * > );
   unsigned int ShapeAnalysis(const itk::FixedArray<float, 3> & );
-  bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
-  //float GetRadius(itk::Vector<float,3> & pos);
+  bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &);
   float GetRadius(itk::Index<3> pos);
   void BuildTrees();
   std::vector< Node * > ReadListOfPoints(std::string fname);
   std::pair< Node *, Node * > FindClosestOpenNode();
   void MaskAwaySomas();
   double GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end);
+  void PruneSomaNodes();
 
 private:
   CharImageType3D::Pointer SomaImage;
   ImageType3D::Pointer InputImage, PaddedInputImage, NDXImage, ThresholdedImage;
-  //std::vector<IndexType> StartPoints;
   itk::BresenhamLine<3> Line;
 
   unsigned int Padding;
@@ -106,6 +111,8 @@ private:
   std::map< itk::Index<3>, Node *, CompareIndices > IndexToNodeMap;
   long NodeCounter;
   double MaxDistance;
+  //the radius of an average microglia process (in microns)
+  double ProcessRadius;
 
   std::map< Node *, std::list< std::pair< double, Node *> > > AdjacencyMap;
 };
