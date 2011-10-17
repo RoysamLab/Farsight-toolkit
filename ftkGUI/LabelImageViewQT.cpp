@@ -389,23 +389,28 @@ void LabelImageViewQT::SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> 
 void LabelImageViewQT::SetCenterMapfromVectorPointer(int time)
 {
 	centerMap = &(centerMapVector.at(time));
-	this->update();
+//	SetCenterMapPointer(&(centerMapVector.at(time)));
 }
 
 void LabelImageViewQT::SetBoundingBoxMapfromVectorPointer(int time)
 {
 	bBoxMap = &(boxMapVector.at(time)) ;
-	this->update();
+//	SetBoundingBoxMapPointer(&(boxMapVector.at(time)));
 }
 
 
 void LabelImageViewQT::SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point> > vectorcenterMap)
 {
+	centerMapVector.clear();
 	centerMapVector = vectorcenterMap;
+	SetCenterMapfromVectorPointer(hSpin->value());
 }
 void LabelImageViewQT::SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box> >  vectorboxMap)
 {
+	boxMapVector.clear();
 	boxMapVector = vectorboxMap;
+	SetBoundingBoxMapfromVectorPointer(hSpin->value());
+		
 }
 void LabelImageViewQT::ClearGets(void)
 {
@@ -658,15 +663,13 @@ void LabelImageViewQT::hspinChange(int v)
 		const ftk::Image::Info * labImInfo = labelImg->GetImageInfo();
 		if (labImInfo->numTSlices > 1)
 		{
-	//		int currentT = hSpin->value();
-			emit emitTimeChanged();
 			SetCenterMapfromVectorPointer(hSpin->value() );
 			SetBoundingBoxMapfromVectorPointer(hSpin->value());
-
+			emit emitTimeChanged(); // emitting time changed is going to update the views
 		}
 	}
 	refreshBaseImage();		//Only need this in either slider or spin changes!!!
-	refreshBoundsImage();
+//	refreshBoundsImage();
 }
 
 
@@ -1374,6 +1377,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 
 		int numColors = (int)centroidColorTable.size();
 		QColor myColor1 = centroidColorTable.at( (cls1)%numColors );
+//		QColor myColor1 = centroidColorTable.at( (cls1-1)%numColors );
 		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor1);

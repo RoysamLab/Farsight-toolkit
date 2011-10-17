@@ -86,6 +86,10 @@ public:
 	void SetCenterMapVectorPointer(std::vector<std::map<int, ftk::Object::Point> > vectorcenterMap);
 	void SetBoundingBoxMapVectorPointer(std::vector<std::map<int, ftk::Object::Box> >  vectorboxMap);
 
+	std::vector<std::map<int, ftk::Object::Point> > GetCenterMapVector(void){return centerMapVector;};
+	std::vector<std::map  <int, ftk::Object::Box> > GetBoxMapVector(void){return boxMapVector;};
+
+
 	void SetCenterMapfromVectorPointer(int time =0);
 	void SetBoundingBoxMapfromVectorPointer(int time =0);
 
