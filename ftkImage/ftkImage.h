@@ -84,8 +84,9 @@ public:
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
 	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy);
-	bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
-	bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
+	bool AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, bool copy);
+    bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
+    bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
 	void SetSpacing(float x, float y, float z);
 
 	std::vector< unsigned short > Size(void);
@@ -103,7 +104,6 @@ public:
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
 	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH, PtrMode mode);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
 	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
-//	template <typename pixelType> void CreateData3DFromItkPtr(typename itk::Image<pixelType, 3>::Pointer itkImagePtr);
 
 	typedef struct 
 	{

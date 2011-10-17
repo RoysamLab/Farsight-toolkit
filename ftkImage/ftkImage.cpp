@@ -142,10 +142,11 @@ bool Image::LoadFilesAsMultipleChannels(std::vector<std::string> fnames, std::ve
 	}
 
 
-	std::vector<std::string> fnamestmp;
-	for(int i=0; i<count; ++i)
-		fnamestmp.push_back(this->GetFilename(fnames.at(i)));
-	this->FileNames.push_back(fnamestmp);
+	this->filenames = fnames;
+	//std::vector<std::string> fnamestmp;
+	//for(int i=0; i<count; ++i)
+	//	fnamestmp.push_back(this->GetFilename(fnames.at(i)));
+	//this->FileNames.push_back(fnames);
 
 	return true;
 }
@@ -597,17 +598,15 @@ bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTim
 	imageDataPtrs.resize(m_Info.numTSlices);
 
 	int t = m_Info.numTSlices - 1;
-	std::vector< std::string > fileName = img->GetFilenames();
-	FileNames.push_back(fileName);
-	filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
-
-
-
-		for (int ch=0; ch<m_Info.numChannels; ++ch)
-		{
-			block.mem = img->GetDataPtr(0,ch,mode);
-			imageDataPtrs.at(t).push_back(block);
-		}
+	if(m_Info.numTSlices==2)
+		FileNames.push_back(this->filenames);
+	FileNames.push_back(img->GetFilenames());
+	//filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
+	for (int ch=0; ch<m_Info.numChannels; ++ch)
+	{
+		block.mem = img->GetDataPtr(0,ch,mode);
+		imageDataPtrs.at(t).push_back(block);
+	}
 	return true;
 }
 
@@ -704,6 +703,51 @@ bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, in
 	return true;
 }
 
+bool Image::AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, bool copy)
+{
+	if( imageDataPtrs.size() == 0 )	//This is my first image, so set the size info
+	{
+		m_Info.numColumns = cs;		//Number of Columns in Image (x)
+		m_Info.numRows = rs;			//Number of Rows in Image (y)
+		m_Info.numZSlices = zs;		//Number of Z Slices in Image (z)
+		m_Info.bytesPerPix = bpPix;	//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)
+		m_Info.dataType = dataType;		//See ENUM DataType
+		m_Info.numTSlices = 1;		//1 time point assumed
+		m_Info.numChannels = 1;		//Start at 1, if to be incremented change code below (was meant for label images only)
+		m_Info.spacing.assign(3,1);			//Init the spacing
+		//imageDataPtrs.clear();
+	}
+	else	//Check to be sure sizes match!
+	{
+		if(m_Info.numColumns != cs || m_Info.numRows != rs || m_Info.numZSlices != zs)
+			return false;
+		if(m_Info.bytesPerPix != bpPix || m_Info.dataType != dataType)
+			return false;
+	}
+
+	filenames.push_back(name);		//Use provided name
+
+	ImageMemoryBlock block;
+	block.manager = FTK;
+	if(copy)
+	{
+		//unsigned char *imgdata = new unsigned char[zs*cs*rs*bpPix];
+		void *imgdata = malloc(zs*cs*rs*bpPix);
+		if(!imgdata) return false;
+		memcpy(imgdata,dptr,zs*cs*rs*bpPix);
+		block.mem = imgdata;
+	}
+	else
+	{
+		block.mem = dptr;
+	}
+	std::vector<ImageMemoryBlock> ChannelData;
+	ChannelData.push_back(block);
+	imageDataPtrs.push_back(ChannelData);
+	m_Info.numTSlices = imageDataPtrs.size();			//Increment the Number of Time Slices in this Image (T)
+
+	return true;
+}
 bool Image::SaveChannelAs( int channel, std::string baseName, std::string ext )
 {
 	if( imageDataPtrs.size() == 0 ) return false;
