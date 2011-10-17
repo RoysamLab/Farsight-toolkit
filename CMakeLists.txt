@@ -31,7 +31,6 @@ OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and V
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 OPTION( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
 OPTION( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" ON )
-
 OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
@@ -131,6 +130,9 @@ SUBDIRS( ftkPreprocess )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkFeatures )
 SUBDIRS( ftkFeatures )
+
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkSpectralUnmixing )
+SUBDIRS( ftkSpectralUnmixing )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
 SUBDIRS( ftkGUI )
