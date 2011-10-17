@@ -1,7 +1,7 @@
 #ifndef _TRACKING_KYMO_VIEW_H
 #define _TRACKING_KYMO_VIEW_H
 
-#include "Trace.h"
+
 
 //QT Includes
 #include <QtGui/QMainWindow>
@@ -33,8 +33,28 @@
 #include "vtkImageShiftScale.h"
 #include "vtkSliderWidget.h"
 #include "vtkSliderRepresentation2D.h"
-//#include "Trace.h"
+#include "Trace.h"
 #include "vtkCamera.h"
+#include "vtkStringArray.h"
+#include "vtkLabeledDataMapper.h"
+#include "vtkSelectVisiblePoints.h"
+#include "vtkActor2D.h"
+#include "vtkIntArray.h"
+#include "vtkLabelPlacementMapper.h"
+#include "vtkPointSetToLabelHierarchy.h"
+#include "vtkCubeAxesActor.h"
+#include "vtkCubeAxesActor2D.h"
+#include "vtkAxisActor2D.h"
+#include <vtkTextProperty.h>
+#include <vtkPointWidget.h>
+#include <vtkImagePlaneWidget.h>
+#include <vtkTable.h>
+#include <vtkCallbackCommand.h>
+#include <vtkActor2DCollection.h>
+//#include "vtkInteractorStyleTrackballActor.h"
+//#include "vtkPropPicker.h"
+//#include "vtkObjectFactory.h"
+
 
 //stl includes
 #include <vector>
@@ -88,6 +108,12 @@
 #include <vtkPiecewiseFunction.h>
 #include <vtkColorTransferFunction.h>
 
+// Farsight Includes:
+#include "ftkGUI/LabelImageViewQT.h"
+#include "ftkGUI/ObjectSelection.h"
+
+
+
 //Macros
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
@@ -127,6 +153,9 @@ typedef itk::ImageRegionIterator<Input2DImageType> twoDIteratorType;
 
 typedef itk::ImageToVTKImageFilter<InputImageType> ConnectorType;
 typedef itk::ImageToVTKImageFilter<Input2DImageType> Connector2DType;
+
+
+
 
 class vtkSlider2DKymoCallbackBrightness : public vtkCommand
 {
@@ -180,28 +209,34 @@ class TrackingKymoView: public QObject
 {
 	Q_OBJECT
 public:
-	TrackingKymoView(ftk::Image::Pointer myImg,std::vector< std::vector<ftk::IntrinsicFeatures> > vvfeatures )
+	TrackingKymoView(ftk::Image::Pointer myImg,std::vector< std::vector<ftk::IntrinsicFeatures> > vvfeatures,LabelImageViewQT * imview = NULL, ObjectSelection * sels = NULL )
 	{
 		myfeatures = vvfeatures;
 		my4DImg = myImg;
-		m_currenttime = 0;
+		ImageView = new LabelImageViewQT();
+		ImageView = imview;
+		Selection = new ObjectSelection();
+		Selection = sels;
+		this->singleTracksVisible = false;
+
+
 		m_mainwindow = new QMainWindow();
 		m_mainwindow->setWindowTitle(tr("Tracking: KymoGraph"));
 		m_imageview = new QVTKWidget(m_mainwindow);
 		m_mainwindow->setCentralWidget(m_imageview);
-
+		
 		statusLabel = new QLabel(QObject::tr(" Ready"));
 		m_mainwindow->statusBar()->addWidget(statusLabel,1);
 		
 		m_vtkrenderer = vtkSmartPointer<vtkRenderer>::New();
 		m_vtkrenderer->BackingStoreOn();
-		//m_imageview->setAutomaticImageCacheEnabled(true);
 		m_imageview->GetRenderWindow()->AddRenderer(m_vtkrenderer);
 		m_imageview->GetRenderWindow()->Render();
+	
 		GenerateImages();
 		AddSliders();
 		GenerateTracks();
-		m_vtkrenderer->AddActor(getTrackPoints(m_tobj->CollectTraceBits()));
+
 		m_trackpoly = m_tobj->GetVTKPolyData();
 		m_trackmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		m_trackmapper->SetInput(m_trackpoly);
@@ -210,14 +245,39 @@ public:
 		m_trackactor->GetProperty()->SetLineWidth(3.0);
 		m_vtkrenderer->AddActor(m_trackactor);
 
-//		connect(m_model,SIGNAL(labelsChanged(int)),SLOT(refreshImages(int)));
+		TraceBitVector = m_tobj->CollectTraceBits();
+		CubeActor = getTrackPoints(TraceBitVector);
+		m_vtkrenderer->AddActor(CubeActor);
+		currentTrackActor = vtkSmartPointer<vtkActor>::New();
 
+		// create widgets for interaction:
+		this->CreatePointer3D();
+		this->CreateInteractorStyle();
+	
 		m_mainwindow->show();
 		m_imageview->show();
 		m_imageview->setMinimumSize(my4DImg->GetImageInfo()->numColumns*1,my4DImg->GetImageInfo()->numRows*1);
 		m_vtkrenderer->Render();
+
 		SaveAnimation();
+		connect(ImageView, SIGNAL(emitTimeChanged()), this, SLOT(refreshImages()));
+		connect(Selection, SIGNAL(changed()), this, SLOT(refreshSelection()));
+
+
 	}
+
+	// Public Member Functions:
+	void GetTable4DImage(std::vector< vtkSmartPointer<vtkTable> >  table){tableVector = table;};
+	void SetTraceBitClasses(int n);// needs to be called after the previous function
+	void UpdateTraceBitClassesView(void);// needs to be called after the previous function
+
+	void GetTFTable(vtkSmartPointer<vtkTable> table){TFTable = table;};
+	void SetTrackClasses(int n);// needs to be called after the previous function
+	//void UpdateTrackClassesView(void);
+	
+	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	void CreateInteractorStyle();
+
 	void GenerateImages();
 	void GenerateTracks();
 	~TrackingKymoView()
@@ -225,37 +285,45 @@ public:
 		delete m_mainwindow;
 		delete m_imageview;
 		delete statusLabel;
-
 	}
-/*	void SetSelection(TrackSelection* select)
-	{
-		m_select = select;
-		m_selectionactor = vtkSmartPointer<vtkActor>::New();
-		m_vtkrenderer->AddActor(m_selectionactor);
-		connect(m_select,SIGNAL(changed(void)),SLOT(refreshSelection(void)));
-	}*/
+
 public slots:
-		void refreshSelection();
-//		void refreshImages(int t);
+		void refreshSelection(void);
+		void ToggleLabelVisibility(void);
+		void ToggleSelectionMode(void);
 		void refreshImages(void);
+
 private:
 
 	vtkSmartPointer<vtkActor> getTrackPoints(std::vector<TraceBit> vec);
+	void CreatePointer3D(void);
+	void CreatePlaneWidget3D(void);
+	void ResetOriginalColors(void);
+	void UpdateViewColors(vtkSmartPointer<vtkUnsignedCharArray> ColorArray);
+	vtkSmartPointer<vtkUnsignedCharArray> CreateClassColorArray(void);
+
 	void SaveAnimation();
 	void AddSliders();
-//    Input2DImageType::Pointer getProjection(InputImageType::Pointer im);
+	std::vector<std::vector<unsigned char> > GetClassColors();
 	vtkSmartPointer<vtkVolume> getOneVTKVolume(vtkSmartPointer<vtkImageData> vtkim, float colors[3]);
 
 	QMainWindow * m_mainwindow;
 	QVTKWidget * m_imageview;
 	QLabel * statusLabel;
 
-//	TrackSelection* m_select;
 	TraceObject * m_tobj;
-	int m_currenttime;
 
+	LabelImageViewQT * ImageView;
+	ObjectSelection * Selection;
+	int currentTime;
+	int numClasses;
+	int numTClasses;
+	bool labelsVisible;
+	bool singleTracksVisible;
 	ftk::Image::Pointer my4DImg;
 	std::vector< std::vector<ftk::IntrinsicFeatures> > myfeatures;
+	std::vector< vtkSmartPointer<vtkTable> > tableVector;
+	vtkSmartPointer<vtkTable> TFTable;		// table of track features
 
 	vtkSmartPointer<vtkRenderer> m_vtkrenderer;
 	vtkSmartPointer<vtkActor> m_selectionactor;
@@ -267,6 +335,16 @@ private:
 
 	vtkSlider2DKymoCallbackContrast *m_callback_contrast;
 	vtkSlider2DKymoCallbackBrightness *m_callback_brightness;
+
+	std::map<int,std::vector<TraceBit> > TraceBitMap; // key value is time, mapped values are the trace bits 
+	std::vector<TraceBit> TraceBitVector;
+	vtkSmartPointer<vtkActor> CubeActor;
+	vtkSmartPointer<vtkActor2D> labelActor;
+	vtkSmartPointer<vtkActor> currentTrackActor;
+	vtkSmartPointer<vtkCubeAxesActor2D> cubeAxesActor;
+	vtkSmartPointer<vtkPointWidget> pointerWidget3d;
+	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
+	vtkSmartPointer<vtkCallbackCommand> keyPress;
 
 };
 

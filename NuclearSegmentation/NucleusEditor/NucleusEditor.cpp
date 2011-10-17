@@ -355,10 +355,6 @@ void NucleusEditor::createMenus()
 	displayChannelMenu = viewMenu->addMenu(tr("Display Channel"));
 	connect(displayChannelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayChannelsMenu()));
 
-#ifdef USE_OPENSLIDE
-	displayLevelMenu = viewMenu->addMenu(tr("Display Slide Level"));
-	connect(displayLevelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayLevelsMenu()));
-#endif
 	viewMenu->addSeparator();
 
 	newTableAction = new QAction(tr("New Table"), this);
@@ -419,6 +415,10 @@ void NucleusEditor::createMenus()
 	preprocessAction = new QAction(tr("Preprocess Image..."), this);
 	connect(preprocessAction, SIGNAL(triggered()), this, SLOT(preprocessImage()));
 	toolMenu->addAction(preprocessAction);
+
+	unmixChannelsAction = new QAction(tr("Unmix Channels..."), this);
+	connect(unmixChannelsAction, SIGNAL(triggered()), this, SLOT(unmixChannels()));
+	toolMenu->addAction(unmixChannelsAction);
 
 	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
 	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
@@ -581,11 +581,11 @@ void NucleusEditor::createMenus()
 	//5-D MENU
 	fiveDMenu = menuBar()->addMenu(tr("5D"));
 
-	trackingAction = new QAction(tr("Run Tracking"),this);
+	trackingAction = new QAction(tr("Tracking..."),this);
 	connect(trackingAction, SIGNAL(triggered()), this, SLOT(startTracking()));
 	fiveDMenu->addAction(trackingAction);
 
-	kymoViewAction = new QAction(tr("View Kymograph"),this);
+	kymoViewAction = new QAction(tr("Kymograph..."),this);
 	connect(kymoViewAction, SIGNAL(triggered()), this, SLOT(displayKymoGraph()));
 	fiveDMenu->addAction(kymoViewAction);
 #endif
@@ -743,6 +743,8 @@ bool NucleusEditor::saveProject()
 		QString fname = QString::fromStdString(projectFiles.input);
 		QString bname = QFileInfo(fname).baseName();
 
+
+			
 		if(projectFiles.output == "")
 			projectFiles.output = bname.toStdString() + "_label.xml";
 
@@ -771,9 +773,18 @@ bool NucleusEditor::saveProject()
 	else
 		return false;
 
-	if(projectFiles.input != "" && !projectFiles.inputSaved)
+	//if(projectFiles.input != "" && !projectFiles.inputSaved)
+	//{
+	//	this->saveImage();
+	//}
+	if(projectFiles.input != "" && !projectFiles.inputSaved && projectFiles.type != "multi" )
 	{
 		this->saveImage();
+	}
+	else
+	{
+		ftk::SaveImageSeries(projectFiles.input, myImg);
+		
 	}
 	if(projectFiles.output != "" && !projectFiles.outputSaved)
 	{
@@ -1353,8 +1364,14 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	//Display Images:
 	segView->SetChannelImage(myImg);
 	projectFiles.path = lastPath.toStdString();
-	projectFiles.inputSaved = true;
+	projectFiles.inputSaved = false;
+	projectFiles.input = "SeriesFileNames.xml";
+	//ftk::SaveImageSeries(projectFiles.input,myImg);
+	projectFiles.type = "multi";
 	load5DLabelImageAction->setEnabled(true);
+
+
+
 
 }
 
@@ -1479,6 +1496,12 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 		tmp4DImage->LoadFile(filesTimeList[t]);
 		labImg->AppendImage(tmp4DImage,mode,true);
 	}
+	std::vector<std::string> filenames  = myImg->GetTimeChannelFilenames().at(0);
+	projectFiles.output = "SeriesLabelNames.xml";
+	std::cout<<projectFiles.output<<std::endl;
+	ftk::SaveLabelSeries(projectFiles.output,filenames);
+	std::cout<<projectFiles.output<<std::endl;
+
 	//Display Images Tables and Plots:
 	segView->SetLabelImage(labImg, selection);
 	this->updateNucSeg();  
@@ -1487,6 +1510,7 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 	CreateNewPlotWindow();
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.outputSaved = true;
+
 
 
 	//For storing edit information.. need to have a bBoxMap set 
@@ -3222,59 +3246,6 @@ void NucleusEditor::DisplayChannelsMenu()
 	connect(chSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleChannel(int)));
 }
 
-#ifdef USE_OPENSLIDE
-void NucleusEditor::DisplayLevelsMenu(){
-	if( !myImg || !myImg->OpenSlideManaged )
-		return;
-
-	int NumLevels = myImg->OpenSlideNumLevels;
-	int SlideCurrentLevel = myImg->OpenSlideCurrentLevel;
-
-	//remove all existing actions;
-	for(int i=0; i<(int)displayLevelAction.size(); ++i){
-		delete displayLevelAction.at(i);
-	}
-	displayLevelMenu->clear();
-	displayLevelAction.clear();
-
-	if(levSignalMapper)
-		delete levSignalMapper;
-	levSignalMapper = new QSignalMapper(this);
-	for(int i=1; i<=NumLevels; ++i){
-		stringstream ss;
-		ss << i;
-		QAction *action = new QAction(tr(ss.str().c_str()),this);
-		action->setCheckable(true);
-		if( i==(SlideCurrentLevel+1) )
-			action->setChecked( true );
-		else
-			action->setChecked( false );
-		action->setStatusTip( tr("Goto this layer") );
-		connect(action, SIGNAL(triggered()), levSignalMapper, SLOT(map()));
-		levSignalMapper->setMapping( action, (i-1) );
-		displayLevelMenu->addAction(action);
-	}
-
-	std::string add_menu = "Save MHD";
-	QAction *action = new QAction(tr(add_menu.c_str()),this);
-	action->setStatusTip( tr("Save Slide in MHD format") );
-	connect(action, SIGNAL(triggered()), levSignalMapper1, SLOT(map()));
-	levSignalMapper1->setMapping( action, (0) );
-	displayLevelMenu->addAction(action);
-
-	connect(levSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleLevel(int)));
-	connect(levSignalMapper1, SIGNAL(mapped(int)), this, SLOT(toggletoggleSaveSlide(int)));
-}
-
-void NucleusEditor::toggleLevel(int levNum){
-
-}
-
-void NucleusEditor::toggleSaveSlide(int levNum){
-
-}
-#endif
-
 void NucleusEditor::toggleChannel( int chNum )
 {
 	std::vector<bool> ch_stats = segView->GetChannelFlags();
@@ -3878,7 +3849,11 @@ void NucleusEditor::process()
 		//binImg = pProc->GetBinaryImage();
 		segView->SetLabelImage(labImg,selection);
 		this->updateNucSeg();
-		table = pProc->GetTable();
+		
+		if(labImg->GetImageInfo()->numTSlices>1)	// if multi time points get the table from nucseg after computing all geometries in updateNucSeg			
+			table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+		else
+			table = pProc->GetTable();
 		NucAdjTable = pProc->GetNucAdjTable();
 		segView->SetNucAdjTable(NucAdjTable);
 		projectFiles.outputSaved = false;
@@ -4544,3 +4519,24 @@ int PredictionDialog::getTrainNumber()
 {
 	return channelCombo->currentIndex();
 }
+//*******************************************************************************************************************************
+//Perform Spectral Unmixing of Channels
+//*******************************************************************************************************************************
+void NucleusEditor::unmixChannels(void)
+{
+	if(!myImg)	return;
+	int nchannels = (int)myImg->GetImageInfo()->numChannels;
+	if(nchannels<2) return;
+	// define the unmixing mode
+	ftk::SpectralUnmixing::UnmixMode umode = ftk::SpectralUnmixing::LINEAR_UNMIX;
+	SpecUnmix = new ftk::SpectralUnmixing();
+	SpecUnmix->SetInputImage(myImg);
+	SpecUnmix->SetNumberOfChannels(nchannels);
+	SpecUnmix->SetUnmixMode(umode);
+	SpecUnmix->Update();
+	myImg = SpecUnmix->GetOutput();
+	segView->SetChannelImage(myImg);
+	printf("done with unmixing\n");
+
+}
+

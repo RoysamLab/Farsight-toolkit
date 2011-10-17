@@ -54,6 +54,7 @@ SET( NucleusEditor_SRCS
 	KymoGraphView.cpp
 	Trace.cpp
 	TrackingDialog.cpp
+	Image3DView.cpp
 	)		
 SET( NucleusEditor_HDRS
     NucleusEditor.h
@@ -68,6 +69,7 @@ SET( NucleusEditor_HDRS
 	KymoGraphView.h
 	Trace.h
 	TrackingDialog.h
+	Image3DView.h
 	)
 SET( NucleusEditor_MOC_REQD_HDRS
     NucleusEditor.h 
@@ -78,6 +80,7 @@ SET( NucleusEditor_MOC_REQD_HDRS
     GalleryDialog.h  
 	KymoGraphView.h
 	TrackingDialog.h
+	Image3DView.h
 	)
 	FIND_PACKAGE(CPLEX)
 	FIND_PACKAGE(CONCERT)
@@ -124,6 +127,7 @@ SET (NUCLEUSEDITOR_LIBRARIES
 	ftkGUI 
 	ftkCommon 
 	ftkFeatures 
+	ftkSpectralUnmixing
 	libSVM 
 	vtkVolumeRendering 
 	QVTK 

@@ -83,6 +83,7 @@
 #include "ftkGUI/PreprocessDialog.h"
 #include "ftkGraphs/kNearestObjects.h"
 #include "PatternAnalysis/activeLearning/mclr.h"
+#include "ftkSpectralUnmixing/ftkSpectralUnmixing.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -230,6 +231,7 @@ protected slots:
 	void clearROI(void);
 	void roiStatistics(void);
 	void preprocessImage(void);
+	void unmixChannels(void);
 	void segmentNuclei(void);
 	void startEditing(void);
 	void stopEditing(void);
@@ -334,6 +336,7 @@ protected:
 	QAction *clearROIAction;
 	QAction *roiStatsAction;
 	QAction *preprocessAction;
+	QAction *unmixChannelsAction;
 	QAction *segmentNucleiAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
@@ -412,6 +415,7 @@ protected:
 	//Amin
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;
+	ftk::SpectralUnmixing * SpecUnmix;
 
 #ifdef USE_TRACKING
 	TrackingKymoView * kymoView;

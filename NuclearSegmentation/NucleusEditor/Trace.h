@@ -20,6 +20,8 @@ namespace stdext = __gnu_cxx;
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
 #include "vtkAppendPolyData.h"
+#include "vtkCellData.h"
+#include <map>
 
 /*
 #include <libxml/xmlreader.h>
@@ -32,14 +34,18 @@ namespace stdext = __gnu_cxx;
 /* A TraceBit has the x,y,z and id of a tracelet */
 struct TraceBit{
 	double x,y,z,r;
+	int time;
 	int id;
 	unsigned int marker;
+	unsigned int track_marker;
+	int class_id;
 	void Print(std::ostream &c)
 	{
 		c<<"\t\tTraceBit:"<<std::endl;
 		c<<"\t\tx:"<<x<<" y:"<<y<<" z:"<<z<<" r:"<<r<<" id:"<<id<<" marker:"<<marker;
 	}
 };
+
 
 /* A TraceLine has a sequence of TraceBits and pointers to two other TraceLines */
 class TraceLine{
@@ -107,8 +113,9 @@ public:
 	bool ReadFromRPIXMLFile(char * filename);
 	bool ReadFromFeatureTracksFile(char *filename, int type_offset);
 	bool ReadFromFeatureTracksFileForKymograph(char *filename,int type_offset);
-	bool WriteToSWCFile(char * filename);
-	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
+//	bool WriteToSWCFile(char * filename);
+//	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
+	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkUnsignedCharArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	void Print(std::ostream &c)
 	{
@@ -120,11 +127,15 @@ public:
 		}
 	}
 	std::vector<TraceBit> CollectTraceBits();
-	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;}
+	std::vector<TraceLine*>* GetTraceLinesPointer(){ return &trace_lines;};
 	stdext::hash_map<unsigned int, unsigned long long int> hashp;
 	stdext::hash_map<unsigned int, unsigned long long int> hashc;
+	vtkSmartPointer<vtkUnsignedCharArray> OriginalColors; // save the colors;
+	
 private:
+
 	std::vector<TraceLine*> trace_lines;	
+	
 };
 
 

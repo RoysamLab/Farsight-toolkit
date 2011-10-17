@@ -159,56 +159,118 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			line->SetParent(old_line);
 		}
 	}
-	printf("Finished loading\n");
+	printf("Finished loading\n"); 
 	//Print(std::cout);
 	fclose(fp);
 	return true;
 }
 
-void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
+//void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
+void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkUnsignedCharArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
 {
 	//tline->Print(std::cout);
 	//scanf("%*c");
 	TraceLine::TraceBitsType tbits;
 	TraceLine::TraceBitsType::iterator iter=tline->GetTraceBitIteratorBegin();
+	tline->SetId(iter->id);
 	double point[3];
 	unsigned int return_id;
 	unsigned int cell_id;
 	unsigned int old_id;
+	unsigned char color[3];
+	int color_index = iter->id%6;
+	switch(color_index)
+	{
+	//Cyan
+	case 0:
+	    	color[0]=0;
+			color[1]=255;
+			color[2]=255;
+			
+					 break;
+	//Royal Blue 	65-105-225
+	case 1:
+	    	color[0]=65;
+			color[1]=105;
+			color[2]=255;
+			
+					 break;
+	//Red
+	case 2:
+	    	color[0]=255;
+			color[1]=0;
+			color[2]=0;
+			
+					 break;
+	//Blue
+	case 3:
+	    	color[0]=0;
+			color[1]=0;
+			color[2]=255;
+			
+					 break;
+	
+	//Orange 	255-165-0
+	case 4:
+	    	color[0]=255;
+			color[1]=165;
+			color[2]=0;
+			
+					 break;
+	//Violet 	238-130-238
+	case 5:
+	    	color[0]=255;
+			color[1]=255;
+			color[2]=0;
+			 
+					 break;
+	}
+
+
 
 	std::vector<unsigned int>* cell_id_array=tline->GetMarkers();
-	point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
+	point[0] = iter->x;
+	point[1]= iter->y;
+	point[2]= iter->z;
 	return_id = line_points->InsertNextPoint(point);
 	hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
-	point_scalars->InsertNextTuple1(iter->id/40.0);
+//	point_scalars->InsertNextTuple1(iter->id/40.0);
+//	point_scalars->InsertNextTupleValue(color);
+//	point_scalars->InsertNextTuple1(0.0);
 
 	/* To add a line between parent line's last point and the first point in the current line */
-	if(tline->GetParent() != NULL)
-	{
-		//printf("I should not have a parent at all! why did I come here?\n");
-		if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
-		{
-			cell_id = line_cells->InsertNextCell(2);
-			cell_id_array->push_back(cell_id);
-			hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
-			line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
-			line_cells->InsertCellPoint(return_id);
-		}
-	}
+	//if(tline->GetParent() != NULL)
+	//{
+	//	//printf("I should not have a parent at all! why did I come here?\n");
+	//	if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
+	//	{
+	//		cell_id = line_cells->InsertNextCell(2);
+	//		cell_id_array->push_back(cell_id); 
+	//		hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
+	//		line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
+	//		line_cells->InsertCellPoint(return_id);
+	//	}
+	//}
 	/* Rest of the lines for the current tline */
 	iter++;
 	int pc = 0;
+	unsigned int track = 1;
 	while(iter!=tline->GetTraceBitIteratorEnd())
 	{
 		//printf("in loop %d\n",++pc);
+
 		old_id = return_id;
 		point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
 		return_id = line_points->InsertNextPoint(point);
 		hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
-
-		point_scalars->InsertNextTuple1(iter->id/40.0);
+		//point_scalars->InsertNextTuple1(iter->id/40.0);
+		iter->track_marker  = point_scalars->InsertNextTupleValue(color);
+		if (pc==0)
+			track = iter->track_marker;
+		++pc;
+		
 		cell_id = line_cells->InsertNextCell(2);
 		cell_id_array->push_back(cell_id);
 		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
@@ -216,12 +278,17 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		line_cells->InsertCellPoint(return_id);
 		++iter;
 	}
+	iter = tline->GetTraceBitIteratorBegin();
+	iter->track_marker = track;
+
+
+
 	/* Recursive calls to the branches if they exist */
-	for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
-	{
-		//printf("I should be having children too! what am I doing here?\n");
-		CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
-	}
+	//for(int counter=0; counter< tline->GetBranchPointer()->size(); counter++)
+	//{
+	//	//printf("I should be having children too! what am I doing here?\n");
+	//	CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
+	//}
 }
 
 void CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
@@ -248,59 +315,62 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 		CollectTraceBitsRecursive(vec,trace_lines[counter]);
 	return vec;
 }
-/*
-bool TraceObject::WriteToSWCFile(char *filename)
-{
-	FILE * fp = fopen(filename,"w");
-	stdext::hash_map<unsigned long long int,int> hash_dump;
-	if(fp == NULL)
-	{
-		printf("Couldn't open %s for writing\n",filename);
-		return false;
-	}
-	int cur_id = 1;
-	std::queue<TraceLine*> q;
-	for(int counter=0; counter<trace_lines.size(); counter++)
-	{
-		q.push(trace_lines[counter]);
-	}
-	while(!q.empty())
-	{
-		TraceLine *t = q.front();
-		q.pop();
-		TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
-		TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
-		hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
-		if(t->GetParent()==NULL)
-		{
-			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
-		}
-		else
-		{
-			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
-		}
-		iter++;
-		while(iter!=iterend)
-		{
-			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id,t->GetType(),iter->x,iter->y,iter->z,iter->r,cur_id-1);
-			cur_id++;
-			iter++;
-		}
-		for(int counter=0; counter<t->GetBranchPointer()->size(); counter++)
-		{
-			q.push((*t->GetBranchPointer())[counter]);
-		}
-	}
-	fclose(fp);
-	return true;
-}*/
+
+//bool TraceObject::WriteToSWCFile(char *filename)
+//{
+//	FILE * fp = fopen(filename,"w");
+//	stdext::hash_map<unsigned long long int,int> hash_dump;
+//	if(fp == NULL)
+//	{
+//		printf("Couldn't open %s for writing\n",filename);
+//		return false;
+//	}
+//	int cur_id = 1;
+//	std::queue<TraceLine*> q;
+//	for(int counter=0; counter<trace_lines.size(); counter++)
+//	{
+//		q.push(trace_lines[counter]);
+//	}
+//	while(!q.empty())
+//	{
+//		TraceLine *t = q.front();
+//		q.pop();
+//		TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
+//		TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
+//		hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
+//		if(t->GetParent()==NULL)
+//		{
+//			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
+//		}
+//		else
+//		{
+//			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
+//		}
+//		iter++;
+//		while(iter!=iterend)
+//		{
+//			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id,t->GetType(),iter->x,iter->y,iter->z,iter->r,cur_id-1);
+//			cur_id++;
+//			iter++;
+//		}
+//		for(int counter=0; counter<t->GetBranchPointer()->size(); counter++)
+//		{
+//			q.push((*t->GetBranchPointer())[counter]);
+//		}
+//	}
+//	fclose(fp);
+//	return true;
+//}
 vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 {
 	hashp.clear();
 	printf("Started creating vtkPolyData for rendering purposes ... ");
 	vtkSmartPointer<vtkPolyData> poly_traces=vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkFloatArray> point_scalars=vtkSmartPointer<vtkFloatArray>::New();
-	point_scalars->SetNumberOfComponents(1);
+//	vtkSmartPointer<vtkFloatArray> point_scalars = vtkSmartPointer<vtkFloatArray>::New();	//responsible for coloring the traces
+	vtkSmartPointer<vtkUnsignedCharArray> point_scalars = vtkSmartPointer<vtkUnsignedCharArray>::New();	//responsible for coloring the traces
+//	point_scalars->SetNumberOfComponents(1);
+	point_scalars->SetNumberOfComponents(3);
+	point_scalars->SetName("colors");
 	vtkSmartPointer<vtkPoints> line_points=vtkSmartPointer<vtkPoints>::New();
 	line_points->SetDataTypeToDouble();
 	vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
@@ -312,9 +382,12 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	}
 	printf("Finished CreatePolyDataRecursive\n");
 	poly_traces->SetPoints(line_points);
-	poly_traces->SetLines(line_cells);
-	
-	poly_traces->GetPointData()->SetScalars(point_scalars);
+	poly_traces->SetLines(line_cells);	
+//	poly_traces->GetPointData()->SetScalars(point_scalars);
+	poly_traces->GetCellData()->SetScalars(point_scalars);
+
+	OriginalColors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	OriginalColors->DeepCopy(point_scalars);
 	printf("Done\n");
 	return poly_traces;
 }

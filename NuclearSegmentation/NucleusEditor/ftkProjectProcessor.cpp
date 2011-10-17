@@ -228,19 +228,28 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	}
 
 	//Process:
-	nucSeg->Binarize(false);
-	nucSeg->DetectSeeds(false);
-	if(finalize)
+	const ftk::Image::Info *info = inputImage->GetImageInfo();
+	if(info->numTSlices==1)
 	{
-		nucSeg->RunClustering(false);
-		nucSeg->Finalize();
+		nucSeg->Binarize(false);
+		nucSeg->DetectSeeds(false);
+		if(finalize)
+		{
+			nucSeg->RunClustering(false);
+			nucSeg->Finalize();
+		}
+		else
+		{
+			nucSeg->RunClustering(true);
+		}
+		nucSeg->ReleaseSegMemory();
+		outputImage = nucSeg->GetLabelImage();
 	}
 	else
 	{
-		nucSeg->RunClustering(true);
+		nucSeg->SegmentAllTimes(finalize);
+		outputImage = nucSeg->GetLabelImage();
 	}
-	nucSeg->ReleaseSegMemory();
-	outputImage = nucSeg->GetLabelImage();
 
 	//Update For params actually used:
 	definition->nuclearParameters.clear();
@@ -262,19 +271,22 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;
 	std::cout << "Done Nucleus Segmentation\nComputing intrisic features for the nuclei\n";
 
-	//Calc Features:
-	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
-	iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
-	if(definition->intrinsicFeatures.size() > 0)
-		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
-	//iCalc->SetFeaturePrefix("nuc_");
-	table = iCalc->Compute();									//Create a new table
-	delete iCalc;
+	if(info->numTSlices==1)
+	{
+		//Calc Features:
+		ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+		iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
+		if(definition->intrinsicFeatures.size() > 0)
+			iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
+		//iCalc->SetFeaturePrefix("nuc_");
+		table = iCalc->Compute();									//Create a new table
+		delete iCalc;
 
-	FTKgraph* NucRAG = new FTKgraph();
-	NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
+		FTKgraph* NucRAG = new FTKgraph();
+		NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
 
-	std::cout << "Done: Instrinsic Nuclear Features\n";
+		std::cout << "Done: Instrinsic Nuclear Features\n";
+	}
 
 	resultIsEditable = true;
 	
