@@ -213,7 +213,7 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 	int numRows = info->numRows;				//y-direction
 	int numColumns = info->numColumns; 			//x-direction
 
-	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);	//Expects grayscale image
+	unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(0,channelNumber,0);	//Expects grayscale image // Amin: should include a for loop
 
 	if(NucleusSeg) delete NucleusSeg;
 	NucleusSeg = new yousef_nucleus_seg();
@@ -283,6 +283,77 @@ bool NuclearSegmentation::Finalize()
 	lastRunStep = 4;
 	return this->GetResultImage();
 }
+
+// This function segments nuclei of all time point images in the ftk input image
+bool NuclearSegmentation::SegmentAllTimes(bool finalize)
+{
+	if(!dataImage)
+	{
+		errorMessage = "No data loaded";
+		return false;
+	}
+	if(labelImage) labelImage = 0;
+	labelImage = ftk::Image::New();
+
+
+	const Image::Info *info = dataImage->GetImageInfo();
+	int numStacks = info->numZSlices;			//z-direction
+	int numRows = info->numRows;				//y-direction
+	int numColumns = info->numColumns; 			//x-direction
+	int numTSlices = info->numTSlices; 			//t-direction
+
+	// Set Yousef Nuclear Segmentation:
+	if(NucleusSeg) delete NucleusSeg;
+	NucleusSeg = new yousef_nucleus_seg();
+
+	if(myParameters.size() == 0)
+	{
+		NucleusSeg->readParametersFromFile("");		//Will use automatic parameter detection	
+	}
+	else
+	{
+		int params[11];
+		ConvertParameters(params);
+		NucleusSeg->setParams(params); //Will use the parameters that have been set and defauls for the rest
+	}
+	// Run the segmentation
+	for (int t = 0; t<numTSlices; ++t)
+	{
+		unsigned char *dptr = dataImage->GetSlicePtr<unsigned char>(t,channelNumber,0);	//Expects grayscale image 
+		NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
+		NucleusSeg->runBinarization();
+		NucleusSeg->runSeedDetection();
+		NucleusSeg->runClustering();
+		lastRunStep = 3;
+		if(finalize)
+		{
+			NucleusSeg->runAlphaExpansion();
+			lastRunStep = 4;
+		}
+
+		std::string filename = dataImage->GetTimeChannelFilenames().at(t).at(channelNumber);
+		vector<int> size = NucleusSeg->getImageSize();
+		unsigned short *outdptr = NULL;
+		if(lastRunStep==3)
+			outdptr = NucleusSeg->getClustImage();
+		else if(lastRunStep==4)
+			outdptr = NucleusSeg->getSegImage();
+		if(outdptr)
+			labelImage->AppendImageFromData3D(outdptr,itk::ImageIOBase::USHORT,sizeof(unsigned short), size[2], size[1], size[0],filename,true);
+		else
+		{
+			errorMessage = "Error retrieving data pointer";
+			return true;
+		}
+	}
+
+	this->GetParameters();				//Get the parameters that were used from the module!!
+	return true;
+		
+}
+
+
+
 
 void NuclearSegmentation::GetParameters()
 {
@@ -475,8 +546,8 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 	{
 		FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
 		labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(t,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(t,0) );
-	//	labFilter->ComputeTexturesOn();
-	//	labFilter->ComputeHistogramOn();
+		//labFilter->ComputeTexturesOn();
+		//labFilter->ComputeHistogramOn();
 		labFilter->SetLevel(1);
 		labFilter->Update();
 		std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
@@ -631,7 +702,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 	}
 
 #ifdef USE_TRACKING
-	//Add Tracking Features:
+	//Add Track Point Features:
 	if(!nucsegTrackFeatures.empty())
 	{
 		for (int i=0; i < ftk::TrackPointFeatures::M; ++i)
@@ -641,6 +712,20 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 			table->AddColumn(column);
 		}
 	}
+	// Add Time Feautes:
+	//if(!nucsegTimeFeatures.empty())
+	//{
+	//	for (int i=0; i < ftk::TrackFeatures::NF; ++i)
+	//	{
+	//		if(!nucsegTimeFeatures.at(i).intrinsic_features.empty())
+	//		{
+	//			column = vtkSmartPointer<vtkDoubleArray>::New();
+	//			column->SetName( (fPrefix+ftk::TrackFeatures::TimeInfo[i].name).c_str() );
+	//			table->AddColumn(column);
+	//		}
+	//	}
+	//}
+
 #endif
 	//Now populate the table:
 	for (int i=0; i<(int)featurevector.size(); ++i)
@@ -652,7 +737,7 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 			row->InsertNextValue( vtkVariant(featurevector.at(i).ScalarFeatures[j]) );
 		}
 #ifdef USE_TRACKING
-		// Add Track Features:
+		// Add Track Point Features:
 		if(!nucsegTrackFeatures.empty())
 		{
 			for (int k=0; k<(int)currentTrackFeatures.size(); ++k)
@@ -666,6 +751,23 @@ vtkSmartPointer<vtkTable> NuclearSegmentation::featureVectorTovtkTable(std::vect
 				}
 			}
 		}
+		// Add Time Features:
+		//if(!nucsegTimeFeatures.empty())
+		//{
+		//	for (int k=0; k<(int)nucsegTimeFeatures.size(); ++k)			// iterate through tracks
+		//	{
+		//		if (!nucsegTimeFeatures.at(k).intrinsic_features.empty())
+		//		{
+		//			if(nucsegTimeFeatures.at(k).intrinsic_features.at(0).num == featurevector.at(i).num)
+		//			{
+		//				for (int j=0; j<ftk::TrackFeatures::NF; ++j)
+		//				{
+		//					row->InsertNextValue( vtkVariant(nucsegTimeFeatures.at(i).scalars[j]) );
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
 #endif
 		table->InsertNextRow(row);
 	}
@@ -677,6 +779,11 @@ void NuclearSegmentation::SetTrackFeatures(std::vector<std::vector<ftk::TrackPoi
 {
 	nucsegTrackFeatures.clear();
 	nucsegTrackFeatures = trackfeatures;
+}
+void NuclearSegmentation::SetTimeFeatures(std::vector<ftk::TrackFeatures> timefeatures)
+{
+	nucsegTimeFeatures.clear();
+	nucsegTimeFeatures = timefeatures;
 }
 #endif
 void NuclearSegmentation::updatetable4DImage(std::vector< vtkSmartPointer<vtkTable> > tableOfFeatures)

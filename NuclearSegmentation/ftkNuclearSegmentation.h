@@ -71,6 +71,7 @@ public:
 	bool DetectSeeds(bool getResultImg = false);				//If binarization has been done it will detect seeds
 	bool RunClustering(bool getResultImg = false);				//Will use binary image and seeds to do initial clustering
 	bool Finalize();											//Will finilize the output using alpha expansion
+	bool SegmentAllTimes(bool finalize = false);				//Will segment the nuclei of all time points.
 	void ReleaseSegMemory();									//Delete the NucleusSeg object to release all of its memory.
 	bool ComputeAllGeometries();								//Compute all geometries for the label image!!!
 	bool ComputeAllGeometries(int numTimes);					//Compute all geometries and return the features for the label image across time!!!
@@ -133,6 +134,7 @@ public:
 	//Set Data:
 #ifdef USE_TRACKING
 	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures> > trackfeatures);
+	void SetTimeFeatures(std::vector<ftk::TrackFeatures>);
 #endif
 	void setCurrentTime(int t = 0){currentTime = t;};
 protected:
@@ -184,6 +186,7 @@ protected:
 #ifdef USE_TRACKING
 	//Add Tracking Features:
 	std::vector<std::vector<ftk::TrackPointFeatures> > nucsegTrackFeatures;
+	std::vector<ftk::TrackFeatures> nucsegTimeFeatures;
 	std::vector<ftk::TrackPointFeatures> currentTrackFeatures; // means current time
 	void setCurrentTrackFeatures(int time);
 #endif
