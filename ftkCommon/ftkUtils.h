@@ -48,6 +48,9 @@ bool FileExists(std::string filename);
 bool AppendTextFile(std::string filename, std::string text);			//Add new line to the file with the given text
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
 bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage);
+bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image);
+bool SaveLabelSeries(std::string seriesfilename, std::vector<std::string> filenames);
+
 vtkSmartPointer<vtkTable> LoadTable(std::string filename);
 vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<vtkTable> table , double tx, double ty, double tz);
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image);

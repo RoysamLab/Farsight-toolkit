@@ -490,6 +490,91 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 
 	return img;
 }
+bool SaveLabelSeries(std::string seriesfilename, std::vector<std::string> filenames)
+{
+	std::cout<<seriesfilename<<std::endl;
+	if(seriesfilename == "")
+		return false;
+
+	if(GetExtension(seriesfilename)!="xml")
+		return false;
+
+	seriesfilename = GetFilePath(filenames.at(0))+"\\"+seriesfilename ;
+	std::cout<<seriesfilename<<std::endl;
+	TiXmlDocument doc;    
+	TiXmlElement * root = new TiXmlElement( "Image" );  
+	doc.LinkEndChild( root ); 
+
+	for(unsigned int i = 0;	i<filenames.size(); ++i)				// iterate through time
+	{
+		// write the xml file containing the xml file names (time file names) of other xml files representing channels
+		TiXmlElement * file = new TiXmlElement("file");
+		std::string path = GetFilePath(filenames.at(i));
+		std::string fullname = GetFilenameFromFullPath(filenames.at(i));
+		std::string fname = path+"\\"+"labeled_"+fullname;
+		file->LinkEndChild( new TiXmlText( fname.c_str() ) );
+		root->LinkEndChild(file);
+	}
+	if( doc.SaveFile( seriesfilename.c_str() ) )
+		return true;
+	else
+		return false;
+}	
+
+bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
+{
+	if(!image)
+		return false;
+
+	if(seriesfilename == "")
+		return false;
+
+	if(GetExtension(seriesfilename)!="xml")
+		return false;
+
+	std::vector<std::vector<std::string> > filenames = image->GetTimeChannelFilenames();	
+
+	seriesfilename = GetFilePath(filenames.at(0).at(0))+"\\"+seriesfilename ;
+	TiXmlDocument doc;    
+	TiXmlElement * root = new TiXmlElement( "Image" );  
+	doc.LinkEndChild( root ); 
+
+	for(unsigned int i = 0;	i<filenames.size(); ++i)				// iterate through time
+	{
+		// write the xml file containing the xml file names (time file names) of other xml files representing channels
+		TiXmlElement * file = new TiXmlElement("file");
+		std::string xmlfilename = filenames.at(i).at(0);
+		xmlfilename = SetExtension(xmlfilename,"xml");
+		file->LinkEndChild( new TiXmlText( xmlfilename.c_str() ) );
+		root->LinkEndChild(file);
+
+		// write the xml file defining the channels for this time point 
+		TiXmlDocument subdoc;
+		TiXmlElement * subroot = new TiXmlElement( "Image" );  
+		subdoc.LinkEndChild( subroot ); 
+
+		for(unsigned int j=0; j<filenames.at(i).size(); ++j)
+		  {
+			TiXmlElement * subfile = new TiXmlElement("file");
+			subfile->SetAttribute("chname", image->GetImageInfo()->channelNames.at(j));
+			subfile->SetAttribute("r", NumToString(image->GetImageInfo()->channelColors.at(j).at(0)));
+			subfile->SetAttribute("g", NumToString(image->GetImageInfo()->channelColors.at(j).at(1)));
+			subfile->SetAttribute("b", NumToString(image->GetImageInfo()->channelColors.at(j).at(2)));
+			subfile->LinkEndChild( new TiXmlText( filenames.at(i).at(j).c_str() ) );
+			subroot->LinkEndChild(subfile);
+		  }
+		subdoc.SaveFile( xmlfilename.c_str() );
+
+	}
+	if( doc.SaveFile( seriesfilename.c_str() ) )
+		return true;
+	else
+		return false;
+}	
+
+
+
+
 
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image)
 {
