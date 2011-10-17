@@ -22,6 +22,7 @@ MicrogliaProcessTracer::MicrogliaProcessTracer()
   this->NodeCounter = 1;
   this->Padding = 1;
   this->ProcessRadius = 0.3;
+  this->SeparateFilePerCell = false;
 
   //no default distance threshold
   //this means all nodes will be added to a tree
@@ -159,6 +160,8 @@ void MicrogliaProcessTracer::LoadSeedPoints(std::string fname)
     (*nodeItr)->IsOpen = false;
     (*nodeItr)->type = 1;
     }
+
+  this->Roots = this->Closed;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -206,10 +209,6 @@ void MicrogliaProcessTracer::RunTracing()
       this->IndexToNodeMap[n->index] = n;
       }
     }
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetInput(this->NDXImage);
-  writer->SetFileName("/Users/zack/ndx.mhd");
-  writer->Update();
  
   //add the centroids to the Index -> Node map too
   std::vector< Node * >::iterator nodeItr;
@@ -555,14 +554,7 @@ void MicrogliaProcessTracer::BuildTrees()
     if(parentAndChild.first == NULL)
       {
       //We've added all the nodes within our distance threshold.
-      //Delete those that remain in the open list.
-      std::vector< Node * >::iterator nodeItr;
       std::cout << this->Open.size() << " nodes were too far away to get added to a cell model" << std::endl;
-      for(nodeItr = this->Open.begin(); nodeItr != this->Open.end(); ++nodeItr)
-        {
-        delete (*nodeItr);
-        }
-      this->Open.clear();
       break;
       }
     
@@ -648,14 +640,23 @@ std::pair< Node *, Node * > MicrogliaProcessTracer::FindClosestOpenNode()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MicrogliaProcessTracer::WriteSWC( std::string fname )
+void MicrogliaProcessTracer::WriteToSWC( std::string fname )
 {
-  if (this->Open.size() != 0 )
-    {
-    std::cout << "ERROR: Open list is not empty.  Run BuildTrees first." << std::endl;
-    return;
-    }
+  std::cout << "writing output to disk" << std::endl;
 
+  if(this->SeparateFilePerCell)
+    {
+    this->WriteMultipleSWCFiles(fname);
+    }
+  else
+    {
+    this->WriteSingleSWCFile(fname);
+    }
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::WriteSingleSWCFile( std::string fname )
+{
   std::ofstream output( fname.c_str() );
   
   std::vector< Node * >::iterator nodeItr;
@@ -684,6 +685,74 @@ void MicrogliaProcessTracer::WriteSWC( std::string fname )
     output << (*nodeItr)->ID << " " << (*nodeItr)->type << " " << x << " " << y << " " << z << " " << r << " " << parentID << std::endl; 
     }
   output.close();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::WriteMultipleSWCFiles( std::string fname )
+{
+  std::vector< Node * >::iterator rootItr, childItr;
+  int n = 1;
+  //print out each cell to a separate file
+  for(rootItr = this->Roots.begin(); rootItr != this->Roots.end(); ++rootItr)
+    {
+    //open a new file for this cellular model
+    size_t pos = fname.find(".swc");
+    std::string baseName = fname.substr(0,pos);
+    std::stringstream ss;
+    ss << baseName << n << ".swc";
+    std::string filename =  ss.str();
+    std::ofstream outFile( filename.c_str() );
+    std::cout << "writing out " << filename << std::endl;
+
+    Node *root = (*rootItr);
+    //this function recursively writes out all the descendents of root to
+    //the same file.
+    this->WriteNodeToSWCFile(root, &outFile); 
+    outFile.close();
+    ++n;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void MicrogliaProcessTracer::WriteNodeToSWCFile( Node *n, std::ofstream *outFile)
+{
+  if(n->IsOpen || n->ID < 1 || n->ID > this->NodeCounter)
+    {
+    return;
+    }
+  ImageType3D::PointType origin = this->InputImage->GetOrigin();
+  itk::Index<3> idx = n->index;
+  float x = idx[0] + origin[0];
+  float y = idx[1] + origin[1];
+  float z = idx[2] + origin[2];
+  long parentID;
+
+  //compute vessel radius at this point
+  float r = this->GetRadius( idx );
+
+  if ( n->parent == NULL )
+    {
+    parentID = -1;
+    }
+  else
+    {
+    parentID = n->parent->ID;
+    }
+  
+  *outFile << n->ID << " " << n->type << " " << x << " " << y << " " << z <<
+             " " << r << " " << parentID << std::endl; 
+    
+  std::vector< Node * >::iterator childItr;
+  for(childItr = n->children.begin(); childItr != n->children.end();
+      ++childItr)
+    {
+    Node *child = (*childItr);
+    if(child->parent->ID != n->ID)
+      {
+      continue;
+      }
+    this->WriteNodeToSWCFile(child, outFile);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -733,27 +802,13 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
       double euclideanDistance = startPoint.EuclideanDistanceTo(endPoint);
       double scaledDistance = this->GetDistanceBetweenPoints(start, end);
      
-      //massive discount for soma centroids (just to make sure they get started)
-      std::map<itk::Index<3>, Node *>::iterator mapItr =
-        this->IndexToNodeMap.find(start);
-      /*
-      if(mapItr == this->IndexToNodeMap.end())
-        {
-        continue;
-        }
-      centerNode = (*mapItr).second; 
-      if(centerNode->IsOpen == false)
-        {
-        scaledDistance /= 10;
-        }
-      */
-
       if( scaledDistance > this->MaxDistance )
         {
         continue;
         }
 
-      mapItr = this->IndexToNodeMap.find(end);
+      std::map<itk::Index<3>, Node *>::iterator mapItr =
+        this->IndexToNodeMap.find(end);
       if(mapItr == this->IndexToNodeMap.end())
         {
         continue;
@@ -952,8 +1007,14 @@ void MicrogliaProcessTracer::PruneSomaNodes()
       //keepers are reassigned to be children of the centroid
       if(keepThisNode)
         {
-        centroidNode->children.push_back(currentNode);
-        currentNode->parent = centroidNode;
+        childItr =
+        std::find(centroidNode->children.begin(), centroidNode->children.end(),
+                  currentNode);
+        if(childItr == centroidNode->children.end())
+          {
+          centroidNode->children.push_back(currentNode);
+          currentNode->parent = centroidNode;
+          }
         currentNode->type = 1;
         somaBranches.push_back(currentNode);
         }
@@ -967,37 +1028,34 @@ void MicrogliaProcessTracer::PruneSomaNodes()
             childItr != currentNode->children.end();
             childItr++)
           {
-          (*childItr)->parent = grandparent;
-          grandparent->children.push_back( (*childItr) );
+          //don't bother if it's been adopted by someone else
+          if( (*childItr)->parent->ID != currentNode->ID )
+            {
+            continue;
+            }
+          std::vector< Node *>::iterator rmItr =
+            std::find(grandparent->children.begin(), grandparent->children.end(),
+                      (*childItr));
+          if(rmItr == grandparent->children.end())
+            {
+            (*childItr)->parent = grandparent;
+            grandparent->children.push_back( (*childItr) );
+            }
           }
 
         //remove the node from its parent's list of children
-        std::vector< Node *>::iterator rmItr = std::find(
-          grandparent->children.begin(), grandparent->children.end(),
-          currentNode);
-        if(rmItr == grandparent->children.end())
-          {
-          std::cout << "parent / child issues..." << std::endl;
-          }
-        else
-          {
-          grandparent->children.erase(rmItr);
-          }
+        std::vector< Node* >::iterator rmItr =
+          std::remove(grandparent->children.begin(), grandparent->children.end(), currentNode);
+        grandparent->children.erase(rmItr, grandparent->children.end());
 
         //remove the node from Open & Closed
         rmItr =
-          std::find(this->Open.begin(), this->Open.end(), currentNode);
-        if(rmItr != this->Open.end())
-          {
-          this->Open.erase(rmItr);
-          }
+          std::remove(this->Open.begin(), this->Open.end(), currentNode);
+        this->Open.erase(rmItr, this->Open.end());
         rmItr =
-          std::find(this->Closed.begin(), this->Closed.end(), currentNode);
-        if(rmItr != this->Closed.end())
-          {
-          this->Closed.erase(rmItr);
-          }
-
+          std::remove(this->Closed.begin(), this->Closed.end(), currentNode);
+        this->Closed.erase(rmItr, this->Closed.end());
+        
         //now we can actually call delete
         delete currentNode;
         //also set the pointer equal to NULL
@@ -1077,18 +1135,12 @@ void MicrogliaProcessTracer::DeleteBranch( Node *n, bool parentSurvives )
   std::vector< Node *>::iterator rmItr;
 
   //if your parent is surviving, remove yourself from their list of children
+  Node *parent = n->parent;
   if(parentSurvives)
     {
-    Node *parent = n->parent;
-    rmItr = std::find(parent->children.begin(), parent->children.end(), n);
-    if(rmItr == parent->children.end())
-      {
-      std::cout << "parent / child issues 2..." << std::endl;
-      }
-    else
-      {
-      parent->children.erase(rmItr);
-      }
+    rmItr =
+      std::remove(parent->children.begin(), parent->children.end(), n);
+    parent->children.erase(rmItr, parent->children.end());
     }
 
   //delete your kids
@@ -1100,19 +1152,14 @@ void MicrogliaProcessTracer::DeleteBranch( Node *n, bool parentSurvives )
 
   //remove yourself from the Open and/or Closed lists
   rmItr =
-    std::find(this->Open.begin(), this->Open.end(), n);
-  if(rmItr != this->Open.end())
-    {
-    this->Open.erase(rmItr);
-    }
+    std::remove(this->Open.begin(), this->Open.end(), n);
+  this->Open.erase(rmItr, this->Open.end());
   rmItr =
-    std::find(this->Closed.begin(), this->Closed.end(), n);
-  if(rmItr != this->Closed.end())
-    {
-    this->Closed.erase(rmItr);
-    }
+    std::remove(this->Closed.begin(), this->Closed.end(), n);
+  this->Closed.erase(rmItr, this->Closed.end());
 
   //bye bye
   delete n;
   n = NULL;
 }
+

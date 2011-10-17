@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
   std::cout << "Beginning Tracing" << std::endl;
 	MPT->RunTracing();
   
-  MPT->WriteSWC( std::string(argv[5]) );
+  MPT->SetSeparateFilePerCell(false);
+  MPT->WriteToSWC( std::string(argv[5]) );
 
 	std::cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << std::endl;
 

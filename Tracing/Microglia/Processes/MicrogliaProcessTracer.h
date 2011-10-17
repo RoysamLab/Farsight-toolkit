@@ -4,9 +4,6 @@
 #include "itkImage.h"
 #include "itkArray.h"
 #include "itkImageFileReader.h"
-//debug purposes only
-#include "itkImageFileWriter.h"
-
 
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
@@ -29,6 +26,7 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <time.h>
 
@@ -67,7 +65,6 @@ public:
   typedef itk::Image< unsigned char, 3 > CharImageType3D;
 
   typedef itk::ImageFileReader<ImageType3D> ReaderType;
-  typedef itk::ImageFileWriter<ImageType3D> WriterType;
   typedef itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D> RescalerType;
   typedef itk::MaskNegatedImageFilter<ImageType3D, CharImageType3D, ImageType3D> MaskFilterType;
 
@@ -81,9 +78,10 @@ public:
   void SetPadding(unsigned int i) { this->Padding = i; }
   void SetMaxDistance(double d) { this->MaxDistance = d; }
   void SetProcessRadius(double d) { this->ProcessRadius = d; }
+  void SetSeparateFilePerCell(bool b) { this->SeparateFilePerCell = b; }
 
   void RunTracing();
-  void WriteSWC( std::string fname );
+  void WriteToSWC( std::string fname );
     
 protected:
   void LoadInputImage(ImageType3D::Pointer &image);
@@ -103,6 +101,9 @@ protected:
   bool AnyBranchPoints( Node *n );
   unsigned int GetPathDepth( Node *n );
   void DeleteBranch( Node *n, bool parentSurvives );
+  void WriteSingleSWCFile( std::string fname );
+  void WriteMultipleSWCFiles( std::string fname );
+  void WriteNodeToSWCFile( Node *n, std::ofstream *outFile);
 
 private:
   CharImageType3D::Pointer SomaImage;
@@ -112,11 +113,14 @@ private:
   unsigned int Padding;
   std::vector< Node * > Open;
   std::vector< Node * > Closed;
+  std::vector< Node * > Roots;
   std::map< itk::Index<3>, Node *, CompareIndices > IndexToNodeMap;
   long NodeCounter;
   double MaxDistance;
   //the radius of an average microglia process (in microns)
   double ProcessRadius;
+  //output each cell in a separate .swc file?  By default, they're all in the same file.
+  bool SeparateFilePerCell;
 
   std::map< Node *, std::list< std::pair< double, Node *> > > AdjacencyMap;
 };
