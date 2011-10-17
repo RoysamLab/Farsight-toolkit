@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#include "View3D.h"
+#include "TraceView3D.h"
 #include <QtGui/QApplication>
 #include <QtCore/QObject>
 
