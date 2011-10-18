@@ -121,7 +121,8 @@ bool ProjectFiles::Write()
 	TiXmlElement * root = new TiXmlElement( "ProjectFiles" );
 	root->SetAttribute("path", path.c_str());
 	root->SetAttribute("name", name.c_str());
-	//root->SetAttribute("type", type.c_str());
+	if(strcmp(  type.c_str(), "multi" ) == 0 )
+		root->SetAttribute("type", type.c_str());
 
 	doc.LinkEndChild( root );  
  

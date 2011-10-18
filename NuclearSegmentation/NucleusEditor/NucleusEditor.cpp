@@ -784,21 +784,28 @@ bool NucleusEditor::saveProject()
 	else
 	{
 		ftk::SaveImageSeries(projectFiles.input, myImg);
-		
 	}
-	if(projectFiles.output != "" && !projectFiles.outputSaved)
+	if(projectFiles.output != "" && !projectFiles.outputSaved && projectFiles.type != "multi")
 	{
 		this->saveResult();
 	}
-	if(projectFiles.definition != "" && !projectFiles.definitionSaved)
+	else
+	{
+		ftk::SaveLabelSeries(projectFiles.output, labImg);
+	}
+	if(projectFiles.definition != "" && !projectFiles.definitionSaved && projectFiles.type != "multi")
 	{
 		if( projectDefinition.Write(projectFiles.GetFullDef()) )
 			projectFiles.definitionSaved = true;
 	}
 	//if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type!="multi")
-	if(projectFiles.table != "" && !projectFiles.tableSaved)
+	if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type != "multi")
 	{
 		this->saveTable();
+	}
+	else
+	{
+		ftk::SaveTableSeries("TableSeries.xml",nucSeg->table4DImage);
 	}
 
 	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
@@ -1047,6 +1054,10 @@ void NucleusEditor::loadProject()
 		segView->SetLabelImage(labImg, selection);
 		this->updateNucSeg();
 		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+		// this next 3 lines are temporary until we figure out how to remove compute all geometries from updateNucSeg
+		table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+		CreateNewTableWindow();
+		CreateNewPlotWindow();
 	}
 
 	if(projectFiles.table != "" && projectFiles.type!="multi")
@@ -1361,18 +1372,26 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 		myImg->AppendImage(tmp4DImage,mode,true);
 	}
 
+	std::vector< std::vector <std::string> > tmp_filenames;
+	for (int t = 0; t< numTimes; ++t)
+	{
+		std::vector <std::string> tmp_file;
+		for (int ch = 0; ch<numChann; ++ch)
+		{			
+			std::string name = filesChannTime.at(t).at(ch);
+			tmp_file.push_back(name);
+		}
+		tmp_filenames.push_back(tmp_file);
+	}
+	myImg->SetTimeChannelFilenames(tmp_filenames);
+
 	//Display Images:
 	segView->SetChannelImage(myImg);
 	projectFiles.path = lastPath.toStdString();
-	projectFiles.inputSaved = false;
+	projectFiles.inputSaved = true;
 	projectFiles.input = "SeriesFileNames.xml";
-	//ftk::SaveImageSeries(projectFiles.input,myImg);
 	projectFiles.type = "multi";
 	load5DLabelImageAction->setEnabled(true);
-
-
-
-
 }
 
 
@@ -1496,11 +1515,15 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 		tmp4DImage->LoadFile(filesTimeList[t]);
 		labImg->AppendImage(tmp4DImage,mode,true);
 	}
-	std::vector<std::string> filenames  = myImg->GetTimeChannelFilenames().at(0);
 	projectFiles.output = "SeriesLabelNames.xml";
-	std::cout<<projectFiles.output<<std::endl;
-	ftk::SaveLabelSeries(projectFiles.output,filenames);
-	std::cout<<projectFiles.output<<std::endl;
+	std::vector< std::vector <std::string> > tmp_filenames;
+	for(int i = 0; i< filesTimeList.size(); ++i)
+	{
+		std::vector <std::string> tmp_file;
+		tmp_file.push_back(filesTimeList.at(i));
+		tmp_filenames.push_back(tmp_file);
+	}
+	labImg->SetTimeChannelFilenames(tmp_filenames);
 
 	//Display Images Tables and Plots:
 	segView->SetLabelImage(labImg, selection);
@@ -1509,8 +1532,13 @@ void NucleusEditor::load5DLabelImage(QStringList filesList)
 	CreateNewTableWindow();
 	CreateNewPlotWindow();
 	projectFiles.path = lastPath.toStdString();
-	projectFiles.outputSaved = true;
 
+	projectFiles.tableSaved = false;
+	projectFiles.inputSaved = false;
+	projectFiles.outputSaved = false;
+	projectFiles.adjTablesSaved = true;
+	projectFiles.table = "TableSeries.xml";
+	projectFiles.type = "multi";
 
 
 	//For storing edit information.. need to have a bBoxMap set 
