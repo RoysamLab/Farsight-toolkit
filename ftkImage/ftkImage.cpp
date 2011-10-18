@@ -601,7 +601,6 @@ bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTim
 	if(m_Info.numTSlices==2)
 		FileNames.push_back(this->filenames);
 	FileNames.push_back(img->GetFilenames());
-	//filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
 	for (int ch=0; ch<m_Info.numChannels; ++ch)
 	{
 		block.mem = img->GetDataPtr(0,ch,mode);

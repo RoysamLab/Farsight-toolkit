@@ -91,7 +91,8 @@ public:
 
 	std::vector< unsigned short > Size(void);
 	std::vector< std::string > GetFilenames(void){ return filenames; };
-	std::vector< std::vector <std::string> > GetTimeChannelFilenames(void){ return FileNames; };
+	std::vector< std::vector <std::string> > GetTimeChannelFilenames(void){ return this->FileNames; };
+	void SetTimeChannelFilenames(std::vector< std::vector <std::string> > filenames){this->FileNames.clear();this->FileNames = filenames;};
 
 	void * GetDataPtr(int T, int CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
 	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
