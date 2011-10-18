@@ -839,20 +839,20 @@ void View3D::choosetoRender(int row, int col)
 			//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
 			this->projectFilesTable->setItem(row,2,offItem);
 			//this->ImageActors->setRenderStatus(row, false);
-			if(this->ImageActors->is2D(row))
-			{
-				//std::cout << "Image is 2D." << std::endl;
+			//if(this->ImageActors->is2D(row))
+			//{
+			//	//std::cout << "Image is 2D." << std::endl;
 				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 				//this->ImageActors->setIs2D(row, false);
-			}
-			else if (this->ImageActors->isRayCast(row))
-			{
+			//}
+			/*else if (this->ImageActors->isRayCast(row))
+			{*/
 				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
-			} 
+			/*} 
 			else
-			{
+			{*/
 				this->Renderer->RemoveActor(this->ImageActors->GetContourActor(row));
-			}
+			/*}*/
 			this->QVTK->GetRenderWindow()->Render();
 			//this->Renderer->UpdateCamera();
 		}
