@@ -449,6 +449,7 @@ void CellTraceModel::createCellToCellGraph()
 	//////////////////////////////////////////////////
 	vtkSmartPointer<vtkTable> graphTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	this->graphVisualize->SetGraphTable(graphTable);
+	this->graphVisualize->setModels(this->getDataTable(), this->GetObjectSelection());
 	this->graphVisualize->ShowGraphWindow();
 }
 
