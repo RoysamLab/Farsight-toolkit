@@ -143,7 +143,6 @@ public:
 
 	void HighlightSelected(TraceLine* tline, double SelectColor);
 	void DeleteTrace(TraceLine *tline);
-	void UnSafeDeleteTrace(TraceLine *tline);
 	void AddChildren(TraceLine *trunk, std::vector<TraceLine*> childTraces);
 	void MergeSelectedTraces();
 	void setupLinkedSpace();
@@ -287,9 +286,6 @@ private:
 	QDockWidget *statisticsDockWidget;
 	int flag;
 	
-	//Declares an undoBuffer
-	//typedef undoBuffer<std::pair<std::string, TraceObject> > bufferType;
-	//bufferType *undoBuff;
 //settings for display
 	int SmallLineLength, maxNumBits, maxPathLength, minDistToParent;
 	float lineWidth;
@@ -438,7 +434,6 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> SphereMapper;
 	vtkSmartPointer<vtkActor> SphereActor;
 	//double pointer3DPos[3];
-	std::vector<double*> ROIPoints;
 	std::vector<TraceLine*> stems;
 	vtkSmartPointer<vtkAxesActor> axes;
 	vtkSmartPointer<vtkOrientationMarkerWidget> UCSMarker;
@@ -446,14 +441,14 @@ private:
 	ImageRenderActors *ImageActors;
 	TraceObject* tobj;
 	vtkSmartPointer<vtkTable> nucleiTable;
-  //raycast
+//!raycast Functions 
 	vtkSmartPointer<vtkPolyData> poly;
 	vtkSmartPointer<vtkPolyDataMapper> polymap;
 	typedef vtkSmartPointer<vtkVolume> VolumePointerType;
 	std::vector<VolumePointerType> m_volumes;
 	vtkSmartPointer<vtkOBJReader> VolReader_OBJ;
 	vtkSmartPointer<vtkLegendScaleActor> scalebar;
-
+//! Set up 2d slicer controls
 	bool viewIn2D;
 	int projectionStyle;
 	void createSlicerSlider();
@@ -467,16 +462,14 @@ private:
 	QDoubleSpinBox * OpacityValueSpin;
 	QSlider *OpacitySlider, *BrightnessSlider;
 
-	TraceObject * debug_object;
-	vtkSmartPointer<vtkActor> debug_actor;
-
 	struct projection {
 		double roll;
 		double azimuth;
 		double elevation;
 	} projection_base;
 	int projection_axis;
-
+//!ROI data objects
+	std::vector<double*> ROIPoints;
 	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
 	vtkSmartPointer<vtkActor> ROIactor;
 

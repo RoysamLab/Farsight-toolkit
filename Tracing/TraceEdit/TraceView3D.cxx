@@ -35,8 +35,6 @@ v7: new GUI and file control
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
 {
-	this->debug_actor = NULL;//Added by Arun
-	this->debug_object = NULL;//Added by Arun
 	this->QVTK = 0;
 	this->GapsPlotView = NULL;
 	this->TreePlot = NULL;
@@ -958,7 +956,7 @@ void View3D::changeDimension(int row, int col)
 void View3D::SetImgInt()
 {
 	if (this->ImageActors->NumberOfImages()>=1)
-	{	// image intensity values at each Trace Bit of trace line
+	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
 	}
 }
@@ -966,7 +964,7 @@ void View3D::SetImgInt()
 void View3D::TraceBitImageIntensity(int ImgID)
 {
 	if (this->ImageActors->NumberOfImages()>=1)
-	{	// image intensity values at each Trace Bit of trace line
+	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(ImgID));
 	}
 }
@@ -2994,17 +2992,6 @@ void View3D::Rerender()
 	this->Renderer->RemoveActor(this->BranchActor);
 	this->Renderer->RemoveActor(this->PointsActor);
 
-	if(this->debug_actor != NULL)
-		this->Renderer->RemoveActor(this->debug_actor);
-	if(debug_object!=NULL)
-	{
-		vtkSmartPointer<vtkPolyDataMapper> polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		polymap->SetInput(this->debug_object->GetVTKPolyData());
-		this->debug_actor = vtkSmartPointer<vtkActor>::New();
-		this->debug_actor->SetMapper(polymap);
-		this->Renderer->AddActor(this->debug_actor);
-	}
-
 	std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
 	if (this->renderTraceBits)
 	{
@@ -3428,12 +3415,19 @@ void View3D::SelectTrees()
 }
 void View3D::updateSelectionFromCell()
 {
+	/*! 
+	* Links CellModel selection to TraceModel Selection
+	*/
 	this->TreeModel->GetObjectSelection()->clear();
 	this->TreeModel->SelectByIDs(this->CellModel->GetSelectedIDs());
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()
 {
+	/*! removes selected segments from the tree
+	* if removing a branch attempt to attach sibling to parent
+	* if removing parent children become roots
+	*/
 	SelectedTraceIDs.clear();
 	statusBar()->showMessage(tr("Deleting"));
 	std::vector<TraceLine*> traceList = TreeModel->GetSelectedTraces();
@@ -3508,21 +3502,11 @@ void View3D::DeleteTraces()
 
 void View3D::DeleteTrace(TraceLine *tline)
 {
-	//std::vector<unsigned int> * vtk_cell_ids = tline->GetMarkers();
-
-	//vtkIdType ncells; vtkIdType *pts;
-	//for(unsigned int counter=0; counter<vtk_cell_ids->size(); counter++)
-	//  {
-	//  this->poly_line_data->GetCellPoints((vtkIdType)(*vtk_cell_ids)[counter],ncells,pts);
-	//  pts[1]=pts[0];
-	//  }
 	std::vector<TraceLine*> *children = tline->GetBranchPointer();
 	if(children->size()!=0)
 	{
 		for(unsigned int counter=0; counter<children->size(); counter++)
 		{
-			//this->poly_line_data->GetCellPoints((*(*children)[counter]->GetMarkers())[0],ncells,pts);
-			//pts[1]=pts[0];
 			this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
 			(*children)[counter]->SetParent(NULL);
 		}
@@ -3537,40 +3521,6 @@ void View3D::DeleteTrace(TraceLine *tline)
 		{
 			return;		//returns if sibling merged to parent
 		}
-		siblings = tline->GetParent()->GetBranchPointer();
-	}
-	else
-	{
-		siblings = this->tobj->GetTraceLinesPointer();
-	}
-	std::vector<TraceLine*>::iterator iter = siblings->begin();
-	std::vector<TraceLine*>::iterator iterend = siblings->end();
-	while(iter != iterend)
-	{
-		if(*iter== tline)
-		{
-			siblings->erase(iter);
-			break;
-		}
-		++iter;
-	}
-	tline->SetParent(NULL);
-}
-void View3D::UnSafeDeleteTrace(TraceLine *tline)
-{
-	std::vector<TraceLine*> *children = tline->GetBranchPointer();
-	if(children->size()!=0)
-	{
-		for(unsigned int counter=0; counter<children->size(); counter++)
-		{
-			this->tobj->GetTraceLinesPointer()->push_back((*children)[counter]);  
-			(*children)[counter]->SetParent(NULL);
-		}
-		children->clear();
-	}   
-	std::vector<TraceLine*>* siblings;
-	if(tline->GetParent()!=NULL)
-	{
 		siblings = tline->GetParent()->GetBranchPointer();
 	}
 	else
