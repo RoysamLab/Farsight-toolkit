@@ -286,35 +286,63 @@ bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable>
 	/*!
 	* Saves a series of data tables into a 
 	*/
-	std::vector< vtkSmartPointer<vtkTable> > tableVector;
-	tableVector.clear();
+	//std::vector< vtkSmartPointer<vtkTable> > tableVector;
+	//tableVector.clear();
 
-	TiXmlDocument doc;
-	if ( !doc.LoadFile( filename.c_str() ) )
-		return false;
+	//TiXmlDocument doc;
+	//if ( !doc.LoadFile( filename.c_str() ) )
+	//	return false;
 
-	TiXmlElement* rootElement = doc.FirstChildElement();
-	const char* docname = rootElement->Value();
-	if ( strcmp( docname, "Table" ) != 0 )
-		return false;
+	//TiXmlElement* rootElement = doc.FirstChildElement();
+	//const char* docname = rootElement->Value();
+	//if ( strcmp( docname, "Table" ) != 0 )
+	//	return false;
 
-	//Parents we know of: datafilename,resultfilename,object,parameter
-	TiXmlElement* parentElement = rootElement->FirstChildElement();
+	////Parents we know of: datafilename,resultfilename,object,parameter
+	//TiXmlElement* parentElement = rootElement->FirstChildElement();
 
-	int counter = 0;
+	std::string seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+filename ;
+	TiXmlDocument doc;    
+	TiXmlElement * root = new TiXmlElement( "Image" );  
+	doc.LinkEndChild( root ); 
+	
 
-	while (parentElement)
+
+	for(unsigned int i = 0;	i<table4DImage.size(); ++i)				// iterate through time
 	{
-		const char * parent = parentElement->Value();
-		if ( strcmp( parent, "file" ) == 0 )
-		{
-			SaveTable(std::string(reinterpret_cast<const char*>(parentElement->GetText())),table4DImage.at(counter) );
-		}
-		parentElement = parentElement->NextSiblingElement();
-		counter++;
-	} // end while(parentElement)
-	//doc.close();
-	return true;
+		// write the xml file containing the xml file names (time file names) of other xml files representing channels
+		TiXmlElement * file = new TiXmlElement("file");
+		std::stringstream ss;
+		ss<<i;
+		std::string path = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\";
+		std::string name = path+"table_time"+ss.str()+".txt";
+		SaveTable(name,table4DImage.at(i));
+
+		file->LinkEndChild( new TiXmlText( name ) );
+		std::cout<< name<<std::endl;
+		root->LinkEndChild(file);
+	}
+	if( doc.SaveFile( seriesfilename.c_str() ) )
+		return true;
+	else
+		return false;
+
+	//int counter = 0;
+
+	//while (parentElement)
+	//{
+	//	const char * parent = parentElement->Value();
+	//	if ( strcmp( parent, "file" ) == 0 )
+	//	{
+	//		SaveTable(std::string(reinterpret_cast<const char*>(parentElement->GetText())),table4DImage.at(counter) );
+	//	}
+	//	parentElement = parentElement->NextSiblingElement();
+	//	counter++;
+	//} // end while(parentElement)
+	////doc.close();
+	//return true;
+
+
 }
 
 
@@ -490,29 +518,38 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 
 	return img;
 }
-bool SaveLabelSeries(std::string seriesfilename, std::vector<std::string> filenames)
+bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image)
 {
-	std::cout<<seriesfilename<<std::endl;
 	if(seriesfilename == "")
 		return false;
 
 	if(GetExtension(seriesfilename)!="xml")
 		return false;
+	std::vector<std::vector<std::string> > filenames;
+	//if(image->GetImageInfo()->numTSlices == 1)
+	//	filenames.push_back(image->GetFilenames());
+	//else
+		filenames = image->GetTimeChannelFilenames();
 
-	seriesfilename = GetFilePath(filenames.at(0))+"\\"+seriesfilename ;
-	std::cout<<seriesfilename<<std::endl;
+	//seriesfilename = GetFilePath(filenames.at(0))+"\\"+seriesfilename ;
+	seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+seriesfilename ;
 	TiXmlDocument doc;    
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root ); 
+	
+
 
 	for(unsigned int i = 0;	i<filenames.size(); ++i)				// iterate through time
 	{
 		// write the xml file containing the xml file names (time file names) of other xml files representing channels
 		TiXmlElement * file = new TiXmlElement("file");
-		std::string path = GetFilePath(filenames.at(i));
-		std::string fullname = GetFilenameFromFullPath(filenames.at(i));
-		std::string fname = path+"\\"+"labeled_"+fullname;
-		file->LinkEndChild( new TiXmlText( fname.c_str() ) );
+	//	std::string path = GetFilePath(filenames.at(i));
+		std::string path = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory";
+
+		//std::string fullname = GetFilenameFromFullPath(filenames.at(i).at(0));		// first channel is assumed to be segmented nucleus
+		//std::string fname = path+"\\"+"labeled_"+fullname;
+		file->LinkEndChild( new TiXmlText( filenames.at(i).at(0).c_str() ) );
+		std::cout<< filenames.at(i).at(0)<<std::endl;
 		root->LinkEndChild(file);
 	}
 	if( doc.SaveFile( seriesfilename.c_str() ) )
@@ -531,10 +568,15 @@ bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
 
 	if(GetExtension(seriesfilename)!="xml")
 		return false;
+	
+	std::vector<std::vector<std::string> > filenames;
+	if(image->GetImageInfo()->numTSlices == 1)
+		filenames.push_back(image->GetFilenames());
+	else
+		filenames = image->GetTimeChannelFilenames();	
 
-	std::vector<std::vector<std::string> > filenames = image->GetTimeChannelFilenames();	
-
-	seriesfilename = GetFilePath(filenames.at(0).at(0))+"\\"+seriesfilename ;
+	//seriesfilename = GetFilePath(filenames.at(0).at(0))+"\\"+seriesfilename ;
+	seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+seriesfilename ;
 	TiXmlDocument doc;    
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root ); 
@@ -543,8 +585,9 @@ bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
 	{
 		// write the xml file containing the xml file names (time file names) of other xml files representing channels
 		TiXmlElement * file = new TiXmlElement("file");
-		std::string xmlfilename = filenames.at(i).at(0);
-		xmlfilename = SetExtension(xmlfilename,"xml");
+		std::stringstream ss;//create a stringstream
+		ss << i+1;
+		std::string xmlfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\series_time_"+ss.str()+".xml";
 		file->LinkEndChild( new TiXmlText( xmlfilename.c_str() ) );
 		root->LinkEndChild(file);
 
