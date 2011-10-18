@@ -839,20 +839,12 @@ void View3D::choosetoRender(int row, int col)
 			//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
 			this->projectFilesTable->setItem(row,2,offItem);
 			//this->ImageActors->setRenderStatus(row, false);
-			//if(this->ImageActors->is2D(row))
-			//{
-			//	//std::cout << "Image is 2D." << std::endl;
-				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
-				//this->ImageActors->setIs2D(row, false);
-			//}
-			/*else if (this->ImageActors->isRayCast(row))
-			{*/
-				this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
-			/*} 
-			else
-			{*/
-				this->Renderer->RemoveActor(this->ImageActors->GetContourActor(row));
-			/*}*/
+			
+			//remove all actors
+			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+			this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
+			this->Renderer->RemoveActor(this->ImageActors->GetContourActor(row));
+
 			this->QVTK->GetRenderWindow()->Render();
 			//this->Renderer->UpdateCamera();
 		}
@@ -866,6 +858,7 @@ void View3D::choosetoRender(int row, int col)
 				{
 					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
 					this->ImageActors->setRenderStatus(row, true);
+					this->ImageActors->setIs2D(row, false);
 					this->RaycastBar->show();
 				}else if (this->projectFilesTable->item(row,3)->text() == "2d")
 				{
@@ -901,11 +894,11 @@ void View3D::changeDimension(int row, int col)
 			if(this->projectFilesTable->item(row,3)->text() == "3d")
 			{
 				//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
-				std::cout << "Row selected was 3D" << std::endl;
+				//std::cout << "Row selected was 3D" << std::endl;
 				this->projectFilesTable->setItem(row,3,Item2D);
 				if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
 				{
-					std::cout << "Image is Raycast" << std::endl;
+					//std::cout << "Image is Raycast" << std::endl;
 					this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
 					this->ImageActors->setIs2D(row, true);
@@ -920,7 +913,7 @@ void View3D::changeDimension(int row, int col)
 				this->projectFilesTable->setItem(row,3,Item3D);
 				//if (this->ImageActors->is2D(row))
 				//{
-				std::cout << "Removing projection... and set is not 2D" << std::endl;
+				//std::cout << "Removing projection... and set is not 2D" << std::endl;
 				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 				this->ImageActors->setIs2D(row, false);
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
@@ -2020,7 +2013,7 @@ void View3D::setSlicerMode()
 		ClearRenderer(i);
 		if (projectFilesTableCreated)
 		{
-			if (this->projectFilesTable->item(i,2)->text() == "on")
+			//if (this->projectFilesTable->item(i,2)->text() == "on") //slice not connected to table
 			{
 				Renderer->AddActor(ImageActors->GetImageSlice(i));
 				ImageActors->setRenderStatus(i, false);
@@ -2034,7 +2027,7 @@ void View3D::setSlicerMode()
 	}
 
 	this->QVTK->GetRenderWindow()->Render();
-	std::cout << "Setting mode slicer" << std::endl;
+	//std::cout << "Setting mode slicer" << std::endl;
 	if (!SlicerBarCreated)
 		this->createSlicerSlider();
 	else
@@ -2067,13 +2060,13 @@ void View3D::setProjectionMode()
 		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
 		this->projectFilesTable->setItem(i,3,Item2D);
-		std::cout << "i: " << i << "make 2D." << std::endl;
+		//std::cout << "i: " << i << "make 2D." << std::endl;
 		/***************************************************************/
 	}
 
 	//this->QVTK->GetRenderWindow()->Render();
 	this->chooseInteractorStyle(1);
-	std::cout << "Setting mode projection" << std::endl;
+	//std::cout << "Setting mode projection" << std::endl;
 	renderMode = PROJECTION;
 }
 
@@ -2110,7 +2103,7 @@ void View3D::setRaycastMode()
 	this->RaycastBar->show();
 	this->chooseInteractorStyle(0);
 	this->viewIn2D = false;
-	std::cout << "Setting mode raycast" << std::endl;
+	//std::cout << "Setting mode raycast" << std::endl;
 	
 	renderMode = RAYCAST;
 }
