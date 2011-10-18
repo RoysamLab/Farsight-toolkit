@@ -542,7 +542,6 @@ void SpectralUnmixing::ConvertOutputToftk(void)
 	unsigned short cs = Image->GetImageInfo()->numColumns;
 	unsigned short rs = Image->GetImageInfo()->numRows;
 	unsigned short zs = Image->GetImageInfo()->numZSlices;
-	std::string name;
 	std::vector< std::vector <std::string> > FileNames = Image->GetTimeChannelFilenames();
 
 	printf("converting to ftk (time): 0\n");
@@ -550,7 +549,9 @@ void SpectralUnmixing::ConvertOutputToftk(void)
 	{
 		
 		printf("converting to ftk (channel): %d\n",ch+1);
-		name = "unmixed_";
+		std::stringstream ss;
+		ss<<ch;
+		std::string name ="channel"+ss.str();
 		std::vector <unsigned char> colors;
 		this->getColor(ch,&colors);
 		UnmixedImage->AppendChannelFromData3D(Unmixed_Images[0][ch]->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name,colors, true);
@@ -565,11 +566,30 @@ void SpectralUnmixing::ConvertOutputToftk(void)
 		for(int ch =0;ch<MChannels;++ch)
 		{
 			printf("converting to ftk (channel): %d\n",ch+1);
-			name = "unmixed_"+FileNames.at(t).at(ch);
+			std::stringstream ss;
+			ss<<ch;
+			std::string name = "channel"+ss.str();
 			tmp_image->AppendChannelFromData3D(Unmixed_Images[t][ch]->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, channelColors.at(ch), true);
 		}
 		UnmixedImage->AppendImage(tmp_image,mode,true);
 	}
+	std::vector< std::vector <std::string> > tmp_filenames;
+	for(int i = 0; i< UnmixedImage->GetImageInfo()->numTSlices; ++i)
+	{
+		std::vector <std::string> tmp_file;
+		for(int ch = 0; ch< UnmixedImage->GetImageInfo()->numChannels; ++ch)
+		{
+			std::stringstream ss;
+			ss<<ch;
+			std::string name = ftk::GetFilePath(FileNames.at(i).at(ch))+"\\unmixed_channnel"+ss.str()+"_"+ftk::GetFilenameFromFullPath(FileNames.at(i).at(ch));
+			tmp_file.push_back(name);
+			std::cout<<name<<std::endl;
+		}
+		tmp_filenames.push_back(tmp_file);
+	}
+	UnmixedImage->SetTimeChannelFilenames(tmp_filenames);
+
+
 }
 
 

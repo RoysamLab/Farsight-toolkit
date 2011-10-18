@@ -35,6 +35,7 @@
 #include <vnl/algo/vnl_qr.h>
 
 #include <ftkImage/ftkImage.h>
+#include <ftkCommon/ftkUtils.h>
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
 
