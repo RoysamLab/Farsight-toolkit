@@ -346,6 +346,17 @@ bool NuclearSegmentation::SegmentAllTimes(bool finalize)
 			return true;
 		}
 	}
+	std::vector< std::vector <std::string> > tmp_filenames;
+	for(int i = 0; i< numTSlices; ++i)
+	{
+		std::vector <std::string> tmp_file;
+		std::string name = ftk::GetFilePath(dataImage->GetTimeChannelFilenames().at(i).at(channelNumber))+"\\labeled_"+ftk::GetFilenameFromFullPath(dataImage->GetTimeChannelFilenames().at(i).at(channelNumber));
+		tmp_file.push_back(name);
+		std::cout<<name<<std::endl;
+		tmp_filenames.push_back(tmp_file);
+	}
+	labelImage->SetTimeChannelFilenames(tmp_filenames);
+
 
 	this->GetParameters();				//Get the parameters that were used from the module!!
 	return true;
