@@ -380,13 +380,13 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
       switch(w)
         {
         case 0:
-          value = (ev[1] + ev[2]);
+          value = -1 * (ev[1] + ev[2]);
           break;
         case 1:
-          value = (ev[0] + ev[2]);
+          value = -1 * (ev[0] + ev[2]);
           break;
         case 2:
-          value = (ev[0] + ev[1]);
+          value = -1 * (ev[0] + ev[1]);
           break;
         default:
           std::cout << "impossible switch value" << std::endl;
