@@ -74,6 +74,7 @@ private:
 	std::vector<double> DistanceToDevice;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
 	vtkSmartPointer<vtkTable> DataTable;
+	std::vector<long int> indMapFromIndToVertex;    // index mapping
 	std::vector<std::string> headers;
 
 	//data for agglormeration
@@ -89,5 +90,6 @@ private:
 
 	//data for EMD 
 	vnl_matrix<double> EMDMatrix;
+	
 };
 #endif

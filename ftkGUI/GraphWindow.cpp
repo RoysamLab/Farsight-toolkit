@@ -6,6 +6,7 @@
 #include <vtkSelection.h>
 #include <vtkMutableDirectedGraph.h>
 #include <vtkDataSetAttributes.h>
+#include <QMessageBox>
 
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -28,9 +29,11 @@ void GraphWindow::setQtModels(QItemSelectionModel *mod)
 void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
 {
 	this->dataTable = table;
-	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	for( long int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
-		this->rootID.insert(this->dataTable->GetValue( i, 0).ToInt());
+		long int var = this->dataTable->GetValue( i, 0).ToLong();
+		this->indMapFromVertexToInd.insert( std::pair< long int, long int>(var, i));
+		this->indMapFromIndToVertex.push_back( var);
 	}
 	if(!sels)
 		this->selection = new ObjectSelection();
@@ -94,9 +97,12 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 {
 	//graphTable->Dump(8);	//debug dump
 
-	this->TTG->ClearLinkVertices();
-	this->TTG->SetInput(0, table);
-	this->TTG->AddLinkEdge(ID1.c_str(), ID2.c_str()); 
+	//this->TTG->ClearLinkVertices();
+	//this->TTG->SetInput(0, table);
+	//this->TTG->AddLinkEdge(ID1.c_str(), ID2.c_str()); 
+
+	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
+	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 
 	vtkSmartPointer<vtkMutableDirectedGraph> graph = vtkMutableDirectedGraph::New();
 	for( int i = 0; i <  this->dataTable->GetNumberOfRows(); i++)
@@ -106,7 +112,23 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 
 	for( int i = 0; i < table->GetNumberOfRows(); i++)
 	{
-		graph->AddEdge( table->GetValue(i,0).ToInt(), table->GetValue(i,1).ToInt());
+		long int ver1 = arrayID1->GetVariantValue(i).ToLong();
+		long int ver2 = arrayID2->GetVariantValue(i).ToLong();
+		std::map< long int, long int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
+		std::map< long int, long int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
+		if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
+		{
+			long int index1 = iter1->second;
+			long int index2 = iter2->second;
+			graph->AddEdge( index1, index2);
+		}
+		else
+		{
+			QMessageBox msg;
+			msg.setText("Index Mapping Error!");
+			msg.exec();
+			exit(-1);
+		}
 	}
 	
 	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
@@ -226,21 +248,15 @@ void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
 	if( IDs.size() > 0)
 	{
 		std::set<long int> selectedIDs;
-		std::set<long int>::iterator iter = this->rootID.begin();
-		std::set<long int>::iterator IdIter;
-		long int count = 0;
-		for( IdIter = IDs.begin(); IdIter != IDs.end() && iter != this->rootID.end(); IdIter++)
+		std::set<long int>::iterator iter = IDs.begin();
+		while( iter != IDs.end())
 		{
-			while( count < *IdIter)
-			{
-				iter++;
-				count++;
-			}
-			selectedIDs.insert( *iter);
+			long int var = indMapFromIndToVertex[*iter];
+			selectedIDs.insert( var);
+			iter++;
 		}
 		this->selection->select( selectedIDs);
-		std::set<long int> updataIDs =  this->selection->getSelections();
-		UpdataLookupTable( updataIDs);
+		UpdataLookupTable( selectedIDs);
 	}
 	this->view->GetRenderer()->Render();
 }
@@ -252,17 +268,8 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 
 	while( iter != IDs.end())
 	{
-		std::set<long int>::iterator iterRoot = this->rootID.begin();
-		std::set<long int>::iterator iterFind = this->rootID.find(*iter);
-		long int count = 0;
-
-		while( iterRoot != iterFind && iterRoot != this->rootID.end())
-		{
-			iterRoot++;
-			count++;
-		}
-		selectedIDs.insert( count);
-
+		long int var = this->indMapFromVertexToInd.find( *iter)->second;
+		selectedIDs.insert( var);
 		iter++;
 	}
 

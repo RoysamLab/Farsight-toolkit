@@ -124,7 +124,14 @@ bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName)
 
 void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 {
+	for( long int i = 0; i < table->GetNumberOfRows(); i++)
+	{
+		long int var = table->GetValue( i, 0).ToLong();
+		this->indMapFromIndToVertex.push_back( var);
+	}
+
 	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
+
 	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
 	{
 		int colIndex = 0;
@@ -705,6 +712,13 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex)
 	if( MSTIndex >= 0 && MSTIndex < this->MSTTable.size())
 	{
 		vtkSmartPointer<vtkTable> table = this->MSTTable[MSTIndex];
+		for( unsigned int i = 0; i < table->GetNumberOfRows(); i++)
+		{
+			long ind1 = this->MSTTable[MSTIndex]->GetValue(i,0).ToLong();
+			long ind2 = this->MSTTable[MSTIndex]->GetValue(i,1).ToLong();
+			table->SetValue(i, 0, this->indMapFromIndToVertex[ind1]);
+			table->SetValue(i, 1, this->indMapFromIndToVertex[ind2]);
+		}
 		return table;
 	}
 	else

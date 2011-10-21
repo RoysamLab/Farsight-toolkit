@@ -93,7 +93,6 @@ signals:
 
 private:
 	vtkSmartPointer<vtkTable> dataTable;
-	std::set<long int> rootID;
 	ObjectSelection * selection;
 
 	QVTKWidget mainQTRenderWidget;
@@ -104,6 +103,9 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	unsigned long observerTag;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
+
+	std::map<long int, long int> indMapFromVertexToInd;
+	std::vector<long int> indMapFromIndToVertex;
 };
 
 #endif
