@@ -224,7 +224,6 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 	}
 	// OpenSlide can handle this image
 	if( !imageIO ){
-		int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
 		//If OpenSlideCurrentLevel is -1 the middle layer is automatically read 
 		OpenSlideManaged = true;
 		if( OpenSlideCurrentLevel < 0 )
@@ -233,52 +232,9 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 			std::cerr << "THE SLIDE LEVEL EXCEEDS THE NUMBER OF LAYERS" << std::endl;
 			return false;
 		}
-		//Allocate memory and read image
-		int64_t width,height;
-		openslide_get_layer_dimensions(openslide_reader, OpenSlideCurrentLevel, &width, &height);
-		unsigned int mem_needed = width*height*4;
-		unsigned int mem_needed_rgb = width*height;
-		uint32_t *buffer = (uint32_t *) malloc(mem_needed);
-		openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
-
-		//Fill in info for the new image
-		//Don't bother with the colors defaults will be set
-		Info nInfo;
-		nInfo.numColumns = width;			//x-dim
-		nInfo.numRows = height;				//y-dim
-		nInfo.numZSlices = 1;				//z-dim 
-		nInfo.numTSlices = 1;				//T-slices 
-		nInfo.bytesPerPix = 1;				//Beacuse Image is RGB
-		nInfo.dataType = itk::ImageIOBase::UCHAR;	//8-bit RGB Datatype
-		nInfo.numChannels = 3;				//Till we figure out how to read more channels with openslide
-
-		m_Info = nInfo;					//Copy info into current image
-
-		unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
-		//Create a pointer for each channel and allocate memory
-		imageDataPtrs.resize(1);			//Since there is only one time pt
-		ImageMemoryBlock block;
-		block.manager = FTK;
-		for(int c=0; c<m_Info.numChannels; ++c){
-			void * mem = malloc(numBytesPerChunk);
-			if(mem == NULL){
-				std::cerr << "Unable to allocate enough memory for the slide\n";
-				return false;
-			}
-			block.mem = mem;
-			imageDataPtrs[0].push_back(block);
-		}
-
-		unsigned int b = 0;
-		for( unsigned int i=0; i<mem_needed_rgb; ++i ){
-			unsigned short ch = 0; ++i; 		//Skip alpha
-			for(int c=0; c<m_Info.numChannels; ++c){
-				unsigned char *toLoc = ((unsigned char*)(imageDataPtrs[0][ch++].mem));
-				toLoc[b] = buffer[i++];
-			}
-			b++;
-		}
-		free( buffer );
+		path = this->GetPath(fileName);				//Path to this image file
+		filenames.push_back( this->GetFilename(fileName) );	//Filename of this image
+		bool open_slide_success = this->LoadDifferentLevelInOpenSlide(OpenSlideCurrentLevel);
 		return true;
 	}
 #else
@@ -396,6 +352,98 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 
 	return true;
 }
+
+#ifdef USE_OPENSLIDE
+bool Image::LoadDifferentLevelInOpenSlide(int layer_num){
+	if( !OpenSlideManaged )
+		return false;
+	std::string previous_file = path+filenames.at(filenames.size()-1);
+	std::cout<<"DEBUG: Filename = "<<previous_file;
+	openslide_t *openslide_reader = openslide_open(previous_file.c_str());
+	int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
+	if( layer_num >= OpenSlideNumLevels || layer_num<0 ){
+		std::cerr << "THE SLIDE LEVEL EXCEEDS THE NUMBER OF LAYERS" << std::endl;
+		return false;
+	}
+	this->OpenSlideCurrentLevel = layer_num;
+	//Allocate memory and read image
+	int64_t width,height;
+	openslide_get_layer_dimensions(openslide_reader, OpenSlideCurrentLevel, &width, &height);
+	uint64_t mem_needed = width*height*4;
+	uint64_t mem_needed_rgb = width*height;
+	uint32_t *buffer = (uint32_t *) malloc(mem_needed);
+	openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
+
+	//Fill in info for the new image
+	//Don't bother with the colors defaults will be set
+	Info nInfo;
+	nInfo.numColumns = width;		//x-dim
+	nInfo.numRows = height;		//y-dim
+	nInfo.numZSlices = 1;		//z-dim 
+	nInfo.numTSlices = 1;		//T-slices 
+	nInfo.bytesPerPix = 1;		//Beacuse Image is RGB
+	nInfo.dataType = itk::ImageIOBase::UCHAR;	//8-bit RGB Datatype
+	nInfo.numChannels = 3;		//Till we figure out how to read more channels with openslide
+
+	m_Info = nInfo;			//Copy info into current image
+
+	uint64_t numBytesPerChunk = m_Info.BytesPerChunk();
+	//Create a pointer for each channel and allocate memory
+	imageDataPtrs.resize(1);		//Since there is only one time pt
+	ImageMemoryBlock block;
+	block.manager = FTK;
+	for(uint32_t c=0; c<m_Info.numChannels; ++c){
+		void * mem = malloc(numBytesPerChunk);
+		if(mem == NULL){
+			std::cerr << "Unable to allocate enough memory for the slide\n";
+			return false;
+		}
+		block.mem = mem;
+		imageDataPtrs[0].push_back(block);
+	}
+
+	uint64_t b = 0;
+	for( uint64_t i=0; i<mem_needed_rgb; ++i ){
+		uint32_t ch = 0; ++i; 	//Skip alpha
+		for(int32_t c=0; c<m_Info.numChannels; ++c){
+			unsigned char *toLoc = ((unsigned char*)(imageDataPtrs[0][ch++].mem));
+			toLoc[b] = buffer[i++];
+		}
+		++b;
+	}
+	free( buffer );
+	return true;
+}
+
+bool Image::SaveMhdFromOpenSlide(std::string out_filename){
+	if( !OpenSlideManaged )
+		return false;
+	std::string previous_file = path+filenames.at(filenames.size()-1);
+	std::cout<<"DEBUG: Filename = "<<previous_file;
+	openslide_t *openslide_reader = openslide_open(previous_file.c_str());
+	int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
+
+	if( !strcmp(GetExtension(out_filename).c_str(),"mhd") )
+		out_filename = out_filename + ".mhd";
+
+	if( OpenSlideCurrentLevel == (OpenSlideNumLevels-1) ){
+		//Write image in memory as it is the bottom layer
+		
+	}
+	else{
+		int64_t width,height;
+		openslide_get_layer_dimensions(openslide_reader, (OpenSlideNumLevels-1), &width, &height);
+		uint64_t mem_needed = width*height*4;
+		uint64_t mem_needed_rgb = width*height;
+		uint32_t *buffer = (uint32_t *) malloc(mem_needed);
+		openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
+		asd;
+	}
+}
+#endif
+
+
+
 
 bool Image::LoadLSMImage( std::string fileName )
 { 
@@ -601,6 +649,7 @@ bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTim
 	if(m_Info.numTSlices==2)
 		FileNames.push_back(this->filenames);
 	FileNames.push_back(img->GetFilenames());
+	//filenames.push_back( this->GetFilename(fileName.at(0)));		//Filename of this image
 	for (int ch=0; ch<m_Info.numChannels; ++ch)
 	{
 		block.mem = img->GetDataPtr(0,ch,mode);
