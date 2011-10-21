@@ -50,7 +50,11 @@ limitations under the License.
 #include <vector>
 #include <string>
 
-//class Dendrogram;
+/**
+* SampleEditor
+* A simple tool to show how to use the ftkGUI classes for table viewing
+* and manipulation.
+*/ 
 class SampleEditor : public QMainWindow
 {
     Q_OBJECT;

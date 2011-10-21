@@ -108,10 +108,6 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	{
 		graph->AddEdge( table->GetValue(i,0).ToInt(), table->GetValue(i,1).ToInt());
 	}
-
-	std::ofstream ofs("mutablegraph.txt", std::ofstream::out);
-	graph->Print( ofs);
-	ofs.close();
 	
 	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
 	this->theme->SetLineWidth(5);

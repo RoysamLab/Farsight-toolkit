@@ -6,6 +6,9 @@
 #include <mbl/mbl_stats_nd.h>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include "ftkUtils.h"
+#include "transportSimplex.h"
+
+#define NUM_BIN 20
 
 SPDAnalysisModel* SPDAnalysisModel::s_pmodel = NULL;
 
@@ -38,6 +41,11 @@ SPDAnalysisModel::SPDAnalysisModel()
 SPDAnalysisModel::~SPDAnalysisModel()
 {
 
+}
+
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataMatrix()
+{
+	return this->DataTable;
 }
 
 bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName)
@@ -708,4 +716,187 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex)
 void SPDAnalysisModel::GetTableHeaders(std::vector<std::string> &headers)
 {
 	headers = this->headers;
+}
+
+void SPDAnalysisModel::GetMatrixDistance( vnl_matrix<double>& data, vnl_vector<double>&distance, DISTANCE_TYPE type)
+{
+	unsigned int num = data.rows() * ( data.rows() - 1) / 2;
+	distance.set_size( num);
+	unsigned int ind = 0;
+	
+	switch( type)
+	{
+	case CITY_BLOCK:
+		for( unsigned int i = 0; i < data.rows(); i++)
+		{
+			for( unsigned int j = i + 1; j < data.rows(); j++)
+			{
+				distance[ind] = 0;
+				vnl_vector<double> sub = data.get_row(j) - data.get_row(i);
+				for( unsigned int k = 0; k < sub.size(); k++)
+				{
+					distance[ind] += abs( sub[k]);
+				}
+				ind++;
+			}
+		}
+		break;
+	case SQUARE_DISTANCE:
+		break;
+	default:
+		break;
+	}
+}
+
+void SPDAnalysisModel::GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance)
+{
+	int size = vertex.size();
+	MSTdistance.set_size( size - 1);   // vertex num is "size", MST edges num is "size - 1"
+	int j = 0;
+	for( int i = 0; i < size; i++)
+	{
+		if( i != vertex[i])
+		{
+			int min = vertex[i] > i ? i : vertex[i];
+			int max = vertex[i] > i ? vertex[i] : i;
+			int index = min * size - ( 1 + min) * min / 2 + ( max - min - 1);
+			MSTdistance[j++] = distance[ index];
+		}
+	}
+}
+
+vnl_vector<unsigned int> SPDAnalysisModel::Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval)
+{
+	double inter = ( distance.max_value() - distance.min_value()) / num_bin;
+	interval.set_size( num_bin + 1);
+	for( unsigned int i = 0; i <= num_bin; i++)
+	{
+		interval[i] = distance.min_value() + i * inter;
+	}
+
+	vnl_vector<unsigned int> amount( num_bin);
+	for( unsigned int i = 0; i < num_bin; i++)
+	{
+		amount[i] = 0;
+	}
+
+	for( unsigned int i = 0; i < distance.size(); i++)
+	{
+		int ind = floor((distance[i] - distance.min_value()) / inter);
+		if( ind == num_bin)
+		{
+			ind =  num_bin - 1;
+		}
+		amount[ind] += 1;
+	}
+	return amount;
+}
+
+vnl_vector<unsigned int> SPDAnalysisModel::Hist(vnl_vector<double>&distance, vnl_vector<double>& interval)
+{
+	double inter = interval[1] - interval[0];   // interval value
+	vnl_vector<unsigned int> distribution( interval.size() - 1);
+	for( unsigned int i = 0; i < interval.size() - 1; i++)
+	{
+		distribution[i] = 0;
+	}
+
+	for( unsigned int i = 0; i < distance.size(); i++)
+	{
+		if( distance[i] >= interval.min_value() && distance[i] <= interval.max_value())
+		{
+			unsigned int index = floor( (distance[i] - interval.min_value()) / inter);
+			if( index >= interval.size() - 1)
+			{
+				index = interval.size() - 2;
+			}
+			distribution[index]++;
+		}
+	}
+	return distribution;
+}
+
+double Dist(int *first, int *second)
+{
+	return abs(*first - *second);
+}
+
+double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second)
+{
+	using namespace dt_simplex;
+	int *src = new int[first.size()];
+	double *src_num = new double[first.size()];
+	unsigned int first_sum = first.sum();
+	for( int i = 0; i < first.size(); i++)
+	{
+		src[i] = i;
+		src_num[i] = (double)first[i] / first_sum;    // convert to the distribution percentage
+	}
+
+	int *snk = new int[second.size()];
+	unsigned int second_sum =  second.sum();
+	double *snk_num = new double[second.size()];
+	for( int i = 0; i < second.size(); i++)
+	{
+		snk[i] = i;
+		snk_num[i] = (double)second[i] / second_sum;    // convert to the distribution percentage
+	}
+
+	TsSignature<int> srcSig(first.size(), src, src_num);
+	TsSignature<int> snkSig(second.size(), snk, snk_num);
+
+	double result = transportSimplex(&srcSig, &snkSig, Dist);
+	
+	delete src;
+	delete src_num;
+	delete snk;
+	delete snk_num;
+
+	return result;
+}
+
+void SPDAnalysisModel::RunEMDAnalysis()
+{
+	vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
+	vnl_vector<double> distance;
+	vnl_vector<double> mstdis;
+
+	/** Generating the distance vector for module data and its MST data */
+	std::vector<vnl_vector<double> > moduleDistance;
+	std::vector<vnl_vector<double> > MSTDistance;
+
+	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
+
+	for( int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
+	{
+		vnl_matrix<double> clusterData( this->DataMatrix.rows(), moduleSize[i]);
+		GetCombinedMatrix( this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
+		
+		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
+		moduleDistance.push_back( distance);
+		
+		std::vector< boost::graph_traits<Graph>::vertex_descriptor> vertex = *iter;
+		GetMSTMatrixDistance( distance, vertex, mstdis);
+		MSTDistance.push_back( mstdis);
+	}
+
+	std::ofstream histOfs("emd.txt", std::ofstream::out);
+	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
+
+	for( int i = 0; i < moduleDistance.size(); i++)
+	{
+		vnl_vector<double> hist_interval;
+		vnl_vector<unsigned int> moduleHist = Hist( moduleDistance[i], NUM_BIN, hist_interval);
+		//histOfs << moduleHist << endl;
+		for( int j = 0; j < MSTDistance.size(); j++)
+		{	
+			std::cout<< "matching module " << i << " with MST " << j<<endl;
+			vnl_vector<unsigned int> mstHist = Hist( MSTDistance[j], hist_interval);   
+			//histOfs << mstHist << endl;
+			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist);
+		}
+	}
+	histOfs << EMDMatrix << endl;
+	histOfs.close();
+	std::cout<< "EMD matrix saved in file emd.txt"<<endl;
 }

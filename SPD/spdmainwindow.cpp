@@ -43,11 +43,14 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	generateMSTButton = new QPushButton(tr("MST"));
 	showMSTButton = new QPushButton(tr("Show MST"));
 
+	emdButton = new QPushButton(tr("EMD"));
+
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
 	connect(showMSTButton, SIGNAL(clicked()), this, SLOT(showMST()));
+	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 
     QGridLayout *mainLayout = new QGridLayout;
 
@@ -87,6 +90,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
     mainLayout->addWidget(generateMSTButton, 6, 2);
 	mainLayout->addWidget(showMSTButton, 7, 2);
+	mainLayout->addWidget(emdButton, 8, 2);
 
     setLayout(mainLayout);
 
@@ -178,7 +182,14 @@ void SPDMainWindow::showMST()
 	{
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
+		this->graph->setModels(SPDModel->GetDataMatrix());
 		this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
 		this->graph->ShowGraphWindow();
 	}
 }
+
+void SPDMainWindow::emdFunction()
+{
+	this->SPDModel->RunEMDAnalysis();
+}
+

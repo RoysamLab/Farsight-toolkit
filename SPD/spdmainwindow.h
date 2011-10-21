@@ -24,6 +24,7 @@ private slots:
 	void generateMST();
 	void showMST();
 	void AddClusterModuleToList();
+	void emdFunction();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -48,7 +49,7 @@ private:
 	QListWidget *listWidget;
 	QPushButton *generateMSTButton;
 	QPushButton *showMSTButton;
-
+	QPushButton *emdButton;
     QString FileName;
 	GraphWindow *graph;
 };

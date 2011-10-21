@@ -17,7 +17,8 @@ QT4_WRAP_CPP( GUI_MOC_SRCS spdmainwindow.h )
 
 SET(SPD_SRCS
 	SPDAnalysisModel.h
-	SPDAnalysisModel.cpp)
+	SPDAnalysisModel.cpp
+	transportSimplex.h)
 
 SET(SPD_TEST_SRCS
 	spdmainwindow.h
