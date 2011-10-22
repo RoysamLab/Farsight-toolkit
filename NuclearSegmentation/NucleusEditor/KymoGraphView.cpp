@@ -280,6 +280,7 @@ void TrackingKymoView::GenerateTracks()
 					tbit.y = (*f)[cox][coy].Centroid[1]*1.0;
 					tbit.z = ((*f)[cox][coy].time)*(time_offset);
 					tbit.time = (*f)[cox][coy].time;
+						
 					tbit.id = (*f)[cox][coy].num;
 					printf("About to add TraceBit\n");
 					tline->AddTraceBit(tbit);
@@ -303,7 +304,7 @@ void TrackingKymoView::GenerateTracks()
 
 vtkSmartPointer<vtkActor> TrackingKymoView::getTrackPoints(std::vector<TraceBit> vec)
 {
-	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
+	point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
 	vtkSmartPointer<vtkStringArray> labels = vtkSmartPointer<vtkStringArray>::New();	// Labels Array
@@ -337,10 +338,10 @@ vtkSmartPointer<vtkActor> TrackingKymoView::getTrackPoints(std::vector<TraceBit>
 	cubemap->GlobalImmediateModeRenderingOn();
 
 	// Actor(OpenGL):
-	vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
+	cubeact = vtkSmartPointer<vtkActor>::New();
 	cubeact->SetMapper(cubemap);
 	//cubeact->SetPickable(0);
-	cubeact->PickableOn();
+	cubeact->PickableOff();
 	cubeact->GetProperty()->SetPointSize(5);
 	cubeact->GetProperty()->SetOpacity(.5);
 
@@ -687,6 +688,15 @@ void TrackingKymoView::HandleKeyPress(vtkObject* caller, unsigned long event, vo
 	case 'l':
 		view->ToggleLabelVisibility();
 		break;
+	case 'd':
+		view->Delete();
+		break;
+	case 'p':
+		view->TogglePickMode();
+		break;
+	case 'c':
+		view->ConnectNodes();
+		break;
 	}
 
 }
@@ -729,4 +739,319 @@ void TrackingKymoView::CreateInteractorStyle()
 	this->Interactor->RemoveObservers(vtkCommand::KeyReleaseEvent);
 	this->Interactor->RemoveObservers(vtkCommand::CharEvent);
 	this->Interactor->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
+
+	this->SetupInteractorStyle();
+	this->myCellPicker = vtkSmartPointer<vtkCellPicker>::New();
+	this->myCellPicker->SetTolerance(0.004);
+	this->Interactor->SetPicker(this->myCellPicker);
+	this->isPicked = vtkSmartPointer<vtkCallbackCommand>::New();
+	this->isPicked->SetCallback(PickCell);
+
+	//isPicked caller allows observer to intepret click 
+	this->isPicked->SetClientData(this);            
+	this->Interactor->AddObserver(vtkCommand::RightButtonPressEvent,isPicked);
+
 }
+void TrackingKymoView::PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata)
+{
+	TrackingKymoView* view = (TrackingKymoView*)clientdata;
+	int *pos = view->Interactor->GetEventPosition();
+	view->Interactor->GetPicker()->Pick(pos[0],pos[1],0.0,view->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+	vtkCellPicker *cell_picker = (vtkCellPicker *)view->Interactor->GetPicker();
+	if(!view->Interactor->GetControlKey())
+	{
+		view->TSelection.clear();
+		view->NSelection.clear();
+		view->ResetOriginalColors();
+	}
+	if(view->Interactor->GetControlKey()&& view->NSelection.size()== 2) // make sure that not more than 2 nodes are selected at once
+		view->NSelection.clear();
+
+	if (cell_picker->GetCellId() == -1) 
+			std::cout<<"nothing has been selected\n";
+	else if(cell_picker->GetViewProp()!=NULL)
+	{
+		
+		std::cout<<"selected:"<<cell_picker->GetCellId()<<"\n";
+		if(view->cubeact->GetPickable()==1)
+		{
+			view->NSelection.insert(cell_picker->GetCellId());
+			// add a sphere to the location of the picked cell
+		}
+		else
+		{
+			view->TSelection.insert(cell_picker->GetCellId());
+			view->m_trackpoly->GetCellData()->GetScalars("colors")->SetTuple3(cell_picker->GetCellId(),255.0,255.0,255.0);
+			view->m_trackpoly->Modified();
+			view->m_imageview->GetRenderWindow()->Render();
+		}
+	}
+	
+}
+void TrackingKymoView::SetupInteractorStyle(void)
+{
+	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
+	this->Interactor->SetInteractorStyle(style);
+	this->m_imageview->GetRenderWindow()->Render();
+}
+void TrackingKymoView::Delete(void)
+{
+	if(TSelection.empty()) return;
+	std::cout<<"selection size: "<<TSelection.size()<<"\n";
+	std::set<unsigned int>::iterator tsel_iter;
+	for(tsel_iter = TSelection.begin();tsel_iter!=TSelection.end();++tsel_iter)
+	{
+		this->DeleteAndRelabelData(*tsel_iter);
+//		this->DeleteAndRelabelData();
+	}
+	printf("done deleting\n");
+	this->UpdateTracePolyData();
+	this->UpdateLabels();
+	this->m_imageview->GetRenderWindow()->Render();
+	TSelection.clear();		// clear selection
+}
+void TrackingKymoView::UpdateTracePolyData()
+{
+	//printf("I am in  UpdateTracePolyData\n");
+	m_trackpoly = m_tobj->GetVTKPolyData();
+	m_trackmapper->SetInput(m_trackpoly);
+	m_trackactor->SetMapper(m_trackmapper);
+	m_trackactor->GetProperty()->SetLineWidth(3.0);
+	m_trackpoly->Modified();
+}
+
+void TrackingKymoView::ConnectNodes(void)
+{
+	if(NSelection.empty()|| NSelection.size()!=2) return;
+
+	//std::vector<TraceLine*> * tline = m_tobj->GetTraceLinesPointer();
+
+	//std::set<unsigned int>::iterator tsel_iter;
+	//TraceLine * new_tline = new TraceLine();
+	//std::set<int> selected_nodes;
+	//int indices[2];
+	//int * indicesptr = indices;
+	//std::vector<TraceLine*>* tline = m_tobj->GetTraceLinesPointer();
+	//for(tsel_iter = NSelection.begin();tsel_iter!=NSelection.end();++tsel_iter)
+	//{	
+	//	TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[*tsel_iter]);
+	//	TraceLine::TraceBitsType::iterator tbit_iter = tline->at(i)->GetTraceBitIteratorBegin();
+	//	while(tbit_iter!=tline->at(i)->GetTraceBitIteratorEnd())
+	//	{
+	//		selected_nodes.insert(tbit_iter->id);
+	//		printf("About to add TraceBit\n");
+	//		new_tline->AddTraceBit(*tbit_iter);
+	//	}
+
+		//for(int i=0; i<TraceBitVector.size();++i)
+		//{
+		//	if(TraceBitVector.at(i).marker == *tsel_iter)
+		//	{
+		//			TraceBit tbit;
+		//			tbit.x = TraceBitVector.at(i).x;
+		//			tbit.y = TraceBitVector.at(i).y;
+		//			tbit.z =  TraceBitVector.at(i).z;
+		//			tbit.time =  TraceBitVector.at(i).time;
+		//			tbit.id = TraceBitVector.at(i).id;
+		//			selected_nodes.insert(tbit.id);
+		//			printf("About to add TraceBit\n");
+		//			new_tline->AddTraceBit(tbit);
+		//			*indicesptr = i;
+		//			++indicesptr;
+		//	}
+		//}
+	//}
+	//if(selected_nodes.size()==1)
+	//{
+	//	printf("cannot connect nodes with the same id\n");
+	//	return;
+	//}
+	//else if(selected_nodes.size()==2)
+	//{
+	//	std::set<int>::iterator id_iter;
+	//	int maxId = this->GetMaxId();
+	//	++maxId;
+	//	for(id_iter = selected_nodes.begin(); id_iter!= selected_nodes.end();++id_iter)
+	//	{
+	//		for(int i=0; i<TraceBitVector.size();++i)
+	//		{
+	//			if(TraceBitVector.at(i).id == *id_iter)
+	//				TraceBitVector.at(i).id = maxId;
+	//		}
+	//	}
+	//	this->UpdateLabels();
+	//}
+	//else
+	//{
+	//	printf("I don't know what's happening\n");
+	//	return;
+	//}
+	//this->AppendNewPolyLine(new_tline);
+	////int max_index = 0;
+	////if(TraceBitVector.at(indices[0]).time>TraceBitVector.at(indices[1]).time)
+	////	max_index = indices[0];
+	////else
+	////	max_index = indices[1];
+
+	////TraceBitVector.at(max_index).track_cell_id = max_index;
+	//m_imageview->GetRenderWindow()->Render();
+
+}	
+void TrackingKymoView::AppendNewPolyLine(TraceLine * new_tline)
+{
+
+	m_tobj->GetTraceLinesPointer()->push_back(new_tline);
+	m_trackpoly = m_tobj->GetVTKPolyData();
+	TraceBitVector = m_tobj->CollectTraceBits();
+	m_trackmapper->SetInput(m_trackpoly);
+	m_trackactor->SetMapper(m_trackmapper);
+	m_trackactor->GetProperty()->SetLineWidth(3.0);
+	m_trackpoly->Modified();
+}
+void TrackingKymoView::TogglePickMode(void)
+{
+	if(cubeact->GetPickable()==1)
+	{
+		cubeact->PickableOff();
+		m_trackactor->PickableOn();
+	}
+	else
+	{
+		m_trackactor->PickableOff();
+		cubeact->PickableOn();
+	}
+}
+
+void TrackingKymoView::DeleteAndRelabelData(int vtk_cell_id)
+//void TrackingKymoView::DeleteAndRelabelData(void)
+{
+	if(TSelection.empty()) return;
+	TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[vtk_cell_id]);
+	TraceBit tb1 = tline->subtrace_hash[vtk_cell_id].at(0);
+	TraceBit tb2 = tline->subtrace_hash[vtk_cell_id].at(1);
+	int maxtime = MAX(tb1.time,tb2.time);
+
+	std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
+	std::vector<TraceLine*>::iterator trace_lines_iter;
+	for(trace_lines_iter = trace_lines->begin() ;trace_lines_iter!= trace_lines->end(); ++trace_lines_iter)
+	{
+		if(tline->GetId() == (*trace_lines_iter)->GetId())
+		{
+			int new_id = this->GetMaxId()+1;
+			trace_lines->erase(trace_lines_iter);
+			TraceLine::TraceBitsType::iterator tbit_iter = tline->GetTraceBitIteratorBegin();
+			TraceLine * new_tline1 = new TraceLine();
+			TraceLine * new_tline2 = new TraceLine();
+
+			
+			while(tbit_iter != tline->GetTraceBitIteratorEnd())
+			{
+				if((*tbit_iter).time < maxtime)
+				{
+					new_tline1->AddTraceBit(*tbit_iter);
+				}
+				else 
+				{
+					(*tbit_iter).id = new_id;
+					new_tline2->AddTraceBit(*tbit_iter);
+				}
+				++tbit_iter;
+			}
+			trace_lines->push_back(new_tline1);
+			new_tline2->SetId(new_id);
+			trace_lines->push_back(new_tline2);
+			break;
+		}
+	}
+
+
+
+
+
+
+}
+int TrackingKymoView::GetMaxId(void)
+{
+	int max = 0;
+
+	std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
+		//std::cout<<"tline size at max id: "<<trace_lines->size()<<"\n";
+
+	for(int i=0; i<trace_lines->size();++i)
+		max = MAX(trace_lines->at(i)->GetId(),max);
+	return max;
+}
+
+void TrackingKymoView::UpdateLabels(void)
+{
+	//printf("entered UpdateLabels\n");
+	m_vtkrenderer->RemoveActor(labelActor);
+	m_vtkrenderer->Modified();
+	point_poly->GetPointData()->RemoveArray("labels");
+	point_poly->GetPointData()->RemoveArray("sizes");
+	point_poly->Modified();
+
+
+	std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
+	//std::cout<<"tline size at UpdateLabels: "<<trace_lines->size()<<"\n";
+
+	std::vector<TraceLine*>::iterator trace_lines_iter;
+
+	//vtkSmartPointer<vtkPolyData> new_point_poly = vtkSmartPointer<vtkPolyData>::New();
+
+	vtkSmartPointer<vtkStringArray> labels = vtkSmartPointer<vtkStringArray>::New();	// Labels Array
+	//labels->SetNumberOfValues(TraceBitVector.size());
+	labels->SetName("labels");
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkIntArray> sizes = vtkSmartPointer<vtkIntArray>::New();			// Priority Arrays used by vtkPointSetToLabelHierarchy
+	//sizes->SetNumberOfValues(vec.size());
+	sizes->SetName("sizes");
+
+	int id = this->GetMaxId();
+	//printf("max id: %d\n",id);
+	for(trace_lines_iter = trace_lines->begin() ;trace_lines_iter!= trace_lines->end(); ++trace_lines_iter)
+	{
+		TraceLine::TraceBitsType::iterator tbit_iter = (*trace_lines_iter)->GetTraceBitIteratorBegin();
+		//	std::cout<<"I am in trace: "<<(*trace_lines_iter)->GetId()<<"\n";
+		while(tbit_iter != (*trace_lines_iter)->GetTraceBitIteratorEnd())
+		{
+			if(tbit_iter->id == id)
+			{
+			//	std::cout<<"I am in trace bit: "<<tbit_iter->id<<", "<< tbit_iter->time<<"\n";
+			//	scanf("%d");
+			}
+			int return_id = points->InsertNextPoint(tbit_iter->x,tbit_iter->y,tbit_iter->z);
+			//Labels:
+			stringstream strId;
+			strId <<"("<<tbit_iter->id<<","<<tbit_iter->time<<")";
+			labels->InsertValue(return_id, strId.str());
+			sizes->InsertValue(return_id, tbit_iter->id);
+			++tbit_iter;
+		}
+	}
+	//printf("finished part of UpdateLabels\n");
+	point_poly->SetPoints(points);
+	point_poly->GetPointData()->AddArray(labels);
+	point_poly->GetPointData()->AddArray(sizes);
+	point_poly->Modified();
+	// Generate the label hierarchy.
+	vtkSmartPointer<vtkPointSetToLabelHierarchy> pointSetToLabelHierarchyFilter =vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
+	pointSetToLabelHierarchyFilter->SetInputConnection( point_poly->GetProducerPort());
+	pointSetToLabelHierarchyFilter->SetLabelArrayName("labels");
+	pointSetToLabelHierarchyFilter->SetPriorityArrayName("sizes");
+	pointSetToLabelHierarchyFilter->Update();
+
+	// Create a mapper and actor for the labels.
+	vtkSmartPointer<vtkLabelPlacementMapper> labelMapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
+	labelMapper->SetInputConnection(pointSetToLabelHierarchyFilter->GetOutputPort());
+	labelActor = vtkSmartPointer<vtkActor2D>::New();
+	labelActor->SetMapper(labelMapper);
+	m_vtkrenderer->AddActor(labelActor);
+	m_vtkrenderer->Modified();
+}
+
+
+		
+			
+
+

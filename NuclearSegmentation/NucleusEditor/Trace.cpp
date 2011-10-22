@@ -235,27 +235,14 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkU
 	return_id = line_points->InsertNextPoint(point);
 	hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
-//	point_scalars->InsertNextTuple1(iter->id/40.0);
-//	point_scalars->InsertNextTupleValue(color);
-//	point_scalars->InsertNextTuple1(0.0);
-
-	/* To add a line between parent line's last point and the first point in the current line */
-	//if(tline->GetParent() != NULL)
-	//{
-	//	//printf("I should not have a parent at all! why did I come here?\n");
-	//	if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
-	//	{
-	//		cell_id = line_cells->InsertNextCell(2);
-	//		cell_id_array->push_back(cell_id); 
-	//		hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
-	//		line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
-	//		line_cells->InsertCellPoint(return_id);
-	//	}
-	//}
+	std::vector<TraceBit> tbitpair;
+	//tbitpair.push_back(*iter);
 	/* Rest of the lines for the current tline */
 	iter++;
 	int pc = 0;
 	unsigned int track = 1;
+	unsigned int cid = 1;
+	std::list<TraceBit>::iterator old_iter;
 	while(iter!=tline->GetTraceBitIteratorEnd())
 	{
 		//printf("in loop %d\n",++pc);
@@ -266,20 +253,36 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkU
 		hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
 		//point_scalars->InsertNextTuple1(iter->id/40.0);
-		iter->track_marker  = point_scalars->InsertNextTupleValue(color);
+		iter->track_marker = point_scalars->InsertNextTupleValue(color);
 		if (pc==0)
 			track = iter->track_marker;
-		++pc;
-		
+				
 		cell_id = line_cells->InsertNextCell(2);
+		// store vtk cells and tbits defining them***********************
+		--iter;
+		old_iter = iter;
+		tbitpair.push_back(*old_iter);
+		++iter;
+		tbitpair.push_back(*iter);
+		tline->subtrace_hash[cell_id]= tbitpair;
+		tbitpair.clear();
+		// finished storing**********************************************
+
+		iter->track_cell_id =cell_id;
+		if (pc==0)
+			cid = iter->track_cell_id;
+
 		cell_id_array->push_back(cell_id);
 		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
 		line_cells->InsertCellPoint(old_id);
 		line_cells->InsertCellPoint(return_id);
+		
 		++iter;
+		++pc;
 	}
 	iter = tline->GetTraceBitIteratorBegin();
 	iter->track_marker = track;
+	iter->track_cell_id = cid;
 
 
 

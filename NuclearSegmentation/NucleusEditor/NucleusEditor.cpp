@@ -1071,7 +1071,7 @@ void NucleusEditor::loadProject()
 	}
 	else
 	{
-		this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
+		//this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
 	}
 
 	if(projectFiles.log == "")	//Not opposite boolean here
@@ -2670,7 +2670,7 @@ void NucleusEditor::displayKymoGraph()
 {
 	if(!labImg) return;
 	if(!myImg) return;
-	kymoView = new TrackingKymoView(myImg,nucSeg->featureVector4DImage);
+	kymoView = new TrackingKymoView(myImg,nucSeg->featureVector4DImage,segView,selection);
 
 }
 #endif

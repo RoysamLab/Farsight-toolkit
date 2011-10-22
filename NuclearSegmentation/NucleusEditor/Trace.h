@@ -36,6 +36,7 @@ struct TraceBit{
 	double x,y,z,r;
 	int time;
 	int id;
+	unsigned int track_cell_id;
 	unsigned int marker;
 	unsigned int track_marker;
 	int class_id;
@@ -87,9 +88,11 @@ public:
 	}
 	std::vector<unsigned int> * GetMarkers() { return &m_markers;}
 	std::vector<TraceLine*> * GetBranchPointer(){ return &m_branches;}
+	stdext::hash_map<unsigned int,std::vector<TraceBit> > subtrace_hash;
 
 private:
 	int m_id;
+	int old_id;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
 	TraceLine *m_parent;

@@ -107,6 +107,8 @@
 #include <vtkVolumeProperty.h>
 #include <vtkPiecewiseFunction.h>
 #include <vtkColorTransferFunction.h>
+#include "vtkRendererCollection.h"
+#include "vtkAppendPolyData.h"
 
 // Farsight Includes:
 #include "ftkGUI/LabelImageViewQT.h"
@@ -275,11 +277,15 @@ public:
 	void SetTrackClasses(int n);// needs to be called after the previous function
 	//void UpdateTrackClassesView(void);
 	
-	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	void CreateInteractorStyle();
 
 	void GenerateImages();
 	void GenerateTracks();
+
+	// Edit Functions:
+	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
+
 	~TrackingKymoView()
 	{
 		delete m_mainwindow;
@@ -332,19 +338,45 @@ private:
 	vtkSmartPointer<vtkActor> m_trackactor;
 	vtkSmartPointer<vtkPolyDataMapper> m_trackmapper;
 	vtkSmartPointer<vtkPolyData> m_trackpoly;
+	vtkSmartPointer<vtkPolyData> point_poly;
 
 	vtkSlider2DKymoCallbackContrast *m_callback_contrast;
 	vtkSlider2DKymoCallbackBrightness *m_callback_brightness;
 
+
+
 	std::map<int,std::vector<TraceBit> > TraceBitMap; // key value is time, mapped values are the trace bits 
 	std::vector<TraceBit> TraceBitVector;
-	vtkSmartPointer<vtkActor> CubeActor;
+	vtkSmartPointer<vtkActor> cubeact;
 	vtkSmartPointer<vtkActor2D> labelActor;
+	vtkSmartPointer<vtkActor> CubeActor;
 	vtkSmartPointer<vtkActor> currentTrackActor;
 	vtkSmartPointer<vtkCubeAxesActor2D> cubeAxesActor;
 	vtkSmartPointer<vtkPointWidget> pointerWidget3d;
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
+
+
+	// Editing Stuff:
+	void SetupInteractorStyle(void);
+	void Delete(void);
+	void ConnectNodes(void);
+	void RelabelDelete(void);
+	void TogglePickMode(void);
+	void UpdateLabels(void);
+	void AppendNewPolyLine(TraceLine * new_tline);
+	void DeleteAndRelabelData(int vtk_cell_id);
+	//void DeleteAndRelabelData(void);
+	void UpdateTracePolyData(void);
+
+	
+
+	int GetMaxId(void);
+	vtkSmartPointer<vtkCellPicker> myCellPicker;
+	vtkSmartPointer<vtkCallbackCommand> isPicked;
+	std::set<unsigned int> TSelection;			// set of selected tracks
+	std::set<unsigned int> NSelection;			// set of selected tracks
+
 
 };
 
