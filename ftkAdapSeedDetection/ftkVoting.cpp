@@ -421,6 +421,25 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, in
 }
 
 // ############################################################################################################################################################################
+void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int &mag)
+{
+
+	iterator binRequired = begin();
+	ftkBins2D::iterator from = binRequired[dist].begin();
+	ftkBins2D::iterator to = binRequired[dist].end();
+
+	for(ftkBins2D::iterator it = from; it != to; it++) 
+	{
+		//p[it->off] += vp.mag;// * (1/(double)mag)/*it->w*/; 
+		p[it->off] += vp.mag * (1/(double)mag); 
+		//p[it->off] += (1/(double)mag)/*it->w*/; 
+		//cout<<" "<<mag;
+		//p[it->off] += 1; // Number of votes, not using magnitude
+		contador_1++;
+	}
+}
+
+// ############################################################################################################################################################################
 void inline ftkCone2D::vote_dir(vector<vector<int> >& p_dir, VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int& offset_1)
 {
 
@@ -554,7 +573,7 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 
 				//cout<<endl<<"coutn: "<<countt++;
 
-				////cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx<<","<<yy<<"|"<<-xx<<" "<<yy<<"|"<<xx<<" "<<-yy<<"|"<<-xx<<" "<<-yy;
+				//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx<<","<<yy<<"|"<<-xx<<" "<<yy<<"|"<<xx<<" "<<-yy<<"|"<<-xx<<" "<<-yy;
 			}
 		}
 	}
@@ -598,9 +617,18 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 			wp.w = 1; // In case of deciding to put some weight
 			_conesPru[ang_quan][R_quan].push_back(wp);
 
+
 			//cout<<endl<<"coutn: "<<countt++;
 
+			//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
+
 	}
+
+
+	//cout<<"Terminio: ";
+	//int ght;
+	//cin>>ght;
+
 
 	//countt = 0;
 	for( int tt=0; tt<_conesPru.size(); tt++ )
@@ -635,6 +663,212 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 	//cin>>stop11;
 
 }
+
+
+//// ############################################################################################################################################################################
+void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
+{
+
+	int stop11;
+
+	_conesPru_prob = vector<ftkCone2D>(ntheta); // Todos los conos posibles
+	for( int uu=0; uu<ntheta; uu++ )
+	{
+		for( int uuu=0; uuu<hmax-hmin+1; uuu++ )
+		{
+			ftkBins2D bin;
+			_conesPru_prob[uu].push_back(bin);
+		}
+	}
+
+	int y1;
+	int R;
+	double R_dou;
+	int R_quan;
+	int ang_quan;
+	double x_nor, y_nor;
+	double x_nor2, y_nor2;
+	int countt=0;
+
+	ftkWPoint2D wp;
+	//#pragma omp parallel for num_threads(8) private(y1)
+	for( int xx=1; xx<=hmax; xx++ )
+	{
+		y1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx));
+		//#pragma omp parallel for num_threads(8) private(wp,R_dou,R,R_quan,x_nor,y_nor,ang_quan)
+		for( int yy=1; yy<=y1; yy++ )
+		{
+			R_dou = (double)sqrt((double)yy*yy+(double)xx*xx);
+			R = (int)ceil(R_dou);
+			if( R>= hmin) // Can be done more efficiently but for now is ok the speed
+			{
+				
+				R_quan = R-hmin;
+				//cout<<endl<<R_quan;
+				x_nor = ((double)xx)/R_dou;
+				y_nor = ((double)yy)/R_dou;
+				ang_quan = computeAngleIndex(x_nor, y_nor);
+				//ftkWPoint2D wp;
+				wp.x = xx;
+				wp.y = yy;
+				wp.w = 1; // In case of deciding to put some weight
+				//cout<<endl<<ang_quan<<" "<<R_quan;
+				_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+				x_nor2 = -x_nor;
+				y_nor2 = y_nor;
+				ang_quan = computeAngleIndex(x_nor2, y_nor2); // It is like ang_quan + 64, + 128 etc...
+				wp.x = -xx;
+				wp.y = yy;
+				wp.w = 1; // In case of deciding to put some weight
+				_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+				x_nor2 = x_nor;
+				y_nor2 = -y_nor;
+				ang_quan = computeAngleIndex(x_nor2, y_nor2); // It is like ang_quan + 64, + 128 etc...
+				wp.x = xx;
+				wp.y = -yy;
+				wp.w = 1; // In case of deciding to put some weight
+				_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+				x_nor2 = -x_nor;
+				y_nor2 = -y_nor;
+				ang_quan = computeAngleIndex(x_nor2, y_nor2); // It is like ang_quan + 64, + 128 etc...
+				wp.x = -xx;
+				wp.y = -yy;
+				wp.w = 1; // In case of deciding to put some weight
+				_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+				//cout<<endl<<"coutn: "<<countt++<<" BBB";
+
+				//cout<<endl<<" "<<R<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx<<","<<yy<<"|"<<-xx<<" "<<yy<<"|"<<xx<<" "<<-yy<<"|"<<-xx<<" "<<-yy<<" ACA";
+			}
+		}
+	}
+	cout<<endl<<"gggg";
+	//ftkWPoint2D wp;
+	//#pragma omp parallel for num_threads(16) private(wp,R_dou,R_quan,x_nor,y_nor,ang_quan)
+	for( int xx=hmin; xx<=hmax; xx++ )
+	{
+
+			R_dou = xx;
+			R_quan = R_dou-hmin;
+			x_nor = ((double)xx)/R_dou;
+			y_nor = 0;
+			ang_quan = computeAngleIndex(x_nor, y_nor);
+			//ftkWPoint2D wp;
+			wp.x = xx;
+			wp.y = 0;
+			wp.w = 1; // In case of deciding to put some weight
+			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+			x_nor = -((double)xx)/R_dou;
+			y_nor = 0;
+			ang_quan = computeAngleIndex(x_nor, y_nor);
+			wp.x = -xx;
+			wp.y = 0;
+			wp.w = 1; // In case of deciding to put some weight
+			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+			x_nor = 0;
+			y_nor = ((double)xx)/R_dou;
+			ang_quan = computeAngleIndex(x_nor, y_nor);
+			wp.x = 0;
+			wp.y = xx;
+			wp.w = 1; // In case of deciding to put some weight
+			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+			x_nor = 0;
+			y_nor = -((double)xx)/R_dou;
+			ang_quan = computeAngleIndex(x_nor, y_nor);
+			wp.x = 0;
+			wp.y = -xx;
+			wp.w = 1; // In case of deciding to put some weight
+			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+
+			//cout<<endl<<"coutn: "<<countt++;
+
+			//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
+
+	}
+
+
+	cout<<endl<<"Computing probability";
+
+	//for( int tt=0; tt<_conesPru_prob.size(); tt++ )
+	//{
+	//	cout<<endl<<"tamanos: "<<tt<<" "<<_conesPru_prob[tt].size()<<" -> ";
+	//	for( int uu=0; uu<_conesPru_prob[tt].size(); ++uu )
+	//	{
+	//		cout<<" "<<_conesPru_prob[tt][uu].size();
+	//	}
+	//	
+	//}
+
+	//////////////////////////////////////////////
+	//cout<<"Terminio de computar conos de probabilidad: ";
+	//int ght;
+	//cin>>ght;
+	//////////////////////////////////////////////
+
+
+	//countt = 0;
+	for( int tt=0; tt<_conesPru_prob.size(); tt++ )
+	{
+		_conesPru_prob[tt].setOffset();
+	}
+
+	// Now calculate the span
+	double span = sqrt((double)hmax*hmax+(double)radius*radius);
+	double dx_dou = hmax/span;
+	double dy_dou = radius/span;
+	_intSpan = computeAngleIndex(dx_dou, dy_dou);
+	_voteDirec = vector< pair< int,int >> (ntheta);
+	_voteDirec_prob = vector< pair< pair< int,int >, vector <int> > > (ntheta);
+	for( int tt=0; tt<ntheta; tt++ ) // 0 256
+	{
+		pair<int,int> spann;
+		if(tt-_intSpan<0)
+		{
+			spann.first = (tt-_intSpan+ntheta)%ntheta;
+		}
+		else
+		{
+			spann.first = (tt-_intSpan)%ntheta;
+		}
+		spann.second = (tt+_intSpan)%ntheta;
+
+		// calculate how many points at disance 
+		vector< int > vi_temp_1 (hmax-hmin+1,0); //hmax-hmin+1 integers of value 0
+		for( int yy=spann.first; yy!=spann.second; yy=(yy+1)%ntheta )
+		{
+			for( int uu=0; uu<hmax-hmin+1; ++uu )
+			{
+				vi_temp_1[uu]  += _conesPru_prob[yy][uu].size();
+			}
+		}
+
+		pair< pair< int,int >, vector<int> > spann_prob;
+		spann_prob.first = spann;
+		spann_prob.second = vi_temp_1;
+		_voteDirec_prob[tt] = spann_prob;
+
+	}
+
+	//for( int tt=0; tt<ntheta; tt++ ) // 0 256
+	//{
+	//	cout<<endl<<"Tam: "<<tt<<", ";
+	//	for( int uu=0; uu<_voteDirec_prob[tt].second.size(); ++uu )
+	//	{
+	//		cout<<_voteDirec_prob[tt].second[uu]<<" ";
+	//	}
+	//}
+
+	cout<<"Cones computed";
+	//cin>>stop11;
+
+}
+
 
 // ############################################################################################################################################################################
 int ftkVoting::nextConeRadius(int h, int r)
@@ -740,12 +974,21 @@ void ftkVoting::vote()
 	imageGradYPixels->Update();
 	//
 
+	VotingDirType::Pointer imageMaxPixels = VotingDirType::New(); 
+	imageMaxPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageMaxPixels->Allocate();
+	imageMaxPixels->FillBuffer( ceros );
+	imageMaxPixels->Update();
+	//
+
 	VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
 	VotingDirType::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
 	VotingDirType::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageOfConexPixelsArray = imageOfConexPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
+	VotingDirType::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
+	
 
 	vector<VPoint2D>::iterator voting_points_begin = _voting_points.begin();
 	vector<VPoint2D>::iterator voting_points_end = _voting_points.end();
@@ -756,6 +999,7 @@ void ftkVoting::vote()
 
 	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
 	computeCones(_hmin, _hmax, _radius);
+	computeCones_prob(_hmin, _hmax, _radius);
 
 	// Primer Voto
 	int nic=0;
@@ -802,10 +1046,14 @@ void ftkVoting::vote()
 			//cout<<endl<<"Q pasa "<<gg;
 			for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
 			{
-				//cout<<endl<<"\t	Q pasa "<<gg;
-				votar(votingSumArray+it->pos,*it,it->angIndex,gg);
-				votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
-				//votar_dir(votingMaskVotes_dir,votingMaskArray+it->pos,*it,it->angIndex,gg,it->pos);
+				////cout<<endl<<"\t	Q pasa "<<gg;
+				//votar(votingSumArray+it->pos,*it,it->angIndex,gg);
+				//votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
+				////votar_dir(votingMaskVotes_dir,votingMaskArray+it->pos,*it,it->angIndex,gg,it->pos);
+
+				votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
+				votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
+				
 			}
 			stringstream out4;
 			out4<<_intSpan;
@@ -827,14 +1075,33 @@ void ftkVoting::vote()
 				cout<<endl<<"\tProblema escribiendo";
 			}
 
-			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+			//	cout<<endl<<"\tProblema escribiendo";
+			//}
+			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+			//	cout<<endl<<"\tProblema escribiendo";
+			//}
+
+			// Get the maximum value of step by step
+			for( int re=0; re<npix; ++re )
+			{
+				if( votingMaskArray[re] > imageMaxPixelsArray[re] )
+				{
+					imageMaxPixelsArray[re] = votingMaskArray[re];
+				}
+			}
+
+
+			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
+			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 				cout<<endl<<"\tProblema escribiendo";
 			}
-			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
+
+
+			// Errase the mask (only to see step by step/by step) mas detallado todavia, ver los picos mas que todo
+			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
 
 			//// The amount of memory required turns out to be to high :( what to do ? 
 			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
@@ -859,7 +1126,7 @@ void ftkVoting::vote()
 		}
 		int rrr;
 		cout<<endl<<"Fin primer voto: "<<ftkCone2D::contador_1;
-		//cin>>rrr;
+		cin>>rrr;
 
 	//stringstream out44;
 	//out44<<_intSpan;
@@ -1116,6 +1383,20 @@ void inline ftkVoting::votar(VotingDirType::PixelType * p, const VPoint2D& vp, i
 	for( int tt=_voteDirec[angl_indx].first; tt!=_voteDirec[angl_indx].second; tt=(tt+1)%ntheta )
 	{
 		_conesPru[tt].vote(p,vp,dist);
+	}
+}
+
+//// ############################################################################################################################################################################
+void inline ftkVoting::votar_prob(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx, int dist)
+{
+	//if( angl_indx==1)
+	//{
+	//	cout<<endl<<_voteDirec[angl_indx].first<<" "<<_voteDirec[angl_indx].second<<", aca";
+	//}
+	//cout<<endl<<"\t angl_indx "<<angl_indx<<","<<_voteDirec[angl_indx].first<<","<<_voteDirec[angl_indx].second;
+	for( int tt=_voteDirec_prob[angl_indx].first.first; tt!=_voteDirec_prob[angl_indx].first.second; tt=(tt+1)%ntheta )
+	{
+		_conesPru_prob[tt].vote(p,vp,dist,_voteDirec_prob[angl_indx].second[dist]);
 	}
 }
 

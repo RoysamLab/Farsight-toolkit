@@ -112,6 +112,7 @@ struct ftkCone2D : public vector<ftkBins2D> {
 	}
 	void inline vote(VotingDirType::PixelType * p, const VPoint2D& vp);
 	void inline vote(VotingDirType::PixelType * p, const VPoint2D& vp, int &dist);
+	void inline vote(VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int &mag);
 
 	//void inline vote_dir(VotingDirType::PixelType * p, const VPoint2D& vp); // Guarda direccion 
 	void inline vote_dir(vector<vector<int> >& p_dir, VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int& offset_1); // Guarda direccion
@@ -158,6 +159,7 @@ private:
 	\param hmax upper bound of voting range, measured in pixel, usually set as 3/4 of the object diameter
 	*/
 	void computeCones(int hmin, int hmax, int radius);
+	void computeCones_prob(int hmin, int hmax, int radius);
 
 	/**
 	Update voting direction for a given point: vp; the new direction is from vp to the point with maximum voting response within vp's voting range.
@@ -178,6 +180,7 @@ private:
 	void vote();
 	void inline votar(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx);
 	void inline votar(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx, int dist);
+	void inline votar_prob(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx, int dist);
 	void updateCones();
 
 //	PointArray _centers; //< detected centers of objects
@@ -234,7 +237,9 @@ private:
 
 	//< pre-computed cone structures for voting
 	vector<ftkCone2D> _conesPru;
+	vector<ftkCone2D> _conesPru_prob;
 	vector< pair< int,int > > _voteDirec;
+	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob;
 
 	//// Voting Direction X and Y
 	//typedef double VotingDirPixelType;

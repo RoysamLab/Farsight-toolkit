@@ -42,9 +42,9 @@ int main( int argc, char * argv[] ){
 
 	// Initial Parameters
 	//reg_type (have not underestand what is this for)
-	int hmin = 1;
-	int hmax = 20; //15 was ok, 25 just to test
-	int radius = 20;
+	int hmin = 4;
+	int hmax = 77; //15 was ok, 25 just to test
+	int radius = 77;
 	double min_grad = 0.1;
 	//threshold (for picking seed points, not necesary for now)
 	double scale = 1.5; // Scale for computing the gradient using DoG
