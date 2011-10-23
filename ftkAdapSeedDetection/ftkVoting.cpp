@@ -823,7 +823,7 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 	double dx_dou = hmax/span;
 	double dy_dou = radius/span;
 	_intSpan = computeAngleIndex(dx_dou, dy_dou);
-	_voteDirec = vector< pair< int,int >> (ntheta);
+	_voteDirec = vector< pair< int,int > > (ntheta);
 	_voteDirec_prob = vector< pair< pair< int,int >, vector <int> > > (ntheta);
 	for( int tt=0; tt<ntheta; tt++ ) // 0 256
 	{
