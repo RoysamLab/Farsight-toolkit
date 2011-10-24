@@ -74,7 +74,7 @@ public:
 	TableWindow(QWidget * parent = 0);
 	~TableWindow();
 	void setQtModels(QItemSelectionModel *mod);
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);//////////////////////
 	vtkSmartPointer<vtkTable> Pointer2Table;
 
 signals:
@@ -95,12 +95,14 @@ private slots:
 	void changeColumns();
 	void exportTable();
 	void showFilters();
+	void selectColumns();/////////////////////////////////////////////////////////////////////
     
 private:
 	QTableView *tableView;
 	vtkQtTableModelAdapter * modAdapter;
 	SelectionAdapter * selAdapter;
 	ObjectSelection * selection;
+	ObjectSelection * selection2;
 
 	QMenu *viewMenu;
 	QMenu *exportMenu;

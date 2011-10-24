@@ -39,11 +39,11 @@ void TableWindow::setQtModels(QItemSelectionModel * mod)
 {
 	this->tableView->setModel( (QAbstractItemModel*)mod->model() );
 	this->tableView->setSelectionModel(mod);
-	this->tableView->setSelectionBehavior( QAbstractItemView::SelectRows );
+	this->tableView->setSelectionBehavior( QAbstractItemView::SelectRows);
 	this->update();
 }
 	
-void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
+void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)///////////////////////////////////////////
 {
 	if(this->modAdapter)
 		delete this->modAdapter;	
@@ -62,6 +62,12 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		if(selAdapter) delete selAdapter;
 		selAdapter = new SelectionAdapter( this->tableView );
 		selAdapter->SetPair(selection,mod);
+	}
+
+	if(sels2)///////////////////////////////////////////////////////////
+	{
+		this->selection2 = sels2;
+		connect(selection2, SIGNAL(changed()), this, SLOT(selectColumns()));
 	}
 		
 	//Resize Rows to be as small as possible
@@ -247,6 +253,36 @@ void TableWindow::changeColumns()
 	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
 		this->tableView->setColumnHidden( i, !visible.at(i) );
+	}
+
+	if(this->selection2)
+	{
+		std::set<long int> selectedIDs;
+
+		for( int i=0; i < this->tableView->model()->columnCount(); ++i)
+		{
+			if(visible.at(i))
+				selectedIDs.insert(i);
+		}
+
+		this->selection2->select(selectedIDs);
+	}
+}
+
+void TableWindow::selectColumns()//////////////////////////////////////////////////////
+{
+	std::set<long int> selectedIDs = this->selection2->getSelections();
+
+	for(int i=0; i < this->tableView->model()->columnCount() - 1; i++)
+	{
+		if (selectedIDs.find(i) != selectedIDs.end())
+		{
+			this->tableView->setColumnHidden( i + 1, false);
+		}
+		else
+		{
+			this->tableView->setColumnHidden( i + 1,true);
+		}
 	}
 }
 

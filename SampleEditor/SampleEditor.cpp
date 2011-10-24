@@ -29,13 +29,15 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
 	graph =  new GraphWindow(this);
-
-	//dendro = new Dendrogram(0,0);
+	dendro1 = new Dendrogram(this);
+	dendro2 = new Dendrogram(this);////////////////////////////////////////////////////////////////
+	heatmap = new Heatmap(this);
 
 	data = NULL;
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
 
 	selection = new ObjectSelection();
+	selection2 = new ObjectSelection();/////////////////////////////////////
 
 	lastPath = ".";
 	
@@ -144,6 +146,23 @@ void SampleEditor::createMenus()
 	SPDAction->setStatusTip(tr("SPD Analysis for the data"));
 	connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 	editMenu->addAction(SPDAction);
+
+	//////////////////////////////////////////////////////////////////////////////
+	ClusClusMenu = editMenu->addMenu(tr("&ClusClus"));
+	sampleDendroAction = new QAction(tr("SampleDendrogram"), this);
+	sampleDendroAction->setStatusTip(tr("SampleDandrogram"));
+	connect(sampleDendroAction, SIGNAL(triggered()), this, SLOT(sampledendrogram()));
+	ClusClusMenu->addAction(sampleDendroAction);
+
+	featureDendroAction = new QAction(tr("FeatureDendrogram"), this);
+	featureDendroAction->setStatusTip(tr("FeatureDandrogram"));
+	connect(featureDendroAction, SIGNAL(triggered()), this, SLOT(featuredendrogram()));
+	ClusClusMenu->addAction(featureDendroAction);
+
+	heatmapAction = new QAction(tr("Heatmap"), this);
+	heatmapAction->setStatusTip(tr("Heatmap"));
+	connect(heatmapAction, SIGNAL(triggered()), this, SLOT(showheatmap()));
+	ClusClusMenu->addAction(heatmapAction);
 }
 
 //********************************************************************************
@@ -166,7 +185,7 @@ void SampleEditor::loadFile()
 
 	ReadFiles(headername.toStdString(), dataname.toStdString());*/
 	this->data = ftk::LoadTable(headername.toStdString());
-	table->setModels(data,selection);
+	table->setModels(data,selection,selection2);//////////////////////////////////////////////////////////////////////////
 	table->show();
 
 	plot->setModels(data,selection);
@@ -175,8 +194,9 @@ void SampleEditor::loadFile()
 	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
 	this->graph->setModels(data, selection);
-	//this->dendro->setModels(data,selection);
-	//this->dendro->show();
+	this->dendro1->setModels(data,selection);
+	this->dendro2->setModels(data,selection2);//////////////////////////////////////////////
+	//this->heatmap->setModels(data,selection,selection2);
 
 }
 
@@ -382,4 +402,77 @@ void SampleEditor::SPDAnalysis()
 		this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
 		this->graph->ShowGraphWindow();
 	}
+}
+
+void SampleEditor::sampledendrogram()
+{
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->data->GetNumberOfRows()];
+
+	std::cout<<this->data->GetNumberOfRows()<<endl;
+	std::cout<<this->data->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->data->GetNumberOfColumns() - 1 ];
+	}
+
+
+	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+		{
+			temp = this->data->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
+	cc1->RunClusClus();
+	cc1->MergersToProgress();
+	cc1->PrepareTreeData();
+	cc1->GetOptimalLeafOrderD();
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	this->dendro1->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
+	this->dendro1->createDataForDendogram();
+	this->dendro1->showGraph();
+
+	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+}
+
+void SampleEditor::featuredendrogram()
+{
+	cc1->Transpose();
+	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
+	cc2->RunClusClus();
+	cc2->MergersToProgress();
+	cc2->PrepareTreeData();
+	cc2->GetOptimalLeafOrderD();
+	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+
+	this->dendro2->setTreeData(cc2->num_samples, cc2->treedata, cc2->optimalleaforder);
+	this->dendro2->createDataForDendogram();
+	this->dendro2->showGraph();
+}
+
+void SampleEditor::showheatmap()
+{
+	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
+	this->heatmap->creatDataForHeatmap();
+	this->heatmap->showGraph();
+
 }

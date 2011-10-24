@@ -37,6 +37,7 @@ OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 OPTION( BUILD_SPD "Build SPD" OFF)
 OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
+OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -304,19 +305,24 @@ ENDIF(BUILD_HARALICK)
 
 IF (BUILD_DENDROGRAM)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Dendrogram )
-	SUBDIRS( Dendrogram)
+	SUBDIRS(Dendrogram)
 ENDIF (BUILD_DENDROGRAM)
 
 
 IF (BUILD_SPD)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SPD )
-	SUBDIRS( SPD)
+	SUBDIRS(SPD)
 ENDIF (BUILD_SPD)
 
 IF (BUILD_XML_GENERATOR)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Xml_Generator )
 	SUBDIRS( Xml_Generator )
 ENDIF (BUILD_XML_GENERATOR)
+IF (BUILD_CLUSCLUS)
+    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/CLUSCLUS )
+    SUBDIRS(CLUSCLUS)
+ENDIF (BUILD_CLUSCLUS)
+
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:

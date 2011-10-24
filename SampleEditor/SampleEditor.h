@@ -73,6 +73,10 @@ private slots:
 	void showStatistics(void);
 	void updateStatistics(void);
 	void SPDAnalysis();
+	void sampledendrogram();
+	void featuredendrogram();
+	void showheatmap();
+
 
 signals:
     void selectionChanged(void);
@@ -90,17 +94,29 @@ private:
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 	QAction *SPDAction;
+	/////////////////////////////
+	QMenu *ClusClusMenu;
+	QAction *sampleDendroAction;
+	QAction *featureDendroAction;
+	QAction *heatmapAction;
+	//////////////////////////////////////////////////////
 	StatisticsToolbar * statisticsToolbar;
 	TableWindow *table;
 	PlotWindow *plot;
 	HistoWindow *histo;
 	GraphWindow *graph;
-	//Dendrogram *dendro;
+	Dendrogram *dendro1;
+	Dendrogram *dendro2;///////////////////////////////////////////////////////////////////////////////////////
+	Heatmap *heatmap;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;
 	ObjectSelection *selection;
+	ObjectSelection *selection2;/////////////////////////////////////////////////////////////////////////////
 	QString lastPath;
+
+	clusclus *cc1;
+	clusclus *cc2;
  };
 
 
