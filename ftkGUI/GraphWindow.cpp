@@ -5,6 +5,7 @@
 #include <vtkIdTypeArray.h>
 #include <vtkSelection.h>
 #include <vtkMutableDirectedGraph.h>
+#include <vtkMutableUndirectedGraph.h>
 #include <vtkDataSetAttributes.h>
 #include <QMessageBox>
 
@@ -104,10 +105,20 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 
-	vtkSmartPointer<vtkMutableDirectedGraph> graph = vtkMutableDirectedGraph::New();
+	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
+	vertexIDarrays->SetNumberOfComponents(1);
+	vertexIDarrays->SetName("vertexIDarrays");
+
+  // Create the edge weight array
+	vtkSmartPointer<vtkDoubleArray> weights = vtkSmartPointer<vtkDoubleArray>::New();
+	weights->SetNumberOfComponents(1);
+	weights->SetName("edgeLabel");
+
+	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
 	for( int i = 0; i <  this->dataTable->GetNumberOfRows(); i++)
 	{
 		int vertexID = graph->AddVertex();
+		vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
 	}
 
 	for( int i = 0; i < table->GetNumberOfRows(); i++)
@@ -121,6 +132,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 			long int index1 = iter1->second;
 			long int index2 = iter2->second;
 			graph->AddEdge( index1, index2);
+			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
 		}
 		else
 		{
@@ -152,19 +164,25 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	lookupTable->Build();
 
 	graph->GetVertexData()->AddArray(vertexColors);
+	graph->GetVertexData()->AddArray(vertexIDarrays);
+	graph->GetEdgeData()->AddArray(weights);
+
 	this->view->AddRepresentationFromInput( graph);
+	this->view->SetEdgeLabelVisibility(true);
+	this->view->SetColorVertices(true); 
+	this->view->SetVertexLabelVisibility(true);
+
 	this->view->SetVertexColorArrayName("Color");
-	this->view->ColorVerticesOn(); 
 
     theme->SetPointLookupTable(lookupTable);
     theme->SetBackgroundColor(0,0,0); 
 	this->view->ApplyViewTheme(theme);
 
-	this->view->SetEdgeLabelVisibility(true);
-	this->view->SetEdgeLabelArrayName(edgeLabel.c_str());
+	this->view->SetEdgeLabelArrayName("edgeLabel");
+
 	this->view->SetLayoutStrategyToForceDirected();
-	this->view->SetVertexLabelArrayName(ID1.c_str());
-	this->view->VertexLabelVisibilityOn();
+
+	this->view->SetVertexLabelArrayName("vertexIDarrays");
 	this->view->SetVertexLabelFontSize(20);
 }
 
