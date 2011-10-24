@@ -36,6 +36,7 @@ OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 OPTION( BUILD_SPD "Build SPD" OFF)
+OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -136,9 +137,6 @@ SUBDIRS( ftkSpectralUnmixing )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGUI )
 SUBDIRS( ftkGUI )
-
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Xml_Generator )
-SUBDIRS( Xml_Generator )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGraphs )
 SUBDIRS( ftkGraphs )
@@ -315,6 +313,10 @@ IF (BUILD_SPD)
 	SUBDIRS( SPD)
 ENDIF (BUILD_SPD)
 
+IF (BUILD_XML_GENERATOR)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Xml_Generator )
+	SUBDIRS( Xml_Generator )
+ENDIF (BUILD_XML_GENERATOR)
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
