@@ -47,6 +47,10 @@ limitations under the License.
 #include "ftkGUI/StatisticsToolbar.h"
 #include "ftkUtils.h"
 #include "ftkGUI/GraphWindow.h"
+#include "ClusClus/clusclus.h"
+#include "ClusClus/Dendrogram.h"
+#include "ClusClus/HeatmapWindow.h"
+
 #include <vector>
 #include <string>
 
