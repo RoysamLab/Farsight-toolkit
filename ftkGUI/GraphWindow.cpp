@@ -253,7 +253,8 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 		graphWin->SetSelectedIds( IDs);
 	}
 
-	graphWin->view->GetRenderer()->Render();
+	graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
+	//graphWin->view->GetRenderer()->Render();
 }
 
 ObjectSelection * GraphWindow::GetSelection()
@@ -341,7 +342,7 @@ void GraphWindow::UpdateGraphView()
 		UpdataLookupTable( updataIDes);
 
 		this->mainQTRenderWidget.GetRenderWindow()->Render();
-		this->view->GetRenderer()->Render();
+		//this->view->GetRenderer()->Render();
 		this->observerTag = annotationLink->AddObserver("AnnotationChangedEvent", this->selectionCallback);
 	}
 }

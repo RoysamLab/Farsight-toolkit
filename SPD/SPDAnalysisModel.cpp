@@ -36,11 +36,23 @@ SPDAnalysisModel::SPDAnalysisModel()
 	headers.push_back("node1");
 	headers.push_back("node2");
 	headers.push_back("weight");
+	filename = "";
+	cc1 = NULL;
+	cc2 = NULL;
 }
 
 SPDAnalysisModel::~SPDAnalysisModel()
 {
-
+	if( cc1 != NULL)
+	{
+		delete cc1;
+		cc1 = NULL;
+	}
+	if( cc2 != NULL)
+	{
+		delete cc2;
+		cc2 = NULL;
+	}
 }
 
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataMatrix()
@@ -48,18 +60,57 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataMatrix()
 	return this->DataTable;
 }
 
-bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName)
+bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName, bool btest)
 {
-	this->DataTable = ftk::LoadTable(fileName);
-	if( this->DataTable != NULL)
-	{
-		ParseTraceFile(this->DataTable);
-		return true;
-	}
-	else
+	std::ifstream file(fileName.c_str(), std::ifstream::in);
+	int line = LineNum(fileName.c_str());
+	if( !file.is_open() || line == -1)
 	{
 		return false;
 	}
+
+	if( btest)
+	{
+		int rowIndex = 0;
+		std::string feature;
+		std::vector<std::string> rowValue;
+		bool bfirst = true;
+		while( !file.eof())
+		{
+			getline(file, feature);
+			if( feature.length() > 3)
+			{
+				split(feature, '\t', &rowValue);
+				std::vector<std::string>::iterator iter = rowValue.begin();
+				if ( bfirst)
+				{
+					this->DataMatrix.set_size( line, rowValue.size() - 1);
+					bfirst = false;
+				}
+				for( int colIndex = 0; colIndex < rowValue.size() - 1; iter++, colIndex++)
+				{
+					this->DataMatrix( rowIndex, colIndex) = atof( (*iter).c_str());   
+				}
+				rowIndex++;
+			}
+			rowValue.clear();
+			feature.clear();
+		}
+	}
+	else
+	{
+		this->DataTable = ftk::LoadTable(fileName);
+		if( this->DataTable != NULL)
+		{
+			ParseTraceFile(this->DataTable);
+		}
+		else
+		{
+			return false;
+		}
+	}	
+
+	return true;
 }
 	//int line = LineNum(fileName);
 
@@ -131,7 +182,6 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 	}
 
 	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
-
 	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
 	{
 		int colIndex = 0;
@@ -220,7 +270,7 @@ void SPDAnalysisModel::NormalizeData()
 	}
 }
 
-int SPDAnalysisModel::ClusterAgglomerate(double cor)
+int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 {
 	vnl_vector<unsigned int> clusterIndex;
 	clusterIndex.set_size( this->DataMatrix.cols());
@@ -228,9 +278,11 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor)
 	vnl_matrix<double> moduleMean = this->DataMatrix;
 	moduleMean.normalize_columns();
 
-	std::ofstream ofs("result.txt", std::ofstream::out);
-	ofs<<"The clustering process:"<<endl;
-
+	this->filename = "C++_" + QString::number(this->DataMatrix.cols())+ "_" + QString::number(this->DataMatrix.rows()) + 
+					"_" + QString::number( cor, 'g', 4) + "_" + QString::number( mer, 'g', 4)+ "_";
+	QString filenameCluster = this->filename + "clustering.txt";
+	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
+	ofs<<"first clustering:"<<endl;
 	for( unsigned int i = 0; i < this->DataMatrix.cols(); i++)
 	{
 		clusterIndex[i] = i;
@@ -253,7 +305,7 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor)
 
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
-		ofs<<"Cluster:"<<i + 1<<endl;
+		ofs<<"Cluster:"<< i + 1<<endl;
 		for( unsigned int j = 0; j < this->ClusterIndex.size(); j++)
 		{
 			if( ClusterIndex[j] == i)
@@ -262,7 +314,7 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor)
 			}
 		}
 	}
-
+	ofs<<endl;
 	ofs.close();
 
 	std::cout<<"The cluster size after cluster: "<<this->ClusterIndex.max_value() + 1<<endl;
@@ -498,8 +550,9 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 	}
 	coherence -= oneMat;
 
-	//std::ofstream ofs("coherence.txt", std::ofstream::out);
-	//ofs<< coherence<<endl;
+	//std::ofstream oft("coherence.txt", std::ofstream::out);
+	//oft<< setprecision(4)<<coherence<<endl;
+	//oft.close();
 
 	while( coherence.rows() > 0 && coherence.max_value() >= cor)
 	{
@@ -509,7 +562,8 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 
 		vnl_matrix<double> dataTmp( this->DataMatrix.rows(), this->ModuleSize[i] + this->ModuleSize[j]);
 		GetCombinedMatrix( this->ClusterIndex, i, j, dataTmp);
-			
+		dataTmp.normalize_columns();
+
 		vnl_vector<double> dataMean;
 		vnl_vector<double> dataSd;
 		vnl_matrix<double> mat = dataTmp.transpose();
@@ -545,19 +599,24 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 			break;
 		}
 	}
-	
-	//ofs.close();
 
-	std::cout<<"The cluster size after merge: "<<this->ClusterIndex.max_value() + 1<<endl;
+	std::cout<<"The cluster size after merge: "<< this->ClusterIndex.max_value() + 1<<endl;
 	std::cout<<this->ClusterIndex<<endl<<endl;
 
-	std::ofstream ofs("result.txt", std::ofstream::out | ios::app);
-	ofs<<"The cluster size after merge: "<<this->ClusterIndex.max_value() + 1<<endl;
-	for ( unsigned int i = 0; i < this->ClusterIndex.size(); i++)
+	QString filenameCluster = this->filename + "clustering.txt";
+	std::ofstream ofs( filenameCluster.toStdString().c_str(), std::ofstream::out | ios::app);
+	ofs<< "clustering result after merge:"<<endl;
+	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
-		ofs<<this->ClusterIndex[i] + 1<<endl;
+		ofs<<"Cluster: "<<i + 1<<endl;
+		for( unsigned int j = 0; j < this->ClusterIndex.size(); j++)
+		{
+			if( ClusterIndex[j] == i)
+			{
+				ofs<< j + 1 <<endl;
+			}
+		}
 	}
-	ofs<<this->ClusterIndex<<endl<<endl;
 	ofs.close();
 }
 
@@ -588,8 +647,9 @@ void SPDAnalysisModel::DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int
 
 void SPDAnalysisModel::GenerateMST()
 {
-	std::ofstream ofs("MST.txt", std::ofstream::out);
-	//std::ofstream ofsmat("CLusterMat.txt", std::ofstream::out);
+	this->ModuleMST.clear();
+	this->MSTWeight.clear();
+	this->ModuleGraph.clear();
 
 	unsigned int num_nodes = this->DataMatrix.rows();
 
@@ -662,6 +722,9 @@ void SPDAnalysisModel::GenerateMST()
 
 	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
 	int moduleIndex = 1;
+
+	QString filenameMST = this->filename + "mst.txt";
+	std::ofstream ofs(filenameMST.toStdString().c_str(), std::ofstream::out);
 	while( iter != this->ModuleMST.end())
 	{
 		ofs<<"Module:"<<moduleIndex<<endl;
@@ -682,15 +745,30 @@ void SPDAnalysisModel::GenerateMST()
 		}
 
 		std::multimap<int,int>::iterator iterTree = tree.begin();
+		int oldValue = (*iterTree).first;
 		while( iterTree!= tree.end())
 		{
-			ofs<<(*iterTree).second + 1<<"\t"<<((*iterTree).first) + 1<<endl;
-			iterTree++;
-		}
+			std::map<int, int> sortTree;
+			while( iterTree!= tree.end() && (*iterTree).first == oldValue)
+			{
+				sortTree.insert( std::pair<int, int>((*iterTree).second, (*iterTree).first));
+				iterTree++;
+			}
 
+			if( iterTree != tree.end())
+			{
+				oldValue = (*iterTree).first;
+			}
+			
+			std::map<int,int>::iterator iterSort = sortTree.begin();
+			while( iterSort != sortTree.end())
+			{
+				ofs<<(*iterSort).first + 1<<"\t"<<((*iterSort).second) + 1<<endl;
+				iterSort++;
+			}
+		}
 		iter++;	
 	}
-
 	ofs.close();
 }
 
@@ -716,8 +794,19 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetMSTTable( int MSTIndex)
 		{
 			long ind1 = this->MSTTable[MSTIndex]->GetValue(i,0).ToLong();
 			long ind2 = this->MSTTable[MSTIndex]->GetValue(i,1).ToLong();
-			table->SetValue(i, 0, this->indMapFromIndToVertex[ind1]);
-			table->SetValue(i, 1, this->indMapFromIndToVertex[ind2]);
+			double dis = this->MSTTable[MSTIndex]->GetValue(i,2).ToDouble();
+			if( this->indMapFromIndToVertex.size() > 0)
+			{
+				table->SetValue(i, 0, this->indMapFromIndToVertex[ind1]);
+				table->SetValue(i, 1, this->indMapFromIndToVertex[ind2]);
+				table->SetValue(i, 2, dis);
+			}
+			else
+			{
+				table->SetValue(i, 0, ind1);
+				table->SetValue(i, 1, ind2);
+				table->SetValue(i, 2, dis);
+			}
 		}
 		return table;
 	}
@@ -877,40 +966,95 @@ void SPDAnalysisModel::RunEMDAnalysis()
 
 	/** Generating the distance vector for module data and its MST data */
 	std::vector<vnl_vector<double> > moduleDistance;
-	std::vector<vnl_vector<double> > MSTDistance;
 
 	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
 
-	for( int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
+	for( unsigned int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
 	{
 		vnl_matrix<double> clusterData( this->DataMatrix.rows(), moduleSize[i]);
 		GetCombinedMatrix( this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
 		
 		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
 		moduleDistance.push_back( distance);
-		
-		std::vector< boost::graph_traits<Graph>::vertex_descriptor> vertex = *iter;
-		GetMSTMatrixDistance( distance, vertex, mstdis);
-		MSTDistance.push_back( mstdis);
 	}
 
-	std::ofstream histOfs("emd.txt", std::ofstream::out);
+	QString filenameEMD = this->filename + "emd.txt";
+	std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
+	histOfs.precision(4);
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
 
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist = Hist( moduleDistance[i], NUM_BIN, hist_interval);
-		//histOfs << moduleHist << endl;
-		for( int j = 0; j < MSTDistance.size(); j++)
+		histOfs << "Module "<<i<<endl;
+		
+		// test the distance of the modules
+		for( int s = 0; s < moduleDistance[i].size(); s++)
+		{
+			for( int t = 0; t < 10; t++, s++)
+			{
+				histOfs << moduleDistance[i][s]<<"\t";
+			}
+			histOfs<<endl;		
+		}
+		histOfs <<endl;
+
+		histOfs << moduleHist << endl<<endl;
+
+		for( int j = 0; j < moduleDistance.size(); j++)
 		{	
 			std::cout<< "matching module " << i << " with MST " << j<<endl;
-			vnl_vector<unsigned int> mstHist = Hist( MSTDistance[j], hist_interval);   
-			//histOfs << mstHist << endl;
+			vnl_vector<double> mstDistance; 
+			GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
+			vnl_vector<unsigned int> mstHist = Hist( mstDistance, hist_interval); 
+
+			histOfs << "MST "<<j<<endl;
+
+			//test the distance of the MSTs
+			for( int s = 0; s < mstDistance.size(); s++)
+			{
+				for( int t = 0; t < 10; t++, s++)
+				{
+					histOfs << mstDistance[s]<<"\t";
+				}
+				histOfs<<endl;		
+			}
+
+			histOfs << mstHist << endl<<endl;
 			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist);
 		}
 	}
-	histOfs << EMDMatrix << endl;
+	histOfs << this->EMDMatrix << endl;
 	histOfs.close();
 	std::cout<< "EMD matrix saved in file emd.txt"<<endl;
+}
+
+void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2)
+{
+	if( this->cc1)
+	{
+		delete this->cc1;
+		this->cc1 = NULL;
+	}
+	this->cc1 = new clusclus( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	this->cc1->RunClusClus();
+	this->cc1->MergersToProgress();
+	this->cc1->PrepareTreeData();
+	this->cc1->GetOptimalLeafOrderD();
+	this->cc1->Transpose();
+
+	if( this->cc2)
+	{
+		delete this->cc2;
+		this->cc2 = NULL;
+	}
+	this->cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
+	this->cc2->RunClusClus();
+	this->cc2->MergersToProgress();
+	this->cc2->PrepareTreeData();
+	this->cc2->GetOptimalLeafOrderD();
+
+	c1 = *this->cc1;
+	c2 = *this->cc2;
 }

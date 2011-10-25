@@ -25,7 +25,7 @@ SET(SPD_TEST_SRCS
 	spdmainwindow.cpp )
 
 ADD_LIBRARY( SPD ${SPD_SRCS} )
-TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon)
+TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon ClusClus_lib)
 ADD_EXECUTABLE(SPDTEST main.cpp ${GUI_MOC_SRCS} ${SPD_TEST_SRCS} )
                 
 TARGET_LINK_LIBRARIES(SPDTEST SPD)

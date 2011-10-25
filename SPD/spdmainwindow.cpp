@@ -7,7 +7,7 @@
 #include <QMessageBox>
 //define NDEBUG
 #include <assert.h>
-
+#include "ClusClus/clusclus.h"
 
 using std::ifstream;
 using std::endl;
@@ -25,6 +25,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"));
     loadButton = new QPushButton(tr("Load"));
+	loadTestButton = new QPushButton(tr("Test Load"));
 
     featureNumLabel = new QLabel(tr("Feature size:"));
     featureNum = new QLabel;
@@ -47,6 +48,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
+	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
 	connect(showMSTButton, SIGNAL(clicked()), this, SLOT(showMST()));
@@ -71,6 +73,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     mainLayout->addWidget(dataFileName, 1, 0, 1, 2);
     mainLayout->addWidget(browseButton, 1, 2);
     mainLayout->addWidget(loadButton, 2, 2);
+	mainLayout->addWidget(loadTestButton, 3, 2);
 
     mainLayout->addWidget(featureNumLabel, 2, 0);
     mainLayout->addWidget(featureNum, 2, 1);
@@ -99,6 +102,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	assert(SPDModel!=NULL);
 
 	graph =  new GraphWindow(this);
+	heatmap = new Heatmap(this);
 }
 
 SPDMainWindow::~SPDMainWindow()
@@ -121,7 +125,19 @@ void SPDMainWindow::load()
 {
 	std::string file = this->FileName.toStdString();
 
-	if ( true == this->SPDModel->ReadCellTraceFile(file.c_str()))
+	if ( true == this->SPDModel->ReadCellTraceFile(file, false))
+	{
+		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
+		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
+		this->SPDModel->NormalizeData();
+	}
+}
+
+void SPDMainWindow::loadTestData()
+{
+	std::string file = this->FileName.toStdString();
+
+	if ( true == this->SPDModel->ReadCellTraceFile(file, true))
 	{
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
@@ -145,9 +161,8 @@ void SPDMainWindow::clusterFunction()
 		if ( atof(clusterCor.c_str()) >= 0 && atof(clusterCor.c_str()) <= 1
 			&& atof(clusterMer.c_str()) >= 0 && atof(clusterMer.c_str()) <= 1)
 		{
-			this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()));
+			this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
 			this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-			AddClusterModuleToList();
 		}
 		else
 		{
@@ -162,11 +177,6 @@ void SPDMainWindow::clusterFunction()
 		mes.setText("Set coherence!");
 		mes.exec();
 	}
-}
-
-void SPDMainWindow::AddClusterModuleToList()
-{
-	
 }
 
 void SPDMainWindow::generateMST()
@@ -191,5 +201,11 @@ void SPDMainWindow::showMST()
 void SPDMainWindow::emdFunction()
 {
 	this->SPDModel->RunEMDAnalysis();
+	//clusclus clus1, clus2;
+	//this->SPDModel->GetClusClusData(clus1, clus2);
+
+	//this->heatmap->setDataForHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);
+	//this->heatmap->creatDataForHeatmap();
+	//this->heatmap->showGraph();
 }
 

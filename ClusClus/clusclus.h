@@ -12,8 +12,10 @@ using namespace std;
 class clusclus 
 {
 public:
+	clusclus();
 	clusclus(const char* filename);
 	clusclus(double** features,int num_samples, int num_features);
+
 	~clusclus();
 
 	void ReadFile(const char *filename);

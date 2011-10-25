@@ -8,6 +8,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <map>
+#include <QString>
+#include "ClusClus/clusclus.h"
 
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, 
 	boost::property< boost::vertex_distance_t, unsigned int>, boost::property< boost::edge_weight_t, double> > Graph;
@@ -26,14 +28,14 @@ public:
 	static void DeInstance();
 
 	vtkSmartPointer<vtkTable> GetDataMatrix();
-	bool ReadCellTraceFile(std::string fileName);
+	bool ReadCellTraceFile(std::string fileName, bool btest);
 	void ParseTraceFile(vtkSmartPointer<vtkTable> table);
 
 	unsigned int GetSampleNum();
 	unsigned int GetFeatureNum();
 
 	void NormalizeData();
-	int ClusterAgglomerate( double cor);
+	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
 
 	void GenerateMST();
@@ -42,6 +44,8 @@ public:
 	void GetTableHeaders(std::vector<std::string> &headers);
 
 	void RunEMDAnalysis();
+
+	void GetClusClusData(clusclus& c1, clusclus& c2);
 
 protected:
 	SPDAnalysisModel();
@@ -68,6 +72,9 @@ protected:
 private:
 	static SPDAnalysisModel *s_pmodel;
 
+	//save filename
+	QString filename;
+
 	// basic data storation
 	std::vector<int> CellTraceIndex;
 	std::vector<std::string> FeatureNames;
@@ -90,6 +97,9 @@ private:
 
 	//data for EMD 
 	vnl_matrix<double> EMDMatrix;
-	
+
+	// for heatmap
+	clusclus *cc1;
+	clusclus *cc2;
 };
 #endif

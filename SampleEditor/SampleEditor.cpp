@@ -389,7 +389,7 @@ void SampleEditor::SPDAnalysis()
 	std::cout<< "Normalizing" << std::endl;
 	SPDModel->NormalizeData();
 	std::cout<< "clustering" << std::endl;
-	SPDModel->ClusterAgglomerate( 0.5);
+	SPDModel->ClusterAgglomerate( 0.5, 0.9);
 	//std::cout<< "Merging" << std::endl;
 	//SPDModel->ClusterMerge( 0.9, 0.9);
 	std::cout<< "Generating MST" << std::endl;
@@ -474,5 +474,4 @@ void SampleEditor::showheatmap()
 	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
 	this->heatmap->creatDataForHeatmap();
 	this->heatmap->showGraph();
-
 }

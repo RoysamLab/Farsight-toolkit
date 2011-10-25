@@ -1,5 +1,9 @@
 #include"clusclus.h"
 
+clusclus::clusclus()
+{
+}
+
 clusclus::clusclus(const char* filename)
 {
 	this->num_features = 0;
@@ -16,6 +20,7 @@ clusclus::clusclus(const char* filename)
 
 	ReadFile(filename);
 }
+
 clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 {
 	this->num_features = numfeatures;

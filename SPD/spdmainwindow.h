@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
+#include "ClusClus/HeatmapWindow.h"
 
 class SPDMainWindow : public QWidget
 {
@@ -20,22 +21,21 @@ public:
 private slots:
     void browse();
     void load();
+	void loadTestData();
     void clusterFunction();
 	void generateMST();
 	void showMST();
-	void AddClusterModuleToList();
 	void emdFunction();
 
 private:
 	SPDAnalysisModel *SPDModel;
-
-private:
     QLabel *dataFileLabel;
 
     QLabel *dataFileName;
     QPushButton *browseButton;
     QPushButton *loadButton;
-
+	QPushButton *loadTestButton;
+	
     QLabel *featureNumLabel;
     QLabel *featureNum;
     QLabel *sampleNumLabel;
@@ -51,7 +51,9 @@ private:
 	QPushButton *showMSTButton;
 	QPushButton *emdButton;
     QString FileName;
+
 	GraphWindow *graph;
+	Heatmap *heatmap;
 };
 
 #endif // SPDMAINWINDOW_H
