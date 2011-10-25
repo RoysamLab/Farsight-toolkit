@@ -1,5 +1,5 @@
 #include <QtGui/QApplication>
-#include "ClusClusMainwindow.h"
+#include "clusclusMainwindow.h"
 
 int main(int argc, char *argv[])
 {

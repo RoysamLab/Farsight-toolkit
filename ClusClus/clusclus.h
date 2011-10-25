@@ -1,8 +1,11 @@
 #ifndef	CLUSCLUS_H
 #define CLUSCLUS_H
 
-#include<math.h>
+#include <math.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 using namespace std;
 
