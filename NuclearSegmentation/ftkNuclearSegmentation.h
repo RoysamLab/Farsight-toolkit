@@ -131,12 +131,14 @@ public:
 	void createMegaTable();	
 	void AddTimeToMegaTable();
 
-	//Set Data:
+	//Set Data:/Amin
 #ifdef USE_TRACKING
 	void SetTrackFeatures(std::vector<std::vector<ftk::TrackPointFeatures> > trackfeatures);
 	void SetTimeFeatures(std::vector<ftk::TrackFeatures>);
 #endif
 	void setCurrentTime(int t = 0){currentTime = t;};
+	void ReassignLabels(std::vector<int> times, std::vector<int> ids, std::vector<int> new_ids);
+
 protected:
 	std::string errorMessage;
 

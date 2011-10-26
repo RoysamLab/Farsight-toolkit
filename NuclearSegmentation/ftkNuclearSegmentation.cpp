@@ -1076,6 +1076,59 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 		}
 	}
 }
+void NuclearSegmentation::ReassignLabels(std::vector<int> times, std::vector<int> ids, std::vector<int> new_ids)
+{
+	int C = labelImage->Size()[3];
+	int R = labelImage->Size()[2];
+	int Z = labelImage->Size()[1];
+	for(int i=0 ; i<times.size();++i) // maybe later add check of vector sizes  
+	{
+		int time = times.at(i);
+		int id = ids.at(i);
+		int new_id = new_ids.at(i);
+
+		ftk::Object::Box region = bBoxMap4DImage.at(time)[id];
+		if(region.min.x < 0) region.min.x = 0;
+		if(region.min.y < 0) region.min.y = 0;
+		if(region.min.z < 0) region.min.z = 0;
+		if(region.max.x >= C) region.max.x = C-1;
+		if(region.max.y >= R) region.max.y = R-1;
+		if(region.max.z >= Z) region.max.z = Z-1;
+		for(int z = region.min.z; z <= region.max.z; ++z)
+		{
+			for(int r=region.min.y; r <= region.max.y; ++r)
+			{
+				for(int c=region.min.x; c <= region.max.x; ++c)
+				{
+					int pix = (int)labelImage->GetPixel(time,0,z,r,c); // Fix for channels
+					if( pix == id )
+						labelImage->SetPixel(time,0,z,r,c,new_id);  // Fix for channels
+				}
+			}
+		}
+
+		// Update bBoxMap and cMap ids:
+		bBoxMap4DImage.at(time).erase( id );
+		bBoxMap4DImage.at(time)[new_id] = region;
+		ftk::Object::Point point = centerMap4DImage.at(time)[id];
+		centerMap4DImage.at(time).erase( id );		
+		centerMap4DImage.at(time)[new_id] = point;
+		// Update Table:
+		for(int row = 0; row<table4DImage.at(time)->GetNumberOfRows(); ++row)
+		{
+			if(table4DImage.at(time)->GetValue(row,0) == id)
+			{
+				table4DImage.at(time)->SetValue(row,0,new_id);
+				break;
+			}
+		}
+
+	}
+	centerMap = centerMap4DImage.at(currentTime);
+	bBoxMap = bBoxMap4DImage.at(currentTime);
+
+
+}
 
 std::vector<int> NuclearSegmentation::GetNeighbors(int id)
 {
