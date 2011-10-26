@@ -40,8 +40,8 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
 	connect(segView, SIGNAL(autoMerge()), this, SLOT(mergeCells()));
 	connect(segView, SIGNAL(emitTimeChanged()), this, SLOT(update5DTable()));
-
 	selection = new ObjectSelection();
+	connect(selection, SIGNAL(MultiChanged()), this, SLOT(updateMultiLabels()));
 	this->setCentralWidget(segView);
 
 	createMenus();
@@ -1581,6 +1581,7 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
+	this->setEditsEnabled(true);
 }
 
 
@@ -3531,6 +3532,30 @@ void NucleusEditor::deleteCells(void)
 		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 	}
 }
+
+void NucleusEditor::updateMultiLabels(void)
+{
+	if(!nucSeg) return;
+	if(!selection) return;
+	std::vector<ObjectSelection::Point> * selected = selection->GetSelectedPoints();
+	std::vector<int> times;
+	std::vector<int> ids;
+	std::vector<int> new_ids;
+
+	for(int i=0; i< selected->size(); ++i)
+	{
+		times.push_back(selected->at(i).time);
+		ids.push_back(selected->at(i).id);
+		new_ids.push_back(selected->at(i).new_id);
+	}
+	nucSeg->ReassignLabels(times,ids,new_ids);
+	segView->SetLabelImage(nucSeg->GetLabelImage(),selection);
+	segView->SetCenterMapVectorPointer(nucSeg->centerMap4DImage);
+	segView->SetBoundingBoxMapVectorPointer(nucSeg->bBoxMap4DImage);
+	this->update5DTable();
+
+}
+
 
 void NucleusEditor::update5DTable(void)
 {

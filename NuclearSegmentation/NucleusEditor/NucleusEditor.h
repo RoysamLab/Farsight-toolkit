@@ -124,6 +124,8 @@ protected slots:
 	void askload5DLabelImage(void);
 	void load5DLabelImage(QStringList labelfilesChannTimeList);
 	void update5DTable(void);
+
+	void updateMultiLabels(void);
 	
 
 

@@ -765,7 +765,10 @@ void TrackingKymoView::PickCell(vtkObject* caller, unsigned long event, void* cl
 		view->ResetOriginalColors();
 	}
 	if(view->Interactor->GetControlKey()&& view->NSelection.size()== 2) // make sure that not more than 2 nodes are selected at once
+	{
 		view->NSelection.clear();
+		view->RemoveSphereActors();
+	}
 
 	if (cell_picker->GetCellId() == -1) 
 			std::cout<<"nothing has been selected\n";
@@ -776,7 +779,12 @@ void TrackingKymoView::PickCell(vtkObject* caller, unsigned long event, void* cl
 		if(view->cubeact->GetPickable()==1)
 		{
 			view->NSelection.insert(cell_picker->GetCellId());
-			// add a sphere to the location of the picked cell
+			double pick_pos[3];
+			cell_picker->GetPickPosition(pick_pos);
+			view->DrawSphere(pick_pos);
+			TraceBit tbit = (reinterpret_cast<TraceLine*>(view->m_tobj->hashp[cell_picker->GetCellId()]))->points_hash[cell_picker->GetCellId()];
+			view->Selection->SetCurrentTime(tbit.time);
+			view->Selection->select(tbit.id);
 		}
 		else
 		{
@@ -788,6 +796,55 @@ void TrackingKymoView::PickCell(vtkObject* caller, unsigned long event, void* cl
 	}
 	
 }
+void TrackingKymoView::RemoveSphereActors(void)
+{
+	m_vtkrenderer->RemoveActor(sphereActor1);
+	m_vtkrenderer->RemoveActor(sphereActor2);
+	m_vtkrenderer->Modified();
+	m_imageview->GetRenderWindow()->Render();
+}
+
+void TrackingKymoView::CreateSphereActors(void)
+{
+	vtkSmartPointer<vtkSphereSource> sphereSource1 = vtkSmartPointer<vtkSphereSource>::New();
+	//sphereSource1->SetCenter(0.0, 0.0, 0.0);
+	sphereSource1->SetRadius(0.6);
+
+	vtkSmartPointer<vtkSphereSource> sphereSource2 = vtkSmartPointer<vtkSphereSource>::New();
+	//sphereSource2->SetCenter(0.0, 0.0, 0.0);
+	sphereSource2->SetRadius(0.6);
+
+	vtkSmartPointer<vtkPolyDataMapper> mapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper1->SetInputConnection(sphereSource1->GetOutputPort());
+	vtkSmartPointer<vtkPolyDataMapper> mapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper2->SetInputConnection(sphereSource2->GetOutputPort());
+
+	sphereActor1 = vtkSmartPointer<vtkActor>::New();
+	sphereActor2 = vtkSmartPointer<vtkActor>::New();
+	sphereActor1->SetMapper(mapper1);
+	sphereActor2->SetMapper(mapper2);
+	sphereActor1->GetProperty()->SetColor(1,1,1);
+	sphereActor2->GetProperty()->SetColor(1,1,1);
+}
+
+void TrackingKymoView::DrawSphere(double pos[])
+{
+	if(NSelection.empty()) return;
+	// get point position
+	if(NSelection.size() == 1)
+	{
+		sphereActor1->SetPosition(pos);
+		m_vtkrenderer->AddActor(sphereActor1);
+	}
+	else if (NSelection.size() == 2)
+	{
+		sphereActor2->SetPosition(pos);
+		m_vtkrenderer->AddActor(sphereActor2);
+	}
+	m_vtkrenderer->Modified();
+	m_imageview->GetRenderWindow()->Render();
+
+}
 void TrackingKymoView::SetupInteractorStyle(void)
 {
 	vtkSmartPointer<vtkInteractorStyleTrackballCamera> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
@@ -797,14 +854,7 @@ void TrackingKymoView::SetupInteractorStyle(void)
 void TrackingKymoView::Delete(void)
 {
 	if(TSelection.empty()) return;
-	std::cout<<"selection size: "<<TSelection.size()<<"\n";
-	std::set<unsigned int>::iterator tsel_iter;
-	for(tsel_iter = TSelection.begin();tsel_iter!=TSelection.end();++tsel_iter)
-	{
-		this->DeleteAndRelabelData(*tsel_iter);
-//		this->DeleteAndRelabelData();
-	}
-	printf("done deleting\n");
+	this->DeleteAndRelabelData();
 	this->UpdateTracePolyData();
 	this->UpdateLabels();
 	this->m_imageview->GetRenderWindow()->Render();
@@ -823,90 +873,143 @@ void TrackingKymoView::UpdateTracePolyData()
 void TrackingKymoView::ConnectNodes(void)
 {
 	if(NSelection.empty()|| NSelection.size()!=2) return;
-
-	//std::vector<TraceLine*> * tline = m_tobj->GetTraceLinesPointer();
-
-	//std::set<unsigned int>::iterator tsel_iter;
-	//TraceLine * new_tline = new TraceLine();
-	//std::set<int> selected_nodes;
-	//int indices[2];
-	//int * indicesptr = indices;
-	//std::vector<TraceLine*>* tline = m_tobj->GetTraceLinesPointer();
-	//for(tsel_iter = NSelection.begin();tsel_iter!=NSelection.end();++tsel_iter)
-	//{	
-	//	TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[*tsel_iter]);
-	//	TraceLine::TraceBitsType::iterator tbit_iter = tline->at(i)->GetTraceBitIteratorBegin();
-	//	while(tbit_iter!=tline->at(i)->GetTraceBitIteratorEnd())
-	//	{
-	//		selected_nodes.insert(tbit_iter->id);
-	//		printf("About to add TraceBit\n");
-	//		new_tline->AddTraceBit(*tbit_iter);
-	//	}
-
-		//for(int i=0; i<TraceBitVector.size();++i)
-		//{
-		//	if(TraceBitVector.at(i).marker == *tsel_iter)
-		//	{
-		//			TraceBit tbit;
-		//			tbit.x = TraceBitVector.at(i).x;
-		//			tbit.y = TraceBitVector.at(i).y;
-		//			tbit.z =  TraceBitVector.at(i).z;
-		//			tbit.time =  TraceBitVector.at(i).time;
-		//			tbit.id = TraceBitVector.at(i).id;
-		//			selected_nodes.insert(tbit.id);
-		//			printf("About to add TraceBit\n");
-		//			new_tline->AddTraceBit(tbit);
-		//			*indicesptr = i;
-		//			++indicesptr;
-		//	}
-		//}
-	//}
-	//if(selected_nodes.size()==1)
-	//{
-	//	printf("cannot connect nodes with the same id\n");
-	//	return;
-	//}
-	//else if(selected_nodes.size()==2)
-	//{
-	//	std::set<int>::iterator id_iter;
-	//	int maxId = this->GetMaxId();
-	//	++maxId;
-	//	for(id_iter = selected_nodes.begin(); id_iter!= selected_nodes.end();++id_iter)
-	//	{
-	//		for(int i=0; i<TraceBitVector.size();++i)
-	//		{
-	//			if(TraceBitVector.at(i).id == *id_iter)
-	//				TraceBitVector.at(i).id = maxId;
-	//		}
-	//	}
-	//	this->UpdateLabels();
-	//}
-	//else
-	//{
-	//	printf("I don't know what's happening\n");
-	//	return;
-	//}
-	//this->AppendNewPolyLine(new_tline);
-	////int max_index = 0;
-	////if(TraceBitVector.at(indices[0]).time>TraceBitVector.at(indices[1]).time)
-	////	max_index = indices[0];
-	////else
-	////	max_index = indices[1];
-
-	////TraceBitVector.at(max_index).track_cell_id = max_index;
-	//m_imageview->GetRenderWindow()->Render();
+	std::vector<TraceLine*> selected_tline;
+	std::set<unsigned int>::iterator node_vtk_ids_iter;
+	// store the selected trace lines:
+	for(node_vtk_ids_iter = NSelection.begin(); node_vtk_ids_iter!= NSelection.end(); ++node_vtk_ids_iter)
+	{
+		TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashp[*node_vtk_ids_iter]);
+		selected_tline.push_back(tline);
+	}
+	// Check if Nodes Can be Connected:
+	if(!IsValidNodeConnection())
+	{
+		printf("-----------------------------------------------------------------------\n ");
+		printf("Node connection not allowed for this case, try to delete tracks first..\n ");
+		printf("-----------------------------------------------------------------------\n ");
+		NSelection.clear();		// clear selection
+	    this->RemoveSphereActors(); // clear selected nodes from the view
+		return;
+	}
+	// find the trace lines that need to be connected and delete them from the trace line data:
+	std::vector<TraceLine*> * trace_lines = m_tobj->GetTraceLinesPointer();
+	std::vector<TraceLine*>::iterator trace_lines_iter;
+	for(int i=0; i<selected_tline.size(); ++i)
+	{
+		for(trace_lines_iter = trace_lines->begin() ;trace_lines_iter!= trace_lines->end(); ++trace_lines_iter)
+		{
+			if(selected_tline.at(i)->GetId() == (*trace_lines_iter)->GetId())
+			{
+				trace_lines->erase(trace_lines_iter);
+				break;
+			}
+		}
+	}
+	// make a new trace line by connecting the other two trace lines:
+	ObjectSelection::Point point;
+	std::vector<ObjectSelection::Point> selected_points;
+	int new_id = this->GetMaxId()+1;
+	TraceLine * new_tline = new TraceLine();
+	for(int i = 0; i<selected_tline.size();++i)
+	{
+		TraceLine::TraceBitsType::iterator tbit_iter = selected_tline.at(i)->GetTraceBitIteratorBegin();
+		while(tbit_iter!=selected_tline.at(i)->GetTraceBitIteratorEnd())
+		{
+			point.id = tbit_iter->id;
+			point.time = tbit_iter->time;
+			point.new_id = new_id;
+			selected_points.push_back(point);
+			tbit_iter->id = new_id;			
+			new_tline->AddTraceBit(*tbit_iter);
+			++tbit_iter;
+		}
+	}
+	new_tline->SetId(new_id);
+	trace_lines->push_back(new_tline);
+	this->UpdateTracePolyData();
+	this->UpdateLabels();
+	this->m_imageview->GetRenderWindow()->Render();
+	NSelection.clear();		// clear selection
+	this->RemoveSphereActors(); // clear selected nodes from the view
+	Selection->SelectPoints(selected_points);
 
 }	
-void TrackingKymoView::AppendNewPolyLine(TraceLine * new_tline)
-{
 
-	m_tobj->GetTraceLinesPointer()->push_back(new_tline);
-	m_trackpoly = m_tobj->GetVTKPolyData();
-	TraceBitVector = m_tobj->CollectTraceBits();
-	m_trackmapper->SetInput(m_trackpoly);
-	m_trackactor->SetMapper(m_trackmapper);
-	m_trackactor->GetProperty()->SetLineWidth(3.0);
-	m_trackpoly->Modified();
+bool TrackingKymoView::IsValidNodeConnection(void)
+{
+	if(NSelection.empty()|| NSelection.size()!=2) return false;
+	std::set<unsigned int>::iterator node_vtk_ids_iter;
+	std::vector<unsigned int> node_ids; 
+	for(node_vtk_ids_iter = NSelection.begin(); node_vtk_ids_iter!= NSelection.end(); ++node_vtk_ids_iter)
+	{
+			TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashp[*node_vtk_ids_iter]);
+			int tbit_time = tline->points_hash[*node_vtk_ids_iter].time;
+			TraceLine::TraceBitsType::iterator tbit_iter = tline->GetTraceBitIteratorBegin();
+			bool endNode = true;
+			bool beginNode = true;
+			std::vector<bool> tmp_vector;
+			//bool singleNode = false;
+			while(tbit_iter!=tline->GetTraceBitIteratorEnd())
+			{
+				if(tbit_iter->time > tbit_time)
+					endNode = false;
+				else if (tbit_iter->time < tbit_time)
+					beginNode = false;
+				++tbit_iter;
+			}
+			 tline->points_hash[*node_vtk_ids_iter].end = endNode;
+			 tline->points_hash[*node_vtk_ids_iter].begin = beginNode;
+			 node_ids.push_back(*node_vtk_ids_iter);
+	}
+	// now compare the two nodes:
+	if(node_ids.size()!=2)
+	{
+		printf("something is up with the selection\n");
+		return false;
+	}
+	TraceBit tbit1 = (reinterpret_cast<TraceLine*>(m_tobj->hashp[node_ids.at(0)]))->points_hash[node_ids.at(0)];
+	TraceBit tbit2 = (reinterpret_cast<TraceLine*>(m_tobj->hashp[node_ids.at(1)]))->points_hash[node_ids.at(1)];
+	bool isvalid = false;
+	// one is at end and the other is at begin:
+	if(tbit1.end == true && tbit1.begin == false && tbit2.end == false && tbit2.begin == true)
+	{
+		int timediff = (tbit2.time - tbit1.time);
+		if( timediff >0 && timediff< 3)
+			isvalid = true;
+	}
+	else if (tbit1.end == false && tbit1.begin == true && tbit2.end == true && tbit2.begin == false)
+	{
+		int timediff = (tbit1.time - tbit2.time);
+		if( timediff >0 && timediff< 4)
+			isvalid = true;
+	}
+	// one is at end or begin and the other is a single node:
+	else if (tbit1.end == true && tbit1.begin == true && tbit2.end == true && tbit2.begin == false)
+	{
+		int timediff = (tbit1.time - tbit2.time);
+		if( timediff >0 && timediff< 3)
+			isvalid = true;
+	}
+	else if (tbit1.end == true && tbit1.begin == true && tbit2.end == false && tbit2.begin == true)
+	{
+		int timediff = (tbit2.time - tbit1.time);
+		if( timediff >0 && timediff< 3)
+			isvalid = true;
+	}
+
+	else if (tbit1.end == false && tbit1.begin == true && tbit2.end == true && tbit2.begin == true)
+	{
+		int timediff = (tbit1.time - tbit2.time);
+		if( timediff >0 && timediff< 3)
+			isvalid = true;
+	}
+	else if (tbit1.end == true && tbit1.begin == false && tbit2.end == true && tbit2.begin == true)
+	{
+		int timediff = (tbit2.time - tbit1.time);
+		if( timediff >0 && timediff< 3)
+			isvalid = true;
+	}
+	return isvalid;
 }
 void TrackingKymoView::TogglePickMode(void)
 {
@@ -922,52 +1025,171 @@ void TrackingKymoView::TogglePickMode(void)
 	}
 }
 
-void TrackingKymoView::DeleteAndRelabelData(int vtk_cell_id)
-//void TrackingKymoView::DeleteAndRelabelData(void)
+void TrackingKymoView::DeleteAndRelabelData(void)
 {
 	if(TSelection.empty()) return;
-	TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[vtk_cell_id]);
-	TraceBit tb1 = tline->subtrace_hash[vtk_cell_id].at(0);
-	TraceBit tb2 = tline->subtrace_hash[vtk_cell_id].at(1);
-	int maxtime = MAX(tb1.time,tb2.time);
+	
+	std::vector<unsigned int> tmp_selection;
+	std::set<unsigned int> samet_selection;	// list of sub-tracks selected within the same track
+	//std::set<unsigned int> difft_selection;
+	std::map<int, std::set<unsigned int> > selection_map;
 
+	std::set<unsigned int>::iterator sel_iter;
+
+	for(sel_iter = TSelection.begin(); sel_iter!= TSelection.end(); ++sel_iter)
+		tmp_selection.push_back(*sel_iter);
+
+	// figure out the number of different selected tracks:
+	std::set<int> selected_ids;
+	for(int i = 0; i< tmp_selection.size(); ++i)
+	{
+		TraceLine *tline1 = reinterpret_cast<TraceLine*>(m_tobj->hashc[tmp_selection.at(i)]);
+		selected_ids.insert(tline1->GetId());
+	}
+	std::set<int>::iterator sel_ids_iter;
+	for(sel_ids_iter = selected_ids.begin(); sel_ids_iter!= selected_ids.end(); ++sel_ids_iter)
+	{
+		std::set<unsigned int> samet_selection;
+		for(int i = 0; i< tmp_selection.size(); ++i)
+		{
+			TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[tmp_selection.at(i)]);
+			int id = tline->GetId();
+			if(tline->GetId() == *sel_ids_iter)
+				samet_selection.insert(tmp_selection.at(i));
+		}
+		selection_map[*sel_ids_iter] = samet_selection;
+	}
+	std::map<int, std::set<unsigned int> >::iterator select_map_iter;
+	for(select_map_iter = selection_map.begin(); select_map_iter!= selection_map.end(); ++select_map_iter)
+	{
+		if(!(*select_map_iter).second.empty()&& (*select_map_iter).second.size()>1)
+			this->DeleteSameTData((*select_map_iter).second);
+		else if(!(*select_map_iter).second.empty()&& (*select_map_iter).second.size()==1)
+			this->DeleteDiffTData((*select_map_iter).second);
+	}
+	if(!points_from_delete.empty())
+	{
+		Selection->SelectPoints(points_from_delete);
+		points_from_delete.clear();
+	}
+
+	
+}
+void  TrackingKymoView::DeleteSameTData(std::set<unsigned int> samet_selection)
+{
+	std::set<unsigned int>::iterator sel_iter = samet_selection.begin();
+	TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[*sel_iter]);
+	int new_id = this->GetMaxId()+1;
+
+	// first find the trace line in the data to erase it:
 	std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
 	std::vector<TraceLine*>::iterator trace_lines_iter;
 	for(trace_lines_iter = trace_lines->begin() ;trace_lines_iter!= trace_lines->end(); ++trace_lines_iter)
 	{
 		if(tline->GetId() == (*trace_lines_iter)->GetId())
 		{
-			int new_id = this->GetMaxId()+1;
 			trace_lines->erase(trace_lines_iter);
-			TraceLine::TraceBitsType::iterator tbit_iter = tline->GetTraceBitIteratorBegin();
-			TraceLine * new_tline1 = new TraceLine();
-			TraceLine * new_tline2 = new TraceLine();
-
-			
-			while(tbit_iter != tline->GetTraceBitIteratorEnd())
-			{
-				if((*tbit_iter).time < maxtime)
-				{
-					new_tline1->AddTraceBit(*tbit_iter);
-				}
-				else 
-				{
-					(*tbit_iter).id = new_id;
-					new_tline2->AddTraceBit(*tbit_iter);
-				}
-				++tbit_iter;
-			}
-			trace_lines->push_back(new_tline1);
-			new_tline2->SetId(new_id);
-			trace_lines->push_back(new_tline2);
 			break;
 		}
 	}
 
+	printf("I am here\n");
 
+	TraceLine * tline_tmp = new TraceLine();
+	tline_tmp = tline;
+	sel_iter = samet_selection.begin();
+	while(sel_iter != samet_selection.end())
+	{
+		TraceBit tb1 = tline->subtrace_hash[*sel_iter].at(0);
+		TraceBit tb2 = tline->subtrace_hash[*sel_iter].at(1);
+		int maxtime = MAX(tb1.time,tb2.time);
+		tline_tmp = this->DeleteTlineRecursive(tline_tmp,*sel_iter,new_id,maxtime);
+		++new_id;
+		++sel_iter;
+	}
+	trace_lines->push_back(tline_tmp);
 
+}
+TraceLine * TrackingKymoView::DeleteTlineRecursive(TraceLine * tline, unsigned int vtk_cell_id, int new_id,int maxtime)
+{
+		std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
+		TraceLine::TraceBitsType::iterator tbit_iter = tline->GetTraceBitIteratorBegin();
+		TraceLine * new_tline1 = new TraceLine();
+		TraceLine * new_tline2 = new TraceLine();
+		ObjectSelection::Point point;
 
+		while(tbit_iter != tline->GetTraceBitIteratorEnd())
+		{
+			if((*tbit_iter).time < maxtime)
+			{
+				new_tline1->AddTraceBit(*tbit_iter);
+			}
+			else 
+			{
+				point.id = tbit_iter->id;
+				point.time = tbit_iter->time;
+				(*tbit_iter).id = new_id;
+				point.new_id = new_id;
+				new_tline2->AddTraceBit(*tbit_iter);
+				points_from_delete.push_back(point);
+			}
+			++tbit_iter;
+		}
+		trace_lines->push_back(new_tline1);
+		new_tline2->SetId(new_id);
+	return new_tline2;
+}
 
+void  TrackingKymoView::DeleteDiffTData(std::set<unsigned int> difft_selection)
+{
+	std::set<unsigned int>::iterator sel_iter;
+	for(sel_iter = difft_selection.begin(); sel_iter!= difft_selection.end(); ++sel_iter)
+	{
+		unsigned int vtk_cell_id = *sel_iter;
+		
+		TraceLine *tline = reinterpret_cast<TraceLine*>(m_tobj->hashc[vtk_cell_id]);
+		std::cout<<"deleting cell:"<<vtk_cell_id<<" with id: "<<tline->GetId()<<std::endl;
+		TraceBit tb1 = tline->subtrace_hash[vtk_cell_id].at(0);
+		TraceBit tb2 = tline->subtrace_hash[vtk_cell_id].at(1);
+		int maxtime = MAX(tb1.time,tb2.time);
+
+		std::vector<TraceLine*>* trace_lines  = m_tobj->GetTraceLinesPointer();
+		std::vector<TraceLine*>::iterator trace_lines_iter;
+		for(trace_lines_iter = trace_lines->begin() ;trace_lines_iter!= trace_lines->end(); ++trace_lines_iter)
+		{
+			if(tline->GetId() == (*trace_lines_iter)->GetId())
+			{
+				int new_id = this->GetMaxId()+1;
+				trace_lines->erase(trace_lines_iter);
+				TraceLine::TraceBitsType::iterator tbit_iter = tline->GetTraceBitIteratorBegin();
+				TraceLine * new_tline1 = new TraceLine();
+				TraceLine * new_tline2 = new TraceLine();
+				ObjectSelection::Point point;
+				
+				while(tbit_iter != tline->GetTraceBitIteratorEnd())
+				{
+					if((*tbit_iter).time < maxtime)
+					{
+						new_tline1->AddTraceBit(*tbit_iter);
+					}
+					else 
+					{
+						point.id = tbit_iter->id;
+						point.time = tbit_iter->time;
+						(*tbit_iter).id = new_id;
+						point.new_id = new_id;
+						points_from_delete.push_back(point);
+						new_tline2->AddTraceBit(*tbit_iter);
+					}
+					++tbit_iter;
+				}
+				trace_lines->push_back(new_tline1);
+				new_tline2->SetId(new_id);
+				trace_lines->push_back(new_tline2);
+				break;
+			}
+		}
+	}
 
 }
 int TrackingKymoView::GetMaxId(void)

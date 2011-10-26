@@ -40,6 +40,8 @@ struct TraceBit{
 	unsigned int marker;
 	unsigned int track_marker;
 	int class_id;
+	bool end;
+	bool begin;
 	void Print(std::ostream &c)
 	{
 		c<<"\t\tTraceBit:"<<std::endl;
@@ -77,7 +79,7 @@ public:
 	};
 	int GetSize()
 	{
-		return m_trace_bits.size();
+		return (int)m_trace_bits.size();
 	};
 	void Getstats();
 	
@@ -89,6 +91,7 @@ public:
 	std::vector<unsigned int> * GetMarkers() { return &m_markers;}
 	std::vector<TraceLine*> * GetBranchPointer(){ return &m_branches;}
 	stdext::hash_map<unsigned int,std::vector<TraceBit> > subtrace_hash;
+	stdext::hash_map<unsigned int,TraceBit> points_hash;
 
 private:
 	int m_id;

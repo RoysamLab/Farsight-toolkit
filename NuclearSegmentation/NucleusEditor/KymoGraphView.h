@@ -51,8 +51,7 @@
 #include <vtkTable.h>
 #include <vtkCallbackCommand.h>
 #include <vtkActor2DCollection.h>
-//#include "vtkInteractorStyleTrackballActor.h"
-//#include "vtkPropPicker.h"
+#include "vtkSphereSource.h"
 //#include "vtkObjectFactory.h"
 
 
@@ -254,6 +253,7 @@ public:
 
 		// create widgets for interaction:
 		this->CreatePointer3D();
+		this->CreateSphereActors();
 		this->CreateInteractorStyle();
 	
 		m_mainwindow->show();
@@ -262,8 +262,8 @@ public:
 		m_vtkrenderer->Render();
 
 		SaveAnimation();
-		connect(ImageView, SIGNAL(emitTimeChanged()), this, SLOT(refreshImages()));
-		connect(Selection, SIGNAL(changed()), this, SLOT(refreshSelection()));
+		//connect(ImageView, SIGNAL(emitTimeChanged()), this, SLOT(refreshImages()));
+		//connect(Selection, SIGNAL(changed()), this, SLOT(refreshSelection()));
 
 
 	}
@@ -358,15 +358,20 @@ private:
 
 
 	// Editing Stuff:
+	void CreateSphereActors(void);
+	void RemoveSphereActors(void);
+	void DrawSphere(double pos[]);
 	void SetupInteractorStyle(void);
 	void Delete(void);
 	void ConnectNodes(void);
+	bool IsValidNodeConnection(void);
 	void RelabelDelete(void);
 	void TogglePickMode(void);
 	void UpdateLabels(void);
-	void AppendNewPolyLine(TraceLine * new_tline);
-	void DeleteAndRelabelData(int vtk_cell_id);
-	//void DeleteAndRelabelData(void);
+	void DeleteAndRelabelData(void);
+	void DeleteDiffTData(std::set<unsigned int> difft_selection);
+	void DeleteSameTData(std::set<unsigned int> samet_selection);
+	TraceLine * DeleteTlineRecursive(TraceLine * tline, unsigned int vtk_cell_id, int new_id,int maxtime);
 	void UpdateTracePolyData(void);
 
 	
@@ -375,7 +380,12 @@ private:
 	vtkSmartPointer<vtkCellPicker> myCellPicker;
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	std::set<unsigned int> TSelection;			// set of selected tracks
-	std::set<unsigned int> NSelection;			// set of selected tracks
+	std::set<unsigned int> NSelection;			// set of selected nodes
+
+	vtkSmartPointer<vtkActor> sphereActor1;
+	vtkSmartPointer<vtkActor> sphereActor2;
+
+	std::vector<ObjectSelection::Point> points_from_delete;
 
 
 };

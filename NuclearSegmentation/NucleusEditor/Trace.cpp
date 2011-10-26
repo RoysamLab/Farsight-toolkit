@@ -233,6 +233,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkU
 	point[1]= iter->y;
 	point[2]= iter->z;
 	return_id = line_points->InsertNextPoint(point);
+	tline->points_hash[return_id] = *iter;
 	hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
 	std::vector<TraceBit> tbitpair;
@@ -250,7 +251,10 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkU
 		old_id = return_id;
 		point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
 		return_id = line_points->InsertNextPoint(point);
+		tline->points_hash[return_id] = *iter;
 		hashp[return_id]=(unsigned long long int)tline;
+		
+
 		iter->marker = return_id;
 		//point_scalars->InsertNextTuple1(iter->id/40.0);
 		iter->track_marker = point_scalars->InsertNextTupleValue(color);
