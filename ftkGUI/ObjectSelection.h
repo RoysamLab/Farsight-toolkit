@@ -16,6 +16,7 @@ limitations under the License.
 #define _OBJECTSELECTION_H
 
 #include <set>
+#include <vector>
 #include <QObject>
 
 //****************************************************************************
@@ -27,6 +28,7 @@ class ObjectSelection: public QObject
 
 public:
 	ObjectSelection();
+
 	
 	bool isSelected(long int id);		
 	bool add(long int id);
@@ -40,14 +42,24 @@ public:
 	bool toggle(long int id);
 	bool toggle(std::set<long int> ids);
 	void clear(void);
-
 	std::set<long int> getSelections(void);	//Returns the selections
+
+	// Time Selections: Kymograph and 3D View Editing
+	typedef struct Point{int id;int new_id;int time;};
+	int GetCurrentTime(){return Time;};
+	void SetCurrentTime(int t);
+	void SelectPoints(std::vector<Point> points);
+	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
 signals:
 	void changed();
+	void TimeChanged();
+	void MultiChanged();
 	
 private:
 	std::set<long int> selections;
+	int Time;
+	std::vector<Point> point_selections; // see if it needs to be cleared later.
 
 };
 

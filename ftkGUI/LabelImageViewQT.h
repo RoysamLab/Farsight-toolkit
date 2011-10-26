@@ -180,6 +180,7 @@ protected slots:
 	void drawRadNeighbors(QPainter *painter);
 	void drawROI(QPainter *painter);
 	void selectionChange(void);
+	void selectionTimeChange(void);
 	void sliderChange(int v);
 	void hspinChange(int v);
 	void vspinChange(int v);
@@ -189,6 +190,7 @@ protected slots:
 	void updateHSlider(void);
 	void initChannelFlags(void);
 	void createROIMask(void);
+
 
 protected:
 	void moveEvent (QMoveEvent * event);

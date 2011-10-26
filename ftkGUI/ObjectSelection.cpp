@@ -154,3 +154,15 @@ std::set<long int> ObjectSelection::getSelections()
 {	
 	return selections;
 }
+void ObjectSelection::SetCurrentTime(int t)
+{
+	Time = t;
+	emit TimeChanged();
+}
+void ObjectSelection::SelectPoints(std::vector<Point> points)
+{
+	point_selections.clear();
+	point_selections = points;
+	emit MultiChanged();
+}
+

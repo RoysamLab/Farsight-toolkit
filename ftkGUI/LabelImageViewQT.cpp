@@ -251,6 +251,7 @@ void LabelImageViewQT::SetLabelImage(ftk::Image::Pointer img, ObjectSelection * 
 	{
 		selection = sels;
 		connect(selection, SIGNAL(changed()), this, SLOT(selectionChange()));
+		connect(selection, SIGNAL(TimeChanged()), this, SLOT(selectionTimeChange()));
 	}
 
 	//refreshFeatures();
@@ -685,7 +686,15 @@ int LabelImageViewQT::GetCurrentTimeVal(void)
 {
 	return hSlider->value();
 }
-
+void LabelImageViewQT::selectionTimeChange(void)
+{
+	if(!selection) return;
+	int time = selection->GetCurrentTime();
+	// just some sanity check, may not be necessary:
+	const ftk::Image::Info * labImInfo = labelImg->GetImageInfo();
+	if(time > labelImg->GetImageInfo()->numTSlices || time<0) return;
+	this->SetCurrentTimeVal(time);
+}
 void LabelImageViewQT::SetCurrentTimeVal(double time)
 {
 	hSlider->setValue(time);
