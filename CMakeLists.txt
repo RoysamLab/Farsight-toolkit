@@ -320,8 +320,8 @@ IF (BUILD_XML_GENERATOR)
 	SUBDIRS( Xml_Generator )
 ENDIF (BUILD_XML_GENERATOR)
 IF (BUILD_CLUSCLUS)
-    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/CLUSCLUS )
-    SUBDIRS(CLUSCLUS)
+    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ClusClus )
+    SUBDIRS(ClusClus)
 ENDIF (BUILD_CLUSCLUS)
 
 #####################################################################################
