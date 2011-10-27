@@ -162,7 +162,7 @@ endif()
 
 ExternalProject_Add(ITK
   URL http://farsight-toolkit.org/support/ITK-Source-Oct-5-2011.tar.gz
-  URL_MD5 222849f931ac88139dc26862401a138f
+  URL_MD5 5b056969356b856fae677e489f0b181d
   DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
   SOURCE_DIR ${ITK_SOURCE_DIR}
   BINARY_DIR ${ITK_BINARY_DIR}
