@@ -4038,7 +4038,7 @@ void View3D::StartActiveLearning()
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
 				active_queries = mclr->ALAMO(active_query);
-			}
+			}// while !loop_termination_condition
 
 
 			/////////////////////////////////////////
@@ -4103,15 +4103,9 @@ void View3D::StartActiveLearning()
 				}
 			}
 			this->ShowCellAnalysis();
-
-			///////////////////////////////////////////
-			
-			///////////////////////////////////////
-			// JON, Update the table view
-			////////////////////////////////////////
-		}
-	}
-}
+		}//pwizzard 
+	}// d->result after training dialog
+}//end of active learning
 
 QImage View3D::Get_AL_Snapshot(CellTrace* currentCell)
 {
