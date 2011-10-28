@@ -1351,17 +1351,48 @@ void ImageOperation::ImMasking(int shrink_factor)
   ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
   connectedComponentFilter->SetInput( IMask );
 
+  try 
+  { 
+    connectedComponentFilter->Update(); 
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at connectedComponentFilter!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
   // Relabel the components in order of size.
   typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
   RelabelType::Pointer relabeler = RelabelType::New();
   relabeler->SetInput( connectedComponentFilter->GetOutput() );
   relabeler->SetMinimumObjectSize(300);
 
+  try 
+  { 
+    relabeler->Update(); 
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at relabeler!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
+
   typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
   LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
   labelGeometryFilter->SetInput( relabeler->GetOutput() );
 
-  labelGeometryFilter->Update();
+try 
+  { 
+    labelGeometryFilter->Update(); 
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at relabeler!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
+//  labelGeometryFilter->Update();
 
   ISoma = relabeler->GetOutput();
 
