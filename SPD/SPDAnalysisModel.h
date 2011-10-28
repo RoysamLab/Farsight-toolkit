@@ -67,7 +67,7 @@ protected:
 	vnl_vector<unsigned int> Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval);
 	vnl_vector<unsigned int> Hist(vnl_vector<double>&distance, vnl_vector<double>& interval);
 	//double Dist(int *first, int *second);
-	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second);
+	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
 
 private:
 	static SPDAnalysisModel *s_pmodel;

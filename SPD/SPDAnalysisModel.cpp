@@ -7,6 +7,7 @@
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include "ftkUtils.h"
 #include "transportSimplex.h"
+#include <iomanip>
 
 #define NUM_BIN 20
 
@@ -921,10 +922,18 @@ vnl_vector<unsigned int> SPDAnalysisModel::Hist(vnl_vector<double>&distance, vnl
 
 double Dist(int *first, int *second)
 {
-	return abs(*first - *second);
+	if( *first > *second)
+	{
+		return *first - *second;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
-double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second)
+double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second,
+											vnl_matrix<double> &flowMatrix)
 {
 	using namespace dt_simplex;
 	int *src = new int[first.size()];
@@ -948,7 +957,21 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	TsSignature<int> srcSig(first.size(), src, src_num);
 	TsSignature<int> snkSig(second.size(), snk, snk_num);
 
-	double result = transportSimplex(&srcSig, &snkSig, Dist);
+	TsFlow flow[NUM_BIN * NUM_BIN];
+	int flowVars = 0;
+	double result = transportSimplex(&srcSig, &snkSig, Dist, flow, &flowVars);
+	
+	for( int i = 0; i < NUM_BIN; i++)
+	{
+		for( int j = 0; j < NUM_BIN; j++)
+		{
+			flowMatrix( i, j) = 0;
+		}
+	}
+	for( int i = 0; i < flowVars; i++)
+	{
+		flowMatrix( flow[i].to, flow[i].from) = flow[i].amount;
+	}
 	
 	delete src;
 	delete src_num;
@@ -987,45 +1010,77 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	{
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist = Hist( moduleDistance[i], NUM_BIN, hist_interval);
-		histOfs << "Module "<<i<<endl;
+		histOfs << "Module "<< i + 1 <<endl;
 		
 		// test the distance of the modules
-		for( int s = 0; s < moduleDistance[i].size(); s++)
-		{
-			for( int t = 0; t < 10; t++, s++)
-			{
-				histOfs << moduleDistance[i][s]<<"\t";
-			}
-			histOfs<<endl;		
-		}
-		histOfs <<endl;
+		//for( int s = 0; s < moduleDistance[i].size(); s = s + 10)
+		//{
+		//	for( int t = 0; t < 10; t++)
+		//	{
+		//		if( s + t < moduleDistance[i].size())
+		//		{
+		//			histOfs << moduleDistance[i][s + t]<<"\t";
+		//		}
+		//	}
+		//	histOfs<<endl;		
+		//}
+		//histOfs <<endl;
 
-		histOfs << moduleHist << endl<<endl;
+		vnl_vector<double> moduleHistPer( moduleHist.size());
+		for( unsigned int y = 0; y < moduleHist.size(); y++)
+		{
+			moduleHistPer[y] = moduleHist[y] / (double)moduleHist.sum();
+		}
+		histOfs << moduleHistPer<< endl<<endl;
 
 		for( int j = 0; j < moduleDistance.size(); j++)
 		{	
-			std::cout<< "matching module " << i << " with MST " << j<<endl;
+			std::cout<< "matching module " << i<< " with MST " << j<<endl;
+			histOfs << "MST "<< j + 1 <<endl;
+
 			vnl_vector<double> mstDistance; 
 			GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
 			vnl_vector<unsigned int> mstHist = Hist( mstDistance, hist_interval); 
 
-			histOfs << "MST "<<j<<endl;
-
 			//test the distance of the MSTs
-			for( int s = 0; s < mstDistance.size(); s++)
+			//for( int s = 0; s < mstDistance.size(); s = s + 10)
+			//{
+			//	for( int t = 0; t < 10; t++)
+			//	{
+			//		if( s + t < mstDistance.size())
+			//		{
+			//			histOfs << mstDistance[s + t]<<"\t";
+			//		}
+			//	}
+			//	histOfs<<endl;		
+			//}
+			
+			vnl_vector<double> mstHistPer( mstHist.size());
+			for( unsigned int y = 0; y < mstHist.size(); y++)
 			{
-				for( int t = 0; t < 10; t++, s++)
-				{
-					histOfs << mstDistance[s]<<"\t";
-				}
-				histOfs<<endl;		
+				mstHistPer[y] = mstHist[y] / (double)mstHist.sum();
+			}
+			histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
+
+			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+			
+			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
+
+			histOfs << "flows:"<<endl;
+			vnl_matrix<double> tranMatrix = flowMatrix.transpose();
+			histOfs << setiosflags(ios::fixed) << tranMatrix <<endl <<endl;
+			
+			histOfs << "sums:" <<endl;
+			vnl_vector<double> sumvector( tranMatrix.cols());
+			for( int i = 0; i < tranMatrix.cols(); i++)
+			{
+				sumvector[i] = tranMatrix.get_column(i).sum();
 			}
 
-			histOfs << mstHist << endl<<endl;
-			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist);
+			histOfs << setiosflags(ios::fixed) << sumvector <<endl<<endl;
 		}
 	}
-	histOfs << this->EMDMatrix << endl;
+	histOfs << setiosflags(ios::fixed) << this->EMDMatrix << endl;
 	histOfs.close();
 	std::cout<< "EMD matrix saved in file emd.txt"<<endl;
 }
