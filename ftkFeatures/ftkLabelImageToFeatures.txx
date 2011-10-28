@@ -88,7 +88,7 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 {
 	intensityImage = NULL;
 	labelImage = NULL;
-	zernikeOrder = 10;
+	zernikeOrder = 5;
 	
 	boundaryPix.clear();
 	interiorPix.clear();
@@ -353,7 +353,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//TEXTURE CALCULATOR:
 	if (this->computeTextures)
     {
-		if(!this->RunTextureFilter()) return;		//Should throw exception
+		//if(!this->RunTextureFilter()) return;		//Should throw exception
     }
     
 }

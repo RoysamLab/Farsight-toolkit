@@ -555,4 +555,89 @@ void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 	}
 }
 
+void IntrinsicFeatureCalculator::GetDistanceToSurfaceMeasures(vtkSmartPointer<vtkTable> table, std::vector< ftk::Object::Point > surfacePoints)
+{
+	typedef itk::Image< IPixelT, 3 > InputImageType;
+	typedef itk::Image< LPixelT, 3 > OutputImageType;
+	typedef itk::DanielssonDistanceMapImageFilter< OutputImageType, OutputImageType > DanielssonFilterType;
+	typedef itk::RescaleIntensityImageFilter< OutputImageType, OutputImageType > RescalerType;
+	typedef itk::ImageFileReader< InputImageType  >  ReaderType;
+	typedef itk::ImageFileWriter< InputImageType >  InputWriterType;
+	typedef itk::ImageFileWriter< OutputImageType >  WriterType;
+	typedef itk::LineIterator< OutputImageType > LineIteratorType;
+
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "Dist_To_Surface" );
+	column->SetNumberOfValues( table->GetNumberOfRows() );
+	table->AddColumn(column);	
+
+	OutputImageType::Pointer im;
+	im = OutputImageType::New();
+	OutputImageType::PointType origin;
+    origin[0] = 0; 
+    origin[1] = 0;    
+	origin[2] = 0;    
+    im->SetOrigin( origin );
+
+    OutputImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z    
+    
+	OutputImageType::Pointer temp_image = labelImage->GetItkPtr< LPixelT >(0,0);
+	itk::Size<3> im_size = temp_image->GetBufferedRegion().GetSize();
+	im_size[2] = 1;
+  
+    InputImageType::RegionType region;
+    region.SetSize( im_size );
+    region.SetIndex( start );
+    
+    im->SetRegions( region );
+    im->Allocate();
+    im->FillBuffer(0);
+	im->Update();
+	
+	//copy the input image into the ITK image
+	for(int p = 1; p < (int)surfacePoints.size(); ++p)
+	{
+		itk::Index<3> indx,indy;
+		indx[0] = surfacePoints[p-1].x;
+		indx[1] = surfacePoints[p-1].y;
+		indx[2] = 0;
+		indy[0] = surfacePoints[p].x;
+		indy[1] = surfacePoints[p].y;
+		indy[2] = 0;
+		LineIteratorType it( im, indx, indy );
+		//it.GoToBegin();
+		//while(!it.IsAtEnd())
+		for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+		{
+			it.Set(255);			
+		}
+	}
+
+	DanielssonFilterType::Pointer danielssonFilter = DanielssonFilterType::New();	
+	WriterType::Pointer writer = WriterType::New();	
+	danielssonFilter->SetInput( im );
+	writer->SetFileName( "DistanceMap.tif" );
+	danielssonFilter->InputIsBinaryOn();
+	danielssonFilter->Update();
+	OutputImageType::Pointer distMap = danielssonFilter->GetOutput();
+	writer->SetInput( distMap );
+	writer->Update();
+	
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		OutputImageType::IndexType indx;
+		indx[0] = table->GetValue(row, 1).ToInt();
+		indx[1] = table->GetValue(row, 2).ToInt();
+		indx[2] = 0;
+		int dist = distMap->GetPixel(indx);
+		table->SetValueByName(row, "Dist_To_Surface", vtkVariant(dist));
+	}
+
+
+
+}
+
 }  // end namespace ftk
