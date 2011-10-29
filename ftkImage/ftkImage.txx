@@ -59,7 +59,7 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 }
 
 
-template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::GetItkPtr(int T, int CH, PtrMode mode = DEFAULT)
+template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::GetItkPtr(int T, int CH, PtrMode mode)
 {
 	if( !IsMatch<pixelType>(m_Info.dataType) ) //Forced to duplicate image because the datatypes are different
 		mode = DEEP_COPY;
