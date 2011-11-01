@@ -74,14 +74,14 @@ void MicrogliaProcessTracer::LoadInputImage(ImageType3D::Pointer &image)
   this->PaddedInputImage->Allocate();
   this->PaddedInputImage->SetSpacing(this->InputImage->GetSpacing());
   
-  for(ondx[2] = 0; ondx[2] < (unsigned int)osz[2]; ++ondx[2]) 
+  for(ondx[2] = 0; ondx[2] < (int)osz[2]; ++ondx[2]) 
   {
-    indx[2] = (ondx[2] < this->Padding) ? 0 : ondx[2] - this->Padding;
-    indx[2] = (ondx[2] >= (unsigned int)osz[2]-this->Padding) ? isz[2]-1 : indx[2];
-    for(ondx[1] = 0; ondx[1] < (unsigned int)osz[1]; ++ondx[1]) 
+    indx[2] = (ondx[2] < (int)this->Padding) ? 0 : ondx[2] - this->Padding;
+    indx[2] = (ondx[2] >= (int)(osz[2]-this->Padding)) ? isz[2]-1 : indx[2];
+    for(ondx[1] = 0; ondx[1] < (int)osz[1]; ++ondx[1]) 
     {
       indx[1] = ondx[1];
-      for(ondx[0] = 0; ondx[0] < (unsigned int)osz[0]; ++ondx[0]) 
+      for(ondx[0] = 0; ondx[0] < (int)osz[0]; ++ondx[0]) 
       {
         indx[0] = ondx[0];
         this->PaddedInputImage->SetPixel(ondx, this->InputImage->GetPixel(indx));
@@ -334,8 +334,8 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
   {
     itk::Index<3> ndx = it.GetIndex();
     if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
-      (ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
-      (ndx[2] > (unsigned int)sz[2]) )
+      (ndx[0] > (int)sz[0]) || (ndx[1] > (int)sz[1]) ||
+      (ndx[2] > (int)sz[2]) )
     {
       ++it;
       ++nit;
@@ -443,14 +443,14 @@ bool MicrogliaProcessTracer::RegisterIndex(const float value,
   unsigned int radZ = (unsigned int)
     ceil( (this->ProcessRadius / this->InputImage->GetSpacing()[2] ) );
 
-  for (n[0] = ndx[0]-radX; n[0] <= ndx[0]+radX; ++n[0]) 
+  for (n[0] = ndx[0]-radX; n[0] <= (int)(ndx[0]+radX); ++n[0]) 
   {
-    for (n[1] = ndx[1]-radY; n[1] <= ndx[1]+radY; ++n[1]) 
+    for (n[1] = ndx[1]-radY; n[1] <= (int)(ndx[1]+radY); ++n[1]) 
     {
-      for (n[2] = ndx[2]-radZ; n[2] <= ndx[2]+radZ; ++n[2]) 
+      for (n[2] = ndx[2]-radZ; n[2] <= (int)(ndx[2]+radZ); ++n[2]) 
       {
-        if ( (n[0] < 2) || (n[1] < 2) || (n[2] < 2) || (n[0] > (unsigned int)sz[0]) ||
-          (n[1] > (unsigned int)sz[1]) || (n[2] > (unsigned int)sz[2]) )
+        if ( (n[0] < 2) || (n[1] < 2) || (n[2] < 2) || (n[0] > (int)sz[0]) ||
+          (n[1] > (int)sz[1]) || (n[2] > (int)sz[2]) )
         {
           continue;
         }
@@ -759,7 +759,7 @@ void MicrogliaProcessTracer::WriteNodeToSWCFile( Node *n, std::ofstream *outFile
 void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
 {
   std::vector< Node * >::iterator nodeItr;
-  Node *centerNode, *nbrNode;
+  Node *nbrNode;
   
   ImageType3D::SizeType radius;
   radius[0] = (unsigned int)
@@ -807,7 +807,7 @@ void MicrogliaProcessTracer::ComputeAdjacencies( std::vector< Node * > nodes )
         continue;
         }
 
-      std::map<itk::Index<3>, Node *>::iterator mapItr =
+      std::map<itk::Index<3>, Node *, CompareIndices>::iterator mapItr =
         this->IndexToNodeMap.find(end);
       if(mapItr == this->IndexToNodeMap.end())
         {
@@ -868,19 +868,19 @@ double MicrogliaProcessTracer::GetDistanceBetweenPoints(itk::Index<3> start,
     bool foregroundPixelFound = false;
     for(int x = indices[i][0] - 1; x < indices[i][0] + 2; x++)
       {
-      if(x < 0 || x > imageSize[0] - 1) 
+      if(x < 0 || x > (int)imageSize[0] - 1) 
         {
         continue;
         }
       for(int y = indices[i][1] - 1; y < indices[i][1] + 2; y++)
         {
-        if(y < 0 || y > imageSize[1] - 1) 
+        if(y < 0 || y > (int)imageSize[1] - 1) 
           {
           continue;
           }
         for(int z = indices[i][2] - 1; z < indices[i][2] + 2; z++)
           {
-          if(z < 0 || z > imageSize[2] - 1)
+          if(z < 0 || z > (int)imageSize[2] - 1)
             {
             continue;
             }
