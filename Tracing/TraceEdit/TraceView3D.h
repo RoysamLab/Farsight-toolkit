@@ -94,8 +94,8 @@ limitations under the License.
 #include "vtkCellLocator.h"
 #include "vtkLegendScaleActor.h"
 
-#include "PatternAnalysis/activeLearning/mclr.h"
-#include "ftkGUI/Active_Learning_Dialog.h"
+#include "PatternAnalysis/activeLearning/mclr_SM.h"
+#include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 

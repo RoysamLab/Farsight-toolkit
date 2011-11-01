@@ -3868,6 +3868,7 @@ void View3D::StartActiveLearning()
 {
 	vtkSmartPointer<vtkTable> featureTable;
 	std::vector<int> active_queries;
+	active_queries.resize(1);
 	double confidence_thresh = 0.5;
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount < 1)
@@ -3925,37 +3926,41 @@ void View3D::StartActiveLearning()
 				class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
 			}
 
-			MCLR *mclr = new MCLR();
+			MCLR_SM *mclr = new MCLR_SM();
 			double sparsity = 1;
 			int active_query = 1;
 			double max_info = -1e9;
 
 			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(new_table, id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",new_table,true);
+			mclr->Initialize(Feats,sparsity,class_list,"",new_table);
 			mclr->Get_Training_Model();
 
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
-			active_queries = mclr->ALAMO(active_query);	
+			//active_queries = mclr->ALAMO(active_query);	
+			//active_queries[0] = active_query;
 
 			bool user_stop_dialog_flag = false;
 			bool loop_termination_condition = true;
 
-			Active_Learning_Dialog *dialog;
-			std::vector<QImage> snapshots;
-			snapshots.resize(active_queries.size());
+			GenericALDialog *dialog;
+			//std::vector<QImage> snapshots;
+			//snapshots.resize(active_queries.size());
 
+			/////////////////////////////////////////////////////////////////////////
+			// Querying starts now
+			/////////////////////////////////////////////////////////////////////////
 			while(loop_termination_condition)
 			{	
-				for(int i=0;i<active_queries.size(); ++i)
-				{
+				//for(int i=0;i<active_queries.size(); ++i)
+				//{
 					if (this->viewIn2D)
 					{
 						double test [6];
 						this->Renderer->ComputeVisiblePropBounds(test);
 						this->setRenderFocus(test, 6);
 					}// end of reset renderer when in 2d mode 
-					int zoomID = mclr->id_time_val.at(active_queries[i]).first;
+					int zoomID = mclr->id_time_val.at(active_query).first;
 					for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
 					{
 						if(myDataTable->GetValue(row,0) == zoomID)
@@ -3965,43 +3970,44 @@ void View3D::StartActiveLearning()
 						}
 					}
 					CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
-					snapshots[i] = Get_AL_Snapshot(currCell);	
-				}
+					//snapshots[i] = Get_AL_Snapshot(currCell);	
+				//}
 				
-				dialog =  new Active_Learning_Dialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);
-				//dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
+				dialog =  new GenericALDialog(mclr->test_table, mclr->no_of_classes, active_query, mclr->top_features);
+				dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
 				dialog->exec();	 
 
-				if(dialog->rejectFlag)
-					return;
+				//if(dialog->rejectFlag)
+				//	return;
 
 				loop_termination_condition = dialog->finish && dialog->result();
 
 				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
 
-				for(int i=0;i<active_queries.size();++i)
-				{
-					atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
-					while(dialog->query_label[i].second == -1)
+				//for(int i=0;i<active_queries.size();++i)
+				//{
+					//atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
+					while(dialog->class_selected == -1)
 					{	
 						QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
 						this->show();
-						dialog =  new Active_Learning_Dialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);	
+						dialog =  new GenericALDialog(mclr->test_table, mclr->no_of_classes, active_query, mclr->top_features);	
 						dialog->exec();
-						i=0;
-						if(dialog->rejectFlag)
-							return;
+						//i=0;
+						//if(dialog->rejectFlag)
+						//	return;
 					}
-				}
+				//}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(dialog->query_label);
+				mclr->Update_Train_Data(active_query, dialog->class_selected);
 				
-				if(atleast_one_chosen ==0)
+				if(dialog->class_selected == 0)
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
-					active_queries = mclr->ALAMO(active_query);
+					//active_queries = mclr->ALAMO(active_query);
+					//active_queries[0] = active_query;
 					continue;
 				}
 
@@ -4037,8 +4043,10 @@ void View3D::StartActiveLearning()
 
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
-				active_queries = mclr->ALAMO(active_query);
+				//active_queries = mclr->ALAMO(active_query);
+				//active_queries[0]= active_query;
 			}// while !loop_termination_condition
+			// Querying is done
 
 
 			/////////////////////////////////////////
@@ -4095,11 +4103,11 @@ void View3D::StartActiveLearning()
 				//myDataTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 				{
-					currCell->SetClassifcation(predictionIndex, curr_col.arg_max()+1, confIndex, curr_col.arg_max());
+					currCell->SetClassifcation(predictionIndex, curr_col.arg_max()+1, confIndex, curr_col(curr_col.arg_max()));
 				}
 				else
 				{
-					currCell->SetClassifcation(predictionIndex, 0, confIndex, curr_col.arg_max());
+					currCell->SetClassifcation(predictionIndex, 0, confIndex, curr_col(curr_col.arg_max()));
 				}
 			}
 			this->ShowCellAnalysis();

@@ -107,7 +107,7 @@ void MCLR_SM::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> cla
 
 
 //Converts vtkTable to Vnl_Matrix
-vnl_matrix <double> MCLR_SM::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<double,double> > id_time)
+vnl_matrix <double> MCLR_SM::tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<int,int> > id_time)
 {
 	
 	vnl_matrix <double> FeatsMatrix(table->GetNumberOfRows(),table->GetNumberOfColumns());
