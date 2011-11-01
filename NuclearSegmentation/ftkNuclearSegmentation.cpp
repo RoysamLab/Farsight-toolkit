@@ -559,7 +559,7 @@ bool NuclearSegmentation::ComputeAllGeometries(int ntimes)
 		labFilter->SetImageInputs( dataImage->GetItkPtr<IntrinsicFeatureCalculator::IPixelT>(t,channelNumber), labelImage->GetItkPtr<IntrinsicFeatureCalculator::LPixelT>(t,0) );
 		//labFilter->ComputeTexturesOn();
 		//labFilter->ComputeHistogramOn();
-		labFilter->SetLevel(1);
+		labFilter->SetLevel(3);
 		labFilter->Update();
 		std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
 
