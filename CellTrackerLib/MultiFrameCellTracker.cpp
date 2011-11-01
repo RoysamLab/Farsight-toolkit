@@ -12,38 +12,38 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 		fvar.variances[counter] = std::numeric_limits<float>::max();
 	}
 
-	//fvar.distVariance = 25;//8.77;//50
-	//fvar.distMean = 2;//3.3;//5
-	//fvar.spacing[0] = 0.64;
-	//fvar.spacing[1] = 0.64;
-	//fvar.spacing[2] = 2.0;
-	//fvar.timeVariance = 0.1;//.119//1;
-	//fvar.timeMean = 0;//.119//1;
-	//fvar.overlapVariance = 1;//0.034;//1;
-	//fvar.overlapMean = 0;//0.2;//0;
-	//fvar.variances[FeatureVariances::VOLUME] = 90000;//44000;//90000;
-	//fvar.MS_prior = 1;//
-	//fvar.AD_prior = 1;
-	//fvar.T_prior = 1;
-	//fvar.boundDistMean = 2;
-	//fvar.boundDistVariance = 12;
+	fvar.distVariance = 25;//8.77;//50
+	fvar.distMean = 2;//3.3;//5
+	fvar.spacing[0] = 0.64;
+	fvar.spacing[1] = 0.64;
+	fvar.spacing[2] = 2.0;
+	fvar.timeVariance = 0.1;//.119//1;
+	fvar.timeMean = 0;//.119//1;
+	fvar.overlapVariance = 1;//0.034;//1;
+	fvar.overlapMean = 0;//0.2;//0;
+	fvar.variances[FeatureVariances::VOLUME] = 90000;//44000;//90000;
+	fvar.MS_prior = 1;//
+	fvar.AD_prior = 1;
+	fvar.T_prior = 1;
+	fvar.boundDistMean = 2;
+	fvar.boundDistVariance = 12;
 
 
-	fvar.spacing[0] = parameters.at(0).second; 
-	fvar.spacing[1] = parameters.at(1).second; 
-	fvar.spacing[2] = parameters.at(2).second; 
-	fvar.distVariance = parameters.at(3).second;
-	fvar.distMean = parameters.at(4).second; 
-	fvar.timeVariance = parameters.at(5).second;
-	fvar.timeMean = parameters.at(6).second; 
-	fvar.overlapVariance = parameters.at(7).second;
-	fvar.overlapMean = parameters.at(8).second;
-	fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
-	fvar.MS_prior = parameters.at(10).second; 
-	fvar.AD_prior = parameters.at(11).second; 
-	fvar.T_prior = parameters.at(12).second; 
-	fvar.boundDistMean = parameters.at(13).second; 
-	fvar.boundDistVariance = parameters.at(14).second; 
+	//fvar.spacing[0] = parameters.at(0).second; 
+	//fvar.spacing[1] = parameters.at(1).second; 
+	//fvar.spacing[2] = parameters.at(2).second; 
+	//fvar.distVariance = parameters.at(3).second;
+	//fvar.distMean = parameters.at(4).second; 
+	//fvar.timeVariance = parameters.at(5).second;
+	//fvar.timeMean = parameters.at(6).second; 
+	//fvar.overlapVariance = parameters.at(7).second;
+	//fvar.overlapMean = parameters.at(8).second;
+	//fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
+	//fvar.MS_prior = parameters.at(10).second; 
+	//fvar.AD_prior = parameters.at(11).second; 
+	//fvar.T_prior = parameters.at(12).second; 
+	//fvar.boundDistMean = parameters.at(13).second; 
+	//fvar.boundDistVariance = parameters.at(14).second; 
 }
 void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders)
 {
@@ -78,16 +78,13 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 	std::string outfilenametmp;
 	for (int t=0 ; t<num_t; ++t)
 	{
-//		 stringstream ss;//create a stringstream
-  //       ss << t;
-	//	 outfilenametmp = resultfiledirectory+"\\"+resultfilename+ss.str()+".tif";
-		 outfilenametmp = resultfiledirectory+"\\"+resultfilename+"_"+inputfilenames.at(t).at(0);
+		 stringstream ss;//create a stringstream
+		 ss << t;
+		 outfilenametmp = resultfiledirectory+"\\"+resultfilename+"_"+ss.str()+".tiff";
 		 outputfilenames.push_back(outfilenametmp);
 		 std::cout<<outfilenametmp<<std::endl;
 		 outfilenametmp.clear();
 	}
-//	scanf("%*d");
-	
 
 	int c=1;
 
@@ -101,18 +98,17 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 	std::string dataset_id = "movie8ova";
 	printf("datasetid = %s\n",dataset_id.c_str());
 
-		MultiFrameCellTracker::VVL loclimages;
-		MultiFrameCellTracker::VVR locrimages;
-		helpers::LabelImageType::Pointer tempsegmented;
-		helpers::InputImageType::Pointer tempimage;
-		std::vector<Color2DImageType::Pointer> input,output;
-	//	char *filename_number = "C:\\Lab\\ArunFiles\\Data\\Tracking\\numbers.bmp";
+	MultiFrameCellTracker::VVL loclimages;
+	MultiFrameCellTracker::VVR locrimages;
+	helpers::LabelImageType::Pointer tempsegmented;
+	helpers::InputImageType::Pointer tempimage;
+	std::vector<Color2DImageType::Pointer> input,output;
 
-		char *filename_number = new char [numbersfile.size()+1];
-    	strcpy(filename_number,numbersfile.c_str());
+	char *filename_number = new char [numbersfile.size()+1];
+	strcpy(filename_number,numbersfile.c_str());
 
-		Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
-		fvar.time_last = num_t-1;
+	Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
+	fvar.time_last = num_t-1;
 		for(int t =0; t<num_t; t++)
 		{
 
@@ -129,6 +125,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
 				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
+				f[counter].ScalarFeatures[FeatureType::CONVEXITY] = 0.0;
 				if(f[counter].ScalarFeatures[FeatureType::VOLUME]<5)
 				{
 					printf("A cell has a volume of %f\n",f[counter].ScalarFeatures[FeatureType::VOLUME]);
@@ -142,9 +139,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		}
 
 		helpers::ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
-	//	debugprefix = "1color";
 
-	//	std::string debugfolder = "C:\\Lab\\ArunFiles\\Data\\Tracking\\debug\\";
 		std::string debugfolder = debugfiledirectory;
 		std::string debugstring = debugfolder +"\\"+ debugprefix + "_input.tif";
 		writeImage<helpers::ColorImageType>(colin,debugstring.c_str());
@@ -193,12 +188,30 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		fvarnew.T_prior = 1;
 		fvarnew.timeVariance = 1;
 		fvarnew.overlapVariance = 1;
+	 
+		//std::string checkfile = entropyfiledirectory+"\\";
+		//checkfile +=   "check.txt";
+		//FILE *fp4 = fopen(checkfile.c_str(),"w");
 
+		 typedef itk::LabelStatisticsImageFilter< helpers::LabelImageType, helpers::LabelImageType> LabelStatisticsImageFilterType;
+		
+		std::vector<helpers::LabelImageType::Pointer> ItkTrackImagePtr;
 		for(int t = 0; t< num_t; t++)
 		{
 			printf("In final loop t = %d\n",t);
+			
 
 			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
+			LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
+			labelStatisticsImageFilter->SetLabelInput(track);
+			labelStatisticsImageFilter->SetInput(track);
+			labelStatisticsImageFilter->Update();
+		//	fprintf(fp4,"%d\t%d\n",t,(int)labelStatisticsImageFilter->GetNumberOfLabels());
+
+
+			std::map<int, std::vector<int> > my_map = this->ComputeEntropyUtilitiesAtTime(t);
+			VertexUtilities.push_back(my_map);
+			ItkTrackImagePtr.push_back(track);
 			Color2DImageType::Pointer cimp = getColor2DImage(track,2);
 			std::vector<FeatureType> f;
 			getFeatureVectorsFarsight(track,tempimage,f,t,c);
@@ -214,20 +227,23 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			//PAUSE;
 			printf("Finished annotate loop\n");
 			output.push_back(cimp);
-			printf("About to call writeImage\n");
-			writeImage<helpers::LabelImageType>(track,outputfilenames[t].c_str());
+			//printf("About to call writeImage\n");
+			//writeImage<helpers::LabelImageType>(track,outputfilenames[t].c_str());
 		}
+		//fclose(fp4); 
+
 
 		// Reload Images:
-		if(!resultImages->LoadFile(outputfilenames[0]))
+		/*if(!resultImages->LoadFile(outputfilenames[0]))
 			resultImages = NULL;
 
 		for(int t = 1; t <num_t; t++)
 		{
 			tmpImage->LoadFile(outputfilenames[t]);
 			resultImages->AppendImage(tmpImage,writemode,true);
-		}
-		
+		}*/
+		convertItkImagesToftkImages(labelimage,rawimage,ItkTrackImagePtr);
+	
 		helpers::ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
 		debugstring = debugfolder + "\\" +  debugprefix + "_debugcol1.tif";
 		writeImage<helpers::ColorImageType>(debugcol1,debugstring.c_str());
@@ -237,18 +253,39 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		writeImage<helpers::ColorImageType>(debugcol3,debugstring.c_str());
 		debugstring = debugfolder + "\\" + debugprefix + "_output.tif";
 		writeImage<helpers::ColorImageType>(colout,debugstring.c_str());
-		this->summarize_tracking(rawimage);
+		summarize_tracking(rawimage);
+
 
 
 		
 }
-	
+void MultiFrameCellTracker::convertItkImagesToftkImages(ftk::Image::Pointer labelImage,ftk::Image::Pointer dataImage,std::vector<helpers::LabelImageType::Pointer> &trackImages)
+{
+
+	ftk::Image::DataType dataType = labelImage->GetImageInfo()->dataType;
+	unsigned char databpPix = labelImage->GetImageInfo()->bytesPerPix;
+	unsigned char labelbpPix = labelImage->GetImageInfo()->bytesPerPix;
+	unsigned short cs = labelImage->GetImageInfo()->numColumns;
+	unsigned short rs = labelImage->GetImageInfo()->numRows;
+	unsigned short zs = labelImage->GetImageInfo()->numZSlices;
+	std::string name;
+	std::vector< std::vector <std::string> > FileNames = dataImage->GetTimeChannelFilenames();
+	for ( int t = 0; t <labelImage->GetImageInfo()->numTSlices; t++ )
+	{
+		name = 	resultfilename+"_"+FileNames.at(t).at(0);
+		resultImages->AppendImageFromData3D(trackImages.at(t)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
+	}
+
+}
+
 void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 {
 	int c=1;
 	int num_t = static_cast<int>(rawImg->GetImageInfo()->numTSlices);
-	ftk::Image::PtrMode readmode;
-	readmode = static_cast<ftk::Image::PtrMode>(0);
+	ftk::Image::PtrMode labelreadmode;
+	ftk::Image::PtrMode rawreadmode;
+	labelreadmode = static_cast<ftk::Image::PtrMode>(2); // deep copy mode (give management to itk)
+	rawreadmode = static_cast<ftk::Image::PtrMode>(0); // default
 
 	LabelImageType::Pointer segmented[MAX_TIME][MAX_TAGS]; // FIXME
 	InputImageType::Pointer images[MAX_TIME][MAX_TAGS];
@@ -262,11 +299,11 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 
 	for(int t = 0; t< num_t ; t++)
 	{
-		images[t][c-1]= rawImg->GetItkPtr<helpers::InputPixelType>(t,channel_to_track,readmode);	// channels FIXME
+		images[t][c-1]= rawImg->GetItkPtr<helpers::InputPixelType>(t,channel_to_track,rawreadmode);	// channels FIXME
 	}
    for(int t = 0; t< num_t; t++)
     {
-		segmented[t][c-1] = resultImages->GetItkPtr<helpers::LabelPixelType>(t,0,readmode);
+		segmented[t][c-1] = resultImages->GetItkPtr<helpers::LabelPixelType>(t,0,labelreadmode);
 	}
  
 
@@ -276,21 +313,14 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
     }
 
  
-  createTrackFeatures(summaryfvector,tfs,c,num_t);
-//  printf("tfs.size() = %d first\n",(int)tfs.size());
-  AnalyzeTimeFeatures(tfs,spac);
+  this->createTrackFeatures(summaryfvector,tfs,c,num_t);
+  this->ComputeVertexEntropies();
+  AnalyzeTimeFeatures(tfs,spac,vertex_entropies);
 
-  //FILE*fp1 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\allfeatures.txt","w");
-  //FILE*fp2 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\timefeaturesfile.txt","w");
-  //for(unsigned int counter  = 0; counter< tfs.size(); counter++)
-  //  {
-		//if(tfs[counter].intrinsic_features.size()>1)
-		//	tfs[counter].Fprintf(fp1,fp2);
-  //  }
-  //fclose(fp1);
-  //fclose(fp2);
+
   this->changeDataHierarchy(tfs);
-
+  
+  std::cout<<"I finished computing vertex entropies..."<<std::endl;
 }
 
 void MultiFrameCellTracker::changeDataHierarchy(std::vector<ftk::TrackFeatures> vectrackfeatures)
@@ -353,6 +383,36 @@ void MultiFrameCellTracker::createTrackFeatures(std::vector<FeatureType> summary
 		//PRINTF("Added %d elements to trfeats\n",counter);
 	}
 
+}
+void MultiFrameCellTracker::ComputeTimeFeaturesTable(void)
+{
+
+	TimeFeaturesTable = vtkSmartPointer<vtkTable>::New();
+	//Init the table (headers):
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "ID" );
+	TimeFeaturesTable->AddColumn(column);
+	std::string fPrefix = "";
+	for (int i=0; i < ftk::TrackFeatures::NF; ++i)
+	{
+			column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName( (fPrefix+ftk::TrackFeatures::TimeInfo[i].name).c_str() );
+			TimeFeaturesTable->AddColumn(column);
+	}
+		//Now populate the table:
+	for (int i=0; i<(int)tfs.size(); ++i)			// iterate through tracks
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		if (!tfs.at(i).intrinsic_features.empty())
+		{
+			row->InsertNextValue(tfs.at(i).intrinsic_features.at(0).num);
+			for (int j=0; j<ftk::TrackFeatures::NF; ++j)
+			{
+				row->InsertNextValue( vtkVariant(tfs.at(i).scalars[j]) );
+			}
+			TimeFeaturesTable->InsertNextRow(row);
+		}
+	}
 }
 
 std::vector<std::vector<ftk::TrackPointFeatures> > MultiFrameCellTracker::getTrackFeatures(void)
@@ -702,6 +762,60 @@ int MultiFrameCellTracker::compute_normal_utility(FeatureType f1, FeatureType f2
 	//printf("returning utility = %f\n", utility);
 	return utility;
 }
+int MultiFrameCellTracker::compute_normal_utility(FeatureType f1, FeatureType f2, int counter, int counter1)
+{
+//	bool flag = false;
+//	//FILE *fp;
+//	//if(counter == 201 && counter1 == 194)
+//	//{
+//	//	fp = fopen("C:\\Users\\amerouan\\Desktop\\debug1.txt","w");
+//	//	flag =true;
+//	//}
+	float utility = 0;
+////	if(flag) fprintf(fp,"utility = 0 : %f\n",utility);
+//	
+//	//printf("FeatureType::N =%d  FeatureVariances::N = %d",FeatureType::N,FeatureVariances::N);
+//	for(int counter=0; counter< FeatureType::N; counter++)
+//	{
+//		utility += (f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])*(f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])/fvar.variances[counter];
+//		//if(flag)
+//		//{
+//		//	fprintf(fp,"%f\t %f\t %f\t\n",(f1.ScalarFeatures[counter],f2.ScalarFeatures[counter]),fvar.variances[counter]);
+//
+//		//}
+//	//	printf("f1.ScalarFeatures[counter] = %f f2.ScalarFeatures[counter] = %f fvar.variances[counter]=%f\n",f1.ScalarFeatures[counter],f2.ScalarFeatures[counter],fvar.variances[counter]);
+//	}
+//	//if(flag) fprintf(fp,"utility += (f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])*(f1.ScalarFeatures[counter]-f2.ScalarFeatures[counter])/fvar.variances[counter] : %f\n",utility);
+//
+//	//printf("utility 1 = %f\n", utility);
+//	float dist = get_distance(f1.Centroid,f2.Centroid);
+//	utility += (dist-fvar.distMean)*(dist-fvar.distMean)/fvar.distVariance;
+//	//printf("utility 2 = %f\n", utility);
+//	if(flag) fprintf(fp,"utility +=  (dist-fvar.distMean)*(dist-fvar.distMean)/fvar.distVariance : %f\n",utility);
+//
+//	utility += (abs(f1.time-f2.time)-1)*(abs(f1.time-f2.time)-1)/fvar.timeVariance;
+//	if(flag) fprintf(fp,"utility += (abs(f1.time-f2.time)-1)*(abs(f1.time-f2.time)-1) : %f\n",utility);
+//	//printf("utility 3 = %f\n", utility);
+//	float ovlap = overlap(f1.BoundingBox,f2.BoundingBox);
+//	ovlap = 1-(ovlap)/MIN(f1.ScalarFeatures[FeatureType::BBOX_VOLUME],f2.ScalarFeatures[FeatureType::BBOX_VOLUME]);
+//	utility += ovlap*ovlap/fvar.overlapVariance;
+//	if(flag) fprintf(fp,"utility += ovlap*ovlap/fvar.overlapVariance  : %f\n",utility);
+//	//printf("utility 4 = %f\n", utility);
+//	utility /= 2.0;
+//	if(flag) fprintf(fp,"utility /= 2.0  : %f\n",utility);
+//
+//	utility = fvar.T_prior*UTILITY_MAX*(exp(-utility));
+//	if(flag) fprintf(fp,"utility = fvar.T_prior*UTILITY_MAX*(exp(-utility)) : %f\n",utility);
+//	if(flag) fclose(fp);
+//	//printf("utility 5 = %f\n", utility);
+//	if(utility < 0)
+//	{
+//		printf("returning negative utility\n");
+//		scanf("%*d");
+//	}
+//	//printf("returning utility = %f\n", utility);
+	return utility;
+}
 
 float MultiFrameCellTracker::get_distance( float x1[3],float x2[3])
 {
@@ -871,11 +985,14 @@ int MultiFrameCellTracker::add_normal_edges(int tmin, int tmax)
 							//printf("g[e].utility = %d\n", g[e].utility);
 							////PAUSE;
 							//}
-							
+
 							g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
+							//g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter], counter1, counter);
+
 							if(g[e].utility < 0)
 							{
 								printf("utility < 0 = %d\n", g[e].utility);
+								printf("between t = %d and t = %d\n",t,tmax);
 								scanf("%*d");
 							}
 							nec++;
@@ -1038,34 +1155,36 @@ int MultiFrameCellTracker::add_merge_split_edges(int tmax)
 
 	TGraph::edge_descriptor e1,e2;
 	bool added1, added2;
-	for(int tcounter = MAX(tmax-K,0);tcounter <=tmax-1; tcounter++)
+
+	// split loops:
+	for(int tcounter = MAX(tmax-K,0);tcounter <=tmax-1; tcounter++)			// loop over three time points
 	{
-		for(int counter=0; counter< m_cand[tcounter].size(); counter++)
+		for(int counter=0; counter< m_cand[tcounter].size(); counter++)		// loop over merge candidates at each time point
 		{
-			for(int counter1 = 0; counter1 < fvector[tmax].size(); counter1++)
+			for(int counter1 = 0; counter1 < fvector[tmax].size(); counter1++)// loop over cells of the last time point
 			{
 				int i1 = m_cand[tcounter][counter].index1;
 				int i2 = m_cand[tcounter][counter].index2;
 
 				float centroid[3];
 				for(int i = 0; i < 3; i++)
-					centroid[i] = (fvector[tcounter][i1].Centroid[i] + fvector[tcounter][i2].Centroid[i])/2.0;
+					centroid[i] = (fvector[tcounter][i1].Centroid[i] + fvector[tcounter][i2].Centroid[i])/2.0;		// compute the new cell centroid
 
-				if(get_distance(fvector[tcounter][i1].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tcounter][i2].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance))
+				if(get_distance(fvector[tcounter][i1].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance) && get_distance(fvector[tcounter][i2].Centroid,fvector[tmax][counter1].Centroid)<4.0*sqrt(fvar.distVariance))// check if both merge candidates are close enough to the cells in the last time point
 				{
 					FeatureType lc1 = fvector[tcounter][i1];
 					FeatureType lc2 = fvector[tcounter][i2];
 
 					int volume_factor = 1;
 
-					lc1.ScalarFeatures[FeatureType::VOLUME] = (lc1.ScalarFeatures[FeatureType::VOLUME] + lc2.ScalarFeatures[FeatureType::VOLUME])/volume_factor;
-					lc2.ScalarFeatures[FeatureType::VOLUME] = lc1.ScalarFeatures[FeatureType::VOLUME];
+					lc1.ScalarFeatures[FeatureType::VOLUME] = (lc1.ScalarFeatures[FeatureType::VOLUME] + lc2.ScalarFeatures[FeatureType::VOLUME])/volume_factor; // add the volumes to the first cell
+					lc2.ScalarFeatures[FeatureType::VOLUME] = lc1.ScalarFeatures[FeatureType::VOLUME];															 // set the volumes to be equal
 
 					FeatureType lc3 = fvector[tmax][counter1];
-					lc3.ScalarFeatures[FeatureType::VOLUME] /=volume_factor;
+					lc3.ScalarFeatures[FeatureType::VOLUME] /=volume_factor;		// supposedly divide by the volume of the corresponding cell by the volume factor
 
-					int utility1 = compute_normal_utility(lc1,lc3);//fvector[tmax][counter1]);
-					int utility2 = compute_normal_utility(lc2,lc3);//fvector[tmax][counter1]);
+					int utility1 = compute_normal_utility(lc1,lc3);// compute the probablity for merge 
+					int utility2 = compute_normal_utility(lc2,lc3);
 
 					tie(e1,added1) = add_edge(rmap[tcounter][i1],rmap[tmax][counter1],g);
 					tie(e2,added2) = add_edge(rmap[tcounter][i2],rmap[tmax][counter1],g);
@@ -1101,11 +1220,12 @@ int MultiFrameCellTracker::add_merge_split_edges(int tmax)
 			}
 		}
 	}
-	for(int counter=0; counter< m_cand[tmax].size(); counter++)
+	// merge loops:
+	for(int counter=0; counter< m_cand[tmax].size(); counter++) // loop over cells of the last time point
 	{
-		for(int tcounter = MAX(tmax-K,0);tcounter <=tmax-1; tcounter++)
+		for(int tcounter = MAX(tmax-K,0);tcounter <=tmax-1; tcounter++) // loop over the two previous time points
 		{		
-			for(int counter1 = 0; counter1 < fvector[tcounter].size(); counter1++)
+			for(int counter1 = 0; counter1 < fvector[tcounter].size(); counter1++) // loop over cells of the previous time points
 			{
 				int i1 = m_cand[tmax][counter].index1;
 				int i2 = m_cand[tmax][counter].index2;
@@ -2039,29 +2159,21 @@ void MultiFrameCellTracker::solve_higher_order()
 
 
 
-	boost::property_map<TGraph, boost::vertex_index_t>::type index;
-	index = get(boost::vertex_index,g);
+	//boost::property_map<TGraph, boost::vertex_index_t>::type index;
+	//index = get(boost::vertex_index,g);
 	//TODO - FIXME - work in progress - dont use it yet.
 	IloEnv env;
 	try{
 		using boost::graph_traits;
 		graph_traits<TGraph>::edge_iterator ei,eend;
-//		std::map<TGraph::edge_descriptor,int> var_index;
 		std::vector<int> utility;
-
 		std::vector<LREdge> lredges;
 
-		std::multimap<TGraph::edge_descriptor, int> frontmap;
-		std::multimap<TGraph::edge_descriptor, int> backmap;
-		std::multimap<TGraph::vertex_descriptor, int> vertmap;
-		typedef std::pair<TGraph::edge_descriptor, int> EdgeMapType;
-		typedef std::pair<TGraph::vertex_descriptor, int> VertexMapType;
 
 		IloObjective obj = IloMaximize(env);
-		//IloObjective objf = IloMaximize(env);
 		IloRangeArray c(env);
 
-		//find number of variables
+		//find number of variables////////////////////////////////////////////////////
 		tie(ei,eend) = boost::edges(g);
 		int ecount = 0;
 		int varc = 0;
@@ -2073,7 +2185,7 @@ void MultiFrameCellTracker::solve_higher_order()
 		int num_v = 0;
 		int in_deg_count = 0;
 		int out_deg_count = 0;
-		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)
+		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)  // compute and form the in and out edges
 		{
 			//printf("#");
 			++num_v;
@@ -2127,7 +2239,7 @@ void MultiFrameCellTracker::solve_higher_order()
 			}
 
 			std::set<TGraph::edge_descriptor>::iterator i1,i2;
-			for(i1 = in_unique_set.begin(); i1!= in_unique_set.end(); ++i1)
+			for(i1 = in_unique_set.begin(); i1!= in_unique_set.end(); ++i1)			// form the second order edges
 			{
 				for(i2 = out_unique_set.begin(); i2!= out_unique_set.end(); ++i2)
 				{
@@ -2135,120 +2247,59 @@ void MultiFrameCellTracker::solve_higher_order()
 					lre.front = *i2;
 					lre.back = *i1;
 					lredges.push_back(lre);
-					//printf("-");
 					utility.push_back(compute_LRUtility_product(lre.back,lre.front));
-					//printf("|");
 					g[*i2].frontlre.push_back(lredges.size()-1);
 					g[*i1].backlre.push_back(lredges.size()-1);
 					g[*vi].vertlre.push_back(lredges.size()-1);
-
-					//frontmap.insert(EdgeMapType(*i2,lredges.size()-1));
-					//backmap.insert(EdgeMapType(*i1,lredges.size()-1));
-					//vertmap.insert(VertexMapType(*vi,lredges.size()-1));
 				}
 			}	
 		}
 
 
 		
-		printf("lredges.size() = %d\n", lredges.size());//,utility);//GCC doesn't like this
+		printf("lredges.size() = %d\n", lredges.size());	// print number of second order edges
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
-		//PAUSE;
-		//_exit(0);
 		varc = lredges.size();
 		IloNumVarArray x(env,varc,0,1,ILOBOOL);
-//		IloNumVarArray xf(env,varc,0,1,ILOFLOAT);
 		IloNumArray numarr(env,varc);
 
 
-		//IloNumExprArg expr(env);
 		printf("I have changed\n");
 		for(int counter=0; counter < varc; counter++)
 		{
-			if(utility[counter] <0)
-			{
-				;
-				//printf("I do have <0 utility %d\n",utility[counter]);
-				//scanf("%*d");
-			}
 			numarr[counter] = utility[counter];
-			//obj.setLinearCoef(x[counter],utility[counter]);
 		}
-		//obj.setLinearCoef(x[counter],utility[counter]);
 		obj.setLinearCoefs(x,numarr);
 
-		
-			//if(index[source(lredges[counter].front,g)]==638)
-			//{
-			//	printf("Utility for 638 is %d\n", utility[counter]);
-			////	PAUSE;
-			//}
-			/*if(utility[counter]==0)
-			{
-			//	printf("Utility is zero : %d\n",counter);
-				if(!(get_edge_type(lredges[counter].front)==DISAPPEAR && get_edge_type(lredges[counter].back)==APPEAR))
-				{
-					;
-					//printf("vertex index = %d\n", index[source(lredges[counter].front,g)]);
-				//	PAUSE;
-				}
-				
-			}*/
-			
-			//printf("utility[%d] = %d\n",counter,utility[counter]);
-		//}
 		printf("step1 completed\n");
 		int vcount = -1;
-	//	std::string entropy_out_file = "C:\\Lab\\ArunFiles\\Data\\Tracking\\";
 		std::string entropy_out_file = entropyfiledirectory+"\\";
-	//	entropy_out_file +=  dataset_id + "_entropy.txt";
 		entropy_out_file +=  dataset_id + "_" + entropyfilename;
-		FILE *fp = fopen(entropy_out_file.c_str(),"w");
-		printf("I am here\n");
+		//FILE *fp = fopen(entropy_out_file.c_str(),"w");
 
-		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)
+		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)	// loop over all vertices (cells) of the graph
 		{
-			if(g[*vi].vertlre.size()>0)
+			printf("I am in loop\n");
+			if(g[*vi].vertlre.size()>0)						// check if the vertex has a second order edge
 			{
 				vcount++;
+				printf("I am in loop condition vcount: %d\n",vcount);
+
 				c.add(IloRange(env,0,1));
-				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
+				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++) // loop over the second order edges of the vertex 
 				{
 					c[vcount].setLinearCoef(x[g[*vi].vertlre[colre]],1);
-					fprintf(fp,"%d ", (int)utility[g[*vi].vertlre[colre]]);
-				}
-				fprintf(fp,"\n");
+		//			fprintf(fp,"%d ", (int)utility[g[*vi].vertlre[colre]]); // print the second order edge utilities for each vertex
+				} 
+		//		fprintf(fp,"\n");
 			}
-			/*if(vertmap.count(*vi)!=0)
-			{
-				vcount++;
-				c.add(IloRange(env,1,1));
-				typedef std::multimap<TGraph::vertex_descriptor,int>::const_iterator Type1;
-				std::pair<Type1, Type1> itrange = vertmap.equal_range(*vi);
-				for(;itrange.first!=itrange.second; ++itrange.first)
-				{
-					Type1 it1 = itrange.first;
-					c[vcount].setLinearCoef(x[it1->second],1.0);
-				}
-			}*/
 		}
-		fclose(fp);
+		//fclose(fp);
 		printf("Done adding vertex constraints\n");
-		//for(int counter = 0; counter < varc; counter++)
-		//{
-		//	x[counter].setBounds(0,1);
-		//}
 		printf("vertex_constraints = %d\n",vcount);
-		//PAUSE;
+
 		for(tie(ei,eend) = edges(g); ei!=eend; ++ei)
 		{
-
-			/*int type = get_edge_type(*ei);
-			if(type==SPLIT || type== MERGE)
-			{
-				if(frontmap.count(*ei)>0 || frontmap.count(coupled_map[*ei]
-			}*/
-			//if(frontmap.count(*ei)>0 && backmap.count(*ei) >0)
 			if(g[*ei].frontlre.size()>0 && g[*ei].backlre.size()>0)
 			{
 				int forward_coeff = 1;
@@ -2284,51 +2335,14 @@ void MultiFrameCellTracker::solve_higher_order()
 						c[vcount].setLinearCoef(x[g[ecoupled].backlre[colre]],forward_coeff);
 					}
 				}
-
-				/*typedef std::multimap<TGraph::edge_descriptor,int>::iterator Type1;
-				std::pair<Type1,Type1> itrange = frontmap.equal_range(*ei);
-				for(;itrange.first!=itrange.second; ++itrange.first)
-				{
-					Type1 it1 = itrange.first;
-					c[vcount].setLinearCoef(x[it1->second],-backward_coeff);
-				}
-				if(type==MERGE)
-				{
-					itrange = frontmap.equal_range(coupled_map[*ei]);
-					for(;itrange.first!=itrange.second; ++itrange.first)
-					{
-						Type1 it1 = itrange.first;
-						c[vcount].setLinearCoef(x[it1->second],-backward_coeff);
-					}
-				}
-				itrange = backmap.equal_range(*ei);
-				for(;itrange.first!=itrange.second; ++itrange.first)
-				{
-					Type1 it1 = itrange.first;
-					c[vcount].setLinearCoef(x[it1->second],forward_coeff);
-				}
-				if(type==SPLIT)
-				{
-					itrange = backmap.equal_range(coupled_map[*ei]);
-					for(;itrange.first!=itrange.second; ++itrange.first)
-					{
-						Type1 it1 = itrange.first;
-						c[vcount].setLinearCoef(x[it1->second],forward_coeff);
-					}	
-				}*/
-
 			}
 		}
 		printf("Done adding edge constraints\n");
 
 		printf("vcount = %d\n",vcount);
-		////scanf("%*d");
 		IloModel model(env);
 		model.add(obj);
 		model.add(c);
-
-		//PAUSE;
-		//std::cout<<model<<std::endl;
 		IloCplex cplex(model);
 	
 		if(!cplex.solve())
@@ -2359,14 +2373,6 @@ void MultiFrameCellTracker::solve_higher_order()
 		env.out() << "LP Solution value  = " << cplex1.getObjValue() << std::endl;
 		
 		cplex1.getValues(vals1,x);
-		/*for(int counter =0; counter < vals.getSize(); counter++)
-		{
-			if(vals[counter] < 0)
-				printf("%0.2f ",vals[counter]);
-		}*/
-	//	printf("Are elements boolean? : %d\n", vals.areElementsBoolean());
-	//	env.out() << "Values        = " << vals << std::endl;
-		//std::cout << "Values.getSize() = "<< vals.getSize() << std::endl;
 		int num_zero = 0;
 		int num_one = 0;
 		int num_others =0;
@@ -2375,11 +2381,8 @@ void MultiFrameCellTracker::solve_higher_order()
 		char *secondorderxgmlout_char = new char [secondorderxgmloutput.size()+1];
     	strcpy(secondorderxgmlout_char,secondorderxgmloutput.c_str());
 
-
-	//	writeXGMML_secondorder("C:\\Lab\\ArunFiles\\Data\\Tracking\\ch4_secondorder.xgmml",lredges,utility,vals);
 		writeXGMML_secondorder(secondorderxgmlout_char,lredges,utility,vals);
 		printf("varc =%d vals.getSize() = %d\n",varc,vals.getSize());
-		//PAUSE;
 		double maxval = 0;
 		int numfracvals = 0;
 		for(int counter=0; counter< vals.getSize(); counter++)
@@ -2426,31 +2429,60 @@ void MultiFrameCellTracker::solve_higher_order()
 			}
 		}
 
-		printf("Confidence = %lf maxutility = %lf objectivefunction = %lf ",cplex.getObjValue()/maxval,maxval,cplex.getObjValue());
-		//printf("Integrality tolerance = %lf\n",cplex.getParam(IloCplex::EpInt));
-		printf("Integrality gap = %lf %% LP Solution = %lf IP Solution = %lf Num frac/total = %d/%d\n",(1-cplex.getObjValue()/cplex1.getObjValue())*100, cplex1.getObjValue(), cplex.getObjValue(), numfracvals, vals.getSize());
-	//	scanf("%*d");
-		/*graph_traits<TGraph>::edge_iterator e_i,e_end;
-		for(tie(e_i,e_end)=edges(g);e_i!=e_end;++e_i)
-		{
-			if(g[*e_i].selected==1)
-			{
+		std::string confidence_file = entropyfiledirectory+"\\";
+		confidence_file +=  dataset_id + "_" + "confidence.txt";
+		FILE *fp2 = fopen(confidence_file.c_str(),"a+");
 
-			}
-		}*/
+		//FILE *fp2 = fopen("L:\\Tracking\\metric\\confidence.txt","a+");
+		fprintf(fp2,"%s ",dataset_id.c_str());
+		fprintf(fp2,"Confidence = %lf maxutility = %lf objectivefunction = %lf ",cplex.getObjValue()/maxval,maxval,cplex.getObjValue());
+		printf("Integrality tolerance = %lf\n",cplex.getParam(IloCplex::EpInt));
+		fprintf(fp2,"Integrality gap = %lf %% LP Solution = %lf IP Solution = %lf Num frac/total = %d/%d\n",(1-cplex.getObjValue()/cplex1.getObjValue())*100, cplex1.getObjValue(), cplex.getObjValue(), numfracvals, vals.getSize());
+		fclose(fp2);
+
+		boost::property_map<TGraph, boost::vertex_index_t>::type index;
+		index = get(boost::vertex_index,g);
+
+		std::vector<int> component(num_vertices(g));
+		int num = my_connected_components2(component);
 		
+		std::string track_entropy_out_file = entropyfiledirectory+"\\";
+		track_entropy_out_file +=  dataset_id + "_track_entropy.txt";
+		FILE *fp1 = fopen(track_entropy_out_file.c_str(),"w");
+		if(fp1==NULL)
+		{
+			printf("Could not open the track entropy metric file\n");
+			scanf("%*d");
+			return;
+		}
+		int iutil;
+		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)  // loop over vertices
+		{
+			if(g[*vi].vertlre.size()>0)						// check if it has left and right edges
+			{
+				
+				fprintf(fp1,"%d,",component[index[*vi]]);	// this will print the track number (i.e the cell id of the track)
+				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++)
+				{
+					int ind = g[*vi].vertlre[colre];
+					iutil = (int)utility[ind];
+					if(g[lredges[ind].front].selected==1 && g[lredges[ind].back].selected==1)
+					{
+						fprintf(fp1,"1,%d,", iutil);
+					}						
+					else
+						fprintf(fp1,"0,%d,", iutil);
+					g[*vi].sec_order_utility.push_back(iutil);
+				}
+				fprintf(fp1,"\n");
+			}
+		}
+		fclose(fp1);
+
+
+		printf("Confidence = %lf maxutility = %lf objectivefunction = %lf ",cplex.getObjValue()/maxval,maxval,cplex.getObjValue());
+		printf("Integrality gap = %lf %% LP Solution = %lf IP Solution = %lf Num frac/total = %d/%d\n",(1-cplex.getObjValue()/cplex1.getObjValue())*100, cplex1.getObjValue(), cplex.getObjValue(), numfracvals, vals.getSize());
 		printf("num_zero = %d num_one = %d num_others = %d\n",num_zero,num_one, num_others);
-		//	//assert(g[inv_index[counter]].selected == 1);
-		//	g[inv_index[counter]].selected = vals[counter];
-		//	if(g[inv_index[counter]].coupled==1)
-		//		g[coupled_map[inv_index[counter]]].selected = vals[counter];
-		//	if(vals[counter]==1 && utility[counter] <0)
-		//	{
-		//		printf("wrong @ %d\n",counter);
-		//	}
-		//}
-		//PAUSE;
-		//_exit(0);
 	}
 	catch(IloException &e)
 	{
@@ -3913,14 +3945,14 @@ void MultiFrameCellTracker::run()
 
 	TGraph::vertex_descriptor vt1 = TGraph::null_vertex();
 	std::vector< TGraph::vertex_descriptor > vv;
-	for(int counter=0; counter< fvector.size(); counter++)
+	for(int counter=0; counter< fvector.size(); counter++)			// loop over time
 	{
 		vv.clear();
-		for(int counter1 = 0; counter1 < fvector[counter].size(); counter1++)
+		for(int counter1 = 0; counter1 < fvector[counter].size(); counter1++) // loop over cells
 		{
 			vv.push_back(vt1);
 		}
-		rmap.push_back(vv);
+		rmap.push_back(vv);						// Fill rmap with null vertex descriptors
 	}
 
 	int avc = 0;
@@ -3930,7 +3962,7 @@ void MultiFrameCellTracker::run()
 
 	TGraph::vertex_descriptor v;
 
-	for(int counter=0; counter< fvector[0].size(); counter++)
+	for(int counter=0; counter< fvector[0].size(); counter++) 
 	{
 		v = add_vertex(g);
 		g[v].special = 0;
@@ -3945,6 +3977,8 @@ void MultiFrameCellTracker::run()
 	_TRACE;
 //	first_t = clock();
 //	firsttime = clock();
+
+// set up the graph:
 	for(int t = 1; t < fvector.size(); t++)
 	{
 		int tmin = MAX(0,t-K);
@@ -3956,30 +3990,19 @@ void MultiFrameCellTracker::run()
 			g[v].findex = counter;
 			rmap[t][counter] = v;
 		}
-		////printf("T = %d\n",t);
-		//TIC		populate_merge_candidates(t);//TOC("populate_merge_candidates");
-		//TIC;		nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
-		//TIC;		msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
-		//TIC;		dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
-		//TIC;		avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
-		//printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
-		////PAUSE;
-		//TIC;		prune(t);//TOC("prune()");
-			populate_merge_candidates(t);//TOC("populate_merge_candidates");
-			nec += this->add_normal_edges(tmin,t);// TOC("add_normal_edges()");
-			msec+= this->add_merge_split_edges(t);// TOC("add_merge_split_edges()");
-			dvc += this->add_disappear_vertices(t);// TOC("add_disappear_vertices()");
-			avc += this->add_appear_vertices(t-1);// TOC("add_appear_vertices()");
+			populate_merge_candidates(t);//populate_merge_candidates"
+			nec += this->add_normal_edges(tmin,t);// add_normal_edges()"
+			msec+= this->add_merge_split_edges(t);// add_merge_split_edges()"
+			dvc += this->add_disappear_vertices(t);// add_disappear_vertices()
+			avc += this->add_appear_vertices(t-1);// add_appear_vertices()
 			printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
-		//PAUSE;
+
 			prune(t);//TOC("prune()");
 	}
-	//dvc += this->add_disappear_vertices(fvector.size());
 
-	//enforce_overlap();
 	
 
-
+// this part is for debugging
 	helpers::VectorPixelType col1,col2,col3,col4;
 	col1[0] = 255;col1[1] = 0;col1[2] = 0;
 	col2[0] = 255;col2[1] = 255;col2[2] = 0;
@@ -3994,21 +4017,6 @@ void MultiFrameCellTracker::run()
 
 
 	boost::graph_traits<TGraph>::edge_iterator e_i,e_next,e_end;
-
-	/*int num_edges_removed = 0;
-	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
-	{
-		e_next = e_i;
-		++e_next;
-		if(g[*e_i].utility <1 )
-		{
-			num_edges_removed++;
-			remove_edge(*e_i,g);
-		}
-	}*/
-	//printf("I removed %d edges\n", num_edges_removed);
-	//scanf("%*d");
-
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
 	{
 		g[*e_i].selected = 0;
@@ -4024,23 +4032,11 @@ void MultiFrameCellTracker::run()
 			draw_line_for_edge(2,*e_i,col1,col2,1);
 		else
 			draw_line_for_edge(2,*e_i,col3,col4,-1);
-
 	}
-
-
-/*	while(1)
-	{
-		int tin, indin;
-		scanf("%d %d",&tin,&indin);
-		if(tin==-1)
-			break;
-		printFeatures(fvector[tin][indin]);
-	}
-*/
+// debugging end
 
 	print_debug_info();
 	solve_higher_order();
-	//solve_lip();
 	print_stats();
 
 	std::string newxgmloutput = entropyfiledirectory + "\\ch4_new.xgmml";
@@ -4051,23 +4047,6 @@ void MultiFrameCellTracker::run()
 	writeXGMML(newxgmloutput_char);
 	boost::property_map<TGraph, boost::vertex_index_t>::type index_v;
 	index_v = get(boost::vertex_index,g);
-	/*while(1)
-	{
-		int v1;
-		cin>>v1;
-		if(v1<0)
-			break;
-		TGraph::vertex_iterator vv1,vv2;
-		for(tie(vv1,vv2) = vertices(g);vv1!=vv2; ++vv1)
-		{
-			if(index_v[*vv1]==v1)
-			{
-				print_all_LRUtilities(*vv1);
-				break;
-			}
-		}
-	}*/
-	
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
@@ -4089,6 +4068,8 @@ void MultiFrameCellTracker::run()
 			draw_line_for_edge(1,*e_i,col3,col4,-1);
 
 	}
+
+	// removing appear and disappear edges:
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
@@ -4100,7 +4081,7 @@ void MultiFrameCellTracker::run()
 	}
 	//scanf("%*d");
 
-
+	// resolving merge split edges
 	resolve_merges_and_splits();
 
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
@@ -4112,78 +4093,8 @@ void MultiFrameCellTracker::run()
 
 	}
 
-	
-	/*TGraph::vertex_iterator del,del_end,del_next,del_tmp;
-	tie(del,del_end) = vertices(g);
-	for(; del!=del_end; del = del_next)
-	{
-		del_next = del;
-		++del_next;
-		if(in_degree(*del,g) == 0 && out_degree(*del,g)==0)
-		{
-			clear_vertex(*del,g);
-			remove_vertex(*del,g);
-		}
-		tie(del_tmp,del_end) = vertices(g);
-	}
-	*/
 
-	/*
-	for(tie(e_i,e_end) = edges(g); e_i!=e_end; e_i = e_next)
-	{
-		e_next = e_i;
-		++e_next;
-		TGraph::edge_iterator e_temp;
-		tie(e_temp,e_end) = edges(g);
-		if(g[*e_i].selected == 1)
-		{
-
-			TGraph::vertex_descriptor v1,v2;
-			v1 = source(*e_i,g);
-			v2 = target(*e_i,g);
-			if(g[v1].special == 0 && g[v1].t == 4)
-			{
-				float x = fvector[4][g[v1].findex].Centroid[0];
-				float y = fvector[4][g[v1].findex].Centroid[1];
-				if(abs(x-233) < 10 && abs(y-119)<10)
-				{
-					print_vertex(v1,1);
-					//scanf("%*d");
-				}
-			}
-			if(g[v1].findex == 0 && g[v1].t == 4)
-			{
-				printf("The edge is still there.. g[v1].special = %d \n",g[v1].special);
-				//scanf("%*d");
-			}
-			TGraph::edge_descriptor e;
-			bool added;
-			tie(e,added) = add_edge(v2,v1,g);
-			if(added)
-			{
-				g[e].coupled = g[*e_i].coupled;
-				g[e].fixed = 0;
-				g[e].selected = 0;
-				g[e].utility = g[*e_i].utility;
-			}
-			if(g[*e_i].coupled==0)
-			{
-				if(g[v1].special == 0 && g[v2].special == 0)
-				{
-
-					FeatureType f1 = fvector[g[v1].t][g[v1].findex];
-					FeatureType f2 = fvector[g[v2].t][g[v2].findex];
-					printf("v1 = %0.0f v2 = %0.0f\n",f1.ScalarFeatures[FeatureType::VOLUME],f2.ScalarFeatures[FeatureType::VOLUME]);
-				}
-				//draw_line_for_edge(*e_i,col1,col2,-2);
-			}
-			else
-			{
-				//draw_line_for_edge(*e_i,col3,col4,2);
-			}
-		}
-	}*/
-
+	// remove non-selected edges from the graph
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
 	{
 		e_next = e_i;
@@ -4195,60 +4106,42 @@ void MultiFrameCellTracker::run()
 	}
 
 
-		TGraph::vertex_iterator v_i, v_end;
-
-		printf("Started deleting vertices\n");
+	TGraph::vertex_iterator v_i, v_end;
+	printf("Started deleting vertices\n");
 	int total_vertex_removed_count = 0;
 	TGraph::vertex_iterator v_next,v_temp;
 	while(1)
 	{
-	int vertex_removed_count = 0;
-	for(tie(v_i,v_end)=vertices(g);v_i!=v_end; v_i = v_next)
-	{
-		v_next = v_i;
-		++v_next;
-		
-		if(g[*v_i].special == 1)//in_degree(*v_i,g) == 0 && out_degree(*v_i,g)==0)
+		int vertex_removed_count = 0;
+		for(tie(v_i,v_end)=vertices(g);v_i!=v_end; v_i = v_next)
 		{
-			clear_vertex(*v_i,g);
-			remove_vertex(*v_i,g);
-			vertex_removed_count ++;
-			break;
+			v_next = v_i;
+			++v_next;
+			
+			if(g[*v_i].special == 1)//in_degree(*v_i,g) == 0 && out_degree(*v_i,g)==0)
+			{
+				clear_vertex(*v_i,g);
+				remove_vertex(*v_i,g);
+				vertex_removed_count ++;
+				break;
+			}
+			tie(v_temp,v_end) = vertices(g);
 		}
-		tie(v_temp,v_end) = vertices(g);
-	}
-	
-	//printf(" I removed %d vertices\n", vertex_removed_count);
-	if(vertex_removed_count==0)
-		break;
+		
+		//printf(" I removed %d vertices\n", vertex_removed_count);
+		if(vertex_removed_count==0)
+			break;
 
-	total_vertex_removed_count++;
+		total_vertex_removed_count++;
 	}
 	printf("finished deleting vertices\n");
 
-	//PAUSE;
-
-	/*for(tie(e_i,e_end) = edges(g); e_i!= e_end ; ++e_i)
-	{
-		if(g[*e_i].coupled == 0)
-			draw_line_for_edge(1,*e_i,col1,col2,1);
-		else
-			draw_line_for_edge(1,*e_i,col3,col4,-1);
-
-	}*/
 	boost::property_map<TGraph, boost::vertex_index_t>::type index;
 	index = get(boost::vertex_index,g);
-
 	std::vector<int> component(num_vertices(g));
 	int num = my_connected_components(component);
-
-	//int num = connected_components(g,&component[0]);
 	int tempnum = num;
 	printf("tempnum = %d num_vertices(g) = %d\n",tempnum,num_vertices(g));
-	//PAUSE;
-
-
-
 
 	std::vector<int> vertex_count(num);
 	std::vector<int> in_vertices_count(num);
@@ -4377,7 +4270,7 @@ helpers::LabelImageType::Pointer MultiFrameCellTracker::getOutputAtTime(int t)
 	helpers::LabelImageType::IndexType lindex;
 
 	lindex.Fill(0);
-	lsize[0] = fvar.BoundingBox[1]-fvar.BoundingBox[0]+1;
+	lsize[0] = fvar.BoundingBox[1]-fvar.BoundingBox[0]+1;// this is the image size basically;
 	lsize[1] = fvar.BoundingBox[3]-fvar.BoundingBox[2]+1;
 	lsize[2] = fvar.BoundingBox[5]-fvar.BoundingBox[4]+1;
 	lregion.SetSize(lsize);
@@ -4387,16 +4280,26 @@ helpers::LabelImageType::Pointer MultiFrameCellTracker::getOutputAtTime(int t)
 	lim->Allocate();
 	lim->FillBuffer(0);
 
+	TGraph::vertex_iterator ver_iter,ver_iter_end;
+	for(tie(ver_iter,ver_iter_end) = vertices(g); ver_iter!=ver_iter_end; ++ver_iter)
+	{
+		g[*ver_iter].selected_sec_order = 0;
+	}
 	TGraph::vertex_iterator v_i,v_end;
+
+	
 	for(tie(v_i,v_end) = vertices(g); v_i!=v_end; ++v_i)
 	{
+		std::vector<helpers::LabelImageType::IndexType> my_vector;
 		if(g[*v_i].special == 0 && g[*v_i].t == t)
 		{
+			
 			int find = g[*v_i].findex;
 			if(find > fvector[t].size()-1 || find> limages[t].size()-1)
 			{
 				printf("We have a problem here\n");
 			}
+			g[*v_i].selected_sec_order = 1; // store the selected vertices only
 			lsize[0] = fvector[t][find].BoundingBox[1]-fvector[t][find].BoundingBox[0]+1;
 			lsize[1] = fvector[t][find].BoundingBox[3]-fvector[t][find].BoundingBox[2]+1;
 			lsize[2] = fvector[t][find].BoundingBox[5]-fvector[t][find].BoundingBox[4]+1;
@@ -4404,8 +4307,6 @@ helpers::LabelImageType::Pointer MultiFrameCellTracker::getOutputAtTime(int t)
 			lregion.SetSize(lsize);
 			lregion.SetIndex(lindex);
 
-
-			//limages[t][find]->GetLargestPossibleRegion().Print(std::cout);
 			LabelIteratorType liter1(limages[t][find],lregion);
 
 			lindex[0] = fvector[t][find].BoundingBox[0];
@@ -4418,8 +4319,11 @@ helpers::LabelImageType::Pointer MultiFrameCellTracker::getOutputAtTime(int t)
 			for(liter1.GoToBegin(),liter2.GoToBegin();!liter1.IsAtEnd();++liter1,++liter2)
 			{
 				if(liter1.Get()!=0)
-					liter2.Set(g[*v_i].new_label);
+				{
+					liter2.Set((LabelPixelType)g[*v_i].new_label);
+				}
 			}
+
 		}
 	}
 
@@ -4775,4 +4679,124 @@ void MultiFrameCellTracker::compute_feature_variances()
 	printf("timeMean = %0.3f timeVariance = %0.3f\n",fvarnew.timeMean, fvarnew.timeVariance);
 	printf("overlapMean = %0.3f overlapVariance = %0.3f\n", fvarnew.overlapMean, fvarnew.overlapVariance);
 	printf("MS_prior = %0.3f AD_prior = %0.3f T_prior = %0.3f\n", fvarnew.MS_prior, fvarnew.AD_prior, fvarnew.T_prior);
+}
+int MultiFrameCellTracker::my_connected_components2(std::vector<int> &component)
+{
+	boost::property_map<TGraph, boost::vertex_index_t>::type index;
+	index = get(boost::vertex_index,g);			// get vertex indices
+
+	for(int counter = 0; counter < component.size(); counter++)
+	{
+		component[counter] = -1;
+	}
+
+	TGraph::vertex_iterator vi,vend;
+
+	int curcomp = -1;
+	for(tie(vi,vend)=vertices(g); vi!=vend; ++vi) // loop through vertices
+	{
+		if(component[index[*vi]]==-1)	
+		{
+			curcomp++;
+			std::queue<TGraph::vertex_descriptor> q;
+			q.push(*vi);
+			while(!q.empty())
+			{
+				TGraph::vertex_descriptor top = q.front();
+				q.pop();
+				component[index[top]] = curcomp;
+				TGraph::out_edge_iterator ei, eend;
+				for(tie(ei,eend) = out_edges(top,g);ei!=eend;++ei) // loop through the out edges of the vertex
+				{
+					if(g[*ei].selected==1)
+					{
+						if(component[index[target(*ei,g)]] == -1)
+						{
+							q.push(target(*ei,g));			// push the target vertices that have been selected
+						}
+					}
+				}
+				TGraph::in_edge_iterator e2,eend2;
+				for(tie(e2,eend2) = in_edges(top,g);e2!=eend2; ++e2)
+				{
+					if(g[*e2].selected==1)
+					{
+						if(component[index[source(*e2,g)]] == -1)
+						{
+							q.push(source(*e2,g));			// push the source vertices that have been selected
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	for(int counter = 0; counter < component.size(); counter++)
+	{
+		if(component[counter] <0 )
+		{
+			printf("Some connected components are still < 0: component[%d] = %d\n",counter,component[counter]);
+			scanf("%*d");
+		}
+	}
+	return (curcomp+1);
+}
+
+std::map<int, std::vector<int> > MultiFrameCellTracker::ComputeEntropyUtilitiesAtTime(int t)
+{
+
+	std::map<int, std::vector<int> > utilitymap; // id, vector of second order edge utilities.
+	TGraph::vertex_iterator v_i,v_end;
+	for(tie(v_i,v_end) = vertices(g); v_i!=v_end; ++v_i)
+	{
+		if(g[*v_i].selected_sec_order == 1 && g[*v_i].t == t)
+		{
+			int find = g[*v_i].findex;
+			if(find > fvector[t].size()-1 || find> limages[t].size()-1)
+			{
+				printf("We have a problem here: ComputeEntropyUtilitiesAtTime\n");
+				scanf("%d");
+			}
+			utilitymap.insert(std::pair<int, std::vector<int> > (g[*v_i].new_label,g[*v_i].sec_order_utility));
+		}
+	}
+
+	return utilitymap;
+}
+void  MultiFrameCellTracker::ComputeVertexEntropies(void)
+{
+
+	std::vector<std::map<int, std::vector<int> > >::iterator vec_iter;
+	for(vec_iter = VertexUtilities.begin(); vec_iter!= VertexUtilities.end(); ++vec_iter)
+	{
+		std::map<int, float> vertex_entropy_map;
+		std::map<int, std::vector<int> > curr_map = (*vec_iter);
+		std::map<int, std::vector<int> >::iterator id_iter;
+		for( id_iter = curr_map.begin(); id_iter!=curr_map.end(); ++id_iter)
+		{
+			std::vector<int> utilities = (*id_iter).second;
+
+			float sum = 0.0;
+			for(int i = 0; i<(int)utilities.size() ;++i)
+				if(utilities[i]>0)sum+=utilities[i];	// make sure to add the positive numbers only
+
+			float vertexentropy = 0.0;
+			if(sum>0)
+			{
+				float logsum = logf(sum);
+				for(int i = 0; i<(int)utilities.size() ;++i)
+					if(utilities[i]>0)vertexentropy-= utilities[i]*(logf(utilities[i])-logsum); // compute vertex entropy
+				vertexentropy /=sum;
+			}
+			if(vertexentropy<0)
+			{
+				printf("vertex entropy is negative at time %d, id %d, value %f",time,(*id_iter).first,vertexentropy);
+				scanf("%d");
+			}
+
+			vertex_entropy_map.insert(std::pair<int,float>((*id_iter).first,vertexentropy));
+		}
+		vertex_entropies.push_back(vertex_entropy_map);
+	}
+
 }

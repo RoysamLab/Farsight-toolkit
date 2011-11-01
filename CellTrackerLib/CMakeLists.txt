@@ -13,7 +13,9 @@ itkBinaryThinningImageFilter3D.h
 itkBinaryThinningImageFilter3D.txx
 itkBinaryThinningImageFilter3D.h
 )
-
+IF (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+ ENDIF (MSVC)
 FIND_PACKAGE(CPLEX)
 FIND_PACKAGE(CONCERT)
 IF(CPLEX_FOUND)

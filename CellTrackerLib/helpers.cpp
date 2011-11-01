@@ -628,7 +628,7 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		typedef ftk::LabelImageToFeatures<InputImageType::PixelType,LabelImageType::PixelType,3> FeatureCalculatorType;
 		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
 		fc->SetImageInputs(in_image,im);
-		fc->SetLevel(1);
+		fc->SetLevel(3);
 	//	fc->ComputeTexturesOn();
 	//	fc->ComputeHistogramOn();
 		fc->Update();
@@ -1501,9 +1501,13 @@ FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer d
 	return tindex;
 }
 
-void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3],std::vector<std::map<int, float> > &v_entropies)
 {
-	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++)
+
+
+	//FILE *fp7 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\tracks.txt","w");
+
+	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++) // looping over labels (tracks)
 	{
 		printf("Beginning to read track no: %d/%d\n",tcounter+1, (int)tfs.size());
 		//std::vector<TrackPoint> track = total_tracks[tcounter];
@@ -1512,21 +1516,81 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
 			continue;
 		}
+
+		std::stringstream ss;
+		ss<<tcounter+1;
+		std::string filename;
+		//filename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\sub_tracks_"+ss.str()+".txt";
+		//FILE *fp = fopen(filename.c_str(),"w");
+
+		//filename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\track_points_"+ss.str()+".txt";
+		//FILE *fp2 = fopen(filename.c_str(),"w");
+
+		//fprintf(fp2,"id\ttime\t");
+		//for(int i = 0; i<= FeatureType::SHAPE;++i)
+		//	fprintf(fp2,(FeatureType::Info[i].name+"\t").c_str() );
+		//fprintf(fp2,"center_x\tcenter_y\tcenter_z\tbbox_x0\tbbox_x1\tbbox_y0\tbbox_y1\tbbox_z0\tbbox_z1\n");
+
+
 		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
 		ftk::TrackFeatures t = tfs[tcounter];
-		//std::vector<float> spacing(3);
-		//spacing[0] = spacing[1] = 0.357;
-		//spacing[2] = 2.0;
 		typedef ftk::TrackPointFeatures TPF;
 		typedef ftk::TrackFeatures TF;
+		typedef ftk::IntrinsicFeatures FeatureType;
 
-		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++)
+		for(unsigned int counter=0; counter< t.intrinsic_features.size(); counter++) // looping over time for each labeled cell
 		{
 			ftk::TrackPointFeatures tpf;
 			Vec3f dir;
+			Vec3f dirnext;
+			if(	counter < v_entropies.size())
+			{
+				std::map<int,float> vert_entropy = v_entropies.at(counter);
+				std::map<int,float>::iterator v_ent_iter;
+				v_ent_iter = vert_entropy.find(tcounter);
+				if (v_ent_iter != vert_entropy.end())
+					tpf.scalars[TPF::VER_ENTROPY] = (*v_ent_iter).second;
+			}
+
+
+			//fprintf(fp2,"%d\t%d\t",t.intrinsic_features[counter].num,t.intrinsic_features[counter].time);
+			//for(int i = 0; i<= FeatureType::SHAPE;++i)
+			//	fprintf(fp2,"%f\t",t.intrinsic_features[counter].ScalarFeatures[i]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[0]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[1]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[2]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[0]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[1]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[2]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[3]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[4]);
+			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[5]);
+			//fprintf(fp2,"\n");
+
+
+
 
 			if(counter>0)
 			{
+
+				// Percent change features
+				tpf.scalars[TPF::VOLUME_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::VOLUME] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::VOLUME])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::VOLUME], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::VOLUME]);
+				tpf.scalars[TPF::INTEGRATED_INTENSITY_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTEGRATED_INTENSITY] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTEGRATED_INTENSITY])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTEGRATED_INTENSITY], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTEGRATED_INTENSITY]);
+				tpf.scalars[TPF::ECCENTRICITY_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::ECCENTRICITY] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::ECCENTRICITY])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::ECCENTRICITY], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::ECCENTRICITY]);
+				tpf.scalars[TPF::ELONGATION_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::ELONGATION] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::ELONGATION])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::ELONGATION], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::ELONGATION]);
+				tpf.scalars[TPF::BBOX_VOLUME_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::BBOX_VOLUME] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::BBOX_VOLUME])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::BBOX_VOLUME], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::BBOX_VOLUME]);
+				tpf.scalars[TPF::CONVEXITY_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::CONVEXITY] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::CONVEXITY])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::CONVEXITY], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::CONVEXITY]);
+				tpf.scalars[TPF::RADIUS_VARIATION_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::RADIUS_VARIATION] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::RADIUS_VARIATION])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::RADIUS_VARIATION], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::RADIUS_VARIATION]);
+				tpf.scalars[TPF::SURFACE_AREA_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_AREA] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_AREA])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_AREA], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_AREA]);
+				tpf.scalars[TPF::SHAPE_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SHAPE] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SHAPE])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SHAPE], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SHAPE]);
+				tpf.scalars[TPF::SURFACE_GRADIENT_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_GRADIENT] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_GRADIENT])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_GRADIENT], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_GRADIENT]);
+				tpf.scalars[TPF::INTERIOR_GRADIENT_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTERIOR_GRADIENT] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTERIOR_GRADIENT])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTERIOR_GRADIENT], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTERIOR_GRADIENT]);
+				tpf.scalars[TPF::SURFACE_INTENSITY_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_INTENSITY] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_INTENSITY])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::SURFACE_INTENSITY], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::SURFACE_INTENSITY]);
+				tpf.scalars[TPF::INTERIOR_INTENSITY_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTERIOR_INTENSITY] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTERIOR_INTENSITY])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTERIOR_INTENSITY], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTERIOR_INTENSITY]);
+				tpf.scalars[TPF::INTENSITY_RATIO_CHANGE] = fabs(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTENSITY_RATIO] -  t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTENSITY_RATIO])/MAX(t.intrinsic_features[counter].ScalarFeatures[FeatureType::INTENSITY_RATIO], t.intrinsic_features[counter-1].ScalarFeatures[FeatureType::INTENSITY_RATIO]);
+				
+				tpf.scalars[TPF::CORR_COEF] = 0.0;
+	
 				dir.x=t.intrinsic_features[counter].Centroid[0]*spacing[0]-t.intrinsic_features[counter-1].Centroid[0]*spacing[0];
 				dir.y=t.intrinsic_features[counter].Centroid[1]*spacing[1]-t.intrinsic_features[counter-1].Centroid[1]*spacing[1];
 				dir.z=t.intrinsic_features[counter].Centroid[2]*spacing[2]-t.intrinsic_features[counter-1].Centroid[2]*spacing[2];
@@ -1534,53 +1598,94 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=dir.x;
 				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=dir.y;
 				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=dir.z;
-				
+
 				dir.Normalize();
+
 				tpf.scalars[TPF::INST_SPEED] = dirdist/(t.intrinsic_features[counter].time-t.intrinsic_features[counter-1].time);
 				tpf.scalars[TPF::DISTANCE] = dirdist;
-				//printf("here %f %f %f\n",dir.x,dir.y,dir.z);
-				//scanf("%*d");
-
+				if(counter+1< t.intrinsic_features.size()) // compute deviation from the path measure: 1-cos(alpha)
+				{
+					dirnext.x=t.intrinsic_features[counter+1].Centroid[0]*spacing[0]-t.intrinsic_features[counter].Centroid[0]*spacing[0];
+					dirnext.y=t.intrinsic_features[counter+1].Centroid[1]*spacing[1]-t.intrinsic_features[counter].Centroid[1]*spacing[1];
+					dirnext.z=t.intrinsic_features[counter+1].Centroid[2]*spacing[2]-t.intrinsic_features[counter].Centroid[2]*spacing[2];
+					dirnext.Normalize();
+					//double nextdist = sqrt(dirnext.x*dirnext.x+dirnext.y*dirnext.y+dirnext.z*dirnext.z); //norm basically
+					double dotproduct = (dirnext.x*dir.x+dirnext.y*dir.y+dirnext.z*dir.z);
+					tpf.scalars[TPF::DEVIATION] = (float)(1-dotproduct);
+				}
+				else
+					tpf.scalars[TPF::DEVIATION] = 0.0;		
 			}
 			else
 			{
-				tpf.scalars[TPF::DISPLACEMENT_VEC_X]=0;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Y]=0;
-				tpf.scalars[TPF::DISPLACEMENT_VEC_Z]=0;
-				tpf.scalars[TPF::INST_SPEED] = 0.0;
-				tpf.scalars[TPF::DISTANCE] = 0.0;
+				for (int i = 0; i<tpf.M; ++i)
+					tpf.scalars[i]=0;
 			}
+
+			
+			//fprintf(fp,"%d\t%d\t",t.intrinsic_features[counter].num,t.intrinsic_features[counter].time);
+			//fprintf(fp,"%f\t",tpf.scalars[TPF::DEVIATION]);
+			//for (int i = tpf.DISTANCE; i<=tpf.INTENSITY_RATIO_CHANGE; ++i)
+			//	fprintf(fp,"%f\t",tpf.scalars[i]);
+			//for (int i = tpf.DISPLACEMENT_VEC_X; i<=tpf.DISPLACEMENT_VEC_Z; ++i)
+			//	fprintf(fp,"%f\t",tpf.scalars[i]);			
+
+			//fprintf(fp,"\n");
 
 
 			if(counter +1 > t.tfeatures.size())
-			{
 				t.tfeatures.push_back(tpf);
-			}
 			else
-			{
 				t.tfeatures[counter] = tpf;
-			}
+
 		}
-		printf("finished calculating first for loop of point features\n");
+
+		//fclose(fp);
+		//fclose(fp2);
+		//printf("finished calculating first for loop of point features\n");
 		float avg_speed = 0;
 		float pathlength = 0;
+		float max_speed = 0;
+		float min_speed = std::numeric_limits<float>::max();
+
 		for(unsigned int counter =0; counter < t.tfeatures.size(); counter++)
 		{
-
-			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
 			pathlength += t.tfeatures[counter].scalars[TPF::DISTANCE];
+
+			// Compute stats of track point features:
+			max_speed = MAX(t.tfeatures[counter].scalars[TPF::INST_SPEED],max_speed);
+			avg_speed += t.tfeatures[counter].scalars[TPF::INST_SPEED];
+			if (counter != 0)
+				min_speed = MIN(t.tfeatures[counter].scalars[TPF::INST_SPEED],min_speed);
 		}
+		if (min_speed == std::numeric_limits<float>::max())
+			min_speed =0;
 		int tnum = t.tfeatures.size();
-		t.scalars[TF::AVG_SPEED] = avg_speed/(tnum-1);
+		t.scalars[TF::AVG_SPEED] = avg_speed/(float)(t.tfeatures.size()-1);
+		t.scalars[TF::MAX_SPEED] = max_speed;
+		t.scalars[TF::MIN_SPEED] = min_speed;
+
+
 		t.scalars[TF::PATHLENGTH] = pathlength;
 		t.scalars[TF::DISPLACEMENT_VEC_X] = t.intrinsic_features[tnum-1].Centroid[0]*spacing[0]-t.intrinsic_features[0].Centroid[0]*spacing[0];
 		t.scalars[TF::DISPLACEMENT_VEC_Y] = t.intrinsic_features[tnum-1].Centroid[1]*spacing[1]-t.intrinsic_features[0].Centroid[1]*spacing[1];
 		t.scalars[TF::DISPLACEMENT_VEC_Z] = t.intrinsic_features[tnum-1].Centroid[2]*spacing[2]-t.intrinsic_features[0].Centroid[2]*spacing[2];
 		float total_distance = sqrt(t.scalars[TF::DISPLACEMENT_VEC_X]*t.scalars[TF::DISPLACEMENT_VEC_X]+t.scalars[TF::DISPLACEMENT_VEC_Y]*t.scalars[TF::DISPLACEMENT_VEC_Y]+t.scalars[TF::DISPLACEMENT_VEC_Z]*t.scalars[TF::DISPLACEMENT_VEC_Z]);
 		t.scalars[TF::CONFINEMENT_RATIO] = pathlength/total_distance;
+		t.scalars[TF::PATHLENGTH] /= (float)(t.tfeatures.size()-1);
+		t.scalars[TF::TOTAL_DISTANCE] = total_distance/(float)(t.tfeatures.size()-1);
 		tfs[tcounter] = t;
 
+		//fprintf(fp7,"%d\t",t.intrinsic_features[0].num);
+		//for (int i = 0; i<=t.MIN_SPEED; ++i)
+		//	fprintf(fp7,"%f\t",t.scalars[i]);
+		//for (int i = t.DISPLACEMENT_VEC_X; i<=t.CONFINEMENT_RATIO; ++i)
+		//	fprintf(fp7,"%f\t",t.scalars[i]);
+		//fprintf(fp7,"\n");
+
 	}
+	//fclose(fp7);
+	
 }
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs,float spacing[3])
 {
@@ -2029,7 +2134,7 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 }
 void annotateImage(Color2DImageType::Pointer number,Color2DImageType::Pointer orig, int n, int x, int y)
 {
-	printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
+//	printf("annotateImage called with n = %d x = %d y = %d ... ", n,x,y);
 	typedef itk::ImageRegionConstIterator<Color2DImageType> ConstColor2DIteratorType;
 	typedef itk::ImageRegionIterator<Color2DImageType> Color2DIteratorType;
 

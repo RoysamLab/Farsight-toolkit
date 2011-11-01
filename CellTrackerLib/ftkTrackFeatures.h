@@ -14,6 +14,11 @@ typedef struct {
 	std::string units;
 	std::string description;
 } TrackPointFeatureInfoType;
+typedef struct {
+	std::string name;
+	std::string units;
+	std::string description;
+} TimeFeatureInfoType;
 
 class TrackPointFeatures{
 public:
@@ -23,7 +28,11 @@ public:
 			scalars[counter] = 0.0;
 		}
 	}
-	enum{DISTANCE_TO_1, DISTANCE, INST_SPEED, ANGLE_REL_TO_1, CHANGE_DISTANCE_TO_1, HAS_CONTACT_TO_2, DISPLACEMENT_VEC_X, DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z};
+	enum{VER_ENTROPY, CORR_COEF, DEVIATION, DISTANCE_TO_1, DISTANCE, INST_SPEED, VOLUME_CHANGE, INTEGRATED_INTENSITY_CHANGE, ECCENTRICITY_CHANGE, \
+	    ELONGATION_CHANGE, BBOX_VOLUME_CHANGE, CONVEXITY_CHANGE ,RADIUS_VARIATION_CHANGE, SURFACE_AREA_CHANGE, SHAPE_CHANGE, \
+		SURFACE_GRADIENT_CHANGE, INTERIOR_GRADIENT_CHANGE, SURFACE_INTENSITY_CHANGE, INTERIOR_INTENSITY_CHANGE, \
+		INTENSITY_RATIO_CHANGE,ANGLE_REL_TO_1, CHANGE_DISTANCE_TO_1, HAS_CONTACT_TO_2, DISPLACEMENT_VEC_X, DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z};
+
 	static const int M = DISPLACEMENT_VEC_Z+1;	//This is the number of scalar track features 
 	float scalars[M];
 	int num;
@@ -45,10 +54,14 @@ class TrackFeatures{
 		}
 
 	
-		std::vector<ftk::IntrinsicFeatures> intrinsic_features;
+		std::vector<ftk::IntrinsicFeatures> intrinsic_features;// figure out what makes some of the vectors empty.
 		std::vector<ftk::TrackPointFeatures> tfeatures;
-		enum{ AVG_SPEED, AVG_DIST_TO_1, AVG_ANGLE_REL_TO_1,CHANGE_DISTANCE_TO_1, CONTACT_TO_2, DISPLACEMENT_VEC_X, DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z, PATHLENGTH, CONFINEMENT_RATIO};
-		float scalars[CONFINEMENT_RATIO+1];
+		enum{ AVG_SPEED, MAX_SPEED, MIN_SPEED, AVG_DIST_TO_1, AVG_ANGLE_REL_TO_1,CHANGE_DISTANCE_TO_1, CONTACT_TO_2, DISPLACEMENT_VEC_X,\
+			  DISPLACEMENT_VEC_Y, DISPLACEMENT_VEC_Z, PATHLENGTH, TOTAL_DISTANCE, CONFINEMENT_RATIO};
+		static const int NF = CONFINEMENT_RATIO+1;
+		float scalars[NF];
+		static TimeFeatureInfoType TimeInfo[NF];
+
 		void Fprintf(FILE* fp1 = stdout,FILE *fp2 = stdout);
 
 };

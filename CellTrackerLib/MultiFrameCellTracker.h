@@ -3,12 +3,15 @@
 
 #include "helpers.h"
 //#include <time.h>
+#include <math.h>
 #include <iostream>                  
 #include <utility>                   
 #include <algorithm>
 #include <map>
 #include <set>
 #include <limits>
+// VTK includes:
+#include <vtkTable.h>
 
 #include <boost/config.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -27,6 +30,7 @@ ILOSTLBEGIN
 #include <PatternAnalysis/embrex/kpls.h>
 #include <itkNormalVariateGenerator.h>
 #endif 
+
 
 using namespace helpers;
 using namespace boost;
@@ -72,6 +76,9 @@ public:
 	void setTrackImages(ftk::Image::Pointer rawimage,ftk::Image::Pointer labelimage);
 	ftk::Image::Pointer getTrackImages(void);
 	std::vector<std::vector<ftk::TrackPointFeatures> > getTrackFeatures(void);
+	vtkSmartPointer<vtkTable> GetTimeFeaturesTable(void){return TimeFeaturesTable;};
+	void ComputeTimeFeaturesTable(void);
+	std::vector<ftk::TrackFeatures> GetTimeFeatures(void){return tfs;};
 
 private:
 		struct TrackVertex{
@@ -80,13 +87,15 @@ private:
 		int findex;
 		int new_label;
 		std::vector<int> vertlre;
+		std::vector<int> sec_order_utility;
+		bool selected_sec_order;
 	};
 
 	struct TrackEdge{
 		int utility;
-		bool coupled;
+		bool coupled;		// for merge-split cells
 		bool fixed;
-		bool selected;
+		bool selected;		// which edge has been selected
 		unsigned char type;
 		std::vector<int> frontlre;
 		std::vector<int> backlre;
@@ -193,6 +202,7 @@ private:
 	void solve_higher_order(void);
 	void prune(int);
 	int compute_normal_utility(FeatureType f1, FeatureType f2);
+	int compute_normal_utility(FeatureType f1, FeatureType f2, int counter, int counter1);
 	void print_stats(void);
 	int get_edge_type(TGraph::edge_descriptor);
 	float compute_LRUtility(TGraph::edge_descriptor, TGraph::edge_descriptor);
@@ -222,8 +232,12 @@ private:
 	void summarize_tracking(ftk::Image::Pointer rawImg);	
 	void createTrackFeatures(std::vector<FeatureType> summaryfvector[MAX_TIME][MAX_TAGS], std::vector<ftk::TrackFeatures> &tfs, int c,int num_t);
 	void changeDataHierarchy(std::vector<ftk::TrackFeatures> vectrackfeatures);
-	
-
+	void convertItkImagesToftkImages(ftk::Image::Pointer labelImage,ftk::Image::Pointer dataImage,std::vector<helpers::LabelImageType::Pointer> &trackImages);
+	int my_connected_components2(std::vector<int> &component);
+	void compute_tracks_entropy();
+	void append_track_entropy_to_tfs();
+	std::map<int, std::vector<int> > ComputeEntropyUtilitiesAtTime(int t);
+	void ComputeVertexEntropies(void);
 
 	TGraph g; 
 	VVF fvector; 
@@ -244,11 +258,17 @@ private:
 	struct LREdge{
 		TGraph::edge_descriptor front,back;
 	};
+
+	std::vector<std::map<int, std::vector<int> > > VertexUtilities;  // second order edge utilities through the vertex
+	std::vector<std::map<int, float> > vertex_entropies;  // second order edge entropies through the vertex
+	
+
 	void writeXGMML_secondorder(char *,std::vector< LREdge >&,std::vector<int>&, IloNumArray& );
 
 	ftk::Image::Pointer resultImages;
 	std::vector<ftk::TrackFeatures> tfs;
 	std::vector<std::vector<ftk::TrackPointFeatures> > timeFeatures; 	// Set a different data hierarchy for output of time features:
+	vtkSmartPointer<vtkTable> TimeFeaturesTable;
 
 	std::string numbersfile;
 	std::string entropyfilename;
