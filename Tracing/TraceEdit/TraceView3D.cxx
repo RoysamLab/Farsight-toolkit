@@ -3951,28 +3951,25 @@ void View3D::StartActiveLearning()
 			// Querying starts now
 			/////////////////////////////////////////////////////////////////////////
 			while(loop_termination_condition)
-			{	
-				//for(int i=0;i<active_queries.size(); ++i)
-				//{
-					if (this->viewIn2D)
+			{	//select the appropriate classes 				
+				if (this->viewIn2D)
+				{
+					double test [6];
+					this->Renderer->ComputeVisiblePropBounds(test);
+					this->setRenderFocus(test, 6);
+				}// end of reset renderer when in 2d mode 
+				int zoomID = mclr->id_time_val.at(active_query).first;
+				for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
+				{
+					if(myDataTable->GetValue(row,0) == zoomID)
 					{
-						double test [6];
-						this->Renderer->ComputeVisiblePropBounds(test);
-						this->setRenderFocus(test, 6);
-					}// end of reset renderer when in 2d mode 
-					int zoomID = mclr->id_time_val.at(active_query).first;
-					for(int row=0; row<(int)myDataTable->GetNumberOfRows(); ++row)
-					{
-						if(myDataTable->GetValue(row,0) == zoomID)
-						{
-							zoomID = row;
-							break;
-						}
+						zoomID = row;
+						break;
 					}
-					CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
-					//snapshots[i] = Get_AL_Snapshot(currCell);	
-				//}
-				
+				}
+				CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
+				this->FocusOnCell(currCell);
+									
 				dialog =  new GenericALDialog(mclr->test_table, mclr->no_of_classes, active_query, mclr->top_features);
 				dialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
 				dialog->exec();	 
@@ -3982,22 +3979,16 @@ void View3D::StartActiveLearning()
 
 				loop_termination_condition = dialog->finish && dialog->result();
 
-				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
-
-				//for(int i=0;i<active_queries.size();++i)
-				//{
-					//atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
-					while(dialog->class_selected == -1)
-					{	
-						QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
-						this->show();
-						dialog =  new GenericALDialog(mclr->test_table, mclr->no_of_classes, active_query, mclr->top_features);	
-						dialog->exec();
-						//i=0;
-						//if(dialog->rejectFlag)
-						//	return;
-					}
-				//}
+				while(dialog->class_selected == -1)
+				{	
+					QMessageBox::critical(this, tr("Oops"), tr("Please select a class"));
+					this->show();
+					dialog =  new GenericALDialog(mclr->test_table, mclr->no_of_classes, active_query, mclr->top_features);	
+					dialog->exec();
+					//i=0;
+					//if(dialog->rejectFlag)
+					//	return;
+				}
 
 				// Update the data & refresh the training model and refresh the Training Dialog 		
 				mclr->Update_Train_Data(active_query, dialog->class_selected);
@@ -4014,7 +4005,7 @@ void View3D::StartActiveLearning()
 				// Update the gallery
 				//gallery.push_back(dialog->temp_pair);
 
-				if(mclr->stop_training && atleast_one_chosen!=0)
+				if(mclr->stop_training !=0)
 				{
 					QMessageBox msgBox;
 					msgBox.setText("I understand the classification problem.");
