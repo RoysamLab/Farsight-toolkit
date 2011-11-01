@@ -60,8 +60,10 @@ limitations under the License.
 //#include <QtGui>
 
 
-
 const unsigned int Dimension = 3;
+
+/** Standard class typedefs. */
+
 typedef unsigned char  ImageActorPixelType;
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::Image< ImageActorPixelType, 2 >   ImageType2D;
@@ -77,9 +79,20 @@ typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
 typedef itk::PermuteAxesImageFilter<ImageType> itkPermuteFilterType;
 typedef vtkSmartPointer<vtkImageSlice> ImageSlicePointerType;
 
+/** \struct imageFileHandle
+ * \brief Basic data structure for the ImageActors class that holds different data elements used to handle the image
+ *
+ * The imageFileHandle data structure is the base for the ImageActors class. It stores the different parameters that
+ * are needed to handle an image file. This data structure contains parameters to change the render status for the
+ * image and specify the number of dimensions it will be rendered in (2D or 3D) amongst others.
+ */
+
 struct imageFileHandle
 {
+	/** A tag for the image. */
 	std::string tag;
+	
+	
 	std::string filename;
 	bool renderStatus;
 	bool ren2d;
@@ -95,7 +108,7 @@ struct imageFileHandle
 	//vtkSmartPointer<vtkImagePermute> PermuteFilter;
 	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
-//Contour Filter pointers
+//!Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
 	vtkSmartPointer<vtkActor> ContourActor;
