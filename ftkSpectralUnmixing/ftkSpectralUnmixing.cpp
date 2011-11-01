@@ -622,7 +622,7 @@ void SpectralUnmixing::EstimateFingerPrintMatrix(vnl_matrix<double> mixed, vnl_m
 	vnl_matrix<double> old_start;					
 	vnl_matrix<double> A[10];						
 	start.print(std::cout);
-	printf("Entered the loop\n");
+	//printf("Entered the loop\n");
 	while(!converge)
 	{
 	//	printf("Finding maximum along components\n");
@@ -688,7 +688,7 @@ void SpectralUnmixing::EstimateFingerPrintMatrix(vnl_matrix<double> mixed, vnl_m
 		if(start.get_column(0).is_zero() == 1 || start.get_column(1).is_zero() == 1)
 		{
 			srand(time(NULL));
-			printf("resetting...\n");
+			//printf("resetting...\n");
 			for(int counter=0; counter<m; counter++)
 			{
 				for(int ncounter = 0; ncounter < n; ncounter++)
@@ -697,7 +697,7 @@ void SpectralUnmixing::EstimateFingerPrintMatrix(vnl_matrix<double> mixed, vnl_m
 				}
 			}
 			std::cout<<std::setprecision(2);
-			start.print(std::cout);
+			//start.print(std::cout);
 			start.normalize_columns();
 			continue;
 		}
