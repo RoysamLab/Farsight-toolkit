@@ -1,10 +1,13 @@
 #ifndef _IMAGE_3DVIEW_H
 #define _IMAGE_3DVIEW_H
 
+// qt includes:
 #include <QtGui/QMainWindow>
 #include <QObject>
-
-
+#include "QGridLayout.h"
+#include "QDockWidget.h"
+#include <QtGui>
+// vtk includes:
 #include "vtkImageViewer2.h"
 #include "vtkImageActor.h"
 #include "vtkSmartPointer.h"
@@ -51,6 +54,8 @@
 #include "vtkPoints.h"
 #include <vtkOpenGLVolumeTextureMapper2D.h>
 #include <vtkOpenGLVolumeTextureMapper3D.h>
+#include <vtkProperty2D.h>
+#include <vtkGPUVolumeRayCastMapper.h>
 #include <vtkVolumeRayCastMapper.h>
 #include <vtkVolumeRayCastCompositeFunction.h>
 #include <vtkVolumeRayCastMIPFunction.h>
@@ -66,9 +71,7 @@
 #include <vtkSurfaceReconstructionFilter.h>
 #include <vtkReverseSense.h>
 #include <vtkTextActor3D.h>
-
-
-
+#include <vtkBoxWidget.h>
 #include <vtkDataSetMapper.h>
 #include <vtkPolygon.h>
 #include <vtkCleanPolyData.h>
@@ -99,6 +102,13 @@
 #include "ftkGUI/ObjectSelection.h"
 
 
+//Macros
+#define Z_SPACING 3
+#define MAX(a,b) (((a) > (b))?(a):(b))
+#define MIN(a,b) (((a) < (b))?(a):(b))
+
+
+
 
 
 struct CellActors{
@@ -112,7 +122,7 @@ class Image3DView: public QObject
 
 public:
 	// The label image must be passed:
-	Image3DView(ftk::Image::Pointer image,std::vector<std::map<int, ftk::Object::Point> > CenterMapVector,LabelImageViewQT * imview = NULL, ObjectSelection * sels = NULL);	// Constructor
+	Image3DView(ftk::Image::Pointer image,ftk::Image::Pointer labimage, LabelImageViewQT * imview = NULL, ObjectSelection * sels = NULL);	// Constructor
 	~Image3DView();  // Destructor
 	 static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 
@@ -121,8 +131,24 @@ public slots:
 		void RefreshTrackActors(void);
 		void ToggleLabelVisibility(void);
 		void Toggle3DStackTrackView(void);
+		void ChangeOpacity(void);
+		void ChangeBrightness(void);
 
 private:
+	QMainWindow * MainWindow;
+	QVTKWidget * QVTKView;
+	// widgets:
+	QDockWidget * DockWidget;
+	QSlider * opacitySlider;
+	QSlider * brightnessSlider;
+	QLabel * opacityLabel;
+	QLabel * brightnessLabel;
+
+	vtkSmartPointer<vtkRenderer> Renderer;
+	vtkSmartPointer<vtkCallbackCommand> keyPress;
+	vtkSmartPointer<vtkRenderWindow > RenderWindow;
+	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
+
 	// Functions:
 	void SetupRenderWindow(void);
 	void Render3DStack(int currentT);
@@ -131,6 +157,12 @@ private:
 	void CreateCentroidActor(int currentT);
 	void CreateLabelActor(int currentT);
 	void CreateInteractorStyle(void);
+	void CreateVolumes(void);
+	void GenerateTracks(void);
+	void CreateTracks(void);
+	void CreateTrackPoints(void);
+	void CreateBoundingBox(void);
+
 
 
 	// Flags:
@@ -140,20 +172,21 @@ private:
 	LabelImageViewQT * ImageView;
 	ObjectSelection * Selection;
 	ftk::Image::Pointer LabelImageData;
+	ftk::Image::Pointer ImageData;
 	ftk::Image::PtrMode mode;
-	vtkSmartPointer<vtkImageData> VTKImage;
+	TraceObject * TraceData;
+	vtkSmartPointer<vtkPolyData> TrackPoly;
+	vtkSmartPointer<vtkActor> bitsActor;
+	vtkSmartPointer<vtkActor> tracksActor;
+	vtkSmartPointer<vtkActor> boxActor;
 
 	std::vector<std::map<int, ftk::Object::Point> > CenterMap;
 	std::vector<std::map<int, ftk::Object::Box> > bBoxMap;
 	std::vector<std::map<int, CellActors> > CellActorsMap;
 	std::vector<vtkSmartPointer<vtkActor2D> > ImageLabelsVector;
+	std::vector<vtkSmartPointer<vtkVolume> > ImageVolumes;
 
-	QMainWindow * MainWindow;
-	QVTKWidget * QVTKView;
-	vtkSmartPointer<vtkRenderer> Renderer;
-	vtkSmartPointer<vtkCallbackCommand> keyPress;
-	vtkSmartPointer<vtkRenderWindow > RenderWindow;
-	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
+
 
 
 
