@@ -3867,8 +3867,6 @@ void View3D::HideCellAnalysis()
 void View3D::StartActiveLearning()
 {
 	vtkSmartPointer<vtkTable> featureTable;
-	std::vector<int> active_queries;
-	active_queries.resize(1);
 	double confidence_thresh = 0.5;
 	int cellCount= this->CellModel->getCellCount();
 	if (cellCount < 1)
@@ -3880,13 +3878,9 @@ void View3D::StartActiveLearning()
 	featureTable = this->CellModel->getDataTable();
 	featureTable->RemoveColumnByName("Trace File");
 	if(!featureTable) return;
-
+//run training dialoge for sample selection
 	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
-	//connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
 	d->exec();
-
-	//Clear the Gallery 
-	//gallery.clear();	
 
 	std::vector< std::pair<int,int> > id_time;	
 	// Remove the training examples from the list of ids.
@@ -3937,15 +3931,11 @@ void View3D::StartActiveLearning()
 
 			// Get the active query based on information gain
 			active_query = mclr->Active_Query();
-			//active_queries = mclr->ALAMO(active_query);	
-			//active_queries[0] = active_query;
 
 			bool user_stop_dialog_flag = false;
 			bool loop_termination_condition = true;
 
 			GenericALDialog *dialog;
-			//std::vector<QImage> snapshots;
-			//snapshots.resize(active_queries.size());
 
 			/////////////////////////////////////////////////////////////////////////
 			// Querying starts now
@@ -3997,14 +3987,8 @@ void View3D::StartActiveLearning()
 				{
 					mclr->Get_Training_Model();
 					active_query = mclr->Active_Query();
-					//active_queries = mclr->ALAMO(active_query);
-					//active_queries[0] = active_query;
 					continue;
 				}
-
-				// Update the gallery
-				//gallery.push_back(dialog->temp_pair);
-
 				if(mclr->stop_training !=0)
 				{
 					QMessageBox msgBox;
@@ -4034,8 +4018,6 @@ void View3D::StartActiveLearning()
 
 				mclr->Get_Training_Model();
 				active_query = mclr->Active_Query();
-				//active_queries = mclr->ALAMO(active_query);
-				//active_queries[0]= active_query;
 			}// while !loop_termination_condition
 			// Querying is done
 
@@ -4067,23 +4049,6 @@ void View3D::StartActiveLearning()
 			vnl_matrix<double> currprob;
 			currprob = mclr->Test_Current_Model(data_classify);
 			
-			//std::string prediction_col_name;
-			//std::string confidence_col_name;
-			//prediction_col_name = "prediction_active";
-			//confidence_col_name = "confidence";
-			//
-
-			////// Add the Prediction Column 
-			//vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			//column->SetName(prediction_col_name.c_str());
-			//column->SetNumberOfValues( myDataTable->GetNumberOfRows() );
-			//myDataTable->AddColumn(column);
-
-			//// Add the confidence column
-			//vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-			//column_confidence->SetName(confidence_col_name.c_str());
-			//column_confidence->SetNumberOfValues( myDataTable->GetNumberOfRows() );
-			//myDataTable->AddColumn(column_confidence);
 			int predictionIndex = this->CellModel->AddNewFeatureHeader("Prediction");
 			int confIndex = this->CellModel->AddNewFeatureHeader("Confidence");
 			//std::cout << "debug prediction: "<< predictionIndex << "confidence" << confIndex << std::endl;
