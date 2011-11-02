@@ -2,70 +2,28 @@
 #define GRAPHWINDOW_H
  
 #include <QVTKWidget.h>
-#include <QtGui/QAction>
 #include <QtGui/QMainWindow>
-#include <QtGui/QApplication>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QWidget>
-#include <QtGui/QStatusBar>
-#include <QtGui/QMenuBar>
-#include <QtGui/QPushButton>
-#include <QtGui/QComboBox>
-#include <QtGui/QItemSelection>
-#include <QtGui/QItemSelectionModel>
-#include <QtGui/QTableView>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QCloseEvent>
-#include <QtGui/QDialog>
-#include <QtGui/QGroupBox>
-#include <QtGui/QLabel>
-#include <QtGui/QCheckBox>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QScrollArea>
-#include <QtGui/QScrollBar>
-#include <QtGui/QDoubleSpinBox>
-
-#include <QtCore/QMap>
-#include <QtCore/QSignalMapper>
-
-
-#include "vtkTable.h"
+#include <vtkTable.h>
 #include <vtkTableToGraph.h>
-#include <vtkViewTheme.h>
-#include <vtkStringToCategory.h>
-#include <vtkGraphLayout.h>
 #include <vtkGraphLayoutView.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkGraphToGlyphs.h>
-#include <vtkRenderer.h>
-#include <vtkFast2DLayoutStrategy.h>
-#include <vtkArcParallelEdgeStrategy.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkEdgeLayout.h>
-#include <vtkGraphToPolyData.h>
-#include <vtkActor.h>
-#include <vtkProperty.h>
-
-#include <vtkAbstractArray.h>
-#include "vtkSmartPointer.h"
-#include "vtkDoubleArray.h"
-#include "vtkAbstractArray.h"
-#include "vtkVariantArray.h"
+#include <vtkSmartPointer.h>
 #include <vtkCallbackCommand.h>
-#include <vtkViewUpdater.h>
-#include "ObjectSelection.h"
 #include <vtkLookupTable.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include <vtkObject.h>
+#include <vtkPoints.h>
+#include "ObjectSelection.h"
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
 #include <string>
-#include <QApplication>
-#include <QFileDialog>
-#include <QFile>
-#include <QCoreApplication>
-#include <QTextStream>
+#include <set>
+#include <map>
+#include <vector>
+
+typedef struct Point
+{
+	double x;
+	double y;
+}Point;
 
 class GraphWindow : public QMainWindow
 {
@@ -74,15 +32,20 @@ class GraphWindow : public QMainWindow
 public:
 	GraphWindow(QWidget * parent = 0);
 	~GraphWindow();
-	void setQtModels(QItemSelectionModel *mod);
 	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
+	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
 	void ShowGraphWindow();
-	void SetSelectedIds(std::set<long int>& IDs);
 	ObjectSelection * GetSelection();
+	
+protected:
+	void SetSelectedIds(std::set<long int>& IDs);
 	void UpdataLookupTable( std::set<long int>& IDs);
+	void CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::vector<Point>& pointList);
+	void find(vnl_vector<long int>& vec, long int val, std::vector<long int>& equal, std::vector<long int>& nonequal);
+	void getBackBones(vnl_matrix< long int>& shortest_hop, vnl_vector< int>& tag, std::vector< long int>& branchnodes, std::vector< long int>& chains);
 
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
@@ -93,16 +56,16 @@ signals:
 
 private:
 	vtkSmartPointer<vtkTable> dataTable;
-	ObjectSelection * selection;
-
+	ObjectSelection *selection;
+	vtkPoints *points;   
+	
 	QVTKWidget mainQTRenderWidget;
 	vtkSmartPointer<vtkViewTheme> theme;
 	vtkSmartPointer<vtkTableToGraph> TTG;	
 	vtkSmartPointer<vtkGraphLayoutView> view;
-	//SelectionAdapter * selAdapter;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
-	unsigned long observerTag;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
+	unsigned long observerTag;
 
 	std::map<long int, long int> indMapFromVertexToInd;
 	std::vector<long int> indMapFromIndToVertex;

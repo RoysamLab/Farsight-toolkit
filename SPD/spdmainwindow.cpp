@@ -192,8 +192,8 @@ void SPDMainWindow::showMST()
 	{
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
-		this->graph->setModels(SPDModel->GetDataMatrix());
-		this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
+		this->graph->setModels(SPDModel->GetDataTable());
+		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2]);
 		this->graph->ShowGraphWindow();
 	}
 }

@@ -67,7 +67,7 @@ ADD_LIBRARY( ftkGUI
 )
 
 TARGET_LINK_LIBRARIES( ftkGUI
-  ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM vtkVolumeRendering vtkHybrid
+  ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM vtkVolumeRendering vtkHybrid vnl
 ) 
 
 IF(USE_KPLS)

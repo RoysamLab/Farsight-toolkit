@@ -27,7 +27,10 @@ public:
 	static SPDAnalysisModel* InitInstance();
 	static void DeInstance();
 
-	vtkSmartPointer<vtkTable> GetDataMatrix();
+	void GetTableHeaders(std::vector<std::string> &headers);
+	vtkSmartPointer<vtkTable> GetDataTable();
+	QString GetFileName();
+
 	bool ReadCellTraceFile(std::string fileName, bool btest);
 	void ParseTraceFile(vtkSmartPointer<vtkTable> table);
 
@@ -37,12 +40,8 @@ public:
 	void NormalizeData();
 	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
-
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
-
-	void GetTableHeaders(std::vector<std::string> &headers);
-
 	void RunEMDAnalysis();
 
 	void GetClusClusData(clusclus& c1, clusclus& c2);
@@ -61,6 +60,7 @@ protected:
 	void SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue);
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
+	double EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	int GetSingleModuleSize( vnl_vector<unsigned int>& index, unsigned int ind);
 	void GetMatrixDistance( vnl_matrix<double>& data, vnl_vector<double>&distance, DISTANCE_TYPE type);
 	void GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance);

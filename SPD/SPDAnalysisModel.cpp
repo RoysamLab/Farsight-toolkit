@@ -56,9 +56,21 @@ SPDAnalysisModel::~SPDAnalysisModel()
 	}
 }
 
-vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataMatrix()
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataTable()
 {
-	return this->DataTable;
+	if( this->DataTable->GetNumberOfRows() > 0)
+	{
+		return this->DataTable;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+QString SPDAnalysisModel::GetFileName()
+{
+	return this->filename;
 }
 
 bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName, bool btest)
@@ -97,6 +109,31 @@ bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName, bool btest)
 			rowValue.clear();
 			feature.clear();
 		}
+
+		// build the index and its mapping for the test data
+		for( unsigned int k = 0; k <= this->DataMatrix.cols(); k++)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			this->DataTable->AddColumn(column);
+		}
+
+		for( unsigned int i = 0; i < this->DataMatrix.rows(); i++)
+		{
+			vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+
+			for( unsigned int j = 0; j <= this->DataMatrix.cols(); j++)
+			{ 
+				if( j == 0)
+				{
+					row->InsertNextValue( vtkVariant( i));
+				}
+				else
+				{
+					row->InsertNextValue( vtkVariant(this->DataMatrix( i, j - 1)));
+				}
+			}
+			this->DataTable->InsertNextRow(row);
+		}
 	}
 	else
 	{
@@ -110,7 +147,6 @@ bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName, bool btest)
 			return false;
 		}
 	}	
-
 	return true;
 }
 	//int line = LineNum(fileName);
@@ -672,7 +708,7 @@ void SPDAnalysisModel::GenerateMST()
 			for( unsigned int j = k + 1; j < num_nodes; j++)
 			{
 				double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
-				//ofs<<dist<<endl;
+				//double dist = EuclideanBlockDist( clusterMat, k, j);
 				boost::add_edge(k, j, dist, graph);
 			}
 		}
@@ -783,6 +819,15 @@ double SPDAnalysisModel::CityBlockDist( vnl_matrix<double>& mat, unsigned int in
 	{
 		dis += abs(subm[i]);
 	}
+	return dis;
+}
+
+double SPDAnalysisModel::EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2)
+{
+	vnl_vector<double> module1 = mat.get_row(ind1);
+	vnl_vector<double> module2 = mat.get_row(ind2);
+	vnl_vector<double> subm = module1 - module2;
+	double dis = subm.magnitude();
 	return dis;
 }
 
