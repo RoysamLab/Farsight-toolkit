@@ -12,38 +12,38 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 		fvar.variances[counter] = std::numeric_limits<float>::max();
 	}
 
-	fvar.distVariance = 25;//8.77;//50
-	fvar.distMean = 2;//3.3;//5
-	fvar.spacing[0] = 0.64;
-	fvar.spacing[1] = 0.64;
-	fvar.spacing[2] = 2.0;
-	fvar.timeVariance = 0.1;//.119//1;
-	fvar.timeMean = 0;//.119//1;
-	fvar.overlapVariance = 1;//0.034;//1;
-	fvar.overlapMean = 0;//0.2;//0;
-	fvar.variances[FeatureVariances::VOLUME] = 90000;//44000;//90000;
-	fvar.MS_prior = 1;//
-	fvar.AD_prior = 1;
-	fvar.T_prior = 1;
-	fvar.boundDistMean = 2;
-	fvar.boundDistVariance = 12;
+	//fvar.distVariance = 25;//8.77;//50
+	//fvar.distMean = 2;//3.3;//5
+	//fvar.spacing[0] = 0.64;
+	//fvar.spacing[1] = 0.64;
+	//fvar.spacing[2] = 2.0;
+	//fvar.timeVariance = 0.1;//.119//1;
+	//fvar.timeMean = 0;//.119//1;
+	//fvar.overlapVariance = 1;//0.034;//1;
+	//fvar.overlapMean = 0;//0.2;//0;
+	//fvar.variances[FeatureVariances::VOLUME] = 90000;//44000;//90000;
+	//fvar.MS_prior = 1;//
+	//fvar.AD_prior = 1;
+	//fvar.T_prior = 1;
+	//fvar.boundDistMean = 2;
+	//fvar.boundDistVariance = 12;
 
 
-	//fvar.spacing[0] = parameters.at(0).second; 
-	//fvar.spacing[1] = parameters.at(1).second; 
-	//fvar.spacing[2] = parameters.at(2).second; 
-	//fvar.distVariance = parameters.at(3).second;
-	//fvar.distMean = parameters.at(4).second; 
-	//fvar.timeVariance = parameters.at(5).second;
-	//fvar.timeMean = parameters.at(6).second; 
-	//fvar.overlapVariance = parameters.at(7).second;
-	//fvar.overlapMean = parameters.at(8).second;
-	//fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
-	//fvar.MS_prior = parameters.at(10).second; 
-	//fvar.AD_prior = parameters.at(11).second; 
-	//fvar.T_prior = parameters.at(12).second; 
-	//fvar.boundDistMean = parameters.at(13).second; 
-	//fvar.boundDistVariance = parameters.at(14).second; 
+	fvar.spacing[0] = parameters.at(0).second; 
+	fvar.spacing[1] = parameters.at(1).second; 
+	fvar.spacing[2] = parameters.at(2).second; 
+	fvar.distVariance = parameters.at(3).second;
+	fvar.distMean = parameters.at(4).second; 
+	fvar.timeVariance = parameters.at(5).second;
+	fvar.timeMean = parameters.at(6).second; 
+	fvar.overlapVariance = parameters.at(7).second;
+	fvar.overlapMean = parameters.at(8).second;
+	fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
+	fvar.MS_prior = parameters.at(10).second; 
+	fvar.AD_prior = parameters.at(11).second; 
+	fvar.T_prior = parameters.at(12).second; 
+	fvar.boundDistMean = parameters.at(13).second; 
+	fvar.boundDistVariance = parameters.at(14).second; 
 }
 void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders)
 {
@@ -2279,12 +2279,9 @@ void MultiFrameCellTracker::solve_higher_order()
 
 		for(tie(vi,vend) = vertices(g); vi != vend; ++vi)	// loop over all vertices (cells) of the graph
 		{
-			printf("I am in loop\n");
 			if(g[*vi].vertlre.size()>0)						// check if the vertex has a second order edge
 			{
 				vcount++;
-				printf("I am in loop condition vcount: %d\n",vcount);
-
 				c.add(IloRange(env,0,1));
 				for(int colre = 0; colre< g[*vi].vertlre.size(); colre++) // loop over the second order edges of the vertex 
 				{
