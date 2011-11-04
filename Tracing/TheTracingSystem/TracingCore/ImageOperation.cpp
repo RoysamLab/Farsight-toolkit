@@ -1351,15 +1351,8 @@ void ImageOperation::ImMasking(int shrink_factor)
   ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
   connectedComponentFilter->SetInput( IMask );
 
-  try 
-  { 
-    connectedComponentFilter->Update(); 
-  } 
-  catch( itk::ExceptionObject & err ) 
-  { 
-    std::cerr << "ExceptionObject caught at connectedComponentFilter!" << std::endl; 
-    std::cerr << err << std::endl; 
-  } 
+  connectedComponentFilter->Update(); 
+  
 
   // Relabel the components in order of size.
   typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
@@ -1367,30 +1360,14 @@ void ImageOperation::ImMasking(int shrink_factor)
   relabeler->SetInput( connectedComponentFilter->GetOutput() );
   relabeler->SetMinimumObjectSize(300);
 
-  try 
-  { 
-    relabeler->Update(); 
-  } 
-  catch( itk::ExceptionObject & err ) 
-  { 
-    std::cerr << "ExceptionObject caught at relabeler!" << std::endl; 
-    std::cerr << err << std::endl; 
-  } 
-
+  relabeler->Update(); 
+  
 
   typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
   LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
   labelGeometryFilter->SetInput( relabeler->GetOutput() );
 
-try 
-  { 
-    labelGeometryFilter->Update(); 
-  } 
-  catch( itk::ExceptionObject & err ) 
-  { 
-    std::cerr << "ExceptionObject caught at relabeler!" << std::endl; 
-    std::cerr << err << std::endl; 
-  } 
+  labelGeometryFilter->Update(); 
 
 //  labelGeometryFilter->Update();
 
@@ -2147,30 +2124,40 @@ void ImageOperation::SeedAdjustment(int iter_num)
    PointList3D New_SeedPt;
 
    vnl_vector<double> saliency(SeedPt.NP);
-   for( int i = 0; i < SeedPt.NP; i++)
+   unsigned long int number_of_out_of_range=0;///
+   //std::cout<<"Number of seeds:"<<SeedPt.NP<<std::endl;///
+   for( unsigned long int i = 0; i < SeedPt.NP; i++)///
    {
 	  GradientImageType::IndexType index; 
 	  SeedPt.Pt[i].check_out_of_range_3D(SM,SN,SZ);
+	  if (SeedPt.Pt[i].check_out_of_range_3D(SM,SN,SZ))
+		number_of_out_of_range++;
+		  //std::cout<<"Out of Range"<<std::endl;
 	  index[0] = ceil(SeedPt.Pt[i].x);
 	  index[1] = ceil(SeedPt.Pt[i].y);
 	  index[2] = ceil(SeedPt.Pt[i].z);
 	  saliency(i) = IVessel->GetPixel(index);
    }
+   //std::cout<<"After for on SeedPt.NP"<<std::endl;
+   //std::cout<<"Number of out of range:"<<number_of_out_of_range<<std::endl;
 
-   for( unsigned int i = 0; i < saliency.size(); i++)
+   for( unsigned long int i = 0; i < saliency.size(); i++)////
    {
-      int index = saliency.arg_max();
+      unsigned long int index = saliency.arg_max();
 	  New_SeedPt.AddPt(SeedPt.Pt[index]);
 	  saliency(index) = -1;
    } 
+    //std::cout<<"After for on saliency size"<<std::endl;///
 
     SeedPt = New_SeedPt;
     
 	visit_label.set_size(SeedPt.GetSize());
+    //std::cout<<"After set size"<<std::endl;///
+
 	visit_label.fill(0);
 
 	//SeedPt_mg = SeedPt;
-	  std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
+	  //std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
 } 
 
 void ImageOperation::SeedDetection(float th, int detection_method, int seed_radius)
@@ -2213,6 +2200,8 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
   NeighborhoodIteratorType it( radius, IVessel, IVessel->GetRequestedRegion());
   //NeighborhoodIteratorType2 it21( radius2, IGVF, IGVF->GetRequestedRegion());
   //NeighborhoodIteratorType2 it22( radius2, V1, V1->GetRequestedRegion());
+  //std::cout<<"SeedDetection-Threshold:"<<th<<std::endl;///
+  //std::cout<<"SeedDetection-Seed Radius:"<<seed_radius<<std::endl;///
 
   for (it.GoToBegin(); !it.IsAtEnd(); ++it)
   {
@@ -2260,7 +2249,7 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
 	visit_label.fill(0);
 
 	//SeedPt_mg = SeedPt;
-	  std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
+	  //std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;///
 
 }
 
@@ -2363,24 +2352,75 @@ void ImageOperation::seed_centroid()
    }
 
   // Set up a connected components filter to label the binary objects.
-  typedef itk::ConnectedComponentImageFilter< LabelImageType, LabelImageType > ConnectedComponentType;
+  typedef itk::ConnectedComponentImageFilter< LabelImageType, LabelImageTypeCCIF > ConnectedComponentType;//////////////////
   ConnectedComponentType::Pointer connectedComponentFilter = ConnectedComponentType::New();
-  connectedComponentFilter->SetInput( I_Seed );
+  
 
+  try 
+  { 
+	  std::cout<<"Before connectedComponentFilter->SetInput()"<< std::endl;
+	  connectedComponentFilter->SetInput( I_Seed );
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at connectedComponentFilter GetOutput!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
+	
   // Relabel the components in order of size.
-  typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType > RelabelType;
+  typedef itk::RelabelComponentImageFilter< LabelImageTypeCCIF, LabelImageTypeCCIF > RelabelType;///////////
   RelabelType::Pointer relabeler = RelabelType::New();
-  relabeler->SetInput( connectedComponentFilter->GetOutput() );
+  
+  try 
+  { 
+	  std::cout<<"Before relaberer->GetOutput()"<< std::endl;
+	  relabeler->SetInput( connectedComponentFilter->GetOutput() );
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at relaberer GetOutput!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
 
-  typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
+
+
+  typedef itk::LabelGeometryImageFilter< LabelImageTypeCCIF > LabelGeometryType;///////////////////
   LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
-  labelGeometryFilter->SetInput( relabeler->GetOutput() );
 
-  labelGeometryFilter->Update();
+  try 
+  { 
+	  std::cout<<"Before labelGeometryFilter->GetOutput()"<< std::endl;
+    labelGeometryFilter->SetInput( relabeler->GetOutput() ); 
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at labelGeometryFilter GetOutput!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
+
+
+  
+
+  try 
+  { 
+	  std::cout<<"Before labelGeometryFilter->Update()"<< std::endl;
+    labelGeometryFilter->Update(); 
+  } 
+  catch( itk::ExceptionObject & err ) 
+  { 
+    std::cerr << "ExceptionObject caught at labelGeometryFilter GetOutput!" << std::endl; 
+    std::cerr << err << std::endl; 
+  } 
+
+  std::cout<<"After labelGeometryFilter->Update()"<< std::endl;
 
 
   LabelGeometryType::LabelPointType index_temp;
   int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+
+  std::cout<<"After labelGeometryFilter->GetNumberofLabels()"<< std::endl;
 
   Point3D temp;
   //PointList3D new_SeedPt(labelValue+1);
@@ -2393,6 +2433,7 @@ void ImageOperation::seed_centroid()
 	temp.z = index_temp[2];
 	SeedPt.AddPt(temp);
   }
+  std::cout<<"Seed Centroid End"<< std::endl;
 
 }
 void ImageOperation::SetCodingMethod(int in)
