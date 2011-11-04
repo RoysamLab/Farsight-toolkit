@@ -4041,7 +4041,7 @@ void MultiFrameCellTracker::run()
 	strcpy(newxgmloutput_char,newxgmloutput.c_str());
 
 	//writeXGMML("C:\\Lab\\ArunFiles\\Data\\Tracking\\ch4_new.xgmml");
-	writeXGMML(newxgmloutput_char);
+	//writeXGMML(newxgmloutput_char);
 	boost::property_map<TGraph, boost::vertex_index_t>::type index_v;
 	index_v = get(boost::vertex_index,g);
 	for(tie(e_i,e_end) = edges(g); e_i!= e_end ; e_i = e_next)
