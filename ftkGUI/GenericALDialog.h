@@ -58,8 +58,8 @@ private slots:
 private:
 	//QMap<QString, QColor> m_snapshot;
 	//QSignalMapper *signalMapper;
-	
-
+	QPushButton *nextButton;
+	QPushButton *doneButton;
 };
 
 

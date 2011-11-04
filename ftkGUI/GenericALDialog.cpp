@@ -45,15 +45,17 @@ GenericALDialog::GenericALDialog(vtkSmartPointer<vtkTable> table,int num_classes
 	//topRow->addWidget(imageLabel,1,0);
 	
 	//Done Button
-	QPushButton *doneButton = new QPushButton("Done");
+	doneButton = new QPushButton("Done");
 
 	connect(doneButton, SIGNAL(clicked()), this, SLOT(finished()));
+	doneButton->setDisabled(true);
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
 
-	QPushButton *nextButton = new QPushButton("Next");
+	nextButton = new QPushButton("Next");
 
 	connect(nextButton, SIGNAL(clicked()), this, SLOT(accept()));
+	nextButton->setDisabled(true);
 	nextButton->setDefault(false);
 	nextButton->setAutoDefault(true);
 	
@@ -129,7 +131,8 @@ void GenericALDialog::finished()
 
 void GenericALDialog::Set_Class()
 {
-
+	nextButton->setDisabled(false);
+	doneButton->setDisabled(false);
 	for(int i =0; i< button_vector.size() ; ++i)
 	{
 		QRadioButton * test_button = button_vector.at(i);

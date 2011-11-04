@@ -428,6 +428,11 @@ private:
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
 
+	//
+	MCLR_SM *mclr;
+	GenericALDialog *ALDialog;
+
+	//
 	vtkSmartPointer<vtkPointWidget> pointer3d;
 	bool ShowPointer3DDefault;
 	vtkSmartPointer<vtkSphereSource> Sphere;
@@ -473,6 +478,12 @@ private:
 	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
 	vtkSmartPointer<vtkActor> ROIactor;
 
+	/*! \enum RenderModeEnum
+	* \brief Sets default the rendering style
+	* Slicer shows a 2d slice at a time
+	* Projection 2d orthographic max min or median intensity projections
+	* Raycast 3d volumetric rendering
+	*/
 	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, SLICERRAYCAST};
 
 	enum RenderModeEnum renderMode;
