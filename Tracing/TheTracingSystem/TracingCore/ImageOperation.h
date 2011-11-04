@@ -164,6 +164,9 @@ typedef ProbImageType2D::Pointer ProbImagePointer2D;
 typedef itk::Image<unsigned short int, 3> LabelImageType;
 typedef LabelImageType::Pointer LabelImagePointer;
 
+typedef itk::Image<unsigned long int, 3> LabelImageTypeCCIF;//////////for connected component image filter in seed_centroid()
+typedef LabelImageTypeCCIF::Pointer LabelImagePointerCCIF;
+
 typedef itk::Image<unsigned short int, 2> LabelImageType2D;
 typedef LabelImageType2D::Pointer LabelImagePointer2D;
 
