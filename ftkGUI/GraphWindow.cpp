@@ -21,6 +21,12 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <math.h>
+#include <iomanip>
+
+#define pi 3.1415926
+#define ANGLE_STEP 90
+#define MAX_HOP 200
 
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -196,8 +202,9 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel)
+void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, QString filename)
 {
+	this->fileName = filename;
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 
@@ -253,9 +260,24 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		}
 		graph->SetPoints( this->points);
 	}
+	else
+	{
+		QMessageBox msg;
+		msg.setText("No coordinates Input!");
+		msg.exec();
+		exit(-2);
+	}
+
+	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	this->theme->SetLineWidth(5);
+	this->theme->SetCellOpacity(0.9);
+	this->theme->SetCellAlphaRange(0.8,0.8);
+	this->theme->SetPointSize(8);
+	this->theme->SetSelectedCellColor(1,0,0);
+	this->theme->SetSelectedPointColor(1,0,0); 
 
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
-	vertexColors->SetNumberOfComponents( this->dataTable->GetNumberOfRows());
+	vertexColors->SetNumberOfComponents(table->GetNumberOfRows());
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
@@ -265,32 +287,28 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
     }
 	lookupTable->Build();
-	
-	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	this->theme->SetLineWidth(5);
-	this->theme->SetCellOpacity(0.9);
-	this->theme->SetCellAlphaRange(0.8,0.8);
-	this->theme->SetPointSize(8);
-	this->theme->SetSelectedCellColor(1,0,0);
-	this->theme->SetSelectedPointColor(1,0,0); 
-    this->theme->SetPointLookupTable(lookupTable);
-    this->theme->SetBackgroundColor(0,0,0); 
-	this->view->ApplyViewTheme(theme);
-	
+
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
 	graph->GetEdgeData()->AddArray(weights);
 
 	this->view->AddRepresentationFromInput( graph);
 	this->view->SetEdgeLabelVisibility(true);
+	this->view->SetColorVertices(true); 
+	this->view->SetVertexLabelVisibility(true);
+
+	this->view->SetVertexColorArrayName("Color");
+
+    theme->SetPointLookupTable(lookupTable);
+    theme->SetBackgroundColor(0,0,0); 
+	this->view->ApplyViewTheme(theme);
+
 	this->view->SetEdgeLabelArrayName("edgeLabel");
 
-	this->view->SetVertexLabelVisibility(true);
-	this->view->SetColorVertices(true); 
-	this->view->SetVertexLabelArrayName("vertexIDarrays");
-	this->view->SetVertexColorArrayName("Color");
-	this->view->SetVertexLabelFontSize(20);
 	this->view->SetLayoutStrategyToPassThrough();
+
+	this->view->SetVertexLabelArrayName("vertexIDarrays");
+	this->view->SetVertexLabelFontSize(20);
 }
 
 void GraphWindow::ShowGraphWindow()
@@ -500,7 +518,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		find( mark, 0, noncheckNode, checkNode);
 	}
 
-	ofstream ofs("shortest_hop.txt");
+	QString hopStr = this->fileName + "shortest_hop.txt";
+	ofstream ofs(hopStr.toStdString().c_str());
 	ofs<< shortest_hop<<endl;
 	ofs.close();
 
@@ -512,17 +531,20 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 
 	std::vector<long int> backbones;
 	std::queue<long int> tmpbackbones;   // for calculating all the sidechains
+	std::vector<long int> debugbackbones;  // for debugging
 	std::map< long int, long int> tmpChain;  // for ordering 
-	std::multimap< long int, std::vector<long int> > chainList;  // store the chains, no repeat
+	std::vector< std::pair<long int, std::vector<long int> > > chainList;  // store the chains, no repeat
 	vnl_vector< int> tag( shortest_hop.rows());     // whether the node has been included in the chain
 	tag.fill( 0);
 
+	QString chainStr = this->fileName + "chains.txt";
+	ofstream ofChains( chainStr.toStdString().c_str());
 	/// find the backbone
 	for( long int i = 0; i < shortest_hop.cols(); i++)
 	{
 		if( shortest_hop( coln, i) + shortest_hop( rown, i) == maxhop)
 		{
-			tmpChain.insert( std::pair< long int, long int>( shortest_hop( rown, i), i));
+			tmpChain.insert( std::pair< long int, long int>( shortest_hop( coln, i), i));
 		}
 	}
 
@@ -531,6 +553,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	{
 		backbones.push_back((*iter).second);
 		tmpbackbones.push((*iter).second);
+		debugbackbones.push_back( (*iter).second);
 		tag[ (*iter).second] = 1;
 	}
 
@@ -544,6 +567,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		{
 			if( adj_matrix( ind, i) != 0 && tag[i] == 0)    // ind's  neighbours that haven't been checked
 			{
+				branchnodes.clear();
+				branchnodes.push_back( ind);
 				for( long int j = 0; j < shortest_hop.cols(); j++)
 				{
 					if( shortest_hop( ind, j) > shortest_hop( i, j))  // find neighbour i's branch nodes including i
@@ -552,25 +577,34 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 						{
 							branchnodes.push_back( j);
 						}
+						else
+						{
+							ofChains<< "already searched branchnode: "<< ind<<"\t"<< i <<"\t"<< j<<endl;
+							for( long int st = 0; st < debugbackbones.size(); st++)
+							{
+								ofChains<< debugbackbones[st] + 1<<endl;
+							}
+							ofChains<< tag<<endl;
+						}
 					}
 				}
 
-				if( branchnodes.size() > 0)
+				if( branchnodes.size() > 1)
 				{
-					getBackBones( shortest_hop, tag, branchnodes, chains);
-					chainList.insert( std::pair< long int, std::vector<long int> >(ind, chains));
+					getBackBones( shortest_hop, branchnodes, chains);
+					chainList.push_back( std::pair< long int, std::vector<long int> >(ind, chains));
 					for( long int k = 0; k < chains.size(); k++)
 					{
 						tmpbackbones.push( chains[k]);
+						debugbackbones.push_back( chains[k]);
+						tag[ chains[k]] = 1;
 					}
-					branchnodes.clear();
 				}
 			}
 		}
 		tmpbackbones.pop();
 	}
 
-	ofstream ofChains("chains.txt");
 	ofChains << "backbones:" <<endl;
 	for( long int i = 0; i < backbones.size(); i++)
 	{
@@ -578,33 +612,200 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	}
 	ofChains <<endl;
 	ofChains << "branch chains:"<<endl;
-	std::multimap< long int, std::vector<long int> >::iterator chainIter;
+	std::vector< std::pair< long int, std::vector<long int> > >::iterator chainIter;
 	for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
 	{
-		std::vector< long int> tmp = (*chainIter).second;
-		ofChains << (*chainIter).first;
-		for( long int i = 0; i < tmp.size(); i++)
+		std::pair< long int, std::vector< long int> >tmp = *chainIter;
+		ofChains << tmp.first;
+		std::vector< long int> branchlist = tmp.second;
+		for( long int i = 0; i < branchlist.size(); i++)
 		{
-			ofChains << "\t"<< tmp[i];
+			ofChains << "\t"<< branchlist[i];
+		}
+		ofChains <<endl;
+	}
+
+	SortChainList( shortest_hop, backbones, chainList);   // the order to draw the subbones
+	for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
+	{
+		std::pair< long int, std::vector< long int> >tmp = *chainIter;
+		ofChains << tmp.first;
+		std::vector< long int> branchlist = tmp.second;
+		for( long int i = 0; i < branchlist.size(); i++)
+		{
+			ofChains << "\t"<< branchlist[i];
 		}
 		ofChains <<endl;
 	}
 	ofChains.close();
+
+	/// calculate the coordinates of the nodes
+	QString corStr = this->fileName + "coordinates.txt";
+	ofstream ofCoordinate( corStr.toStdString().c_str());
+	ofCoordinate.precision(4);
+
+	vnl_matrix< double> nodePos( 2, adj_matrix.cols());
+	vnl_vector< int> nodePosAssigned( adj_matrix.cols());
+	nodePos.fill(0);
+	nodePosAssigned.fill(0);
+
+	/// calculate backbone node position
+	vnl_vector< double> backboneAngle( backbones.size());
+	for( long int i = 0; i < backboneAngle.size(); i++)
+	{
+		backboneAngle[i] = i + 1;
+	}
+	backboneAngle = backboneAngle -  backboneAngle.mean();
+	backboneAngle = backboneAngle / backboneAngle.max_value() * pi / ANGLE_STEP * 25;
+	
+	double powx = pow( sin(backboneAngle[0]) - sin(backboneAngle[1]), 2);
+	double powy = pow( cos(backboneAngle[1]) - cos(backboneAngle[0]), 2);
+	double norm = sqrt( powx + powy);
+
+	if( backbones.size() > 500)
+	{
+		long int size = backbones.size();
+		for( long int i = 0; i < backbones.size(); i++)
+		{
+			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm * 500 / size;
+			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm * 500 / size;
+			nodePosAssigned[ backbones[i]] = 1;
+		}
+	}
+	else
+	{
+		for( long int i = 0; i < backbones.size(); i++)
+		{
+			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm;
+			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm;
+			nodePosAssigned[ backbones[i]] = 1;
+		}
+	}
+
+	/// cacluate the branch backbone nodes position
+	for( long int i = 0; i < chainList.size(); i++)
+	{
+		std::pair< long int, std::vector<long int> > branch = chainList[i];
+		long int attachNode = branch.first;
+		std::vector< long int> branchNode = branch.second;
+		for( long int j = 0; j < branchNode.size(); j++)
+		{
+			long int newNode = branchNode[j];
+			double bestR = 0.3;
+			double bestTheta = 0;
+			vnl_vector< double> minForce( 7);
+			vnl_vector< double> mintheta( 7);
+			minForce.fill(0);
+			mintheta.fill(0);
+
+			int count = 0;
+			for( double r = 0.3; r <= 0.9; r = r + 0.1, count++)
+			{
+				bool bfirst = true;
+				double minVar = 0;
+				for( double theta = 0; theta <= 2 * pi; theta += 2 * pi / ANGLE_STEP)
+				{
+					Point newNodePoint;
+					vnl_matrix<double> repel_mat;
+					GetElementsIndexInMatrix( shortest_hop, newNode, MAX_HOP, nodePos, repel_mat, nodePosAssigned);
+
+					newNodePoint.x = nodePos( 0, attachNode) + r * cos( theta);
+					newNodePoint.y = nodePos( 1, attachNode) + r * sin( theta);
+					for( long int k = 0; k < repel_mat.cols(); k++)
+					{
+						repel_mat(0, k) = newNodePoint.x - repel_mat( 0, k);
+						repel_mat(1, k) = newNodePoint.y - repel_mat( 1, k);
+					}
+
+					vnl_vector< double> repel_tmp_xvector(repel_mat.cols());
+					vnl_vector< double> repel_tmp_yvector(repel_mat.cols());
+					for( long int k = 0; k < repel_mat.cols(); k++)
+					{
+						double force = sqrt( pow(repel_mat(0, k),2) + pow(repel_mat(1, k),2));
+						force = pow( force, 5);
+						repel_tmp_xvector[ k] = repel_mat(0, k) / force;
+						repel_tmp_yvector[ k] = repel_mat(1, k) / force;
+					}
+
+					vnl_vector<double> repel_force(2);
+					repel_force[ 0] = repel_tmp_xvector.sum();
+					repel_force[ 1] = repel_tmp_yvector.sum();
+
+					double cosalfa = (repel_force[0] * cos( theta) + repel_force[1] * sin( theta)) / repel_force.magnitude();
+					double sinalfa = sqrt( 1 - pow( cosalfa, 2));
+		
+					if( bfirst)
+					{
+						if( repel_force.magnitude() * cosalfa >= 0)
+						{
+							minForce[ count] = repel_force.magnitude() * cosalfa;
+							mintheta[ count] = theta;
+							minVar = repel_force.magnitude() * sinalfa;
+							bfirst = false;
+						}
+					}
+					else
+					{
+						if( repel_force.magnitude() * cosalfa >= 0 && repel_force.magnitude() * sinalfa < minVar )
+						{
+							minForce[ count] = repel_force.magnitude() * cosalfa;
+							mintheta[ count] = theta;
+							minVar = repel_force.magnitude() * sinalfa;
+						}
+					}
+				}
+			}
+			
+			int min = minForce.arg_min();
+			bestR = 0.3 + 0.1 * min;
+			bestTheta = mintheta[ min];
+
+			nodePos(0, newNode) = nodePos(0, attachNode) + bestR * cos( bestTheta);
+			nodePos(1, newNode) = nodePos(1, attachNode) + bestR * sin( bestTheta);
+			nodePosAssigned[ newNode] = 1;
+			attachNode = newNode;
+		}
+	}
+
+	double medianX = Median( nodePos.get_row(0));
+	double medianY = Median( nodePos.get_row(1));
+	double medianXY[2] = {medianX, medianY};
+
+	for( int i = 0; i < 2; i++)
+	{
+		vnl_vector<double> tmpNodePos = nodePos.get_row(i) - medianXY[i];
+		vnl_vector<double> tmp = tmpNodePos;
+		for( long int j = 0; j < tmpNodePos.size(); j++)
+		{
+			tmp[j] = abs( tmp[j]);
+		}
+		
+		tmpNodePos = tmpNodePos / tmp.max_value() * 50;
+		nodePos.set_row(i, tmpNodePos);
+	}
+
+	ofCoordinate << setiosflags(ios::fixed)<< nodePos.transpose()<<endl;
+	ofCoordinate.close();
+
+	for( long int i = 0; i < nodePos.cols(); i++)
+	{
+		Point pt( nodePos(0, i), nodePos(1, i));
+		pointList.push_back( pt);
+	}
 }
 
-/// branchnodes first element is the chain's first node
-void GraphWindow::getBackBones(vnl_matrix< long int>& shortest_hop, vnl_vector< int>& tag, 
-							   std::vector< long int>& branchnodes, std::vector< long int>& chains)
+/// branchnodes first element is the chain's attach node
+void GraphWindow::getBackBones(vnl_matrix< long int>& shortest_hop, std::vector< long int>& branchnodes, std::vector< long int>& chains)
 {
 	chains.clear();
 	vnl_vector< long int> branchShortestHop( branchnodes.size());
 
-	long int startNode = branchnodes.front();
+	long int attachNode = branchnodes.front();
 	std::map< long int, long int> tmpChain;  // for ordering 
 
 	for( long int i = 0; i < branchShortestHop.size(); i++)
 	{
-		branchShortestHop[i] = shortest_hop( startNode, branchnodes[i]);
+		branchShortestHop[i] = shortest_hop( attachNode, branchnodes[i]);
 	}
 
 	long int maxHop = branchShortestHop.max_value();
@@ -612,17 +813,19 @@ void GraphWindow::getBackBones(vnl_matrix< long int>& shortest_hop, vnl_vector< 
 	long int endNode = branchnodes[ endNodeIndex];
 	for( long int i = 0; i < shortest_hop.cols(); i++)
 	{
-		if( shortest_hop( startNode, i) + shortest_hop( endNode, i) == maxHop)
+		if( shortest_hop( attachNode, i) + shortest_hop( endNode, i) == maxHop)
 		{
-			tmpChain.insert( std::pair< long int, long int>( shortest_hop( startNode, i), i));
+			tmpChain.insert( std::pair< long int, long int>( shortest_hop( attachNode, i), i));
 		}
 	}
 
 	std::map< long int, long int>::iterator iter;
 	for( iter = tmpChain.begin(); iter != tmpChain.end(); iter++)
 	{
-		chains.push_back((*iter).second);
-		tag[ (*iter).second] = 1;
+		if( (*iter).second != attachNode)
+		{
+			chains.push_back((*iter).second);
+		}
 	}
 }
 
@@ -639,4 +842,93 @@ void GraphWindow::find(vnl_vector<long int>& vec, long int val, std::vector<long
 			nonequal.push_back(i);
 		}
 	}
+}
+
+void GraphWindow::GetElementsIndexInMatrix(vnl_matrix<long int>& mat, long int rownum, long int max, vnl_matrix<double>& oldmat, vnl_matrix<double>& newmat, vnl_vector< int>& tag)
+{
+	std::vector< long int> index;
+	for( long int i = 0; i < mat.cols(); i++)
+	{
+		if( mat( rownum, i) < max && tag[i] == 1)
+		{
+			index.push_back( i);
+		}
+	}
+
+	newmat.set_size( oldmat.rows(), index.size());
+	for( long int i = 0; i < index.size(); i++)
+	{
+		vnl_vector< double> tmpcol = oldmat.get_column( index[i]);
+		newmat.set_column( i, tmpcol);
+	}
+}
+
+double GraphWindow::Median( vnl_vector<double>& vec)
+{
+	vnl_vector<double> vect = vec;
+	vnl_vector<double> tmp( vec.size());
+	double max = vect.max_value() + 1;
+	double med;
+	for( long int i = 0; i < vect.size(); i++)
+	{
+		tmp[i] = vect.min_value();
+		long int ind = vect.arg_min();
+		vect[ind] = max;
+	}
+
+	long int size = tmp.size();
+	if( size % 2 == 1)
+	{
+		med = tmp[ size / 2];
+	}
+	else
+	{
+		med = 1.0 / 2.0 * ( tmp[ size / 2] + tmp[ size / 2 - 1]);
+	}
+	return med;
+}
+
+void GraphWindow::SortChainList( vnl_matrix<long int>& shortest_hop, std::vector<long int>& backbones, 
+				   std::vector< std::pair<long int, std::vector<long int> > >& chainList)
+{
+	std::vector< std::pair<long int, std::vector<long int> > > tmpchainList;
+	std::multimap< long int, long int> sortMap;
+	long int startNode = backbones[0];
+	long int endNode = backbones[ backbones.size() - 1];
+	for( long int i = 0; i < chainList.size(); i++)
+	{
+		std::pair<long int, std::vector<long int> > chainPair = chainList[i];
+		if( IsExist( backbones, chainPair.first))
+		{
+			long int abHop = abs( shortest_hop(chainPair.first, startNode) - shortest_hop( chainPair.first, endNode));
+			sortMap.insert( std::pair< long int, long int>(abHop, i));
+		}
+		else
+		{
+			std::multimap< long int, long int>::iterator iter;
+			for( iter = sortMap.begin(); iter != sortMap.end(); iter++)
+			{
+				std::pair<long int, std::vector<long int> > pair = chainList[ (*iter).second];
+				tmpchainList.push_back( pair);
+			}
+			for( long int k = i; k < chainList.size(); k++)
+			{
+				tmpchainList.push_back( chainList[k]);
+			}
+			chainList = tmpchainList;
+			break;
+		}
+	}
+}
+
+bool GraphWindow::IsExist(std::vector<long int>& vec, long int value)
+{
+	for( long int i = 0; i < vec.size(); i++)
+	{
+		if( value == vec[i])
+		{
+			return true;
+		}
+	}
+	return false;
 }
