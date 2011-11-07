@@ -42,6 +42,7 @@ NuclearSegmentation::NuclearSegmentation()
 	this->ResetAll();
 
 	paramNames.push_back("high_sensitivity");
+
 	paramNames.push_back("LoG_size");
 	paramNames.push_back("min_scale");
 	paramNames.push_back("max_scale");
