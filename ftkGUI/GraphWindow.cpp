@@ -863,7 +863,7 @@ void GraphWindow::GetElementsIndexInMatrix(vnl_matrix<long int>& mat, long int r
 	}
 }
 
-double GraphWindow::Median( vnl_vector<double>& vec)
+double GraphWindow::Median( vnl_vector<double> vec)
 {
 	vnl_vector<double> vect = vec;
 	vnl_vector<double> tmp( vec.size());

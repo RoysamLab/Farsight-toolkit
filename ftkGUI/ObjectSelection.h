@@ -45,7 +45,7 @@ public:
 	std::set<long int> getSelections(void);	//Returns the selections
 
 	// Time Selections: Kymograph and 3D View Editing
-	typedef struct Point{int id;int new_id;int time;};
+	struct Point{int id;int new_id;int time;};
 	int GetCurrentTime(){return Time;};
 	void SetCurrentTime(int t);
 	void SelectPoints(std::vector<Point> points);

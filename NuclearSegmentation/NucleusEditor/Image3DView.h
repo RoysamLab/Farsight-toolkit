@@ -4,8 +4,8 @@
 // qt includes:
 #include <QtGui/QMainWindow>
 #include <QObject>
-#include "QGridLayout.h"
-#include "QDockWidget.h"
+#include <QGridLayout>
+#include <QDockWidget>
 #include <QtGui>
 // vtk includes:
 #include "vtkImageViewer2.h"

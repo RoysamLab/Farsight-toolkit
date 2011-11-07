@@ -56,7 +56,7 @@ protected:
 	void GetElementsIndexInMatrix(vnl_matrix<long int>& mat, long int rownum, long int max, vnl_matrix<double>& oldmat, vnl_matrix<double>& newmat, vnl_vector< int>& tag);
 	void SortChainList( vnl_matrix<long int>& shortest_hop, std::vector<long int>& backbones, 
 		std::vector< std::pair<long int, std::vector<long int> > >& chainList);
-	double Median( vnl_vector<double>& vec);
+	double Median( vnl_vector<double> vec);
 	bool IsExist(std::vector<long int>& vec, long int value);
 	
 protected slots:
