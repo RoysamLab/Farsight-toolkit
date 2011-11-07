@@ -195,8 +195,8 @@ void SampleEditor::loadFile()
 	std::cout << "I reached here inside the sample editor"<<std::endl;
 	this->graph->setModels(data, selection);
 	this->dendro1->setModels(data,selection);
-	this->dendro2->setModels(data,selection2);//////////////////////////////////////////////
-	//this->heatmap->setModels(data,selection,selection2);
+	this->dendro2->setModels(data,selection2);
+	this->heatmap->setModels(data,selection,selection2);
 
 }
 
@@ -472,7 +472,60 @@ void SampleEditor::featuredendrogram()
 
 void SampleEditor::showheatmap()
 {
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->data->GetNumberOfRows()];
+
+	std::cout<<this->data->GetNumberOfRows()<<endl;
+	std::cout<<this->data->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->data->GetNumberOfColumns() - 1 ];
+	}
+
+
+	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+		{
+			temp = this->data->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
+	cc1->RunClusClus();
+	cc1->MergersToProgress();
+	cc1->PrepareTreeData();
+	cc1->GetOptimalLeafOrderD();
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	cc1->Transpose();
+	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
+	cc2->RunClusClus();
+	cc2->MergersToProgress();
+	cc2->PrepareTreeData();
+	cc2->GetOptimalLeafOrderD();
+	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+
+
 	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
-	this->heatmap->creatDataForHeatmap();
+	this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
+	this->heatmap->creatDataForHeatmap();	
 	this->heatmap->showGraph();
+	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+
 }
