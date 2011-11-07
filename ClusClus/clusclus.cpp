@@ -160,29 +160,25 @@ double clusclus::MergeClusters(int num_currcluster, int *pivot1, int *pivot2)
 
 /*void clusclus::NormalizeFeatures()
 {
-	//Normalize by subtracting the mean and then dividing by the standard deviation	
-	for(int i=0; i<num_features; i++)
+	for(int i=0; i<this->num_features; i++)
 	{
-		//1. Compute the mean (average) of each feature
 		double avg = 0.0;
-		for(int j=0; j<num_samples; j++)
+		for(int j=0; j<this->num_samples; j++)
 		{
-			avg +=features[j][i];
-		}	
-		avg/=num_samples;
-
-		//1. Compute the standard deviation of each feature
-		double stdd = 0.0;
-		for(int j=0; j<num_samples; j++)
-		{
-			stdd+= sqrt((features[j][i]-avg)*(features[j][i]-avg));
+			avg += this->features[j][i];
 		}
-		stdd/=num_samples;
+		avg /= this->num_samples;
 
-		//3. Normalize
-		for(int j=0; j<num_samples; j++)
+		double sum = 0.0;
+		for(int j=0; j<this->num_samples; j++)
 		{
-			features[j][i] = (features[j][i]-avg)/stdd;
+			sum += (this->features[j][i]-avg)*(this->features[j][i]-avg);
+		}
+
+		double stdd = sqrt(sum / this->num_samples);
+		for(int j=0; j<this->num_samples; j++)
+		{
+			this->features[j][i] = (this->features[j][i]-avg)/stdd;
 		}
 	}
 }*/
@@ -343,7 +339,7 @@ void clusclus::WriteClusteringOutputToFile(const char *filename1, const char *fi
 	for(int i=0; i<num_samples-1; i++)
 	{
 		for(int j=0; j<5; j++)
-			fprintf(fp1,"%f\t ",mergers[i][j]);
+			fprintf(fp1,"%14.7e\t",mergers[i][j]);
 		fprintf(fp1,"\n");
 	}
 	fclose(fp1);

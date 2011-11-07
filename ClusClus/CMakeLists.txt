@@ -22,7 +22,8 @@ SET( ClusClus_HDRS
 	clusgap.h
 	clusclusMainwindow.h
 	HeatmapWindow.h)
-
+LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
+INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h)  
 
 ADD_LIBRARY( ClusClus_lib ${ClusClus_SRCS} ${ClusClus_HDRS} ${ClusClus_MOC_REQD_HDRS} )
