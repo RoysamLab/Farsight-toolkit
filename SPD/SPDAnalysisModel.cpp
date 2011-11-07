@@ -1055,7 +1055,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	{
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist = Hist( moduleDistance[i], NUM_BIN, hist_interval);
-		histOfs << "Module "<< i + 1 <<endl;
+		//histOfs << "Module "<< i + 1 <<endl;
 		
 		// test the distance of the modules
 		//for( int s = 0; s < moduleDistance[i].size(); s = s + 10)
@@ -1076,12 +1076,12 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		{
 			moduleHistPer[y] = moduleHist[y] / (double)moduleHist.sum();
 		}
-		histOfs << moduleHistPer<< endl<<endl;
+		//histOfs << moduleHistPer<< endl<<endl;
 
 		for( int j = 0; j < moduleDistance.size(); j++)
 		{	
 			std::cout<< "matching module " << i<< " with MST " << j<<endl;
-			histOfs << "MST "<< j + 1 <<endl;
+			//histOfs << "MST "<< j + 1 <<endl;
 
 			vnl_vector<double> mstDistance; 
 			GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
@@ -1105,13 +1105,13 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			{
 				mstHistPer[y] = mstHist[y] / (double)mstHist.sum();
 			}
-			histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
+			//histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
 
 			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
 			
 			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
 
-			histOfs << "flows:"<<endl;
+			/* histOfs << "flows:"<<endl;
 			vnl_matrix<double> tranMatrix = flowMatrix.transpose();
 			histOfs << setiosflags(ios::fixed) << tranMatrix <<endl <<endl;
 			
@@ -1122,7 +1122,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 				sumvector[i] = tranMatrix.get_column(i).sum();
 			}
 
-			histOfs << setiosflags(ios::fixed) << sumvector <<endl<<endl;
+			histOfs << setiosflags(ios::fixed) << sumvector <<endl<<endl;*/
 		}
 	}
 	histOfs << setiosflags(ios::fixed) << this->EMDMatrix << endl;
@@ -1130,14 +1130,54 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	std::cout<< "EMD matrix saved in file emd.txt"<<endl;
 }
 
-void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2)
+void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double threshold)
 {
+	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	this->heatmapMatrix.fill(0);
+	std::vector< unsigned int> simModIndex;
+	
+	double max = this->EMDMatrix.max_value();
+	double min = this->EMDMatrix.min_value();
+	double interval = max - min;
+
+	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		simModIndex.clear();
+		for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
+		{
+			double tmp = ( this->EMDMatrix( i, j) - min)/ interval;
+			if( tmp >= threshold)
+			{
+				simModIndex.push_back(j);
+			}
+		}
+
+		if( simModIndex.size() > 0)
+		{
+			for( unsigned int j = 0; j < simModIndex.size(); j++)
+			{
+				for( unsigned int k = 0; k < simModIndex.size(); k++)
+				{
+					this->heatmapMatrix( simModIndex[j], simModIndex[k]) = heatmapMatrix( simModIndex[j], simModIndex[k]) + 1;
+					this->heatmapMatrix( simModIndex[k], simModIndex[j]) = heatmapMatrix( simModIndex[k], simModIndex[j]) + 1;
+				}
+			}
+		}
+	}
+
+	QString filenameSM = this->filename + "similarity_matrix.txt";
+	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
+	ofSimatrix.precision(4);
+	ofSimatrix << setiosflags(ios::fixed) << this->heatmapMatrix <<endl;
+	ofSimatrix.close();
+	
 	if( this->cc1)
 	{
 		delete this->cc1;
 		this->cc1 = NULL;
 	}
-	this->cc1 = new clusclus( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+
+	this->cc1 = new clusclus( this->heatmapMatrix.data_array(), heatmapMatrix.rows(), heatmapMatrix.cols());
 	this->cc1->RunClusClus();
 	this->cc1->MergersToProgress();
 	this->cc1->PrepareTreeData();
@@ -1157,4 +1197,149 @@ void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2)
 
 	c1 = *this->cc1;
 	c2 = *this->cc2;
+}
+
+void SPDAnalysisModel::GetCombinedMatrix( vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
+{
+	unsigned int i = 0;
+	unsigned int ind = 0;
+
+	for( i = 0; i < index.size(); i++)
+	{
+		if( IsExist(moduleID, index[i]))
+		{
+			mat.set_column( ind++, this->DataMatrix.get_column(i));
+		}
+	}
+}
+
+bool SPDAnalysisModel::IsExist(std::vector<unsigned int> vec, unsigned int value)
+{
+	for( int i = 0; i < vec.size(); i++)
+	{
+		if( value == vec[i])
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string& selectedModules)
+{
+	QString filenameMST = this->filename + "progression_mst.txt";
+	std::ofstream ofs(filenameMST.toStdString().c_str(), std::ofstream::out);
+	ofs.precision(4);
+
+	std::vector<std::string> moduleIDStr;
+	std::vector<unsigned int> moduleID;
+	split( selectedModules, ',', &moduleIDStr);
+	int coln = 0;
+	for( int i = 0; i < moduleIDStr.size(); i++)
+	{
+		unsigned int index = atoi( moduleIDStr[i].c_str());
+		moduleID.push_back( index);
+		coln += GetSingleModuleSize( this->ClusterIndex, index);
+	}
+	
+	vnl_matrix<double> clusterMat( this->DataMatrix.rows(), coln);
+	GetCombinedMatrix( this->ClusterIndex, moduleID, clusterMat);
+	ofs<< setiosflags(ios::fixed)<< clusterMat<<endl<<endl;
+
+	int num_nodes = this->DataMatrix.rows();
+	Graph graph( num_nodes);
+
+	for( unsigned int k = 0; k < num_nodes; k++)
+	{
+		for( unsigned int j = k + 1; j < num_nodes; j++)
+		{
+			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+			//double dist = EuclideanBlockDist( clusterMat, k, j);
+			boost::add_edge(k, j, dist, graph);
+		}
+	}
+
+	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->DataMatrix.rows());
+
+	try
+	{
+		boost::prim_minimum_spanning_tree(graph, &vertex[0]);
+
+	}
+	catch(...)
+	{
+		std::cout<< "MST construction failure!"<<endl;
+		exit(111);
+	}
+
+	// construct vtk table and show it
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+
+	for(int i = 0; i < this->headers.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( (this->headers)[i].c_str());
+		table->AddColumn(column);
+	}
+	
+	for( int i = 0; i < vertex.size(); i++)
+	{
+		if( i != vertex[i])
+		{
+			double dist = CityBlockDist( clusterMat, i, vertex[i]);
+			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+			if( this->indMapFromIndToVertex.size() > 0)
+			{
+				DataRow->InsertNextValue( this->indMapFromIndToVertex[i]);
+				DataRow->InsertNextValue( this->indMapFromIndToVertex[vertex[i]]);
+			}
+			else
+			{
+				DataRow->InsertNextValue( i);
+				DataRow->InsertNextValue( vertex[i]);
+			}
+			DataRow->InsertNextValue(dist);
+			table->InsertNextRow(DataRow);
+		}
+	}
+
+	// write into files
+
+	std::multimap<int,int> tree;
+
+	for( unsigned int i = 0; i < vertex.size(); i++)
+	{
+		if( i != vertex[i])
+		{
+			tree.insert(std::pair<int,int>(i, vertex[i]));
+			tree.insert(std::pair<int,int>(vertex[i], i));
+		}
+	}
+
+	std::multimap<int,int>::iterator iterTree = tree.begin();
+	int oldValue = (*iterTree).first;
+	while( iterTree!= tree.end())
+	{
+		std::map<int, int> sortTree;
+		while( iterTree!= tree.end() && (*iterTree).first == oldValue)
+		{
+			sortTree.insert( std::pair<int, int>((*iterTree).second, (*iterTree).first));
+			iterTree++;
+		}
+
+		if( iterTree != tree.end())
+		{
+			oldValue = (*iterTree).first;
+		}
+			
+		std::map<int,int>::iterator iterSort = sortTree.begin();
+		while( iterSort != sortTree.end())
+		{
+			ofs<<(*iterSort).first + 1<<"\t"<<((*iterSort).second) + 1<<endl;
+			iterSort++;
+		}
+	}
+
+	return table;
 }

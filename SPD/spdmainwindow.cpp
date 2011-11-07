@@ -43,8 +43,15 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	listWidget = new QListWidget( this);
 	generateMSTButton = new QPushButton(tr("MST"));
 	showMSTButton = new QPushButton(tr("Show MST"));
-
 	emdButton = new QPushButton(tr("EMD"));
+	
+	emdThresBox = new QLineEdit;
+	psmLable = new QLabel(tr("PSM Threshold"));
+    psmButton = new QPushButton(tr("Show PSM"));
+
+	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
+	psdModuleSelectBox = new QLineEdit;
+    psdtButton = new QPushButton(tr("View Progression"));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
@@ -53,7 +60,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
 	connect(showMSTButton, SIGNAL(clicked()), this, SLOT(showMST()));
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
-
+	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
+	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
     QGridLayout *mainLayout = new QGridLayout;
 
     for ( int col = 0; col<= 2; col++)
@@ -94,6 +102,14 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     mainLayout->addWidget(generateMSTButton, 6, 2);
 	mainLayout->addWidget(showMSTButton, 7, 2);
 	mainLayout->addWidget(emdButton, 8, 2);
+
+	mainLayout->addWidget(psmLable, 9, 0);
+	mainLayout->addWidget(emdThresBox, 9, 1);
+	mainLayout->addWidget(psmButton, 9, 2);
+
+	mainLayout->addWidget(psdtLable, 10, 0);
+	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	mainLayout->addWidget(psdtButton, 11, 2);
 
     setLayout(mainLayout);
 
@@ -202,11 +218,48 @@ void SPDMainWindow::showMST()
 void SPDMainWindow::emdFunction()
 {
 	this->SPDModel->RunEMDAnalysis();
-	//clusclus clus1, clus2;
-	//this->SPDModel->GetClusClusData(clus1, clus2);
+}
 
-	//this->heatmap->setDataForHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);
-	//this->heatmap->creatDataForHeatmap();
-	//this->heatmap->showGraph();
+void SPDMainWindow::showPSM()
+{
+	std::string emdThres = this->emdThresBox->text().toStdString();
+	if ( emdThres.length() > 0)
+	{
+		if ( atof(emdThres.c_str()) >= 0 && atof(emdThres.c_str()) <= 1)
+		{
+			clusclus clus1, clus2;
+			this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()));
+			this->heatmap->setDataForHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);
+			this->heatmap->creatDataForHeatmap();
+			this->heatmap->showGraph();
+		}
+		else
+		{
+			QMessageBox mes;
+			mes.setText("The threshold must be bewtween 0 and 1!");
+			mes.exec();
+		}
+	}
+	else
+	{
+		QMessageBox mes;
+		mes.setText("Set threshold!");
+		mes.exec();
+	}
+}
+
+void SPDMainWindow::viewProgression()
+{
+	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
+	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
+	if( table != NULL)
+	{
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+		this->graph->setModels(SPDModel->GetDataTable());
+		QString str = SPDModel->GetFileName();
+		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], str);
+		this->graph->ShowGraphWindow();
+	}
 }
 

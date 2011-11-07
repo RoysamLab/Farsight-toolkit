@@ -26,6 +26,8 @@ private slots:
 	void generateMST();
 	void showMST();
 	void emdFunction();
+	void showPSM();
+	void viewProgression();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -50,8 +52,14 @@ private:
 	QPushButton *generateMSTButton;
 	QPushButton *showMSTButton;
 	QPushButton *emdButton;
+	QLineEdit *emdThresBox;
+	QLabel *psmLable;
+    QPushButton *psmButton;
+	QLabel *psdtLable;   // progression sample discovery tree
+	QLineEdit *psdModuleSelectBox;  // select similar modules
+    QPushButton *psdtButton;
+	
     QString FileName;
-
 	GraphWindow *graph;
 	Heatmap *heatmap;
 };

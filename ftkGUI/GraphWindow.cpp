@@ -112,12 +112,6 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 
 void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel)
 {
-	//graphTable->Dump(8);	//debug dump
-
-	//this->TTG->ClearLinkVertices();
-	//this->TTG->SetInput(0, table);
-	//this->TTG->AddLinkEdge(ID1.c_str(), ID2.c_str()); 
-
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 
@@ -863,7 +857,7 @@ void GraphWindow::GetElementsIndexInMatrix(vnl_matrix<long int>& mat, long int r
 	}
 }
 
-double GraphWindow::Median( vnl_vector<double> vec)
+double GraphWindow::Median( vnl_vector<double>& vec)
 {
 	vnl_vector<double> vect = vec;
 	vnl_vector<double> tmp( vec.size());

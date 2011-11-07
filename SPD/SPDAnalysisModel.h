@@ -44,7 +44,8 @@ public:
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
 
-	void GetClusClusData(clusclus& c1, clusclus& c2);
+	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold);
+	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 
 protected:
 	SPDAnalysisModel();
@@ -54,6 +55,7 @@ protected:
 	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, int fold);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
+	void GetCombinedMatrix( vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
 	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
@@ -68,6 +70,7 @@ protected:
 	vnl_vector<unsigned int> Hist(vnl_vector<double>&distance, vnl_vector<double>& interval);
 	//double Dist(int *first, int *second);
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
+	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
 
 private:
 	static SPDAnalysisModel *s_pmodel;
@@ -99,6 +102,7 @@ private:
 	vnl_matrix<double> EMDMatrix;
 
 	// for heatmap
+	vnl_matrix<double> heatmapMatrix;
 	clusclus *cc1;
 	clusclus *cc2;
 };

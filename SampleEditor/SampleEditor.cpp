@@ -401,6 +401,7 @@ void SampleEditor::SPDAnalysis()
 		SPDModel->GetTableHeaders( headers);
 		QString str = SPDModel->GetFileName();
 		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], str);
+		//this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
 		this->graph->ShowGraphWindow();
 	}
 }
