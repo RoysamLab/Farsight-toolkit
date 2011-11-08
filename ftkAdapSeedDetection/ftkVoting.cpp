@@ -121,11 +121,36 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		}
 	}
 
+	// Magnitude Image Binary (just to store in file the voting pixels)
+	VotingDirType::Pointer votingMagImage_bin = VotingDirType::New();
+	votingMagImage_bin->SetRegions( inputImage->GetRequestedRegion() );
+	votingMagImage_bin->Allocate();
+
+	// Canny edge detection
+	typedef itk::CannyEdgeDetectionImageFilter <VotingDirType, VotingDirType> CannyEdgeDetectionImageFilterType;
+	CannyEdgeDetectionImageFilterType::Pointer cannyFilter = CannyEdgeDetectionImageFilterType::New();
+	cannyFilter->SetInput(inputImage);
+	cannyFilter->SetVariance( 2.5 );
+	cannyFilter->SetUpperThreshold( 0.03/*0.0238*/ );
+	cannyFilter->SetLowerThreshold( 0.005/*0.0175*/ );
+	cannyFilter->Update();
+
+	// Save the canny edge result
+	string filenameCanny = "output\\out_ImageOfCanny.jpg";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+
+
+
 	// Arrays of data
 	nftkVotingGlobal::InputImageType::PixelType * votingImaArray = inputImage->GetBufferPointer();
 	VotingDirType::PixelType * votingDirXArray = votingDirX->GetBufferPointer();
 	VotingDirType::PixelType * votingDirYArray = votingDirY->GetBufferPointer();
 	VotingDirType::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
+	VotingDirType::PixelType * votingMagArray_bin = votingMagImage_bin->GetBufferPointer();
+	VotingDirType::PixelType * votingCannyArray = cannyFilter->GetOutput()->GetBufferPointer();
+	
 
 	//double maxgrad = votingMagImag
 
@@ -148,10 +173,49 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 			}
 	}
 
+
+	// Testing to store the resulting voting image base on the gradient
+	// Save the canny edge result
+	string filenameGradVot = "output\\out_ImageOfGradVot.jpg";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+	// Put 1 if mag array is different to zero
+	for(int i=0; i<npix; i++) {
+			votingMagArray_bin[i] = 0;
+			if (votingMagArray[i]!=0)
+			{
+				votingMagArray_bin[i] = 1;
+			}
+	}
+	string filenameGradVot_bin = "output\\out_ImageOfGradVot_bin.jpg";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+	// Put 1 if mag array intersect with canny edge is di
+	for(int i=0; i<npix; i++) {
+			votingMagArray_bin[i] = 0;
+			if (votingMagArray[i]!=0 && votingCannyArray[i]!=0)
+			{
+				votingMagArray_bin[i] = 1;
+			}
+	}
+	string filenameGradVotInterCanny = "output\\out_ImageOfGradVotInterCanny.jpg";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+
+
+
+
+
+
 	// Padding
 	bw = sqrt((double)(_radius*_radius + _hmax*_hmax)) + 3; // Que es esto ??
 	const int bw2 = 2*bw;
 
+
+	// Calculate the voting poitns
 //int stop1;
 	int indx;
 	VPoint2D vp;
@@ -161,8 +225,8 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		for(x = 0; x < nx; x++)
 		{
 			k = x+nx*y;
-//cout<<endl<<votingMagArray[k];
-			if (votingMagArray[k] > epsilon)
+			if (votingMagArray[k] > epsilon) // This is the original one, only vote if the mag of gradient is greater than epsilon (and gra_min) previously thresholded
+			//if(votingCannyArray[k]!=0) // This is new, use the canny edge detection to vote form this values (IT DOES NOT WORK TO USE THE CANNY EDGE DETECTION, INCREIBLE)
 			{
 				if ((indx=computeAngleIndex(votingDirXArray[k], votingDirYArray[k])) >= 0 ) // NO ESTAN INCLUYENDO LOS CEROS PORQUE ??
 				{
@@ -176,6 +240,14 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		}
 	}
 //cin>>stop1;
+
+
+
+
+
+
+
+
 
 	nx += bw2;
 	ny += bw2;
@@ -198,11 +270,6 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 
 	// Copy sum votes to 
 
-#ifdef VERBOSE
-	
-	cout<<endl<<"nos fuimos";
-
-#endif
 
 }
 
@@ -421,7 +488,7 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, in
 }
 
 // ############################################################################################################################################################################
-void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int &mag)
+void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int &mag) // Incluye la probabilidad
 {
 
 	iterator binRequired = begin();
@@ -432,6 +499,7 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, in
 	{
 		//p[it->off] += vp.mag;// * (1/(double)mag)/*it->w*/; 
 		p[it->off] += vp.mag * (1/(double)mag); 
+		//p[it->off] += (1/(double)mag); 
 		//p[it->off] += (1/(double)mag)/*it->w*/; 
 		//cout<<" "<<mag;
 		//p[it->off] += 1; // Number of votes, not using magnitude
@@ -496,6 +564,48 @@ void inline ftkVoting::updateDirection(VPoint2D& vp)
 		//cout<<"\n"<<vp.angIndex;
 	}
 }
+
+
+//// ############################################################################################################################################################################
+void inline ftkVoting::updateDirection_prob(VPoint2D& vp)
+{
+	ftkBins2D::iterator max_point;
+	double maxvote = 0;
+	for( int tt=_voteDirec[vp.angIndex].first; tt!=_voteDirec[vp.angIndex].second; tt=(tt+1)%ntheta ) // Update direction for each voting point
+	{
+		ftkCone2D::iterator from = _conesPru[tt].begin();
+		ftkCone2D::iterator to = _conesPru[tt].end();
+		//_conesPru[tt].vote(p,vp);
+
+		VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer()+vp.pos;
+		for(ftkCone2D::iterator it = from; it != to; it++)  // Iterate to the cones
+		{
+			for(ftkBins2D::iterator it1=it->begin(); it1!=it->end(); it1++) // Iterate to the bins of each cone
+			{
+				if ( votingSumArray[it1->off]>maxvote) 
+				{
+					maxvote = max(maxvote, votingSumArray[it1->off]);
+					max_point = it1;
+				}    
+			}
+		} 
+	}
+
+	if (maxvote<epsilon)
+		return;
+
+	double dx = max_point->x;
+	double dy = max_point->y;
+
+	double r = sqrt(dx*dx+dy*dy);
+	if (r>epsilon) {
+		vp.xc = vp.x + max_point->x;
+		vp.yc = vp.y + max_point->y;
+		vp.angIndex = computeAngleIndex(dx/r, dy/r);
+		//cout<<"\n"<<vp.angIndex;
+	}
+}
+
 
 //// ############################################################################################################################################################################
 void ftkVoting::computeCones(int hmin, int hmax, int radius)
@@ -823,7 +933,6 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 	double dx_dou = hmax/span;
 	double dy_dou = radius/span;
 	_intSpan = computeAngleIndex(dx_dou, dy_dou);
-	_voteDirec = vector< pair< int,int > > (ntheta);
 	_voteDirec_prob = vector< pair< pair< int,int >, vector <int> > > (ntheta);
 	for( int tt=0; tt<ntheta; tt++ ) // 0 256
 	{
@@ -999,7 +1108,7 @@ void ftkVoting::vote()
 
 	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
 	computeCones(_hmin, _hmax, _radius);
-	computeCones_prob(_hmin, _hmax, _radius);
+	computeCones_prob(_hmin, _hmax, _radius); // Just for one moment
 
 	// Primer Voto
 	int nic=0;
@@ -1047,12 +1156,12 @@ void ftkVoting::vote()
 			for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
 			{
 				////cout<<endl<<"\t	Q pasa "<<gg;
-				//votar(votingSumArray+it->pos,*it,it->angIndex,gg);
-				//votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
+				votar(votingSumArray+it->pos,*it,it->angIndex,gg);
+				votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
 				////votar_dir(votingMaskVotes_dir,votingMaskArray+it->pos,*it,it->angIndex,gg,it->pos);
 
-				votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
-				votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
+				//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
+				//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
 				
 			}
 			stringstream out4;
@@ -1126,7 +1235,7 @@ void ftkVoting::vote()
 		}
 		int rrr;
 		cout<<endl<<"Fin primer voto: "<<ftkCone2D::contador_1;
-		cin>>rrr;
+		//cin>>rrr;
 
 	//stringstream out44;
 	//out44<<_intSpan;
@@ -1222,8 +1331,11 @@ void ftkVoting::vote()
 			for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
 			{
 				//cout<<endl<<"\t	Q pasa "<<gg;
-				votar(votingSumArray+it->pos,*it,it->angIndex,gg);
+				//votar(votingSumArray+it->pos,*it,it->angIndex,gg);
 				votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
+
+				//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
+				//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
 			}
 			stringstream out4;
 			out4<<_intSpan;
@@ -1253,13 +1365,15 @@ void ftkVoting::vote()
 		}
 		cout<<"\t done";
 
+		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
+
 
 
 		if( _intSpan==0)
 			break;
 
 	}
-	memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
+	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));*/
 
 	//while (r>= 0) 
 	//{
