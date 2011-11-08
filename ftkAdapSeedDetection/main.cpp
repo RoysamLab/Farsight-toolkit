@@ -25,8 +25,8 @@
 #include"ftkVoting.h"
 #include"ftkVotingGlobal.h"
 
-#include"ftkVoting_3D.h"
-#include"ftkVotingGlobal_3D.h"
+//#include"ftkVoting_3D.h"
+//#include"ftkVotingGlobal_3D.h"
 
 
 //using namespace nftkVotingGlobal;
@@ -56,25 +56,25 @@ int main( int argc, char * argv[] ){
 
 
 // ###################################### 2D
-	//// Set Up the Reader 2D
-	//nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
-	//inputImage->Update();
-
-	//ftkVoting voteMain;
-	//voteMain.setParams(hmin,hmax,radius,min_grad,scale);
-	//voteMain.setPrefix("temp/");
-	//voteMain.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
-
-
-// ###################################### 3D
 	// Set Up the Reader 2D
 	nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
 	inputImage->Update();
 
-	ftkVoting_3D voteMain;
+	ftkVoting voteMain;
 	voteMain.setParams(hmin,hmax,radius,min_grad,scale);
 	voteMain.setPrefix("temp/");
 	voteMain.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
+
+
+// ###################################### 3D
+	//// Set Up the Reader 2D
+	//nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
+	//inputImage->Update();
+
+	//ftkVoting_3D voteMain;
+	//voteMain.setParams(hmin,hmax,radius,min_grad,scale);
+	//voteMain.setPrefix("temp/");
+	//voteMain.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
 
 
 
