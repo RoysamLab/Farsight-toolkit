@@ -57,7 +57,7 @@ protected:
 	void SortChainList( vnl_matrix<long int>& shortest_hop, std::vector<long int>& backbones, 
 		std::vector< std::pair<long int, std::vector<long int> > >& chainList);
 	bool IsExist(std::vector<long int>& vec, long int value);
-	double Median( vnl_vector<double>& vec);
+	double Median( vnl_vector<double> vec);
 	
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
