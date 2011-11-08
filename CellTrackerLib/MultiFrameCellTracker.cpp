@@ -828,7 +828,7 @@ float MultiFrameCellTracker::get_distance( float x1[3],float x2[3])
 }
 int MultiFrameCellTracker::add_disappear_vertices(int t)
 {
-	_ETRACE;
+	//_ETRACE;
 	using boost::graph_traits;
 	typedef graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
@@ -878,7 +878,7 @@ int MultiFrameCellTracker::add_disappear_vertices(int t)
 			}
 		}
 	}
-	_LTRACE;
+	//_LTRACE;
 	//printf(" I added %d disappear edges\n",ret_count);
 	//PAUSE;
 	return ret_count;
@@ -886,7 +886,7 @@ int MultiFrameCellTracker::add_disappear_vertices(int t)
 
 int MultiFrameCellTracker::add_appear_vertices(int t)
 {
-	_ETRACE;
+	//_ETRACE;
 	using boost::graph_traits;
 	typedef graph_traits<TGraph>::vertex_iterator vertex_iter;
 	TGraph::vertex_descriptor v;
@@ -904,7 +904,7 @@ int MultiFrameCellTracker::add_appear_vertices(int t)
 				//printf("findex = %d fvector[%d].size() = %d\n",g[*vi].findex,t,fvector[t].size());
 				//if(get_boundary_dist(fvector[t+1][g[*vi].findex].Centroid) <  4.0*sqrt(fvar.distVariance))
 				{
-					_TRACE;
+					//_TRACE;
 					v = add_vertex(g);
 					g[v].special = 1;
 					g[v].t = t;
@@ -930,12 +930,12 @@ int MultiFrameCellTracker::add_appear_vertices(int t)
 						printFeatures(fvector[t+1][g[*vi].findex]);
 						printf("Utility for appearing = %d\n",g[e].utility);
 					}
-					_TRACE;
+					//_TRACE;
 				}
 			}
 		}
 	}
-	_LTRACE;
+	//_LTRACE;
 	//printf(" I added %d appear edges\n",ret_count);
 	//PAUSE;
 	return ret_count;
@@ -943,7 +943,7 @@ int MultiFrameCellTracker::add_appear_vertices(int t)
 
 int MultiFrameCellTracker::add_normal_edges(int tmin, int tmax)
 {
-	_ETRACE;
+	//_ETRACE;
 	TGraph::edge_descriptor e;
 	bool added = false;
 	int nec = 0;
@@ -1141,7 +1141,7 @@ void  MultiFrameCellTracker::populate_merge_candidates(int t)
 
 int MultiFrameCellTracker::add_merge_split_edges(int tmax)
 {
-	_TRACE
+	//_TRACE
 		int msec = 0;
 	if(m_cand.size() < tmax)
 	{
@@ -3517,9 +3517,9 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 					printf("g[vd].t = %d g[vd].findex = %d g[vd].special = %d\n",g[vd].t, g[vd].findex,g[vd].special);
 				
 					printFeatures(fvector[g[vd].t][g[vd].findex]);
-					_TRACE;
+					//_TRACE;
 					SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
-					_TRACE;
+					//_TRACE;
 
 					int ttemp = g[vd].t;
 					fvecout[0].time = ttemp;
@@ -3564,7 +3564,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 				std::vector<std::vector<bool> > permutations = generate_all_binary_strings(permsize);
 				float utilmax = -1;
 				int utilpos = -1;
-				_TRACE;
+				//_TRACE;
 				int permpc = 0;
 				for(int cop = 0; cop < permutations.size(); cop++)
 				{
@@ -3667,7 +3667,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 						utilpos = cop;
 					}
 				}
-				_TRACE;
+				//_TRACE;
 				//yay! I have utilpos. All I have to do is to connect them with the right edges. first clear all original vertices. Dont delete the vertices now.
 				for(int co1 = 0; co1 < to_resolve[counter].size(); co1++)
 				{
@@ -3681,6 +3681,11 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 				printf("before.size() = %d after.size() = %d utilpos = %d\n",before.size(),after.size(),utilpos);
 				if(before.size()!=0)
 				{
+
+					int utilpos_tmp =  permutations.size()-1;
+					int permpc_tmp = permutations.at(utilpos).size()-2;
+					int a =0;
+
 					if(permutations[utilpos][permpc++] == 0)
 					{
 						tie(e1,added) = my_add_edge(before[before.size()-1].first,spvertices[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
@@ -3701,7 +3706,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 					prev1 = spvertices[0].first;
 					prev2 = spvertices[0].second;
 				}
-				_TRACE;
+				//_TRACE;
 
 				for(int co1 = 0; co1 < spvertices.size()-1; co1++)
 				{
@@ -3724,14 +3729,14 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 						prev2 = spvertices[co1+1].first;
 					}
 				}
-				_TRACE;
+				//_TRACE;
 			//	printf("prev1\n");print_vertex(prev1,1);
 		//		printf("prev2\n");print_vertex(prev2,1);
 			//	printf("after[0].first\n");print_vertex(after[0].first,1);
 			//	printf("after[0].second\n");print_vertex(after[0].second,1);
 		//		printf("utilpos = %d, permc = %d, permutation.size() = %d [0].size = %d\n",utilpos, permpc, permutations.size(), permutations[0].size());
 				if(after.size()!=0)
-				{//_TRACE;
+				{////_TRACE;
 					//for(int co_ = 0; co_ < permutations.size(); co_++)
 				//	{
 				//		for(int co1_ = 0; co1_ < permutations[co_].size(); co1_++)
@@ -3739,31 +3744,31 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 			//				printf("permutations[%d][%d] = %d\n",co_,co1_,int(permutations[co_][co1_]));
 				//		}
 			//		}
-					//_TRACE;
+					////_TRACE;
 				//	printf("permutations[0][0] = %d\n", int(permutations[0][0]));
 					if(int(permutations[utilpos][permpc]) == 0)
 					{
-						_TRACE;
+						//_TRACE;
 						tie(e1,added) = my_add_edge(prev1,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
-						_TRACE;
+						//_TRACE;
 						tie(e1,added) = my_add_edge(prev2,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
 					}
 					else
 					{
-						_TRACE;
+						//_TRACE;
 						tie(e1,added) = my_add_edge(prev1,after[0].second,1/*dummy utility*/,0,1,1,TRANSLATION);
-						_TRACE;
+						//_TRACE;
 						tie(e1,added) = my_add_edge(prev2,after[0].first,1/*dummy utility*/,0,1,1,TRANSLATION);
 					}
 					permpc++;
 				}
-				_TRACE;
+				//_TRACE;
 				if(permpc != permutations[0].size())
 				{
 					printf("Something is wrong with permpc\n");
 					PAUSE;
 				}
-				_TRACE;
+				//_TRACE;
 				///PAUSE;
 			}
 			else
@@ -3775,7 +3780,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 
 
 		//
-		_TRACE;
+		//_TRACE;
 		if(change_made == false)
 			break;
 	}
@@ -3971,7 +3976,7 @@ void MultiFrameCellTracker::run()
 	populate_merge_candidates(0);
 //	avc += add_appear_vertices(-1);
 
-	_TRACE;
+	//_TRACE;
 //	first_t = clock();
 //	firsttime = clock();
 
