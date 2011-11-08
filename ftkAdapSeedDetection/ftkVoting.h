@@ -15,6 +15,8 @@
 #include "itkComposeImageFilter.h"
 #include "itkVectorImage.h"
 
+#include "itkCannyEdgeDetectionImageFilter.h"
+
 #define VERBOSE
 
 //#include <image.h>
@@ -166,6 +168,12 @@ private:
 	*/
 	//void getMaxDirection(VPoint2D& vp);
 	void inline updateDirection(VPoint2D& vp);
+
+	/**
+	Update voting direction for a given point: vp; the new direction is from vp to the point with maximum voting response within vp's voting range.
+	*/
+	//void getMaxDirection(VPoint2D& vp);
+	void inline updateDirection_prob(VPoint2D& vp);
 
 //	/**
 //	Update voting direction for a given point: vp; the new direction is from vp to the point (x,y) within vp's voting range, in which (x,y) is the average coordinate value weighted by its votes at current iteration.

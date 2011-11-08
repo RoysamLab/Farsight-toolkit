@@ -25,6 +25,10 @@
 #include"ftkVoting.h"
 #include"ftkVotingGlobal.h"
 
+#include"ftkVoting_3D.h"
+#include"ftkVotingGlobal_3D.h"
+
+
 //using namespace nftkVotingGlobal;
 
 //using namespace std;
@@ -42,26 +46,35 @@ int main( int argc, char * argv[] ){
 
 	// Initial Parameters
 	//reg_type (have not underestand what is this for)
-	int hmin = 4;
-	int hmax = 77; //15 was ok, 25 just to test
-	int radius = 77;
-	double min_grad = 0.1;
+	int hmin = 3;
+	int hmax = 35;//35;//77; //15 was ok, 25 just to test
+	int radius = 35;//10;//77;
+	double min_grad = 0.2;
 	//threshold (for picking seed points, not necesary for now)
 	double scale = 1.5; // Scale for computing the gradient using DoG
 	//zc_only TRUE - voting points should also be the zero-crossing points of the image; FALSE - otherwise
 
 
-	// Set Up the Reader
+// ###################################### 2D
+	//// Set Up the Reader 2D
+	//nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
+	//inputImage->Update();
+
+	//ftkVoting voteMain;
+	//voteMain.setParams(hmin,hmax,radius,min_grad,scale);
+	//voteMain.setPrefix("temp/");
+	//voteMain.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
+
+
+// ###################################### 3D
+	// Set Up the Reader 2D
 	nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
 	inputImage->Update();
 
-
-	ftkVoting voteMain;
+	ftkVoting_3D voteMain;
 	voteMain.setParams(hmin,hmax,radius,min_grad,scale);
 	voteMain.setPrefix("temp/");
 	voteMain.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
-
-
 
 
 
