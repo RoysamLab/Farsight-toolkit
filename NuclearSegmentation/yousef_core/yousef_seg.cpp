@@ -215,7 +215,7 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 	}
 	else
 	{*/
-		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1, 128);		//Do Binarization		
+		ok = Cell_Binarization_3D(dataImagePtr,binImagePtr, numRows, numColumns, numStacks, shift, 1, number_of_bins);		//Do Binarization		
 	//}
 
 	if(ok)
