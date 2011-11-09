@@ -97,6 +97,8 @@ FIND_PACKAGE(Boost)
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 
+#SET(Boost_DIR "" CACHE internal "" FORCE) #This is needed because Linux might have some boost.cmake already somewhere which conflicts with our own Boost
+
 IF(USE_OPENSLIDE)
         FIND_PACKAGE(OpenSlide)
         IF(OPENSLIDE_FOUND)
@@ -243,7 +245,7 @@ ENDIF(BUILD_SAMPLE_EDITOR)
 #ENDIF(BUILD_TISSUENETS)
 
 IF(BUILD_MDL)
-  FIND_PACKAGE(Boost)
+  #FIND_PACKAGE(Boost)
   MARK_AS_ADVANCED(CLEAR Boost_INCLUDE_DIR)                                                                                                  
 ENDIF(BUILD_MDL)
 
