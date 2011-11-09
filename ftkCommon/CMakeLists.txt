@@ -34,11 +34,6 @@ ftkgnt.h
 )
 
 
-FIND_PACKAGE(Boost)
-
-LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
-INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
-
 if (BUILD_CUDA)
 	CUDA_ADD_LIBRARY( ftkCommon
             ${FTKCOMMON_SRCS} 
