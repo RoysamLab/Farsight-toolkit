@@ -49,8 +49,16 @@ void SpectralUnmixing::Update(void)
 	ftk::Image::PtrMode mode;
 	mode = static_cast<ftk::Image::PtrMode>(2); //DEEP_COPY mode
 
+	// First Get the FingerPrint Matrix:
+	InputImageType::Pointer imdata[MAX_CHANNS];
+	for(int ch = 0; ch< NChannels; ++ch)
+	{
+		imdata[ch] = Image->GetItkPtr<InputPixelType>(0,ch,mode);
+	}
+	vnl_matrix<double> FingerPrintMatrix = GetFingerPrintMatrix(imdata);
+	printf("Finished Estimating from first Image, I am gonna use it to unmix everything else");
+	
 	int numTSlices = (int)Image->GetImageInfo()->numTSlices;
-
 	for(int T=0; T<numTSlices; ++T)
 	{
 		InputImageType::Pointer im[MAX_CHANNS];
@@ -61,14 +69,15 @@ void SpectralUnmixing::Update(void)
 			im[ch] = Image->GetItkPtr<InputPixelType>(T,ch,mode);
 		}
 		printf("Initiating unmixing for T = %d\n",T);
-		UnmixClustering(im,om);
+
+		UnmixClustering(im,om,FingerPrintMatrix);
 		printf("Finished UnmixClustering for T = %d\n",T);
 	}
 	this->ConvertOutputToftk();
 	
 
 }
-void SpectralUnmixing::UnmixClustering(InputImageType::Pointer im[],InputImageType::Pointer om[])
+vnl_matrix<double> SpectralUnmixing::GetFingerPrintMatrix(InputImageType::Pointer im[])
 {
 	printf("Unnmixing %d channels ...\n",NChannels);
 	InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
@@ -175,6 +184,10 @@ void SpectralUnmixing::UnmixClustering(InputImageType::Pointer im[],InputImageTy
 	start.normalize_columns();
 	printf("Normalized Finger Print Matrix:\n");
 	start.print(std::cout);
+	return start;
+}
+void SpectralUnmixing::UnmixClustering(InputImageType::Pointer im[],InputImageType::Pointer om[],vnl_matrix<double> start)
+{
 	if(unmixMode == PIXEL_CLASSIFICATION)
 		this->UnmixPureChannels(im,om,start);
 	else if(unmixMode == LINEAR_UNMIX && sysMode == OVER_DETERMINED) 
