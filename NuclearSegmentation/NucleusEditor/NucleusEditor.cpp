@@ -1581,7 +1581,7 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.path = lastPath.toStdString();
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
-	this->setEditsEnabled(true);
+	this->setEditsEnabled(false);
 }
 
 
