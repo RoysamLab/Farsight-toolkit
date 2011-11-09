@@ -193,7 +193,7 @@ private:
 	\return The angle index in the look-up table
 	*/
 	int computeAngleIndex(double dx, double dy) const;
-	pair<int,int> ftkVoting_3D::computeAngleIndex_3D(double dx, double dy, double dz) const;
+	pair<int,int> computeAngleIndex_3D(double dx, double dy, double dz) const;
 
 
 //	/** voting */
