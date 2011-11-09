@@ -27,6 +27,7 @@ SET( FTKVOTING_SRCS
 
 main.cpp
 ftkVoting.cpp
+ftkVoting_3D.cpp
 ftkVotingGlobal.cpp
  
 )
@@ -38,6 +39,7 @@ ftkVotingGlobal.cpp
 SET( FTKVOTING_HDRS
 
 ftkVoting.h
+ftkVoting_3D.h
 ftkVotingGlobal.h
  
 )

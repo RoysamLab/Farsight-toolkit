@@ -17,7 +17,6 @@
 
 #include "itkCannyEdgeDetectionImageFilter.h"
 
-#define VERBOSE
 
 //#include <image.h>
 //#include <point.h>
@@ -144,6 +143,32 @@ public:
 	*/
 	void setPrefix(const string& p);
 
+
+	// -------------------------------------
+	void SetSlice( unsigned int slice){
+		_slice = slice;
+	}
+	unsigned int _slice;
+
+	void setOutBySlice( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+		_votingBySlice = input;
+	}
+	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySlice;
+
+	void setOutBySliceLastbigSapan( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+		_votingBySliceLastbigSapan = input;
+	}
+	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySliceLastbigSapan;
+
+	void setOutBySliceLastbigSapanProb( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+		_votingBySliceLastbigSapanProb = input;
+	}
+	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySliceLastbigSapanProb;
+	// -------------------------------------
+
+	double _OriginalScale;
+
+
 private:
 
 	/**
@@ -247,7 +272,9 @@ private:
 	vector<ftkCone2D> _conesPru;
 	vector<ftkCone2D> _conesPru_prob;
 	vector< pair< int,int > > _voteDirec;
+	vector< pair< int,int > > _voteDirec_copy;
 	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob;
+	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob_copy;
 
 	//// Voting Direction X and Y
 	//typedef double VotingDirPixelType;
@@ -255,6 +282,11 @@ private:
 
 	// Image of votes (without padding)
 	//VotingDirTyp
+
+
+
+	
+
 	};
 
 #endif

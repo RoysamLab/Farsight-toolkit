@@ -18,6 +18,12 @@ namespace nftkVotingGlobal{
 	const unsigned int Dimension = 2;
 	typedef itk::Image< InputPixelType, Dimension > InputImageType;
 
+	const unsigned int Dimension_3 = 3;
+	typedef itk::Image< InputPixelType, Dimension_3 > InputImageType_3D;
+
+	typedef unsigned short InputPixelType_16;
+	typedef itk::Image< InputPixelType_16, Dimension_3 > InputImageType_3D_16;
+
 
 template <typename T1, typename T2>
 int writeImage(typename T1::Pointer im, const char* filename)
@@ -103,6 +109,65 @@ typename T1::Pointer readImage( const char* filename )
 	rescaleFilter->Update();
 	inputImage = rescaleFilter->GetOutput();
 	return inputImage;
+};
+
+template <typename T1, typename T2>
+typename T2::Pointer readImage_3D( const char* filename )
+{
+	// Set Up the Reader
+	printf("Reading %s ... ",filename);
+	typedef itk::ImageFileReader < T1 >  ReaderType;
+	typename ReaderType::Pointer reader = ReaderType::New();
+	reader->SetFileName( filename );
+	try{
+		reader->Update();}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "ExceptionObject caught!" << std::endl;
+		std::cerr << err << std::endl;
+	}
+
+
+	int nxx = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+	int nyx = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+	int nzx = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[2];
+	int npix = nxx*nyx*nzx;
+
+	cout<<endl<<"size_m: "<<nxx<<" "<<nyx<<" "<<nzx;
+
+	// This is temporary
+	// RescaleIntensityImageFilter
+	typedef itk::RescaleIntensityImageFilter< T1, T2 > RescaleFilterType;
+	typename RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+	rescaleFilter->SetInput( reader->GetOutput() );
+	rescaleFilter->SetOutputMaximum( 1.0 );
+	rescaleFilter->SetOutputMinimum( 0.0 ); 
+	rescaleFilter->Update();
+	return rescaleFilter->GetOutput();
+};
+
+template <typename T1, typename T2>
+int writeImage_3D(typename T1::Pointer im, const char* filename)
+{
+	typedef itk::RescaleIntensityImageFilter< T1, T2 > RescaleFilterType;
+	typename RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+	rescaleFilter->SetInput( im );
+	//rescaleFilter->SetOutputMaximum( 255 ); //65,535
+	rescaleFilter->SetOutputMaximum( 65535 ); //65,535
+	rescaleFilter->SetOutputMinimum( 0 ); 
+	rescaleFilter->Update();
+
+	// Set Up the Writer and Write the result
+	typedef itk::ImageFileWriter < T2 >  WriterType;
+	typename WriterType::Pointer writer = WriterType::New();
+	writer->SetInput( rescaleFilter->GetOutput() );
+	writer->SetFileName( filename );
+	try{
+		writer->Update();}
+	catch( itk::ExceptionObject & err ){
+		std::cerr << "ExceptionObject caught!" << std::endl;
+		std::cerr << err << std::endl;
+		return 1;}
+	return 0;
 };
 
 double diffclock(clock_t clock1,clock_t clock2);

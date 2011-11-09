@@ -121,6 +121,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		}
 	}
 
+
 	// Magnitude Image Binary (just to store in file the voting pixels)
 	VotingDirType::Pointer votingMagImage_bin = VotingDirType::New();
 	votingMagImage_bin->SetRegions( inputImage->GetRequestedRegion() );
@@ -150,7 +151,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	VotingDirType::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
 	VotingDirType::PixelType * votingMagArray_bin = votingMagImage_bin->GetBufferPointer();
 	VotingDirType::PixelType * votingCannyArray = cannyFilter->GetOutput()->GetBufferPointer();
-	
+
 
 	//double maxgrad = votingMagImag
 
@@ -161,16 +162,21 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 
 	VotingDirType::PixelType maxVotVal = imageCalculatorFilter->GetMaximum();
 
+
+	cout<<endl<<"Max Grad: "<<maxVotVal<<", Thresh: "<<_min_grad;
+
+	//_OriginalScale = maxVotVal;
+
 	// Scale the values of the gradient by the maximum value of the gradiente, to ensure that the maximum value is 1
 	for(int i=0; i<npix; i++) {
-			if (votingMagArray[i]<_min_grad)
-			{
-				votingMagArray[i] = 0;
-			}
-			else
-			{
-				votingMagArray[i] /= maxVotVal;
-			}
+		if (votingMagArray[i]</*0.001*/_min_grad)
+		{
+			votingMagArray[i] = 0;
+		}
+		else
+		{
+			//votingMagArray[i] /= maxVotVal;
+		}
 	}
 
 
@@ -182,11 +188,11 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	}
 	// Put 1 if mag array is different to zero
 	for(int i=0; i<npix; i++) {
-			votingMagArray_bin[i] = 0;
-			if (votingMagArray[i]!=0)
-			{
-				votingMagArray_bin[i] = 1;
-			}
+		votingMagArray_bin[i] = 0;
+		if (votingMagArray[i]!=0)
+		{
+			votingMagArray_bin[i] = 1;
+		}
 	}
 	string filenameGradVot_bin = "output\\out_ImageOfGradVot_bin.jpg";
 	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
@@ -194,11 +200,11 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	}
 	// Put 1 if mag array intersect with canny edge is di
 	for(int i=0; i<npix; i++) {
-			votingMagArray_bin[i] = 0;
-			if (votingMagArray[i]!=0 && votingCannyArray[i]!=0)
-			{
-				votingMagArray_bin[i] = 1;
-			}
+		votingMagArray_bin[i] = 0;
+		if (votingMagArray[i]!=0 && votingCannyArray[i]!=0)
+		{
+			votingMagArray_bin[i] = 1;
+		}
 	}
 	string filenameGradVotInterCanny = "output\\out_ImageOfGradVotInterCanny.jpg";
 	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
@@ -216,7 +222,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 
 
 	// Calculate the voting poitns
-//int stop1;
+	//int stop1;
 	int indx;
 	VPoint2D vp;
 	int x, y, k;
@@ -226,7 +232,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		{
 			k = x+nx*y;
 			if (votingMagArray[k] > epsilon) // This is the original one, only vote if the mag of gradient is greater than epsilon (and gra_min) previously thresholded
-			//if(votingCannyArray[k]!=0) // This is new, use the canny edge detection to vote form this values (IT DOES NOT WORK TO USE THE CANNY EDGE DETECTION, INCREIBLE)
+				//if(votingCannyArray[k]!=0) // This is new, use the canny edge detection to vote form this values (IT DOES NOT WORK TO USE THE CANNY EDGE DETECTION, INCREIBLE)
 			{
 				if ((indx=computeAngleIndex(votingDirXArray[k], votingDirYArray[k])) >= 0 ) // NO ESTAN INCLUYENDO LOS CEROS PORQUE ??
 				{
@@ -239,7 +245,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 			}
 		}
 	}
-//cin>>stop1;
+	//cin>>stop1;
 
 
 
@@ -450,7 +456,7 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp)
 		for(ftkBins2D::iterator it1=it->begin(); it1!=it->end(); ++it1) {
 			p[it1->off] += vp.mag * it1->w;
 			//p[it1->off] += 1; //Numer of votes, not using magnitude
-			contador_1++;
+			//contador_1++;
 		}      
 	}
 }
@@ -483,9 +489,43 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, in
 	{
 		p[it->off] += vp.mag * it->w; 
 		//p[it->off] += 1; // Number of votes, not using magnitude
-		contador_1++;
+		//contador_1++;
 	}
 }
+
+
+// I HAVE TO FINISH THIS ONE, VOTES WITH PROPABILITY AND WITHOUT DISTANCE (FASTER VERSION)
+//// ############################################################################################################################################################################
+//void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp) // Incluye la probabilidad
+//{
+//
+//	iterator binRequired = begin();
+//	ftkBins2D::iterator from = binRequired[dist].begin();
+//	ftkBins2D::iterator to = binRequired[dist].end();
+//
+//	for(ftkBins2D::iterator it = from; it != to; it++) 
+//	{
+//		//p[it->off] += vp.mag;// * (1/(double)mag)/*it->w*/; 
+//		p[it->off] += vp.mag * (1/(double)mag); 
+//		//p[it->off] += (1/(double)mag); 
+//		//p[it->off] += (1/(double)mag)/*it->w*/; 
+//		//cout<<" "<<mag;
+//		//p[it->off] += 1; // Number of votes, not using magnitude
+//		contador_1++;
+//	}
+//
+//	//int stop2;
+//	iterator from = begin(); //Pointer to Bin
+//	iterator to = end();     
+//	for(iterator it = from; it != to; it++) 
+//	{
+//		for(ftkBins2D::iterator it1=it->begin(); it1!=it->end(); ++it1) {
+//			p[it1->off] += vp.mag * (1/(double)_voteDirec_prob[].second[dist]);
+//			//p[it1->off] += 1; //Numer of votes, not using magnitude
+//			contador_1++;
+//		}      
+//	}
+//}
 
 // ############################################################################################################################################################################
 void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, int& dist, int &mag) // Incluye la probabilidad
@@ -503,7 +543,7 @@ void inline ftkCone2D::vote(VotingDirType::PixelType * p, const VPoint2D& vp, in
 		//p[it->off] += (1/(double)mag)/*it->w*/; 
 		//cout<<" "<<mag;
 		//p[it->off] += 1; // Number of votes, not using magnitude
-		contador_1++;
+		//contador_1++;
 	}
 }
 
@@ -521,7 +561,7 @@ void inline ftkCone2D::vote_dir(vector<vector<int> >& p_dir, VotingDirType::Pixe
 		p_dir.at(it->off+offset_1).at(vp.angIndex) += 1; // angIndex 0 255
 		//p_dir[it->off][vp.angIndex] += 1;
 		//p[it->off] += 1; // Number of votes, not using magnitude
-		contador_1++;
+		//contador_1++;
 	}
 }
 
@@ -633,18 +673,18 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 	int countt=0;
 
 	ftkWPoint2D wp;
-	#pragma omp parallel for num_threads(8) private(y1)
+#pragma omp parallel for num_threads(8) private(y1)
 	for( int xx=1; xx<=hmax; xx++ )
 	{
 		y1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx));
-		#pragma omp parallel for num_threads(8) private(wp,R_dou,R,R_quan,x_nor,y_nor,ang_quan)
+#pragma omp parallel for num_threads(8) private(wp,R_dou,R,R_quan,x_nor,y_nor,ang_quan)
 		for( int yy=1; yy<=y1; yy++ )
 		{
 			R_dou = (double)sqrt((double)yy*yy+(double)xx*xx);
 			R = (int)ceil(R_dou);
 			if( R>= hmin) // Can be done more efficiently but for now is ok the speed
 			{
-				
+
 				R_quan = R-hmin;
 				//cout<<endl<<R_quan;
 				x_nor = ((double)xx)/R_dou;
@@ -688,49 +728,49 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 		}
 	}
 	//ftkWPoint2D wp;
-	#pragma omp parallel for num_threads(16) private(wp,R_dou,R_quan,x_nor,y_nor,ang_quan)
+#pragma omp parallel for num_threads(16) private(wp,R_dou,R_quan,x_nor,y_nor,ang_quan)
 	for( int xx=hmin; xx<=hmax; xx++ )
 	{
 
-			R_dou = xx;
-			R_quan = R_dou-hmin;
-			x_nor = ((double)xx)/R_dou;
-			y_nor = 0;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			//ftkWPoint2D wp;
-			wp.x = xx;
-			wp.y = 0;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru[ang_quan][R_quan].push_back(wp);
+		R_dou = xx;
+		R_quan = R_dou-hmin;
+		x_nor = ((double)xx)/R_dou;
+		y_nor = 0;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		//ftkWPoint2D wp;
+		wp.x = xx;
+		wp.y = 0;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru[ang_quan][R_quan].push_back(wp);
 
-			x_nor = -((double)xx)/R_dou;
-			y_nor = 0;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = -xx;
-			wp.y = 0;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru[ang_quan][R_quan].push_back(wp);
+		x_nor = -((double)xx)/R_dou;
+		y_nor = 0;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = -xx;
+		wp.y = 0;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru[ang_quan][R_quan].push_back(wp);
 
-			x_nor = 0;
-			y_nor = ((double)xx)/R_dou;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = 0;
-			wp.y = xx;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru[ang_quan][R_quan].push_back(wp);
+		x_nor = 0;
+		y_nor = ((double)xx)/R_dou;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = 0;
+		wp.y = xx;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru[ang_quan][R_quan].push_back(wp);
 
-			x_nor = 0;
-			y_nor = -((double)xx)/R_dou;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = 0;
-			wp.y = -xx;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru[ang_quan][R_quan].push_back(wp);
+		x_nor = 0;
+		y_nor = -((double)xx)/R_dou;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = 0;
+		wp.y = -xx;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru[ang_quan][R_quan].push_back(wp);
 
 
-			//cout<<endl<<"coutn: "<<countt++;
+		//cout<<endl<<"coutn: "<<countt++;
 
-			//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
+		//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
 
 	}
 
@@ -752,6 +792,8 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 	double dy_dou = radius/span;
 	_intSpan = computeAngleIndex(dx_dou, dy_dou);
 	_voteDirec = vector< pair< int,int > > (ntheta);
+	// This copy is for a test on the voting, just to use the last state of the voting directions (updated gradients) and perform actually a vote in the biggest span
+	_voteDirec_copy = vector< pair< int,int > > (ntheta);
 	for( int tt=0; tt<ntheta; tt++ )
 	{
 		pair<int,int> spann;
@@ -767,6 +809,9 @@ void ftkVoting::computeCones(int hmin, int hmax, int radius)
 		spann.second = (tt+_intSpan)%ntheta;
 		_voteDirec[tt] = spann;
 	}
+	// Copy the initial votes direction (span)
+	_voteDirec_copy = _voteDirec;
+
 
 
 	cout<<"Cones computed";
@@ -812,7 +857,7 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 			R = (int)ceil(R_dou);
 			if( R>= hmin) // Can be done more efficiently but for now is ok the speed
 			{
-				
+
 				R_quan = R-hmin;
 				//cout<<endl<<R_quan;
 				x_nor = ((double)xx)/R_dou;
@@ -855,50 +900,50 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 			}
 		}
 	}
-	cout<<endl<<"gggg";
+	//cout<<endl<<"gggg";
 	//ftkWPoint2D wp;
 	//#pragma omp parallel for num_threads(16) private(wp,R_dou,R_quan,x_nor,y_nor,ang_quan)
 	for( int xx=hmin; xx<=hmax; xx++ )
 	{
 
-			R_dou = xx;
-			R_quan = R_dou-hmin;
-			x_nor = ((double)xx)/R_dou;
-			y_nor = 0;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			//ftkWPoint2D wp;
-			wp.x = xx;
-			wp.y = 0;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+		R_dou = xx;
+		R_quan = R_dou-hmin;
+		x_nor = ((double)xx)/R_dou;
+		y_nor = 0;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		//ftkWPoint2D wp;
+		wp.x = xx;
+		wp.y = 0;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru_prob[ang_quan][R_quan].push_back(wp);
 
-			x_nor = -((double)xx)/R_dou;
-			y_nor = 0;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = -xx;
-			wp.y = 0;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+		x_nor = -((double)xx)/R_dou;
+		y_nor = 0;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = -xx;
+		wp.y = 0;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru_prob[ang_quan][R_quan].push_back(wp);
 
-			x_nor = 0;
-			y_nor = ((double)xx)/R_dou;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = 0;
-			wp.y = xx;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+		x_nor = 0;
+		y_nor = ((double)xx)/R_dou;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = 0;
+		wp.y = xx;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru_prob[ang_quan][R_quan].push_back(wp);
 
-			x_nor = 0;
-			y_nor = -((double)xx)/R_dou;
-			ang_quan = computeAngleIndex(x_nor, y_nor);
-			wp.x = 0;
-			wp.y = -xx;
-			wp.w = 1; // In case of deciding to put some weight
-			_conesPru_prob[ang_quan][R_quan].push_back(wp);
+		x_nor = 0;
+		y_nor = -((double)xx)/R_dou;
+		ang_quan = computeAngleIndex(x_nor, y_nor);
+		wp.x = 0;
+		wp.y = -xx;
+		wp.w = 1; // In case of deciding to put some weight
+		_conesPru_prob[ang_quan][R_quan].push_back(wp);
 
-			//cout<<endl<<"coutn: "<<countt++;
+		//cout<<endl<<"coutn: "<<countt++;
 
-			//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
+		//cout<<endl<<" "<<R_quan<<" "<<ang_quan<<" "<<R_dou<<"-> "<<xx;
 
 	}
 
@@ -934,6 +979,8 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 	double dy_dou = radius/span;
 	_intSpan = computeAngleIndex(dx_dou, dy_dou);
 	_voteDirec_prob = vector< pair< pair< int,int >, vector <int> > > (ntheta);
+	// This copy is for a test on the voting, just to use the last state of the voting directions (updated gradients) and perform actually a vote in the biggest span
+	_voteDirec_prob_copy = vector< pair< pair< int,int >, vector <int> > > (ntheta);
 	for( int tt=0; tt<ntheta; tt++ ) // 0 256
 	{
 		pair<int,int> spann;
@@ -961,8 +1008,11 @@ void ftkVoting::computeCones_prob(int hmin, int hmax, int radius)
 		spann_prob.first = spann;
 		spann_prob.second = vi_temp_1;
 		_voteDirec_prob[tt] = spann_prob;
-
 	}
+
+	// Just to test yosef method at the end when we have the best directions
+	_voteDirec_prob_copy = _voteDirec_prob;
+
 
 	//for( int tt=0; tt<ntheta; tt++ ) // 0 256
 	//{
@@ -1097,7 +1147,7 @@ void ftkVoting::vote()
 	VotingDirType::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
-	
+
 
 	vector<VPoint2D>::iterator voting_points_begin = _voting_points.begin();
 	vector<VPoint2D>::iterator voting_points_end = _voting_points.end();
@@ -1114,128 +1164,145 @@ void ftkVoting::vote()
 	int nic=0;
 	int count = 0;
 	cout<<endl<<"Span"<<_intSpan;
-//	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++) { //it voting points
-//		//if ( count <256 ){
-//
-//		//cout<<endl<<"\tVoting pixel: "<<nic++<<", "<<it->pos;
-////		_cones[it->angIndex].vote(votingSumArray+it->pos, *it);
-//		
-//			votar(votingSumArray+it->pos,*it,it->angIndex);
-//
-//
-//
-//		////
-//		//imageOfVotingPixelsArray[it->pos] = 1;
-//		////(*it).x = 1;
-//		////(*it).y = 0;
-//		////_cones[count].vote(imageOfConexPixelsArray+it->pos, *it);
-//		////cout<<endl<<"Epezando a votar "<<count;
-//		//votar(imageOfConexPixelsArray+it->pos,*it,it->angIndex);
-//		////_conesPru[count].vote(imageOfConexPixelsArray+it->pos, *it,count);
-//
-//
-//		//stringstream out;
-//		//out<<count;
-//		//string s = out.str();
-//		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
-//		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
-//		//	cout<<endl<<"\tProblema escribiendo";
-//		//}
-//		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType::PixelType));
-//
-//		count++;
-//		//
-//		//}
-//	}
+	//	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++) { //it voting points
+	//		//if ( count <256 ){
+	//
+	//		//cout<<endl<<"\tVoting pixel: "<<nic++<<", "<<it->pos;
+	////		_cones[it->angIndex].vote(votingSumArray+it->pos, *it);
+	//		
+	//			votar(votingSumArray+it->pos,*it,it->angIndex);
+	//
+	//
+	//
+	//		////
+	//		//imageOfVotingPixelsArray[it->pos] = 1;
+	//		////(*it).x = 1;
+	//		////(*it).y = 0;
+	//		////_cones[count].vote(imageOfConexPixelsArray+it->pos, *it);
+	//		////cout<<endl<<"Epezando a votar "<<count;
+	//		//votar(imageOfConexPixelsArray+it->pos,*it,it->angIndex);
+	//		////_conesPru[count].vote(imageOfConexPixelsArray+it->pos, *it,count);
+	//
+	//
+	//		//stringstream out;
+	//		//out<<count;
+	//		//string s = out.str();
+	//		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
+	//		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
+	//		//	cout<<endl<<"\tProblema escribiendo";
+	//		//}
+	//		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType::PixelType));
+	//
+	//		count++;
+	//		//
+	//		//}
+	//	}
 
-	
+
 	int ytt;
-		for( int gg=0; gg<=_hmax-_hmin; gg++ )
-		{
-			//cout<<endl<<"Q pasa "<<gg;
-			for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
-			{
-				////cout<<endl<<"\t	Q pasa "<<gg;
-				votar(votingSumArray+it->pos,*it,it->angIndex,gg);
-				votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
-				////votar_dir(votingMaskVotes_dir,votingMaskArray+it->pos,*it,it->angIndex,gg,it->pos);
+	////// -------------------------------------------------------------------------------------------
+	////// 1 of 2 || Step by step
+	//for( int gg=0; gg<=_hmax-_hmin; gg++ )
+	//{
+	//	//cout<<endl<<"Q pasa "<<gg;
+	//	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+	//	{
+	//		////cout<<endl<<"\t	Q pasa "<<gg;
+	//		votar(votingSumArray+it->pos,*it,it->angIndex,gg);
+	//		votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
+	//		////votar_dir(votingMaskVotes_dir,votingMaskArray+it->pos,*it,it->angIndex,gg,it->pos);
 
-				//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
-				//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
-				
-			}
-			stringstream out4;
-			out4<<_intSpan;
-			string s4 = out4.str();
-			stringstream out5;
-			out5<<_hmax-_hmin-gg;
-			string s5 = out5.str();
-			////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-			////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
-			////	cout<<endl<<"\tProblema escribiendo";
-			////}
+	//		//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
+	//		//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
 
-			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
-			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
+	//	}
+	//	stringstream out4;
+	//	out4<<_intSpan;
+	//	string s4 = out4.str();
+	//	stringstream out5;
+	//	out5<<_hmax-_hmin-gg;
+	//	string s5 = out5.str();
+	//	////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
+	//	////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+	//	////	cout<<endl<<"\tProblema escribiendo";
+	//	////}
 
-			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
-			//	cout<<endl<<"\tProblema escribiendo";
-			//}
-			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
-			//	cout<<endl<<"\tProblema escribiendo";
-			//}
+	//	string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+	//		cout<<endl<<"\tProblema escribiendo";
+	//	}
+	//	string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+	//		cout<<endl<<"\tProblema escribiendo";
+	//	}
 
-			// Get the maximum value of step by step
-			for( int re=0; re<npix; ++re )
-			{
-				if( votingMaskArray[re] > imageMaxPixelsArray[re] )
-				{
-					imageMaxPixelsArray[re] = votingMaskArray[re];
-				}
-			}
+	//	//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+	//	//	cout<<endl<<"\tProblema escribiendo";
+	//	//}
+	//	//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+	//	//	cout<<endl<<"\tProblema escribiendo";
+	//	//}
 
-
-			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
+	//	// Get the maximum value of step by step
+	//	for( int re=0; re<npix; ++re )
+	//	{
+	//		if( votingMaskArray[re] > imageMaxPixelsArray[re] )
+	//		{
+	//			imageMaxPixelsArray[re] = votingMaskArray[re];
+	//		}
+	//	}
 
 
-			// Errase the mask (only to see step by step/by step) mas detallado todavia, ver los picos mas que todo
-			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
-
-			//// The amount of memory required turns out to be to high :( what to do ? 
-			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
-			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
-			//	cout<<endl<<"\tProblema escribiendo";
-			//}
-
-			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
-			//writer->SetInput( votingDirPerPixel );
-			//writer->SetFileName( filename9.c_str() );
-			//writer->Update();
-
-			//VotingDirType::IndexType acceso;
-			//acceso[0] = 45;
-			//acceso[1] = 345;
-			//cout<<endl<<" S4: "<<s4<<", S5: "<<s5<<", x: 45, y: 345, "<<_votingSumVotes->GetPixel(acceso);
-			//cout<<endl<<"W pasa";
-			//cin>>ytt;
+	//	string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
+	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
+	//		cout<<endl<<"\tProblema escribiendo";
+	//	}
 
 
-			
-		}
-		int rrr;
-		cout<<endl<<"Fin primer voto: "<<ftkCone2D::contador_1;
-		//cin>>rrr;
+
+
+	//	// Errase the mask (only to see step by step/by step) mas detallado todavia, ver los picos mas que todo
+	//	memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+
+	//	//// The amount of memory required turns out to be to high :( what to do ? 
+	//	//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
+	//	//	cout<<endl<<"\tProblema escribiendo";
+	//	//}
+
+	//	//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//	//writer->SetInput( votingDirPerPixel );
+	//	//writer->SetFileName( filename9.c_str() );
+	//	//writer->Update();
+
+	//	//VotingDirType::IndexType acceso;
+	//	//acceso[0] = 45;
+	//	//acceso[1] = 345;
+	//	//cout<<endl<<" S4: "<<s4<<", S5: "<<s5<<", x: 45, y: 345, "<<_votingSumVotes->GetPixel(acceso);
+	//	//cout<<endl<<"W pasa";
+	//	//cin>>ytt;
+	//}
+	// -------------------------------------------------------------------------------------------
+	// 2 of 2 ||  Voting without step by step
+	// VOTING PERFECTO
+	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+	{
+		votar(votingMaskArray+it->pos,*it,it->angIndex);
+	}
+	//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType)); // Mask = Sum;
+	memcpy(votingSumArray, votingMaskArray, npix*sizeof(VotingDirType::PixelType)); // Sum = Mask;
+
+
+
+
+
+
+
+	cout<<endl<<"Fin primer voto: "<<ftkCone2D::contador_1;
+	int rrr;
+	//cin>>rrr;
 
 	//stringstream out44;
 	//out44<<_intSpan;
@@ -1247,7 +1314,7 @@ void ftkVoting::vote()
 	//{
 	//	dirFilOut << it->x <<"\t"<<it->y<<"\t"<<it->angIndex<<"\t"<<it->mag<<"\n";
 	//}
-		
+
 	//stringstream out2;
 	//out2<<_intSpan;
 	//string s2 = out2.str();
@@ -1276,7 +1343,7 @@ void ftkVoting::vote()
 		cout<<endl<<"Updating cones:";
 		updateCones(); // Reduce _intSpan
 		cout<<"\t done";
-		
+
 
 		// Missing update direction
 		int pru = _voting_points.size();
@@ -1284,7 +1351,7 @@ void ftkVoting::vote()
 		cout<<endl<<"Updating direction:";
 #pragma omp parallel for num_threads(16)
 		for( int ty=0; ty<pru; ty++ ){
-			updateDirection(*(it+ty));
+			updateDirection(*(it+ty)); // The Update is with the sum image
 		}
 		cout<<"\t done";
 		//stringstream out45;
@@ -1299,8 +1366,8 @@ void ftkVoting::vote()
 		//}
 
 		//for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++) {	
-				////getMaxDirection(*it);    
-				//updateDirection(*it);
+		////getMaxDirection(*it);    
+		//updateDirection(*it);
 		//}   
 
 		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
@@ -1325,47 +1392,109 @@ void ftkVoting::vote()
 
 		memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
 		cout<<endl<<"Voting:";
-		for( int gg=0; gg<=_hmax-_hmin; gg++ )
+
+		//// -------------------------------------------------------------------------------------------
+		//// 1 of 2 || Step by step
+		//for( int gg=0; gg<=_hmax-_hmin; gg++ )
+		//{
+		//	//cout<<endl<<"Q pasa "<<gg;
+		//	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+		//	{
+		//		//cout<<endl<<"\t	Q pasa "<<gg;
+		//		//votar(votingSumArray+it->pos,*it,it->angIndex,gg);
+		//		votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
+
+		//		//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
+		//		//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
+		//	}
+		//	stringstream out4;
+		//	out4<<_intSpan;
+		//	string s4 = out4.str();
+		//	stringstream out5;
+		//	out5<<_hmax-_hmin-gg;
+		//	string s5 = out5.str();
+
+		//	string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+		//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+		//		cout<<endl<<"\tProblema escribiendo";
+		//	}
+		//	string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+		//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+		//		cout<<endl<<"\tProblema escribiendo";
+		//	}
+
+		//	//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+		//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+		//	//	cout<<endl<<"\tProblema escribiendo";
+		//	//}
+		//	//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+		//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+		//	//	cout<<endl<<"\tProblema escribiendo";
+		//	//}
+		//}
+		//// -------------------------------------------------------------------------------------------
+		//// 2 of 2 ||  Voting without step by step
+		//// VOTING PERFECTO
+		//for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+		//{
+		//	votar(votingMaskArray+it->pos,*it,it->angIndex);
+		//}
+		// ------------------------------------------------------------------
+		// 3 of 2 ||  Voting without step by step
+		// VOTING PERFECTO
+		for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
 		{
-			//cout<<endl<<"Q pasa "<<gg;
-			for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+			//votar(votingMaskArray+it->pos,*it,it->angIndex);
+			for( int tt=_voteDirec[it->angIndex].first; tt!=_voteDirec[it->angIndex].second; tt=(tt+1)%ntheta )
 			{
-				//cout<<endl<<"\t	Q pasa "<<gg;
-				//votar(votingSumArray+it->pos,*it,it->angIndex,gg);
-				votar(votingMaskArray+it->pos,*it,it->angIndex,gg);
-
-				//votar_prob(votingSumArray+it->pos,*it,it->angIndex,gg);
-				//votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
+				_conesPru[tt].vote(votingMaskArray+it->pos,*it);
 			}
-			stringstream out4;
-			out4<<_intSpan;
-			string s4 = out4.str();
-			stringstream out5;
-			out5<<_hmax-_hmin-gg;
-			string s5 = out5.str();
-
-			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
-			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
-
-			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
-			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
-				cout<<endl<<"\tProblema escribiendo";
-			}
-			
 		}
-		cout<<"\t done";
+		// ------------------------------------------------------------------
+		cout<<"\t voting done";
+		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType)); // Mask = Sum;
+		memcpy(votingSumArray, votingMaskArray, npix*sizeof(VotingDirType::PixelType)); // Mask = Sum;
 
-		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
+
+
+
+		// TEST TO GENERATE THE PROCESS SLICE BY SLICE
+		if( _intSpan == 23 )
+		{
+			stringstream outSlice;
+			outSlice<<_intSpan;
+			string sSlice = outSlice.str();
+			string filenameSlicebySlice = "output\\BySlice\\out_"+sSlice+"__"+_prefix+".tif";
+			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filenameSlicebySlice.c_str() )){
+				cout<<endl<<"\tProblema escribiendo";
+			}
+
+	//int nxxX = _votingBySlice->GetLargestPossibleRegion().GetSize()[0];
+	//int nyxX = _votingBySlice->GetLargestPossibleRegion().GetSize()[1];
+	//int nzxX = _votingBySlice->GetLargestPossibleRegion().GetSize()[2];
+	//int npixX = nxxX*nyxX*nzxX;
+	//cout<<endl<<"PASDFASD: "<<npixX;
+
+			// Copy one slice
+			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceArray = _votingBySlice->GetBufferPointer();
+			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
+			{
+				votingBySliceArray[yyyo] = votingSumArray[yyyo-_slice*nx*ny];
+			}
+			if( (_slice == 20) || (_slice == 50) || (_slice == 100) || (_slice == 150) || (_slice == 200) || (_slice == 274) )
+			{
+			stringstream outSlice_3D;
+			outSlice_3D<<_intSpan;
+			string sSlice_3D = outSlice_3D.str();
+			string filenameSlicebySlice_3D = "output\\BySlice_3D\\out_"+sSlice_3D+"__"+_prefix+".tif";
+			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySlice, filenameSlicebySlice_3D.c_str() )){
+				cout<<endl<<"\tProblema escribiendo";
+			}
+			}
+				
+			// To end the iteration
+			_intSpan=0;
+		}
 
 
 
@@ -1373,6 +1502,71 @@ void ftkVoting::vote()
 			break;
 
 	}
+
+	// FOR YOUSEF SEGMENTATION
+	// Here we have good direction for the votes, now what we can do is actually "diffuse in that direction" so that we get a good result for yousef segmentation
+	// Restore the initial span of the voting direction
+	_voteDirec = _voteDirec_copy;
+	// VOTE ONE TIME
+	memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+	{
+		votar(votingMaskArray+it->pos,*it,it->angIndex);
+	}
+	string filenameSlicebySliceLastbigSapan = "output\\BySliceLastbigSapan\\out___"+_prefix+".tif";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapan.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+
+			// Copy one slice
+			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceLastbigSapanArray = _votingBySliceLastbigSapan->GetBufferPointer();
+			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
+			{
+				votingBySliceLastbigSapanArray[yyyo] = votingMaskArray[yyyo-_slice*nx*ny];
+			}
+			if( (_slice == 50) || (_slice == 100) || (_slice == 150) || (_slice == 200) || (_slice == 274) )
+			{
+			string filenameSlicebySliceLastbigSapan_3D = "output\\BySliceLastbigSapan_3D\\out___"+_prefix+".tif";
+			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySliceLastbigSapan, filenameSlicebySliceLastbigSapan_3D.c_str() )){
+				cout<<endl<<"\tProblema escribiendo";
+			}
+			}
+
+	// Using probability
+	_voteDirec_prob = _voteDirec_prob_copy;
+	memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+	for( int gg=0; gg<=_hmax-_hmin; gg++ )
+	{
+		for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
+		{
+			votar_prob(votingMaskArray+it->pos,*it,it->angIndex,gg);
+		}
+	}
+	string filenameSlicebySliceLastbigSapanProb = "output\\BySliceLastbigSapanProb\\out___"+_prefix+".tif";
+	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapanProb.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+
+			// Copy one slice
+			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceLastbigSapanProbArray = _votingBySliceLastbigSapanProb->GetBufferPointer();
+			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
+			{
+				votingBySliceLastbigSapanProbArray[yyyo] = votingMaskArray[yyyo-_slice*nx*ny];
+			}
+			if( (_slice == 50) || (_slice == 100) || (_slice == 150) || (_slice == 200) || (_slice == 274) )
+			{
+			string filenameSlicebySliceLastbigSapanProb_3D = "output\\BySliceLastbigSapanProb_3D\\out___"+_prefix+".tif";
+			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySliceLastbigSapanProb, filenameSlicebySliceLastbigSapanProb_3D.c_str() )){
+				cout<<endl<<"\tProblema escribiendo";
+			}
+			}
+
+
+
+
+
+
+
 	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));*/
 
 	//while (r>= 0) 
@@ -1499,6 +1693,20 @@ void inline ftkVoting::votar(VotingDirType::PixelType * p, const VPoint2D& vp, i
 		_conesPru[tt].vote(p,vp,dist);
 	}
 }
+
+////// ############################################################################################################################################################################
+//void inline ftkVoting::votar_prob(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx)
+//{
+//	//if( angl_indx==1)
+//	//{
+//	//	cout<<endl<<_voteDirec[angl_indx].first<<" "<<_voteDirec[angl_indx].second<<", aca";
+//	//}
+//	//cout<<endl<<"\t angl_indx "<<angl_indx<<","<<_voteDirec[angl_indx].first<<","<<_voteDirec[angl_indx].second;
+//	for( int tt=_voteDirec_prob[angl_indx].first.first; tt!=_voteDirec_prob[angl_indx].first.second; tt=(tt+1)%ntheta )
+//	{
+//		_conesPru_prob[tt].vote(p,vp);
+//	}
+//}
 
 //// ############################################################################################################################################################################
 void inline ftkVoting::votar_prob(VotingDirType::PixelType * p, const VPoint2D& vp, int angl_indx, int dist)
