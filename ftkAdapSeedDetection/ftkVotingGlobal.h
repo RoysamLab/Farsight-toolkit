@@ -132,7 +132,7 @@ typename T2::Pointer readImage_3D( const char* filename )
 	int nzx = reader->GetOutput()->GetLargestPossibleRegion().GetSize()[2];
 	int npix = nxx*nyx*nzx;
 
-	cout<<endl<<"size_m: "<<nxx<<" "<<nyx<<" "<<nzx;
+	std::cout<<endl<<"size_m: "<<nxx<<" "<<nyx<<" "<<nzx;
 
 	// This is temporary
 	// RescaleIntensityImageFilter
