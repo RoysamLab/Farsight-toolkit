@@ -1914,6 +1914,7 @@ void NucleusEditor::updateDatabase()
 		dbConn = ftk::sqliteOpenConnection();
 		if( dbConn ){
 			if(tableVector.size()==0){
+				std::cout<<"There is one table loaded\n";
 				for (int col = 1; col< table->GetNumberOfColumns(); ++col){
 					std::string temp3=table->GetColumnName(col);
 					col_names.push_back(temp3);
@@ -1937,6 +1938,7 @@ void NucleusEditor::updateDatabase()
 				std::cout << "The image ID on the database is: " << sql_db_img_id << std::endl;
 			}
 			else{
+				std::cout<<"There are "<<tableVector.size()<<" tables loaded\n";
 				for (int col = 1; col< tableVector.at(0)->GetNumberOfColumns(); ++col){
 					std::string temp3=tableVector.at(0)->GetColumnName(col);
 					col_names.push_back(temp3);
