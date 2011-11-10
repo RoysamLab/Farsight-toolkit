@@ -244,6 +244,13 @@ cout<<endl<<"Derivative Z done";
 
 	// Calculate the voting poitns
 //int stop1;
+
+
+	int max1=0;
+	int max2=0;
+
+// This can be parallel
+
 	pair< int, int > indx;
 	VPoint3D vp;
 	int x, y, z, k;
@@ -265,10 +272,17 @@ cout<<endl<<"Derivative Z done";
 					vp.mag = votingDirXYZ_3DArray[k]; 
 					vp.angIndex = indx;
 					_voting_points.push_back(vp);
+
+					if(indx.first>max1)
+						max1=indx.first;
+					if(indx.second>max2)
+						max2=indx.second;
 				}
 			}
 		}
 	}
+
+	cout<<endl<<"MAX ANGLE: "<<max1<<" "<<max2;
 //cin>>stop1;
 
 
@@ -296,7 +310,7 @@ cout<<endl<<"Derivative Z done";
 	nz -= bw2;
 	npix = nx*ny*nz;
 
-	//_votingVotes = VotingDirType::New();
+	//_votingVotes = VotingDirType_3D::New();
 	//_votingVotes->SetRegions( inputImage->GetRequestedRegion() );
 	//_votingVotes->Allocate();
 
@@ -316,14 +330,14 @@ cout<<endl<<"Derivative Z done";
 
 
 //	// Derivative XXXXXXXXXX
-//	VotingDirType::Pointer votingDirX = VotingDirType::New();
+//	VotingDirType_3D::Pointer votingDirX = VotingDirType_3D::New();
 //	votingDirX->SetRegions( inputImage->GetRequestedRegion() );
 //	votingDirX->Allocate();
 //
 //	itk::SobelOperator< VotingDirPixelType, 2 > sobelOperator;
 //	sobelOperator.SetDirection( 0 );
 //	sobelOperator.CreateDirectional();
-//	typedef itk::ImageRegionIterator< VotingDirType > IteratorType3;
+//	typedef itk::ImageRegionIterator< VotingDirType_3D > IteratorType3;
 //	IteratorType3 out2( votingDirX, votingDirX->GetRequestedRegion() );
 //
 //	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType2;
@@ -338,14 +352,14 @@ cout<<endl<<"Derivative Z done";
 //	}
 //
 //	// Derivative YYYYYYYYYY
-//	VotingDirType::Pointer votingDirY = VotingDirType::New();
+//	VotingDirType_3D::Pointer votingDirY = VotingDirType_3D::New();
 //	votingDirY->SetRegions( inputImage->GetRequestedRegion() );
 //	votingDirY->Allocate();
 //
 //	itk::SobelOperator<VotingDirPixelType, 2> sobelOperatorY;
 //	sobelOperatorY.SetDirection( 1 );
 //	sobelOperatorY.CreateDirectional();
-//	typedef itk::ImageRegionIterator< VotingDirType > IteratorType4;
+//	typedef itk::ImageRegionIterator< VotingDirType_3D > IteratorType4;
 //	IteratorType4 out3( votingDirY, votingDirY->GetRequestedRegion() );
 //
 //	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType3;
@@ -360,14 +374,14 @@ cout<<endl<<"Derivative Z done";
 //	}
 //
 //	// Magnitude Image
-//	VotingDirType::Pointer votingMagImage = VotingDirType::New(); //VotingDirType = double
+//	VotingDirType_3D::Pointer votingMagImage = VotingDirType_3D::New(); //VotingDirType_3D = double
 //	votingMagImage->SetRegions( inputImage->GetRequestedRegion()); // IMPORTANTE PARA CREAR UNA IMAGEN NUEVA EN BASE A UNA QUE YA EXISTE EN VEZ DE PONERME A LEER LOS TAMANOS Y LAS REGIONES
 //	votingMagImage->Allocate();
 //
-//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType > ITVotingMag;
+//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType_3D > ITVotingMag;
 //	ITVotingMag iVotingMag(votingMagImage, votingMagImage->GetLargestPossibleRegion() );
 //
-//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType > ITVotingDir;
+//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType_3D > ITVotingDir;
 //	ITVotingDir iVotingDirX(votingDirX, votingDirX->GetLargestPossibleRegion() );
 //	ITVotingDir iVotingDirY(votingDirY, votingDirY->GetLargestPossibleRegion() );
 //
@@ -380,12 +394,12 @@ cout<<endl<<"Derivative Z done";
 //	}
 //
 //	// Magnitude Image Binary (just to store in file the voting pixels)
-//	VotingDirType::Pointer votingMagImage_bin = VotingDirType::New();
+//	VotingDirType_3D::Pointer votingMagImage_bin = VotingDirType_3D::New();
 //	votingMagImage_bin->SetRegions( inputImage->GetRequestedRegion() );
 //	votingMagImage_bin->Allocate();
 //
 //	// Canny edge detection
-//	typedef itk::CannyEdgeDetectionImageFilter <VotingDirType, VotingDirType> CannyEdgeDetectionImageFilterType;
+//	typedef itk::CannyEdgeDetectionImageFilter <VotingDirType_3D, VotingDirType_3D> CannyEdgeDetectionImageFilterType;
 //	CannyEdgeDetectionImageFilterType::Pointer cannyFilter = CannyEdgeDetectionImageFilterType::New();
 //	cannyFilter->SetInput(inputImage);
 //	cannyFilter->SetVariance( 2.5 );
@@ -395,7 +409,7 @@ cout<<endl<<"Derivative Z done";
 //
 //	// Save the canny edge result
 //	string filenameCanny = "output\\out_ImageOfCanny.jpg";
-//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
+//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
 //		cout<<endl<<"\tProblema escribiendo";
 //	}
 //
@@ -403,21 +417,21 @@ cout<<endl<<"Derivative Z done";
 //
 //	// Arrays of data
 //	nftkVotingGlobal::InputImageType::PixelType * votingImaArray = inputImage->GetBufferPointer();
-//	VotingDirType::PixelType * votingDirXArray = votingDirX->GetBufferPointer();
-//	VotingDirType::PixelType * votingDirYArray = votingDirY->GetBufferPointer();
-//	VotingDirType::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
-//	VotingDirType::PixelType * votingMagArray_bin = votingMagImage_bin->GetBufferPointer();
-//	VotingDirType::PixelType * votingCannyArray = cannyFilter->GetOutput()->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingDirXArray = votingDirX->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingDirYArray = votingDirY->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingMagArray_bin = votingMagImage_bin->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingCannyArray = cannyFilter->GetOutput()->GetBufferPointer();
 //	
 //
 //	//double maxgrad = votingMagImag
 //
-//	typedef itk::MinimumMaximumImageCalculator < VotingDirType > ImageCalculatorFilterType;
+//	typedef itk::MinimumMaximumImageCalculator < VotingDirType_3D > ImageCalculatorFilterType;
 //	ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New ();
 //	imageCalculatorFilter->SetImage( votingMagImage );
 //	imageCalculatorFilter->Compute();
 //
-//	VotingDirType::PixelType maxVotVal = imageCalculatorFilter->GetMaximum();
+//	VotingDirType_3D::PixelType maxVotVal = imageCalculatorFilter->GetMaximum();
 //
 //	// Scale the values of the gradient by the maximum value of the gradiente, to ensure that the maximum value is 1
 //	for(int i=0; i<npix; i++) {
@@ -435,7 +449,7 @@ cout<<endl<<"Derivative Z done";
 //	// Testing to store the resulting voting image base on the gradient
 //	// Save the canny edge result
 //	string filenameGradVot = "output\\out_ImageOfGradVot.jpg";
-//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
+//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
 //		cout<<endl<<"\tProblema escribiendo";
 //	}
 //	// Put 1 if mag array is different to zero
@@ -447,7 +461,7 @@ cout<<endl<<"Derivative Z done";
 //			}
 //	}
 //	string filenameGradVot_bin = "output\\out_ImageOfGradVot_bin.jpg";
-//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
+//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
 //		cout<<endl<<"\tProblema escribiendo";
 //	}
 //	// Put 1 if mag array intersect with canny edge is di
@@ -459,7 +473,7 @@ cout<<endl<<"Derivative Z done";
 //			}
 //	}
 //	string filenameGradVotInterCanny = "output\\out_ImageOfGradVotInterCanny.jpg";
-//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
+//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
 //		cout<<endl<<"\tProblema escribiendo";
 //	}
 //
@@ -522,7 +536,7 @@ cout<<endl<<"Derivative Z done";
 //	ny -= bw2;
 //	npix = nx*ny;
 //
-//	//_votingVotes = VotingDirType::New();
+//	//_votingVotes = VotingDirType_3D::New();
 //	//_votingVotes->SetRegions( inputImage->GetRequestedRegion() );
 //	//_votingVotes->Allocate();
 //
@@ -701,24 +715,91 @@ void ftkVoting_3D::setPrefix(const string& p)
 // ############################################################################################################################################################################
 pair<int,int> ftkVoting_3D::computeAngleIndex_3D(double dx, double dy, double dz) const 
 {
-	// NEEDS REVIEW
-	double a = acos(dx);
-	if (dy<0) {
-		a = 2*pi-a;
-	}
 
-	// NEEDS REVIEW
-	double b = acos(dz);
-	if (dz<0) {
-		b = pi-b;
-	}
+            //dx = i/dmag;
+            //dy = j/dmag;
+            //dz = kk/dmag;
 
-	//int indx_theta = nftkVotingGlobal::round_double(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
-	//return max(0, min(ntheta-1, indx_theta)); // Se asegura que el maximo devuelto sea 255 (256 nunca va a salir de aca)
+	int betaa_qu;
+	int tetaa_qu;
+	double betaa;
+	double tetaa;
+            
+            if( (dx==0) && (dy==0) )
+			{
+                betaa_qu = 0;
+                tetaa_qu = 0;
+                if(dz<0)
+				{
+                    betaa_qu = 0;
+                    tetaa_qu = 127;
+				}
+                //ban = 1;
+			}
+            else if( (dx==0) && (dz==0) )
+			{
+                betaa_qu = 63;
+                tetaa_qu = 63;
+                if(dy<0)
+				{
+                    betaa_qu = 192;
+                    tetaa_qu = 63;
+				}
+                //ban = 1;
+			}
+            else if( (dy==0) && (dz==0) )
+			{
+                betaa_qu = 0;
+                tetaa_qu = 63;
+                if(dx<0)
+				{
+                    betaa_qu = 127;
+                    tetaa_qu = 63; 
+				}
+                //ban = 1;
+			}
+            else
+			{
+                betaa = atan(dy/dx);
+                if(dx==0)
+				{
+                    betaa = pi/2;
+                    if(dy<0)
+					{
+                        betaa = 3*pi/4;
+					}
+				}
+                else if(dy==0)
+				{
+                    betaa = 0;
+                    if(dx<0)
+					{
+                        betaa = pi;
+					}
+				}
+                else if(dy>0 && dx<0 )
+				{
+                    betaa = pi + betaa;
+				}
+                else if(dy<0 && dx>0 )
+				{
+                    betaa = 2*pi + betaa;
+				}
+                else if(dy<0 && dx<0 )
+				{
+                    betaa = pi + betaa;
+				}
+                
+                tetaa = acos(dz);
+                
+                betaa_qu = floor(betaa/delta_theta);
+                tetaa_qu = floor(tetaa/delta_theta);
+                //ban = 1;
+			}
 
 	pair<int,int> indx_theta;
-	indx_theta.first = floor(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
-	indx_theta.second = floor(b/(pi/ntheta)); // De por si esta divisino no veo como pueda ser mas de 255
+	indx_theta.first = betaa_qu; // De por si esta divisino no veo como pueda ser mas de 255
+	indx_theta.second = tetaa_qu; // De por si esta divisino no veo como pueda ser mas de 255
 
 
 	if(indx_theta.first<0 || indx_theta.first>255 || indx_theta.second<0 || indx_theta.second>127 )
@@ -726,12 +807,41 @@ pair<int,int> ftkVoting_3D::computeAngleIndex_3D(double dx, double dy, double dz
 	cout<<endl<<"Error en compute angle: "<<indx_theta.first<<" "<<indx_theta.second<<" "<<dx<<" "<<dy<<" "<<dz;
 	cin>>rr;
 	}
+
+
+	//// NEEDS REVIEW
+	//double a = acos(dx);
+	//if (dy<0) {
+	//	a = 2*pi-a;
+	//}
+
+	//// NEEDS REVIEW
+	//double b = acos(dz);
+	//if (dz<0) {
+	//	b = pi-b;
+	//}
+
+	////int indx_theta = nftkVotingGlobal::round_double(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
+	////return max(0, min(ntheta-1, indx_theta)); // Se asegura que el maximo devuelto sea 255 (256 nunca va a salir de aca)
+
+	//pair<int,int> indx_theta;
+	//indx_theta.first = floor(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
+	//indx_theta.second = floor(b/(pi/ntheta)); // De por si esta divisino no veo como pueda ser mas de 255
+
+
+	//if(indx_theta.first<0 || indx_theta.first>255 || indx_theta.second<0 || indx_theta.second>127 )
+	//{int rr;
+	//cout<<endl<<"Error en compute angle: "<<indx_theta.first<<" "<<indx_theta.second<<" "<<dx<<" "<<dy<<" "<<dz;
+	//cin>>rr;
+	//}
+
+
 	//return max(0, min(ntheta-1, indx_theta));
 	return indx_theta;
 }
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp)
+void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp)
 {
 //	//int stop2;
 //	iterator from = begin(); //Pointer to Bin
@@ -747,7 +857,7 @@ void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp)
 }
 
 //// ############################################################################################################################################################################
-//void inline ftkCone3D::vote_dir(VotingDirType::PixelType * p, const VPoint3D& vp) //Vota y guarda direcciones de los votos
+//void inline ftkCone3D::vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp) //Vota y guarda direcciones de los votos
 //{
 //	//int stop2;
 //	iterator from = begin(); //Pointer to Bin
@@ -763,7 +873,7 @@ void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp)
 //}
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp, int& dist)
+void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist)
 {
 	//iterator binRequired = begin();
 	//ftkBins2D::iterator from = binRequired[dist].begin();
@@ -778,7 +888,7 @@ void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp, in
 }
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp, int& dist, int &mag) // Incluye la probabilidad
+void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag) // Incluye la probabilidad
 {
 
 	//iterator binRequired = begin();
@@ -798,7 +908,7 @@ void inline ftkCone3D::vote(VotingDirType::PixelType * p, const VPoint3D& vp, in
 }
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote_dir(vector<vector<int> >& p_dir, VotingDirType::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1)
+void inline ftkCone3D::vote_dir(vector<vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1)
 {
 
 	//iterator binRequired = begin();
@@ -826,7 +936,7 @@ void inline ftkVoting_3D::updateDirection(VPoint3D& vp)
 	//	ftkCone2D::iterator to = _conesPru[tt].end();
 	//	//_conesPru[tt].vote(p,vp);
 
-	//	VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer()+vp.pos;
+	//	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer()+vp.pos;
 	//	for(ftkCone2D::iterator it = from; it != to; it++) 
 	//	{
 	//		for(ftkBins2D::iterator it1=it->begin(); it1!=it->end(); it1++)
@@ -867,7 +977,7 @@ void inline ftkVoting_3D::updateDirection_prob(VPoint3D& vp)
 	//	ftkCone2D::iterator to = _conesPru[tt].end();
 	//	//_conesPru[tt].vote(p,vp);
 
-	//	VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer()+vp.pos;
+	//	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer()+vp.pos;
 	//	for(ftkCone2D::iterator it = from; it != to; it++)  // Iterate to the cones
 	//	{
 	//		for(ftkBins2D::iterator it1=it->begin(); it1!=it->end(); it1++) // Iterate to the bins of each cone
@@ -900,6 +1010,154 @@ void inline ftkVoting_3D::updateDirection_prob(VPoint3D& vp)
 //// ############################################################################################################################################################################
 void ftkVoting_3D::computeCones(int hmin, int hmax, int radius)
 {
+
+	// CAREFULL WITH THIS 30
+	int numberofcercles = 30; 
+	_conesPru = vector<ftkCone3D>(numberofcercles); // Todos los conos posibles
+	for( int uu=0; uu<numberofcercles; uu++ )
+	{
+		for( int uuu=0; uuu<hmax-hmin+1; uuu++ )
+		{
+			ftkBins3D bin;
+			_conesPru[uu].push_back(bin);
+		}
+	}
+
+	int z1;
+	int R;
+	double R_dou;
+	int R_quan;
+	pair<int,int> ang_quan;
+	double x_nor, y_nor, z_nor;
+	double x_nor2, y_nor2;
+	int countt=0;
+
+	ftkWPoint3D wp;
+	for( int xx=0; xx<=hmax; xx++ )
+	{
+		for( int yy=0; yy<=hmax; yy++ )
+		{
+			z1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
+			for( int zz=1; zz<=z1; zz++ )
+			{
+				R_dou = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
+				R = (int)ceil(R_dou);
+
+				if( R>= hmin) // Can be done more efficiently but for now is ok the speed
+				{
+					
+					R_quan = R-hmin;
+					//cout<<endl<<R_quan;
+					x_nor = ((double)xx)/R_dou;
+					y_nor = ((double)yy)/R_dou;
+					z_nor = ((double)zz)/R_dou;
+					ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
+					//ftkWPoint2D wp;
+					wp.x = xx;
+					wp.y = yy;
+					wp.z = zz;
+					wp.w = 1; // In case of deciding to put some weight
+					if( ang_quan.second < numberofcercles )
+					{
+						_conesPru[ang_quan.second][R_quan].push_back(wp);
+					}
+
+				x_nor2 = -x_nor;
+				y_nor2 = y_nor;
+				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+				wp.x = -xx;
+				wp.y = yy;
+				wp.w = 1; // In case of deciding to put some weight
+					if( ang_quan.second < numberofcercles )
+					{
+						_conesPru[ang_quan.second][R_quan].push_back(wp);
+					}
+
+				x_nor2 = x_nor;
+				y_nor2 = -y_nor;
+				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+				wp.x = xx;
+				wp.y = -yy;
+				wp.w = 1; // In case of deciding to put some weight
+					if( ang_quan.second < numberofcercles )
+					{
+						_conesPru[ang_quan.second][R_quan].push_back(wp);
+					}
+
+				x_nor2 = -x_nor;
+				y_nor2 = -y_nor;
+				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+				wp.x = -xx;
+				wp.y = -yy;
+				wp.w = 1; // In case of deciding to put some weight
+					if( ang_quan.second < numberofcercles )
+					{
+						_conesPru[ang_quan.second][R_quan].push_back(wp);
+					}
+
+
+
+				}
+			}
+		}
+	}
+
+	for( int xx=hmin; xx<=hmax; xx++ )
+	{
+
+			R_dou = xx;
+			R_quan = R_dou-hmin;
+			x_nor = ((double)xx)/R_dou;
+			y_nor = 0;
+			ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
+			//ftkWPoint2D wp;
+			wp.x = 0;
+			wp.y = 0;
+			wp.z = xx;
+			wp.w = 1; // In case of deciding to put some weight
+			if( ang_quan.second < numberofcercles )
+			{
+				_conesPru[ang_quan.second][R_quan].push_back(wp);
+			}
+	}
+
+	//countt = 0;
+	for( int tt=0; tt<_conesPru.size(); tt++ )
+	{
+		_conesPru[tt].setOffset();
+	}
+
+
+	//// Now calculate the span
+	//double span = sqrt((double)hmax*hmax+(double)radius*radius);
+	//double dx_dou = hmax/span;
+	//double dy_dou = radius/span;
+	//_intSpan = computeAngleIndex(dx_dou, dy_dou);
+	//_voteDirec = vector< pair< int,int > > (ntheta);
+	//for( int tt=0; tt<ntheta; tt++ )
+	//{
+	//	pair<int,int> spann;
+	//	if(tt-_intSpan<0)
+	//	{
+	//		spann.first = (tt-_intSpan+ntheta)%ntheta;
+	//	}
+	//	else
+	//	{
+	//		spann.first = (tt-_intSpan)%ntheta;
+	//	}
+	//	//cout<<endl<<"\t"<<spann.first;
+	//	spann.second = (tt+_intSpan)%ntheta;
+	//	_voteDirec[tt] = spann;
+	//}
+
+
+	//cout<<"Cones computed";
+	////cin>>stop11;
+
+
+
+
+
 
 	//int stop11;
 
@@ -1284,122 +1542,190 @@ void ftkVoting_3D::computeCones_prob(int hmin, int hmax, int radius)
 void ftkVoting_3D::vote()
 {
 
-	//	_votingSumVotes = VotingDirType::New();
-//	VotingDirType::IndexType start;
-//	start[0] = 0;
-//	start[1] = 0;
-//	VotingDirType::SizeType size;
-//	size[0] = nx;
-//	size[1] = ny;
-//	VotingDirType::RegionType region;
-//	region.SetSize( size );
-//	region.SetIndex( start );
-//	_votingSumVotes->SetRegions( region );
-//	_votingSumVotes->Allocate();
-//	const VotingDirType::PixelType ceros = 0;
-//	_votingSumVotes->FillBuffer( ceros );
-//	_votingSumVotes->Update();
-//
-//	_votingMaskVotes = VotingDirType::New(); 
-//	_votingMaskVotes->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	_votingMaskVotes->Allocate();
-//	_votingMaskVotes->FillBuffer( ceros );
-//	_votingMaskVotes->Update();
-//
-//
-//	//// Creates a vectorial image, that stores the histogram of voting form each pixel, too much memory, not used for now :(
-//	//ImageToVectorImageFilterType::Pointer imageToVectorImageFilter = ImageToVectorImageFilterType::New();
-//	//for( int oo=0; oo<256; oo++ )
-//	//{
-//	//	VotingDirPerType_scalar::Pointer image_1 = VotingDirPerType_scalar::New();
-//	//	VotingDirPerType_scalar::IndexType start_1;
-//	//	start_1[0] = 0;
-//	//	start_1[1] = 0;
-//	//	VotingDirPerType_scalar::SizeType size_1;
-//	//	size_1[0] = nx;
-//	//	size_1[1] = ny;
-//	//	VotingDirPerType_scalar::RegionType region_1;
-//	//	region_1.SetSize(size_1);
-//	//	region_1.SetIndex(start_1);
-//	//	image_1->SetRegions(region_1);
-//	//	image_1->Allocate();
-//	//	const VotingDirPerType_scalar::PixelType ceros_1 = 0;
-//	//	image_1->FillBuffer(ceros_1);
-//	//	image_1->Update();
-//	//	
-//	//	imageToVectorImageFilter->SetInput(oo, image_1);
-//	//}
-//	//imageToVectorImageFilter->Update();
-//	//VotingDirPerType::Pointer votingDirPerPixel = imageToVectorImageFilter->GetOutput();
-//
-//
-//
-//
-//
-//
-//	//vector < vector < int > > votingMaskVotes_dir = vector< vector< int > >(nx*ny);
-//	//for( int yr=0; yr<nx*ny; yr++ )
-//	//{
-//	//	vector< int > bindedir = vector< int >(256,0); //256 int of value 0
-//	//	votingMaskVotes_dir.push_back( bindedir );
-//	//}
-//
-//	//
-//	VotingDirType::Pointer imageOfVotingPixels = VotingDirType::New(); 
-//	imageOfVotingPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	imageOfVotingPixels->Allocate();
-//	imageOfVotingPixels->FillBuffer( ceros );
-//	imageOfVotingPixels->Update();
-//	//
-//
-//	//
-//	VotingDirType::Pointer imageOfConexPixels = VotingDirType::New(); 
-//	imageOfConexPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	imageOfConexPixels->Allocate();
-//	imageOfConexPixels->FillBuffer( ceros );
-//	imageOfConexPixels->Update();
-//	//
-//
-//	VotingDirType::Pointer imageGradXPixels = VotingDirType::New(); 
-//	imageGradXPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	imageGradXPixels->Allocate();
-//	imageGradXPixels->FillBuffer( ceros );
-//	imageGradXPixels->Update();
-//	//
-//
-//	VotingDirType::Pointer imageGradYPixels = VotingDirType::New(); 
-//	imageGradYPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	imageGradYPixels->Allocate();
-//	imageGradYPixels->FillBuffer( ceros );
-//	imageGradYPixels->Update();
-//	//
-//
-//	VotingDirType::Pointer imageMaxPixels = VotingDirType::New(); 
-//	imageMaxPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
-//	imageMaxPixels->Allocate();
-//	imageMaxPixels->FillBuffer( ceros );
-//	imageMaxPixels->Update();
-//	//
-//
-//	VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
-//	VotingDirType::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
-//	VotingDirType::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageOfConexPixelsArray = imageOfConexPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
-//	
-//
-//	vector<VPoint2D>::iterator voting_points_begin = _voting_points.begin();
-//	vector<VPoint2D>::iterator voting_points_end = _voting_points.end();
-//
-//	for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++) {	
-//		it->pos = it->x+nx*it->y; // Poscion donde esta x,y en nuestra recien creada _sum (Image)
-//	}
-//
-//	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
-//	computeCones(_hmin, _hmax, _radius);
-//	computeCones_prob(_hmin, _hmax, _radius); // Just for one moment
+	_votingSumVotes = VotingDirType_3D::New();
+	VotingDirType_3D::IndexType start;
+	start[0] = 0;
+	start[1] = 0;
+	start[2] = 0;
+	VotingDirType_3D::SizeType size;
+	size[0] = nx;
+	size[1] = ny;
+	size[2] = nz;
+	VotingDirType_3D::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	_votingSumVotes->SetRegions( region );
+	_votingSumVotes->Allocate();
+	const VotingDirType_3D::PixelType ceros = 0;
+	_votingSumVotes->FillBuffer( ceros );
+	_votingSumVotes->Update();
+
+	_votingMaskVotes = VotingDirType_3D::New(); 
+	_votingMaskVotes->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	_votingMaskVotes->Allocate();
+	_votingMaskVotes->FillBuffer( ceros );
+	_votingMaskVotes->Update();
+
+
+	//// Creates a vectorial image, that stores the histogram of voting form each pixel, too much memory, not used for now :(
+	//ImageToVectorImageFilterType::Pointer imageToVectorImageFilter = ImageToVectorImageFilterType::New();
+	//for( int oo=0; oo<256; oo++ )
+	//{
+	//	VotingDirPerType_scalar::Pointer image_1 = VotingDirPerType_scalar::New();
+	//	VotingDirPerType_scalar::IndexType start_1;
+	//	start_1[0] = 0;
+	//	start_1[1] = 0;
+	//	VotingDirPerType_scalar::SizeType size_1;
+	//	size_1[0] = nx;
+	//	size_1[1] = ny;
+	//	VotingDirPerType_scalar::RegionType region_1;
+	//	region_1.SetSize(size_1);
+	//	region_1.SetIndex(start_1);
+	//	image_1->SetRegions(region_1);
+	//	image_1->Allocate();
+	//	const VotingDirPerType_scalar::PixelType ceros_1 = 0;
+	//	image_1->FillBuffer(ceros_1);
+	//	image_1->Update();
+	//	
+	//	imageToVectorImageFilter->SetInput(oo, image_1);
+	//}
+	//imageToVectorImageFilter->Update();
+	//VotingDirPerType::Pointer votingDirPerPixel = imageToVectorImageFilter->GetOutput();
+
+
+
+
+
+
+	//vector < vector < int > > votingMaskVotes_dir = vector< vector< int > >(nx*ny);
+	//for( int yr=0; yr<nx*ny; yr++ )
+	//{
+	//	vector< int > bindedir = vector< int >(256,0); //256 int of value 0
+	//	votingMaskVotes_dir.push_back( bindedir );
+	//}
+
+	//
+	VotingDirType_3D::Pointer imageOfVotingPixels = VotingDirType_3D::New(); 
+	imageOfVotingPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageOfVotingPixels->Allocate();
+	imageOfVotingPixels->FillBuffer( ceros );
+	imageOfVotingPixels->Update();
+	//
+
+	//
+	VotingDirType_3D::Pointer imageOfConexPixels = VotingDirType_3D::New(); 
+	imageOfConexPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageOfConexPixels->Allocate();
+	imageOfConexPixels->FillBuffer( ceros );
+	imageOfConexPixels->Update();
+	//
+
+	VotingDirType_3D::Pointer imageGradXPixels = VotingDirType_3D::New(); 
+	imageGradXPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageGradXPixels->Allocate();
+	imageGradXPixels->FillBuffer( ceros );
+	imageGradXPixels->Update();
+	//
+
+	VotingDirType_3D::Pointer imageGradYPixels = VotingDirType_3D::New(); 
+	imageGradYPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageGradYPixels->Allocate();
+	imageGradYPixels->FillBuffer( ceros );
+	imageGradYPixels->Update();
+	//
+
+	VotingDirType_3D::Pointer imageMaxPixels = VotingDirType_3D::New(); 
+	imageMaxPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
+	imageMaxPixels->Allocate();
+	imageMaxPixels->FillBuffer( ceros );
+	imageMaxPixels->Update();
+	//
+
+	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
+	VotingDirType_3D::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
+	VotingDirType_3D::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
+	VotingDirType_3D::PixelType * imageOfConexPixelsArray = imageOfConexPixels->GetBufferPointer();
+	VotingDirType_3D::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
+	VotingDirType_3D::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
+	VotingDirType_3D::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
+	
+
+	// Update the voting points to the new size (paddng)
+	vector<VPoint3D>::iterator voting_points_begin = _voting_points.begin();
+	vector<VPoint3D>::iterator voting_points_end = _voting_points.end();
+
+	for(vector<VPoint3D>::iterator it=voting_points_begin; it!=voting_points_end; it++) {	
+		it->pos = it->x+nx*it->y+nx*ny*it->z; // Poscion donde esta x,y en nuestra recien creada _sum (Image)
+	}
+
+	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
+	computeCones(_hmin, _hmax, _radius);
+	//computeCones_prob(_hmin, _hmax, _radius); // Just for one moment
+
+	// Print a cones in the sum image and the store thre result
+
+
+	string filenameCones_1 = "output\\out__votingSumVotes.tif";
+	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_1.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+#pragma omp parallel for
+	for( int uu=0; uu<30; ++uu )
+	{
+		//cout<<endl<<"aja 1";
+		for( unsigned int raddd=0; raddd<60; ++raddd )
+		{
+			//cout<<endl<<"aja 2";
+			for( unsigned int bin_cont=0; bin_cont < _conesPru[uu][raddd].size(); ++bin_cont )
+			{
+				int x_posi = _conesPru[uu][raddd][bin_cont].x+20;
+				int y_posi = _conesPru[uu][raddd][bin_cont].y+20;
+				int z_posi = _conesPru[uu][raddd][bin_cont].z+20;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+
+				x_posi = _conesPru[uu][raddd][bin_cont].x+200;
+				y_posi = _conesPru[uu][raddd][bin_cont].y+200;
+				z_posi = _conesPru[uu][raddd][bin_cont].z+20;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+
+				x_posi = _conesPru[uu][raddd][bin_cont].x+250;
+				y_posi = _conesPru[uu][raddd][bin_cont].y+250;
+				z_posi = _conesPru[uu][raddd][bin_cont].z+250;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+
+				//cout<<endl<<"aja";
+			}
+		}
+	}
+
+#pragma omp parallel for
+	for( int yx =0; yx<20; ++yx ){
+		for( unsigned int yy =0; yy<20; ++yy ){
+			for( unsigned int yz =0; yz<20; ++yz ){
+
+				int x_posi = yx+300;
+				int y_posi = yy+250;
+				int z_posi = yz+250;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+
+			}
+		}
+	}
+
+
+	string filenameCones_2 = "output\\out__votingSumVotes_cone.tif";
+	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_2.c_str() )){
+		cout<<endl<<"\tProblema escribiendo";
+	}
+
+
+
+	
+
+
+
+
+
 //
 //	// Primer Voto
 //	int nic=0;
@@ -1429,10 +1755,10 @@ void ftkVoting_3D::vote()
 ////		//out<<count;
 ////		//string s = out.str();
 ////		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
-////		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
+////		//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageOfConexPixels, filename.c_str() )){
 ////		//	cout<<endl<<"\tProblema escribiendo";
 ////		//}
-////		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType::PixelType));
+////		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 ////
 ////		count++;
 ////		//
@@ -1462,25 +1788,25 @@ void ftkVoting_3D::vote()
 //			out5<<_hmax-_hmin-gg;
 //			string s5 = out5.str();
 //			////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-//			////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+//			////if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 //			////	cout<<endl<<"\tProblema escribiendo";
 //			////}
 //
 //			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 //			//	cout<<endl<<"\tProblema escribiendo";
 //			//}
 //			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 //			//	cout<<endl<<"\tProblema escribiendo";
 //			//}
 //
@@ -1495,13 +1821,13 @@ void ftkVoting_3D::vote()
 //
 //
 //			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //
 //			// Errase the mask (only to see step by step/by step) mas detallado todavia, ver los picos mas que todo
-//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //			//// The amount of memory required turns out to be to high :( what to do ? 
 //			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
@@ -1514,7 +1840,7 @@ void ftkVoting_3D::vote()
 //			//writer->SetFileName( filename9.c_str() );
 //			//writer->Update();
 //
-//			//VotingDirType::IndexType acceso;
+//			//VotingDirType_3D::IndexType acceso;
 //			//acceso[0] = 45;
 //			//acceso[1] = 345;
 //			//cout<<endl<<" S4: "<<s4<<", S5: "<<s5<<", x: 45, y: 345, "<<_votingSumVotes->GetPixel(acceso);
@@ -1543,19 +1869,19 @@ void ftkVoting_3D::vote()
 //	//out2<<_intSpan;
 //	//string s2 = out2.str();
 //	//string filename2 = "output\\out_ImageOfSums_"+s2+".jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2.c_str() )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2.c_str() )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
 //	////votingSumVotes
 //	////Store Derivative in X
 //	//const char* filename = "output\\out_ImageOfVotes.jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfVotingPixels, filename )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageOfVotingPixels, filename )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
 //	//const char* filename2 = "output\\out_vote_1.jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2 )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2 )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
@@ -1594,8 +1920,8 @@ void ftkVoting_3D::vote()
 //				//updateDirection(*it);
 //		//}   
 //
-//		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
-//		//memset(votingSumArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
+//		//memset(votingSumArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //		//VOTING PERFECTO
 //		//for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -1606,15 +1932,15 @@ void ftkVoting_3D::vote()
 //		//out3<<_intSpan;
 //		//string s3 = out3.str();
 //		////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-//		////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+//		////if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 //		////	cout<<endl<<"\tProblema escribiendo";
 //		////}
 //		//string filename4 = "output\\out_ImageOfSums_"+s3+".jpg";
-//		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename4.c_str() )){
+//		//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename4.c_str() )){
 //		//	cout<<endl<<"\tProblema escribiendo";
 //		//}
 //
-//		memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//		memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //		cout<<endl<<"Voting:";
 //		for( int gg=0; gg<=_hmax-_hmin; gg++ )
 //		{
@@ -1636,27 +1962,27 @@ void ftkVoting_3D::vote()
 //			string s5 = out5.str();
 //
 //			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			
 //		}
 //		cout<<"\t done";
 //
-//		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
+//		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
 //
 //
 //
@@ -1664,7 +1990,7 @@ void ftkVoting_3D::vote()
 //			break;
 //
 //	}
-//	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));*/
+//	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));*/
 //
 //	//while (r>= 0) 
 //	//{
@@ -1676,8 +2002,8 @@ void ftkVoting_3D::vote()
 //	//			getMaxDirection(*it);    
 //	//	}    
 //
-//	//	memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
-//	//	memset(votingSumArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//	//	memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
+//	//	memset(votingSumArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //
 //	//	 //NO ENTIENDO PARA QUE ES ESTO
@@ -1768,23 +2094,23 @@ void ftkVoting_3D::vote()
 	//////////////////////////////////////////////////////////////////////////////////////
 // Copia Original 
 
-//	_votingSumVotes = VotingDirType::New();
-//	VotingDirType::IndexType start;
+//	_votingSumVotes = VotingDirType_3D::New();
+//	VotingDirType_3D::IndexType start;
 //	start[0] = 0;
 //	start[1] = 0;
-//	VotingDirType::SizeType size;
+//	VotingDirType_3D::SizeType size;
 //	size[0] = nx;
 //	size[1] = ny;
-//	VotingDirType::RegionType region;
+//	VotingDirType_3D::RegionType region;
 //	region.SetSize( size );
 //	region.SetIndex( start );
 //	_votingSumVotes->SetRegions( region );
 //	_votingSumVotes->Allocate();
-//	const VotingDirType::PixelType ceros = 0;
+//	const VotingDirType_3D::PixelType ceros = 0;
 //	_votingSumVotes->FillBuffer( ceros );
 //	_votingSumVotes->Update();
 //
-//	_votingMaskVotes = VotingDirType::New(); 
+//	_votingMaskVotes = VotingDirType_3D::New(); 
 //	_votingMaskVotes->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	_votingMaskVotes->Allocate();
 //	_votingMaskVotes->FillBuffer( ceros );
@@ -1829,7 +2155,7 @@ void ftkVoting_3D::vote()
 //	//}
 //
 //	//
-//	VotingDirType::Pointer imageOfVotingPixels = VotingDirType::New(); 
+//	VotingDirType_3D::Pointer imageOfVotingPixels = VotingDirType_3D::New(); 
 //	imageOfVotingPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	imageOfVotingPixels->Allocate();
 //	imageOfVotingPixels->FillBuffer( ceros );
@@ -1837,41 +2163,41 @@ void ftkVoting_3D::vote()
 //	//
 //
 //	//
-//	VotingDirType::Pointer imageOfConexPixels = VotingDirType::New(); 
+//	VotingDirType_3D::Pointer imageOfConexPixels = VotingDirType_3D::New(); 
 //	imageOfConexPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	imageOfConexPixels->Allocate();
 //	imageOfConexPixels->FillBuffer( ceros );
 //	imageOfConexPixels->Update();
 //	//
 //
-//	VotingDirType::Pointer imageGradXPixels = VotingDirType::New(); 
+//	VotingDirType_3D::Pointer imageGradXPixels = VotingDirType_3D::New(); 
 //	imageGradXPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	imageGradXPixels->Allocate();
 //	imageGradXPixels->FillBuffer( ceros );
 //	imageGradXPixels->Update();
 //	//
 //
-//	VotingDirType::Pointer imageGradYPixels = VotingDirType::New(); 
+//	VotingDirType_3D::Pointer imageGradYPixels = VotingDirType_3D::New(); 
 //	imageGradYPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	imageGradYPixels->Allocate();
 //	imageGradYPixels->FillBuffer( ceros );
 //	imageGradYPixels->Update();
 //	//
 //
-//	VotingDirType::Pointer imageMaxPixels = VotingDirType::New(); 
+//	VotingDirType_3D::Pointer imageMaxPixels = VotingDirType_3D::New(); 
 //	imageMaxPixels->SetRegions( region );// Puede generar problemas depronto toque declara otro size y otro start
 //	imageMaxPixels->Allocate();
 //	imageMaxPixels->FillBuffer( ceros );
 //	imageMaxPixels->Update();
 //	//
 //
-//	VotingDirType::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
-//	VotingDirType::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
-//	VotingDirType::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageOfConexPixelsArray = imageOfConexPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
-//	VotingDirType::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
+//	VotingDirType_3D::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
+//	VotingDirType_3D::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
+//	VotingDirType_3D::PixelType * imageOfConexPixelsArray = imageOfConexPixels->GetBufferPointer();
+//	VotingDirType_3D::PixelType * imageGradXPixelsArray = imageGradXPixels->GetBufferPointer();
+//	VotingDirType_3D::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
+//	VotingDirType_3D::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
 //	
 //
 //	vector<VPoint2D>::iterator voting_points_begin = _voting_points.begin();
@@ -1913,10 +2239,10 @@ void ftkVoting_3D::vote()
 ////		//out<<count;
 ////		//string s = out.str();
 ////		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
-////		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
+////		//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageOfConexPixels, filename.c_str() )){
 ////		//	cout<<endl<<"\tProblema escribiendo";
 ////		//}
-////		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType::PixelType));
+////		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 ////
 ////		count++;
 ////		//
@@ -1946,25 +2272,25 @@ void ftkVoting_3D::vote()
 //			out5<<_hmax-_hmin-gg;
 //			string s5 = out5.str();
 //			////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-//			////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+//			////if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 //			////	cout<<endl<<"\tProblema escribiendo";
 //			////}
 //
 //			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 //			//	cout<<endl<<"\tProblema escribiendo";
 //			//}
 //			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+//			//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 //			//	cout<<endl<<"\tProblema escribiendo";
 //			//}
 //
@@ -1979,13 +2305,13 @@ void ftkVoting_3D::vote()
 //
 //
 //			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //
 //			// Errase the mask (only to see step by step/by step) mas detallado todavia, ver los picos mas que todo
-//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //			//// The amount of memory required turns out to be to high :( what to do ? 
 //			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
@@ -1998,7 +2324,7 @@ void ftkVoting_3D::vote()
 //			//writer->SetFileName( filename9.c_str() );
 //			//writer->Update();
 //
-//			//VotingDirType::IndexType acceso;
+//			//VotingDirType_3D::IndexType acceso;
 //			//acceso[0] = 45;
 //			//acceso[1] = 345;
 //			//cout<<endl<<" S4: "<<s4<<", S5: "<<s5<<", x: 45, y: 345, "<<_votingSumVotes->GetPixel(acceso);
@@ -2027,19 +2353,19 @@ void ftkVoting_3D::vote()
 //	//out2<<_intSpan;
 //	//string s2 = out2.str();
 //	//string filename2 = "output\\out_ImageOfSums_"+s2+".jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2.c_str() )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2.c_str() )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
 //	////votingSumVotes
 //	////Store Derivative in X
 //	//const char* filename = "output\\out_ImageOfVotes.jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfVotingPixels, filename )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(imageOfVotingPixels, filename )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
 //	//const char* filename2 = "output\\out_vote_1.jpg";
-//	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2 )){
+//	//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2 )){
 //	//	cout<<endl<<"\tProblema escribiendo";
 //	//}
 //
@@ -2078,8 +2404,8 @@ void ftkVoting_3D::vote()
 //				//updateDirection(*it);
 //		//}   
 //
-//		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
-//		//memset(votingSumArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//		//memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
+//		//memset(votingSumArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //		//VOTING PERFECTO
 //		//for(vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -2090,15 +2416,15 @@ void ftkVoting_3D::vote()
 //		//out3<<_intSpan;
 //		//string s3 = out3.str();
 //		////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-//		////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+//		////if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 //		////	cout<<endl<<"\tProblema escribiendo";
 //		////}
 //		//string filename4 = "output\\out_ImageOfSums_"+s3+".jpg";
-//		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename4.c_str() )){
+//		//if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename4.c_str() )){
 //		//	cout<<endl<<"\tProblema escribiendo";
 //		//}
 //
-//		memset(votingMaskArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//		memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //		cout<<endl<<"Voting:";
 //		for( int gg=0; gg<=_hmax-_hmin; gg++ )
 //		{
@@ -2120,27 +2446,27 @@ void ftkVoting_3D::vote()
 //			string s5 = out5.str();
 //
 //			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-//			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+//			if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //
 //			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+//			if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 //				cout<<endl<<"\tProblema escribiendo";
 //			}
 //			
 //		}
 //		cout<<"\t done";
 //
-//		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
+//		memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
 //
 //
 //
@@ -2148,7 +2474,7 @@ void ftkVoting_3D::vote()
 //			break;
 //
 //	}
-//	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));*/
+//	/*memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));*/
 //
 //	//while (r>= 0) 
 //	//{
@@ -2160,8 +2486,8 @@ void ftkVoting_3D::vote()
 //	//			getMaxDirection(*it);    
 //	//	}    
 //
-//	//	memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType::PixelType));
-//	//	memset(votingSumArray, 0,  npix*sizeof(VotingDirType::PixelType));
+//	//	memcpy(votingMaskArray, votingSumArray, npix*sizeof(VotingDirType_3D::PixelType));
+//	//	memset(votingSumArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 //
 //
 //	//	 //NO ENTIENDO PARA QUE ES ESTO
@@ -2249,7 +2575,7 @@ void ftkVoting_3D::vote()
 }
 
 //// ############################################################################################################################################################################
-void inline ftkVoting_3D::votar(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx)
+void inline ftkVoting_3D::votar(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx)
 {
 	////if( angl_indx==1)
 	////{
@@ -2263,7 +2589,7 @@ void inline ftkVoting_3D::votar(VotingDirType::PixelType * p, const VPoint3D& vp
 }
 
 //// ############################################################################################################################################################################
-void inline ftkVoting_3D::votar(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist)
+void inline ftkVoting_3D::votar(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist)
 {
 	////if( angl_indx==1)
 	////{
@@ -2277,7 +2603,7 @@ void inline ftkVoting_3D::votar(VotingDirType::PixelType * p, const VPoint3D& vp
 }
 
 //// ############################################################################################################################################################################
-void inline ftkVoting_3D::votar_prob(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist)
+void inline ftkVoting_3D::votar_prob(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist)
 {
 	////if( angl_indx==1)
 	////{
@@ -2291,7 +2617,7 @@ void inline ftkVoting_3D::votar_prob(VotingDirType::PixelType * p, const VPoint3
 }
 
 //// ############################################################################################################################################################################
-void inline ftkVoting_3D::votar_dir(vector<vector<int> >& p_dir,VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1)
+void inline ftkVoting_3D::votar_dir(vector<vector<int> >& p_dir,VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1)
 {
 	////if( angl_indx==1)
 	////{

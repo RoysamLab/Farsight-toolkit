@@ -1148,7 +1148,7 @@ void ftkVoting::vote()
 	VotingDirType::PixelType * imageGradYPixelsArray = imageGradYPixels->GetBufferPointer();
 	VotingDirType::PixelType * imageMaxPixelsArray = imageMaxPixels->GetBufferPointer();
 
-
+	// Update the voting points to the new size (paddng)
 	vector<VPoint2D>::iterator voting_points_begin = _voting_points.begin();
 	vector<VPoint2D>::iterator voting_points_end = _voting_points.end();
 

@@ -33,7 +33,7 @@ using namespace std;
 
 // Voting Direction X and Y
 typedef double VotingDirPixelType;
-typedef itk::Image< VotingDirPixelType, 3 > VotingDirType;
+typedef itk::Image< VotingDirPixelType, 3 > VotingDirType_3D;
 
 // Direction per pixel ( I think this was tested for storing the direction of each one of the votes to each pixel)
 typedef int VotingDirPerPixelType;
@@ -121,14 +121,14 @@ struct ftkCone3D : public vector<ftkBins3D> {
 			it->setOffset();
 		}
 	}
-	void inline vote(VotingDirType::PixelType * p, const VPoint3D& vp);
-	void inline vote(VotingDirType::PixelType * p, const VPoint3D& vp, int &dist);
-	void inline vote(VotingDirType::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
+	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp);
+	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int &dist);
+	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
 
-	//void inline vote_dir(VotingDirType::PixelType * p, const VPoint3D& vp); // Guarda direccion 
-	void inline vote_dir(vector<vector<int> >& p_dir, VotingDirType::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
+	//void inline vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp); // Guarda direccion 
+	void inline vote_dir(vector<vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
 
-	//void vote(VotingDirType::PixelType * p, VotingDirType::PixelType * pmask, const VPoint3D& vp);
+	//void vote(VotingDirType_3D::PixelType * p, VotingDirType_3D::PixelType * pmask, const VPoint3D& vp);
 	double dx, dy, dz; //< direction
 };
 
@@ -198,9 +198,9 @@ private:
 
 //	/** voting */
 	void vote();
-	void inline votar(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx);
-	void inline votar(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist);
-	void inline votar_prob(VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist);
+	void inline votar(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx);
+	void inline votar(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist);
+	void inline votar_prob(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist);
 	void updateCones();
 
 //	PointArray _centers; //< detected centers of objects
@@ -244,16 +244,16 @@ private:
 	//vector<Cone3D> _coe::Pointer _votingVotes;
 
 	// Image of votes (with the padding)
-	VotingDirType::Pointer _votingSumVotes;
+	VotingDirType_3D::Pointer _votingSumVotes;
 
 	// Nose que es
-	VotingDirType::Pointer _votingMaskVotes;
+	VotingDirType_3D::Pointer _votingMaskVotes;
 
-	//typename VotingDirType::Pointer DerivateImage( int dIrection );
+	//typename VotingDirType_3D::Pointer DerivateImage( int dIrection );
 
 	//vector<vector<int> > _votingMaskVotes_dir;
 
-	void inline votar_dir(vector<vector<int> >& p_dir,VotingDirType::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1);
+	void inline votar_dir(vector<vector<int> >& p_dir,VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1);
 
 
 	//< pre-computed cone structures for voting
@@ -264,7 +264,7 @@ private:
 
 	//// Voting Direction X and Y
 	//typedef double VotingDirPixelType;
-	//typedef itk::Image< VotingDirPixelType, 2 > VotingDirType;
+	//typedef itk::Image< VotingDirPixelType, 2 > VotingDirType_3D;
 
 	// Image of votes (without padding)
 	//VotingDirTyp
