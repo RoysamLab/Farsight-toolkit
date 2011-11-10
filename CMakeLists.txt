@@ -38,6 +38,7 @@ OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 OPTION( BUILD_SPD "Build SPD" OFF)
 OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
+OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -319,10 +320,16 @@ IF (BUILD_XML_GENERATOR)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Xml_Generator )
 	SUBDIRS( Xml_Generator )
 ENDIF (BUILD_XML_GENERATOR)
+
 IF (BUILD_CLUSCLUS)
     INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ClusClus )
     SUBDIRS(ClusClus)
 ENDIF (BUILD_CLUSCLUS)
+
+IF (BUILD_IMONTAGE)
+    INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/iMontage )
+    SUBDIRS(iMontage)
+ENDIF (BUILD_IMONTAGE)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
