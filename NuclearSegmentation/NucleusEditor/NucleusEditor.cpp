@@ -813,7 +813,9 @@ bool NucleusEditor::saveProject()
 	}
 	else
 	{
-		ftk::SaveTableSeries("TableSeries.xml",nucSeg->table4DImage);
+		ftk::SaveTableSeries("TableSeries.xml",nucSeg->table4DImage, projectFiles.path);
+		std::string tablename = projectFiles.path+"megaTable.txt";
+		ftk::SaveTable(tablename,nucSeg->megaTable);
 	}
 
 	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
@@ -887,8 +889,7 @@ bool NucleusEditor::saveImage()
 			for ( int T = 0; T <myImg->GetImageInfo()->numTSlices; T++ )
 			{
 				ftk::Image::Pointer ImageToSave = ftk::Image::New();
-			//	name = ftk::GetFilePath(FileNames.at(t).at(0))+ftk::GetFilenameFromFullPath(FileNames.at(t).at(0);
-				name = FileNames.at(T).at(Ch);
+				name = ftk::SetExtension(FileNames.at(T).at(Ch),"");
 				ImageToSave->AppendImageFromData3D(myImg->GetItkPtr<unsigned char>(T,Ch,mode)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
 				ok = ImageToSave->SaveChannelAs(0, name,"tif");
 			}
@@ -962,7 +963,7 @@ bool NucleusEditor::saveResult()
 		{
 			ftk::Image::Pointer ImageToSave = ftk::Image::New();
 		//	name = ftk::GetFilePath(FileNames.at(t).at(0))+ftk::GetFilenameFromFullPath(FileNames.at(t).at(0);
-			name = FileNames.at(T).at(0);
+			name = ftk::SetExtension(FileNames.at(T).at(0),"");
 			ImageToSave->AppendImageFromData3D(labImg->GetItkPtr<short int>(T,0,mode)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
 			ok = ImageToSave->SaveChannelAs(0, name,"tif");
 		}
@@ -1065,7 +1066,7 @@ void NucleusEditor::createDefaultLogName(void)
 
 void NucleusEditor::SaveActiveLearningResults(void)
 {	
-	ftk::SaveTableSeries(projectFiles.GetFullTable(),nucSeg->table4DImage);
+	ftk::SaveTableSeries(projectFiles.GetFullTable(),nucSeg->table4DImage,projectFiles.path);
 }
 
 
@@ -2701,6 +2702,16 @@ void NucleusEditor::startTracking()
 	if(myImg->GetImageInfo()->numTSlices <3) return;
 
 
+		//Get Channels in current Image:
+	QVector<QString> chs = getChannelStrings();
+	int nucChannel = 0;
+	ParamsFileDialog *dialog = new ParamsFileDialog(lastPath,getChannelStrings(),this);
+	if( dialog->exec() )
+	{
+		nucChannel = dialog->getChannelNumber();
+	}
+	delete dialog;
+
 	TrackingDialog * trackdialog= new  TrackingDialog();
 	trackdialog->exec();
 	if(trackdialog->result())
@@ -2709,6 +2720,7 @@ void NucleusEditor::startTracking()
 		mfcellTracker = new MultiFrameCellTracker();
 		mfcellTracker->setTrackParameters(trackdialog->getParameters());
 		mfcellTracker->settrackresultFolders(trackdialog->getFolders());
+		mfcellTracker->setChannelToTrack(nucChannel);
 		mfcellTracker->setTrackImages(myImg,labImg);
 		labImg = mfcellTracker->getTrackImages();
 
@@ -2720,6 +2732,10 @@ void NucleusEditor::startTracking()
 		CreateNewPlotWindow();
 		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
 	}
+	delete trackdialog;
+
+
+
 }
 //**********************************************************************
 // SLOT: start kymograph view:
@@ -3448,6 +3464,8 @@ void NucleusEditor::updateNucSeg(bool ask)
 	if (imInfo->numTSlices > 1)
 	{
 		nucSeg->ComputeAllGeometries(imInfo->numTSlices);
+		nucSeg->createMegaTable();
+		nucSeg->AddTimeToMegaTable();
 		segView->SetCenterMapVectorPointer(nucSeg->centerMap4DImage);
 		segView->SetBoundingBoxMapVectorPointer(nucSeg->bBoxMap4DImage);
 	}

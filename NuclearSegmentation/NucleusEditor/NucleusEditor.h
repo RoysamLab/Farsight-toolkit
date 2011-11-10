@@ -419,9 +419,9 @@ protected:
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;
 	ftk::SpectralUnmixing * SpecUnmix;
-	Image3DView * myview ;
 
 #ifdef USE_TRACKING
+	Image3DView * myview;
 	TrackingKymoView * kymoView;
 	MultiFrameCellTracker * mfcellTracker;
 #endif
