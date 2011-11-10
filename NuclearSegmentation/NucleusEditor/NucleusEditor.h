@@ -64,6 +64,7 @@
 #ifdef USE_TRACKING
 #include "KymoGraphView.h" 
 #include "TrackingDialog.h"
+#include "Image3DView.h"
 #include "CellTrackerLib/MultiFrameCellTracker.h"
 #endif
 
@@ -418,6 +419,7 @@ protected:
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;
 	ftk::SpectralUnmixing * SpecUnmix;
+	Image3DView * myview ;
 
 #ifdef USE_TRACKING
 	TrackingKymoView * kymoView;

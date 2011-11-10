@@ -788,7 +788,9 @@ bool NucleusEditor::saveProject()
 	}
 	else
 	{
-		ftk::SaveImageSeries(projectFiles.input, myImg);
+		ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
+		this->saveImage();
+
 	}
 	if(projectFiles.output != "" && !projectFiles.outputSaved && projectFiles.type != "multi")
 	{
@@ -796,7 +798,8 @@ bool NucleusEditor::saveProject()
 	}
 	else
 	{
-		ftk::SaveLabelSeries(projectFiles.output, labImg);
+		ftk::SaveLabelSeries(projectFiles.output, labImg, projectFiles.path);
+		this->saveResult();
 	}
 	if(projectFiles.definition != "" && !projectFiles.definitionSaved && projectFiles.type != "multi")
 	{
@@ -861,10 +864,36 @@ bool NucleusEditor::saveImage()
 	QString ext = QFileInfo(fullname).suffix();
 
 	bool ok;
-	if(ext == "xml")
-		ok = ftk::SaveXMLImage(fullname.toStdString(), myImg);
+	if(myImg->GetImageInfo()->numTSlices == 1)
+	{
+		if(ext == "xml")
+			ok = ftk::SaveXMLImage(fullname.toStdString(), myImg);
+		else
+			ok = myImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
+	}
 	else
-		ok = myImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
+	{
+		ftk::Image::PtrMode mode;
+		mode = static_cast<ftk::Image::PtrMode>(2);
+		ftk::Image::DataType dataType = myImg->GetImageInfo()->dataType;
+		unsigned char databpPix = myImg->GetImageInfo()->bytesPerPix;
+		unsigned short cs = myImg->GetImageInfo()->numColumns;
+		unsigned short rs = myImg->GetImageInfo()->numRows;
+		unsigned short zs = myImg->GetImageInfo()->numZSlices;
+		std::string name;
+		std::vector< std::vector <std::string> > FileNames = myImg->GetTimeChannelFilenames();
+		for(int Ch = 0; Ch  <myImg->GetImageInfo()->numChannels; Ch++)
+		{
+			for ( int T = 0; T <myImg->GetImageInfo()->numTSlices; T++ )
+			{
+				ftk::Image::Pointer ImageToSave = ftk::Image::New();
+			//	name = ftk::GetFilePath(FileNames.at(t).at(0))+ftk::GetFilenameFromFullPath(FileNames.at(t).at(0);
+				name = FileNames.at(T).at(Ch);
+				ImageToSave->AppendImageFromData3D(myImg->GetItkPtr<unsigned char>(T,Ch,mode)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
+				ok = ImageToSave->SaveChannelAs(0, name,"tif");
+			}
+		}
+	}
 
 	projectFiles.inputSaved = ok;
 	return ok;
@@ -878,9 +907,9 @@ bool NucleusEditor::askSaveResult()
 	QString filename;
 
 	if(labImg->GetImageInfo()->numChannels == 1)
-		filename = QFileDialog::getSaveFileName(this, tr("Save Result As..."),lastPath, tr("TIFF Image (*.tif)"));
+		filename = QFileDialog::getSaveFileName(this, tr("save result as..."),lastPath, tr("tiff image (*.tif)"));
 	else
-		filename = QFileDialog::getSaveFileName(this, tr("Save Result As..."),lastPath, tr("XML Image Definition(*.xml)"));
+		filename = QFileDialog::getSaveFileName(this, tr("save result as..."),lastPath, tr("xml image definition(*.xml)"));
 
 	if(filename == "")
 	{
@@ -890,7 +919,7 @@ bool NucleusEditor::askSaveResult()
 	{
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
-		projectFiles.output = QFileInfo(filename).fileName().toStdString();
+		projectFiles.input = QFileInfo(filename).fileName().toStdString();
 	}
 
 	return this->saveResult();
@@ -909,11 +938,37 @@ bool NucleusEditor::saveResult()
 	QString ext = QFileInfo(fullname).suffix();
 
 	bool ok;
-	if(ext == "xml")
-		ok = ftk::SaveXMLImage(fullname.toStdString(), labImg);
+	if(labImg->GetImageInfo()->numTSlices == 1)
+	{
+		if(ext == "xml")
+			ok = ftk::SaveXMLImage(fullname.toStdString(), labImg);
+		else{
+			ok = labImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
+		}
+		ok = labImg->SaveChannelAs(0, projectFiles.output,"tif");
+	}
 	else
-		ok = labImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
-
+	{
+		ftk::Image::PtrMode mode;
+		mode = static_cast<ftk::Image::PtrMode>(2);
+		ftk::Image::DataType dataType = labImg->GetImageInfo()->dataType;
+		unsigned char databpPix = labImg->GetImageInfo()->bytesPerPix;
+		unsigned short cs = labImg->GetImageInfo()->numColumns;
+		unsigned short rs = labImg->GetImageInfo()->numRows;
+		unsigned short zs = labImg->GetImageInfo()->numZSlices;
+		std::string name;
+		std::vector< std::vector <std::string> > FileNames = labImg->GetTimeChannelFilenames();
+		for ( int T = 0; T <labImg->GetImageInfo()->numTSlices; T++ )
+		{
+			ftk::Image::Pointer ImageToSave = ftk::Image::New();
+		//	name = ftk::GetFilePath(FileNames.at(t).at(0))+ftk::GetFilenameFromFullPath(FileNames.at(t).at(0);
+			name = FileNames.at(T).at(0);
+			ImageToSave->AppendImageFromData3D(labImg->GetItkPtr<short int>(T,0,mode)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
+			ok = ImageToSave->SaveChannelAs(0, name,"tif");
+		}
+	}
+	if(ok)
+		printf("done saving\n");
 	projectFiles.outputSaved = ok;
 	return ok;
 }
@@ -1393,9 +1448,11 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	//Display Images:
 	segView->SetChannelImage(myImg);
 	projectFiles.path = lastPath.toStdString();
-	projectFiles.inputSaved = true;
+	projectFiles.inputSaved = false;
 	projectFiles.input = "SeriesFileNames.xml";
 	projectFiles.type = "multi";
+	//ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
+
 	load5DLabelImageAction->setEnabled(true);
 }
 
@@ -2672,6 +2729,7 @@ void NucleusEditor::displayKymoGraph()
 	if(!labImg) return;
 	if(!myImg) return;
 	kymoView = new TrackingKymoView(myImg,nucSeg->featureVector4DImage,segView,selection);
+	myview = new Image3DView(myImg,labImg,segView,selection);	// Constructor
 
 }
 #endif
@@ -3829,7 +3887,7 @@ void NucleusEditor::CreateDefaultAssociationRules()
 void NucleusEditor::segmentNuclei()
 {
 	if(!myImg) return;
-
+	editMenu->setEnabled(true);
 	//Get Channels in current Image:
 	QVector<QString> chs = getChannelStrings();
 
