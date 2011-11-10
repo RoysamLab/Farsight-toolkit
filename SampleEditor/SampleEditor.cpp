@@ -488,7 +488,7 @@ void SampleEditor::showheatmap()
 
 	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
 	{
-		datas[i] = new double[this->data->GetNumberOfColumns() - 1 ];
+		datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2 ];
 	}
 
 

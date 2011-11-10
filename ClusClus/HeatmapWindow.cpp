@@ -1,5 +1,19 @@
 #include "HeatmapWindow.h"
- 
+#define COLOR_MAP_SIZE 64
+const static rgb COLORMAP[64] = {rgb(0.0000, 0.0000, 0.5625),rgb(0.0000, 0.0000, 0.6250),rgb(0.0000, 0.0000, 0.6875),rgb(0.0000, 0.0000, 0.7500),
+rgb(0.0000, 0.0000, 0.8125),rgb(0.0000, 0.0000, 0.8750),rgb(0.0000, 0.0000, 0.9375),rgb(0.0000, 0.0000, 1.0000),rgb(0.0000, 0.0625, 1.0000),
+rgb(0.0000, 0.1250, 1.0000),rgb(0.0000, 0.1875, 1.0000),rgb(0.0000, 0.2500, 1.0000),rgb(0.0000, 0.3125, 1.0000),rgb(0.0000, 0.3750, 1.0000),
+rgb(0.0000, 0.4375, 1.0000),rgb(0.0000, 0.5000, 1.0000),rgb(0.0000, 0.5625, 1.0000),rgb(0.0000, 0.6250, 1.0000),rgb(0.0000, 0.6875, 1.0000),
+rgb(0.0000, 0.7500, 1.0000),rgb(0.0000, 0.8125, 1.0000),rgb(0.0000, 0.8750, 1.0000),rgb(0.0000, 0.9375, 1.0000),rgb(0.0000, 1.0000, 1.0000),
+rgb(0.0625, 1.0000, 0.9375),rgb(0.1250, 1.0000, 0.8750),rgb(0.1875, 1.0000, 0.8125),rgb(0.2500, 1.0000, 0.7500),rgb(0.3125, 1.0000, 0.6875),
+rgb(0.3750, 1.0000, 0.6250),rgb(0.4375, 1.0000, 0.5625),rgb(0.5000, 1.0000, 0.5000),rgb(0.5625, 1.0000, 0.4375),rgb(0.6250, 1.0000, 0.3750),
+rgb(0.6875, 1.0000, 0.3125),rgb(0.7500, 1.0000, 0.2500),rgb(0.8125, 1.0000, 0.1875),rgb(0.8750, 1.0000, 0.1250),rgb(0.9375, 1.0000, 0.0625),
+rgb(1.0000, 1.0000, 0.0000),rgb(1.0000, 0.9375, 0.0000),rgb(1.0000, 0.8750, 0.0000),rgb(1.0000, 0.8125, 0.0000),rgb(1.0000, 0.7500, 0.0000),
+rgb(1.0000, 0.6875, 0.0000),rgb(1.0000, 0.6250, 0.0000),rgb(1.0000, 0.5625, 0.0000),rgb(1.0000, 0.5000, 0.0000),rgb(1.0000, 0.4375, 0.0000),
+rgb(1.0000, 0.3750, 0.0000),rgb(1.0000, 0.3125, 0.0000),rgb(1.0000, 0.2500, 0.0000),rgb(1.0000, 0.1875, 0.0000),rgb(1.0000, 0.1250, 0.0000),
+rgb(1.0000, 0.0625, 0.0000),rgb(1.0000, 0.0000, 0.0000),rgb(0.9375, 0.0000, 0.0000),rgb(0.8750, 0.0000, 0.0000),rgb(0.8125, 0.0000, 0.0000),
+rgb(0.7500, 0.0000, 0.0000),rgb(0.6875, 0.0000, 0.0000),rgb(0.6250, 0.0000, 0.0000),rgb(0.5625, 0.0000, 0.0000),rgb(0.5000, 0.0000, 0.0000)};
+
 vtkStandardNewMacro(MouseInteractorStyle);
 
 Heatmap::Heatmap(QWidget *parent)
@@ -29,6 +43,23 @@ Heatmap::Heatmap(QWidget *parent)
 	this->vertexColors2 = vtkSmartPointer<vtkIntArray>::New();
 	this->lookupTable1 = vtkSmartPointer<vtkLookupTable>::New();
 	this->lookupTable2 = vtkSmartPointer<vtkLookupTable>::New();
+
+	this->myCellPicker = vtkSmartPointer<vtkCellPicker>::New();
+///////////////////////////////////////////////////////////////////////////////////////////
+	denpoints1 = vtkSmartPointer<vtkPoints>::New();
+	denlines1 = vtkSmartPointer<vtkCellArray>::New();
+	denlinesPolyData1 =vtkSmartPointer<vtkPolyData>::New();
+	denmapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	denactor1 = vtkSmartPointer<vtkActor>::New();
+	dencolors1 = vtkSmartPointer<vtkUnsignedCharArray>::New();
+
+	denpoints2 = vtkSmartPointer<vtkPoints>::New();
+	denlines2 = vtkSmartPointer<vtkCellArray>::New();
+	denlinesPolyData2 =vtkSmartPointer<vtkPolyData>::New();
+	denmapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	denactor2 = vtkSmartPointer<vtkActor>::New();
+	dencolors2 = vtkSmartPointer<vtkUnsignedCharArray>::New();
+///////////////////////////////////////////////////////////////////////////////////////////
 }
 
 Heatmap::~Heatmap()
@@ -37,6 +68,35 @@ Heatmap::~Heatmap()
 
 void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
 {
+	this->mapdata = features;
+	this->Optimal_Leaf_Order1 = optimalleaforder1;
+	this->Optimal_Leaf_Order2 = optimalleaforder2;
+	this->num_samples = num_samples;
+	this->num_features = num_features;
+}
+
+void Heatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
+{
+	double max = features[0][0];
+	for( int i = 0; i < num_samples; i++)
+	{
+		for( int j = 0; j < num_features; j++)
+		{
+			if( features[i][j] > max)
+			{
+				max = features[i][j];
+			}
+		}
+	}
+
+	for( int i = 0; i < num_samples; i++)
+	{
+		for( int j = 0; j < num_features; j++)
+		{
+			features[i][j] = features[i][j] / max;
+		}
+	}
+
 	this->mapdata = features;
 	this->Optimal_Leaf_Order1 = optimalleaforder1;
 	this->Optimal_Leaf_Order2 = optimalleaforder2;
@@ -55,7 +115,6 @@ void Heatmap::creatDataForHeatmap()
 	tempdata = new double*[this->num_samples];
 	for(int i = 0; i < this->num_samples; i++)
 		tempdata[i] = new double[this->num_features];
-	/////
 
 	for(int i = 0; i < this->num_samples; i++)
 	{
@@ -86,13 +145,53 @@ void Heatmap::creatDataForHeatmap()
 	for(int i=0; i<this->num_samples; i++)
 	{
 		for(int j=0; j<this->num_features; j++)
-			fprintf(fp,"%14.7e\t",mapdata[i][j]);
+			fprintf(fp,"%.4f\t",mapdata[i][j]);
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
 //////////////////////////////////////////////
 	this->createDataForDendogram1();
 	this->createDataForDendogram2();
+}
+
+void Heatmap::creatDataForSimilarMatrixHeatmap()
+{
+	const char* filename = "heatmapdata.txt";
+	FILE *fp = fopen(filename,"w");
+	for(int i=0; i<this->num_samples; i++)
+	{
+		for(int j=0; j<this->num_features; j++)
+			fprintf(fp,"%.4f\t",mapdata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fprintf(fp,"\n");
+
+	double** tempdata;
+	tempdata = new double*[this->num_samples];
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		tempdata[i] = new double[this->num_features];
+	}
+
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order2[j]];
+		}
+	}
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		mapdata[i] = tempdata[Optimal_Leaf_Order1[i]]; 
+	}
+
+	for(int i=0; i<this->num_samples; i++)
+	{
+		for(int j=0; j<this->num_features; j++)
+			fprintf(fp,"%.4f\t",mapdata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 }
 
 void Heatmap::scaleData()
@@ -113,7 +212,7 @@ void Heatmap::scaleData()
 	}
 }
 
-void Heatmap::setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL)
+void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	if(!sels)
 		this->Selection = new ObjectSelection();
@@ -131,6 +230,7 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection 
 
 void Heatmap::showGraph()
 {	
+	this->removeActorflag = 0;
 	this->drawPoints1();
 	this->drawPoints2();
     this->aPlane->SetXResolution(this->num_features);
@@ -173,6 +273,19 @@ void Heatmap::showGraph()
 	this->view->ApplyViewTheme(theme);
 ////////////////////////////////////////////////////////////
 
+	this->view->GetInteractor()->SetPicker(this->myCellPicker);
+	this->myCellPicker->SetTolerance(0.004);
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback2 =vtkSmartPointer<vtkCallbackCommand>::New();
+	selectionCallback2->SetClientData(this);
+	selectionCallback2->SetCallback(SelectionCallbackFunction2 );
+
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback3 =vtkSmartPointer<vtkCallbackCommand>::New();
+	selectionCallback3->SetClientData(this);
+	selectionCallback3->SetCallback(SelectionCallbackFunction3);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonReleaseEvent);
+	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonPressEvent, selectionCallback2);
+	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback3);
 	// Setup actor and mapper
 	this->mapper->SetInputConnection(aPlane->GetOutputPort());
 	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
@@ -190,12 +303,95 @@ void Heatmap::showGraph()
 	/this->view->GetInteractor()->SetInteractorStyle(style);*/
 
 	this->view->GetRenderer()->AddActor(actor);
-	this->view->GetRenderer()->SetBackground(1,1,1);
+	this->view->GetRenderer()->SetBackground(255,255,255);
 
 	this->showDendrogram1();
 	this->showDendrogram2();
 	this->view->Render();
 	this->view->GetInteractor()->Start();
+}
+
+void Heatmap::showSimilarMatrixGraph()
+{	
+    this->aPlane->SetXResolution(this->num_features);
+    this->aPlane->SetYResolution(this->num_samples);
+
+	int index = 0;
+
+	for (int i = 0; i < this->num_samples; i++)
+    {
+		for(int j = 0; j < this->num_features; j++)
+		{
+			cellData->InsertNextValue(index++);
+		}
+    }
+	
+	this->lookuptable->SetNumberOfTableValues(this->num_samples*this->num_features);
+	this->lookuptable->SetTableRange(0, this->num_samples*this->num_features - 1);   
+	this->lookuptable->Build();
+
+	int k = 0;
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			rgb rgb = GetRGBValue( mapdata[num_samples - i - 1][j]);
+			lookuptable->SetTableValue(k++, rgb.r, rgb.g, rgb.b);
+		}
+	}
+
+	this->aPlane->Update(); // Force an update so we can set cell data
+	this->aPlane->GetOutput()->GetCellData()->SetScalars(cellData);
+
+
+	this->theme->SetCellValueRange(0, this->num_samples*this->num_features - 1);
+	this->theme->SetSelectedCellColor(1,0,1);
+	this->theme->SetSelectedPointColor(1,0,1);
+	this->view->ApplyViewTheme(theme);
+
+	this->view->GetInteractor()->SetPicker(this->myCellPicker);
+	this->myCellPicker->SetTolerance(0.004);
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback2 =vtkSmartPointer<vtkCallbackCommand>::New();
+	selectionCallback2->SetClientData(this);
+	selectionCallback2->SetCallback(SelectionCallbackFunction2 );
+
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback3 =vtkSmartPointer<vtkCallbackCommand>::New();
+	selectionCallback3->SetClientData(this);
+	selectionCallback3->SetCallback(SelectionCallbackFunction3);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonReleaseEvent);
+	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonPressEvent, selectionCallback2);
+	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback3);
+
+	// Setup actor and mapper
+	this->mapper->SetInputConnection(aPlane->GetOutputPort());
+	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
+	this->mapper->SetLookupTable(lookuptable);
+	this->actor->SetMapper(mapper);
+	
+	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
+	this->mainQTRenderWidget.resize(600, 600);
+	this->mainQTRenderWidget.show();
+
+	this->view->GetRenderer()->AddActor(actor);
+	this->view->GetRenderer()->SetBackground(1,1,1);
+
+	this->view->Render();
+	this->view->GetInteractor()->Start();
+}
+
+rgb Heatmap::GetRGBValue(double val)
+{
+	int index = COLOR_MAP_SIZE * val - 1;   // when val = 1; index should be the max index
+	if( index >= COLOR_MAP_SIZE)
+	{
+		index = COLOR_MAP_SIZE - 1;
+	}
+	else if( index < 0)
+	{
+		index = 0;
+	}
+	return COLORMAP[index];
 }
 
 void Heatmap::setDataForDendrograms(double** treedata1, double** treedata2)
@@ -231,10 +427,11 @@ void Heatmap::createDataForDendogram1()
 
 	for(int i = 0; i < num_samples-1; i++)
 	{
-		connect_Data_Tree1[i][2] = pow(connect_Data_Tree1[i][2], 0.2);
-		connect_Data_Tree1[i][2] /= pow(connect_Data_Tree1[num_samples-2][2], 0.2);
+		connect_Data_Tree1[i][2] = pow(connect_Data_Tree1[i][2], 0.15);
+		connect_Data_Tree1[i][2] /= pow(connect_Data_Tree1[num_samples-2][2], 0.15);
+		connect_Data_Tree1[i][2] /= 2;
 	}
-	connect_Data_Tree1[num_samples-2][2] = 1;
+	connect_Data_Tree1[num_samples-2][2] = 0.5;
 
 	for(int i = num_samples ; i < 2*num_samples - 1; i++)
 	{
@@ -284,10 +481,11 @@ void Heatmap::createDataForDendogram2()
 
 	for(int i = 0; i < num_features-1; i++)
 	{
-		connect_Data_Tree2[i][2] = pow(connect_Data_Tree2[i][2], 0.2);
-		connect_Data_Tree2[i][2] /= pow(connect_Data_Tree2[num_features - 2][2], 0.2);
+		connect_Data_Tree2[i][2] = pow(connect_Data_Tree2[i][2], 0.15);
+		connect_Data_Tree2[i][2] /= pow(connect_Data_Tree2[num_features - 2][2], 0.15);
+		connect_Data_Tree2[i][2] /= 2;
 	}
-	connect_Data_Tree2[num_features - 2][2] = 1;
+	connect_Data_Tree2[num_features - 2][2] = 0.5;
 
 	for(int i = num_features ; i < 2*num_features - 1; i++)
 	{
@@ -317,6 +515,15 @@ void Heatmap::showDendrogram1()
 	double p3[3];
 	double p4[3];
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	dencolors1->SetNumberOfComponents(3);
+	dencolors1->SetName("denColors1");
+	unsigned char color[3] = {0, 0, 0};
+
+	for(int i=0; i<3*(this->num_samples - 1);i++)
+		dencolors1->InsertNextTupleValue(color);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	for(int i=0; i<this->num_samples-1;i++)
 	{
 		double temp1 = this->connect_Data_Tree1[i][0];
@@ -345,48 +552,37 @@ void Heatmap::showDendrogram1()
         p4[0]=-connect_Data_Tree1[i][2] - 0.5;
         p4[1]=p2[1];
         p4[2]=p2[2];
+//////////////////////////////////////////////////////////////////////////////////////////////
+		denpoints1->InsertNextPoint(p1);
+		denpoints1->InsertNextPoint(p2);
+		denpoints1->InsertNextPoint(p3);
+		denpoints1->InsertNextPoint(p4);
 
-		vtkSmartPointer<vtkLineSource> lineSource1 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource1->SetPoint1(p1);
-		lineSource1->SetPoint2(p3);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper1->SetInputConnection(lineSource1->GetOutputPort());
+		vtkSmartPointer<vtkLine> line0 = vtkSmartPointer<vtkLine>::New();
+		line0->GetPointIds()->SetId(0,0 + i*4);
+		line0->GetPointIds()->SetId(1,2 + i*4);
+		denlines1->InsertNextCell(line0);
 
-		vtkSmartPointer<vtkActor> actor1 = vtkSmartPointer<vtkActor>::New();
-		actor1->GetProperty()->SetColor(0.5,0.7,0); //set the colours of the line of the dendrogram
-		actor1->GetProperty()->SetLineWidth(0.5);
-		actor1->SetMapper(mapper1);
-		this->view->GetRenderer()->AddActor(actor1);
+		vtkSmartPointer<vtkLine> line1 = vtkSmartPointer<vtkLine>::New();
+		line1->GetPointIds()->SetId(0,1 + i*4);
+		line1->GetPointIds()->SetId(1,3 + i*4);
+		denlines1->InsertNextCell(line1);
 
-		vtkSmartPointer<vtkLineSource> lineSource2 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource2->SetPoint1(p2);
-		lineSource2->SetPoint2(p4);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper2->SetInputConnection(lineSource2->GetOutputPort());
-
-		vtkSmartPointer<vtkActor> actor2 = vtkSmartPointer<vtkActor>::New();
-		actor2->SetMapper(mapper2);
-		actor2->GetProperty()->SetColor(0.5,0.7,0);
-		actor2->GetProperty()->SetLineWidth(0.5);
-		this->view->GetRenderer()->AddActor(actor2);
-
-		vtkSmartPointer<vtkLineSource> lineSource3 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource3->SetPoint1(p3);
-		lineSource3->SetPoint2(p4);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper3 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper3->SetInputConnection(lineSource3->GetOutputPort());
-
-		vtkSmartPointer<vtkActor> actor3 = vtkSmartPointer<vtkActor>::New();
-		actor3->GetProperty()->SetColor(0.5,0.7,0);
-		actor3->GetProperty()->SetLineWidth(0.5);
-		actor3->SetMapper(mapper3);
-		this->view->GetRenderer()->AddActor(actor3);
-
-		//this->view->Render();
+		vtkSmartPointer<vtkLine> line2 = vtkSmartPointer<vtkLine>::New();
+		line2->GetPointIds()->SetId(0,2 + i*4);
+		line2->GetPointIds()->SetId(1,3 + i*4);
+		denlines1->InsertNextCell(line2);
 	}
+
+	denlinesPolyData1->SetPoints(denpoints1);
+	denlinesPolyData1->SetLines(denlines1);
+	denlinesPolyData1->GetCellData()->SetScalars(dencolors1);
+
+	denmapper1->SetInput(denlinesPolyData1);
+	denactor1->SetMapper(denmapper1);
+	denmapper1->SetScalarRange(0, 3*this->num_samples-1);
+	this->view->GetRenderer()->AddActor(denactor1);
+	this->view->Render();
 }
 
 void Heatmap::showDendrogram2()
@@ -395,6 +591,14 @@ void Heatmap::showDendrogram2()
 	double p2[3];
 	double p3[3];
 	double p4[3];
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	dencolors2->SetNumberOfComponents(3);
+	dencolors2->SetName("denColors2");
+	unsigned char color[3] = {0, 0, 0};
+
+	for(int i=0; i<3*(this->num_features - 1);i++)
+		dencolors2->InsertNextTupleValue(color);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	for(int i=0; i<this->num_features-1; i++)
 	{
@@ -425,48 +629,36 @@ void Heatmap::showDendrogram2()
         p4[1]=this->connect_Data_Tree2[i][2] + 0.5;
         p4[2]=p2[2];
 
-		vtkSmartPointer<vtkLineSource> lineSource1 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource1->SetPoint1(p1);
-		lineSource1->SetPoint2(p3);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper1->SetInputConnection(lineSource1->GetOutputPort());
+		denpoints2->InsertNextPoint(p1);
+		denpoints2->InsertNextPoint(p2);
+		denpoints2->InsertNextPoint(p3);
+		denpoints2->InsertNextPoint(p4);
 
-		vtkSmartPointer<vtkActor> actor1 = vtkSmartPointer<vtkActor>::New();
-		actor1->GetProperty()->SetColor(0.5,0.7,0); //set the colours of the line of the dendrogram
-		actor1->GetProperty()->SetLineWidth(0.5);
-		actor1->SetMapper(mapper1);
-		this->view->GetRenderer()->AddActor(actor1);
+		vtkSmartPointer<vtkLine> line0 = vtkSmartPointer<vtkLine>::New();
+		line0->GetPointIds()->SetId(0,0 + i*4);
+		line0->GetPointIds()->SetId(1,2 + i*4);
+		denlines2->InsertNextCell(line0);
 
-		vtkSmartPointer<vtkLineSource> lineSource2 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource2->SetPoint1(p2);
-		lineSource2->SetPoint2(p4);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper2->SetInputConnection(lineSource2->GetOutputPort());
+		vtkSmartPointer<vtkLine> line1 = vtkSmartPointer<vtkLine>::New();
+		line1->GetPointIds()->SetId(0,1 + i*4);
+		line1->GetPointIds()->SetId(1,3 + i*4);
+		denlines2->InsertNextCell(line1);
 
-		vtkSmartPointer<vtkActor> actor2 = vtkSmartPointer<vtkActor>::New();
-		actor2->SetMapper(mapper2);
-		actor2->GetProperty()->SetColor(0.5,0.7,0);
-		actor2->GetProperty()->SetLineWidth(0.5);
-		this->view->GetRenderer()->AddActor(actor2);
-
-		vtkSmartPointer<vtkLineSource> lineSource3 = vtkSmartPointer<vtkLineSource>::New();
-		lineSource3->SetPoint1(p3);
-		lineSource3->SetPoint2(p4);
-	   
-		vtkSmartPointer<vtkPolyDataMapper> mapper3 = vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper3->SetInputConnection(lineSource3->GetOutputPort());
-
-		vtkSmartPointer<vtkActor> actor3 = vtkSmartPointer<vtkActor>::New();
-		actor3->GetProperty()->SetColor(0.5,0.7,0);
-		actor3->GetProperty()->SetLineWidth(0.5);
-		actor3->SetMapper(mapper3);
-		this->view->GetRenderer()->AddActor(actor3);
-
-		//this->view->Render();
-
+		vtkSmartPointer<vtkLine> line2 = vtkSmartPointer<vtkLine>::New();
+		line2->GetPointIds()->SetId(0,2 + i*4);
+		line2->GetPointIds()->SetId(1,3 + i*4);
+		denlines2->InsertNextCell(line2);
 	}
+
+	denlinesPolyData2->SetPoints(denpoints2);
+	denlinesPolyData2->SetLines(denlines2);
+	denlinesPolyData2->GetCellData()->SetScalars(dencolors2);
+
+	denmapper2->SetInput(denlinesPolyData2);
+	denactor2->SetMapper(denmapper2);
+	denmapper2->SetScalarRange(0, 3*this->num_features-1);
+	this->view->GetRenderer()->AddActor(denactor2);
+	this->view->Render();
 }
 
 void Heatmap::GetSelecectedIDs()
@@ -545,11 +737,20 @@ void Heatmap::GetSelecectedIDs()
 	vtkSmartPointer<vtkActor> selectedActor = vtkSmartPointer<vtkActor>::New();
 	selectedActor->SetMapper(selectedMapper);
 	selectedActor->GetProperty()->EdgeVisibilityOn();
-	selectedActor->GetProperty()->SetEdgeColor(1,0,1);
+	selectedActor->GetProperty()->SetEdgeColor(1,1,1);
 	selectedActor->GetProperty()->SetLineWidth(0.5);
 	
-	this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+	cout<<"outsideremoveActorflag...."<<removeActorflag<<endl;
+	if (this->removeActorflag != 0 && this->removeActorflag%2 ==0)
+	{
+		cout<<"insideremoveActorflag...."<<removeActorflag<<endl;
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+	}
+	//this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
 	this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+	this->removeActorflag += 1;
+	this->view->Render();	
 }
 
 /*void Heatmap::GetSelecectedIDs2()
@@ -579,7 +780,7 @@ void Heatmap::drawPoints1()
     lookupTable1->SetNumberOfTableValues(2*(this->num_samples)-1 + 2*(this->num_features)-1);
     for(int i=0; i<(2*(this->num_samples)-1) + (2*(this->num_features)-1);i++)
     {
-		lookupTable1->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
+		lookupTable1->SetTableValue(i, 0.5, 0.5,0.5); // color the vertices- blue
     }  
     lookupTable1->Build();
    
@@ -590,7 +791,7 @@ void Heatmap::drawPoints1()
     for(int j=0;j<(2*(this->num_samples)-1) + (2*(this->num_features)-1);j++)
     {
 		vertexColors1->InsertNextValue(j);
-		scales1->InsertNextValue(1.3);
+		scales1->InsertNextValue(0.5);
     }
 
 	this->graph_Layout1->GetVertexData()->AddArray(vertexColors1);
@@ -623,6 +824,7 @@ void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int ev
 
 	vtkSelectionNode* vertices = NULL;
 	vtkSelectionNode* edges = NULL;
+	vtkSelectionNode* cells = NULL;
 
     if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
         {
@@ -657,10 +859,95 @@ void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int ev
 			}
 		}
 
+		for(int i = 0; i<heatmapWin->dencolors1->GetSize() ; i++)
+			heatmapWin->dencolors1->SetValue(i, 0);
+		for(int i = 0; i<heatmapWin->dencolors2->GetSize() ; i++)
+			heatmapWin->dencolors2->SetValue(i, 0);
 		heatmapWin->SetdenSelectedIds1( IDs);
 	}
 }
 
+
+void Heatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	//cout<<"vtkselectionhaha2222222.............................."<<endl;
+	// Get the location of the click (in window coordinates)
+	Heatmap* heatmapWin = (Heatmap*)clientData;
+	int* pos = heatmapWin->view->GetInteractor()->GetEventPosition();
+ 
+	vtkCellPicker *cell_picker = (vtkCellPicker *)heatmapWin->view->GetInteractor()->GetPicker();
+	//vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
+	//cell_picker->SetTolerance(0.0005);
+ 
+	// Pick from this location.
+	cell_picker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
+	double* worldPosition = cell_picker->GetPickPosition();
+
+	//std::cout << "Pick position is: " << worldPosition[0] << " " << worldPosition[1] << " " << worldPosition[2] << endl;
+ 
+	if((worldPosition[0]<=0.5) && (worldPosition[0]>=-0.5) && (worldPosition[1]<=0.5) && (worldPosition[0]>=-0.5))
+	{
+		vtkSmartPointer<vtkCellPicker> cellpicker = vtkSmartPointer<vtkCellPicker>::New();
+		cellpicker->SetTolerance(0.0005);
+ 
+		// Pick from this location.
+		cellpicker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
+ 
+		double* worldPosition = cellpicker->GetPickPosition();
+		//std::cout << "Cell id is: " << cellpicker->GetCellId() << std::endl;
+
+		if(cellpicker->GetCellId() != -1)
+		{
+			//std::cout << "Pick position is: " << worldPosition[0] << " " << worldPosition[1] << " " << worldPosition[2] << endl;
+	 
+			heatmapWin->id1 = cellpicker->GetCellId();
+		}
+	}
+	//cout<<"haha"<<endl;
+}
+
+void Heatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	//cout<<"vtkselectionhaha2222222.............................."<<endl;
+	// Get the location of the click (in window coordinates)
+	Heatmap* heatmapWin = (Heatmap*)clientData;
+	int* pos = heatmapWin->view->GetInteractor()->GetEventPosition();
+ 
+	vtkCellPicker *cell_picker = (vtkCellPicker *)heatmapWin->view->GetInteractor()->GetPicker();
+	//vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
+	//cell_picker->SetTolerance(0.0005);
+ 
+	// Pick from this location.
+	cell_picker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
+	double* worldPosition = cell_picker->GetPickPosition();
+
+	//std::cout << "Pick position is: " << worldPosition[0] << " " << worldPosition[1] << " " << worldPosition[2] << endl;
+ 
+	if((worldPosition[0]<=0.5) && (worldPosition[0]>=-0.5) && (worldPosition[1]<=0.5) && (worldPosition[0]>=-0.5))
+	{
+		vtkSmartPointer<vtkCellPicker> cellpicker = vtkSmartPointer<vtkCellPicker>::New();
+		cellpicker->SetTolerance(0.0005);
+ 
+		// Pick from this location.
+		cellpicker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
+ 
+		double* worldPosition = cellpicker->GetPickPosition();
+		//std::cout << "Cell id is: " << cellpicker->GetCellId() << std::endl;
+
+		if(cellpicker->GetCellId() != -1)
+		{
+			//std::cout << "Pick position is: " << worldPosition[0] << " " << worldPosition[1] << " " << worldPosition[2] << endl;
+	 
+			heatmapWin->id2 = cellpicker->GetCellId();
+			heatmapWin->ids = vtkSmartPointer<vtkIdTypeArray>::New();
+			heatmapWin->ids->SetNumberOfComponents(1);
+			heatmapWin->computeselectedcells();
+			heatmapWin->setselectedCellIds();
+			emit heatmapWin->SelChanged();
+		}
+	}
+	//cout<<"haha"<<endl;
+}
 
 void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 {
@@ -689,9 +976,26 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 		{
 			selectedIDs2.insert(i);
 		}
+
+		cout<<"color table................"<<endl;
+		for(int i = 0; i<dencolors1->GetSize() ; i++)
+		{
+			unsigned char ch = dencolors1->GetValue(i);
+			cout<<(int)ch << " ";
+		}		
+		cout<<endl;
+
+		denmapper1->ScalarVisibilityOn();
+		denlinesPolyData1->Modified();
+		denlinesPolyData1->Update();
+		denmapper1->Modified();
+		denmapper1->Update();
+		denactor1->Modified();
+		this->view->Render();
+
+
 		this->Selection2->select(selectedIDs2);
 		this->Selection->select(selectedIDs1);
-
 	}
 
 	else if(selectedIDs2.size() > 0)	
@@ -702,6 +1006,14 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 			selectedIDs1.insert(i);
 		}
 		this->Selection->select(selectedIDs1);
+
+		denmapper2->ScalarVisibilityOn();
+		denlinesPolyData2->Modified();
+		denlinesPolyData2->Update();
+		denmapper2->Modified();
+		denmapper2->Update();
+		denactor2->Modified();
+		this->view->Render();
 	}
 
 	else
@@ -723,6 +1035,15 @@ void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 		{
 			if(id == connect_Data_Tree1[i][3])
 			{
+				this->dencolors1->SetValue((id - this->num_samples)*9, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 1, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 2, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 3, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 4, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 5, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 6, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 7, 255);
+				this->dencolors1->SetValue((id - this->num_samples)*9 + 8, 255);
 				this->reselectIds1(selectedIDs, connect_Data_Tree1[i][0]);
 				this->reselectIds1(selectedIDs, connect_Data_Tree1[i][1]);
 			}
@@ -741,12 +1062,80 @@ void Heatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
 		{
 			if(id == connect_Data_Tree2[i][3])
 			{
+				this->dencolors2->SetValue((id - this->num_features)*9, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 1, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 2, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 3, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 4, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 5, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 6, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 7, 255);
+				this->dencolors2->SetValue((id - this->num_features)*9 + 8, 255);
 				this->reselectIds2(selectedIDs2, connect_Data_Tree2[i][0]);
 				this->reselectIds2(selectedIDs2, connect_Data_Tree2[i][1]);
 			}
 		}
 	}
 }
+
+void Heatmap::computeselectedcells()
+{
+	this->r1 = id1/this->num_features;
+	this->r2 = id2/this->num_features;
+	this->c1 = id1%this->num_features;
+	this->c2 = id2%this->num_features;
+
+	cout<<"r1: "<<r1<<"\t";
+	cout<<"r2: "<<r2<<"\t";
+	cout<<"c1: "<<c1<<"\t";
+	cout<<"c2: "<<c2<<endl;
+
+	for(int i = 0; i <= r1 - r2; i++)
+	{
+		for(int j = 0; j <= c2 - c1; j++)
+		{
+			ids->InsertNextValue(id2 - j + this->num_features*i);
+		}
+	}
+}
+
+void Heatmap::setselectedCellIds()
+{
+	std::set<long int> selectedIDs1;
+	std::set<long int> selectedIDs2;
+
+	for(int i = r2; i<=r1; i++)
+	{
+		selectedIDs1.insert(this->Optimal_Leaf_Order1[i]);
+	}
+	for(int j = c1; j<=c2; j++)
+	{		
+		selectedIDs2.insert(this->Optimal_Leaf_Order2[j]);
+	}
+
+	this->Selection2->select(selectedIDs2);
+	this->Selection->select(selectedIDs1);
+}
+
+void Heatmap::GetSelRowCol(int &r1, int &c1, int &r2, int &c2)
+{
+	r1 = this->r1;
+	r2 = this->r2;
+	c1 = this->c1;
+	c2 = this->c2;
+}
+
+void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
+{
+	this->r1 = r1;
+	this->r2 = r2;
+	this->c1 = c1;
+	this->c2 = c2;
+	
+	setselectedCellIds();	
+}
+
+
 MouseInteractorStyle::MouseInteractorStyle()
 {
 	selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
@@ -913,3 +1302,4 @@ void MouseInteractorStyle::setselectedIds()
 	this->hm->Selection2->select(selectedIDs2);
 	this->hm->Selection->select(selectedIDs1);
 }
+

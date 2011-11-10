@@ -105,6 +105,7 @@
 #include <vtkSelection.h>
 #include <vtkExtractSelection.h>
 #include <vtkObjectFactory.h>
+#include <vtkLine.h>
 
 #include <boost/math/distributions/normal.hpp>
 
@@ -115,6 +116,19 @@ using namespace std;
 
 class MouseInteractorStyle;
 
+typedef struct srgb
+{
+	srgb( double rv, double gv, double bv)
+	{
+		r = rv;
+		g = gv;
+		b = bv;
+	};
+	double r;
+	double g;
+	double b;
+}rgb;
+
 class Heatmap : public QMainWindow
 {
     Q_OBJECT;
@@ -123,10 +137,15 @@ public:
 	Heatmap(QWidget * parent = 0);
 	~Heatmap();
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
+	void setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2);
 	void creatDataForHeatmap();
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2);
+	void creatDataForSimilarMatrixHeatmap();
+	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void showGraph();
+	void showSimilarMatrixGraph();
+	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
+	void SetSelRowCol(int r1, int c1, int r2, int c2);
 
 	double** mapdata;
 	double** connect_Data_Tree1;
@@ -142,12 +161,17 @@ public:
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
 
+signals:
+	void SelChanged();
+
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs);
 	//void SetdenSelectedIds2(std::set<long int>& IDs);
 	void GetSelecectedIDs();
 	//void GetSelecectedIDs2();
-	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );	
+	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 
 private:
 	QVTKWidget mainQTRenderWidget;
@@ -174,7 +198,27 @@ private:
 	vtkSmartPointer<vtkLookupTable> lookupTable2;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback1;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback2;
-	
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback3;
+	vtkSmartPointer<vtkCellPicker> myCellPicker;
+	vtkSmartPointer<vtkIdTypeArray> ids;
+
+/////////////////////////////////////////////////////////////////////
+	vtkSmartPointer<vtkPoints> denpoints1;
+	vtkSmartPointer<vtkCellArray> denlines1;
+	vtkSmartPointer<vtkPolyData> denlinesPolyData1;
+	vtkSmartPointer<vtkPolyDataMapper> denmapper1;
+	vtkSmartPointer<vtkActor> denactor1;
+	vtkSmartPointer<vtkUnsignedCharArray> dencolors1;
+
+	vtkSmartPointer<vtkPoints> denpoints2;
+	vtkSmartPointer<vtkCellArray> denlines2;
+	vtkSmartPointer<vtkPolyData> denlinesPolyData2;
+	vtkSmartPointer<vtkPolyDataMapper> denmapper2;
+	vtkSmartPointer<vtkActor> denactor2;
+	vtkSmartPointer<vtkUnsignedCharArray> dencolors2;
+///////////////////////////////////////////////////////////////////////////
+	void computeselectedcells();
+	void setselectedCellIds();
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
 	void createDataForDendogram1();
@@ -184,7 +228,14 @@ private:
 	void scaleData();
 	void drawPoints1();
 	void drawPoints2();
-
+	rgb GetRGBValue(double val);
+	vtkIdType id1;
+	vtkIdType id2;
+	int r1;
+	int r2;
+	int c1;
+	int c2;
+	int removeActorflag;
 };
 
 

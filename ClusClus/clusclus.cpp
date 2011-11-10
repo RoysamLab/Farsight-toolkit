@@ -8,7 +8,7 @@ clusclus::clusclus(const char* filename)
 {
 	this->num_features = 0;
 	this->num_samples = 0;
-	this->num_gaps = 20;
+	this->num_gaps = 5;
 	this->features = NULL;
 	this->sample_distances = NULL;
 	this->cluster_distances = NULL;
@@ -33,7 +33,7 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 	this->members = NULL;
 	this->gap = NULL;
 	this->linkmode = 2;
-	this->num_gaps = 20;
+	this->num_gaps = 5;
 
 	this->mergers = new double*[num_samples-1];
 	this->progress = new int*[num_samples];
@@ -372,7 +372,7 @@ void clusclus::WriteClusteringOutputToFile(const char *filename1, const char *fi
 	fclose(fp4);
 
 	FILE *fp5 = fopen(filename5,"w");
-	for(int i=0; i<20; i++)
+	for(int i=0; i<num_gaps; i++)
 	{
 		for(int j=0; j<8; j++)
 			fprintf(fp5,"%14.7e\t",gap[i][j]);
