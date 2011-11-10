@@ -470,7 +470,6 @@ std::vector<std::string> GetSeriesPaths(std::string filename){
 }
 
 
-
 ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 {
 	/*!
@@ -518,7 +517,7 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 
 	return img;
 }
-bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image)
+bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image, std::string path)
 {
 	if(seriesfilename == "")
 		return false;
@@ -532,7 +531,7 @@ bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image)
 		filenames = image->GetTimeChannelFilenames();
 
 	//seriesfilename = GetFilePath(filenames.at(0))+"\\"+seriesfilename ;
-	seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+seriesfilename ;
+	seriesfilename = path+seriesfilename ;
 	TiXmlDocument doc;    
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root ); 
@@ -544,8 +543,6 @@ bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image)
 		// write the xml file containing the xml file names (time file names) of other xml files representing channels
 		TiXmlElement * file = new TiXmlElement("file");
 	//	std::string path = GetFilePath(filenames.at(i));
-		std::string path = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory";
-
 		//std::string fullname = GetFilenameFromFullPath(filenames.at(i).at(0));		// first channel is assumed to be segmented nucleus
 		//std::string fname = path+"\\"+"labeled_"+fullname;
 		file->LinkEndChild( new TiXmlText( filenames.at(i).at(0).c_str() ) );
@@ -558,7 +555,7 @@ bool SaveLabelSeries(std::string seriesfilename,ftk::Image::Pointer image)
 		return false;
 }	
 
-bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
+bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image, std::string path)
 {
 	if(!image)
 		return false;
@@ -576,7 +573,7 @@ bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
 		filenames = image->GetTimeChannelFilenames();	
 
 	//seriesfilename = GetFilePath(filenames.at(0).at(0))+"\\"+seriesfilename ;
-	seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+seriesfilename ;
+	seriesfilename = path+seriesfilename ;
 	TiXmlDocument doc;    
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root ); 
@@ -587,7 +584,7 @@ bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image)
 		TiXmlElement * file = new TiXmlElement("file");
 		std::stringstream ss;//create a stringstream
 		ss << i+1;
-		std::string xmlfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\series_time_"+ss.str()+".xml";
+		std::string xmlfilename = path+"series_time_"+ss.str()+".xml";
 		file->LinkEndChild( new TiXmlText( xmlfilename.c_str() ) );
 		root->LinkEndChild(file);
 
