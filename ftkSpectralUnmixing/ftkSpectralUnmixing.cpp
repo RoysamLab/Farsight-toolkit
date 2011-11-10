@@ -56,7 +56,7 @@ void SpectralUnmixing::Update(void)
 		imdata[ch] = Image->GetItkPtr<InputPixelType>(0,ch,mode);
 	}
 	vnl_matrix<double> FingerPrintMatrix = GetFingerPrintMatrix(imdata);
-	printf("Finished Estimating from first Image, I am gonna use it to unmix everything else");
+	printf("Finished Estimating from first Image, I am gonna use it to unmix everything else\n");
 	
 	int numTSlices = (int)Image->GetImageInfo()->numTSlices;
 	for(int T=0; T<numTSlices; ++T)
@@ -69,7 +69,6 @@ void SpectralUnmixing::Update(void)
 			im[ch] = Image->GetItkPtr<InputPixelType>(T,ch,mode);
 		}
 		printf("Initiating unmixing for T = %d\n",T);
-
 		UnmixClustering(im,om,FingerPrintMatrix);
 		printf("Finished UnmixClustering for T = %d\n",T);
 	}
@@ -594,7 +593,7 @@ void SpectralUnmixing::ConvertOutputToftk(void)
 		{
 			std::stringstream ss;
 			ss<<ch;
-			std::string name = ftk::GetFilePath(FileNames.at(i).at(ch))+"\\unmixed_channnel"+ss.str()+"_"+ftk::GetFilenameFromFullPath(FileNames.at(i).at(ch));
+			std::string name = ftk::GetFilePath(FileNames.at(i).at(ch))+"\\unmixed_ch"+ss.str()+"_"+ftk::GetFilenameFromFullPath(FileNames.at(i).at(ch));
 			tmp_file.push_back(name);
 			std::cout<<name<<std::endl;
 		}
