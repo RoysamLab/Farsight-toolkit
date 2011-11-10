@@ -21,6 +21,7 @@ limitations under the License.
 #include <vtksys/hash_map.hxx> /* Platform independent hashmap */
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
+#include "vtkIdTypeArray.h"
 
 class TraceBit;
 class TraceLine;
