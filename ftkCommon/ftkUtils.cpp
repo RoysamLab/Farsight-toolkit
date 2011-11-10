@@ -281,27 +281,10 @@ std::vector< vtkSmartPointer<vtkTable> > LoadTableSeries(std::string filename)
 
 
 
-bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage)
+bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage,std::string path)
 {
-	/*!
-	* Saves a series of data tables into a 
-	*/
-	//std::vector< vtkSmartPointer<vtkTable> > tableVector;
-	//tableVector.clear();
 
-	//TiXmlDocument doc;
-	//if ( !doc.LoadFile( filename.c_str() ) )
-	//	return false;
-
-	//TiXmlElement* rootElement = doc.FirstChildElement();
-	//const char* docname = rootElement->Value();
-	//if ( strcmp( docname, "Table" ) != 0 )
-	//	return false;
-
-	////Parents we know of: datafilename,resultfilename,object,parameter
-	//TiXmlElement* parentElement = rootElement->FirstChildElement();
-
-	std::string seriesfilename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\"+filename ;
+	std::string seriesfilename = filename ;
 	TiXmlDocument doc;    
 	TiXmlElement * root = new TiXmlElement( "Image" );  
 	doc.LinkEndChild( root ); 
@@ -314,10 +297,8 @@ bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable>
 		TiXmlElement * file = new TiXmlElement("file");
 		std::stringstream ss;
 		ss<<i;
-		std::string path = "C:\\Lab\\ArunFiles\\Data\\Tracking\\cache\\testdirectory\\";
 		std::string name = path+"table_time"+ss.str()+".txt";
 		SaveTable(name,table4DImage.at(i));
-
 		file->LinkEndChild( new TiXmlText( name ) );
 		std::cout<< name<<std::endl;
 		root->LinkEndChild(file);
