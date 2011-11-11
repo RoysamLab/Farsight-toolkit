@@ -150,16 +150,21 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	unsigned short* dImg = NULL;	
 	int max_dist = 1;
+	iterator1.GoToBegin();
 	if(UseDistMap == 1)
 	{
 		for(size_t i=0; i<r*c*z; i++)
-		{				
+		{
 			if(bImg[i]>0)
 				iterator1.Set(0.0);//IM[i]);
 			else
 				iterator1.Set(255.0);
 			++iterator1;
-
+			if( iterator1.IsAtEnd() ){
+				std::cerr<<"WARNING: ITK Image allocated during seed"
+					 <<"detection is smaller than input image\n";
+				break;
+			}
 		}
 		//By Yousef on 09/08/2009
 		//Just for testing purposes: Write out the distance map into an image file
