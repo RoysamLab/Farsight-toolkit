@@ -41,7 +41,7 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 
 	int numPix = (m_Info.numColumns)*(m_Info.numRows);
 	pixelType * stack = static_cast<pixelType *>(imageDataPtrs[T][CH].mem);
-	pixelType * slice = stack + Z*numPix;
+	pixelType * slice = stack + ((unsigned long)Z*(unsigned long)numPix);
 	pixelType * mem;
 	if( mode == DEEP_COPY)
 	{
