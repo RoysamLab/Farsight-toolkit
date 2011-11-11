@@ -296,7 +296,12 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	}
 	//Detect the seed points (which are also the local maxima points)	
 	std::cout<<"Detecting Seeds"<<std::endl;
-	*IM_bin = new unsigned short[((unsigned long)r)*((unsigned long)c)*((unsigned long)z)];
+	*IM_bin = new unsigned short[(((unsigned long)r)*((unsigned long)c)*((unsigned long)z))];
+	if(!*IM_bin)
+	{
+		std::cerr<<"could not allocate memory for the LoG response calc"<<std::endl;
+		return 0;
+	}
 	//std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
 #ifdef OPENCL	
@@ -552,7 +557,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 				if(im_vals[II] == mx)    
 					out1[II]=255;
 				else
-					out1[(k*r*c)+(i*c)+j]=0;
+					out1[II]=0;
 			}			
 		}
 	}  
