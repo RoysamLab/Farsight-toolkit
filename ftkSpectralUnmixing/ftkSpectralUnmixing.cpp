@@ -50,12 +50,13 @@ void SpectralUnmixing::Update(void)
 	mode = static_cast<ftk::Image::PtrMode>(2); //DEEP_COPY mode
 
 	// First Get the FingerPrint Matrix:
-	InputImageType::Pointer imdata[MAX_CHANNS];
-	for(int ch = 0; ch< NChannels; ++ch)
-	{
-		imdata[ch] = Image->GetItkPtr<InputPixelType>(0,ch,mode);
-	}
-	vnl_matrix<double> FingerPrintMatrix = GetFingerPrintMatrix(imdata);
+	//InputImageType::Pointer imdata[MAX_CHANNS];
+	//for(int ch = 0; ch< NChannels; ++ch)
+	//{
+	//	imdata[ch] = Image->GetItkPtr<InputPixelType>(0,ch,mode);
+	//}
+//	vnl_matrix<double> FingerPrintMatrix = GetFingerPrintMatrix(imdata);
+	vnl_matrix<double> FingerPrintMatrix = this->GetFingerPrintMatrix();
 	printf("Finished Estimating from first Image, I am gonna use it to unmix everything else\n");
 	
 	int numTSlices = (int)Image->GetImageInfo()->numTSlices;
@@ -76,95 +77,110 @@ void SpectralUnmixing::Update(void)
 	
 
 }
-vnl_matrix<double> SpectralUnmixing::GetFingerPrintMatrix(InputImageType::Pointer im[])
+//vnl_matrix<double> SpectralUnmixing::GetFingerPrintMatrix(InputImageType::Pointer im[])
+vnl_matrix<double> SpectralUnmixing::GetFingerPrintMatrix(void)
 {
-	printf("Unnmixing %d channels ...\n",NChannels);
-	InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
-
-	IteratorType iterator[MAX_CHANNS];
-	IteratorType assigniter[MAX_CHANNS];
-
-	double max_values[MAX_CHANNS];
-	double mean_values[MAX_CHANNS];
-	int mean_values_count = 0;
-	// Compute max and mean values of the images:
-	for(int counter=0; counter<NChannels; counter++) 
-	{
-		iterator[counter] = IteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
-		iterator[counter].GoToBegin();
-		max_values[counter]=-1;
-		printf(" Done.\n",counter+1);
-		for(;!iterator[counter].IsAtEnd();++iterator[counter]) // compute max and mean value
-		{
-			if(max_values[counter]<iterator[counter].Value())
-				max_values[counter] = iterator[counter].Value();
-			mean_values[counter] += iterator[counter].Value();
-			if(counter==0)
-				mean_values_count++;
-		}
-		printf("Max%d = %lf\n",counter,max_values[counter]);
-		printf("mean_values[%d] = %lf\n",counter,mean_values[counter]);
-		iterator[counter].GoToBegin();
-	}
-
-	// Choose the voxels data for the unmixing algorithm( thesis: Yi)and put them in mixed(NUM_ELEMENTS_FOR_UNMIXING,n).
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(2); //DEEP_COPY mode
+	InputImageType::Pointer im[MAX_CHANNS];
+	int numTSlices = (int)Image->GetImageInfo()->numTSlices;
 	vnl_matrix<double> mixed(NUM_ELEMENTS_FOR_UNMIXING,NChannels);
 	int pc = 0;
 	int npc = 0;
-	int total_voxels = size[0]*size[1]*size[2];
-	printf("Just before matrix creation for clustering\n");
-	for(;!iterator[0].IsAtEnd();)		// iterate through all voxels
+	for(int T=0; T<numTSlices; ++T)
 	{
-		if(rand()*1.0/RAND_MAX< 2*NUM_ELEMENTS_FOR_UNMIXING*1.0/total_voxels)
+
+		printf("Selecting from T:%d\n",T);
+		for(int ch = 0; ch< NChannels; ++ch)
 		{
-			double norm = 0;
-			double inf_norm = 0;
-			int counter;
-			for(counter=0; counter<NChannels; counter++)
-			{
-				norm += iterator[counter].Get()*1.0*iterator[counter].Get();
-				inf_norm = MAX(inf_norm,iterator[counter].Get());
-			}
-			if(counter!=NChannels)
-			{
-				for(int counter1=0; counter1< NChannels; counter1++)	// increment the iterator to the next voxel
-				{
-					++iterator[counter1];
-				}
-				continue;
-			}
-			norm = sqrt(norm);
-			if(inf_norm < MIN_NORM)
-			{
-				for(int counter1=0; counter1< NChannels; counter1++)	// increment the iterator the next voxel
-				{
-					++iterator[counter1];
-				}
-				continue;
-			}
-			for(int counter=0; counter < NChannels; counter++)
-				mixed[pc][counter] = iterator[counter].Get()-mean_values[counter];
-			pc++;
-			//printf("I came into the rand\n");
+			im[ch] = Image->GetItkPtr<InputPixelType>(0,ch,mode);
 		}
-		else
+		
+		InputImageType::SizeType size = im[0]->GetLargestPossibleRegion().GetSize();
+		IteratorType iterator[MAX_CHANNS];
+		IteratorType assigniter[MAX_CHANNS];
+
+		double max_values[MAX_CHANNS];
+		double mean_values[MAX_CHANNS];
+		int mean_values_count = 0;
+		// Compute max and mean values of the images:
+		for(int counter=0; counter<NChannels; counter++) 
 		{
-			npc++;
-			//printf("I'm in else of rand()\n");
+			iterator[counter] = IteratorType(im[counter],im[counter]->GetLargestPossibleRegion());
+			iterator[counter].GoToBegin();
+			max_values[counter]=-1;
+		//	printf(" Done.\n",counter+1);
+			for(;!iterator[counter].IsAtEnd();++iterator[counter]) // compute max and mean value
+			{
+				if(max_values[counter]<iterator[counter].Value())
+					max_values[counter] = iterator[counter].Value();
+				mean_values[counter] += iterator[counter].Value();
+				if(counter==0)
+					mean_values_count++;
+			}
+		//	printf("Max%d = %lf\n",counter,max_values[counter]);
+		//	printf("mean_values[%d] = %lf\n",counter,mean_values[counter]);
+			iterator[counter].GoToBegin();
 		}
-		for(int counter=0; counter< NChannels; counter++)
+
+	// Choose the voxels data for the unmixing algorithm( thesis: Yi)and put them in mixed(NUM_ELEMENTS_FOR_UNMIXING,n).
+
+		int total_voxels = size[0]*size[1]*size[2];
+		printf("Just before matrix creation for clustering\n");
+		for(;!iterator[0].IsAtEnd();)		// iterate through all voxels
 		{
-			++iterator[counter];
+			if(rand()*1.0/RAND_MAX< 2*NUM_ELEMENTS_FOR_UNMIXING*1.0/total_voxels)
+			{
+				double norm = 0;
+				double inf_norm = 0;
+				int counter;
+				for(counter=0; counter<NChannels; counter++)
+				{
+					norm += iterator[counter].Get()*1.0*iterator[counter].Get();
+					inf_norm = MAX(inf_norm,iterator[counter].Get());
+				}
+				if(counter!=NChannels)
+				{
+					for(int counter1=0; counter1< NChannels; counter1++)	// increment the iterator to the next voxel
+					{
+						++iterator[counter1];
+					}
+					continue;
+				}
+				norm = sqrt(norm);
+				if(inf_norm < MIN_NORM)
+				{
+					for(int counter1=0; counter1< NChannels; counter1++)	// increment the iterator the next voxel
+					{
+						++iterator[counter1];
+					}
+					continue;
+				}
+				for(int counter=0; counter < NChannels; counter++)
+					mixed[pc][counter] = iterator[counter].Get()-mean_values[counter];
+				pc++;
+				//printf("I came into the rand\n");
+			}
+			else
+			{
+				npc++;
+				//printf("I'm in else of rand()\n");
+			}
+			for(int counter=0; counter< NChannels; counter++)
+			{
+				++iterator[counter];
+			}
+			if(pc > NUM_ELEMENTS_FOR_UNMIXING-1)
+				break;
 		}
 		if(pc > NUM_ELEMENTS_FOR_UNMIXING-1)
 			break;
 	}
+	// Now Compute the fingerprint matrix:
+	printf("Finished Collecting Mixed Data\n");
 	mixed = mixed.extract(pc,NChannels);
 	printf( "npc = %d pc = %d npc+pc = %d",npc,pc,npc+pc);
 	printf("Matrix created. pc = %d\n",pc);
-	for(int counter=0; counter< NChannels; counter++)
-		iterator[counter].GoToBegin();
-
 	// Generate a matrix of random numbers:
 	vnl_matrix<double> start(NChannels,MChannels);
 	for(int counter=0; counter<MChannels; counter++)
@@ -177,6 +193,8 @@ vnl_matrix<double> SpectralUnmixing::GetFingerPrintMatrix(InputImageType::Pointe
 	start.print(std::cout);
 	printf("Just before EstimateFingerPrintMatrix\n");
 	vnl_vector <unsigned char> indices(mixed.rows()); 
+
+
 	this->EstimateFingerPrintMatrix(mixed,start,indices);
 	printf("Finished estimating Finger Print Matrix:\n");
 	start.print(std::cout);

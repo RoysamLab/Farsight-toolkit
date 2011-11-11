@@ -39,7 +39,7 @@
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
 
-#define NUM_ELEMENTS_FOR_UNMIXING 1000000
+#define NUM_ELEMENTS_FOR_UNMIXING 9000000
 #define MIN_NORM 30
 #define MAX_CHANNS 10
 
@@ -89,7 +89,8 @@ class SpectralUnmixing
 		std::vector<std::vector<InputImageType::Pointer> >Unmixed_Images;
 
 		// Functions:
-		vnl_matrix<double> GetFingerPrintMatrix(InputImageType::Pointer im[]);
+		//vnl_matrix<double> GetFingerPrintMatrix(InputImageType::Pointer im[]);
+		vnl_matrix<double> GetFingerPrintMatrix(void);
 		void EstimateFingerPrintMatrix(vnl_matrix<double> mixed, vnl_matrix<double> &start, vnl_vector<unsigned char> &indices);
 		void UnmixPureChannels(InputImageType::Pointer im[],InputImageType::Pointer om[],vnl_matrix<double> &start);	// this unmixing method uses voxel classification based on maximum projection onto cluster centers
 		void UnmixUsingIterations(InputImageType::Pointer im[],InputImageType::Pointer om[],vnl_matrix<double> &start);// this method is for over-determined/full ranked systems MChannels<=NChannels
