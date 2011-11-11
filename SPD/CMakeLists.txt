@@ -18,16 +18,11 @@ QT4_WRAP_CPP( GUI_MOC_SRCS spdmainwindow.h )
 SET(SPD_SRCS
 	SPDAnalysisModel.h
 	SPDAnalysisModel.cpp
-	transportSimplex.h)
-
-SET(SPD_TEST_SRCS
+	transportSimplex.h
 	spdmainwindow.h
-	spdmainwindow.cpp )
+	spdmainwindow.cpp)
 
-ADD_LIBRARY( SPD ${SPD_SRCS} )
+ADD_LIBRARY( SPD ${SPD_SRCS} ${GUI_MOC_SRCS})
 TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon ClusClus_lib)
-ADD_EXECUTABLE(SPDTEST main.cpp ${GUI_MOC_SRCS} ${SPD_TEST_SRCS} )
-                
-TARGET_LINK_LIBRARIES(SPDTEST SPD)
 
 

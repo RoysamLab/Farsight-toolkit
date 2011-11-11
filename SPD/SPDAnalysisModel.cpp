@@ -217,6 +217,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 		long int var = table->GetValue( i, 0).ToLong();
 		this->indMapFromIndToVertex.push_back( var);
 	}
+	this->DataTable = table;
 
 	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
 	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
@@ -975,6 +976,7 @@ double Dist(int *first, int *second)
 	{
 		return 0;
 	}
+	//return abs(*first - *second);
 }
 
 double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second,
@@ -1111,7 +1113,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			
 			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
 
-			/* histOfs << "flows:"<<endl;
+			/*histOfs << "flows:"<<endl;
 			vnl_matrix<double> tranMatrix = flowMatrix.transpose();
 			histOfs << setiosflags(ios::fixed) << tranMatrix <<endl <<endl;
 			
@@ -1132,21 +1134,17 @@ void SPDAnalysisModel::RunEMDAnalysis()
 
 void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double threshold)
 {
-	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols() + 2);
 	this->heatmapMatrix.fill(0);
 	std::vector< unsigned int> simModIndex;
-	
-	double max = this->EMDMatrix.max_value();
-	double min = this->EMDMatrix.min_value();
-	double interval = max - min;
 
 	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
-		simModIndex.clear();
+		double max = this->EMDMatrix.get_row(i).max_value();
 		for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
 		{
-			double tmp = ( this->EMDMatrix( i, j) - min)/ interval;
-			if( tmp >= threshold)
+			this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+			if( this->EMDMatrix( i, j) >= threshold)
 			{
 				simModIndex.push_back(j);
 			}
@@ -1156,33 +1154,43 @@ void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double thresh
 		{
 			for( unsigned int j = 0; j < simModIndex.size(); j++)
 			{
-				for( unsigned int k = 0; k < simModIndex.size(); k++)
+				for( unsigned int k = j + 1; k < simModIndex.size(); k++)
 				{
 					this->heatmapMatrix( simModIndex[j], simModIndex[k]) = heatmapMatrix( simModIndex[j], simModIndex[k]) + 1;
 					this->heatmapMatrix( simModIndex[k], simModIndex[j]) = heatmapMatrix( simModIndex[k], simModIndex[j]) + 1;
 				}
+				this->heatmapMatrix(simModIndex[j], simModIndex[j]) = this->heatmapMatrix(simModIndex[j], simModIndex[j]) + 1;
 			}
 		}
+		simModIndex.clear();
 	}
 
 	QString filenameSM = this->filename + "similarity_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
 	ofSimatrix.precision(4);
-	ofSimatrix << setiosflags(ios::fixed) << this->heatmapMatrix <<endl;
-	ofSimatrix.close();
-	
+	ofSimatrix << "EMD matrix( devided by max value of each row):"<<endl;
+	ofSimatrix << setiosflags(ios::fixed) << this->EMDMatrix <<endl<<endl;
+	ofSimatrix << "Heatmap Matrix:"<<endl;
+	ofSimatrix << this->heatmapMatrix <<endl;
+
 	if( this->cc1)
 	{
 		delete this->cc1;
 		this->cc1 = NULL;
 	}
 
-	this->cc1 = new clusclus( this->heatmapMatrix.data_array(), heatmapMatrix.rows(), heatmapMatrix.cols());
+	this->cc1 = new clusclus( this->heatmapMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 	this->cc1->RunClusClus();
 	this->cc1->MergersToProgress();
 	this->cc1->PrepareTreeData();
 	this->cc1->GetOptimalLeafOrderD();
 	this->cc1->Transpose();
+
+	ofSimatrix << "Optimal leaf order:"<<endl;
+	for(int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		ofSimatrix << cc1->optimalleaforder[i]<<endl;
+	}
 
 	if( this->cc2)
 	{
@@ -1197,6 +1205,8 @@ void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double thresh
 
 	c1 = *this->cc1;
 	c2 = *this->cc2;
+
+	ofSimatrix.close();
 }
 
 void SPDAnalysisModel::GetCombinedMatrix( vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
@@ -1225,6 +1235,21 @@ bool SPDAnalysisModel::IsExist(std::vector<unsigned int> vec, unsigned int value
 	return false;
 }
 
+long int SPDAnalysisModel::GetSelectedFeatures( vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs)
+{
+	long int count = 0;
+	featureSelectedIDs.clear();
+	for( long int i = 0; i < index.size(); i++)
+	{
+		if( IsExist(moduleID, index[i]))
+		{
+			count++;
+			featureSelectedIDs.insert(i + 1);   // feature id is one bigger than the original feature id 
+		}
+	}
+	return count;
+}
+
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string& selectedModules)
 {
 	QString filenameMST = this->filename + "progression_mst.txt";
@@ -1239,8 +1264,8 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 	{
 		unsigned int index = atoi( moduleIDStr[i].c_str());
 		moduleID.push_back( index);
-		coln += GetSingleModuleSize( this->ClusterIndex, index);
 	}
+	coln = GetSelectedFeatures( this->ClusterIndex, moduleID, this->selectedFeatureIDs);
 	
 	vnl_matrix<double> clusterMat( this->DataMatrix.rows(), coln);
 	GetCombinedMatrix( this->ClusterIndex, moduleID, clusterMat);
@@ -1342,4 +1367,25 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 	}
 
 	return table;
+}
+
+void SPDAnalysisModel::GetSelectedFeatures(std::set<long int>& selectedFeatures)
+{
+	selectedFeatures = this->selectedFeatureIDs;
+}
+
+void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures)
+{
+	std::set<long int>::iterator iter;
+	QString file = this->filename + filename;
+	std::ofstream ofs( file.toStdString().c_str(), std::ofstream::out);
+
+	for( iter = selectedFeatures.begin(); iter != selectedFeatures.end(); iter++)
+	{
+		long int index = *iter;
+		char* name = this->DataTable->GetColumn(index)->GetName();
+		std::string featureName(name);
+		ofs<< featureName<<endl;
+	}
+	ofs.close();
 }

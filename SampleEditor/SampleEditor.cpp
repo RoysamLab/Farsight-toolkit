@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "SampleEditor.h"
 //#include "Dendrogram.h"
-#include "../SPD/SPDAnalysisModel.h"
 
 
 //*******************************************************************************
@@ -28,10 +27,11 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = new TableWindow();
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
-	graph =  new GraphWindow(this);
+	//graph =  new GraphWindow(this);
 	dendro1 = new Dendrogram(this);
 	dendro2 = new Dendrogram(this);////////////////////////////////////////////////////////////////
 	heatmap = new Heatmap(this);
+	spdWin = new SPDMainWindow();
 
 	data = NULL;
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
@@ -193,10 +193,10 @@ void SampleEditor::loadFile()
 	this->histo->setModels(data, selection);
 	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
-	this->graph->setModels(data, selection);
-	this->dendro1->setModels(data,selection);
-	this->dendro2->setModels(data,selection2);
-	this->heatmap->setModels(data,selection,selection2);
+	//this->graph->setModels(data, selection, selection2);
+	//this->dendro1->setModels(data,selection);
+	//this->dendro2->setModels(data,selection2);
+	//this->heatmap->setModels(data,selection,selection2);
 
 }
 
@@ -374,36 +374,46 @@ void SampleEditor::updateStatistics(void)
 		statisticsToolbar->statisticsDockWidget->close();
 		showStatistics();
 	}
-		
 }
 
 void SampleEditor::SPDAnalysis()
 {
 	if( this->data->GetNumberOfRows() <= 0)
 	{
-		return;
+		spdWin->setModels();
+	}
+	else
+	{
+		spdWin->setModels( this->data, selection, selection2);
 	}
 
-	SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
-	SPDModel->ParseTraceFile( this->data);
-	std::cout<< "Normalizing" << std::endl;
-	SPDModel->NormalizeData();
-	std::cout<< "clustering" << std::endl;
-	SPDModel->ClusterAgglomerate( 0.5, 0.9);
-	//std::cout<< "Merging" << std::endl;
-	//SPDModel->ClusterMerge( 0.9, 0.9);
-	std::cout<< "Generating MST" << std::endl;
-	SPDModel->GenerateMST();
-	vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
-	if( table != NULL)
-	{
-		std::vector<std::string> headers;
-		SPDModel->GetTableHeaders( headers);
-		QString str = SPDModel->GetFileName();
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], str);
-		//this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
-		this->graph->ShowGraphWindow();
-	}
+	spdWin->show();
+
+	//SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
+	//SPDModel->ParseTraceFile( this->data);
+	//std::cout<< "Normalizing" << std::endl;
+	//SPDModel->NormalizeData();
+	//std::cout<< "clustering" << std::endl;
+	//SPDModel->ClusterAgglomerate( 0.5, 0.9);
+	////std::cout<< "Merging" << std::endl;
+	////SPDModel->ClusterMerge( 0.9, 0.9);
+	//std::cout<< "Generating MST" << std::endl;
+	//SPDModel->GenerateMST();
+	//SPDModel->RunEMDAnalysis();
+
+	//QString str = "0";
+	//vtkSmartPointer<vtkTable> table = SPDModel->GenerateProgressionTree(str.toStdString());
+	//if( table != NULL)
+	//{
+	//	std::vector<std::string> headers;
+	//	SPDModel->GetTableHeaders( headers);
+	//	QString str = SPDModel->GetFileName();
+	//	std::set<long int> featureSelectedIDs;
+	//	SPDModel->GetSelectedFeatures(featureSelectedIDs);
+	//	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+	//	//this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
+	//	this->graph->ShowGraphWindow();
+	//}
 }
 
 void SampleEditor::sampledendrogram()

@@ -18,6 +18,8 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <QtGui/QMenu>
+#include <QtGui/QMenuBar>
 
 typedef struct Point
 {
@@ -39,16 +41,17 @@ class GraphWindow : public QMainWindow
 public:
 	GraphWindow(QWidget * parent = 0);
 	~GraphWindow();
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
-	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, QString filename = "");
+	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>& colSels, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
 	
 protected:
 	void SetSelectedIds(std::set<long int>& IDs);
+	void SetSelectedIds2();
 	void UpdataLookupTable( std::set<long int>& IDs);
 	void CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::vector<Point>& pointList);
 	void find(vnl_vector<long int>& vec, long int val, std::vector<long int>& equal, std::vector<long int>& nonequal);
@@ -69,10 +72,12 @@ signals:
 private:
 	vtkSmartPointer<vtkTable> dataTable;
 	ObjectSelection *selection;
-	vtkSmartPointer<vtkPoints> points;   
+	ObjectSelection *selection2;
+	   
+	std::set<long int> colSelectIDs;
 	
 	QVTKWidget mainQTRenderWidget;
-	vtkSmartPointer<vtkViewTheme> theme;
+	//vtkSmartPointer<vtkViewTheme> theme;
 	vtkSmartPointer<vtkTableToGraph> TTG;	
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;

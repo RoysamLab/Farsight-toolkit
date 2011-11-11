@@ -741,11 +741,11 @@ void Heatmap::GetSelecectedIDs()
 	selectedActor->GetProperty()->SetLineWidth(0.5);
 	
 	cout<<"outsideremoveActorflag...."<<removeActorflag<<endl;
-	if (this->removeActorflag != 0 && this->removeActorflag%2 ==0)
+	if (this->removeActorflag != 0 && this->removeActorflag%1 ==0)
 	{
 		cout<<"insideremoveActorflag...."<<removeActorflag<<endl;
 		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
-		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+		//this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
 	}
 	//this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
 	this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);

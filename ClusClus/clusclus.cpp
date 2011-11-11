@@ -25,7 +25,18 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 {
 	this->num_features = numfeatures;
 	this->num_samples = numsamples;
+
 	this->features = feature;
+
+	//FILE *fp2 = fopen("numfeature.txt","w");
+	//for(int i=0; i<num_samples; i++)
+	//{
+	//	for(int j=0; j<num_features; j++)
+	//		fprintf(fp2,"%f\t ",this->features[i][j]);
+	//	fprintf(fp2,"\n");
+	//}
+	//fclose(fp2);
+
 	this->sample_distances = NULL;
 	this->cluster_distances = NULL;
 	this->mergers = NULL;
@@ -80,6 +91,7 @@ clusclus::~clusclus()
 	delete this->members;
 	delete this->num_cluster_samples;
 	delete this->gap;
+	delete this->features;
 }
 void clusclus::RunClusClus()
 {

@@ -36,14 +36,13 @@ GraphWindow::GraphWindow(QWidget *parent)
 	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
 	this->observerTag = 0;
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	this->points =  vtkSmartPointer<vtkPoints>::New();
 }
 
 GraphWindow::~GraphWindow()
 {
 }
 
-void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
+void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	this->dataTable = table;
 	for( long int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
@@ -56,6 +55,11 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		this->selection = new ObjectSelection();
 	else
 		this->selection = sels;
+
+	if(!sels2)
+		this->selection2 = new ObjectSelection();
+	else
+		this->selection2 = sels2;
 	connect( this->selection, SIGNAL( changed()), this, SLOT( UpdateGraphView()));
 }
 	
@@ -65,15 +69,15 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table)
 	this->TTG->ClearLinkVertices();
 	this->TTG->SetInput(0, table);
 	this->TTG->AddLinkEdge("Source", "Target"); 
-
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	
-	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	this->theme->SetLineWidth(5);
-	this->theme->SetCellOpacity(0.9);
-	this->theme->SetCellAlphaRange(0.5,0.5);
-	this->theme->SetPointSize(10);
-	this->theme->SetSelectedCellColor(1,0,1);
-	this->theme->SetSelectedPointColor(1,0,1); 
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.5,0.5);
+	theme->SetPointSize(10);
+	theme->SetSelectedCellColor(1,0,1);
+	theme->SetSelectedPointColor(1,0,1); 
 
 	
 	this->view->AddRepresentationFromInputConnection(TTG->GetOutputPort());
@@ -91,15 +95,15 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->TTG->ClearLinkVertices();
 	this->TTG->SetInput(0, table);
 	this->TTG->AddLinkEdge(ID1.c_str(), ID2.c_str()); 
-
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	
-	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	this->theme->SetLineWidth(5);
-	this->theme->SetCellOpacity(0.9);
-	this->theme->SetCellAlphaRange(0.5,0.5);
-	this->theme->SetPointSize(10);
-	this->theme->SetSelectedCellColor(1,0,1);
-	this->theme->SetSelectedPointColor(1,0,1); 
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.5,0.5);
+	theme->SetPointSize(10);
+	theme->SetSelectedCellColor(1,0,1);
+	theme->SetSelectedPointColor(1,0,1); 
 
 	this->view->AddRepresentationFromInputConnection(TTG->GetOutputPort());
 	/*this->view->SetEdgeLabelVisibility(true);
@@ -114,6 +118,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 {
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 
 	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
 	vertexIDarrays->SetNumberOfComponents(1);
@@ -131,7 +136,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 		vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
 	}
 
-	for( int i = 0; i < table->GetNumberOfRows(); i++)
+	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)
 	{
 		long int ver1 = arrayID1->GetVariantValue(i).ToLong();
 		long int ver2 = arrayID2->GetVariantValue(i).ToLong();
@@ -142,7 +147,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 			long int index1 = iter1->second;
 			long int index2 = iter2->second;
 			graph->AddEdge( index1, index2);
-			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
+			weights->InsertNextValue(table->GetValueByName(i, edgeLabel.c_str()).ToDouble());
 		}
 		else
 		{
@@ -153,20 +158,24 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 		}
 	}
 	
-	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	this->theme->SetLineWidth(5);
-	this->theme->SetCellOpacity(0.9);
-	this->theme->SetCellAlphaRange(0.8,0.8);
-	this->theme->SetPointSize(8);
-	this->theme->SetSelectedCellColor(1,0,0);
-	this->theme->SetSelectedPointColor(1,0,0); 
+	theme = vtkSmartPointer<vtkViewTheme>::New();
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.8,0.8);
+	theme->SetPointSize(8);
+	theme->SetSelectedCellColor(1,0,0);
+	theme->SetSelectedPointColor(1,0,0); 
 
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(table->GetNumberOfRows());
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
-	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+
+	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
+
+	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		vertexColors->InsertNextValue( i);
 		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
@@ -196,11 +205,14 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, QString filename)
+void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>& colSels, QString filename)
 {
 	this->fileName = filename;
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
+	this->colSelectIDs = colSels;
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
 	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
 	vertexIDarrays->SetNumberOfComponents(1);
@@ -250,9 +262,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	{
 		for( int i = 0; i <  pointList.size(); i++)
 		{
-			this->points->InsertNextPoint(pointList[i].x, pointList[i].y, 0);
+			points->InsertNextPoint(pointList[i].x, pointList[i].y, 0);
 		}
-		graph->SetPoints( this->points);
+		graph->SetPoints( points);
 	}
 	else
 	{
@@ -262,20 +274,22 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		exit(-2);
 	}
 
-	this->theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	this->theme->SetLineWidth(5);
-	this->theme->SetCellOpacity(0.9);
-	this->theme->SetCellAlphaRange(0.8,0.8);
-	this->theme->SetPointSize(8);
-	this->theme->SetSelectedCellColor(1,0,0);
-	this->theme->SetSelectedPointColor(1,0,0); 
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.8,0.8);
+	theme->SetPointSize(8);
+	theme->SetSelectedCellColor(1,0,0);
+	theme->SetSelectedPointColor(1,0,0); 
+	theme->SetBackgroundColor(0,0,0); 
 
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(table->GetNumberOfRows());
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
-	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
+	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		vertexColors->InsertNextValue( i);
 		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
@@ -286,7 +300,8 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	graph->GetVertexData()->AddArray(vertexIDarrays);
 	graph->GetEdgeData()->AddArray(weights);
 
-	this->view->AddRepresentationFromInput( graph);
+	this->view->RemoveAllRepresentations();
+	this->view->SetRepresentationFromInput( graph);
 	this->view->SetEdgeLabelVisibility(true);
 	this->view->SetColorVertices(true); 
 	this->view->SetVertexLabelVisibility(true);
@@ -294,13 +309,11 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->SetVertexColorArrayName("Color");
 
     theme->SetPointLookupTable(lookupTable);
-    theme->SetBackgroundColor(0,0,0); 
+    
 	this->view->ApplyViewTheme(theme);
 
 	this->view->SetEdgeLabelArrayName("edgeLabel");
-
 	this->view->SetLayoutStrategyToPassThrough();
-
 	this->view->SetVertexLabelArrayName("vertexIDarrays");
 	this->view->SetVertexLabelFontSize(20);
 }
@@ -370,6 +383,7 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 			}
 		}
 		graphWin->SetSelectedIds( IDs);
+		graphWin->SetSelectedIds2();  // only select the selected feature columns
 	}
 
 	graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
@@ -399,6 +413,11 @@ void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
 	this->view->GetRenderer()->Render();
 }
 
+void GraphWindow::SetSelectedIds2()
+{
+	this->selection2->select( this->colSelectIDs);
+}
+
 void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 {
 	std::set<long int> selectedIDs; 
@@ -410,8 +429,8 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		selectedIDs.insert( var);
 		iter++;
 	}
-
-	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
+	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		if (selectedIDs.find(i) != selectedIDs.end())
 		{
@@ -457,6 +476,7 @@ void GraphWindow::UpdateGraphView()
 		selection->RemoveAllNodes();
 		selection->AddNode(selectNodeList);
 		annotationLink->SetCurrentSelection( selection);
+		selection2->select( this->colSelectIDs);    // only select the selected feature columns
 		std::set<long int> updataIDes =  this->selection->getSelections();
 		UpdataLookupTable( updataIDes);
 

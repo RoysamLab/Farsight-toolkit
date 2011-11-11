@@ -53,6 +53,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	psdModuleSelectBox = new QLineEdit;
     psdtButton = new QPushButton(tr("View Progression"));
 
+	saveFeatureButton = new QPushButton(tr("Save Selected Features"));
+
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
@@ -62,6 +64,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
+	connect(saveFeatureButton, SIGNAL(clicked()), this, SLOT(saveSelectedFeatures()));
+
     QGridLayout *mainLayout = new QGridLayout;
 
     for ( int col = 0; col<= 2; col++)
@@ -70,7 +74,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 7; row++)
+    for ( int row = 1; row <= 12; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -110,6 +114,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	mainLayout->addWidget(psdtLable, 10, 0);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
 	mainLayout->addWidget(psdtButton, 11, 2);
+	mainLayout->addWidget(saveFeatureButton, 12, 2);
 
     setLayout(mainLayout);
 
@@ -119,11 +124,38 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	graph =  new GraphWindow(this);
 	heatmap = new Heatmap(this);
+	
+	connect( heatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 }
 
 SPDMainWindow::~SPDMainWindow()
 {
 	SPDAnalysisModel::DeInstance();
+}
+
+void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
+{
+	data = table;
+	selection = sels;
+	selection2 = sels2;
+
+	if( data == NULL)
+	{
+		browseButton->setEnabled(TRUE);
+		loadButton->setEnabled(TRUE);
+		loadTestButton->setEnabled(TRUE);
+	}
+	else
+	{
+		SPDModel->ParseTraceFile( this->data);
+		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
+		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
+		this->SPDModel->NormalizeData();
+		
+		browseButton->setEnabled(FALSE);
+		loadButton->setEnabled(FALSE);
+		loadTestButton->setEnabled(FALSE);
+	}
 }
 
 void SPDMainWindow::browse()
@@ -202,17 +234,18 @@ void SPDMainWindow::generateMST()
 
 void SPDMainWindow::showMST()
 {
-	vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
+	//vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
 
-	if( table != NULL)
-	{
-		std::vector<std::string> headers;
-		SPDModel->GetTableHeaders( headers);
-		this->graph->setModels(SPDModel->GetDataTable());
-		QString str = SPDModel->GetFileName();
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], str);
-		this->graph->ShowGraphWindow();
-	}
+	//if( table != NULL)
+	//{
+	//	std::vector<std::string> headers;
+	//	SPDModel->GetTableHeaders( headers);
+	//	this->graph->setModels(SPDModel->GetDataTable());
+	//	QString str = SPDModel->GetFileName();
+	//	std::set< 
+	//	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], ,str);
+	//	this->graph->ShowGraphWindow();
+	//}
 }
 
 void SPDMainWindow::emdFunction()
@@ -229,9 +262,16 @@ void SPDMainWindow::showPSM()
 		{
 			clusclus clus1, clus2;
 			this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()));
-			this->heatmap->setDataForHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);
-			this->heatmap->creatDataForHeatmap();
-			this->heatmap->showGraph();
+			optimalleaforder.set_size(clus1.num_samples);
+			for( int i = 0; i < clus1.num_samples; i++)
+			{
+				optimalleaforder[i] = clus1.optimalleaforder[i];
+			}
+			this->heatmap->setModels();
+			this->heatmap->setDataForSimilarMatrixHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);	
+			this->heatmap->creatDataForSimilarMatrixHeatmap();
+			this->heatmap->showSimilarMatrixGraph();
+
 		}
 		else
 		{
@@ -256,10 +296,56 @@ void SPDMainWindow::viewProgression()
 	{
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
-		this->graph->setModels(SPDModel->GetDataTable());
+		this->graph->setModels(data, selection, selection2);
 		QString str = SPDModel->GetFileName();
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], str);
+		std::set<long int> featureSelectedIDs;
+		SPDModel->GetSelectedFeatures(featureSelectedIDs);
+		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
 		this->graph->ShowGraphWindow();
 	}
 }
 
+void SPDMainWindow::saveSelectedFeatures()
+{
+	std::set<long int> featureSelectedIDs;
+	SPDModel->GetSelectedFeatures(featureSelectedIDs);
+	if( featureSelectedIDs.size() > 0)
+	{
+		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
+	}
+	else
+	{
+		QMessageBox mes;
+		mes.setText("No features have been selected!");
+		mes.exec();
+	}
+}
+
+void SPDMainWindow::updateSelMod()
+{
+	int r1 = 0;
+	int r2 = 0;
+	int c1 = 0;
+	int c2 = 0;
+	int size = optimalleaforder.size();
+
+	this->heatmap->GetSelRowCol(r1, c1, r2, c2);
+	//this->heatmap->SetSelRowCol(r1, size - 1 - r1, r2, size - 1 - r2);   // make the selection block symetric
+
+	int num = abs(r1 - r2) + 1;
+	int max = r1 > r2 ? r1 : r2;
+
+	selMod.set_size(num);
+	QString str;
+
+	for( int i = 0; i < num; i++)
+	{
+		selMod[i] = optimalleaforder[size - 1 - max + i];
+		if( i != num - 1)
+		{
+			str += QString::number(selMod[i])+",";
+		}
+	}
+	str += QString::number(selMod[num - 1]);
+	psdModuleSelectBox->setText(str);
+}

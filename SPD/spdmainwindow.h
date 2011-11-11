@@ -16,6 +16,7 @@ class SPDMainWindow : public QWidget
 
 public:
     explicit SPDMainWindow(QWidget *parent = 0);
+	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDMainWindow();
 
 private slots:
@@ -28,6 +29,8 @@ private slots:
 	void emdFunction();
 	void showPSM();
 	void viewProgression();
+	void saveSelectedFeatures();
+	void updateSelMod();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -58,10 +61,17 @@ private:
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
     QPushButton *psdtButton;
-	
+	QPushButton *saveFeatureButton;  // save the selected features to file
+
     QString FileName;
 	GraphWindow *graph;
 	Heatmap *heatmap;
+	vnl_vector<int> optimalleaforder;
+	vnl_vector<int> selMod;
+
+	vtkSmartPointer<vtkTable> data;
+	ObjectSelection *selection;
+	ObjectSelection *selection2;
 };
 
 #endif // SPDMAINWINDOW_H

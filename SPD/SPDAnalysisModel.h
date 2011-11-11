@@ -46,6 +46,8 @@ public:
 
 	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
+	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
+	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
 
 protected:
 	SPDAnalysisModel();
@@ -71,7 +73,8 @@ protected:
 	//double Dist(int *first, int *second);
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
-
+	long int GetSelectedFeatures(vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs);
+	
 private:
 	static SPDAnalysisModel *s_pmodel;
 
@@ -100,7 +103,7 @@ private:
 
 	//data for EMD 
 	vnl_matrix<double> EMDMatrix;
-
+	std::set< long int> selectedFeatureIDs;
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;
 	clusclus *cc1;
