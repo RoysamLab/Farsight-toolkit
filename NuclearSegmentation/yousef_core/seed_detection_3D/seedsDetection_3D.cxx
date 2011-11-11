@@ -284,7 +284,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	free(dImg);
 
-	*IM_out = new float[r*c*z];
+	*IM_out = new float[(((unsigned long)r)*((unsigned long)c)*((unsigned long)z))];
 	if(!*IM_out)
 	{
 		std::cerr<<"could not allocate memory for the LoG response image"<<std::endl;
