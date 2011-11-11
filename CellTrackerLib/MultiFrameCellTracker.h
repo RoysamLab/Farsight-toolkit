@@ -30,7 +30,7 @@ ILOSTLBEGIN
 #include <PatternAnalysis/embrex/kpls.h>
 #include <itkNormalVariateGenerator.h>
 #endif 
-
+#include <ftkCommon/ftkUtils.h>
 
 using namespace helpers;
 using namespace boost;
@@ -74,6 +74,7 @@ public:
 	void setTrackParameters(std::vector<std::pair<std::string,float> > parameters);
 	void settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders);
 	void setTrackImages(ftk::Image::Pointer rawimage,ftk::Image::Pointer labelimage);
+	void setChannelToTrack(int nucChannel){this->channel_to_track = nucChannel;};
 	ftk::Image::Pointer getTrackImages(void);
 	std::vector<std::vector<ftk::TrackPointFeatures> > getTrackFeatures(void);
 	vtkSmartPointer<vtkTable> GetTimeFeaturesTable(void){return TimeFeaturesTable;};

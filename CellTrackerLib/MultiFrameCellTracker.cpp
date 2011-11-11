@@ -67,7 +67,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 	writemode = static_cast<ftk::Image::PtrMode>(1);
 	ftk::Image::Pointer tmpImage = ftk::Image::New();
 	resultImages = ftk::Image::New();
-	channel_to_track = 0; // Fix Me.
+//	channel_to_track = 0; // Fix Me.
 
 
 
@@ -275,6 +275,17 @@ void MultiFrameCellTracker::convertItkImagesToftkImages(ftk::Image::Pointer labe
 		name = 	resultfilename+"_"+FileNames.at(t).at(0);
 		resultImages->AppendImageFromData3D(trackImages.at(t)->GetBufferPointer(), dataType, databpPix, cs, rs, zs, name, true);
 	}
+	std::vector< std::vector <std::string> > tmp_filenames;
+	for(int i = 0; i< labelImage->GetImageInfo()->numTSlices; ++i)
+	{
+		std::vector <std::string> tmp_file;
+		std::string name = ftk::GetFilePath(labelImage->GetTimeChannelFilenames().at(i).at(0))+"\\tracked_"+ftk::GetFilenameFromFullPath(labelImage->GetTimeChannelFilenames().at(i).at(0));
+		tmp_file.push_back(name);
+		std::cout<<name<<std::endl;
+		tmp_filenames.push_back(tmp_file);
+	}
+	resultImages->SetTimeChannelFilenames(tmp_filenames);
+
 
 }
 
@@ -314,13 +325,13 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 
  
   this->createTrackFeatures(summaryfvector,tfs,c,num_t);
-  this->ComputeVertexEntropies();
-  AnalyzeTimeFeatures(tfs,spac,vertex_entropies);
+  //this->ComputeVertexEntropies();
+  AnalyzeTimeFeatures(tfs,spac);
 
 
   this->changeDataHierarchy(tfs);
   
-  std::cout<<"I finished computing vertex entropies..."<<std::endl;
+  std::cout<<"I finished computing features..."<<std::endl;
 }
 
 void MultiFrameCellTracker::changeDataHierarchy(std::vector<ftk::TrackFeatures> vectrackfeatures)
