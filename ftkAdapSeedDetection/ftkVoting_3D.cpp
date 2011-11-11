@@ -1011,121 +1011,139 @@ void inline ftkVoting_3D::updateDirection_prob(VPoint3D& vp)
 void ftkVoting_3D::computeCones(int hmin, int hmax, int radius)
 {
 
-	// CAREFULL WITH THIS 30
-	int numberofcercles = 30; 
-	_conesPru = vector<ftkCone3D>(numberofcercles); // Todos los conos posibles
-	for( int uu=0; uu<numberofcercles; uu++ )
-	{
-		for( int uuu=0; uuu<hmax-hmin+1; uuu++ )
-		{
-			ftkBins3D bin;
-			_conesPru[uu].push_back(bin);
-		}
-	}
-
-	int z1;
-	int R;
-	double R_dou;
-	int R_quan;
-	pair<int,int> ang_quan;
-	double x_nor, y_nor, z_nor;
-	double x_nor2, y_nor2;
-	int countt=0;
-
-	ftkWPoint3D wp;
-	for( int xx=0; xx<=hmax; xx++ )
-	{
-		for( int yy=0; yy<=hmax; yy++ )
-		{
-			z1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
-			for( int zz=1; zz<=z1; zz++ )
-			{
-				R_dou = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
-				R = (int)ceil(R_dou);
-
-				if( R>= hmin) // Can be done more efficiently but for now is ok the speed
-				{
-					
-					R_quan = R-hmin;
-					//cout<<endl<<R_quan;
-					x_nor = ((double)xx)/R_dou;
-					y_nor = ((double)yy)/R_dou;
-					z_nor = ((double)zz)/R_dou;
-					ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
-					//ftkWPoint2D wp;
-					wp.x = xx;
-					wp.y = yy;
-					wp.z = zz;
-					wp.w = 1; // In case of deciding to put some weight
-					if( ang_quan.second < numberofcercles )
-					{
-						_conesPru[ang_quan.second][R_quan].push_back(wp);
-					}
-
-				x_nor2 = -x_nor;
-				y_nor2 = y_nor;
-				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
-				wp.x = -xx;
-				wp.y = yy;
-				wp.w = 1; // In case of deciding to put some weight
-					if( ang_quan.second < numberofcercles )
-					{
-						_conesPru[ang_quan.second][R_quan].push_back(wp);
-					}
-
-				x_nor2 = x_nor;
-				y_nor2 = -y_nor;
-				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
-				wp.x = xx;
-				wp.y = -yy;
-				wp.w = 1; // In case of deciding to put some weight
-					if( ang_quan.second < numberofcercles )
-					{
-						_conesPru[ang_quan.second][R_quan].push_back(wp);
-					}
-
-				x_nor2 = -x_nor;
-				y_nor2 = -y_nor;
-				ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
-				wp.x = -xx;
-				wp.y = -yy;
-				wp.w = 1; // In case of deciding to put some weight
-					if( ang_quan.second < numberofcercles )
-					{
-						_conesPru[ang_quan.second][R_quan].push_back(wp);
-					}
+	//_conesPru = vector<vector<ftkCone3D>(ntheta)>(ntheta/2); // Todos los conos posibles
+	_conesPru_3D = vector < vector < ftkCone3D > >(ntheta/2, vector<ftkCone3D>(ntheta)); // Todos los conos posibles
+	//for( int uu=0; uu<ntheta; uu++ )
+	//{
+	//	for( int uu2=0; uu2<ntheta; uu2++ )
+	//	for( int uuu=0; uuu<hmax-hmin+1; uuu++ )
+	//	{
+	//		ftkBins3D bin;
+	//		_conesPru[uu].push_back(bin);
+	//	}
+	//}
 
 
 
-				}
-			}
-		}
-	}
+	//// CAREFULL WITH THIS 30
+	//int numberofcercles = 30; 
+	//_conesPru = vector<ftkCone3D>(numberofcercles); // Todos los conos posibles
+	//for( int uu=0; uu<numberofcercles; uu++ )
+	//{
+	//	for( int uuu=0; uuu<hmax-hmin+1; uuu++ )
+	//	{
+	//		ftkBins3D bin;
+	//		_conesPru[uu].push_back(bin);
+	//	}
+	//}
 
-	for( int xx=hmin; xx<=hmax; xx++ )
-	{
+	//int z1;
+	//int R;
+	//double R_dou;
+	//int R_quan;
+	//pair<int,int> ang_quan;
+	//double x_nor, y_nor, z_nor;
+	//double x_nor2, y_nor2;
+	//int countt=0;
 
-			R_dou = xx;
-			R_quan = R_dou-hmin;
-			x_nor = ((double)xx)/R_dou;
-			y_nor = 0;
-			ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
-			//ftkWPoint2D wp;
-			wp.x = 0;
-			wp.y = 0;
-			wp.z = xx;
-			wp.w = 1; // In case of deciding to put some weight
-			if( ang_quan.second < numberofcercles )
-			{
-				_conesPru[ang_quan.second][R_quan].push_back(wp);
-			}
-	}
+	//ftkWPoint3D wp;
+	//for( int xx=0; xx<=hmax; xx++ )
+	//{
+	//	for( int yy=0; yy<=hmax; yy++ )
+	//	{
+	//		z1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
+	//		for( int zz=1; zz<=z1; zz++ )
+	//		{
+	//			R_dou = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
+	//			R = (int)ceil(R_dou);
 
-	//countt = 0;
-	for( int tt=0; tt<_conesPru.size(); tt++ )
-	{
-		_conesPru[tt].setOffset();
-	}
+	//			if( R>= hmin) // Can be done more efficiently but for now is ok the speed
+	//			{
+	//				
+	//				R_quan = R-hmin;
+	//				//cout<<endl<<R_quan;
+	//				x_nor = ((double)xx)/R_dou;
+	//				y_nor = ((double)yy)/R_dou;
+	//				z_nor = ((double)zz)/R_dou;
+	//				ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
+	//				//ftkWPoint2D wp;
+	//				wp.x = xx;
+	//				wp.y = yy;
+	//				wp.z = zz;
+	//				wp.w = 1; // In case of deciding to put some weight
+	//				if( ang_quan.second < numberofcercles )
+	//				{
+	//					_conesPru[ang_quan.second][R_quan].push_back(wp);
+	//				}
+
+	//			x_nor2 = -x_nor;
+	//			y_nor2 = y_nor;
+	//			ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+	//			wp.x = -xx;
+	//			wp.y = yy;
+	//			wp.w = 1; // In case of deciding to put some weight
+	//				if( ang_quan.second < numberofcercles )
+	//				{
+	//					_conesPru[ang_quan.second][R_quan].push_back(wp);
+	//				}
+
+	//			x_nor2 = x_nor;
+	//			y_nor2 = -y_nor;
+	//			ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+	//			wp.x = xx;
+	//			wp.y = -yy;
+	//			wp.w = 1; // In case of deciding to put some weight
+	//				if( ang_quan.second < numberofcercles )
+	//				{
+	//					_conesPru[ang_quan.second][R_quan].push_back(wp);
+	//				}
+
+	//			x_nor2 = -x_nor;
+	//			y_nor2 = -y_nor;
+	//			ang_quan = computeAngleIndex_3D(x_nor2, y_nor2, z_nor); // It is like ang_quan + 64, + 128 etc...
+	//			wp.x = -xx;
+	//			wp.y = -yy;
+	//			wp.w = 1; // In case of deciding to put some weight
+	//				if( ang_quan.second < numberofcercles )
+	//				{
+	//					_conesPru[ang_quan.second][R_quan].push_back(wp);
+	//				}
+
+
+
+	//			}
+	//		}
+	//	}
+	//}
+
+	//for( int xx=hmin; xx<=hmax; xx++ )
+	//{
+
+	//		R_dou = xx;
+	//		R_quan = R_dou-hmin;
+	//		x_nor = ((double)xx)/R_dou;
+	//		y_nor = 0;
+	//		ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
+	//		//ftkWPoint2D wp;
+	//		wp.x = 0;
+	//		wp.y = 0;
+	//		wp.z = xx;
+	//		wp.w = 1; // In case of deciding to put some weight
+	//		if( ang_quan.second < numberofcercles )
+	//		{
+	//			_conesPru[ang_quan.second][R_quan].push_back(wp);
+	//		}
+	//}
+
+	////countt = 0;
+	//for( int tt=0; tt<_conesPru.size(); tt++ )
+	//{
+	//	_conesPru[tt].setOffset();
+	//}
+
+
+
+
 
 
 	//// Now calculate the span
@@ -1665,62 +1683,66 @@ void ftkVoting_3D::vote()
 	// Print a cones in the sum image and the store thre result
 
 
-	string filenameCones_1 = "output\\out__votingSumVotes.tif";
-	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_1.c_str() )){
-		cout<<endl<<"\tProblema escribiendo";
-	}
-#pragma omp parallel for
-	for( int uu=0; uu<30; ++uu )
-	{
-		//cout<<endl<<"aja 1";
-		for( unsigned int raddd=0; raddd<60; ++raddd )
-		{
-			//cout<<endl<<"aja 2";
-			for( unsigned int bin_cont=0; bin_cont < _conesPru[uu][raddd].size(); ++bin_cont )
-			{
-				int x_posi = _conesPru[uu][raddd][bin_cont].x+20;
-				int y_posi = _conesPru[uu][raddd][bin_cont].y+20;
-				int z_posi = _conesPru[uu][raddd][bin_cont].z+20;
-				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
 
-				x_posi = _conesPru[uu][raddd][bin_cont].x+200;
-				y_posi = _conesPru[uu][raddd][bin_cont].y+200;
-				z_posi = _conesPru[uu][raddd][bin_cont].z+20;
-				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
-
-				x_posi = _conesPru[uu][raddd][bin_cont].x+250;
-				y_posi = _conesPru[uu][raddd][bin_cont].y+250;
-				z_posi = _conesPru[uu][raddd][bin_cont].z+250;
-				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
-
-				//cout<<endl<<"aja";
-			}
-		}
-	}
-
-#pragma omp parallel for
-	for( int yx =0; yx<20; ++yx ){
-		for( unsigned int yy =0; yy<20; ++yy ){
-			for( unsigned int yz =0; yz<20; ++yz ){
-
-				int x_posi = yx+300;
-				int y_posi = yy+250;
-				int z_posi = yz+250;
-				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
-
-			}
-		}
-	}
-
-
-	string filenameCones_2 = "output\\out__votingSumVotes_cone.tif";
-	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_2.c_str() )){
-		cout<<endl<<"\tProblema escribiendo";
-	}
+//	string filenameCones_1 = "output\\out__votingSumVotes.tif";
+//	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_1.c_str() )){
+//		cout<<endl<<"\tProblema escribiendo";
+//	}
+//#pragma omp parallel for
+//	for( int uu=0; uu<30; ++uu )
+//	{
+//		//cout<<endl<<"aja 1";
+//		for( unsigned int raddd=0; raddd<60; ++raddd )
+//		{
+//			//cout<<endl<<"aja 2";
+//			for( unsigned int bin_cont=0; bin_cont < _conesPru[uu][raddd].size(); ++bin_cont )
+//			{
+//				int x_posi = _conesPru[uu][raddd][bin_cont].x+20;
+//				int y_posi = _conesPru[uu][raddd][bin_cont].y+20;
+//				int z_posi = _conesPru[uu][raddd][bin_cont].z+20;
+//				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+//
+//				x_posi = _conesPru[uu][raddd][bin_cont].x+200;
+//				y_posi = _conesPru[uu][raddd][bin_cont].y+200;
+//				z_posi = _conesPru[uu][raddd][bin_cont].z+20;
+//				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+//
+//				x_posi = _conesPru[uu][raddd][bin_cont].x+250;
+//				y_posi = _conesPru[uu][raddd][bin_cont].y+250;
+//				z_posi = _conesPru[uu][raddd][bin_cont].z+250;
+//				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+//
+//				//cout<<endl<<"aja";
+//			}
+//		}
+//	}
+//
+//#pragma omp parallel for
+//	for( int yx =0; yx<20; ++yx ){
+//		for( unsigned int yy =0; yy<20; ++yy ){
+//			for( unsigned int yz =0; yz<20; ++yz ){
+//
+//				int x_posi = yx+300;
+//				int y_posi = yy+250;
+//				int z_posi = yz+250;
+//				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+//
+//			}
+//		}
+//	}
+//
+//
+//	string filenameCones_2 = "output\\out__votingSumVotes_cone.tif";
+//	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingSumVotes, filenameCones_2.c_str() )){
+//		cout<<endl<<"\tProblema escribiendo";
+//	}
 
 
 
 	
+
+
+
 
 
 
