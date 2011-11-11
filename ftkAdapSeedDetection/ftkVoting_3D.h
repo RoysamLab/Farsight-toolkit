@@ -257,7 +257,7 @@ private:
 
 
 	//< pre-computed cone structures for voting
-	vector<ftkCone3D> _conesPru;
+	vector<vector<ftkCone3D> > _conesPru_3D;
 	vector<ftkCone3D> _conesPru_prob;
 	vector< pair< int,int > > _voteDirec;
 	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob;
