@@ -161,8 +161,10 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 				iterator1.Set(255.0);
 			++iterator1;
 			if( iterator1.IsAtEnd() ){
+				size_t max_pix = r*c*z;
 				std::cerr<<"WARNING: ITK Image allocated during seed"
-					 <<"detection is smaller than input image\n";
+					 <<"detection is smaller than input image\nMax index:"
+					 <<max_pix<<" Found:"<<std::endl;
 				break;
 			}
 		}
