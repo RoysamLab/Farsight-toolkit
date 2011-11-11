@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 	reader->SetFileName (argv[1]);
 	reader->Update();	
 	std::cout<<"done"<<std::endl;
-	//read the input image into an ITK image
+  	//read the input image into an ITK image
 	OutputImageType::Pointer img = reader->GetOutput();	
 	//get the image dimensions
 	size_t size1=img->GetLargestPossibleRegion().GetSize()[0];

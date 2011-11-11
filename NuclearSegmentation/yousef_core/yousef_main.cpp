@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName (argv[1]);
-	reader->Update();	
+	reader->Update();
 	//read the input image into an ITK image
 	OutputImageType::Pointer img = reader->GetOutput();	
 	//get the image dimensions

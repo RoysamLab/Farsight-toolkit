@@ -215,7 +215,7 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 {
 	// Find out the pixel type of the image in file
 	itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO( fileName.c_str(), itk::ImageIOFactory::ReadMode );
-#ifdef USE_OPENSLIDE
+#if 0
 	// If it is a pathology slide that is only supported by Openslide and not ITK
 	openslide_t *openslide_reader = openslide_open(fileName.c_str());
 	if( !imageIO && openslide_reader==NULL ){
@@ -353,7 +353,7 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 	return true;
 }
 
-#ifdef USE_OPENSLIDE
+#if 0
 bool Image::LoadDifferentLevelInOpenSlide(int layer_num){
 	if( !OpenSlideManaged )
 		return false;
