@@ -50,7 +50,7 @@ limitations under the License.
 #include "ClusClus/clusclus.h"
 #include "ClusClus/Dendrogram.h"
 #include "ClusClus/HeatmapWindow.h"
-#include "../SPD/SPDMainWindow.h"
+#include "SPD/spdmainwindow.h"
 #include <vector>
 #include <string>
 
