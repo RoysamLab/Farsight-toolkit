@@ -86,7 +86,14 @@ int main(int argc, char* argv[])
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
 	//std::cout << "zackdebug: beginning seed detection" << std::endl;
-	NucleusSeg->runSeedDetection();
+	try{
+		NucleusSeg->runSeedDetection();
+	}
+	catch( itk::ExceptionObject & err ){
+		std::cout << "ExceptionObject caught !" << std::endl;
+		std::cout << err << std::endl;
+		return EXIT_FAILURE;
+	}
 
 	//std::cout << "zackdebug: clustering" << std::endl;
 	//3-Initial Segmentation (CLustering)

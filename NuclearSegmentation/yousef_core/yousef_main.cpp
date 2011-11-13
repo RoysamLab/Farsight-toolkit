@@ -79,7 +79,21 @@ int main(int argc, char* argv[])
 	//1-Binarization
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
+	try {
 	NucleusSeg->runSeedDetection();
+	}
+	catch( bad_alloc & excp ){
+		std::cout<<"You have requested more memory than "
+			 <<"what is currently available in this "
+			 <<"system, please try again with a smaller "
+			 <<"input image\n";
+	}
+	catch( itk::ExceptionObject & excp ){
+		std::cout<<"Error: " << excp <<std::endl;
+	}
+	catch( std::excption & excp ){
+		std::cout<<"Error: " << excp.what() << std::endl;
+	}
 	//3-Initial Segmentation (CLustering)
 	NucleusSeg->runClustering();
 	if(NucleusSeg->isSegmentationFinEnabled())
