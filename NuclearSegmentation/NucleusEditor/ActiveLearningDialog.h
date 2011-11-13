@@ -72,7 +72,13 @@ public:
 	std::vector<int> id_list;
 	bool rejectFlag;
 
+signals:
+	void start_classification(bool create_model);
+	void retrain(bool first_pop, std::vector<std::pair<int,int> > labels);
+
 private slots:
+	void StartClassification();
+	void Retrain();
 	void finished();
 	void Set_Class();
 	void Set_Class_Validate();

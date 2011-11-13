@@ -26,7 +26,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	buttongroup.resize(snapshot.size());
 
 	this->setWindowTitle(tr("ALAMO Window: Specify Class"));
-	this->setModal(true);
+	this->setModal(false);
 	//Master Layout
 	QGridLayout * layout = new QGridLayout;
 
@@ -47,20 +47,20 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 
 	//Done Button
 	QPushButton *doneButton = new QPushButton("Done");
-	connect(doneButton, SIGNAL(clicked()), this, SLOT(finished()));
+	connect(doneButton, SIGNAL(clicked()), this, SLOT(StartClassification()));
 	doneButton->setDefault(false);
 	doneButton->setAutoDefault(false);
 
 
 	QPushButton *nextButton = new QPushButton("Next");
-	connect(nextButton, SIGNAL(clicked()), this, SLOT(accept()));
+	connect(nextButton, SIGNAL(clicked()), this, SLOT(Retrain()));
 	nextButton->setDefault(false);
 	nextButton->setAutoDefault(true);
 
 
 	//Cancel Button
 	QPushButton *cancelButton = new QPushButton("Cancel");
-	connect(cancelButton, SIGNAL(clicked()), this, SLOT(rejectAction()));
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 	cancelButton->setDefault(false);
 	cancelButton->setAutoDefault(false);
 
@@ -312,6 +312,25 @@ std::vector<QHBoxLayout *> ActiveLearningDialog::Validation_Sample_Details(QImag
 	return rows;
 }
 
+void ActiveLearningDialog::StartClassification()
+{
+	for(int i=0; i<query_label.size(); ++i)
+	{
+		if(query_label[i].second == -1)
+		{	
+			emit retrain(false, query_label);
+			return;
+		}
+	}	
+	emit start_classification(true);
+	this->accept();
+}
+
+void ActiveLearningDialog::Retrain()
+{
+	emit retrain(false, query_label);
+	this->accept();
+}
 
 void ActiveLearningDialog::finished()
 {
