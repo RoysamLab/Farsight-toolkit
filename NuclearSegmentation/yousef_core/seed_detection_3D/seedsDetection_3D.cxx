@@ -485,17 +485,20 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
 {
-
-	float mx = A[(z1*R*C)+(r1*C)+c1];
+	unsigned long II = ((unsigned long)z1)*((unsigned long)R)*((unsigned long)C)+
+			   ((unsigned long)r1)*((unsigned long)C)+((unsigned long)c1);
+	float mx = A[II];
 
 	for(int i=r1; i<=r2; i++)
 	{
 		for(int j=c1; j<=c2; j++)
 		{
 			for(int k=z1; k<=z2; k++)
-			{				
-				if(A[(k*R*C)+(i*C)+j]>mx)
-					mx = A[(k*R*C)+(i*C)+j];
+			{
+				unsigned long III = ((unsigned long)k)*((unsigned long)R)*((unsigned long)C)
+						   +((unsigned long)i)*((unsigned long)C)+((unsigned long)j);
+				if(A[III]>mx)
+					mx = A[III];
 			}
 		}
 	}
@@ -504,16 +507,19 @@ float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2,in
 
 unsigned short get_maximum_3D(unsigned short* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C)
 {
-
-	unsigned short mx = A[(z1*R*C)+(r1*C)+c1];
+	unsigned long II = ((unsigned long)z1)*((unsigned long)R)*((unsigned long)C)+
+			   ((unsigned long)r1)*((unsigned long)C)+((unsigned long)c1);
+	unsigned short mx = A[II];
 	for(int i=r1; i<=r2; i++)
 	{
 		for(int j=c1; j<=c2; j++)
 		{
 			for(int k=z1; k<=z2; k++)
-			{				
-				if(A[(k*R*C)+(i*C)+j]>mx)
-					mx = A[(k*R*C)+(i*C)+j];
+			{
+				unsigned long III = ((unsigned long)k)*((unsigned long)R)*((unsigned long)C)+
+						    ((unsigned long)i)*((unsigned long)C)+((unsigned long)j);
+				if(A[III]>mx)
+					mx = A[III];
 			}
 		}
 	}
