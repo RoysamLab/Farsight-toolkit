@@ -161,20 +161,14 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	iterator1.GoToBegin();
 	if(UseDistMap == 1)
 	{
-		for(unsigned long i=0; i<((unsigned long)r)*((unsigned long)c)*((unsigned long)z); ++i)
+		unsigned long i=0;
+		while( !iterator1.IsAtEnd() )
 		{
-			if( iterator1.IsAtEnd() ){
-                                std::cerr<<"WARNING: ITK Image allocated during seed"
-                                         <<"detection is smaller than input image\nMax index:"
-                                         <<((unsigned long)r)*((unsigned long)c)*((unsigned long)z)<<" ITK:"
-					 <<i<<std::endl;
-                                break;
-                        }
 			if(bImg[i]>0)
 				iterator1.Set(0.0);//IM[i]);
 			else
 				iterator1.Set(255.0);
-			++iterator1;
+			++iterator1; ++i;
 
 		}
 		//By Yousef on 09/08/2009
@@ -195,11 +189,12 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		//max_dist = distMap(im, r, c, z,dImg);
 		max_dist = distMap_SliceBySlice(im, r, c, z,dImg);
 		std::cout<<"done"<<std::endl;
-		iterator1.GoToBegin();		
 	}
 
 	float multp = 1.0;
-	for(unsigned long i=0; i<((unsigned long)r)*((unsigned long)c)*((unsigned long)z); ++i)
+	iterator1.GoToBegin();
+	unsigned long i=0;
+	while( !iterator1.IsAtEnd() )
 	{
 
 		if(UseDistMap == 1)
@@ -208,14 +203,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			iterator1.Set((unsigned short)IM[i]/multp);			
 		else
 			iterator1.Set(255);
-		if( iterator1.IsAtEnd() ){
-			std::cerr<<"WARNING: Trying to access an out of bounds pixel in an ITK Image "
-				 <<"in function distMap in seed detection\n Max ind"
-				 <<((unsigned long)r)*((unsigned long)c)*((unsigned long)z)<<" ITK:"
-				 <<i<<std::endl;
-				break;
-		}
-		++iterator1;
+		++iterator1; ++i;
 	}
 
 	cout << "About to enter Estimating parameters" << endl;
@@ -387,17 +375,11 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
 	unsigned long i = 0;
 	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
 	IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
-	while ( i<((unsigned long)r)*((unsigned long)c)*((unsigned long)z))
+	iterate.GoToBegin();
+	while ( !iterate.IsAtEnd() )
 	{
 		IMG[i] = /*sigma*sigma*/iterate.Get()/sqrt(sigma);
 		++i;
-		if( iterate.IsAtEnd() ){
-			std::cerr<<"WARNING: Trying to access an out of bounds pixel in an ITK Image"
-				 <<"in function detect_seeds  in seed detection\n Max ITK ind"
-				 <<((unsigned long)r)*((unsigned long)c)*((unsigned long)z)<<" Trying:"
-				 <<i<<std::endl;
-				break;
-		}
 		++iterate;
 	}
 
@@ -456,6 +438,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		//   Copy the resulting image into the input array
 		typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
 		IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
+		iterate.GoToBegin();
 
 		unsigned long II;
 #pragma omp ordered
@@ -1088,9 +1071,10 @@ int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigne
 	unsigned long i = 0;
 	typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
 	IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+	iterate.GoToBegin();
 
 	unsigned long max_dist = 0;
-	while (i<((unsigned long)r)*((unsigned long)c)*((unsigned long)z))
+	while (!iterate.IsAtEnd())
 	{	  
 		double ds = iterate.Get();
 		if(ds<=0)
@@ -1101,15 +1085,7 @@ int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigne
 		if(IMG[i]>max_dist)
 			max_dist = IMG[i];
 
-		++i;
-		if( iterate.IsAtEnd() ){
-			std::cerr<<"WARNING: Trying to access an out of bounds pixel in an ITK Image"
-				 <<"in function distMap in seed detection\n Max ITK ind"
-				 <<((unsigned long)r)*((unsigned long)c)*((unsigned long)z)<<" Trying:"
-				 <<i<<std::endl;
-				break;
-		}
-		++iterate;
+		++i; ++iterate;
 	}	
 	return max_dist;
 }
@@ -1145,8 +1121,9 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 		//   Copy the resulting image into the input array  
 		typedef itk::ImageRegionIteratorWithIndex< OutputImageType2 > IteratorType;
 		IteratorType iterate(dt_obj->GetOutput(),dt_obj->GetOutput()->GetRequestedRegion());
+		iterate.GoToBegin();
 		unsigned long j=0;	  	 
-		while ( j<((unsigned long)r*(unsigned long)c))
+		while ( !iterate.IsAtEnd() )
 		{	  
 			double ds = iterate.Get();
 			ds = ds*100; //enhance the contrast
@@ -1159,16 +1136,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 				IMG[k] = (unsigned short) ds;
 			if(IMG[k]>max_dist)
 				max_dist = IMG[k];
-			++k;
-			++j;
-			if( iterate.IsAtEnd() ){
-				std::cerr<<"WARNING: Trying to access an out of bounds pixel in an ITK Image"
-					 <<"in function distMap_SliceBySlice in seed detection\n Max ind"
-					 <<((unsigned long)r)*((unsigned long)c)<<" ITK:"
-					 <<i<<std::endl;
-				break;
-			}
-			++iterate;
+			++k; ++j; ++iterate;
 		}	  
 
 		//By Yousef: try to write out the output at the central slice
