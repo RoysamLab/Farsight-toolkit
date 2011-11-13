@@ -948,6 +948,7 @@ void PatternAnalysisWizard::extractTable()
 		new_table->InsertNextRow(model_data1);
 	}
 
+	emit start_training(new_table);
 }
 
 

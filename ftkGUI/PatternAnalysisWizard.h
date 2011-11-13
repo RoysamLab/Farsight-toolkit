@@ -88,6 +88,7 @@ protected:
 signals:
 	void changedTable(void);
 	void enableModels(void);
+	void start_training(vtkSmartPointer<vtkTable>);
 
 private:
 	void initFeatureGroup(void);
