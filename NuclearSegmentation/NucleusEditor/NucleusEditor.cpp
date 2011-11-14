@@ -765,30 +765,30 @@ bool NucleusEditor::saveSomaImage()
 	Filename = Filename + "_somas.tif";
 
 	typedef itk::Image<unsigned short, 3> LabelImageType;
-	typedef itk::Image<unsigned char, 3> UCharImageType;
-	typedef itk::ImageFileWriter<UCharImageType> UCharWriterType;
+	//typedef itk::Image<unsigned char, 3> UCharImageType;
+	typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
 	LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(0,0);
 	LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
 
-	UCharImageType::Pointer somaImage = UCharImageType::New();
+	LabelImageType::Pointer somaImage = LabelImageType::New();
 	itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
-	UCharImageType::IndexType start;
+	LabelImageType::IndexType start;
     start[0] =   0;  // first index on X
     start[1] =   0;  // first index on Y    
 	start[2] =   0;  // first index on Z  
-	UCharImageType::PointType origin;
+	LabelImageType::PointType origin;
     origin[0] = 0; 
     origin[1] = 0;    
 	origin[2] = 0;    
     somaImage->SetOrigin( origin );
-	UCharImageType::RegionType region;
+	LabelImageType::RegionType region;
 	region.SetSize( im_size );
 	region.SetIndex( start );
 	somaImage->SetRegions( region );
 	somaImage->Allocate();
 	somaImage->FillBuffer(0);
 	somaImage->Update();
-	UCharImageType::PixelType * somaArray = somaImage->GetBufferPointer();
+	LabelImageType::PixelType * somaArray = somaImage->GetBufferPointer();
 
 	int slice_size = im_size[1] * im_size[0];
 	int row_size = im_size[0];
@@ -806,12 +806,12 @@ bool NucleusEditor::saveSomaImage()
 			{
 				unsigned long offset = (i*slice_size)+(j*row_size)+k;
 				if(classMap[labelArray[offset]] == 1)
-					somaArray[offset] = 255;
+					somaArray[offset] = labelArray[offset];
 			}
 		}
 	}
 
-	UCharWriterType::Pointer writer = UCharWriterType::New();
+	LabelWriterType::Pointer writer = LabelWriterType::New();
 	writer->SetFileName(Filename);
 	writer->SetInput(somaImage);
 	writer->Update();
