@@ -2358,7 +2358,7 @@ void ImageOperation::seed_centroid()
 
   try 
   { 
-	  std::cout<<"Before connectedComponentFilter->SetInput()"<< std::endl;
+	  //std::cout<<"Before connectedComponentFilter->SetInput()"<< std::endl;
 	  connectedComponentFilter->SetInput( I_Seed );
   } 
   catch( itk::ExceptionObject & err ) 
@@ -2374,7 +2374,7 @@ void ImageOperation::seed_centroid()
   
   try 
   { 
-	  std::cout<<"Before relaberer->GetOutput()"<< std::endl;
+	  //std::cout<<"Before relaberer->GetOutput()"<< std::endl;
 	  relabeler->SetInput( connectedComponentFilter->GetOutput() );
   } 
   catch( itk::ExceptionObject & err ) 
@@ -2390,7 +2390,7 @@ void ImageOperation::seed_centroid()
 
   try 
   { 
-	  std::cout<<"Before labelGeometryFilter->GetOutput()"<< std::endl;
+	  //std::cout<<"Before labelGeometryFilter->GetOutput()"<< std::endl;
     labelGeometryFilter->SetInput( relabeler->GetOutput() ); 
   } 
   catch( itk::ExceptionObject & err ) 
@@ -2405,7 +2405,7 @@ void ImageOperation::seed_centroid()
 
   try 
   { 
-	  std::cout<<"Before labelGeometryFilter->Update()"<< std::endl;
+	  //std::cout<<"Before labelGeometryFilter->Update()"<< std::endl;
     labelGeometryFilter->Update(); 
   } 
   catch( itk::ExceptionObject & err ) 
@@ -2414,13 +2414,13 @@ void ImageOperation::seed_centroid()
     std::cerr << err << std::endl; 
   } 
 
-  std::cout<<"After labelGeometryFilter->Update()"<< std::endl;
+  //std::cout<<"After labelGeometryFilter->Update()"<< std::endl;
 
 
   LabelGeometryType::LabelPointType index_temp;
   int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
 
-  std::cout<<"After labelGeometryFilter->GetNumberofLabels()"<< std::endl;
+  //std::cout<<"After labelGeometryFilter->GetNumberofLabels()"<< std::endl;
 
   Point3D temp;
   //PointList3D new_SeedPt(labelValue+1);
@@ -3402,9 +3402,9 @@ void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
 
 	 bool auto_threshold = true;
 
-	 int  timeThreshold = 40;
+	 int  timeThreshold = 300;//
 	 int intTh = 5;
-     int maxTh = 100;
+     int maxTh = 400;//100
 	 int stepTh = 5;
 	 std::vector<float> score;
 
