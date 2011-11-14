@@ -2032,6 +2032,7 @@ void View3D::setSlicerMode()
 		this->createSlicerSlider();
 	else
 		this->SlicerBar->show();
+	// need to set window level to lighten image - Audrey
 	this->chooseInteractorStyle(3);
 	this->setSlicerZValue(-1);
 	renderMode = SLICER;
@@ -2448,6 +2449,10 @@ void View3D::RayCastOpacityValueChanged(double value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
+void View3D::ShowGridlines()
+{
+
+}
 void View3D::EditHelp()
 {
 	//will write help documentation here
