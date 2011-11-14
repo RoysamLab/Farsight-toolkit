@@ -15,8 +15,8 @@ limitations under the License.
 #ifndef __BRANCHPT_H
 #define __BRANCHPT_H
 #include <vector>
-class TraceBit;
-class TraceLine;
+#include "TraceLine.h"
+#include "TraceBit.h"
 
 class branchPT
 {
