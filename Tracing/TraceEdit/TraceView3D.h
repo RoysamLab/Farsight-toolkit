@@ -46,8 +46,11 @@ limitations under the License.
 #include <QVTKWidget.h>
 
 #include "vtkActor.h"
+#include "vtkAxesActor.h"
 #include "vtkCallbackCommand.h"
+#include "vtkCamera.h"
 #include "vtkCellArray.h"
+#include "vtkCellLocator.h"
 #include "vtkCellPicker.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkCommand.h"
@@ -61,15 +64,22 @@ limitations under the License.
 #include "vtkInteractorStyleRubberBandZoom.h"
 #include "vtkInteractorStyleImage.h"
 #include "vtkImagePlaneWidget.h"
+#include "vtkJPEGWriter.h"
+#include "vtkLegendScaleActor.h"
+#include "vtkLinearExtrusionFilter.h"
 #include "vtkLODActor.h"
 #include "vtkObjectFactory.h"
+#include "vtkOBJReader.h"
 #include "vtkOpenGLVolumeTextureMapper3D.h"
+#include "vtkOrientationMarkerWidget.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkPlaybackRepresentation.h"
 #include "vtkPlaybackWidget.h"
+#include "vtkPlotGrid.h"
 #include "vtkPointData.h"
 #include "vtkPointPicker.h"
 #include "vtkPoints.h"
+#include "vtkPointWidget.h"
 #include "vtkPolygon.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
@@ -78,39 +88,31 @@ limitations under the License.
 #include "vtkRendererCollection.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
-#include "vtkCamera.h"
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"
 #include "vtkSphereSource.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-#include "vtkPointWidget.h"
-#include "vtkOrientationMarkerWidget.h"
-#include "vtkAxesActor.h"
 #include "vtkWindowToImageFilter.h"
-#include "vtkJPEGWriter.h"
-#include "vtkLinearExtrusionFilter.h"
-#include "vtkOBJReader.h"
-#include "vtkCellLocator.h"
-#include "vtkLegendScaleActor.h"
 
 #include "PatternAnalysis/activeLearning/mclr_SM.h"
 #include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 
+#include "branchPT.h"
+#include "CellTrace.h"
+#include "CellTraceModel.h"
+#include "ftkCommon/ftkProjectManager.h"
+#include "ftkUtils.h"
+#include "ImageActors.h"
+#include "MergeModel.h"
+
 #include "TraceBit.h"
 #include "TraceGap.h"
 #include "TraceLine.h"
 #include "TraceObject.h"
-#include "branchPT.h"
-#include "CellTrace.h"
 #include "TraceModel.h"
-#include "MergeModel.h"
-#include "CellTraceModel.h"
-#include "ImageActors.h"
-#include "ftkCommon/ftkProjectManager.h"
-#include "ftkUtils.h"
 
 class View3D : public QMainWindow 
 {
@@ -221,6 +223,7 @@ public slots:
 	void AddROIPoint();
 	void DrawROI();
 	void CalculateDistanceToDevice();
+	void ShowGridlines();
 
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
