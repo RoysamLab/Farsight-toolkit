@@ -247,6 +247,10 @@ void NucleusEditor::createMenus()
 	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
 	fileMenu->addAction(saveProjectAction);
 
+	saveSomaImageAction = new QAction(tr("Save Soma Image..."), this);
+	connect(saveSomaImageAction, SIGNAL(triggered()), this, SLOT(saveSomaImage()));
+	fileMenu->addAction(saveSomaImageAction);
+
 	saveImageAction = new QAction(tr("Save Image..."), this);
 	saveImageAction->setStatusTip(tr("Save image currently displayed"));
 	connect(saveImageAction, SIGNAL(triggered()), this, SLOT(askSaveImage()));
@@ -734,6 +738,112 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 // Saving SLOTS:
 //*********************************************************************************
 //*********************************************************************************
+bool NucleusEditor::saveSomaImage()
+{
+	if(!labImg || !table) return false;
+
+	bool found = false;
+	for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
+	{	
+		std::string current_column = table->GetColumnName(col);
+		if(current_column.find("prediction_active_mg") != std::string::npos )
+		{
+			found = true;
+			break;			
+		}	
+	}
+	if(!found) return false;
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Soma Image As..."),lastPath, standardImageTypes);
+	if(filename == "")
+		return false;
+	lastPath = QFileInfo(filename).absolutePath();
+	std::string Filename = filename.toStdString();
+	string::iterator it;
+	it = Filename.end() - 4;
+	Filename.erase(it, it+4);
+	Filename = Filename + "_somas.tif";
+
+	typedef itk::Image<unsigned short, 3> LabelImageType;
+	typedef itk::Image<unsigned char, 3> UCharImageType;
+	typedef itk::ImageFileWriter<UCharImageType> UCharWriterType;
+	LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(0,0);
+	LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
+
+	UCharImageType::Pointer somaImage = UCharImageType::New();
+	itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
+	UCharImageType::IndexType start;
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z  
+	UCharImageType::PointType origin;
+    origin[0] = 0; 
+    origin[1] = 0;    
+	origin[2] = 0;    
+    somaImage->SetOrigin( origin );
+	UCharImageType::RegionType region;
+	region.SetSize( im_size );
+	region.SetIndex( start );
+	somaImage->SetRegions( region );
+	somaImage->Allocate();
+	somaImage->FillBuffer(0);
+	somaImage->Update();
+	UCharImageType::PixelType * somaArray = somaImage->GetBufferPointer();
+
+	int slice_size = im_size[1] * im_size[0];
+	int row_size = im_size[0];
+	std::map<unsigned short, int> classMap;
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		classMap[table->GetValue(row,0).ToUnsignedShort()] = table->GetValueByName(row, "prediction_active_mg").ToInt();
+	}
+
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			for(int k=0; k<im_size[0]; ++k)
+			{
+				unsigned long offset = (i*slice_size)+(j*row_size)+k;
+				if(classMap[labelArray[offset]] == 1)
+					somaArray[offset] = 255;
+			}
+		}
+	}
+
+	UCharWriterType::Pointer writer = UCharWriterType::New();
+	writer->SetFileName(Filename);
+	writer->SetInput(somaImage);
+	writer->Update();
+
+	it = Filename.end() - 10;
+	Filename.erase(it, it+10);
+	Filename = Filename + "_centroids.txt";
+
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Write out the features:
+	for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
+	{
+		if(table->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+		{
+			outFile << table->GetValue(row,1).ToInt() << "\t" ;
+			outFile << table->GetValue(row,2).ToInt() << "\t" ;
+			outFile << table->GetValue(row,3).ToInt() << "\t" ;
+			outFile << "\n";
+		}
+	}
+	outFile.close();
+	
+	return true;
+
+
+}
 bool NucleusEditor::saveProject()
 {
 
@@ -1970,9 +2080,7 @@ void NucleusEditor::updateDatabase()
 
 void NucleusEditor::startActiveLearningwithFeat()
 {	
-	vtkSmartPointer<vtkTable> featureTable;
-	std::vector<int> active_queries;
-
+	from_model = false;
 	if(myImg->GetImageInfo()->numTSlices==1)
 		featureTable = table;
 	else
@@ -2011,7 +2119,6 @@ void NucleusEditor::startActiveLearningwithFeat()
 	//Clear the Gallery 
 	//gallery.clear();	
 
-	std::vector< std::pair<int,int> > id_time;	
 	// Remove the training examples from the list of ids.
 	//Get the list of ids
 	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
@@ -2035,159 +2142,140 @@ void NucleusEditor::startActiveLearningwithFeat()
 	if(d->result())
 	{
 		pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
+		connect(pWizard, SIGNAL(start_training(vtkSmartPointer<vtkTable>)), this, SLOT(StartTraining(vtkSmartPointer<vtkTable>)));
 		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-		pWizard->exec();
-
-		//pawTable does not have the id column  nor the train_default column
-		pawTable = pWizard->getExtractedTable();
-		// If the user did not hit cancel 	
-		if(pWizard->result())
-		{
-			//// Delete the prediction column if it exists
-			prediction_names = ftk::GetColumsWithString( "prediction_active" , pawTable);
-			if(prediction_names.size()>0)
-				pawTable->RemoveColumnByName("prediction_active");
-
-			vnl_vector<double> class_list(pawTable->GetNumberOfRows()); 
-
-			for(int row = 0; (int)row < pawTable->GetNumberOfRows(); ++row)  
-			{
-				class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
-			}
-
-			MCLR *mclr = new MCLR();
-			double sparsity = 1;
-			int active_query = 1;
-			double max_info = -1e9;
-
-			// Normalize the feature matrix
-			vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pawTable,id_time));
-			mclr->Initialize(Feats,sparsity,class_list,"",pawTable,true);
-			mclr->Get_Training_Model();
-
-			// Get the active query based on information gain
-			active_query = mclr->Active_Query();
-			active_queries = mclr->ALAMO(active_query);		
-
-			if(myImg->GetImageInfo()->numTSlices > 1)
-				segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
-
-			bool user_stop_dialog_flag = false;
-			bool loop_termination_condition = true;
-
-			ActiveLearningDialog *dialog;
-			std::vector<QImage> snapshots;
-			snapshots.resize(active_queries.size());
-
-			while(loop_termination_condition)
-			{	
-				// Collect all the snapshots
-				for(int i=0;i<active_queries.size(); ++i)
-					//for(int i=0;i<1; ++i)
-				{	
-					if(myImg->GetImageInfo()->numTSlices > 1)
-						segView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
-					snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
-				}
-
-				//mclr->test_table is the pawTable obtained above
-				dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);
-				dialog->exec();
-
-				if(dialog->rejectFlag)
-					return;
-
-				loop_termination_condition = dialog->finish && dialog->result();
-
-				int atleast_one_chosen = 0; // A check to see if the user selected Not sure for all the cells
-
-				for(int i=0;i<active_queries.size();++i)
-				{
-					atleast_one_chosen = atleast_one_chosen+dialog->query_label[i].second;
-					if(dialog->query_label[i].second == -1)
-					{	
-						QMessageBox::critical(this, tr("Oops"), tr("Please select a class for all the cells"));
-						this->show();
-						dialog =  new ActiveLearningDialog(snapshots,mclr->test_table,mclr->no_of_classes,active_queries,mclr->top_features);	
-						dialog->exec();
-						i=0;
-						if(dialog->rejectFlag)
-							return;
-					}
-				}
-
-
-				// Update the data & refresh the training model and refresh the Training Dialog 		
-				mclr->Update_Train_Data(dialog->query_label);
-
-				if(atleast_one_chosen ==0)
-				{
-					mclr->Get_Training_Model();
-					active_query = mclr->Active_Query();
-					active_queries = mclr->ALAMO(active_query);
-					continue;
-				}
-
-				// Update the gallery
-				//gallery.push_back(dialog->temp_pair);
-
-				if(mclr->stop_training && atleast_one_chosen!=0)
-				{
-					QMessageBox msgBox;
-					msgBox.setText("I understand the classification problem.");
-					msgBox.setInformativeText("Do you want to stop training and classify ? ");
-					msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-					msgBox.setDefaultButton(QMessageBox::Ok);
-					int ret = msgBox.exec();
-
-					switch (ret) 
-					{
-					case QMessageBox::Ok:
-						// Save was clicked
-						user_stop_dialog_flag = true;
-						break;
-					case QMessageBox::Cancel:
-						mclr->stop_training = false;
-						break;
-					default:
-						// should never be reached
-						break;
-					}
-				}
-
-				if(user_stop_dialog_flag)
-					break;
-
-				mclr->Get_Training_Model();
-				active_query = mclr->Active_Query();
-				active_queries = mclr->ALAMO(active_query);
-
-			}
-
-			//Enable the Menu Items related to active Learning
-			//showGalleryAction->setEnabled(true);
-			if(myImg->GetImageInfo()->numTSlices > 1)
-				saveActiveResultsAction->setEnabled(true);
-
-			active_model = mclr->CreateActiveLearningModel(pawTable);
-
-			std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
-			if(myImg->GetImageInfo()->numTSlices == 1)
-			{
-				VectorOfTables.push_back(table);
-				table = Perform_Classification(mclr, VectorOfTables, pawTable, false).at(0);
-			}
-			else
-			{
-				VectorOfTables = nucSeg->table4DImage;
-				nucSeg->table4DImage = Perform_Classification(mclr, VectorOfTables, pawTable, false);
-			}
-			activeRun = 1;
-			projectFiles.tableSaved = false;
-			this->updateViews();
-		}
+		pWizard->show();
 	}
 }
+
+void NucleusEditor::StartTraining(vtkSmartPointer<vtkTable> pTable)
+{
+	//pawTable does not have the id column  nor the train_default column
+	pawTable = pTable;
+	
+	//// Delete the prediction column if it exists
+	prediction_names = ftk::GetColumsWithString( "prediction_active" , pawTable);
+	if(prediction_names.size()>0)
+		pawTable->RemoveColumnByName("prediction_active");
+
+	vnl_vector<double> class_list(pawTable->GetNumberOfRows()); 
+
+	for(int row = 0; (int)row < pawTable->GetNumberOfRows(); ++row)  
+	{
+		class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
+	}
+
+	mclr = new MCLR();
+	double sparsity = 1;
+	double max_info = -1e9;
+
+	// Normalize the feature matrix
+	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pawTable, id_time));
+	mclr->Initialize(Feats,sparsity,class_list,"",pawTable,true);
+	mclr->Get_Training_Model();
+
+	// Get the active query based on information gain
+	int active_query = mclr->Active_Query();
+	active_queries = mclr->ALAMO(active_query);		
+
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
+
+	std::vector<std::pair<int,int> > dummy_vector;
+	dummy_vector.clear();
+	ALDialogPopUP(true, dummy_vector);
+
+}
+
+void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > query_labels)
+{
+	bool user_stop_dialog_flag = false;
+	int atleast_one_chosen = 0;
+
+	if(!first_pop)		
+	{
+		for(int i=0; i<active_queries.size(); ++i)
+		{
+			atleast_one_chosen = atleast_one_chosen + query_labels[i].second;
+			if(query_labels[i].second == -1)
+			{	
+				QMessageBox::critical(this, tr("Oops"), tr("Please select a class for all the cells"));
+				this->show();
+				dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);	
+				connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
+				connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
+				dialog->show();
+				i=0;		
+				return;
+			}
+		}
+
+
+		// Update the data & refresh the training model and refresh the Training Dialog 		
+		mclr->Update_Train_Data(query_labels);
+
+		// Update the gallery
+		//gallery.push_back(dialog->temp_pair);
+
+		if(mclr->stop_training && atleast_one_chosen!=0)
+		{
+			QMessageBox msgBox;
+			msgBox.setText("I understand the classification problem.");
+			msgBox.setInformativeText("Do you want to stop training and classify ? ");
+			msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+			msgBox.setDefaultButton(QMessageBox::Ok);
+			int ret = msgBox.exec();
+
+			switch (ret) 
+			{
+			case QMessageBox::Ok:
+				// Save was clicked
+				user_stop_dialog_flag = true;
+				break;
+			case QMessageBox::Cancel:
+				mclr->stop_training = false;
+				break;
+			default:
+				// should never be reached
+				break;
+			}
+		}
+
+		if(user_stop_dialog_flag)
+		{
+			Start_Classification(true);
+			return;
+		}
+
+		mclr->Get_Training_Model();
+		int active_query = mclr->Active_Query();
+		active_queries = mclr->ALAMO(active_query);
+	}
+
+
+
+	snapshots.resize(active_queries.size());
+	// Collect all the snapshots
+	for(int i=0;i<active_queries.size(); ++i)
+		//for(int i=0;i<1; ++i)
+	{	
+		if(myImg->GetImageInfo()->numTSlices > 1)
+			segView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
+		snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
+	}
+
+	//mclr->test_table is the pawTable obtained above
+	dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);
+	connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
+	connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
+	dialog->show();
+
+	//Enable the Menu Items related to active Learning
+	//showGalleryAction->setEnabled(true);
+
+}
+	
+
 
 
 void NucleusEditor::startActiveValidation()
@@ -2433,6 +2521,7 @@ void NucleusEditor::SaveActiveLearningModel()
 
 void NucleusEditor::classifyFromActiveLearningModel()
 {
+	from_model = true;
 	//open pattern analysis wizard	
 	vtkSmartPointer<vtkTable> featureTable;
 	if(myImg->GetImageInfo()->numTSlices==1)
@@ -2511,29 +2600,42 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		// Extracted Table containing features of trained model 
 		pawTable = pWizard->getExtractedTable();
 
-		MCLR *mclr = new MCLR();
+		mclr = new MCLR();
 		// Number of features and classes needed in "add_bias" fuction of MCLR
 		mclr->Set_Number_Of_Classes((int)alm_table->GetNumberOfRows());
 		mclr->Set_Number_Of_Features((int)alm_table->GetNumberOfColumns());
-
-		std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
-		if(myImg->GetImageInfo()->numTSlices==1)
-		{
-			VectorOfTables.push_back(table);
-			table = Perform_Classification(mclr, VectorOfTables, pawTable, true).at(0);
-		}
-		else
-		{
-			VectorOfTables = nucSeg->table4DImage;
-			nucSeg->table4DImage = Perform_Classification(mclr, VectorOfTables, pawTable, true);
-		}
-		projectFiles.tableSaved = false;
-		activeRun = 1;		
-		this->updateViews();
+		Start_Classification();		
 	}
 }
 
-std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(MCLR* mclr_class, std::vector< vtkSmartPointer<vtkTable> > table_vector, vtkSmartPointer<vtkTable> pWizard_table, bool from_model)
+void NucleusEditor::Start_Classification(bool create_model)
+{
+	if(create_model)
+	{
+		active_model = mclr->CreateActiveLearningModel(pawTable);
+	}
+
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		saveActiveResultsAction->setEnabled(true);
+
+	std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
+	if(myImg->GetImageInfo()->numTSlices==1)
+	{
+		VectorOfTables.push_back(table);
+		table = Perform_Classification(VectorOfTables).at(0);
+	}
+	else
+	{
+		VectorOfTables = nucSeg->table4DImage;
+		nucSeg->table4DImage = Perform_Classification(VectorOfTables);
+	}
+	projectFiles.tableSaved = false;
+	activeRun = 1;		
+	this->updateViews();
+
+
+}
+std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector)
 {
 	for(int i=0; i<table_vector.size() ; ++i)
 	{	
@@ -2542,10 +2644,10 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		test_table->Initialize();
 
 		test_table->SetNumberOfRows(table_vector.at(i)->GetNumberOfRows());
-		for(int col=0; col<pWizard_table->GetNumberOfColumns(); ++col)
+		for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
 		{
 			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(pWizard_table->GetColumnName(col));
+			column->SetName(pawTable->GetColumnName(col));
 			test_table->AddColumn(column);	
 		}
 		for(int row = 0; row < (int)table_vector.at(i)->GetNumberOfRows(); ++row)
@@ -2560,22 +2662,22 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(M
 		vnl_matrix<double> data_classify;
 		if(from_model)
 		{
-			data_classify =  mclr_class->Normalize_Feature_Matrix_w(mclr_class->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+			data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
 		}
 		else
 		{
-			data_classify =  mclr_class->Normalize_Feature_Matrix(mclr_class->tableToMatrix(test_table, mclr_class->id_time_val));
+			data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table, mclr->id_time_val));
 		}
 		data_classify = data_classify.transpose();
 
 		vnl_matrix<double> currprob;
 		if(from_model)
 		{
-			currprob = mclr_class->Test_Current_Model_w(data_classify, act_learn_matrix);
+			currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
 		}
 		else
 		{
-			currprob = mclr_class->Test_Current_Model(data_classify);
+			currprob = mclr->Test_Current_Model(data_classify);
 		}
 
 		if(classification_name != "")
@@ -3146,7 +3248,7 @@ void NucleusEditor::closeViews()
 }
 
 //Call this slot when the table has been modified (new rows or columns) to update the views:
-void NucleusEditor::updateViews(void)
+void NucleusEditor::updateViews()
 {
 	//Show colored seeds after kPLS has run
 	if( kplsRun )
@@ -3166,8 +3268,6 @@ void NucleusEditor::updateViews(void)
 		segView->SetCentroidsVisible(true);
 	}
 
-
-
 	segView->update();
 
 	for(int p=0; p<(int)tblWin.size(); ++p)
@@ -3178,6 +3278,8 @@ void NucleusEditor::updateViews(void)
 
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->update();
+
+
 }
 
 //******************************************************************************

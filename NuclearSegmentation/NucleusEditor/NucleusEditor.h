@@ -148,6 +148,7 @@ protected slots:
 
 	//Saving:
 	bool saveProject(void);
+	bool saveSomaImage(void);
 	bool askSaveImage(void);
 	bool saveImage(void);
 	bool askSaveResult(void);
@@ -247,10 +248,13 @@ protected slots:
 	//void BuildGallery();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
+	void StartTraining(vtkSmartPointer<vtkTable> pTable);
+	void ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > query_labels);
 	//void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
 	void classifyFromActiveLearningModel();
 	vtkSmartPointer<vtkTable> loadActiveLearningModel(std::string filename);
-	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(MCLR* mclr_class, std::vector< vtkSmartPointer<vtkTable> > table_vector, vtkSmartPointer<vtkTable> pWizard_table, bool from_model);
+	void Start_Classification(bool create_model = false);
+	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector);
 	
 	//******************************************************
 	//5D Views Menu
@@ -294,6 +298,7 @@ protected:
 	QAction *loadProjectAction;
 	QAction *processProjectAction;
 	QAction *saveProjectAction;
+	QAction *saveSomaImageAction;
 	QAction *saveImageAction;
 	QAction *saveLabelAction;
 	QAction *saveTableAction;
@@ -439,6 +444,13 @@ protected:
 	// Active Learning Variables
 	///////////////////////////////////////////////////////////////////////////////
 	unsigned int activeRun;
+	MCLR *mclr;
+	ActiveLearningDialog *dialog;
+	bool from_model;
+	std::vector< std::pair<int,int> > id_time;	
+	std::vector<int> active_queries;
+	std::vector<QImage> snapshots;
+	vtkSmartPointer<vtkTable> featureTable;
 	vnl_matrix<double> act_learn_matrix;
 	double confidence_thresh;
 	std::string classification_name;
