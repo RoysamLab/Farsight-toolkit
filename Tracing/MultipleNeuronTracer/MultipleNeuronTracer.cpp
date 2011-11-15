@@ -1217,7 +1217,16 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 ///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::LoadSomaImage(std::string somaFileName)
 {
-	typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
+	/*typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
+	SomaReaderType::Pointer somaReader = SomaReaderType::New();
+	somaReader->SetFileName(somaFileName);
+	SomaImage = somaReader->GetOutput();
+	somaReader->Update();
+	*/
+
+	// Now reading a labeled image for the somas
+
+	typedef itk::ImageFileReader<LabelImageType3D> SomaReaderType;
 	SomaReaderType::Pointer somaReader = SomaReaderType::New();
 	somaReader->SetFileName(somaFileName);
 	SomaImage = somaReader->GetOutput();
@@ -1229,6 +1238,10 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 	std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
 
 	unsigned int originalSize = SWCNodeContainer.size();
+	LabelArrayType somaArray = SomaImage->GetBufferPointer();
+	itk::Size<3> im_size = SomaImage->GetBufferedRegion().GetSize();
+	int slice_size = im_size[0] * im_size[1];
+	int row_size = im_size[0];
 
 	//find the root nodes of each tree
 	std::cout << "Finding the root nodes of each tree" << std::endl;
@@ -1261,10 +1274,30 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 
 		//remove any other node that falls within a soma
-		if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		/*if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
 		{
 			delete (*sit);
 			sit = SWCNodeContainer.erase(sit);
+		}*/
+
+		// Removing nodes only lying in the foreground of the current soma
+		itk::Index<3> Node_0 = (*sit)->ndx;
+		itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
+		if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
+		//if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		{
+			if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
+			//if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx)	)
+			{
+				delete (*sit);
+				sit = SWCNodeContainer.erase(sit);
+
+				std::cout << "Deleted cell. " << std::endl;
+			}
+			else{
+				++sit;
+				continue;
+			}
 		}
 
 		//otherwise if its parent lies within a soma reassign it to be a child
@@ -1277,7 +1310,9 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 				++sit;
 				continue;
 			}
-			if( SomaImage->GetPixel( parent->ndx ) != 0)
+			itk::Index<3> Node_2 = parent->ndx;
+			//if( SomaImage->GetPixel( parent->ndx ) != 0)
+			if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
 			{
 				(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
 				(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;

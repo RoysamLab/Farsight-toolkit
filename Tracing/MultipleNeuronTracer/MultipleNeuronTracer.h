@@ -90,6 +90,8 @@ public:
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	typedef itk::Image< unsigned char, 3 > CharImageType3D;
 	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
+	typedef itk::Image< unsigned short, 3 > LabelImageType3D;
+	typedef LabelImageType3D::PixelType * LabelArrayType;
 
 	//Constructor
 	MultipleNeuronTracer();
@@ -127,7 +129,8 @@ protected:
 
 private:
 	std::vector<SWCNode*> SWCNodeContainer;
-	CharImageType3D::Pointer SomaImage;
+	//CharImageType3D::Pointer SomaImage;
+	LabelImageType3D::Pointer SomaImage;
 	PixelType CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage;   //Input Image, EK image, CT image
