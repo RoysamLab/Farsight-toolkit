@@ -198,6 +198,62 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	
 	return table;
 }
+
+vtkSmartPointer<vtkTable> LoadXYZTable(std::string filename)
+{
+	/*!
+	*	Read a tab deliminated text file of xyz coords and create a vtkTable
+	*/
+	if( !FileExists(filename.c_str()) )
+		return NULL;
+
+	const int MAXLINESIZE = 10024;	
+	char line[MAXLINESIZE];
+
+	//Open the file:
+	ifstream inFile; 
+	inFile.open( filename.c_str() );
+	if ( !inFile.is_open() )
+		return NULL;
+
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+
+	//!Create THE HEADER INFO:
+	/**Creates the vtk table header information to reference the columns by*/
+
+	vtkSmartPointer<vtkDoubleArray> Xcolumn = vtkSmartPointer<vtkDoubleArray>::New();
+	Xcolumn->SetName( "centroid_x");
+	table->AddColumn(Xcolumn);
+
+	vtkSmartPointer<vtkDoubleArray> Ycolumn = vtkSmartPointer<vtkDoubleArray>::New();
+	Ycolumn->SetName( "centroid_y");
+	table->AddColumn(Ycolumn);
+
+	vtkSmartPointer<vtkDoubleArray> Zcolumn = vtkSmartPointer<vtkDoubleArray>::New();
+	Zcolumn->SetName( "centroid_z");
+	table->AddColumn(Zcolumn);
+	//!LOAD THE DATA:
+	/*!
+	* Reads all the data into table
+	* Note: reads in as float but stores as vtkVariant
+	*/
+	inFile.getline(line, MAXLINESIZE);
+	while ( !inFile.eof() ) //Get all values
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		char * pch = strtok (line," \t");
+		while (pch != NULL)
+		{
+			row->InsertNextValue( vtkVariant( atof(pch) ) );
+			pch = strtok (NULL, " \t");
+		}
+		table->InsertNextRow(row);
+		inFile.getline(line, MAXLINESIZE);
+	}
+	inFile.close();
+	
+	return table;
+}
 vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<vtkTable> initialTable , double tx, double ty, double tz)
 {	//!Loads and apends a feature table into montage space
 	/*!
