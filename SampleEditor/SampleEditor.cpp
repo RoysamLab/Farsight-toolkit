@@ -433,7 +433,7 @@ void SampleEditor::sampledendrogram()
 
 	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
 	{
-		datas[i] = new double[this->data->GetNumberOfColumns() - 1 ];
+		datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2];
 	}
 
 
@@ -448,9 +448,6 @@ void SampleEditor::sampledendrogram()
 
 	cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
 	cc1->RunClusClus();
-	cc1->MergersToProgress();
-	cc1->PrepareTreeData();
-	cc1->GetOptimalLeafOrderD();
 	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
 		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
 
@@ -470,15 +467,15 @@ void SampleEditor::featuredendrogram()
 	cc1->Transpose();
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
 	cc2->RunClusClus();
-	cc2->MergersToProgress();
-	cc2->PrepareTreeData();
-	cc2->GetOptimalLeafOrderD();
 	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
 		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
 
 	this->dendro2->setTreeData(cc2->num_samples, cc2->treedata, cc2->optimalleaforder);
 	this->dendro2->createDataForDendogram();
 	this->dendro2->showGraph();
+
+	delete cc1;
+	delete cc2;
 }
 
 void SampleEditor::showheatmap()
@@ -501,7 +498,6 @@ void SampleEditor::showheatmap()
 		datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2 ];
 	}
 
-
 	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
 	{		
 		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
@@ -513,18 +509,12 @@ void SampleEditor::showheatmap()
 
 	cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
 	cc1->RunClusClus();
-	cc1->MergersToProgress();
-	cc1->PrepareTreeData();
-	cc1->GetOptimalLeafOrderD();
 	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
 		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
 
 	cc1->Transpose();
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
 	cc2->RunClusClus();
-	cc2->MergersToProgress();
-	cc2->PrepareTreeData();
-	cc2->GetOptimalLeafOrderD();
 	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
 		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
 
@@ -539,4 +529,6 @@ void SampleEditor::showheatmap()
 	}
 	delete datas;
 
+	delete cc1;
+	delete cc2;
 }

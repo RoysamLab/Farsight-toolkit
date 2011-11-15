@@ -156,7 +156,8 @@ void ClusClusMainWindow::load()
 {
 	string file = this->FileName.toStdString();
 
-	this->cc1 = new clusclus(file.c_str());
+	this->cc1 = new clusclus();
+	this->cc1->ReadFile(file.c_str());
 	this->featureNum->setText( QString::number(this->cc1->num_features));
 	this->sampleNum->setText( QString::number(this->cc1->num_samples));
 }

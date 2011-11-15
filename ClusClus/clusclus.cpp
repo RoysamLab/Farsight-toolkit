@@ -2,57 +2,39 @@
 
 clusclus::clusclus()
 {
-}
-
-clusclus::clusclus(const char* filename)
-{
-	this->num_features = 0;
 	this->num_samples = 0;
-	this->num_gaps = 5;
-	this->features = NULL;
-	this->sample_distances = NULL;
-	this->cluster_distances = NULL;
-	this->mergers = NULL;
-	this->progress = NULL;
-	this->members = NULL;
-	this->gap = NULL;
+	this->num_features = 0;	
 	this->linkmode = 2;
-
-	ReadFile(filename);
+	this->num_gaps = 5;
+	this->gap = NULL;
+	this->mergers = NULL;
+	this->treedata = NULL;
+	this->features = NULL;
+	this->members = NULL;
+	this->progress = NULL;
+	this->optimalleaforder = NULL;
+	this->sample_distances = NULL;
+	this->transposefeatures = NULL;
+	this->cluster_distances = NULL;
+	this->num_cluster_samples = NULL;	
 }
 
 clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 {
-	this->num_features = numfeatures;
-	this->num_samples = numsamples;
-
-	this->features = feature;
-
-	//FILE *fp2 = fopen("numfeature.txt","w");
-	//for(int i=0; i<num_samples; i++)
-	//{
-	//	for(int j=0; j<num_features; j++)
-	//		fprintf(fp2,"%f\t ",this->features[i][j]);
-	//	fprintf(fp2,"\n");
-	//}
-	//fclose(fp2);
-
-	this->sample_distances = NULL;
-	this->cluster_distances = NULL;
-	this->mergers = NULL;
-	this->progress = NULL;
-	this->members = NULL;
-	this->gap = NULL;
 	this->linkmode = 2;
 	this->num_gaps = 5;
-
-	this->mergers = new double*[num_samples-1];
+	this->num_features = numfeatures;
+	this->num_samples = numsamples;
+	
+	this->gap = new double*[num_samples-1];
 	this->progress = new int*[num_samples];
-	this->num_cluster_samples = new int[num_samples];
 	this->members = new int*[num_samples];
+	this->mergers = new double*[num_samples-1];
+	this->treedata = new double*[num_samples-1];
+	this->features = new double*[num_samples];
+	this->num_cluster_samples = new int[num_samples];
 	this->sample_distances = new double[num_samples*(num_samples+1)/2];
 	this->cluster_distances = new double[num_samples*(num_samples+1)/2];
-	this->gap = new double*[num_samples-1];
 	this->transposefeatures = new double*[num_features];
 	this->treedata = new double*[num_samples-1];
 	this->optimalleaforder = new int[num_samples];
@@ -61,6 +43,9 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 	{
 		this->progress[i] = new int[num_samples];
 		this->members[i] = new int[2];
+		this->features[i] = new double[num_features + 2];
+		for(int j = 0 ; j<num_features; j++)
+			this->features[i][j] = feature[i][j];
 	}
 	for(int i=0; i<num_samples-1; i++)
 	{
@@ -74,26 +59,106 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 
 clusclus::~clusclus()
 {
+	if(this->features)
+	{
+		for(int i=0; i<num_samples; i++)
+		{
+			delete this->progress[i];
+			delete this->members[i];
+			delete this->features[i];
+		}
+		for(int i=0; i<num_samples-1; i++)
+		{
+			delete this->gap[i];
+			delete this->mergers[i];
+			delete this->treedata[i];
+		}
+		for(int i=0; i<num_features-1; i++)
+			delete this->transposefeatures[i];
+
+		delete this->gap;
+		delete this->progress;
+		delete this->members;
+		delete this->mergers;
+		delete this->treedata;
+		delete this->features;
+		delete this->num_cluster_samples;
+		delete this->sample_distances;
+		delete this->cluster_distances;
+		delete this->transposefeatures;
+		delete this->treedata;
+		delete this->optimalleaforder;
+	}
+}
+
+void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
+{
+	if(this->features)
+	{
+		for(int i=0; i<num_samples; i++)
+		{
+			delete this->progress[i];
+			delete this->members[i];
+			delete this->features[i];
+		}
+		for(int i=0; i<num_samples-1; i++)
+		{
+			delete this->gap[i];
+			delete this->mergers[i];
+			delete this->treedata[i];
+		}
+		for(int i=0; i<num_features-1; i++)
+			delete this->transposefeatures[i];
+
+		delete this->gap;
+		delete this->progress;
+		delete this->members;
+		delete this->mergers;
+		delete this->treedata;
+		delete this->features;
+		delete this->num_cluster_samples;
+		delete this->sample_distances;
+		delete this->cluster_distances;
+		delete this->transposefeatures;
+		delete this->treedata;
+		delete this->optimalleaforder;
+	}
+
+	this->num_features = numfeatures;
+	this->num_samples = numsamples;
+
+	this->gap = new double*[num_samples-1];
+	this->progress = new int*[num_samples];
+	this->members = new int*[num_samples];
+	this->mergers = new double*[num_samples-1];
+	this->treedata = new double*[num_samples-1];
+	this->features = new double*[num_samples];
+	this->num_cluster_samples = new int[num_samples];
+	this->sample_distances = new double[num_samples*(num_samples+1)/2];
+	this->cluster_distances = new double[num_samples*(num_samples+1)/2];
+	this->transposefeatures = new double*[num_features];
+	this->treedata = new double*[num_samples-1];
+	this->optimalleaforder = new int[num_samples];
+
 	for(int i=0; i<num_samples; i++)
 	{
-		delete this->progress[i];
-		delete this->members[i];
+		this->progress[i] = new int[num_samples];
+		this->members[i] = new int[2];
+		this->features[i] = new double[num_features + 2];
+		for(int j = 0 ; j<num_features; j++)
+			this->features[i][j] = feature[i][j];
 	}
 	for(int i=0; i<num_samples-1; i++)
 	{
-		delete this->gap[i];
-		delete this->mergers[i];
+		this->mergers[i] = new double[5];
+		this->gap[i] = new double[8];
+		this->treedata[i] = new double[4];
 	}
-	delete this->sample_distances;
-	delete this->cluster_distances;
-	delete this->mergers;
-	delete this->progress;
-	delete this->members;
-	delete this->num_cluster_samples;
-	delete this->gap;
-	delete this->features;
+	for(int i=0; i<num_features-1; i++)
+		this->transposefeatures[i] = new double[num_samples + 2];
 }
-void clusclus::RunClusClus()
+
+void clusclus::Clustering()
 {
 	int num_currcluster = num_samples;
 	int pivot1,pivot2;
@@ -707,4 +772,12 @@ void clusclus::GetKids(int k, int* Tnums, int* pickedup, int* kids)
 		GetKids(k2, Tnums, kids, kids);     //pick up kids from node k2
 	}
 	return;
+}
+
+void clusclus::RunClusClus()
+{
+	this->Clustering();
+	this->MergersToProgress();
+	this->PrepareTreeData();
+	this->GetOptimalLeafOrderD();
 }

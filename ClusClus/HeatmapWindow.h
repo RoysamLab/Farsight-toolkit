@@ -13,26 +13,6 @@
 #include <QtGui/QApplication>
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QWidget>
-#include <QtGui/QStatusBar>
-#include <QtGui/QMenuBar>
-#include <QtGui/QPushButton>
-#include <QtGui/QComboBox>
-#include <QtGui/QItemSelection>
-#include <QtGui/QItemSelectionModel>
-#include <QtGui/QTableView>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QCloseEvent>
-#include <QtGui/QDialog>
-#include <QtGui/QGroupBox>
-#include <QtGui/QLabel>
-#include <QtGui/QCheckBox>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QScrollArea>
-#include <QtGui/QScrollBar>
-#include <QtGui/QDoubleSpinBox>
-#include <QtCore/QMap>
-#include <QtCore/QSignalMapper>
 #include <QApplication>
 #include <QFileDialog>
 #include <QFile>
@@ -111,10 +91,7 @@
 
 #include <ftkCommon/ftkUtils.h>
 #include "ObjectSelection.h"
-
 using namespace std;
-
-class MouseInteractorStyle;
 
 typedef struct srgb
 {
@@ -146,17 +123,18 @@ public:
 	void showSimilarMatrixGraph();
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
+	void SetInteractStyle();
 
-	double** mapdata;
-	double** connect_Data_Tree1;
-	int*    Optimal_Leaf_Order1;
+	int              num_samples;
+	int              num_features;
+	double**         mapdata;
+	double**         connect_Data_Tree1;
+	double**         connect_Data_Tree2;
+	int*             Optimal_Leaf_Order1;
+	int*             Optimal_Leaf_Order2;
+	
 	vector<vector<double > > Processed_Coordinate_Data_Tree1;
-	int num_samples;
-	double** connect_Data_Tree2;
-	int*    Optimal_Leaf_Order2;
 	vector<vector<double > > Processed_Coordinate_Data_Tree2;	
-	int num_features;
-	friend class MouseInteractorStyle;
 
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
@@ -166,12 +144,11 @@ signals:
 
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs);
-	//void SetdenSelectedIds2(std::set<long int>& IDs);
 	void GetSelecectedIDs();
-	//void GetSelecectedIDs2();
 	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 
 private:
 	QVTKWidget mainQTRenderWidget;
@@ -185,24 +162,19 @@ private:
 	vtkSmartPointer<vtkViewTheme> theme;
 	vtkSmartPointer<vtkIdTypeArray>ids1;
 	vtkSmartPointer<vtkIdTypeArray>ids2;
-	/////////////////////////////////////////////////////////
+
 	vtkSmartPointer<vtkIdTypeArray> v1;
-	vtkSmartPointer<vtkIdTypeArray> v2;
 	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout1;
-	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout2;
 	vtkSmartPointer<vtkPoints> points1;
-	vtkSmartPointer<vtkPoints> points2;
 	vtkSmartPointer<vtkIntArray> vertexColors1;
-	vtkSmartPointer<vtkIntArray> vertexColors2;
 	vtkSmartPointer<vtkLookupTable> lookupTable1;
-	vtkSmartPointer<vtkLookupTable> lookupTable2;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback1;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback2;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback3;
+	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkCellPicker> myCellPicker;
 	vtkSmartPointer<vtkIdTypeArray> ids;
 
-/////////////////////////////////////////////////////////////////////
 	vtkSmartPointer<vtkPoints> denpoints1;
 	vtkSmartPointer<vtkCellArray> denlines1;
 	vtkSmartPointer<vtkPolyData> denlinesPolyData1;
@@ -216,61 +188,32 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> denmapper2;
 	vtkSmartPointer<vtkActor> denactor2;
 	vtkSmartPointer<vtkUnsignedCharArray> dencolors2;
-///////////////////////////////////////////////////////////////////////////
-	void computeselectedcells();
-	void setselectedCellIds();
-	void reselectIds1(std::set<long int>& selectedIDs, long int id);
-	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
-	void createDataForDendogram1();
-	void createDataForDendogram2();
-	void showDendrogram1();
-	void showDendrogram2();
+
 	void scaleData();
 	void drawPoints1();
-	void drawPoints2();
-	rgb GetRGBValue(double val);
-	vtkIdType id1;
-	vtkIdType id2;
-	int r1;
-	int r2;
-	int c1;
-	int c2;
-	int removeActorflag;
-};
-
-
-class MouseInteractorStyle : public vtkInteractorStyleImage
-{
-public:
-	static MouseInteractorStyle* New();
-	vtkSmartPointer<vtkPolyData> Data;
-	vtkIdType id1;
-	vtkIdType id2;
-
-	Heatmap *hm;
-
-protected:
-	MouseInteractorStyle();
-	//~MouseInteractorStyle();
-
-private:
-	virtual void OnLeftButtonDown();
-	virtual void OnLeftButtonUp();
+	void showDendrogram1();
+	void showDendrogram2();	
+	void setselectedCellIds();
 	void computeselectedcells();
-	void setselectedIds();
+	void createDataForDendogram1();
+	void createDataForDendogram2();
+	void reselectIds1(std::set<long int>& selectedIDs, long int id);
+	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
 
-    vtkSmartPointer<vtkDataSetMapper> selectedMapper;
-    vtkSmartPointer<vtkActor> selectedActor;
-	vtkSmartPointer<vtkIdTypeArray> ids;
-	vtkSmartPointer<vtkSelectionNode> selectionNode;
-	vtkSmartPointer<vtkSelection> selection;
-	vtkSmartPointer<vtkExtractSelection> extractSelection;
-	vtkSmartPointer<vtkUnstructuredGrid> selected;
-
-	int r1;
-	int r2;
-	int c1;
-	int c2;
+	int     r1;
+	int     r2;
+	int     c1;
+	int     c2;
+	int     removeActorflag;
+	int     denResetflag1;
+	int     denResetflag2;
+	int     continueselectnum;
+	bool    continueselect;
+	bool    intersectionselect;
+	vtkIdType id1;
+	vtkIdType id2;
+	rgb GetRGBValue(double val);
+	std::set<long int> interselectedIDs;
 };
 
 #endif

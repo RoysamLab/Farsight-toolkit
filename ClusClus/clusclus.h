@@ -13,13 +13,14 @@ class clusclus
 {
 public:
 	clusclus();
-	clusclus(const char* filename);
 	clusclus(double** features,int num_samples, int num_features);
 
 	~clusclus();
 
 	void ReadFile(const char *filename);
+	void Initialize(double** feature,int numsamples, int numfeatures);
 	void RunClusClus();
+	void Clustering();
 	void MergersToProgress();
 	void GetMembers(int num_cluster);
 	void Transpose();
@@ -30,16 +31,16 @@ public:
 	void PrepareTreeData();
 	void GetOptimalLeafOrderD();
 
-	int       num_features;
 	int       num_samples;
+	int       num_features;
 	int       linkmode;
 	int		  num_gaps;
 	int*      optimalleaforder;
-	double**  features;
-	double**  transposefeatures;
 	double**  gap;
 	double**  mergers;
 	double**  treedata;
+	double**  features;
+	double**  transposefeatures;
 
 private:
 //	void   NormalizeFeatures();
