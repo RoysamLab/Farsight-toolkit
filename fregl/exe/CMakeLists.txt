@@ -66,6 +66,9 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    ADD_EXECUTABLE( mosaic_images mosaic_images.cxx)
    TARGET_LINK_LIBRARIES( mosaic_images fregl   ${ITK_LIBRARIES} )
 
+   ADD_EXECUTABLE( mosaic_roi mosaic_roi.cxx)
+   TARGET_LINK_LIBRARIES( mosaic_roi fregl   ${ITK_LIBRARIES} )
+
    ADD_EXECUTABLE( initialized_register_pair initialized_register_pair.cxx)
    TARGET_LINK_LIBRARIES( initialized_register_pair fregl   ${ITK_LIBRARIES} )
 
@@ -96,7 +99,7 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    TARGET_LINK_LIBRARIES( SubsampleVolume   ${ITK_LIBRARIES} )
 #ENDIF(BUILD_FREGL)
 
-INSTALL( TARGETS lsm_to_tiff register_pair register_joint mosaic_image_pair mosaic_images
+INSTALL( TARGETS lsm_to_tiff register_pair register_joint mosaic_image_pair mosaic_images mosaic_roi
 DESTINATION ${INSTALL_BIN_DIR} )
 
 #copy the gdbicp to the installation directory

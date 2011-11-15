@@ -73,6 +73,7 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 	anchor_set_ = true;
 
 	image_id_indices_.clear();
+	image_origins_.clear();
 	std::vector<SizeType> const & image_sizes = joint_register_->image_sizes();
 
 	// Set inverse_xforms_
@@ -90,8 +91,12 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 		origin_[0] = 0;
 		origin_[1] = 0;
 		origin_[2] = 0;
+		roi_origin_[0] = 0;
+		roi_origin_[1] = 0;
+		roi_origin_[2] = 0;
 
 		image_size_ = image_sizes[anchor_];
+		roi_size_ = image_sizes[anchor_];
 		std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
 		std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
 
@@ -99,6 +104,8 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 	}
 
 	if (space_set) {
+		roi_origin_ = origin_;
+		roi_size_ = image_size_;
 		std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
 		std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
 		return;
@@ -130,6 +137,9 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 
 					xformed_pt = xform->TransformPoint(pt);
 					//std::cout<<"xformed_Point = "<<xformed_pt[0]<<","<<xformed_pt[1]<<","<<xformed_pt[2]<<std::endl;
+					if (sx == 0 && sy == 0 && sz==0){
+						image_origins_.push_back(xformed_pt);
+					}
 					if (!min_set) {
 						min_set = true;
 						min_pt = xformed_pt;
@@ -155,15 +165,53 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 	origin_[0] = floor(origin_[0]);
 	origin_[1] = floor(origin_[1]);
 	origin_[2] = floor(origin_[2]);
+	roi_origin_[0] = floor(origin_[0]);
+	roi_origin_[1] = floor(origin_[1]);
+	roi_origin_[2] = floor(origin_[2]);
 	//std::cout<<"Origin = "<<origin_[0]<<", "<<origin_[1]<<", "<<origin_[2]<<std::endl;
 
 	image_size_[0] =  ceil(max_pt[0]-origin_[0] + 1);
 	image_size_[1] =  ceil(max_pt[1]-origin_[1] + 1);
 	image_size_[2] =  ceil(max_pt[2]-origin_[2] + 1);
+	roi_size_[0] =  ceil(max_pt[0]-origin_[0] + 1);
+	roi_size_[1] =  ceil(max_pt[1]-origin_[1] + 1);
+	roi_size_[2] =  ceil(max_pt[2]-origin_[2] + 1);
 
 	std::cout<<"Origin = "<<origin_[0]<<","<<origin_[1]<<","<<origin_[2]<<std::endl;
 	std::cout<<"Image_size = "<<image_size_[0]<<" x "<<image_size_[1]<<" x "<<image_size_[2]<<std::endl;
 }
+
+  //  Set the roi for processing
+void 
+fregl_space_transformer::
+set_roi(PointType s_origin, SizeType s_size) {
+	
+	roi_origin_[0] = s_origin[0];
+	roi_origin_[1] = s_origin[1];
+	roi_origin_[2] = s_origin[2];
+	roi_size_[0] =  s_size[0];
+	roi_size_[1] =  s_size[1];
+	roi_size_[2] =  s_size[2];
+	
+	// Now make sure origin and size are in range or fix
+	if (roi_origin_[0] < origin_[0]) roi_origin_[0] = origin_[0];
+	if (roi_origin_[1] < origin_[1]) roi_origin_[1] = origin_[1];
+	if (roi_origin_[2] < origin_[2]) roi_origin_[2] = origin_[2];
+	if (roi_origin_[0] > origin_[0] + image_size_[0]) roi_origin_[0] = origin_[0] + image_size_[0];
+	if (roi_origin_[1] > origin_[1] + image_size_[1]) roi_origin_[1] = origin_[1] + image_size_[1];
+	if (roi_origin_[2] > origin_[2] + image_size_[2]) roi_origin_[2] = origin_[2] + image_size_[2];
+	
+	// Make sure size is in range or fix
+	if (roi_origin_[0] + roi_size_[0] > origin_[0] + image_size_[0])
+		roi_size_[0] = (origin_[0] + image_size_[0]) - roi_origin_[0];
+	if (roi_origin_[1] + roi_size_[1] > origin_[1] + image_size_[1])
+		roi_size_[1] = (origin_[1] + image_size_[1]) - roi_origin_[1];
+	if (roi_origin_[1] + roi_size_[1] > origin_[1] + image_size_[1])
+		roi_size_[1] = (origin_[1] + image_size_[1]) - roi_origin_[1];
+	std::cout<<"ROI Origin = "<<roi_origin_[0]<<","<<roi_origin_[1]<<","<<roi_origin_[2]<<std::endl;
+	std::cout<<"ROI Size = "<<roi_size_[0]<<" x "<<roi_size_[1]<<" x "<<roi_size_[2]<<std::endl;
+}
+
 
 bool 
 fregl_space_transformer::in_image(PointType loc, int image_index, 
@@ -207,6 +255,39 @@ in_image(vnl_vector_fixed< float, 3 > loc, int image_index,
 	xformed_loc[2] = xformed_pt_loc[2];
 
 	return in_range;
+}
+
+bool 
+fregl_space_transformer::
+image_in_roi(int image_index) const {
+	
+	int index = image_id_indices_[image_index];
+	TransformType::Pointer xform = joint_register_->get_transform(index, anchor_);
+	// If the image is not even in anchor space then return false
+	if (!xform) return false;
+	std::vector<SizeType> const & image_sizes = joint_register_->image_sizes();
+	
+	// Get the origin and size of the image in anchor space
+	SizeType i_size = image_sizes[image_index];
+	PointType i_origin = image_origins_[image_index];
+	
+	//Set the far corner of the image space
+	PointType i_end = i_origin;
+	i_end[0] += i_size[0];
+	i_end[1] += i_size[1];
+	i_end[2] += i_size[2];
+	
+	// Set the far corner of the roi
+	PointType roi_end = roi_origin_;
+	roi_end[0] += roi_size_[0];
+	roi_end[1] += roi_size_[1];
+	roi_end[2] += roi_size_[2];
+	
+	// Little complicated test to see if any piece of the image is in the anchor space.
+	if ((i_end[0] >= roi_origin_[0] && i_end[1] >= roi_origin_[1] && i_end[2] >= roi_origin_[2]) && 
+			(i_origin[0] <= roi_end[0] && i_origin[1] <= roi_end[1] && i_origin[2] <= roi_end[2])) return true;
+	else return false;
+	
 }
 
 bool 
@@ -375,6 +456,56 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
 	resampler->SetTransform( inverse_xform );
 	resampler->SetSize( image_size_ );
 	resampler->SetOutputOrigin( origin_ );
+	resampler->SetOutputSpacing(spacing_);
+	resampler->SetDefaultPixelValue( background );
+	try {
+		resampler->Update();
+	}
+	catch(itk::ExceptionObject& e) {
+		vcl_cout << e << vcl_endl;
+		return NULL;
+	}
+
+	return resampler->GetOutput();
+}
+
+fregl_space_transformer::ImageType::Pointer 
+fregl_space_transformer::
+transform_image_roi(ImageType::Pointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+{
+	if (!anchor_set_) {
+		std::cerr<<"Set anchor first"<<std::endl;
+		return NULL;
+	}
+
+
+	// Set the resampler to generate the transformed image
+	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
+	int index = image_id_indices_[image_index];
+	TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+	if ( !inverse_xform ) 
+		return NULL;
+
+	std::cout<<"Transform image in ROI "<<joint_register_->image_names()[image_index]<<std::endl;
+
+	TransformType::ParametersType params(12);
+	params = inverse_xform->GetParameters();
+	/*
+	std::cout<<"Inverse parameters = "<<params[0]<<", "<<params[1]<<", "
+	<<params[2]<<", "<<params[3]<<", "<<params[4]<<", "<<params[5]
+	<<", "<<params[6]<<", "<<params[7]<<", "<<params[8]<<", "
+	<<params[9]<<", "<<params[10]<<", "<<params[11]<<std::endl;
+	*/
+	ResamplerType::Pointer resampler = ResamplerType::New();
+	if (use_NN_interpolator) {
+		typedef itk::NearestNeighborInterpolateImageFunction<ImageType, double> NNInterpoType;
+		NNInterpoType::Pointer nn_interpolator = NNInterpoType::New();
+		resampler->SetInterpolator(nn_interpolator);
+	}
+	resampler->SetInput(in_image);
+	resampler->SetTransform( inverse_xform );
+	resampler->SetSize( roi_size_ );
+	resampler->SetOutputOrigin( roi_origin_ );
 	resampler->SetOutputSpacing(spacing_);
 	resampler->SetDefaultPixelValue( background );
 	try {
