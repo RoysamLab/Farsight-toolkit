@@ -43,6 +43,8 @@ int main(int argc, char* argv[])
 
 	MNT->WriteSWCFile(SWCFilename, 1);
 
+	//MNT->WriteMultipleSWCFiles(SWCFilename, 1);
+
 	std::cout << "Total time to tracing is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << std::endl;
 	
 

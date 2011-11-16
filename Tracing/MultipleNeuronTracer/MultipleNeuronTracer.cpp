@@ -1256,6 +1256,19 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 
+	if(treeIDToRootMap.size() != this->StartPoints.size()){
+		std::cout << "Centroids missing!!" << std::endl;
+		std::ofstream cent_out_1("cent1.txt");
+		std::ofstream cent_out_2("cent2.txt");
+		for(int i = 0; i < this->StartPoints.size(); i++)
+			cent_out_1 << this->StartPoints[i][0] << "," << this->StartPoints[i][1] << "," << this->StartPoints[i][2] << std::endl;
+		for(int i = 0; i < treeIDToRootMap.size(); i++)
+			cent_out_2 << treeIDToRootMap[i]->ndx[0] << "," << treeIDToRootMap[i]->ndx[1] << "," << treeIDToRootMap[i]->ndx[2] << std::endl;
+		cent_out_1.close();
+		cent_out_2.close();
+	}
+	
+	itk::Index<3> dummy_index;
 	//Removing nodes
 	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
 	{
@@ -1283,20 +1296,40 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		// Removing nodes only lying in the foreground of the current soma
 		itk::Index<3> Node_0 = (*sit)->ndx;
 		itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
-		if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
-		//if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		//if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
+		if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
 		{
-			if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
-			//if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx)	)
+			//if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
+			if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
 			{
+				for(int i = 0; i < this->StartPoints.size(); i++){
+					if((*sit)->ndx[0] == this->StartPoints[i][0] && (*sit)->ndx[1] == this->StartPoints[i][1] && (*sit)->ndx[2] == this->StartPoints[i][2])
+						std::cout << "Centroid " << (*sit)->ndx[0] << ", " << (*sit)->ndx[1] << ", " << (*sit)->ndx[2] << " deleted!! " <<std::endl;
+				}
+				
 				delete (*sit);
 				sit = SWCNodeContainer.erase(sit);
-
-				std::cout << "Deleted cell. " << std::endl;
+				//std::cout << "Deleted node. " << std::endl;
 			}
 			else{
-				++sit;
-				continue;
+				SWCNode *parent = (*sit)->parent;
+				SWCNode *root = treeIDToRootMap[(*sit)->TreeID];
+
+				if(parent->ndx == root->ndx){
+					++sit;
+					continue;
+				}
+
+				if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx)){
+					(*sit)->parent = root;
+					(*sit)->PID = root->ID;
+
+					++sit;
+				}
+				else{
+					++sit;
+					continue;
+				}
 			}
 		}
 
@@ -1310,13 +1343,18 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 				++sit;
 				continue;
 			}
+
 			itk::Index<3> Node_2 = parent->ndx;
-			//if( SomaImage->GetPixel( parent->ndx ) != 0)
-			if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
+			//if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
+			if( SomaImage->GetPixel( parent->ndx ) != 0)
 			{
-				(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
-				(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
+				if( SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
+				{
+					(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
+					(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
+				}
 			}
+
 			++sit;
 		}
 	}
@@ -1344,8 +1382,8 @@ void MultipleNeuronTracer::WriteMultipleSWCFiles(std::string fname, unsigned int
 		fname1.replace(fname.length()-4,8,ss.str());
 		std::cout << "Writing SWCImage file " << fname1 << " \n Tree ID " << i+1 <<std::endl;
 		std::ofstream ofile(fname1.c_str());
-		ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
-		ofile << "#author: AM" << std::endl;
+		//ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
+		//ofile << "#author: AM" << std::endl;
 	
 		//make the LookUp table
 		std::map<long, long> NodeIDToSWCIDMap;

@@ -158,6 +158,8 @@ public:
 	SWCNode(); 
 	SWCNode(long, long, long, itk::Index<3> );
 	SWCNode(long, SWCNode *, long, itk::Index<3> ); 
+	
+	//static bool IsIndexSame(itk::Index<3>, itk::Index<3>);
 
 };
 
