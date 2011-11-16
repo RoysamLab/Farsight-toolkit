@@ -2925,6 +2925,7 @@ void View3D::AssociateNeuronToNuclei()
 						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
 					}
 					found = true;
+					this->nucleiTable->RemoveRow(nucleiRowIter);
 				}
 				nucleiRowIter++;
 			}//end nuclei match search
@@ -2938,6 +2939,8 @@ void View3D::AssociateNeuronToNuclei()
 				}
 			}
 		}//end of soma row		
+		this->AddDebugPoints(this->nucleiTable);
+		this->QVTK->GetRenderWindow()->Render();
 		this->ShowCellAnalysis();
 	}// end of matching soma to nuclei
 }
@@ -2995,7 +2998,6 @@ void View3D::Rerender()
 	{
 		this->AddPointsAsPoints(vec);
 	}
-	this->AddDebugPoints(this->tobj->debug_points);
 	this->UpdateLineActor();
 	this->UpdateBranchActor();
 	this->Renderer->AddActor(this->BranchActor); 
@@ -3089,18 +3091,22 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	Renderer->AddActor(PointsActor);
 }
 
-void View3D::AddDebugPoints(std::vector<TraceBit> vec)
+void View3D::AddDebugPoints(vtkTable * centroidsTable)
 {
-	if(vec.size() ==0)
+	if(centroidsTable->GetNumberOfRows() ==0)
 		return;
 	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
 	cube_src->SetBounds(-1,1,-1,1,-1,1);
 	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
-	for(unsigned int counter=0; counter<vec.size(); counter++)
+	for(vtkIdType counter=0; counter<centroidsTable->GetNumberOfRows(); counter++)
 	{
-		int return_id = points->InsertNextPoint(vec[counter].x,vec[counter].y,vec[counter].z);
+		int return_id = points->InsertNextPoint(
+			centroidsTable->GetValueByName(counter, "centroid_x").ToDouble(),
+			centroidsTable->GetValueByName(counter, "centroid_y").ToDouble(),
+			centroidsTable->GetValueByName(counter, "centroid_z").ToDouble()
+			);
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(return_id);
 	}
@@ -3113,13 +3119,13 @@ void View3D::AddDebugPoints(std::vector<TraceBit> vec)
 	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
 	cubemap->SetInput(glyphs->GetOutput());
 	cubemap->GlobalImmediateModeRenderingOn();
-	PointsActor = vtkSmartPointer<vtkActor>::New();
-	PointsActor->SetMapper(cubemap);
-	PointsActor->SetPickable(0);
-	PointsActor->GetProperty()->SetPointSize(5);
-	PointsActor->GetProperty()->SetOpacity(.5);
-	PointsActor->GetProperty()->SetColor(1,1,0);
-	Renderer->AddActor(PointsActor);
+	CentroidsActor = vtkSmartPointer<vtkActor>::New();
+	CentroidsActor->SetMapper(cubemap);
+	CentroidsActor->SetPickable(0);
+	CentroidsActor->GetProperty()->SetPointSize(5);
+	CentroidsActor->GetProperty()->SetOpacity(.5);
+	CentroidsActor->GetProperty()->SetColor(1,1,0);
+	Renderer->AddActor(CentroidsActor);
 }
 
 void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,

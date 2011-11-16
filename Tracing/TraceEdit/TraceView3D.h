@@ -134,7 +134,7 @@ public:
 	void CreateSphereActor();
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
-	void AddDebugPoints(std::vector<TraceBit> vec);// shown as big yellow cubes
+	void AddDebugPoints(vtkTable *centroidsTable);// shown as big yellow cubes
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -412,6 +412,7 @@ private:
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkActor> LineActor;
 	vtkSmartPointer<vtkActor> PointsActor;
+	vtkSmartPointer<vtkActor> CentroidsActor;
 	vtkSmartPointer<vtkPolyDataMapper> LineMapper;
 
 	// save screenshots
