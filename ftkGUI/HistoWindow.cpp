@@ -14,7 +14,15 @@ limitations under the License.
 =========================================================================*/
 
 #include "HistoWindow.h"
-
+#include <vtkAnnotationLink.h>
+#include <vtkDataRepresentation.h>
+#include <vtkCommand.h>
+#include <vtkSelectionNode.h>
+#include <vtkIdTypeArray.h>
+#include <vtkSelection.h>
+#include <vtkQtChartMouseSelectionHandler.h>
+#include <vtkQtChartArea.h>
+#include <vtkQtChartArea.h>
 //Constructor
 HistoWindow::HistoWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -72,6 +80,12 @@ void HistoWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	selection = sels;
 
 	this->update();
+	this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+	this->selectionCallback->SetClientData(this);
+    this->selectionCallback->SetCallback ( SelectionCallbackFunction);
+	vtkAnnotationLink *link = chartView->GetRepresentation()->GetAnnotationLink();
+	link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
+	//chartView->SetupDefaultInteractor();
 }
 
 void HistoWindow::update(void)
@@ -335,3 +349,48 @@ bool comp(double n, double n1,double n2) {
   else return false;
 };
 */
+
+void HistoWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
+	vtkSelection* selection = annotationLink->GetCurrentSelection();
+	HistoWindow* histWin = (HistoWindow*)clientData;
+
+	vtkSelectionNode* vertices = NULL;
+
+
+	if( selection->GetNode(0))
+	{
+		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(0);
+		}
+	}
+
+	if( selection->GetNode(1))
+	{
+		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(1);
+		}
+	}
+
+	if( vertices != NULL)
+	{
+		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+	
+		std::set<long int> IDs;
+		if(vertexList->GetNumberOfTuples() > 0)
+		{
+			
+			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+			{
+				long int value = vertexList->GetValue(i);
+				IDs.insert(value);
+			}
+		}
+		//histWin->SetSelectedIds( IDs);
+		//histWin->SetSelectedIds2();  // only select the selected feature columns
+	}
+	histWin->chartView->Update();
+}

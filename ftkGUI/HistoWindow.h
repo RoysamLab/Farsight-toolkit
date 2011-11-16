@@ -38,7 +38,7 @@ limitations under the License.
 #include <vtkQtBarChartView.h>
 #include <vtkDoubleArray.h>
 #include <vtkQtBarChartView.h>
-
+#include <vtkCallbackCommand.h>
 #include "ObjectSelection.h"
 
 #include <set>
@@ -64,16 +64,14 @@ public:
 
 public slots:
 	void update(void);
-
 signals:
 	void closing(QWidget *widget);
 
+public:
+	vtkSmartPointer<vtkQtBarChartView> chartView;
+
 protected:
 	void closeEvent(QCloseEvent *event);
-
-private slots:
-	void columnChange(QAction *action);
-	void binsChange(QAction *action);
 
 private:
 	void SyncModel();
@@ -83,7 +81,17 @@ private:
 	bool findFrequencies();
 	void setBucketNames();
 	void ConstructBarChart();
+	//Helpers:
+	void updateOptionMenus();
+	void initMap(std::map<int,int> &v, int n);
+	double GetMaxNumber(){ std::multiset<double>::iterator pos=std::max_element(data.begin(), data.end());
+						   return *pos;};
+private slots:
+	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	void columnChange(QAction *action);
+	void binsChange(QAction *action);
 
+private:
 	int columnNum;
 	std::string columnName;
 	int numofbins;				//
@@ -98,21 +106,13 @@ private:
 	ObjectSelection *selection;
 	vtkSmartPointer<vtkTable> m_table;
 	vtkSmartPointer<vtkTable> hisTable;
-	vtkSmartPointer<vtkQtBarChartView> chartView;
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 
 	QVBoxLayout *layout;
 
 	QMenu *optionsMenu;
 	QMenu *columnMenu;
 	QMenu *binsMenu;
-
-	//Helpers:
-	void updateOptionMenus();
-	void initMap(std::map<int,int> &v, int n);
-	double GetMaxNumber(){ std::multiset<double>::iterator pos=std::max_element(data.begin(), data.end());
-						   return *pos;};
-
-
 };
 
 #endif

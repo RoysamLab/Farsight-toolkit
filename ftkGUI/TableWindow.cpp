@@ -273,7 +273,7 @@ void TableWindow::selectColumns()///////////////////////////////////////////////
 {
 	std::set<long int> selectedIDs = this->selection2->getSelections();
 
-	for(int i = 1; i < this->tableView->model()->columnCount() - 1; i++)   // always showing the index and distance 
+	for(int i = 1; i < this->tableView->model()->columnCount(); i++)   // always showing the index and distance 
 	{
 		if (selectedIDs.find(i) != selectedIDs.end())
 		{

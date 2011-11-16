@@ -42,30 +42,36 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	listWidget = new QListWidget( this);
 	generateMSTButton = new QPushButton(tr("MST"));
-	showMSTButton = new QPushButton(tr("Show MST"));
+	autoProcButton = new QPushButton(tr("Auto-processing"));
 	emdButton = new QPushButton(tr("EMD"));
 	
 	emdThresBox = new QLineEdit;
-	psmLable = new QLabel(tr("PSM Threshold"));
+	emdPercentageBox = new QLineEdit;
+	psmLable = new QLabel(tr("PSM Threshold:"));
+	psmPerLable = new QLabel(tr("PSM Selected Blocks' Percentage:"));
     psmButton = new QPushButton(tr("Show PSM"));
+	psmHisButton = new QPushButton(tr("PSM Histogram"));
 
 	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
 	psdModuleSelectBox = new QLineEdit;
     psdtButton = new QPushButton(tr("View Progression"));
 
-	saveFeatureButton = new QPushButton(tr("Save Selected Features"));
+	//saveFeatureButton = new QPushButton(tr("Save Selected Features"));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
-	connect(showMSTButton, SIGNAL(clicked()), this, SLOT(showMST()));
+	connect(autoProcButton, SIGNAL(clicked()), this, SLOT(autoProcess()));
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
+	connect(psmHisButton, SIGNAL(clicked()), this, SLOT(showPSMHist()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
-	connect(saveFeatureButton, SIGNAL(clicked()), this, SLOT(saveSelectedFeatures()));
-
+	//connect(saveFeatureButton, SIGNAL(clicked()), this, SLOT(saveSelectedFeatures()));
+	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
+	connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
+	
     QGridLayout *mainLayout = new QGridLayout;
 
     for ( int col = 0; col<= 2; col++)
@@ -104,17 +110,21 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	mainLayout->addWidget(listWidget, 6, 0, 3, 2);
 
     mainLayout->addWidget(generateMSTButton, 6, 2);
-	mainLayout->addWidget(showMSTButton, 7, 2);
+	mainLayout->addWidget(autoProcButton, 7, 2);
 	mainLayout->addWidget(emdButton, 8, 2);
 
 	mainLayout->addWidget(psmLable, 9, 0);
 	mainLayout->addWidget(emdThresBox, 9, 1);
-	mainLayout->addWidget(psmButton, 9, 2);
+	mainLayout->addWidget(psmHisButton, 9, 2);
 
-	mainLayout->addWidget(psdtLable, 10, 0);
-	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 11, 2);
-	mainLayout->addWidget(saveFeatureButton, 12, 2);
+	mainLayout->addWidget(psmPerLable, 10, 0);
+	mainLayout->addWidget(emdPercentageBox, 10, 1);
+	mainLayout->addWidget(psmButton, 10, 2);
+
+	mainLayout->addWidget(psdtLable, 11, 0);
+	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
+	mainLayout->addWidget(psdtButton, 12, 2);
+	//mainLayout->addWidget(saveFeatureButton, 13, 2);
 
     setLayout(mainLayout);
 
@@ -124,6 +134,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	graph =  new GraphWindow(this);
 	heatmap = new Heatmap(this);
+	histo = new HistoWindow(this);
 	
 	connect( heatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 }
@@ -232,25 +243,76 @@ void SPDMainWindow::generateMST()
 	this->SPDModel->GenerateMST();
 }
 
-void SPDMainWindow::showMST()
+void SPDMainWindow::autoProcess()
 {
-	//vtkSmartPointer<vtkTable> table = SPDModel->GetMSTTable(0);
-
-	//if( table != NULL)
-	//{
-	//	std::vector<std::string> headers;
-	//	SPDModel->GetTableHeaders( headers);
-	//	this->graph->setModels(SPDModel->GetDataTable());
-	//	QString str = SPDModel->GetFileName();
-	//	std::set< 
-	//	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], ,str);
-	//	this->graph->ShowGraphWindow();
-	//}
+	this->SPDModel->GenerateMST();
+	this->SPDModel->RunEMDAnalysis();
+	std::string str = "0";
+	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(str);
+	if( table != NULL)
+	{
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+		this->graph->setModels(data, selection, selection2);
+		QString str = SPDModel->GetFileName();
+		std::set<long int> featureSelectedIDs;
+		SPDModel->GetSelectedFeatures(featureSelectedIDs);
+		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+		this->graph->ShowGraphWindow();
+	}
 }
 
 void SPDMainWindow::emdFunction()
 {
 	this->SPDModel->RunEMDAnalysis();
+}
+
+void SPDMainWindow::editThreshold()
+{
+	std::string emdThres = this->emdThresBox->text().toStdString();
+	double thres = atof(emdThres.c_str());
+	double per = 0;
+	if( thres >= 0 && thres <= 1)
+	{
+		per = this->SPDModel->GetEMDSelectedPercentage( thres);
+	}
+	emdPercentageBox->setText(QString::number(per));
+}
+
+void SPDMainWindow::editPercentage()
+{
+	std::string emdPer = this->emdPercentageBox->text().toStdString();
+	double per = atof(emdPer.c_str());
+	double thres = 0;
+	if( per >= 0 && per <=1)
+	{
+		thres = this->SPDModel->GetEMDSelectedThreshold( per);
+	}
+	emdThresBox->setText(QString::number(thres));
+}
+
+void SPDMainWindow::showPSMHist()
+{
+	vtkSmartPointer<vtkTable> emdTable = vtkSmartPointer<vtkTable>::New();
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName("earth mover distance");
+	emdTable->AddColumn(column);
+	vnl_matrix<double> emdMatrix;
+	this->SPDModel->GetEMDMatrixDivByMax(emdMatrix);
+	for( int i = 0; i < emdMatrix.rows(); i++)
+	{
+		for( int j = 0; j < emdMatrix.cols(); j++)
+		{
+			if( i != j)
+			{
+				vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+				row->InsertNextValue( vtkVariant( emdMatrix(i,j)));
+				emdTable->InsertNextRow(row);
+			}
+		}
+	}
+	this->histo->setModels(emdTable);
+	this->histo->show();
 }
 
 void SPDMainWindow::showPSM()
@@ -271,7 +333,6 @@ void SPDMainWindow::showPSM()
 			this->heatmap->setDataForSimilarMatrixHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);	
 			this->heatmap->creatDataForSimilarMatrixHeatmap();
 			this->heatmap->showSimilarMatrixGraph();
-
 		}
 		else
 		{
@@ -294,30 +355,18 @@ void SPDMainWindow::viewProgression()
 	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	if( table != NULL)
 	{
+		
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
 		this->graph->setModels(data, selection, selection2);
 		QString str = SPDModel->GetFileName();
 		std::set<long int> featureSelectedIDs;
 		SPDModel->GetSelectedFeatures(featureSelectedIDs);
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-		this->graph->ShowGraphWindow();
-	}
-}
-
-void SPDMainWindow::saveSelectedFeatures()
-{
-	std::set<long int> featureSelectedIDs;
-	SPDModel->GetSelectedFeatures(featureSelectedIDs);
-	if( featureSelectedIDs.size() > 0)
-	{
 		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
-	}
-	else
-	{
-		QMessageBox mes;
-		mes.setText("No features have been selected!");
-		mes.exec();
+		std::cout<< "Features saved in SelFeatures.txt"<<endl;
+		//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+		this->graph->SetGraphTable( table, headers[0], headers[1]);
+		this->graph->ShowGraphWindow();
 	}
 }
 

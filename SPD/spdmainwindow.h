@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
+#include "ftkGUI/HistoWindow.h"
 #include "ClusClus/HeatmapWindow.h"
 
 class SPDMainWindow : public QWidget
@@ -25,12 +26,15 @@ private slots:
 	void loadTestData();
     void clusterFunction();
 	void generateMST();
-	void showMST();
+	void autoProcess();
 	void emdFunction();
 	void showPSM();
+	void showPSMHist();
 	void viewProgression();
-	void saveSelectedFeatures();
+	//void saveSelectedFeatures();
 	void updateSelMod();
+	void editThreshold();
+	void editPercentage();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -53,25 +57,31 @@ private:
     QPushButton *clusterButton;
 	QListWidget *listWidget;
 	QPushButton *generateMSTButton;
-	QPushButton *showMSTButton;
+	QPushButton *autoProcButton;
 	QPushButton *emdButton;
 	QLineEdit *emdThresBox;
+	QLineEdit *emdPercentageBox;
 	QLabel *psmLable;
+	QLabel *psmPerLable;
     QPushButton *psmButton;
+	QPushButton *psmHisButton;
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
     QPushButton *psdtButton;
-	QPushButton *saveFeatureButton;  // save the selected features to file
+	//QPushButton *saveFeatureButton;  // save the selected features to file
 
     QString FileName;
 	GraphWindow *graph;
 	Heatmap *heatmap;
+	HistoWindow *histo;
+
 	vnl_vector<int> optimalleaforder;
 	vnl_vector<int> selMod;
 
 	vtkSmartPointer<vtkTable> data;
 	ObjectSelection *selection;
 	ObjectSelection *selection2;
+
 };
 
 #endif // SPDMAINWINDOW_H

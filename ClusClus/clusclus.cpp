@@ -25,7 +25,6 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 	this->num_gaps = 5;
 	this->num_features = numfeatures;
 	this->num_samples = numsamples;
-	
 	this->gap = new double*[num_samples-1];
 	this->progress = new int*[num_samples];
 	this->members = new int*[num_samples];
@@ -36,7 +35,6 @@ clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 	this->sample_distances = new double[num_samples*(num_samples+1)/2];
 	this->cluster_distances = new double[num_samples*(num_samples+1)/2];
 	this->transposefeatures = new double*[num_features];
-	this->treedata = new double*[num_samples-1];
 	this->optimalleaforder = new int[num_samples];
 
 	for(int i=0; i<num_samples; i++)
@@ -86,7 +84,6 @@ clusclus::~clusclus()
 		delete this->sample_distances;
 		delete this->cluster_distances;
 		delete this->transposefeatures;
-		delete this->treedata;
 		delete this->optimalleaforder;
 	}
 }
@@ -120,7 +117,6 @@ void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
 		delete this->sample_distances;
 		delete this->cluster_distances;
 		delete this->transposefeatures;
-		delete this->treedata;
 		delete this->optimalleaforder;
 	}
 
@@ -137,7 +133,6 @@ void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
 	this->sample_distances = new double[num_samples*(num_samples+1)/2];
 	this->cluster_distances = new double[num_samples*(num_samples+1)/2];
 	this->transposefeatures = new double*[num_features];
-	this->treedata = new double*[num_samples-1];
 	this->optimalleaforder = new int[num_samples];
 
 	for(int i=0; i<num_samples; i++)

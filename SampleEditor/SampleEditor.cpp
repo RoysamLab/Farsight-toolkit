@@ -193,11 +193,6 @@ void SampleEditor::loadFile()
 	this->histo->setModels(data, selection);
 	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
-	//this->graph->setModels(data, selection, selection2);
-	//this->dendro1->setModels(data,selection);
-	//this->dendro2->setModels(data,selection2);
-	//this->heatmap->setModels(data,selection,selection2);
-
 }
 
 

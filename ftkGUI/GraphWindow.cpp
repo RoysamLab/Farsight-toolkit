@@ -116,6 +116,8 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 
 void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel)
 {
+	std::cout<< "SetGraphTable"<<endl;
+
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
@@ -223,6 +225,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	weights->SetNumberOfComponents(1);
 	weights->SetName("edgeLabel");
 
+	std::cout<< "construct graph"<<endl;
 	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
 	vnl_matrix<long int> adj_matrix( this->dataTable->GetNumberOfRows(), this->dataTable->GetNumberOfRows());
 
@@ -256,10 +259,12 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		}
 	}
 
+	std::cout<< "calculate coordinates"<<endl;
 	std::vector<Point> pointList;
 	CalculateCoordinates(adj_matrix, pointList);
 	if( pointList.size() > 0)
 	{
+		std::cout<< pointList.size()<<endl;
 		for( int i = 0; i <  pointList.size(); i++)
 		{
 			points->InsertNextPoint(pointList[i].x, pointList[i].y, 0);
@@ -323,8 +328,11 @@ void GraphWindow::ShowGraphWindow()
 	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
 	this->mainQTRenderWidget.resize(600, 600);
 	this->mainQTRenderWidget.show();
+	std::cout<< "view->ResetCamera"<<endl;
 	view->ResetCamera();
+	std::cout<< "view->Render"<<endl;
 	view->Render();
+	std::cout<< "Successfully rendered"<<endl;
 
     this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback->SetClientData(this);
@@ -551,6 +559,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	vnl_vector< int> tag( shortest_hop.rows());     // whether the node has been included in the chain
 	tag.fill( 0);
 
+	std::cout<<"build chains"<<endl;
 	QString chainStr = this->fileName + "chains.txt";
 	ofstream ofChains( chainStr.toStdString().c_str());
 	/// find the backbone
@@ -654,6 +663,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	ofChains.close();
 
 	/// calculate the coordinates of the nodes
+	std::cout<<"calculate nodes position"<<endl;
 	QString corStr = this->fileName + "coordinates.txt";
 	ofstream ofCoordinate( corStr.toStdString().c_str());
 	ofCoordinate.precision(4);
@@ -699,6 +709,10 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	/// cacluate the branch backbone nodes position
 	for( long int i = 0; i < chainList.size(); i++)
 	{
+		if( i % 100 == 0)
+		{
+			std::cout<<i<<endl;
+		}
 		std::pair< long int, std::vector<long int> > branch = chainList[i];
 		long int attachNode = branch.first;
 		std::vector< long int> branchNode = branch.second;

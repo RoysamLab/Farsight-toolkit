@@ -43,11 +43,13 @@ public:
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
-
+	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
 	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
+	double GetEMDSelectedPercentage(double thres);
+	double GetEMDSelectedThreshold( double per);
 
 protected:
 	SPDAnalysisModel();
@@ -68,8 +70,8 @@ protected:
 	int GetSingleModuleSize( vnl_vector<unsigned int>& index, unsigned int ind);
 	void GetMatrixDistance( vnl_matrix<double>& data, vnl_vector<double>&distance, DISTANCE_TYPE type);
 	void GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance);
-	vnl_vector<unsigned int> Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval);
-	vnl_vector<unsigned int> Hist(vnl_vector<double>&distance, vnl_vector<double>& interval);
+	void Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
+	void Hist(vnl_vector<double>&distance, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	//double Dist(int *first, int *second);
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
@@ -106,6 +108,7 @@ private:
 	std::set< long int> selectedFeatureIDs;
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;
+	vnl_matrix<double> heatmapMatrixNew;
 	clusclus *cc1;
 	clusclus *cc2;
 };
