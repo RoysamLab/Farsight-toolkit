@@ -190,9 +190,14 @@ void SampleEditor::loadFile()
 
 	plot->setModels(data,selection);
 	plot->show();
-	//this->histo->setModels(data, selection);
-	//this->histo->show();
+	this->histo->setModels(data, selection);
+	this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
+	//this->graph->setModels(data, selection, selection2);
+	//this->dendro1->setModels(data,selection);
+	//this->dendro2->setModels(data,selection2);
+	//this->heatmap->setModels(data,selection,selection2);
+
 }
 
 
@@ -418,6 +423,7 @@ void SampleEditor::sampledendrogram()
 		return;
 	}
 
+	this->dendro1->setModels(data,selection);
 	double** datas;
 	vtkVariant temp; 
 
@@ -459,6 +465,7 @@ void SampleEditor::sampledendrogram()
 
 void SampleEditor::featuredendrogram()
 {
+	this->dendro2->setModels(data,selection2);
 	cc1->Transpose();
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
 	cc2->RunClusClus();
@@ -480,6 +487,7 @@ void SampleEditor::showheatmap()
 		return;
 	}
 
+	this->heatmap->setModels(data,selection,selection2);
 	double** datas;
 	vtkVariant temp; 
 
@@ -514,7 +522,7 @@ void SampleEditor::showheatmap()
 		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
 
 
-	this->heatmap->setModels(data,selection,selection2);
+	cout<<"finish clusclus....."<<endl;
 	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
 	this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
 	this->heatmap->creatDataForHeatmap();	

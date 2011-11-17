@@ -154,20 +154,21 @@ void Heatmap::creatDataForHeatmap()
 
 		std = sqrt(sum/this->num_features);
 
-		for(int j = 0; j < num_features; j++)
-		{
-			if( std != 0)
-			{
+		if(std)
+			for(int j = 0; j < num_features; j++)
 				tempdata[i][j] = (temp[j] - mean)/std;
-			}
-			else
-			{
-				tempdata[i][j] = temp[j] - mean;
-			}
-		}
 	}
 	for(int i = 0; i < this->num_samples; i++)
 		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
+
+	FILE *fp = fopen("mapdata","w");
+	for(int i=0; i<num_samples; i++)
+	{
+		for(int j=0; j<num_features; j++)
+			fprintf(fp,"%f\t",mapdata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 
 	this->createDataForDendogram1();
 	this->createDataForDendogram2();
@@ -224,13 +225,9 @@ void Heatmap::scaleData()
 		}
 		sum = sqrt(sum);
 
-		for(int j = 0; j<this->num_samples; j++)
-		{
-			if( sum != 0)
-			{
+		if(sum)
+			for(int j = 0; j<this->num_samples; j++)
 				mapdata[j][i] /= sum;
-			}
-		}
 	}
 }
 
