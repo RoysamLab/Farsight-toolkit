@@ -42,18 +42,18 @@ limitations under the License.
 fregl_pairwise_register::
 fregl_pairwise_register( InputImageType::Pointer from_image, 
                          InputImageType::Pointer to_image,
-						 std::string from_image_filename,
-						 std::string to_image_filename,
+                         std::string from_image_filename,
+                         std::string to_image_filename,
                          float background )
 {
-	from_image_ = from_image;
-	to_image_ = to_image;
-	this->from_image_filename = from_image_filename;
-	this->to_image_filename = to_image_filename;
-	background_ = background;
-	exhaustive_ = false;
-	stack_size_set_ = false;
-	smoothing_ = 0;
+  from_image_ = from_image;
+  to_image_ = to_image;
+  this->from_image_filename = from_image_filename;
+  this->to_image_filename = to_image_filename;
+  background_ = background;
+  exhaustive_ = false;
+  stack_size_set_ = false;
+  smoothing_ = 0;
 }
 
 fregl_pairwise_register::
@@ -196,107 +196,107 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
       vcl_cout << "Registration failed in 2D. Please try a different channel with more intensity variation." << vcl_endl;
       return false;
     }
-
+    
     // Read in the file
     // mosaic_xxx_from_image_proj_to_xxx_to_image_proj.xform back to
     // memoyr
-	vcl_string xform_string = vcl_string("mosaic_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + from_image_filename + vcl_string("_proj_to_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + to_image_filename + vcl_string("_proj.xform");
-	std::cout << from_image_filename << std::endl;
-	std::cout << to_image_filename << std::endl;
-	std::cout << "Reading in xform file: " << xform_string << std::endl;
-	vcl_ifstream reg_info(xform_string.c_str());
+    vcl_string xform_string = vcl_string("mosaic_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + from_image_filename + vcl_string("_proj_to_") + from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_") + to_image_filename + vcl_string("_proj.xform");
+    std::cout << from_image_filename << std::endl;
+    std::cout << to_image_filename << std::endl;
+    std::cout << "Reading in xform file: " << xform_string << std::endl;
+    vcl_ifstream reg_info(xform_string.c_str());
     rgrl_transformation_sptr xform_2d = read_2d_xform( reg_info );
-
+    
     if ( !valid_2d_xform(xform_2d, scaling) ) {
-        vcl_cout << "Invalid 2D xform. Please try a different channel with more intensity variation." << vcl_endl;
+      vcl_cout << "Invalid 2D xform. Please try a different channel with more intensity variation." << vcl_endl;
       return false;
-      }
+    }
     // Now work out the center of mass in z-direction in the overlap
     // volume estimated by the x-y shift.
     //
     double t_z = compute_z_shift (xform_2d, from_image_, to_image_, 
                                   from_image_2d, to_image_2d, background_);
     
-     // Image type of float are needed for intensity-based
-     // registration. Crop only the overlap volume and release the
-     // original images.
-     InternalImageType:: Pointer from_image_crop, to_image_crop;
-     from_image_crop = crop_image(from_image_);
-     to_image_crop = crop_image(to_image_);
+    // Image type of float are needed for intensity-based
+    // registration. Crop only the overlap volume and release the
+    // original images.
+    InternalImageType:: Pointer from_image_crop, to_image_crop;
+    from_image_crop = crop_image(from_image_);
+    to_image_crop = crop_image(to_image_);
     
-
-     // Force early release of images that are not needed anymore.
-     from_image_2d = 0;
-     to_image_2d = 0;
-     std::cout<<"End of cropping"<<std::endl;
-
-     TransformType::ParametersType parameters(12);
-     convert_rgrl_to_itk_xform( xform_2d, -t_z, parameters);
     
-     // Now perform intensity-based registration on the cropped 3D
-     // volume
-     //
-
-     std::cout<<"Running 3D intensity-based registration ..."<<std::endl;
-     //typedef itk::MeanSquaresImageToImageMetric< InternalImageType, InternalImageType > MetricType;
-     typedef itk::NormalizedCorrelationImageToImageMetric< InternalImageType, InternalImageType > MetricType;
-     typedef itk::LinearInterpolateImageFunction< InternalImageType, double> InterpolatorType;
-     typedef itk::ImageRegistrationMethod< InternalImageType, InternalImageType > RegistrationType;
-     typedef itk::RegularStepGradientDescentOptimizer    OptimizerType;
-     typedef OptimizerType::ScalesType OptimizerScalesType;
-
-     InterpolatorType::Pointer interpolator = InterpolatorType::New();
-     MetricType::Pointer metric = MetricType::New();
-     TransformType::Pointer transform = TransformType::New();
-     RegistrationType::Pointer registrator = RegistrationType::New();
-     OptimizerType::Pointer optimizer = OptimizerType::New();
+    // Force early release of images that are not needed anymore.
+    from_image_2d = 0;
+    to_image_2d = 0;
+    std::cout<<"End of cropping"<<std::endl;
     
-     registrator->SetTransform( transform );
-     registrator->SetOptimizer( optimizer );
-     registrator->SetInterpolator( interpolator );
-     registrator->SetMetric( metric );
+    TransformType::ParametersType parameters(12);
+    convert_rgrl_to_itk_xform( xform_2d, -t_z, parameters);
     
-     registrator->SetFixedImage( to_image_crop );
-     registrator->SetMovingImage( from_image_crop );
-     registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
-     registrator->SetInitialTransformParameters( parameters );
+    // Now perform intensity-based registration on the cropped 3D
+    // volume
+    //
     
-     optimizer->SetMaximumStepLength( 4.0 );
-     optimizer->SetMinimumStepLength( 0.1);
-     optimizer->SetNumberOfIterations( 100 );
-     optimizer->MaximizeOff();
+    std::cout<<"Running 3D intensity-based registration ..."<<std::endl;
+    //typedef itk::MeanSquaresImageToImageMetric< InternalImageType, InternalImageType > MetricType;
+    typedef itk::NormalizedCorrelationImageToImageMetric< InternalImageType, InternalImageType > MetricType;
+    typedef itk::LinearInterpolateImageFunction< InternalImageType, double> InterpolatorType;
+    typedef itk::ImageRegistrationMethod< InternalImageType, InternalImageType > RegistrationType;
+    typedef itk::RegularStepGradientDescentOptimizer    OptimizerType;
+    typedef OptimizerType::ScalesType OptimizerScalesType;
     
-     // set the parameter scale to limit the freedom in affine parts
-     int num_params = 12;    
-     OptimizerScalesType optimizerScales(num_params);
-     for (unsigned int i = 0; i<9; i++) {
-       //affine components
-       optimizerScales[i] = 1.0;
-     }
-     for (unsigned int i = 0; i<3; i++) {
-       //translation components
-       optimizerScales[i+9] = 1.0/1000000;
-     }
-     optimizer->SetScales(optimizerScales);
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    MetricType::Pointer metric = MetricType::New();
+    TransformType::Pointer transform = TransformType::New();
+    RegistrationType::Pointer registrator = RegistrationType::New();
+    OptimizerType::Pointer optimizer = OptimizerType::New();
     
-     // To add the observer to watch the progress of the registration
-     CommandIteration::Pointer   observer  = CommandIteration::New();
-     optimizer->AddObserver( itk::IterationEvent(), observer );
+    registrator->SetTransform( transform );
+    registrator->SetOptimizer( optimizer );
+    registrator->SetInterpolator( interpolator );
+    registrator->SetMetric( metric );
     
-     // Now run the registration
-     registrator->StartRegistration();
+    registrator->SetFixedImage( to_image_crop );
+    registrator->SetMovingImage( from_image_crop );
+    registrator->SetFixedImageRegion(to_image_crop->GetRequestedRegion());
+    registrator->SetInitialTransformParameters( parameters );
     
-     // Set the final transform
-     TransformType::ParametersType final_parameters;
-     final_parameters = registrator->GetLastTransformParameters();
-     if (!transform_) transform_ = TransformType::New();
-     transform_->SetParameters( final_parameters );
-     obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
-   }
-   catch(itk::ExceptionObject& e) {
-     vcl_cout << e << vcl_endl;
-     return false;
-   }
+    optimizer->SetMaximumStepLength( 4.0 );
+    optimizer->SetMinimumStepLength( 0.1);
+    optimizer->SetNumberOfIterations( 100 );
+    optimizer->MaximizeOff();
+    
+    // set the parameter scale to limit the freedom in affine parts
+    int num_params = 12;    
+    OptimizerScalesType optimizerScales(num_params);
+    for (unsigned int i = 0; i<9; i++) {
+      //affine components
+      optimizerScales[i] = 1.0;
+    }
+    for (unsigned int i = 0; i<3; i++) {
+      //translation components
+      optimizerScales[i+9] = 1.0/1000000;
+    }
+    optimizer->SetScales(optimizerScales);
+    
+    // To add the observer to watch the progress of the registration
+    CommandIteration::Pointer   observer  = CommandIteration::New();
+    optimizer->AddObserver( itk::IterationEvent(), observer );
+    
+    // Now run the registration
+    registrator->StartRegistration();
+    
+    // Set the final transform
+    TransformType::ParametersType final_parameters;
+    final_parameters = registrator->GetLastTransformParameters();
+    if (!transform_) transform_ = TransformType::New();
+    transform_->SetParameters( final_parameters );
+    obj_value = 1+optimizer->GetValue(); //NCC is in the range of [-1~0]
+  }
+  catch(itk::ExceptionObject& e) {
+    vcl_cout << e << vcl_endl;
+    return false;
+  }
   
   return true;
 }

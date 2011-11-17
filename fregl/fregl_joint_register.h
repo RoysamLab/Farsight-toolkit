@@ -68,9 +68,8 @@ public:
   //
   //  Every image is treated as a node, and a transform is the
   //  edge. The connected graph provides the capability to transform
-  //  every image to any image in the graph. The function returns the
-  //  number of connected sub-graphs.
-  int build_graph();
+  //  every image to any image in the graph. 
+  void build_graph();
   
   //: Compute the transformation from every image to the chosen anchor
   bool build_graph(int i);
@@ -136,7 +135,13 @@ public:
   double get_error_bound() const;
 
   //: Get the list of adjacent images that overlap with the anchor image
-  void get_adjacent_images(std::string anchor_image, std::vector<std::string>& adjacent_images) const; 
+  void get_adjacent_images(std::string anchor_image, std::vector<std::string>& adjacent_images) const;
+
+  //: Return the number of subgraphs in the joint transformation file
+  int number_of_subgraphs() const;
+
+  //: Check if two images iare in the same subgraph
+  bool in_same_subgraph(int image_index1, int image_index2) const;
 
 private: 
   void initialize(std::vector<fregl_reg_record::Pointer> const & reg_records);
@@ -161,9 +166,8 @@ private:
   //  distance in the overlapping area to generate correspondences.
   void generate_correspondences();
 
-public: //temporary
-  vbl_array_2d<TransformType::Pointer> transforms_; // (from,to)
 private:
+  vbl_array_2d<TransformType::Pointer> transforms_; // (from,to)
   vbl_array_2d<double> overlap_; //initially pairwise, finally updated by joint
   vbl_array_2d<double> obj_; //values from the pairwise registration
   std::vector<std::string> image_ids_;
@@ -173,6 +177,7 @@ private:
   double error_bound_;
   vbl_array_2d< CorrespondenceList > pairwise_constraints_;
   std::vector<int> graph_indices_;
+  int num_subgraphs_;
 };
 
 #endif

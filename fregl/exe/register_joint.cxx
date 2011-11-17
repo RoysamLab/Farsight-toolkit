@@ -126,8 +126,9 @@ main(  int argc, char* argv[] )
 	std::cout<<"Joint registration mutual consistency ..."<<std::endl;
 	*/
 	
-	int sub_graphs_built = jointer_register->build_graph();
-	
+	jointer_register->build_graph();
+        std::cout<<"subgraphs built = "<<jointer_register->number_of_subgraphs()<<std::endl;
+        
 	/*for (unsigned int j = 0; j<jointer_register->transforms_.cols(); j++) 
 	{
 		for (unsigned int i = 0; i<jointer_register->transforms_.rows(); i++) 
@@ -140,7 +141,7 @@ main(  int argc, char* argv[] )
 		}
 	}*/
 	
-	jointer_register->write_xml(arg_xml_file(), sub_graphs_built, arg_debug());
+	jointer_register->write_xml(arg_xml_file(), jointer_register->number_of_subgraphs(), arg_debug());
 
 	/*
 	bool graph_build = jointer_register->build_graph(!arg_no_mc());

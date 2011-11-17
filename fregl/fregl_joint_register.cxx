@@ -197,36 +197,35 @@ initialize(std::vector<fregl_reg_record::Pointer> const & reg_records)
     }
   }
   
-  //std::cout << "Printing out transforms" << std::endl;
-  //for (unsigned int j = 0; j<transforms_.cols(); j++) 
-  //{
-  //	for (unsigned int i = 0; i<transforms_.rows(); i++) 
-  //	{
-  //		if (transforms_(i,j))
-  //		{
-  //			TransformType::ParametersType params = transforms_(i,j)->GetParameters(); //temporary
-  //			std::cout << i << " to " << j << ": " << params[9] << " " << params[10] << " " << params[11] << std::endl;
-  //		}
-  //	}
-  //}
+  // build the array which contains the sub_graph indices. Images
+  // belonging to the same subgraph should have the same index
+  num_subgraphs_ = 0;
+  for (unsigned int i = 0; i<transforms_.rows(); i++) {
+    if (!graph_indices_[i]) 
+      generate_graph_indices(i, ++num_subgraphs_);
+  }
   
   std::cout<<"End of Initialization"<<std::endl;
 }
 
-int
+void
 fregl_joint_register::
 build_graph()
 {
   vul_timer timer;
   timer.mark();
-  // build the array which contains the sub_graph indices. Images
+
+  /* This piece of code is moved initialize(.)
+  // Build the array which contains the sub_graph indices. Images
   // belonging to the same subgraph should have the same index
+  graph_indices_.resize(image_ids_.size(),0);
   int index = 0;
   for (unsigned int i = 0; i<transforms_.rows(); i++) {
     if (!graph_indices_[i]) 
       generate_graph_indices(i, ++index);
   }
-
+  */
+  
   /*
   std::cout << "Pre-corruption" << std::endl;
   for (unsigned int j = 0; j< transforms_.cols(); j++) 
@@ -267,8 +266,7 @@ build_graph()
   std::cout << "Timing: Joint registration in  ";
   timer.print( std::cout );
   std::cout<<std::endl;
-  
-  return index;
+
 }
 
 bool 
@@ -440,6 +438,22 @@ fregl_joint_register::
 is_overlapped(int from, int to) const
 {
   if (overlap_(from,to) > 0) return true;
+  else return false;
+}
+
+int
+fregl_joint_register::
+number_of_subgraphs() const
+{
+  return num_subgraphs_;
+}
+
+bool
+fregl_joint_register::
+in_same_subgraph(int image_index1, int image_index2) const
+{
+  if (graph_indices_[image_index1] == graph_indices_[image_index2])
+    return true;
   else return false;
 }
 
