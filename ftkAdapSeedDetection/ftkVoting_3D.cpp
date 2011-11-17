@@ -2126,6 +2126,7 @@ void ftkVoting_3D::vote()
 	}
 	}
 
+	cout<<endl<<"FINNN";
 	clock_t end=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
 
