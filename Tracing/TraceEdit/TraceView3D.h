@@ -114,7 +114,9 @@ limitations under the License.
 #include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
+#ifdef USE_SPD
 #include "SPD/spdmainwindow.h"
+#endif
 #include "branchPT.h"
 #include "CellTrace.h"
 #include "CellTraceModel.h"
@@ -248,6 +250,7 @@ public slots:
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
 	void FocusOnCell(CellTrace* SelectedCell);
+
 	void SPDAnalysis();
 
 //these are for bootloadfile
@@ -401,7 +404,9 @@ private:
 	PlotWindow *FL_MeasurePlot;
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
+#ifdef USE_SPD
 	SPDMainWindow *SPDWin;
+#endif
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
