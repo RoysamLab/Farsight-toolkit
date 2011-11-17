@@ -61,6 +61,7 @@ View3D::View3D(QWidget *parent)
 	this->renderTraceBits = false;
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
+	this->showGrid = true;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
@@ -76,6 +77,7 @@ View3D::View3D(QWidget *parent)
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
 	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
 	this->ImageActors = new ImageRenderActors();
+	this->Gridlines = new GridlineActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
 	this->EditLogDisplay->setLineWrapMode(QTextEdit::NoWrap);
@@ -181,6 +183,7 @@ View3D::~View3D()
 	}
 	delete this->tobj;
 	delete this->ImageActors;
+	delete this->Gridlines;
 }
 /*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
@@ -1151,6 +1154,12 @@ void View3D::CreateGUIObjects()
 	this->ColorByTreesAction->setCheckable(true);
 	this->ColorByTreesAction->setChecked(false);
 	connect(this->ColorByTreesAction, SIGNAL(triggered()), this, SLOT(ToggleColorByTrees()));
+
+	this->GridAction = new QAction("Grid Lines", this->CentralWidget);
+	this->GridAction->setCheckable(true);
+	this->GridAction->setChecked(false);
+	connect(this->GridAction, SIGNAL(triggered()), this, SLOT(ToggleGridlines()));
+
 	// 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
 
@@ -1653,6 +1662,7 @@ void View3D::CreateLayout()
 	renderer_sub_menu->addAction(this->SetProjection);
 	renderer_sub_menu->addAction(this->SetRaycast);
 	this->DataViews->addAction(this->ColorByTreesAction);
+	this->DataViews->addAction(this->GridAction);
 
 	this->createRayCastSliders();
 	this->menuBar()->addSeparator();
@@ -2461,10 +2471,56 @@ void View3D::RayCastOpacityValueChanged(double value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-/*void View3D::ShowGridlines()
+void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 {
+	//std::cout << "Grid Lines selected." << std::endl;
+	//If gridlines don't exist, then create
+	int num_lines = this->Gridlines->NumberOfLines();
+	if (num_lines == 0)
+	{
+		//std::cout << "Create grid" << std::endl;
+		double imageBounds[6];
+		ImageActors->getImageBounds(imageBounds);
+		Gridlines->createGrid(imageBounds);
+		//num_lines = this->Gridlines->NumberOfLines();
+		//std::cout << "Number of lines: " << num_lines << std::endl;
+	}
 
-}*/
+	//if (PROJECTION)
+	if (showGrid)
+	{
+		//std::cout << "Show Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		showGrid = false;
+	}// turn on grid
+	else
+	{
+		//std::cout << "Hide Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		showGrid = true;
+	}// turn off grid
+	this->QVTK->GetRenderWindow()->Render();
+}
 void View3D::EditHelp()
 {
 	//will write help documentation here
