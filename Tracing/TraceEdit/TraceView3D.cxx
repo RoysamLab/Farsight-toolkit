@@ -3296,7 +3296,6 @@ void View3D::HalfBridges(double d)
 	this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
 }
 /*	Statistics	*/
-
 void View3D::ListSelections()
 {
 	std::vector<TraceLine* > IDs = this->TreeModel->GetSelectedTraces();

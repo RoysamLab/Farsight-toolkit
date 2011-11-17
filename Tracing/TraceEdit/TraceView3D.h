@@ -123,7 +123,7 @@ public:
 	View3D(TraceObject* Traces);
 	~View3D();
 	void Initialize();
-  void LoadFiles(int argc, char **argv);
+	void LoadFiles(int argc, char **argv);
 	void CreateBootLoader();
 	void CreateGUIObjects();
 	void CreateLayout();

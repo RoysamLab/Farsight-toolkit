@@ -273,17 +273,18 @@ void TableWindow::selectColumns()///////////////////////////////////////////////
 {
 	std::set<long int> selectedIDs = this->selection2->getSelections();
 
-	for(int i = 1; i < this->tableView->model()->columnCount() - 1; i++)   // always showing the index and distance 
+	for(int i = 0; i < this->tableView->model()->columnCount(); i++)   // always showing the index and distance 
 	{
 		if (selectedIDs.find(i) != selectedIDs.end())
 		{
-			this->tableView->setColumnHidden( i, false);
+			this->tableView->setColumnHidden( i+1, false);
 		}
 		else
 		{
-			this->tableView->setColumnHidden( i, true);
+			this->tableView->setColumnHidden( i+1, true);
 		}
 	}
+	this->tableView->setColumnHidden( 0, false);
 }
 
 
