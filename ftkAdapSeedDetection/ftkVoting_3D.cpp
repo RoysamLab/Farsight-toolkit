@@ -2130,6 +2130,10 @@ void ftkVoting_3D::vote()
 	cout<<endl<<"FINNN_2";
 	clock_t end=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+		cout<<endl<<"FINNN";
+	cout<<endl<<"FINNN_2";
+		cout<<endl<<"FINNN";
+	cout<<endl<<"FINNN_2";
 
 
 	clock_t begin3=clock();
@@ -2148,7 +2152,7 @@ void ftkVoting_3D::vote()
 	{
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
-		cout<<endl<<"UU_new2: "<<oo<<" "<<uu;
+		//cout<<endl<<"UU_new2: "<<oo<<" "<<uu;
 //vector < vector < int > > temp_direc_1 = _voteDirec_3D_new[uu];
 		vector < vector < int > > * temp_direc_1 = &(_voteDirec_3D_new[uu]);
 
