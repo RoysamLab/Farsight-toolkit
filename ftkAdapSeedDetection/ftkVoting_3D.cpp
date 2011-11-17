@@ -2043,7 +2043,7 @@ void ftkVoting_3D::vote()
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
 		//cout<<endl<<"INTER: "<<uu;
-		//cout<<endl<<"UU: "<<uu;
+		cout<<endl<<"UU: "<<uu;
 		for( unsigned int raddd=0; raddd<60; ++raddd )
 		{
 			
