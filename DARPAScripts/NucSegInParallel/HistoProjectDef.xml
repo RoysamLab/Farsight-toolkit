@@ -1,0 +1,43 @@
+<ProjectDefinition name="Project DARPA">
+    <Inputs>
+        <channel number="0" name="dapi" type="NUCLEAR" />
+        <channel number="1" name="gfp" type="GFP_MARKER" />
+    </Inputs>
+    <Pipeline>
+        <step name="NUCLEAR_SEGMENTATION" />
+        <step name="RAW_ASSOCIATIONS" />
+    </Pipeline>
+    <NuclearSegmentationParameters>
+        <parameter name="high_sensitivity" value="0.00" />
+        <parameter name="LoG_size" value="30.00" />
+        <parameter name="min_scale" value="4.00" />
+        <parameter name="max_scale" value="10.00" />
+        <parameter name="xy_clustering_res" value="3.00" />
+        <parameter name="z_clustering_res" value="2.00" />
+        <parameter name="finalize_segmentation" value="1.00" />
+        <parameter name="sampling_ratio_XY_to_Z" value="2.00" />
+        <parameter name="Use_Distance_Map" value="1.00" />
+        <parameter name="refinement_range" value="6.00" />
+        <parameter name="min_object_size" value="100.00" />
+    </NuclearSegmentationParameters>
+    <CytoplasmSegmentationParameters>
+        <parameter name="draw_real_boundaries" value="1.00" />
+        <parameter name="remove_stromal_cell_boundaries" value="0.00" />
+        <parameter name="draw_synthetic_boundaries" value="0.00" />
+        <parameter name="radius_of_synthetic_boundaries" value="0.00" />
+        <parameter name="number_of_levels" value="1.00" />
+        <parameter name="number_of_levels_in_foreground" value="1.00" />
+    </CytoplasmSegmentationParameters>
+    <AssociationRules>
+        <AssociationRule Name="GFP_TOTAL" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+        <AssociationRule Name="GFP_AVG" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+    </AssociationRules>
+    <ClassificationParameters>
+        <TrainingFile Name="/home/gramak/dataset_leelab/data_set1/ki67/TrainingSet.xml" />
+        <ClassificationParameter TrainingColumn="train_Endothelial" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR,CA9_TOTAL,CA9_AVG" />
+        <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG" />
+    </ClassificationParameters>
+    <PixelLevelAnalysis>
+        <PixelLevelRule RoiImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 655 (305).jpg" TargetImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 605 (304).jpg" Mode="1" OutputFilename="/home/gramak/dataset_leelab/data_set1/ki67/Pixel_Analysis_Output.txt" Radius="0" />
+    </PixelLevelAnalysis>
+</ProjectDefinition>

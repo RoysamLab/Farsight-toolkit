@@ -1,0 +1,4 @@
+<Image>
+    <file chname="dapi" r="255" g="0" b="0">full_pathNuclear.tif</file>
+    <file chname="gfp" r="0" g="255" b="0">full_pathGFP.tif</file>
+</Image>

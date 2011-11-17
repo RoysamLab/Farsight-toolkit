@@ -1,0 +1,7 @@
+<ProjectFiles path="full_path name="DARPA">
+    <input file="Histo_Input_Imagess" />
+    <output file="Histo_Input_Image_label" />
+    <log file="Histo_Input_Image_log.txt" validated="0" />
+    <definition file="HistoProjectDef.xml" />
+    <table file="Histo_Input_Image_table" />
+</ProjectFiles>
