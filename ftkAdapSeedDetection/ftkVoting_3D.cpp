@@ -2094,7 +2094,7 @@ void ftkVoting_3D::vote()
 	//#pragma omp parallel for
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
-		//cout<<endl<<"UU: "<<uu;
+		cout<<endl<<"UU_new: "<<uu;
 		for( int angle_int = 0; angle_int<10; ++angle_int )
 		{
 			//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
