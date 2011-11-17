@@ -1374,7 +1374,7 @@ void View3D::CreateGUIObjects()
 
 	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
 	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
-#ifndef 
+#ifndef USE_SPD
 	this->SPDAction->setDisabled(true);
 #endif
 
@@ -2461,10 +2461,10 @@ void View3D::RayCastOpacityValueChanged(double value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-void View3D::ShowGridlines()
+/*void View3D::ShowGridlines()
 {
 
-}
+}*/
 void View3D::EditHelp()
 {
 	//will write help documentation here
