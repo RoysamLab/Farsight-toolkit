@@ -2043,7 +2043,7 @@ void ftkVoting_3D::vote()
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
 		//cout<<endl<<"INTER: "<<uu;
-		cout<<endl<<"UU: "<<uu;
+		//cout<<endl<<"UU: "<<uu;
 		for( unsigned int raddd=0; raddd<60; ++raddd )
 		{
 			
@@ -2124,14 +2124,8 @@ void ftkVoting_3D::vote()
 	}
 	}
 
-	cout<<endl<<"FINNN";
-	cout<<endl<<"FINNN_2";
-	clock_t end=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
-		cout<<endl<<"FINNN";
-	cout<<endl<<"FINNN_2";
-		cout<<endl<<"FINNN";
-	cout<<endl<<"FINNN_2";
+
 
 
 	clock_t begin3=clock();
@@ -2148,9 +2142,10 @@ void ftkVoting_3D::vote()
 
 	for( int oo=0; oo<1000; ++oo)
 	{
+	cout<<endl<<"OO: "<<oo;
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
-		cout<<endl<<"UU_new2: "<<oo<<" "<<uu;
+		//cout<<endl<<"UU_new2: "<<oo<<" "<<uu;
 //vector < vector < int > > temp_direc_1 = _voteDirec_3D_new[uu];
 		vector < vector < int > > * temp_direc_1 = &(_voteDirec_3D_new[uu]);
 
@@ -2197,7 +2192,10 @@ void ftkVoting_3D::vote()
 
 	clock_t end3=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
-
+		cout<<endl<<"FINNN";
+	cout<<endl<<"FINNN_2";
+		cout<<endl<<"FINNN";
+	cout<<endl<<"FINNN_2";
 
 
 
