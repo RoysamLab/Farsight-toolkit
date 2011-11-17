@@ -2123,7 +2123,7 @@ void ftkVoting_3D::vote()
 		}
 	}
 	}
-
+	clock_t end=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
 
 
