@@ -1258,14 +1258,15 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 
 	if(treeIDToRootMap.size() != this->StartPoints.size()){
 		std::cout << "Centroids missing!!" << std::endl;
-		std::ofstream cent_out_1("cent1.txt");
+		
+		/*std::ofstream cent_out_1("cent1.txt");
 		std::ofstream cent_out_2("cent2.txt");
 		for(int i = 0; i < this->StartPoints.size(); i++)
 			cent_out_1 << this->StartPoints[i][0] << "," << this->StartPoints[i][1] << "," << this->StartPoints[i][2] << std::endl;
 		for(int i = 0; i < treeIDToRootMap.size(); i++)
 			cent_out_2 << treeIDToRootMap[i]->ndx[0] << "," << treeIDToRootMap[i]->ndx[1] << "," << treeIDToRootMap[i]->ndx[2] << std::endl;
 		cent_out_1.close();
-		cent_out_2.close();
+		cent_out_2.close();*/
 	}
 	
 	itk::Index<3> dummy_index;
