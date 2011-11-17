@@ -364,8 +364,8 @@ void SPDMainWindow::viewProgression()
 		SPDModel->GetSelectedFeatures(featureSelectedIDs);
 		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
 		std::cout<< "Features saved in SelFeatures.txt"<<endl;
-		//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-		this->graph->SetGraphTable( table, headers[0], headers[1]);
+		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+		//this->graph->SetGraphTable( table, headers[0], headers[1]);
 		this->graph->ShowGraphWindow();
 	}
 }

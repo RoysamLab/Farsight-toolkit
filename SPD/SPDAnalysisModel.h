@@ -63,6 +63,8 @@ protected:
 	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
+	void EraseCols(vnl_matrix<double>& mat, std::vector<unsigned int> vec);
+
 	void SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue);
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);

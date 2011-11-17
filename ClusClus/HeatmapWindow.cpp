@@ -155,7 +155,16 @@ void Heatmap::creatDataForHeatmap()
 		std = sqrt(sum/this->num_features);
 
 		for(int j = 0; j < num_features; j++)
-			tempdata[i][j] = (temp[j] - mean)/std;
+		{
+			if( std != 0)
+			{
+				tempdata[i][j] = (temp[j] - mean)/std;
+			}
+			else
+			{
+				tempdata[i][j] = temp[j] - mean;
+			}
+		}
 	}
 	for(int i = 0; i < this->num_samples; i++)
 		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
@@ -217,7 +226,10 @@ void Heatmap::scaleData()
 
 		for(int j = 0; j<this->num_samples; j++)
 		{
-			mapdata[j][i] /= sum;
+			if( sum != 0)
+			{
+				mapdata[j][i] /= sum;
+			}
 		}
 	}
 }

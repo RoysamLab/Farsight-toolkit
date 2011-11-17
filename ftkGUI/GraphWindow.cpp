@@ -215,6 +215,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->colSelectIDs = colSels;
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	
 
 	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
 	vertexIDarrays->SetNumberOfComponents(1);
@@ -279,21 +280,11 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		exit(-2);
 	}
 
-	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	theme->SetLineWidth(5);
-	theme->SetCellOpacity(0.9);
-	theme->SetCellAlphaRange(0.8,0.8);
-	theme->SetPointSize(8);
-	theme->SetSelectedCellColor(1,0,0);
-	theme->SetSelectedPointColor(1,0,0); 
-	theme->SetBackgroundColor(0,0,0); 
-
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
-	vertexColors->SetNumberOfComponents(table->GetNumberOfRows());
+	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
-	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
 	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		vertexColors->InsertNextValue( i);
@@ -303,7 +294,16 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
-	graph->GetEdgeData()->AddArray(weights);
+	//graph->GetEdgeData()->AddArray(weights);
+	
+	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(5);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.8,0.8);
+	theme->SetPointSize(8);
+	theme->SetSelectedCellColor(1,0,0);
+	theme->SetSelectedPointColor(1,0,0); 
+	theme->SetBackgroundColor(0,0,0); 
 
 	this->view->RemoveAllRepresentations();
 	this->view->SetRepresentationFromInput( graph);
@@ -312,14 +312,13 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->SetVertexLabelVisibility(true);
 
 	this->view->SetVertexColorArrayName("Color");
+	//this->view->SetEdgeLabelArrayName("edgeLabel");
+	this->view->SetVertexLabelArrayName("vertexIDarrays");
 
     theme->SetPointLookupTable(lookupTable);
-    
 	this->view->ApplyViewTheme(theme);
 
-	this->view->SetEdgeLabelArrayName("edgeLabel");
 	this->view->SetLayoutStrategyToPassThrough();
-	this->view->SetVertexLabelArrayName("vertexIDarrays");
 	this->view->SetVertexLabelFontSize(20);
 }
 

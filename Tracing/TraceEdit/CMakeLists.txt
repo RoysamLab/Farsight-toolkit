@@ -20,6 +20,8 @@ SET( Libraries
     ftkCommon
     ftkGraphs
     MCLR
+    SPD 
+    ClusClus_lib
     ${QT_LIBRARIES} )
 
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)

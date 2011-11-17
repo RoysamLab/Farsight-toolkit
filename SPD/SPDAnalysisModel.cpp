@@ -220,7 +220,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 	}
 	this->DataTable = table;
 
-	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 1);
+	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
 	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
 	{
 		int colIndex = 0;
@@ -230,10 +230,10 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 			{
 				this->CellTraceIndex.push_back( table->GetValue(i, j).ToInt());
 			}
-			//else if( j == table->GetNumberOfColumns() - 1)
-			//{
-			//	this->DistanceToDevice.push_back( table->GetValue(i, j).ToDouble());
-			//}
+			else if( j == table->GetNumberOfColumns() - 1)
+			{
+				this->DistanceToDevice.push_back( table->GetValue(i, j).ToDouble());
+			}
 			else
 			{
 				(this->DataMatrix)(rowIndex, colIndex++) = table->GetValue(i, j).ToDouble();
@@ -297,13 +297,20 @@ void SPDAnalysisModel::NormalizeData()
 	for( unsigned int i = 0; i < this->DataMatrix.columns(); ++i)
 	{
 		vnl_vector<double> temp_col = this->DataMatrix.get_column(i);
-		if( std_vec(i) > 0)
+		if( abs(std_vec(i)) > 0)
 		{	
 			for( unsigned int j =0; j < temp_col.size(); ++j)
 			{
 				temp_col[j] = (temp_col[j] - mean_vec(i))/std_vec(i);
 			}
 			//temp_col = temp_col.normalize();
+		}
+		else
+		{
+			for( unsigned int j =0; j < temp_col.size(); ++j)
+			{
+				temp_col[j] = temp_col[j] - mean_vec(i);
+			}
 		}
 		this->DataMatrix.set_column(i,temp_col);
 	}
@@ -368,7 +375,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 	vnl_vector<int> moduleSize = GetModuleSize(index);
 	vnl_vector<int> isActiveModule;
 	vnl_vector<double> moduleCenter;
-	vnl_vector<double> moduleCor;   
+  
 	isActiveModule.set_size( moduleSize.size());
 	unsigned int i = 0;
 	for(  i = 0; i < moduleSize.size(); i++)
@@ -383,6 +390,9 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 		zeroCol[i] = 0;
 	}
 
+	//ofstream ofs("moduleCor.txt");
+	//ofs<< mean<<endl;
+	std::vector<unsigned int> delColsVec;
 	while( isActiveModule.sum() > 1)
 	{
 		vnl_vector<int> tmp;
@@ -392,6 +402,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 		vnl_vector<double> newModuleMeans;
 		vnl_vector<double> newModuleStd;
 		vnl_vector<double> newModuleCor;
+		vnl_vector<double> moduleCor; 
 
 		for( i = 0; i < moduleSize.size(); i++)
 		{
@@ -407,6 +418,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 
 		unsigned int moduleId = tmp.arg_min();
 		moduleCenter = mean.get_column(moduleId);
+		moduleCor.set_size(mean.cols());
 		moduleCor = moduleCenter * mean;
 		moduleCor[moduleId] = 0;
 
@@ -433,6 +445,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 				moduleSize[moduleToDeleteId] = 0;
 				mean.set_column(moduleId, newModuleMeans);
 				mean.set_column(moduleToDeleteId, zeroCol);
+				delColsVec.push_back(moduleToDeleteId);
 
 				for( unsigned int j = 0; j < index.size(); j++)
 				{
@@ -443,14 +456,19 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 				}
 			}
 		}
+		
+		//ofs<< isActiveModule.sum()<<endl;
+		//ofs<< moduleCenter<<endl;
+		//ofs<< moduleCor<<endl<<endl;
 		isActiveModule[moduleId] = 0;
+		//moduleCor.clear();
 	}
+	//ofs.close();
 
 	StandardizeIndex(index);
 
 	int max = index.max_value() + 1;
-	EraseZeroCol( mean);
-
+	EraseCols( mean, delColsVec);
 	return index.max_value() + 1;   // how many clusters have been generated
 }
 
@@ -505,6 +523,11 @@ void SPDAnalysisModel::GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<d
 
 	std = stats.sd();
 	mean = stats.mean();
+
+	if( mat.cols()> 0 && mean.size() <= 0)
+	{
+		std::cout<< "meanstd ERROR"<<endl;
+	}
 }
 
 void SPDAnalysisModel::StandardizeIndex(vnl_vector<unsigned int>& index)
@@ -566,6 +589,20 @@ void SPDAnalysisModel::EraseZeroCol(vnl_matrix<double>& mat)
 		}
 	}
 
+	mat = newMat;
+}
+
+void SPDAnalysisModel::EraseCols(vnl_matrix<double>& mat, std::vector<unsigned int> vec)
+{
+	vnl_matrix<double> newMat( mat.rows(), mat.cols() - vec.size());
+	unsigned int index = 0;
+	for( unsigned int i = 0; i < mat.cols(); i++)
+	{
+		if( IsExist(vec, i) == false)
+		{
+			newMat.set_column( index++, mat.get_column(i));
+		}
+	}
 	mat = newMat;
 }
 
@@ -759,56 +796,56 @@ void SPDAnalysisModel::GenerateMST()
 		this->MSTWeight.push_back( mapweight);
 	}
 
-	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
-	int moduleIndex = 1;
+	//std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
+	//int moduleIndex = 1;
 
-	QString filenameMST = this->filename + "mst.txt";
-	std::ofstream ofs(filenameMST.toStdString().c_str(), std::ofstream::out);
-	while( iter != this->ModuleMST.end())
-	{
-		ofs<<"Module:"<<moduleIndex<<endl;
-		ofs<<"Distance:"<< MSTWeight[moduleIndex - 1]<<endl;
-		moduleIndex++;
+	//QString filenameMST = this->filename + "mst.txt";
+	//std::ofstream ofs(filenameMST.toStdString().c_str(), std::ofstream::out);
+	//while( iter != this->ModuleMST.end())
+	//{
+	//	ofs<<"Module:"<<moduleIndex<<endl;
+	//	ofs<<"Distance:"<< MSTWeight[moduleIndex - 1]<<endl;
+	//	moduleIndex++;
 
-		std::vector< boost::graph_traits<Graph>::vertex_descriptor> vertex = *iter;
-		std::multimap<int,int> tree;
+	//	std::vector< boost::graph_traits<Graph>::vertex_descriptor> vertex = *iter;
+	//	std::multimap<int,int> tree;
 
-		for( unsigned int i = 0; i < vertex.size(); i++)
-		{
-			if( i != vertex[i])
-			{
-				tree.insert(std::pair<int,int>(i, vertex[i]));
-				tree.insert(std::pair<int,int>(vertex[i], i));
-			}
-			//ofs<<i<<"\t"<< vertex[i]<<endl;
-		}
+	//	for( unsigned int i = 0; i < vertex.size(); i++)
+	//	{
+	//		if( i != vertex[i])
+	//		{
+	//			tree.insert(std::pair<int,int>(i, vertex[i]));
+	//			tree.insert(std::pair<int,int>(vertex[i], i));
+	//		}
+	//		//ofs<<i<<"\t"<< vertex[i]<<endl;
+	//	}
 
-		std::multimap<int,int>::iterator iterTree = tree.begin();
-		int oldValue = (*iterTree).first;
-		while( iterTree!= tree.end())
-		{
-			std::map<int, int> sortTree;
-			while( iterTree!= tree.end() && (*iterTree).first == oldValue)
-			{
-				sortTree.insert( std::pair<int, int>((*iterTree).second, (*iterTree).first));
-				iterTree++;
-			}
+	//	std::multimap<int,int>::iterator iterTree = tree.begin();
+	//	int oldValue = (*iterTree).first;
+	//	while( iterTree!= tree.end())
+	//	{
+	//		std::map<int, int> sortTree;
+	//		while( iterTree!= tree.end() && (*iterTree).first == oldValue)
+	//		{
+	//			sortTree.insert( std::pair<int, int>((*iterTree).second, (*iterTree).first));
+	//			iterTree++;
+	//		}
 
-			if( iterTree != tree.end())
-			{
-				oldValue = (*iterTree).first;
-			}
-			
-			std::map<int,int>::iterator iterSort = sortTree.begin();
-			while( iterSort != sortTree.end())
-			{
-				ofs<<(*iterSort).first + 1<<"\t"<<((*iterSort).second) + 1<<endl;
-				iterSort++;
-			}
-		}
-		iter++;	
-	}
-	ofs.close();
+	//		if( iterTree != tree.end())
+	//		{
+	//			oldValue = (*iterTree).first;
+	//		}
+	//		
+	//		std::map<int,int>::iterator iterSort = sortTree.begin();
+	//		while( iterSort != sortTree.end())
+	//		{
+	//			ofs<<(*iterSort).first + 1<<"\t"<<((*iterSort).second) + 1<<endl;
+	//			iterSort++;
+	//		}
+	//	}
+	//	iter++;	
+	//}
+	//ofs.close();
 }
 
 double SPDAnalysisModel::CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2)
@@ -934,7 +971,16 @@ void SPDAnalysisModel::Hist(vnl_vector<double>&distance, int num_bin, vnl_vector
 
 	for( unsigned int i = 0; i < distance.size(); i++)
 	{
-		int ind = floor((distance[i] - min) / inter);
+		int ind = 0;
+		if( inter != 0)
+		{
+			ind = floor((distance[i] - min) / inter);
+		}
+		else
+		{
+			ind = floor(distance[i] - min);
+		}
+
 		if( ind == num_bin)
 		{
 			ind =  num_bin - 1;
@@ -956,7 +1002,16 @@ void SPDAnalysisModel::Hist(vnl_vector<double>&distance, vnl_vector<double>& int
 	{
 		if( distance[i] >= interval.min_value() && distance[i] <= interval.max_value())
 		{
-			unsigned int index = floor( (distance[i] - interval.min_value()) / inter);
+			unsigned int index = 0;
+			if( inter != 0)
+			{
+				index = floor( (distance[i] - interval.min_value()) / inter);
+			}
+			else
+			{
+				index = floor( distance[i] - interval.min_value());
+			}
+
 			if( index >= interval.size() - 1)
 			{
 				index = interval.size() - 2;
@@ -989,7 +1044,14 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	for( int i = 0; i < first.size(); i++)
 	{
 		src[i] = i;
-		src_num[i] = (double)first[i] / first_sum;    // convert to the distribution percentage
+		if( first_sum != 0)
+		{
+			src_num[i] = (double)first[i] / first_sum;    // convert to the distribution percentage
+		}
+		else
+		{
+			src_num[i] = (double)first[i];
+		}
 	}
 
 	int *snk = new int[second.size()];
@@ -998,7 +1060,14 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	for( int i = 0; i < second.size(); i++)
 	{
 		snk[i] = i;
-		snk_num[i] = (double)second[i] / second_sum;    // convert to the distribution percentage
+		if( second_sum != 0)
+		{
+			snk_num[i] = (double)second[i] / second_sum;    // convert to the distribution percentage
+		}
+		else
+		{
+			snk_num[i] = (double)second[i];
+		}
 	}
 
 	TsSignature<int> srcSig(first.size(), src, src_num);
@@ -1040,6 +1109,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
 
 	std::cout<< this->ClusterIndex.max_value()<<endl;
+	ofstream ofs("moduleDistance.txt");
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
 	{
 		std::cout<< "build module distance "<< i<<endl;
@@ -1048,11 +1118,16 @@ void SPDAnalysisModel::RunEMDAnalysis()
 
 		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
 		moduleDistance.push_back( distance);
-	}
 
-	QString filenameEMD = this->filename + "emd.txt";
-	std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
-	histOfs.precision(4);
+		ofs<<i<<endl;
+		ofs<<clusterData<<endl<<endl;
+		ofs<<distance<<endl<<endl;
+	}
+	ofs.close();
+
+	//QString filenameEMD = this->filename + "emd.txt";
+	//std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
+	//histOfs.precision(4);
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
 
 	for( int i = 0; i < moduleDistance.size(); i++)
@@ -1081,7 +1156,14 @@ void SPDAnalysisModel::RunEMDAnalysis()
 
 		for( unsigned int y = 0; y < moduleHist.size(); y++)
 		{
-			moduleHistPer[y] = moduleHist[y] / (double)moduleHist.sum();
+			if( moduleHist.sum() != 0)
+			{
+				moduleHistPer[y] = moduleHist[y] / (double)moduleHist.sum();
+			}
+			else
+			{
+				moduleHistPer[y] = moduleHist[y];
+			}
 		}
 		//histOfs << moduleHistPer<< endl<<endl;
 
@@ -1111,7 +1193,14 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			vnl_vector<double> mstHistPer( mstHist.size());
 			for( unsigned int y = 0; y < mstHist.size(); y++)
 			{
-				mstHistPer[y] = mstHist[y] / (double)mstHist.sum();
+				if( mstHist.sum() != 0)
+				{
+					mstHistPer[y] = mstHist[y] / (double)mstHist.sum();
+				}
+				else
+				{
+					mstHistPer[y] = mstHist[y];
+				}
 			}
 			//histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
 
@@ -1134,19 +1223,22 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		}
 	}
 
-	histOfs << setiosflags(ios::fixed) << this->EMDMatrix <<endl <<endl;
+	//histOfs << setiosflags(ios::fixed) << this->EMDMatrix <<endl <<endl;
 
 	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
 		double max = this->EMDMatrix.get_row(i).max_value();
 		for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
 		{
-			this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+			if( max != 0)
+			{
+				this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+			}
 		}
 	}
 
-	histOfs << setiosflags(ios::fixed) << this->EMDMatrix << endl;
-	histOfs.close();
+	//histOfs << setiosflags(ios::fixed) << this->EMDMatrix << endl;
+	//histOfs.close();
 	std::cout<< "EMD matrix has been built successfully"<<endl;
 }
 

@@ -190,8 +190,8 @@ void SampleEditor::loadFile()
 
 	plot->setModels(data,selection);
 	plot->show();
-	this->histo->setModels(data, selection);
-	this->histo->show();
+	//this->histo->setModels(data, selection);
+	//this->histo->show();
 	std::cout << "I reached here inside the sample editor"<<std::endl;
 }
 
@@ -514,6 +514,7 @@ void SampleEditor::showheatmap()
 		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
 
 
+	this->heatmap->setModels(data,selection,selection2);
 	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
 	this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
 	this->heatmap->creatDataForHeatmap();	

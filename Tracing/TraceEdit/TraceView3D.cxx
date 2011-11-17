@@ -1372,6 +1372,10 @@ void View3D::CreateGUIObjects()
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 	this->CellAnalysis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 
+	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
+	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
+
+
 	this->StartActiveLearningAction = new QAction("Start Active Learning", this->CentralWidget);
 	connect (this->StartActiveLearningAction, SIGNAL(triggered()), this, SLOT(StartActiveLearning()));
 
@@ -1638,6 +1642,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->CellAnalysis);
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
+	this->analysisViews->addAction(this->SPDAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -4924,4 +4929,26 @@ void View3D::SaveComputedCellFeaturesTable()
 	}
 
 	myfile.close();
+}
+
+
+void View3D::SPDAnalysis()
+{
+	this->SPDWin = new SPDMainWindow();
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	{
+		//this->SPDWin->setModels();
+		QMessageBox mes;
+		mes.setText("Please compute cell features first!");
+		mes.exec();
+	}
+	else
+	{
+		vtkSmartPointer<vtkTable> featureTable;
+		featureTable = this->CellModel->getDataTable();
+		featureTable->RemoveColumnByName("Trace File");
+		this->SPDWin->setModels( featureTable, this->CellModel->GetObjectSelection());
+	}
+
+	this->SPDWin->show();
 }
