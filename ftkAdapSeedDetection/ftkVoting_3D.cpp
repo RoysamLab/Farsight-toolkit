@@ -2056,6 +2056,9 @@ void ftkVoting_3D::vote()
 			}
 		}
 	}
+	int t =0;
+	cout<<end<<t;
+	cout<<endl<<"endddddd";
 	cout<<endl<<"end 1";
 
 
