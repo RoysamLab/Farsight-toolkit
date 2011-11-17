@@ -20,9 +20,15 @@ SET( Libraries
     ftkCommon
     ftkGraphs
     MCLR
+    ${QT_LIBRARIES} )
+
+	IF (BUILD_SPD)	
+SET( Clustering 
     SPD 
     ClusClus_lib
-    ${QT_LIBRARIES} )
+	)
+ENDIF (BUILD_SPD)
+
 
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
 
@@ -49,7 +55,12 @@ IF(USE_GPUREN)
 	ADD_DEFINITIONS(-DUSE_GPUREN)
 ENDIF(USE_GPUREN)
 
-TARGET_LINK_LIBRARIES(Trace ${Libraries})
+IF (BUILD_SPD)
+	TARGET_LINK_LIBRARIES(Trace ${Libraries} ${Clustering})
+ELSE (BUILD_SPD)
+	TARGET_LINK_LIBRARIES(Trace ${Libraries})
+ENDIF (BUILD_SPD)
+
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} Trace)
