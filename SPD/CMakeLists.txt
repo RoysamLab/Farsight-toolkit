@@ -22,6 +22,10 @@ SET(SPD_SRCS
 	spdmainwindow.h
 	spdmainwindow.cpp)
 
+IF ( NOT BUILD_CLUSCLUS )
+	MESSAGE( SEND_ERROR "Must turn on BUILD_CLUSCLUS" )
+ENDIF ( NOT BUILD_CLUSCLUS )
+	
 ADD_LIBRARY( SPD ${SPD_SRCS} ${GUI_MOC_SRCS})
 TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon ClusClus_lib)
 
