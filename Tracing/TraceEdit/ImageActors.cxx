@@ -829,8 +829,6 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int me
 		//LoadedImages[i]->PermuteFilter = PermuteFilterType::New();
 		//LoadedImages[i]->PermuteFilter->SetInputConnection(source->GetOutputPort());
 
-
-		//
 		////LoadedImages[i]->PermuteFilter->SetInputConnection(source->GetOutputPort());
 		//LoadedImages[i]->PermuteFilter->SetFilteredAxes(0,2,1);
 		//try

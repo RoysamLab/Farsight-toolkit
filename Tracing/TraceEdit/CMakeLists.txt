@@ -41,6 +41,7 @@ ADD_LIBRARY(Trace
   TraceView3D.h     TraceView3D.cxx 
   cellexport.h	    cellexport.cxx
   screenshot.h	    screenshot.cxx
+  GridActors.h		GridActors.cxx
   ${GUI_MOC_SRCS} 
   )
 OPTION( USE_GPUREN "Use GPU for Rendering" OFF )

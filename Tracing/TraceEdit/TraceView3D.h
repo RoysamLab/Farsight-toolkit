@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "cellexport.h"
 #include "screenshot.h"
+#include "GridActors.h"
 #include "vtkInteractorStyleImage.h"
 #include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
@@ -33,7 +34,7 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/TableWindow.h"
-#include"ftkGUI/StatisticsToolbar.h"
+#include "ftkGUI/StatisticsToolbar.h"
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "vnl/vnl_cost_function.h"
@@ -94,6 +95,20 @@ limitations under the License.
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 #include "vtkWindowToImageFilter.h"
+
+#include "vtkLineSource.h"
+#include "vtkPolyData.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
+#include "vtkImageActor.h"
+#include "vtkImageCast.h"
+//#include "vtkImageSlice.h"
+#include "vtkLookupTable.h"
+#include "vtkImageMapToColors.h"
+#include "vtkImageGridSource.h"
+//#include "vtkDataSetMapper.h"
+//#include "vtkStructuredGrid.h"
+//#include "vtkStructuredGridOutlineFilter.h"
 
 #include "PatternAnalysis/activeLearning/mclr_SM.h"
 #include "ftkGUI/GenericALDialog.h"
@@ -223,7 +238,7 @@ public slots:
 	void AddROIPoint();
 	void DrawROI();
 	void CalculateDistanceToDevice();
-	void ShowGridlines();
+	void ToggleGridlines();
 
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
@@ -342,6 +357,7 @@ private:
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;
+	QAction *GridAction;
 
 	QPushButton *MoveSphere;
 	QPushButton *updatePT3D;
@@ -454,6 +470,7 @@ private:
 	vtkSmartPointer<vtkOrientationMarkerWidget> UCSMarker;
 	
 	ImageRenderActors *ImageActors;
+	GridlineActors *Gridlines;
 	TraceObject* tobj;
 	vtkSmartPointer<vtkTable> nucleiTable;
 //!raycast Functions 
@@ -483,6 +500,9 @@ private:
 		double elevation;
 	} projection_base;
 	int projection_axis;
+
+	bool showGrid;
+
 //!ROI data objects
 	std::vector<double*> ROIPoints;
 	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	

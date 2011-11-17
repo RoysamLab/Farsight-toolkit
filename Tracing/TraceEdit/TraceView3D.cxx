@@ -61,6 +61,7 @@ View3D::View3D(QWidget *parent)
 	this->renderTraceBits = false;
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
+	this->showGrid = true;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
@@ -76,6 +77,7 @@ View3D::View3D(QWidget *parent)
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
 	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
 	this->ImageActors = new ImageRenderActors();
+	this->Gridlines = new GridlineActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
 	this->EditLogDisplay->setLineWrapMode(QTextEdit::NoWrap);
@@ -181,6 +183,7 @@ View3D::~View3D()
 	}
 	delete this->tobj;
 	delete this->ImageActors;
+	delete this->Gridlines;
 }
 /*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
@@ -1151,6 +1154,12 @@ void View3D::CreateGUIObjects()
 	this->ColorByTreesAction->setCheckable(true);
 	this->ColorByTreesAction->setChecked(false);
 	connect(this->ColorByTreesAction, SIGNAL(triggered()), this, SLOT(ToggleColorByTrees()));
+
+	this->GridAction = new QAction("Grid Lines", this->CentralWidget);
+	this->GridAction->setCheckable(true);
+	this->GridAction->setChecked(false);
+	connect(this->GridAction, SIGNAL(triggered()), this, SLOT(ToggleGridlines()));
+
 	// 3d cursor actions 
 	this->CursorActionsWidget = new QWidget(this);
 
@@ -1186,9 +1195,6 @@ void View3D::CreateGUIObjects()
 
 	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
-
-	this->LoadSeedPointsAsGliphs = new QAction("Load Seed Point gliphs", this->CentralWidget);
-	connect(this->LoadSeedPointsAsGliphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
 
 	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
 	connect(this->AssociateCellToNucleiAction, SIGNAL(triggered()), this, SLOT(AssociateNeuronToNuclei()));
@@ -1372,10 +1378,6 @@ void View3D::CreateGUIObjects()
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 	this->CellAnalysis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 
-	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
-	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
-
-
 	this->StartActiveLearningAction = new QAction("Start Active Learning", this->CentralWidget);
 	connect (this->StartActiveLearningAction, SIGNAL(triggered()), this, SLOT(StartActiveLearning()));
 
@@ -1427,7 +1429,6 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
-	this->fileMenu->addAction(this->LoadSeedPointsAsGliphs);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
@@ -1642,7 +1643,6 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->CellAnalysis);
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
-	this->analysisViews->addAction(this->SPDAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -1650,6 +1650,7 @@ void View3D::CreateLayout()
 	renderer_sub_menu->addAction(this->SetProjection);
 	renderer_sub_menu->addAction(this->SetRaycast);
 	this->DataViews->addAction(this->ColorByTreesAction);
+	this->DataViews->addAction(this->GridAction);
 
 	this->createRayCastSliders();
 	this->menuBar()->addSeparator();
@@ -2458,9 +2459,55 @@ void View3D::RayCastOpacityValueChanged(double value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-void View3D::ShowGridlines()
+void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 {
+	//std::cout << "Grid Lines selected." << std::endl;
+	//If gridlines don't exist, then create
+	int num_lines = this->Gridlines->NumberOfLines();
+	if (num_lines == 0)
+	{
+		//std::cout << "Create grid" << std::endl;
+		double imageBounds[6];
+		ImageActors->getImageBounds(imageBounds);
+		Gridlines->createGrid(imageBounds);
+		//num_lines = this->Gridlines->NumberOfLines();
+		//std::cout << "Number of lines: " << num_lines << std::endl;
+	}
 
+	//if (PROJECTION)
+	if (showGrid)
+	{
+		//std::cout << "Show Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		showGrid = false;
+	}// turn on grid
+	else
+	{
+		//std::cout << "Hide Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		showGrid = true;
+	}// turn off grid
+	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::EditHelp()
 {
@@ -2934,7 +2981,6 @@ void View3D::AssociateNeuronToNuclei()
 						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
 					}
 					found = true;
-					this->nucleiTable->RemoveRow(nucleiRowIter);
 				}
 				nucleiRowIter++;
 			}//end nuclei match search
@@ -2948,20 +2994,8 @@ void View3D::AssociateNeuronToNuclei()
 				}
 			}
 		}//end of soma row		
-		this->AddDebugPoints(this->nucleiTable);
-		this->QVTK->GetRenderWindow()->Render();
 		this->ShowCellAnalysis();
 	}// end of matching soma to nuclei
-}
-void View3D::ShowSeedPoints()
-{
-	QString fileName = QFileDialog::getOpenFileName(this, "Open Seed File", "",tr(".txt(*.txt)"));
-	if (!fileName.isEmpty())
-	{
-		vtkSmartPointer<vtkTable> SeedTable = ftk::LoadXYZTable(fileName.toStdString());	
-		this->AddDebugPoints(SeedTable);
-		this->QVTK->GetRenderWindow()->Render();
-	}//
 }
 void View3D::CalculateCellToCellDistanceGraph()
 {
@@ -3017,6 +3051,7 @@ void View3D::Rerender()
 	{
 		this->AddPointsAsPoints(vec);
 	}
+	this->AddDebugPoints(this->tobj->debug_points);
 	this->UpdateLineActor();
 	this->UpdateBranchActor();
 	this->Renderer->AddActor(this->BranchActor); 
@@ -3110,22 +3145,18 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	Renderer->AddActor(PointsActor);
 }
 
-void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
+void View3D::AddDebugPoints(std::vector<TraceBit> vec)
 {
-	if(centroidsTable->GetNumberOfRows() ==0)
+	if(vec.size() ==0)
 		return;
 	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
 	cube_src->SetBounds(-1,1,-1,1,-1,1);
 	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
-	for(vtkIdType counter=0; counter<centroidsTable->GetNumberOfRows(); counter++)
+	for(unsigned int counter=0; counter<vec.size(); counter++)
 	{
-		int return_id = points->InsertNextPoint(
-			centroidsTable->GetValueByName(counter, "centroid_x").ToDouble(),
-			centroidsTable->GetValueByName(counter, "centroid_y").ToDouble(),
-			centroidsTable->GetValueByName(counter, "centroid_z").ToDouble()
-			);
+		int return_id = points->InsertNextPoint(vec[counter].x,vec[counter].y,vec[counter].z);
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(return_id);
 	}
@@ -3138,13 +3169,13 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
 	cubemap->SetInput(glyphs->GetOutput());
 	cubemap->GlobalImmediateModeRenderingOn();
-	CentroidsActor = vtkSmartPointer<vtkActor>::New();
-	CentroidsActor->SetMapper(cubemap);
-	CentroidsActor->SetPickable(0);
-	CentroidsActor->GetProperty()->SetPointSize(5);
-	CentroidsActor->GetProperty()->SetOpacity(.5);
-	CentroidsActor->GetProperty()->SetColor(1,1,0);
-	Renderer->AddActor(CentroidsActor);
+	PointsActor = vtkSmartPointer<vtkActor>::New();
+	PointsActor->SetMapper(cubemap);
+	PointsActor->SetPickable(0);
+	PointsActor->GetProperty()->SetPointSize(5);
+	PointsActor->GetProperty()->SetOpacity(.5);
+	PointsActor->GetProperty()->SetColor(1,1,0);
+	Renderer->AddActor(PointsActor);
 }
 
 void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
@@ -3296,6 +3327,7 @@ void View3D::HalfBridges(double d)
 	this->TreeModel->SelectByIDs(this->tobj->HalfBridges);
 }
 /*	Statistics	*/
+
 void View3D::ListSelections()
 {
 	std::vector<TraceLine* > IDs = this->TreeModel->GetSelectedTraces();
@@ -4887,7 +4919,7 @@ void View3D::CropBorderCells()
 	DeleteTraces();
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
-}                                                                                                                                                                                                                                      
+}                                                                                                                                                                                                                                      
 
 
 
@@ -4928,26 +4960,4 @@ void View3D::SaveComputedCellFeaturesTable()
 	}
 
 	myfile.close();
-}
-
-
-void View3D::SPDAnalysis()
-{
-	this->SPDWin = new SPDMainWindow();
-	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
-	{
-		//this->SPDWin->setModels();
-		QMessageBox mes;
-		mes.setText("Please compute cell features first!");
-		mes.exec();
-	}
-	else
-	{
-		vtkSmartPointer<vtkTable> featureTable;
-		featureTable = this->CellModel->getDataTable();
-		featureTable->RemoveColumnByName("Trace File");
-		this->SPDWin->setModels( featureTable, this->CellModel->GetObjectSelection());
-	}
-
-	this->SPDWin->show();
 }
