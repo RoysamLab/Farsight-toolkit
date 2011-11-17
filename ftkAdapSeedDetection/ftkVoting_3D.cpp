@@ -2059,7 +2059,7 @@ void ftkVoting_3D::vote()
 	int t =0;
 	cout<<endl<<t;
 	cout<<endl<<"endddddd";
-	cout<<endl<<"end 1";
+	//cout<<endl<<"end 1";
 
 
 	////#pragma omp parallel for
