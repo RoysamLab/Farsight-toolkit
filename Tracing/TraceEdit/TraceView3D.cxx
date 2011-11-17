@@ -1187,6 +1187,9 @@ void View3D::CreateGUIObjects()
 	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
 
+	this->LoadSeedPointsAsGliphs = new QAction("Load Seed Point gliphs", this->CentralWidget);
+	connect(this->LoadSeedPointsAsGliphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
+
 	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
 	connect(this->AssociateCellToNucleiAction, SIGNAL(triggered()), this, SLOT(AssociateNeuronToNuclei()));
 	this->AssociateCellToNucleiAction->setDisabled(true);
@@ -1420,6 +1423,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
+	this->fileMenu->addAction(this->LoadSeedPointsAsGliphs);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
@@ -2944,6 +2948,16 @@ void View3D::AssociateNeuronToNuclei()
 		this->ShowCellAnalysis();
 	}// end of matching soma to nuclei
 }
+void View3D::ShowSeedPoints()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Seed File", "",tr(".txt(*.txt)"));
+	if (!fileName.isEmpty())
+	{
+		vtkSmartPointer<vtkTable> SeedTable = ftk::LoadXYZTable(fileName.toStdString());	
+		this->AddDebugPoints(SeedTable);
+		this->QVTK->GetRenderWindow()->Render();
+	}//
+}
 void View3D::CalculateCellToCellDistanceGraph()
 {
 	int cellCount= this->CellModel->getCellCount();
@@ -3091,7 +3105,7 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	Renderer->AddActor(PointsActor);
 }
 
-void View3D::AddDebugPoints(vtkTable * centroidsTable)
+void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 {
 	if(centroidsTable->GetNumberOfRows() ==0)
 		return;

@@ -134,7 +134,7 @@ public:
 	void CreateSphereActor();
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
-	void AddDebugPoints(vtkTable *centroidsTable);// shown as big yellow cubes
+	void AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable);// shown as big yellow cubes
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
@@ -228,6 +228,7 @@ public slots:
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
 	void AssociateNeuronToNuclei();
+	void ShowSeedPoints();
 
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
@@ -353,6 +354,7 @@ private:
 
 	QAction *LoadNucleiTable;
 	QAction *AssociateCellToNucleiAction;
+	QAction *LoadSeedPointsAsGliphs;
 
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
