@@ -13,7 +13,7 @@ from string import maketrans
 print "Hello, World!"
 
 rootPath = os.getcwd()
-rootPath = rootPath + '\\'
+rootPath = rootPath + '/'
 patternN    = 'Chan3*' # Can include any UNIX shell-style wildcards
 patternGFP = 'GCHAN3*'
 
@@ -35,13 +35,13 @@ op_proj1         = 'darpa.xml'
 exx_ml		 = '.xml'
 texxt		 = '.txt'
 
-pp = 'C:\\ROYSAMLAB\\FARSIGHT\\Farsight_DASH_bin\\exe\\Release\\projproc'
+pp = '/data/kedar/farsight-bin/exe/projproc'
 pppppp = '\"'
 for root, dirs, files in os.walk(rootPath):
 	count_file  = 0
 	count_file1 = 0
 	asd = cmp(os.path.join(root,''),rootPath)
-	print asd
+	#print asd
 	if asd != 0:
 		newN = []
 		newGFP = []
@@ -56,17 +56,17 @@ for root, dirs, files in os.walk(rootPath):
 			count_file += 1
 			newNNN = newNN.translate(trantab)
 			newN.append( newNNN )
-		print newN
+		#print newN
 		for filename in fnmatch.filter(files, patternGFP):
 			newGFPPP = ''
 			newGFPP = os.path.join(root,filename)
 			count_file1 += 1
 			newGFPPP = newGFPP.translate(trantab)
 			newGFP.append( newGFPPP )
-		print newGFP
+		#print newGFP
 
-		print os.path.join(root,'')
-		print count_file
+		#print os.path.join(root,'')
+		#print count_file
 		if count_file1 == count_file:
 			#Write image file
 			com_to_exec = []
@@ -83,7 +83,7 @@ for root, dirs, files in os.walk(rootPath):
 				data = open(rootPath+inpu_xml_img1).read()
 				data = re.sub(ppatternN,newN[x],data)
 				data = re.sub(ppatternGFP,newGFP[x],data)
-				print data
+				#print data
 				o.write( data )
 				o.close()
 
@@ -110,6 +110,10 @@ for root, dirs, files in os.walk(rootPath):
 				#os.system( com_to_exec )
 				#os.chdir(rootPath)
 			for com_to_exec_str in com_to_exec:
-				print com_to_exec_str
+				#os.system( com_to_exec_str )
 				subprocess.Popen(com_to_exec_str, shell=True)
-				time.sleep(10)
+				#time in secs between two files in a folder
+				time.sleep(5)
+				print com_to_exec_str
+	#time in secs between two folders
+	time.sleep(900)
