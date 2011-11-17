@@ -99,7 +99,6 @@ struct ftkBins3D : public vector<ftkWPoint3D> {
 			it->setOffset();     
 	}
 	void nic (){}
-	//double center_weight;
 };
 
 // ############################################################################################################################################################################
@@ -130,6 +129,11 @@ struct ftkCone3D : public vector<ftkBins3D> {
 
 	//void vote(VotingDirType_3D::PixelType * p, VotingDirType_3D::PixelType * pmask, const VPoint3D& vp);
 	double dx, dy, dz; //< direction
+
+	double dxx;
+	double dyy;
+	double dzz; // This is the direction of the center pixel
+
 };
 
 // ############################################################################################################################################################################
@@ -258,9 +262,13 @@ private:
 
 	//< pre-computed cone structures for voting
 	vector<vector<ftkCone3D> > _conesPru_3D;
+	vector < ftkCone3D > _conesPru_3D_new;
 	vector<ftkCone3D> _conesPru_prob;
 	vector< pair< int,int > > _voteDirec;
 	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob;
+
+
+	vector< vector< vector< int > > > _voteDirec_3D_new;
 
 	//// Voting Direction X and Y
 	//typedef double VotingDirPixelType;
@@ -268,6 +276,9 @@ private:
 
 	// Image of votes (without padding)
 	//VotingDirTyp
+
+	int _NN_dir;
+
 	};
 
 #endif

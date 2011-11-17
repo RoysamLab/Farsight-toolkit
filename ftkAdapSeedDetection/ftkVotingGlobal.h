@@ -24,6 +24,9 @@ namespace nftkVotingGlobal{
 	typedef unsigned short InputPixelType_16;
 	typedef itk::Image< InputPixelType_16, Dimension_3 > InputImageType_3D_16;
 
+	typedef unsigned char InputPixelType_8;
+	typedef itk::Image< InputPixelType_8, Dimension_3 > InputImageType_3D_8;
+
 
 template <typename T1, typename T2>
 int writeImage(typename T1::Pointer im, const char* filename)
