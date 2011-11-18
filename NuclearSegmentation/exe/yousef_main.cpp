@@ -89,9 +89,19 @@ int main(int argc, char* argv[])
 	try{
 		NucleusSeg->runSeedDetection();
 	}
-	catch( itk::ExceptionObject & err ){
-		std::cout << "ExceptionObject caught !" << std::endl;
-		std::cout << err << std::endl;
+	catch( bad_alloc & excp ){
+		std::cout<<"You have requested more memory than "
+			 <<"what is currently available in this "
+			 <<"system, please try again with a smaller "
+			 <<"input image\n";
+		return EXIT_FAILURE;
+	}
+	catch( itk::ExceptionObject & excp ){
+		std::cout<<"Error: " << excp <<std::endl;
+		return EXIT_FAILURE;
+	}
+	catch( std::excption & excp ){
+		std::cout<<"Error: " << excp.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 

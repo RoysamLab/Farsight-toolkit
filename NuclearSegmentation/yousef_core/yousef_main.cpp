@@ -35,7 +35,9 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	clock_t startTimer = clock();
-	
+
+	std::cout<<"Starting segmentation\n";
+
 	//For 8-bit grayscale images only 
 	typedef itk::Image< unsigned char, 3 > OutputImageType;
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
@@ -80,7 +82,8 @@ int main(int argc, char* argv[])
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
 	try {
-	NucleusSeg->runSeedDetection();
+		std::cout<<"Starting seed detection\n";
+		NucleusSeg->runSeedDetection();
 	}
 	catch( bad_alloc & excp ){
 		std::cout<<"You have requested more memory than "
