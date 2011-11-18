@@ -1280,6 +1280,21 @@ void View3D::CreateGUIObjects()
 	this->WidthSpaceBox->setValue(10);
 	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
 
+	this->GridRSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridRSlider->setRange(0,255);
+	this->GridRSlider->setValue(255);
+	connect(this->GridRSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
+	
+	this->GridGSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridGSlider->setRange(0,255);
+	this->GridGSlider->setValue(255);
+	connect(this->GridGSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
+	
+	this->GridBSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridBSlider->setRange(0,255);
+	this->GridBSlider->setValue(255);
+	connect(this->GridBSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
+
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -1584,6 +1599,9 @@ void View3D::CreateLayout()
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
+	GridlineLayout->addRow(tr("R: "),this->GridRSlider);
+	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
+	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
 	SettingsBox->addWidget(GridlineSettings);
 
 	SettingsBox->addWidget(this->ApplySettingsButton);
@@ -2392,12 +2410,16 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 	int num_lines = this->Gridlines->NumberOfLines();
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
+	int line_r = GridRSlider->value();
+	int line_g = GridGSlider->value();
+	int line_b = GridBSlider->value();
+
 	if (num_lines == 0)
 	{
 		//std::cout << "Create grid" << std::endl;
 		double imageBounds[6];
 		ImageActors->getImageBounds(imageBounds);
-		Gridlines->createGrid(imageBounds,height_spacing,width_spacing);
+		Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b);
 		//num_lines = this->Gridlines->NumberOfLines();
 		//std::cout << "Number of lines: " << num_lines << std::endl;
 	}
@@ -2456,7 +2478,10 @@ void View3D::AdjustGridlines(int value)
 	ImageActors->getImageBounds(imageBounds);
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
-	Gridlines->createGrid(imageBounds,height_spacing,width_spacing);
+	int line_r = GridRSlider->value();
+	int line_g = GridGSlider->value();
+	int line_b = GridBSlider->value();
+	Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b);
 	
 	//Add actors
 	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();

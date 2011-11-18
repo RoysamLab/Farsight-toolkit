@@ -15,7 +15,7 @@ GridlineActors::~GridlineActors()
 {
 	//nada
 }
-void GridlineActors::createGrid(double bounds[],int height_spacing, int width_spacing)
+void GridlineActors::createGrid(double bounds[],int height_spacing, int width_spacing, int r, int g, int b)
 {
 	//int gridspacing = 10; //make adjustable
 
@@ -74,6 +74,17 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 		//actor->SetInput(castFilter->GetOutput());
 		//Renderer->AddActor(actor);
 
+		double r_color = r/256.0;
+		double g_color = g/256.0;
+		double b_color = b/256.0;
+
+		std::cout << "r: " << r_color << std::endl;
+		std::cout << "G: " << g_color << std::endl;
+		std::cout << "B: " << b_color << std::endl;
+
+		vtkSmartPointer<vtkProperty> lineproperty = vtkSmartPointer<vtkProperty>::New();
+		lineproperty->SetColor(r_color,g_color,b_color);
+
 		//Manually create lines
 		/// horizontal lines
 		num_horizontal_lines = (bounds[3] - bounds[2]) / height_spacing + 1;
@@ -96,6 +107,7 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 			mapper->SetInputConnection(lineSource->GetOutputPort());
 			//Create GridlineActor
 			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
+			GridlineActor->SetProperty(lineproperty);
 			//Store it to the GridlineActorVector
 			GridlineActorVectorHorizontal[horizontal_line_index] = GridlineActor;
 			
@@ -124,6 +136,7 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 			vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 			mapper->SetInputConnection(lineSource->GetOutputPort());
 			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
+			GridlineActor->SetProperty(lineproperty);
 			GridlineActorVectorVertical[vertical_line_index] = GridlineActor;
 			GridlineActor->SetMapper(mapper);
 			//GridlineActor->GetProperty()->SetLineWidth(4);

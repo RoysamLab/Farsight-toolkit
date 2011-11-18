@@ -96,20 +96,6 @@ limitations under the License.
 #include "vtkVolumeProperty.h"
 #include "vtkWindowToImageFilter.h"
 
-#include "vtkLineSource.h"
-#include "vtkPolyData.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkProperty.h"
-#include "vtkImageActor.h"
-#include "vtkImageCast.h"
-//#include "vtkImageSlice.h"
-#include "vtkLookupTable.h"
-#include "vtkImageMapToColors.h"
-#include "vtkImageGridSource.h"
-//#include "vtkDataSetMapper.h"
-//#include "vtkStructuredGrid.h"
-//#include "vtkStructuredGridOutlineFilter.h"
-
 #include "PatternAnalysis/activeLearning/mclr_SM.h"
 #include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
@@ -510,6 +496,7 @@ private:
 	bool showGrid;
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox;
 	QGroupBox * GridlineSettings;
+	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 
 //!ROI data objects
 	std::vector<double*> ROIPoints;
