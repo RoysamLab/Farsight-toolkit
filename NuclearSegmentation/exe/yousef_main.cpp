@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 		std::cout<<"Error: " << excp <<std::endl;
 		return EXIT_FAILURE;
 	}
-	catch( std::excption & excp ){
+	catch( std::exception & excp ){
 		std::cout<<"Error: " << excp.what() << std::endl;
 		return EXIT_FAILURE;
 	}
