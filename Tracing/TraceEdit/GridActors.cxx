@@ -15,7 +15,7 @@ GridlineActors::~GridlineActors()
 {
 	//nada
 }
-void GridlineActors::createGrid(double bounds[],int height_spacing, int width_spacing, int r, int g, int b)
+void GridlineActors::createGrid(double bounds[],int height_spacing, int width_spacing, int r, int g, int b, int opacity)
 {
 	//int gridspacing = 10; //make adjustable
 
@@ -77,13 +77,16 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 		double r_color = r/256.0;
 		double g_color = g/256.0;
 		double b_color = b/256.0;
+		double line_opacity = opacity/100.0;
 
-		std::cout << "r: " << r_color << std::endl;
-		std::cout << "G: " << g_color << std::endl;
-		std::cout << "B: " << b_color << std::endl;
+		//std::cout << "r: " << r_color << std::endl;
+		//std::cout << "G: " << g_color << std::endl;
+		//std::cout << "B: " << b_color << std::endl;
 
 		vtkSmartPointer<vtkProperty> lineproperty = vtkSmartPointer<vtkProperty>::New();
 		lineproperty->SetColor(r_color,g_color,b_color);
+		lineproperty->SetOpacity(line_opacity);
+		//lineproperty->SetLineWidth(4);
 
 		//Manually create lines
 		/// horizontal lines

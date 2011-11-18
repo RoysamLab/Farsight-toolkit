@@ -497,6 +497,7 @@ private:
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox;
 	QGroupBox * GridlineSettings;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
+	QSlider * GridOpacitySlider;
 
 //!ROI data objects
 	std::vector<double*> ROIPoints;

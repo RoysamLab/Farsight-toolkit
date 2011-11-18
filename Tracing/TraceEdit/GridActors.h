@@ -24,7 +24,7 @@ class GridlineActors
 public:
 	GridlineActors();
 	~GridlineActors();
-	void createGrid(double bounds[],int height_spacing, int width_spacing, int r, int g, int b);
+	void createGrid(double bounds[],int height_spacing, int width_spacing, int r, int g, int b, int opacity);
 	vtkSmartPointer<vtkActor> GetHorizontalGridlines(int i);
 	vtkSmartPointer<vtkActor> GetVerticalGridlines(int i);
 	int NumberOfLines();

@@ -1295,6 +1295,11 @@ void View3D::CreateGUIObjects()
 	this->GridBSlider->setValue(255);
 	connect(this->GridBSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 
+	this->GridOpacitySlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridOpacitySlider->setRange(0,100);
+	this->GridOpacitySlider->setValue(75);
+	connect(this->GridOpacitySlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
+
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -1602,6 +1607,7 @@ void View3D::CreateLayout()
 	GridlineLayout->addRow(tr("R: "),this->GridRSlider);
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
+	GridlineLayout->addRow(tr("Opacity: "),this->GridOpacitySlider);
 	SettingsBox->addWidget(GridlineSettings);
 
 	SettingsBox->addWidget(this->ApplySettingsButton);
@@ -2413,13 +2419,14 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
 	int line_b = GridBSlider->value();
+	int line_opacity = GridOpacitySlider->value();
 
 	if (num_lines == 0)
 	{
 		//std::cout << "Create grid" << std::endl;
 		double imageBounds[6];
 		ImageActors->getImageBounds(imageBounds);
-		Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b);
+		Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b, line_opacity);
 		//num_lines = this->Gridlines->NumberOfLines();
 		//std::cout << "Number of lines: " << num_lines << std::endl;
 	}
@@ -2481,7 +2488,8 @@ void View3D::AdjustGridlines(int value)
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
 	int line_b = GridBSlider->value();
-	Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b);
+	int line_opacity = GridOpacitySlider->value();
+	Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b, line_opacity);
 	
 	//Add actors
 	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
