@@ -21,7 +21,8 @@ patternGFP = 'GCHAN3*'
 ppatternN    = 'full_pathNuclear.tif' # Can include any UNIX shell-style wildcards
 ppatternGFP = 'full_pathGFP.tif'
 
-#Things to replace in the project file
+#Number of charecters to match in the filenames from the end
+num_cahr_match = 13
 
 inpu_xml_img     = 'Histo_Input_Image'
 inpu_xml_img11   = 'Histo_Input_Imagess'
@@ -56,16 +57,18 @@ for root, dirs, files in os.walk(rootPath):
 			count_file += 1
 			newNNN = newNN.translate(trantab)
 			newN.append( newNNN )
-		#print newN
 		for filename in fnmatch.filter(files, patternGFP):
 			newGFPPP = ''
 			newGFPP = os.path.join(root,filename)
 			count_file1 += 1
 			newGFPPP = newGFPP.translate(trantab)
 			newGFP.append( newGFPPP )
-		#print newGFP
+		newN.sort()
+		newGFP.sort()
+		print newN
+		print newGFP
 
-		#print os.path.join(root,'')
+		print os.path.join(root,'')
 		#print count_file
 		if count_file1 == count_file:
 			#Write image file
@@ -113,7 +116,7 @@ for root, dirs, files in os.walk(rootPath):
 				#os.system( com_to_exec_str )
 				subprocess.Popen(com_to_exec_str, shell=True)
 				#time in secs between two files in a folder
-				time.sleep(5)
-				print com_to_exec_str
-	#time in secs between two folders
-	time.sleep(900)
+				time.sleep(2)
+				#print com_to_exec_str
+			#time in secs between two folders
+			time.sleep(600)

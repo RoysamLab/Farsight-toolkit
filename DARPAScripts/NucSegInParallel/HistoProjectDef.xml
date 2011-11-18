@@ -5,7 +5,7 @@
     </Inputs>
     <Pipeline>
         <step name="NUCLEAR_SEGMENTATION" />
-        <step name="RAW_ASSOCIATIONS" />
+        <step name="RAW_ASSOCIATIONS"/>
     </Pipeline>
     <NuclearSegmentationParameters>
         <parameter name="high_sensitivity" value="0.00" />
