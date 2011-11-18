@@ -1579,9 +1579,8 @@ void View3D::CreateLayout()
 	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
 	SettingsBox->addWidget(BackgroundSettings);
 
-	GridlineSettings = new QGroupBox(tr("Adjust Grid"));
-	GridlineSettings->setCheckable(true);
-	GridlineSettings->setChecked(false);
+	GridlineSettings = new QGroupBox(tr("Grid"));
+	GridlineSettings->setEnabled(false);
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
@@ -2418,7 +2417,7 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
 		}
 		GridAction->setChecked(showGrid);
-		GridlineSettings->setChecked(true);
+		GridlineSettings->setEnabled(true);
 		showGrid = false;
 	}// turn on grid
 	else
@@ -2435,7 +2434,7 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
 		}
 		GridAction->setChecked(showGrid);
-		GridlineSettings->setChecked(false);
+		GridlineSettings->setEnabled(false);
 		showGrid = true;
 	}// turn off grid
 	this->QVTK->GetRenderWindow()->Render();
