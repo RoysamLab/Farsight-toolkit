@@ -225,6 +225,8 @@ public slots:
 	void removeImageActors();
 	//void raycastToSlicer();
 	void ToggleColorByTrees();
+	void ToggleGridlines();
+	void AdjustGridlines(int value);
 	void setSlicerZValue(int value);
 	void setSliceThickness(int sliceThickness);
 	void RayCastOpacityChanged(int value);
@@ -240,7 +242,6 @@ public slots:
 	void AddROIPoint();
 	void DrawROI();
 	void CalculateDistanceToDevice();
-	void ToggleGridlines();
 
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
@@ -505,8 +506,10 @@ private:
 		double elevation;
 	} projection_base;
 	int projection_axis;
-
+//!Gridline controls
 	bool showGrid;
+	QSpinBox * HeightSpaceBox, * WidthSpaceBox;
+	QGroupBox * GridlineSettings;
 
 //!ROI data objects
 	std::vector<double*> ROIPoints;

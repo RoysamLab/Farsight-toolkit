@@ -15,13 +15,13 @@ GridlineActors::~GridlineActors()
 {
 	//nada
 }
-void GridlineActors::createGrid(double bounds[])
+void GridlineActors::createGrid(double bounds[],int height_spacing, int width_spacing)
 {
-	int gridspacing = 10; //make adjustable
+	//int gridspacing = 10; //make adjustable
 
 	//if (PROJECTION)//VTKImageGridSource or Unstructured grid
 	{
-		std::cout << "Projectionmode confirmed" << std::endl;
+		//std::cout << "Projectionmode confirmed" << std::endl;
 		////check if this code needed
 		//std::cout << "Xinitial: " << bounds[0] << std::endl;
 		//std::cout << "Xfinal: " << bounds[1] << std::endl;
@@ -29,13 +29,14 @@ void GridlineActors::createGrid(double bounds[])
 		//std::cout << "Yfinal: " << bounds[3] << std::endl;
 		//std::cout << "Zinitial: " << bounds[4] << std::endl;
 		//std::cout << "Zfinal: " << bounds[5] << std::endl;
+
 		// 2D image so limit z range to 1 slice
 		bounds[5] = bounds[4];
 
-		//hack since SetDataExtent requires int array but we have double array -_-
-		int int_bounds[6];
-		for (int k = 0; k < 6; k++)
-			int_bounds[k] = bounds[k]/gridspacing; //make adjustable
+		////hack since SetDataExtent requires int array but we have double array -_-
+		//int int_bounds[6];
+		//for (int k = 0; k < 6; k++)
+		//	int_bounds[k] = bounds[k]/gridspacing; //make adjustable
 
 		//////////////////////////////////////////////////////////
 		// could not control line width of the vtkImageGridSource
@@ -75,11 +76,11 @@ void GridlineActors::createGrid(double bounds[])
 
 		//Manually create lines
 		/// horizontal lines
-		num_horizontal_lines = (bounds[3] - bounds[2]) / gridspacing + 1;
+		num_horizontal_lines = (bounds[3] - bounds[2]) / height_spacing + 1;
 		GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
 		
 		unsigned int horizontal_line_index = 0;
-		for (double increment = bounds[2]; increment < bounds[3]; increment+=gridspacing, horizontal_line_index++)
+		for (double increment = bounds[2]; increment < bounds[3]; increment+=height_spacing, horizontal_line_index++)
 		{	
 			// Create two points, P0 and P1
 			double p0[3] = {bounds[0], increment, 0.0};
@@ -104,11 +105,11 @@ void GridlineActors::createGrid(double bounds[])
 		}
 
 		/// vertical lines
-		num_vertical_lines = (bounds[1] - bounds[0]) / gridspacing + 1;
+		num_vertical_lines = (bounds[1] - bounds[0]) / width_spacing + 1;
 		GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
 
 		unsigned int vertical_line_index = 0;
-		for (double increment = bounds[0]; increment < bounds[1]; increment+=gridspacing, vertical_line_index++)
+		for (double increment = bounds[0]; increment < bounds[1]; increment+=width_spacing, vertical_line_index++)
 		{	
 			// Create two points, P0 and P1
 			double p0[3] = {increment, bounds[2], 0.0};

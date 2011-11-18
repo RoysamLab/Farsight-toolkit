@@ -1270,6 +1270,16 @@ void View3D::CreateGUIObjects()
 	this->AzimuthBox->setRange(-360,360);
 	this->AzimuthBox->setSingleStep(1);
 
+	this->HeightSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->HeightSpaceBox->setRange(1,100);
+	this->HeightSpaceBox->setValue(10);	
+	connect(this->HeightSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+
+	this->WidthSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->WidthSpaceBox->setRange(1,100);
+	this->WidthSpaceBox->setValue(10);
+	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -1543,6 +1553,7 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(selectionSettings);
 
 	QGroupBox *displaySettings = new QGroupBox("Display Settings");
+	//displaySettings->setMinimumHeight(25);
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
@@ -1553,7 +1564,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(this->markTraceBits);
 	SettingsBox->addWidget(displaySettings);
 
-	QGroupBox *rotationSettings = new QGroupBox("Rotation");
+	QGroupBox *rotationSettings = new QGroupBox(tr("Rotation"));
 	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
 	RotateLayout->addRow(tr("Roll: "),this->RollBox);
 	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
@@ -1561,17 +1572,25 @@ void View3D::CreateLayout()
 	RotateLayout->addWidget(this->updateRotationButton);
 	SettingsBox->addWidget(rotationSettings);
 
-	QGroupBox *BackgroundSettings = new QGroupBox(("Background RGB Color"));
+	QGroupBox *BackgroundSettings = new QGroupBox("Background RGB Color");
 	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
 	BackgroundLayout->addRow(tr("Value Red: "), this->BackgroundRBox);
 	BackgroundLayout->addRow(tr("Value Blue: "),this->BackgroundGBox);
 	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
 	SettingsBox->addWidget(BackgroundSettings);
 
+	GridlineSettings = new QGroupBox(tr("Adjust Grid"));
+	GridlineSettings->setCheckable(true);
+	GridlineSettings->setChecked(false);
+	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
+	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
+	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
+	SettingsBox->addWidget(GridlineSettings);
+
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	this->SettingsWidget->setMaximumSize(256,600);
+	this->SettingsWidget->setMaximumSize(256,700);
 
 	this->settingsDock = new QDockWidget("Editor Settings", this);
 	this->settingsDock->setWidget(this->SettingsWidget);
@@ -2367,6 +2386,93 @@ void View3D::ToggleColorByTrees()
 	this->Rerender();
 }
 
+void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
+{
+	//std::cout << "Grid Lines selected." << std::endl;
+	//If gridlines don't exist, then create
+	int num_lines = this->Gridlines->NumberOfLines();
+	int height_spacing = this->HeightSpaceBox->value();
+	int width_spacing = this->WidthSpaceBox->value();
+	if (num_lines == 0)
+	{
+		//std::cout << "Create grid" << std::endl;
+		double imageBounds[6];
+		ImageActors->getImageBounds(imageBounds);
+		Gridlines->createGrid(imageBounds,height_spacing,width_spacing);
+		//num_lines = this->Gridlines->NumberOfLines();
+		//std::cout << "Number of lines: " << num_lines << std::endl;
+	}
+
+	//if (PROJECTION)
+	if (showGrid)
+	{
+		//std::cout << "Show Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		GridlineSettings->setChecked(true);
+		showGrid = false;
+	}// turn on grid
+	else
+	{
+		//std::cout << "Hide Grid" << std::endl;
+		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+		for (int i = 0; i < num_horizontal_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetHorizontalGridlines(i));
+		}
+		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+		for (int i = 0; i < num_vertical_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
+		}
+		GridAction->setChecked(showGrid);
+		GridlineSettings->setChecked(false);
+		showGrid = true;
+	}// turn off grid
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::AdjustGridlines(int value)
+{
+	//std::cout << "Adjust Gridlines" << std::endl;
+	//Remove actors
+	int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+	for (int i = 0; i < num_horizontal_lines; i++)
+		Renderer->RemoveActor(Gridlines->GetHorizontalGridlines(i));
+
+	int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+	for (int i = 0; i < num_vertical_lines; i++)
+		Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
+
+	//Recreate grid
+	double imageBounds[6];
+	ImageActors->getImageBounds(imageBounds);
+	int height_spacing = this->HeightSpaceBox->value();
+	int width_spacing = this->WidthSpaceBox->value();
+	Gridlines->createGrid(imageBounds,height_spacing,width_spacing);
+	
+	//Add actors
+	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
+	for (int i = 0; i < num_horizontal_lines; i++)
+		Renderer->AddActor(Gridlines->GetHorizontalGridlines(i));
+
+	num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
+	for (int i = 0; i < num_vertical_lines; i++)
+		Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
+
+	this->QVTK->GetRenderWindow()->Render();
+
+	//num_lines = this->Gridlines->NumberOfLines();
+	//std::cout << "Number of lines: " << num_lines << std::endl;
+}
 void View3D::CreateSphereActor()
 {
 	this->Sphere = vtkSmartPointer<vtkSphereSource>::New();
@@ -2471,56 +2577,6 @@ void View3D::RayCastOpacityValueChanged(double value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
-{
-	//std::cout << "Grid Lines selected." << std::endl;
-	//If gridlines don't exist, then create
-	int num_lines = this->Gridlines->NumberOfLines();
-	if (num_lines == 0)
-	{
-		//std::cout << "Create grid" << std::endl;
-		double imageBounds[6];
-		ImageActors->getImageBounds(imageBounds);
-		Gridlines->createGrid(imageBounds);
-		//num_lines = this->Gridlines->NumberOfLines();
-		//std::cout << "Number of lines: " << num_lines << std::endl;
-	}
-
-	//if (PROJECTION)
-	if (showGrid)
-	{
-		//std::cout << "Show Grid" << std::endl;
-		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
-		for (int i = 0; i < num_horizontal_lines; i++)
-		{
-			Renderer->AddActor(Gridlines->GetHorizontalGridlines(i));
-		}
-		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
-		for (int i = 0; i < num_vertical_lines; i++)
-		{
-			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
-		}
-		GridAction->setChecked(showGrid);
-		showGrid = false;
-	}// turn on grid
-	else
-	{
-		//std::cout << "Hide Grid" << std::endl;
-		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
-		for (int i = 0; i < num_horizontal_lines; i++)
-		{
-			Renderer->RemoveActor(Gridlines->GetHorizontalGridlines(i));
-		}
-		int num_vertical_lines = this->Gridlines->NumberOfVerticalLines();
-		for (int i = 0; i < num_vertical_lines; i++)
-		{
-			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
-		}
-		GridAction->setChecked(showGrid);
-		showGrid = true;
-	}// turn off grid
-	this->QVTK->GetRenderWindow()->Render();
-}
 void View3D::EditHelp()
 {
 	//will write help documentation here
