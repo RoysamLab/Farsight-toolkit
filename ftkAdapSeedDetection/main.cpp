@@ -20,7 +20,10 @@
 //// TEST
 //#include <map>
 //#include <utility> // make_pair
+
+#ifdef _OPENMP
 #include "omp.h"
+#endif
 
 //#include"ftkVoting.h"
 //#include"ftkVotingGlobal.h"
