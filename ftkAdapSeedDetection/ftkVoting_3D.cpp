@@ -2098,6 +2098,7 @@ clock_t begin37=clock();
 	std::cout << std::endl << "Done drawing a crcle, Para 2, ";
 	clock_t end37=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end37,begin37)) << " s";
+	nftkVotingGlobal::stopProgram();
 
 // PARALLEL 3
 clock_t begin38=clock();
@@ -2121,6 +2122,7 @@ clock_t begin38=clock();
 	std::cout << std::endl << "Done drawing a crcle, Para 3, ";
 	clock_t end38=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end38,begin38)) << " s";
+	nftkVotingGlobal::stopProgram();
 
 // NOT PARALLEL
 	clock_t begin34=clock();
