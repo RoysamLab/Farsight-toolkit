@@ -179,6 +179,8 @@ int round_double( double x );
 
 int round_double2( double x );
 
+void stopProgram( void );
+
 };
 
 #endif

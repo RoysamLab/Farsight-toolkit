@@ -31,3 +31,9 @@ int  nftkVotingGlobal::round_double2( double x )
  if (dx >= 0.5) return(ix+1);
  else return(ix);
 };
+
+void ntkVotingGlobal::stopProgram( void )
+{
+	int input;
+	std::cout << " -> Wating for U: ";
+}
