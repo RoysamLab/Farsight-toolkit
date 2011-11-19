@@ -2048,7 +2048,7 @@ void ftkVoting_3D::vote()
 
 
 
-	//#pragma omp parallel for
+#pragma omp parallel for
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
 		//cout<<endl<<"INTER: "<<uu;
@@ -2065,9 +2065,11 @@ void ftkVoting_3D::vote()
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a square";
-	std::cout << std::endl << "Done drawing a square";
-	std::cout << std::endl << "Done drawing a square";
+	std::cout << std::endl << "Done drawing a crcle";
+	std::cout << std::endl << "Done drawing a crcle";
+	std::cout << std::endl << "Done drawing a crcle";
+	int input_1;
+	std::cin >> input_1;
 	//cout<<endl<<"end 1";
 
 
