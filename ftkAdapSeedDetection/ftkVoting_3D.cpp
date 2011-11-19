@@ -2051,15 +2051,17 @@ void ftkVoting_3D::vote()
 int raddd2;
 int bin_cont2;
 
+// PARALLEL
+clock_t begin33=clock();
 #pragma omp parallel for private(raddd2,bin_cont2)
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
 		//cout<<endl<<"INTER: "<<uu;
 		//cout<<endl<<"UU: "<<uu;
-		for( unsigned int raddd2=0; raddd2<60; ++raddd2 )
+		for( raddd2=0; raddd2<60; ++raddd2 )
 		{
 
-			for( unsigned int bin_cont2=0; bin_cont2 < _conesPru_3D_new[uu][raddd2].size(); ++bin_cont2 )
+			for( bin_cont2=0; bin_cont2 < _conesPru_3D_new[uu][raddd2].size(); ++bin_cont2 )
 			{
 				int x_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].x+100;
 				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
@@ -2068,15 +2070,39 @@ int bin_cont2;
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle.";
-	std::cout << std::endl << "Done drawing a crcle.";
-	std::cout << std::endl << "Done drawing a crcle.";
+	std::cout << std::endl << "Done drawing a crcle. Para";
 
 	nftkVotingGlobal::stopProgram();
 
-	clock_t begin33=clock();
+	
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
+
+	nftkVotingGlobal::stopProgram();
+
+// NOT PARALLEL
+	clock_t begin34=clock();
+//#pragma omp parallel for private(raddd2,bin_cont2)
+	for( int uu=0; uu<_NN_dir; ++uu )
+	{
+		for( int raddd2=0; raddd2<60; ++raddd2 )
+		{
+
+			for(  int bin_cont2=0; bin_cont2 < _conesPru_3D_new[uu][raddd2].size(); ++bin_cont2 )
+			{
+				int x_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].x+100;
+				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
+				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+			}
+		}
+	}
+	std::cout << std::endl << "Done drawing a crcle. No Para";
+
+	nftkVotingGlobal::stopProgram();
+	
+	clock_t end34=clock();
+	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end34,begin34)) << " s";
 
 	nftkVotingGlobal::stopProgram();
 
