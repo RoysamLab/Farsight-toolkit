@@ -254,7 +254,7 @@ IF (BUILD_OPENMP)
     IF (MSVC)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
-    elseif(GCC)
+    elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
     
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
