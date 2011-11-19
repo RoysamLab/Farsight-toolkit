@@ -2143,9 +2143,7 @@ void ftkVoting_3D::vote()
 		}
 	}
 	clock_t end=clock();
-	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
-	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
-	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
 
 	nftkVotingGlobal::stopProgram();
 
@@ -2175,12 +2173,12 @@ void ftkVoting_3D::vote()
 			//vector < vector < int > > temp_direc_1 = _voteDirec_3D_new[uu];
 			vector < vector < int > > * temp_direc_1 = &(_voteDirec_3D_new[uu]);
 
-			//		int vv;
-			//		int raddd;
-			//		int bin_cont;
+					int vv;
+					int raddd;
+					int bin_cont;
 
 			//#pragma omp parallel for private(vv,raddd,bin_cont)
-#pragma omp parallel for
+#pragma omp parallel for private(vv,raddd,bin_cont)
 			for( int angle_int = 0; angle_int<10; ++angle_int )
 			{
 				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
@@ -2188,20 +2186,20 @@ void ftkVoting_3D::vote()
 				//vector < int > temp_angle_2 = temp_direc_1[angle_int];
 				vector < int > * temp_angle_2 = &((*temp_direc_1)[angle_int]);
 				//#pragma omp parallel for private(raddd,bin_cont)
-				for( int vv = 0; vv<(*temp_angle_2).size(); ++vv )
+				for( vv = 0; vv<(*temp_angle_2).size(); ++vv )
 				{
 					//cout<<endl<<"VV: "<<vv;
 					//int temp_direc_cone_1 = temp_angle_2[vv];
 					//ftkCone3D temp_direc_cone_1 = _conesPru_3D_new[temp_angle_2[vv]];
 					ftkCone3D * temp_direc_cone_1 = &(_conesPru_3D_new[(*temp_angle_2)[vv]]);
 					//#pragma omp parallel for private(bin_cont)
-					for( int raddd=0; raddd<60; ++raddd )
+					for( raddd=0; raddd<60; ++raddd )
 					{
 						//cout<<endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
 						//ftkBins3D temp_dist_1 = temp_direc_cone_1[raddd];
 						ftkBins3D  * temp_dist_1 = &((*temp_direc_cone_1)[raddd]);
 						//#pragma omp parallel for
-						for( int bin_cont=0; bin_cont < (*temp_dist_1).size(); ++bin_cont )
+						for( bin_cont=0; bin_cont < (*temp_dist_1).size(); ++bin_cont )
 						{
 							//int x_posi = temp_dist_1[bin_cont].x+250;
 							//int y_posi = temp_dist_1[bin_cont].y+250;
@@ -2244,9 +2242,7 @@ void ftkVoting_3D::vote()
 	}
 
 	clock_t end3=clock();
-	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
-	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
-	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
+	cout << "Time elapsed Third: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
 
 	nftkVotingGlobal::stopProgram();
 
@@ -2307,9 +2303,7 @@ void ftkVoting_3D::vote()
 	}
 
 	clock_t end2=clock();
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
+	cout << "Time elapsed Fourth: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
 
 	nftkVotingGlobal::stopProgram();
 
