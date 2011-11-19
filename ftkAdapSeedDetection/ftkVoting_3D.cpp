@@ -2039,7 +2039,7 @@ void ftkVoting_3D::vote()
 	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
 	std::cout << std::endl << "Now we are going to compute the cones";
 	computeCones(_hmin, _hmax, _radius);
-	std::cout << std::endl << "Done computing cones";
+	std::cout << " -> Done.";
 	//computeCones_prob(_hmin, _hmax, _radius); // Just for one moment
 
 	// Print a cones in the sum image and the store thre result
@@ -2072,7 +2072,7 @@ clock_t begin33=clock();
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle. Para";
+	std::cout << std::endl << "Done drawing a crcle, Para, ";
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
 
@@ -2095,7 +2095,7 @@ clock_t begin37=clock();
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle. Para";
+	std::cout << std::endl << "Done drawing a crcle, Para 2, ";
 	clock_t end37=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end37,begin37)) << " s";
 
@@ -2116,7 +2116,7 @@ clock_t begin37=clock();
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle. No Para";
+	std::cout << std::endl << "Done drawing a crcle, No Para, ";
 	clock_t end34=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end34,begin34)) << " s";
 	//nftkVotingGlobal::stopProgram();
