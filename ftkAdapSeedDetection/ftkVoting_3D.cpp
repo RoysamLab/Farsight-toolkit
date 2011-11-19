@@ -2011,6 +2011,8 @@ void ftkVoting_3D::vote()
 	imageMaxPixels->Update();
 	//
 
+	std::cout << std::endl << "Memory Allocated";
+
 	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer();
 	VotingDirType_3D::PixelType * votingMaskArray = _votingMaskVotes->GetBufferPointer();
 	VotingDirType_3D::PixelType * imageOfVotingPixelsArray = imageOfVotingPixels->GetBufferPointer();
@@ -2036,8 +2038,7 @@ void ftkVoting_3D::vote()
 
 	// Print a cones in the sum image and the store thre result
 
-
-	cout<<endl<<"START 2";
+	
 
 
 
