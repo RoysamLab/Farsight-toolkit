@@ -2077,9 +2077,6 @@ void ftkVoting_3D::vote()
 
 	nftkVotingGlobal::stopProgram();
 
-	int input_1;
-	std::cin >> input_1;
-	//cout<<endl<<"end 1";
 
 
 	////#pragma omp parallel for
@@ -2149,6 +2146,8 @@ void ftkVoting_3D::vote()
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+
+	nftkVotingGlobal::stopProgram();
 
 
 
@@ -2249,6 +2248,8 @@ void ftkVoting_3D::vote()
 	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
 	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
 
+	nftkVotingGlobal::stopProgram();
+
 
 
 
@@ -2307,6 +2308,10 @@ void ftkVoting_3D::vote()
 
 	clock_t end2=clock();
 	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
+	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
+	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end2,begin2)) << " s";
+
+	nftkVotingGlobal::stopProgram();
 
 	cout<<endl<<"END";
 	int rert;

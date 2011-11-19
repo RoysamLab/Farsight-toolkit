@@ -36,4 +36,5 @@ void nftkVotingGlobal::stopProgram( void )
 {
 	int input;
 	std::cout << " -> Wating for U: ";
+	std::cin >> input;
 }
