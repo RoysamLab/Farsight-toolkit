@@ -2142,7 +2142,7 @@ int bin_cont;
 			{
 				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
 				//// instead use vector iterator
-				#pragma omp parallel for
+				#pragma omp parallel for private(raddd,bin_cont)
 				for( int vv = 0; vv<_voteDirec_3D_new[uu][angle_int].size(); ++vv )
 				{
 					//cout<<endl<<"VV: "<<vv;
