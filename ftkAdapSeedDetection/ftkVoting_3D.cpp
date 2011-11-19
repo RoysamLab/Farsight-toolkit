@@ -2142,7 +2142,7 @@ clock_t begin38=clock();
 	std::cout << std::endl << "Done drawing a crcle, No Para, ";
 	clock_t end34=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end34,begin34)) << " s";
-	//nftkVotingGlobal::stopProgram();
+	nftkVotingGlobal::stopProgram();
 
 
 
