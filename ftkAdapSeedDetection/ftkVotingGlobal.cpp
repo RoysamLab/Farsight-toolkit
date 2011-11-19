@@ -32,7 +32,7 @@ int  nftkVotingGlobal::round_double2( double x )
  else return(ix);
 };
 
-void ntkVotingGlobal::stopProgram( void )
+void nftkVotingGlobal::stopProgram( void )
 {
 	int input;
 	std::cout << " -> Wating for U: ";
