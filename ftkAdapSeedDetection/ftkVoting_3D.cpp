@@ -2065,9 +2065,10 @@ void ftkVoting_3D::vote()
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle";
-	std::cout << std::endl << "Done drawing a crcle";
-	std::cout << std::endl << "Done drawing a crcle";
+	std::cout << std::endl << "Done drawing a crcle.";
+	std::cout << std::endl << "Done drawing a crcle.";
+	std::cout << std::endl << "Done drawing a crcle.";
+	stopProgram();
 	int input_1;
 	std::cin >> input_1;
 	//cout<<endl<<"end 1";
