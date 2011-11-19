@@ -2048,19 +2048,22 @@ void ftkVoting_3D::vote()
 
 
 
-#pragma omp parallel for
+int raddd2;
+int bin_cont2;
+
+#pragma omp parallel for private(raddd2,bin_cont2)
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
 		//cout<<endl<<"INTER: "<<uu;
 		//cout<<endl<<"UU: "<<uu;
-		for( unsigned int raddd=0; raddd<60; ++raddd )
+		for( unsigned int raddd2=0; raddd2<60; ++raddd2 )
 		{
 
-			for( unsigned int bin_cont=0; bin_cont < _conesPru_3D_new[uu][raddd].size(); ++bin_cont )
+			for( unsigned int bin_cont2=0; bin_cont2 < _conesPru_3D_new[uu][raddd2].size(); ++bin_cont2 )
 			{
-				int x_posi = _conesPru_3D_new[uu][raddd][bin_cont].x+100;
-				int y_posi = _conesPru_3D_new[uu][raddd][bin_cont].y+100;
-				int z_posi = _conesPru_3D_new[uu][raddd][bin_cont].z+100;
+				int x_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].x+100;
+				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
+				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
 				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
 			}
 		}
