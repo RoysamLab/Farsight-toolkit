@@ -762,83 +762,89 @@ bool NucleusEditor::saveSomaImage()
 	string::iterator it;
 	it = Filename.end() - 4;
 	Filename.erase(it, it+4);
-	Filename = Filename + "_somas.tif";
-
+	
 	typedef itk::Image<unsigned short, 3> LabelImageType;
 	//typedef itk::Image<unsigned char, 3> UCharImageType;
 	typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
-	LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(0,0);
-	LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
-
-	LabelImageType::Pointer somaImage = LabelImageType::New();
-	itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
-	LabelImageType::IndexType start;
-    start[0] =   0;  // first index on X
-    start[1] =   0;  // first index on Y    
-	start[2] =   0;  // first index on Z  
-	LabelImageType::PointType origin;
-    origin[0] = 0; 
-    origin[1] = 0;    
-	origin[2] = 0;    
-    somaImage->SetOrigin( origin );
-	LabelImageType::RegionType region;
-	region.SetSize( im_size );
-	region.SetIndex( start );
-	somaImage->SetRegions( region );
-	somaImage->Allocate();
-	somaImage->FillBuffer(0);
-	somaImage->Update();
-	LabelImageType::PixelType * somaArray = somaImage->GetBufferPointer();
-
-	int slice_size = im_size[1] * im_size[0];
-	int row_size = im_size[0];
-	std::map<unsigned short, int> classMap;
-	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	for(int t=0; t<(int)myImg->GetImageInfo()->numTSlices; ++t)
 	{
-		classMap[table->GetValue(row,0).ToUnsignedShort()] = table->GetValueByName(row, "prediction_active_mg").ToInt();
-	}
+		std::stringstream ss;
+		ss << t;
+		std::string time = ss.str();
+		Filename = Filename + "_somas_" + time + ".tif";
+		LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(t,0);
+		LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
 
-	for(int i=0; i<im_size[2]; ++i)
-	{
-		for(int j=0; j<im_size[1]; ++j)
+		LabelImageType::Pointer somaImage = LabelImageType::New();
+		itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
+		LabelImageType::IndexType start;
+		start[0] =   0;  // first index on X
+		start[1] =   0;  // first index on Y    
+		start[2] =   0;  // first index on Z  
+		LabelImageType::PointType origin;
+		origin[0] = 0; 
+		origin[1] = 0;    
+		origin[2] = 0;    
+		somaImage->SetOrigin( origin );
+		LabelImageType::RegionType region;
+		region.SetSize( im_size );
+		region.SetIndex( start );
+		somaImage->SetRegions( region );
+		somaImage->Allocate();
+		somaImage->FillBuffer(0);
+		somaImage->Update();
+		LabelImageType::PixelType * somaArray = somaImage->GetBufferPointer();
+
+		int slice_size = im_size[1] * im_size[0];
+		int row_size = im_size[0];
+		std::map<unsigned short, int> classMap;
+		for(int row=0; row<(int)nucSeg->table4DImage[t]->GetNumberOfRows(); ++row)
 		{
-			for(int k=0; k<im_size[0]; ++k)
+			classMap[nucSeg->table4DImage[t]->GetValue(row,0).ToUnsignedShort()] = nucSeg->table4DImage[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+		}
+
+		for(int i=0; i<im_size[2]; ++i)
+		{
+			for(int j=0; j<im_size[1]; ++j)
 			{
-				unsigned long offset = (i*slice_size)+(j*row_size)+k;
-				if(classMap[labelArray[offset]] == 1)
-					somaArray[offset] = labelArray[offset];
+				for(int k=0; k<im_size[0]; ++k)
+				{
+					unsigned long offset = (i*slice_size)+(j*row_size)+k;
+					if(classMap[labelArray[offset]] == 1)
+						somaArray[offset] = labelArray[offset];
+				}
 			}
 		}
-	}
 
-	LabelWriterType::Pointer writer = LabelWriterType::New();
-	writer->SetFileName(Filename);
-	writer->SetInput(somaImage);
-	writer->Update();
+		LabelWriterType::Pointer writer = LabelWriterType::New();
+		writer->SetFileName(Filename);
+		writer->SetInput(somaImage);
+		writer->Update();
 
-	it = Filename.end() - 10;
-	Filename.erase(it, it+10);
-	Filename = Filename + "_centroids.txt";
+		it = Filename.end() - 12;
+		Filename.erase(it, it+12);
+		Filename = Filename + "_centroids_" + time + ".txt";
 
-	ofstream outFile; 
-	outFile.open(Filename.c_str(), ios::out | ios::trunc );
-	if ( !outFile.is_open() )
-	{
-		std::cerr << "Failed to Load Document: " << outFile << std::endl;
-		return false;
-	}
-	//Write out the features:
-	for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
-	{
-		if(table->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+		ofstream outFile; 
+		outFile.open(Filename.c_str(), ios::out | ios::trunc );
+		if ( !outFile.is_open() )
 		{
-			outFile << table->GetValue(row,1).ToInt() << "\t" ;
-			outFile << table->GetValue(row,2).ToInt() << "\t" ;
-			outFile << table->GetValue(row,3).ToInt() << "\t" ;
-			outFile << "\n";
+			std::cerr << "Failed to Load Document: " << outFile << std::endl;
+			return false;
 		}
+		//Write out the features:
+		for(int row = 0; row < (int)nucSeg->table4DImage[t]->GetNumberOfRows(); ++row)
+		{
+			if(nucSeg->table4DImage[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+			{
+				outFile << nucSeg->table4DImage[t]->GetValue(row,1).ToInt() << "\t" ;
+				outFile << nucSeg->table4DImage[t]->GetValue(row,2).ToInt() << "\t" ;
+				outFile << nucSeg->table4DImage[t]->GetValue(row,3).ToInt() << "\t" ;
+				outFile << "\n";
+			}
+		}
+		outFile.close();
 	}
-	outFile.close();
 	
 	return true;
 
