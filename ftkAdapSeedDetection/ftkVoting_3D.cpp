@@ -2135,7 +2135,10 @@ void ftkVoting_3D::vote()
 		}
 	}
 	clock_t end=clock();
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+
 
 
 
@@ -2231,11 +2234,10 @@ void ftkVoting_3D::vote()
 	}
 
 	clock_t end3=clock();
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
-	cout<<endl<<"FINNN";
-	cout<<endl<<"FINNN_2";
-	cout<<endl<<"FINNN";
-	cout<<endl<<"FINNN_2";
+	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
+	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
+	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end3,begin3)) << " s";
+
 
 
 
