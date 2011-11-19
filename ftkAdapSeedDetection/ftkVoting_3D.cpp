@@ -2100,6 +2100,30 @@ clock_t begin37=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end37,begin37)) << " s";
 	nftkVotingGlobal::stopProgram();
 
+// PARALLEL 2
+clock_t begin39=clock();
+	for( int uu=0; uu<_NN_dir; ++uu )
+	{
+		//cout<<endl<<"INTER: "<<uu;
+		//cout<<endl<<"UU: "<<uu;
+		#pragma omp parallel for private(bin_cont2) shared(uu)
+		for( int raddd2=0; raddd2<60; ++raddd2 )
+		{
+
+			for( bin_cont2=0; bin_cont2 < _conesPru_3D_new[uu][raddd2].size(); ++bin_cont2 )
+			{
+				int x_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].x+100;
+				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
+				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
+				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+			}
+		}
+	}
+	std::cout << std::endl << "Done drawing a crcle, Para 2, ";
+	clock_t end39=clock();
+	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end39,begin39)) << " s";
+	nftkVotingGlobal::stopProgram();
+
 // PARALLEL 3
 clock_t begin38=clock();
 	for( int uu=0; uu<_NN_dir; ++uu )
