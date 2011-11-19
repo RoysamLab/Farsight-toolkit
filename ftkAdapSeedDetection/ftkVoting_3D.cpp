@@ -1910,7 +1910,7 @@ void ftkVoting_3D::computeCones_prob(int hmin, int hmax, int radius)
 void ftkVoting_3D::vote()
 {
 
-	std::cout << "Voting started";
+	std::cout << std::endl <<  "Voting started";
 
 	_votingSumVotes = VotingDirType_3D::New();
 	VotingDirType_3D::IndexType start;
@@ -2029,9 +2029,9 @@ void ftkVoting_3D::vote()
 	}
 
 	//cout<<endl<<"Vote: Conputecone: "<<"Hmin: "<<_hmin<<", Hmax: "<<_hmax;
-	std::cout << "Now we are going to compute the cones";
+	std::cout << std::endl << "Now we are going to compute the cones";
 	computeCones(_hmin, _hmax, _radius);
-	std::cout << "Done computing cones";
+	std::cout << std::endl << "Done computing cones";
 	//computeCones_prob(_hmin, _hmax, _radius); // Just for one moment
 
 	// Print a cones in the sum image and the store thre result
