@@ -14,8 +14,8 @@ print "Hello, World!"
 
 rootPath = os.getcwd()
 rootPath = rootPath + '/'
-patternN    = 'Chan3*' # Can include any UNIX shell-style wildcards
-patternGFP = 'GCHAN3*'
+patternN    = 'Til*' # Can include any UNIX shell-style wildcards
+patternGFP = 'Tig*'
 
 #Things to replace in the input image file
 ppatternN    = 'full_pathNuclear.tif' # Can include any UNIX shell-style wildcards
@@ -36,8 +36,9 @@ op_proj1         = 'darpa.xml'
 exx_ml		 = '.xml'
 texxt		 = '.txt'
 
-pp = '/data/kedar/farsight-bin/exe/projproc'
+pp = '/data/kedar/farsight-rel/exe/projproc'
 pppppp = '\"'
+counttt = 0
 for root, dirs, files in os.walk(rootPath):
 	count_file  = 0
 	count_file1 = 0
@@ -114,9 +115,13 @@ for root, dirs, files in os.walk(rootPath):
 				#os.chdir(rootPath)
 			for com_to_exec_str in com_to_exec:
 				#os.system( com_to_exec_str )
+				counttt += 1
 				subprocess.Popen(com_to_exec_str, shell=True)
+				#Number of instances to run in parallel
+				if counttt == 5:
+					counttt = 0
+					#Time to run one instance
+					time.sleep(3000)
 				#time in secs between two files in a folder
 				time.sleep(2)
 				#print com_to_exec_str
-			#time in secs between two folders
-			time.sleep(2700)
