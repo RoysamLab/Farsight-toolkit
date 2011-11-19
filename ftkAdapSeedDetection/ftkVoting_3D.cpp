@@ -1910,6 +1910,8 @@ void ftkVoting_3D::computeCones_prob(int hmin, int hmax, int radius)
 void ftkVoting_3D::vote()
 {
 
+	std::cout << "Voting started";
+
 	_votingSumVotes = VotingDirType_3D::New();
 	VotingDirType_3D::IndexType start;
 	start[0] = 0;
