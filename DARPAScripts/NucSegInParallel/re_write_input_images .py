@@ -13,22 +13,22 @@ from string import maketrans
 print "Hello, World!"
 
 rootPath = os.getcwd()
-rootPath = rootPath + '/'
+rootPath = rootPath + '\\'
 patternN    = 'Chan3*' # Can include any UNIX shell-style wildcards
-patternGFP = 'GCHAN3*'
+patternGFP  = 'GCHAN3*'
+patternLab  = 'Histo_Input_Image_label*_nuc.tif'
 
 #Things to replace in the input image file
 ppatternN    = 'full_pathNuclear.tif' # Can include any UNIX shell-style wildcards
-ppatternGFP = 'full_pathGFP.tif'
-
-#Number of charecters to match in the filenames from the end
-num_cahr_match = 13
+ppatternGFP  = 'full_pathGFP.tif'
+ppatternLab  = 'full_path_label'
 
 inpu_xml_img     = 'Histo_Input_Image'
 inpu_xml_img11   = 'Histo_Input_Imagess'
 inpu_xml_img1    = 'Histo_Input_Image.xml'
 replace_pattern1 = 'full_path'
 lab_im           = 'Histo_Input_Image_label'
+lab_im1          = 'Histo_Input_Image_label.xml'
 tab_le           = 'Histo_Input_Image_table'
 proc_def_xml     = 'HistoProjectDef.xml'
 op_proj          = 'darpa'
@@ -36,16 +36,17 @@ op_proj1         = 'darpa.xml'
 exx_ml		 = '.xml'
 texxt		 = '.txt'
 
-pp = '/data/kedar/farsight-bin/exe/projproc'
 pppppp = '\"'
 for root, dirs, files in os.walk(rootPath):
 	count_file  = 0
 	count_file1 = 0
+	count_file2 = 0
 	asd = cmp(os.path.join(root,''),rootPath)
 	#print asd
 	if asd != 0:
-		newN = []
+		newN   = []
 		newGFP = []
+		newLab = []
 
 		intab = "\\"
 		outtab = "/"
@@ -63,16 +64,27 @@ for root, dirs, files in os.walk(rootPath):
 			count_file1 += 1
 			newGFPPP = newGFPP.translate(trantab)
 			newGFP.append( newGFPPP )
+		for filename in fnmatch.filter(files, patternLab):
+			newLABB = ''
+			newLABB = os.path.join(root,filename)
+			count_file2 += 1
+			newLABB = newLABB.translate(trantab)
+			newLab.append( newLABB )
 		newN.sort()
 		newGFP.sort()
-		print newN
-		print newGFP
+		newLab.sort()
+
+		print count_file
+		print count_file1
+		print count_file2
 
 		print os.path.join(root,'')
 		#print count_file
 		if count_file1 == count_file:
+			print newN
+			print newGFP
+			print newLab
 			#Write image file
-			com_to_exec = []
 			for x in range(len(newGFP)):
 				inp_fil_str  = os.path.join(root,inpu_xml_img) + str(x) + exx_ml
 				inp_fil_str1 = inpu_xml_img + str(x) + exx_ml
@@ -102,21 +114,8 @@ for root, dirs, files in os.walk(rootPath):
 				o1.write( data1 )
 				o1.close()
 
-				o2 = open(os.path.join(root,proc_def_xml),"w")
-				data2 = open(rootPath+proc_def_xml).read()
-				o2.write( data2 )
-				o2.close()
-
-				com_to_exec_str = pp + ' \"' + inp_fil_str + '\" \"' + lab_fil_str + '\" \"' + tab_fil_str + '\" \"' + os.path.join(root,proc_def_xml) + '\"'
-				com_to_exec.append( com_to_exec_str )
-				#print com_to_exec
-				#os.system( com_to_exec )
-				#os.chdir(rootPath)
-			for com_to_exec_str in com_to_exec:
-				#os.system( com_to_exec_str )
-				subprocess.Popen(com_to_exec_str, shell=True)
-				#time in secs between two files in a folder
-				time.sleep(2)
-				#print com_to_exec_str
-			#time in secs between two folders
-			time.sleep(2700)
+				o3 = open(os.path.join(root,lab_fil_str1),"w")
+				data3 = open(rootPath+lab_im1).read()
+				data3 = re.sub(ppatternLab, newLab[x], data3)
+				o3.write( data3 )
+				o3.close()

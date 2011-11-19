@@ -1,0 +1,8 @@
+<ProjectFiles path="D:/11_09_Nuc_seg/" name="07_13_11" type="multi">
+    <input file="Batch.xml" />
+    <output file="Batch_label.xml" />
+    <log file="Histo_Input_Image_log.txt" validated="0" />
+    <definition file="HistoProjectDef.xml" />
+    <table file="Batch_tables.xml" />
+    <adjTables file="" />
+</ProjectFiles>
