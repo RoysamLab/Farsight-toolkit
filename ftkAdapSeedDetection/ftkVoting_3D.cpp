@@ -2076,8 +2076,6 @@ clock_t begin33=clock();
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
 
-	nftkVotingGlobal::stopProgram();
-
 // NOT PARALLEL
 	clock_t begin34=clock();
 //#pragma omp parallel for private(raddd2,bin_cont2)
@@ -2098,7 +2096,6 @@ clock_t begin33=clock();
 	std::cout << std::endl << "Done drawing a crcle. No Para";
 	clock_t end34=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end34,begin34)) << " s";
-
 	nftkVotingGlobal::stopProgram();
 
 
@@ -2129,6 +2126,11 @@ clock_t begin33=clock();
 	//}
 
 
+int raddd;
+int bin_cont;
+
+// PARALLEL
+
 	clock_t begin=clock();
 	for( int oo=0; oo<1; ++oo)
 	{
@@ -2140,14 +2142,15 @@ clock_t begin33=clock();
 			{
 				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
 				//// instead use vector iterator
+				#pragma omp parallel for
 				for( int vv = 0; vv<_voteDirec_3D_new[uu][angle_int].size(); ++vv )
 				{
 					//cout<<endl<<"VV: "<<vv;
 					int temp_vv = _voteDirec_3D_new[uu][angle_int][vv];
-					for( unsigned int raddd=0; raddd<60; ++raddd )
+					for( raddd=0; raddd<60; ++raddd )
 					{
 						//cout<<endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
-						for( unsigned int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
+						for( bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
 						{
 							int x_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].x+250;
 							int y_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].y+250;
@@ -2167,9 +2170,53 @@ clock_t begin33=clock();
 		}
 	}
 	clock_t end=clock();
-	cout << "Time elapsed Second: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	cout << "Time elapsed Second Parallel: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+
+
+// NOT PARALLEL
+
+	clock_t begin67=clock();
+	for( int oo=0; oo<1; ++oo)
+	{
+		//#pragma omp parallel for
+		for( int uu=0; uu<_NN_dir; ++uu )
+		{
+			//cout<<endl<<"UU_new: "<<oo<<" "<<uu;
+			for( int angle_int = 0; angle_int<10; ++angle_int )
+			{
+				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
+				//// instead use vector iterator
+				for( int vv = 0; vv<_voteDirec_3D_new[uu][angle_int].size(); ++vv )
+				{
+					//cout<<endl<<"VV: "<<vv;
+					int temp_vv = _voteDirec_3D_new[uu][angle_int][vv];
+					for( int raddd=0; raddd<60; ++raddd )
+					{
+						//cout<<endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
+						for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
+						{
+							int x_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].x+250;
+							int y_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].y+250;
+							int z_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].z+250;
+							votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+						}
+					}
+				}
+				//stringstream outas;
+				//outas<<angle_int;
+				//string sas = outas.str();
+				//string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+				//if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
+				//	cout<<endl<<"\tProblema escribiendo";
+				//}
+			}
+		}
+	}
+	clock_t end67=clock();
+	cout << "Time elapsed Second Parallel: " << double(nftkVotingGlobal::diffclock(end67,begin67)) << " s";
 
 	nftkVotingGlobal::stopProgram();
+
 
 
 
