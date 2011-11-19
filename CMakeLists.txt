@@ -39,6 +39,7 @@ OPTION( BUILD_SPD "Build SPD" OFF)
 OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
 OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
+OPTION( BUILD_FTKVOTING "Build Radial Voting" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -140,9 +141,6 @@ SUBDIRS( ftkGUI )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkGraphs )
 SUBDIRS( ftkGraphs )
-
-INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkAdapSeedDetection )
-SUBDIRS( ftkAdapSeedDetection )
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 SUBDIRS( tinyxml )
@@ -324,6 +322,11 @@ IF (BUILD_IMONTAGE)
     INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/iMontage )
     SUBDIRS(iMontage)
 ENDIF (BUILD_IMONTAGE)
+
+IF (BUILD_FTKVOTING)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkAdapSeedDetection )
+	SUBDIRS( ftkAdapSeedDetection )
+ENDIF (BUILD_FTKVOTING)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
