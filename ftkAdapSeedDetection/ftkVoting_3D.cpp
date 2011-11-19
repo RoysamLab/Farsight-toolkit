@@ -2167,7 +2167,7 @@ void ftkVoting_3D::vote()
 	//#pragma omp parallel for
 	for( int oo=0; oo<10; ++oo)
 	{
-		//cout<<endl<<"OO: "<<oo;
+		cout<<endl<<"OO: "<<oo;
 		//#pragma omp parallel for
 		for( int uu=0; uu<_NN_dir; ++uu )
 		{
@@ -2286,7 +2286,7 @@ void ftkVoting_3D::vote()
 							votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
 						}
 						////cout<<endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
-						//for( unsigned int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
+						//for( unsigned int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )1
 						//{
 						//	int x_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].x+250;
 						//	int y_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].y+250;
