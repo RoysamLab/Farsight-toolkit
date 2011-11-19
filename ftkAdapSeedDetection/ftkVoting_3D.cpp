@@ -2142,7 +2142,7 @@ int bin_cont;
 			{
 				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
 				//// instead use vector iterator
-				#pragma omp parallel for private(raddd,bin_cont)
+//				#pragma omp parallel for private(raddd,bin_cont)
 				for( int vv = 0; vv<_voteDirec_3D_new[uu][angle_int].size(); ++vv )
 				{
 					//cout<<endl<<"VV: "<<vv;
@@ -2150,7 +2150,8 @@ int bin_cont;
 					for( raddd=0; raddd<60; ++raddd )
 					{
 						//cout<<endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
-						for( bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
+						#pragma omp parallel for
+						for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv][raddd].size(); ++bin_cont )
 						{
 							int x_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].x+250;
 							int y_posi = _conesPru_3D_new[temp_vv][raddd][bin_cont].y+250;
@@ -2171,7 +2172,7 @@ int bin_cont;
 	}
 	clock_t end=clock();
 	cout << "Time elapsed Second Parallel: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
-	nftkVotingGlobal::stopProgram();
+	//nftkVotingGlobal::stopProgram();
 
 
 // NOT PARALLEL
@@ -2222,7 +2223,7 @@ int bin_cont;
 
 
 
-	clock_t begin3=clock();
+	
 
 
 	//vector < vector < int > > temp_direc_1;
@@ -2234,6 +2235,7 @@ int bin_cont;
 	//int z_posi;
 
 
+	clock_t begin3=clock();
 	//#pragma omp parallel for
 	for( int oo=0; oo<10; ++oo)
 	{
@@ -2250,7 +2252,6 @@ int bin_cont;
 					int bin_cont;
 
 			//#pragma omp parallel for private(vv,raddd,bin_cont)
-#pragma omp parallel for private(vv,raddd,bin_cont)
 			for( int angle_int = 0; angle_int<10; ++angle_int )
 			{
 				//cout<<endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
@@ -2258,6 +2259,7 @@ int bin_cont;
 				//vector < int > temp_angle_2 = temp_direc_1[angle_int];
 				vector < int > * temp_angle_2 = &((*temp_direc_1)[angle_int]);
 				//#pragma omp parallel for private(raddd,bin_cont)
+#pragma omp parallel for private(raddd,bin_cont)
 				for( vv = 0; vv<(*temp_angle_2).size(); ++vv )
 				{
 					//cout<<endl<<"VV: "<<vv;
