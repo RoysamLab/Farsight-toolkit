@@ -2073,10 +2073,6 @@ clock_t begin33=clock();
 		}
 	}
 	std::cout << std::endl << "Done drawing a crcle. Para";
-
-	nftkVotingGlobal::stopProgram();
-
-	
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
 
@@ -2100,9 +2096,6 @@ clock_t begin33=clock();
 		}
 	}
 	std::cout << std::endl << "Done drawing a crcle. No Para";
-
-	nftkVotingGlobal::stopProgram();
-	
 	clock_t end34=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end34,begin34)) << " s";
 
