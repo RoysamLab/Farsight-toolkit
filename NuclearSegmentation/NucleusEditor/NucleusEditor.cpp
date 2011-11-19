@@ -771,7 +771,7 @@ bool NucleusEditor::saveSomaImage()
 		std::stringstream ss;
 		ss << t;
 		std::string time = ss.str();
-		Filename = Filename + "_somas_" + time + ".tif";
+		std::string somasFilename = Filename + "_somas_" + time + ".tif";
 		LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(t,0);
 		LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
 
@@ -817,16 +817,16 @@ bool NucleusEditor::saveSomaImage()
 		}
 
 		LabelWriterType::Pointer writer = LabelWriterType::New();
-		writer->SetFileName(Filename);
+		writer->SetFileName(somasFilename);
 		writer->SetInput(somaImage);
 		writer->Update();
 
-		it = Filename.end() - 12;
-		Filename.erase(it, it+12);
-		Filename = Filename + "_centroids_" + time + ".txt";
+		//it = Filename.end() - 12;
+		//Filename.erase(it, it+12);
+		std::string centroidsFilename = Filename + "_centroids_" + time + ".txt";
 
 		ofstream outFile; 
-		outFile.open(Filename.c_str(), ios::out | ios::trunc );
+		outFile.open(centroidsFilename.c_str(), ios::out | ios::trunc );
 		if ( !outFile.is_open() )
 		{
 			std::cerr << "Failed to Load Document: " << outFile << std::endl;
