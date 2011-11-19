@@ -2069,13 +2069,13 @@ void ftkVoting_3D::vote()
 	std::cout << std::endl << "Done drawing a crcle.";
 	std::cout << std::endl << "Done drawing a crcle.";
 
-	stopProgram();
+	nftkVotingGlobal::stopProgram();
 
 	clock_t begin33=clock();
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
 
-	stopProgram();
+	nftkVotingGlobal::stopProgram();
 
 	int input_1;
 	std::cin >> input_1;

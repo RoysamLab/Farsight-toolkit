@@ -6,7 +6,7 @@
 #include<vector>
 //#include<stringstream>
 
-#include"ftkVotingGlobal.h"
+#include "ftkVotingGlobal.h"
 
 #include "itkSobelOperator.h"
 #include "itkNeighborhoodInnerProduct.h"
