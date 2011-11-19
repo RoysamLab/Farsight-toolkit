@@ -2075,6 +2075,7 @@ clock_t begin33=clock();
 	std::cout << std::endl << "Done drawing a crcle, Para, ";
 	clock_t end33=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end33,begin33)) << " s";
+	nftkVotingGlobal::stopProgram();
 
 // PARALLEL 2
 clock_t begin37=clock();
@@ -2092,6 +2093,10 @@ clock_t begin37=clock();
 				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
 				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
 				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+				if( (uu>=_NN_dir) || (raddd2>=60) || (bin_cont2>=_conesPru_3D_new[uu][raddd2].size()) )
+				{
+					std::cout << std::endl << "houston we have a problem: ";
+				}
 			}
 		}
 	}
@@ -2100,7 +2105,7 @@ clock_t begin37=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end37,begin37)) << " s";
 	nftkVotingGlobal::stopProgram();
 
-// PARALLEL 2
+// PARALLEL 4
 clock_t begin39=clock();
 	for( int uu=0; uu<_NN_dir; ++uu )
 	{
@@ -2116,10 +2121,14 @@ clock_t begin39=clock();
 				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
 				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
 				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+				if( (uu>=_NN_dir) || (raddd2>=60) || (bin_cont2>=_conesPru_3D_new[uu][raddd2].size()) )
+				{
+					std::cout << std::endl << "houston we have a problem: ";
+				}
 			}
 		}
 	}
-	std::cout << std::endl << "Done drawing a crcle, Para 2, ";
+	std::cout << std::endl << "Done drawing a crcle, Para 4, ";
 	clock_t end39=clock();
 	cout << "Time elapsed First: " << double(nftkVotingGlobal::diffclock(end39,begin39)) << " s";
 	nftkVotingGlobal::stopProgram();
@@ -2140,6 +2149,10 @@ clock_t begin38=clock();
 				int y_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].y+100;
 				int z_posi = _conesPru_3D_new[uu][raddd2][bin_cont2].z+100;
 				votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi] = 1;
+				if( (uu>=_NN_dir) || (raddd2>=60) || (bin_cont2>=_conesPru_3D_new[uu][raddd2].size()) )
+				{
+					std::cout << std::endl << "houston we have a problem: ";
+				}
 			}
 		}
 	}
