@@ -11,14 +11,14 @@ print "Writing Input Images"
 
 rootPath = os.getcwd()
 rootPath = rootPath + '/'
-patternN    = '*Histo_Input_Image*' # Can include any UNIX shell-style wildcards
+patternN    = '*Histo_Input_Images*.xml' # Can include any UNIX shell-style wildcards
 ppatternN    = 'full_path/Histo_Input_Image.xml' # Can include any UNIX shell-style wildcards
 inpu_xml_img     = 'Batch.xml'
 replace_pattern1 = 'full_path'
 
 
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-o.write('<Image>')
+o.write('<Image>\n')
 o.close()
 
 for root, dirs, files in os.walk(rootPath):
@@ -35,7 +35,7 @@ for root, dirs, files in os.walk(rootPath):
                         newN = newNN.translate(trantab)
                         #Write image file
                         o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-                        o.write('<file>'+newN+'</file>')
+                        o.write('\t<file>'+newN+'</file>\n')
                         o.close()
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")
 o.write('</Image>')

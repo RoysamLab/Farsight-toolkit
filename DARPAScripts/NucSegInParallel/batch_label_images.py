@@ -11,14 +11,14 @@ print "Writing Label Images"
 
 rootPath = os.getcwd()
 rootPath = rootPath + '/'
-patternN    = 'Histo_Input_Image_label*.xml' # Can include any UNIX shell-style wildcards
+patternN    = 'Histo_Input_Image_label*_nuc.tif' # Can include any UNIX shell-style wildcards
 ppatternN    = 'full_path/Histo_Input_Image_label.xml' # Can include any UNIX shell-style wildcards
 inpu_xml_img     = 'Batch_label.xml'
 replace_pattern1 = 'full_path'
 
 
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-o.write('<Image>')
+o.write('<Image>\n')
 o.close()
 
 for root, dirs, files in os.walk(rootPath):
@@ -37,7 +37,7 @@ for root, dirs, files in os.walk(rootPath):
                         newN = newNN.translate(trantab)
                         #Write image file
                         o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-                        o.write('<file>'+newN+'</file>')
+                        o.write('\t<file>'+newN+'</file>\n')
                         print newN
                         o.close()
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")

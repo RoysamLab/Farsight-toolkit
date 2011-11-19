@@ -86,7 +86,7 @@ for root, dirs, files in os.walk(rootPath):
 			print newLab
 			#Write image file
 			for x in range(len(newGFP)):
-				inp_fil_str  = os.path.join(root,inpu_xml_img) + str(x) + exx_ml
+				inp_fil_str  = os.path.join(root,inpu_xml_img) + 's' + str(x) + exx_ml
 				inp_fil_str1 = inpu_xml_img + str(x) + exx_ml
 				lab_fil_str  = os.path.join(root,lab_im)       + str(x) + exx_ml
 				lab_fil_str1 = lab_im       + str(x) + exx_ml

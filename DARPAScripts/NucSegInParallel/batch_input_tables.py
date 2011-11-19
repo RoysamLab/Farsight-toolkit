@@ -18,7 +18,7 @@ replace_pattern1 = 'full_path'
 
 
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-o.write('<Table>')
+o.write('<Table>\n')
 o.close()
 
 for root, dirs, files in os.walk(rootPath):
@@ -37,7 +37,7 @@ for root, dirs, files in os.walk(rootPath):
                         newN = newNN.translate(trantab)
                         #Write image file
                         o = open(os.path.join(rootPath,inpu_xml_img),"a+")
-                        o.write('<file>'+newN+'</file>')
+                        o.write('\t<file>'+newN+'</file>\n')
                         o.close()
 o = open(os.path.join(rootPath,inpu_xml_img),"a+")
 o.write('</Table>')
