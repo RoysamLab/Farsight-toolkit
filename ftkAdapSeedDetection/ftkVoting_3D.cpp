@@ -145,6 +145,9 @@ void ftkVoting_3D::compute(nftkVotingGlobal::InputImageType_3D::Pointer inputIma
 	nftkVotingGlobal::InputImageType_3D::PixelType maxVotVal = imageCalculatorFilter->GetMaximum();
 
 	// Scale the values of the gradient by the maximum value of the gradiente, to ensure that the maximum value is 1
+
+	std::cout << std::endl << "Scalling the values of the gradiet (0 to 1) -> ";
+#pragma omp parallel for
 	for(int i=0; i<npix; i++) {
 		//cout<<endl<<votingDirXYZ_3DArray[i];
 		if (votingDirXYZ_3DArray[i]<0.01)
@@ -156,11 +159,12 @@ void ftkVoting_3D::compute(nftkVotingGlobal::InputImageType_3D::Pointer inputIma
 			votingDirXYZ_3DArray[i] /= maxVotVal;
 		}
 	}
+	std::cout << "Done.";
 
-	string filenameDerivativeXYZ_Thre = "output\\out_ftkDerivativeXYZ_Thre.tif";
-	if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(votingDirXYZ_3D, filenameDerivativeXYZ_Thre.c_str() )){
-		cout<<endl<<"\tProblema escribiendo";
-	}
+	//string filenameDerivativeXYZ_Thre = "output\\out_ftkDerivativeXYZ_Thre.tif";
+	//if( nftkVotingGlobal::writeImage< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(votingDirXYZ_3D, filenameDerivativeXYZ_Thre.c_str() )){
+	//	cout<<endl<<"\tProblema escribiendo";
+	//}
 
 
 
