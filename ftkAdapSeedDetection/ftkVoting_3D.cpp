@@ -2065,7 +2065,9 @@ void ftkVoting_3D::vote()
 			}
 		}
 	}
-	cout<<endl<<"endddddd";
+	std::cout << std::endl << "Done drawing a square";
+	std::cout << std::endl << "Done drawing a square";
+	std::cout << std::endl << "Done drawing a square";
 	//cout<<endl<<"end 1";
 
 
