@@ -1233,72 +1233,74 @@ void ftkVoting_3D::computeCones(int hmin, int hmax, int radius)
 
 
 
-	//_conesPru = vector<vector<ftkCone3D>(ntheta)>(ntheta/2); // Todos los conos posibles
-	_conesPru_3D = vector < vector < ftkCone3D > >(ntheta/2, vector<ftkCone3D>(ntheta)); // Todos los conos posibles
-	for( int uu=0; uu<ntheta/2; uu++ ) // Phi
-	{
-		for( int uu2=0; uu2<ntheta; uu2++ ) // Theta
-		{
-			for( int uuu=0; uuu<hmax-hmin+1; uuu++ ) 
-			{
-				ftkBins3D bin;
-				_conesPru_3D[uu][uu2].push_back(bin);
-			}
-		}
-	}
+	////_conesPru = vector<vector<ftkCone3D>(ntheta)>(ntheta/2); // Todos los conos posibles
+	//_conesPru_3D = vector < vector < ftkCone3D > >(ntheta/2, vector<ftkCone3D>(ntheta)); // Todos los conos posibles
+	//for( int uu=0; uu<ntheta/2; uu++ ) // Phi
+	//{
+	//	for( int uu2=0; uu2<ntheta; uu2++ ) // Theta
+	//	{
+	//		for( int uuu=0; uuu<hmax-hmin+1; uuu++ ) 
+	//		{
+	//			ftkBins3D bin;
+	//			_conesPru_3D[uu][uu2].push_back(bin);
+	//		}
+	//	}
+	//}
 
 
-	int z1;
-	int R;
-	double R_dou;
-	int R_quan;
-	pair<int,int> ang_quan;
-	double x_nor, y_nor, z_nor;
-	double x_nor2, y_nor2;
-	int countt=0;
+	//int z1;
+	//int R;
+	//double R_dou;
+	//int R_quan;
+	//pair<int,int> ang_quan;
+	//double x_nor, y_nor, z_nor;
+	//double x_nor2, y_nor2;
+	//int countt=0;
 
-	ftkWPoint3D wp;
-	for( int xx=-hmax; xx<=hmax; ++xx )
-	{
-		for( int yy=-hmax; yy<=hmax; ++yy )
-		{
-			z1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
-			for( int zz=0; zz<=z1; ++zz )
-			{
-				R_dou = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
-				R = (int)ceil(R_dou);
+	//ftkWPoint3D wp;
+	//for( int xx=-hmax; xx<=hmax; ++xx )
+	//{
+	//	for( int yy=-hmax; yy<=hmax; ++yy )
+	//	{
+	//		z1 = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
+	//		for( int zz=0; zz<=z1; ++zz )
+	//		{
+	//			R_dou = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
+	//			R = (int)ceil(R_dou);
 
-				if( R>=hmin ) // Can be done more efficiently but for now is ok the speed
-				{
+	//			if( R>=hmin ) // Can be done more efficiently but for now is ok the speed
+	//			{
 
-					R_quan = R-hmin;
-					//cout<<endl<<R_quan;
-					x_nor = ((double)xx)/R_dou;
-					y_nor = ((double)yy)/R_dou;
-					z_nor = ((double)zz)/R_dou;
-					ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
-					//ftkWPoint2D wp;
-					wp.x = xx;
-					wp.y = yy;
-					wp.z = zz;
-					wp.w = 1; // In case of deciding to put some weight
-					_conesPru_3D[ang_quan.first][ang_quan.second][R_quan].push_back(wp);
+	//				R_quan = R-hmin;
+	//				//cout<<endl<<R_quan;
+	//				x_nor = ((double)xx)/R_dou;
+	//				y_nor = ((double)yy)/R_dou;
+	//				z_nor = ((double)zz)/R_dou;
+	//				ang_quan = computeAngleIndex_3D(x_nor, y_nor, z_nor);
+	//				//ftkWPoint2D wp;
+	//				wp.x = xx;
+	//				wp.y = yy;
+	//				wp.z = zz;
+	//				wp.w = 1; // In case of deciding to put some weight
+	//				_conesPru_3D[ang_quan.first][ang_quan.second][R_quan].push_back(wp);
 
-				}
-			}
-		}
-	}
+	//			}
+	//		}
+	//	}
+	//}
 
-	// Put the direction of the center pixel dxx, dyy, dzz
-	for( int uu=0; uu<ntheta/2; uu++ ) // Phi
-	{
-		for( int uu2=0; uu2<ntheta; uu2++ ) // Theta
-		{
-			_conesPru_3D[uu][uu2].dxx = sin(uu*delta_theta)*cos(uu2*delta_theta);
-			_conesPru_3D[uu][uu2].dyy = sin(uu*delta_theta)*sin(uu2*delta_theta);
-			_conesPru_3D[uu][uu2].dzz = cos(uu*delta_theta);
-		}
-	}
+	//// Put the direction of the center pixel dxx, dyy, dzz
+	//for( int uu=0; uu<ntheta/2; uu++ ) // Phi
+	//{
+	//	for( int uu2=0; uu2<ntheta; uu2++ ) // Theta
+	//	{
+	//		_conesPru_3D[uu][uu2].dxx = sin(uu*delta_theta)*cos(uu2*delta_theta);
+	//		_conesPru_3D[uu][uu2].dyy = sin(uu*delta_theta)*sin(uu2*delta_theta);
+	//		_conesPru_3D[uu][uu2].dzz = cos(uu*delta_theta);
+	//	}
+	//}
+
+
 
 
 
@@ -1689,7 +1691,7 @@ void ftkVoting_3D::computeCones(int hmin, int hmax, int radius)
 	//}
 
 
-	cout<<"Cones computed";
+	//cout<<"Cones computed";
 	////cin>>stop11;
 
 }
