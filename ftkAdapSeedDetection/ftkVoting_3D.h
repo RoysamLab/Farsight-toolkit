@@ -4,6 +4,7 @@
 
 #include<iostream>
 #include<vector>
+#include <cmath>
 //#include<stringstream>
 
 #include "ftkVotingGlobal.h"
@@ -25,11 +26,6 @@
 //#include <point.h>
 //#include <global.h>
 
-//namespace stdi {
-
-//	namespace voting {
-
-using namespace std;
 
 // Voting Direction X and Y
 typedef double VotingDirPixelType;
@@ -56,10 +52,12 @@ typedef itk::Image< OutputPixelType, 2 > OutputImageType;
 struct VPoint3D {
 	short x, y, z; //(PARA QUE LA DIFERENCIA ENTRE X,Y Y XC Y XC)
 	short xc, yc, zc; //< center point (la nueva direccino a la que apunta)
-	pair<int,int> angIndex; //< angle index
+	std::pair<int,int> angIndex; //< angle index
 	int pos; //PARA QUE ES POS
 	double mag; //< magnitude
 	int scale;
+	int direc_vote;
+	int posOri;
 };
 
 // ############################################################################################################################################################################
@@ -82,11 +80,11 @@ struct ftkWPoint3D {
 
 // ############################################################################################################################################################################
 /** An intersection of cone */
-//  typedef vector<WPoint3D> ConePlane3D;  
-struct ftkBins3D : public vector<ftkWPoint3D> {
+//  typedef std::vector<WPoint3D> ConePlane3D;  
+struct ftkBins3D : public std::vector<ftkWPoint3D> {
 	static int nx, ny, nz;
-	ftkBins3D(int n, const ftkWPoint3D &v) : vector<ftkWPoint3D>(n, v) { }
-	ftkBins3D() : vector<ftkWPoint3D>() { }
+	ftkBins3D(int n, const ftkWPoint3D &v) : std::vector<ftkWPoint3D>(n, v) { }
+	ftkBins3D() : std::vector<ftkWPoint3D>() { }
 	static void setImageSize(int xsize, int ysize, int zsize)
 	{  
 		nx = xsize;
@@ -103,10 +101,10 @@ struct ftkBins3D : public vector<ftkWPoint3D> {
 
 // ############################################################################################################################################################################
 /** \brief A 3D cone */
-struct ftkCone3D : public vector<ftkBins3D> {
+struct ftkCone3D : public std::vector<ftkBins3D> {
 	static int nx, ny, nz; //< image size
 	static int contador_1;
-	ftkCone3D() : vector<ftkBins3D>() { }
+	ftkCone3D() : std::vector<ftkBins3D>() { }
 	void setDirection(double xx, double yy, double zz); //No veo que sea util siendo que ya tenamos un vector de estoy de tamano 256
 	static void setImageSize(int xsize, int ysize, int zsize)
 	{  
@@ -125,7 +123,7 @@ struct ftkCone3D : public vector<ftkBins3D> {
 	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
 
 	//void inline vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp); // Guarda direccion 
-	void inline vote_dir(vector<vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
+	void inline vote_dir(std::vector<std::vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
 
 	//void vote(VotingDirType_3D::PixelType * p, VotingDirType_3D::PixelType * pmask, const VPoint3D& vp);
 	double dx, dy, dz; //< direction
@@ -137,6 +135,42 @@ struct ftkCone3D : public vector<ftkBins3D> {
 };
 
 // ############################################################################################################################################################################
+/** \brief A 3D cone */
+struct ftkCone3D_new : public std::vector<ftkWPoint3D> { // Cones without distance quantized
+	static int nx, ny, nz; //< image size
+	static int contador_1;
+	ftkCone3D_new() : std::vector<ftkWPoint3D>() { }
+	void setDirection(double xx, double yy, double zz); //No veo que sea util siendo que ya tenamos un vector de estoy de tamano 256
+	static void setImageSize(int xsize, int ysize, int zsize)
+	{  
+		nx = xsize;
+		ny = ysize;
+		nz = zsize;
+	}
+	void setOffset()
+	{
+		for(iterator it = begin(); it!=end(); it++) { // I think this is not necessary
+			it->setOffset();
+		}
+	}
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp);
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int &dist);
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
+
+	//void inline vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp); // Guarda direccion 
+	//void inline vote_dir(std::vector<std::vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
+
+	//void vote(VotingDirType_3D::PixelType * p, VotingDirType_3D::PixelType * pmask, const VPoint3D& vp);
+	double dx, dy, dz; //< direction
+
+	double dxx;
+	double dyy;
+	double dzz; // This is the direction of the center pixel
+
+};
+
+// ############################################################################################################################################################################
+
 class ftkVoting_3D {
 
 public:
@@ -155,7 +189,7 @@ public:
 	/**
 	Set the prefix of the path to store the voting landscope
 	*/
-	void setPrefix(const string& p);
+	void setPrefix(const std::string& p);
 
 private:
 
@@ -197,7 +231,7 @@ private:
 	\return The angle index in the look-up table
 	*/
 	int computeAngleIndex(double dx, double dy) const;
-	pair<int,int> computeAngleIndex_3D(double dx, double dy, double dz) const;
+	std::pair<int,int> computeAngleIndex_3D(double dx, double dy, double dz) const;
 
 
 //	/** voting */
@@ -208,7 +242,7 @@ private:
 	void updateCones();
 
 //	PointArray _centers; //< detected centers of objects
-//	vector<double> _center_weights; //< accumulated votes for each center
+//	std::vector<double> _center_weights; //< accumulated votes for each center
 //
 //	doubleImage _sum, _mask, _vote; //<sum of voting
 //
@@ -236,7 +270,7 @@ private:
 	double delta_theta;
 
 	//INTERNAL
-	string _prefix; //< prefix for path to record voting landscope in each iteration
+	std::string _prefix; //< prefix for path to record voting landscope in each iteration
 	int nx; // x-size
 	int ny; // y-size
 	int nz; // z-size
@@ -244,8 +278,8 @@ private:
 	int bw;//< padding size for border pixels during voting 
 
 	//// Vectores
-	vector<VPoint3D> _voting_points; // voting candidate points
-	//vector<Cone3D> _coe::Pointer _votingVotes;
+	std::vector< VPoint3D > _voting_points; // voting candidate points
+	//std::vector<Cone3D> _coe::Pointer _votingVotes;
 
 	// Image of votes (with the padding)
 	VotingDirType_3D::Pointer _votingSumVotes;
@@ -255,20 +289,20 @@ private:
 
 	//typename VotingDirType_3D::Pointer DerivateImage( int dIrection );
 
-	//vector<vector<int> > _votingMaskVotes_dir;
+	//std::vector<std::vector<int> > _votingMaskVotes_dir;
 
-	void inline votar_dir(vector<vector<int> >& p_dir,VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1);
+	void inline votar_dir(std::vector<std::vector<int> >& p_dir,VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx, int dist, int& offset_1);
 
 
 	//< pre-computed cone structures for voting
-	vector<vector<ftkCone3D> > _conesPru_3D;
-	vector < ftkCone3D > _conesPru_3D_new;
-	vector<ftkCone3D> _conesPru_prob;
-	vector< pair< int,int > > _voteDirec;
-	vector< pair< pair< int,int > , vector <int> > > _voteDirec_prob;
+	std::vector<std::vector<ftkCone3D> > _conesPru_3D;
+	std::vector < ftkCone3D > _conesPru_3D_new;
+	std::vector<ftkCone3D> _conesPru_prob;
+	std::vector< std::pair< int,int > > _voteDirec;
+	std::vector< std::pair< std::pair< int,int > , std::vector <int> > > _voteDirec_prob;
 
 
-	vector< vector< vector< int > > > _voteDirec_3D_new;
+	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new;
 
 	//// Voting Direction X and Y
 	//typedef double VotingDirPixelType;
@@ -278,6 +312,25 @@ private:
 	//VotingDirTyp
 
 	int _NN_dir;
+	double _sigmaG;
+
+
+
+	// Cones
+	std::vector < ftkCone3D > _conesPru_3D_new_para; // A test to do the calculation of the cones in parallel
+	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new_para;
+
+	std::vector < ftkCone3D_new > _conesPru_3D_new_para_notqu; // A test to do the calculation of the cones in parallel and not quantized
+	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new_para_notqu;
+
+
+	clock_t _t1_begin;
+	clock_t _t1_end;
+
+
+	std::vector< VPoint3D > _voting_points_3D; // List of voting points
+
+	int computeDirecIndex_3D(double dx, double dy, double dz) const;
 
 	};
 

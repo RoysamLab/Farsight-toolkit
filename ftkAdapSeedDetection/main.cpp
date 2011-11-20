@@ -21,9 +21,7 @@
 //#include <map>
 //#include <utility> // make_pair
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif
+
 
 //#include"ftkVoting.h"
 //#include"ftkVotingGlobal.h"
@@ -76,7 +74,7 @@ int main( int argc, char * argv[] ){
 
 
 	// ###################################### 3D
-		// Set Up the Reader 2D
+		// Set Up the Reader 3D
 	
 		// Input Image Type
 	
@@ -1458,7 +1456,9 @@ int main( int argc, char * argv[] ){
 
 
 	clock_t end=clock();
-	cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	std::cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+
+	std::cout << std::endl;
 	return 1;
 };
 
