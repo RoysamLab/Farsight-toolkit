@@ -53,10 +53,10 @@ int main( int argc, char * argv[] ){
 
 	// Initial Parameters
 	//reg_type (have not underestand what is this for)
-	int hmin = 9;
-	int hmax = 70;//35;//77; //15 was ok, 25 just to test
-	int radius = 70;//10;//77;
-	double min_grad = 0.2;
+	int hmin = 2;
+	int hmax = 35;//35;//77; //15 was ok, 25 just to test
+	int radius = 35;//10;//77;
+	double min_grad = 0.1;
 	//threshold (for picking seed points, not necesary for now)
 	double scale = 1.5; // Scale for computing the gradient using DoG
 	//zc_only TRUE - voting points should also be the zero-crossing points of the image; FALSE - otherwise
@@ -65,7 +65,6 @@ int main( int argc, char * argv[] ){
 	//// ###################################### 2D
 	//// Set Up the Reader 2D
 	//nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
-	//inputImage->Update();
 
 	//ftkVoting voteMain;
 	//voteMain.setParams(hmin,hmax,radius,min_grad,scale);
@@ -79,7 +78,6 @@ int main( int argc, char * argv[] ){
 		// Input Image Type
 	
 		nftkVotingGlobal::InputImageType_3D::Pointer inputImage = nftkVotingGlobal::readImage_3D< nftkVotingGlobal::InputImageType_3D_16, nftkVotingGlobal::InputImageType_3D >( inputImageName );
-		inputImage->Update();
 	
 		ftkVoting_3D voteMain_3D;
 		voteMain_3D.setParams(hmin,hmax,radius,min_grad,scale);
