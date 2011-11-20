@@ -419,7 +419,7 @@ void Common::RenderImage3D(RenderImageType3D::Pointer data_ptr){
 	
 
 	vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
-	volume->SetMapper(volume_mapper);
+	volume->SetMapper(volume_mapper); 
 	volume->SetProperty(volume_property);
 	volume->SetPosition(0, 0, 0);
 	volume->SetPickable(0);
@@ -446,3 +446,76 @@ void Common::RescaleDataForRendering(ImageType3D::Pointer data, RenderImageType3
 
 	data_to_render = rescaler->GetOutput();
 }
+
+PixelType Common::NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& normalizedInputData){
+
+	// This filter gives wierd values at output !! Try the LabelStatisticsImageFilter
+	/*StatisticsFilterType::Pointer statistics_filter = StatisticsFilterType::New();
+	statistics_filter->SetInput(inputData);
+	float volumeMean = statistics_filter->GetMean();
+	float volumeStd = statistics_filter->GetSigma();
+	float volumeMax = statistics_filter->GetMaximum();
+	float volumeMin = statistics_filter->GetMinimum();
+	statistics_filter->Update();*/
+
+	normalizedInputData = ImageType3D::New();
+
+	MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
+	min_max_calculator->SetImage(inputData);
+	min_max_calculator->Compute();
+
+	PixelType volumeMax = min_max_calculator->GetMaximum();
+
+	/*DuplicatorType::Pointer image_duplicator = DuplicatorType::New();
+	image_duplicator->SetInputImage(inputData);
+	image_duplicator->Update();
+	normalizedInputData = image_duplicator->GetOutput();*/
+	
+	if(volumeMax != 1){
+
+		DuplicatorType::Pointer image_duplicator2 = DuplicatorType::New();
+		image_duplicator2->SetInputImage(inputData);
+		image_duplicator2->Update();
+
+		ImageType3D::Pointer divisor_image = image_duplicator2->GetOutput();
+		divisor_image->FillBuffer(volumeMax);
+
+		DivideImageFilterType::Pointer divide_image_filter = DivideImageFilterType::New();
+		divide_image_filter->SetInput1(inputData);
+		divide_image_filter->SetInput1(divisor_image);
+		divide_image_filter->Update();
+
+		normalizedInputData = divide_image_filter->GetOutput();
+
+		/*typedef itk::Functor::Mult<ImageType3D::PixelType> MultiplicationFunctorType;
+		typedef itk::UnaryFunctorImageFilter<ImageType3D, ImageType3D, MultiplicationFunctorType> MultiplicationUnaryFunctorFilterType;
+		MultiplicationUnaryFunctorFilterType::Pointer multiplier = MultiplicationUnaryFunctorFilterType::New();
+		
+		typedef itk::BinaryFunctorImageFilter<ImageType3D, ImageType3D, ImageType3D, MultiplicationFunctorType> MultiplicationBinaryFunctorType;*/
+		
+		/*ShiftScaleFilterType::Pointer shift_scale_filter = ShiftScaleFilterType::New();
+		shift_scale_filter->SetInput(inputData);
+		shift_scale_filter->SetScale(1 / volumeMax);
+		shift_scale_filter->Update();
+		normalizedInputData = shift_scale_filter->GetOutput();*/
+
+		// Too slow!!
+		/*itk::ImageRegionIterator<ImageType3D> iter_input(inputData, inputData->GetBufferedRegion());
+		itk::ImageRegionIterator<ImageType3D> iter_norm_input(normalizedInputData, normalizedInputData->GetBufferedRegion());
+		
+		while(!iter_input.IsAtEnd())
+			iter_norm_input.Set(iter_input.Get() / volumeMax);*/
+	}
+	else
+		normalizedInputData = inputData;
+
+	return volumeMax;
+}
+
+/*int inline Common::GetSign(double value){
+	if(value < 0)
+		return -1;
+	if(value > 0)
+		return 1;
+	return 0;
+}*/

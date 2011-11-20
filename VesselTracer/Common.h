@@ -15,6 +15,12 @@
 #include "itkImageToVTKImageFilter.h"
 #include "itkMaximumProjectionImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkShiftScaleImageFilter.h"
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkMinimumMaximumImageCalculator.h"
+#include "itkDivideImageFilter.h"
+#include "itkImageDuplicator.h"
+#include "itkStatisticsImageFilter.h"
 
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
@@ -45,7 +51,12 @@ typedef unsigned char RenderPixelType;
 typedef itk::Image<RenderPixelType, 3> RenderImageType3D;
 
 typedef itk::ImageToVTKImageFilter<RenderImageType3D> ITKToVTKConnectorType;
-
+typedef itk::ShiftScaleImageFilter<ImageType3D,ImageType3D> ShiftScaleFilterType;
+typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType;
+typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
+typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
+typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
+typedef itk::ImageDuplicator<ImageType3D> DuplicatorType;
 
 namespace Common{
 	
@@ -104,5 +115,15 @@ namespace Common{
 	 * (ITK image ptr, ITK image ptr for rendering)
 	 */
 	void RescaleDataForRendering(ImageType3D::Pointer, RenderImageType3D::Pointer&);
+	
+	/** Normalize data using its max value, return tge maax value.
+	 * (input data, data to normalize)
+	 */
+	PixelType NormalizeData(ImageType3D::Pointer, ImageType3D::Pointer&);
 
+	// Cannot add new functions to namespace!!
+	/** Return the sign of the value
+	 * (value)
+	 */
+	//int inline GetSign(double);
 }
