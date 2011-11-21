@@ -28,16 +28,16 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    	QApplication app(argc, argv);
 
 	QCoreApplication::setOrganizationName("RPI");
-    QCoreApplication::setOrganizationDomain("farsight-toolkit.org");
-    QCoreApplication::setApplicationName("Farsight Nucleus Editor");
+    	QCoreApplication::setOrganizationDomain("farsight-toolkit.org");
+    	QCoreApplication::setApplicationName("Farsight Nucleus Editor");
 
 	NucleusEditor nucEdit(0,0);
 	nucEdit.show();
 
-    return app.exec();
+   	return app.exec();
 }
 
 //This function is used to create a GUI application that does not show the console.
