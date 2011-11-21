@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 		double bounds[6];
 		cell->getCellBounds(bounds);
 
-		//std::cout << "Min X: " << bounds[0] << " Max X: " << bounds[1] << " Min Y: " << bounds[2] << " Max Y: " << bounds[3] << " Min Z: " << bounds[4] << " Max Z: " << bounds[5] << std::endl;
+		std::cout << "Min X: " << bounds[0] << " Max X: " << bounds[1] << " Min Y: " << bounds[2] << " Max Y: " << bounds[3] << " Min Z: " << bounds[4] << " Max Z: " << bounds[5] << std::endl;
 	}
 
 	return 0;
