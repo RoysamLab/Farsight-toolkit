@@ -1280,6 +1280,11 @@ void View3D::CreateGUIObjects()
 	this->WidthSpaceBox->setValue(10);
 	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
 
+	this->LineWidthBox = new QSpinBox(this->SettingsWidget);
+	this->LineWidthBox->setRange(1,100);
+	this->LineWidthBox->setValue(1);
+	connect(this->LineWidthBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+
 	this->GridRSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
 	this->GridRSlider->setRange(0,255);
 	this->GridRSlider->setValue(255);
@@ -1604,6 +1609,7 @@ void View3D::CreateLayout()
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
+	GridlineLayout->addRow(tr("Line Width: "),this->LineWidthBox);
 	GridlineLayout->addRow(tr("R: "),this->GridRSlider);
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
@@ -2416,6 +2422,7 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 	int num_lines = this->Gridlines->NumberOfLines();
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
+	int line_width = this->LineWidthBox->value();
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
 	int line_b = GridBSlider->value();
@@ -2426,7 +2433,7 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D gridlines
 		//std::cout << "Create grid" << std::endl;
 		double imageBounds[6];
 		ImageActors->getImageBounds(imageBounds);
-		Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b, line_opacity);
+		Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
 		//num_lines = this->Gridlines->NumberOfLines();
 		//std::cout << "Number of lines: " << num_lines << std::endl;
 	}
@@ -2485,11 +2492,12 @@ void View3D::AdjustGridlines(int value)
 	ImageActors->getImageBounds(imageBounds);
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
+	int line_width = this->LineWidthBox->value();
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
 	int line_b = GridBSlider->value();
 	int line_opacity = GridOpacitySlider->value();
-	Gridlines->createGrid(imageBounds,height_spacing,width_spacing,line_r, line_g, line_b, line_opacity);
+	Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
 	
 	//Add actors
 	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();

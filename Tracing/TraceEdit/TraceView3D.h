@@ -494,7 +494,7 @@ private:
 	int projection_axis;
 //!Gridline controls
 	bool showGrid;
-	QSpinBox * HeightSpaceBox, * WidthSpaceBox;
+	QSpinBox * HeightSpaceBox, * WidthSpaceBox, * LineWidthBox;
 	QGroupBox * GridlineSettings;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
