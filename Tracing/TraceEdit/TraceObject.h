@@ -43,6 +43,7 @@ typedef struct {
 	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
 	bool Front;
 } EndPointInfo;
+
 typedef struct {
 	TraceBit* arrayOBits[2];
 	double slope[3];
@@ -50,6 +51,7 @@ typedef struct {
 	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
 	bool Front;
 } adjPointLines;
+
 const int timeSize = 20; //this should be user en
 /* A Trace object is a list of root TraceLines*/
 struct equlli
@@ -73,6 +75,7 @@ struct hashulli
 	const static size_t bucket_size = 4;
 	const static size_t min_buckets = 8;
 };
+
 class TraceObject
 {
 public:
