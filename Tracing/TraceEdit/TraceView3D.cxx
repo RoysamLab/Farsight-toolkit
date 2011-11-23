@@ -1609,7 +1609,7 @@ void View3D::CreateLayout()
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
-	GridlineLayout->addRow(tr("Line Width: "),this->LineWidthBox);
+	GridlineLayout->addRow(tr("Line Thickness: "),this->LineWidthBox);
 	GridlineLayout->addRow(tr("R: "),this->GridRSlider);
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);

@@ -116,7 +116,7 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 			
 			//Add the GridlineActor to the renderer
 			GridlineActor->SetMapper(mapper);
-			//GridlineActor->GetProperty()->SetLineWidth(4);
+			GridlineActor->SetPickable(0);
 		}
 
 		/// vertical lines
@@ -142,7 +142,7 @@ void GridlineActors::createGrid(double bounds[],int height_spacing, int width_sp
 			GridlineActor->SetProperty(lineproperty);
 			GridlineActorVectorVertical[vertical_line_index] = GridlineActor;
 			GridlineActor->SetMapper(mapper);
-			//GridlineActor->GetProperty()->SetLineWidth(4);
+			GridlineActor->SetPickable(0);
 		}
 	}
 }
