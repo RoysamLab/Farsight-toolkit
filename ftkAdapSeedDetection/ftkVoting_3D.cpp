@@ -2441,8 +2441,6 @@ void ftkVoting_3D::vote()
 
 	// One Vote just to test
 	std::cout << std::endl << "One Vote just to test.";
-	std::cout << std::endl << "One Vote just to test.";
-	std::cout << std::endl << "One Vote just to test.";
 	_t1_begin=clock();
 
 	int temp2 = _voting_points_3D.size();
