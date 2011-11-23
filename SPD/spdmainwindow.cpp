@@ -220,8 +220,15 @@ void SPDMainWindow::clusterFunction()
 		if ( atof(clusterCor.c_str()) >= 0 && atof(clusterCor.c_str()) <= 1
 			&& atof(clusterMer.c_str()) >= 0 && atof(clusterMer.c_str()) <= 1)
 		{
-			this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-			this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+			try
+			{
+				this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+				this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+			}
+			catch(...)
+			{
+				std::cout<< "Clustering exception, please try again!"<<endl;
+			}
 		}
 		else
 		{
@@ -240,7 +247,14 @@ void SPDMainWindow::clusterFunction()
 
 void SPDMainWindow::generateMST()
 {
-	this->SPDModel->GenerateMST();
+	try
+	{
+		this->SPDModel->GenerateMST();
+	}
+	catch(...)
+	{
+		std::cout<< "MST construction failure, please try again!"<<endl;
+	}
 }
 
 void SPDMainWindow::autoProcess()
@@ -264,7 +278,14 @@ void SPDMainWindow::autoProcess()
 
 void SPDMainWindow::emdFunction()
 {
-	this->SPDModel->RunEMDAnalysis();
+	try
+	{
+		this->SPDModel->RunEMDAnalysis();
+	}
+	catch(...)
+	{
+		std::cout<< "EMD construction failure, please try again!"<<endl;
+	}
 }
 
 void SPDMainWindow::editThreshold()
@@ -366,7 +387,14 @@ void SPDMainWindow::viewProgression()
 		std::cout<< "Features saved in SelFeatures.txt"<<endl;
 		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
 		//this->graph->SetGraphTable( table, headers[0], headers[1]);
-		this->graph->ShowGraphWindow();
+		try
+		{
+			this->graph->ShowGraphWindow();
+		}
+		catch(...)
+		{
+			std::cout<< "Graph window error!"<<endl;
+		}
 	}
 }
 
@@ -397,4 +425,9 @@ void SPDMainWindow::updateSelMod()
 	}
 	str += QString::number(selMod[num - 1]);
 	psdModuleSelectBox->setText(str);
+}
+
+void SPDMainWindow::GetProgressionTreeOrder(std::vector<long int> &order)
+{
+	this->graph->GetProgressionTreeOrder(order);
 }

@@ -15,6 +15,25 @@ typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS,
 	boost::property< boost::vertex_distance_t, unsigned int>, boost::property< boost::edge_weight_t, double> > Graph;
 typedef std::pair < unsigned int, unsigned int>Edge;
 
+typedef struct Tree
+{
+	Tree()
+	{
+	};
+	Tree(int fir, int sec, double c, int par)
+	{
+		first = fir;
+		second = sec;
+		cor = c;
+		parent = par;
+	};
+	int first;
+	int second;
+	double cor;
+	int parent;
+}Tree;
+
+
 enum DISTANCE_TYPE
 {
 	CITY_BLOCK,
@@ -40,6 +59,8 @@ public:
 	void NormalizeData();
 	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
+	void HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol = true);
+
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
@@ -50,6 +71,7 @@ public:
 	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
+	void GetMatrixData(vnl_matrix<double> &mat);
 
 protected:
 	SPDAnalysisModel();
@@ -64,7 +86,6 @@ protected:
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
 	void EraseCols(vnl_matrix<double>& mat, std::vector<unsigned int> vec);
-
 	void SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue);
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
@@ -78,7 +99,11 @@ protected:
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
 	long int GetSelectedFeatures(vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs);
-	
+	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
+
+public:
+	std::vector< Tree> TreeData;
+
 private:
 	static SPDAnalysisModel *s_pmodel;
 
@@ -108,6 +133,7 @@ private:
 	//data for EMD 
 	vnl_matrix<double> EMDMatrix;
 	std::set< long int> selectedFeatureIDs;
+
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;
 	vnl_matrix<double> heatmapMatrixNew;

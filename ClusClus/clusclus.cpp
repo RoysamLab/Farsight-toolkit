@@ -86,6 +86,17 @@ clusclus::~clusclus()
 		delete this->transposefeatures;
 		delete this->optimalleaforder;
 	}
+	else if( this->treedata)   // the clusclus is intialized by tree data and used for getting the optimal order
+	{
+		for( int i = 0; i < num_samples-1; i++)
+		{
+			delete this->treedata[i];
+		}
+		delete this->treedata;
+		this->treedata = NULL;
+		delete this->optimalleaforder;
+		this->optimalleaforder = NULL;
+	}
 }
 
 void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
@@ -151,6 +162,32 @@ void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
 	}
 	for(int i=0; i<num_features-1; i++)
 		this->transposefeatures[i] = new double[num_samples + 2];
+}
+
+void clusclus::Initialize( double** treedata, int numsamples)
+{
+	this->num_samples = numsamples;
+	if( this->treedata)
+	{
+		for( int i = 0; i < numsamples - 1; i++)
+		{
+			delete this->treedata[i];
+		}
+		delete this->treedata;
+		this->treedata = NULL;
+	}
+
+	this->treedata = new double*[numsamples - 1];
+	this->optimalleaforder = new int[num_samples];
+
+	for(int i = 0; i < numsamples - 1; i++)
+	{
+		this->treedata[i] = new double[4];
+		for( int j = 0; j < 4; j++)
+		{
+			this->treedata[i][j] = treedata[i][j];
+		}
+	}
 }
 
 void clusclus::Clustering()
@@ -716,7 +753,7 @@ int  clusclus::FindRowIndex(int col, int c)
 
 void clusclus::GetOptimalLeafOrderD() 
 {
-	int      i, k;
+	int  i, k;
 	int* Tnums;
 	int* pickedup;
 

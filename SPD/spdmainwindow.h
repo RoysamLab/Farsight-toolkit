@@ -19,6 +19,7 @@ public:
     explicit SPDMainWindow(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDMainWindow();
+	void GetProgressionTreeOrder(std::vector<long int> &order);
 
 private slots:
     void browse();

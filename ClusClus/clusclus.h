@@ -1,6 +1,10 @@
 #ifndef	CLUSCLUS_H
 #define CLUSCLUS_H
 
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
+
 #include <math.h>
 #include <iostream>
 #include <stdio.h>
@@ -19,6 +23,7 @@ public:
 
 	void ReadFile(const char *filename);
 	void Initialize(double** feature,int numsamples, int numfeatures);
+	void Initialize( double** treedata, int numsamples);
 	void RunClusClus();
 	void Clustering();
 	void MergersToProgress();

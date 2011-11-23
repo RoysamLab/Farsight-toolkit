@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <strstream>
 #include <string>
 #include <math.h>
  
@@ -86,12 +87,44 @@
 #include <vtkExtractSelection.h>
 #include <vtkObjectFactory.h>
 #include <vtkLine.h>
+#include <vtkBalloonRepresentation.h>
+#include <vtkBalloonWidget.h>
+#include <vtkSphereSource.h>
+#include <vtkStringArray.h>
+#include <vtkHoverWidget.h>
 
 #include <boost/math/distributions/normal.hpp>
 
 #include <ftkCommon/ftkUtils.h>
+#include "ClusClus/clusclus.h"
+#include "ClusClus/Dendrogram.h"
+#include "ClusClus/HeatmapWindow.h"
 #include "ObjectSelection.h"
 using namespace std;
+
+class vtkHoverCallback : public vtkCommand
+{
+  public:
+    static vtkHoverCallback *New()
+    {
+      return new vtkHoverCallback;
+    }
+ 
+    vtkHoverCallback() {}
+ 
+    virtual void Execute(vtkObject*, unsigned long event, void *vtkNotUsed(calldata))
+    {
+      switch (event) 
+        {
+        case vtkCommand::TimerEvent:
+          std::cout << "TimerEvent -> the mouse stopped moving and the widget hovered" << std::endl; 
+          break;
+        case vtkCommand::EndInteractionEvent:
+          std::cout << "EndInteractionEvent -> the mouse started to move" << std::endl; 
+          break;
+        }
+    }
+};
 
 typedef struct srgb
 {
@@ -116,14 +149,18 @@ public:
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2);
-	void creatDataForHeatmap();
+	void creatDataForHeatmap(double powCof);
 	void creatDataForSimilarMatrixHeatmap();
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
+	void runClusclus();
 	void showGraph();
 	void showSimilarMatrixGraph();
+	void showSPDGraph();
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
+	void showDendrogram1();
+	void showDendrogram2();	
 
 	int              num_samples;
 	int              num_features;
@@ -143,15 +180,18 @@ signals:
 	void SelChanged();
 
 protected slots:
-	void SetdenSelectedIds1(std::set<long int>& IDs);
+	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
 	void GetSelecectedIDs();
+	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+
+	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 
 private:
 	QVTKWidget mainQTRenderWidget;
+	vtkSmartPointer<vtkTable > table;
 	vtkSmartPointer<vtkPlaneSource> aPlane;
 	vtkSmartPointer<vtkFloatArray> cellData;
 	vtkSmartPointer<vtkLookupTable> lookuptable;
@@ -188,17 +228,28 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> denmapper2;
 	vtkSmartPointer<vtkActor> denactor2;
 	vtkSmartPointer<vtkUnsignedCharArray> dencolors2;
+	vtkSmartPointer<vtkVariantArray> featureName;
+
+	vtkSmartPointer<vtkBalloonRepresentation> balloonRep;
+    vtkSmartPointer<vtkBalloonWidget> balloonWidget;
+    vtkSmartPointer<vtkBalloonRepresentation> balloonRep2;
+    vtkSmartPointer<vtkBalloonWidget> balloonWidget2 ;
+	  vtkSmartPointer<vtkHoverWidget> hoverWidget;
+	    vtkSmartPointer<vtkHoverCallback> hoverCallback;
 
 	void scaleData();
 	void drawPoints1();
-	void showDendrogram1();
-	void showDendrogram2();	
+	void drawPoints2();
 	void setselectedCellIds();
 	void computeselectedcells();
-	void createDataForDendogram1();
-	void createDataForDendogram2();
+	void createDataForDendogram1(double powCof);
+	void createDataForDendogram2(double powCof);
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
+
+	vtkSmartPointer<vtkTable> dataTable;
+	std::map<int, int> indMapFromVertexToInd;
+	std::vector<int> indMapFromIndToVertex;
 
 	int     r1;
 	int     r2;
@@ -214,6 +265,9 @@ private:
 	vtkIdType id2;
 	rgb GetRGBValue(double val);
 	std::set<long int> interselectedIDs;
+
+	clusclus *cc1;
+	clusclus *cc2;
 };
 
 #endif

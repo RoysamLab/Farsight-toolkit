@@ -170,7 +170,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	theme->SetSelectedPointColor(1,0,0); 
 
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
-	vertexColors->SetNumberOfComponents(table->GetNumberOfRows());
+	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
@@ -550,11 +550,12 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	unsigned int coln = maxId / shortest_hop.rows();
 	unsigned int rown = maxId  - coln * shortest_hop.rows();
 
-	std::vector<long int> backbones;
+	backbones.clear();
+	chainList.clear();  // store the chains, no repeat
+
 	std::queue<long int> tmpbackbones;   // for calculating all the sidechains
 	std::vector<long int> debugbackbones;  // for debugging
 	std::map< long int, long int> tmpChain;  // for ordering 
-	std::vector< std::pair<long int, std::vector<long int> > > chainList;  // store the chains, no repeat
 	vnl_vector< int> tag( shortest_hop.rows());     // whether the node has been included in the chain
 	tag.fill( 0);
 
@@ -648,17 +649,17 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	}
 
 	SortChainList( shortest_hop, backbones, chainList);   // the order to draw the subbones
-	for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
-	{
-		std::pair< long int, std::vector< long int> >tmp = *chainIter;
-		ofChains << tmp.first;
-		std::vector< long int> branchlist = tmp.second;
-		for( long int i = 0; i < branchlist.size(); i++)
-		{
-			ofChains << "\t"<< branchlist[i];
-		}
-		ofChains <<endl;
-	}
+	//for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
+	//{
+	//	std::pair< long int, std::vector< long int> >tmp = *chainIter;
+	//	ofChains << tmp.first;
+	//	std::vector< long int> branchlist = tmp.second;
+	//	for( long int i = 0; i < branchlist.size(); i++)
+	//	{
+	//		ofChains << "\t"<< branchlist[i];
+	//	}
+	//	ofChains <<endl;
+	//}
 	ofChains.close();
 
 	/// calculate the coordinates of the nodes
@@ -958,4 +959,34 @@ bool GraphWindow::IsExist(std::vector<long int>& vec, long int value)
 		}
 	}
 	return false;
+}
+
+void GraphWindow::GetProgressionTreeOrder(std::vector<long int> &order)
+{
+	order.clear();
+
+	for( long int i = 0; i < backbones.size(); i++)
+	{
+		order.push_back(backbones[i]);
+		GetOrder(backbones[i], order);
+	}
+}
+
+void GraphWindow::GetOrder(long int node, std::vector<long int> &order)
+{
+	std::vector<long int> vec;
+	for( long int i = 0; i < chainList.size(); i++)
+	{
+		std::pair<long int, std::vector<long int> > pair = chainList[i];
+		if( pair.first == node)
+		{
+			vec = pair.second;
+			for( long int j = 0; j < vec.size(); j++)
+			{
+				order.push_back( vec[j]);
+				GetOrder( vec[j], order);
+			}
+		}
+	}
+	vec.clear();
 }

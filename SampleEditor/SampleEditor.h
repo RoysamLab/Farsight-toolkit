@@ -77,10 +77,13 @@ private slots:
 	void showStatistics(void);
 	void updateStatistics(void);
 	void SPDAnalysis();
+	void spdSampledendrogram();
+	void spdFeatureDendroram();
+	void spdShowHeatmap();
+
 	void sampledendrogram();
 	void featuredendrogram();
 	void showheatmap();
-
 
 signals:
     void selectionChanged(void);
@@ -97,7 +100,13 @@ private:
 	QAction *changeRowDataAction;
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
+
+	QMenu *SPDMenu;
 	QAction *SPDAction;
+	QAction *spdSampleDendroAction;
+	QAction *spdFeatureDendroAction;
+	QAction *spdHeatmapAction;
+
 	/////////////////////////////
 	QMenu *ClusClusMenu;
 	QAction *sampleDendroAction;
@@ -112,7 +121,9 @@ private:
 	Dendrogram *dendro1;
 	Dendrogram *dendro2;///////////////////////////////////////////////////////////////////////////////////////
 	Heatmap *heatmap;
+
 	SPDMainWindow *spdWin;
+	SPDAnalysisModel *SPDModel;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;

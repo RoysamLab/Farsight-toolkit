@@ -61,16 +61,36 @@ Heatmap::Heatmap(QWidget *parent)
 	this->mapdata = NULL;
 	this->Optimal_Leaf_Order1 = NULL;
 	this->Optimal_Leaf_Order2 = NULL;
+	this->connect_Data_Tree1 = NULL;
+	this->connect_Data_Tree2 = NULL;
+
+	 this->hoverWidget = vtkSmartPointer<vtkHoverWidget>::New();
+	 hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
 }
 
 Heatmap::~Heatmap()
 {
-	for(int i=0; i<num_samples; i++)
-		delete this->mapdata[i];
-	delete this->mapdata;
+	if(this->mapdata)
+	{
+		for(int i=0; i<num_samples; i++)
+			delete this->mapdata[i];
+		delete this->mapdata;
+	}
 
-	delete this->Optimal_Leaf_Order1;
-	delete this->Optimal_Leaf_Order2;
+	if(this->Optimal_Leaf_Order1)
+		delete this->Optimal_Leaf_Order1;
+	if(this->Optimal_Leaf_Order2)
+		delete this->Optimal_Leaf_Order2;
+
+	if(this->connect_Data_Tree1)
+		for(int i = 0; i<this->num_samples - 1; i++)
+			delete this->connect_Data_Tree1[i];
+	delete this->connect_Data_Tree1;
+
+	if(this->connect_Data_Tree2)
+		for(int i = 0; i<this->num_features - 1; i++)
+			delete this->connect_Data_Tree2[i];
+	delete this->connect_Data_Tree2;
 }
 
 void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
@@ -100,6 +120,11 @@ void Heatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaf
 	double max = features[0][0];
 	for( int i = 0; i < num_samples; i++)
 	{
+		if( !this->dataTable)    // if the datatable is null, build the index mapping here
+		{
+			this->indMapFromVertexToInd.insert( std::pair< int, int>(i, i));
+			this->indMapFromIndToVertex.push_back( i);
+		}
 		for( int j = 0; j < num_features; j++)
 		{
 			if( features[i][j] > max)
@@ -124,7 +149,7 @@ void Heatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaf
 	this->num_features = num_features;
 }
 
-void Heatmap::creatDataForHeatmap()
+void Heatmap::creatDataForHeatmap(double powCof)
 {
 	this->scaleData();
 
@@ -170,8 +195,14 @@ void Heatmap::creatDataForHeatmap()
 	}
 	fclose(fp);
 
-	this->createDataForDendogram1();
-	this->createDataForDendogram2();
+	if( this->connect_Data_Tree1 != NULL)
+	{
+		this->createDataForDendogram1(powCof);
+	}
+	if( this->connect_Data_Tree2 != NULL)
+	{
+		this->createDataForDendogram2(powCof);
+	}
 }
 
 void Heatmap::creatDataForSimilarMatrixHeatmap()
@@ -233,6 +264,19 @@ void Heatmap::scaleData()
 
 void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
+	this->dataTable = table;
+	this->indMapFromVertexToInd.clear();
+	this->indMapFromIndToVertex.clear();
+	if( this->dataTable)
+	{
+		for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+		{
+			int var = this->dataTable->GetValue( i, 0).ToInt();
+			this->indMapFromVertexToInd.insert( std::pair< int, int>(var, i));
+			this->indMapFromIndToVertex.push_back( var);
+		}
+	}
+
 	if(!sels)
 		this->Selection = new ObjectSelection();
 	else
@@ -244,6 +288,57 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels,
 		this->Selection2 = sels2;
 
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDs()));
+}
+
+void Heatmap::runClusclus()
+{
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->table->GetNumberOfRows()];
+
+	std::cout<<this->table->GetNumberOfRows()<<endl;
+	std::cout<<this->table->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+	}
+
+	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	cc1 = new clusclus(datas, (int)this->table->GetNumberOfRows(), (int)this->table->GetNumberOfColumns() - 1);
+	cc1->RunClusClus();
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	cc1->Transpose();
+	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
+	cc2->RunClusClus();
+	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+
+
+	cout<<"finish clusclus....."<<endl;
+	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
+	this->setDataForDendrograms(cc1->treedata, cc2->treedata);
+	this->creatDataForHeatmap(0.15);	
+	
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+
+	delete cc1;
+	delete cc2;
 }
 
 void Heatmap::showGraph()
@@ -268,15 +363,22 @@ void Heatmap::showGraph()
 
 	int k = 0;
 	boost::math::normal N;
-	for(int i = 0; i < this->num_samples; i++)
+	try
 	{
-		for(int j = 0; j < this->num_features; j++)
+		for(int i = 0; i < this->num_samples; i++)
 		{
-			if(mapdata[num_samples - i - 1][j] <= 0)
-				lookuptable->SetTableValue(k++, 0, 1 - cdf(N,mapdata[num_samples - i - 1][j]), 0);
-			else
-				lookuptable->SetTableValue(k++, cdf(N,mapdata[num_samples - i - 1][j]), 0, 0);
+			for(int j = 0; j < this->num_features; j++)
+			{
+				if(mapdata[num_samples - i - 1][j] <= 0)
+					lookuptable->SetTableValue(k++, 0, 1 - cdf(N,mapdata[num_samples - i - 1][j]), 0);
+				else
+					lookuptable->SetTableValue(k++, cdf(N,mapdata[num_samples - i - 1][j]), 0, 0);
+			}
 		}
+	}
+	catch(...)
+	{
+		cout<<"Boost call failed! please try again!"<<endl;
 	}
 
 	this->aPlane->Update(); // Force an update so we can set cell data
@@ -289,11 +391,56 @@ void Heatmap::showGraph()
 
 	this->SetInteractStyle();
 	this->view->GetRenderer()->AddActor(actor);
-	this->view->GetRenderer()->SetBackground(255,255,255);
+	this->view->GetRenderer()->SetBackground(1,1,1);
 
-	this->showDendrogram1();
-	this->showDendrogram2();
+	try
+	{
+		this->showDendrogram1();
+		this->showDendrogram2();
+	}
+	catch(...)
+	{
+		cout<<"Draw dendrogram failed ! Please try again!"<<endl;
+	}
+	/////////////////////////////////////////////////////////////////////
+	//vtkSmartPointer<vtkSphereSource> sphereSource = vtkSmartPointer<vtkSphereSource>::New();
+	//sphereSource->SetCenter(-2.0, 0.0, 0.0);
+	//sphereSource->SetRadius(0.5);
+	//sphereSource->Update();
+ //
+	//vtkSmartPointer<vtkPolyDataMapper> sphereMapper =
+ //   vtkSmartPointer<vtkPolyDataMapper>::New();
+	//sphereMapper->SetInputConnection(sphereSource->GetOutputPort());
+ //
+	//vtkSmartPointer<vtkActor> sphereActor =
+ //   vtkSmartPointer<vtkActor>::New();
+	//sphereActor->SetMapper(sphereMapper);
+
+ //   vtkSmartPointer<vtkBalloonRepresentation> balloonRep =
+ //   vtkSmartPointer<vtkBalloonRepresentation>::New();
+	//balloonRep->SetBalloonLayoutToImageRight();
+ //
+	//vtkSmartPointer<vtkBalloonWidget> balloonWidget =
+ //   vtkSmartPointer<vtkBalloonWidget>::New();
+	//balloonWidget->SetInteractor(this->view->GetInteractor());
+	//balloonWidget->SetRepresentation(balloonRep);
+	//balloonWidget->AddBalloon(sphereActor,"This is a sphere",NULL);
+	//this->view->GetRenderer()->AddActor(sphereActor);
+
+	
+    hoverWidget->SetInteractor(this->view->GetInteractor());
+   hoverWidget->SetTimerDuration(1000);
+ 
+  // Create a callback to listen to the widget's two VTK events
+	//hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
+    hoverWidget->AddObserver(vtkCommand::TimerEvent,hoverCallback);
+    hoverWidget->AddObserver(vtkCommand::EndInteractionEvent,hoverCallback);
+
+	this->view->GetInteractor()->Initialize();
+	/////////////////////////////////////////////////////////////////////
+
 	this->view->Render();
+	hoverWidget->On();/////////////
 	this->view->GetInteractor()->Start();
 }
 
@@ -325,6 +472,8 @@ void Heatmap::SetInteractStyle()
 	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonPressEvent, selectionCallback2);
 	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback3);
 	this->view->GetInteractor()->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
+	//this->view->GetInteractor()->AddObserver(vtkCommand::TimerEvent, hoverCallback);
+	//this->view->GetInteractor()->AddObserver(vtkCommand::EndInteractionEvent, hoverCallback);
 
 	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
 	this->mainQTRenderWidget.resize(600, 600);
@@ -399,6 +548,54 @@ void Heatmap::showSimilarMatrixGraph()
 	this->view->GetInteractor()->Start();
 }
 
+void Heatmap::showSPDGraph()
+{	
+	drawPoints2();
+    this->aPlane->SetXResolution(this->num_features);
+    this->aPlane->SetYResolution(this->num_samples);
+
+	int index = 0;
+
+	for (int i = 0; i < this->num_samples; i++)
+    {
+		for(int j = 0; j < this->num_features; j++)
+		{
+			cellData->InsertNextValue(index++);
+		}
+    }
+	
+	this->lookuptable->SetNumberOfTableValues(this->num_samples*this->num_features);
+	this->lookuptable->SetTableRange(0, this->num_samples*this->num_features - 1);   
+	this->lookuptable->Build();
+
+	int k = 0;
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			rgb rgb = GetRGBValue( mapdata[num_samples - i - 1][j]);
+			lookuptable->SetTableValue(k++, rgb.r, rgb.g, rgb.b);
+		}
+	}
+
+	this->aPlane->Update(); // Force an update so we can set cell data
+	this->aPlane->GetOutput()->GetCellData()->SetScalars(cellData);
+
+	this->mapper->SetInputConnection(aPlane->GetOutputPort());
+	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
+	this->mapper->SetLookupTable(lookuptable);
+	this->actor->SetMapper(mapper);
+
+	this->SetInteractStyle();
+	this->view->GetRenderer()->AddActor(actor);
+	this->view->GetRenderer()->SetBackground(255,255,255);
+
+	//this->showDendrogram1();
+	this->showDendrogram2();
+	this->view->Render();
+	this->view->GetInteractor()->Start();
+}
+
 rgb Heatmap::GetRGBValue(double val)
 {
 	int index = COLOR_MAP_SIZE * val - 1;   // when val = 1; index should be the max index
@@ -415,11 +612,30 @@ rgb Heatmap::GetRGBValue(double val)
 
 void Heatmap::setDataForDendrograms(double** treedata1, double** treedata2)
 {
-	this->connect_Data_Tree1 = treedata1;
-	this->connect_Data_Tree2 = treedata2;
+	if(treedata1 != NULL)
+	{
+		this->connect_Data_Tree1 = new double*[this->num_samples-1];
+		for(int i = 0; i<this->num_samples - 1; i++)
+		{
+			this->connect_Data_Tree1[i] = new double[4];
+			for(int j = 0; j<4; j++)
+				this->connect_Data_Tree1[i][j] = treedata1[i][j];
+		}
+	}
+
+	if( treedata2 != NULL)
+	{
+		this->connect_Data_Tree2 = new double*[this->num_features-1];
+		for(int i = 0; i<this->num_features - 1; i++)
+		{
+			this->connect_Data_Tree2[i] = new double[4];
+			for(int j = 0; j<4; j++)
+				this->connect_Data_Tree2[i][j] = treedata2[i][j];
+		}
+	}
 }
 
-void Heatmap::createDataForDendogram1()
+void Heatmap::createDataForDendogram1(double powCof)
 {
 	this->Processed_Coordinate_Data_Tree1.resize(2*(this->num_samples) - 1);
 	for(int i = 0; i < 2*(this->num_samples) - 1; i++)
@@ -445,8 +661,8 @@ void Heatmap::createDataForDendogram1()
 
 	for(int i = 0; i < num_samples-1; i++)
 	{
-		connect_Data_Tree1[i][2] = pow(connect_Data_Tree1[i][2], 0.15);
-		connect_Data_Tree1[i][2] /= pow(connect_Data_Tree1[num_samples-2][2], 0.15);
+		connect_Data_Tree1[i][2] = pow(connect_Data_Tree1[i][2], powCof);
+		connect_Data_Tree1[i][2] /= pow(connect_Data_Tree1[num_samples-2][2], powCof);
 		connect_Data_Tree1[i][2] /= 2;
 	}
 	connect_Data_Tree1[num_samples-2][2] = 0.5;
@@ -471,7 +687,7 @@ void Heatmap::createDataForDendogram1()
 	}
 }
 
-void Heatmap::createDataForDendogram2()
+void Heatmap::createDataForDendogram2(double powCof)
 {
 	this->Processed_Coordinate_Data_Tree2.resize(2*(this->num_features) - 1);
 	for(int i = 0; i < 2*(this->num_features) - 1; i++)
@@ -497,8 +713,8 @@ void Heatmap::createDataForDendogram2()
 
 	for(int i = 0; i < num_features-1; i++)
 	{
-		connect_Data_Tree2[i][2] = pow(connect_Data_Tree2[i][2], 0.15);
-		connect_Data_Tree2[i][2] /= pow(connect_Data_Tree2[num_features - 2][2], 0.15);
+		connect_Data_Tree2[i][2] = pow(connect_Data_Tree2[i][2], powCof);
+		connect_Data_Tree2[i][2] /= pow(connect_Data_Tree2[num_features - 2][2], powCof);
 		connect_Data_Tree2[i][2] /= 2;
 	}
 	connect_Data_Tree2[num_features - 2][2] = 0.5;
@@ -595,7 +811,7 @@ void Heatmap::showDendrogram1()
 	denactor1->SetMapper(denmapper1);
 	denmapper1->SetScalarRange(0, 3*this->num_samples-1);
 	this->view->GetRenderer()->AddActor(denactor1);
-	this->view->Render();
+	//this->view->Render();
 }
 
 void Heatmap::showDendrogram2()
@@ -670,7 +886,7 @@ void Heatmap::showDendrogram2()
 	denactor2->SetMapper(denmapper2);
 	denmapper2->SetScalarRange(0, 3*this->num_features-1);
 	this->view->GetRenderer()->AddActor(denactor2);
-	this->view->Render();
+	//this->view->Render();
 }
 
 void Heatmap::GetSelecectedIDs()
@@ -699,7 +915,7 @@ void Heatmap::GetSelecectedIDs()
 
 		for(int i = 0; i<this->num_samples; i++)
 		{
-			if(Optimal_Leaf_Order1[i] == index1)
+			if(Optimal_Leaf_Order1[i] == indMapFromVertexToInd.find(index1)->second)
 			{
 				IDs1[count1++] = i;				
 				break;
@@ -721,6 +937,26 @@ void Heatmap::GetSelecectedIDs()
 			}		
 		}
 		iter2++;
+	}
+
+	if( num1 == 0 && num2 != 0)
+	{
+		num1 = this->num_samples;
+		IDs1.resize(num1);
+		for( int i = 0; i < this->num_samples; i++)
+		{
+			IDs1[i] = i;
+		}
+	}
+
+	if( num2 == 0 && num1 != 0)
+	{
+		num2 = this->num_features;
+		IDs2.resize(num2);
+		for( int i = 0; i < this->num_features; i++)
+		{
+			IDs2[i] = i;
+		}
 	}
 
 	for(int i = 0; i<num1; i++)
@@ -752,31 +988,38 @@ void Heatmap::GetSelecectedIDs()
 	selectedActor->GetProperty()->SetEdgeColor(1,1,1);
 	selectedActor->GetProperty()->SetLineWidth(0.5);
 
-	if(continueselect == false)
+	try
 	{
-		if(continueselectnum > 0)
+		if(continueselect == false)
 		{
-			cout<<"I'm here "<<continueselectnum<<endl;
-			for(int i = 0; i<continueselectnum + 1; i++)
-				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
-			continueselectnum = 0;
+			if(continueselectnum > 0)
+			{
+				cout<<"I'm here "<<continueselectnum<<endl;
+				for(int i = 0; i<continueselectnum + 1; i++)
+					this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+				continueselectnum = 0;
+			}
+			else
+			{
+				if (this->removeActorflag != 0)
+					this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+			}
+
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+			this->removeActorflag += 1;
 		}
 		else
 		{
-			if (this->removeActorflag != 0)
-				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+			this->continueselectnum += 1;
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+
 		}
-
-		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
-		this->removeActorflag += 1;
+		this->view->Render();
 	}
-	else
+	catch(...)
 	{
-		this->continueselectnum += 1;
-		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
-
+		cout<<"GetSelecectedIDs failed, please try it again!"<<endl;
 	}
-	this->view->Render();
 }
 
 void Heatmap::drawPoints1()
@@ -812,6 +1055,86 @@ void Heatmap::drawPoints1()
     for(int j=0;j<(2*(this->num_samples)-1) + (2*(this->num_features)-1);j++)
     {
 		vertexColors1->InsertNextValue(j);
+		scales1->InsertNextValue(1);
+    }
+
+	this->graph_Layout1->GetVertexData()->AddArray(vertexColors1);
+    this->view->AddRepresentationFromInput(graph_Layout1);
+    this->view->SetLayoutStrategy("Pass Through");
+	this->graph_Layout1->GetVertexData()->AddArray(scales1);
+    this->view->ScaledGlyphsOn();
+    this->view->SetScalingArrayName("Scales1");
+    vtkRenderedGraphRepresentation::SafeDownCast(this->view->GetRepresentation()) ->SetGlyphType(vtkGraphToGlyphs::CIRCLE);
+
+	this->view->SetVertexColorArrayName("Color1");
+    this->view->ColorVerticesOn();
+	this->theme->SetPointLookupTable(lookupTable1);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+	vtkSmartPointer<vtkStringArray> vertexIDarrays = vtkSmartPointer<vtkStringArray>::New();
+	vertexIDarrays->SetNumberOfComponents(1);
+	vertexIDarrays->SetName("vertexIDarrays");
+
+	for( int i = 0; i < this->num_samples; i++)
+	{
+		vertexIDarrays->InsertNextValue("");
+		//vtkVariant v = i;
+		//vertexIDarrays->InsertNextValue(v.ToString());
+	}
+	for( int i = this->num_samples; i <2*(this->num_samples)-1; i++)
+		vertexIDarrays->InsertNextValue("");
+
+	for( int i = 2*(this->num_samples)-1; i <2*(this->num_samples)-1 + this->num_features; i++)
+	{
+		vertexIDarrays->InsertNextValue("");
+		//vtkIdType id = i - (2*(this->num_samples)-1) + 1;
+		//vertexIDarrays->InsertNextValue(this->table->GetColumn(id)->GetName ());
+	}	
+
+	for( int i = 2*(this->num_samples)-1 + this->num_features; i <2*(this->num_samples)-1 + 2*(this->num_features)-1; i++)
+		vertexIDarrays->InsertNextValue("");
+
+	this->graph_Layout1->GetVertexData()->AddArray(vertexIDarrays);
+	this->view->SetVertexLabelVisibility(true);
+	this->view->SetVertexLabelArrayName("vertexIDarrays");
+	this->view->SetVertexLabelFontSize(20);
+	this->view->SetHideVertexLabelsOnInteraction(1);
+/////////////////////////////////////////////////////////////////////
+    this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
+    this->selectionCallback1->SetClientData(this);
+    this->selectionCallback1->SetCallback ( SelectionCallbackFunction1);
+    this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);\
+}
+
+void Heatmap::drawPoints2()
+{
+	v1->SetNumberOfValues (2*this->num_samples-1);
+
+	for(int i=0; i<((2*this->num_features)-1);i++)
+    {
+		v1->SetValue (i,graph_Layout1->AddVertex());
+		this->points1->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1],this->Processed_Coordinate_Data_Tree2[i][2],this->Processed_Coordinate_Data_Tree2[i][3]);
+	}
+    this->graph_Layout1->SetPoints(this->points1);
+     
+    ///////////////coloring/////////////////////
+    vertexColors1->SetNumberOfComponents(1);
+    vertexColors1->SetName("Color1");
+ 
+    lookupTable1->SetNumberOfTableValues( 2 * this->num_features - 1);
+    for(int i = 0; i< 2 * this->num_features-1; i++)
+    {
+		lookupTable1->SetTableValue(i, 0.5, 0.5,0.5); // color the vertices- blue
+    }  
+    lookupTable1->Build();
+   
+	vtkSmartPointer<vtkFloatArray> scales1 = vtkSmartPointer<vtkFloatArray>::New(); /// scales for vertex size
+    scales1->SetNumberOfComponents(1);
+	scales1->SetName("Scales1");
+
+    for(int j = 0; j< 2 * this->num_features - 1; j++)
+    {
+		vertexColors1->InsertNextValue(j);
 		scales1->InsertNextValue(0.5);
     }
 
@@ -829,10 +1152,11 @@ void Heatmap::drawPoints1()
 
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
-    this->selectionCallback1->SetCallback ( SelectionCallbackFunction1);
+    this->selectionCallback1->SetCallback ( SelectionCallbackFunction);
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
-void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+
+void Heatmap::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
 	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
 	vtkSelection* selection = annotationLink->GetCurrentSelection();
@@ -875,10 +1199,62 @@ void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int ev
 			}
 		}
 
-		heatmapWin->SetdenSelectedIds1( IDs);
+		heatmapWin->SetdenSelectedIds1( IDs, false);
 	}
 }
 
+void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
+	vtkSelection* selection = annotationLink->GetCurrentSelection();
+	Heatmap* heatmapWin = (Heatmap*)clientData;
+
+	vtkSelectionNode* vertices = NULL;
+	vtkSelectionNode* edges = NULL;
+	vtkSelectionNode* cells = NULL;
+
+    if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+        {
+        vertices = selection->GetNode(0);
+        }
+    else if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
+        {
+        edges = selection->GetNode(0);
+        }
+ 
+    if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+        {
+        vertices = selection->GetNode(1);
+        }
+    else if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
+        {
+        edges = selection->GetNode(1);
+        }
+
+	if( vertices != NULL)
+	{
+		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+	
+		std::set<long int> IDs;
+		if(vertexList->GetNumberOfTuples() > 0)
+		{
+
+			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+			{
+				long int value = vertexList->GetValue(i);
+				IDs.insert(value);
+			}
+		}
+		try
+		{
+			heatmapWin->SetdenSelectedIds1( IDs, true);
+		}
+		catch(...)
+		{
+			cout<<"SetdenSelectedIds1 failed, please try again !"<<endl;
+		}
+	}
+}
 
 void Heatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
@@ -926,13 +1302,20 @@ void Heatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int ev
  
 		double* worldPosition = cellpicker->GetPickPosition();
 		if(cellpicker->GetCellId() != -1)
-		{	 
+		{
+			try
+			{
 			heatmapWin->id2 = cellpicker->GetCellId();
 			heatmapWin->ids = vtkSmartPointer<vtkIdTypeArray>::New();
 			heatmapWin->ids->SetNumberOfComponents(1);
 			heatmapWin->computeselectedcells();
 			heatmapWin->setselectedCellIds();
 			emit heatmapWin->SelChanged();
+			}
+			catch(...)
+			{
+				cout<<"SelectionCallbackFunction3 failed, please try again !"<<endl;
+			}
 		}
 	}
 }
@@ -958,7 +1341,7 @@ void Heatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void*
 	}
 }
 
-void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
+void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 {
 	std::set<long int> selectedIDs1;
 	std::set<long int> selectedIDs2;
@@ -989,18 +1372,35 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 		}
 	}
 
-	if( IDs.size() > 0)
+	if( bfirst)
 	{
-		for(it=IDs.begin(); it != IDs.end(); it++ )
+		if( IDs.size() > 0)
 		{
-			id = *it;
-			cout<<"id ====="<<id<<endl;
-			if(id < 2*this->num_samples-1)
+			for( it = IDs.begin(); it != IDs.end(); it++ )
 			{
-				reselectIds1(selectedIDs1, id);
+				id = *it;
+				//cout<<"id ====="<<id<<endl;
+				if(id < 2*this->num_samples-1)
+				{
+					reselectIds1(selectedIDs1, id);
+				}
+				else
+					reselectIds2(selectedIDs2, id - (2*this->num_samples-1));
 			}
-			else
-				reselectIds2(selectedIDs2, id - (2*this->num_samples-1));
+		}
+	}
+	else
+	{
+		if( IDs.size() > 0)
+		{
+			for( it = IDs.begin(); it != IDs.end(); it++ )
+			{
+				id = *it;
+				if(id < 2 * this->num_features - 1)
+				{
+					reselectIds2(selectedIDs2, id);
+				}
+			}
 		}
 	}
 
@@ -1022,10 +1422,16 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 		
 		if(intersectionselect == true)
 			this->interselectedIDs = selectedIDs1;
-		this->Selection2->select(selectedIDs2);
-		this->Selection->select(selectedIDs1);
+		try
+		{
+			this->Selection2->select(selectedIDs2);
+			this->Selection->select(selectedIDs1);
+		}
+		catch(...)
+		{
+			cout<<"Setcelected id after reselect failed, please try again!"<<endl;
+		}
 	}
-
 	else if(selectedIDs2.size() > 0)	
 	{
 		this->Selection2->select(selectedIDs2);
@@ -1033,7 +1439,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 		if(intersectionselect == false)
 		{
 			for(int i = 0; i<this->num_samples; i++)
-				selectedIDs1.insert(i);
+				selectedIDs1.insert( indMapFromIndToVertex[i]);
 			this->Selection->select(selectedIDs1);
 		}
 		else
@@ -1047,21 +1453,19 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs)
 		denactor2->Modified();
 		this->view->Render();
 		this->denResetflag2 = 1;
-
 	}
 	else
 	{
 		this->Selection2->clear();
 		this->Selection->clear();
 	}
-
 }
 
 void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 {
 	if(id < this->num_samples)
 	{
-		selectedIDs.insert(id);
+		selectedIDs.insert( indMapFromIndToVertex[id]);
 	}
 	else
 	{
@@ -1088,7 +1492,7 @@ void Heatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
 {
 	if(id  < this->num_features)
 	{
-		selectedIDs2.insert(id);
+		selectedIDs2.insert( id);
 	}
 	else
 	{
@@ -1167,14 +1571,21 @@ void Heatmap::setselectedCellIds()
 
 	for(int i = r2; i<=r1; i++)
 	{
-		selectedIDs1.insert(this->Optimal_Leaf_Order1[i]);
+		selectedIDs1.insert( indMapFromIndToVertex[ this->Optimal_Leaf_Order1[i]]);
 	}
 	for(int j = c1; j<=c2; j++)
 	{		
 		selectedIDs2.insert(this->Optimal_Leaf_Order2[j]);
 	}
+	try
+	{
 	this->Selection2->select(selectedIDs2);
 	this->Selection->select(selectedIDs1);
+	}
+	catch(...)
+	{
+		cout<<"setselectedCellIds failed, please try again!"<<endl;
+	}
 }
 
 void Heatmap::GetSelRowCol(int &r1, int &c1, int &r2, int &c2)

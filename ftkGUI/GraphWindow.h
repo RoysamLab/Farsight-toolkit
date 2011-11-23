@@ -48,6 +48,7 @@ public:
 	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>& colSels, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
+	void GetProgressionTreeOrder(std::vector<long int> &order);
 	
 protected:
 	void SetSelectedIds(std::set<long int>& IDs);
@@ -61,6 +62,7 @@ protected:
 		std::vector< std::pair<long int, std::vector<long int> > >& chainList);
 	bool IsExist(std::vector<long int>& vec, long int value);
 	double Median( vnl_vector<double> vec);
+	void GetOrder(long int node, std::vector<long int> &order);
 	
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
@@ -87,6 +89,9 @@ private:
 	std::map<long int, long int> indMapFromVertexToInd;
 	std::vector<long int> indMapFromIndToVertex;
 	QString fileName;
+
+	std::vector< long int> backbones;
+	std::vector< std::pair<long int, std::vector<long int> > > chainList;
 };
 
 #endif

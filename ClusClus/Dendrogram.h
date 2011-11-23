@@ -78,6 +78,9 @@
 #include <vtkDataSetAttributes.h>
 
 #include <ftkCommon/ftkUtils.h>
+#include "ClusClus/clusclus.h"
+#include "ClusClus/Dendrogram.h"
+#include "ClusClus/HeatmapWindow.h"
 #include "ObjectSelection.h"
 
 using namespace std;
@@ -91,7 +94,8 @@ public:
 	~Dendrogram();
 	void createDataForDendogram();
 	void showGraph();
-	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL);
+	void runClusclus();
+	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, double powCof = 0.2);
 	void setTreeData(int num_samples, double** treedata, int* optimalleaforder);
 
 	double** connect_Data_Tree;
@@ -110,7 +114,7 @@ signals:
 private:
 	void reselectIds(std::set<long int>& selectedIDs, long int id);
 
-	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout;
+	vtkSmartPointer<vtkTable > table;
 	vtkSmartPointer<vtkGraphLayoutView> graphLayoutView; 
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	vtkSmartPointer<vtkViewTheme> theme;
@@ -122,6 +126,9 @@ private:
 	QVTKWidget mainQTRenderWidget;
 
 	ObjectSelection * Selection;
+	double powCof;
+	clusclus *cc1;
+	clusclus *cc2;
 };
 
 #endif

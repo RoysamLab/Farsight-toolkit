@@ -4,26 +4,43 @@ Dendrogram::Dendrogram(QWidget *parent)
 : QMainWindow(parent)
 {
 	this->mainQTRenderWidget;
-	this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
-	this->theme = vtkSmartPointer<vtkViewTheme>::New();
-	this->graphLayoutView = vtkSmartPointer<vtkGraphLayoutView>::New();
-	this->points = vtkSmartPointer<vtkPoints>::New();
-	this->vertexColors = vtkSmartPointer<vtkIntArray>::New();
-	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	this->v = vtkSmartPointer<vtkIdTypeArray>::New();
+	//this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
+	//this->theme = vtkSmartPointer<vtkViewTheme>::New();
+	//this->graphLayoutView = vtkSmartPointer<vtkGraphLayoutView>::New();
+	//this->points = vtkSmartPointer<vtkPoints>::New();
+	//this->vertexColors = vtkSmartPointer<vtkIntArray>::New();
+	//this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	//this->v = vtkSmartPointer<vtkIdTypeArray>::New();
 }
 
 Dendrogram::~Dendrogram()
 {
+	if(this->Optimal_Leaf_Order)
+		delete this->Optimal_Leaf_Order;
+	if(this->connect_Data_Tree)
+	{
+		for(int i = 0; i<this->num_samples - 1; i++)
+			delete this->connect_Data_Tree[i];
+		delete this->connect_Data_Tree;
+	}
 }
 
 void Dendrogram::setTreeData(int numsamples, double** treedata, int* optimalleaforder)
 {
-	this->connect_Data_Tree = treedata;
-	this->Optimal_Leaf_Order = optimalleaforder;
 	this->num_samples = numsamples;
-	
+	this->connect_Data_Tree = new double*[this->num_samples-1];
+	for(int i = 0; i<this->num_samples - 1; i++)
+	{
+		this->connect_Data_Tree[i] = new double[4];
+		for(int j = 0; j<4; j++)
+			this->connect_Data_Tree[i][j] = treedata[i][j];
+	}
+	//this->connect_Data_Tree = treedata;
+	this->Optimal_Leaf_Order = new int[this->num_samples];
+	for(int i = 0; i<this->num_samples; i++)
+		this->Optimal_Leaf_Order[i] = optimalleaforder[i];	
 }
+
 void Dendrogram::createDataForDendogram()
 {
 	this->Processed_Coordinate_Data_Tree.resize(2*(this->num_samples) - 1);
@@ -51,7 +68,7 @@ void Dendrogram::createDataForDendogram()
 
 	for(int i = 0; i < num_samples-1; i++)
 	{
-		connect_Data_Tree[i][2] = pow(connect_Data_Tree[i][2], 0.2);
+		connect_Data_Tree[i][2] = pow(connect_Data_Tree[i][2], this->powCof);
 	}
 
 	for(int i = num_samples ; i < 2*num_samples - 1; i++)
@@ -76,13 +93,20 @@ void Dendrogram::createDataForDendogram()
 }
 void Dendrogram::showGraph()
 {
+	this->theme = vtkSmartPointer<vtkViewTheme>::New();
+	this->graphLayoutView = vtkSmartPointer<vtkGraphLayoutView>::New();
+	this->points = vtkSmartPointer<vtkPoints>::New();
+	this->vertexColors = vtkSmartPointer<vtkIntArray>::New();
+	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	this->v = vtkSmartPointer<vtkIdTypeArray>::New();
+	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
 	v->SetNumberOfValues (2*this->num_samples-1);
 	for(int i=0; i<((2*this->num_samples)-1);i++)
     {
 		v->SetValue (i,graph_Layout->AddVertex());
 		this->points->InsertNextPoint(this->Processed_Coordinate_Data_Tree[i][1],this->Processed_Coordinate_Data_Tree[i][2],this->Processed_Coordinate_Data_Tree[i][3]);
 	}
-    this->graph_Layout->SetPoints(this->points);
+    graph_Layout->SetPoints(this->points);
      
     ///////////////coloring/////////////////////
     vertexColors->SetNumberOfComponents(1);
@@ -105,10 +129,10 @@ void Dendrogram::showGraph()
 		scales->InsertNextValue(1.3);
     }
 
-	this->graph_Layout->GetVertexData()->AddArray(vertexColors);
-    this->graphLayoutView->AddRepresentationFromInput(graph_Layout);
+	graph_Layout->GetVertexData()->AddArray(vertexColors);
+    this->graphLayoutView->SetRepresentationFromInput(graph_Layout);
     this->graphLayoutView->SetLayoutStrategy("Pass Through");
-	this->graph_Layout->GetVertexData()->AddArray(scales);
+	graph_Layout->GetVertexData()->AddArray(scales);
     this->graphLayoutView->ScaledGlyphsOn();
     this->graphLayoutView->SetScalingArrayName("Scales");
     vtkRenderedGraphRepresentation::SafeDownCast(this->graphLayoutView->GetRepresentation()) ->SetGlyphType(vtkGraphToGlyphs::CIRCLE);
@@ -216,6 +240,47 @@ void Dendrogram::showGraph()
 	this->graphLayoutView->GetInteractor()->Start();
 	
 }
+
+void Dendrogram::runClusclus()
+{
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->table->GetNumberOfRows()];
+
+	std::cout<<this->table->GetNumberOfRows()<<endl;
+	std::cout<<this->table->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2];
+	}
+
+
+	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	cc1 = new clusclus(datas, (int)this->table->GetNumberOfRows(), (int)this->table->GetNumberOfColumns() - 1);
+	cc1->RunClusClus();
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	this->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
+	this->createDataForDendogram();
+	//this->dendro1->showGraph();
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+}
 void Dendrogram::SetSelectedIds(std::set<long int>& IDs)
 {
 	std::set<long int> selectedIDs;
@@ -303,14 +368,16 @@ void Dendrogram::SelectionCallbackFunction(vtkObject* caller, long unsigned int 
 }
 
 
-void Dendrogram::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels)
+void Dendrogram::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, double powCof)
 {
-	//this->createDataForDendogram();
+	if(table)
+		this->table = table;
 
 	if(!sels)
 		this->Selection = new ObjectSelection();
 	else
 		this->Selection = sels;
+	this->powCof = powCof;
 
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDs()));
 

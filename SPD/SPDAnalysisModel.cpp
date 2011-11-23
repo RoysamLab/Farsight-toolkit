@@ -437,16 +437,19 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 
 			newModuleMeans.normalize();
 			newModuleCor = newModuleMeans * newModule;
+			double newCor = abs( newModuleCor.mean());                          //??? there should be no abs???
 
-			if( abs(newModuleCor.mean()) > cor)
+			if( newCor > cor)
 			{
 				isActiveModule[moduleToDeleteId] = 0;
 				moduleSize[moduleId] += moduleSize[moduleToDeleteId];
 				moduleSize[moduleToDeleteId] = 0;
+
 				mean.set_column(moduleId, newModuleMeans);
 				mean.set_column(moduleToDeleteId, zeroCol);
+				
 				delColsVec.push_back(moduleToDeleteId);
-
+				
 				for( unsigned int j = 0; j < index.size(); j++)
 				{
 					if( index[j] == moduleToDeleteId)
@@ -466,9 +469,8 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 	//ofs.close();
 
 	StandardizeIndex(index);
-
-	int max = index.max_value() + 1;
 	EraseCols( mean, delColsVec);
+	
 	return index.max_value() + 1;   // how many clusters have been generated
 }
 
@@ -644,9 +646,9 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 		vnl_vector<double> dataSd;
 		vnl_matrix<double> mat = dataTmp.transpose();
 		GetMatrixRowMeanStd( mat, dataMean, dataSd);
-		dataMean.normalize();
+		dataMean = dataMean.normalize();
 
-		double moduleCor = (dataMean * dataTmp).mean();
+		double moduleCor = abs( (dataMean * dataTmp).mean());
 
 		if( moduleCor >= cor || coherence(i, j) >= mer)
 		{
@@ -693,7 +695,141 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 			}
 		}
 	}
+
 	ofs.close();
+}
+
+/// Hierachical Clustering for cols of data
+void SPDAnalysisModel::HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol)    
+{
+	ParseTraceFile(table);
+	TreeData.clear(); 
+	//vnl_matrix<double> tmpData;
+	if( bcol ==  false)
+	{
+		DataMatrix = DataMatrix.transpose();
+	}
+	DataMatrix.normalize_columns();
+
+	vnl_matrix<double> CorMat(DataMatrix.cols(), DataMatrix.cols());
+	CorMat.fill(0);
+	for( int i = 0; i < DataMatrix.cols(); i++)
+	{
+		vnl_vector<double> tmpColi = DataMatrix.get_column(i);
+		for( int j = i + 1; j < DataMatrix.cols(); j++)
+		{
+			vnl_vector<double> tmpColj = DataMatrix.get_column(j);
+			double cor = VnlVecMultiply(tmpColi, tmpColj);
+			CorMat(i, j) = cor;
+			CorMat(j, i) = cor;
+		}
+	}
+
+	vnl_vector<int> index( DataMatrix.cols());    // node index
+	vnl_vector<unsigned int> cIndex(DataMatrix.cols());    // cluster index
+	vnl_vector<int> size(DataMatrix.cols());      // cluster size
+	int newIndex = DataMatrix.cols();
+	for( int i = 0; i < DataMatrix.cols(); i++)
+	{
+		index[i] = i;
+		cIndex[i] = i;
+		size[i] = 1;
+	}
+
+	vnl_vector<double> zeroCol;
+	zeroCol.set_size( CorMat.rows());
+	for( int i = 0; i < CorMat.rows(); i++)
+	{
+		zeroCol[i] = 0;
+	}
+	
+	std::vector<unsigned int> ids;
+	for( int count = 0; count < DataMatrix.cols() - 1; count++)
+	{
+		int maxId = CorMat.arg_max();
+		double maxCor = CorMat.max_value();
+		int j = maxId / CorMat.rows();
+		int i = maxId - CorMat.rows() * j;
+		int min = i > j ? j : i;
+		int max = i > j ? i : j;
+
+		Tree tr( index[min], index[max], maxCor, newIndex);
+		TreeData.push_back( tr);
+
+		index[min] = newIndex;
+		index[max] = -1;
+		SubstitudeVectorElement(cIndex, max, min);        // !!! get all index which is max to min
+
+		CorMat.set_column(min, zeroCol);
+		CorMat.set_column(max, zeroCol);
+		CorMat.set_row(min, zeroCol);
+		CorMat.set_row(max, zeroCol);
+
+		for( int k = 0; k < CorMat.cols(); k++)
+		{
+			if( k != min && index[k] != -1)
+			{
+				ids.clear();
+				ids.push_back(min);
+				ids.push_back(max);
+				ids.push_back(k);
+
+				vnl_matrix<double> newModule(DataMatrix.rows(), size(min) + size(max) + size(k));
+				vnl_vector<double> newModuleMeans;
+				vnl_vector<double> newModuleStd;
+				vnl_vector<double> newModuleCor;
+				vnl_vector<double> moduleCor; 
+
+				GetCombinedMatrix(cIndex, ids, newModule);   
+				//newModule.normalize_columns();
+
+				vnl_matrix<double> mat = newModule.transpose();
+				GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
+
+				newModuleMeans = newModuleMeans.normalize();
+				newModuleCor = newModuleMeans * newModule;
+				double newCor = abs( newModuleCor.mean());
+
+				CorMat( min, k) = newCor;
+				CorMat( k, min) = newCor;
+			}	
+		}
+		newIndex += 1;
+		size(min) += size(max);
+		size(max) = 0;
+	}
+
+	QString str = "dendrogram";
+	if(bcol)
+	{
+		str += "_feature.txt";
+	}
+	else
+	{
+		str += "_sample.txt";
+	}
+	ofstream ofs(str.toStdString().c_str());
+	for( int i = 0; i < TreeData.size(); i++)
+	{
+		Tree tr = TreeData[i];
+		ofs<< tr.first<< "\t"<< tr.second<< "\t"<< tr.cor<< "\t"<< tr.parent<<endl;
+	}
+	ofs.close();
+}
+
+double SPDAnalysisModel::VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2)
+{
+	if( vec1.size() != vec2.size())
+	{
+		std::cout<< "vector size doesn't match for multiplication"<<endl;
+		return 0;
+	}
+	double sum = 0;
+	for( int i = 0; i < vec1.size(); i++)
+	{
+		sum += vec1[i] * vec2[i];
+	}
+	return sum;
 }
 
 void SPDAnalysisModel::SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue)
@@ -1315,12 +1451,19 @@ void SPDAnalysisModel::GetCombinedMatrix( vnl_vector< unsigned int> & index, std
 	unsigned int i = 0;
 	unsigned int ind = 0;
 
-	for( i = 0; i < index.size(); i++)
+	if( mat.rows() == DataMatrix.rows())
 	{
-		if( IsExist(moduleID, index[i]))
+		for( i = 0; i < index.size(); i++)
 		{
-			mat.set_column( ind++, this->DataMatrix.get_column(i));
+			if( IsExist(moduleID, index[i]))
+			{
+				mat.set_column( ind++, DataMatrix.get_column(i));
+			}
 		}
+	}
+	else
+	{
+		std::cout<< "Row number does not match!"<<endl;
 	}
 }
 
@@ -1515,4 +1658,9 @@ double SPDAnalysisModel::GetEMDSelectedPercentage(double thres)
 double SPDAnalysisModel::GetEMDSelectedThreshold( double per)
 {
 	return 0;
+}
+
+void SPDAnalysisModel::GetMatrixData(vnl_matrix<double> &mat)
+{
+	mat = DataMatrix.normalize_columns();
 }
