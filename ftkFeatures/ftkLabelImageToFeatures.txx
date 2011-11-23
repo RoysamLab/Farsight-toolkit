@@ -91,7 +91,6 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	zernikeOrder = 5;
 	
 	boundaryPix.clear();
-	labelToBoundary.clear();
 	interiorPix.clear();
 	sharePix.clear();
 	labels.clear();
@@ -609,7 +608,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 ::LabelImageScan()
 {
 	if(!labelImage) return;
-	labelToBoundary.clear();
 	
 	typedef itk::ConstantBoundaryCondition<LabelImageType> boundaryConditionType;
 	typedef itk::ConstNeighborhoodIterator<LabelImageType, boundaryConditionType > NeighborhoodIteratorType;
@@ -684,7 +682,6 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		{
 			//I have a boundary point!!!
 			boundaryPix[ LtoIMap[v] ].push_back(index);
-			labelToBoundary[v].push_back(index);
 		}
 		else 
 		{

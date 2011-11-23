@@ -157,7 +157,6 @@ public:
 
 	void Update();
 	LabelPixelType GetMaxLabel();
-	std::map< TLPixel, std::vector< typename LabelImageType::IndexType > > GetBoundaryPixels(){ return labelToBoundary; };
 	float GetPercentSharedBoundary(TLPixel focusLabel, TLPixel neighborLabel);
 	std::vector<TLPixel> GetContactNeighbors(TLPixel label);
 	IntrinsicFeatures * GetFeatures( LabelPixelType label );
@@ -197,7 +196,6 @@ private:
 	bool cyto_image;
 
 	std::vector< std::vector< typename LabelImageType::IndexType > > boundaryPix;	//boundary pixels for each label
-	std::map< TLPixel, std::vector< typename LabelImageType::IndexType > > labelToBoundary;	//boundary pixels for each label
 	std::vector< std::vector< typename LabelImageType::IndexType > > interiorPix;	//interior pixels for each label
 	std::vector< std::map<TLPixel, int> > sharePix;				//number of edges shared between boundary pairs
 																//the map will connect neighbors to number of edges shared.
