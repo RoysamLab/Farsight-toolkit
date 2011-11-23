@@ -11,3 +11,4 @@ SET(iMontage_SRCS
 
 ADD_EXECUTABLE(iMontage main.cpp ${iMontage_HDRS} ${iMontage_SRCS})
 TARGET_LINK_LIBRARIES(iMontage Trace)
+INSTALL( TARGETS iMontage RUNTIME DESTINATION bin )
