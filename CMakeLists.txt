@@ -28,6 +28,7 @@ OPTION( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 OPTION( BUILD_EMBREX "Build Mark Embrecht's KPLS module" OFF )
 OPTION( BUILD_UNMIXING "Build Unmixing module" OFF )
 OPTION( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
+OPTION( BUILD_POWEROF2TILING "Build PowerOf2Tiling.exe which will take an image and split it into tiles of 1024 pixels, zero-padding where needed" OFF)
 OPTION( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 OPTION( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
 OPTION( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" ON )
@@ -327,6 +328,11 @@ IF (BUILD_FTKVOTING)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkAdapSeedDetection )
 	SUBDIRS( ftkAdapSeedDetection )
 ENDIF (BUILD_FTKVOTING)
+
+IF (BUILD_POWEROF2TILING)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/PowerOf2Tiling )
+	SUBDIRS( PowerOf2Tiling )
+ENDIF (BUILD_POWEROF2TILING)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
