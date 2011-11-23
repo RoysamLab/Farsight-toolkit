@@ -170,6 +170,10 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		labFilter->ComputeTexturesOn();
 	labFilter->Update();
 
+		std::map< unsigned short, std::vector< typename itk::Image<unsigned short, 3>::IndexType > > labToBoundMap = labFilter->GetBoundaryPixels();
+	std::string Filename = "Boundary.txt";
+
+
 	//Init the table (headers):
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	column->SetName( "ID" );
@@ -251,6 +255,31 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		}
 		table->InsertNextRow(row);
 	}
+
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	//Write the headers:
+
+	int dimenIma = 2;
+	outFile << dimenIma << "\n";
+	for(int c=0; c<(int)table->GetNumberOfRows(); ++c)
+	{
+		int ID = table->GetValue(c, 0).ToInt();
+		outFile << ID << "\t" << (int)table->GetNumberOfRows();
+		for(int d=0; d<labToBoundMap[ID].size(); ++d)
+		{
+			outFile << labToBoundMap[ID][d][0] << "\t" ;			
+			outFile << labToBoundMap[ID][d][1] << "\t" ;		
+			if( dimenIma == 3 ){
+				outFile << labToBoundMap[ID][d][2] << "\t" ;		
+			}
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+
+
 	return table;
 }
 

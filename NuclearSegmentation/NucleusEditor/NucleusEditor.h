@@ -227,6 +227,7 @@ protected slots:
 	//*****************************************************
 
 	//For Tools menu
+	void dummyFunctions(void);
 	void startROI(void);
 	void endROI(void);
 	void updateROIinTable(void);
@@ -337,6 +338,7 @@ protected:
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;
+	QAction *dummyAction;
 	QMenu *roiMenu;
 	QAction *drawROIAction;
 	QAction *loadROIAction;
@@ -420,6 +422,7 @@ protected:
 	ftk::ProjectProcessor *pProc;				//My project processor
 	ftk::Image::Pointer myImg;					//My currently visible image
 	ftk::Image::Pointer labImg;					//Currently visible label image
+	std::map< unsigned short, std::vector< typename itk::Image<unsigned short, 3>::IndexType > > labToBoundMap;
 	//Amin
 	ftk::Image::PtrMode mode;
 	std::vector<QStringList> * filesChannTimeList;

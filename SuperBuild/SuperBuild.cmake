@@ -148,7 +148,7 @@ set(VTK_DIR ${base}/Build/VTK)
 # ITK v4 needs a short path on Windows
 # We setup different (shorter) directories for ITK here if necessary
 if(WIN32)
-  set(ITK_BASE_DIR_DEFAULT "C:/ITKRoot")
+  set(ITK_BASE_DIR_DEFAULT "C:/Lab/farsight/ITK_Superbuild")
   set(ITK_BASE_DIR "${ITK_BASE_DIR_DEFAULT}"
     CACHE PATH "Base of all SuperBuild-built ITK source/build trees.  If this path is too long, ITK will fail to build.")
   set(ITK_DOWNLOAD_DIR "${ITK_BASE_DIR}/Download")

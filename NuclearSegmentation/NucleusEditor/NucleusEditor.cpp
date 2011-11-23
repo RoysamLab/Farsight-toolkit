@@ -399,6 +399,10 @@ void NucleusEditor::createMenus()
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
 
+	dummyAction = new QAction(tr("My Dummy Functions"), this);
+	connect(dummyAction, SIGNAL(triggered()), this, SLOT(dummyFunctions()));
+	toolMenu->addAction(dummyAction);
+
 	roiMenu = toolMenu->addMenu(tr("Region Of Interest"));
 
 	drawROIAction = new QAction(tr("Draw ROI"), this);
@@ -1876,6 +1880,43 @@ this->updateViews();
 delete assocCal;
 }
 */
+
+void NucleusEditor::dummyFunctions(void)
+{
+	ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 > *boundPixFilter = ftk::LabelImageToFeatures< unsigned char, unsigned short, 3 >::New();
+	boundPixFilter->SetImageInputs(myImg->GetItkPtr<unsigned char>(0,0), labImg->GetItkPtr<unsigned short>(0,0));
+	labToBoundMap = boundPixFilter->GetBoundaryPixels();
+
+	std::cout<<endl<<" End Map population";
+
+	std::string Filename = "Boundary.txt";
+	
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(Filename.c_str(), ios::out | ios::trunc );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return;
+	}
+	//Write the headers:
+	for(int c=0; c<(int)table->GetNumberOfRows(); ++c)
+	{
+		int ID = table->GetValue(c, 0).ToInt();
+		outFile << ID << ":\t" ;
+		for(int d=0; d<labToBoundMap[ID].size(); ++d)
+		{
+			outFile << labToBoundMap[ID][0] << "," ;
+			outFile << labToBoundMap[ID][1] << "," ;
+			outFile << labToBoundMap[ID][2] << "; " ;
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+
+}
+
+
 
 void NucleusEditor::startROI(void)
 {
