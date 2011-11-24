@@ -2554,7 +2554,14 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 
 	// If there is not maximum continue with the same gradient ??? !!! (es decir no mas grande que un determinado threshdol)
 	vp.direc_vote = temp_vv_max;
-	vp.scale = scale_max+(int)((double)scale_max/3); // ??? Give the third part (option relajada)
+	
+	// If this is less than the maximum otherwise do not change
+	if(scale_max+(int)((double)scale_max/3)<=_hmax)
+	{
+		vp.scale = scale_max+(int)((double)scale_max/3); // ??? Give the third part (option relajada)
+	}
+	
+	
 
 }
 
