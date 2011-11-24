@@ -885,7 +885,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 			for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 			{
 				int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
-				std::endl<<std::cout<<_conesPru_3D_new[temp_vv].size();
+				std::cout << std::endl << _conesPru_3D_new[temp_vv].size();
 				for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv].size(); ++bin_cont )
 				{
 					poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
