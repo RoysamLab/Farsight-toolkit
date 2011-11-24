@@ -850,28 +850,49 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 // 			}
 // 		}
 		
-		// VERSION 3
+// 		// VERSION 3
+// 		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
+// 
+// 		int dir_vote = _voting_points_3D.at(i).direc_vote;
+// 		//#pragma omp parallel for
+// 		for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
+// 		{
+// 			std::vector< int >::iterator it_dir_3D;
+// 			for( it_dir_3D = _voteDirec_3D_new[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new[dir_vote][angle_int].end(); ++it_dir_3D )
+// 			{
+// 				ftkCone3D::iterator it_cone_3D;
+// 				ftkBins3D::iterator it_bin_3D;
+// 				for( it_cone_3D = _conesPru_3D_new[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new[(*it_dir_3D)].end(); ++it_cone_3D )
+// 				{
+// 					for( it_bin_3D = (*it_cone_3D).begin(); it_bin_3D != (*it_cone_3D).end(); ++it_bin_3D )
+// 					{
+// 						votingMaskArray_pos[(*it_bin_3D).off] = votingMaskArray_pos[(*it_bin_3D).off] + _voting_points_3D.at(i).mag;
+// 					}
+// 
+// 				}
+// 			}
+// 		}
+
+		// VERSION 1
 		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
 
 		int dir_vote = _voting_points_3D.at(i).direc_vote;
 		//#pragma omp parallel for
 		for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
 		{
-			std::vector< int >::iterator it_dir_3D;
-			for( it_dir_3D = _voteDirec_3D_new[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new[dir_vote][angle_int].end(); ++it_dir_3D )
+			for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 			{
-				ftkCone3D::iterator it_cone_3D;
-				ftkBins3D::iterator it_bin_3D;
-				for( it_cone_3D = _conesPru_3D_new[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new[(*it_dir_3D)].end(); ++it_cone_3D )
+				int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
+				for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv].size(); ++bin_cont )
 				{
-					for( it_bin_3D = (*it_cone_3D).begin(); it_bin_3D != (*it_cone_3D).end(); ++it_bin_3D )
-					{
-						votingMaskArray_pos[(*it_bin_3D).off] = votingMaskArray_pos[(*it_bin_3D).off] + _voting_points_3D.at(i).mag;
-					}
-
+					ftkBins3D * poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
+					
+					for( int votes=0; votes < (*poin_bin).size(); ++votes )
+						votingMaskArray_pos[(*poin_bin)[votes].off] = votingMaskArray_pos[(*poin_bin)[votes].off] + _voting_points_3D.at(i).mag;
 				}
 			}
 		}
+
 	}
 	memcpy(votingSumArray, votingMaskArray, npix*sizeof(VotingDirType_3D::PixelType)); // !!! This should be sum = sum + mask
 	memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
