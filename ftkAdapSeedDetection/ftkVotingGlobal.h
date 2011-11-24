@@ -3,11 +3,27 @@
 #define FTKVOTINGGLOBAL_H
 
 #include <time.h>
+#include<iostream>
+#include<vector>
+#include <cmath>
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkRescaleIntensityImageFilter.h"
+
+#include "itkSobelOperator.h"
+#include "itkNeighborhoodInnerProduct.h"
+#include "itkMinimumMaximumImageCalculator.h"
+
+#include "itkComposeImageFilter.h"
+#include "itkVectorImage.h"
+
+#include "itkCannyEdgeDetectionImageFilter.h"
+
+#include "itkRecursiveGaussianImageFilter.h"
+#include "itkImageDuplicator.h"
+
 
 #ifdef _OPENMP
 #include "omp.h"

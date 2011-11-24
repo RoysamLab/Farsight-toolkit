@@ -2,30 +2,13 @@
 #ifndef FTKVOTING_3D_H
 #define FTKVOTING_3D_H 
 
-#include<iostream>
-#include<vector>
-#include <cmath>
-//#include<stringstream>
+// ############################################################################################################################################################################
+// ??? -> Questions
+// !!! -> Testing
+// *** -> Someting to be improved
+// ############################################################################################################################################################################
 
 #include "ftkVotingGlobal.h"
-
-#include "itkSobelOperator.h"
-#include "itkNeighborhoodInnerProduct.h"
-#include "itkMinimumMaximumImageCalculator.h"
-
-#include "itkComposeImageFilter.h"
-#include "itkVectorImage.h"
-
-#include "itkCannyEdgeDetectionImageFilter.h"
-
-#include "itkRecursiveGaussianImageFilter.h"
-#include "itkImageDuplicator.h"
-
-
-//#include <image.h>
-//#include <point.h>
-//#include <global.h>
-
 
 // Voting Direction X and Y
 typedef double VotingDirPixelType;
@@ -39,98 +22,120 @@ typedef itk::ComposeImageFilter<VotingDirPerType_scalar> ImageToVectorImageFilte
 
 
 
-// Output Image Type
-typedef unsigned char OutputPixelType;
-typedef itk::Image< OutputPixelType, 2 > OutputImageType;
-
-
-
-
-
 // ############################################################################################################################################################################
 /** Voting point */
 struct VPoint3D {
-	short x, y, z; //(PARA QUE LA DIFERENCIA ENTRE X,Y Y XC Y XC)
-	short xc, yc, zc; //< center point (la nueva direccino a la que apunta)
-	std::pair<int,int> angIndex; //< angle index
-	int pos; //PARA QUE ES POS
-	double mag; //< magnitude
-	int scale;
-	int direc_vote;
-	int posOri;
+	// ???
+	short x, y, z;		
+	// Center point
+	short xc, yc, zc;	
+	// Actual position on the data structure ("cube")
+	int pos;			
+	// Magnitude of the vote
+	double mag;			
+	// Scale of the vote
+	int scale;			
+	// The direction of the vore
+	int direc_vote;		
+	// Position on the original data structure ("cube")
+	int posOri;			
 };
 
 // ############################################################################################################################################################################
 /** Weighted point */
 struct ftkWPoint3D {    
-	static int nx, ny, nz; // SE TIENEN QUE DEFINIR EN ALGUN PUNTO EN EL CPP "int WPoint3D::nx = 0;"
-	ftkWPoint3D(int xx=0, int yy=0, int zz=0, double ww=0) : x(xx), y(yy), z(zz), off(0), w(ww) {}
+	// Size of the image, initialized in the cpp file
+	static int nx, ny, nz;		
+	// Constructor, initialize the variables
+	ftkWPoint3D(int xx=0, int yy=0, int zz=0, double ww=0) : x(xx), y(yy), z(zz), off(0), w(ww) {}		
+	// Set image size (nx, ny, nz are static)
 	static void setImageSize(int xsize, int ysize, int zsize)
 	{  
 		nx = xsize;
 		ny = ysize;
 		nz = zsize;
 	}
-	void setOffset() 
-	{  off = x + y*nx + z*nx*ny; }
-	int x, y, z; //< coordinates
-	int off; //< offset position (//PARA QUE ES ESTE PARAMETRO)
-	double w; //< weight
+	// To avoid having to calculate x+y*nx+z*nx*ny for every access of the votes
+	void setOffset()			
+	{  
+		off = x + y*nx + z*nx*ny; 
+	}
+	// ???
+	int x, y, z;				
+	// Actual position on the data structure ("cube")
+	int off;					
+	// Weight of the vote
+	double w;					
 };
 
 // ############################################################################################################################################################################
-/** An intersection of cone */
-//  typedef std::vector<WPoint3D> ConePlane3D;  
+/** Bins of the cones */
 struct ftkBins3D : public std::vector<ftkWPoint3D> {
-	static int nx, ny, nz;
-	ftkBins3D(int n, const ftkWPoint3D &v) : std::vector<ftkWPoint3D>(n, v) { }
+	// Size of the image, initialized in the cpp file
+	static int nx, ny, nz;		
+	// Constructor, initialize the variables
+	ftkBins3D(int n, const ftkWPoint3D &v) : std::vector<ftkWPoint3D>(n, v) { }		
 	ftkBins3D() : std::vector<ftkWPoint3D>() { }
+	// Set image size (nx, ny, nz are static)
 	static void setImageSize(int xsize, int ysize, int zsize)
 	{  
 		nx = xsize;
 		ny = ysize;
 		nz = zsize;
 	}
+	// To avoid having to calculate x+y*nx+z*nx*ny for every access of the votes
 	void setOffset()
 	{
-		for(iterator it = begin(); it!=end(); it++) //NO ENTIENDO SU FUNCION MUY BIEN
+		for(iterator it = begin(); it!=end(); it++)
 			it->setOffset();     
 	}
+	// !!!
 	void nic (){}
 };
 
 // ############################################################################################################################################################################
-/** \brief A 3D cone */
+/** 3D Cone */
 struct ftkCone3D : public std::vector<ftkBins3D> {
+	// Size of the image, initialized in the cpp file
 	static int nx, ny, nz; //< image size
+	// !!! Counter of votes
 	static int contador_1;
 	ftkCone3D() : std::vector<ftkBins3D>() { }
-	void setDirection(double xx, double yy, double zz); //No veo que sea util siendo que ya tenamos un vector de estoy de tamano 256
+	// Set the direction of the cone
+	void setDirection(double xx, double yy, double zz)
+	{
+		dxx = xx;
+		dyy = yy;
+		dzz = zz;
+	}
+	// Set the image size (nx, ny, nz are static)
 	static void setImageSize(int xsize, int ysize, int zsize)
 	{  
 		nx = xsize;
 		ny = ysize;
 		nz = zsize;
 	}
+	// To avoid having to calculate x+y*nx+z*nx*ny for every access of the votes
 	void setOffset()
 	{
 		for(iterator it = begin(); it!=end(); it++) {
 			it->setOffset();
 		}
 	}
-	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp);
-	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int &dist);
-	void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
+	// Functions to actually vote vote
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp);
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int &dist);
+	//void inline vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag);
 
-	//void inline vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp); // Guarda direccion 
-	void inline vote_dir(std::vector<std::vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1); // Guarda direccion
+	// !!! Store the direction of the votes
+	//void inline vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp);
+	// !!! Store the direction of the votes
+	void inline vote_dir(std::vector<std::vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1);
 
-	//void vote(VotingDirType_3D::PixelType * p, VotingDirType_3D::PixelType * pmask, const VPoint3D& vp);
-	double dx, dy, dz; //< direction
-
+	// Direction of the cone (
 	double dxx;
 	double dyy;
-	double dzz; // This is the direction of the center pixel
+	double dzz; 
 
 };
 
@@ -331,6 +336,8 @@ private:
 	std::vector< VPoint3D > _voting_points_3D; // List of voting points
 
 	int computeDirecIndex_3D(double dx, double dy, double dz) const;
+
+	int _Z_factor;
 
 	};
 

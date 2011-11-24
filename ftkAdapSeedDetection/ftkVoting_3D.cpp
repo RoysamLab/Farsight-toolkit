@@ -37,6 +37,7 @@ ftkVoting_3D::ftkVoting_3D(){
 	delta_theta = 2*pi/ntheta;
 	_NN_dir = 500;
 	_sigmaG = 1.5;
+	_Z_factor = 2;
 
 }
 
@@ -166,11 +167,11 @@ void ftkVoting_3D::compute(nftkVotingGlobal::InputImageType_3D::Pointer inputIma
 	// Gradient magnitude and normalize gradient X, Y and Z
 #pragma omp parallel for
 	for( int tt=0; tt<npix; tt++ ){
-		votingDirXYZ_3DArray[tt] = sqrt(votingDirX_3DArray[tt]*votingDirX_3DArray[tt]+votingDirY_3DArray[tt]*votingDirY_3DArray[tt]+votingDirZ_3DArray[tt]*votingDirZ_3DArray[tt]);
+		votingDirXYZ_3DArray[tt] = sqrt(votingDirX_3DArray[tt]*votingDirX_3DArray[tt]+votingDirY_3DArray[tt]*votingDirY_3DArray[tt]+votingDirZ_3DArray[tt]*votingDirZ_3DArray[tt]*_Z_factor);
 		if(votingDirXYZ_3DArray[tt]>epsilon){
 			votingDirX_3DArray[tt] = votingDirX_3DArray[tt]/votingDirXYZ_3DArray[tt];
 			votingDirY_3DArray[tt] = votingDirY_3DArray[tt]/votingDirXYZ_3DArray[tt];
-			votingDirZ_3DArray[tt] = votingDirZ_3DArray[tt]/votingDirXYZ_3DArray[tt];
+			votingDirZ_3DArray[tt] = votingDirZ_3DArray[tt]*_Z_factor/votingDirXYZ_3DArray[tt];
 		}
 	}
 
@@ -294,45 +295,48 @@ void ftkVoting_3D::compute(nftkVotingGlobal::InputImageType_3D::Pointer inputIma
 	bw = sqrt((double)(_radius*_radius + _hmax*_hmax)) + 3; // Que es esto ??
 	const int bw2 = 2*bw;
 
-	// Calculate the voting poitns
-	std::cout << std::endl << "Computing the voting points -> ";
-	_t1_begin=clock();
-	int max1=0;
-	int max2=0;
-// This can be parallel
-	std::pair< int, int > indx;
-	VPoint3D vp;
-	for(int z = 0; z < nz; z++)
-	{
-		for(int y = 0; y < ny; y++)
-		{
-			for(int x = 0; x < nx; x++)
-			{
-				int k = x+nx*y+nx*ny*z;
-				if (votingDirXYZ_3DArray[k] > _min_grad) // This is the original one, only vote if the mag of gradient is greater than epsilon (and gra_min) previously thresholded
-				{
-					indx = computeAngleIndex_3D(votingDirX_3DArray[k], votingDirY_3DArray[k], votingDirZ_3DArray[k]); // NO ESTAN INCLUYENDO LOS CEROS PORQUE ??
-					vp.x = x + bw;
-					vp.y = y + bw;
-					vp.z = z + bw;
-					vp.mag = votingDirXYZ_3DArray[k]; 
-					vp.angIndex = indx;
-					_voting_points.push_back(vp);
 
-					if(indx.first>max1)
-						max1=indx.first;
-					if(indx.second>max2)
-						max2=indx.second;
-				}
-			}
-		}
-	}
-	std::cout << "Done.";
-	_t1_end=clock();
-	std::cout << "Time: " << double(nftkVotingGlobal::diffclock(_t1_end,_t1_begin)) << " s";
+//	// Calculate the voting poitns
+//	std::cout << std::endl << "Computing the voting points -> ";
+//	_t1_begin=clock();
+//	int max1=0;
+//	int max2=0;
+//// This can be parallel
+//	std::pair< int, int > indx;
+//	VPoint3D vp;
+//	for(int z = 0; z < nz; z++)
+//	{
+//		for(int y = 0; y < ny; y++)
+//		{
+//			for(int x = 0; x < nx; x++)
+//			{
+//				int k = x+nx*y+nx*ny*z;
+//				if (votingDirXYZ_3DArray[k] > _min_grad) // This is the original one, only vote if the mag of gradient is greater than epsilon (and gra_min) previously thresholded
+//				{
+//					indx = computeAngleIndex_3D(votingDirX_3DArray[k], votingDirY_3DArray[k], votingDirZ_3DArray[k]); // NO ESTAN INCLUYENDO LOS CEROS PORQUE ??
+//					vp.x = x + bw;
+//					vp.y = y + bw;
+//					vp.z = z + bw;
+//					vp.mag = votingDirXYZ_3DArray[k]; 
+//					vp.angIndex = indx;
+//					_voting_points.push_back(vp);
+//
+//					if(indx.first>max1)
+//						max1=indx.first;
+//					if(indx.second>max2)
+//						max2=indx.second;
+//				}
+//			}
+//		}
+//	}
+//	std::cout << "Done.";
+//	_t1_end=clock();
+//	std::cout << "Time: " << double(nftkVotingGlobal::diffclock(_t1_end,_t1_begin)) << " s";
+//
+//	std::cout << std::endl << "The number of voting points: "<<_voting_points.size();
+//	std::cout << std::endl << "MAX ANGLE: "<<max1<<" "<<max2;
 
-	std::cout << std::endl << "The number of voting points: "<<_voting_points.size();
-	std::cout << std::endl << "MAX ANGLE: "<<max1<<" "<<max2;
+
 
 
 	// Calculate the voting poitns
@@ -399,238 +403,6 @@ void ftkVoting_3D::compute(nftkVotingGlobal::InputImageType_3D::Pointer inputIma
 	ny -= bw2;
 	nz -= bw2;
 	npix = nx*ny*nz;
-
-	//_votingVotes = VotingDirType_3D::New();
-	//_votingVotes->SetRegions( inputImage->GetRequestedRegion() );
-	//_votingVotes->Allocate();
-
-	// Copy sum votes to 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//	// Derivative XXXXXXXXXX
-	//	VotingDirType_3D::Pointer votingDirX = VotingDirType_3D::New();
-	//	votingDirX->SetRegions( inputImage->GetRequestedRegion() );
-	//	votingDirX->Allocate();
-	//
-	//	itk::SobelOperator< VotingDirPixelType, 2 > sobelOperator;
-	//	sobelOperator.SetDirection( 0 );
-	//	sobelOperator.CreateDirectional();
-	//	typedef itk::ImageRegionIterator< VotingDirType_3D > IteratorType3;
-	//	IteratorType3 out2( votingDirX, votingDirX->GetRequestedRegion() );
-	//
-	//	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType2;
-	//	typedef itk::ImageRegionIterator< nftkVotingGlobal::InputImageType > IteratorType2;
-	//	NeighborhoodIteratorType2::RadiusType radius2 = sobelOperator.GetRadius();
-	//	NeighborhoodIteratorType2 it2( radius2, inputImage, inputImage->GetRequestedRegion() );
-	//	itk::NeighborhoodInnerProduct< nftkVotingGlobal::InputImageType > innerProduct;
-	//
-	//	for (it2.GoToBegin(), out2.GoToBegin(); !it2.IsAtEnd(); ++it2, ++out2)
-	//	{
-	//		out2.Set( innerProduct( it2, sobelOperator ) );
-	//	}
-	//
-	//	// Derivative YYYYYYYYYY
-	//	VotingDirType_3D::Pointer votingDirY = VotingDirType_3D::New();
-	//	votingDirY->SetRegions( inputImage->GetRequestedRegion() );
-	//	votingDirY->Allocate();
-	//
-	//	itk::SobelOperator<VotingDirPixelType, 2> sobelOperatorY;
-	//	sobelOperatorY.SetDirection( 1 );
-	//	sobelOperatorY.CreateDirectional();
-	//	typedef itk::ImageRegionIterator< VotingDirType_3D > IteratorType4;
-	//	IteratorType4 out3( votingDirY, votingDirY->GetRequestedRegion() );
-	//
-	//	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType3;
-	//	typedef itk::ImageRegionIterator< nftkVotingGlobal::InputImageType > IteratorType3;
-	//	NeighborhoodIteratorType3::RadiusType radius3 = sobelOperatorY.GetRadius();
-	//	NeighborhoodIteratorType3 it3( radius3, inputImage, inputImage->GetRequestedRegion() );
-	//	itk::NeighborhoodInnerProduct< nftkVotingGlobal::InputImageType > innerProduct2;
-	//
-	//	for (it3.GoToBegin(), out3.GoToBegin(); !it3.IsAtEnd(); ++it3, ++out3)
-	//	{
-	//		out3.Set( innerProduct2( it3, sobelOperatorY ) );
-	//	}
-	//
-	//	// Magnitude Image
-	//	VotingDirType_3D::Pointer votingMagImage = VotingDirType_3D::New(); //VotingDirType_3D = double
-	//	votingMagImage->SetRegions( inputImage->GetRequestedRegion()); // IMPORTANTE PARA CREAR UNA IMAGEN NUEVA EN BASE A UNA QUE YA EXISTE EN VEZ DE PONERME A LEER LOS TAMANOS Y LAS REGIONES
-	//	votingMagImage->Allocate();
-	//
-	//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType_3D > ITVotingMag;
-	//	ITVotingMag iVotingMag(votingMagImage, votingMagImage->GetLargestPossibleRegion() );
-	//
-	//	typedef itk::ImageRegionIteratorWithIndex< VotingDirType_3D > ITVotingDir;
-	//	ITVotingDir iVotingDirX(votingDirX, votingDirX->GetLargestPossibleRegion() );
-	//	ITVotingDir iVotingDirY(votingDirY, votingDirY->GetLargestPossibleRegion() );
-	//
-	//	for ( iVotingMag.GoToBegin(),iVotingDirX.GoToBegin(),iVotingDirY.GoToBegin(); !iVotingMag.IsAtEnd(); ++iVotingMag, ++iVotingDirX, ++iVotingDirY ){
-	//		iVotingMag.Set(sqrt( iVotingDirX.Get()*iVotingDirX.Get() + iVotingDirY.Get()*iVotingDirY.Get() ));
-	//		if(iVotingMag.Get()>epsilon){
-	//			iVotingDirX.Set(iVotingDirX.Get()/iVotingMag.Get());
-	//			iVotingDirY.Set(iVotingDirY.Get()/iVotingMag.Get());
-	//		}
-	//	}
-	//
-	//	// Magnitude Image Binary (just to store in file the voting pixels)
-	//	VotingDirType_3D::Pointer votingMagImage_bin = VotingDirType_3D::New();
-	//	votingMagImage_bin->SetRegions( inputImage->GetRequestedRegion() );
-	//	votingMagImage_bin->Allocate();
-	//
-	//	// Canny edge detection
-	//	typedef itk::CannyEdgeDetectionImageFilter <VotingDirType_3D, VotingDirType_3D> CannyEdgeDetectionImageFilterType;
-	//	CannyEdgeDetectionImageFilterType::Pointer cannyFilter = CannyEdgeDetectionImageFilterType::New();
-	//	cannyFilter->SetInput(inputImage);
-	//	cannyFilter->SetVariance( 2.5 );
-	//	cannyFilter->SetUpperThreshold( 0.03/*0.0238*/ );
-	//	cannyFilter->SetLowerThreshold( 0.005/*0.0175*/ );
-	//	cannyFilter->Update();
-	//
-	//	// Save the canny edge result
-	//	string filenameCanny = "output\\out_ImageOfCanny.jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
-	//		std::cout<<std::endl<<"\tProblema escribiendo";
-	//	}
-	//
-	//
-	//
-	//	// Arrays of data
-	//	nftkVotingGlobal::InputImageType::PixelType * votingImaArray = inputImage->GetBufferPointer();
-	//	VotingDirType_3D::PixelType * votingDirXArray = votingDirX->GetBufferPointer();
-	//	VotingDirType_3D::PixelType * votingDirYArray = votingDirY->GetBufferPointer();
-	//	VotingDirType_3D::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
-	//	VotingDirType_3D::PixelType * votingMagArray_bin = votingMagImage_bin->GetBufferPointer();
-	//	VotingDirType_3D::PixelType * votingCannyArray = cannyFilter->GetOutput()->GetBufferPointer();
-	//	
-	//
-	//	//double maxgrad = votingMagImag
-	//
-	//	typedef itk::MinimumMaximumImageCalculator < VotingDirType_3D > ImageCalculatorFilterType;
-	//	ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New ();
-	//	imageCalculatorFilter->SetImage( votingMagImage );
-	//	imageCalculatorFilter->Compute();
-	//
-	//	VotingDirType_3D::PixelType maxVotVal = imageCalculatorFilter->GetMaximum();
-	//
-	//	// Scale the values of the gradient by the maximum value of the gradiente, to ensure that the maximum value is 1
-	//	for(int i=0; i<npix; i++) {
-	//			if (votingMagArray[i]<_min_grad)
-	//			{
-	//				votingMagArray[i] = 0;
-	//			}
-	//			else
-	//			{
-	//				votingMagArray[i] /= maxVotVal;
-	//			}
-	//	}
-	//
-	//
-	//	// Testing to store the resulting voting image base on the gradient
-	//	// Save the canny edge result
-	//	string filenameGradVot = "output\\out_ImageOfGradVot.jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
-	//		std::cout<<std::endl<<"\tProblema escribiendo";
-	//	}
-	//	// Put 1 if mag array is different to zero
-	//	for(int i=0; i<npix; i++) {
-	//			votingMagArray_bin[i] = 0;
-	//			if (votingMagArray[i]!=0)
-	//			{
-	//				votingMagArray_bin[i] = 1;
-	//			}
-	//	}
-	//	string filenameGradVot_bin = "output\\out_ImageOfGradVot_bin.jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
-	//		std::cout<<std::endl<<"\tProblema escribiendo";
-	//	}
-	//	// Put 1 if mag array intersect with canny edge is di
-	//	for(int i=0; i<npix; i++) {
-	//			votingMagArray_bin[i] = 0;
-	//			if (votingMagArray[i]!=0 && votingCannyArray[i]!=0)
-	//			{
-	//				votingMagArray_bin[i] = 1;
-	//			}
-	//	}
-	//	string filenameGradVotInterCanny = "output\\out_ImageOfGradVotInterCanny.jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType_3D, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
-	//		std::cout<<std::endl<<"\tProblema escribiendo";
-	//	}
-	//
-	//
-	//
-	//
-	//
-	//
-	//	// Padding
-	//	bw = sqrt((double)(_radius*_radius + _hmax*_hmax)) + 3; // Que es esto ??
-	//	const int bw2 = 2*bw;
-	//
-	//
-	//	// Calculate the voting poitns
-	////int stop1;
-	//	int indx;
-	//	VPoint2D vp;
-	//	int x, y, k;
-	//	for(y = 0; y < ny; y++)
-	//	{
-	//		for(x = 0; x < nx; x++)
-	//		{
-	//			k = x+nx*y;
-	//			if (votingMagArray[k] > epsilon) // This is the original one, only vote if the mag of gradient is greater than epsilon (and gra_min) previously thresholded
-	//			//if(votingCannyArray[k]!=0) // This is new, use the canny edge detection to vote form this values (IT DOES NOT WORK TO USE THE CANNY EDGE DETECTION, INCREIBLE)
-	//			{
-	//				if ((indx=computeAngleIndex(votingDirXArray[k], votingDirYArray[k])) >= 0 ) // NO ESTAN INCLUYENDO LOS CEROS PORQUE ??
-	//				{
-	//					vp.x = x + bw;
-	//					vp.y = y + bw;
-	//					vp.mag = votingMagArray[k]; 
-	//					vp.angIndex = indx;
-	//					_voting_points.push_back(vp);
-	//				}	
-	//			}
-	//		}
-	//	}
-	////std::cin>>stop1;
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//	nx += bw2;
-	//	ny += bw2;
-	//	npix = nx*ny;
-	//
-	//	ftkWPoint2D::setImageSize(nx,ny);
-	//	ftkBins2D::setImageSize(nx,ny);
-	//	ftkCone2D::setImageSize(nx,ny);
-	//
-	//	vote();
-	//
-	//	// Switch back to the original size
-	//	nx -= bw2;
-	//	ny -= bw2;
-	//	npix = nx*ny;
-	//
-	//	//_votingVotes = VotingDirType_3D::New();
-	//	//_votingVotes->SetRegions( inputImage->GetRequestedRegion() );
-	//	//_votingVotes->Allocate();
-	//
-	//	// Copy sum votes to 
 
 
 }
@@ -978,8 +750,8 @@ std::pair<int,int> ftkVoting_3D::computeAngleIndex_3D(double dx, double dy, doub
 }
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp)
-{
+//void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp)
+//{
 	//	//int stop2;
 	//	iterator from = begin(); //Pointer to Bin
 	//	iterator to = end();     
@@ -991,7 +763,7 @@ void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp)
 	//			contador_1++;
 	//		}      
 	//	}
-}
+//}
 
 //// ############################################################################################################################################################################
 //void inline ftkCone3D::vote_dir(VotingDirType_3D::PixelType * p, const VPoint3D& vp) //Vota y guarda direcciones de los votos
@@ -1010,8 +782,8 @@ void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp)
 //}
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist)
-{
+//void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist)
+//{
 	//iterator binRequired = begin();
 	//ftkBins2D::iterator from = binRequired[dist].begin();
 	//ftkBins2D::iterator to = binRequired[dist].end();
@@ -1022,11 +794,11 @@ void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp,
 	//	//p[it->off] += 1; // Number of votes, not using magnitude
 	//	contador_1++;
 	//}
-}
+//}
 
 // ############################################################################################################################################################################
-void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag) // Incluye la probabilidad
-{
+//void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int &mag) // Incluye la probabilidad
+//{
 
 	//iterator binRequired = begin();
 	//ftkBins2D::iterator from = binRequired[dist].begin();
@@ -1042,7 +814,7 @@ void inline ftkCone3D::vote(VotingDirType_3D::PixelType * p, const VPoint3D& vp,
 	//	//p[it->off] += 1; // Number of votes, not using magnitude
 	//	contador_1++;
 	//}
-}
+//}
 
 // ############################################################################################################################################################################
 void inline ftkCone3D::vote_dir(std::vector<std::vector<int> >& p_dir, VotingDirType_3D::PixelType * p, const VPoint3D& vp, int& dist, int& offset_1)
