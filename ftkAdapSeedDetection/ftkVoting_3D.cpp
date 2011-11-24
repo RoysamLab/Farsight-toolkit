@@ -906,6 +906,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 
 
 	// Update the direction of the votes
+	// !!! ??? OJO QUE AHOR EL UPDATE SE ESTA HACIENDO CON LA SUMA, NO CON LA MASCARA
 	std::cout << std::endl << "\tLet's Update Directions.";
 	_t3_begin=clock();
 	int temp3 = _voting_points_3D.size();
@@ -2537,7 +2538,7 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 				
 				for( int votes=0; votes < (*poin_bin).size(); ++votes )
 				{
-					posMax = votingMaskArray_pos[(*poin_bin)[votes].off] = votingMaskArray_pos[(*poin_bin)[votes].off];
+					posMax = votingSumArray_pos[(*poin_bin)[votes].off] = votingSumArray_pos[(*poin_bin)[votes].off];
 					if( posMax > maxx )
 					{
 						maxx = posMax;
