@@ -27,7 +27,7 @@ int main( int argc, char * argv[] ){
 	//int hmax = atoi(argv[2]);
 
 	// Initial Parameters
-	int hmin = 2;
+	int hmin = 1;
 	int hmax = 35;//35;//77; //15 was ok, 25 just to test
 	int radius = 35;//10;//77;
 	double min_grad = 0.1;
