@@ -861,9 +861,10 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 			for( it_dir_3D = _voteDirec_3D_new[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new[dir_vote][angle_int].end(); ++it_dir_3D )
 			{
 				ftkCone3D::iterator it_cone_3D;
+				ftkBins3D::iterator it_bin_3D;
 				for( it_cone_3D = _conesPru_3D_new[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new[(*it_dir_3D)].end(); ++it_cone_3D )
 				{
-					ftkBins3D::iterator it_bin_3D;
+					
 					for( it_bin_3D = (*it_cone_3D).begin(); it_bin_3D != (*it_cone_3D).end(); ++it_bin_3D )
 					{
 						votingMaskArray_pos[(*it_bin_3D).off] = votingMaskArray_pos[(*it_bin_3D).off] + _voting_points_3D.at(i).mag;
