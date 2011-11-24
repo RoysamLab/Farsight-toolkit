@@ -807,7 +807,7 @@ void ftkVoting_3D::vote()
 	_t1_begin=clock();
 for( int spanofvote = 10; spanofvote>0; --spanofvote )
 {
-	std::cout << std::endl << "\tVote " << _intSpan - spanofvote + 1;
+	std::cout << std::endl << "\tVote (version 3)" << _intSpan - spanofvote + 1;
 	_t2_begin=clock();
 	int temp2 = _voting_points_3D.size();
 #pragma omp parallel for
@@ -864,7 +864,6 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 				ftkBins3D::iterator it_bin_3D;
 				for( it_cone_3D = _conesPru_3D_new[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new[(*it_dir_3D)].end(); ++it_cone_3D )
 				{
-					
 					for( it_bin_3D = (*it_cone_3D).begin(); it_bin_3D != (*it_cone_3D).end(); ++it_bin_3D )
 					{
 						votingMaskArray_pos[(*it_bin_3D).off] = votingMaskArray_pos[(*it_bin_3D).off] + _voting_points_3D.at(i).mag;
