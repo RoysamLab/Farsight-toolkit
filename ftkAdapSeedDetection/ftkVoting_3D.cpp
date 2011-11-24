@@ -831,7 +831,26 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 		//}
 
 
-		// VERSION 2
+// 		// VERSION 2
+// 		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
+// 
+// 		int dir_vote = _voting_points_3D.at(i).direc_vote;
+// 		//#pragma omp parallel for
+// 		for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
+// 		{
+// 			std::vector< int >::iterator it_dir_3D;
+// 			for( it_dir_3D = _voteDirec_3D_new_notqu[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new_notqu[dir_vote][angle_int].end(); ++it_dir_3D )
+// 			{
+// 				ftkCone3D_new::iterator it_cone_3D;
+// 				for( it_cone_3D = _conesPru_3D_new_notqu[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new_notqu[(*it_dir_3D)].end(); ++it_cone_3D )
+// 				{
+// 					votingMaskArray_pos[(*it_cone_3D).off] = votingMaskArray_pos[(*it_cone_3D).off] + _voting_points_3D.at(i).mag;
+// 
+// 				}
+// 			}
+// 		}
+		
+		// VERSION 3
 		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
 
 		int dir_vote = _voting_points_3D.at(i).direc_vote;
@@ -839,12 +858,16 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 		for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
 		{
 			std::vector< int >::iterator it_dir_3D;
-			for( it_dir_3D = _voteDirec_3D_new_notqu[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new_notqu[dir_vote][angle_int].end(); ++it_dir_3D )
+			for( it_dir_3D = _voteDirec_3D_new[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new[dir_vote][angle_int].end(); ++it_dir_3D )
 			{
-				ftkCone3D_new::iterator it_cone_3D;
-				for( it_cone_3D = _conesPru_3D_new_notqu[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new_notqu[(*it_dir_3D)].end(); ++it_cone_3D )
+				ftkCone3D::iterator it_cone_3D;
+				for( it_cone_3D = _conesPru_3D_new[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new[(*it_dir_3D)].end(); ++it_cone_3D )
 				{
-					votingMaskArray_pos[(*it_cone_3D).off] = votingMaskArray_pos[(*it_cone_3D).off] + _voting_points_3D.at(i).mag;
+					ftkBins3D::iterator it_bin_3D;
+					for( it_bin_3D = (*it_cone_3D).begin(); it_bin_3D != (*it_cone_3D).end(); ++it_bin_3D )
+					{
+						votingMaskArray_pos[(*it_bin_3D).off] = votingMaskArray_pos[(*it_bin_3D).off] + _voting_points_3D.at(i).mag;
+					}
 
 				}
 			}
