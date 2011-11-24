@@ -334,16 +334,26 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 		}
 	}
 
+	//int z1_new;
+	//int R_new;
+	//double R_dou_new;
+	//int R_quan_new;
+	//double x_nor_new, y_nor_new, z_nor_new;
+
+	//ftkWPoint3D wp_new;
+
+#pragma omp parallel for
+	for( int xx=-hmax; xx<=hmax; ++xx )
+	{
+
 	int z1_new;
 	int R_new;
 	double R_dou_new;
 	int R_quan_new;
 	double x_nor_new, y_nor_new, z_nor_new;
-	//int maxmax_pos_ = 0;
 
 	ftkWPoint3D wp_new;
-	for( int xx=-hmax; xx<=hmax; ++xx )
-	{
+
 		for( int yy=-hmax; yy<=hmax; ++yy )
 		{
 			z1_new = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
@@ -378,7 +388,10 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 							maxmax_pos = uu;
 						}
 					}
+#pragma omp critical
+					{
 					_conesPru_3D_new[maxmax_pos][R_quan_new].push_back(wp_new);
+					}
 				}
 			}
 		}
@@ -534,6 +547,14 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 		long__para_notqu = long__para_notqu + dlong_para_notqu;
 
 	}
+
+	int z1_new;
+	int R_new;
+	double R_dou_new;
+	int R_quan_new;
+	double x_nor_new, y_nor_new, z_nor_new;
+
+	ftkWPoint3D wp_new;
 
 //#pragma omp parallel for private(z1_new,R_new,R_dou_new,R_quan_new,x_nor_new, y_nor_new, z_nor_new)
 	for( int xx=-hmax; xx<=hmax; ++xx )
