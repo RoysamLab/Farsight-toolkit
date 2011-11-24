@@ -116,7 +116,7 @@ namespace nftkVot{
 	typename T1::Pointer readImage( const char* filename )
 	{
 		// Set Up the Reader
-		printf("Reading %s ... ",filename);
+		std::cout << std::endl << std::endl << "Reading ... " << filename;
 		typedef itk::ImageFileReader < T1 >  ReaderType;
 		typename ReaderType::Pointer reader = ReaderType::New();
 		reader->SetFileName( filename );
@@ -148,7 +148,7 @@ namespace nftkVot{
 	typename T2::Pointer readImage_3D( const char* filename )
 	{
 		// Set Up the Reader
-		printf("Reading %s ... ",filename);
+		std::cout << std::endl << std::endl << "Reading ... " << filename;
 		typedef itk::ImageFileReader < T1 >  ReaderType;
 		typename ReaderType::Pointer reader = ReaderType::New();
 		reader->SetFileName( filename );

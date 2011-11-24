@@ -30,13 +30,13 @@ ftkVoting_3D::ftkVoting_3D()
 	_min_grad = 0.005;
 	//_threshold (for picking seed points, not necesary for now)
 	_scale = 1.5; // Scale for computing the gradient using DoG
-	//_zc_only TRUE - voting points should also be the zero-crossing points of the image; FALSE - otherwise
 
 	// Default Parameters for quantizing the direction of voting
 	_NN_dir = 500;
 	_sigmaG = 1.5;
 	_Z_factor = 2;
 	_maxSpan = 10;
+	_intSpan = _maxSpan; // Start with the maximum span
 }
 
 // ############################################################################################################################################################################
@@ -63,12 +63,19 @@ void ftkVoting_3D::setParams(	int hmin, int hmax,	int radius,	double min_grad, d
 // ############################################################################################################################################################################
 void ftkVoting_3D::compute(nftkVot::InputImageType_3D::Pointer inputImage)
 {
+	_inputImage = inputImage;
+
 	nx = inputImage->GetLargestPossibleRegion().GetSize()[0];
 	ny = inputImage->GetLargestPossibleRegion().GetSize()[1];
 	nz = inputImage->GetLargestPossibleRegion().GetSize()[2];
 	npix = nx*ny*nz;
+	_npix_org = npix;
 
-	std::cout << std::endl << "--> COMPUTING DERIVATIVES <--";
+	_nx_org = nx;
+	_ny_org = ny;
+	_nz_org = nz;
+
+	std::cout << std::endl << std::endl << "--> COMPUTING DERIVATIVES <--";
 
 	// Derivatives using Gaussian
 	typedef itk::RecursiveGaussianImageFilter<nftkVot::InputImageType_3D,nftkVot::InputImageType_3D > ShortFilterType;
@@ -240,12 +247,12 @@ void ftkVoting_3D::compute(nftkVot::InputImageType_3D::Pointer inputImage)
 	// Padding
 	bw = sqrt((double)(_radius*_radius + _hmax*_hmax)) + 3; // Que es esto ??
 	const int bw2 = 2*bw;
+	_bw = bw;
 
 	// Calculate the voting poitns
 	std::cout << std::endl << "Calculate Voting Points 3D -> ";
 	_t1_begin=clock();
 // This can be parallel
-	int direction_vote;
 	VPoint3D vp_3D;
 	for(int z = 0; z < nz; ++z)
 	{
@@ -412,6 +419,8 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 			if( (0<=angle) && (angle<_maxSpan) )
 			{
 				_voteDirec_3D_new[uu][angle].push_back(uu2);
+				//!!!
+				//std::cout<<std::endl<<angle;
 			}
 		}
 	}
@@ -421,116 +430,12 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 	std::cout << "Time elapsed: " << double(nftkVot::diffclock(end_1,begin_1)) << " s";
 
 
+	// NOT QUANTIZED
 
-
-//	// Parellel to calculate the (pixels) on a given direction
-//
-//	std::cout << std::endl << "Computing the cones in the parallel way";
-//	clock_t begin_2=clock();
-//
-//	_conesPru_3D_new_para = std::vector < ftkCone3D >(_NN_dir); // Todos los conos posibles
-//
-//	double dlong_para = pi*(3-sqrt(5.0));
-//	double dz_para = 2.0/_NN_dir;
-//	double long__para = 0;
-//	double z_para = 1-dz_para/2;
-//
-//	for( int uu=0; uu<_NN_dir; uu++ ) // Phi
-//	{
-//		double r_para = sqrt(1-z_para*z_para);
-//		_conesPru_3D_new_para[uu].dxx = cos(long__para)*r_para;
-//		_conesPru_3D_new_para[uu].dyy = sin(long__para)*r_para;
-//		_conesPru_3D_new_para[uu].dzz = z_para;
-//		z_para    = z_para - dz_para;
-//		long__para = long__para + dlong_para;
-//
-//		for( int uuu=0; uuu<hmax-hmin+1; uuu++ ) 
-//		{
-//			ftkBins3D bin_para;
-//			_conesPru_3D_new_para[uu].push_back(bin_para);
-//			// Direction of evenly distributed directions
-//		}
-//	}
-//
-//#pragma omp parallel for private(z1_new,R_new,R_dou_new,R_quan_new,x_nor_new, y_nor_new, z_nor_new)
-//	for( int uu=0; uu<_NN_dir; ++uu ) // All possible directions
-//	{
-//		double maxmax_dot = 0;
-//		int maxmax_pos = 0;
-//		double dotprod = 0;
-//		ftkWPoint3D wp_new;
-//
-//		for( int xx=-hmax; xx<=hmax; ++xx )
-//		{
-//			for( int yy=-hmax; yy<=hmax; ++yy )
-//			{
-//				z1_new = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
-//				for( int zz=-z1_new; zz<=z1_new; ++zz )
-//				{
-//					R_dou_new = (double)sqrt((double)zz*zz+(double)yy*yy+(double)xx*xx);
-//					R_new = (int)ceil(R_dou_new);
-//
-//					if( R_new>=hmin ) // Can be done more efficiently but for now is ok the speed
-//					{
-//						//std::cout<<std::endl<<R_quan_new;
-//						x_nor_new = ((double)xx)/R_dou_new;
-//						y_nor_new = ((double)yy)/R_dou_new;
-//						z_nor_new = ((double)zz)/R_dou_new;
-//
-//						//for( int uu=0; uu<_NN_dir; ++uu ) // All possible directions
-//						dotprod = _conesPru_3D_new_para[uu].dxx*x_nor_new+_conesPru_3D_new_para[uu].dyy*y_nor_new+_conesPru_3D_new_para[uu].dzz*z_nor_new;
-//						if ( maxmax_dot<dotprod)
-//						{
-//							maxmax_dot = dotprod;
-//							maxmax_pos = uu;
-//							R_quan_new = R_new-hmin;
-//
-//							wp_new.x = xx;
-//							wp_new.y = yy;
-//							wp_new.z = zz;
-//							wp_new.w = 1; // In case of deciding to put some weight
-//						}
-//					}
-//				}
-//			}
-//		}
-//		_conesPru_3D_new_para[maxmax_pos][R_quan_new].push_back(wp_new);
-//	}
-//
-//	_voteDirec_3D_new_para = std::vector< std::vector< std::vector< int > > >(_NN_dir,std::vector< std::vector <int> >(_maxSpan));
-//
-//	double max_dotpro_delta_para = atan((double)_radius/(double)_hmax)/_maxSpan; // Max span
-//
-//
-//	//INEFFICIENT, 
-//	//#pragma omp parallel for 
-//	for( int uu=0; uu<_NN_dir; ++uu ) // All possible directions
-//	{
-//		for( int uu2=0; uu2<_NN_dir; ++uu2 ) // All possible directions
-//		{
-//			double dotproduct = acos(_conesPru_3D_new_para[uu].dxx*_conesPru_3D_new_para[uu2].dxx+_conesPru_3D_new_para[uu].dyy*_conesPru_3D_new_para[uu2].dyy+_conesPru_3D_new_para[uu].dzz*_conesPru_3D_new_para[uu2].dzz);
-//
-//			int angle = ceil(dotproduct/max_dotpro_delta_para);
-//			if( (0<=angle) && (angle<_maxSpan) )
-//			{
-//				_voteDirec_3D_new_para[uu][angle].push_back(uu2);
-//			}
-//		}
-//	}
-//	std::cout << " -> Done. ";
-//	clock_t end_2=clock();
-//	std::cout << "Time: " << double(nftkVot::diffclock(end_2,begin_2)) << " s";
-
-
-
-
-
-	// Parellel to calculate the (pixels) on a given direction
-
-	std::cout << std::endl << "Computing the cones in the parallel way without qua";
+	std::cout << std::endl << "Computing the cones without qua";
 	clock_t begin_3=clock();
 
-	_conesPru_3D_new_para_notqu = std::vector < ftkCone3D_new >(_NN_dir); // Todos los conos posibles
+	_conesPru_3D_new_notqu = std::vector < ftkCone3D_new >(_NN_dir); // Todos los conos posibles
 
 	double dlong_para_notqu = pi*(3-sqrt(5.0));
 	double dz_para_notqu = 2.0/_NN_dir;
@@ -540,13 +445,16 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 	for( int uu=0; uu<_NN_dir; uu++ ) // Phi
 	{
 		double r_para_notqu = sqrt(1-z_para_notqu*z_para_notqu);
-		_conesPru_3D_new_para_notqu[uu].dxx = cos(long__para_notqu)*r_para_notqu;
-		_conesPru_3D_new_para_notqu[uu].dyy = sin(long__para_notqu)*r_para_notqu;
-		_conesPru_3D_new_para_notqu[uu].dzz = z_para_notqu;
+		_conesPru_3D_new_notqu[uu].dxx = cos(long__para_notqu)*r_para_notqu;
+		_conesPru_3D_new_notqu[uu].dyy = sin(long__para_notqu)*r_para_notqu;
+		_conesPru_3D_new_notqu[uu].dzz = z_para_notqu;
 		z_para_notqu    = z_para_notqu - dz_para_notqu;
 		long__para_notqu = long__para_notqu + dlong_para_notqu;
-
 	}
+
+#pragma omp parallel for
+	for( int xx=-hmax; xx<=hmax; ++xx )
+	{
 
 	int z1_new;
 	int R_new;
@@ -556,9 +464,6 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 
 	ftkWPoint3D wp_new;
 
-//#pragma omp parallel for private(z1_new,R_new,R_dou_new,R_quan_new,x_nor_new, y_nor_new, z_nor_new)
-	for( int xx=-hmax; xx<=hmax; ++xx )
-	{
 		for( int yy=-hmax; yy<=hmax; ++yy )
 		{
 			z1_new = (int)floor((double)sqrt((double)hmax*hmax-(double)xx*xx-(double)yy*yy));
@@ -586,20 +491,23 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 
 					for( int uu=0; uu<_NN_dir; ++uu ) // All possible directions
 					{
-						double dotprod = _conesPru_3D_new_para_notqu[uu].dxx*x_nor_new+_conesPru_3D_new_para_notqu[uu].dyy*y_nor_new+_conesPru_3D_new_para_notqu[uu].dzz*z_nor_new;
+						double dotprod = _conesPru_3D_new_notqu[uu].dxx*x_nor_new+_conesPru_3D_new_notqu[uu].dyy*y_nor_new+_conesPru_3D_new_notqu[uu].dzz*z_nor_new;
 						if ( maxmax_dot<dotprod)
 						{
 							maxmax_dot = dotprod;
 							maxmax_pos = uu;
 						}
 					}
-					_conesPru_3D_new_para_notqu[maxmax_pos].push_back(wp_new);
+#pragma omp critical
+					{
+					_conesPru_3D_new_notqu[maxmax_pos].push_back(wp_new);
+					}
 				}
 			}
 		}
 	}
 
-	_voteDirec_3D_new_para_notqu = std::vector< std::vector< std::vector< int > > >(_NN_dir,std::vector< std::vector <int> >(_maxSpan));
+	_voteDirec_3D_new_notqu = std::vector< std::vector< std::vector< int > > >(_NN_dir,std::vector< std::vector <int> >(_maxSpan));
 	double max_dotpro_delta_para_notqu = atan((double)_radius/(double)_hmax)/_maxSpan; // Max span
 
 	//INEFFICIENT, 
@@ -608,12 +516,12 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 	{
 		for( int uu2=0; uu2<_NN_dir; ++uu2 ) // All possible directions
 		{
-			double dotproduct = acos(_conesPru_3D_new_para_notqu[uu].dxx*_conesPru_3D_new_para_notqu[uu2].dxx+_conesPru_3D_new_para_notqu[uu].dyy*_conesPru_3D_new_para_notqu[uu2].dyy+_conesPru_3D_new_para_notqu[uu].dzz*_conesPru_3D_new_para_notqu[uu2].dzz);
+			double dotproduct = acos(_conesPru_3D_new_notqu[uu].dxx*_conesPru_3D_new_notqu[uu2].dxx+_conesPru_3D_new_notqu[uu].dyy*_conesPru_3D_new_notqu[uu2].dyy+_conesPru_3D_new_notqu[uu].dzz*_conesPru_3D_new_notqu[uu2].dzz);
 
 			int angle = ceil(dotproduct/max_dotpro_delta_para_notqu);
 			if( (0<=angle) && (angle<_maxSpan) )
 			{
-				_voteDirec_3D_new_para_notqu[uu][angle].push_back(uu2);
+				_voteDirec_3D_new_notqu[uu][angle].push_back(uu2);
 			}
 		}
 	}
@@ -624,15 +532,11 @@ void ftkVoting_3D::computeCones_3D(int hmin, int hmax, int radius)
 
 
 
-
-
-
-
 //// ############################################################################################################################################################################
 void ftkVoting_3D::vote()
 {
 
-	std::cout << std::endl << "--> VOTING STARTED <--";
+	std::cout << std::endl << std::endl << "--> VOTING STARTED <--";
 
 	std::cout << std::endl << "Memory Allocation .";
 	_t1_begin=clock();
@@ -809,7 +713,7 @@ void ftkVoting_3D::vote()
 #pragma omp parallel for
 	for( int uu=0; uu<_NN_dir; uu++ )
 	{
-		_conesPru_3D_new_para_notqu[uu].setOffset();
+		_conesPru_3D_new_notqu[uu].setOffset();
 	}
 
 
@@ -822,10 +726,35 @@ void ftkVoting_3D::vote()
 	{
 		imageOfVotingPixelsArray[_voting_points_3D.at(i).pos] = 1;
 	}
-	std::string filenameCones_votpixe = "output\\aa_votepixels.tif";
+	std::string filenameCones_votpixe = "output\\Vot_Pixels.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(imageOfVotingPixels, filenameCones_votpixe.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
+	std::cout << " -> Done. ";
+	_t1_end=clock();
+	std::cout << "Time: " << double(nftkVot::diffclock(_t1_end,_t1_begin)) << " s";
+
+
+	// Store the original image with padding
+	std::cout << std::endl << "Store the original image with padding (only necessary to show results, disable otherwise).";
+	_t1_begin=clock();
+	nftkVot::InputImageType_3D::PixelType * inputImageArray = _inputImage->GetBufferPointer();
+#pragma omp parallel for
+	for( int xx = 0; xx<_nx_org; ++xx )
+	{
+		for( int yy = 0; yy<_ny_org; ++yy )
+		{
+			for( int zz = 0; zz<_nz_org; ++zz )
+			{
+				votingSumArray[bw+bw*(2*bw+_nx_org)+bw*(2*bw+_nx_org)*(2*bw+_ny_org)+ xx+yy*(_nx_org+2*bw)+zz*(_nx_org+2*bw)*(_ny_org+2*bw)] = inputImageArray[xx+yy*_nx_org+zz*_nx_org*_ny_org];
+			}
+		}
+	}
+	std::string filenameOrig = "output\\Vot_OriginalImage.tif";
+	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameOrig.c_str() )){
+		std::cout<<std::endl<<"\tProblema escribiendo";
+	}
+	memset(votingSumArray, 0,  npix*sizeof(VotingDirType_3D::PixelType)); // Errase the 
 	std::cout << " -> Done. ";
 	_t1_end=clock();
 	std::cout << "Time: " << double(nftkVot::diffclock(_t1_end,_t1_begin)) << " s";
@@ -873,81 +802,100 @@ void ftkVoting_3D::vote()
 	//nftkVot::stopProgram();
 
 
-
-
-	// One Vote just to test
-	std::cout << std::endl << "One Vote just to test.";
+	// Let's Vote
+	std::cout << std::endl << "Let's Vote.";
 	_t1_begin=clock();
-
+for( int spanofvote = 10; spanofvote>0; --spanofvote )
+{
+	std::cout << std::endl << "\tVote " << _intSpan - spanofvote + 1;
+	_t2_begin=clock();
 	int temp2 = _voting_points_3D.size();
 #pragma omp parallel for
-	for( int i=0; i<temp2; ++i )
+	for( int i=0; i<temp2; ++i ) // All the voting points
 	{
-		//std::cout<<std::endl<<"Vote: "<<i;
-		int dir_vote = _voting_points_3D.at(i).direc_vote;
-//#pragma omp parallel for
-		for( int angle_int = 0; angle_int<_maxSpan; ++angle_int )
-		{
-			//std::cout<<std::endl<<"SIZE: "<<_voteDirec_3D_new[uu][angle_int].size();
-			//// instead use vector iterator
-//#pragma omp parallel for
-			for( int vv = 0; vv<_voteDirec_3D_new_para_notqu[dir_vote][angle_int].size(); ++vv )
-			{
-				//std::cout<<std::endl<<"VV: "<<vv;
-				int temp_vv = _voteDirec_3D_new_para_notqu[dir_vote][angle_int][vv];
-				//for( int raddd=0; raddd<_conesPru_3D_new_para[temp_vv].size(); ++raddd )
-				//{
-					//std::cout<<std::endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
-//#pragma omp parallel for
-					for( int bin_cont=0; bin_cont < _conesPru_3D_new_para_notqu[temp_vv].size(); ++bin_cont )
-					{
-						//int x_posi = _conesPru_3D_new_para_notqu[temp_vv][bin_cont].x;
-						//int y_posi = _conesPru_3D_new_para_notqu[temp_vv][bin_cont].y;
-						//int z_posi = _conesPru_3D_new_para_notqu[temp_vv][bin_cont].z;
-						//votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi+_voting_points_3D.at(i).pos] = votingSumArray[x_posi+nx*y_posi+nx*ny*z_posi+_voting_points_3D.at(i).pos] + _voting_points_3D.at(i).mag;
-						//votingMaskArray[x_posi+nx*y_posi+nx*ny*z_posi+_voting_points_3D.at(i).pos] = 1;
-						////std::cout << std::endl << _voting_points_3D.at(i).mag << " " << _conesPru_3D_new_para_notqu[temp_vv][bin_cont].x;
-						//std::cout << std::endl << _conesPru_3D_new_para_notqu[temp_vv][bin_cont].off << " -> " << _voting_points_3D.at(i).pos;
+		//// VERSION 1
+		//VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
 
-						votingSumArray[_conesPru_3D_new_para_notqu[temp_vv][bin_cont].off+_voting_points_3D.at(i).pos] = votingSumArray[_conesPru_3D_new_para_notqu[temp_vv][bin_cont].off+_voting_points_3D.at(i).pos] + _voting_points_3D.at(i).mag;
-						votingMaskArray[_voting_points_3D.at(i).pos] = 1;
-					}
-				//}
-			}
-		}
-		//if(i%10000==0)
+		//int dir_vote = _voting_points_3D.at(i).direc_vote;
+		////#pragma omp parallel for
+		//for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
 		//{
-		//	std::cout<<std::endl<<"Vote: "<<temp2-i;
-		//	std::stringstream outas;
-		//	outas<<i/10000;
-		//	std::string sas = outas.str();
-		//	std::string filenameCones_2as = "output\\oneVote_"+sas+".tif";
-		//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
-		//		std::cout<<std::endl<<"\tProblema escribiendo";
-		//	}
-		//	std::string filenameCones_2as_mask = "output\\oneVote_"+sas+"_mask.tif";
-		//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingMaskVotes, filenameCones_2as_mask.c_str() )){
-		//		std::cout<<std::endl<<"\tProblema escribiendo";
+		//	for( int vv = 0; vv<_voteDirec_3D_new_notqu[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
+		//	{
+		//		int temp_vv = _voteDirec_3D_new_notqu[dir_vote][angle_int][vv];
+		//		for( int bin_cont=0; bin_cont < _conesPru_3D_new_notqu[temp_vv].size(); ++bin_cont )
+		//		{
+		//			votingMaskArray_pos[_conesPru_3D_new_notqu[temp_vv][bin_cont].off] = votingMaskArray_pos[_conesPru_3D_new_notqu[temp_vv][bin_cont].off] + _voting_points_3D.at(i).mag;
+		//		}
 		//	}
 		//}
-	}
 
+
+		// VERSION 2
+		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
+
+		int dir_vote = _voting_points_3D.at(i).direc_vote;
+		//#pragma omp parallel for
+		for( int angle_int = 0; angle_int<spanofvote; ++angle_int ) // The different angles (1-10)
+		{
+			std::vector< int >::iterator it_dir_3D;
+			for( it_dir_3D = _voteDirec_3D_new_notqu[dir_vote][angle_int].begin(); it_dir_3D != _voteDirec_3D_new_notqu[dir_vote][angle_int].end(); ++it_dir_3D )
+			{
+				ftkCone3D_new::iterator it_cone_3D;
+				for( it_cone_3D = _conesPru_3D_new_notqu[(*it_dir_3D)].begin(); it_cone_3D != _conesPru_3D_new_notqu[(*it_dir_3D)].end(); ++it_cone_3D )
+				{
+					votingMaskArray_pos[(*it_cone_3D).off] = votingMaskArray_pos[(*it_cone_3D).off] + _voting_points_3D.at(i).mag;
+
+				}
+			}
+		}
+	}
+	memcpy(votingSumArray, votingMaskArray, npix*sizeof(VotingDirType_3D::PixelType)); // !!! This should be sum = sum + mask
+	memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 	std::cout << " -> Done. ";
+	_t2_end=clock();
+	std::cout << "Time: " << double(nftkVot::diffclock(_t2_end,_t2_begin)) << " s";
+
+
+
+	// Update the direction of the votes
+	std::cout << std::endl << "\tLet's Update Directions.";
+	_t3_begin=clock();
+	int temp3 = _voting_points_3D.size();
+#pragma omp parallel for
+	for( int i=0; i<temp3; ++i ) // All the voting points
+	{
+		updateDirection_3D(_voting_points_3D.at(i));
+	}
+	std::cout << " -> Done. ";
+	_t3_end=clock();
+	std::cout << "Time: " << double(nftkVot::diffclock(_t3_end,_t3_begin)) << " s";
+
+	// Writing results
+	std::cout << std::endl << "\tWriting results.";
+	_t4_begin=clock();
+	std::stringstream outas;
+	outas << spanofvote;
+	std::string sas = outas.str();
+	std::string filenameCones_2as = "output\\"+sas+"_Vote_sum.tif";
+	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
+		std::cout<<std::endl<<"\tProblema escribiendo";
+	}
+	std::string filenameCones_2as_mask = "output\\"+sas+"_Vote_mask.tif";
+	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingMaskVotes, filenameCones_2as_mask.c_str() )){
+		std::cout<<std::endl<<"\tProblema escribiendo";
+	}
+	std::cout << " -> Done. ";
+	_t4_end=clock();
+	std::cout << "Time: " << double(nftkVot::diffclock(_t4_end,_t4_begin)) << " s";
+	//nftkVot::stopProgram();
+
+}
+
+	std::cout << std::endl << "\t -> Done. ";
 	_t1_end=clock();
 	std::cout << "Time: " << double(nftkVot::diffclock(_t1_end,_t1_begin)) << " s";
 	nftkVot::stopProgram();
-
-
-			std::string filenameCones_2as = "output\\oneVote_.tif";
-			if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
-				std::cout<<std::endl<<"\tProblema escribiendo";
-			}
-			std::string filenameCones_2as_mask = "output\\oneVote_mask.tif";
-			if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingMaskVotes, filenameCones_2as_mask.c_str() )){
-				std::cout<<std::endl<<"\tProblema escribiendo";
-			}
-
-
 
 
 
@@ -1105,8 +1053,6 @@ void ftkVoting_3D::vote()
 	//}
 
 
-	int raddd;
-	int bin_cont;
 
 	// PARALLEL
 
@@ -1126,7 +1072,7 @@ void ftkVoting_3D::vote()
 				{
 					//std::cout<<std::endl<<"VV: "<<vv;
 					int temp_vv = _voteDirec_3D_new[uu][angle_int][vv];
-					for( raddd=0; raddd<60; ++raddd )
+					for( int raddd=0; raddd<60; ++raddd )
 					{
 						//std::cout<<std::endl<<"INTER: "<<_conesPru_3D_new[temp_vv][raddd].size();
 #pragma omp parallel for
@@ -1224,10 +1170,6 @@ void ftkVoting_3D::vote()
 			//std::cout<<std::endl<<"UU_new2: "<<oo<<" "<<uu;
 			//std::vector < std::vector < int > > temp_direc_1 = _voteDirec_3D_new[uu];
 			std::vector < std::vector < int > > * temp_direc_1 = &(_voteDirec_3D_new[uu]);
-
-			int vv;
-			int raddd;
-			int bin_cont;
 
 			//#pragma omp parallel for private(vv,raddd,bin_cont)
 			for( int angle_int = 0; angle_int<_maxSpan; ++angle_int )
@@ -2505,41 +2447,42 @@ int ftkVoting_3D::computeDirecIndex_3D(double dx, double dy, double dz) const
 // ############################################################################################################################################################################
 void ftkVoting_3D::updateCones()
 {
-	//if(_intSpan==0)
-	//{
-	//	int rr;
-	//	std::cout<<std::endl<<"Error en updatecones";
-	//	std::cin>>rr;
-	//}
 
-	//int reduction = 2;
-	//while(_intSpan-reduction<0) //Si el span se reduce a menos de 0, entonces reduzca hasta que quede en cero
-	//{
-	//	reduction--;
-	//}
-	//_intSpan = _intSpan-reduction;
-	//int temp;
-	////_voteDirec = std::vector< pair< int,int > > (ntheta);
-	//for( int tt=0; tt<ntheta; tt++ )
-	//{
-	//	_voteDirec[tt].first = (_voteDirec[tt].first+reduction)%ntheta;
-	//	temp = _voteDirec[tt].second-reduction;
-	//	if(temp<0)
-	//	{
-	//		_voteDirec[tt].second = (temp+ntheta)%ntheta;
-	//	}
-	//	else
-	//	{
-	//		_voteDirec[tt].second = (temp)%ntheta;
-	//	}
-	//}
 }
 
+//// ############################################################################################################################################################################
+void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
+{
+	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer() + vp.pos;
 
+	double maxx = -100;
+	double posMax = 0;
 
+	int temp_vv_max = 0; // Maxima directino 
 
+	int dir_vote = vp.direc_vote;
+	for( int angle_int = 0; angle_int<_intSpan; ++angle_int ) // The different angles (1-10)
+	{
+		for( int vv = 0; vv<_voteDirec_3D_new_notqu[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
+		{
+			int temp_vv = _voteDirec_3D_new_notqu[dir_vote][angle_int][vv];
+			for( int bin_cont=0; bin_cont < _conesPru_3D_new_notqu[temp_vv].size(); ++bin_cont )
+			{
+				posMax = votingSumArray[_conesPru_3D_new_notqu[temp_vv][bin_cont].off];
+				if( posMax > maxx )
+				{
+					maxx = posMax;
+					temp_vv_max = temp_vv;
+				}
 
+			}
+		}
+	}
 
+	// If there is not maximum continue with the same gradient ??? !!! (es decir no mas grande que un determinado threshdol)
+	vp.direc_vote = temp_vv_max;
+
+}
 
 //// ############################################################################################################################################################################
 void inline ftkVoting_3D::votar(VotingDirType_3D::PixelType * p, const VPoint3D& vp, int angl_indx)

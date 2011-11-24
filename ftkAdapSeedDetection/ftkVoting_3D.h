@@ -220,7 +220,7 @@ private:
 	void updateCones();
 
 	/**	Update voting direction for a given point: vp; the new direction is from vp to the point with maximum voting response within vp's voting range.*/
-	void updateDirection_3D(VPoint3D& vp);
+	void inline updateDirection_3D(VPoint3D& vp);
 
 	/**	Update voting direction for a given point: vp; the new direction is from vp to the point with maximum voting response within vp's voting range. */
 	void inline updateDirection_3D_prob(VPoint3D& vp);
@@ -241,8 +241,8 @@ private:
 	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new_para;
 
 	/** A test to do the calculation of the cones in parallel and not quantized */
-	std::vector < ftkCone3D_new > _conesPru_3D_new_para_notqu; 
-	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new_para_notqu;
+	std::vector < ftkCone3D_new > _conesPru_3D_new_notqu; 
+	std::vector< std::vector< std::vector< int > > > _voteDirec_3D_new_notqu;
 
 
 
@@ -278,7 +278,13 @@ private:
 	double _sigmaG;
 	/** Timming variables */
 	clock_t _t1_begin;
+	clock_t _t2_begin;
+	clock_t _t3_begin;
+	clock_t _t4_begin;
 	clock_t _t1_end;
+	clock_t _t2_end;
+	clock_t _t3_end;
+	clock_t _t4_end;
 
 
 	// ??? these variables can be private ?
@@ -292,6 +298,13 @@ private:
 	int npix;
 	/** padding size for border pixels during voting  */
 	int bw;
+	/** Original size. */
+	int _bw;
+	int _nx_org;
+	int _ny_org;
+	int _nz_org;
+	/** Original size */
+	int _npix_org;
 
 
 //	/** voting */
@@ -310,6 +323,9 @@ private:
 	std::vector<ftkCone3D> _conesPru_prob;
 	std::vector< std::pair< int,int > > _voteDirec;
 	std::vector< std::pair< std::pair< int,int > , std::vector <int> > > _voteDirec_prob;
+
+	// Copy of the pointer of the input image
+	nftkVot::InputImageType_3D::Pointer _inputImage;
 
 
 	};
