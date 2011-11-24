@@ -2506,28 +2506,50 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 	double posMax = 0;
 
 	int temp_vv_max = 0; // Maxima directino 
+	int scale_max = hmax;
 
 	int dir_vote = vp.direc_vote;
 	for( int angle_int = 0; angle_int<_intSpan; ++angle_int ) // The different angles (1-10)
 	{
-		for( int vv = 0; vv<_voteDirec_3D_new_notqu[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
+// 		for( int vv = 0; vv<_voteDirec_3D_new_notqu[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
+// 		{
+// 			int temp_vv = _voteDirec_3D_new_notqu[dir_vote][angle_int][vv];
+// 			for( int bin_cont=0; bin_cont < _conesPru_3D_new_notqu[temp_vv].size(); ++bin_cont )
+// 			{
+// 				posMax = votingSumArray[_conesPru_3D_new_notqu[temp_vv][bin_cont].off];
+// 				if( posMax > maxx )
+// 				{
+// 					maxx = posMax;
+// 					temp_vv_max = temp_vv;
+// 				}
+// 
+// 			}
+// 		}
+		
+		for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 		{
-			int temp_vv = _voteDirec_3D_new_notqu[dir_vote][angle_int][vv];
-			for( int bin_cont=0; bin_cont < _conesPru_3D_new_notqu[temp_vv].size(); ++bin_cont )
+			int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
+			for( int bin_cont=0; bin_cont < _voting_points_3D.at(i).scale/*_conesPru_3D_new[temp_vv].size()*/; ++bin_cont )
 			{
-				posMax = votingSumArray[_conesPru_3D_new_notqu[temp_vv][bin_cont].off];
-				if( posMax > maxx )
+				poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
+				
+				for( int votes=0; votes < (*poin_bin).size(); ++votes )
 				{
-					maxx = posMax;
-					temp_vv_max = temp_vv;
+					posMax = votingMaskArray_pos[(*poin_bin)[votes].off] = votingMaskArray_pos[(*poin_bin)[votes].off];
+					if( posMax > maxx )
+					{
+						maxx = posMax;
+						temp_vv_max = temp_vv;
+						scale_max = bin_cont;
+					}
 				}
-
 			}
 		}
 	}
 
 	// If there is not maximum continue with the same gradient ??? !!! (es decir no mas grande que un determinado threshdol)
 	vp.direc_vote = temp_vv_max;
+	vp.scale = scale_max+(int)((double)scale_max/3); // ??? Give the third part (option relajada)
 
 }
 
