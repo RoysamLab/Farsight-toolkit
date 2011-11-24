@@ -2550,7 +2550,7 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 		}
 	}
 	
-	std::cout<<std::endl<<scale_max;
+	//std::cout<<std::endl<<scale_max;
 
 	// If there is not maximum continue with the same gradient ??? !!! (es decir no mas grande que un determinado threshdol)
 	vp.direc_vote = temp_vv_max;
