@@ -875,6 +875,8 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 
 		// VERSION 1
 		VotingDirType_3D::PixelType * votingMaskArray_pos = _votingMaskVotes->GetBufferPointer()+_voting_points_3D.at(i).pos;
+		
+		ftkBins3D * poin_bin;
 
 		int dir_vote = _voting_points_3D.at(i).direc_vote;
 		//#pragma omp parallel for
@@ -883,9 +885,10 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 			for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 			{
 				int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
+				std::endl<<std::cout<<_conesPru_3D_new[temp_vv].size();
 				for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv].size(); ++bin_cont )
 				{
-					ftkBins3D * poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
+					poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
 					
 					for( int votes=0; votes < (*poin_bin).size(); ++votes )
 						votingMaskArray_pos[(*poin_bin)[votes].off] = votingMaskArray_pos[(*poin_bin)[votes].off] + _voting_points_3D.at(i).mag;
