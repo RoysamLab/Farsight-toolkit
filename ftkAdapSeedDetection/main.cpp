@@ -10,7 +10,7 @@
 #include "itkImage.h"
 #include "itkExtractImageFilter.h"
 
-//using namespace nftkVotingGlobal;
+//using namespace nftkVot;
 
 
 
@@ -38,7 +38,7 @@ int main( int argc, char * argv[] ){
 
 	//// ###################################### 2D
 	//// Set Up the Reader 2D
-	//nftkVotingGlobal::InputImageType::Pointer inputImage = nftkVotingGlobal::readImage< nftkVotingGlobal::InputImageType, nftkVotingGlobal::InputImageType >( inputImageName );
+	//nftkVot::InputImageType::Pointer inputImage = nftkVot::readImage< nftkVot::InputImageType, nftkVot::InputImageType >( inputImageName );
 
 	//ftkVoting voteMain;
 	//voteMain.setParams(hmin,hmax,radius,min_grad,scale);
@@ -51,17 +51,17 @@ int main( int argc, char * argv[] ){
 	
 		// Input Image Type
 	
-		nftkVotingGlobal::InputImageType_3D::Pointer inputImage = nftkVotingGlobal::readImage_3D< nftkVotingGlobal::InputImageType_3D_16, nftkVotingGlobal::InputImageType_3D >( inputImageName );
+		nftkVot::InputImageType_3D::Pointer inputImage = nftkVot::readImage_3D< nftkVot::InputImageType_3D_16, nftkVot::InputImageType_3D >( inputImageName );
 	
 		ftkVoting_3D voteMain_3D;
 		voteMain_3D.setParams(hmin,hmax,radius,min_grad,scale);
 		voteMain_3D.setPrefix("temp/");
-		voteMain_3D.compute(inputImage); // DUDA COMO HACER PARA ENVIAR UN CONST POINTER, DESPUES DE QUE HE LEIDO LA IMAGEN COMO POINTER ??
+		voteMain_3D.compute(inputImage);
 
 	//// ###################################### 2D Slice by Slice
 
 	//// Set Up the Reader 2D
-	//nftkVotingGlobal::InputImageType_3D::Pointer inputImage_3D = nftkVotingGlobal::readImage_3D< nftkVotingGlobal::InputImageType_3D_16, nftkVotingGlobal::InputImageType_3D >( inputImageName );
+	//nftkVot::InputImageType_3D::Pointer inputImage_3D = nftkVot::readImage_3D< nftkVot::InputImageType_3D_16, nftkVot::InputImageType_3D >( inputImageName );
 	//inputImage_3D->Update();
 
 
@@ -70,21 +70,21 @@ int main( int argc, char * argv[] ){
 	//double dyy =0.3;
 	//cout<<endl<<" ANGULO: "<<atan(dyy/dxx)<<" "<<atan(dxx/dyy);;
 
-	//typedef itk::ExtractImageFilter< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType > FilterType;
+	//typedef itk::ExtractImageFilter< nftkVot::InputImageType_3D, nftkVot::InputImageType > FilterType;
 	//FilterType::Pointer filter = FilterType::New();
 	//filter->SetDirectionCollapseToSubmatrix();
 
 	//filter->SetInput( inputImage_3D );
 
 
-	//nftkVotingGlobal::InputImageType_3D::RegionType inputRegion = inputImage_3D->GetLargestPossibleRegion();
-	//nftkVotingGlobal::InputImageType_3D::SizeType size = inputRegion.GetSize();
+	//nftkVot::InputImageType_3D::RegionType inputRegion = inputImage_3D->GetLargestPossibleRegion();
+	//nftkVot::InputImageType_3D::SizeType size = inputRegion.GetSize();
 	//size[2] = 0;
 
-	//nftkVotingGlobal::InputImageType_3D::IndexType start = inputRegion.GetIndex();
+	//nftkVot::InputImageType_3D::IndexType start = inputRegion.GetIndex();
 	//start[2] = 1;
 
-	//nftkVotingGlobal::InputImageType_3D::RegionType desiredRegion;
+	//nftkVot::InputImageType_3D::RegionType desiredRegion;
 	//desiredRegion.SetSize(  size  );
 	//desiredRegion.SetIndex( start );
 
@@ -102,48 +102,48 @@ int main( int argc, char * argv[] ){
 	//}
 
 
-	////nftkVotingGlobal::InputImageType_3D::Pointer votingBySlice = nftkVotingGlobal::InputImageType_3D::New(); //VotingDirType = double
+	////nftkVot::InputImageType_3D::Pointer votingBySlice = nftkVot::InputImageType_3D::New(); //VotingDirType = double
 	////votingBySlice->SetRegions( inputImage_3D->GetRequestedRegion()); // IMPORTANTE PARA CREAR UNA IMAGEN NUEVA EN BASE A UNA QUE YA EXISTE EN VEZ DE PONERME A LEER LOS TAMANOS Y LAS REGIONES
 	////votingBySlice->Allocate();
 
-	////nftkVotingGlobal::InputImageType_3D::Pointer votingBySlice = nftkVotingGlobal::readImage_3D< nftkVotingGlobal::InputImageType_3D_16, nftkVotingGlobal::InputImageType_3D >( inputImageName );
+	////nftkVot::InputImageType_3D::Pointer votingBySlice = nftkVot::readImage_3D< nftkVot::InputImageType_3D_16, nftkVot::InputImageType_3D >( inputImageName );
 	////votingBySlice->Update();
 	////int nxxX = votingBySlice->GetLargestPossibleRegion().GetSize()[0];
 	////int nyxX = votingBySlice->GetLargestPossibleRegion().GetSize()[1];
 	////int nzxX = votingBySlice->GetLargestPossibleRegion().GetSize()[2];
 	////int npixX = nxxX*nyxX*nzxX;
-	////nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceArray = votingBySlice->GetBufferPointer();
+	////nftkVot::InputImageType_3D::PixelType * votingBySliceArray = votingBySlice->GetBufferPointer();
 	////for( unsigned int tr=0; tr<npixX; ++tr ){
 	////	votingBySliceArray[0] = 0;
 	////}
 
-	//nftkVotingGlobal::InputImageType_3D::Pointer votingBySlice = nftkVotingGlobal::InputImageType_3D::New();
-	//nftkVotingGlobal::InputImageType_3D::IndexType start22;
+	//nftkVot::InputImageType_3D::Pointer votingBySlice = nftkVot::InputImageType_3D::New();
+	//nftkVot::InputImageType_3D::IndexType start22;
 	//start22[0] = 0;
 	//start22[1] = 0;
 	//start22[2] = 0;
-	//nftkVotingGlobal::InputImageType_3D::SizeType size22;
+	//nftkVot::InputImageType_3D::SizeType size22;
 	//double bw = sqrt((double)(radius*radius + hmax*hmax)) + 3; // Que es esto ??
 	//const int bw2 = 2*bw;
 	//size22[0] = inputImage_3D->GetLargestPossibleRegion().GetSize()[0]+bw2;
 	//size22[1] = inputImage_3D->GetLargestPossibleRegion().GetSize()[1]+bw2;
 	//size22[2] = inputImage_3D->GetLargestPossibleRegion().GetSize()[2];
-	//nftkVotingGlobal::InputImageType_3D::RegionType region;
+	//nftkVot::InputImageType_3D::RegionType region;
 	//region.SetSize( size22 );
 	//region.SetIndex( start22 );
 	//votingBySlice->SetRegions( region );
 	//votingBySlice->Allocate();
-	//const nftkVotingGlobal::InputImageType_3D::PixelType ceros = 0;
+	//const nftkVot::InputImageType_3D::PixelType ceros = 0;
 	//votingBySlice->FillBuffer( ceros );
 	//votingBySlice->Update();
 
-	//nftkVotingGlobal::InputImageType_3D::Pointer votingBySliceLastbigSapan = nftkVotingGlobal::InputImageType_3D::New();
+	//nftkVot::InputImageType_3D::Pointer votingBySliceLastbigSapan = nftkVot::InputImageType_3D::New();
 	//votingBySliceLastbigSapan->SetRegions( region );
 	//votingBySliceLastbigSapan->Allocate();
 	//votingBySliceLastbigSapan->FillBuffer( ceros );
 	//votingBySliceLastbigSapan->Update();
 
-	//nftkVotingGlobal::InputImageType_3D::Pointer votingBySliceLastbigSapanProb = nftkVotingGlobal::InputImageType_3D::New();
+	//nftkVot::InputImageType_3D::Pointer votingBySliceLastbigSapanProb = nftkVot::InputImageType_3D::New();
 	//votingBySliceLastbigSapanProb->SetRegions( region );
 	//votingBySliceLastbigSapanProb->Allocate();
 	//votingBySliceLastbigSapanProb->FillBuffer( ceros );
@@ -195,7 +195,7 @@ int main( int argc, char * argv[] ){
 
 
 	clock_t end=clock();
-	std::cout << "Time elapsed: " << double(nftkVotingGlobal::diffclock(end,begin)) << " s";
+	std::cout << "Time elapsed: " << double(nftkVot::diffclock(end,begin)) << " s";
 
 	std::cout << std::endl;
 	return 0;

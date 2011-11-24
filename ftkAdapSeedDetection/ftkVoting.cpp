@@ -47,7 +47,7 @@ void ftkVoting::setParams(	int hmin, int hmax,	int radius,	double min_grad, doub
 }
 
 // ############################################################################################################################################################################
-void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
+void ftkVoting::compute(nftkVot::InputImageType::Pointer inputImage)
 {
 	nx = inputImage->GetLargestPossibleRegion().GetSize()[0];
 	ny = inputImage->GetLargestPossibleRegion().GetSize()[1];
@@ -68,11 +68,11 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	typedef itk::ImageRegionIterator< VotingDirType > IteratorType3;
 	IteratorType3 out2( votingDirX, votingDirX->GetRequestedRegion() );
 
-	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType2;
-	typedef itk::ImageRegionIterator< nftkVotingGlobal::InputImageType > IteratorType2;
+	typedef itk::ConstNeighborhoodIterator< nftkVot::InputImageType > NeighborhoodIteratorType2;
+	typedef itk::ImageRegionIterator< nftkVot::InputImageType > IteratorType2;
 	NeighborhoodIteratorType2::RadiusType radius2 = sobelOperator.GetRadius();
 	NeighborhoodIteratorType2 it2( radius2, inputImage, inputImage->GetRequestedRegion() );
-	itk::NeighborhoodInnerProduct< nftkVotingGlobal::InputImageType > innerProduct;
+	itk::NeighborhoodInnerProduct< nftkVot::InputImageType > innerProduct;
 
 	for (it2.GoToBegin(), out2.GoToBegin(); !it2.IsAtEnd(); ++it2, ++out2)
 	{
@@ -90,11 +90,11 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	typedef itk::ImageRegionIterator< VotingDirType > IteratorType4;
 	IteratorType4 out3( votingDirY, votingDirY->GetRequestedRegion() );
 
-	typedef itk::ConstNeighborhoodIterator< nftkVotingGlobal::InputImageType > NeighborhoodIteratorType3;
-	typedef itk::ImageRegionIterator< nftkVotingGlobal::InputImageType > IteratorType3;
+	typedef itk::ConstNeighborhoodIterator< nftkVot::InputImageType > NeighborhoodIteratorType3;
+	typedef itk::ImageRegionIterator< nftkVot::InputImageType > IteratorType3;
 	NeighborhoodIteratorType3::RadiusType radius3 = sobelOperatorY.GetRadius();
 	NeighborhoodIteratorType3 it3( radius3, inputImage, inputImage->GetRequestedRegion() );
-	itk::NeighborhoodInnerProduct< nftkVotingGlobal::InputImageType > innerProduct2;
+	itk::NeighborhoodInnerProduct< nftkVot::InputImageType > innerProduct2;
 
 	for (it3.GoToBegin(), out3.GoToBegin(); !it3.IsAtEnd(); ++it3, ++out3)
 	{
@@ -138,14 +138,14 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 
 	// Save the canny edge result
 	string filenameCanny = "output\\out_ImageOfCanny.jpg";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(cannyFilter->GetOutput(), filenameCanny.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 
 
 
 	// Arrays of data
-	nftkVotingGlobal::InputImageType::PixelType * votingImaArray = inputImage->GetBufferPointer();
+	nftkVot::InputImageType::PixelType * votingImaArray = inputImage->GetBufferPointer();
 	VotingDirType::PixelType * votingDirXArray = votingDirX->GetBufferPointer();
 	VotingDirType::PixelType * votingDirYArray = votingDirY->GetBufferPointer();
 	VotingDirType::PixelType * votingMagArray = votingMagImage->GetBufferPointer();
@@ -183,7 +183,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 	// Testing to store the resulting voting image base on the gradient
 	// Save the canny edge result
 	string filenameGradVot = "output\\out_ImageOfGradVot.jpg";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(votingMagImage, filenameGradVot.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 	// Put 1 if mag array is different to zero
@@ -195,7 +195,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		}
 	}
 	string filenameGradVot_bin = "output\\out_ImageOfGradVot_bin.jpg";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVot_bin.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 	// Put 1 if mag array intersect with canny edge is di
@@ -207,7 +207,7 @@ void ftkVoting::compute(nftkVotingGlobal::InputImageType::Pointer inputImage)
 		}
 	}
 	string filenameGradVotInterCanny = "output\\out_ImageOfGradVotInterCanny.jpg";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(votingMagImage_bin, filenameGradVotInterCanny.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 
@@ -433,7 +433,7 @@ int ftkVoting::computeAngleIndex(double dx, double dy) const
 		a = 2*pi-a;
 	}
 
-	//int indx_theta = nftkVotingGlobal::round_double(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
+	//int indx_theta = nftkVot::round_double(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
 	//return max(0, min(ntheta-1, indx_theta)); // Se asegura que el maximo devuelto sea 255 (256 nunca va a salir de aca)
 
 	int indx_theta = floor(a/delta_theta); // De por si esta divisino no veo como pueda ser mas de 255
@@ -1188,7 +1188,7 @@ void ftkVoting::vote()
 	//		//out<<count;
 	//		//string s = out.str();
 	//		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
-	//		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
+	//		//if( nftkVot::writeImage< VotingDirType, OutputImageType >(imageOfConexPixels, filename.c_str() )){
 	//		//	cout<<endl<<"\tProblema escribiendo";
 	//		//}
 	//		//memset(imageOfConexPixelsArray, 0,  npix*sizeof(VotingDirType::PixelType));
@@ -1223,25 +1223,25 @@ void ftkVoting::vote()
 	//	out5<<_hmax-_hmin-gg;
 	//	string s5 = out5.str();
 	//	////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-	//	////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+	//	////if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 	//	////	cout<<endl<<"\tProblema escribiendo";
 	//	////}
 
 	//	string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+	//	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 	//		cout<<endl<<"\tProblema escribiendo";
 	//	}
 	//	string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+	//	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 	//		cout<<endl<<"\tProblema escribiendo";
 	//	}
 
 	//	//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+	//	//if( nftkVot::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
 	//	//	cout<<endl<<"\tProblema escribiendo";
 	//	//}
 	//	//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+	//	//if( nftkVot::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
 	//	//	cout<<endl<<"\tProblema escribiendo";
 	//	//}
 
@@ -1256,7 +1256,7 @@ void ftkVoting::vote()
 
 
 	//	string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
-	//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
+	//	if( nftkVot::writeImage< VotingDirType, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 	//		cout<<endl<<"\tProblema escribiendo";
 	//	}
 
@@ -1268,7 +1268,7 @@ void ftkVoting::vote()
 
 	//	//// The amount of memory required turns out to be to high :( what to do ? 
 	//	//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
-	//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
+	//	//if( nftkVot::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
 	//	//	cout<<endl<<"\tProblema escribiendo";
 	//	//}
 
@@ -1319,19 +1319,19 @@ void ftkVoting::vote()
 	//out2<<_intSpan;
 	//string s2 = out2.str();
 	//string filename2 = "output\\out_ImageOfSums_"+s2+".jpg";
-	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2.c_str() )){
+	//if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2.c_str() )){
 	//	cout<<endl<<"\tProblema escribiendo";
 	//}
 
 	////votingSumVotes
 	////Store Derivative in X
 	//const char* filename = "output\\out_ImageOfVotes.jpg";
-	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(imageOfVotingPixels, filename )){
+	//if( nftkVot::writeImage< VotingDirType, OutputImageType >(imageOfVotingPixels, filename )){
 	//	cout<<endl<<"\tProblema escribiendo";
 	//}
 
 	//const char* filename2 = "output\\out_vote_1.jpg";
-	//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2 )){
+	//if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename2 )){
 	//	cout<<endl<<"\tProblema escribiendo";
 	//}
 
@@ -1382,11 +1382,11 @@ void ftkVoting::vote()
 		//out3<<_intSpan;
 		//string s3 = out3.str();
 		////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
-		////if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
+		////if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 		////	cout<<endl<<"\tProblema escribiendo";
 		////}
 		//string filename4 = "output\\out_ImageOfSums_"+s3+".jpg";
-		//if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename4.c_str() )){
+		//if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename4.c_str() )){
 		//	cout<<endl<<"\tProblema escribiendo";
 		//}
 
@@ -1415,20 +1415,20 @@ void ftkVoting::vote()
 		//	string s5 = out5.str();
 
 		//	string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-		//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
+		//	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 		//		cout<<endl<<"\tProblema escribiendo";
 		//	}
 		//	string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
-		//	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
+		//	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 		//		cout<<endl<<"\tProblema escribiendo";
 		//	}
 
 		//	//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-		//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
+		//	//if( nftkVot::writeImage_mhdDouble< VotingDirType >(_votingSumVotes, filename7.c_str() )){
 		//	//	cout<<endl<<"\tProblema escribiendo";
 		//	//}
 		//	//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
-		//	//if( nftkVotingGlobal::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
+		//	//if( nftkVot::writeImage_mhdDouble< VotingDirType >(_votingMaskVotes, filename8.c_str() )){
 		//	//	cout<<endl<<"\tProblema escribiendo";
 		//	//}
 		//}
@@ -1465,7 +1465,7 @@ void ftkVoting::vote()
 			outSlice<<_intSpan;
 			string sSlice = outSlice.str();
 			string filenameSlicebySlice = "output\\BySlice\\out_"+sSlice+"__"+_prefix+".tif";
-			if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filenameSlicebySlice.c_str() )){
+			if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingSumVotes, filenameSlicebySlice.c_str() )){
 				cout<<endl<<"\tProblema escribiendo";
 			}
 
@@ -1476,7 +1476,7 @@ void ftkVoting::vote()
 	//cout<<endl<<"PASDFASD: "<<npixX;
 
 			// Copy one slice
-			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceArray = _votingBySlice->GetBufferPointer();
+			nftkVot::InputImageType_3D::PixelType * votingBySliceArray = _votingBySlice->GetBufferPointer();
 			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
 			{
 				votingBySliceArray[yyyo] = votingSumArray[yyyo-_slice*nx*ny];
@@ -1487,7 +1487,7 @@ void ftkVoting::vote()
 			outSlice_3D<<_intSpan;
 			string sSlice_3D = outSlice_3D.str();
 			string filenameSlicebySlice_3D = "output\\BySlice_3D\\out_"+sSlice_3D+"__"+_prefix+".tif";
-			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySlice, filenameSlicebySlice_3D.c_str() )){
+			if( nftkVot::writeImage_3D< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(_votingBySlice, filenameSlicebySlice_3D.c_str() )){
 				cout<<endl<<"\tProblema escribiendo";
 			}
 			}
@@ -1514,12 +1514,12 @@ void ftkVoting::vote()
 		votar(votingMaskArray+it->pos,*it,it->angIndex);
 	}
 	string filenameSlicebySliceLastbigSapan = "output\\BySliceLastbigSapan\\out___"+_prefix+".tif";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapan.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapan.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 
 			// Copy one slice
-			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceLastbigSapanArray = _votingBySliceLastbigSapan->GetBufferPointer();
+			nftkVot::InputImageType_3D::PixelType * votingBySliceLastbigSapanArray = _votingBySliceLastbigSapan->GetBufferPointer();
 			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
 			{
 				votingBySliceLastbigSapanArray[yyyo] = votingMaskArray[yyyo-_slice*nx*ny];
@@ -1527,7 +1527,7 @@ void ftkVoting::vote()
 			if( (_slice == 50) || (_slice == 100) || (_slice == 150) || (_slice == 200) || (_slice == 274) )
 			{
 			string filenameSlicebySliceLastbigSapan_3D = "output\\BySliceLastbigSapan_3D\\out___"+_prefix+".tif";
-			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySliceLastbigSapan, filenameSlicebySliceLastbigSapan_3D.c_str() )){
+			if( nftkVot::writeImage_3D< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(_votingBySliceLastbigSapan, filenameSlicebySliceLastbigSapan_3D.c_str() )){
 				cout<<endl<<"\tProblema escribiendo";
 			}
 			}
@@ -1543,12 +1543,12 @@ void ftkVoting::vote()
 		}
 	}
 	string filenameSlicebySliceLastbigSapanProb = "output\\BySliceLastbigSapanProb\\out___"+_prefix+".tif";
-	if( nftkVotingGlobal::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapanProb.c_str() )){
+	if( nftkVot::writeImage< VotingDirType, OutputImageType >(_votingMaskVotes, filenameSlicebySliceLastbigSapanProb.c_str() )){
 		cout<<endl<<"\tProblema escribiendo";
 	}
 
 			// Copy one slice
-			nftkVotingGlobal::InputImageType_3D::PixelType * votingBySliceLastbigSapanProbArray = _votingBySliceLastbigSapanProb->GetBufferPointer();
+			nftkVot::InputImageType_3D::PixelType * votingBySliceLastbigSapanProbArray = _votingBySliceLastbigSapanProb->GetBufferPointer();
 			for( unsigned int yyyo = _slice*nx*ny; yyyo<(_slice+1)*nx*ny; ++yyyo )
 			{
 				votingBySliceLastbigSapanProbArray[yyyo] = votingMaskArray[yyyo-_slice*nx*ny];
@@ -1556,7 +1556,7 @@ void ftkVoting::vote()
 			if( (_slice == 50) || (_slice == 100) || (_slice == 150) || (_slice == 200) || (_slice == 274) )
 			{
 			string filenameSlicebySliceLastbigSapanProb_3D = "output\\BySliceLastbigSapanProb_3D\\out___"+_prefix+".tif";
-			if( nftkVotingGlobal::writeImage_3D< nftkVotingGlobal::InputImageType_3D, nftkVotingGlobal::InputImageType_3D_16 >(_votingBySliceLastbigSapanProb, filenameSlicebySliceLastbigSapanProb_3D.c_str() )){
+			if( nftkVot::writeImage_3D< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(_votingBySliceLastbigSapanProb, filenameSlicebySliceLastbigSapanProb_3D.c_str() )){
 				cout<<endl<<"\tProblema escribiendo";
 			}
 			}

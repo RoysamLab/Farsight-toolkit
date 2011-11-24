@@ -136,7 +136,7 @@ public:
 	void setParams(	int hmin, int hmax,	int radius,	double min_grad, double scale );
 
 	/** main user interface for voting */
-	void compute(nftkVotingGlobal::InputImageType::Pointer I);
+	void compute(nftkVot::InputImageType::Pointer I);
 
 	/**
 	Set the prefix of the path to store the voting landscope
@@ -150,20 +150,20 @@ public:
 	}
 	unsigned int _slice;
 
-	void setOutBySlice( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+	void setOutBySlice( nftkVot::InputImageType_3D::Pointer input ){
 		_votingBySlice = input;
 	}
-	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySlice;
+	nftkVot::InputImageType_3D::Pointer _votingBySlice;
 
-	void setOutBySliceLastbigSapan( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+	void setOutBySliceLastbigSapan( nftkVot::InputImageType_3D::Pointer input ){
 		_votingBySliceLastbigSapan = input;
 	}
-	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySliceLastbigSapan;
+	nftkVot::InputImageType_3D::Pointer _votingBySliceLastbigSapan;
 
-	void setOutBySliceLastbigSapanProb( nftkVotingGlobal::InputImageType_3D::Pointer input ){
+	void setOutBySliceLastbigSapanProb( nftkVot::InputImageType_3D::Pointer input ){
 		_votingBySliceLastbigSapanProb = input;
 	}
-	nftkVotingGlobal::InputImageType_3D::Pointer _votingBySliceLastbigSapanProb;
+	nftkVot::InputImageType_3D::Pointer _votingBySliceLastbigSapanProb;
 	// -------------------------------------
 
 	double _OriginalScale;

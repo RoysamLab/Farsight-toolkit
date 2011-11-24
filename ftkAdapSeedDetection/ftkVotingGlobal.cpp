@@ -1,14 +1,14 @@
 // ############################################################################################################################################################################
 #include"ftkVotingGlobal.h"
 
-double nftkVotingGlobal::diffclock(clock_t clock1,clock_t clock2)
+double nftkVot::diffclock(clock_t clock1,clock_t clock2)
 {
 	double diffticks=clock1-clock2;
 	double diffms=(diffticks)/CLOCKS_PER_SEC;
 	return diffms;
 };
 
-int  nftkVotingGlobal::round_double( double x ) 
+int  nftkVot::round_double( double x ) 
 {
  int    ix;
  double dx;
@@ -20,7 +20,7 @@ int  nftkVotingGlobal::round_double( double x )
  else return(ix);
 };
 
-int  nftkVotingGlobal::round_double2( double x ) 
+int  nftkVot::round_double2( double x ) 
 {
  int    ix;
  double dx;
@@ -32,7 +32,7 @@ int  nftkVotingGlobal::round_double2( double x )
  else return(ix);
 };
 
-void nftkVotingGlobal::stopProgram( void )
+void nftkVot::stopProgram( void )
 {
 	int input;
 	std::cout << " -> Wating for U: ";
