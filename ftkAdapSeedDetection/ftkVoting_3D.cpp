@@ -2500,13 +2500,15 @@ void ftkVoting_3D::updateCones()
 //// ############################################################################################################################################################################
 void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 {
-	VotingDirType_3D::PixelType * votingSumArray = _votingSumVotes->GetBufferPointer() + vp.pos;
+	VotingDirType_3D::PixelType * votingSumArray_pos = _votingSumVotes->GetBufferPointer() + vp.pos;
 
 	double maxx = -100;
 	double posMax = 0;
 
 	int temp_vv_max = 0; // Maxima directino 
-	int scale_max = hmax;
+	int scale_max = _hmax;
+	
+	ftkBins3D * poin_bin;
 
 	int dir_vote = vp.direc_vote;
 	for( int angle_int = 0; angle_int<_intSpan; ++angle_int ) // The different angles (1-10)
@@ -2516,7 +2518,7 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 // 			int temp_vv = _voteDirec_3D_new_notqu[dir_vote][angle_int][vv];
 // 			for( int bin_cont=0; bin_cont < _conesPru_3D_new_notqu[temp_vv].size(); ++bin_cont )
 // 			{
-// 				posMax = votingSumArray[_conesPru_3D_new_notqu[temp_vv][bin_cont].off];
+// 				posMax = votingSumArray_pos[_conesPru_3D_new_notqu[temp_vv][bin_cont].off];
 // 				if( posMax > maxx )
 // 				{
 // 					maxx = posMax;
@@ -2529,7 +2531,7 @@ void inline ftkVoting_3D::updateDirection_3D(VPoint3D& vp)
 		for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 		{
 			int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
-			for( int bin_cont=0; bin_cont < _voting_points_3D.at(i).scale/*_conesPru_3D_new[temp_vv].size()*/; ++bin_cont )
+			for( int bin_cont=0; bin_cont < vp.scale/*_conesPru_3D_new[temp_vv].size()*/; ++bin_cont )
 			{
 				poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
 				
