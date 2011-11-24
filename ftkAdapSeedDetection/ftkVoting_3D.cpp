@@ -268,6 +268,7 @@ void ftkVoting_3D::compute(nftkVot::InputImageType_3D::Pointer inputImage)
 					vp_3D.z = z + bw;
 					vp_3D.mag = votingDirXYZ_3DArray[k]; 
 					vp_3D.posOri = k; // This is the original position in the original image
+					vp_3D.scale = _hmax;
 					_voting_points_3D.push_back(vp_3D);
 				}
 			}
@@ -885,8 +886,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 			for( int vv = 0; vv<_voteDirec_3D_new[dir_vote][angle_int].size(); ++vv )	// All the bins at a given dot product distance from the given direction (dir_vote)
 			{
 				int temp_vv = _voteDirec_3D_new[dir_vote][angle_int][vv];
-				std::cout << std::endl << _conesPru_3D_new[temp_vv].size();
-				for( int bin_cont=0; bin_cont < _conesPru_3D_new[temp_vv].size(); ++bin_cont )
+				for( int bin_cont=0; bin_cont < _voting_points_3D.at(i).scale/*_conesPru_3D_new[temp_vv].size()*/; ++bin_cont )
 				{
 					poin_bin =  &_conesPru_3D_new[temp_vv][bin_cont];
 					
