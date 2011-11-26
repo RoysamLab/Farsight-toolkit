@@ -218,19 +218,19 @@ void ftkVoting_3D::compute(nftkVot::InputImageType_3D::Pointer inputImage)
 	//_t1_begin=clock();
 	//
 	//	// Save the derivatives
-	//	string filenameDerivativeX = "output\\out_ftkDerivativeX.tif";
+	//	string filenameDerivativeX = "output/out_ftkDerivativeX.tif";
 	//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(votingDirX_3D, filenameDerivativeX.c_str() )){
 	//		std::cout<<std::endl<<"\tProblema escribiendo";
 	//	}
-	//	string filenameDerivativeY = "output\\out_ftkDerivativeY.tif";
+	//	string filenameDerivativeY = "output/out_ftkDerivativeY.tif";
 	//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(votingDirY_3D, filenameDerivativeY.c_str() )){
 	//		std::cout<<std::endl<<"\tProblema escribiendo";
 	//	}
-	//	string filenameDerivativeZ = "output\\out_ftkDerivativeZ.tif";
+	//	string filenameDerivativeZ = "output/out_ftkDerivativeZ.tif";
 	//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(votingDirZ_3D, filenameDerivativeZ.c_str() )){
 	//		std::cout<<std::endl<<"\tProblema escribiendo";
 	//	}
-	//	string filenameDerivativeXYZ = "output\\out_ftkDerivativeXYZ.tif";
+	//	string filenameDerivativeXYZ = "output/out_ftkDerivativeXYZ.tif";
 	//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(votingDirXYZ_3D, filenameDerivativeXYZ.c_str() )){
 	//		std::cout<<std::endl<<"\tProblema escribiendo";
 	//	}
@@ -727,7 +727,7 @@ void ftkVoting_3D::vote()
 	{
 		imageOfVotingPixelsArray[_voting_points_3D.at(i).pos] = 1;
 	}
-	std::string filenameCones_votpixe = "output\\Vot_Pixels.tif";
+	std::string filenameCones_votpixe = "output/Vot_Pixels.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(imageOfVotingPixels, filenameCones_votpixe.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
@@ -751,7 +751,7 @@ void ftkVoting_3D::vote()
 			}
 		}
 	}
-	std::string filenameOrig = "output\\Vot_OriginalImage.tif";
+	std::string filenameOrig = "output/Vot_OriginalImage.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameOrig.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
@@ -793,7 +793,7 @@ void ftkVoting_3D::vote()
 	//		}
 	//	}
 	//}
-	//std::string filenameCones_2as = "output\\oneVote.tif";
+	//std::string filenameCones_2as = "output/oneVote.tif";
 	//if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//}
@@ -925,11 +925,11 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	std::stringstream outas;
 	outas << spanofvote;
 	std::string sas = outas.str();
-	std::string filenameCones_2as = "output\\"+sas+"_Vote_sum.tif";
+	std::string filenameCones_2as = "output/"+sas+"_Vote_sum.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
-	std::string filenameCones_2as_mask = "output\\"+sas+"_Vote_mask.tif";
+	std::string filenameCones_2as_mask = "output/"+sas+"_Vote_mask.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingMaskVotes, filenameCones_2as_mask.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
@@ -1094,7 +1094,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//	stringstream outas;
 	//	outas<<uu;
 	//	string sas = outas.str();
-	//	string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+	//	string filenameCones_2as = "output/out_new_votingSumVotes_cone"+sas+".tif";
 	//	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 	//		std::cout<<std::endl<<"\tProblema escribiendo";
 	//	}
@@ -1136,7 +1136,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 				//stringstream outas;
 				//outas<<angle_int;
 				//string sas = outas.str();
-				//string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+				//string filenameCones_2as = "output/out_new_votingSumVotes_cone"+sas+".tif";
 				//if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 				//	std::cout<<std::endl<<"\tProblema escribiendo";
 				//}
@@ -1180,7 +1180,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 				//stringstream outas;
 				//outas<<angle_int;
 				//string sas = outas.str();
-				//string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+				//string filenameCones_2as = "output/out_new_votingSumVotes_cone"+sas+".tif";
 				//if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 				//	std::cout<<std::endl<<"\tProblema escribiendo";
 				//}
@@ -1275,7 +1275,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 				//stringstream outas;
 				//outas<<angle_int;
 				//string sas = outas.str();
-				//string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+				//string filenameCones_2as = "output/out_new_votingSumVotes_cone"+sas+".tif";
 				//if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 				//	std::cout<<std::endl<<"\tProblema escribiendo";
 				//}
@@ -1336,7 +1336,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 				//stringstream outas;
 				//outas<<angle_int;
 				//string sas = outas.str();
-				//string filenameCones_2as = "output\\out_new_votingSumVotes_cone"+sas+".tif";
+				//string filenameCones_2as = "output/out_new_votingSumVotes_cone"+sas+".tif";
 				//if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 				//	std::cout<<std::endl<<"\tProblema escribiendo";
 				//}
@@ -1365,7 +1365,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 
 
 
-	std::string filenameCones_1 = "output\\out__votingSumVotes.tif";
+	std::string filenameCones_1 = "output/out__votingSumVotes.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_16 >(_votingSumVotes, filenameCones_1.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
@@ -1472,7 +1472,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 		std::stringstream outas;
 		outas<<uu2;
 		std::string sas = outas.str();
-		std::string filenameCones_2as = "output\\out__votingSumVotes_cone"+sas+".tif";
+		std::string filenameCones_2as = "output/out__votingSumVotes_cone"+sas+".tif";
 		if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 			std::cout<<std::endl<<"\tProblema escribiendo";
 		}
@@ -1549,7 +1549,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 		std::stringstream outas;
 		outas<<uu2;
 		std::string sas = outas.str();
-		std::string filenameCones_2as = "output\\z_out__votingSumVotes_cone"+sas+".tif";
+		std::string filenameCones_2as = "output/z_out__votingSumVotes_cone"+sas+".tif";
 		if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2as.c_str() )){
 			std::cout<<std::endl<<"\tProblema escribiendo";
 		}
@@ -1572,7 +1572,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	}
 
 
-	std::string filenameCones_2 = "output\\out__votingSumVotes_cone.tif";
+	std::string filenameCones_2 = "output/out__votingSumVotes_cone.tif";
 	if( nftkVot::writeImage< nftkVot::InputImageType_3D, nftkVot::InputImageType_3D_8 >(_votingSumVotes, filenameCones_2.c_str() )){
 		std::cout<<std::endl<<"\tProblema escribiendo";
 	}
@@ -1653,7 +1653,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	////		//stringstream out;
 	////		//out<<count;
 	////		//string s = out.str();
-	////		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
+	////		//string filename = "output/cones/out_ImageOfVotes_"+s+".jpg";
 	////		//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageOfConexPixels, filename.c_str() )){
 	////		//	std::cout<<std::endl<<"\tProblema escribiendo";
 	////		//}
@@ -1686,25 +1686,25 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			stringstream out5;
 	//			out5<<_hmax-_hmin-gg;
 	//			string s5 = out5.str();
-	//			////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
+	//			////string filename3 = "output/out_ImageOfMask_"+s3+".jpg";
 	//			////if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 	//			////	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			////}
 	//
-	//			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename5 = "output/Sum_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename6 = "output/Mask_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
 	//
-	//			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			//string filename7 = "output/Sum_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
-	//			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			//string filename8 = "output/Mask_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
@@ -1719,7 +1719,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			}
 	//
 	//
-	//			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
+	//			string filename9_max = "output/Max_stepbystep/out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
@@ -1729,12 +1729,12 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 	//
 	//			//// The amount of memory required turns out to be to high :( what to do ? 
-	//			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//			//string filename9 = "output/Direction_perpixel/out_DirPerPixel_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
 	//
-	//			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//			//string filename9 = "output/Direction_perpixel/out_DirPerPixel_"+s4+"__"+s5+".mhd";
 	//			//writer->SetInput( votingDirPerPixel );
 	//			//writer->SetFileName( filename9.c_str() );
 	//			//writer->Update();
@@ -1756,7 +1756,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//	//stringstream out44;
 	//	//out44<<_intSpan;
 	//	//string s44 = out44.str();
-	//	//string filename_dir = "output\\Directions\\Dri_vote_"+s44+".txt";
+	//	//string filename_dir = "output/Directions/Dri_vote_"+s44+".txt";
 	//	//ofstream dirFilOut;
 	//	//dirFilOut.open (filename_dir.c_str());
 	//	//for(std::vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -1767,19 +1767,19 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//	//stringstream out2;
 	//	//out2<<_intSpan;
 	//	//string s2 = out2.str();
-	//	//string filename2 = "output\\out_ImageOfSums_"+s2+".jpg";
+	//	//string filename2 = "output/out_ImageOfSums_"+s2+".jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2.c_str() )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
 	//
 	//	////votingSumVotes
 	//	////Store Derivative in X
-	//	//const char* filename = "output\\out_ImageOfVotes.jpg";
+	//	//const char* filename = "output/out_ImageOfVotes.jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageOfVotingPixels, filename )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
 	//
-	//	//const char* filename2 = "output\\out_vote_1.jpg";
+	//	//const char* filename2 = "output/out_vote_1.jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2 )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
@@ -1806,7 +1806,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//		//stringstream out45;
 	//		//out45<<_intSpan;
 	//		//string s45 = out45.str();
-	//		//string filename_dir2 = "output\\Directions\\Dri_vote_"+s45+".txt";
+	//		//string filename_dir2 = "output/Directions/Dri_vote_"+s45+".txt";
 	//		//ofstream dirFilOut2;
 	//		//dirFilOut2.open (filename_dir2.c_str());
 	//		//for(std::vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -1830,11 +1830,11 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//		//stringstream out3;
 	//		//out3<<_intSpan;
 	//		//string s3 = out3.str();
-	//		////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
+	//		////string filename3 = "output/out_ImageOfMask_"+s3+".jpg";
 	//		////if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 	//		////	std::cout<<std::endl<<"\tProblema escribiendo";
 	//		////}
-	//		//string filename4 = "output\\out_ImageOfSums_"+s3+".jpg";
+	//		//string filename4 = "output/out_ImageOfSums_"+s3+".jpg";
 	//		//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename4.c_str() )){
 	//		//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//		//}
@@ -1860,20 +1860,20 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			out5<<_hmax-_hmin-gg;
 	//			string s5 = out5.str();
 	//
-	//			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename5 = "output/Sum_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename6 = "output/Mask_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
 	//
-	//			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			string filename7 = "output/Sum_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			string filename8 = "output/Mask_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
@@ -2137,7 +2137,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	////		//stringstream out;
 	////		//out<<count;
 	////		//string s = out.str();
-	////		//string filename = "output\\cones\\out_ImageOfVotes_"+s+".jpg";
+	////		//string filename = "output/cones/out_ImageOfVotes_"+s+".jpg";
 	////		//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageOfConexPixels, filename.c_str() )){
 	////		//	std::cout<<std::endl<<"\tProblema escribiendo";
 	////		//}
@@ -2170,25 +2170,25 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			stringstream out5;
 	//			out5<<_hmax-_hmin-gg;
 	//			string s5 = out5.str();
-	//			////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
+	//			////string filename3 = "output/out_ImageOfMask_"+s3+".jpg";
 	//			////if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 	//			////	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			////}
 	//
-	//			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename5 = "output/Sum_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename6 = "output/Mask_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
 	//
-	//			//string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			//string filename7 = "output/Sum_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
-	//			//string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			//string filename8 = "output/Mask_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
@@ -2203,7 +2203,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			}
 	//
 	//
-	//			string filename9_max = "output\\Max_stepbystep\\out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
+	//			string filename9_max = "output/Max_stepbystep/out_ImageOfMaxs_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageMaxPixels, filename9_max.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
@@ -2213,12 +2213,12 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			memset(votingMaskArray, 0,  npix*sizeof(VotingDirType_3D::PixelType));
 	//
 	//			//// The amount of memory required turns out to be to high :( what to do ? 
-	//			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//			//string filename9 = "output/Direction_perpixel/out_DirPerPixel_"+s4+"__"+s5+".mhd";
 	//			//if( nftkVot::writeImage_mhdDouble< VotingDirPerType >(votingDirPerPixel, filename9.c_str() )){
 	//			//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//			//}
 	//
-	//			//string filename9 = "output\\Direction_perpixel\\out_DirPerPixel_"+s4+"__"+s5+".mhd";
+	//			//string filename9 = "output/Direction_perpixel/out_DirPerPixel_"+s4+"__"+s5+".mhd";
 	//			//writer->SetInput( votingDirPerPixel );
 	//			//writer->SetFileName( filename9.c_str() );
 	//			//writer->Update();
@@ -2240,7 +2240,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//	//stringstream out44;
 	//	//out44<<_intSpan;
 	//	//string s44 = out44.str();
-	//	//string filename_dir = "output\\Directions\\Dri_vote_"+s44+".txt";
+	//	//string filename_dir = "output/Directions/Dri_vote_"+s44+".txt";
 	//	//ofstream dirFilOut;
 	//	//dirFilOut.open (filename_dir.c_str());
 	//	//for(std::vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -2251,19 +2251,19 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//	//stringstream out2;
 	//	//out2<<_intSpan;
 	//	//string s2 = out2.str();
-	//	//string filename2 = "output\\out_ImageOfSums_"+s2+".jpg";
+	//	//string filename2 = "output/out_ImageOfSums_"+s2+".jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2.c_str() )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
 	//
 	//	////votingSumVotes
 	//	////Store Derivative in X
-	//	//const char* filename = "output\\out_ImageOfVotes.jpg";
+	//	//const char* filename = "output/out_ImageOfVotes.jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(imageOfVotingPixels, filename )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
 	//
-	//	//const char* filename2 = "output\\out_vote_1.jpg";
+	//	//const char* filename2 = "output/out_vote_1.jpg";
 	//	//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename2 )){
 	//	//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//	//}
@@ -2290,7 +2290,7 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//		//stringstream out45;
 	//		//out45<<_intSpan;
 	//		//string s45 = out45.str();
-	//		//string filename_dir2 = "output\\Directions\\Dri_vote_"+s45+".txt";
+	//		//string filename_dir2 = "output/Directions/Dri_vote_"+s45+".txt";
 	//		//ofstream dirFilOut2;
 	//		//dirFilOut2.open (filename_dir2.c_str());
 	//		//for(std::vector<VPoint2D>::iterator it=voting_points_begin; it!=voting_points_end; it++)
@@ -2314,11 +2314,11 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//		//stringstream out3;
 	//		//out3<<_intSpan;
 	//		//string s3 = out3.str();
-	//		////string filename3 = "output\\out_ImageOfMask_"+s3+".jpg";
+	//		////string filename3 = "output/out_ImageOfMask_"+s3+".jpg";
 	//		////if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename3.c_str() )){
 	//		////	std::cout<<std::endl<<"\tProblema escribiendo";
 	//		////}
-	//		//string filename4 = "output\\out_ImageOfSums_"+s3+".jpg";
+	//		//string filename4 = "output/out_ImageOfSums_"+s3+".jpg";
 	//		//if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename4.c_str() )){
 	//		//	std::cout<<std::endl<<"\tProblema escribiendo";
 	//		//}
@@ -2344,20 +2344,20 @@ for( int spanofvote = 10; spanofvote>0; --spanofvote )
 	//			out5<<_hmax-_hmin-gg;
 	//			string s5 = out5.str();
 	//
-	//			string filename5 = "output\\Sum_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename5 = "output/Sum_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingSumVotes, filename5.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename6 = "output\\Mask_stepbystep\\out_ImageOfSums_"+s4+"__"+s5+".jpg";
+	//			string filename6 = "output/Mask_stepbystep/out_ImageOfSums_"+s4+"__"+s5+".jpg";
 	//			if( nftkVot::writeImage< VotingDirType_3D, OutputImageType >(_votingMaskVotes, filename6.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
 	//
-	//			string filename7 = "output\\Sum_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			string filename7 = "output/Sum_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingSumVotes, filename7.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
-	//			string filename8 = "output\\Mask_stepbystep_mhd\\out_ImageOfSums_"+s4+"__"+s5+".mhd";
+	//			string filename8 = "output/Mask_stepbystep_mhd/out_ImageOfSums_"+s4+"__"+s5+".mhd";
 	//			if( nftkVot::writeImage_mhdDouble< VotingDirType_3D >(_votingMaskVotes, filename8.c_str() )){
 	//				std::cout<<std::endl<<"\tProblema escribiendo";
 	//			}
