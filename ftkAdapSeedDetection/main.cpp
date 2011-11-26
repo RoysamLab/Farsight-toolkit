@@ -28,8 +28,8 @@ int main( int argc, char * argv[] ){
 
 	// Initial Parameters
 	int hmin = 1;
-	int hmax = 35;//35;//77; //15 was ok, 25 just to test
-	int radius = 25;//10;//77;
+	int hmax = 25;//35;//77; //15 was ok, 25 just to test
+	int radius = 0.7*hmax;//25;//10;//77;
 	double min_grad = 0.1;
 	//threshold (for picking seed points, not necesary for now)
 	double scale = 1.5; // Scale for computing the gradient using Gradient
