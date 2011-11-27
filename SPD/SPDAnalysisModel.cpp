@@ -329,10 +329,14 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 	QString filenameCluster = this->filename + "clustering.txt";
 	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
 	ofs<<"first clustering:"<<endl;
+
+	vnl_vector<int> TreeIndex(this->DataMatrix.cols());
 	for( unsigned int i = 0; i < this->DataMatrix.cols(); i++)
 	{
 		clusterIndex[i] = i;
+		TreeIndex[i] = i;
 	}
+	TreeData.clear();
 
 	int old_cluster_num = this->DataMatrix.cols();
 	int new_cluster_num = this->DataMatrix.cols();
@@ -340,14 +344,14 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 	do
 	{
 		old_cluster_num = new_cluster_num;
-		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, 2);
+		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, TreeIndex, 2);
 		//ofs<<clusterIndex<<endl<<endl;
 	}
 	while( old_cluster_num != new_cluster_num);
 
 	this->ClusterIndex = clusterIndex;
 	this->ModuleMean = moduleMean;
-	this->ModuleSize = GetModuleSize( clusterIndex);
+	this->TreeIndex = TreeIndex;
 
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
@@ -370,12 +374,13 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 }
 
 
-int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, int fold = 2)
+int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, vnl_vector<int>& TreeIndex, int fold = 2)
 {
 	vnl_vector<int> moduleSize = GetModuleSize(index);
 	vnl_vector<int> isActiveModule;
 	vnl_vector<double> moduleCenter;
-  
+	int newIndex = TreeIndex.max_value() + 1;
+
 	isActiveModule.set_size( moduleSize.size());
 	unsigned int i = 0;
 	for(  i = 0; i < moduleSize.size(); i++)
@@ -435,7 +440,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 			vnl_matrix<double> mat = newModule.transpose();
 			GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
 
-			newModuleMeans.normalize();
+			newModuleMeans = newModuleMeans.normalize();
 			newModuleCor = newModuleMeans * newModule;
 			double newCor = abs( newModuleCor.mean());                          //??? there should be no abs???
 
@@ -457,6 +462,12 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 						index[j] = moduleId;
 					}
 				}
+
+				Tree tr( TreeIndex[moduleId], TreeIndex[moduleToDeleteId], newCor, newIndex);
+				TreeIndex[moduleId] = newIndex;
+				TreeIndex[moduleToDeleteId] = -1;
+				TreeData.push_back( tr);
+				newIndex++;
 			}
 		}
 		
@@ -470,7 +481,18 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 
 	StandardizeIndex(index);
 	EraseCols( mean, delColsVec);
-	
+
+    vnl_vector<int> newTreeIndex(index.max_value() + 1);
+	int j = 0;
+	for( int i = 0; i < TreeIndex.size(); i++)
+	{
+		if( TreeIndex[i] != -1 && j <= index.max_value())
+		{
+			newTreeIndex[j++] = TreeIndex[i];
+		}
+	}
+	TreeIndex = newTreeIndex;
+
 	return index.max_value() + 1;   // how many clusters have been generated
 }
 
@@ -611,7 +633,11 @@ void SPDAnalysisModel::EraseCols(vnl_matrix<double>& mat, std::vector<unsigned i
 void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 {
 	vnl_matrix<double> coherence = this->ModuleMean.transpose() * this->ModuleMean;
+	vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
 	vnl_matrix<double> oneMat(coherence.rows(), coherence.cols());
+
+	int newIndex = this->TreeIndex.max_value() + 1;
+
 	for( unsigned int i = 0; i < coherence.rows(); i++)
 	{
 		for( unsigned int j = 0; j < coherence.rows(); j++)
@@ -638,13 +664,13 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 		unsigned int j = maxId / coherence.rows();
 		unsigned int i = maxId - coherence.rows() * j;
 
-		vnl_matrix<double> dataTmp( this->DataMatrix.rows(), this->ModuleSize[i] + this->ModuleSize[j]);
+		vnl_matrix<double> dataTmp( this->DataMatrix.rows(), moduleSize[i] + moduleSize[j]);
 		GetCombinedMatrix( this->ClusterIndex, i, j, dataTmp);
 		dataTmp.normalize_columns();
 
 		vnl_vector<double> dataMean;
 		vnl_vector<double> dataSd;
-		vnl_matrix<double> mat = dataTmp.transpose();
+		vnl_matrix<double> mat = dataTmp.transpose();    // bugs lying here
 		GetMatrixRowMeanStd( mat, dataMean, dataSd);
 		dataMean = dataMean.normalize();
 
@@ -663,14 +689,30 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 			DeleteMatrixColumn( coherenceTmp, max);
 			coherence = coherenceTmp.transpose();
 
-			SubstitudeVectorElement( this->ClusterIndex, max, min);
+			moduleSize[ min] += moduleSize[max];
+			moduleSize[ max] = 0;
 
+			Tree tr( TreeIndex[min], TreeIndex[max], moduleCor, newIndex);
+			TreeIndex[min] = newIndex;
+			TreeData.push_back( tr);
+			newIndex++;
+
+			SubstitudeVectorElement( this->ClusterIndex, max, min);
 			unsigned int clusternum = this->ClusterIndex.max_value();
 
+			vnl_vector<int> newTreeIndex( TreeIndex.size() - 1);
+			for( int k = 0; k < max; k++)
+			{
+				newTreeIndex[k] = TreeIndex[k];
+			}
 			for( unsigned int ind = max + 1; ind < clusternum + 1; ind++)
 			{
 				SubstitudeVectorElement( this->ClusterIndex, ind, ind - 1);
+				moduleSize[ind - 1] = moduleSize[ind];
+				newTreeIndex[ind - 1] = TreeIndex[ind];
 			}
+			moduleSize[ clusternum] = 0;
+			TreeIndex = newTreeIndex;
 		}
 		else
 		{
@@ -696,6 +738,117 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 		}
 	}
 
+	ofs<<endl<<"TreeData:"<<endl;
+	for( int i = 0; i < TreeData.size(); i++)
+	{
+		Tree tr = TreeData[i];
+		ofs<< tr.first<< "\t"<< tr.second<< "\t"<< tr.cor<< "\t"<< tr.parent<<endl;
+	}
+	ofs<< TreeIndex<<endl;
+	ofs.close();
+}
+
+void SPDAnalysisModel::HierachicalClustering()    
+{
+	assert(TreeIndex.size() == this->ClusterIndex.max_value() + 1);
+
+	vnl_vector<int> moduleSize = GetModuleSize(this->ClusterIndex);
+	vnl_matrix<double> matrix = DataMatrix;
+	matrix.normalize_columns();
+	vnl_matrix<double> CorMat(TreeIndex.size(), TreeIndex.size());
+	CorMat.fill(0);
+	for( int i = 0; i < TreeIndex.size(); i++)
+	{
+		for( int j = i + 1; j < TreeIndex.size(); j++)
+		{
+			vnl_matrix<double> newModule;
+			vnl_vector<double> newModuleMeans;
+			vnl_vector<double> newModuleStd;
+			vnl_vector<double> newModuleCor;
+
+			int newModuleSize = moduleSize[i] + moduleSize[j];
+			newModule.set_size(this->DataMatrix.rows(), newModuleSize);
+			GetCombinedMatrix(this->ClusterIndex, i, j, newModule);   
+			newModule.normalize_columns();
+			vnl_matrix<double> mat = newModule.transpose();
+			GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
+			newModuleMeans = newModuleMeans.normalize();
+			newModuleCor = newModuleMeans * newModule;
+			double newCor = abs( newModuleCor.mean());
+			CorMat(i, j) = newCor;
+			CorMat(j, i) = newCor;
+		}
+	}
+
+	vnl_vector<double> zeroCol;
+	zeroCol.set_size( CorMat.rows());
+	for( int i = 0; i < CorMat.rows(); i++)
+	{
+		zeroCol[i] = 0;
+	}
+
+	std::vector<unsigned int> ids;
+	int newIndex = TreeIndex.max_value() + 1;
+	vnl_vector<unsigned int> cIndex = this->ClusterIndex;
+
+	for( int count = 0; count < TreeIndex.size() - 1; count++)
+	{
+		int maxId = CorMat.arg_max();
+		double maxCor = CorMat.max_value();
+		int j = maxId / CorMat.rows();
+		int i = maxId - CorMat.rows() * j;
+		int min = i > j ? j : i;
+		int max = i > j ? i : j;
+
+		Tree tr( TreeIndex[min], TreeIndex[max], maxCor, newIndex);
+		TreeData.push_back( tr);
+		TreeIndex[min] = newIndex;
+		TreeIndex[max] = -1;
+		newIndex += 1;
+
+		SubstitudeVectorElement(cIndex, max, min);       
+		moduleSize[min] += moduleSize[max];
+		moduleSize[max] = 0;
+
+		CorMat.set_column(min, zeroCol);
+		CorMat.set_column(max, zeroCol);
+		CorMat.set_row(min, zeroCol);
+		CorMat.set_row(max, zeroCol);
+
+		for( int k = 0; k < CorMat.cols(); k++)
+		{
+			if( k != min && TreeIndex[k] != -1)
+			{
+				vnl_matrix<double> newModule(DataMatrix.rows(), moduleSize(min) + moduleSize(k));
+				vnl_vector<double> newModuleMeans;
+				vnl_vector<double> newModuleStd;
+				vnl_vector<double> newModuleCor;
+
+				GetCombinedMatrix(cIndex, min, k, newModule);   
+				newModule.normalize_columns();
+
+				vnl_matrix<double> mat = newModule.transpose();
+				GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
+
+				newModuleMeans = newModuleMeans.normalize();
+				newModuleCor = newModuleMeans * newModule;
+				double newCor = abs( newModuleCor.mean());
+
+				CorMat( min, k) = newCor;
+				CorMat( k, min) = newCor;
+			}	
+		}
+	}
+
+	QString str = "dendrogram_feature.txt";
+	ofstream ofs(str.toStdString().c_str());
+	ofs<< "Tree Index:"<<endl;
+	ofs<< TreeIndex<<endl;
+	for( int i = 0; i < TreeData.size(); i++)
+	{
+		Tree tr = TreeData[i];
+		ofs<< tr.first<< "\t"<< tr.second<< "\t"<< tr.cor<< "\t"<< tr.parent<<endl;
+	}
 	ofs.close();
 }
 
@@ -1488,7 +1641,7 @@ long int SPDAnalysisModel::GetSelectedFeatures( vnl_vector< unsigned int> & inde
 		if( IsExist(moduleID, index[i]))
 		{
 			count++;
-			featureSelectedIDs.insert(i + 1);   // feature id is one bigger than the original feature id 
+			featureSelectedIDs.insert(i);   // feature id is one bigger than the original feature id 
 		}
 	}
 	return count;
@@ -1631,9 +1784,9 @@ void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::set<long 
 	for( iter = selectedFeatures.begin(); iter != selectedFeatures.end(); iter++)
 	{
 		long int index = *iter;
-		char* name = this->DataTable->GetColumn(index)->GetName();
+		char* name = this->DataTable->GetColumn(index + 1)->GetName();
 		std::string featureName(name);
-		ofs<< featureName<<endl;
+		ofs<< index<<"\t"<<featureName<<endl;
 	}
 	ofs.close();
 }

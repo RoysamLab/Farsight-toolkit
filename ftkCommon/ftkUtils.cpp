@@ -164,6 +164,8 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	/**Creates the vtk table header information to reference the columns by*/
 	inFile.getline(line, MAXLINESIZE);
 	char * pch = strtok (line," \t");
+	//int i = 0;
+	//std::stringstream ss;
 	while (pch != NULL)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -172,6 +174,9 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 		std::replace(col_name.begin(),col_name.end(),')','_');
 		std::replace(col_name.begin(),col_name.end(),',','_');
 		column->SetName( col_name.c_str() );
+		//ss<<i++;
+		//column->SetName( ss.str().c_str());
+		//ss.str("");
 		table->AddColumn(column);
 		pch = strtok (NULL, " \t");
 	}

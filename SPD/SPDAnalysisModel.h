@@ -60,6 +60,7 @@ public:
 	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
 	void HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol = true);
+	void HierachicalClustering();
 
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
@@ -78,7 +79,7 @@ protected:
 	~SPDAnalysisModel();
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
-	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, int fold);
+	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, vnl_vector<int>& TreeIndex, int fold);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
@@ -122,7 +123,7 @@ private:
 	//data for agglormeration
 	vnl_vector<unsigned int> ClusterIndex;
 	vnl_matrix<double> ModuleMean;
-	vnl_vector<int> ModuleSize;
+	vnl_vector<int> TreeIndex;     // tree node index
 
 	//MST for each module
 	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor> > ModuleMST;

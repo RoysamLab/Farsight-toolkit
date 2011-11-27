@@ -473,7 +473,7 @@ void SampleEditor::spdSampledendrogram()
 
 void SampleEditor::spdFeatureDendroram()
 {
-	SPDModel->HierachicalClustering(data, true);
+	SPDModel->HierachicalClustering();
 	std::vector< Tree> TreeData = SPDModel->TreeData;
 	std::cout << TreeData.size()<<endl;
 	if( TreeData.size() <= 0)
@@ -484,6 +484,7 @@ void SampleEditor::spdFeatureDendroram()
 	this->dendro2->setModels(data,selection2, 1);
 	double **treedata = new double*[TreeData.size()];
 
+	ofstream ofs("featureOrder.txt");
 	for(int i = 0; i < TreeData.size(); i++)
 	{
 		treedata[i] = new double[4];
@@ -491,11 +492,20 @@ void SampleEditor::spdFeatureDendroram()
 		treedata[i][1] = TreeData[i].second;
 		treedata[i][2] = (1 - TreeData[i].cor + 0.01) * 100;
 		treedata[i][3] = TreeData[i].parent;
+		ofs<< treedata[i][0]<<"\t"<<treedata[i][1]<<"\t"<<treedata[i][2]<<"\t"<<treedata[i][3]<<endl;
 	}
 
 	cc2 = new clusclus();
 	cc2->Initialize(treedata, TreeData.size() + 1);
 	cc2->GetOptimalLeafOrderD();
+
+	ofs<< "feature optimal order:"<<endl;
+	for( int i = 0; i < cc2->num_samples; i++)
+	{
+		ofs<< cc2->optimalleaforder[i]<<"\t";
+	}
+	ofs<<endl;
+	ofs.close();
 
 	this->dendro2->setTreeData(cc2->num_samples, cc2->treedata, cc2->optimalleaforder);
 	this->dendro2->createDataForDendogram();
@@ -554,7 +564,8 @@ void SampleEditor::spdShowHeatmap()
 	}
 	ofs<<endl;
 
-	SPDModel->HierachicalClustering(data, true);
+	//SPDModel->HierachicalClustering(data, true);
+	SPDModel->HierachicalClustering();
 	std::vector< Tree> FeatureTreeData = SPDModel->TreeData;
 	double **ftreedata = new double*[FeatureTreeData.size()];
 
