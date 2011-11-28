@@ -1,9 +1,9 @@
 #include "itkSubtractImageFilter.h"
-#include "itkMeanImageFilter.h"
+#include "itkGrayscaleErodeImageFilter.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkSliceBySliceImageFilter.h"
-
+#include "itkBinaryBallStructuringElement.h"
 #include "itkStreamingImageFilter.h"
 
 int main(int argc, char *argv[])
@@ -24,16 +24,23 @@ int main(int argc, char *argv[])
 	//Make reader
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(argv[1]);	
+	
+	//Structuring element
+	typedef itk::BinaryBallStructuringElement<ImageType::PixelType, 2> StructuringElementType;
+	StructuringElementType structuringElement;
+	structuringElement.SetRadius(atof(argv[3]));
+	structuringElement.CreateStructuringElement();
 
+	//SliceBySliceFilter
 	typedef itk::SliceBySliceImageFilter< ImageType, ImageType > SliceBySliceFilterType;
 	SliceBySliceFilterType::Pointer SliceBySliceFilter = SliceBySliceFilterType::New();
 
-	//Mean Filter
-	typedef itk::MeanImageFilter< SliceBySliceFilterType::InternalInputImageType, SliceBySliceFilterType::InternalOutputImageType > MeanFilterType;
-	MeanFilterType::Pointer Meanfilter = MeanFilterType::New(); 
-	Meanfilter->SetRadius(atof(argv[3]));
+	//Erode Filter
+	typedef itk::GrayscaleErodeImageFilter< SliceBySliceFilterType::InternalInputImageType, SliceBySliceFilterType::InternalOutputImageType, StructuringElementType > GrayscaleErodeImageFilter; //This filter takes the minimum of all the neighboring values and puts it into the pixel location
+	GrayscaleErodeImageFilter::Pointer ErodeFilter = GrayscaleErodeImageFilter::New(); 
+	ErodeFilter->SetKernel(structuringElement);
 	SliceBySliceFilter->SetInput(reader->GetOutput());
-	SliceBySliceFilter->SetFilter(Meanfilter);
+	SliceBySliceFilter->SetFilter(ErodeFilter);
 	
 	//Subtract Filter
 	typedef itk::SubtractImageFilter< ImageType, ImageType, ImageType > SubtractFilterType;
