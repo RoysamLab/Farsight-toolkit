@@ -2,16 +2,16 @@ PROJECT(RollingBallFilter)
 
 #INCLUDE_DIRECTORIES()
 
-SET(LibRollingBallFilter_HDRS 
+SET(RollingBallFilter_HDRS 
 	RollingBallFilter.h
 )
 
-SET(LibRollingBallFilter_SRCS 
+SET(RollingBallFilter_SRCS 
 	RollingBallFilter.cpp
 )
 
-ADD_LIBRARY(LibRollingBallFilter ${LibRollingBallFilter_HDRS} ${LibRollingBallFilter_SRCS} )
-ADD_EXECUTABLE(RollingBallFilter main.cpp)
+ADD_LIBRARY(RollingBallFilter ${RollingBallFilter_HDRS} ${RollingBallFilter_SRCS} )
+ADD_EXECUTABLE(RollingBallFilterTester main.cpp)
 
-TARGET_LINK_LIBRARIES(RollingBallFilter LibRollingBallFilter ${ITK_LIBRARIES})
-INSTALL( TARGETS RollingBallFilter RUNTIME DESTINATION bin )
+TARGET_LINK_LIBRARIES(RollingBallFilterTester RollingBallFilter ${ITK_LIBRARIES})
+INSTALL( TARGETS RollingBallFilterTester RUNTIME DESTINATION bin )
