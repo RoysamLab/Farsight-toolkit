@@ -33,6 +33,8 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	dendro2 = new Dendrogram(this);////////////////////////////////////////////////////////////////
 	heatmap = new Heatmap(this);
 	spdWin = new SPDMainWindow();
+	this->cc1 = NULL;
+	this->cc2 = NULL;
 
 	data = NULL;
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
@@ -221,6 +223,7 @@ void SampleEditor::loadFile()
 
 void SampleEditor::ReadFiles(std::string hname, std::string dname)
 {
+
 	const int MAXLINESIZE = 102400;	//Numbers could be in scientific notation in this file
 	char line[MAXLINESIZE];
 
@@ -637,6 +640,16 @@ void SampleEditor::sampledendrogram()
 	}
 
 	this->dendro1->setModels(data,selection);
+
+	//if(!cc1)
+	//	this->dendro1->runClusclus();
+	//else
+	//{
+	//	this->dendro1->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
+	//	this->dendro1->createDataForDendogram();
+	//}
+	//this->dendro1->showGraph();
+
 	double** datas;
 	vtkVariant temp; 
 
@@ -679,7 +692,43 @@ void SampleEditor::sampledendrogram()
 void SampleEditor::featuredendrogram()
 {
 	this->dendro2->setModels(data,selection2);
-	cc1->Transpose();
+	if(cc1)
+		cc1->Transpose();
+	else
+	{
+		double** datas;
+		vtkVariant temp; 
+
+		datas = new double*[this->data->GetNumberOfRows()];
+
+		std::cout<<this->data->GetNumberOfRows()<<endl;
+		std::cout<<this->data->GetNumberOfColumns()<<endl;
+
+		for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+		{
+			datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2];
+		}
+
+
+		for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+		{		
+			for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+			{
+				temp = this->data->GetValue(i, j);
+				datas[i][j-1] = temp.ToDouble();
+			}
+		}
+
+		cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
+		cc1->Transpose();
+
+		for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+		{
+			delete datas[i];
+		}
+		delete datas;
+	}
+
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
 	cc2->RunClusClus();
 	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
@@ -689,8 +738,8 @@ void SampleEditor::featuredendrogram()
 	this->dendro2->createDataForDendogram();
 	this->dendro2->showGraph();
 
-	delete cc1;
-	delete cc2;
+	//delete cc1;
+	//delete cc2;
 }
 
 void SampleEditor::showheatmap()
@@ -701,51 +750,54 @@ void SampleEditor::showheatmap()
 	}
 
 	this->heatmap->setModels(data,selection,selection2);
-	double** datas;
-	vtkVariant temp; 
-
-	datas = new double*[this->data->GetNumberOfRows()];
-
-	std::cout<<this->data->GetNumberOfRows()<<endl;
-	std::cout<<this->data->GetNumberOfColumns()<<endl;
-
-	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
-	{
-		datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2 ];
-	}
-
-	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
-	{		
-		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
-		{
-			temp = this->data->GetValue(i, j);
-			datas[i][j-1] = temp.ToDouble();
-		}
-	}
-
-	cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
-	cc1->RunClusClus();
-	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
-		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
-
-	cc1->Transpose();
-	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
-	cc2->RunClusClus();
-	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
-		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
-
-
-	cout<<"finish clusclus....."<<endl;
-	this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
-	this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
-	this->heatmap->creatDataForHeatmap(0.15);	
+	this->heatmap->runClusclus();
 	this->heatmap->showGraph();
-	for (int i = 0; i < this->data->GetNumberOfRows(); i++)
-	{
-		delete datas[i];
-	}
-	delete datas;
 
-	delete cc1;
-	delete cc2;
+	//double** datas;
+	//vtkVariant temp; 
+
+	//datas = new double*[this->data->GetNumberOfRows()];
+
+	//std::cout<<this->data->GetNumberOfRows()<<endl;
+	//std::cout<<this->data->GetNumberOfColumns()<<endl;
+
+	//for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	//{
+	//	datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2 ];
+	//}
+
+	//for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+	//{		
+	//	for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+	//	{
+	//		temp = this->data->GetValue(i, j);
+	//		datas[i][j-1] = temp.ToDouble();
+	//	}
+	//}
+
+	//cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
+	//cc1->RunClusClus();
+	//cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+	//	"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	//cc1->Transpose();
+	//cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
+	//cc2->RunClusClus();
+	//cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+	//	"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+
+
+	//cout<<"finish clusclus....."<<endl;
+	//this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
+	//this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
+	//this->heatmap->creatDataForHeatmap();	
+	//this->heatmap->showGraph();
+	//for (int i = 0; i < this->data->GetNumberOfRows(); i++)
+	//{
+	//	delete datas[i];
+	//}
+	//delete datas;
+
+	//delete cc1;
+	//delete cc2;
 }
