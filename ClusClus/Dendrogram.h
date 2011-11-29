@@ -76,11 +76,10 @@
 #include <vtkCallbackCommand.h>
 #include <vtkFloatArray.h>
 #include <vtkDataSetAttributes.h>
+#include <vtkBalloonWidget.h>
 
+#include <ClusClus/clusclus.h>
 #include <ftkCommon/ftkUtils.h>
-#include "ClusClus/clusclus.h"
-#include "ClusClus/Dendrogram.h"
-#include "ClusClus/HeatmapWindow.h"
 #include "ObjectSelection.h"
 
 using namespace std;
@@ -104,7 +103,7 @@ public:
 	int num_samples;
 	
 protected slots:
-	void SetSelectedIds(std::set<long int>& IDs);
+	void SetSelectedIds(std::set<long int>& IDs );
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );	
 	void GetSelecectedIDs();
 
@@ -115,6 +114,7 @@ private:
 	void reselectIds(std::set<long int>& selectedIDs, long int id);
 
 	vtkSmartPointer<vtkTable > table;
+	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout;
 	vtkSmartPointer<vtkGraphLayoutView> graphLayoutView; 
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	vtkSmartPointer<vtkViewTheme> theme;
@@ -122,6 +122,11 @@ private:
 	vtkSmartPointer<vtkIntArray> vertexColors;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
 	vtkSmartPointer<vtkIdTypeArray> v;
+
+	vtkSmartPointer<vtkBalloonRepresentation> balloonRep1;
+    vtkSmartPointer<vtkBalloonWidget> balloonWidget1;
+    vtkSmartPointer<vtkBalloonRepresentation> balloonRep;
+    vtkSmartPointer<vtkBalloonWidget> balloonWidget ;
 
 	QVTKWidget mainQTRenderWidget;
 

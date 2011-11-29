@@ -92,17 +92,16 @@
 #include <vtkSphereSource.h>
 #include <vtkStringArray.h>
 #include <vtkHoverWidget.h>
+#include <vtkPointSetToLabelHierarchy.h>
 
 #include <boost/math/distributions/normal.hpp>
 
 #include <ftkCommon/ftkUtils.h>
 #include "ClusClus/clusclus.h"
-#include "ClusClus/Dendrogram.h"
-#include "ClusClus/HeatmapWindow.h"
 #include "ObjectSelection.h"
 using namespace std;
 
-class vtkHoverCallback : public vtkCommand
+/*class vtkHoverCallback : public vtkCommand
 {
   public:
     static vtkHoverCallback *New()
@@ -124,7 +123,7 @@ class vtkHoverCallback : public vtkCommand
           break;
         }
     }
-};
+};*/
 
 typedef struct srgb
 {
@@ -230,12 +229,12 @@ private:
 	vtkSmartPointer<vtkUnsignedCharArray> dencolors2;
 	vtkSmartPointer<vtkVariantArray> featureName;
 
-	vtkSmartPointer<vtkBalloonRepresentation> balloonRep;
-    vtkSmartPointer<vtkBalloonWidget> balloonWidget;
-    vtkSmartPointer<vtkBalloonRepresentation> balloonRep2;
-    vtkSmartPointer<vtkBalloonWidget> balloonWidget2 ;
-	  vtkSmartPointer<vtkHoverWidget> hoverWidget;
-	    vtkSmartPointer<vtkHoverCallback> hoverCallback;
+	//vtkSmartPointer<vtkBalloonRepresentation> balloonRep;
+ //   vtkSmartPointer<vtkBalloonWidget> balloonWidget;
+ //   vtkSmartPointer<vtkBalloonRepresentation> balloonRep2;
+ //   vtkSmartPointer<vtkBalloonWidget> balloonWidget2 ;
+	//vtkSmartPointer<vtkHoverWidget> hoverWidget;
+	//vtkSmartPointer<vtkHoverCallback> hoverCallback;
 
 	void scaleData();
 	void drawPoints1();
@@ -247,7 +246,7 @@ private:
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
 
-	vtkSmartPointer<vtkTable> dataTable;
+	//vtkSmartPointer<vtkTable> dataTable;
 	std::map<int, int> indMapFromVertexToInd;
 	std::vector<int> indMapFromIndToVertex;
 

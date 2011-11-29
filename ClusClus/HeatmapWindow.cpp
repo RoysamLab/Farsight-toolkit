@@ -64,8 +64,8 @@ Heatmap::Heatmap(QWidget *parent)
 	this->connect_Data_Tree1 = NULL;
 	this->connect_Data_Tree2 = NULL;
 
-	 this->hoverWidget = vtkSmartPointer<vtkHoverWidget>::New();
-	 hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
+	 //this->hoverWidget = vtkSmartPointer<vtkHoverWidget>::New();
+	 //hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
 }
 
 Heatmap::~Heatmap()
@@ -120,7 +120,7 @@ void Heatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaf
 	double max = features[0][0];
 	for( int i = 0; i < num_samples; i++)
 	{
-		if( !this->dataTable)    // if the datatable is null, build the index mapping here
+		if( !this->table)    // if the table is null, build the index mapping here
 		{
 			this->indMapFromVertexToInd.insert( std::pair< int, int>(i, i));
 			this->indMapFromIndToVertex.push_back( i);
@@ -264,14 +264,14 @@ void Heatmap::scaleData()
 
 void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
-	this->dataTable = table;
+	this->table = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
-	if( this->dataTable)
+	if( this->table)
 	{
-		for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+		for( int i = 0; i < this->table->GetNumberOfRows(); i++)
 		{
-			int var = this->dataTable->GetValue( i, 0).ToInt();
+			int var = this->table->GetValue( i, 0).ToInt();
 			this->indMapFromVertexToInd.insert( std::pair< int, int>(var, i));
 			this->indMapFromIndToVertex.push_back( var);
 		}
@@ -329,7 +329,7 @@ void Heatmap::runClusclus()
 	cout<<"finish clusclus....."<<endl;
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
 	this->setDataForDendrograms(cc1->treedata, cc2->treedata);
-	this->creatDataForHeatmap(0.15);	
+	this->creatDataForHeatmap(0.2);	
 	
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
@@ -428,19 +428,19 @@ void Heatmap::showGraph()
 	//this->view->GetRenderer()->AddActor(sphereActor);
 
 	
-    hoverWidget->SetInteractor(this->view->GetInteractor());
-   hoverWidget->SetTimerDuration(1000);
+   // hoverWidget->SetInteractor(this->view->GetInteractor());
+   //hoverWidget->SetTimerDuration(1000);
  
   // Create a callback to listen to the widget's two VTK events
 	//hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
-    hoverWidget->AddObserver(vtkCommand::TimerEvent,hoverCallback);
-    hoverWidget->AddObserver(vtkCommand::EndInteractionEvent,hoverCallback);
+ /*   hoverWidget->AddObserver(vtkCommand::TimerEvent,hoverCallback);
+    hoverWidget->AddObserver(vtkCommand::EndInteractionEvent,hoverCallback);*/
 
-	this->view->GetInteractor()->Initialize();
+	//this->view->GetInteractor()->Initialize();
 	/////////////////////////////////////////////////////////////////////
 
 	this->view->Render();
-	hoverWidget->On();/////////////
+	//hoverWidget->On();/////////////
 	this->view->GetInteractor()->Start();
 }
 
@@ -810,6 +810,7 @@ void Heatmap::showDendrogram1()
 	denmapper1->SetInput(denlinesPolyData1);
 	denactor1->SetMapper(denmapper1);
 	denmapper1->SetScalarRange(0, 3*this->num_samples-1);
+
 	this->view->GetRenderer()->AddActor(denactor1);
 	//this->view->Render();
 }
@@ -1025,12 +1026,13 @@ void Heatmap::GetSelecectedIDs()
 void Heatmap::drawPoints1()
 {
 	v1->SetNumberOfValues (2*this->num_samples-1);
-	for(int i=0; i<((2*this->num_samples)-1);i++)
+	for(unsigned int i=0; i<2*this->num_samples-1;i++)
     {
 		v1->SetValue (i,graph_Layout1->AddVertex());
 		this->points1->InsertNextPoint(this->Processed_Coordinate_Data_Tree1[i][1],this->Processed_Coordinate_Data_Tree1[i][2],this->Processed_Coordinate_Data_Tree1[i][3]);
 	}
-	for(int i=0; i<((2*this->num_features)-1);i++)
+	
+	for(unsigned int i=0; i<(2*this->num_features-1);i++)
     {
 		v1->SetValue (i,graph_Layout1->AddVertex());
 		this->points1->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1],this->Processed_Coordinate_Data_Tree2[i][2],this->Processed_Coordinate_Data_Tree2[i][3]);
@@ -1040,9 +1042,10 @@ void Heatmap::drawPoints1()
     ///////////////coloring/////////////////////
     vertexColors1->SetNumberOfComponents(1);
     vertexColors1->SetName("Color1");
- 
-    lookupTable1->SetNumberOfTableValues(2*(this->num_samples)-1 + 2*(this->num_features)-1);
-    for(int i=0; i<(2*(this->num_samples)-1) + (2*(this->num_features)-1);i++)
+	
+	int max_table_values = 2*this->num_samples + 2*this->num_features-2;
+	lookupTable1->SetNumberOfTableValues(max_table_values);
+    for(unsigned int i=0; i<max_table_values;i++)
     {
 		lookupTable1->SetTableValue(i, 0.5, 0.5,0.5); // color the vertices- blue
     }  
@@ -1052,7 +1055,7 @@ void Heatmap::drawPoints1()
     scales1->SetNumberOfComponents(1);
 	scales1->SetName("Scales1");
 
-    for(int j=0;j<(2*(this->num_samples)-1) + (2*(this->num_features)-1);j++)
+    for(unsigned int j=0;j<2*this->num_samples + 2*this->num_features -2;j++)
     {
 		vertexColors1->InsertNextValue(j);
 		scales1->InsertNextValue(1);
@@ -1070,40 +1073,39 @@ void Heatmap::drawPoints1()
     this->view->ColorVerticesOn();
 	this->theme->SetPointLookupTable(lookupTable1);
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+
 	vtkSmartPointer<vtkStringArray> vertexIDarrays = vtkSmartPointer<vtkStringArray>::New();
 	vertexIDarrays->SetNumberOfComponents(1);
 	vertexIDarrays->SetName("vertexIDarrays");
 
-	for( int i = 0; i < this->num_samples; i++)
+	for( unsigned int i = 0; i < this->num_samples; i++)
 	{
-		vertexIDarrays->InsertNextValue("");
-		//vtkVariant v = i;
-		//vertexIDarrays->InsertNextValue(v.ToString());
+		//vertexIDarrays->InsertNextValue("");
+		vtkVariant v = i;
+		vertexIDarrays->InsertNextValue(v.ToString());
 	}
-	for( int i = this->num_samples; i <2*(this->num_samples)-1; i++)
+	for( unsigned int i = this->num_samples; i <2*(this->num_samples)-1; i++)
 		vertexIDarrays->InsertNextValue("");
 
-	for( int i = 2*(this->num_samples)-1; i <2*(this->num_samples)-1 + this->num_features; i++)
+	for(unsigned int i = 2*(this->num_samples)-1; i <2*(this->num_samples)-1 + this->num_features; i++)
 	{
-		vertexIDarrays->InsertNextValue("");
-		//vtkIdType id = i - (2*(this->num_samples)-1) + 1;
-		//vertexIDarrays->InsertNextValue(this->table->GetColumn(id)->GetName ());
+		//vertexIDarrays->InsertNextValue("");
+		vtkIdType id = i - (2*this->num_samples-1) + 1 ;
+		vertexIDarrays->InsertNextValue(this->table->GetColumn(id)->GetName ());
 	}	
 
-	for( int i = 2*(this->num_samples)-1 + this->num_features; i <2*(this->num_samples)-1 + 2*(this->num_features)-1; i++)
+	for(unsigned int i = 2*(this->num_samples)-1 + this->num_features; i <2*(this->num_samples)-1 + 2*(this->num_features)-1; i++)
 		vertexIDarrays->InsertNextValue("");
 
 	this->graph_Layout1->GetVertexData()->AddArray(vertexIDarrays);
 	this->view->SetVertexLabelVisibility(true);
 	this->view->SetVertexLabelArrayName("vertexIDarrays");
-	this->view->SetVertexLabelFontSize(20);
-	this->view->SetHideVertexLabelsOnInteraction(1);
-/////////////////////////////////////////////////////////////////////
+	this->view->SetVertexLabelFontSize(25);
+
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
     this->selectionCallback1->SetCallback ( SelectionCallbackFunction1);
-    this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);\
+    this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
 void Heatmap::drawPoints2()
@@ -1150,6 +1152,36 @@ void Heatmap::drawPoints2()
     this->view->ColorVerticesOn();
 	this->theme->SetPointLookupTable(lookupTable1);
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+	vtkSmartPointer<vtkStringArray> vertexIDarrays = vtkSmartPointer<vtkStringArray>::New();
+	vertexIDarrays->SetNumberOfComponents(1);
+	vertexIDarrays->SetName("vertexIDarrays");
+
+	for( int i = 0; i < this->num_samples; i++)
+	{
+		vertexIDarrays->InsertNextValue("");
+		//vtkVariant v = i;
+		//vertexIDarrays->InsertNextValue(v.ToString());
+	}
+	for( int i = this->num_samples; i <2*(this->num_samples)-1; i++)
+		vertexIDarrays->InsertNextValue("");
+
+	for( int i = 2*(this->num_samples)-1; i <2*(this->num_samples)-1 + this->num_features; i++)
+	{
+		vertexIDarrays->InsertNextValue("");
+		//vtkIdType id = i - (2*(this->num_samples)-1) + 1;
+		//vertexIDarrays->InsertNextValue(this->table->GetColumn(id)->GetName ());
+	}	
+
+	for( int i = 2*(this->num_samples)-1 + this->num_features; i <2*(this->num_samples)-1 + 2*(this->num_features)-1; i++)
+		vertexIDarrays->InsertNextValue("");
+
+	this->graph_Layout1->GetVertexData()->AddArray(vertexIDarrays);
+	this->view->SetVertexLabelVisibility(true);
+	this->view->SetVertexLabelArrayName("vertexIDarrays");
+	this->view->SetVertexLabelFontSize(20);
+	this->view->SetHideVertexLabelsOnInteraction(1);
+/////////////////////////////////////////////////////////////////////
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
     this->selectionCallback1->SetCallback ( SelectionCallbackFunction);
@@ -1198,8 +1230,14 @@ void Heatmap::SelectionCallbackFunction(vtkObject* caller, long unsigned int eve
 				IDs.insert(value);
 			}
 		}
-
-		heatmapWin->SetdenSelectedIds1( IDs, false);
+		try
+		{
+			heatmapWin->SetdenSelectedIds1( IDs, false);
+		}
+		catch(...)
+		{
+			cout<<"SetdenSelectedIds1 failed, please try again !"<<endl;
+		}
 	}
 }
 
@@ -1385,7 +1423,16 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 					reselectIds1(selectedIDs1, id);
 				}
 				else
-					reselectIds2(selectedIDs2, id - (2*this->num_samples-1));
+				{
+					try
+					{
+						reselectIds2(selectedIDs2, id - (2*this->num_samples-1));
+					}
+					catch(...)
+					{
+						cout<<"reselectIds2 failed, please try again!"<<endl;
+					}
+				}
 			}
 		}
 	}

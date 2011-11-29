@@ -99,7 +99,7 @@ void Dendrogram::showGraph()
 	this->vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	this->v = vtkSmartPointer<vtkIdTypeArray>::New();
-	vtkSmartPointer<vtkMutableUndirectedGraph> graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
+	this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
 	v->SetNumberOfValues (2*this->num_samples-1);
 	for(int i=0; i<((2*this->num_samples)-1);i++)
     {
@@ -158,6 +158,8 @@ void Dendrogram::showGraph()
     this->selectionCallback->SetClientData(this);
     this->selectionCallback->SetCallback ( SelectionCallbackFunction);
     graphLayoutView->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback);
+	////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
  
 	double p1[3];
 	double p2[3];
@@ -230,7 +232,10 @@ void Dendrogram::showGraph()
 		actor3->GetProperty()->SetColor(0.5,0.7,0);
 		actor3->GetProperty()->SetLineWidth(1.5);
 		actor3->SetMapper(mapper3);
+		/////////////////////////////////////////////////////////////////
+		///////////////////////////////////////////////////////
 		this->graphLayoutView->GetRenderer()->AddActor(actor3);
+
 
 		this->graphLayoutView->Render();
 
