@@ -42,15 +42,58 @@ GraphWindow::~GraphWindow()
 {
 }
 
-void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
+void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2, std::vector<int> *indexCluster)
 {
 	this->dataTable = table;
+	this->indMapFromVertexToInd.clear();
+	this->indMapFromIndToVertex.clear();
+
 	for( long int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		long int var = this->dataTable->GetValue( i, 0).ToLong();
 		this->indMapFromVertexToInd.insert( std::pair< long int, long int>(var, i));
 		this->indMapFromIndToVertex.push_back( var);
 	}
+
+	this->indMapFromVertexToClusInd.clear();
+	for( int i = 0; i < this->indMapFromClusIndToVertex.size(); i++)
+	{
+		this->indMapFromClusIndToVertex[i].clear();
+		this->indMapFromClusIndToInd[i].clear();
+	}
+	this->indMapFromClusIndToVertex.clear();
+	this->indMapFromClusIndToInd.clear();
+
+	if( indexCluster != NULL)
+	{
+		int clusterSize = 0;
+		for( int i = 0; i < indexCluster->size(); i++)
+		{
+			if( (*indexCluster)[i] + 1 > clusterSize)
+			{
+				clusterSize = (*indexCluster)[i] + 1;
+			}
+			this->indMapFromVertexToClusInd.insert( std::pair< int, int>(this->indMapFromIndToVertex[i], (*indexCluster)[i]));
+		}
+			/// rebuild the datamatrix for MST 
+		std::vector<int> clus;
+		for( int i = 0; i < clusterSize; i++)
+		{
+			this->indMapFromClusIndToVertex.push_back(clus);
+			this->indMapFromClusIndToInd.push_back(clus);
+		}
+		for( int i = 0; i < indexCluster->size(); i++)
+		{
+			int index = (*indexCluster)[i];
+			this->indMapFromClusIndToVertex[index].push_back( this->indMapFromIndToVertex[i]);
+			this->indMapFromClusIndToInd[index].push_back( i);
+		}
+	}
+	else
+	{
+
+	}
+
 	if(!sels)
 		this->selection = new ObjectSelection();
 	else
@@ -63,6 +106,7 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	connect( this->selection, SIGNAL( changed()), this, SLOT( UpdateGraphView()));
 }
 	
+
 void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table)
 {
 	//graphTable->Dump(8);	//debug dump
@@ -228,35 +272,54 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	std::cout<< "construct graph"<<endl;
 	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
-	vnl_matrix<long int> adj_matrix( this->dataTable->GetNumberOfRows(), this->dataTable->GetNumberOfRows());
+	vnl_matrix<long int> adj_matrix( table->GetNumberOfRows() + 1, table->GetNumberOfRows() + 1);
 
-	for( int i = 0; i <  this->dataTable->GetNumberOfRows(); i++)
+	for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
 	{
 		int vertexID = graph->AddVertex();
-		vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
+		if (this->indMapFromClusIndToVertex.size() <= 0)
+		{
+			vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
+		}
+		else
+		{
+			vertexIDarrays->InsertNextValue( i);   // which should be the cluster index
+		}
 	}
 
 	for( int i = 0; i < table->GetNumberOfRows(); i++)
 	{
+
 		long int ver1 = arrayID1->GetVariantValue(i).ToLong();
 		long int ver2 = arrayID2->GetVariantValue(i).ToLong();
-		std::map< long int, long int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
-		std::map< long int, long int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
-		if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
+
+		if (this->indMapFromClusIndToVertex.size() <= 0)
 		{
-			long int index1 = iter1->second;
-			long int index2 = iter2->second;
-			graph->AddEdge( index1, index2);
-			adj_matrix( index1, index2) = 1;
-			adj_matrix( index2, index1) = 1;
-			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
+			std::map< long int, long int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
+			std::map< long int, long int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
+			if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
+			{
+				long int index1 = iter1->second;
+				long int index2 = iter2->second;
+				graph->AddEdge( index1, index2);
+				adj_matrix( index1, index2) = 1;
+				adj_matrix( index2, index1) = 1;
+				weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
+			}
+			else
+			{
+				QMessageBox msg;
+				msg.setText("Index Mapping Error!");
+				msg.exec();
+				exit(-1);
+			}
 		}
-		else
+		else    // cluster index, no mapping
 		{
-			QMessageBox msg;
-			msg.setText("Index Mapping Error!");
-			msg.exec();
-			exit(-1);
+			graph->AddEdge( ver1, ver2);
+			adj_matrix( ver1, ver2) = 1;
+			adj_matrix( ver2, ver1) = 1;
+			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
 		}
 	}
 
@@ -284,8 +347,8 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
 	
-	this->lookupTable->SetNumberOfTableValues( this->dataTable->GetNumberOfRows());
-	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
+	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
 	{
 		vertexColors->InsertNextValue( i);
 		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
@@ -382,17 +445,16 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 		std::set<long int> IDs;
 		if(vertexList->GetNumberOfTuples() > 0)
 		{
-			
 			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
 			{
 				long int value = vertexList->GetValue(i);
 				IDs.insert(value);
 			}
 		}
-		graphWin->SetSelectedIds( IDs);
-		graphWin->SetSelectedIds2();  // only select the selected feature columns
-	}
 
+		graphWin->SetSelectedIds( IDs);
+		//graphWin->SetSelectedIds2();  // only select the selected feature columns
+	}
 	graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
 	//graphWin->view->GetRenderer()->Render();
 }
@@ -410,8 +472,19 @@ void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
 		std::set<long int>::iterator iter = IDs.begin();
 		while( iter != IDs.end())
 		{
-			long int var = indMapFromIndToVertex[*iter];
-			selectedIDs.insert( var);
+			if( this->indMapFromClusIndToVertex.size() <= 0)
+			{
+				long int var = indMapFromIndToVertex[*iter];
+				selectedIDs.insert( var);
+			}
+			else
+			{
+				std::vector<int> clusVertex = indMapFromClusIndToVertex[*iter];
+				for( int ind = 0; ind < clusVertex.size(); ind++)
+				{
+					selectedIDs.insert(clusVertex[ind]);
+				}
+			}
 			iter++;
 		}
 		this->selection->select( selectedIDs);
@@ -432,12 +505,34 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 
 	while( iter != IDs.end())
 	{
-		long int var = this->indMapFromVertexToInd.find( *iter)->second;
-		selectedIDs.insert( var);
+		long int var = 0;
+		if( this->indMapFromClusIndToVertex.size() <= 0)
+		{
+			var = this->indMapFromVertexToInd.find( *iter)->second;
+		}
+		else
+		{
+			var = this->indMapFromVertexToClusInd.find( *iter)->second;
+		}
+
+		if( selectedIDs.find( var) == selectedIDs.end())   // selectIDs doesn't have var
+		{
+			selectedIDs.insert( var);
+		}
 		iter++;
 	}
 	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
-	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	int vertexnum = 0;
+	if( this->indMapFromClusIndToVertex.size() <= 0)
+	{
+		vertexnum = this->dataTable->GetNumberOfRows();
+	}
+	else
+	{
+		vertexnum = this->indMapFromClusIndToVertex.size();  // vertex size equals cluster size
+	}
+
+	for( vtkIdType i = 0; i < vertexnum; i++)
 	{
 		if (selectedIDs.find(i) != selectedIDs.end())
 		{
@@ -453,7 +548,26 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 
 void GraphWindow::UpdateGraphView()
 {
-	std::set<long int> IDs = this->selection->getSelections();
+	std::set<long int> IDs;
+	std::set<long int> IDsnew = this->selection->getSelections();
+	if( this->indMapFromClusIndToVertex.size() <= 0)
+	{
+		IDs = IDsnew;
+	}
+	else
+	{
+		std::set<long int>::iterator iter = IDsnew.begin();
+		while( iter != IDsnew.end())
+		{
+			int var = this->indMapFromVertexToClusInd.find( *iter)->second;
+
+			if( IDs.find( var) == IDs.end())   // selectIDs doesn't have var
+			{
+				IDs.insert( var);
+			}
+			iter++;
+		}
+	}
 
 	if( this->view->GetRepresentation())
 	{
@@ -964,11 +1078,27 @@ bool GraphWindow::IsExist(std::vector<long int>& vec, long int value)
 void GraphWindow::GetProgressionTreeOrder(std::vector<long int> &order)
 {
 	order.clear();
-
+	std::vector<long int> clusterOrder;
 	for( long int i = 0; i < backbones.size(); i++)
 	{
-		order.push_back(backbones[i]);
-		GetOrder(backbones[i], order);
+		clusterOrder.push_back(backbones[i]);
+		GetOrder(backbones[i], clusterOrder);
+	}
+
+	if( this->indMapFromClusIndToInd.size() > 0 )
+	{
+		for( int i = 0; i < clusterOrder.size(); i++)
+		{
+			std::vector<int> clusterNodes = this->indMapFromClusIndToInd[ clusterOrder[i]];
+			for( int j = 0; j < clusterNodes.size(); j++)
+			{
+				order.push_back( clusterNodes[j]);
+			}
+		}
+	}
+	else
+	{
+		order = clusterOrder;
 	}
 }
 

@@ -219,26 +219,41 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 		this->indMapFromIndToVertex.push_back( var);
 	}
 	this->DataTable = table;
+	this->DataTable->RemoveColumnByName("Soma_X");
+	this->DataTable->RemoveColumnByName("Soma_Y");
+	this->DataTable->RemoveColumnByName("Soma_Z");
 
-	this->DataMatrix.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
-	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
+	this->DataMatrix.set_size( this->DataTable->GetNumberOfRows(), this->DataTable->GetNumberOfColumns() - 2);
+	for( int i = 0, rowIndex = 0; i < this->DataTable->GetNumberOfRows(); i++, rowIndex++)
 	{
 		int colIndex = 0;
-		for( int j = 0; j < table->GetNumberOfColumns(); j++)
+		for( int j = 0; j < this->DataTable->GetNumberOfColumns(); j++)
 		{
-			if( j == 0)
+			if( j == 0 )
 			{
-				this->CellTraceIndex.push_back( table->GetValue(i, j).ToInt());
+				this->CellTraceIndex.push_back( this->DataTable->GetValue(i, j).ToInt());
 			}
-			else if( j == table->GetNumberOfColumns() - 1)
+			else if( j == this->DataTable->GetNumberOfColumns() - 1)
 			{
-				this->DistanceToDevice.push_back( table->GetValue(i, j).ToDouble());
+				this->DistanceToDevice.push_back( this->DataTable->GetValue(i, j).ToDouble());
 			}
 			else
 			{
-				(this->DataMatrix)(rowIndex, colIndex++) = table->GetValue(i, j).ToDouble();
+				(this->DataMatrix)(rowIndex, colIndex++) = this->DataTable->GetValue(i, j).ToDouble();
 			}
 		}
+	}
+
+	this->CellClusterIndex.set_size(this->DataMatrix.rows());
+	for( int i = 0; i < CellCluster.size(); i++)
+	{
+		this->CellCluster[i].clear();
+	}
+	this->CellCluster.clear();
+
+	for( int i = 0; i < this->DataMatrix.rows(); i++)
+	{
+		this->CellClusterIndex[i] = i;
 	}
 }
 
@@ -316,11 +331,102 @@ void SPDAnalysisModel::NormalizeData()
 	}
 }
 
-int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
+void SPDAnalysisModel::ClusterCells( double cor)
 {
+	vnl_matrix<double> tmpMat = this->DataMatrix;
+	NormalizeData();   // eliminate the differences of different features
+	this->DataMatrix =  this->DataMatrix.transpose();
+	NormalizeData();   // for calculating covariance
+	vnl_matrix<double> moduleMean = this->DataMatrix;
+	moduleMean.normalize_columns();
+
+	for( int i = 0; i < CellCluster.size(); i++)
+	{
+		CellCluster[i].clear();
+	}
+	CellCluster.clear();
+	
 	vnl_vector<unsigned int> clusterIndex;
 	clusterIndex.set_size( this->DataMatrix.cols());
+	vnl_vector<int> TreeIndex(this->DataMatrix.cols());
+	for( unsigned int i = 0; i < this->DataMatrix.cols(); i++)
+	{
+		clusterIndex[i] = i;
+		TreeIndex[i] = i;
+	}
 
+	this->filename = "C++_" + QString::number(this->DataMatrix.cols())+ "_" + QString::number(this->DataMatrix.rows()) + 
+					"_" + QString::number( cor, 'g', 4) + "_";
+	QString filenameCluster = this->filename + "Cellclustering.txt";
+	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
+	ofs<<"cell clustering:"<<endl;
+
+	TreeData.clear();
+
+	int old_cluster_num = this->DataMatrix.cols();
+	int new_cluster_num = this->DataMatrix.cols();
+	do
+	{
+		old_cluster_num = new_cluster_num;
+		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, TreeIndex, 2);
+		std::cout<< "new cluster num:"<< new_cluster_num<<" vs "<<"old cluster num:"<<old_cluster_num<<endl;
+	}
+	while( old_cluster_num != new_cluster_num);
+
+	this->CellClusterIndex = clusterIndex;
+	std::cout<< "Cell Cluster Size:"<<new_cluster_num<<endl;
+
+	/// rebuild the datamatrix for MST 
+	std::vector<int> clus;
+	for( int i = 0; i < new_cluster_num; i++)
+	{
+		CellCluster.push_back(clus);
+	}
+	for( int i = 0; i < this->DataMatrix.cols(); i++)
+	{
+		int index = this->CellClusterIndex[i];
+		CellCluster[index].push_back(i);
+	}
+
+	this->MatrixAfterCellCluster.set_size( CellCluster.size(), tmpMat.cols());
+	for( int i = 0; i < CellCluster.size(); i++)
+	{
+		ofs<< "Cluster "<<i<<endl;
+		vnl_vector<double> tmpVec( tmpMat.cols());
+		tmpVec.fill(0);
+		for( int j = 0; j < CellCluster[i].size(); j++)
+		{
+			ofs<< CellCluster[i][j]<<endl;
+			tmpVec += tmpMat.get_row(CellCluster[i][j]);
+		}
+		tmpVec = tmpVec / CellCluster[i].size();
+		MatrixAfterCellCluster.set_row( i, tmpVec);
+	}	
+	this->DataMatrix = MatrixAfterCellCluster;  // for normalization
+	NormalizeData();
+	MatrixAfterCellCluster = this->DataMatrix;
+	
+	this->DataMatrix = tmpMat;   // restore datamatrix
+	ofs.close();
+}
+
+void SPDAnalysisModel::GetClusterMapping( std::vector<int> &indToclusInd)
+{
+	indToclusInd.clear();
+	if( this->CellClusterIndex.max_value() + 1 < this->DataMatrix.rows())    // cell cluster has been on
+	{
+		for( int i = 0; i < this->CellClusterIndex.size(); i++)
+		{
+			indToclusInd.push_back( this->CellClusterIndex[i]);
+		}
+	}
+}
+
+int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
+{
+	NormalizeData();
+	vnl_vector<unsigned int> clusterIndex;
+	clusterIndex.set_size( this->DataMatrix.cols());
 	vnl_matrix<double> moduleMean = this->DataMatrix;
 	moduleMean.normalize_columns();
 
@@ -434,7 +540,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 
 		if( moduleToDeleteId != moduleId && isActiveModule[moduleToDeleteId] == 1)
 		{
-			GetCombinedMatrix(index, moduleId, moduleToDeleteId, newModule);   
+			GetCombinedMatrix( this->DataMatrix, index, moduleId, moduleToDeleteId, newModule);   
 			newModule.normalize_columns();
 
 			vnl_matrix<double> mat = newModule.transpose();
@@ -496,7 +602,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 	return index.max_value() + 1;   // how many clusters have been generated
 }
 
-void SPDAnalysisModel::GetCombinedMatrix(vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, 
+void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, 
 										 vnl_matrix<double>& mat)
 {
 	unsigned int i = 0;
@@ -506,7 +612,7 @@ void SPDAnalysisModel::GetCombinedMatrix(vnl_vector<unsigned int>& index, unsign
 	{
 		if( index[i] == moduleId || index[i] == moduleDeleteId)
 		{
-			mat.set_column( ind++, this->DataMatrix.get_column(i));
+			mat.set_column( ind++, datamat.get_column(i));
 		}
 	}
 }
@@ -665,7 +771,7 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 		unsigned int i = maxId - coherence.rows() * j;
 
 		vnl_matrix<double> dataTmp( this->DataMatrix.rows(), moduleSize[i] + moduleSize[j]);
-		GetCombinedMatrix( this->ClusterIndex, i, j, dataTmp);
+		GetCombinedMatrix( this->DataMatrix, this->ClusterIndex, i, j, dataTmp);
 		dataTmp.normalize_columns();
 
 		vnl_vector<double> dataMean;
@@ -768,7 +874,7 @@ void SPDAnalysisModel::HierachicalClustering()
 
 			int newModuleSize = moduleSize[i] + moduleSize[j];
 			newModule.set_size(this->DataMatrix.rows(), newModuleSize);
-			GetCombinedMatrix(this->ClusterIndex, i, j, newModule);   
+			GetCombinedMatrix(this->DataMatrix, this->ClusterIndex, i, j, newModule);   
 			newModule.normalize_columns();
 			vnl_matrix<double> mat = newModule.transpose();
 			GetMatrixRowMeanStd(mat, newModuleMeans, newModuleStd);
@@ -824,7 +930,7 @@ void SPDAnalysisModel::HierachicalClustering()
 				vnl_vector<double> newModuleStd;
 				vnl_vector<double> newModuleCor;
 
-				GetCombinedMatrix(cIndex, min, k, newModule);   
+				GetCombinedMatrix( this->DataMatrix, cIndex, min, k, newModule);   
 				newModule.normalize_columns();
 
 				vnl_matrix<double> mat = newModule.transpose();
@@ -933,7 +1039,7 @@ void SPDAnalysisModel::HierachicalClustering(vtkSmartPointer<vtkTable> table, bo
 				vnl_vector<double> newModuleCor;
 				vnl_vector<double> moduleCor; 
 
-				GetCombinedMatrix(cIndex, ids, newModule);   
+				GetCombinedMatrix( this->DataMatrix, cIndex, ids, newModule);   
 				//newModule.normalize_columns();
 
 				vnl_matrix<double> mat = newModule.transpose();
@@ -1016,15 +1122,20 @@ void SPDAnalysisModel::GenerateMST()
 	this->MSTWeight.clear();
 	this->ModuleGraph.clear();
 
-	unsigned int num_nodes = this->DataMatrix.rows();
+	if( this->MatrixAfterCellCluster.rows() <= 0)
+	{
+		this->MatrixAfterCellCluster = this->DataMatrix;
+		std::cout<< "MatrixAfterCellCluster hasn't been generated, given datamatrix instead!"<<endl;
+	}
+
+	unsigned int num_nodes = this->MatrixAfterCellCluster.rows();
 
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
 		std::cout<<"Building MST for module "<<i<<endl;
 
-
-		vnl_matrix<double> clusterMat( this->DataMatrix.rows(), GetSingleModuleSize( this->ClusterIndex, i));
-		GetCombinedMatrix( this->ClusterIndex, i, i, clusterMat);
+		vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), GetSingleModuleSize( this->ClusterIndex, i));
+		GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, i, i, clusterMat);
 
 		//ofsmat<<"Module:"<< i + 1<<endl;
 		//ofsmat<< clusterMat<<endl<<endl;
@@ -1041,7 +1152,7 @@ void SPDAnalysisModel::GenerateMST()
 			}
 		}
 
-		std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->DataMatrix.rows());
+		std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->MatrixAfterCellCluster.rows());
 
 		try
 		{
@@ -1402,8 +1513,8 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
 	{
 		std::cout<< "build module distance "<< i<<endl;
-		vnl_matrix<double> clusterData( this->DataMatrix.rows(), moduleSize[i]);
-		GetCombinedMatrix( this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
+		vnl_matrix<double> clusterData( this->MatrixAfterCellCluster.rows(), moduleSize[i]);
+		GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
 
 		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
 		moduleDistance.push_back( distance);
@@ -1599,18 +1710,18 @@ void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double thresh
 	ofSimatrix.close();
 }
 
-void SPDAnalysisModel::GetCombinedMatrix( vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
+void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
 {
 	unsigned int i = 0;
 	unsigned int ind = 0;
 
-	if( mat.rows() == DataMatrix.rows())
+	if( mat.rows() == datamat.rows())
 	{
 		for( i = 0; i < index.size(); i++)
 		{
 			if( IsExist(moduleID, index[i]))
 			{
-				mat.set_column( ind++, DataMatrix.get_column(i));
+				mat.set_column( ind++, datamat.get_column(i));
 			}
 		}
 	}
@@ -1664,12 +1775,12 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 	}
 	coln = GetSelectedFeatures( this->ClusterIndex, moduleID, this->selectedFeatureIDs);
 	
-	vnl_matrix<double> clusterMat( this->DataMatrix.rows(), coln);
-	GetCombinedMatrix( this->ClusterIndex, moduleID, clusterMat);
+	vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), coln);
+	GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, moduleID, clusterMat);
 	ofs<< setiosflags(ios::fixed)<< clusterMat<<endl<<endl;
 
 	std::cout<<"Build progression tree"<<endl;
-	int num_nodes = this->DataMatrix.rows();
+	int num_nodes = this->MatrixAfterCellCluster.rows();
 	Graph graph( num_nodes);
 
 	for( unsigned int k = 0; k < num_nodes; k++)
@@ -1682,7 +1793,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 		}
 	}
 
-	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->DataMatrix.rows());
+	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->MatrixAfterCellCluster.rows());
 
 	try
 	{
@@ -1714,7 +1825,12 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 		{
 			double dist = CityBlockDist( clusterMat, i, vertex[i]);
 			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-			if( this->indMapFromIndToVertex.size() > 0)
+			if( this->CellCluster.size() > 0)    // cluster index continuous, no mapping needed
+			{
+				DataRow->InsertNextValue( i);
+				DataRow->InsertNextValue( vertex[i]);
+			}
+			else if( this->indMapFromIndToVertex.size() > 0)
 			{
 				DataRow->InsertNextValue( this->indMapFromIndToVertex[i]);
 				DataRow->InsertNextValue( this->indMapFromIndToVertex[vertex[i]]);

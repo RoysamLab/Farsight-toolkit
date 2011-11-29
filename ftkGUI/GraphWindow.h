@@ -41,7 +41,7 @@ class GraphWindow : public QMainWindow
 public:
 	GraphWindow(QWidget * parent = 0);
 	~GraphWindow();
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL, std::vector<int> *clusterIndex = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
@@ -88,6 +88,9 @@ private:
 
 	std::map<long int, long int> indMapFromVertexToInd;
 	std::vector<long int> indMapFromIndToVertex;
+	std::map<long int, long int> indMapFromVertexToClusInd;
+	std::vector< std::vector<int> > indMapFromClusIndToVertex;
+	std::vector< std::vector<int> > indMapFromClusIndToInd;
 	QString fileName;
 
 	std::vector< long int> backbones;

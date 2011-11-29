@@ -27,7 +27,7 @@ private slots:
 	void loadTestData();
     void clusterFunction();
 	void generateMST();
-	void autoProcess();
+	void clusterCells();
 	void emdFunction();
 	void showPSM();
 	void showPSMHist();
@@ -58,7 +58,7 @@ private:
     QPushButton *clusterButton;
 	QListWidget *listWidget;
 	QPushButton *generateMSTButton;
-	QPushButton *autoProcButton;
+	QPushButton *cellClusterButton;
 	QPushButton *emdButton;
 	QLineEdit *emdThresBox;
 	QLineEdit *emdPercentageBox;

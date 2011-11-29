@@ -20,7 +20,9 @@ SET(SPD_SRCS
 	SPDAnalysisModel.cpp
 	transportSimplex.h
 	spdmainwindow.h
-	spdmainwindow.cpp)
+	spdmainwindow.cpp
+	LCSAnalysis.h
+	LCSAnalysis.cpp)
 
 IF ( NOT BUILD_CLUSCLUS )
 	MESSAGE( SEND_ERROR "Must turn on BUILD_CLUSCLUS" )

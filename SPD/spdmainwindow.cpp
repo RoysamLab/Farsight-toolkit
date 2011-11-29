@@ -38,11 +38,11 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     clusterCoherenceBox = new QLineEdit;
     clusterMergeLabel = new QLabel(tr("Merge Coherence:"));
     clusterMergeBox = new QLineEdit;
-    clusterButton = new QPushButton(tr("Agglomerate"));
-
+    clusterButton = new QPushButton(tr("Feature Cluster"));
+	cellClusterButton = new QPushButton(tr("Cell Cluster"));
+	
 	listWidget = new QListWidget( this);
 	generateMSTButton = new QPushButton(tr("MST"));
-	autoProcButton = new QPushButton(tr("Auto-processing"));
 	emdButton = new QPushButton(tr("EMD"));
 	
 	emdThresBox = new QLineEdit;
@@ -63,7 +63,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
-	connect(autoProcButton, SIGNAL(clicked()), this, SLOT(autoProcess()));
+	connect(cellClusterButton , SIGNAL(clicked()), this, SLOT(clusterCells()));
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psmHisButton, SIGNAL(clicked()), this, SLOT(showPSMHist()));
@@ -80,7 +80,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 12; row++)
+    for ( int row = 1; row <= 11; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -102,28 +102,27 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
     mainLayout->addWidget(clusterCoherenceBox, 4, 1);
-	mainLayout->addWidget(clusterButton, 4, 2);
+	mainLayout->addWidget(clusterButton, 5, 2);
 
     mainLayout->addWidget(clusterMergeLabel, 5, 0);
     mainLayout->addWidget(clusterMergeBox, 5, 1);
-
-	mainLayout->addWidget(listWidget, 6, 0, 3, 2);
-
+	mainLayout->addWidget(cellClusterButton, 4, 2);
+	
+	mainLayout->addWidget(listWidget, 6, 0, 2, 2);
     mainLayout->addWidget(generateMSTButton, 6, 2);
-	mainLayout->addWidget(autoProcButton, 7, 2);
-	mainLayout->addWidget(emdButton, 8, 2);
+	mainLayout->addWidget(emdButton, 7, 2);
 
-	mainLayout->addWidget(psmLable, 9, 0);
-	mainLayout->addWidget(emdThresBox, 9, 1);
-	mainLayout->addWidget(psmHisButton, 9, 2);
+	mainLayout->addWidget(psmLable, 8, 0);
+	mainLayout->addWidget(emdThresBox, 8, 1);
+	mainLayout->addWidget(psmHisButton, 8, 2);
 
-	mainLayout->addWidget(psmPerLable, 10, 0);
-	mainLayout->addWidget(emdPercentageBox, 10, 1);
-	mainLayout->addWidget(psmButton, 10, 2);
+	mainLayout->addWidget(psmPerLable, 9, 0);
+	mainLayout->addWidget(emdPercentageBox, 9, 1);
+	mainLayout->addWidget(psmButton, 9, 2);
 
-	mainLayout->addWidget(psdtLable, 11, 0);
-	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 12, 2);
+	mainLayout->addWidget(psdtLable, 10, 0);
+	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	mainLayout->addWidget(psdtButton, 11, 2);
 	//mainLayout->addWidget(saveFeatureButton, 13, 2);
 
     setLayout(mainLayout);
@@ -161,7 +160,7 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		SPDModel->ParseTraceFile( this->data);
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		this->SPDModel->NormalizeData();
+		//this->SPDModel->NormalizeData();
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
@@ -188,7 +187,7 @@ void SPDMainWindow::load()
 	{
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		this->SPDModel->NormalizeData();
+		//this->SPDModel->NormalizeData();
 	}
 }
 
@@ -257,22 +256,12 @@ void SPDMainWindow::generateMST()
 	}
 }
 
-void SPDMainWindow::autoProcess()
+void SPDMainWindow::clusterCells()
 {
-	this->SPDModel->GenerateMST();
-	this->SPDModel->RunEMDAnalysis();
-	std::string str = "0";
-	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(str);
-	if( table != NULL)
+	std::string clusterCor = this->clusterCoherenceBox->text().toStdString();
+	if ( atof(clusterCor.c_str()) >= 0 && atof(clusterCor.c_str()) <= 1)
 	{
-		std::vector<std::string> headers;
-		SPDModel->GetTableHeaders( headers);
-		this->graph->setModels(data, selection, selection2);
-		QString str = SPDModel->GetFileName();
-		std::set<long int> featureSelectedIDs;
-		SPDModel->GetSelectedFeatures(featureSelectedIDs);
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-		this->graph->ShowGraphWindow();
+		this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
 	}
 }
 
@@ -376,10 +365,20 @@ void SPDMainWindow::viewProgression()
 	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	if( table != NULL)
 	{
-		
 		std::vector<std::string> headers;
+		std::vector<int> index;
+
 		SPDModel->GetTableHeaders( headers);
-		this->graph->setModels(data, selection, selection2);
+		SPDModel->GetClusterMapping(index);
+		if( index.size() > 0)
+		{
+			this->graph->setModels(data, selection, selection2, &index);
+		}
+		else
+		{
+			this->graph->setModels(data, selection, selection2);
+		}
+
 		QString str = SPDModel->GetFileName();
 		std::set<long int> featureSelectedIDs;
 		SPDModel->GetSelectedFeatures(featureSelectedIDs);
@@ -398,7 +397,7 @@ void SPDMainWindow::viewProgression()
 	}
 }
 
-void SPDMainWindow::updateSelMod()
+void SPDMainWindow::updateSelMod()   // possible bugs
 {
 	int r1 = 0;
 	int r2 = 0;
@@ -412,19 +411,26 @@ void SPDMainWindow::updateSelMod()
 	int num = abs(r1 - r2) + 1;
 	int max = r1 > r2 ? r1 : r2;
 
-	selMod.set_size(num);
-	QString str;
-
-	for( int i = 0; i < num; i++)
+	if( num < size)
 	{
-		selMod[i] = optimalleaforder[size - 1 - max + i];
-		if( i != num - 1)
+		selMod.set_size(num);
+		QString str;
+		
+		for( int i = 0; i < num; i++)
 		{
-			str += QString::number(selMod[i])+",";
+			int index = size - 1 - max + i;
+			if( index >= 0 && index < size)
+			{
+				selMod[i] = optimalleaforder[index];
+				if( i != num - 1)
+				{
+					str += QString::number(selMod[i])+",";
+				}
+			}
 		}
+		str += QString::number(selMod[num - 1]);
+		psdModuleSelectBox->setText(str);
 	}
-	str += QString::number(selMod[num - 1]);
-	psdModuleSelectBox->setText(str);
 }
 
 void SPDMainWindow::GetProgressionTreeOrder(std::vector<long int> &order)
