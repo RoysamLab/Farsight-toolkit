@@ -22,6 +22,7 @@ CellTraceModel::CellTraceModel()
 {	
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
+	this->ColumnSelection = new ObjectSelection();
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
 	this->AdditionalHeaders.clear();
@@ -30,6 +31,7 @@ CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
 {	
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
+	this->ColumnSelection = new ObjectSelection();
 	this->setCells(Cells);
 }
 CellTraceModel::~CellTraceModel()
@@ -269,6 +271,10 @@ vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 ObjectSelection * CellTraceModel::GetObjectSelection()
 {
 	return this->Selection;
+}
+ObjectSelection * CellTraceModel::GetObjectSelectionColumn()
+{
+	return this->ColumnSelection;
 }
 void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 {

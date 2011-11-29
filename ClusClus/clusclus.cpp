@@ -260,7 +260,7 @@ double clusclus::MergeClusters(int num_currcluster, int *pivot1, int *pivot2)
 		}
 	}
 	num_cluster_samples[*pivot1] += num_cluster_samples[*pivot2];
-	for(int i=*pivot2; i<num_currcluster; i++)
+	for(int i=*pivot2; i<num_currcluster - 1; i++)
 	{
 		num_cluster_samples[i] = num_cluster_samples[i+1];
 	}

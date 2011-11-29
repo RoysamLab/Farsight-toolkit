@@ -4,6 +4,19 @@ PROJECT(TraceEdit)
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 
+
+IF (BUILD_SPD)	
+SET( SPD_LIBRARIES 
+    SPD 
+    )
+ENDIF (BUILD_SPD)
+
+IF(BUILD_CLUSCLUS)
+SET (CLUSCLUS_LIBRARIES
+    ClusClus_lib
+    )
+ENDIF (BUILD_CLUSCLUS)
+
 SET( Libraries
     tiff
     ${ITK_LIBRARIES}
@@ -20,14 +33,10 @@ SET( Libraries
     ftkCommon
     ftkGraphs
     MCLR
+    ${CLUSCLUS_LIBRARIES}
+    ${SPD_LIBRARIES}
     ${QT_LIBRARIES} )
 
-	IF (BUILD_SPD)	
-SET( Clustering 
-    SPD 
-    ClusClus_lib
-	)
-ENDIF (BUILD_SPD)
 
 
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
@@ -55,11 +64,7 @@ IF(USE_GPUREN)
 	ADD_DEFINITIONS(-DUSE_GPUREN)
 ENDIF(USE_GPUREN)
 
-IF (BUILD_SPD)
-	TARGET_LINK_LIBRARIES(Trace ${Libraries} ${Clustering})
-ELSE (BUILD_SPD)
-	TARGET_LINK_LIBRARIES(Trace ${Libraries})
-ENDIF (BUILD_SPD)
+TARGET_LINK_LIBRARIES(Trace ${Libraries})
 
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )

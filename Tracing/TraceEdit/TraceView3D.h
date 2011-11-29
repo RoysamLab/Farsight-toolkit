@@ -100,9 +100,12 @@ limitations under the License.
 #include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
-#ifdef USE_SPD
+//#ifdef USE_SPD
 #include "SPD/spdmainwindow.h"
-#endif
+//#endif
+//#ifdef USE_Clusclus
+#include "ClusClus/HeatmapWindow.h"
+//#endif
 #include "branchPT.h"
 #include "CellTrace.h"
 #include "CellTraceModel.h"
@@ -116,6 +119,8 @@ limitations under the License.
 #include "TraceLine.h"
 #include "TraceObject.h"
 #include "TraceModel.h"
+
+
 
 class View3D : public QMainWindow 
 {
@@ -239,6 +244,7 @@ public slots:
 	void FocusOnCell(CellTrace* SelectedCell);
 
 	void SPDAnalysis();
+	void ClusclusAnalysis();
 
 //these are for bootloadfile
 	QString getTraceFile();
@@ -372,6 +378,7 @@ private:
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 	QAction *SPDAction;
+	QAction *ClusclusAction;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -391,9 +398,10 @@ private:
 	PlotWindow *FL_MeasurePlot;
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
-#ifdef USE_SPD
+//#ifdef USE_SPD
 	SPDMainWindow *SPDWin;
-#endif
+//#endif
+	Heatmap *HeatmapWin;
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;

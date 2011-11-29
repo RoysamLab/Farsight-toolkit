@@ -1418,6 +1418,9 @@ void View3D::CreateGUIObjects()
 
 	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
 	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
+
+	this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
+	connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 #ifndef USE_SPD
 	this->SPDAction->setDisabled(true);
 #endif
@@ -1703,6 +1706,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 	this->analysisViews->addAction(this->SPDAction);
+	this->analysisViews->addAction(this->ClusclusAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -3203,7 +3207,7 @@ void View3D::Rerender()
 	}
 	if (this->FL_MeasureTable)
 	{
-		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->FL_MeasureTable->update();
 	}
 	if (this->FL_histo)
@@ -4002,13 +4006,13 @@ void View3D::ShowCellAnalysis()
 		}
 		if (this->FL_MeasureTable)
 		{
-			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
 		else
 		{
 			this->FL_MeasureTable = new TableWindow();
-			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
 			this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
 			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
@@ -5088,7 +5092,7 @@ void View3D::SaveComputedCellFeaturesTable()
 
 void View3D::SPDAnalysis()
 {
-#ifdef USE_SPD
+//#ifdef USE_SPD
 	this->SPDWin = new SPDMainWindow();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
@@ -5106,5 +5110,28 @@ void View3D::SPDAnalysis()
 	}
 
 	this->SPDWin->show();
-#endif
+//#endif
+}
+
+void View3D::ClusclusAnalysis()
+{
+	this->HeatmapWin = new Heatmap();
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	{
+		//this->SPDWin->setModels();
+		QMessageBox mes;
+		mes.setText("Please compute cell features first!");
+		mes.exec();
+	}
+	else
+	{
+		vtkSmartPointer<vtkTable> featureTable;
+		featureTable = this->CellModel->getDataTable();
+		featureTable->RemoveColumnByName("Trace File");
+
+		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+		this->HeatmapWin->runClusclus();
+		this->HeatmapWin->showGraph();
+	}
+
 }

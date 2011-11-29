@@ -69,6 +69,9 @@ public:
 	vtkSmartPointer<vtkTable> getDataTable();
 	vtkSmartPointer<vtkTable> getCellBoundsTable();
 	ObjectSelection * GetObjectSelection();
+	////////////////////////////////////////////
+	ObjectSelection * GetObjectSelectionColumn();
+	///////////////////////////////////////////////
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
 	std::set<long int> GetSelectedIDs();
@@ -91,6 +94,9 @@ private:
 	void SyncModel();
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
+	//////////////////////////////////////////////
+	ObjectSelection * ColumnSelection;
+	////////////////////////////////////////////
 	GraphWindow * graphVisualize;
 };
 

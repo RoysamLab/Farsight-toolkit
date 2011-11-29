@@ -1025,7 +1025,7 @@ void Heatmap::GetSelecectedIDs()
 
 void Heatmap::drawPoints1()
 {
-	v1->SetNumberOfValues (2*this->num_samples-1);
+	v1->SetNumberOfValues (2*this->num_samples-1 + 2*this->num_features-1);
 	for(unsigned int i=0; i<2*this->num_samples-1;i++)
     {
 		v1->SetValue (i,graph_Layout1->AddVertex());
@@ -1034,7 +1034,7 @@ void Heatmap::drawPoints1()
 	
 	for(unsigned int i=0; i<(2*this->num_features-1);i++)
     {
-		v1->SetValue (i,graph_Layout1->AddVertex());
+		v1->SetValue (i+2*this->num_samples-1,graph_Layout1->AddVertex());
 		this->points1->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1],this->Processed_Coordinate_Data_Tree2[i][2],this->Processed_Coordinate_Data_Tree2[i][3]);
 	}
     this->graph_Layout1->SetPoints(this->points1);
