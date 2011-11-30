@@ -83,7 +83,6 @@
 #include "ftkGUI/LabelImageViewQT.h"
 #include "ftkGUI/PreprocessDialog.h"
 #include "ftkGraphs/kNearestObjects.h"
-#include "PatternAnalysis/activeLearning/mclr.h"
 #include "ftkSpectralUnmixing/ftkSpectralUnmixing.h"
 
 //VTK includes:
@@ -227,6 +226,7 @@ protected slots:
 	//*****************************************************
 
 	//For Tools menu
+	void getCentroids(void);
 	void startROI(void);
 	void endROI(void);
 	void updateROIinTable(void);
@@ -252,7 +252,6 @@ protected slots:
 	void ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > query_labels);
 	//void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
 	void classifyFromActiveLearningModel();
-	vtkSmartPointer<vtkTable> loadActiveLearningModel(std::string filename);
 	void Start_Classification(bool create_model = false);
 	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector);
 	
@@ -337,6 +336,7 @@ protected:
 	QAction *imageIntensityAction;
 
 	QMenu *toolMenu;
+	QAction *getCentroidAction;
 	QMenu *roiMenu;
 	QAction *drawROIAction;
 	QAction *loadROIAction;

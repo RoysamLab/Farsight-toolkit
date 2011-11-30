@@ -399,6 +399,10 @@ void NucleusEditor::createMenus()
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
 
+	getCentroidAction = new QAction(tr("Get Object Centroids"), this);
+	connect(getCentroidAction, SIGNAL(triggered()), this, SLOT(getCentroids()));
+	toolMenu->addAction(getCentroidAction);
+
 	roiMenu = toolMenu->addMenu(tr("Region Of Interest"));
 
 	drawROIAction = new QAction(tr("Draw ROI"), this);
@@ -742,6 +746,13 @@ bool NucleusEditor::saveSomaImage()
 {
 	if(!labImg || !table) return false;
 
+	std::vector< vtkSmartPointer< vtkTable > > featureTable;
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		featureTable = nucSeg->table4DImage;
+	else
+		featureTable.push_back(table);
+
+
 	bool found = false;
 	for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
 	{	
@@ -798,9 +809,9 @@ bool NucleusEditor::saveSomaImage()
 		int slice_size = im_size[1] * im_size[0];
 		int row_size = im_size[0];
 		std::map<unsigned short, int> classMap;
-		for(int row=0; row<(int)nucSeg->table4DImage[t]->GetNumberOfRows(); ++row)
+		for(int row=0; row<(int)featureTable[t]->GetNumberOfRows(); ++row)
 		{
-			classMap[nucSeg->table4DImage[t]->GetValue(row,0).ToUnsignedShort()] = nucSeg->table4DImage[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+			classMap[featureTable[t]->GetValue(row,0).ToUnsignedShort()] = featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt();
 		}
 
 		for(int i=0; i<im_size[2]; ++i)
@@ -833,13 +844,13 @@ bool NucleusEditor::saveSomaImage()
 			return false;
 		}
 		//Write out the features:
-		for(int row = 0; row < (int)nucSeg->table4DImage[t]->GetNumberOfRows(); ++row)
+		for(int row = 0; row < (int)featureTable[t]->GetNumberOfRows(); ++row)
 		{
-			if(nucSeg->table4DImage[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+			if(featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
 			{
-				outFile << nucSeg->table4DImage[t]->GetValue(row,1).ToInt() << "\t" ;
-				outFile << nucSeg->table4DImage[t]->GetValue(row,2).ToInt() << "\t" ;
-				outFile << nucSeg->table4DImage[t]->GetValue(row,3).ToInt() << "\t" ;
+				outFile << featureTable[t]->GetValue(row,1).ToInt() << "\t" ;
+				outFile << featureTable[t]->GetValue(row,2).ToInt() << "\t" ;
+				outFile << featureTable[t]->GetValue(row,3).ToInt() << "\t" ;
 				outFile << "\n";
 			}
 		}
@@ -1877,6 +1888,18 @@ delete assocCal;
 }
 */
 
+void NucleusEditor::getCentroids(void)
+{
+
+	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
+	iCalc->SetInputImages(myImg, labImg, 0, 0);
+	iCalc->GetObjectCentroids(table);								//Create a new table
+	delete iCalc;
+
+	updateViews();
+
+}
+
 void NucleusEditor::startROI(void)
 {
 	segView->GetROI();
@@ -2514,10 +2537,14 @@ void NucleusEditor::SaveActiveLearningModel()
 	//Write out the average distance:
 	for(int i=0; i < (int)active_model.size(); ++i)
 	{
-		outFile << active_model.at(i).first << "\t";
-		for(int j=0; j<(int)active_model.at(i).second.size(); ++j)
+		outFile << active_model[i].first << "\t";		
+	}
+	outFile << "\n";
+	for(int j=0; j<(int)active_model[0].second.size(); ++j)
+	{
+		for(int i=0; i < (int)active_model.size(); ++i)
 		{
-			outFile << active_model.at(i).second.get(j) << "\t";
+			outFile << active_model[i].second.get(j) << "\t";
 		}
 		outFile << "\n";
 	}
@@ -2548,7 +2575,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		return;
 	lastPath = QFileInfo(fileName).absolutePath();
 
-	vtkSmartPointer<vtkTable> active_model_table = this->loadActiveLearningModel(fileName.toStdString());
+	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(fileName.toStdString());
 
 	// to generate the Active Learning Matrix
 	act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
@@ -2569,23 +2596,9 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
 	}
 
-	vtkSmartPointer<vtkTable> alm_table = vtkSmartPointer<vtkTable>::New();
-	alm_table->Initialize();
-	for(int c=1; c<(int)active_model_table->GetNumberOfColumns(); ++c)
-	{
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName( active_model_table->GetColumnName(c));
-		alm_table->AddColumn(column);
-	}
-	for(int row = 2; row < (int)active_model_table->GetNumberOfRows(); ++row)
-	{
-		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-		for(int c=1; c<(int)active_model_table->GetNumberOfColumns(); ++c)
-		{
-			model_data1->InsertNextValue(active_model_table->GetValue(row,c));
-		}
-		alm_table->InsertNextRow(model_data1);
-	}
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveColumn(0);
 
 	ClassName_Confidence_Dialog *dialog = new ClassName_Confidence_Dialog(this);
 	if( dialog->exec() )
@@ -2597,7 +2610,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 		return;
 	delete dialog;
 
-	pWizard = new PatternAnalysisWizard( featureTable, alm_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
+	pWizard = new PatternAnalysisWizard( featureTable, active_model_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
 	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 	pWizard->exec();
 
@@ -2608,8 +2621,8 @@ void NucleusEditor::classifyFromActiveLearningModel()
 
 		mclr = new MCLR();
 		// Number of features and classes needed in "add_bias" fuction of MCLR
-		mclr->Set_Number_Of_Classes((int)alm_table->GetNumberOfRows());
-		mclr->Set_Number_Of_Features((int)alm_table->GetNumberOfColumns());
+		mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
+		mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
 		Start_Classification();		
 	}
 }
@@ -2733,57 +2746,6 @@ std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(s
 	//table_vector.at(0)->
 	return table_vector;
 }
-
-
-
-
-
-
-vtkSmartPointer<vtkTable> NucleusEditor::loadActiveLearningModel(std::string filename)
-{
-	const int MAXLINESIZE = 1024;	//Numbers could be in scientific notation in this file
-	char line[MAXLINESIZE];
-
-	//Open the file:
-	ifstream inFile; 
-	inFile.open( filename.c_str() );
-	if ( !inFile.is_open() )
-		return NULL;
-
-	vtkSmartPointer<vtkTable> alm_table = vtkSmartPointer<vtkTable>::New();	
-
-	inFile.getline(line, MAXLINESIZE);
-	while ( !inFile.eof() )
-	{
-		char * pch = strtok (line," \t");
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName( pch );
-
-		pch = strtok (NULL, " \t");
-		std::vector<vtkVariant> temp_1;
-		while (pch != NULL)
-		{
-			temp_1.push_back(vtkVariant(atof(pch)));
-			pch = strtok (NULL, " \t");
-		}	
-
-		column->SetNumberOfValues(temp_1.size());
-		alm_table->AddColumn(column);
-		for(int row=0; row<(int)temp_1.size(); ++row)
-		{
-			alm_table->SetValue(row, alm_table->GetNumberOfColumns()-1, temp_1.at(row));
-		}
-
-		inFile.getline(line, MAXLINESIZE);
-
-	}
-	inFile.close();
-
-	return alm_table;
-
-}
-
-
 
 
 
