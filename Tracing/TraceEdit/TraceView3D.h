@@ -201,6 +201,7 @@ public slots:
 
 	void LoadTraces();
 	void LoadImageData();
+	void LoadCellTraceTable();
 	void LoadSomaFile();
 	void LoadProject();
 	void SetTraceType(int newType);
@@ -328,6 +329,7 @@ private:
 	QAction *exitAction;
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;
+	QAction *loadCellTraceTable;
 	QAction *CloseAllImage;
 
 	QAction *SetSlicer;

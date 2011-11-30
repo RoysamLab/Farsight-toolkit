@@ -67,6 +67,7 @@ public:
 	~CellTraceModel();
 	void setCells(std::vector<CellTrace*> Cells);
 	vtkSmartPointer<vtkTable> getDataTable();
+	void setDataTable(vtkSmartPointer<vtkTable> table);
 	vtkSmartPointer<vtkTable> getCellBoundsTable();
 	ObjectSelection * GetObjectSelection();
 	////////////////////////////////////////////

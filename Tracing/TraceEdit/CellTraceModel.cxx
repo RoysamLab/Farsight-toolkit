@@ -233,6 +233,12 @@ vtkSmartPointer<vtkTable> CellTraceModel::getDataTable()
 	return this->DataTable;
 }
 
+void CellTraceModel::setDataTable(vtkSmartPointer<vtkTable> table)
+{
+	this->DataTable = table;
+	this->Selection->clear();
+}
+
 vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 {
 	vtkSmartPointer<vtkTable> CellBoundsTable = vtkSmartPointer<vtkTable>::New();

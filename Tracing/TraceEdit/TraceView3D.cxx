@@ -559,6 +559,47 @@ void View3D::LoadImageData()
 	}
 }
 
+void View3D::LoadCellTraceTable()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, "Select table file to open", "", tr("TXT Files (*.txt)"));
+
+	if(fileName == "")
+		return;
+
+	vtkSmartPointer< vtkTable >cellTable = ftk::LoadTable(fileName.toStdString());
+	if(!cellTable) return;
+	
+	this->CellModel->setDataTable(cellTable);
+
+	if(this->FL_MeasurePlot)
+	{
+		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasurePlot->update();
+	}
+	else
+	{
+		this->FL_MeasurePlot = new PlotWindow();
+		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasurePlot->move(this->TraceEditSettings.value("FLMeasurePlot/pos",QPoint(32, 561)).toPoint());
+		this->FL_MeasurePlot->show();
+	}
+	if (this->FL_MeasureTable)
+	{
+		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasureTable->update();
+	}
+	else
+	{
+		this->FL_MeasureTable = new TableWindow();
+		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
+		this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
+		this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
+		this->FL_MeasureTable->show();
+	}
+}
+
 void View3D::LoadSomaFile()
 {
 	QString somaFile = this->getSomaFile();
@@ -1058,6 +1099,10 @@ void View3D::CreateGUIObjects()
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
 
+	this->loadCellTraceTable = new QAction("Load Cell Trace Table", this->CentralWidget);
+	connect (this->loadCellTraceTable, SIGNAL(triggered()), this, SLOT(LoadCellTraceTable()));
+	this->loadCellTraceTable->setStatusTip("Load a Cell Trace Table");
+
 	this->CloseAllImage = new QAction("Remove Image Actors", this->CentralWidget);
 	connect (this->CloseAllImage, SIGNAL(triggered()), this, SLOT(removeImageActors()));
 	this->CloseAllImage->setStatusTip("remove images from rendering");
@@ -1475,6 +1520,7 @@ void View3D::CreateLayout()
 	this->fileMenu = this->menuBar()->addMenu(tr("&File"));
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
+	this->fileMenu->addAction(this->loadCellTraceTable);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGliphs);
