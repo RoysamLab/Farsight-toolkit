@@ -47,9 +47,11 @@ class ProjectDefinition
 {
 public:
 	//ENUMS & STRUCTS:
-	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, FEATURE_COMPUTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, MULTI_MODEL_SEGMENTATION, CLASSIFY, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
+	enum TaskType { PREPROCESSING, NUCLEAR_SEGMENTATION, FEATURE_COMPUTATION, CYTOPLASM_SEGMENTATION, RAW_ASSOCIATIONS, MULTI_MODEL_SEGMENTATION, CLASSIFY, CLASSIFY_MCLR, CLASS_EXTRACTION, ANALYTE_MEASUREMENTS, PIXEL_ANALYSIS, QUERY };
 	typedef struct { int number; std::string name; std::string type; } Channel;
 	typedef struct { std::string name; double value; } Parameter;
+	typedef struct { std::string ClassColName; double ConfThreshold; std::string TrainingFileName; } ClassificationRule;
+	typedef struct { std::string Class_Name; int Class; } ClassExtractionRule;
 	typedef struct { std::string TrainingColumn; std::vector<std::string> ClassificationColumns; } ClassParam;
 	typedef struct { std::string filterName; std::string channelName; std::string paramenter1; double value1; std::string paramenter2; double value2; std::string paramenter3; double value3; std::string paramenter4; double value4;
 					 std::string paramenter5; double value5; std::string paramenter6; double value6; } preprocessParam;
@@ -69,13 +71,17 @@ public:
 	std::vector<mmSegFile> ReadMMSegFiles(TiXmlElement * inputElement);
 	std::vector<std::string> ParseText(TiXmlElement * element);
 	std::vector<ClassParam> ReadClassificationParameters(TiXmlElement * inputElement);
+	std::vector<ClassificationRule> ReadClassificationMCLRRules(TiXmlElement * inputElement);
+	std::vector<ClassExtractionRule> ReadClassExtractionRules(TiXmlElement * inputElement);
 	std::vector<ftk::PixelAnalysisDefinitions> ReadPixelLevelRules(TiXmlElement * element);
 	TiXmlElement * GetPreprocessingElement( preprocessParam param );
 	std::vector<QueryParameter> ReadQueryParameters(TiXmlElement * inputElement);
 	TiXmlElement * GetParameterElement( Parameter param );
 	TiXmlElement * GetQueryParameterElement( QueryParameter param );
 	TiXmlElement * GetAssocRuleElement( ftk::AssociationRule rule );
-	TiXmlElement * GetClassificationElement( ProjectDefinition::ClassParam ClassParameter );
+	TiXmlElement * GetClassificationElement( ClassParam ClassParameter );
+	TiXmlElement * GetClassificationMCLRElement( ClassificationRule ClassRule );
+	TiXmlElement * GetClassExtractRuleElement( ClassExtractionRule ClassExtractRule );
 	TiXmlElement * GetTrainingFileElement( std::string file_name );
 	TiXmlElement * GetPixelLevelParameterElement( ftk::PixelAnalysisDefinitions PixParameter );
 
@@ -102,6 +108,8 @@ public:
 	std::vector<std::string> analyteMeasures;
 	std::vector<ftk::ProjectDefinition::QueryParameter> queryParameters;
 
+	std::vector<ClassificationRule> Classification_Rules;	//These rules are only for MCLR
+	std::vector<ClassExtractionRule> Class_Extraction_Rules;	//This is to filter the label image 
 	std::string classificationTrainingData;	//Training Data File
 
 protected:

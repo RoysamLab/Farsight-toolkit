@@ -40,6 +40,8 @@ ProjectProcessor::ProjectProcessor()
 	outputImage = NULL;
 	definition = NULL;
 	tasks.clear();
+	classImageMap.clear();
+	classCentroidMap.clear();
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
@@ -79,6 +81,10 @@ void ProjectProcessor::Initialize(void)
 		//case ProjectDefinition::MULTI_MODEL_SEGMENTATION:
 		//	break;
 		case ProjectDefinition::CLASSIFY:
+			break;
+		case ProjectDefinition::CLASSIFY_MCLR:
+			break;
+		case ProjectDefinition::CLASS_EXTRACTION:
 			break;
 		case ProjectDefinition::ANALYTE_MEASUREMENTS:
 			break;
@@ -127,6 +133,12 @@ void ProjectProcessor::ProcessNext(void)
 		break;
 	case ProjectDefinition::CLASSIFY:
 		taskDone = Classify();
+		break;
+	case ProjectDefinition::CLASSIFY_MCLR:
+		taskDone = Classify_mclr();
+		break;
+	case ProjectDefinition::CLASS_EXTRACTION:
+		taskDone = Extract_Class();
 		break;
 	case ProjectDefinition::PIXEL_ANALYSIS:
 		taskDone = PixLevAnalysis();
@@ -659,6 +671,221 @@ bool ProjectProcessor::Classify(void){
 
 }
 */
+
+//***********************************************************************************************************
+//  CLASSIFICATION USING MCLR
+//***********************************************************************************************************
+bool ProjectProcessor::Classify_mclr(void)
+{
+	std::cout<<"Classification Started Using MCLR\n";
+	if(!table)
+		return false;
+
+	for(int i=0; i<(int)definition->Classification_Rules.size(); ++i)
+	{
+		vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(definition->Classification_Rules[i].TrainingFileName);
+		
+		// to generate the Active Learning Matrix
+		vnl_matrix<double> act_learn_matrix;
+		act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
+		for(int row = 2; row<(int)active_model_table->GetNumberOfRows(); ++row)
+		{
+			for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+			{
+				act_learn_matrix.put(col, row-2, active_model_table->GetValue(row,col).ToDouble());
+			}
+		}
+
+		//to generate the std_deviation and the mean vectors
+		vnl_vector<double> std_dev_vec, mean_vec; 
+		std_dev_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+		mean_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+		for(int col=1; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+		{
+			std_dev_vec.put(col-1, active_model_table->GetValue(0,col).ToDouble());
+			mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
+		}
+		active_model_table->RemoveRow(0);
+		active_model_table->RemoveRow(0);
+		active_model_table->RemoveColumn(0);
+		
+		std::string classification_name = definition->Classification_Rules[i].ClassColName;
+		double confidence_thresh = definition->Classification_Rules[i].ConfThreshold;
+
+		MCLR* mclr = new MCLR();
+		// Number of features and classes needed in "add_bias" fuction of MCLR
+		mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
+		mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
+
+		vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+		test_table->Initialize();
+		test_table->SetNumberOfRows(table->GetNumberOfRows());
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(active_model_table->GetColumnName(col));
+			test_table->AddColumn(column);	
+		}
+		for(int row = 0; row < (int)table->GetNumberOfRows(); ++row)
+		{		
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
+				model_data1->InsertNextValue(table->GetValueByName(row,test_table->GetColumnName(c)));
+			test_table->InsertNextRow(model_data1);
+		}	
+		std::cout<< test_table->GetNumberOfRows() << "_" << test_table->GetNumberOfColumns();
+
+		////// Final Data  to classify from the model
+		vnl_matrix<double> data_classify;
+		data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+		data_classify = data_classify.transpose();
+
+		vnl_matrix<double> currprob;
+		currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
+
+		std::string prediction_col_name = "prediction_active_" + classification_name;
+		std::string confidence_col_name = "confidence_" + classification_name;
+
+		//// Add the Prediction Column 
+		std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, table );
+		if(prediction_column_names.size() == 0)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(prediction_col_name.c_str());
+			column->SetNumberOfValues( table->GetNumberOfRows() );
+			table->AddColumn(column);
+		}
+
+		// Add the confidence column
+		std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, table );
+		if(confidence_column_names.size() == 0)
+		{
+			vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+			column_confidence->SetName(confidence_col_name.c_str());
+			column_confidence->SetNumberOfValues( table->GetNumberOfRows() );
+			table->AddColumn(column_confidence);
+		}
+		
+		for(int row = 0; row<(int)table->GetNumberOfRows(); ++row)  
+		{
+			vnl_vector<double> curr_col = currprob.get_column(row);
+			table->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+			if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+			{
+				table->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
+			}
+			else
+			{
+				table->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
+			}
+		}
+	}
+
+	std::cout<< "Classification done" << std::endl;
+	
+	return true;
+}
+
+//***********************************************************************************************************
+//  EXTRACT CLASS
+//***********************************************************************************************************
+bool ProjectProcessor::Extract_Class(void)
+{
+	for(int i=0; i<(int)definition->Classification_Rules.size(); ++i)
+	{
+		bool found = false;
+		std::string className = definition->Class_Extraction_Rules[i].Class_Name;
+		std::string classColumnName = "prediction_active_" + className;
+		int class_ext = definition->Class_Extraction_Rules[i].Class;
+
+		for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
+		{	
+			std::string current_column = table->GetColumnName(col);
+			if(current_column.find(classColumnName) != std::string::npos )
+			{
+				found = true;
+				break;			
+			}	
+		}
+		if(!found) continue;
+
+
+		//Extract the Image of desired class
+		LabelImageType::Pointer classImage = LabelImageType::New();
+		LabelImageType::Pointer labelImage = outputImage->GetItkPtr<unsigned short>(0,0);
+		LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
+
+		itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
+		LabelImageType::IndexType start;
+		start[0] =   0;  // first index on X
+		start[1] =   0;  // first index on Y    
+		start[2] =   0;  // first index on Z  
+		LabelImageType::PointType origin;
+		origin[0] = 0; 
+		origin[1] = 0;    
+		origin[2] = 0;    
+		classImage->SetOrigin( origin );
+		LabelImageType::RegionType region;
+		region.SetSize( im_size );
+		region.SetIndex( start );
+		classImage->SetRegions( region );
+		classImage->Allocate();
+		classImage->FillBuffer(0);
+		classImage->Update();
+		LabelImageType::PixelType * classArray = classImage->GetBufferPointer();
+
+		int slice_size = im_size[1] * im_size[0];
+		int row_size = im_size[0];
+		std::map<unsigned short, int> classMap;
+		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		{
+			classMap[table->GetValue(row,0).ToUnsignedShort()] = table->GetValueByName(row, classColumnName.c_str()).ToInt();
+		}
+
+		for(int i=0; i<im_size[2]; ++i)
+		{
+			for(int j=0; j<im_size[1]; ++j)
+			{
+				for(int k=0; k<im_size[0]; ++k)
+				{
+					unsigned long offset = (i*slice_size)+(j*row_size)+k;
+					if(classMap[labelArray[offset]] == class_ext)
+						classArray[offset] = labelArray[offset];
+				}
+			}
+		}
+		classImageMap[className] = classImage;
+
+		//Extract the Centroids of desired class
+		vtkSmartPointer<vtkTable> centroid_table  = vtkSmartPointer<vtkTable>::New();
+		centroid_table->Initialize();
+		vtkSmartPointer<vtkDoubleArray> column_x = vtkSmartPointer<vtkDoubleArray>::New();
+		column_x->SetName("centroid_x");
+		centroid_table->AddColumn(column_x);	
+		vtkSmartPointer<vtkDoubleArray> column_y = vtkSmartPointer<vtkDoubleArray>::New();
+		column_y->SetName("centroid_y");
+		centroid_table->AddColumn(column_y);	
+		vtkSmartPointer<vtkDoubleArray> column_z = vtkSmartPointer<vtkDoubleArray>::New();
+		column_z->SetName("centroid_z");
+		centroid_table->AddColumn(column_z);	
+		for(int row = 0; row<(int)table->GetNumberOfRows(); ++row)
+		{		
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			if(table->GetValueByName(row, classColumnName.c_str()).ToInt() == class_ext)
+			{
+				model_data1->InsertNextValue(table->GetValueByName(row, "centroid_x"));
+				model_data1->InsertNextValue(table->GetValueByName(row, "centroid_y"));
+				model_data1->InsertNextValue(table->GetValueByName(row, "centroid_z"));
+				centroid_table->InsertNextRow(model_data1);
+			}			
+		}	
+		classCentroidMap[className] = centroid_table;
+	}
+
+
+	return true;
+}
+
 
 
 //***********************************************************************************************************

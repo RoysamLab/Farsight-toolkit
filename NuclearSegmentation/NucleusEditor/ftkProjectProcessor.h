@@ -41,6 +41,7 @@
 #include "ftkPreprocess2.h"
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 #include "SQLite/NESqlite/NESqliteFactory.h"
+#include "PatternAnalysis/activeLearning/mclr.h"
 
 // MODEL_SEG is defined as a compiler option in the Nucleus Editor's CMakeLists
 #ifdef MODEL_SEG
@@ -57,6 +58,7 @@ public:
 
 	typedef unsigned char IPixelT;
 	typedef unsigned short LPixelT;
+	typedef itk::Image<unsigned short, 3> LabelImageType;
 
 	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; int inputChannel3; bool done; } Task;
 	ProjectProcessor();
@@ -76,6 +78,8 @@ public:
 
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
+	std::map< std::string, LabelImageType::Pointer > GetClassImageMap(void){ return classImageMap; };
+	std::map< std::string, vtkSmartPointer<vtkTable> > GetClassCentroidMap(void){ return classCentroidMap; };
 	vtkSmartPointer<vtkTable> GetTable(void){ return table; };
 	vtkSmartPointer<vtkTable> GetNucAdjTable(void){ return NucAdjTable; }; 
 	vtkSmartPointer<vtkTable> GetCellAdjTable(void){ return CellAdjTable; }; 
@@ -90,6 +94,8 @@ protected:
 	bool ComputeAssociations(void);							//Compute Associative Measures
 	bool PixLevAnalysis(void);								//If you must with all this nice object level machinery available
 	bool Classify(void);									//Classify Cells
+	bool Classify_mclr(void);
+	bool Extract_Class(void);
 	void ComputeAnalyteMeasures(void);						//Compute Analyte Measures by Class
 	bool RunQuery(void);									//Run SQL Query
 
@@ -97,6 +103,8 @@ protected:
 
 	ftk::Image::Pointer inputImage;
 	ftk::Image::Pointer outputImage;
+	std::map< std::string, LabelImageType::Pointer > classImageMap;
+	std::map< std::string, vtkSmartPointer<vtkTable> > classCentroidMap;
 	ftk::ProjectDefinition * definition;
 	std::vector<Task> tasks;
 	vtkSmartPointer<vtkTable> table;

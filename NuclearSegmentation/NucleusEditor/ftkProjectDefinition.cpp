@@ -84,6 +84,14 @@ bool ProjectDefinition::Load(std::string filename)
 		{
 			classificationParameters = this->ReadClassificationParameters(parentElement);
 		}
+		else if( strcmp( parent, "Classification_MCLR_Rules" ) == 0 )
+		{
+			Classification_Rules = this->ReadClassificationMCLRRules(parentElement);
+		}
+		else if( strcmp( parent, "ClassExtractionRules" ) == 0 )
+		{
+			Class_Extraction_Rules = this->ReadClassExtractionRules(parentElement);
+		}
 		else if( strcmp( parent, "AssociationRules" ) == 0 )
 		{
 			associationRules = this->ReadAssociationRules(parentElement);
@@ -160,6 +168,10 @@ std::vector<ProjectDefinition::TaskType> ProjectDefinition::ReadSteps(TiXmlEleme
 				returnVector.push_back(MULTI_MODEL_SEGMENTATION);
 			else if(step == "CLASSIFY")
 				returnVector.push_back(CLASSIFY);
+			else if(step == "CLASSIFY_MCLR")
+				returnVector.push_back(CLASSIFY_MCLR);
+			else if(step == "CLASS_EXTRACTION")
+				returnVector.push_back(CLASS_EXTRACTION);
 			else if(step == "ANALYTE_MEASUREMENTS")
 				returnVector.push_back(ANALYTE_MEASUREMENTS);
 			else if(step == "PIXEL_ANALYSIS")
@@ -331,7 +343,8 @@ std::vector<ProjectDefinition::ClassParam> ProjectDefinition::ReadClassification
 
 	while (parameterElement){
 		const char * parameter = parameterElement ->Value();
-		if ( strcmp(parameter,"ClassificationParameter") == 0 ){
+		if ( strcmp(parameter,"ClassificationParameter") == 0 )
+		{
 			ClassParam current_classification_parameter;
 			current_classification_parameter.TrainingColumn = parameterElement->Attribute("TrainingColumn");
 			std::string ClassColNames;
@@ -345,9 +358,51 @@ std::vector<ProjectDefinition::ClassParam> ProjectDefinition::ReadClassification
 
 			returnVector.push_back(current_classification_parameter);
 		}
-		else if ( strcmp(parameter,"TrainingFile") == 0 ){
+		else if ( strcmp(parameter,"TrainingFile") == 0 )
+		{
 			classificationTrainingData = parameterElement->Attribute("Name");
 		}
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
+std::vector<ProjectDefinition::ClassificationRule> ProjectDefinition::ReadClassificationMCLRRules(TiXmlElement * inputElement)
+{
+	std::vector<ClassificationRule> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ClassificationRule classRule;
+		if ( strcmp(parameter,"Classification_MCLR_Rule") == 0 )
+		{
+			classRule.ClassColName = parameterElement->Attribute("ClassColName");
+			classRule.ConfThreshold = atof(parameterElement->Attribute("ConfThreshold"));
+			classRule.TrainingFileName = parameterElement->Attribute("TrainingFileName");			
+		}
+		returnVector.push_back(classRule);
+		parameterElement = parameterElement->NextSiblingElement();
+	}
+	return returnVector;
+}
+
+std::vector<ProjectDefinition::ClassExtractionRule> ProjectDefinition::ReadClassExtractionRules(TiXmlElement * inputElement)
+{
+	std::vector<ClassExtractionRule> returnVector;
+
+	TiXmlElement * parameterElement = inputElement->FirstChildElement();
+	while (parameterElement)
+	{
+		const char * parameter = parameterElement ->Value();
+		ClassExtractionRule classExtractRule;
+		if ( strcmp(parameter,"ClassExtractionRule") == 0 )
+		{
+			classExtractRule.Class_Name = parameterElement->Attribute("Class_Name");
+			classExtractRule.Class = atoi(parameterElement->Attribute("Class"));						
+		}
+		returnVector.push_back(classExtractRule);
 		parameterElement = parameterElement->NextSiblingElement();
 	}
 	return returnVector;
@@ -439,9 +494,11 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//PreprocessParameters
-	if(preprocessingParameters.size() > 0){
+	if(preprocessingParameters.size() > 0)
+	{
 		TiXmlElement * paramElement = new TiXmlElement("PreprocessingParameters");
-		for(int i=0; i<(int)preprocessingParameters.size(); ++i){
+		for(int i=0; i<(int)preprocessingParameters.size(); ++i)
+		{
 			paramElement->LinkEndChild( GetPreprocessingElement(preprocessingParameters.at(i)) );
 		}
 		root->LinkEndChild(paramElement);
@@ -459,19 +516,23 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//CytoplasmSegmentationParameters:
-	if(cytoplasmParameters.size() > 0){
+	if(cytoplasmParameters.size() > 0)
+	{
 		TiXmlElement * paramsElement = new TiXmlElement("CytoplasmSegmentationParameters");
-		for(int i=0; i<(int)cytoplasmParameters.size(); ++i){
+		for(int i=0; i<(int)cytoplasmParameters.size(); ++i)
+		{
 			paramsElement->LinkEndChild( GetParameterElement(cytoplasmParameters.at(i)) );
 		}
 		root->LinkEndChild(paramsElement);
 	}
 
 	//IntrinsicFeatures:
-	if(intrinsicFeatures.size() > 0){
+	if(intrinsicFeatures.size() > 0)
+	{
 		TiXmlElement * featuresElement = new TiXmlElement("IntrinsicFeatures");
 		std::string text = intrinsicFeatures.at(0);
-		for(int i=1; i<(int)intrinsicFeatures.size(); ++i){
+		for(int i=1; i<(int)intrinsicFeatures.size(); ++i)
+		{
 			text += "," + intrinsicFeatures.at(i);
 		}
 		featuresElement->LinkEndChild( new TiXmlText( text.c_str() ) );
@@ -479,16 +540,19 @@ bool ProjectDefinition::Write(std::string filename)
 	}
 
 	//AssociationRules:
-	if(associationRules.size() > 0){
+	if(associationRules.size() > 0)
+	{
 		TiXmlElement * assocElement = new TiXmlElement("AssociationRules");
-		for(int i=0; i<(int)associationRules.size(); ++i){
+		for(int i=0; i<(int)associationRules.size(); ++i)
+		{
 			assocElement->LinkEndChild( GetAssocRuleElement(associationRules.at(i)) );
 		}
 		root->LinkEndChild(assocElement);
 	}
 
 	//ClassificationParameters:
-	if(classificationParameters.size() > 0){
+	if(classificationParameters.size() > 0)
+	{
 		TiXmlElement * paramsElement = new TiXmlElement("ClassificationParameters");
 		if( !classificationTrainingData.empty() )
 			paramsElement->LinkEndChild(GetTrainingFileElement(classificationTrainingData));
@@ -497,6 +561,29 @@ bool ProjectDefinition::Write(std::string filename)
 		root->LinkEndChild(paramsElement);
 	}
 
+	//Classification_MCLR_Rules:
+	if(Classification_Rules.size() > 0)
+	{
+		TiXmlElement * paramsElement = new TiXmlElement("Classification_MCLR_Rules");
+		for(int i=0; i<(int)Classification_Rules.size(); ++i)
+		{
+			paramsElement->LinkEndChild(GetClassificationMCLRElement(Classification_Rules.at(i)));
+		}
+		root->LinkEndChild(paramsElement);
+	}
+
+	//ClassExtractionRules:
+	if(Class_Extraction_Rules.size() > 0)
+	{
+		TiXmlElement * paramsElement = new TiXmlElement("ClassExtractionRules");
+		for(int i=0; i<(int)Class_Extraction_Rules.size(); ++i)
+		{
+			paramsElement->LinkEndChild(GetClassExtractRuleElement(Class_Extraction_Rules.at(i)));
+		}
+		root->LinkEndChild(paramsElement);
+	}
+
+	//SqlQueryParameters
 	if(queryParameters.size() > 0)
 	{
 		TiXmlElement * paramsElement = new TiXmlElement("SqlQueryParameters");
@@ -563,6 +650,7 @@ TiXmlElement * ProjectDefinition::GetParameterElement( Parameter param )
 	returnElement->SetAttribute("value", ftk::NumToString(param.value));
 	return returnElement;
 }
+
 TiXmlElement * ProjectDefinition::GetQueryParameterElement( ftk::ProjectDefinition::QueryParameter param )
 {
 	TiXmlElement * returnElement = new TiXmlElement("SqlQuery");
@@ -588,12 +676,15 @@ TiXmlElement * ProjectDefinition::GetAssocRuleElement( ftk::AssociationRule rule
 	return returnElement;
 }
 
-TiXmlElement * ProjectDefinition::GetTrainingFileElement( std::string file_name ){
+TiXmlElement * ProjectDefinition::GetTrainingFileElement( std::string file_name )
+{
 	TiXmlElement * returnElement = new TiXmlElement("TrainingFile");
 	returnElement->SetAttribute("Name", file_name.c_str());
 	return returnElement;
 }
-TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::ClassParam ClassParameter ){
+
+TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::ClassParam ClassParameter )
+{
 	TiXmlElement * returnElement = new TiXmlElement("ClassificationParameter");
 	returnElement->SetAttribute("TrainingColumn", ClassParameter.TrainingColumn.c_str());
 	std::string class_columns;
@@ -604,7 +695,25 @@ TiXmlElement * ProjectDefinition::GetClassificationElement( ProjectDefinition::C
 	return returnElement;
 }
 
-TiXmlElement * ProjectDefinition::GetPixelLevelParameterElement( ftk::PixelAnalysisDefinitions PixParameter ){
+TiXmlElement * ProjectDefinition::GetClassificationMCLRElement( ProjectDefinition::ClassificationRule ClassRule )
+{
+	TiXmlElement * returnElement = new TiXmlElement("Classification_MCLR_Rule");
+	returnElement->SetAttribute("ClassColName", ClassRule.ClassColName);
+	returnElement->SetAttribute("ConfThreshold", ftk::NumToString(ClassRule.ConfThreshold));
+	returnElement->SetAttribute("TrainingFileName", ClassRule.TrainingFileName);
+	return returnElement;
+}
+
+TiXmlElement * ProjectDefinition::GetClassExtractRuleElement( ProjectDefinition::ClassExtractionRule ClassExtractRule )
+{
+	TiXmlElement * returnElement = new TiXmlElement("ClassExtractionRule");
+	returnElement->SetAttribute("Class_Name", ClassExtractRule.Class_Name);
+	returnElement->SetAttribute("Class", ftk::NumToString(ClassExtractRule.Class));
+	return returnElement;
+}
+
+TiXmlElement * ProjectDefinition::GetPixelLevelParameterElement( ftk::PixelAnalysisDefinitions PixParameter )
+{
 	TiXmlElement * returnElement = new TiXmlElement("PixelLevelRule");
 	returnElement->SetAttribute("RoiImage", PixParameter.regionChannelName.c_str());
 	returnElement->SetAttribute("TargetImage", PixParameter.regionChannelName.c_str());
@@ -676,8 +785,17 @@ std::string ProjectDefinition::GetTaskString(TaskType task)
 	case RAW_ASSOCIATIONS:
 		retText = "RAW_ASSOCIATIONS";
 		break;
+	case MULTI_MODEL_SEGMENTATION:
+		retText = "MULTI_MODEL_SEGMENTATION";
+		break;
 	case CLASSIFY:
 		retText = "CLASSIFY";
+		break;
+	case CLASSIFY_MCLR:
+		retText = "CLASSIFY_MCLR";
+		break;
+	case CLASS_EXTRACTION:
+		retText = "CLASS_EXTRACTION";
 		break;
 	case ANALYTE_MEASUREMENTS:
 		retText = "ANALYTE_MEASUREMENTS";
@@ -735,6 +853,8 @@ void ProjectDefinition::Clear(void)
 	nuclearParameters.clear();
 	cytoplasmParameters.clear();
 	classificationParameters.clear();
+	Classification_Rules.clear();
+	Class_Extraction_Rules.clear();
 	associationRules.clear();
 	intrinsicFeatures.clear();
 	analyteMeasures.clear();
