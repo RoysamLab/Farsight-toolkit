@@ -3245,23 +3245,23 @@ void View3D::Rerender()
 	{
 		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 		this->CellModel->setCells(NewCells);
+		if(this->FL_MeasurePlot)
+		{
+			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasurePlot->update();
+		}
+		if (this->FL_MeasureTable)
+		{
+			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->update();
+		}
+		if (this->FL_histo)
+		{
+			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_histo->update();
+		}
+		this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 	}//end if has cell calculations
-	if(this->FL_MeasurePlot)
-	{
-		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasurePlot->update();
-	}
-	if (this->FL_MeasureTable)
-	{
-		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
-		this->FL_MeasureTable->update();
-	}
-	if (this->FL_histo)
-	{
-		this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_histo->update();
-	}
-	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
 void View3D::UpdateLineActor()

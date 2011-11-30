@@ -31,7 +31,7 @@ class TraceBit
     double x,y,z,r, I;		//
 	float dx,dy,dz;
 	//unsigned char I;
-    int id;
+    unsigned int id;
     unsigned int marker;
     void Print(std::ostream &c);
 };

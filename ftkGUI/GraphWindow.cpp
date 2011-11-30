@@ -165,6 +165,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
 	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
 	vertexIDarrays->SetNumberOfComponents(1);
@@ -179,6 +180,11 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	for( int i = 0; i <  this->dataTable->GetNumberOfRows(); i++)
 	{
 		int vertexID = graph->AddVertex();
+		//add coord points for pass through here
+		double x = this->dataTable->GetValueByName(i,"Soma X").ToDouble();
+		double y = this->dataTable->GetValueByName(i,"Soma Y").ToDouble();
+		double z = this->dataTable->GetValueByName(i,"Soma Z").ToDouble();
+		points->InsertNextPoint(x,y,z);
 		vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
 	}
 
@@ -231,6 +237,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
 	graph->GetEdgeData()->AddArray(weights);
+	graph->SetPoints(points);
 
 	this->view->AddRepresentationFromInput( graph);
 	this->view->SetEdgeLabelVisibility(true);
@@ -245,7 +252,8 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 
 	this->view->SetEdgeLabelArrayName("edgeLabel");
 
-	this->view->SetLayoutStrategyToForceDirected();
+	//this->view->SetLayoutStrategyToForceDirected();
+	this->view->SetLayoutStrategyToPassThrough();
 
 	this->view->SetVertexLabelArrayName("vertexIDarrays");
 	this->view->SetVertexLabelFontSize(20);
