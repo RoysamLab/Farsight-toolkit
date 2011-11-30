@@ -258,13 +258,11 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 //**************************************************************************************
 //**************************************************************************************
 //**************************************************************************************
-vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::GetObjectCentroids(int time)
+void IntrinsicFeatureCalculator::GetObjectCentroids(vtkSmartPointer<vtkTable> table, int time)
 {
-	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-
 	if(!intensityImage || !labelImage)
 	{
-		return table;
+		return;
 	}
 
 	//Compute features:
@@ -282,40 +280,34 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::GetObjectCentroids(int tim
 
 	//Init the table (headers):
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-	column->SetName( "ID" );
-	table->AddColumn(column);
-
-	column = vtkSmartPointer<vtkDoubleArray>::New();
 	column->SetName( "centroid_x" );
+	column->SetNumberOfValues(table->GetNumberOfRows());
 	table->AddColumn(column);
 
 	column = vtkSmartPointer<vtkDoubleArray>::New();
 	column->SetName( "centroid_y" );
+	column->SetNumberOfValues(table->GetNumberOfRows());
 	table->AddColumn(column);
 
 	column = vtkSmartPointer<vtkDoubleArray>::New();
 	column->SetName( "centroid_z" );
+	column->SetNumberOfValues(table->GetNumberOfRows());
 	table->AddColumn(column);
 	
-	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-
-	for (int i=0; i<(int)labels.size(); ++i)
+	for (int i=0; i<(int)table->GetNumberOfRows(); ++i)
 	{
-		FeatureCalcType::LabelPixelType id = labels.at(i);
-		if(id == 0) continue;
+		FeatureCalcType::LabelPixelType id = table->GetValue(i,0).ToInt();
 		if(useIDs)
 			if(IDs.find(id) == IDs.end()) continue;	//Don't care about this id, so skip it
 
 		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
-		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
-		row->InsertNextValue( vtkVariant(id) );
-		row->InsertNextValue( vtkVariant((int)features->Centroid[0]) );
-		row->InsertNextValue( vtkVariant((int)features->Centroid[1]) );
-		row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
+		table->SetValueByName( i, "centroid_x", vtkVariant((int)features->Centroid[0]) );
+		table->SetValueByName( i, "centroid_y", vtkVariant((int)features->Centroid[1]) );
+		table->SetValueByName( i, "centroid_z", vtkVariant((int)features->Centroid[2]) );
 
-		table->InsertNextRow(row);
+		
 	}
-	return table;
+	return;
 }
 
 //**************************************************************************************
