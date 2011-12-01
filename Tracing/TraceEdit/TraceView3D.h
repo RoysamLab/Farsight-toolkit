@@ -403,9 +403,10 @@ private:
 #ifdef USE_SPD
 	SPDMainWindow *SPDWin;
 #endif
-#ifdef USE_Clusclus
+#ifdef	USE_ClusClus
 	Heatmap *HeatmapWin;
 #endif
+
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
 	QSpinBox *MaxGapField;
