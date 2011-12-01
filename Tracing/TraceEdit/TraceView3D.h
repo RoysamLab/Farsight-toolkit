@@ -400,11 +400,12 @@ private:
 	PlotWindow *FL_MeasurePlot;
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
-//#ifdef USE_SPD
+#ifdef USE_SPD
 	SPDMainWindow *SPDWin;
-//#endif
+#endif
+#ifdef USE_Clusclus
 	Heatmap *HeatmapWin;
-
+#endif
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
 	QSpinBox *MaxGapField;
