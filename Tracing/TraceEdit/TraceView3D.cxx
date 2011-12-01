@@ -5138,7 +5138,7 @@ void View3D::SaveComputedCellFeaturesTable()
 
 void View3D::SPDAnalysis()
 {
-//#ifdef USE_SPD
+#ifdef USE_SPD
 	this->SPDWin = new SPDMainWindow();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
@@ -5156,11 +5156,12 @@ void View3D::SPDAnalysis()
 	}
 
 	this->SPDWin->show();
-//#endif
+#endif
 }
 
 void View3D::ClusclusAnalysis()
 {
+#ifdef USE_ClusClus
 	this->HeatmapWin = new Heatmap();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
@@ -5179,5 +5180,5 @@ void View3D::ClusclusAnalysis()
 		this->HeatmapWin->runClusclus();
 		this->HeatmapWin->showGraph();
 	}
-
+#endif
 }

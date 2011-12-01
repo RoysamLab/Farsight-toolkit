@@ -100,12 +100,12 @@ limitations under the License.
 #include "ftkGUI/GenericALDialog.h"
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
-//#ifdef USE_SPD
+#ifdef USE_SPD
 #include "SPD/spdmainwindow.h"
-//#endif
-//#ifdef USE_Clusclus
+#endif
+#ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
-//#endif
+#endif
 #include "branchPT.h"
 #include "CellTrace.h"
 #include "CellTraceModel.h"
