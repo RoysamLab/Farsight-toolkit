@@ -104,7 +104,7 @@ main(int argc, char* argv[]) {
     roi_size[1] = arg_roi_sizey();
     roi_size[2] = arg_roi_sizez();
 
-    // Cosntruct the montagage
+    // Cosntruct the montage
     fregl_image_manager::Pointer region_montage = new fregl_image_manager(arg_xml_file(), arg_img_path(), arg_anchor(),
             arg_nn());
 
