@@ -40,14 +40,14 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		for (unsigned int j = 0; j < this->stems; j++)
 		{
 			this->MaxMin(this->segments[0]->GetBranchPointer()->at(j)->GetDistToParent(), 
-				this->TotalStemDistance, this->MinStemDistiance, this->MaxStemDistasnce);
+				this->TotalStemDistance, this->MinStemDistance, this->MaxStemDistance);
 		}
 		this->EstimatedSomaRadius = this->TotalStemDistance/(double)this->stems;
 	}
 	else
 	{
-		this->MinStemDistiance = -PI;
-		this->MaxStemDistasnce = -PI;
+		this->MinStemDistance = -PI;
+		this->MaxStemDistance = -PI;
 		this->TotalStemDistance = -PI;
 		this->EstimatedSomaRadius = -PI;
 	}
@@ -304,9 +304,9 @@ void CellTrace::clearAll()
 	this->somaSurface = 0;
 	this->SomaRadii = 0;
 
-	this->MinStemDistiance = 1000;
+	this->MinStemDistance = 1000;
 	this->TotalStemDistance = 0;
-	this->MaxStemDistasnce = 0; 
+	this->MaxStemDistance = 0; 
 	this->EstimatedSomaRadius = -PI;
 
 	this->daughterRatio = 0;
@@ -414,6 +414,23 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
 	CellData->Reset();
 	CellData->InsertNextValue(this->segments[0]->GetId());
+
+	CellData->InsertNextValue(this->maxX - this->minX);//Width
+	CellData->InsertNextValue(this->maxY - this->minY);//Length
+	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
+	
+	CellData->InsertNextValue(this->somaX);
+	CellData->InsertNextValue(this->somaY);
+	CellData->InsertNextValue(this->somaZ);
+	CellData->InsertNextValue(this->SomaRadii);
+	CellData->InsertNextValue(this->somaVolume);
+	CellData->InsertNextValue(this->somaSurface);
+
+	CellData->InsertNextValue(this->skewnessX);
+	CellData->InsertNextValue(this->skewnessY);
+	CellData->InsertNextValue(this->skewnessZ);
+	CellData->InsertNextValue(this->euclideanSkewness);
+
 	CellData->InsertNextValue(this->NumSegments);
 	CellData->InsertNextValue(this->stems);
 	CellData->InsertNextValue(this->branchPoints);
@@ -423,21 +440,22 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		this->branchPoints = 1;
 	}//protect from divide by zero
 
-	CellData->InsertNextValue(this->MinTerminalLevel);
-	CellData->InsertNextValue(this->minTerminalPathLength);
-	CellData->InsertNextValue(this->MaxTerminalLevel);
-	CellData->InsertNextValue(this->maxTerminalPathLength);
-	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
-	CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
-	CellData->InsertNextValue(this->TotalEuclidianPath);
-	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
-	CellData->InsertNextValue(this->TotalPathLength);
-	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
+	CellData->InsertNextValue(this->MinDiameter);
+	CellData->InsertNextValue(this->TotalDiameter / this->NumSegments);
+	CellData->InsertNextValue(this->MaxDiameter);
 
-	CellData->InsertNextValue(this->TotalFragmentation);
-	CellData->InsertNextValue(this->MinFragmentation);
-	CellData->InsertNextValue(this->TotalFragmentation / this->NumSegments);
-	CellData->InsertNextValue(this->MaxFragmentation);
+	CellData->InsertNextValue(this->MinDiameterPower);
+	CellData->InsertNextValue(this->TotalDiameterPower / this->NumSegments);
+	CellData->InsertNextValue(this->MaxDiameterPower);
+
+	CellData->InsertNextValue(this->TotalVolume);
+	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
+	CellData->InsertNextValue(this->minSegmentVolume);
+	CellData->InsertNextValue(this->maxSegmentVolume);
+	CellData->InsertNextValue(this->surfaceAreaTotal);
+	CellData->InsertNextValue(this->SurfaceAreaMax);
+	CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
+	CellData->InsertNextValue(this->SurfaceAreaMin);
 
 	//CellData->InsertNextValue(this->TotalBurkTaper);
 	CellData->InsertNextValue(this->MinBurkTaper);
@@ -449,68 +467,23 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalHillmanTaper / this->NumSegments);
 	CellData->InsertNextValue(this->MaxBurkTaper);
 
+	CellData->InsertNextValue(this->TotalEuclidianPath);
+	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
+	CellData->InsertNextValue(this->TotalPathLength);
+	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
+
+	CellData->InsertNextValue(this->MinStemDistance);
+	CellData->InsertNextValue(this->EstimatedSomaRadius);
+	CellData->InsertNextValue(this->MaxStemDistance);
+
 	CellData->InsertNextValue(this->MinContraction);
 	CellData->InsertNextValue(this->TotalContraction / this->NumSegments);
 	CellData->InsertNextValue(this->MaxContraction);
 
-	CellData->InsertNextValue(this->MinDiameter);
-	CellData->InsertNextValue(this->TotalDiameter / this->NumSegments);
-	CellData->InsertNextValue(this->MaxDiameter);
-
-	CellData->InsertNextValue(this->MinDiameterPower);
-	CellData->InsertNextValue(this->TotalDiameterPower / this->NumSegments);
-	CellData->InsertNextValue(this->MaxDiameterPower);
-
-	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
-	CellData->InsertNextValue(this->DiamThresholdMax);
-	CellData->InsertNextValue(this->DiamThresholdMin);
-	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
-	CellData->InsertNextValue(this->LastParentDiamMax);
-	CellData->InsertNextValue(this->LastParentDiamMin);
-
-	CellData->InsertNextValue(this->TotalTerminalSegment);
-	CellData->InsertNextValue(this->MinTerminalSegment);
-	CellData->InsertNextValue(this->TotalTerminalSegment / this->terminalTips); //average
-	CellData->InsertNextValue(this->MaxTerminalSegment);
-
-	CellData->InsertNextValue(this->TotalVolume);
-	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
-	CellData->InsertNextValue(this->minSegmentVolume);
-	CellData->InsertNextValue(this->maxSegmentVolume);
-	CellData->InsertNextValue(this->surfaceAreaTotal);
-	CellData->InsertNextValue(this->SurfaceAreaMax);
-	CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
-	CellData->InsertNextValue(this->SurfaceAreaMin);
-
-	CellData->InsertNextValue(this->BifAmplLocal / this->branchPoints);
-	CellData->InsertNextValue(this->BifAmplLocalMin);
-	CellData->InsertNextValue(this->BifAmplLocalMax);
-	CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
-	CellData->InsertNextValue(this->BifTiltLocalMin);
-	CellData->InsertNextValue(this->BifTiltLocalMax);
-
-	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
-	CellData->InsertNextValue(this->BifAmpRemoteMin);
-	CellData->InsertNextValue(this->BifAmpRemoteMax);
-
-	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
-	CellData->InsertNextValue(this->BifTiltRemoteMin);
-	CellData->InsertNextValue(this->BifTiltRemoteMax);
-
-	double AveAzimuth = -PI;
-	double AveElevation = -PI;
-	if (this->stems !=0)
-	{
-		AveAzimuth = this->Azimuth / this->stems;
-		AveElevation = this->Elevation / this->stems;
-	}
-	CellData->InsertNextValue(AveAzimuth);
-	CellData->InsertNextValue(this->AzimuthMin);
-	CellData->InsertNextValue(this->AzimuthMax); 
-
-	CellData->InsertNextValue(AveElevation);
-	CellData->InsertNextValue(this->ElevationMin);
-	CellData->InsertNextValue(this->ElevationMax);
+	CellData->InsertNextValue(this->TotalFragmentation);
+	CellData->InsertNextValue(this->MinFragmentation);
+	CellData->InsertNextValue(this->TotalFragmentation / this->NumSegments);
+	CellData->InsertNextValue(this->MaxFragmentation);
 
 	CellData->InsertNextValue(this->daughterRatioMin);
 	CellData->InsertNextValue(this->daughterRatio / this->branchPoints);
@@ -523,16 +496,6 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->partitionAsymmetryMin);
 	CellData->InsertNextValue(this->partitionAsymmetry / this->branchPoints);
 	CellData->InsertNextValue(this->partitionAsymmetryMax);
-
-	CellData->InsertNextValue(this->MinHillmanThresh); 
-	if (this->terminalBifCount != 0)
-	{
-		CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
-	}else
-	{
-		CellData->InsertNextValue(-PI);
-	}
-	CellData->InsertNextValue(this->MaxHillmanThresh);
 
 	CellData->InsertNextValue(this->rallPowerMin);
 	CellData->InsertNextValue(this->rallPower / this->branchPoints);
@@ -550,25 +513,63 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->Pk_2 / this->branchPoints);
 	CellData->InsertNextValue(this->Pk_2Max);
 
-	CellData->InsertNextValue(this->maxX - this->minX);//Width
-	CellData->InsertNextValue(this->maxY - this->minY);//Length
-	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
+	double AveAzimuth = -PI;
+	double AveElevation = -PI;
+	if (this->stems !=0)
+	{
+		AveAzimuth = this->Azimuth / this->stems;
+		AveElevation = this->Elevation / this->stems;
+	}
+	CellData->InsertNextValue(AveAzimuth);
+	CellData->InsertNextValue(this->AzimuthMin);
+	CellData->InsertNextValue(this->AzimuthMax); 
+	CellData->InsertNextValue(AveElevation);
+	CellData->InsertNextValue(this->ElevationMin);
+	CellData->InsertNextValue(this->ElevationMax);
 
-	CellData->InsertNextValue(this->skewnessX);
-	CellData->InsertNextValue(this->skewnessY);
-	CellData->InsertNextValue(this->skewnessZ);
-	CellData->InsertNextValue(this->euclideanSkewness);
+	CellData->InsertNextValue(this->BifAmplLocal / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmplLocalMin);
+	CellData->InsertNextValue(this->BifAmplLocalMax);
+	CellData->InsertNextValue(this->BifTiltLocal/ this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltLocalMin);
+	CellData->InsertNextValue(this->BifTiltLocalMax);
 
-	CellData->InsertNextValue(this->somaX);
-	CellData->InsertNextValue(this->somaY);
-	CellData->InsertNextValue(this->somaZ);
-	CellData->InsertNextValue(this->SomaRadii);
-	CellData->InsertNextValue(this->somaVolume);
-	CellData->InsertNextValue(this->somaSurface);
+	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmpRemoteMin);
+	CellData->InsertNextValue(this->BifAmpRemoteMax);
 
-	CellData->InsertNextValue(this->MinStemDistiance);
-	CellData->InsertNextValue(this->EstimatedSomaRadius);
-	CellData->InsertNextValue(this->MaxStemDistasnce);
+	CellData->InsertNextValue(this->BifTiltRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltRemoteMin);
+	CellData->InsertNextValue(this->BifTiltRemoteMax);
+
+	CellData->InsertNextValue(this->MinTerminalLevel);
+	CellData->InsertNextValue(this->minTerminalPathLength);
+	CellData->InsertNextValue(this->MaxTerminalLevel);
+	CellData->InsertNextValue(this->maxTerminalPathLength);
+	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
+	CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
+
+	CellData->InsertNextValue(this->TotalTerminalSegment);
+	CellData->InsertNextValue(this->MinTerminalSegment);
+	CellData->InsertNextValue(this->TotalTerminalSegment / this->terminalTips); //average
+	CellData->InsertNextValue(this->MaxTerminalSegment);
+
+	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
+	CellData->InsertNextValue(this->DiamThresholdMax);
+	CellData->InsertNextValue(this->DiamThresholdMin);
+	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
+	CellData->InsertNextValue(this->LastParentDiamMax);
+	CellData->InsertNextValue(this->LastParentDiamMin);
+
+	CellData->InsertNextValue(this->MinHillmanThresh); 
+	if (this->terminalBifCount != 0)
+	{
+		CellData->InsertNextValue(this->TotalHillmanThresh/ this->terminalBifCount);
+	}else
+	{
+		CellData->InsertNextValue(-PI);
+	}
+	CellData->InsertNextValue(this->MaxHillmanThresh);
 
 	CellData->InsertNextValue(this->GetFileName().c_str());
 	/*CellData->InsertNextValue(this->prediction);

@@ -47,38 +47,27 @@ void CellTraceModel::SetupHeaders()
 {
 	this->headers.clear();
 	this->headers.push_back("Root Trace");
+
+	this->headers.push_back("Width X");
+	this->headers.push_back("Height Y");
+	this->headers.push_back("Depth Z");
+
+	this->headers.push_back("Soma X Pos");
+	this->headers.push_back("Soma Y Pos");
+	this->headers.push_back("Soma Z Pos");
+	this->headers.push_back("Soma Radii");
+	this->headers.push_back("Soma Volume");
+	this->headers.push_back("Soma Surface Area");
+
+	this->headers.push_back("Skewness X");
+	this->headers.push_back("Skewness Y");
+	this->headers.push_back("Skewness Z");
+	this->headers.push_back("Euclidean Skewness");
+
 	this->headers.push_back("Segments");
 	this->headers.push_back("Stems");
 	this->headers.push_back("Branch Pt");
 	this->headers.push_back("Leaf Nodes");
-
-	this->headers.push_back("Min Leaf Level");
-	this->headers.push_back("Min Leaf Path Length");
-	this->headers.push_back("Max Leaf Level");
-	this->headers.push_back("Max Leaf Path Length");
-	this->headers.push_back("Ave Leaf Level");
-	this->headers.push_back("Ave Leaf Path Length");
-	this->headers.push_back("Total Euclidian Length");
-	this->headers.push_back("Average Segment Euclidian Length");
-	this->headers.push_back("Total Path Length");
-	this->headers.push_back("Average Segment Path Length");
-
-	this->headers.push_back("Total Fragmentation");
-	this->headers.push_back("Min Fragmentation");
-	this->headers.push_back("Average Fragmentation");
-	this->headers.push_back("Max Fragmentation");
-
-	this->headers.push_back("Min Burk Taper");
-	this->headers.push_back("Average Burk Taper");
-	this->headers.push_back("Max Burk Taper");
-
-	this->headers.push_back("Min Hillman Taper");
-	this->headers.push_back("Average Hillman Taper");
-	this->headers.push_back("Max Hillman Taper");
-
-	this->headers.push_back("Min Contraction");
-	this->headers.push_back("Average Contraction");
-	this->headers.push_back("Max Contraction");
 
 	this->headers.push_back("Min Diameter");
 	this->headers.push_back("Average Diameter");
@@ -87,18 +76,6 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Diameter Power");
 	this->headers.push_back("Average Diameter Power");
 	this->headers.push_back("Max Diameter Power");
-
-	this->headers.push_back("Average Diameter Threshold");
-	this->headers.push_back("Diameter Threshold Max");
-	this->headers.push_back("Diameter Threshold Min");
-	this->headers.push_back("Average Parent Diameter");
-	this->headers.push_back("Parent Diameter Max");
-	this->headers.push_back("Parent Diameter Min");
-
-	this->headers.push_back( "Total Terminal Compartments");
-	this->headers.push_back( "Min Terminal Compartments");
-	this->headers.push_back( "Average Terminal Compartments");
-	this->headers.push_back( "Max Terminal Compartments");
 
 	this->headers.push_back("Total Volume");
 	this->headers.push_back("Min Segment Volume");
@@ -109,26 +86,31 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Segment Surface Area");
 	this->headers.push_back("Min Segment Surface Area");
 
-	this->headers.push_back("Average Local Bifurcation Amp");
-	this->headers.push_back("Min Local Bifurcation Amp");
-	this->headers.push_back("Max Local Bifurcation Amp");
-	this->headers.push_back("Average Local Bifurcation Tilt");
-	this->headers.push_back("Min Local Bifurcation Tilt");
-	this->headers.push_back("Max Local Bifurcation Tilt");	
-	
-	this->headers.push_back("Average Remote Bifurcation Amp");
-	this->headers.push_back("Min Remote Bifurcation Amp");
-	this->headers.push_back("Max Remote Bifurcation Amp");
-	this->headers.push_back("Average Remote Bifurcation Tilt");
-	this->headers.push_back("Min Remote Bifurcation Tilt");
-	this->headers.push_back("Max Remote Bifurcation Tilt");
+	this->headers.push_back("Min Burk Taper");
+	this->headers.push_back("Average Burk Taper");
+	this->headers.push_back("Max Burk Taper");
 
-	this->headers.push_back("Average Azimuth");
-	this->headers.push_back("Min Azimuth");
-	this->headers.push_back("Max Azimuth");
-	this->headers.push_back("Average Elevation");
-	this->headers.push_back("Min Elevation");
-	this->headers.push_back("Max Elevation");
+	this->headers.push_back("Min Hillman Taper");
+	this->headers.push_back("Average Hillman Taper");
+	this->headers.push_back("Max Hillman Taper");
+
+	this->headers.push_back("Total Euclidian Length");
+	this->headers.push_back("Average Segment Euclidian Length");
+	this->headers.push_back("Total Path Length");
+	this->headers.push_back("Average Segment Path Length");
+
+	this->headers.push_back("Min Stem Distance");
+	this->headers.push_back("Average Stem Distance");
+	this->headers.push_back("Max Stem Distance");
+
+	this->headers.push_back("Min Contraction");
+	this->headers.push_back("Average Contraction");
+	this->headers.push_back("Max Contraction");
+
+	this->headers.push_back("Total Fragmentation");
+	this->headers.push_back("Min Fragmentation");
+	this->headers.push_back("Average Fragmentation");
+	this->headers.push_back("Max Fragmentation");
 
 	this->headers.push_back("Min Daughter Ratio");
 	this->headers.push_back("Average Daughter Ratio");
@@ -141,10 +123,6 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Partition Asymmetry");
 	this->headers.push_back("Average Partition Asymmetry");
 	this->headers.push_back("Max Partition Asymmetry");
-
-	this->headers.push_back("Min Hillman Thresh");
-	this->headers.push_back("Average Hillman Thresh");
-	this->headers.push_back("Max Hillman Thresh");
 
 	this->headers.push_back("Min Rall Power");
 	this->headers.push_back("Average Rall Power");
@@ -162,25 +140,49 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Pk 2");
 	this->headers.push_back("Max Pk 2");
 
-	this->headers.push_back("Width X");
-	this->headers.push_back("Height Y");
-	this->headers.push_back("Depth Z");
+	this->headers.push_back("Average Azimuth");
+	this->headers.push_back("Min Azimuth");
+	this->headers.push_back("Max Azimuth");
+	this->headers.push_back("Average Elevation");
+	this->headers.push_back("Min Elevation");
+	this->headers.push_back("Max Elevation");
 
-	this->headers.push_back("Skewness X");
-	this->headers.push_back("Skewness Y");
-	this->headers.push_back("Skewness Z");
-	this->headers.push_back("Euclidean Skewness");
+	this->headers.push_back("Average Local Bifurcation Amp");
+	this->headers.push_back("Min Local Bifurcation Amp");
+	this->headers.push_back("Max Local Bifurcation Amp");
+	this->headers.push_back("Average Local Bifurcation Tilt");
+	this->headers.push_back("Min Local Bifurcation Tilt");
+	this->headers.push_back("Max Local Bifurcation Tilt");	
+	
+	this->headers.push_back("Average Remote Bifurcation Amp");
+	this->headers.push_back("Min Remote Bifurcation Amp");
+	this->headers.push_back("Max Remote Bifurcation Amp");
+	this->headers.push_back("Average Remote Bifurcation Tilt");
+	this->headers.push_back("Min Remote Bifurcation Tilt");
+	this->headers.push_back("Max Remote Bifurcation Tilt");
 
-	this->headers.push_back("Soma X");
-	this->headers.push_back("Soma Y");
-	this->headers.push_back("Soma Z");
-	this->headers.push_back("Soma Radii");
-	this->headers.push_back("Soma Volume");
-	this->headers.push_back("Soma Surface Area");
+	this->headers.push_back("Min Leaf Level");
+	this->headers.push_back("Min Leaf Path Length");
+	this->headers.push_back("Max Leaf Level");
+	this->headers.push_back("Max Leaf Path Length");
+	this->headers.push_back("Ave Leaf Level");
+	this->headers.push_back("Ave Leaf Path Length");
 
-	this->headers.push_back("Min Stem Distance");
-	this->headers.push_back("AverageStemDistance");
-	this->headers.push_back("Max Stem Distance");
+	this->headers.push_back( "Total Terminal Compartments");
+	this->headers.push_back( "Min Terminal Compartments");
+	this->headers.push_back( "Average Terminal Compartments");
+	this->headers.push_back( "Max Terminal Compartments");
+
+	this->headers.push_back("Average Diameter Threshold");
+	this->headers.push_back("Diameter Threshold Max");
+	this->headers.push_back("Diameter Threshold Min");
+	this->headers.push_back("Average Terminal Parent Diameter");
+	this->headers.push_back("Terminal Parent Diameter Max");
+	this->headers.push_back("Terminal Parent Diameter Min");
+
+	this->headers.push_back("Min Terminal Hillman Thresh");
+	this->headers.push_back("Average Terminal Hillman Thresh");
+	this->headers.push_back("Max Terminal Hillman Thresh");
 
 	this->headers.push_back("Trace File");
 

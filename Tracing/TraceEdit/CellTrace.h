@@ -75,7 +75,7 @@ public:
 
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
-	double MinStemDistiance, MaxStemDistasnce, TotalStemDistance, EstimatedSomaRadius;
+	double MinStemDistance, MaxStemDistance, TotalStemDistance, EstimatedSomaRadius;
 
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
 
