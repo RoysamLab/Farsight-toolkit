@@ -637,3 +637,8 @@ TraceLine * CellTrace::getRootTrace()
 {
 	return this->segments.front();
 }
+
+std::vector<TraceLine *> CellTrace::getSegments()
+{
+	return this->segments;
+}
