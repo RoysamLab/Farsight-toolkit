@@ -14,10 +14,10 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-	char* xml_file = argv[1];
-	std::cout << "Reading XML file: " << xml_file << std::endl;
+	char* swc_file = argv[1];
+	std::cout << "Reading SWC file: " << swc_file << std::endl;
 	
-	tobj->ReadFromSWCFile(xml_file);
+	tobj->ReadFromSWCFile(swc_file);
 	CellTraceModel* cells = new CellTraceModel(tobj->CalculateCellFeatures());
 
 	double maxX = 0;
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 		double bounds[6];
 		cell->getCellBounds(bounds);
 
-		std::cout << "Min X: " << bounds[0] << " Max X: " << bounds[1] << " Min Y: " << bounds[2] << " Max Y: " << bounds[3] << " Min Z: " << bounds[4] << " Max Z: " << bounds[5] << std::endl;
+		std::cout << "Cell " << k << ": Min X: " << bounds[0] << " Max X: " << bounds[1] << " Min Y: " << bounds[2] << " Max Y: " << bounds[3] << " Min Z: " << bounds[4] << " Max Z: " << bounds[5] << std::endl;
 	
 		if (bounds[1] > maxX)
 			maxX = bounds[1];
@@ -53,7 +53,49 @@ int main(int argc, char* argv[])
 			minZ = bounds[4];
 	}
 
-	std::cout << "Image bounds: (" << minX << ", " << minY << ", " << minZ << ") to (" << maxX << ", " << maxY << ", " << maxZ << ")" << std::endl; 
+	std::cout << "The extreme bounds of the cells in the image are: (" << minX << ", " << minY << ", " << minZ << ") to (" << maxX << ", " << maxY << ", " << maxZ << ")" << std::endl; 
+	
+	int image_x_size = maxX - minX + 1;
+	int image_y_size = maxY - minY + 1;
+	int image_z_size = maxZ - minZ + 1;
 
-	return 0;
+	for (int k = 0; k < cells->getCellCount(); k++)
+	{		
+		CellTrace* cell = cells->GetCellAt(k);
+		
+		double bounds[6];
+		cell->getCellBounds(bounds);
+		
+		if (bounds[0] < image_x_size * 0.1)	//if the left side of the traces falls inside the 10% on the left of the image, it is most likely in the left overlap region
+		{
+			//std::cout << "Cell " << k << " rejected for overlap on the left side of the image" << std::endl;
+			continue;				//for now do nothing
+		}
+		
+		if (bounds[1] > image_x_size * 0.9)	//if the right side of the traces falls inside the 10% on the right of the image, it is most likely in the right overlap region
+		{
+			//std::cout << "Cell " << k << " rejected for overlap on the right side of the image" << std::endl;
+			continue;				//for now do nothing
+		}
+
+		if (bounds[2] < image_y_size * 0.1)	//if the top of the traces falls inside the 10% on the top of the image, it is most likely in the top overlap region
+		{
+			//std::cout << "Cell " << k << " rejected for overlap on the top of the image" << std::endl;
+			continue;
+		}
+
+		if (bounds[3] > image_y_size * 0.9)	//if the bottom of the traces falls inside the 10% on the bottom of the image, it is most likely in the bottom overlap region
+		{
+			//std::cout << "Cell " << k << " rejected for overlap on the bottom of the image" << std::endl;
+			continue;
+		}
+
+		//Note that we do not have Z-overlap since we do not register images in that dimension. However, if we do, it is a simple matter of extending the above if statements to include those cases in the z-dimension 		
+		std::cout << "Cell " << k << "found inside non-overlap region" << std::endl;
+		
+		std::ostringstream fileNameStream;
+		fileNameStream << k << ".swc";
+
+		tobj->WriteToSWCFile(cell->getSegments(), fileNameStream.str().c_str());	
+	}	
 }
