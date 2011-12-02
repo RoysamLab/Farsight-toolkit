@@ -3,6 +3,7 @@
 #include "CellTrace.h"
 #include <string>
 #include <limits>
+#include <tinyxml/tinyxml.h>
 
 int main(int argc, char* argv[])
 {
@@ -11,10 +12,55 @@ int main(int argc, char* argv[])
 	if (argc < 2)
 	{
 		std::cout << "Must run program with correct number of arguments" << std::endl;
+		std::cout << "Usage: " << argv[0] << " project_xml_file" << std::endl;
 		return -1;
 	}
 	
-	char* swc_file = argv[1];
+	char* xml_file = argv[1];
+	TiXmlDocument project_doc(argv[1]);
+	
+	//Handles if the file does not exist or is not a valid XML file
+	if (!project_doc.LoadFile())
+	{
+		std::cerr << "Could not load file: " << argv[1] << std::endl;
+		return -1;
+	}
+
+	TiXmlElement* current_element = project_doc.FirstChildElement();
+
+	if (!current_element)
+	{
+		std::cerr << "No root element! Is this a valid XML file?" << std::endl;
+		return -2;
+	}
+
+	TiXmlHandle root = TiXmlHandle(current_element);
+	current_element = root.FirstChild().Element();
+	std::cout << current_element->Value() << std::endl;
+
+
+	for (; current_element->NextSibling() != 0; current_element = current_element->NextSiblingElement())
+	{
+		//File lines
+		std::string fileName, type;
+		int tX, tY, tZ;
+		
+		type = current_element->Attribute("Type");
+	
+		if (type == "Image")
+		{
+			fileName = current_element->Attribute("FileName");
+			current_element->QueryIntAttribute("tX", &tX);
+			current_element->QueryIntAttribute("tY", &tY);
+			current_element->QueryIntAttribute("tZ", &tZ);
+			std::cout << fileName << " " << tX << " " << tY << " " << tZ << std::endl;
+		}
+	}
+
+	
+/*
+
+	//char* swc_file = argv[1];
 	std::cout << "Reading SWC file: " << swc_file << std::endl;
 	
 	tobj->ReadFromSWCFile(swc_file);
@@ -91,11 +137,11 @@ int main(int argc, char* argv[])
 		}
 
 		//Note that we do not have Z-overlap since we do not register images in that dimension. However, if we do, it is a simple matter of extending the above if statements to include those cases in the z-dimension 		
-		std::cout << "Cell " << k << "found inside non-overlap region" << std::endl;
+		std::cout << "Cell " << k << " found inside non-overlap region" << std::endl;
 		
 		std::ostringstream fileNameStream;
 		fileNameStream << k << ".swc";
 
 		tobj->WriteToSWCFile(cell->getSegments(), fileNameStream.str().c_str());	
-	}	
+	}*/	
 }
