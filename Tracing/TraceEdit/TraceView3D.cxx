@@ -45,7 +45,7 @@ View3D::View3D(QWidget *parent)
 	this->GapsTableView = NULL;
 	this->TreeModel = NULL;
 	this->savescreenshotDialog = NULL;
-	this->ROIExtrudedpolydata = NULL;
+	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
 
 	this->tobj = new TraceObject;
@@ -77,6 +77,8 @@ View3D::View3D(QWidget *parent)
 	this->backColorG = this->TraceEditSettings.value("mainWin/ColorG", .6).toDouble() ;
 	this->backColorB = this->TraceEditSettings.value("mainWin/ColorB", .6).toDouble() ;
 	this->ImageActors = new ImageRenderActors();
+	this->VOIType= new VolumeOfInterest();
+
 	this->Gridlines = new GridlineActors();
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setReadOnly(true);
@@ -2964,8 +2966,9 @@ void View3D::AddROIPoint()
 		double* newPT = new double[3];
 		this->pointer3d->GetPosition(newPT);
 		//std::cout << "adding point xyz " << newPT[0] << " " << newPT[1] << " " << newPT[2] << " \n" ;
-		this->ROIPoints.push_back(newPT);
-		if (this->ROIPoints.size() >= 3)
+		//this->ROIPoints.push_back(newPT);
+		//if (this->ROIPoints.size() >= 3)
+		if (this->VOIType->AddVOIPoint(newPT) >= 3)
 		{
 			this->ExtrudeROIButton->setEnabled(true);
 		}
@@ -2974,61 +2977,67 @@ void View3D::AddROIPoint()
 void View3D::DrawROI()
 {
 	
-	if (this->ROIPoints.size() < 3)
+	//if (this->ROIPoints.size() < 3)
+	//{
+	//	std::cout<< "not enough points\n";
+	//	return;
+	//}
+
+	if (!this->VOIType->ExtrudeVOI())
 	{
-		std::cout<< "not enough points\n";
 		return;
 	}
-
-	//// Add the points to a vtkPoints object
-	vtkSmartPointer<vtkPoints> vtkROIpoints = vtkSmartPointer<vtkPoints>::New();
-	
-	std::vector<double*>::iterator ROIPoints_iter;
-
-	int count = 0;
-	this->EditLogDisplay->append(QString("\nDefining ROI\n X\tY\tZ"));
-	for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
-	{
-		vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
-		this->EditLogDisplay->append((QString("%1\t%2\t%3").arg((*ROIPoints_iter)[0]).arg((*ROIPoints_iter)[1]).arg((*ROIPoints_iter)[2])));
-		delete *ROIPoints_iter;
-		*ROIPoints_iter = NULL;
-		count++; //size of polygon vertex
-	}
-
+	////// Add the points to a vtkPoints object
+	//vtkSmartPointer<vtkPoints> vtkROIpoints = vtkSmartPointer<vtkPoints>::New();
 	//
-	vtkSmartPointer<vtkPolygon> ROI_Poly = vtkSmartPointer<vtkPolygon>::New();
-	ROI_Poly->GetPointIds()->SetNumberOfIds(count);
-	for (int i =0; i< count; i++)
-	{
-		ROI_Poly->GetPointIds()->SetId(i,i);
-	}
+	//std::vector<double*>::iterator ROIPoints_iter;
 
-	//build cell array
-	vtkSmartPointer<vtkCellArray> ROI_Poly_CellArray = vtkSmartPointer<vtkCellArray>::New();
-	ROI_Poly_CellArray->InsertNextCell(ROI_Poly);
+	//int count = 0;
+	//this->EditLogDisplay->append(QString("\nDefining ROI\n X\tY\tZ"));
+	//for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
+	//{
+	//	vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
+	//	this->EditLogDisplay->append((QString("%1\t%2\t%3").arg((*ROIPoints_iter)[0]).arg((*ROIPoints_iter)[1]).arg((*ROIPoints_iter)[2])));
+	//	delete *ROIPoints_iter;
+	//	*ROIPoints_iter = NULL;
+	//	count++; //size of polygon vertex
+	//}
 
-	// Create a polydata to store everything in
-	vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
-	ROIpolydata->SetPoints(vtkROIpoints);
-	ROIpolydata->SetPolys(ROI_Poly_CellArray);
+	////
+	//vtkSmartPointer<vtkPolygon> ROI_Poly = vtkSmartPointer<vtkPolygon>::New();
+	//ROI_Poly->GetPointIds()->SetNumberOfIds(count);
+	//for (int i =0; i< count; i++)
+	//{
+	//	ROI_Poly->GetPointIds()->SetId(i,i);
+	//}
 
-	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
-	extrude->SetInput( ROIpolydata);
-	extrude->SetExtrusionTypeToNormalExtrusion();
-	//extrude->SetVector(0, 0, 1 );
-	extrude->SetScaleFactor (100);
-	//extrude->CappingOff();
-	extrude->Update();
-	// Setup actor and mapper
-	vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->ROIExtrudedpolydata = extrude->GetOutput();
-	ROImapper->SetInput(this->ROIExtrudedpolydata);
+	////build cell array
+	//vtkSmartPointer<vtkCellArray> ROI_Poly_CellArray = vtkSmartPointer<vtkCellArray>::New();
+	//ROI_Poly_CellArray->InsertNextCell(ROI_Poly);
 
-	this->ROIactor = vtkSmartPointer<vtkActor>::New();
-	ROIactor->SetMapper(ROImapper);
+	//// Create a polydata to store everything in
+	//vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
+	//ROIpolydata->SetPoints(vtkROIpoints);
+	//ROIpolydata->SetPolys(ROI_Poly_CellArray);
 
-	this->Renderer->AddActor(ROIactor);
+	//vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
+	//extrude->SetInput( ROIpolydata);
+	//extrude->SetExtrusionTypeToNormalExtrusion();
+	////extrude->SetVector(0, 0, 1 );
+	//extrude->SetScaleFactor (100);
+	////extrude->CappingOff();
+	//extrude->Update();
+	//// Setup actor and mapper
+	//vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	//this->ROIExtrudedpolydata = extrude->GetOutput();
+	//ROImapper->SetInput(this->ROIExtrudedpolydata);
+
+	//this->ROIactor = vtkSmartPointer<vtkActor>::New();
+	//ROIactor->SetMapper(ROImapper);
+
+	//this->Renderer->AddActor(ROIactor);
+	this->Renderer->AddActor(this->VOIType->GetActor());
+	
 	this->QVTK->GetRenderWindow()->Render();
 	this->createNewROIPointButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
@@ -3037,57 +3046,58 @@ void View3D::DrawROI()
 
 void View3D::CalculateDistanceToDevice()
 {
-	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
+	/*vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
 	cellLocator->SetDataSet(this->ROIExtrudedpolydata);
-	cellLocator->BuildLocator();
+	cellLocator->BuildLocator();*/
 	
 	unsigned int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
-		for (unsigned int i = 0; i < cellCount; i++)
-		{
-			//double testPoint[3] = {500, 600, 50};
-			double somaPoint[3];
-			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
-			currCell->getSomaCoord(somaPoint);
-			//Find the closest points to TestPoint
-			double closestPoint[3];//the coordinates of the closest point will be returned here
-			double closestPointDist2; //the squared distance to the closest point will be returned here
-			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
-			int subId; //this is rarely used (in triangle strips only, I believe)
-			cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
-			currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
-		}//end for cell count
+		//for (unsigned int i = 0; i < cellCount; i++)
+		//{
+		//	//double testPoint[3] = {500, 600, 50};
+		//	double somaPoint[3];
+		//	CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
+		//	currCell->getSomaCoord(somaPoint);
+		//	//Find the closest points to TestPoint
+		//	double closestPoint[3];//the coordinates of the closest point will be returned here
+		//	double closestPointDist2; //the squared distance to the closest point will be returned here
+		//	vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+		//	int subId; //this is rarely used (in triangle strips only, I believe)
+		//	cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
+		//	currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
+		//}//end for cell count
+		this->VOIType->CalculateCellDistanceToVOI(this->CellModel);
 		this->ShowCellAnalysis();
 	}
-	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
-	if (nucleiRowCount > 0)
-	{
-		// create new column
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName("Distance_To_Device");
-		column->SetNumberOfValues(nucleiRowCount);
-		this->nucleiTable->AddColumn(column);
-		// read coordinates 
-		for (vtkIdType rowID = 0; rowID < nucleiRowCount; rowID++)
-		{
-			double centroid[3];
-			centroid[0] = this->nucleiTable->GetValueByName(rowID,"centroid_x").ToDouble();
-			centroid[1] = this->nucleiTable->GetValueByName(rowID,"centroid_y").ToDouble();
-			centroid[2] = this->nucleiTable->GetValueByName(rowID,"centroid_z").ToDouble();
+	//vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
+	//if (nucleiRowCount > 0)
+	//{
+	//	// create new column
+	//	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	//	column->SetName("Distance_To_Device");
+	//	column->SetNumberOfValues(nucleiRowCount);
+	//	this->nucleiTable->AddColumn(column);
+	//	// read coordinates 
+	//	for (vtkIdType rowID = 0; rowID < nucleiRowCount; rowID++)
+	//	{
+	//		double centroid[3];
+	//		centroid[0] = this->nucleiTable->GetValueByName(rowID,"centroid_x").ToDouble();
+	//		centroid[1] = this->nucleiTable->GetValueByName(rowID,"centroid_y").ToDouble();
+	//		centroid[2] = this->nucleiTable->GetValueByName(rowID,"centroid_z").ToDouble();
 
-			double closestPoint[3];//the coordinates of the closest point will be returned here
-			double closestPointDist2; //the squared distance to the closest point will be returned here
-			vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
-			int subId; //this is rarely used (in triangle strips only, I believe)
-			cellLocator->FindClosestPoint(centroid, closestPoint, cellId, subId, closestPointDist2);
+	//		double closestPoint[3];//the coordinates of the closest point will be returned here
+	//		double closestPointDist2; //the squared distance to the closest point will be returned here
+	//		vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
+	//		int subId; //this is rarely used (in triangle strips only, I believe)
+	//		cellLocator->FindClosestPoint(centroid, closestPoint, cellId, subId, closestPointDist2);
 
-			this->nucleiTable->SetValueByName(rowID,"Distance_To_Device", vtkVariant(std::sqrt(closestPointDist2)));
-		}
-		QString nucleifileName = QFileDialog::getSaveFileName(
-			this, tr("Save Nuclei feature File"), "", tr(".txt(*.txt)"));
-		ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
-	} // end nuclei dist to device
+	//		this->nucleiTable->SetValueByName(rowID,"Distance_To_Device", vtkVariant(std::sqrt(closestPointDist2)));
+	//	}
+	//	QString nucleifileName = QFileDialog::getSaveFileName(
+	//		this, tr("Save Nuclei feature File"), "", tr(".txt(*.txt)"));
+	//	ftk::SaveTable(nucleifileName.toStdString(),this->nucleiTable);
+	//} // end nuclei dist to device
 }
 void View3D::readNucleiTable()
 {

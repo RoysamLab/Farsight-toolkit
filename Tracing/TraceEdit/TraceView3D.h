@@ -120,7 +120,7 @@ limitations under the License.
 #include "TraceObject.h"
 #include "TraceModel.h"
 
-
+#include "VolumeOfInterest.h"
 
 class View3D : public QMainWindow 
 {
@@ -513,8 +513,10 @@ private:
 
 //!ROI data objects
 	std::vector<double*> ROIPoints;
-	vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
+	//vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	
 	vtkSmartPointer<vtkActor> ROIactor;
+
+	VolumeOfInterest * VOIType;
 
 	/*! \enum RenderModeEnum
 	* \brief Sets default the rendering style
