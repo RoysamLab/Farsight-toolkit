@@ -199,7 +199,7 @@ private slots:
 	void SetRanges(int i);
 };
 
-class SelectionAdapter : QObject
+class SelectionAdapter : public QObject
 {
 	Q_OBJECT
 public:
