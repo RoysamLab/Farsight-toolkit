@@ -16,6 +16,7 @@ limitations under the License.
 //***********************************************************************************
 // TableWindow provides a classic table view into a model
 //***********************************************************************************
+
 #include "TableWindow.h"
 
 //Constructors:
