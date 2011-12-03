@@ -22,8 +22,9 @@ limitations under the License.
 TableWindow::TableWindow(QWidget * parent)
 : QMainWindow(parent)
 {
-  this->modAdapter = NULL;
+	this->modAdapter = NULL;
 	this->setup();
+	this->rowsSelected = false;
 }
 
 //Destructor
@@ -62,6 +63,7 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		if(selAdapter) delete selAdapter;
 		selAdapter = new SelectionAdapter( this->tableView );
 		selAdapter->SetPair(selection,mod);
+		connect(selAdapter, SIGNAL(newRowsSelected()), this, SLOT(GetSelectedRows()));
 	}
 
 	if(sels2)///////////////////////////////////////////////////////////
@@ -145,13 +147,16 @@ void TableWindow::exportTable()
 
 	TableOutputStream << "\n" ;
 	
-	for(vtkIdType row = 0; row < Pointer2Table->GetNumberOfRows(); row++ )
+	if(rowsSelected == false)
 	{
-		for(vtkIdType col = 0; col < Pointer2Table->GetNumberOfColumns(); col++ )
-		{	
-			TableOutputStream << Pointer2Table->GetValue(row,col).ToString() << "\t";
+		for(vtkIdType row = 0; row < Pointer2Table->GetNumberOfRows(); row++ )
+		{
+			for(vtkIdType col = 0; col < Pointer2Table->GetNumberOfColumns(); col++ )
+			{	
+				TableOutputStream << Pointer2Table->GetValue(row,col).ToString() << "\t";
+			}
+			TableOutputStream << "\n";
 		}
-		TableOutputStream << "\n";
 	}
 
 	DumpedTable.close();
@@ -823,6 +828,7 @@ void SelectionAdapter::updateQMOD(void)
 	}
 
 	okToChange = TRUE;
+	emit newRowsSelected();
 }
 
 //The class gets called when a row in the table is clicked/selected
@@ -853,4 +859,5 @@ void SelectionAdapter::updateOBJ(const QItemSelection & selected, const QItemSel
 	//}
 	m_obj->select(ids);
 	okToChange = TRUE;
+	emit newRowsSelected();
 }

@@ -96,6 +96,7 @@ private slots:
 	void exportTable();
 	void showFilters();
 	void selectColumns();/////////////////////////////////////////////////////////////////////
+	void GetSelectedRows();
     
 private:
 	QTableView *tableView;
@@ -103,6 +104,7 @@ private:
 	SelectionAdapter * selAdapter;
 	ObjectSelection * selection;
 	ObjectSelection * selection2;
+	ObjectSelection * selectedRows;
 
 	QMenu *viewMenu;
 	QMenu *exportMenu;
@@ -114,6 +116,7 @@ private:
 	QAction *testAction;
 
 	static const int rowHeight = 18;
+	bool rowsSelected;
 };
 
 
@@ -203,6 +206,10 @@ public:
 	SelectionAdapter();
 	SelectionAdapter(QTableView *tableView);
 	void SetPair(ObjectSelection * obj, QItemSelectionModel * qmod);
+	ObjectSelection * getSelRows(){ return m_obj; };
+
+signals:
+	void newRowsSelected();
 
 protected slots:
 	void updateQMOD(void);
