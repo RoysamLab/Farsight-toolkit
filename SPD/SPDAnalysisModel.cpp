@@ -40,6 +40,7 @@ SPDAnalysisModel::SPDAnalysisModel()
 	filename = "";
 	cc1 = new clusclus();
 	cc2 = new clusclus();
+	this->bProgression = false;
 }
 
 SPDAnalysisModel::~SPDAnalysisModel()
@@ -1116,6 +1117,16 @@ void SPDAnalysisModel::DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int
 	mat = matTmp;
 }
 
+void SPDAnalysisModel::SetProgressionTag(bool bProg)
+{
+	this->bProgression = bProg;
+}
+
+bool SPDAnalysisModel::GetProgressionTag()
+{
+	return this->bProgression;
+}
+
 void SPDAnalysisModel::GenerateMST()
 {
 	this->ModuleMST.clear();
@@ -1246,6 +1257,50 @@ void SPDAnalysisModel::GenerateMST()
 	//	iter++;	
 	//}
 	//ofs.close();
+}
+
+void SPDAnalysisModel::GenerateDistanceMST()
+{
+	if( this->MatrixAfterCellCluster.rows() <= 0)
+	{
+		this->MatrixAfterCellCluster = this->DataMatrix;
+	}
+
+	unsigned int num_nodes = this->MatrixAfterCellCluster.rows();
+
+	std::cout<<"Building MST for distance to device "<<endl;
+
+	vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), 1);
+	for( int i = 0; i < this->MatrixAfterCellCluster.rows(); i++)
+	{
+		clusterMat(i,0) = DistanceToDevice[i];
+	}
+
+	Graph graph(num_nodes);
+
+	for( unsigned int k = 0; k < num_nodes; k++)
+	{
+		for( unsigned int j = k + 1; j < num_nodes; j++)
+		{
+			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+				//double dist = EuclideanBlockDist( clusterMat, k, j);
+			boost::add_edge(k, j, dist, graph);
+		}
+	}
+
+	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(this->MatrixAfterCellCluster.rows());
+
+	try
+	{
+		boost::prim_minimum_spanning_tree(graph, &vertex[0]);
+	}
+	catch(...)
+	{
+		std::cout<< "MST construction failure!"<<endl;
+		exit(111);
+	}
+
+	DistanceMST = vertex;
 }
 
 double SPDAnalysisModel::CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2)
@@ -1529,6 +1584,33 @@ void SPDAnalysisModel::RunEMDAnalysis()
 	//std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
 	//histOfs.precision(4);
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
+	this->DistanceEMDVector.set_size( this->ClusterIndex.max_value() + 1);
+
+	if( bProgression)
+	{
+		vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), 1);
+		for( int i = 0; i < this->MatrixAfterCellCluster.rows(); i++)
+		{
+			clusterMat(i,0) = DistanceToDevice[i];
+		}
+		GetMatrixDistance( clusterMat, distance, CITY_BLOCK);
+
+		vnl_vector<double> hist_interval;
+		vnl_vector<unsigned int> moduleHist;
+		Hist( distance, NUM_BIN, hist_interval, moduleHist);
+
+		for( int j = 0; j < this->ModuleMST.size(); j++)
+		{
+			vnl_vector<double> mstDistance; 
+			GetMSTMatrixDistance( distance, this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
+			vnl_vector<unsigned int> mstHist;
+			Hist( mstDistance, hist_interval, mstHist); 
+			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);		
+			DistanceEMDVector[j] = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
+		}
+		double max = DistanceEMDVector.max_value();
+		DistanceEMDVector = DistanceEMDVector / max;
+	}
 
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
@@ -1551,20 +1633,6 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		//	histOfs<<endl;		
 		//}
 		//histOfs <<endl;
-
-		vnl_vector<double> moduleHistPer( moduleHist.size());
-
-		for( unsigned int y = 0; y < moduleHist.size(); y++)
-		{
-			if( moduleHist.sum() != 0)
-			{
-				moduleHistPer[y] = moduleHist[y] / (double)moduleHist.sum();
-			}
-			else
-			{
-				moduleHistPer[y] = moduleHist[y];
-			}
-		}
 		//histOfs << moduleHistPer<< endl<<endl;
 
 		for( int j = 0; j < moduleDistance.size(); j++)
@@ -1589,19 +1657,6 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			//	}
 			//	histOfs<<endl;		
 			//}
-			
-			vnl_vector<double> mstHistPer( mstHist.size());
-			for( unsigned int y = 0; y < mstHist.size(); y++)
-			{
-				if( mstHist.sum() != 0)
-				{
-					mstHistPer[y] = mstHist[y] / (double)mstHist.sum();
-				}
-				else
-				{
-					mstHistPer[y] = mstHist[y];
-				}
-			}
 			//histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
 
 			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
@@ -1647,11 +1702,23 @@ void SPDAnalysisModel::GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix)
 	emdMatrix =  this->EMDMatrix;
 }
 
-void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double threshold)
+void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double threshold, double magFactor)
 {
 	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols());
 	this->heatmapMatrix.fill(0);
 	std::vector< unsigned int> simModIndex;
+	std::vector< unsigned int> disModIndex;
+
+	if( bProgression)
+	{
+		for(unsigned int i = 0; i < DistanceEMDVector.size(); i++)
+		{
+			if( DistanceEMDVector[i] >= threshold)
+			{
+				disModIndex.push_back(i);
+			}
+		}
+	}
 
 	QString filenameSM = this->filename + "similarity_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
@@ -1682,8 +1749,20 @@ void SPDAnalysisModel::GetClusClusData(clusclus& c1, clusclus& c2, double thresh
 				this->heatmapMatrix(simModIndex[j], simModIndex[j]) = this->heatmapMatrix(simModIndex[j], simModIndex[j]) + 1;
 			}
 		}
-
 		simModIndex.clear();
+	}
+
+	if( bProgression && disModIndex.size() > 0 && magFactor > 0)
+	{
+		for( unsigned int j = 0; j < disModIndex.size(); j++)
+		{
+			for( unsigned int k = j + 1; k < disModIndex.size(); k++)
+			{
+				this->heatmapMatrix( disModIndex[j], disModIndex[k]) = heatmapMatrix( disModIndex[j], disModIndex[k]) + magFactor;
+				this->heatmapMatrix( disModIndex[k], disModIndex[j]) = heatmapMatrix( disModIndex[k], disModIndex[j]) + magFactor;
+			}
+			this->heatmapMatrix(disModIndex[j], disModIndex[j]) = this->heatmapMatrix(disModIndex[j], disModIndex[j]) + magFactor;
+		}
 	}
 
 	ofSimatrix << "EMD matrix( devided by max value of each row):"<<endl;

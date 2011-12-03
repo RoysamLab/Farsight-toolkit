@@ -96,8 +96,8 @@ private slots:
 	void exportTable();
 	void showFilters();
 	void selectColumns();/////////////////////////////////////////////////////////////////////
-	void GetSelectedRows();
-    
+    void exportSelectedIDs();
+
 private:
 	QTableView *tableView;
 	vtkQtTableModelAdapter * modAdapter;
@@ -112,7 +112,7 @@ private:
 	QAction *visibleColumnsAction;
 	QAction *sortByAction;
 	QAction *filterRowsAction;
-
+	QAction *exportIDAction;
 	QAction *testAction;
 
 	static const int rowHeight = 18;

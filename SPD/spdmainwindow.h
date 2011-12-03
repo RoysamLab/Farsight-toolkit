@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QListWidget>
+#include <QDoubleSpinBox>
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
@@ -36,6 +37,7 @@ private slots:
 	void updateSelMod();
 	void editThreshold();
 	void editPercentage();
+	void showProgressionHeatmap();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -52,15 +54,19 @@ private:
     QLabel *sampleNum;
 
     QLabel *clusterCoherenceLabel;
-    QLineEdit *clusterCoherenceBox;
+    QDoubleSpinBox *clusterCoherenceBox;
+	QLabel *sampleCoherenceLabel;
+	QDoubleSpinBox *sampleCoherenceBox;
     QLabel *clusterMergeLabel;
-    QLineEdit *clusterMergeBox;
+    QDoubleSpinBox *clusterMergeBox;
     QPushButton *clusterButton;
-	QListWidget *listWidget;
-	QPushButton *generateMSTButton;
 	QPushButton *cellClusterButton;
+	QListWidget *listWidget;
+	QLabel *mstLabel;
+	QPushButton *generateMSTButton;
+	QLabel *emdLabel;
 	QPushButton *emdButton;
-	QLineEdit *emdThresBox;
+	QDoubleSpinBox *emdThresBox;
 	QLineEdit *emdPercentageBox;
 	QLabel *psmLable;
 	QLabel *psmPerLable;
@@ -69,12 +75,14 @@ private:
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
     QPushButton *psdtButton;
-	//QPushButton *saveFeatureButton;  // save the selected features to file
+	QLabel *heatmapLabel;
+	QPushButton *heatmapButton;  // show progression heatmap
 
     QString FileName;
 	GraphWindow *graph;
-	Heatmap *heatmap;
+	Heatmap *simHeatmap;
 	HistoWindow *histo;
+	Heatmap *progressionHeatmap;
 
 	vnl_vector<int> optimalleaforder;
 	vnl_vector<int> selMod;

@@ -63,10 +63,11 @@ public:
 	void HierachicalClustering();
 	void ClusterCells(double cor);
 	void GenerateMST();
+	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
-	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold);
+	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold, double magFactor = 0);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
@@ -74,6 +75,8 @@ public:
 	double GetEMDSelectedThreshold( double per);
 	void GetMatrixData(vnl_matrix<double> &mat);
 	void GetClusterMapping( std::vector<int> &indToclusInd);
+	void SetProgressionTag(bool bProg);
+	bool GetProgressionTag();
 
 protected:
 	SPDAnalysisModel();
@@ -133,14 +136,19 @@ private:
 	vnl_vector<int> TreeIndex;     // tree node index
 
 	//MST for each module
+	bool bProgression;
+
 	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor> > ModuleMST;
+	std::vector< boost::graph_traits<Graph>::vertex_descriptor> DistanceMST;
 	std::vector< double> MSTWeight;
 	std::vector< std::vector< boost::graph_traits<Graph>::vertex_descriptor> > ModuleGraph;
 	std::vector< vtkSmartPointer<vtkTable> > MSTTable;    // data to pass to the views
+	std::vector< vtkSmartPointer<vtkTable> > MSTDistanceTable;    // data to pass to the views
 
 	//data for EMD 
 	vnl_matrix<double> EMDMatrix;
 	std::set< long int> selectedFeatureIDs;
+	vnl_vector<double> DistanceEMDVector;
 
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;

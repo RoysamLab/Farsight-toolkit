@@ -404,7 +404,7 @@ void SampleEditor::SPDAnalysis()
 	}
 	else
 	{
-		spdWin->setModels( this->data, selection, selection2);
+		spdWin->setModels( this->data, selection);
 	}
 
 	spdWin->show();

@@ -16,6 +16,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     QWidget(parent)
 {
 	SPDModel = NULL;
+	selection = NULL;
+	selection2 = NULL;
 
     dataFileLabel = new QLabel(tr("Choose file:"));
 
@@ -34,20 +36,40 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     sampleNum = new QLabel;
     sampleNum->setFrameStyle(frameStyle);
 
-    clusterCoherenceLabel = new QLabel(tr("Coherence:"));
-    clusterCoherenceBox = new QLineEdit;
-    clusterMergeLabel = new QLabel(tr("Merge Coherence:"));
-    clusterMergeBox = new QLineEdit;
+	sampleCoherenceLabel = new QLabel(tr("Sample Coherence(0.0 ~ 1.0):"));;
+	sampleCoherenceBox = new QDoubleSpinBox;
+	sampleCoherenceBox->setValue( 0.9);
+	sampleCoherenceBox->setRange(0,1); 
+	sampleCoherenceBox->setSingleStep(0.1);
+
+    clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"));
+    clusterCoherenceBox = new QDoubleSpinBox;
+	clusterCoherenceBox->setValue(0.9);
+	clusterCoherenceBox->setRange(0,1); 
+	clusterCoherenceBox->setSingleStep(0.1);
+
+    clusterMergeLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"));
+    clusterMergeBox = new QDoubleSpinBox;
+	clusterMergeBox->setValue(0.9);
+	clusterMergeBox->setRange(0,1);
+	clusterMergeBox->setSingleStep(0.1);
+
     clusterButton = new QPushButton(tr("Feature Cluster"));
 	cellClusterButton = new QPushButton(tr("Cell Cluster"));
 	
-	listWidget = new QListWidget( this);
+
+	//listWidget = new QListWidget( this);
+	mstLabel = new QLabel(tr("Generate MST for each module:"));
 	generateMSTButton = new QPushButton(tr("MST"));
+	emdLabel = new QLabel(tr("Matching MSTs with modules:"));
 	emdButton = new QPushButton(tr("EMD"));
-	
-	emdThresBox = new QLineEdit;
+
+	emdThresBox = new QDoubleSpinBox;
+	emdThresBox->setRange(0,1);
+	emdThresBox->setSingleStep(0.1);
+
 	emdPercentageBox = new QLineEdit;
-	psmLable = new QLabel(tr("PSM Threshold:"));
+	psmLable = new QLabel(tr("PSM Threshold(0.0 ~ 1.0):"));
 	psmPerLable = new QLabel(tr("PSM Selected Blocks' Percentage:"));
     psmButton = new QPushButton(tr("Show PSM"));
 	psmHisButton = new QPushButton(tr("PSM Histogram"));
@@ -55,6 +77,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
 	psdModuleSelectBox = new QLineEdit;
     psdtButton = new QPushButton(tr("View Progression"));
+	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
+	heatmapButton = new QPushButton(tr("Heatmap"));
 
 	//saveFeatureButton = new QPushButton(tr("Save Selected Features"));
 
@@ -71,6 +95,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	//connect(saveFeatureButton, SIGNAL(clicked()), this, SLOT(saveSelectedFeatures()));
 	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
 	connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
+	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
 	
     QGridLayout *mainLayout = new QGridLayout;
 
@@ -80,7 +105,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 11; row++)
+    for ( int row = 1; row <= 13; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -96,34 +121,39 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     mainLayout->addWidget(featureNumLabel, 2, 0);
     mainLayout->addWidget(featureNum, 2, 1);
 
-
     mainLayout->addWidget(sampleNumLabel, 3, 0);
     mainLayout->addWidget(sampleNum, 3, 1);
 
-	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
-    mainLayout->addWidget(clusterCoherenceBox, 4, 1);
-	mainLayout->addWidget(clusterButton, 5, 2);
-
-    mainLayout->addWidget(clusterMergeLabel, 5, 0);
-    mainLayout->addWidget(clusterMergeBox, 5, 1);
+	mainLayout->addWidget(sampleCoherenceLabel, 4, 0);
+    mainLayout->addWidget(sampleCoherenceBox, 4, 1);
 	mainLayout->addWidget(cellClusterButton, 4, 2);
+
+	mainLayout->addWidget(clusterCoherenceLabel, 5, 0);
+    mainLayout->addWidget(clusterCoherenceBox, 5, 1);
+	mainLayout->addWidget(clusterButton, 6, 2);
+
+    mainLayout->addWidget(clusterMergeLabel, 6, 0);
+    mainLayout->addWidget(clusterMergeBox, 6, 1);
 	
-	mainLayout->addWidget(listWidget, 6, 0, 2, 2);
-    mainLayout->addWidget(generateMSTButton, 6, 2);
-	mainLayout->addWidget(emdButton, 7, 2);
+	mainLayout->addWidget(mstLabel, 7, 0);
+    mainLayout->addWidget(generateMSTButton, 7, 2);
+	mainLayout->addWidget(emdLabel, 8, 0);
+	mainLayout->addWidget(emdButton, 8, 2);
 
-	mainLayout->addWidget(psmLable, 8, 0);
-	mainLayout->addWidget(emdThresBox, 8, 1);
-	mainLayout->addWidget(psmHisButton, 8, 2);
+	mainLayout->addWidget(psmLable, 9, 0);
+	mainLayout->addWidget(emdThresBox, 9, 1);
+	mainLayout->addWidget(psmHisButton, 9, 2);
 
-	mainLayout->addWidget(psmPerLable, 9, 0);
-	mainLayout->addWidget(emdPercentageBox, 9, 1);
-	mainLayout->addWidget(psmButton, 9, 2);
+	mainLayout->addWidget(psmPerLable, 10, 0);
+	mainLayout->addWidget(emdPercentageBox, 10, 1);
+	mainLayout->addWidget(psmButton, 10, 2);
 
-	mainLayout->addWidget(psdtLable, 10, 0);
-	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 11, 2);
-	//mainLayout->addWidget(saveFeatureButton, 13, 2);
+	mainLayout->addWidget(psdtLable, 11, 0);
+	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
+	mainLayout->addWidget(psdtButton, 12, 2);
+
+	mainLayout->addWidget(heatmapLabel, 13, 0);
+	mainLayout->addWidget(heatmapButton, 13, 2);
 
     setLayout(mainLayout);
 
@@ -132,10 +162,10 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	assert(SPDModel!=NULL);
 
 	graph =  new GraphWindow(this);
-	heatmap = new Heatmap(this);
+	simHeatmap = new Heatmap(this);
 	histo = new HistoWindow(this);
-	
-	connect( heatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
+	progressionHeatmap = new Heatmap(this);
+	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 }
 
 SPDMainWindow::~SPDMainWindow()
@@ -146,8 +176,24 @@ SPDMainWindow::~SPDMainWindow()
 void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	data = table;
-	selection = sels;
-	selection2 = sels2;
+
+	if( sels == NULL)
+	{
+		selection = new ObjectSelection();
+	}
+	else
+	{
+		selection = sels;
+	}
+
+	if( sels2 == NULL)
+	{
+		selection2 = new ObjectSelection();
+	}
+	else
+	{
+		selection2 = sels2;
+	}
 
 	if( data == NULL)
 	{
@@ -157,7 +203,9 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	}
 	else
 	{
-		SPDModel->ParseTraceFile( this->data);
+		SPDModel->ParseTraceFile( data);
+		std::cout<<"table size after parse "<<data->GetNumberOfRows()<<"\t"<<data->GetNumberOfColumns()<<endl;
+
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
 		//this->SPDModel->NormalizeData();
@@ -185,6 +233,7 @@ void SPDMainWindow::load()
 
 	if ( true == this->SPDModel->ReadCellTraceFile(file, false))
 	{
+		data = this->SPDModel->GetDataTable();
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
 		//this->SPDModel->NormalizeData();
@@ -214,33 +263,15 @@ void SPDMainWindow::clusterFunction()
 
 	std::string clusterCor = this->clusterCoherenceBox->text().toStdString();
 	std::string clusterMer = this->clusterMergeBox->text().toStdString();
-	if ( clusterCor.length() > 0 && clusterMer.length() > 0)
+
+	try
 	{
-		if ( atof(clusterCor.c_str()) >= 0 && atof(clusterCor.c_str()) <= 1
-			&& atof(clusterMer.c_str()) >= 0 && atof(clusterMer.c_str()) <= 1)
-		{
-			try
-			{
-				this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-				this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-			}
-			catch(...)
-			{
-				std::cout<< "Clustering exception, please try again!"<<endl;
-			}
-		}
-		else
-		{
-			QMessageBox mes;
-			mes.setText("The coherence must be bewtween 0 and 1!");
-			mes.exec();
-		}
+		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+		this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
 	}
-	else
+	catch(...)
 	{
-		QMessageBox mes;
-		mes.setText("Set coherence!");
-		mes.exec();
+		std::cout<< "Clustering exception, please try again!"<<endl;
 	}
 }
 
@@ -258,11 +289,8 @@ void SPDMainWindow::generateMST()
 
 void SPDMainWindow::clusterCells()
 {
-	std::string clusterCor = this->clusterCoherenceBox->text().toStdString();
-	if ( atof(clusterCor.c_str()) >= 0 && atof(clusterCor.c_str()) <= 1)
-	{
-		this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
-	}
+	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
+	this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
 }
 
 void SPDMainWindow::emdFunction()
@@ -279,8 +307,8 @@ void SPDMainWindow::emdFunction()
 
 void SPDMainWindow::editThreshold()
 {
-	std::string emdThres = this->emdThresBox->text().toStdString();
-	double thres = atof(emdThres.c_str());
+	QString emdThres = this->emdThresBox->text();
+	double thres = this->emdThresBox->valueFromText(emdThres);
 	double per = 0;
 	if( thres >= 0 && thres <= 1)
 	{
@@ -291,14 +319,14 @@ void SPDMainWindow::editThreshold()
 
 void SPDMainWindow::editPercentage()
 {
-	std::string emdPer = this->emdPercentageBox->text().toStdString();
-	double per = atof(emdPer.c_str());
-	double thres = 0;
-	if( per >= 0 && per <=1)
-	{
-		thres = this->SPDModel->GetEMDSelectedThreshold( per);
-	}
-	emdThresBox->setText(QString::number(thres));
+	//std::string emdPer = this->emdPercentageBox->text().toStdString();
+	//double per = atof(emdPer.c_str());
+	//double thres = 0;
+	//if( per >= 0 && per <=1)
+	//{
+	//	thres = this->SPDModel->GetEMDSelectedThreshold( per);
+	//}
+	//emdThresBox->setText(QString::number(thres));
 }
 
 void SPDMainWindow::showPSMHist()
@@ -309,6 +337,7 @@ void SPDMainWindow::showPSMHist()
 	emdTable->AddColumn(column);
 	vnl_matrix<double> emdMatrix;
 	this->SPDModel->GetEMDMatrixDivByMax(emdMatrix);
+
 	for( int i = 0; i < emdMatrix.rows(); i++)
 	{
 		for( int j = 0; j < emdMatrix.cols(); j++)
@@ -328,35 +357,18 @@ void SPDMainWindow::showPSMHist()
 void SPDMainWindow::showPSM()
 {
 	std::string emdThres = this->emdThresBox->text().toStdString();
-	if ( emdThres.length() > 0)
+
+	clusclus clus1, clus2;
+	this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()));
+	optimalleaforder.set_size(clus1.num_samples);
+	for( int i = 0; i < clus1.num_samples; i++)
 	{
-		if ( atof(emdThres.c_str()) >= 0 && atof(emdThres.c_str()) <= 1)
-		{
-			clusclus clus1, clus2;
-			this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()));
-			optimalleaforder.set_size(clus1.num_samples);
-			for( int i = 0; i < clus1.num_samples; i++)
-			{
-				optimalleaforder[i] = clus1.optimalleaforder[i];
-			}
-			this->heatmap->setModels();
-			this->heatmap->setDataForSimilarMatrixHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);	
-			this->heatmap->creatDataForSimilarMatrixHeatmap();
-			this->heatmap->showSimilarMatrixGraph();
-		}
-		else
-		{
-			QMessageBox mes;
-			mes.setText("The threshold must be bewtween 0 and 1!");
-			mes.exec();
-		}
+		optimalleaforder[i] = clus1.optimalleaforder[i];
 	}
-	else
-	{
-		QMessageBox mes;
-		mes.setText("Set threshold!");
-		mes.exec();
-	}
+	this->simHeatmap->setModels();
+	this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1.features, clus1.optimalleaforder, clus2.optimalleaforder, clus1.num_samples, clus2.num_samples);	
+	this->simHeatmap->creatDataForSimilarMatrixHeatmap();
+	this->simHeatmap->showSimilarMatrixGraph();
 }
 
 void SPDMainWindow::viewProgression()
@@ -370,6 +382,17 @@ void SPDMainWindow::viewProgression()
 
 		SPDModel->GetTableHeaders( headers);
 		SPDModel->GetClusterMapping(index);
+
+		if( selection == NULL)
+		{
+			selection = new ObjectSelection();
+		}
+
+		if( selection2 == NULL)
+		{
+			selection2 = new ObjectSelection();
+		}
+
 		if( index.size() > 0)
 		{
 			this->graph->setModels(data, selection, selection2, &index);
@@ -405,8 +428,8 @@ void SPDMainWindow::updateSelMod()   // possible bugs
 	int c2 = 0;
 	int size = optimalleaforder.size();
 
-	this->heatmap->GetSelRowCol(r1, c1, r2, c2);
-	//this->heatmap->SetSelRowCol(r1, size - 1 - r1, r2, size - 1 - r2);   // make the selection block symetric
+	this->simHeatmap->GetSelRowCol(r1, c1, r2, c2);
+	//this->simHeatmap->SetSelRowCol(r1, size - 1 - r1, r2, size - 1 - r2);   // make the selection block symetric
 
 	int num = abs(r1 - r2) + 1;
 	int max = r1 > r2 ? r1 : r2;
@@ -436,4 +459,83 @@ void SPDMainWindow::updateSelMod()   // possible bugs
 void SPDMainWindow::GetProgressionTreeOrder(std::vector<long int> &order)
 {
 	this->graph->GetProgressionTreeOrder(order);
+}
+
+void SPDMainWindow::showProgressionHeatmap()
+{
+	ofstream ofs("SPDHeatmapOptimalOrder.txt");
+
+	this->progressionHeatmap->setModels(data,selection,selection2);
+
+	std::vector<long int> TreeOrder;
+	this->graph->GetProgressionTreeOrder(TreeOrder);
+	if( TreeOrder.size() <=0)
+	{
+		std::cout<< "progression tree hasn't been built yet"<<endl;
+		return;
+	}
+
+	int *order = new int[TreeOrder.size()];
+	ofs<< "Sample Tree Order:"<<endl;
+	for( long int i = 0; i < TreeOrder.size(); i++)
+	{
+		order[i] = TreeOrder[i];
+		ofs<< TreeOrder[i]<<"\t";
+	}
+	ofs<<endl;
+
+	SPDModel->HierachicalClustering();
+	std::vector< Tree> FeatureTreeData = SPDModel->TreeData;
+	double **ftreedata = new double*[FeatureTreeData.size()];
+
+	for(int i = 0; i < FeatureTreeData.size(); i++)
+	{
+		ftreedata[i] = new double[4];
+		ftreedata[i][0] = FeatureTreeData[i].first;
+		ftreedata[i][1] = FeatureTreeData[i].second;
+		ftreedata[i][2] = (1 - FeatureTreeData[i].cor + 0.01) * 100;
+		ftreedata[i][3] = FeatureTreeData[i].parent;
+	}
+
+	clusclus *cc2 = new clusclus();
+	cc2->Initialize(ftreedata, FeatureTreeData.size() + 1);
+	cc2->GetOptimalLeafOrderD();
+	
+	ofs<< "feature optimal order:"<<endl;
+	for( int i = 0; i < cc2->num_samples; i++)
+	{
+		ofs<< cc2->optimalleaforder[i]<<"\t";
+	}
+	ofs<<endl;
+	ofs.close();
+	
+	vnl_matrix<double> mat;
+	SPDModel->GetMatrixData(mat);
+	for(int i = 0; i < mat.cols(); i++)
+	{
+		vnl_vector<double> coln = mat.get_column(i);
+		double max = abs( coln.max_value());
+		if( max != 0)
+		{
+			coln = coln / max;
+			mat.set_column(i, coln);
+		}
+	}
+	
+	// optimal order is the mst tree order
+	this->progressionHeatmap->setDataForHeatmap(mat.data_array(), order, cc2->optimalleaforder, TreeOrder.size(), cc2->num_samples);
+	this->progressionHeatmap->setDataForDendrograms(NULL, cc2->treedata);
+	this->progressionHeatmap->creatDataForHeatmap(1);	
+	this->progressionHeatmap->showSPDGraph();
+
+	for( int i = 0; i < FeatureTreeData.size(); i++)
+	{
+		delete ftreedata[i];
+	}
+	delete ftreedata;
+
+	delete cc2;
+	delete order;
+	
+	cout<<"finish simHeatmap..."<<endl;
 }

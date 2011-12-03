@@ -124,6 +124,10 @@ void TableWindow::createMenus()
 	exportAction = new QAction(tr("Save As..."), this);
 	connect(exportAction, SIGNAL(triggered()), this, SLOT(exportTable()));
 	exportMenu->addAction(exportAction);
+
+	exportIDAction = new QAction(tr("Export selected IDs"), this);
+	connect(exportIDAction, SIGNAL(triggered()), this, SLOT(exportSelectedIDs()));
+	exportMenu->addAction(exportIDAction);
 }
 
 // Exports the features data table to file
@@ -163,6 +167,23 @@ void TableWindow::exportTable()
 	DumpedTable.close();
 }
 
+void TableWindow::exportSelectedIDs()
+{
+	if(!this->tableView->model())
+		return;
+
+	QString Filename = QFileDialog::getSaveFileName( this, tr("Save Selected IDs"), QDir::currentPath(), tr("Plain Text Document (*.txt)") );
+    
+	ofstream TableOutputStream(Filename.toStdString().c_str());
+	std::set< long int> selectedIDs = this->selection->getSelections();
+	std::set< long int>::iterator iter;
+	for( iter = selectedIDs.begin(); iter != selectedIDs.end(); iter++)
+	{
+		TableOutputStream<< *iter <<"\t";
+	}
+	TableOutputStream.close();
+}
+
 void TableWindow::closeEvent(QCloseEvent *event)
 {
 	emit closing(this);
@@ -195,13 +216,6 @@ void TableWindow::showFilters()
 	filters->exec();
 	delete filters;
 }
-
-void TableWindow::GetSelectedRows()
-{
-	this->selectedRows = selAdapter->getSelRows();
-	this->rowsSelected = true;
-}
-
 
 //Sort does not work so well with the change to vtkTable. Removed for now!
 void TableWindow::sortBy()

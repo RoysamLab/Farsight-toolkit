@@ -5107,15 +5107,18 @@ void View3D::SPDAnalysis()
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		//this->SPDWin->setModels();
-		QMessageBox mes;
-		mes.setText("Please compute cell features first!");
-		mes.exec();
+		//QMessageBox mes;
+		//mes.setText("Please compute cell features first!");
+		//mes.exec();
 	}
 	else
 	{
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
+		featureTable->RemoveColumnByName("Soma X");
+		featureTable->RemoveColumnByName("Soma Y");
+		featureTable->RemoveColumnByName("Soma Z");
 		this->SPDWin->setModels( featureTable, this->CellModel->GetObjectSelection());
 	}
 
@@ -5139,7 +5142,7 @@ void View3D::ClusclusAnalysis()
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
-
+		
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->HeatmapWin->runClusclus();
 		this->HeatmapWin->showGraph();

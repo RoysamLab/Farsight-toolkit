@@ -291,7 +291,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		}
 		else
 		{
-			vertexIDarrays->InsertNextValue( i);   // which should be the cluster index
+			vertexIDarrays->InsertNextValue( this->indMapFromClusIndToVertex[i].size());   // which should be the cluster index
 		}
 	}
 
@@ -461,9 +461,9 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 		}
 
 		graphWin->SetSelectedIds( IDs);
-		//graphWin->SetSelectedIds2();  // only select the selected feature columns
+		graphWin->SetSelectedIds2();  // only select the selected feature columns
 	}
-	graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
+	//graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
 	//graphWin->view->GetRenderer()->Render();
 }
 
@@ -590,6 +590,7 @@ void GraphWindow::UpdateGraphView()
 		vtkSelection* selection = annotationLink->GetCurrentSelection();
 	
 		vtkSmartPointer<vtkIdTypeArray> vertexList = vtkSmartPointer<vtkIdTypeArray>::New();
+		vertexList->SetNumberOfComponents(1);
 
 		std::set<long int>::iterator iter = IDs.begin();
 		for( int id = 0; id < IDs.size(); id++, iter++)
@@ -610,7 +611,7 @@ void GraphWindow::UpdateGraphView()
 		UpdataLookupTable( updataIDes);
 
 		this->mainQTRenderWidget.GetRenderWindow()->Render();
-		//this->view->GetRenderer()->Render();
+		this->view->GetRenderer()->Render();
 		this->observerTag = annotationLink->AddObserver("AnnotationChangedEvent", this->selectionCallback);
 	}
 }
@@ -650,8 +651,17 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 
 		for( long int i = 0; i < checkNode.size(); i++)
 		{
-			shortest_hop( checkNode[i], noncheckNodeInd) =  shortest_hop( checkNode[i], checkNodeInd) + 1;
-			shortest_hop( noncheckNodeInd, checkNode[i]) =  shortest_hop( checkNode[i], checkNodeInd) + 1;
+			if( indMapFromClusIndToInd.size() <= 0)
+			{
+				shortest_hop( checkNode[i], noncheckNodeInd) =  shortest_hop( checkNode[i], checkNodeInd) + 1;
+				shortest_hop( noncheckNodeInd, checkNode[i]) =  shortest_hop( checkNode[i], checkNodeInd) + 1;
+			}
+			else
+			{
+				int size = ( this->indMapFromClusIndToInd[noncheckNodeInd].size() + this->indMapFromClusIndToInd[checkNodeInd].size()) / 2;
+				shortest_hop( checkNode[i], noncheckNodeInd) =  shortest_hop( checkNode[i], checkNodeInd) + size;
+				shortest_hop( noncheckNodeInd, checkNode[i]) =  shortest_hop( checkNode[i], checkNodeInd) + size;
+			}
 		}
 
 		mark[ noncheckNodeInd] = 1;
