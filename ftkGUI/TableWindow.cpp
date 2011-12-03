@@ -196,6 +196,13 @@ void TableWindow::showFilters()
 	delete filters;
 }
 
+void TableWindow::GetSelectedRows()
+{
+	this->selectedRows = selAdapter->getSelRows();
+	this->rowsSelected = true;
+}
+
+
 //Sort does not work so well with the change to vtkTable. Removed for now!
 void TableWindow::sortBy()
 {
