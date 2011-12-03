@@ -395,7 +395,7 @@ QString View3D::getSomaFile()
 {
 	QString somaDir = this->TraceEditSettings.value("somaDir", ".").toString();
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", somaDir, 
-		tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
+		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if(!somaFiles.isEmpty())
 	{
 		somaDir = QFileInfo(somaFiles).absolutePath();
@@ -1234,6 +1234,9 @@ void View3D::CreateGUIObjects()
 	this->ExtrudeROIButton = new QPushButton("Extrude ROI points", this->CentralWidget);
 	connect(this->ExtrudeROIButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
 
+	this->ReadBinaryVOIButton = new QPushButton("Read Binary VOI Image", this->CentralWidget);
+	connect(this->ReadBinaryVOIButton, SIGNAL(clicked()), this, SLOT(ReadVOI()));
+
 	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
 	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
 
@@ -1580,6 +1583,7 @@ void View3D::CreateLayout()
 	QVBoxLayout *CursorROILayout = new QVBoxLayout();
 	CursorROILayout->addWidget(this->createNewROIPointButton);
 	CursorROILayout->addWidget(this->ExtrudeROIButton);
+	CursorROILayout->addWidget(this->ReadBinaryVOIButton);
 	this->ExtrudeROIButton->setEnabled(false);
 	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
 	this->CalculateDistanceToDeviceButton->setEnabled(false);
@@ -2976,65 +2980,11 @@ void View3D::AddROIPoint()
 }
 void View3D::DrawROI()
 {
-	
-	//if (this->ROIPoints.size() < 3)
-	//{
-	//	std::cout<< "not enough points\n";
-	//	return;
-	//}
-
 	if (!this->VOIType->ExtrudeVOI())
 	{
 		return;
 	}
-	////// Add the points to a vtkPoints object
-	//vtkSmartPointer<vtkPoints> vtkROIpoints = vtkSmartPointer<vtkPoints>::New();
-	//
-	//std::vector<double*>::iterator ROIPoints_iter;
-
-	//int count = 0;
-	//this->EditLogDisplay->append(QString("\nDefining ROI\n X\tY\tZ"));
-	//for (ROIPoints_iter = ROIPoints.begin(); ROIPoints_iter != ROIPoints.end(); ROIPoints_iter++)
-	//{
-	//	vtkROIpoints->InsertNextPoint(*ROIPoints_iter);
-	//	this->EditLogDisplay->append((QString("%1\t%2\t%3").arg((*ROIPoints_iter)[0]).arg((*ROIPoints_iter)[1]).arg((*ROIPoints_iter)[2])));
-	//	delete *ROIPoints_iter;
-	//	*ROIPoints_iter = NULL;
-	//	count++; //size of polygon vertex
-	//}
-
-	////
-	//vtkSmartPointer<vtkPolygon> ROI_Poly = vtkSmartPointer<vtkPolygon>::New();
-	//ROI_Poly->GetPointIds()->SetNumberOfIds(count);
-	//for (int i =0; i< count; i++)
-	//{
-	//	ROI_Poly->GetPointIds()->SetId(i,i);
-	//}
-
-	////build cell array
-	//vtkSmartPointer<vtkCellArray> ROI_Poly_CellArray = vtkSmartPointer<vtkCellArray>::New();
-	//ROI_Poly_CellArray->InsertNextCell(ROI_Poly);
-
-	//// Create a polydata to store everything in
-	//vtkSmartPointer<vtkPolyData> ROIpolydata = vtkSmartPointer<vtkPolyData>::New();
-	//ROIpolydata->SetPoints(vtkROIpoints);
-	//ROIpolydata->SetPolys(ROI_Poly_CellArray);
-
-	//vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
-	//extrude->SetInput( ROIpolydata);
-	//extrude->SetExtrusionTypeToNormalExtrusion();
-	////extrude->SetVector(0, 0, 1 );
-	//extrude->SetScaleFactor (100);
-	////extrude->CappingOff();
-	//extrude->Update();
-	//// Setup actor and mapper
-	//vtkSmartPointer<vtkPolyDataMapper> ROImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	//this->ROIExtrudedpolydata = extrude->GetOutput();
-	//ROImapper->SetInput(this->ROIExtrudedpolydata);
-
-	//this->ROIactor = vtkSmartPointer<vtkActor>::New();
 	//ROIactor->SetMapper(ROImapper);
-
 	//this->Renderer->AddActor(ROIactor);
 	this->Renderer->AddActor(this->VOIType->GetActor());
 	
@@ -3044,29 +2994,33 @@ void View3D::DrawROI()
 	this->CalculateDistanceToDeviceButton->setEnabled(true);
 }
 
-void View3D::CalculateDistanceToDevice()
+/////////////Trac's//////////////
+void View3D::ReadVOI()
 {
-	/*vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
-	cellLocator->SetDataSet(this->ROIExtrudedpolydata);
-	cellLocator->BuildLocator();*/
-	
+//QDialogue to read tiff or mhd image here
+	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", traceDir, 
+		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd " ));
+	//this->ImageActors->loadImage(nextFile.toStdString(), "Image");
+
+	if(!somaFiles.isEmpty())
+	{
+		this->VOIType->ReadBinaryVOI(somaFiles.toStdString());
+			
+		this->Renderer->AddActor(this->VOIType->GetActor());
+		
+		this->QVTK->GetRenderWindow()->Render();
+		this->createNewROIPointButton->setEnabled(false);
+		this->ExtrudeROIButton->setEnabled(false);
+		this->CalculateDistanceToDeviceButton->setEnabled(true);
+	}
+}
+/////////////////////////////////
+void View3D::CalculateDistanceToDevice()
+{	
 	unsigned int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
-		//for (unsigned int i = 0; i < cellCount; i++)
-		//{
-		//	//double testPoint[3] = {500, 600, 50};
-		//	double somaPoint[3];
-		//	CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
-		//	currCell->getSomaCoord(somaPoint);
-		//	//Find the closest points to TestPoint
-		//	double closestPoint[3];//the coordinates of the closest point will be returned here
-		//	double closestPointDist2; //the squared distance to the closest point will be returned here
-		//	vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
-		//	int subId; //this is rarely used (in triangle strips only, I believe)
-		//	cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
-		//	currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
-		//}//end for cell count
 		this->VOIType->CalculateCellDistanceToVOI(this->CellModel);
 		this->ShowCellAnalysis();
 	}

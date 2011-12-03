@@ -233,6 +233,7 @@ public slots:
 
 	void AddROIPoint();
 	void DrawROI();
+	void ReadVOI();
 	void CalculateDistanceToDevice();
 
 	void CalculateCellToCellDistanceGraph();
@@ -365,6 +366,7 @@ private:
 
 	QPushButton *createNewROIPointButton;
 	QPushButton *ExtrudeROIButton;
+	QPushButton *ReadBinaryVOIButton;
 	QPushButton *CalculateDistanceToDeviceButton;
 	QPushButton *CalculateCellDistanceButton;
 

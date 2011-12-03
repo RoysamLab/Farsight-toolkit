@@ -52,56 +52,6 @@ ImageRenderActors::~ImageRenderActors()
 
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 {
-	//if (ImageSource.empty())
-	//{
-	//	return -1;
-	//}
-	//imageFileHandle *newImage= new imageFileHandle;
-	//newImage->filename = ImageSource;
-	//newImage->tag = tag;
-	//newImage->renderStatus = false;
-	//newImage->ren2d = false;
-	//newImage->sliceActor = 0;
-	////newImage->colorTransferFunction = 0;
-	//newImage->ContourActor = 0;
-	//newImage->ContourFilter = 0;
-	//newImage->ContourMapper = 0;
-	//newImage->ImageData = 0;
-	////newImage->opacityTransferFunction = 0;
-	//newImage->volume = 0;
-	//newImage->volumeMapper = 0;
-	//#ifdef USE_GPUREN
-	//{
-	//	newImage->volumeMapperGPU = 0;
-	//}
-	//#endif
-	//newImage->volumeProperty = 0;
-	//newImage->reader = ReaderType::New();
-	//newImage->reader->SetFileName( ImageSource );
-	//newImage->x = 0;
-	//newImage->y = 0;
-	//newImage->z = 0;
-	////Test opening and reading the input file
-	//try
-	//{
-	//	newImage->reader->Update();
-	//}
-	//catch( itk::ExceptionObject & exp )
-	//{
-	//	std::cerr << "Exception thrown while reading the input file " << std::endl;
-	//	std::cerr << exp << std::endl;
-	//	//return EXIT_FAILURE;
-	//}
-	//newImage->Rescale = IntensityRescaleType::New();
-	//newImage->Rescale->SetInput( newImage->reader->GetOutput() );
-	//newImage->connector= ConnectorType::New();
-	//newImage->connector->SetInput( newImage->Rescale->GetOutput() );
-	//newImage->projectionConnector = ConnectorType::New();
-	//newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
-
-	//newImage->ImageData = newImage->connector->GetOutput();
-	//this->LoadedImages.push_back(newImage);
-	//return (int) (this->LoadedImages.size() -1);
 	return this->loadImage(ImageSource,tag, 0,0,0);
 }
 int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, double x, double y, double z)

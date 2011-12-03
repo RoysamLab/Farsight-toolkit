@@ -91,3 +91,26 @@ void VolumeOfInterest::CalculateCellDistanceToVOI(CellTraceModel *CellModel)
 		currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
 	}//end for cell count
 }
+void VolumeOfInterest::ReadBinaryVOI(std::string filename)
+{
+	ReaderType::Pointer contourReader = ReaderType::New();
+	contourReader->SetFileName(filename.c_str());	
+	try
+	{
+		contourReader->Update();
+	}
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while reading the input file " << std::endl;
+		std::cerr << exp << std::endl;
+		//return EXIT_FAILURE;
+	}
+	ConnectorType::Pointer connector = ConnectorType::New();
+	connector->SetInput( contourReader->GetOutput() );
+
+	vtkSmartPointer<vtkContourFilter> ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
+	ContourFilter->SetInput(connector->GetOutput() );
+	ContourFilter->SetValue(0,10);
+	ContourFilter->Update();
+	this->VOIPolyData = ContourFilter->GetOutput();
+}
