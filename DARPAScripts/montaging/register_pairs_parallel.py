@@ -73,8 +73,8 @@ def register(argv):
     threads_launched = 0
     for subprocess_command in subprocess_command_list:
         #while loop to check active processes to see if we can launch more threads
-        #while threads_launched >= multiprocessing.cpu_count():
-        while threads_launched >= 16:
+        while threads_launched >= multiprocessing.cpu_count():
+        #while threads_launched >= 16:
             threads_launched = 0
             still_launched_subp_list = []
             for launched_subp in launched_processes_list:                  
