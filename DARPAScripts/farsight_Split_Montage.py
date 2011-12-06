@@ -4,7 +4,7 @@ import math
  
 global foldername
 foldername=None
-tilesize=1000
+tilesize=1024
 
 ##############################
 ''' Start of actual script '''
