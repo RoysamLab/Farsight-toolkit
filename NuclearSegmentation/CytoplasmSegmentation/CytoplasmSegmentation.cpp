@@ -162,6 +162,7 @@ bool CytoplasmSegmentation::Run()
 		UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
 		dRegion.SetSize(2,0);
 		deFilter->SetExtractionRegion(dRegion);
+		deFilter->->SetDirectionCollapseToIdentity();
 		deFilter->SetInput( data );
 
 		DataCastType::Pointer dFilter = DataCastType::New();
@@ -185,6 +186,7 @@ bool CytoplasmSegmentation::Run()
 		UCharImageType3D::RegionType dRegion = data->GetLargestPossibleRegion();
 		dRegion.SetSize(2,0);
 		deFilter->SetExtractionRegion(dRegion);
+		deFilter->SetDirectionCollapseToIdentity();
 		deFilter->SetInput( data );
 
 		DataCastType::Pointer dFilter = DataCastType::New();
@@ -208,6 +210,7 @@ bool CytoplasmSegmentation::Run()
 	UShortImageType3D::RegionType lRegion = nuc->GetLargestPossibleRegion();
 	lRegion.SetSize(2,0);
 	leFilter->SetExtractionRegion(lRegion);
+	leFilter->->SetDirectionCollapseToIdentity();
 	leFilter->SetInput( nuc );
 
 	LabelCastType::Pointer lFilter = LabelCastType::New();
