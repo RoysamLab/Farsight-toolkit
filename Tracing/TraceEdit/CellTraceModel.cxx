@@ -180,7 +180,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Terminal Parent Diameter Max");
 	this->headers.push_back("Terminal Parent Diameter Min");
 
-	this->headers.push_back("Min Terminal Hillman Thresh");
+	this->headers.push_back("Min Terminal Hillman Thresh"); //extend for all branches
 	this->headers.push_back("Average Terminal Hillman Thresh");
 	this->headers.push_back("Max Terminal Hillman Thresh");
 
