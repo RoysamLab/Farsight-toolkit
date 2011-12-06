@@ -248,9 +248,9 @@ vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 	std::vector<QString> BoundsHeaders;
 	BoundsHeaders.clear();
 	BoundsHeaders.push_back("Cell ID");
-	BoundsHeaders.push_back("Soma X");
-	BoundsHeaders.push_back("Soma Y");
-	BoundsHeaders.push_back("Soma Z");
+	BoundsHeaders.push_back("Soma X Pos");
+	BoundsHeaders.push_back("Soma Y Pos");
+	BoundsHeaders.push_back("Soma Z Pos");
 	BoundsHeaders.push_back("Min X");
 	BoundsHeaders.push_back("Max X");
 	BoundsHeaders.push_back("Min Y");

@@ -5154,9 +5154,9 @@ void View3D::SPDAnalysis()
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
-		featureTable->RemoveColumnByName("Soma X");
-		featureTable->RemoveColumnByName("Soma Y");
-		featureTable->RemoveColumnByName("Soma Z");
+		featureTable->RemoveColumnByName("Soma X Pos");
+		featureTable->RemoveColumnByName("Soma Y Pos");
+		featureTable->RemoveColumnByName("Soma Z Pos");
 		this->SPDWin->setModels( featureTable, this->CellModel->GetObjectSelection());
 	}
 
