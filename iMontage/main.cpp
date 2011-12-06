@@ -21,6 +21,8 @@ int main(int argc, char* argv[])
 	char* xml_file = argv[1];
 	TiXmlDocument project_doc(argv[1]);
 
+	vcl_string dir_path = vul_file::dirname(xml_file);
+
 	//Handles if the file does not exist or is not a valid XML file
 	if (!project_doc.LoadFile())
 	{
@@ -53,13 +55,12 @@ int main(int argc, char* argv[])
 
 		if (type == "Trace")
 		{
-			fileName = current_element->Attribute("FileName");
+			fileName = dir_path + "/" + vul_file::strip_directory(current_element->Attribute("FileName"));
 			current_element->QueryIntAttribute("tX", &tX);
 			current_element->QueryIntAttribute("tY", &tY);
 			current_element->QueryIntAttribute("tZ", &tZ);
-			std::cout << fileName << " " << tX << " " << tY << " " << tZ << std::endl;
-
-
+			//std::cout << fileName << " " << tX << " " << tY << " " << tZ << std::endl;			
+					
 			char *swc_file = (char *)fileName.c_str();	//converting const char * to char *
 			std::cout << "Reading SWC file: " << swc_file << std::endl;
 			
@@ -70,7 +71,7 @@ int main(int argc, char* argv[])
 			CellTraceModel* cells = new CellTraceModel(tobj->CalculateCellFeatures());
 			
 			//reset fileName and swc_file
-			fileName = current_element->Attribute("FileName");
+			fileName = dir_path + "/" + vul_file::strip_directory(current_element->Attribute("FileName"));
 			swc_file = (char *)fileName.c_str();
 			//std::cout << swc_file << std::endl;
 			
