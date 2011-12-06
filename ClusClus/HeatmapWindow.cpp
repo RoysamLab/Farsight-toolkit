@@ -1,38 +1,4 @@
 #include "HeatmapWindow.h"
-#define COLOR_MAP_SIZE 128
-const static rgb COLORMAP[COLOR_MAP_SIZE] = {rgb(0.0000, 0.0000, 0.5313),rgb(0.0000, 0.0000, 0.5625),rgb(0.0000, 0.0000, 0.5938),
-rgb(0.0000, 0.0000, 0.6250),rgb(0.0000, 0.0000, 0.6563),rgb(0.0000, 0.0000, 0.6875),rgb(0.0000, 0.0000, 0.7188),
-rgb(0.0000, 0.0000, 0.7500),rgb(0.0000, 0.0000, 0.7813),rgb(0.0000, 0.0000, 0.8125),rgb(0.0000, 0.0000, 0.8438),
-rgb(0.0000, 0.0000, 0.8750),rgb(0.0000, 0.0000, 0.9063),rgb(0.0000, 0.0000, 0.9375),rgb(0.0000, 0.0000, 0.9688),
-rgb(0.0000, 0.0000, 1.0000),rgb(0.0000, 0.0313, 1.0000),rgb(0.0000, 0.0625, 1.0000),rgb(0.0000, 0.0938, 1.0000),
-rgb(0.0000, 0.1250, 1.0000),rgb(0.0000, 0.1563, 1.0000),rgb(0.0000, 0.1875, 1.0000),rgb(0.0000, 0.2188, 1.0000),
-rgb(0.0000, 0.2500, 1.0000),rgb(0.0000, 0.2813, 1.0000),rgb(0.0000, 0.3125, 1.0000),rgb(0.0000, 0.3438, 1.0000),
-rgb(0.0000, 0.3750, 1.0000),rgb(0.0000, 0.4063, 1.0000),rgb(0.0000, 0.4375, 1.0000),rgb(0.0000, 0.4688, 1.0000),
-rgb(0.0000, 0.5000, 1.0000),rgb(0.0000, 0.5313, 1.0000),rgb(0.0000, 0.5625, 1.0000),rgb(0.0000, 0.5938, 1.0000),
-rgb(0.0000, 0.6250, 1.0000),rgb(0.0000, 0.6563, 1.0000),rgb(0.0000, 0.6875, 1.0000),rgb(0.0000, 0.7188, 1.0000),
-rgb(0.0000, 0.7500, 1.0000),rgb(0.0000, 0.7813, 1.0000),rgb(0.0000, 0.8125, 1.0000),rgb(0.0000, 0.8438, 1.0000),
-rgb(0.0000, 0.8750, 1.0000),rgb(0.0000, 0.9063, 1.0000),rgb(0.0000, 0.9375, 1.0000),rgb(0.0000, 0.9688, 1.0000),
-rgb(0.0000, 1.0000, 1.0000),rgb(0.0313, 1.0000, 0.9688),rgb(0.0625, 1.0000, 0.9375),rgb(0.0938, 1.0000, 0.9063),
-rgb(0.1250, 1.0000, 0.8750),rgb(0.1563, 1.0000, 0.8438),rgb(0.1875, 1.0000, 0.8125),rgb(0.2188, 1.0000, 0.7813),
-rgb(0.2500, 1.0000, 0.7500),rgb(0.2813, 1.0000, 0.7188),rgb(0.3125, 1.0000, 0.6875),rgb(0.3438, 1.0000, 0.6563),
-rgb(0.3750, 1.0000, 0.6250),rgb(0.4063, 1.0000, 0.5938),rgb(0.4375, 1.0000, 0.5625),rgb(0.4688, 1.0000, 0.5313),
-rgb(0.5000, 1.0000, 0.5000),rgb(0.5313, 1.0000, 0.4688),rgb(0.5625, 1.0000, 0.4375),rgb(0.5938, 1.0000, 0.4063),
-rgb(0.6250, 1.0000, 0.3750),rgb(0.6563, 1.0000, 0.3438),rgb(0.6875, 1.0000, 0.3125),rgb(0.7188, 1.0000, 0.2813),
-rgb(0.7500, 1.0000, 0.2500),rgb(0.7813, 1.0000, 0.2188),rgb(0.8125, 1.0000, 0.1875),rgb(0.8438, 1.0000, 0.1563),
-rgb(0.8750, 1.0000, 0.1250),rgb(0.9063, 1.0000, 0.0938),rgb(0.9375, 1.0000, 0.0625),rgb(0.9688, 1.0000, 0.0313),
-rgb(1.0000, 1.0000, 0.0000),rgb(1.0000, 0.9688, 0.0000),rgb(1.0000, 0.9375, 0.0000),rgb(1.0000, 0.9063, 0.0000),
-rgb(1.0000, 0.8750, 0.0000),rgb(1.0000, 0.8438, 0.0000),rgb(1.0000, 0.8125, 0.0000),rgb(1.0000, 0.7813, 0.0000),
-rgb(1.0000, 0.7500, 0.0000),rgb(1.0000, 0.7188, 0.0000),rgb(1.0000, 0.6875, 0.0000),rgb(1.0000, 0.6563, 0.0000),
-rgb(1.0000, 0.6250, 0.0000),rgb(1.0000, 0.5938, 0.0000),rgb(1.0000, 0.5625, 0.0000),rgb(1.0000, 0.5313, 0.0000),
-rgb(1.0000, 0.5000, 0.0000),rgb(1.0000, 0.4688, 0.0000),rgb(1.0000, 0.4375, 0.0000),rgb(1.0000, 0.4063, 0.0000),
-rgb(1.0000, 0.3750, 0.0000),rgb(1.0000, 0.3438, 0.0000),rgb(1.0000, 0.3125, 0.0000),rgb(1.0000, 0.2813, 0.0000),
-rgb(1.0000, 0.2500, 0.0000),rgb(1.0000, 0.2188, 0.0000),rgb(1.0000, 0.1875, 0.0000),rgb(1.0000, 0.1563, 0.0000),
-rgb(1.0000, 0.1250, 0.0000),rgb(1.0000, 0.0938, 0.0000),rgb(1.0000, 0.0625, 0.0000),rgb(1.0000, 0.0313, 0.0000),
-rgb(1.0000, 0.0000, 0.0000),rgb(0.9688, 0.0000, 0.0000),rgb(0.9375, 0.0000, 0.0000),rgb(0.9063, 0.0000, 0.0000),
-rgb(0.8750, 0.0000, 0.0000),rgb(0.8438, 0.0000, 0.0000),rgb(0.8125, 0.0000, 0.0000),rgb(0.7813, 0.0000, 0.0000),
-rgb(0.7500, 0.0000, 0.0000),rgb(0.7188, 0.0000, 0.0000),rgb(0.6875, 0.0000, 0.0000),rgb(0.6563, 0.0000, 0.0000),
-rgb(0.6250, 0.0000, 0.0000),rgb(0.5938, 0.0000, 0.0000),rgb(0.5625, 0.0000, 0.0000),rgb(0.5313, 0.0000, 0.0000),
-rgb(0.5000, 0.0000, 0.0000)};
 
 Heatmap::Heatmap(QWidget *parent)
 : QMainWindow(parent)
@@ -206,7 +172,47 @@ void Heatmap::creatDataForHeatmap(double powCof)
 	for(int i = 0; i < this->num_samples; i++)
 		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
 
-	FILE *fp = fopen("mapdata","w");
+	FILE *fp = fopen("mapdata.txt","w");
+	for(int i=0; i<num_samples; i++)
+	{
+		for(int j=0; j<num_features; j++)
+			fprintf(fp,"%f\t",mapdata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
+
+	if( this->connect_Data_Tree1 != NULL)
+	{
+		this->createDataForDendogram1(powCof);
+	}
+	if( this->connect_Data_Tree2 != NULL)
+	{
+		this->createDataForDendogram2(powCof);
+	}
+}
+
+void Heatmap::creatDataForProgressionHeatmap(double powCof)
+{
+	vector<double > temp;
+	temp.resize(num_features);
+
+	double** tempdata;
+	tempdata = new double*[this->num_samples];
+	for(int i = 0; i < this->num_samples; i++)
+		tempdata[i] = new double[this->num_features];
+
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order2[j]];
+		}
+	}
+
+	for(int i = 0; i < this->num_samples; i++)
+		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
+
+	FILE *fp = fopen("progressionmapdata.txt","w");
 	for(int i=0; i<num_samples; i++)
 	{
 		for(int j=0; j<num_features; j++)
@@ -614,20 +620,6 @@ void Heatmap::showSPDGraph()
 	this->showDendrogram2();
 	this->view->Render();
 	this->view->GetInteractor()->Start();
-}
-
-rgb Heatmap::GetRGBValue(double val)
-{
-	int index = COLOR_MAP_SIZE * val - 1;   // when val = 1; index should be the max index
-	if( index >= COLOR_MAP_SIZE)
-	{
-		index = COLOR_MAP_SIZE - 1;
-	}
-	else if( index < 0)
-	{
-		index = 0;
-	}
-	return COLORMAP[index];
 }
 
 void Heatmap::setDataForDendrograms(double** treedata1, double** treedata2)

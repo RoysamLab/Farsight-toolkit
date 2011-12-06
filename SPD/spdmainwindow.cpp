@@ -517,7 +517,7 @@ void SPDMainWindow::showProgressionHeatmap()
 		double max = abs( coln.max_value());
 		if( max != 0)
 		{
-			coln = coln / max;
+			coln = ( coln - coln.min_value()) / (coln.max_value() - coln.min_value());
 			mat.set_column(i, coln);
 		}
 	}
@@ -525,7 +525,7 @@ void SPDMainWindow::showProgressionHeatmap()
 	// optimal order is the mst tree order
 	this->progressionHeatmap->setDataForHeatmap(mat.data_array(), order, cc2->optimalleaforder, TreeOrder.size(), cc2->num_samples);
 	this->progressionHeatmap->setDataForDendrograms(NULL, cc2->treedata);
-	this->progressionHeatmap->creatDataForHeatmap(1);	
+	this->progressionHeatmap->creatDataForProgressionHeatmap(1);	
 	this->progressionHeatmap->showSPDGraph();
 
 	for( int i = 0; i < FeatureTreeData.size(); i++)

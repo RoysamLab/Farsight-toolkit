@@ -99,6 +99,8 @@
 #include <ftkCommon/ftkUtils.h>
 #include "ClusClus/clusclus.h"
 #include "ObjectSelection.h"
+#include "ftkGUI/ColorMap.h"
+
 using namespace std;
 
 /*class vtkHoverCallback : public vtkCommand
@@ -125,19 +127,6 @@ using namespace std;
     }
 };*/
 
-typedef struct srgb
-{
-	srgb( double rv, double gv, double bv)
-	{
-		r = rv;
-		g = gv;
-		b = bv;
-	};
-	double r;
-	double g;
-	double b;
-}rgb;
-
 class Heatmap : public QMainWindow
 {
     Q_OBJECT;
@@ -149,6 +138,7 @@ public:
 	void setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2);
 	void creatDataForHeatmap(double powCof);
+	void creatDataForProgressionHeatmap(double powCof);
 	void creatDataForSimilarMatrixHeatmap();
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
@@ -187,6 +177,21 @@ protected slots:
 	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 
 	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
+
+private:
+	rgb GetRGBValue(double val)
+	{
+		int index = COLOR_MAP_SIZE * val - 1;   // when val = 1; index should be the max index
+		if( index >= COLOR_MAP_SIZE)
+		{
+			index = COLOR_MAP_SIZE - 1;
+		}
+		else if( index < 0)
+		{
+			index = 0;
+		}
+		return COLORMAP[index];
+	};
 
 private:
 	QVTKWidget mainQTRenderWidget;
@@ -262,7 +267,6 @@ private:
 	bool    intersectionselect;
 	vtkIdType id1;
 	vtkIdType id2;
-	rgb GetRGBValue(double val);
 	std::set<long int> interselectedIDs;
 
 	clusclus *cc1;

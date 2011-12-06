@@ -33,6 +33,7 @@ SET( GUI_HDRS
 	PreprocessDialog.h
 	StatisticsToolbar.h
 	GraphWindow.h
+	ColorMap.h
 )
 
 

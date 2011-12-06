@@ -28,6 +28,8 @@
 #define ANGLE_STEP 90
 #define MAX_HOP 200
 
+double selectColor[3]={1,1,1};
+
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
 {
@@ -47,6 +49,15 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	this->dataTable = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
+	this->DistanceToDevice.fill(0);
+
+	/// Get the distance to device for each sample
+	int coln = this->dataTable->GetNumberOfColumns();
+	vnl_vector<double> distance(this->dataTable->GetNumberOfRows());
+	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	{
+		distance[i] = this->dataTable->GetValue(i, coln - 1).ToDouble();
+	}
 
 	for( long int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
@@ -76,6 +87,7 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 			this->indMapFromVertexToClusInd.insert( std::pair< int, int>(this->indMapFromIndToVertex[i], (*indexCluster)[i]));
 		}
 			/// rebuild the datamatrix for MST 
+		DistanceToDevice.set_size(clusterSize);
 		std::vector<int> clus;
 		for( int i = 0; i < clusterSize; i++)
 		{
@@ -88,10 +100,29 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 			this->indMapFromClusIndToVertex[index].push_back( this->indMapFromIndToVertex[i]);
 			this->indMapFromClusIndToInd[index].push_back( i);
 		}
+		for( int i = 0; i < clusterSize; i++)
+		{
+			std::vector<int> tmp = this->indMapFromClusIndToInd[i];
+			double sum = 0;
+			for( int j = 0; j < tmp.size(); j++)
+			{
+				sum += distance(tmp[j]);
+			}
+			DistanceToDevice[i] = sum / tmp.size();
+		}
 	}
 	else
 	{
+		DistanceToDevice = distance;
+	}
 
+	//DistanceToDevice = DistanceToDevice - DistanceToDevice.mean();
+	//vnl_vector<double>::abs_t var = DistanceToDevice.two_norm();
+	//DistanceToDevice = DistanceToDevice / var;
+	DistanceToDevice = (DistanceToDevice - DistanceToDevice.min_value()) / ( DistanceToDevice.max_value() - DistanceToDevice.min_value());
+	for( int i = 0; i < DistanceToDevice.size(); i++)
+	{
+		DistanceToDevice[i] = 1 - exp(- 5 * DistanceToDevice[i]);
 	}
 
 	if(!sels)
@@ -356,29 +387,41 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	vertexColors->SetName("Color");
 	
 	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
-	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
+
+	if(DistanceToDevice.sum() <= 0)    // distance is not available
 	{
-		vertexColors->InsertNextValue( i);
-		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
-    }
+		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			vertexColors->InsertNextValue( i);
+			this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
+		}
+	}
+	else
+	{
+		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			vertexColors->InsertNextValue( i);
+			this->lookupTable->SetTableValue(i, 1 - DistanceToDevice[i], 0, DistanceToDevice[i]); // color the vertices- blue
+		}
+	}
 	lookupTable->Build();
 
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
-	//graph->GetEdgeData()->AddArray(weights);
+	graph->GetEdgeData()->AddArray(weights);
 	
 	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
 	theme->SetLineWidth(5);
 	theme->SetCellOpacity(0.9);
 	theme->SetCellAlphaRange(0.8,0.8);
 	theme->SetPointSize(8);
-	theme->SetSelectedCellColor(1,0,0);
-	theme->SetSelectedPointColor(1,0,0); 
+	theme->SetSelectedCellColor(selectColor);
+	theme->SetSelectedPointColor(selectColor); 
 	theme->SetBackgroundColor(0,0,0); 
 
 	this->view->RemoveAllRepresentations();
 	this->view->SetRepresentationFromInput( graph);
-	this->view->SetEdgeLabelVisibility(true);
+	this->view->SetEdgeLabelVisibility(false);
 	this->view->SetColorVertices(true); 
 	this->view->SetVertexLabelVisibility(true);
 
@@ -540,15 +583,33 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		vertexnum = this->indMapFromClusIndToVertex.size();  // vertex size equals cluster size
 	}
 
-	for( vtkIdType i = 0; i < vertexnum; i++)
+	if(DistanceToDevice.sum() <= 0)    // distance is not available
 	{
-		if (selectedIDs.find(i) != selectedIDs.end())
+		for( vtkIdType i = 0; i < vertexnum; i++)
 		{
-			this->lookupTable->SetTableValue(i, 1.0, 0, 0); // color the vertices- red
+			if (selectedIDs.find(i) != selectedIDs.end())
+			{
+				this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
+			}
+		
+			else
+			{
+				this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
+			}
 		}
-		else
+	}
+	else
+	{
+		for( vtkIdType i = 0; i < vertexnum; i++)
 		{
-			this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
+			if (selectedIDs.find(i) != selectedIDs.end())
+			{
+				this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
+			}
+			else
+			{
+				this->lookupTable->SetTableValue(i, 1 - DistanceToDevice[i], 0, DistanceToDevice[i]); // color the vertices- blue
+			}
 		}
 	}
 	this->lookupTable->Build();

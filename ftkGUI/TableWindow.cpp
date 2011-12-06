@@ -64,7 +64,6 @@ void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 		if(selAdapter) delete selAdapter;
 		selAdapter = new SelectionAdapter( this->tableView );
 		selAdapter->SetPair(selection,mod);
-		connect(selAdapter, SIGNAL(newRowsSelected()), this, SLOT(GetSelectedRows()));
 	}
 
 	if(sels2)///////////////////////////////////////////////////////////

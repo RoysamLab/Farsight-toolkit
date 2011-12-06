@@ -20,6 +20,7 @@
 #include <vector>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
+#include "ftkGUI/ColorMap.h"
 
 typedef struct Point
 {
@@ -73,6 +74,7 @@ signals:
 
 private:
 	vtkSmartPointer<vtkTable> dataTable;
+	vnl_vector<double> DistanceToDevice;
 	ObjectSelection *selection;
 	ObjectSelection *selection2;
 	   
