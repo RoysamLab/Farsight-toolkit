@@ -121,25 +121,25 @@ int main(int argc, char* argv[])
 				double bounds[6];
 				cell->getCellBounds(bounds);
 
-				if (bounds[0] < tX + image_x_size * 0.01)	//if the left side of the traces falls inside the 10% on the left of the image, it is most likely in the left overlap region
+				if (bounds[0] < tX + image_x_size * 0.01)	//if the left side of the traces falls inside the 1% on the left of the image, it is most likely in the left overlap region
 				{
 					//std::cout << "Cell " << k << " rejected for overlap on the left side of the image" << std::endl;
 					continue;				//for now do nothing
 				}
 
-				if (bounds[1] > tX + image_x_size * 0.99)	//if the right side of the traces falls inside the 10% on the right of the image, it is most likely in the right overlap region
+				if (bounds[1] > tX + image_x_size * 0.99)	//if the right side of the traces falls inside the 1% on the right of the image, it is most likely in the right overlap region
 				{
 					//std::cout << "Cell " << k << " rejected for overlap on the right side of the image" << std::endl;
 					continue;				//for now do nothing
 				}
 
-				if (bounds[2] < tY + image_y_size * 0.01)	//if the top of the traces falls inside the 10% on the top of the image, it is most likely in the top overlap region
+				if (bounds[2] < tY + image_y_size * 0.01)	//if the top of the traces falls inside the 1% on the top of the image, it is most likely in the top overlap region
 				{
 					//std::cout << "Cell " << k << " rejected for overlap on the top of the image" << std::endl;
 					continue;
 				}
 
-				if (bounds[3] > tY + image_y_size * 0.99)	//if the bottom of the traces falls inside the 10% on the bottom of the image, it is most likely in the bottom overlap region
+				if (bounds[3] > tY + image_y_size * 0.99)	//if the bottom of the traces falls inside the 1% on the bottom of the image, it is most likely in the bottom overlap region
 				{
 					//std::cout << "Cell " << k << " rejected for overlap on the bottom of the image" << std::endl;
 					continue;
