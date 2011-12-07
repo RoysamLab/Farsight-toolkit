@@ -179,13 +179,21 @@ public:
 	double getOpacityValue();
 	void setOpacityValueMax(double opacity);
 	double getOpacityValueMax();
+	void setColorValues(int value);
 	void getImageBounds(double bounds[]);
 	void setImageBounds(double bounds[]);
 	double* getSliceBounds();
+
+	struct ColorType
+	{
+		double red;
+		double green;
+		double blue;
+	};
 private:
 	bool useGPURendering;
-	void syncColorTransfetFunction();
-	void syncOpacityTransfetFunction();
+	void syncColorTransferFunction();
+	void syncOpacityTransferFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
@@ -193,6 +201,7 @@ private:
 	std::vector<double> TotalImageSize;
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
+	int colorValue;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 	double sliceBounds[6];
 

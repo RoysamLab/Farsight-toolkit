@@ -2676,7 +2676,16 @@ void View3D::createRayCastSliders()
 	this->BrightnessSlider->setValue(this->ImageActors->getBrightness());
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
+	
+	QStringList ColorProfileList;
+	ColorProfileList << "RGB" << "Red" << "Green" << "Blue" << "Gray";
+	this->ColorProfileCombo = new QComboBox;
+	this->ColorProfileCombo->addItems(ColorProfileList);
+	connect(this->ColorProfileCombo, SIGNAL(activated(int)), this, SLOT(RayCastColorValueChanged(int)));
+
 	//add the widgets to the bar
+	this->RaycastBar->addWidget(new QLabel("Color Profile"));
+	this->RaycastBar->addWidget(this->ColorProfileCombo);
 	this->RaycastBar->addWidget(new QLabel("Opacity Threshold"));
 	this->RaycastBar->addWidget(this->OpacitySpin);
 	this->RaycastBar->addWidget(this->OpacitySlider);
@@ -2705,13 +2714,18 @@ void View3D::RayCastOpacityChanged(int value)
 	this->ImageActors->setOpacity(value);
 	this->TraceEditSettings.setValue("RayCast/Opacity", value);
 	this->QVTK->GetRenderWindow()->Render();
-
 }
 
 void View3D::RayCastOpacityValueChanged(double value)
 {
 	this->ImageActors->setOpacityValue(value);
 	this->TraceEditSettings.setValue("RayCast/OpacityValue", value);
+	this->QVTK->GetRenderWindow()->Render();
+}
+
+void View3D::RayCastColorValueChanged(int value)
+{
+	this->ImageActors->setColorValues(value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 

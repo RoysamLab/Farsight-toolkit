@@ -28,11 +28,12 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity1Value = .1;
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
+	this->colorValue = 0;
 	this->RaycastSampleDist = .2;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
-	this->syncOpacityTransfetFunction();
+	this->syncOpacityTransferFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
-	this->syncColorTransfetFunction();
+	this->syncColorTransferFunction();
 	this->TotalImageSize.clear();
 	for (int i = 0; i <6; i++)
 	{
@@ -317,7 +318,7 @@ void ImageRenderActors::setColorValues(double r, double g, double b)
 	this->r = r;
 	this->g = g;
 	this->b = b;
-	this->syncColorTransfetFunction();
+	this->syncColorTransferFunction();
 }
 void ImageRenderActors::setColorValues(int i, double value)
 {
@@ -333,12 +334,12 @@ void ImageRenderActors::setColorValues(int i, double value)
 	{
 		this->b = value;
 	}
-	this->syncColorTransfetFunction();
+	this->syncColorTransferFunction();
 }
 void ImageRenderActors::setBrightness(int value)
 {
 	this->brightness = (double)value;
-	this->syncColorTransfetFunction();
+	this->syncColorTransferFunction();
 }
 int ImageRenderActors::getBrightness()
 {
@@ -347,7 +348,7 @@ int ImageRenderActors::getBrightness()
 void ImageRenderActors::setOpacity(int value)
 {
 	this->opacity1 = (double ) value;
-	this->syncOpacityTransfetFunction();
+	this->syncOpacityTransferFunction();
 }
 int ImageRenderActors::getOpacity()
 {
@@ -356,25 +357,100 @@ int ImageRenderActors::getOpacity()
 void ImageRenderActors::setOpacityValue(double opacity)
 {
 	this->opacity1Value = opacity;
-	this->syncOpacityTransfetFunction();
+	this->syncOpacityTransferFunction();
 }
 double ImageRenderActors::getOpacityValue()
 {
 	return this->opacity1Value;
 }
-void ImageRenderActors::syncColorTransfetFunction()
+void ImageRenderActors::setColorValues(int value)
+{
+	this->colorValue = value;
+	this->syncColorTransferFunction();
+}
+void ImageRenderActors::syncColorTransferFunction()
 {
 	this->colorTransferFunction->RemoveAllPoints();
 	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
-	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, 0, 0, .5);//blue
-	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, 0, .5, 0);//green
-	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, .5, 0, 0);//red
+
+	ColorType colorPoint1, colorPoint2, colorPoint3;
+	
+	//Make the 3 points to be added to the color transformer. 
+	//These 3 RGB points describe 3 curves that converts how to tranform the original RGB values (which are grayscale) to their new values.
+	switch (colorValue)
+	{
+		case 1: //red
+			colorPoint1.red = 0.11;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.0; 
+			colorPoint2.red = 0.59;		colorPoint2.blue = 0.0;		colorPoint2.green = 0.0;
+			colorPoint3.red = 0.3;		colorPoint3.blue = 0.0;		colorPoint3.green = 0.0;
+			break;
+		case 2: //green
+			colorPoint1.red = 0.0;		colorPoint1.blue = 0.11;	colorPoint1.green = 0.0;
+			colorPoint2.red = 0.0;		colorPoint2.blue = 0.59;	colorPoint2.green = 0.0;
+			colorPoint1.red = 0.0;		colorPoint1.blue = 0.3;		colorPoint1.green = 0.0;
+			break;
+		case 3: //blue
+			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.11;
+			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.59;
+			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.3;
+			break;
+		case 4: //gray
+			colorPoint1.red = 0.75;		colorPoint1.blue = 0.75;	colorPoint1.green = 0.75;
+			colorPoint2.red = 0.75;		colorPoint2.blue = 0.75;	colorPoint2.green = 0.75;
+			colorPoint3.red = 0.75;		colorPoint3.blue = 0.75;	colorPoint3.green = 0.75;
+			break;
+		default:
+			colorPoint1.red = 0.5;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.0;
+			colorPoint2.red = 0.0;		colorPoint2.blue = 0.5;		colorPoint2.green = 0.0;
+			colorPoint3.red = 0.0;		colorPoint3.blue = 0.0;		colorPoint3.green = 0.5;
+	}
+	
+	//Add those 3 points into the color transformer
+	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, colorPoint1.red, colorPoint1.blue, colorPoint1.green);
+	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, colorPoint2.red, colorPoint2.blue, colorPoint2.green);
+	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, colorPoint3.red, colorPoint3.blue, colorPoint3.green);
+
+	/*double blueChannelcolor[3] = {0.0,0.0,0.0};
+	double greenChannelcolor[3] = {0.0,0.0,0.0};
+	double redChannelcolor[3] = {0.0,0.0,0.0};*/
+
+	//switch (colorValue)
+	//{
+	//	case 1: //red
+	//		blueChannelcolor[0] = .11;
+	//		greenChannelcolor[0] = .59;
+	//		redChannelcolor[0] = .3;
+	//		break;
+	//	case 2: //green
+	//		blueChannelcolor[1] = .11;
+	//		greenChannelcolor[1] = .59;
+	//		redChannelcolor[1] = .3;
+	//		break;
+	//	case 3: //blue
+	//		blueChannelcolor[2] = .11;
+	//		greenChannelcolor[2] = .59;
+	//		redChannelcolor[2] = .3;
+	//		break;
+	//	case 4: //gray
+	//		blueChannelcolor[0] = blueChannelcolor[1] = blueChannelcolor[2] = .75;
+	//		greenChannelcolor[0] = greenChannelcolor[1] = greenChannelcolor[2] = .75;
+	//		redChannelcolor[0] = redChannelcolor[1] = redChannelcolor[2] = .75;
+	//		break;
+	//	default: 
+	//		blueChannelcolor[2] = .5;
+	//		greenChannelcolor[1] = .5;
+	//		redChannelcolor[0] = .5;
+	//		break; 
+	//}
+	//this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, blueChannelcolor[0],blueChannelcolor[1],blueChannelcolor[2]);//blue
+	//this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, greenChannelcolor[0],greenChannelcolor[1],greenChannelcolor[2]);//green
+	//this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, redChannelcolor[0], redChannelcolor[1], redChannelcolor[2]);//red
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
 		this->LoadedImages[i]->volume->Update();
 	}
 }
-void ImageRenderActors::syncOpacityTransfetFunction()
+void ImageRenderActors::syncOpacityTransferFunction()
 {
 	this->opacityTransferFunction->RemoveAllPoints();
 	this->opacityTransferFunction->AddPoint(2,0.0);

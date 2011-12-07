@@ -224,6 +224,7 @@ public slots:
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
+	void RayCastColorValueChanged(int value);
 	void showPTin3D(double value);
 	void getPosPTin3D();
 	void setPTtoSoma();
@@ -501,6 +502,7 @@ private:
 	QSpinBox * OpacitySpin, * BrightnessSpin;
 	QDoubleSpinBox * OpacityValueSpin;
 	QSlider *OpacitySlider, *BrightnessSlider;
+	QComboBox *ColorProfileCombo;
 
 	struct projection {
 		double roll;
