@@ -25,6 +25,9 @@
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
 
+#include "vtkXMLPolyDataReader.h"
+#include "vtkXMLPolyDataWriter.h"
+
 //FTK Includes
 #include "CellTrace.h"
 #include "CellTraceModel.h"
@@ -43,6 +46,8 @@ public:
 	vtkSmartPointer<vtkActor> GetActor();
 	void CalculateCellDistanceToVOI(CellTraceModel *CellModel);
 	void ReadBinaryVOI(std::string filename);
+	void ReadVTPVOI(std::string filename);
+	void WriteVTPVOI(std::string filename);
 private:
 	std::vector<double*> ROIPoints;
 	vtkSmartPointer<vtkPolyData> VOIPolyData;

@@ -234,6 +234,7 @@ public slots:
 	void AddROIPoint();
 	void DrawROI();
 	void ReadVOI();
+	void WriteVOI();
 	void CalculateDistanceToDevice();
 
 	void CalculateCellToCellDistanceGraph();
@@ -367,6 +368,7 @@ private:
 	QPushButton *createNewROIPointButton;
 	QPushButton *ExtrudeROIButton;
 	QPushButton *ReadBinaryVOIButton;
+	QPushButton *WriteVOIButton;
 	QPushButton *CalculateDistanceToDeviceButton;
 	QPushButton *CalculateCellDistanceButton;
 
@@ -405,7 +407,7 @@ private:
 #ifdef USE_SPD
 	SPDMainWindow *SPDWin;
 #endif
-#ifdef	USE_ClusClus
+#ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
 #endif
 

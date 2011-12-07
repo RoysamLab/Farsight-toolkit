@@ -110,7 +110,22 @@ void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 
 	vtkSmartPointer<vtkContourFilter> ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
 	ContourFilter->SetInput(connector->GetOutput() );
-	ContourFilter->SetValue(0,10);
+	ContourFilter->SetValue(0,1);
 	ContourFilter->Update();
 	this->VOIPolyData = ContourFilter->GetOutput();
+}
+void VolumeOfInterest::ReadVTPVOI(std::string filename)
+{
+	// Read volume data from VTK's .vtp file
+	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+	reader->SetFileName(filename.c_str());
+	reader->Update();
+	this->VOIPolyData = reader->GetOutput();
+}
+void VolumeOfInterest::WriteVTPVOI(std::string filename)
+{  
+	vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	writer->SetFileName(filename.c_str());
+	writer->SetInput(this->VOIPolyData);
+	writer->Write();
 }

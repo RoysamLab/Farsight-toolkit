@@ -1237,6 +1237,9 @@ void View3D::CreateGUIObjects()
 	this->ReadBinaryVOIButton = new QPushButton("Read Binary VOI Image", this->CentralWidget);
 	connect(this->ReadBinaryVOIButton, SIGNAL(clicked()), this, SLOT(ReadVOI()));
 
+	this->WriteVOIButton = new QPushButton("Write VOI Image", this->CentralWidget);
+	connect(this->WriteVOIButton, SIGNAL(clicked()), this, SLOT(WriteVOI()));
+
 	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
 	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
 
@@ -1584,6 +1587,7 @@ void View3D::CreateLayout()
 	CursorROILayout->addWidget(this->createNewROIPointButton);
 	CursorROILayout->addWidget(this->ExtrudeROIButton);
 	CursorROILayout->addWidget(this->ReadBinaryVOIButton);
+	CursorROILayout->addWidget(this->WriteVOIButton);
 	this->ExtrudeROIButton->setEnabled(false);
 	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
 	this->CalculateDistanceToDeviceButton->setEnabled(false);
@@ -3038,19 +3042,35 @@ void View3D::ReadVOI()
 //QDialogue to read tiff or mhd image here
 	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", traceDir, 
-		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd " ));
-	//this->ImageActors->loadImage(nextFile.toStdString(), "Image");
+		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd );; VTP ( *vtp ) " ));
 
 	if(!somaFiles.isEmpty())
 	{
-		this->VOIType->ReadBinaryVOI(somaFiles.toStdString());
-			
+		if (somaFiles.endsWith(".vtp"))
+		{
+			this->VOIType->ReadVTPVOI(somaFiles.toStdString());
+		}
+		else
+		{
+			this->VOIType->ReadBinaryVOI(somaFiles.toStdString());
+		}	
 		this->Renderer->AddActor(this->VOIType->GetActor());
 		
 		this->QVTK->GetRenderWindow()->Render();
 		this->createNewROIPointButton->setEnabled(false);
 		this->ExtrudeROIButton->setEnabled(false);
 		this->CalculateDistanceToDeviceButton->setEnabled(true);
+	}
+}
+
+void  View3D::WriteVOI()
+{
+	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString somaFiles = QFileDialog::getSaveFileName(this, "Save Volume as" , traceDir, 
+		tr("VTK Data Format ( *vtp ) " ) );
+	if(!somaFiles.isEmpty())
+	{
+		this->VOIType->WriteVTPVOI(somaFiles.toStdString());
 	}
 }
 /////////////////////////////////
@@ -5166,7 +5186,7 @@ void View3D::SPDAnalysis()
 
 void View3D::ClusclusAnalysis()
 {
-#ifdef USE_ClusClus
+#ifdef USE_Clusclus
 	this->HeatmapWin = new Heatmap();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
