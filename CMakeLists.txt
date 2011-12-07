@@ -42,6 +42,7 @@ OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
 OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
 OPTION( BUILD_FTKVOTING "Build Radial Voting" OFF)
+OPTION( BUILD_Batch_Distance2Device "Build Distance to Device Batch Processing Code" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -342,6 +343,10 @@ IF (BUILD_ROLLINGBALLFILTER)
 	SUBDIRS( RollingBallFilter )
 ENDIF (BUILD_ROLLINGBALLFILTER)
 
+IF (BUILD_Batch_Distance2Device)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Batch_Distance2Device )
+	SUBDIRS( Batch_Distance2Device )
+ENDIF (BUILD_Batch_Distance2Device)
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
