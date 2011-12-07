@@ -6,14 +6,15 @@
 #include <tinyxml/tinyxml.h>
 #include "vul/vul_file.h"
 #include "ftkCommon/ftkUtils.h"
+#include "VolumeOfInterest.h"
 
 int main(int argc, char* argv[])
 {
 
-	if (argc < 2)
+	if (argc < 3)
 	{
 		std::cout << "Must run program with correct number of arguments" << std::endl;
-		std::cout << "Usage: " << argv[0] << " project_xml_file" << std::endl;
+		std::cout << "Usage: " << argv[0] << " project_xml_file.xml vtkpolydata.vtp" << std::endl;
 		return -1;
 	}
 
@@ -79,6 +80,10 @@ int main(int argc, char* argv[])
 	}
 	CellTraceModel* cells = new CellTraceModel(tobj->CalculateCellFeatures());
 	
+        VolumeOfInterest *voi = new VolumeOfInterest();
+        voi->ReadVTPVOI(args[2]);
+        voi->CalculateCellDistanceToVOI(cells);
+
+
 	ftk::SaveTable(vul_file::strip_extension(argv[1]) + ".txt", cells->getDataTable());
-	
 }
