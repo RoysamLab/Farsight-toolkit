@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 	CellTraceModel* cells = new CellTraceModel(tobj->CalculateCellFeatures());
 	
         VolumeOfInterest *voi = new VolumeOfInterest();
-        voi->ReadVTPVOI(args[2]);
+        voi->ReadVTPVOI(argv[2]);
         voi->CalculateCellDistanceToVOI(cells);
 
 
