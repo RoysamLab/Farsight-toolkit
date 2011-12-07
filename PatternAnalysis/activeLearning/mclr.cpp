@@ -48,14 +48,16 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	test_data.set_size(test_counter,data.cols());
 
 	test_counter = 0;
-
+	//variable to keep track of the number of rows deleted
+	int num_del_rows = 0;
 	for(int i= 0;i<data.rows();++i)
 	{
 		if(classes(i)!=-1)
 		{	
 			train_data.set_row(train_counter,data.get_row(i));
 			++train_counter;
-			test_table->RemoveRow(i);
+			test_table->RemoveRow(i - num_del_rows);
+			++num_del_rows;
 		}
 		else
 		{
@@ -88,7 +90,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	// Used in active label selection
 	stop_cond.set_size(2);
 	stop_cond[0] = 1e-5;
-	stop_cond[1] = 0.01;
+	stop_cond[1] = 0.1;
 	delta = 1e-9; // used for approximating |w| 
 
 	no_of_features = x.rows();
@@ -826,9 +828,9 @@ MCLR::model MCLR::Get_Training_Model()
 
 
 	m.FIM = hessian*-1;
-	//m.CRB = vnl_matrix_inverse<double>(hessian);
+	m.CRB = vnl_matrix_inverse<double>(hessian);
 	//// quirk of vnl ...
-	//m.CRB = m.CRB*-1;
+	m.CRB = m.CRB*-1;
 
 
 
