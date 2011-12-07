@@ -6,6 +6,7 @@
 #include <string>
 #include "vul/vul_file.h"
 #include <fstream>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -20,7 +21,7 @@ int main(int argc, char* argv[])
 	char *arg1 = argv[1];
 
 	//Make the file names
-	vcl_string fileName = vul_file::strip_directory(arg1);
+	vcl_string fileName = vul_file::strip_directory(argv[1]);
 	vcl_string fileName_no_ext = vul_file::strip_extension(fileName);	
 
 	//Some typedefs to make things easier to read later
@@ -85,7 +86,7 @@ int main(int argc, char* argv[])
 	WriterType::Pointer writer = WriterType::New();
 
 	//Write the file names to a txt file
-	ofstream list_of_tile_filenames;
+	std::ofstream list_of_tile_filenames;
 	list_of_tile_filenames.open("list_of_tile_filenames.txt");
 
 	for (int k = 0; k < input_image_size[0]; k+=1024)
@@ -131,7 +132,7 @@ int main(int argc, char* argv[])
 				std::cerr << err << std::endl;
 				return -1;
 			}
-			list_of_tile_filenames.write << output_name_stream.str() << "\n";
+			list_of_tile_filenames << output_name_stream.str() << "\n";
 		}
 	}
 	list_of_tile_filenames.close();
