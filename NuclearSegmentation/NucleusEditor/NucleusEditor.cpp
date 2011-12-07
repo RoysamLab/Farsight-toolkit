@@ -2109,6 +2109,8 @@ void NucleusEditor::updateDatabase()
 
 void NucleusEditor::startActiveLearningwithFeat()
 {	
+
+	id_time.clear();
 	from_model = false;
 	if(myImg->GetImageInfo()->numTSlices==1)
 		featureTable = table;
@@ -2220,6 +2222,7 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 {
 	bool user_stop_dialog_flag = false;
 	int atleast_one_chosen = 0;
+
 
 	if(!first_pop)		
 	{
@@ -2574,7 +2577,7 @@ void NucleusEditor::classifyFromActiveLearningModel()
 	if(fileName == "")
 		return;
 	lastPath = QFileInfo(fileName).absolutePath();
-
+	
 	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(fileName.toStdString());
 
 	// to generate the Active Learning Matrix
