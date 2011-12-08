@@ -189,7 +189,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel)
+void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol)
 {
 	std::cout<< "SetGraphTable"<<endl;
 
@@ -212,9 +212,9 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	{
 		int vertexID = graph->AddVertex();
 		//add coord points for pass through here
-		double x = this->dataTable->GetValueByName(i,"Soma X").ToDouble();
-		double y = this->dataTable->GetValueByName(i,"Soma Y").ToDouble();
-		double z = this->dataTable->GetValueByName(i,"Soma Z").ToDouble();
+		double x = this->dataTable->GetValueByName(i, xCol.c_str()).ToDouble();
+		double y = this->dataTable->GetValueByName(i, yCol.c_str()).ToDouble();
+		double z = this->dataTable->GetValueByName(i, zCol.c_str()).ToDouble();
 		points->InsertNextPoint(x,y,z);
 		vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
 	}

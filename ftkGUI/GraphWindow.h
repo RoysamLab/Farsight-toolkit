@@ -45,7 +45,7 @@ public:
 	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL, std::vector<int> *clusterIndex = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
-	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel);
+	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol);
 	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>& colSels, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
