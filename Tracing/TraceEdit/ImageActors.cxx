@@ -380,35 +380,35 @@ void ImageRenderActors::syncColorTransferFunction()
 	switch (colorValue)
 	{
 		case 1: //red
-			colorPoint1.red = 0.11;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.0; 
-			colorPoint2.red = 0.59;		colorPoint2.blue = 0.0;		colorPoint2.green = 0.0;
-			colorPoint3.red = 0.3;		colorPoint3.blue = 0.0;		colorPoint3.green = 0.0;
+			colorPoint1.red = 0.11;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.0; 
+			colorPoint2.red = 0.59;		colorPoint2.green = 0.0;		colorPoint2.blue = 0.0;
+			colorPoint3.red = 0.3;		colorPoint3.green = 0.0;		colorPoint3.blue = 0.0;
 			break;
 		case 2: //green
-			colorPoint1.red = 0.0;		colorPoint1.blue = 0.11;	colorPoint1.green = 0.0;
-			colorPoint2.red = 0.0;		colorPoint2.blue = 0.59;	colorPoint2.green = 0.0;
-			colorPoint1.red = 0.0;		colorPoint1.blue = 0.3;		colorPoint1.green = 0.0;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.11;		colorPoint1.blue = 0.0;
+			colorPoint2.red = 0.0;		colorPoint2.green = 0.59;		colorPoint2.blue = 0.0;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.3;		colorPoint1.blue = 0.0;
 			break;
 		case 3: //blue
-			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.11;
-			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.59;
-			colorPoint1.red = 0.0;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.3;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.11;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.59;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.3;
 			break;
 		case 4: //gray
-			colorPoint1.red = 0.75;		colorPoint1.blue = 0.75;	colorPoint1.green = 0.75;
-			colorPoint2.red = 0.75;		colorPoint2.blue = 0.75;	colorPoint2.green = 0.75;
-			colorPoint3.red = 0.75;		colorPoint3.blue = 0.75;	colorPoint3.green = 0.75;
+			colorPoint1.red = 0.75;		colorPoint1.green = 0.75;		colorPoint1.blue = 0.75;
+			colorPoint2.red = 0.75;		colorPoint2.green = 0.75;		colorPoint2.blue = 0.75;
+			colorPoint3.red = 0.75;		colorPoint3.green = 0.75;		colorPoint3.blue = 0.75;
 			break;
 		default:
-			colorPoint1.red = 0.5;		colorPoint1.blue = 0.0;		colorPoint1.green = 0.0;
-			colorPoint2.red = 0.0;		colorPoint2.blue = 0.5;		colorPoint2.green = 0.0;
-			colorPoint3.red = 0.0;		colorPoint3.blue = 0.0;		colorPoint3.green = 0.5;
+			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.5;
+			colorPoint2.red = 0.0;		colorPoint2.green = 0.5;		colorPoint2.blue = 0.0;
+			colorPoint3.red = 0.5;		colorPoint3.green = 0.0;		colorPoint3.blue = 0.0;
 	}
 	
 	//Add those 3 points into the color transformer
-	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, colorPoint1.red, colorPoint1.blue, colorPoint1.green);
-	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, colorPoint2.red, colorPoint2.blue, colorPoint2.green);
-	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, colorPoint3.red, colorPoint3.blue, colorPoint3.green);
+	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, colorPoint1.red, colorPoint1.green, colorPoint1.blue);
+	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, colorPoint2.red, colorPoint2.green, colorPoint2.blue);
+	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, colorPoint3.red, colorPoint3.green, colorPoint3.blue);
 
 	/*double blueChannelcolor[3] = {0.0,0.0,0.0};
 	double greenChannelcolor[3] = {0.0,0.0,0.0};
