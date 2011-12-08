@@ -50,6 +50,7 @@ limitations under the License.
 #include "ClusClus/clusclus.h"
 #include "ClusClus/Dendrogram.h"
 #include "ClusClus/HeatmapWindow.h"
+#include "ClusClus/ProgressionHeatmapWindow.h"
 #include "SPD/spdmainwindow.h"
 #include <vector>
 #include <string>
@@ -121,6 +122,7 @@ private:
 	Dendrogram *dendro1;
 	Dendrogram *dendro2;///////////////////////////////////////////////////////////////////////////////////////
 	Heatmap *heatmap;
+	ProgressionHeatmap *progressionheatmap;
 
 	SPDMainWindow *spdWin;
 	SPDAnalysisModel *SPDModel;

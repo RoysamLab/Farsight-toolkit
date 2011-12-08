@@ -162,9 +162,9 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	assert(SPDModel!=NULL);
 
 	graph =  new GraphWindow(this);
-	simHeatmap = new Heatmap(this);
+	simHeatmap = new ProgressionHeatmap(this);
 	histo = new HistoWindow(this);
-	progressionHeatmap = new Heatmap(this);
+	progressionHeatmap = new ProgressionHeatmap(this);
 	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 }
 
@@ -203,6 +203,10 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	}
 	else
 	{
+		data->RemoveColumnByName("Soma_X");
+		data->RemoveColumnByName("Soma_Y");
+		data->RemoveColumnByName("Soma_Z");
+
 		SPDModel->ParseTraceFile( data);
 		std::cout<<"table size after parse "<<data->GetNumberOfRows()<<"\t"<<data->GetNumberOfColumns()<<endl;
 
@@ -514,12 +518,26 @@ void SPDMainWindow::showProgressionHeatmap()
 	for(int i = 0; i < mat.cols(); i++)
 	{
 		vnl_vector<double> coln = mat.get_column(i);
-		double max = abs( coln.max_value());
-		if( max != 0)
+		//double max = abs( coln.max_value());
+		double interval = coln.max_value() - coln.min_value();
+		if( interval != 0)
 		{
-			coln = ( coln - coln.min_value()) / (coln.max_value() - coln.min_value());
-			mat.set_column(i, coln);
+			coln = ( coln - coln.min_value()) / interval;
+			//coln = coln + 1;
+			//coln = coln / max;
+			for( int j = 0; j < coln.size(); j++)
+			{
+				if(coln[j] < 0.5)
+				{
+					coln[j] = 2 * pow( coln[j], 2);
+				}
+				else
+				{
+					coln[j] = - 2 * pow( coln[j] - 1, 2) + 1;
+				}
+			}		
 		}
+		mat.set_column(i, coln);
 	}
 	
 	// optimal order is the mst tree order

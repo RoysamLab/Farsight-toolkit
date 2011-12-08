@@ -219,10 +219,8 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 		long int var = table->GetValue( i, 0).ToLong();
 		this->indMapFromIndToVertex.push_back( var);
 	}
+
 	this->DataTable = table;
-	this->DataTable->RemoveColumnByName("Soma_X");
-	this->DataTable->RemoveColumnByName("Soma_Y");
-	this->DataTable->RemoveColumnByName("Soma_Z");
 
 	this->DataMatrix.set_size( this->DataTable->GetNumberOfRows(), this->DataTable->GetNumberOfColumns() - 2);
 	for( int i = 0, rowIndex = 0; i < this->DataTable->GetNumberOfRows(); i++, rowIndex++)

@@ -10,7 +10,7 @@
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
-#include "ClusClus/HeatmapWindow.h"
+#include "ClusClus/ProgressionHeatmapWindow.h"
 
 class SPDMainWindow : public QWidget
 {
@@ -80,9 +80,9 @@ private:
 
     QString FileName;
 	GraphWindow *graph;
-	Heatmap *simHeatmap;
+	ProgressionHeatmap *simHeatmap;
 	HistoWindow *histo;
-	Heatmap *progressionHeatmap;
+	ProgressionHeatmap *progressionHeatmap;
 
 	vnl_vector<int> optimalleaforder;
 	vnl_vector<int> selMod;

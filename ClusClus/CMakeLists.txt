@@ -14,17 +14,20 @@ SET( ClusClus_SRCS
 	clusclus.cpp
 	clusgap.cpp
 	clusclusMainwindow.cpp
-	HeatmapWindow.cpp)
+	HeatmapWindow.cpp
+	ProgressionHeatmapWindow.cpp)
 
 SET( ClusClus_HDRS 
 	Dendrogram.h
 	clusclus.h
 	clusgap.h
 	clusclusMainwindow.h
-	HeatmapWindow.h)
+	HeatmapWindow.h
+	ProgressionHeatmapWindow.h)
+	
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
-QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h)  
+QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h ProgressionHeatmapWindow.h)  
 
 ADD_LIBRARY( ClusClus_lib ${ClusClus_SRCS} ${ClusClus_HDRS} ${ClusClus_MOC_REQD_HDRS} )
 

@@ -32,6 +32,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	dendro1 = new Dendrogram(this);
 	dendro2 = new Dendrogram(this);////////////////////////////////////////////////////////////////
 	heatmap = new Heatmap(this);
+	progressionheatmap = new ProgressionHeatmap(this);
 	spdWin = new SPDMainWindow();
 	this->cc1 = NULL;
 	this->cc2 = NULL;
@@ -525,7 +526,7 @@ void SampleEditor::spdFeatureDendroram()
 void SampleEditor::spdShowHeatmap()
 {
 	ofstream ofs("SPDHeatmapOptimalOrder.txt");
-	this->heatmap->setModels(data,selection,selection2);
+	this->progressionheatmap->setModels(data,selection,selection2);
 	//SPDModel->HierachicalClustering(data, false);
 	//std::vector< Tree> SampleTreeData = SPDModel->TreeData;
 
@@ -607,11 +608,11 @@ void SampleEditor::spdShowHeatmap()
 	}
 	
 	// optimal order is the mst tree order
-	this->heatmap->setDataForHeatmap(mat.data_array(), order, cc2->optimalleaforder, TreeOrder.size(), cc2->num_samples);
+	this->progressionheatmap->setDataForHeatmap(mat.data_array(), order, cc2->optimalleaforder, TreeOrder.size(), cc2->num_samples);
 	//this->heatmap->setDataForHeatmap(mat.data_array(), cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
-	this->heatmap->setDataForDendrograms(NULL, cc2->treedata);
-	this->heatmap->creatDataForHeatmap(1);	
-	this->heatmap->showSPDGraph();
+	this->progressionheatmap->setDataForDendrograms(NULL, cc2->treedata);
+	this->progressionheatmap->creatDataForHeatmap(1);	
+	this->progressionheatmap->showSPDGraph();
 	//this->heatmap->showDendrogram2();
 
 	//for( int i = 0; i < SampleTreeData.size(); i++)

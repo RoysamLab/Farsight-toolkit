@@ -87,6 +87,7 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
 	unsigned long observerTag;
+	vtkSmartPointer<vtkDoubleArray> edgeWeights;
 
 	std::map<long int, long int> indMapFromVertexToInd;
 	std::vector<long int> indMapFromIndToVertex;

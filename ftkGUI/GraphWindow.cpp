@@ -28,7 +28,7 @@
 #define ANGLE_STEP 90
 #define MAX_HOP 200
 
-double selectColor[3]={1,1,1};
+double selectColor[3]={0,1,0};
 
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -38,6 +38,7 @@ GraphWindow::GraphWindow(QWidget *parent)
 	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
 	this->observerTag = 0;
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	edgeWeights = vtkSmartPointer<vtkDoubleArray>::New();
 }
 
 GraphWindow::~GraphWindow()
@@ -119,10 +120,13 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	//DistanceToDevice = DistanceToDevice - DistanceToDevice.mean();
 	//vnl_vector<double>::abs_t var = DistanceToDevice.two_norm();
 	//DistanceToDevice = DistanceToDevice / var;
-	DistanceToDevice = (DistanceToDevice - DistanceToDevice.min_value()) / ( DistanceToDevice.max_value() - DistanceToDevice.min_value());
-	for( int i = 0; i < DistanceToDevice.size(); i++)
+	if( DistanceToDevice.max_value() - DistanceToDevice.min_value() != 0)
 	{
-		DistanceToDevice[i] = 1 - exp(- 5 * DistanceToDevice[i]);
+		DistanceToDevice = (DistanceToDevice - DistanceToDevice.min_value()) / ( DistanceToDevice.max_value() - DistanceToDevice.min_value());
+		for( int i = 0; i < DistanceToDevice.size(); i++)
+		{
+			DistanceToDevice[i] = 1 - exp(- 5 * DistanceToDevice[i]);
+		}
 	}
 
 	if(!sels)
@@ -261,7 +265,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		vertexColors->InsertNextValue( i);
-		this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
+		this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
     }
 	lookupTable->Build();
 
@@ -361,6 +365,13 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
 		}
 	}
+	edgeWeights->SetNumberOfComponents(1);
+	for( int i = 0; i < weights->GetNumberOfComponents(); i++)
+	{
+		edgeWeights->InsertNextValue(weights->GetValue(i));
+	}
+	std::cout<<"Edges size:"<< table->GetNumberOfRows()<<endl;
+	std::cout<<"Weights array size:"<< edgeWeights->GetNumberOfComponents()<<endl;
 
 	std::cout<< "calculate coordinates"<<endl;
 	std::vector<Point> pointList;
@@ -388,12 +399,12 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	
 	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
 
-	if(DistanceToDevice.sum() <= 0)    // distance is not available
+	if(DistanceToDevice.sum() <= 10)    // distance is not available
 	{
-		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
-		{
+		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
+		{             
 			vertexColors->InsertNextValue( i);
-			this->lookupTable->SetTableValue(i, 0, 0, 1.0); // color the vertices- blue
+			this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
 		}
 	}
 	else
@@ -410,14 +421,17 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	graph->GetVertexData()->AddArray(vertexIDarrays);
 	graph->GetEdgeData()->AddArray(weights);
 	
-	theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	theme->SetLineWidth(5);
+	//theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(3);
 	theme->SetCellOpacity(0.9);
 	theme->SetCellAlphaRange(0.8,0.8);
-	theme->SetPointSize(8);
+	theme->SetPointSize(5);
+	theme->SetCellColor(0.6,0.6,0.6);
 	theme->SetSelectedCellColor(selectColor);
 	theme->SetSelectedPointColor(selectColor); 
-	theme->SetBackgroundColor(0,0,0); 
+	theme->SetVertexLabelColor(0.3,0.3,0.3);
+	theme->SetBackgroundColor(1,1,1); 
+	theme->SetBackgroundColor2(1,1,1);
 
 	this->view->RemoveAllRepresentations();
 	this->view->SetRepresentationFromInput( graph);
@@ -433,7 +447,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->ApplyViewTheme(theme);
 
 	this->view->SetLayoutStrategyToPassThrough();
-	this->view->SetVertexLabelFontSize(20);
+	this->view->SetVertexLabelFontSize(15);
 }
 
 void GraphWindow::ShowGraphWindow()
@@ -583,7 +597,7 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		vertexnum = this->indMapFromClusIndToVertex.size();  // vertex size equals cluster size
 	}
 
-	if(DistanceToDevice.sum() <= 0)    // distance is not available
+	if(DistanceToDevice.sum() <= 10)    // distance is not available
 	{
 		for( vtkIdType i = 0; i < vertexnum; i++)
 		{
