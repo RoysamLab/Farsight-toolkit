@@ -141,6 +141,7 @@ public:
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
 	void CreateImageResliceMapper(int i);
 	void CreateImageProperty(int i);
+	void SetImageSliceWindowLevel(int value);
 	void CreateImageSlice(int i);
 	ImageSlicePointerType GetImageSlice(int i);
 	void SetSliceThickness(int numofslices);
@@ -201,7 +202,7 @@ private:
 	std::vector<double> TotalImageSize;
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
 	double brightness;
-	int colorValue;
+	int colorValue, sliceBrightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 	double sliceBounds[6];
 

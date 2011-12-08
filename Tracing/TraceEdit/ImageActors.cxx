@@ -16,7 +16,6 @@ limitations under the License.
 
 ImageRenderActors::ImageRenderActors()
 {
-
 	this->LoadedImages.clear();
 	//define the points of %90 color
 	this->r = 90.0;
@@ -29,6 +28,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
 	this->colorValue = 0;
+	this->sliceBrightness = 500;
 	this->RaycastSampleDist = .2;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->syncOpacityTransferFunction();
@@ -39,7 +39,6 @@ ImageRenderActors::ImageRenderActors()
 	{
 		this->TotalImageSize.push_back(0);
 	}
-
 }
 
 ImageRenderActors::~ImageRenderActors()
@@ -471,19 +470,26 @@ void ImageRenderActors::CreateImageResliceMapper(int i)
 	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
 	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn(); 
 	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
-	//this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
-	this->LoadedImages[i]->imageResliceMapper->SetSlabTypeToMax(); //give options for min and mean
-	//this->LoadedImages[i]->imageResliceMapper->GetSlabThickness();
+	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(10);
+	this->LoadedImages[i]->imageResliceMapper->SetSlabTypeToMax();
 	this->LoadedImages[i]->imageResliceMapper->ResampleToScreenPixelsOff();
 }
 void ImageRenderActors::CreateImageProperty(int i)
 {
 	this->LoadedImages[i]->imageProperty = vtkImageProperty::New();
-	this->LoadedImages[i]->imageProperty->SetColorWindow(2000);
-	this->LoadedImages[i]->imageProperty->SetColorLevel(1000);
+	this->LoadedImages[i]->imageProperty->SetColorWindow(2000); //set range of brightness
+	this->LoadedImages[i]->imageProperty->SetColorLevel(this->sliceBrightness); //level of brightness within the range defined by colorwindow
 	this->LoadedImages[i]->imageProperty->SetInterpolationTypeToLinear();
-
-	//return this->LoadedImages[i]->imageProperty;
+}
+void ImageRenderActors::SetImageSliceWindowLevel(int value)
+{
+	//std::cout << "Slice Brightness: " << value << std::endl;
+	this->sliceBrightness = value;
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		this->LoadedImages[i]->imageProperty->SetColorLevel(sliceBrightness);
+		this->LoadedImages[i]->imageSlice->Update();
+	}
 }
 void ImageRenderActors::CreateImageSlice(int i)
 {

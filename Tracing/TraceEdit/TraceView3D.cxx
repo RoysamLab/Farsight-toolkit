@@ -1873,7 +1873,7 @@ void View3D::chooseInteractorStyle(int iren)
 	{
 		vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style = vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
 		this->Interactor->SetInteractorStyle(style);
-	}else if (iren == 3)
+	}else if (iren == 3) //slicer interactor
 	{
 		vtkSmartPointer<vtkInteractorStyleImage> styleImage = vtkSmartPointer<vtkInteractorStyleImage>::New();
 		styleImage->SetInteractionModeToImage3D();
@@ -2370,7 +2370,17 @@ void View3D::createSlicerSlider()
 	QLabel * SliceThicknessLabel = new QLabel("Slice Thickness",this);
 	this->SliceThicknessSpinBox = new QSpinBox(this);
 	this->SliceThicknessSpinBox->setRange(1,upperBound);
+	this->SliceThicknessSpinBox->setValue(10);
 
+	QLabel * SliceWindowLevelLabel = new QLabel("Slice Brightness",this);
+	this->SliceBrightnessSlider = new QSlider(Qt::Vertical);
+	this->SliceBrightnessSlider->setSingleStep(1);
+	this->SliceBrightnessSlider->setRange(0,1000);
+	this->SliceBrightnessSlider->setTickInterval(50);
+	this->SliceBrightnessSlider->setTickPosition(QSlider::TicksRight);
+	this->SliceBrightnessSlider->setValue(500);
+
+	QLabel * SliceNumberLabel = new QLabel("Slice Number",this);
 	this->SliceSpinBox = new QSpinBox(this);
 	this->SliceSpinBox->setRange(1,upperBound);
 
@@ -2384,10 +2394,14 @@ void View3D::createSlicerSlider()
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this->SliceSlider, SLOT(setValue(int)));
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
 	connect(this->SliceThicknessSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSliceThickness(int)));
+	connect(this->SliceBrightnessSlider, SIGNAL(valueChanged(int)),this, SLOT(setSliceWindowLevel(int)));
+	this->SlicerBar->addWidget(SliceNumberLabel);
 	this->SlicerBar->addWidget(this->SliceSpinBox);
 	this->SlicerBar->addWidget(this->SliceSlider);
 	this->SlicerBar->addWidget(SliceThicknessLabel);
 	this->SlicerBar->addWidget(this->SliceThicknessSpinBox);
+	this->SlicerBar->addWidget(SliceWindowLevelLabel);
+	this->SlicerBar->addWidget(this->SliceBrightnessSlider);
 	this->SlicerBar->hide();
 	this->SlicerBarCreated = true;
 }
@@ -2477,6 +2491,11 @@ void View3D::setSlicerZValue(int value)
 void View3D::setSliceThickness(int sliceThickness)
 {
 	this->ImageActors->SetSliceThickness(sliceThickness - 1);
+}
+void View3D::setSliceWindowLevel(int value)
+{
+	this->ImageActors->SetImageSliceWindowLevel(value);
+	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::ToggleColorByTrees()
 {

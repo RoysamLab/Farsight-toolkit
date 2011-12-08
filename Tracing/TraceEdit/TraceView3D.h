@@ -221,6 +221,7 @@ public slots:
 	void AdjustGridlines(int value);
 	void setSlicerZValue(int value);
 	void setSliceThickness(int sliceThickness);
+	void setSliceWindowLevel(int value);
 	void RayCastOpacityChanged(int value);
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
@@ -496,7 +497,7 @@ private:
 	bool SlicerBarCreated;
 	void setSlicerBarValues(int i);
 	QSpinBox * SliceSpinBox, * SliceThicknessSpinBox;
-	QSlider * SliceSlider;
+	QSlider * SliceSlider, * SliceBrightnessSlider;
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
