@@ -302,13 +302,13 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 			n_sum = sqrt( V2[0]*V2[0]+V2[1]*V2[1]+V2[2]*V2[2] );
 			V2[0] /= n_sum; V2[1] /= n_sum; V2[2] /= n_sum;
 			//Get the normal to the plane formed by the biggest two EVs
-			V2[0] = V1[2]*EP_norm[3]-V1[3]*EP_norm[2];
-			V2[1] = V1[3]*EP_norm[1]-V1[1]*EP_norm[3];
-			V2[2] = V1[1]*EP_norm[2]-V1[2]*EP_norm[1];
+			EP_norm[0] = V1[1]*V2[2]-V1[2]*V2[1];
+			EP_norm[1] = V1[2]*V2[0]-V1[0]*V2[2];
+			EP_norm[2] = V1[0]*V2[1]-V1[1]*V2[0];
 			//Reassign V2 so that it is orthogonal to both EP_norm and V1
-			V2[0] = V1[2]*EP_norm[3]-V1[3]*EP_norm[2];
-			V2[1] = V1[3]*EP_norm[1]-V1[1]*EP_norm[3];
-			V2[2] = V1[1]*EP_norm[2]-V1[2]*EP_norm[1];
+			V2[0] = V1[1]*EP_norm[2]-V1[2]*EP_norm[1];
+			V2[1] = V1[2]*EP_norm[0]-V1[0]*EP_norm[2];
+			V2[2] = V1[0]*EP_norm[1]-V1[1]*EP_norm[0];
 			//Now we have the point normal form; EP_norm is the normal and
 			//centroid_x, centroid_y, centroid_z is the normal
 			//The equation to the plane is EP_norm[0](x-centroid_x)+EP_norm[1](y-centroid_y)+EP_norm[2](z-centroid_z)=0
@@ -359,7 +359,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 					fin_est_angle = atan2( crooos, doooot );
 					unsigned short bin_num, bin_low_num;
-					bin_low_num = ceil(number_of_rois/2);
+					bin_low_num = ceil((double)number_of_rois/2);
 					if( fin_est_angle<0 )
 						bin_num = floor(fin_est_angle/MM_PI*bin_low_num);
 					else
