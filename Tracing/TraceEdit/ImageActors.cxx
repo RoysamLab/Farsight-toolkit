@@ -470,7 +470,7 @@ void ImageRenderActors::CreateImageResliceMapper(int i)
 	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
 	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn(); 
 	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
-	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(10);
+	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(9);
 	this->LoadedImages[i]->imageResliceMapper->SetSlabTypeToMax();
 	this->LoadedImages[i]->imageResliceMapper->ResampleToScreenPixelsOff();
 }

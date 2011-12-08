@@ -2511,7 +2511,7 @@ void View3D::ToggleColorByTrees()
 	this->Rerender();
 }
 
-void View3D::ToggleGridlines() //Audrey - work in progress - 2D x-y gridlines - work on following slices for slicer mode
+void View3D::ToggleGridlines() //2D gridlines
 {
 	//std::cout << "Grid Lines selected." << std::endl;
 	//If gridlines don't exist, then create
@@ -2527,22 +2527,24 @@ void View3D::ToggleGridlines() //Audrey - work in progress - 2D x-y gridlines - 
 
 	if (num_lines == 0)
 	{
+		double sceneBounds[6];
+		this->Renderer->ComputeVisiblePropBounds(sceneBounds);
 		//std::cout << "Create grid" << std::endl;
-		double imageBounds[6];
-		ImageActors->getImageBounds(imageBounds);
-		int grid_z_plane = imageBounds[5];
+		//double imageBounds[6];
+		//ImageActors->getImageBounds(imageBounds);
+		int grid_z_plane = sceneBounds[5];
 
 		if (renderMode == SLICER)
 		{
-			grid_z_plane = imageBounds[5]-this->SliceSlider->value();
-			Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			grid_z_plane = sceneBounds[5]-this->SliceSlider->value();
+			Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 		}
 		else if (this->projection_axis == 2)
-			Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 		else if (this->projection_axis == 1)
-			Gridlines->createGridxz(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 		else
-			Gridlines->createGridyz(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 		//num_lines = this->Gridlines->NumberOfLines();
 		//std::cout << "Number of lines: " << num_lines << std::endl;
 	}
@@ -2597,8 +2599,10 @@ void View3D::AdjustGridlines(int value)
 		Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
 
 	//Recreate grid
-	double imageBounds[6];
-	ImageActors->getImageBounds(imageBounds);
+	double sceneBounds[6];
+	this->Renderer->ComputeVisiblePropBounds(sceneBounds);
+	//double imageBounds[6];
+	//ImageActors->getImageBounds(imageBounds);
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
 	int line_width = this->LineWidthBox->value();
@@ -2606,19 +2610,19 @@ void View3D::AdjustGridlines(int value)
 	int line_g = GridGSlider->value();
 	int line_b = GridBSlider->value();
 	int line_opacity = GridOpacitySlider->value();
-	int grid_z_plane = imageBounds[4];
+	int grid_z_plane = sceneBounds[4];
 
 	if (renderMode == SLICER)
 	{
-		grid_z_plane = imageBounds[5]-this->SliceSlider->value();
-		Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		grid_z_plane = sceneBounds[5]-this->SliceSlider->value();
+		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	}
 	else if (this->projection_axis == 2)
-		Gridlines->createGrid(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	else if (this->projection_axis == 1)
-		Gridlines->createGridxz(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	else
-		Gridlines->createGridyz(imageBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 
 	//Add actors
 	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
