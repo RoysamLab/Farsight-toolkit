@@ -14,8 +14,10 @@ function convert()
 	{ 
 		showProgress(i+1, list.length); 
 		open(dir1+list[i]);
+		run("Enhance Contrast", "saturated=0.00 use");
+		run("Median...", "radius=1");
 		run("Subtract Background...", "rolling=50 stack");
-		run("Enhance Contrast", "saturated=0.01 use");
+		run("Enhance Contrast", "saturated=0.00 use");
 		//run("16-bit");
 		run("8-bit");
 		
