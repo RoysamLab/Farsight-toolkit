@@ -352,10 +352,10 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					double doooot, crooos,fin_est_angle;
 					doooot = n_vec[0]*V1[0]+n_vec[1]*V1[1]+n_vec[2]*V1[2];
 					crooos = n_vec[0]*V2[0]+n_vec[1]*V2[1]+n_vec[2]*V2[2];
-					if( crooos>0 )
-						crooos = sqrt(1-(crooos*crooos));
-					else
-						crooos = (-1.00)*(sqrt(1-(crooos*crooos)));
+					//if( crooos>0 )
+					//	crooos = sqrt(1-(crooos*crooos));
+					//else
+					//	crooos = (-1.00)*(sqrt(1-(crooos*crooos)));
 
 					fin_est_angle = atan2( crooos, doooot );
 					unsigned short bin_num, bin_low_num;
