@@ -10,10 +10,13 @@
 
 #include "vtkCellArray.h"
 #include "vtkCellLocator.h"
+#include "vtkCellData.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
+
 #include "vtkContourFilter.h"
+#include "vtkMarchingCubes.h"
 
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"

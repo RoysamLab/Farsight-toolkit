@@ -3262,6 +3262,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 	{
 		color = tline->getTraceColor();
 	}
+	iter++;
 	while(iter!=iterend)
 	{
 		//poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);

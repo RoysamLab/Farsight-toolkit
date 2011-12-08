@@ -65,6 +65,7 @@ vtkSmartPointer<vtkActor> VolumeOfInterest::GetActor()
 	vtkSmartPointer<vtkPolyDataMapper> VOImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	VOImapper->SetInput(this->VOIPolyData);
 	vtkSmartPointer<vtkActor> VOIactor = vtkSmartPointer<vtkActor>::New();
+	VOIactor->GetProperty()->BackfaceCullingOn();
 	VOIactor->SetMapper(VOImapper);
 	return VOIactor;
 }
@@ -108,10 +109,23 @@ void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 	ConnectorType::Pointer connector = ConnectorType::New();
 	connector->SetInput( contourReader->GetOutput() );
 
-	vtkSmartPointer<vtkContourFilter> ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-	ContourFilter->SetInput(connector->GetOutput() );
+	vtkSmartPointer<vtkMarchingCubes> ContourFilter = vtkSmartPointer<vtkMarchingCubes>::New();
+		ContourFilter->ComputeNormalsOff();
+		ContourFilter->ComputeScalarsOff();
+		ContourFilter->ComputeGradientsOff();
+		ContourFilter->SetInput(connector->GetOutput() );
+		ContourFilter->SetNumberOfContours(1);
 	ContourFilter->SetValue(0,1);
+
+	vtkSmartPointer<vtkUnsignedCharArray> colorArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colorArray->SetNumberOfComponents(3);
+	unsigned char color[3] = {255,255,255};
 	ContourFilter->Update();
+	for (vtkIdType count = 0; count < ContourFilter->GetOutput()->GetNumberOfCells(); count++)
+	{
+		colorArray->InsertNextTupleValue(color);
+	}
+	ContourFilter->GetOutput()->GetCellData()->SetScalars(colorArray);
 	this->VOIPolyData = ContourFilter->GetOutput();
 }
 void VolumeOfInterest::ReadVTPVOI(std::string filename)
