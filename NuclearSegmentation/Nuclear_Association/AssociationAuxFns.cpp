@@ -355,7 +355,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					//if( crooos>0 )
 					//	crooos = sqrt(1-(crooos*crooos));
 					//else
-					//	crooos = (-1.00)*(sqrt(1-(crooos*crooos)));
+					//	crooos = (-1.00)*(sqrt(1-(crooos*crooos)));//
 
 					fin_est_angle = atan2( crooos, doooot );
 					unsigned short bin_num, bin_low_num;
