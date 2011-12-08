@@ -1992,8 +1992,12 @@ void View3D::CreateActors()
 	this->LineActor->SetPickable(1);
 	this->Renderer->AddActor(this->LineActor);
 
-	this->UpdateBranchActor();
-	this->Renderer->AddActor(this->BranchActor);
+	
+	if (this->renderTraceBits)
+	{	
+		this->UpdateBranchActor();
+		this->Renderer->AddActor(this->BranchActor);
+	}
 	this->QVTK->GetRenderWindow()->Render();
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
@@ -3250,17 +3254,19 @@ void View3D::Rerender()
 	this->SphereActor->VisibilityOff();
 	this->SelectedTraceIDs.clear();
 	/*this->MergeGaps->GetSelectionModel()->clearSelection();*/
-	this->Renderer->RemoveActor(this->BranchActor);
-	this->Renderer->RemoveActor(this->PointsActor);
 
-	std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
-	if (this->renderTraceBits)
-	{
-		this->AddPointsAsPoints(vec);
-	}
 	this->UpdateLineActor();
-	this->UpdateBranchActor();
-	this->Renderer->AddActor(this->BranchActor); 
+	if (this->renderTraceBits)
+	{	
+		this->Renderer->RemoveActor(this->BranchActor);
+		this->Renderer->RemoveActor(this->PointsActor);
+
+		std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
+		this->AddPointsAsPoints(vec);
+		this->UpdateBranchActor();
+		this->Renderer->AddActor(this->BranchActor); 
+	}
+
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 	this->QVTK->GetRenderWindow()->Render();
 	if (this->FTKTable)
