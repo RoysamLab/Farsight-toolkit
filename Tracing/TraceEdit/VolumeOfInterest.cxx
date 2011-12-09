@@ -1,7 +1,7 @@
 #include "VolumeOfInterest.h"
 VolumeOfInterest::VolumeOfInterest()
 {
-	this->VOIPolyData =  vtkSmartPointer<vtkPolyData>::New();
+	this->VOIPolyData.clear();// =  std::vector<vtkPolyData*>;
 	this->ROIPoints.clear();
 }
 int VolumeOfInterest::AddVOIPoint(double* newPT)
@@ -57,15 +57,15 @@ bool VolumeOfInterest::ExtrudeVOI()
 	extrude->SetScaleFactor (100);
 	extrude->Update();
 
-	this->VOIPolyData = extrude->GetOutput();
+	this->VOIPolyData.push_back( extrude->GetOutput());
 	return true;
 }
 vtkSmartPointer<vtkActor> VolumeOfInterest::GetActor()
 {
 	vtkSmartPointer<vtkPolyDataMapper> VOImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	VOImapper->SetInput(this->VOIPolyData);
+	VOImapper->SetInput(this->VOIPolyData.back());
 	vtkSmartPointer<vtkActor> VOIactor = vtkSmartPointer<vtkActor>::New();
-	VOIactor->GetProperty()->BackfaceCullingOn();
+	//VOIactor->GetProperty()->SetRepresentationToSurface();
 	VOIactor->SetMapper(VOImapper);
 	return VOIactor;
 }
@@ -73,7 +73,7 @@ vtkSmartPointer<vtkActor> VolumeOfInterest::GetActor()
 void VolumeOfInterest::CalculateCellDistanceToVOI(CellTraceModel *CellModel)
 {
 	vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
-	cellLocator->SetDataSet(this->VOIPolyData);
+	cellLocator->SetDataSet(this->VOIPolyData.back());
 	cellLocator->BuildLocator();
 
 	unsigned int cellCount= CellModel->getCellCount();
@@ -119,14 +119,14 @@ void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 
 	vtkSmartPointer<vtkUnsignedCharArray> colorArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colorArray->SetNumberOfComponents(3);
-	unsigned char color[3] = {255,255,255};
+	unsigned char color[3] = {255,255,250};
 	ContourFilter->Update();
 	for (vtkIdType count = 0; count < ContourFilter->GetOutput()->GetNumberOfCells(); count++)
 	{
 		colorArray->InsertNextTupleValue(color);
 	}
 	ContourFilter->GetOutput()->GetCellData()->SetScalars(colorArray);
-	this->VOIPolyData = ContourFilter->GetOutput();
+	this->VOIPolyData.push_back( ContourFilter->GetOutput());
 }
 void VolumeOfInterest::ReadVTPVOI(std::string filename)
 {
@@ -134,12 +134,12 @@ void VolumeOfInterest::ReadVTPVOI(std::string filename)
 	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
 	reader->SetFileName(filename.c_str());
 	reader->Update();
-	this->VOIPolyData = reader->GetOutput();
+	this->VOIPolyData.push_back( reader->GetOutput());
 }
 void VolumeOfInterest::WriteVTPVOI(std::string filename)
 {  
 	vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
 	writer->SetFileName(filename.c_str());
-	writer->SetInput(this->VOIPolyData);
+	writer->SetInput(this->VOIPolyData.back());
 	writer->Write();
 }

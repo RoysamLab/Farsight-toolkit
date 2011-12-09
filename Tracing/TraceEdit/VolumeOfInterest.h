@@ -52,7 +52,7 @@ public:
 	void ReadVTPVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
 private:
-	std::vector<double*> ROIPoints;
-	vtkSmartPointer<vtkPolyData> VOIPolyData;
+	std::vector< double * > ROIPoints;
+	std::vector< vtkSmartPointer<vtkPolyData > > VOIPolyData;
 };
 #endif
