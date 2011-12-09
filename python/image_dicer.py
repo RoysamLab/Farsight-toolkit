@@ -9,7 +9,7 @@ def image_dicer(montage_image, centroid_list):
     idx = 0
 
     for line in centroid_list:
-        command_list.append("./image_dicer " + montage_image + centroid_list[idx].rstrip('\n'))
+        command_list.append("./image_dicer " + montage_image + " " + centroid_list[idx].rstrip('\n'))
         idx = idx + 1
 
     #make "debug" directory to store the console output of each subprocess
