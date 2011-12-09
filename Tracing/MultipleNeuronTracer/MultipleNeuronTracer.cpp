@@ -19,10 +19,10 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 	image->Update();
 
 	std::cout << "Entering LoadCurvImage" << std::endl;
-	LoadCurvImage(image, pad);
+	LoadCurvImage_1(image, pad);
 }
 
-void MultipleNeuronTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)  
+void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)  
 {
 	ImageType3D::Pointer CurvImage = image;
 	padz = pad;
@@ -149,7 +149,7 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 	infile.close();
 }
 
-void MultipleNeuronTracer::ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int pad) 
+void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad) 
 {
 	padz = pad;
 

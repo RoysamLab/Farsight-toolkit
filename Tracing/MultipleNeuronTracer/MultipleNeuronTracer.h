@@ -100,11 +100,12 @@ public:
 
 
 	void LoadCurvImage(std::string fname, unsigned int pad); 
-	void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
+	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);
 	void ReadStartPoints(std::string fname, unsigned int padz);
-	void ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
+	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
 	void SetCostThreshold(float thres){CostThreshold = thres;};
 	void LoadSomaImage(std::string somaFileName);
+	void LoadSomaImage_1(LabelImageType3D::Pointer image){ SomaImage = image; };
 	void RunTracing();
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
