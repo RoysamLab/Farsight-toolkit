@@ -27,6 +27,9 @@ limitations under the License.
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkImageSeriesWriter.h"
 #include "itkNumericSeriesFileNames.h"
+#include "itkTranslationTransform.h"
+#include "itkResampleImageFilter.h"
+
 
 typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
@@ -134,7 +137,36 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::GetOutput() {
     duplicator->SetInputImage(montage_image);
     duplicator->Update();
     ImageType::Pointer image = duplicator->GetOutput();
-    return image;
+    	
+	typedef itk::TranslationTransform<double, ImageType::ImageDimension> TranslationTransformType;
+	TranslationTransformType::Pointer transform = TranslationTransformType::New();
+	TranslationTransformType::OutputVectorType translation;
+	std::cout << "global_origin: " << global_origin[0] << " " << global_origin[1] << " " << global_origin[2] << std::endl;
+	translation[0] = global_origin[0];
+	translation[1] = global_origin[1];
+	translation[2] = global_origin[2];
+	transform->Translate(translation);
+
+	typedef itk::ResampleImageFilter<ImageType, ImageType, double> ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resampleFilter = ResampleImageFilterType::New();
+	resampleFilter->SetTransform(transform.GetPointer());
+	resampleFilter->SetInput(image);
+	
+	ImageType::SizeType size = image->GetLargestPossibleRegion().GetSize();
+	resampleFilter->SetSize(size);
+	
+	try
+	{
+		resampleFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cout << "Error in ResampleFilter" << std::endl;
+		std::cout << err << std::endl;
+	}
+
+	
+	return resampleFilter->GetOutput();
 }
 
 //: Set the image channel to montage
