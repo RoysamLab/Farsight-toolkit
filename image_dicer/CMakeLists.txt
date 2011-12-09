@@ -10,5 +10,5 @@ SET(image_dicer_SRCS
 )
 
 ADD_EXECUTABLE(image_dicer main.cpp ${image_dicer_HDRS} ${image_dicer_SRCS})
-TARGET_LINK_LIBRARIES(image_dicer vul ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(image_dicer vul ${ITK_LIBRARIES} Yousef_Nucleus_Seg )
 INSTALL( TARGETS image_dicer RUNTIME DESTINATION bin )
