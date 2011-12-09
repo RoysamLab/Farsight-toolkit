@@ -2,10 +2,13 @@
     <Inputs>
         <channel number="0" name="dapi" type="NUCLEAR" />
         <channel number="1" name="gfp" type="GFP_MARKER" />
+        <channel number="1" name="cy5" type="CY5_MARKER" />
     </Inputs>
     <Pipeline>
-        <step name="NUCLEAR_SEGMENTATION" />
+	<step name="NUCLEAR_SEGMENTATION" />
         <step name="RAW_ASSOCIATIONS"/>
+	<step name="CLASSIFY_MCLR" />
+	<step name="CLASS_EXTRACTION" />
     </Pipeline>
     <NuclearSegmentationParameters>
         <parameter name="high_sensitivity" value="0.00" />
@@ -14,7 +17,7 @@
         <parameter name="max_scale" value="10.00" />
         <parameter name="xy_clustering_res" value="3.00" />
         <parameter name="z_clustering_res" value="2.00" />
-        <parameter name="finalize_segmentation" value="1.00" />
+        <parameter name="finalize_segmentation" value="0.00" />
         <parameter name="sampling_ratio_XY_to_Z" value="2.00" />
         <parameter name="Use_Distance_Map" value="1.00" />
         <parameter name="refinement_range" value="6.00" />
@@ -29,15 +32,15 @@
         <parameter name="number_of_levels_in_foreground" value="1.00" />
     </CytoplasmSegmentationParameters>
     <AssociationRules>
-        <AssociationRule Name="GFP_TOTAL" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
-        <AssociationRule Name="GFP_AVG" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+	<AssociationRule Name="GFP_TOTAL" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+	<AssociationRule Name="GFP_AVG" SegmentationSource="NUCLEAR" Target_Image="gfp" Outside_Distance="1" Inside_Distance="8" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
+	<AssociationRule Name="CY5_TOTAL" SegmentationSource="NUCLEAR" Target_Image="cy5" Outside_Distance="4" Inside_Distance="2" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="TOTAL" />
+        <AssociationRule Name="CY5_AVG" SegmentationSource="NUCLEAR" Target_Image="cy5" Outside_Distance="4" Inside_Distance="2" Use_Whole_Object="False" Use_Background_Subtraction="True" Use_MultiLevel_Thresholding="False" Number_Of_Thresholds="1" Number_Included_In_Foreground="1" Association_Type="AVERAGE" />
     </AssociationRules>
-    <ClassificationParameters>
-        <TrainingFile Name="/home/gramak/dataset_leelab/data_set1/ki67/TrainingSet.xml" />
-        <ClassificationParameter TrainingColumn="train_Endothelial" ClassificationColumns="CD34_TOTAL,CD34_AVG,CD34_SURR,SMA_TOTAL,SMA_AVG,SMA_SURR,CA9_TOTAL,CA9_AVG" />
-        <ClassificationParameter TrainingColumn="train_Tumor" ClassificationColumns="CA9_TOTAL,CA9_AVG" />
-    </ClassificationParameters>
-    <PixelLevelAnalysis>
-        <PixelLevelRule RoiImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 655 (305).jpg" TargetImage="/home/gramak/dataset_leelab/data_set1/ki67/09-15271_1_qDot 605 (304).jpg" Mode="1" OutputFilename="/home/gramak/dataset_leelab/data_set1/ki67/Pixel_Analysis_Output.txt" Radius="0" />
-    </PixelLevelAnalysis>
+    <Classification_MCLR_Rules>
+        <Classification_MCLR_Rule ClassColName="soma" ConfThreshold="0.50" TrainingFileName="/data/kedar/data/nuc_seg/MG_Model1.txt" />
+    </Classification_MCLR_Rules>
+    <ClassExtractionRules>
+        <ClassExtractionRule Class_Name="soma" Class="1" />
+    </ClassExtractionRules>
 </ProjectDefinition>

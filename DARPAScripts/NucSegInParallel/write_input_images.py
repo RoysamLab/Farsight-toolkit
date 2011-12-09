@@ -15,11 +15,13 @@ print "Hello, World!"
 rootPath = os.getcwd()
 rootPath = rootPath + '/'
 patternN    = 'Tile*' # Can include any UNIX shell-style wildcards
-patternGFP = 'Tige*'
+patternGFP  = 'Tige*'
+patternCY5  = 'Cy5*'
 
 #Things to replace in the input image file
 ppatternN    = 'full_pathNuclear.tif' # Can include any UNIX shell-style wildcards
 ppatternGFP = 'full_pathGFP.tif'
+ppatternCY5 = 'full_pathCY5.tif'
 
 inpu_xml_img     = 'Histo_Input_Image'
 inpu_xml_img11   = 'Histo_Input_Imagess'
@@ -34,18 +36,20 @@ op_proj1         = 'darpa.xml'
 exx_ml		 = '.xml'
 texxt		 = '.txt'
 
-pp = '/data/kedar/farsight-rel/exe/projproc'
+pp = '/data/kedar/farsight-bin/exe/projproc'
 pppppp = '\"'
 counttt = 0
 for root, dirs, files in os.walk(rootPath):
 	count_file  = 0
 	count_file1 = 0
 	count_file2 = 0
+	count_file3 = 0
 	asd = cmp(os.path.join(root,''),rootPath)
 	#print asd
 	if asd != 0:
-		newN = []
+		newN   = []
 		newGFP = []
+		newCY5 = []
 		newDNE = []
 		intab = "\\"
 		outtab = "/"
@@ -62,6 +66,12 @@ for root, dirs, files in os.walk(rootPath):
 			count_file1 += 1
 			newGFPPP = newGFPP.translate(trantab)
 			newGFP.append( newGFPPP )
+		for filename in fnmatch.filter(files, patternCY5):
+			newCY555 = ''
+			newCY55 = os.path.join(root,filename)
+			count_file3 += 1
+			newCY555 = newCY55.translate(trantab)
+			newCY5.append( newCY555 )
 		for filename in fnmatch.filter(files, lab_im1):
 			newDNEEE = ''
 			newDNEE = os.path.join(root,filename)
@@ -70,6 +80,7 @@ for root, dirs, files in os.walk(rootPath):
 			newDNE.append( newDNEEE )
 		newN.sort()
 		newGFP.sort()
+		newCY5.sort()
 		newDNE.sort()
 		#print newN
 		#print newGFP
@@ -77,6 +88,8 @@ for root, dirs, files in os.walk(rootPath):
 
 		print os.path.join(root,'')
 		#print count_file
+		if count_file1 != count_file3:
+			continue
 		if count_file1 == count_file:
 			#Write image file
 			com_to_exec = []
@@ -103,6 +116,7 @@ for root, dirs, files in os.walk(rootPath):
 				data = open(rootPath+inpu_xml_img1).read()
 				data = re.sub(ppatternN,newN[x],data)
 				data = re.sub(ppatternGFP,newGFP[x],data)
+				data = re.sub(ppatternCY5,newCY5[x],data)
 				#print data
 				o.write( data )
 				o.close()
@@ -145,8 +159,8 @@ for root, dirs, files in os.walk(rootPath):
 #				if counttt == 10:
 #					counttt = 0
 					#Time to run one instance
-#					time.sleep(3000)
+#					time.sleep(2700)
 				#time in secs between two files in a folder
-#				time.sleep(2)
+#				time.sleep(60)
 				#print com_to_exec_str
 
