@@ -14,21 +14,19 @@ print "Hello, World!"
 
 rootPath = os.getcwd()
 rootPath = rootPath + '/'
-patternN    = 'Til*' # Can include any UNIX shell-style wildcards
-patternGFP = 'Tig*'
+patternN    = 'Tile*' # Can include any UNIX shell-style wildcards
+patternGFP = 'Tige*'
 
 #Things to replace in the input image file
 ppatternN    = 'full_pathNuclear.tif' # Can include any UNIX shell-style wildcards
 ppatternGFP = 'full_pathGFP.tif'
-
-#Number of charecters to match in the filenames from the end
-num_cahr_match = 13
 
 inpu_xml_img     = 'Histo_Input_Image'
 inpu_xml_img11   = 'Histo_Input_Imagess'
 inpu_xml_img1    = 'Histo_Input_Image.xml'
 replace_pattern1 = 'full_path'
 lab_im           = 'Histo_Input_Image_label'
+lab_im1          = 'Histo_Input_Image_label*'
 tab_le           = 'Histo_Input_Image_table'
 proc_def_xml     = 'HistoProjectDef.xml'
 op_proj          = 'darpa'
@@ -42,16 +40,16 @@ counttt = 0
 for root, dirs, files in os.walk(rootPath):
 	count_file  = 0
 	count_file1 = 0
+	count_file2 = 0
 	asd = cmp(os.path.join(root,''),rootPath)
 	#print asd
 	if asd != 0:
 		newN = []
 		newGFP = []
-
+		newDNE = []
 		intab = "\\"
 		outtab = "/"
 		trantab = maketrans( intab, outtab )
-
 		for filename in fnmatch.filter(files, patternN):
 			newNNN = ''
 			newNN = os.path.join(root,filename)
@@ -64,10 +62,18 @@ for root, dirs, files in os.walk(rootPath):
 			count_file1 += 1
 			newGFPPP = newGFPP.translate(trantab)
 			newGFP.append( newGFPPP )
+		for filename in fnmatch.filter(files, lab_im1):
+			newDNEEE = ''
+			newDNEE = os.path.join(root,filename)
+			count_file2 += 1
+			newDNEEE = newDNEE.translate(trantab)
+			newDNE.append( newDNEEE )
 		newN.sort()
 		newGFP.sort()
-		print newN
-		print newGFP
+		newDNE.sort()
+		#print newN
+		#print newGFP
+		#print newDNE
 
 		print os.path.join(root,'')
 		#print count_file
@@ -75,14 +81,24 @@ for root, dirs, files in os.walk(rootPath):
 			#Write image file
 			com_to_exec = []
 			for x in range(len(newGFP)):
-				inp_fil_str  = os.path.join(root,inpu_xml_img) + str(x) + exx_ml
-				inp_fil_str1 = inpu_xml_img + str(x) + exx_ml
-				lab_fil_str  = os.path.join(root,lab_im)       + str(x) + exx_ml
-				lab_fil_str1 = lab_im       + str(x) + exx_ml
-				tab_fil_str  = os.path.join(root,tab_le)       + str(x) + texxt
-				tab_fil_str1 = tab_le       + str(x) + texxt
-				prj_fil_str  = os.path.join(root,op_proj)      + str(x) + exx_ml
-				prj_fil_str1 = op_proj      + str(x) + exx_ml
+				start_pos = 0
+				end_pos   = 0
+				curxy     = newGFP[x]
+				start_pos = curxy.rfind('/')
+				curxy     = curxy[start_pos:]
+				#print curxy
+				start_pos = curxy.find('_')
+				end_pos   = curxy.find('.')
+				#print curxy[start_pos:end_pos]
+				curxy     = curxy[start_pos:end_pos]
+				inp_fil_str  = os.path.join(root,inpu_xml_img) + curxy + exx_ml
+				inp_fil_str1 = inpu_xml_img + curxy + exx_ml
+				lab_fil_str  = os.path.join(root,lab_im)       + curxy + exx_ml
+				lab_fil_str1 = lab_im       + curxy + exx_ml
+				tab_fil_str  = os.path.join(root,tab_le)       + curxy + texxt
+				tab_fil_str1 = tab_le       + curxy + texxt
+				prj_fil_str  = os.path.join(root,op_proj)      + curxy + exx_ml
+				prj_fil_str1 = op_proj      + curxy + exx_ml
 				o = open(inp_fil_str,"w")
 				data = open(rootPath+inpu_xml_img1).read()
 				data = re.sub(ppatternN,newN[x],data)
@@ -109,19 +125,28 @@ for root, dirs, files in os.walk(rootPath):
 				o2.close()
 
 				com_to_exec_str = pp + ' \"' + inp_fil_str + '\" \"' + lab_fil_str + '\" \"' + tab_fil_str + '\" \"' + os.path.join(root,proc_def_xml) + '\"'
-				com_to_exec.append( com_to_exec_str )
+
+				found_op = 0
+				for y in range(len(newDNE)):
+					if newDNE[y]==lab_fil_str:
+						found_op = 1
+						#print lab_fil_str1
+				if found_op==0:
+					com_to_exec.append( com_to_exec_str )
+			#print com_to_exec
 				#print com_to_exec
 				#os.system( com_to_exec )
 				#os.chdir(rootPath)
-			for com_to_exec_str in com_to_exec:
+#			for com_to_exec_str in com_to_exec:
 				#os.system( com_to_exec_str )
-				counttt += 1
-				subprocess.Popen(com_to_exec_str, shell=True)
+#				counttt += 1
+#				subprocess.Popen(com_to_exec_str, shell=True)
 				#Number of instances to run in parallel
-				if counttt == 5:
-					counttt = 0
+#				if counttt == 10:
+#					counttt = 0
 					#Time to run one instance
-					time.sleep(3000)
+#					time.sleep(3000)
 				#time in secs between two files in a folder
-				time.sleep(2)
+#				time.sleep(2)
 				#print com_to_exec_str
+
