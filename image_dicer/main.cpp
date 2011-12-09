@@ -64,12 +64,17 @@ int main(int argc, char* argv[])
 		//Open file to write the centroids out
 		std::ostringstream output_centroid_filename_stream;
 		output_centroid_filename_stream << vul_file::strip_directory(vul_file::strip_extension(argv[2])) << "_" << x << "_" << y << "_" << z << ".txt";
-		
+	
+		//Open file to write the local centroids out
+		std::ostringstream output_local_centroid_filename_stream;
+		output_local_centroid_filename_stream << vul_file::strip_directory(vul_file::strip_extension(argv[2])) << "_" << size[0]/2 << "_" << size[1]/2 << "_" << size[2]/2 << "_local_coord.txt";
+	
+	
 		std::cout << "Writing " << output_centroid_filename_stream.str() << std::endl;
 		std::ofstream centroid_file_coords(output_centroid_filename_stream.str().c_str());
 
 		centroid_file_coords << x << " " << y << " " << z << std::endl;	//Write global coords
-		centroid_file_coords << 150 << " " << 150 << " " << "50" << std::endl;	//Write lobal coords
+		centroid_file_coords << size[0]/2 << " " << size[1]/2 << " " << size[2]/2 << std::endl;	//Write lobal coords
 		centroid_file_coords.close();
 
 
