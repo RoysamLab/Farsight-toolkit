@@ -46,24 +46,16 @@ using std::endl;
 #include <fregl/fregl_space_transformer.h>
 #include <fregl/fregl_util.h>
 #include <fregl/fregl_image_manager.h>
-#include "itkImageRegionConstIterator.h"
-#include "itkImageRegionIterator.h"
 #include "itkImageFileWriter.h"
-#include "itkImageSliceIteratorWithIndex.h"
-#include "itkImageLinearIteratorWithIndex.h"
 #include "itkImageSeriesWriter.h"
 #include "itkNumericSeriesFileNames.h"
 #include "itkImageSeriesWriter.h"
 
+#include "fregl_roi.h"
+
 typedef unsigned char InputPixelType;
 typedef itk::Image< InputPixelType, 3 > ImageType;
 typedef itk::Image< InputPixelType, 2 > ImageType2D;
-typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
-typedef itk::ImageRegionIterator< ImageType > RegionIterator;
-typedef itk::ImageRegionConstIterator< ImageType2D > RegionConstIterator2D;
-typedef itk::ImageLinearConstIteratorWithIndex< ImageType2D > LinearConstIteratorType2D;
-typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
-typedef itk::ImageSliceConstIteratorWithIndex< ImageType > SliceConstIteratorType;
 typedef ImageType::PointType PointType; //physical space
 typedef ImageType::IndexType IndexType; //physical space
 typedef ImageType::SizeType SizeType;
@@ -102,18 +94,24 @@ main(int argc, char* argv[]) {
 	roi_origin[2] = arg_roi_originz();
 	roi_size[0] = arg_roi_sizex();
 	roi_size[1] = arg_roi_sizey();
-	roi_size[2] = arg_roi_sizez();
+	roi_size[2] = arg_roi_sizez();	
+
+	
+	ImageType::Pointer final_image;
+	fregl_roi *roi_filter = new fregl_roi(arg_xml_file(), arg_img_path(), arg_anchor(), arg_nn());
+	roi_filter->setROI(roi_origin, roi_size);
+	final_image = roi_filter->getROI();
+
 
 	// Cosntruct the montage
-	fregl_image_manager::Pointer region_montage = new fregl_image_manager(arg_xml_file(), arg_img_path(), arg_anchor(),
+	/*fregl_image_manager::Pointer region_montage = new fregl_image_manager(arg_xml_file(), arg_img_path(), arg_anchor(),
 			arg_nn());
 	
-	region_montage->set_regionofinterest(roi_origin, roi_size);
+	region_montage->set_regionofinterest(roi_origin, roi_size);*/
 	//Taking the maximum
 	std::string image_name = arg_img_path() + std::string("/") + arg_anchor();
-	ImageType::Pointer final_image;
-	region_montage->Update();
-	final_image = region_montage->GetOutput();
+	//region_montage->Update();
+	//final_image = region_montage->GetOutput();
 	
 	std::string output_name = arg_outfile();
 
@@ -147,7 +145,7 @@ main(int argc, char* argv[]) {
 	useriesWriter->Update();*/
 
 	if (arg_3d()) {
-		std::string name_3d = output_name + std::string(".mhd");
+		std::string name_3d = output_name;
 		typedef itk::ImageFileWriter< ImageType > WriterType;
 		WriterType::Pointer writer = WriterType::New();
 		writer->SetFileName(name_3d);
@@ -159,15 +157,16 @@ main(int argc, char* argv[]) {
 	ImageType2D::Pointer image_2d = fregl_util_max_projection(final_image);
 	typedef itk::ImageFileWriter< ImageType2D > WriterType2D;
 	WriterType2D::Pointer writer2D = WriterType2D::New();
-	std::string name_2d = output_name + std::string("_2d_proj.png");
+	std::string name_2d = vul_file::strip_extension(output_name) + std::string("_2d_proj.png");
 	writer2D->SetFileName(name_2d);
 	writer2D->SetInput(image_2d);
 	writer2D->Update();
 
-	// dump the output to xml
+	/*// dump the output to xml
 	std::string xml_name = output_name + std::string(".xml");
 	fregl_space_transformer::Pointer space_transformer = region_montage->get_space_transformer();
 	space_transformer->write_xml(xml_name, output_name, name_2d, arg_overlap(), arg_in_anchor(), arg_channel(), arg_blending(), arg_nn(), arg_denoise());
+	*/
 
 	return 0;
 }

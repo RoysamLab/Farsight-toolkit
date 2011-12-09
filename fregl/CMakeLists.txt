@@ -18,7 +18,7 @@ SET( fregl_sources
 	fregl_image_manager.h       	fregl_image_manager.cxx
 	#fregl_result_record.h       	fregl_result_record.cxx
  	fregl_util.h                	fregl_util.cxx
- 	#fregl_roi.h			fregl_roi.cxx		
+ 	fregl_roi.h			fregl_roi.cxx		
 )
 
 AUX_SOURCE_DIRECTORY( Templates fregl_sources )
