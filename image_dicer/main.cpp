@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 
 		std::ostringstream output_filename_stream;
 
-		output_filename_stream << vul_file::strip_extension(argv[2]) << "_" << x << "_" << y << "_" << z << ".TIF";	
+		output_filename_stream << vul_file::strip_extension(argv[2]) << "_" << x << "_" << y << "_" << z << ".mhd";	
 
 		writer->SetFileName(std::string(output_filename_stream.str()));
 		writer->SetInput(image);
