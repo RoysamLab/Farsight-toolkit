@@ -202,21 +202,6 @@ protected slots:
 	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 
 private:
-	rgb GetRGBValue(double val)
-	{
-		int index = COLOR_MAP_SIZE * val - 1;   // when val = 1; index should be the max index
-		if( index >= COLOR_MAP_SIZE)
-		{
-			index = COLOR_MAP_SIZE - 1;
-		}
-		else if( index < 0)
-		{
-			index = 0;
-		}
-		return COLORMAP[index];
-	};
-
-private:
 	QVTKWidget mainQTRenderWidget;
 	vtkSmartPointer<vtkTable > table;
 	vtkSmartPointer<vtkPlaneSource> aPlane;
@@ -264,6 +249,7 @@ private:
 	//vtkSmartPointer<vtkHoverWidget> hoverWidget;
 	//vtkSmartPointer<vtkHoverCallback> hoverCallback;
 
+	rgb GetRGBValue(double val);
 	void readmustd(double** mustd);
 	void scaleData(double** mustd);
 	void scaleData();
