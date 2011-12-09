@@ -38,7 +38,6 @@ GraphWindow::GraphWindow(QWidget *parent)
 	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
 	this->observerTag = 0;
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	edgeWeights = vtkSmartPointer<vtkDoubleArray>::New();
 }
 
 GraphWindow::~GraphWindow()
@@ -316,6 +315,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	std::cout<< "construct graph"<<endl;
 	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
 	vnl_matrix<long int> adj_matrix( table->GetNumberOfRows() + 1, table->GetNumberOfRows() + 1);
+	
+	vertextList.set_size( table->GetNumberOfRows(), 3);
+	edgeWeights.set_size( table->GetNumberOfRows());
 
 	for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
 	{
@@ -347,6 +349,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 				graph->AddEdge( index1, index2);
 				adj_matrix( index1, index2) = 1;
 				adj_matrix( index2, index1) = 1;
+				vertextList( i, 0) = index1;
+				vertextList( i, 1) = index2;
+				edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
 				weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
 			}
 			else
@@ -362,31 +367,52 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 			graph->AddEdge( ver1, ver2);
 			adj_matrix( ver1, ver2) = 1;
 			adj_matrix( ver2, ver1) = 1;
+			vertextList( i, 0) = ver1;
+			vertextList( i, 1) = ver2;
+			edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
 			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
 		}
 	}
-	edgeWeights->SetNumberOfComponents(1);
-	for( int i = 0; i < weights->GetNumberOfComponents(); i++)
+
+	//edgeWeights = edgeWeights - edgeWeights.mean();
+	//double std = edgeWeights.two_norm();
+	//if( std != 0)
+	//{
+	//	edgeWeights = edgeWeights / std;
+	//	edgeWeights = ( edgeWeights - edgeWeights.min_value()) / ( edgeWeights.max_value() - edgeWeights.min_value()) + 0.1;
+	//	edgeWeights = 2.0 * edgeWeights;
+	//}
+	edgeWeights = edgeWeights / edgeWeights.max_value() * 5;
+	for(int i = 0; i < vertextList.rows(); i++)
 	{
-		edgeWeights->InsertNextValue(weights->GetValue(i));
+		vertextList( i, 2) = edgeWeights[i];
 	}
-	std::cout<<"Edges size:"<< table->GetNumberOfRows()<<endl;
-	std::cout<<"Weights array size:"<< edgeWeights->GetNumberOfComponents()<<endl;
+
+	std::ofstream verofs("vertextList.txt");
+	verofs<< vertextList<<endl;
+	verofs.close();
 
 	std::cout<< "calculate coordinates"<<endl;
-	std::vector<Point> pointList;
-	CalculateCoordinates(adj_matrix, pointList);
-	if( pointList.size() > 0)
+	std::vector<Point> oldPointList;
+	std::vector<Point> newPointList;
+	CalculateCoordinates(adj_matrix, oldPointList);
+	newPointList = oldPointList;
+	UpdateCoordinatesByEdgeWeights( oldPointList, vertextList, newPointList);
+
+	//std::vector<Point> newPointList;
+	//CalculateCoordinates(adj_matrix, newPointList);
+
+	if( newPointList.size() > 0)
 	{
-		std::cout<< pointList.size()<<endl;
-		for( int i = 0; i <  pointList.size(); i++)
+		std::cout<< newPointList.size()<<endl;
+		for( int i = 0; i <  newPointList.size(); i++)
 		{
-			points->InsertNextPoint(pointList[i].x, pointList[i].y, 0);
+			points->InsertNextPoint(newPointList[i].x, newPointList[i].y, 0);
 		}
 		graph->SetPoints( points);
 	}
 	else
-	{
+	{	
 		QMessageBox msg;
 		msg.setText("No coordinates Input!");
 		msg.exec();
@@ -435,12 +461,12 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	this->view->RemoveAllRepresentations();
 	this->view->SetRepresentationFromInput( graph);
-	this->view->SetEdgeLabelVisibility(false);
+	this->view->SetEdgeLabelVisibility(true);
 	this->view->SetColorVertices(true); 
 	this->view->SetVertexLabelVisibility(true);
 
 	this->view->SetVertexColorArrayName("Color");
-	//this->view->SetEdgeLabelArrayName("edgeLabel");
+	this->view->SetEdgeLabelArrayName("edgeLabel");
 	this->view->SetVertexLabelArrayName("vertexIDarrays");
 
     theme->SetPointLookupTable(lookupTable);
@@ -448,6 +474,87 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	this->view->SetLayoutStrategyToPassThrough();
 	this->view->SetVertexLabelFontSize(15);
+}
+
+void GraphWindow::UpdateCoordinatesByEdgeWeights(std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
+{
+	long int oldFirstIndex = backbones[0];
+	long int oldSecondIndex = 0;
+	newPointList[ oldFirstIndex] = oldPointList[oldFirstIndex];
+	Point newFirst = oldPointList[oldFirstIndex];
+	Point oldFirst = oldPointList[oldFirstIndex];
+	Point oldSecond(0,0);
+	for( int i = 1; i < backbones.size(); i++)
+	{
+		oldSecondIndex = backbones[i];
+		oldSecond = oldPointList[oldSecondIndex];
+		double weight = GetEdgeWeight( vertexList, oldFirstIndex, oldSecondIndex);
+		Point newSecond = GetNewPointFromOldPoint(oldFirst, oldSecond, newFirst, weight);
+		newPointList[ oldSecondIndex] = newSecond;
+		newFirst = newSecond;
+		oldFirst = oldSecond;
+		oldFirstIndex = oldSecondIndex;
+		UpdateChainPointList(oldSecondIndex, oldPointList, vertexList, newPointList);
+	}
+}
+
+// attachnode's coordinate has been updated already in pointlist
+void GraphWindow::UpdateChainPointList(long int attachnode, std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
+{
+	for( long int i = 0; i < chainList.size(); i++)
+	{
+		std::pair<long int, std::vector<long int> > pair = chainList[i];
+		if( pair.first == attachnode)
+		{
+ 			Point oldFirst = oldPointList[ attachnode];
+			Point newFirst = newPointList[ attachnode];
+			std::vector<long int> vec = pair.second;	
+			Point oldSecond(0,0);
+			long int oldFirstIndex = attachnode; 
+			long int oldSecondIndex = 0;
+			for( long int j = 0; j < vec.size(); j++)
+			{
+				oldSecondIndex = vec[j];
+				oldSecond = oldPointList[ oldSecondIndex];
+				double weight = GetEdgeWeight( vertexList, oldFirstIndex, oldSecondIndex);
+				Point newSecond = GetNewPointFromOldPoint(oldFirst, oldSecond, newFirst, weight);
+				newPointList[oldSecondIndex] = newSecond;
+				newFirst = newSecond;
+				oldFirst = oldSecond;
+				oldFirstIndex = oldSecondIndex;	
+
+				UpdateChainPointList(oldSecondIndex, oldPointList, vertexList, newPointList);
+			}
+		}
+	}
+}
+
+double GraphWindow::GetEdgeWeight( vnl_matrix<double>& vertexList, long firstIndex, long secondIndex)
+{
+	double weight;
+	for( int i = 0; i < vertexList.rows(); i++)
+	{
+		if( vertexList(i, 0) == firstIndex && vertexList( i, 1)== secondIndex
+			|| vertexList(i, 0) ==  secondIndex && vertexList(i, 1) ==  firstIndex)
+		{
+			weight = vertexList(i,2);
+			break;
+		}
+	}
+	return weight;
+}
+
+/// calculate the new point nodes based on the two old points and their weight
+Point GraphWindow::GetNewPointFromOldPoint( Point &oldPointFirst, Point &oldPointSecond, Point &newPointFirst, double weight)
+{
+	Point newpoint(0,0);
+	double xd = (oldPointFirst.x - oldPointSecond.x) * (oldPointFirst.x - oldPointSecond.x);
+	double yd = (oldPointFirst.y - oldPointSecond.y) * (oldPointFirst.y - oldPointSecond.y);
+	double distance = sqrt( xd + yd);
+
+	newpoint.x = newPointFirst.x + ( oldPointSecond.x - oldPointFirst.x) * weight / distance;
+	newpoint.y = newPointFirst.y + ( oldPointSecond.y - oldPointFirst.y) * weight /  distance;
+	return newpoint;
 }
 
 void GraphWindow::ShowGraphWindow()
@@ -461,7 +568,7 @@ void GraphWindow::ShowGraphWindow()
 	view->Render();
 	std::cout<< "Successfully rendered"<<endl;
 
-    this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New();
+    this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New(); 
     this->selectionCallback->SetClientData(this);
     this->selectionCallback->SetCallback ( SelectionCallbackFunction);
 	vtkAnnotationLink *link = view->GetRepresentation()->GetAnnotationLink();

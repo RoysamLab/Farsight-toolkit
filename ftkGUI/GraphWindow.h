@@ -64,7 +64,11 @@ protected:
 	bool IsExist(std::vector<long int>& vec, long int value);
 	double Median( vnl_vector<double> vec);
 	void GetOrder(long int node, std::vector<long int> &order);
-	
+	void UpdateCoordinatesByEdgeWeights(std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList);
+	void UpdateChainPointList(long int attachnode, std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList);
+	Point GetNewPointFromOldPoint( Point &oldPointFirst, Point &oldPointSecond, Point &newPointFirst, double weight);
+	double GetEdgeWeight(vnl_matrix<double>& vertexList, long firstIndex, long secondIndex);
+
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	void UpdateGraphView();
@@ -87,7 +91,8 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
 	unsigned long observerTag;
-	vtkSmartPointer<vtkDoubleArray> edgeWeights;
+	vnl_vector<double> edgeWeights;
+	vnl_matrix<double> vertextList;
 
 	std::map<long int, long int> indMapFromVertexToInd;
 	std::vector<long int> indMapFromIndToVertex;

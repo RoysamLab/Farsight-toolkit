@@ -358,6 +358,8 @@ void SPDAnalysisModel::ClusterCells( double cor)
 					"_" + QString::number( cor, 'g', 4) + "_";
 	QString filenameCluster = this->filename + "Cellclustering.txt";
 	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
+	//ofs<< "Data Matrix:"<<endl;
+	//ofs<< this->DataMatrix<<endl<<endl;
 	ofs<<"cell clustering:"<<endl;
 
 	TreeData.clear();
