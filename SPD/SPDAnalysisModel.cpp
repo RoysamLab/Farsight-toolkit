@@ -238,7 +238,15 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 			}
 			else
 			{
-				(this->DataMatrix)(rowIndex, colIndex++) = this->DataTable->GetValue(i, j).ToDouble();
+				double var = this->DataTable->GetValue(i, j).ToDouble();
+				if( !_isnan(var))
+				{
+					(this->DataMatrix)(rowIndex, colIndex++) = this->DataTable->GetValue(i, j).ToDouble();
+				}
+				else
+				{
+					(this->DataMatrix)(rowIndex, colIndex++) = 0;
+				}
 			}
 		}
 	}
@@ -332,10 +340,28 @@ void SPDAnalysisModel::NormalizeData()
 
 void SPDAnalysisModel::ClusterCells( double cor)
 {
+	this->filename = "C++_" + QString::number(this->DataMatrix.cols())+ "_" + QString::number(this->DataMatrix.rows()) + 
+					"_" + QString::number( cor, 'g', 4) + "_";
+	QString filenameCluster = this->filename + "Cellclustering.txt";
+	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
+
 	vnl_matrix<double> tmpMat = this->DataMatrix;
+	ofs<< "Data Matrix before transpose and normalize:"<<endl;
+	ofs<< this->DataMatrix<<endl<<endl;
+
 	NormalizeData();   // eliminate the differences of different features
+	ofs<< "Data Matrix after first normalize:"<<endl;
+	ofs<< this->DataMatrix<<endl<<endl;
+
 	this->DataMatrix =  this->DataMatrix.transpose();
+	ofs<< "Data Matrix after first transpose:"<<endl;
+	ofs<< this->DataMatrix<<endl<<endl;
+
 	NormalizeData();   // for calculating covariance
+	ofs<< "Data Matrix after transpose normalize:"<<endl;
+	ofs<< this->DataMatrix<<endl<<endl;
+	ofs<<"cell clustering:"<<endl;
+
 	vnl_matrix<double> moduleMean = this->DataMatrix;
 	moduleMean.normalize_columns();
 
@@ -354,12 +380,8 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		TreeIndex[i] = i;
 	}
 
-	this->filename = "C++_" + QString::number(this->DataMatrix.cols())+ "_" + QString::number(this->DataMatrix.rows()) + 
-					"_" + QString::number( cor, 'g', 4) + "_";
-	QString filenameCluster = this->filename + "Cellclustering.txt";
-	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
-	//ofs<< "Data Matrix:"<<endl;
-	//ofs<< this->DataMatrix<<endl<<endl;
+	ofs<< "Data Matrix:"<<endl;
+	ofs<< this->DataMatrix<<endl<<endl;
 	ofs<<"cell clustering:"<<endl;
 
 	TreeData.clear();

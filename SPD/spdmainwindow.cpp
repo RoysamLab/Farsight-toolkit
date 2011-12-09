@@ -210,7 +210,7 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		data->RemoveColumnByName("Soma_X_Pos");
 		data->RemoveColumnByName("Soma_Y_Pos");
 		data->RemoveColumnByName("Soma_Z_Pos");
-
+		
 		SPDModel->ParseTraceFile( data);
 		std::cout<<"table size after parse "<<data->GetNumberOfRows()<<"\t"<<data->GetNumberOfColumns()<<endl;
 		
