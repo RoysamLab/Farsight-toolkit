@@ -33,7 +33,7 @@ def image_dicer(montage_image, centroid_list):
             #print "Threads launched: " + str(threads_launched)
             time.sleep(1)
                           
-        fh = open(os.getcwd() + '/debug/debug_' + centroid_list.rstrip('\n') + ".txt", 'w')
+        fh = open(os.getcwd() + '/debug/debug_' + centroid_list[idx].rstrip('\n') + ".txt", 'w')
         print "Launching " + command
         subp = subprocess.Popen(command, stdout = fh, stderr = fh, shell=True)
         #subp = subprocess.Popen(command)
