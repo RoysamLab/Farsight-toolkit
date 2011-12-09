@@ -93,10 +93,19 @@
 #include <vtkStringArray.h>
 #include <vtkHoverWidget.h>
 #include <vtkPointSetToLabelHierarchy.h>
+#include <vtkTextActor.h>
+#include <vtkTextProperty.h>
+#include <vtkPointSetToLabelHierarchy.h>
+#include <vtkLabelPlacementMapper.h>
+#include <vtkQtLabelRenderStrategy.h>
+#include <vtkPointData.h>
+#include <vtkScalarBarActor.h>
+
 
 #include <boost/math/distributions/normal.hpp>
 
 #include <ftkCommon/ftkUtils.h>
+#include <FtkGUI/ColorMap.h>
 #include "ClusClus/clusclus.h"
 #include "ObjectSelection.h"
 #include "ftkGUI/ColorMap.h"
@@ -126,6 +135,19 @@ using namespace std;
         }
     }
 };*/
+//
+//typedef struct srgb
+//{
+//	srgb( double rv, double gv, double bv)
+//	{
+//		r = rv;
+//		g = gv;
+//		b = bv;
+//	};
+//	double r;
+//	double g;
+//	double b;
+//}rgb;
 
 class Heatmap : public QMainWindow
 {
@@ -136,12 +158,13 @@ public:
 	~Heatmap();
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
-	void setDataForDendrograms(double** treedata1, double** treedata2);
+	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void creatDataForProgressionHeatmap(double powCof);
 	void creatDataForSimilarMatrixHeatmap();
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
+	void runClus();
 	void showGraph();
 	void showSimilarMatrixGraph();
 	void showSPDGraph();
@@ -241,13 +264,17 @@ private:
 	//vtkSmartPointer<vtkHoverWidget> hoverWidget;
 	//vtkSmartPointer<vtkHoverCallback> hoverCallback;
 
+	void readmustd(double** mustd);
+	void scaleData(double** mustd);
 	void scaleData();
 	void drawPoints1();
 	void drawPoints2();
+	void drawPoints3();
 	void setselectedCellIds();
 	void computeselectedcells();
 	void createDataForDendogram1(double powCof);
 	void createDataForDendogram2(double powCof);
+	void createDataForDendogram2();
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
 

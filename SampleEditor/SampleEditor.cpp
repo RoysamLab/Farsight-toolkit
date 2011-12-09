@@ -750,8 +750,17 @@ void SampleEditor::showheatmap()
 		return;
 	}
 
-	this->heatmap->setModels(data,selection,selection2);
-	this->heatmap->runClusclus();
+		vtkSmartPointer<vtkTable> featureTable;
+		featureTable = this->data;
+		featureTable->RemoveColumnByName("Trace File");
+		
+		featureTable->RemoveColumnByName("Soma X Pos");
+		featureTable->RemoveColumnByName("Soma Y Pos");
+		featureTable->RemoveColumnByName("Soma Z Pos");
+		featureTable->RemoveColumnByName("Distance to Device");
+
+	this->heatmap->setModels(featureTable,selection,selection2);
+	this->heatmap->runClus();
 	this->heatmap->showGraph();
 
 	//double** datas;

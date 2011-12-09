@@ -5245,8 +5245,14 @@ void View3D::ClusclusAnalysis()
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
 		
+		featureTable->RemoveColumnByName("Soma X Pos");
+		featureTable->RemoveColumnByName("Soma Y Pos");
+		featureTable->RemoveColumnByName("Soma Z Pos");
+		featureTable->RemoveColumnByName("Distance to Device");
+
+
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
-		this->HeatmapWin->runClusclus();
+		this->HeatmapWin->runClus();
 		this->HeatmapWin->showGraph();
 	}
 #endif
