@@ -10,44 +10,58 @@ typedef itk::Image<unsigned char, 3> ImageType;
 
 int main(int argc, char* argv[])
 {
+	std::fstream soma_centroid_file;
+	soma_centroid_file.open(argv[1], std::fstream::in);
+	
 	typedef itk::ImageFileReader<ImageType> ReaderType;
 	typedef itk::ImageFileWriter<ImageType> WriterType;	
 	
 	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName(argv[1]);
-	//reader->Update();
+	reader->SetFileName(argv[2]);
+	reader->Update();
 	
-	//ImageType::Pointer image = reader->GetOutput();	
+	ImageType::Pointer image = reader->GetOutput();	
 	
 	WriterType::Pointer writer = WriterType::New();
 
-	ImageType::RegionType region;
-	ImageType::IndexType start;
 	
-	int x = atoi(argv[2]);
-	int y = atoi(argv[3]);
-	int z = atoi(argv[4]);
-	
-	start[0] = y - 150;
-	start[1] = x - 150;
-	start[2] = z - 50;
+	while (soma_centroid_file.good())
+	{
+		double x_d, y_d, z_d;
+		soma_centroid_file >> x_d >> y_d >> z_d;
 		
-	ImageType::SizeType size;
-	size[0] = 300;
-	size[1] = 300;
-	size[2] = 100;
+		int x, y, z;
+		x = x_d;
+		y = y_d;
+		z = z_d;
 
-	region.SetSize(size);
-	region.SetIndex(start);
+		//std::cout << x << " " << y << " " << z << std::endl;
+		ImageType::RegionType region;
+		ImageType::IndexType start;
+	
+		start[0] = y - 150;
+		start[1] = x - 150;
+		start[2] = z - 50;
+		
+		ImageType::SizeType size;
+		size[0] = 300;
+		size[1] = 300;
+		size[2] = 100;
 
-	std::ostringstream output_filename_stream;
+		region.SetSize(size);
+		region.SetIndex(start);
 
-	output_filename_stream << vul_file::strip_extension(argv[2]) << "_" << x << "_" << y << "_" << z << ".TIF";	
+		std::ostringstream output_filename_stream;
 
-	writer->SetFileName(std::string(output_filename_stream.str()));
-	writer->SetInput(reader->GetOutput());
-	writer->Update();		
+		output_filename_stream << vul_file::strip_extension(argv[2]) << "_" << x << "_" << y << "_" << z << ".TIF";	
 
+		writer->SetFileName(std::string(output_filename_stream.str()));
+		writer->SetInput(image);
+		writer->Update();		
+
+	}
+	
+	soma_centroid_file.close();
 }
 
 
