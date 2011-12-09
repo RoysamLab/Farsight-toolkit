@@ -6,6 +6,7 @@
 #include "vul/vul_file.h"
 #include "iostream"
 #include "itkRegionOfInterestImageFilter.h"
+#include <algorithm>
 
 typedef itk::Image<unsigned char, 3> ImageType;
 
@@ -38,18 +39,20 @@ int main(int argc, char* argv[])
 		x = x_d;
 		y = y_d;
 		z = z_d;
+
+		ImageType::SizeType montage_size = image->GetLargestPossibleRegion().GetSize();
 		
 		//std::cout << x << " " << y << " " << z << std::endl;
 		ImageType::IndexType start;
 
-		start[0] = y - 150;
-		start[1] = x - 150;
-		start[2] = z - 50;
+		start[0] = std::max<long long>(0, x - 150);
+		start[1] = std::max<long long>(0, y - 150);
+		start[2] = std::max<long long>(0, z - 50);
 
 		ImageType::SizeType size;
-		size[0] = 300;
-		size[1] = 300;
-		size[2] = 100;
+		size[0] = std::min<long long>(300, montage_size[0] - start[0]);
+		size[1] = std::min<long long>(300, montage_size[1] - start[1]);
+		size[2] = std::min<long long>(100, montage_size[2] - start[2]);
 
 		//Open file to write the centroids out
 		std::ostringstream output_centroid_filename_stream;
@@ -78,3 +81,5 @@ int main(int argc, char* argv[])
 
 	centroids_file.close();
 }
+
+
