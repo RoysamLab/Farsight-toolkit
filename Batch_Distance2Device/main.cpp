@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
         voi->ReadVTPVOI(argv[2]);
         voi->CalculateCellDistanceToVOI(cells);
 
+	cells->setCells(tobj->CalculateCellFeatures());
 
 	ftk::SaveTable(vul_file::strip_extension(argv[1]) + ".txt", cells->getDataTable());
 }

@@ -43,6 +43,7 @@ OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
 OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
 OPTION( BUILD_FTKVOTING "Build Radial Voting" OFF)
 OPTION( BUILD_Batch_Distance2Device "Build Distance to Device Batch Processing Code" OFF)
+OPTION( BUILD_image_dicer "Build program to dice an image based on a text file centered around a coordinate" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -347,6 +348,11 @@ IF (BUILD_Batch_Distance2Device)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Batch_Distance2Device )
 	SUBDIRS( Batch_Distance2Device )
 ENDIF (BUILD_Batch_Distance2Device)
+
+IF (BUILD_image_dicer)
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/image_dicer)
+	SUBDIRS( image_dicer)
+ENDIF(BUILD_image_dicer)
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
