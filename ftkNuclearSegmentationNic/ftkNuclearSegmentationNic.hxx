@@ -9,16 +9,16 @@ ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkNuclearSegmen
 	//NucleusSeg = NULL;
 	this->ResetRealeaseAll();
 
-	_paramNames.push_back("High_sensitivity");
+	_paramNames.push_back("high_sensitivity");
 	_paramNames.push_back("LoG_size");
 	_paramNames.push_back("min_scale");
 	_paramNames.push_back("max_scale");
 	_paramNames.push_back("xy_clustering_res");
 	_paramNames.push_back("z_clustering_res");
-	_paramNames.push_back("Finalize_segmentation");
+	_paramNames.push_back("finalize_segmentation");
 	_paramNames.push_back("Sampling_ratio_XY_to_Z");
 	_paramNames.push_back("Use_Distance_Map");
-	_paramNames.push_back("Refinement_range");
+	_paramNames.push_back("refinement_range");
 	_paramNames.push_back("min_object_size");
 	_currentTime = 0;
 };
@@ -54,6 +54,7 @@ void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ResetRealea
 template< typename inputPixelType >
 void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ReleaseMemory()
 {
+	// This should realease all the memory
 	//itk::ImageIOBase::
 	// !!! need to work on this
 
@@ -123,7 +124,7 @@ void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetParamete
 
 	if(!found)		//Add the parameter
 	{
-		parameter newP;
+		parameterInt newP;
 		newP.name = name;
 		newP.value = value;
 		_vectParameters.push_back(newP);
@@ -143,8 +144,8 @@ template< typename inputPixelType >
 void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkBinarizeMixPoisson(unsigned int numberBins, bool getResultImg)
 //void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkBinarizeMixPoisson(unsigned int numberBins, bool getResultImg)//, const std::vector<double> 
 {
-	// !!! Missing test for the correct data
-	//inputImageType_3::Pointer dptr = _dataImage->GetItkPtr<inputPixelType>(_T,_CN,0);
+	// !!! Missing test for the correct data 
+	typename inputImageType_3::Pointer dptr = _dataImage->GetItkPtr<inputPixelType>(_T,_CH,0);
 	
 	//itk::Image
 	//itk::I
