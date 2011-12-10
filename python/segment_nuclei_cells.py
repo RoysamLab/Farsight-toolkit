@@ -9,7 +9,7 @@ def seg_nuclei(basename_list):
     idx = 0
 
     for line in basename_list:
-        command_list.append("./segment_nuclei " + basename_list[idx].rstrip('\n') + ".mhd " + basename_list[idx].rstrip('\n') + "_label.mhd Seg_Params.ini")
+        command_list.append("segment_nuclei " + basename_list[idx].rstrip('\n') + ".mhd " + basename_list[idx].rstrip('\n') + "_label.mhd Seg_Params.ini")
         idx = idx + 1
 
     #make "debug" directory to store the console output of each subprocess
