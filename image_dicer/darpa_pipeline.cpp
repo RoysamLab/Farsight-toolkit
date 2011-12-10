@@ -29,7 +29,13 @@ typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 
 //typedef struct{ double x_d; double y_d; double z_d; } centroids;
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[])
+{
+	if(argc < 5)
+	{
+		std::cout<<"Usage1: darpa_tracer <Global_Centroids_List> <DAPI_Montage_File> <GFP_Montage_File> <Seg_Params_File> \n";
+		return 0;
+	}
 	//Input: Somas_file, nucleus_montage, trace_channel_montage, nuc_seg_parameters
 	//std::fstream soma_centroid_file;
 	//soma_centroid_file.open(argv[1], std::fstream::in);
@@ -42,7 +48,7 @@ int main(int argc, char* argv[]){
 	//soma_centroid_file.close();
 
 	std::vector< itk::Index<3> > centroid_list;
-	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable("C:\\Data\\Darpa\\Global_centroids.txt");
+	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable(argv[1]);
 	for(int r=0; r<(int)global_centroids->GetNumberOfRows(); ++r)
 	{
 		int cx = global_centroids->GetValue(r, 0).ToInt();
@@ -60,11 +66,11 @@ int main(int argc, char* argv[]){
 	typedef itk::ImageFileReader<nucImageType> nucReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
 	nucReaderType::Pointer reader_nuc   = nucReaderType::New();
-	reader_nuc->  SetFileName("C:\\Data\\Darpa\\montage_DAPI.tif");
-	reader_nuc->  Update();
+	reader_nuc->SetFileName(argv[2]);
+	reader_nuc->Update();
 	nucImageType::Pointer img_nuc   = reader_nuc->GetOutput();
 	gfpReaderType::Pointer reader_trace = gfpReaderType::New();
-	reader_trace->SetFileName("C:\\Data\\Darpa\\montage_GFP.tif");
+	reader_trace->SetFileName(argv[3]);
 	reader_trace->Update();
 	gfpImageType::Pointer img_trace = reader_trace->GetOutput();
 	uint64_t size_trace[3],size_nuc[3];
@@ -133,8 +139,8 @@ int main(int argc, char* argv[]){
 		ROIfilter2->Update();
 		gfpImageType::Pointer img_tr = ROIfilter2->GetOutput();
 
-		itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
-		caster->SetInput(img_tr);
+		//itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
+		//caster->SetInput(img_tr);
 		//itk::ImageFileWriter<nucImageType>::Pointer writer2 = itk::ImageFileWriter<nucImageType>::New();
 		//writer2->SetFileName("C:\\ROYSAMLAB\\FARSIGHT\\Farsight_DASH_bin\\exe\\Release\\gfp_File.tif");
 		//writer2->SetInput(caster->GetOutput());
@@ -153,30 +159,35 @@ int main(int argc, char* argv[]){
 		for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
 			in_Image[ind]=(pix_buf.Get());
 		yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
-		NucleusSeg->readParametersFromFile("C:\\ROYSAMLAB\\FARSIGHT\\Farsight_DASH_bin\\exe\\Release\\Seg_Params.ini");
+		NucleusSeg->readParametersFromFile(argv[4]);
 		NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"");
 		NucleusSeg->runBinarization();
-		try {
+		try 
+		{
 			std::cout<<"Starting seed detection\n";
 			NucleusSeg->runSeedDetection();
 		}
-		catch( bad_alloc & excp ){
+		catch( bad_alloc & excp )
+		{
 			std::cout<<"You have requested more memory than "
 			<<"what is currently available in this "
 			<<"system, please try again with a smaller "
 			<<"input image\n";
 			return EXIT_FAILURE;
 		}
-		catch( itk::ExceptionObject & excp ){
+		catch( itk::ExceptionObject & excp )
+		{
 			std::cout<<"Error: " << excp <<std::endl;
 			return EXIT_FAILURE;
 		}
 		NucleusSeg->runClustering();
 		unsigned short *output_img;
-		if(NucleusSeg->isSegmentationFinEnabled()){
+		if(NucleusSeg->isSegmentationFinEnabled())
+		{
 			NucleusSeg->runAlphaExpansion();
 			output_img=NucleusSeg->getSegImage();
-		} else
+		} 
+		else
 			output_img=NucleusSeg->getClustImage();
 
 		LabelType::Pointer image = LabelType::New();
@@ -220,7 +231,7 @@ int main(int argc, char* argv[]){
 		std::vector< itk::Index<3> > soma_centroids;
 		soma_centroids.push_back(centroid);
 		
-		std::ostringstream swc_filename_stream;
+		//std::ostringstream swc_filename_stream;
 		//swc_filename_stream << vul_file::strip_extension(argv[3]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
 		
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
