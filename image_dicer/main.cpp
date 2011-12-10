@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
 
 	while (centroids_file.good())
 	{
-		
 		WriterType::Pointer writer = WriterType::New();
 		double x_d, y_d, z_d;
 		centroids_file >> x_d >> y_d >> z_d;
@@ -58,6 +57,16 @@ int main(int argc, char* argv[])
 		size[0] = std::min<long long>(300, montage_size[0] - start[0]);
 		size[1] = std::min<long long>(300, montage_size[1] - start[1]);
 		size[2] = std::min<long long>(100, montage_size[2] - start[2]);
+	
+		int local_centroid_coord_x, local_centroid_coord_y, local_centroid_coord_z;
+
+		if (x-150 < 0)
+			local_centroid_coord_x = 150 + (x - 150);
+		if (y-150 < 0)
+			local_centroid_coord_y = 150 + (y - 150);
+		if (z-150 < 0)
+			local_centroid_coord_z = 150 + (z - 150);		
+
 
 		//std::cout << "size: " << size[0] << ", " << size[1] << ", " << size[2] << std::endl;
 
@@ -96,7 +105,6 @@ int main(int argc, char* argv[])
 		writer->SetFileName(std::string(output_image_filename_stream.str()));
 		writer->SetInput(ROIfilter->GetOutput());
 		writer->Update();		
-
 	}
 
 	file_basenames.close();
