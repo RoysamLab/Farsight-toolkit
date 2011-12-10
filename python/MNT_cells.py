@@ -1,6 +1,6 @@
 import os, sys, platform, subprocess, multiprocessing, time
 
-def MNT(basename_list):
+def MNT(GFP_basename_list, DAPI_basename_list):
     command_list=[]
     list=[]
     launched_processes_list=[]
@@ -8,8 +8,8 @@ def MNT(basename_list):
     
     idx = 0
 
-    for line in basename_list:
-        command_list.append("./MultipleNeuronTracer " + basename_list[idx].rstrip('\n') + ".mhd " + basename_list[idx].rstrip('\n') + "_local_coord.txt 10000 " + basename_list[idx].rstrip('\n') + "_label.mhd")
+    for line in GFP_basename_list:
+        command_list.append("MultipleNeuronTracer.exe " + GFP_basename_list[idx].rstrip('\n') + ".mhd " + GFP_basename_list[idx].rstrip('\n') + "_local_coord.txt 200 " + DAPI_basename_list[idx].rstrip('\n') + "_label.mhd")
         idx = idx + 1
 
     #make "debug" directory to store the console output of each subprocess
@@ -33,14 +33,14 @@ def MNT(basename_list):
             #print "Threads launched: " + str(threads_launched)
             time.sleep(1)
                           
-        fh = open(os.getcwd() + '/debug/debug_' + basename_list[idx].rstrip('\n') + ".txt", 'w')
+        #fh = open(os.getcwd() + '/debug/debug_' + GFP_basename_list[idx].rstrip('\n') + ".txt", 'w')
         print "Launching " + command
-        subp = subprocess.Popen(command, stdout = fh, stderr = fh, shell=True)
+        subp = subprocess.Popen(command + " > " + os.getcwd() + '/debug/debug_' + GFP_basename_list[idx].rstrip('\n') + ".txt 2>&1", shell=True)
         #subp = subprocess.Popen(command)
         
         list.append(subp)
         launched_processes_list.append(subp)
-        file_handle_list.append(fh)
+        #file_handle_list.append(fh)
         threads_launched = threads_launched + 1;
         idx = idx + 1
 
@@ -54,16 +54,18 @@ def MNT(basename_list):
                 processes_done = False
 
     #close all the debug file handles since we are done writing to them
-    for fh in file_handle_list:
-        fh.close()
+    #for fh in file_handle_list:
+        #fh.close()
     
     
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print 'Usage: '+sys.argv[0]+' <cell_list.txt>\n'
+    if len(sys.argv) < 3:
+        print 'Usage: '+sys.argv[0]+' <cell_list_GFP.txt> <cell_list_DAPI.txt>\n'
+        
         sys.exit(1)
     start_time = time.clock()
-    basename_list = open(sys.argv[1], 'r').readlines()
-    MNT(basename_list)
+    GFP_basename_list = open(sys.argv[1], 'r').readlines()
+    DAPI_basename_list = open(sys.argv[2], 'r').readlines()
+    MNT(GFP_basename_list, DAPI_basename_list)
     print 'MNT took: ' + str(time.clock() - start_time) + ' seconds'

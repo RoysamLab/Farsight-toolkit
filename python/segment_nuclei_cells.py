@@ -33,14 +33,14 @@ def seg_nuclei(basename_list):
             #print "Threads launched: " + str(threads_launched)
             time.sleep(1)
                           
-        fh = open(os.getcwd() + '/debug/debug_' + basename_list[idx].rstrip('\n') + ".txt", 'w')
+        #fh = open(os.getcwd() + '/debug/debug_' + basename_list[idx].rstrip('\n') + ".txt", 'w')
         print "Launching " + command
-        subp = subprocess.Popen(command, stdout = fh, stderr = fh, shell=True)
+        subp = subprocess.Popen(command + " > " + os.getcwd() + '/debug/debug_' + basename_list[idx].rstrip('\n') + ".txt 2>&1" , shell=True)
         #subp = subprocess.Popen(command)
         
         list.append(subp)
         launched_processes_list.append(subp)
-        file_handle_list.append(fh)
+        #file_handle_list.append(fh)
         threads_launched = threads_launched + 1;
         idx = idx + 1
 
@@ -54,8 +54,8 @@ def seg_nuclei(basename_list):
                 processes_done = False
 
     #close all the debug file handles since we are done writing to them
-    for fh in file_handle_list:
-        fh.close()
+    #for fh in file_handle_list:
+        #fh.close()
     
     
 
