@@ -74,13 +74,13 @@ namespace ftk{
 			/**
 			*	Reset all the pointers and deletes all the data
 			*/
-			void ftkNuclearSegmentationNic::ResetRealeaseAll();
+			void ResetRealeaseAll();
 
 			/**
 			*	This function errases the pointers to all the internal memory of the class. The class creates and destroys the pointers to the binary image, the seed Image, etc... when the user ask for a copy, the itkDuplicator function is used, to create a copy
 			*	@see (all the pointers that allocate the image)
 			*/
-			void ftkNuclearSegmentationNic::ReleaseMemory();
+			void ReleaseMemory();
 
 			/**
 			*	Load the input image from a file
