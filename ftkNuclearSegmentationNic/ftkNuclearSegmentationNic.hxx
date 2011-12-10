@@ -79,7 +79,7 @@ void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ReleaseMemo
 
 // ############################################################################################################################################################################
 template< typename inputPixelType >
-bool ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetInput(ftk::Image::Pointer inImg, std::string fname, int chNumber = 0)
+bool ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetInput(ftk::Image::Pointer inImg, std::string fname, int chNumber)
 {
 	if(chNumber > inImg->GetImageInfo()->numChannels)
 	{
