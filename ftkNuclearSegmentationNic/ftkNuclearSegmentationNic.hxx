@@ -93,7 +93,7 @@ bool ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetInput(ft
 	//}
 	_dataFileName = fname;
 	_dataImage = inImg;
-	_CN = chNumber;
+	_CH = chNumber;
 
 
 	return true;
@@ -134,17 +134,17 @@ void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetParamete
 template< typename inputPixelType >
 void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::setTime( unsigned int time )
 {
-	_time = time;
+	_T = time;
 }
 
 
 // ############################################################################################################################################################################
 template< typename inputPixelType >
-void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkBinarizeMixPoisson(unsigned int numberBins = 128, bool getResultImg = falsebinarizeparam)
+void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkBinarizeMixPoisson(unsigned int numberBins, bool getResultImg)
 //void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::ftkBinarizeMixPoisson(unsigned int numberBins, bool getResultImg)//, const std::vector<double> 
 {
 	// !!! Missing test for the correct data
-	inputImageType_3::Pointer dptr = _dataImage->GetItkPtr<inputPixelType>(_T,_CN,0);
+	//inputImageType_3::Pointer dptr = _dataImage->GetItkPtr<inputPixelType>(_T,_CN,0);
 	
 	//itk::Image
 	//itk::I
