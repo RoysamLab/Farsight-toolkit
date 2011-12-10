@@ -13,7 +13,9 @@
 int main( int argc, char * argv[] ){
 
 
-	ftkNucSecNic::ftkNuclearSegmentationNic nucSecNic;
+	ftk::ftkNucSecNic::ftkNuclearSegmentationNic<int> nucSecNic;
+	nucSecNic.ResetRealeaseAll();
+	nucSecNic.ReleaseMemory();
 
 
 	std::cout << std::endl;

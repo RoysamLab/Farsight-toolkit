@@ -26,7 +26,7 @@ INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 SET( FTKNUCLEARSEGMENTATIONNIC_SRCS
 
 main.cpp
-ftkNuclearSegmentationNic.cpp
+#ftkNuclearSegmentationNic.cpp
  
 )
 
@@ -37,6 +37,7 @@ ftkNuclearSegmentationNic.cpp
 SET( FTKNUCLEARSEGMENTATIONNIC_HDRS
 
 ftkNuclearSegmentationNic.h
+ftkNuclearSegmentationNic.txx
  
 )
 
