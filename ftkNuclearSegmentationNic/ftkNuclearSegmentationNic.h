@@ -205,6 +205,6 @@ namespace ftk{
 
 
 
-#include "ftkNuclearSegmentationNic.txx"
+#include "ftkNuclearSegmentationNic.hxx"
 
 #endif
