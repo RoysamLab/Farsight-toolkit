@@ -1418,7 +1418,7 @@ int TraceObject::getNewLineId()
 int TraceObject::GetMaximumBitId()
 {
 	std::vector<TraceBit> bits = this->CollectTraceBits();
-	int maxID = -1;
+	unsigned int maxID = -1;
 	for(std::vector<TraceBit>::iterator itr = bits.begin();
 		itr != bits.end(); ++itr)
 	{

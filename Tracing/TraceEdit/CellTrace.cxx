@@ -37,7 +37,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->confidence = this->segments[0]->getConfidence();*/
 	if (this->stems > 0)
 	{
-		for (unsigned int j = 0; j < this->stems; j++)
+		for ( int j = 0; j < this->stems; j++)
 		{
 			this->MaxMin(this->segments[0]->GetBranchPointer()->at(j)->GetDistToParent(), 
 				this->TotalStemDistance, this->MinStemDistance, this->MaxStemDistance);
@@ -477,7 +477,15 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->MaxStemDistance);
 
 	CellData->InsertNextValue(this->MinContraction);
-	CellData->InsertNextValue(this->TotalContraction / this->NumSegments);
+	double aveContraction = this->TotalContraction / this->NumSegments;
+	if (aveContraction != aveContraction)
+	{
+		CellData->InsertNextValue(-PI);
+	}
+	else
+	{
+		CellData->InsertNextValue(aveContraction);
+	}
 	CellData->InsertNextValue(this->MaxContraction);
 
 	CellData->InsertNextValue(this->TotalFragmentation);
@@ -629,7 +637,7 @@ std::set<long int> CellTrace::TraceIDsInCell()
 {
 	return this->IDs;
 }
-int CellTrace::rootID()
+unsigned int CellTrace::rootID()
 {
 	return this->segments[0]->GetId();
 }

@@ -81,7 +81,7 @@ TraceLine* TraceLine::GetParent()
 {
   return this->m_parent;
 }
-int TraceLine::GetParentID()
+unsigned int TraceLine::GetParentID()
 {
 	if (this->m_parent)
 	{
@@ -511,10 +511,10 @@ TraceLine::TraceBitsType* TraceLine::GetTraceBitsPointer()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void TraceLine::SetId(int lid){ m_id = lid;}
+void TraceLine::SetId(unsigned int lid){ m_id = lid;}
 
 ///////////////////////////////////////////////////////////////////////////////
-int TraceLine::GetId()
+unsigned int TraceLine::GetId()
 { 
   return m_id;
 };

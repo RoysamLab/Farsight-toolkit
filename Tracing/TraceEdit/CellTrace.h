@@ -35,7 +35,7 @@ public:
 	vtkSmartPointer<vtkVariantArray> BoundsRow();
 	std::string BasicFeatureString();
 	std::set<long int> TraceIDsInCell();
-	int rootID();
+	unsigned int rootID();
 	TraceLine * getRootTrace();
 	void setFileName(std::string newFileName);
 	std::string GetFileName();

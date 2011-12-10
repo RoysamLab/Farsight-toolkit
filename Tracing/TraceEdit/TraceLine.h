@@ -40,7 +40,7 @@ public:
 	TraceLine(const TraceLine &t);
   ~TraceLine();
 	TraceLine *GetParent();
-	int GetParentID();
+	unsigned int GetParentID();
 	void SetParent(TraceLine* p);
 	int GetRootID();
 	int GetLevel();
@@ -118,8 +118,8 @@ public:
 	TraceBitsType::iterator GetTraceBitIteratorBegin();
 	TraceBitsType::iterator GetTraceBitIteratorEnd();
 	TraceBitsType * GetTraceBitsPointer();
-	void SetId(int lid);
-	int GetId();
+	void SetId(unsigned int lid);
+	unsigned int GetId();
 	int GetSize();
 	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData);
 	void Print(std::ostream &c,int indent);
@@ -184,7 +184,8 @@ private:
 	/*double prediction, confidence;*/
 
 	char * FileName; 
-	int m_id, root, level, terminalDegree;
+	unsigned int m_id, root;
+	int level, terminalDegree;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
 	TraceLine *m_parent;
