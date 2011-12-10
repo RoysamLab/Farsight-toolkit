@@ -29,13 +29,7 @@ typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 
 //typedef struct{ double x_d; double y_d; double z_d; } centroids;
 
-int main(int argc, char* argv[])
-{
-	if(argc < 4)
-	{
-		std::cout<<"Usage1: darpa_tracer <Global_Centroids_List> <DAPI_Montage_File> <GFP_Montage_File> \n";
-		return 0;
-	}
+int main(int argc, char* argv[]){
 	//Input: Somas_file, nucleus_montage, trace_channel_montage, nuc_seg_parameters
 	//std::fstream soma_centroid_file;
 	//soma_centroid_file.open(argv[1], std::fstream::in);
@@ -48,13 +42,13 @@ int main(int argc, char* argv[])
 	//soma_centroid_file.close();
 
 	std::vector< itk::Index<3> > centroid_list;
-	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable(argv[1]);
+	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable("C:\\Data\\Darpa\\Global_centroids.txt");
 	for(int r=0; r<(int)global_centroids->GetNumberOfRows(); ++r)
 	{
 		int cx = global_centroids->GetValue(r, 0).ToInt();
 		int cy = global_centroids->GetValue(r, 1).ToInt();
 		int cz = global_centroids->GetValue(r, 2).ToInt();
-		if( (fmod((double)cx,1050)>1000) && (fmod((double)cx,1050)<50) && (fmod((double)cy,1050)>1000) && (fmod((double)cy,1050)<50))
+		if( (fmod((double)cx,1050)>1000) || (fmod((double)cx,1050)<50) || (fmod((double)cy,1050)>1000) || (fmod((double)cy,1050)<50))
 		{
 			itk::Index<3> cen;
 			cen[0] = cx; cen[1] = cy; cen[2] = cz; 
@@ -66,11 +60,11 @@ int main(int argc, char* argv[])
 	typedef itk::ImageFileReader<nucImageType> nucReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
 	nucReaderType::Pointer reader_nuc   = nucReaderType::New();
-	reader_nuc->  SetFileName(argv[2]);
+	reader_nuc->  SetFileName("C:\\Data\\Darpa\\montage_DAPI.tif");
 	reader_nuc->  Update();
 	nucImageType::Pointer img_nuc   = reader_nuc->GetOutput();
 	gfpReaderType::Pointer reader_trace = gfpReaderType::New();
-	reader_trace->SetFileName(argv[3]);
+	reader_trace->SetFileName("C:\\Data\\Darpa\\montage_GFP.tif");
 	reader_trace->Update();
 	gfpImageType::Pointer img_trace = reader_trace->GetOutput();
 	uint64_t size_trace[3],size_nuc[3];
@@ -226,8 +220,8 @@ int main(int argc, char* argv[])
 		std::vector< itk::Index<3> > soma_centroids;
 		soma_centroids.push_back(centroid);
 		
-		//std::ostringstream swc_filename_stream;
-		//swc_filename_stream << vul_file::strip_extension(argv[4]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
+		std::ostringstream swc_filename_stream;
+		//swc_filename_stream << vul_file::strip_extension(argv[3]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
 		
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->LoadCurvImage_1(img_tr, 1);
@@ -239,7 +233,9 @@ int main(int argc, char* argv[])
 		
 		std::stringstream ssx, ssy, ssz;
 		ssx << x; ssy << y; ssz << z;
-		MNT->WriteSWCFile("Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 1);		
+		MNT->WriteSWCFile("Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 1);
+
+		
 
 
 	}
