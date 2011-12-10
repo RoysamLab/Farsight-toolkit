@@ -151,7 +151,10 @@ int main(int argc, char* argv[])
 		std::cout<<"Starting segmentation\n";
 		unsigned char *in_Image;
 		in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
-		if( in_Image == NULL ) return EXIT_FAILURE;
+		if( in_Image == NULL ){
+			std::cerr<<"Nucleus Seg failed because malloc failed\n"
+			continue;
+		}
 		memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
 		typedef itk::ImageRegionConstIterator< nucImageType > ConstIteratorType;
 		ConstIteratorType pix_buf( img, img->GetRequestedRegion() );
@@ -173,12 +176,10 @@ int main(int argc, char* argv[])
 			<<"what is currently available in this "
 			<<"system, please try again with a smaller "
 			<<"input image\n";
-			return EXIT_FAILURE;
 		}
 		catch( itk::ExceptionObject & excp )
 		{
 			std::cout<<"Error: " << excp <<std::endl;
-			return EXIT_FAILURE;
 		}
 		NucleusSeg->runClustering();
 		unsigned short *output_img;
