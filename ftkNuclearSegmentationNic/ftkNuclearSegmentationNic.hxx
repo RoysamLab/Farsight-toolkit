@@ -93,7 +93,7 @@ bool ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetInput(ft
 	//}
 	_dataFileName = fname;
 	_dataImage = inImg;
-	_channelNumber = chNumber;
+	_CN = chNumber;
 
 
 	return true;
@@ -104,7 +104,6 @@ template< typename inputPixelType >
 void ftk::ftkNucSecNic::ftkNuclearSegmentationNic< inputPixelType >::SetParameters(std::string paramFileName)
 {
 	_paramFileName = paramFileName;
-	asd
 }
 
 // ############################################################################################################################################################################
