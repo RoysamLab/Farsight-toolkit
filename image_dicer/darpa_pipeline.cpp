@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 		unsigned char *in_Image;
 		in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
 		if( in_Image == NULL ){
-			std::cerr<<"Nucleus Seg failed because malloc failed\n"
+			std::cerr<<"Nucleus Seg failed because malloc failed\n";
 			continue;
 		}
 		memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
