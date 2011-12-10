@@ -37,7 +37,7 @@ main.cpp
 SET( FTKNUCLEARSEGMENTATIONNIC_HDRS
 
 ftkNuclearSegmentationNic.h
-ftkNuclearSegmentationNic.txx
+ftkNuclearSegmentationNic.hxx
  
 )
 
