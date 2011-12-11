@@ -45,14 +45,23 @@ int main(int argc, char* argv[])
 	//soma_centroid_file.close();
 
 	std::vector< itk::Index<3> > centroid_list;
+	std::vector< itk::Index<3> > all_centroid_list;
 	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable(argv[1]);
 	for(int r=0; r<(int)global_centroids->GetNumberOfRows(); ++r){
 		int cx = global_centroids->GetValue(r, 0).ToInt();
 		int cy = global_centroids->GetValue(r, 1).ToInt();
 		int cz = global_centroids->GetValue(r, 2).ToInt();
-		itk::Index<3> cen;
-		cen[0] = cx; cen[1] = cy; cen[2] = cz; 
-		centroid_list.push_back(cen);
+
+		itk::Index<3> all_cen;
+		all_cen[0] = cx; all_cen[1] = cy; all_cen[2] = cz; 
+		all_centroid_list.push_back(all_cen);
+		if( (fmod((double)cx,1050)>1000) || (fmod((double)cx,1050)<50) || (fmod((double)cy,1050)>1000) || (fmod((double)cy,1050)<50))
+		{
+			itk::Index<3> cen;
+			cen[0] = cx; cen[1] = cy; cen[2] = cz; 
+			centroid_list.push_back(cen);
+
+		}
 
 	}
 
@@ -86,29 +95,29 @@ int main(int argc, char* argv[])
 		z = centroid_list[a][2];
 
 		nucImageType::IndexType start;
-		start[0] = ((x - 200)>0) ? (x - 200):0; //Is there a reason why x and y are flipped?
-		start[1] = ((y - 200)>0) ? (y - 200):0;
-		start[2] = ((z - 75) >0) ? (z - 75) :0;
+		start[0] = ((x - 250)>0) ? (x - 250):0; //Is there a reason why x and y are flipped?
+		start[1] = ((y - 250)>0) ? (y - 250):0;
+		start[2] = ((z - 100) >0) ? (z - 100) :0;
 
 		gfpImageType::IndexType start2;
-		start2[0] = ((x - 200)>0) ? (x - 200):0; //Is there a reason why x and y are flipped?
-		start2[1] = ((y - 200)>0) ? (y - 200):0;
-		start2[2] = ((z - 75) >0) ? (z - 75) :0;
+		start2[0] = ((x - 250)>0) ? (x - 250):0; //Is there a reason why x and y are flipped?
+		start2[1] = ((y - 250)>0) ? (y - 250):0;
+		start2[2] = ((z - 100) >0) ? (z - 100) :0;
 
 		nucImageType::SizeType size;
-		size[0] = ((x+200)<size_nuc[0]) ? 400 : (200+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
-		size[1] = ((y+200)<size_nuc[1]) ? 400 : (200+size_trace[1]-y-1);
-		size[2] = ((z+75)<size_nuc[2]) ? 150 : (75+size_trace[2]-z-1);
+		size[0] = ((x+250)<size_nuc[0]) ? 500 : (250+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
+		size[1] = ((y+250)<size_nuc[1]) ? 500 : (250+size_trace[1]-y-1);
+		size[2] = ((z+100)<size_nuc[2]) ? 200 : (100+size_trace[2]-z-1);
 
 		gfpImageType::SizeType size2;
-		size2[0] = ((x+200)<size_trace[0]) ? 400 : (200+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
-		size2[1] = ((y+200)<size_trace[1]) ? 400 : (200+size_trace[1]-y-1);
-		size2[2] = ((z+75)<size_trace[2]) ? 150 : (75+size_trace[2]-z-1);
+		size2[0] = ((x+250)<size_trace[0]) ? 500 : (250+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
+		size2[1] = ((y+250)<size_trace[1]) ? 500 : (250+size_trace[1]-y-1);
+		size2[2] = ((z+100)<size_trace[2]) ? 200 : (100+size_trace[2]-z-1);
 
 		itk::Index<3> centroid;
-		centroid[0] = ((x - 200)>0) ? 200:x; //Is there a reason why x and y are flipped?
-		centroid[1] = ((y - 200)>0) ? 200:y;
-		centroid[2] = ((z - 75) >0) ? 75:z;
+		centroid[0] = ((x - 250)>0) ? 250:x; //Is there a reason why x and y are flipped?
+		centroid[1] = ((y - 250)>0) ? 250:y;
+		centroid[2] = ((z - 100) >0) ? 100:z;
 
 		std::ostringstream output_filename_stream;
 
@@ -233,7 +242,24 @@ int main(int argc, char* argv[])
 */
 		//Run Multiple Neuron Tracer
 		std::vector< itk::Index<3> > soma_centroids;
-		soma_centroids.push_back(centroid);
+		
+		
+		for(int ctr =0; ctr<all_centroid_list.size() ; ctr++)
+		{
+			itk::Index<3> cen =  all_centroid_list[ctr];
+
+			if(abs((double)(cen[0]-x))<=250 && abs((double)(cen[1]-y))<=250 && abs((double)(cen[2]-z))<=100 )
+			{
+				itk::Index<3> centroid2;
+				centroid2[0] = centroid[0] + cen[0] - x; //Is there a reason why x and y are flipped?
+				centroid2[1] = centroid[1] + cen[1] - y;
+				centroid2[2] = centroid[2] + cen[2] - z;
+				soma_centroids.push_back(centroid2);
+
+			}
+
+		}
+
 		
 		//std::ostringstream swc_filename_stream;
 		//swc_filename_stream << vul_file::strip_extension(argv[3]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
@@ -241,7 +267,7 @@ int main(int argc, char* argv[])
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->LoadCurvImage_1(img_tr, 1);
 		MNT->ReadStartPoints_1(soma_centroids, 1);
-		MNT->SetCostThreshold(200);
+		MNT->SetCostThreshold(1000);
 		MNT->LoadSomaImage_1(image);
 		MNT->RunTracing();
 		/*MNT->WriteSWCFile(std::string(swc_filename_stream.str()), 1);*/
