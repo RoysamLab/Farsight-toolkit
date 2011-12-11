@@ -63,6 +63,8 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	std::cout << "Number of cells to be retraced : " << centroid_list.size() << "\n";
+
 	typedef itk::ImageFileReader<nucImageType> nucReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
 	nucReaderType::Pointer reader_nuc   = nucReaderType::New();
@@ -82,8 +84,8 @@ int main(int argc, char* argv[])
 	size_trace[2] = img_trace->GetLargestPossibleRegion().GetSize()[2];
 	if( size_trace[0]!=size_nuc[0] || size_trace[1]!=size_nuc[1] || size_trace[2]!=size_nuc[2] ) return EXIT_FAILURE;
 
-	#pragma omp parallel for  
-	for( uint64_t a=0; a<centroid_list.size(); ++a )
+	#pragma omp parallel for num_threads
+	for( long int a=0; a<centroid_list.size(); ++a )
 	{
 		int x, y, z;
 		x = centroid_list[a][0];
@@ -238,9 +240,10 @@ int main(int argc, char* argv[])
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->LoadCurvImage_1(img_tr, 1);
 		MNT->ReadStartPoints_1(soma_centroids, 1);
-		MNT->SetCostThreshold(300);
+		MNT->SetCostThreshold(200);
 		MNT->LoadSomaImage_1(image);
 		MNT->RunTracing();
+		delete MNT;
 		/*MNT->WriteSWCFile(std::string(swc_filename_stream.str()), 1);*/
 		
 		std::stringstream ssx, ssy, ssz;
