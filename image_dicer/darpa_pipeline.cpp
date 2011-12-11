@@ -18,6 +18,7 @@
 #include <time.h>
 #include <limits.h>
 #include <math.h>
+#include <algorithm>
 
 #include "omp.h"
 
@@ -26,6 +27,7 @@ typedef itk::Image<unsigned short, 3> LabelType;
 typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 
 //typedef struct{ double x_d; double y_d; double z_d; } centroids;
+bool myfunction (uint64_t i,uint64_t j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
@@ -86,8 +88,10 @@ int main(int argc, char* argv[])
 	size_trace[2] = img_trace->GetLargestPossibleRegion().GetSize()[2];
 	if( size_trace[0]!=size_nuc[0] || size_trace[1]!=size_nuc[1] || size_trace[2]!=size_nuc[2] ) return EXIT_FAILURE;
 
-	#pragma omp parallel for num_threads(20)
-	for( long int a=0; a<centroid_list.size(); ++a ){
+	long int a=0;
+	while( a<centroid_list.size() ){
+	//#pragma openmp parallel for
+	//for( long int a=0; a<centroid_list.size(); ++a ){
 	//for( long int a=0; a<5; ++a ){
 		int x, y, z;
 		x = centroid_list[a][0];
@@ -242,25 +246,60 @@ int main(int argc, char* argv[])
 */
 		//Run Multiple Neuron Tracer
 		std::vector< itk::Index<3> > soma_centroids;
-		
-		
-		for(int ctr =0; ctr<all_centroid_list.size() ; ctr++)
-		{
+		std::vector< itk::Index<3> > soma_centroids_to_be_del;
+		std::vector<unsigned short> label_vec;
+		std::vector<uint64_t> delete_index;
+		bool centroid_not_found = true;
+		for(uint64_t ctr =0; ctr<all_centroid_list.size() ; ctr++){
 			itk::Index<3> cen =  all_centroid_list[ctr];
-
-			if(abs((double)(cen[0]-x))<=250 && abs((double)(cen[1]-y))<=250 && abs((double)(cen[2]-z))<=100 )
-			{
+			if(abs((double)(cen[0]-x))<=250 && abs((double)(cen[1]-y))<=250 && abs((double)(cen[2]-z))<=100 ){
 				itk::Index<3> centroid2;
 				centroid2[0] = centroid[0] + cen[0] - x; //Is there a reason why x and y are flipped?
 				centroid2[1] = centroid[1] + cen[1] - y;
 				centroid2[2] = centroid[2] + cen[2] - z;
-				soma_centroids.push_back(centroid2);
-
+				LabelType::IndexType centroid_index;
+				centroid_index[0] = centroid2[0]; centroid_index[1] = centroid2[1]; centroid_index[2] = centroid2[2];
+				iterator1.SetIndex( centroid_index );
+				unsigned short centroid_label = iterator1.Get();
+				for(int b=0; b<label_vec.size(); ++b){
+					if( label_vec.at(b)==centroid_label ){
+						centroid_not_found = false;
+						break;
+					}
+				}
+				if( centroid_not_found ){
+					label_vec.push_back( centroid_label );
+					soma_centroids.push_back( centroid2 );
+				}
+				if( !centroid_not_found ){
+					delete_index.push_back( ctr );
+					soma_centroids_to_be_del.push_back( cen );
+				}
 			}
-
 		}
 
-		
+		if( !centroid_not_found ){
+			std::sort(delete_index.begin(), delete_index.end(), myfunction);
+			for( uint64_t b=0; b<delete_index.size(); ++b )
+				all_centroid_list.erase(all_centroid_list.begin()+delete_index.at(b));
+			delete_index.clear();
+
+			for( uint64_t b=0; b<soma_centroids_to_be_del.size(); ++b ){
+				itk::Index<3> centroid2 = soma_centroids_to_be_del.at(b);
+				for( uint64_t c=0; c<centroid_list.size(); ++c ){
+					itk::Index<3> centroid3 = centroid_list.at(c);
+					if( centroid2[0]==centroid3[0] && centroid2[1]==centroid3[1] && centroid2[2]==centroid3[2] )
+						delete_index.push_back( c );
+						break;
+				}
+			}
+
+			std::sort(delete_index.begin(), delete_index.end(), myfunction);
+			for( uint64_t b=0; b<centroid_list.size(); ++b )
+				centroid_list.erase( centroid_list.begin()+delete_index.at(b) );
+			std::cout<<"Number of cells to be retraced : "<<centroid_list.size() << " after "<<a<<" processed\n";
+		}
+
 		//std::ostringstream swc_filename_stream;
 		//swc_filename_stream << vul_file::strip_extension(argv[3]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
 		
@@ -277,6 +316,7 @@ int main(int argc, char* argv[])
 		MNT->WriteSWCFile("Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 1);
 
 		delete MNT;
+		++a;
 	}
 
 }
