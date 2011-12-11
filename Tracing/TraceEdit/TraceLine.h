@@ -162,6 +162,7 @@ public:
 	char * GetFileName();
 	void getEndPtBounds(double bounds[]);
 	std::string stats();	
+	std::string RootCoord();	
 	std::string statHeaders();
 
 	double GetAzimuth();

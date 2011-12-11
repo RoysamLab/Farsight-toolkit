@@ -871,6 +871,17 @@ std::string TraceLine::stats()
 	thisStats << this->GetParentID();
 	return thisStats.str();
 }
+std::string TraceLine::RootCoord()
+{
+	std::stringstream thisStats;
+	thisStats << this->m_trace_bits.front().x;
+	thisStats << "_";
+	thisStats << this->m_trace_bits.front().y;
+	thisStats << "_";
+	thisStats << this->m_trace_bits.front().z;
+	return thisStats.str();
+
+}
 std::string TraceLine::statHeaders()
 {
 	std::stringstream thisStatsHeaders; 

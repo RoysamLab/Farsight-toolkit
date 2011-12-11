@@ -173,6 +173,7 @@ public slots:
 	void changeDimension(int row, int col);
 	void ListSelections();
 	void ClearSelection();
+	void FastClearSelection();
 	void SelectTrees();
 	void DeleteTraces();
 	void SetRoots();

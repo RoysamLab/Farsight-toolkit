@@ -31,6 +31,9 @@ v7: new GUI and file control
 
 #include "TraceView3D.h"
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 
 View3D::View3D(QWidget *parent)
 : QMainWindow(parent)
@@ -3274,7 +3277,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 void View3D::Rerender()
 {
 	this->statusBar()->showMessage(tr("Rerender Image"));
-	this->tobj->cleanTree();
+	//this->tobj->cleanTree();
 	this->SphereActor->VisibilityOff();
 	this->SelectedTraceIDs.clear();
 	/*this->MergeGaps->GetSelectionModel()->clearSelection();*/
@@ -3326,12 +3329,13 @@ void View3D::Rerender()
 			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
 			this->FL_histo->update();
 		}
-		this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 	}//end if has cell calculations
+	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
 void View3D::UpdateLineActor()
 {
+	std::cout <<"updating polydata\n";
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	this->poly_line_data->Modified();
 	this->LineMapper->SetInput(this->poly_line_data);
@@ -3339,6 +3343,7 @@ void View3D::UpdateLineActor()
 	this->LineActor->GetProperty()->SetColor(0,1,0);
 	this->LineActor->GetProperty()->SetPointSize(2);
 	this->LineActor->GetProperty()->SetLineWidth(lineWidth);
+	std::cout <<" polydata updated\n";
 }
 
 void View3D::UpdateBranchActor()
@@ -3434,7 +3439,8 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		break;
 
 	case 'c':
-		view->ClearSelection();
+		//view->ClearSelection();
+		view->FastClearSelection();
 		break;
 
 		//case 'd':
@@ -3692,6 +3698,18 @@ void View3D::ClearSelection()
 	this->statusBar()->showMessage("All Clear", 4000);
 
 	//cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
+}
+void View3D::FastClearSelection()
+{
+	
+	if(this->FL_MeasurePlot || this->FL_MeasureTable)
+	{
+		this->CellModel->GetObjectSelection()->clear();
+	}
+	else
+	{
+		this->TreeModel->GetObjectSelection()->clear();
+	}
 }
 
 void View3D::SelectTrees()
@@ -4904,7 +4922,6 @@ void View3D::AutoCellExport()
 					break;
 				}
 				CellTrace* currCell = this->CellModel->GetCellAt( i);
-				this->FocusOnCell(currCell);
 				QString cellName = QString(currCell->GetFileName().c_str());
 
 				std::vector<TraceLine*> roots;
@@ -4915,11 +4932,11 @@ void View3D::AutoCellExport()
 				{
 					if (!swcfileName.isEmpty())
 					{
-						cellName = swcfileName + QString("%1").arg(cellNum);;
+						cellName = swcfileName + QString("%1").arg(cellNum);
 					}
 					else
 					{
-						cellName = tr("cell_") + QString("%1").arg(cellNum);
+						cellName = tr("cell_") + QString("%1_%2_%3").arg(currCell->somaX).arg(currCell->somaY).arg(currCell->somaZ);
 					}
 				}
 				QString swcFileName = curdirectoryswc % "/" % cellName % QString(".swc");
@@ -4937,6 +4954,7 @@ void View3D::AutoCellExport()
 						cellName = tr("cell_") + QString("%1").arg(cellNum);
 					}
 				}
+				this->FocusOnCell(currCell);
 				QString ScreenShotFileName = curdirectoryjpg % "/" % cellName % QString(".jpg");
 				this->TraceEditSettings.setValue("jpgDir", curdirectoryjpg);
 				this->saveRenderWindow(ScreenShotFileName.toStdString().c_str());
@@ -5248,11 +5266,14 @@ void View3D::ClusclusAnalysis()
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
-		featureTable->RemoveColumnByName("Distance to Device");
 
+		this->HeatmapWin->setAColumn(featureTable->GetColumnByName("Distance to Device"));
+
+		featureTable->RemoveColumnByName("Distance to Device");
 
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->HeatmapWin->runClus();
+		//this->HeatmapWin->printAColumn();
 		this->HeatmapWin->showGraph();
 	}
 #endif
