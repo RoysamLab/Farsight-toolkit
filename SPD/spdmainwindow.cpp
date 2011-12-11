@@ -164,13 +164,17 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	graph =  new GraphWindow(this);
 	simHeatmap = new ProgressionHeatmap(this);
 	histo = new HistoWindow(this);
-	progressionHeatmap = new ProgressionHeatmap(this);
+	this->progressionHeatmap = NULL;
 	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 }
 
 SPDMainWindow::~SPDMainWindow()
 {
 	SPDAnalysisModel::DeInstance();
+	if( this->progressionHeatmap)
+	{
+		delete this->progressionHeatmap;
+	}
 }
 
 void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
@@ -206,6 +210,7 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		data->RemoveColumnByName("Soma_X");
 		data->RemoveColumnByName("Soma_Y");
 		data->RemoveColumnByName("Soma_Z");
+		data->RemoveColumnByName("Trace_File");
 
 		data->RemoveColumnByName("Soma_X_Pos");
 		data->RemoveColumnByName("Soma_Y_Pos");
@@ -473,11 +478,19 @@ void SPDMainWindow::GetProgressionTreeOrder(std::vector<long int> &order)
 void SPDMainWindow::showProgressionHeatmap()
 {
 	ofstream ofs("SPDHeatmapOptimalOrder.txt");
+	if( this->progressionHeatmap)
+	{
+		delete this->progressionHeatmap;
+	}
+
+	this->progressionHeatmap = new ProgressionHeatmap(this);
 
 	this->progressionHeatmap->setModels(data,selection,selection2);
-
+	
 	std::vector<long int> TreeOrder;
 	this->graph->GetProgressionTreeOrder(TreeOrder);
+	//SPDModel->GetDistanceOrder(TreeOrder);
+
 	if( TreeOrder.size() <=0)
 	{
 		std::cout<< "progression tree hasn't been built yet"<<endl;
@@ -494,7 +507,7 @@ void SPDMainWindow::showProgressionHeatmap()
 	ofs<<endl;
 
 	SPDModel->HierachicalClustering();
-	std::vector< Tree> FeatureTreeData = SPDModel->TreeData;
+	std::vector< Tree> FeatureTreeData = SPDModel->PublicTreeData;
 	double **ftreedata = new double*[FeatureTreeData.size()];
 
 	for(int i = 0; i < FeatureTreeData.size(); i++)

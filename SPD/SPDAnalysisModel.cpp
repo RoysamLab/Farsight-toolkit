@@ -346,21 +346,12 @@ void SPDAnalysisModel::ClusterCells( double cor)
 	std::ofstream ofs(filenameCluster.toStdString().c_str(), std::ofstream::out);
 
 	vnl_matrix<double> tmpMat = this->DataMatrix;
-	ofs<< "Data Matrix before transpose and normalize:"<<endl;
-	ofs<< this->DataMatrix<<endl<<endl;
 
 	NormalizeData();   // eliminate the differences of different features
-	ofs<< "Data Matrix after first normalize:"<<endl;
-	ofs<< this->DataMatrix<<endl<<endl;
 
 	this->DataMatrix =  this->DataMatrix.transpose();
-	ofs<< "Data Matrix after first transpose:"<<endl;
-	ofs<< this->DataMatrix<<endl<<endl;
 
 	NormalizeData();   // for calculating covariance
-	ofs<< "Data Matrix after transpose normalize:"<<endl;
-	ofs<< this->DataMatrix<<endl<<endl;
-	ofs<<"cell clustering:"<<endl;
 
 	vnl_matrix<double> moduleMean = this->DataMatrix;
 	moduleMean.normalize_columns();
@@ -380,8 +371,6 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		TreeIndex[i] = i;
 	}
 
-	ofs<< "Data Matrix:"<<endl;
-	ofs<< this->DataMatrix<<endl<<endl;
 	ofs<<"cell clustering:"<<endl;
 
 	TreeData.clear();
@@ -880,7 +869,7 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 void SPDAnalysisModel::HierachicalClustering()    
 {
 	assert(TreeIndex.size() == this->ClusterIndex.max_value() + 1);
-
+	PublicTreeData = TreeData;
 	vnl_vector<int> moduleSize = GetModuleSize(this->ClusterIndex);
 	vnl_matrix<double> matrix = DataMatrix;
 	matrix.normalize_columns();
@@ -930,7 +919,7 @@ void SPDAnalysisModel::HierachicalClustering()
 		int max = i > j ? i : j;
 
 		Tree tr( TreeIndex[min], TreeIndex[max], maxCor, newIndex);
-		TreeData.push_back( tr);
+		PublicTreeData.push_back( tr);
 		TreeIndex[min] = newIndex;
 		TreeIndex[max] = -1;
 		newIndex += 1;
@@ -973,9 +962,9 @@ void SPDAnalysisModel::HierachicalClustering()
 	ofstream ofs(str.toStdString().c_str());
 	ofs<< "Tree Index:"<<endl;
 	ofs<< TreeIndex<<endl;
-	for( int i = 0; i < TreeData.size(); i++)
+	for( int i = 0; i < PublicTreeData.size(); i++)
 	{
-		Tree tr = TreeData[i];
+		Tree tr = PublicTreeData[i];
 		ofs<< tr.first<< "\t"<< tr.second<< "\t"<< tr.cor<< "\t"<< tr.parent<<endl;
 	}
 	ofs.close();
@@ -2033,4 +2022,21 @@ double SPDAnalysisModel::GetEMDSelectedThreshold( double per)
 void SPDAnalysisModel::GetMatrixData(vnl_matrix<double> &mat)
 {
 	mat = DataMatrix.normalize_columns();
+}
+
+void SPDAnalysisModel::GetDistanceOrder(std::vector<long int> &order)
+{
+	order.clear();
+	vnl_vector<double> distance( DistanceToDevice.size());
+	for( long int i = 0; i < DistanceToDevice.size(); i++)
+	{
+		distance[i] = DistanceToDevice[i];
+	}
+	double max = distance.max_value();
+	for( long int i = 0; i < DistanceToDevice.size(); i++)
+	{
+		long int minind = distance.arg_min();
+		order.push_back(minind);
+		distance[minind] = max;
+	}
 }

@@ -497,12 +497,12 @@ void ProgressionHeatmap::SetInteractStyle()
 	this->keyPress->SetCallback(HandleKeyPress);
 	this->keyPress->SetClientData(this);
 
-	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonPressEvent);
-	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonReleaseEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::LeftButtonPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::LeftButtonReleaseEvent);
 	this->view->GetInteractor()->RemoveObservers(vtkCommand::KeyPressEvent);
 	this->view->GetInteractor()->RemoveObservers(vtkCommand::KeyReleaseEvent);
-	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonPressEvent, selectionCallback2);
-	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback3);
+	this->view->GetInteractor()->AddObserver(vtkCommand::LeftButtonPressEvent, selectionCallback2);
+	this->view->GetInteractor()->AddObserver(vtkCommand::LeftButtonReleaseEvent, selectionCallback3);
 	this->view->GetInteractor()->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
 	//this->view->GetInteractor()->AddObserver(vtkCommand::TimerEvent, hoverCallback);
 	//this->view->GetInteractor()->AddObserver(vtkCommand::EndInteractionEvent, hoverCallback);
@@ -558,10 +558,10 @@ void ProgressionHeatmap::showSimilarMatrixGraph()
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback3 =vtkSmartPointer<vtkCallbackCommand>::New();
 	selectionCallback3->SetClientData(this);
 	selectionCallback3->SetCallback(SelectionCallbackFunction3);
-	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonPressEvent);
-	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonReleaseEvent);
-	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonPressEvent, selectionCallback2);
-	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback3);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::LeftButtonPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::LeftButtonReleaseEvent);
+	this->view->GetInteractor()->AddObserver(vtkCommand::LeftButtonPressEvent, selectionCallback2);
+	this->view->GetInteractor()->AddObserver(vtkCommand::LeftButtonReleaseEvent, selectionCallback3);
 
 	// Setup actor and mapper
 	this->mapper->SetInputConnection(aPlane->GetOutputPort());

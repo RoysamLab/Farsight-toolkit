@@ -77,6 +77,7 @@ public:
 	void GetClusterMapping( std::vector<int> &indToclusInd);
 	void SetProgressionTag(bool bProg);
 	bool GetProgressionTag();
+	void GetDistanceOrder(std::vector<long int> &order);
 
 protected:
 	SPDAnalysisModel();
@@ -107,10 +108,11 @@ protected:
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
 
 public:
-	std::vector< Tree> TreeData;
+	std::vector< Tree> PublicTreeData;
 
 private:
 	static SPDAnalysisModel *s_pmodel;
+	std::vector< Tree> TreeData;
 
 	//save filename
 	QString filename;

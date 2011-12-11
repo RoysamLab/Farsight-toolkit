@@ -439,46 +439,46 @@ void SampleEditor::SPDAnalysis()
 
 void SampleEditor::spdSampledendrogram()
 {
-	SPDModel->HierachicalClustering(data, false);
-	std::vector< Tree> TreeData = SPDModel->TreeData;
-	std::cout << TreeData.size()<<endl;
-	if( TreeData.size() <= 0)
-	{
-		return;
-	}
+	//SPDModel->HierachicalClustering(data, false);
+	//std::vector< Tree> TreeData = SPDModel->PublicTreeData;
+	//std::cout << TreeData.size()<<endl;
+	//if( TreeData.size() <= 0)
+	//{
+	//	return;
+	//}
 
-	this->dendro1->setModels(data, selection, 1);
-	double **treedata = new double*[TreeData.size()];
+	//this->dendro1->setModels(data, selection, 1);
+	//double **treedata = new double*[TreeData.size()];
 
-	for(int i = 0; i < TreeData.size(); i++)
-	{
-		treedata[i] = new double[4];
-		treedata[i][0] = TreeData[i].first;
-		treedata[i][1] = TreeData[i].second;
-		treedata[i][2] = (1 - TreeData[i].cor + 0.01) * 100;
-		treedata[i][3] = TreeData[i].parent;
-	}
+	//for(int i = 0; i < TreeData.size(); i++)
+	//{
+	//	treedata[i] = new double[4];
+	//	treedata[i][0] = TreeData[i].first;
+	//	treedata[i][1] = TreeData[i].second;
+	//	treedata[i][2] = (1 - TreeData[i].cor + 0.01) * 100;
+	//	treedata[i][3] = TreeData[i].parent;
+	//}
 
-	cc1 = new clusclus();
-	cc1->Initialize(treedata, TreeData.size() + 1);
-	cc1->GetOptimalLeafOrderD();
+	//cc1 = new clusclus();
+	//cc1->Initialize(treedata, TreeData.size() + 1);
+	//cc1->GetOptimalLeafOrderD();
 
-	this->dendro1->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
-	this->dendro1->createDataForDendogram();
-	this->dendro1->showGraph();
+	//this->dendro1->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
+	//this->dendro1->createDataForDendogram();
+	//this->dendro1->showGraph();
 
-	for( int i = 0; i < TreeData.size(); i++)
-	{
-		delete treedata[i];
-	}
-	delete treedata;
-	delete cc1;
+	//for( int i = 0; i < TreeData.size(); i++)
+	//{
+	//	delete treedata[i];
+	//}
+	//delete treedata;
+	//delete cc1;
 }
 
 void SampleEditor::spdFeatureDendroram()
 {
 	SPDModel->HierachicalClustering();
-	std::vector< Tree> TreeData = SPDModel->TreeData;
+	std::vector< Tree> TreeData = SPDModel->PublicTreeData;
 	std::cout << TreeData.size()<<endl;
 	if( TreeData.size() <= 0)
 	{
@@ -570,7 +570,7 @@ void SampleEditor::spdShowHeatmap()
 
 	//SPDModel->HierachicalClustering(data, true);
 	SPDModel->HierachicalClustering();
-	std::vector< Tree> FeatureTreeData = SPDModel->TreeData;
+	std::vector< Tree> FeatureTreeData = SPDModel->PublicTreeData;
 	double **ftreedata = new double*[FeatureTreeData.size()];
 
 	for(int i = 0; i < FeatureTreeData.size(); i++)
