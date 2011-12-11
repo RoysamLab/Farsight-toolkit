@@ -19,9 +19,7 @@
 #include <limits.h>
 #include <math.h>
 
-#ifdef _OPENMP
 #include "omp.h"
-#endif
 
 typedef itk::Image<unsigned char,  3> nucImageType;
 typedef itk::Image<unsigned short, 3> LabelType;
@@ -31,8 +29,7 @@ typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 
 int main(int argc, char* argv[])
 {
-	if(argc < 5)
-	{
+	if(argc < 5){
 		std::cout<<"Usage1: darpa_tracer <Global_Centroids_List> <DAPI_Montage_File> <GFP_Montage_File> <Seg_Params_File> \n";
 		return 0;
 	}
@@ -49,18 +46,14 @@ int main(int argc, char* argv[])
 
 	std::vector< itk::Index<3> > centroid_list;
 	vtkSmartPointer<vtkTable> global_centroids = ftk::LoadTable(argv[1]);
-	for(int r=0; r<(int)global_centroids->GetNumberOfRows(); ++r)
-	{
+	for(int r=0; r<(int)global_centroids->GetNumberOfRows(); ++r){
 		int cx = global_centroids->GetValue(r, 0).ToInt();
 		int cy = global_centroids->GetValue(r, 1).ToInt();
 		int cz = global_centroids->GetValue(r, 2).ToInt();
-		if( (fmod((double)cx,1050)>1000) || (fmod((double)cx,1050)<50) || (fmod((double)cy,1050)>1000) || (fmod((double)cy,1050)<50))
-		{
-			itk::Index<3> cen;
-			cen[0] = cx; cen[1] = cy; cen[2] = cz; 
-			centroid_list.push_back(cen);
+		itk::Index<3> cen;
+		cen[0] = cx; cen[1] = cy; cen[2] = cz; 
+		centroid_list.push_back(cen);
 
-		}
 	}
 
 	std::cout << "Number of cells to be retraced : " << centroid_list.size() << "\n";
@@ -84,9 +77,9 @@ int main(int argc, char* argv[])
 	size_trace[2] = img_trace->GetLargestPossibleRegion().GetSize()[2];
 	if( size_trace[0]!=size_nuc[0] || size_trace[1]!=size_nuc[1] || size_trace[2]!=size_nuc[2] ) return EXIT_FAILURE;
 
-	#pragma omp parallel for num_threads
-	for( long int a=0; a<centroid_list.size(); ++a )
-	{
+	#pragma omp parallel for num_threads(20)
+	for( long int a=0; a<centroid_list.size(); ++a ){
+	//for( long int a=0; a<5; ++a ){
 		int x, y, z;
 		x = centroid_list[a][0];
 		y = centroid_list[a][1];
@@ -141,13 +134,17 @@ int main(int argc, char* argv[])
 		ROIfilter2->Update();
 		gfpImageType::Pointer img_tr = ROIfilter2->GetOutput();
 
-		//itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
-		//caster->SetInput(img_tr);
-		//itk::ImageFileWriter<nucImageType>::Pointer writer2 = itk::ImageFileWriter<nucImageType>::New();
-		//writer2->SetFileName("C:\\ROYSAMLAB\\FARSIGHT\\Farsight_DASH_bin\\exe\\Release\\gfp_File.tif");
-		//writer2->SetInput(caster->GetOutput());
-		//writer2->Update();
-
+/*		itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
+		caster->SetInput(img_tr);
+		itk::ImageFileWriter<nucImageType>::Pointer writer2 = itk::ImageFileWriter<nucImageType>::New();
+		std::stringstream ss;
+		ss << "gfp_image" << a << ".tif";
+		std::string file_output;
+		file_output = ss.str();
+		writer2->SetFileName(file_output.c_str());
+		writer2->SetInput(caster->GetOutput());
+		writer2->Update();
+*/
 		//Run Nucleus Segmentation
 		clock_t startTimer = clock();
 		std::cout<<"Starting segmentation\n";
@@ -165,7 +162,7 @@ int main(int argc, char* argv[])
 			in_Image[ind]=(pix_buf.Get());
 		yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
 		NucleusSeg->readParametersFromFile(argv[4]);
-		NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"");
+		NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/data/kedar/nuc_seg.tif");
 		NucleusSeg->runBinarization();
 		try 
 		{
@@ -224,12 +221,16 @@ int main(int argc, char* argv[])
 			++iterator1;
 		}
 		delete NucleusSeg;
-			
-		//itk::ImageFileWriter<LabelType>::Pointer writer = itk::ImageFileWriter<LabelType>::New();
-		//writer->SetFileName("C:\\ROYSAMLAB\\FARSIGHT\\Farsight_DASH_bin\\exe\\Release\\Soma_File.tif");
-		//writer->SetInput(image);
-		//writer->Update();
 
+/*		std::stringstream ss1;
+		ss << "soma_label" << a << ".tif";
+		std::string file_output1;
+		file_output1 = ss1.str();
+		itk::ImageFileWriter<LabelType>::Pointer writer = itk::ImageFileWriter<LabelType>::New();
+		writer->SetFileName(file_output1);
+		writer->SetInput(image);
+		writer->Update();
+*/
 		//Run Multiple Neuron Tracer
 		std::vector< itk::Index<3> > soma_centroids;
 		soma_centroids.push_back(centroid);
@@ -243,16 +244,13 @@ int main(int argc, char* argv[])
 		MNT->SetCostThreshold(200);
 		MNT->LoadSomaImage_1(image);
 		MNT->RunTracing();
-		delete MNT;
 		/*MNT->WriteSWCFile(std::string(swc_filename_stream.str()), 1);*/
 		
 		std::stringstream ssx, ssy, ssz;
 		ssx << x; ssy << y; ssz << z;
 		MNT->WriteSWCFile("Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 1);
 
-		
-
-
+		delete MNT;
 	}
 
 }
