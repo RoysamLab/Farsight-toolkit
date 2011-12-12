@@ -482,8 +482,8 @@ void Heatmap::runClus()
 	cout<<"finish clusclus....."<<endl;
 	cout<<this->table->GetNumberOfRows();
 	cout<<this->table->GetNumberOfColumns();
-	//cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
-		//"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
 
 /*	cc1->Transpose();
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);

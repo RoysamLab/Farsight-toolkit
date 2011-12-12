@@ -444,59 +444,59 @@ void clusclus::GetMembers(int num_cluster)
 void clusclus::WriteClusteringOutputToFile(const char *filename1, const char *filename2,const char *filename3, 
 										   const char *filename4, const char* filename5, const char *filename6, const char *filename7)
 {
-	FILE *fp1 = fopen(filename1,"w");
-	for(int i=0; i<num_samples-1; i++)
-	{
-		for(int j=0; j<5; j++)
-			fprintf(fp1,"%14.7e\t",mergers[i][j]);
-		fprintf(fp1,"\n");
-	}
-	fclose(fp1);
+	//FILE *fp1 = fopen(filename1,"w");
+	//for(int i=0; i<num_samples-1; i++)
+	//{
+	//	for(int j=0; j<5; j++)
+	//		fprintf(fp1,"%14.7e\t",mergers[i][j]);
+	//	fprintf(fp1,"\n");
+	//}
+	//fclose(fp1);
 
-	FILE *fp2 = fopen(filename2,"w");
-	for(int i=0; i<num_samples; i++)
-	{
-		for(int j=0; j<num_features+2; j++)
-			fprintf(fp2,"%f\t ",features[i][j]);
-		fprintf(fp2,"\n");
-	}
-	fclose(fp2);
+	//FILE *fp2 = fopen(filename2,"w");
+	//for(int i=0; i<num_samples; i++)
+	//{
+	//	for(int j=0; j<num_features+2; j++)
+	//		fprintf(fp2,"%f\t ",features[i][j]);
+	//	fprintf(fp2,"\n");
+	//}
+	//fclose(fp2);
 
-	FILE *fp3 = fopen(filename3,"w");
-	for(int i=0; i<num_samples; i++)
-	{
-		for(int j=0; j<num_samples; j++)
-			fprintf(fp3,"%d\t ",progress[i][j]);
-		fprintf(fp3,"\n");
-	}
-	fclose(fp3);
+	//FILE *fp3 = fopen(filename3,"w");
+	//for(int i=0; i<num_samples; i++)
+	//{
+	//	for(int j=0; j<num_samples; j++)
+	//		fprintf(fp3,"%d\t ",progress[i][j]);
+	//	fprintf(fp3,"\n");
+	//}
+	//fclose(fp3);
 
-	FILE *fp4 = fopen(filename4,"w");
-	for(int i=0; i<num_samples; i++)
-	{
-		for(int j=0; j<2; j++)
-			fprintf(fp4,"%d\t",members[i][j]);
-		fprintf(fp4,"\n");
-	}
-	fclose(fp4);
+	//FILE *fp4 = fopen(filename4,"w");
+	//for(int i=0; i<num_samples; i++)
+	//{
+	//	for(int j=0; j<2; j++)
+	//		fprintf(fp4,"%d\t",members[i][j]);
+	//	fprintf(fp4,"\n");
+	//}
+	//fclose(fp4);
 
-	FILE *fp5 = fopen(filename5,"w");
-	for(int i=0; i<num_gaps; i++)
-	{
-		for(int j=0; j<8; j++)
-			fprintf(fp5,"%14.7e\t",gap[i][j]);
-		fprintf(fp5,"\n");
-	}
-	fclose(fp5);
+	//FILE *fp5 = fopen(filename5,"w");
+	//for(int i=0; i<num_gaps; i++)
+	//{
+	//	for(int j=0; j<8; j++)
+	//		fprintf(fp5,"%14.7e\t",gap[i][j]);
+	//	fprintf(fp5,"\n");
+	//}
+	//fclose(fp5);
 
-	FILE *fp6 = fopen(filename6,"w");
-	for(int i=0; i<num_samples -1; i++)
-	{
-		for(int j=0; j<4; j++)
-			fprintf(fp6,"%f\t",treedata[i][j]);
-		fprintf(fp6,"\n");
-	}
-	fclose(fp6);
+	//FILE *fp6 = fopen(filename6,"w");
+	//for(int i=0; i<num_samples -1; i++)
+	//{
+	//	for(int j=0; j<4; j++)
+	//		fprintf(fp6,"%f\t",treedata[i][j]);
+	//	fprintf(fp6,"\n");
+	//}
+	//fclose(fp6);
 
 	FILE *fp7 = fopen(filename7,"w");
 	for(int i=0; i<num_samples; i++)

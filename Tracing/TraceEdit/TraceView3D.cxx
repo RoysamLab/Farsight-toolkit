@@ -5383,6 +5383,7 @@ void View3D::ClusclusAnalysis()
 	}
 	else
 	{
+
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
@@ -5391,7 +5392,7 @@ void View3D::ClusclusAnalysis()
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
 
-		this->HeatmapWin->setAColumn(featureTable->GetColumnByName("Distance to Device"));
+		//this->HeatmapWin->setAColumn(featureTable->GetColumnByName("Distance to Device"));
 
 		featureTable->RemoveColumnByName("Distance to Device");
 
