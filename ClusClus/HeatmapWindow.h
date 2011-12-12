@@ -105,7 +105,6 @@
 #include <boost/math/distributions/normal.hpp>
 
 #include <ftkCommon/ftkUtils.h>
-#include <FtkGUI/ColorMap.h>
 #include "ClusClus/clusclus.h"
 #include "ObjectSelection.h"
 #include "ftkGUI/ColorMap.h"
