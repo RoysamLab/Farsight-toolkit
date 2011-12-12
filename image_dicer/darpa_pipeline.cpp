@@ -88,10 +88,10 @@ int main(int argc, char* argv[])
 	size_trace[2] = img_trace->GetLargestPossibleRegion().GetSize()[2];
 	if( size_trace[0]!=size_nuc[0] || size_trace[1]!=size_nuc[1] || size_trace[2]!=size_nuc[2] ) return EXIT_FAILURE;
 
-	long int a=0;
-	while( a<centroid_list.size() ){
-	//#pragma openmp parallel for
-	//for( long int a=0; a<centroid_list.size(); ++a ){
+	//long int a=0;
+	//while( a<centroid_list.size() ){
+	#pragma omp parallel for
+	for( long int a=0; a<centroid_list.size(); ++a ){
 	//for( long int a=0; a<5; ++a ){
 		int x, y, z;
 		x = centroid_list[a][0];
@@ -99,29 +99,24 @@ int main(int argc, char* argv[])
 		z = centroid_list[a][2];
 
 		nucImageType::IndexType start;
-		start[0] = ((x - 250)>0) ? (x - 250):0; //Is there a reason why x and y are flipped?
+		start[0] = ((x - 250)>0) ? (x - 250):0;
 		start[1] = ((y - 250)>0) ? (y - 250):0;
 		start[2] = ((z - 100) >0) ? (z - 100) :0;
 
 		gfpImageType::IndexType start2;
-		start2[0] = ((x - 250)>0) ? (x - 250):0; //Is there a reason why x and y are flipped?
+		start2[0] = ((x - 250)>0) ? (x - 250):0;
 		start2[1] = ((y - 250)>0) ? (y - 250):0;
 		start2[2] = ((z - 100) >0) ? (z - 100) :0;
 
 		nucImageType::SizeType size;
-		size[0] = ((x+250)<size_nuc[0]) ? 500 : (250+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
+		size[0] = ((x+250)<size_nuc[0]) ? 500 : (250+size_trace[0]-x-1); 
 		size[1] = ((y+250)<size_nuc[1]) ? 500 : (250+size_trace[1]-y-1);
 		size[2] = ((z+100)<size_nuc[2]) ? 200 : (100+size_trace[2]-z-1);
 
 		gfpImageType::SizeType size2;
-		size2[0] = ((x+250)<size_trace[0]) ? 500 : (250+size_trace[0]-x-1); //Is there a reason why x and y are flipped?
+		size2[0] = ((x+250)<size_trace[0]) ? 500 : (250+size_trace[0]-x-1);
 		size2[1] = ((y+250)<size_trace[1]) ? 500 : (250+size_trace[1]-y-1);
 		size2[2] = ((z+100)<size_trace[2]) ? 200 : (100+size_trace[2]-z-1);
-
-		itk::Index<3> centroid;
-		centroid[0] = ((x - 250)>0) ? 250:x; //Is there a reason why x and y are flipped?
-		centroid[1] = ((y - 250)>0) ? 250:y;
-		centroid[2] = ((z - 100) >0) ? 100:z;
 
 		std::ostringstream output_filename_stream;
 
@@ -147,17 +142,18 @@ int main(int argc, char* argv[])
 		ROIfilter2->Update();
 		gfpImageType::Pointer img_tr = ROIfilter2->GetOutput();
 
-/*		itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
-		caster->SetInput(img_tr);
-		itk::ImageFileWriter<nucImageType>::Pointer writer2 = itk::ImageFileWriter<nucImageType>::New();
+		//itk::CastImageFilter<gfpImageType, nucImageType>::Pointer caster = itk::CastImageFilter<gfpImageType, nucImageType>::New();
+		//caster->SetInput(img_tr);
+		//itk::ImageFileWriter<nucImageType>::Pointer writer2 = itk::ImageFileWriter<nucImageType>::New();
+		itk::ImageFileWriter<gfpImageType>::Pointer writer2 = itk::ImageFileWriter<gfpImageType>::New();
 		std::stringstream ss;
-		ss << "gfp_image" << a << ".tif";
+		ss << "gfp_image" << x << "_" << y << "_" << z << ".mhd";
 		std::string file_output;
 		file_output = ss.str();
 		writer2->SetFileName(file_output.c_str());
-		writer2->SetInput(caster->GetOutput());
+		writer2->SetInput(img_tr);
 		writer2->Update();
-*/
+
 		//Run Nucleus Segmentation
 		clock_t startTimer = clock();
 		std::cout<<"Starting segmentation\n";
@@ -175,7 +171,7 @@ int main(int argc, char* argv[])
 			in_Image[ind]=(pix_buf.Get());
 		yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
 		NucleusSeg->readParametersFromFile(argv[4]);
-		NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/data/kedar/nuc_seg.tif");
+		NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/home/gramak/Desktop/11_10_tracing/montage_kt11306_w410DAPIdsu.mhd");
 		NucleusSeg->runBinarization();
 		try 
 		{
@@ -195,13 +191,15 @@ int main(int argc, char* argv[])
 		}
 		NucleusSeg->runClustering();
 		unsigned short *output_img;
-		if(NucleusSeg->isSegmentationFinEnabled())
+/*		if(NucleusSeg->isSegmentationFinEnabled())
 		{
 			NucleusSeg->runAlphaExpansion();
 			output_img=NucleusSeg->getSegImage();
 		} 
 		else
-			output_img=NucleusSeg->getClustImage();
+*/
+		output_img=NucleusSeg->getClustImage();
+		std::cout<<"Done with nucleus segmentation for image "<<a<<std::endl;
 
 		LabelType::Pointer image = LabelType::New();
 		LabelType::PointType origin;
@@ -233,24 +231,46 @@ int main(int argc, char* argv[])
 			iterator1.Set(val);
 			++iterator1;
 		}
-		delete NucleusSeg;
 
-/*		std::stringstream ss1;
-		ss << "soma_label" << a << ".tif";
+		std::stringstream ss1;
+		ss1 << "soma_label"<< x << "_" << y << "_" << z << ".tif";
 		std::string file_output1;
 		file_output1 = ss1.str();
 		itk::ImageFileWriter<LabelType>::Pointer writer = itk::ImageFileWriter<LabelType>::New();
 		writer->SetFileName(file_output1);
 		writer->SetInput(image);
 		writer->Update();
-*/
+		delete NucleusSeg;
+	}
+
+	long int a=0;
+	while( a<centroid_list.size() ){
 		//Run Multiple Neuron Tracer
+		int x, y, z;
+		x = centroid_list[a][0];
+		y = centroid_list[a][1];
+		z = centroid_list[a][2];
+		itk::Index<3> centroid;
+		centroid[0] = ((x - 250)>0) ? 250:x; 
+		centroid[1] = ((y - 250)>0) ? 250:y;
+		centroid[2] = ((z - 100) >0) ? 100:z;
+		std::stringstream ss1;
+		ss1 << "soma_label"<< centroid_list.at(a)[0] << "_" << centroid_list.at(a)[1] << "_" << centroid_list.at(a)[2] << ".tif";
+		std::string file_output1;
+		file_output1 = ss1.str();
+		itk::ImageFileReader<LabelType>::Pointer reader = itk::ImageFileReader<LabelType>::New();
+		reader->SetFileName(file_output1);
+		reader->Update();
+		LabelType::Pointer image = reader->GetOutput();
+		typedef itk::ImageRegionIteratorWithIndex< LabelType > IteratorType;
+		IteratorType iterator1(image,image->GetRequestedRegion());
+
 		std::vector< itk::Index<3> > soma_centroids;
 		std::vector< itk::Index<3> > soma_centroids_to_be_del;
 		std::vector<unsigned short> label_vec;
 		std::vector<uint64_t> delete_index;
 		bool centroid_not_found = true;
-		for(uint64_t ctr =0; ctr<all_centroid_list.size() ; ctr++){
+		for(uint64_t ctr =0; ctr<all_centroid_list.size() ; ++ctr){
 			itk::Index<3> cen =  all_centroid_list[ctr];
 			if(abs((double)(cen[0]-x))<=250 && abs((double)(cen[1]-y))<=250 && abs((double)(cen[2]-z))<=100 ){
 				itk::Index<3> centroid2;
@@ -261,19 +281,21 @@ int main(int argc, char* argv[])
 				centroid_index[0] = centroid2[0]; centroid_index[1] = centroid2[1]; centroid_index[2] = centroid2[2];
 				iterator1.SetIndex( centroid_index );
 				unsigned short centroid_label = iterator1.Get();
-				for(int b=0; b<label_vec.size(); ++b){
-					if( label_vec.at(b)==centroid_label ){
-						centroid_not_found = false;
-						break;
+				if( label_vec.size() ){
+					for(int b=0; b<label_vec.size(); ++b){
+						if( label_vec.at(b)==centroid_label ){
+							centroid_not_found = false;
+							break;
+						}
 					}
-				}
-				if( centroid_not_found ){
-					label_vec.push_back( centroid_label );
-					soma_centroids.push_back( centroid2 );
-				}
-				if( !centroid_not_found ){
-					delete_index.push_back( ctr );
-					soma_centroids_to_be_del.push_back( cen );
+					if( centroid_not_found ){
+						label_vec.push_back( centroid_label );
+						soma_centroids.push_back( centroid2 );
+					}
+					if( !centroid_not_found ){
+						delete_index.push_back( ctr );
+						soma_centroids_to_be_del.push_back( cen );
+					}
 				}
 			}
 		}
@@ -283,7 +305,6 @@ int main(int argc, char* argv[])
 			for( uint64_t b=0; b<delete_index.size(); ++b )
 				all_centroid_list.erase(all_centroid_list.begin()+delete_index.at(b));
 			delete_index.clear();
-
 			for( uint64_t b=0; b<soma_centroids_to_be_del.size(); ++b ){
 				itk::Index<3> centroid2 = soma_centroids_to_be_del.at(b);
 				for( uint64_t c=0; c<centroid_list.size(); ++c ){
@@ -293,16 +314,57 @@ int main(int argc, char* argv[])
 						break;
 				}
 			}
-
 			std::sort(delete_index.begin(), delete_index.end(), myfunction);
 			for( uint64_t b=0; b<centroid_list.size(); ++b )
 				centroid_list.erase( centroid_list.begin()+delete_index.at(b) );
 			std::cout<<"Number of cells to be retraced : "<<centroid_list.size() << " after "<<a<<" processed\n";
 		}
+		++a;
+	}
 
 		//std::ostringstream swc_filename_stream;
 		//swc_filename_stream << vul_file::strip_extension(argv[3]) << "_" << x << "_" << y << "_" << z << "_ANT.swc";
-		
+
+	#pragma omp parallel for
+	for( a=0; a<centroid_list.size(); ++a ){
+		int x, y, z;
+		x = centroid_list[a][0];
+		y = centroid_list[a][1];
+		z = centroid_list[a][2];
+		itk::Index<3> centroid;
+		centroid[0] = ((x - 250)>0) ? 250:x; 
+		centroid[1] = ((y - 250)>0) ? 250:y;
+		centroid[2] = ((z - 100) >0) ? 100:z;
+		std::stringstream ss1;
+		ss1 << "soma_label"<< centroid_list.at(a)[0] << "_" << centroid_list.at(a)[1] << "_" << centroid_list.at(a)[2] << ".tif";
+		std::string file_output1;
+		file_output1 = ss1.str();
+		itk::ImageFileReader<LabelType>::Pointer reader = itk::ImageFileReader<LabelType>::New();
+		reader->SetFileName(file_output1);
+		reader->Update();
+		LabelType::Pointer image = reader->GetOutput();
+
+		itk::ImageFileReader<gfpImageType>::Pointer reader2 = itk::ImageFileReader<gfpImageType>::New();
+		std::stringstream ss;
+		ss << "gfp_image" << x << "_" << y << "_" << z << ".mhd";
+		std::string file_output;
+		file_output = ss.str();
+		reader2->SetFileName(file_output.c_str());
+		reader2->Update();
+		gfpImageType::Pointer img_tr = reader2->GetOutput();
+
+		std::vector< itk::Index<3> > soma_centroids;      
+		for(int ctr =0; ctr<all_centroid_list.size() ; ++ctr){
+			itk::Index<3> cen =  all_centroid_list[ctr];
+			if(abs((double)(cen[0]-x))<=250 && abs((double)(cen[1]-y))<=250 && abs((double)(cen[2]-z))<=100 ){
+				itk::Index<3> centroid2;
+				centroid2[0] = centroid[0] + cen[0] - x; //Is there a reason why x and y are flipped?
+				centroid2[1] = centroid[1] + cen[1] - y;
+				centroid2[2] = centroid[2] + cen[2] - z;
+				soma_centroids.push_back(centroid2);
+			}
+		}
+
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->LoadCurvImage_1(img_tr, 1);
 		MNT->ReadStartPoints_1(soma_centroids, 1);
@@ -316,7 +378,6 @@ int main(int argc, char* argv[])
 		MNT->WriteSWCFile("Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 1);
 
 		delete MNT;
-		++a;
 	}
 
 }
