@@ -190,6 +190,7 @@ public slots:
 	void ShowCellAnalysis();
 	void ShowSettingsWindow();
 	void HideSettingsWindow();
+	void adjustEditorSettingsSize(bool changesize);
 	void HideCellAnalysis();
 	void ApplyNewSettings();
 	void AutomaticEdits();
@@ -213,6 +214,7 @@ public slots:
 
 	void StartActiveLearning();
 
+	void setHighlightSettings(int value);
 	void chooseInteractorStyle(int iren);
 	void SetProjectionMethod(int style);
 	void removeImageActors();
@@ -312,7 +314,8 @@ private:
 //settings for display
 	int SmallLineLength, maxNumBits, maxPathLength, minDistToParent;
 	float lineWidth;
-	double SelectColor, backColorR, backColorG, backColorB;
+	double SelectColor, SelectTipColor, backColorR, backColorG, backColorB;
+	QGroupBox * selectionSettings, * displaySettings, * rotationSettings, * BackgroundSettings, * GridlineSettings;
 	int numSplit, numDeleted, numMerged;
 	QLabel *SplitLabel, *DeleteLabel, *MergeLabel, *BranchesLabel;
 	QDoubleSpinBox *posX, *posY, *posZ;
@@ -416,17 +419,19 @@ private:
 
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
+	QToolBox *SettingsToolBox;
 	QSpinBox *MaxGapField;
 	QDoubleSpinBox *GapToleranceField;
 	//QSpinBox *LineLengthField;
 	QDoubleSpinBox *ColorValueField;
+	QDoubleSpinBox *TipColor;
 	QSpinBox *LineWidthField;
 	QCheckBox * markTraceBits;
 	bool renderTraceBits;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;
-	QComboBox *typeCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo, *ProjectionAxisCombo;
+	QComboBox *typeCombo, *HighlightCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo, *ProjectionAxisCombo;
 	QPushButton *updateRotationButton;
 		
 	QTableWidget * projectFilesTable;
@@ -515,7 +520,6 @@ private:
 //!Gridline controls
 	bool showGrid;
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox, * LineWidthBox;
-	QGroupBox * GridlineSettings;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
 
@@ -533,8 +537,10 @@ private:
 	* Raycast 3d volumetric rendering
 	*/
 	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, SLICERRAYCAST};
+	enum HighlightModeEnum { TREE, SEGMENT, TIP };
 
 	enum RenderModeEnum renderMode;
+	enum HighlightModeEnum highlightMode;
 
 	void ClearRenderer(int i);
 	

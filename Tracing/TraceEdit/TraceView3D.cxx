@@ -861,6 +861,7 @@ void View3D::ShowProjectTable()
 	}// end of project !empty
 	this->projectFilesDock->show();
 	this->projectFilesTableCreated = true;
+	this->ShowToolBars->addAction(this->projectFilesDock->toggleViewAction());
 }
 //! 2-D projection and raycast (no slice image)
 void View3D::choosetoRender(int row, int col)
@@ -1296,6 +1297,11 @@ void View3D::CreateGUIObjects()
 	this->ColorValueField->setRange(0,1);
 	this->ColorValueField->setSingleStep(.01);
 
+	this->TipColor = new QDoubleSpinBox(this->SettingsWidget);
+	this->TipColor->setRange(0,1);
+	this->TipColor->setSingleStep(.01);
+	this->TipColor->setValue(0.5);
+
 	this->LineWidthField = new QSpinBox(this->SettingsWidget);
 	this->LineWidthField->setRange(1,5);
 
@@ -1365,14 +1371,16 @@ void View3D::CreateGUIObjects()
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
-	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble() ;
+	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble();
 	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
 	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toDouble();
-	this->SelectColor =this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
+	this->SelectColor = this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
+	this->SelectTipColor = this->TraceEditSettings.value("mainWin/selectTipColor", .5).toDouble();
 	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
 	this->ColorValueField->setValue(this->SelectColor);
+	this->TipColor->setValue(this->SelectTipColor);
 	this->LineWidthField->setValue(this->lineWidth);
 	this->BackgroundRBox->setValue(this->backColorR);
 	this->BackgroundGBox->setValue(this->backColorG);
@@ -1384,6 +1392,12 @@ void View3D::CreateGUIObjects()
 	this->typeCombo = new QComboBox;
 	this->typeCombo->addItems(types);
 	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
+
+	QStringList HighlightStyles;
+	HighlightStyles << "Tree" << "Branch Order" << "Tips";
+	this->HighlightCombo = new QComboBox;
+	this->HighlightCombo->addItems(HighlightStyles);
+	connect(this->HighlightCombo, SIGNAL(activated(int)), this, SLOT(setHighlightSettings(int)));
 
 	QStringList ZoomStyles;
 	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" << "Slicer";
@@ -1630,44 +1644,63 @@ void View3D::CreateLayout()
 	this->BranchToolBar->hide();
 
 	//settings widget layout
+	//this->SettingsToolBox = new QToolBox(this);
 	QVBoxLayout * SettingsBox = new QVBoxLayout(this->SettingsWidget);
-	QGroupBox *selectionSettings = new QGroupBox("Selection Settings");
+
+	selectionSettings = new QGroupBox("Selection Settings");
 	QFormLayout *settingsLayout = new QFormLayout(selectionSettings);
 	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
 	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
 	//settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
 	//selectionSettings->setLayout(settingsLayout);
+	//SettingsToolBox->addItem(settingsLayout, "Selection Settings");
+	selectionSettings->setCheckable(true);
+	connect(selectionSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	SettingsBox->addWidget(selectionSettings);
 
-	QGroupBox *displaySettings = new QGroupBox("Display Settings");
+	displaySettings = new QGroupBox("Display Settings");
+	displaySettings->setCheckable(true);
+	connect(displaySettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	//displaySettings->setMinimumHeight(25);
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
+	DisplayLayout->addRow(tr("Highlight by:"),this->HighlightCombo);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
+	DisplayLayout->addRow(tr("Tip Color RGB 0 to 1:"),this->TipColor);
 	DisplayLayout->addRow(tr("Line width:"),this->LineWidthField);
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
 	DisplayLayout->addRow(tr("Projection plane: "),this->RotateImageUpCombo);
 	//DisplayLayout->addRow(tr("2D Projection: "),this->ProjectionAxisCombo);
 	DisplayLayout->addRow(this->markTraceBits);
+	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
 	SettingsBox->addWidget(displaySettings);
 
-	QGroupBox *rotationSettings = new QGroupBox(tr("Rotation"));
+	rotationSettings = new QGroupBox(tr("Rotation"));
+	rotationSettings->setCheckable(true);
+	connect(rotationSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
 	RotateLayout->addRow(tr("Roll: "),this->RollBox);
 	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
 	RotateLayout->addRow(tr("Azimuth: "),this->AzimuthBox);
 	RotateLayout->addWidget(this->updateRotationButton);
+	//SettingsToolBox->addItem(RotateLayout, tr("Rotation"));
 	SettingsBox->addWidget(rotationSettings);
 
-	QGroupBox *BackgroundSettings = new QGroupBox("Background RGB Color");
+	BackgroundSettings = new QGroupBox("Background RGB Color");
+	BackgroundSettings->setCheckable(true);
+	connect(BackgroundSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
 	BackgroundLayout->addRow(tr("Value Red: "), this->BackgroundRBox);
 	BackgroundLayout->addRow(tr("Value Blue: "),this->BackgroundGBox);
 	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
+	//SettingsToolBox->addItem(BackgroundLayout, "Background RGB Color");
 	SettingsBox->addWidget(BackgroundSettings);
 
 	GridlineSettings = new QGroupBox(tr("Grid"));
-	GridlineSettings->setEnabled(false);
+	//GridlineSettings->setEnabled(false);
+	GridlineSettings->setHidden(true);
+	GridlineSettings->setCheckable(true);
+	connect(GridlineSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
@@ -1676,15 +1709,20 @@ void View3D::CreateLayout()
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
 	GridlineLayout->addRow(tr("Opacity: "),this->GridOpacitySlider);
+	//SettingsToolBox->addItem(GridlineLayout, tr("Grid"));
+	//SettingsToolBox->setItemEnabled(blah blah, false);
 	SettingsBox->addWidget(GridlineSettings);
 
+	//SettingsToolBox->addItem(this->ApplySettingsButton);
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	this->SettingsWidget->setMaximumSize(256,700);
+	this->SettingsWidget->setMaximumSize(256,800);
+	//SettingsToolBox->addItem(this->SettingsWidget, "Editor Settings");
 
 	this->settingsDock = new QDockWidget("Editor Settings", this);
 	this->settingsDock->setWidget(this->SettingsWidget);
+	//this->settingsDock->setWidget(SettingsToolBox);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
 	this->DataViews->addAction(this->settingsDock->toggleViewAction());
 	this->settingsDock->hide();
@@ -1788,15 +1826,37 @@ void View3D::CreateLayout()
 	this->projectFilesDock = new QDockWidget(tr("List of Image Files"), this);
 	this->projectFilesDock->setWidget(this->projectFilesTable);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->projectFilesDock);
-	this->ShowToolBars->addAction(this->projectFilesDock->toggleViewAction());
 	this->projectFilesDock->hide();
 	/**************************************************************************/
 
-	/**************************************************************************/
-
-
 }
+void View3D::adjustEditorSettingsSize(bool changesize) // Replace with QToolBar
+{
+	if (selectionSettings->isChecked())
+		selectionSettings->setMaximumHeight(100);
+	else
+		selectionSettings->setMaximumHeight(15);
 
+	if (rotationSettings->isChecked())
+		rotationSettings->setMaximumHeight(150);
+	else
+		rotationSettings->setMaximumHeight(15);
+
+	if (displaySettings->isChecked())
+		displaySettings->setMaximumHeight(200);
+	else
+		displaySettings->setMaximumHeight(15);
+
+	if (BackgroundSettings->isChecked())
+		BackgroundSettings->setMaximumHeight(100);
+	else
+		BackgroundSettings->setMaximumHeight(15);
+
+	if (GridlineSettings->isChecked())
+		GridlineSettings->setMaximumHeight(200);
+	else
+		GridlineSettings->setMaximumHeight(15);
+}
 void View3D::ShowAutomatedEdits()
 {
 	this->SmallLinesGroup->setEnabled(0);
@@ -2567,7 +2627,8 @@ void View3D::ToggleGridlines() //2D gridlines
 			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
 		}
 		GridAction->setChecked(showGrid);
-		GridlineSettings->setEnabled(true);
+		GridlineSettings->setHidden(false);
+		//GridlineSettings->setEnabled(true);
 		showGrid = false;
 	}// turn on grid
 	else
@@ -2584,7 +2645,8 @@ void View3D::ToggleGridlines() //2D gridlines
 			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
 		}
 		GridAction->setChecked(showGrid);
-		GridlineSettings->setEnabled(false);
+		GridlineSettings->setHidden(true);
+		//GridlineSettings->setEnabled(false);
 		showGrid = true;
 	}// turn off grid
 	this->QVTK->GetRenderWindow()->Render();
@@ -2799,6 +2861,7 @@ void View3D::ShowSettingsWindow()
 	this->GapToleranceField->setValue(this->tobj->gapTol);
 	this->LineLengthField->setValue(this->SmallLineLength);
 	this->ColorValueField->setValue(this->SelectColor);
+	this->TipColor->setValue(this->SelectTipColor);
 	this->LineWidthField->setValue(this->lineWidth);
 	this->BackgroundRBox->setValue(this->backColorR);
 	this->BackgroundGBox->setValue(this->backColorG);
@@ -2813,16 +2876,18 @@ void View3D::ApplyNewSettings()
 	this->tobj->gapTol = this->GapToleranceField->value();
 	this->SmallLineLength = (float)this->LineLengthField->value();
 	this->SelectColor = this->ColorValueField->value();
+	this->SelectTipColor = this->TipColor->value();
 	this->lineWidth = (float)this->LineWidthField->value();
 	this->backColorR = this->BackgroundRBox->value();
 	this->backColorG = this->BackgroundGBox->value();
 	this->backColorB = this->BackgroundBBox->value();
 	this->Renderer->SetBackground(this->backColorR,this->backColorG,this->backColorB);
 	this->statusBar()->showMessage(tr("Applying new settings"),3000);
-	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol ) ;
+	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol );
 	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
 	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
 	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
+	this->TraceEditSettings.setValue("mainWin/selectTipColor", this->SelectTipColor);
 	this->TraceEditSettings.setValue("mainWin/LineWidth", this->lineWidth);
 	this->TraceEditSettings.setValue("mainWin/ColorR", this->backColorR);
 	this->TraceEditSettings.setValue("mainWin/ColorG", this->backColorG);
@@ -2831,7 +2896,7 @@ void View3D::ApplyNewSettings()
 	this->renderTraceBits = this->markTraceBits->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
-	this->QVTK->GetRenderWindow()->Render();  
+	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::HideSettingsWindow()
@@ -3243,6 +3308,18 @@ void View3D::CalculateCellToCellDistanceGraph()
 	}
 }
 /*Selections*/
+void View3D::setHighlightSettings(int value)
+{
+	if (value == 1)
+		highlightMode = SEGMENT;
+	else if (value == 2)
+		highlightMode = TIP;
+	else
+		highlightMode = TREE;
+
+	this->updateTraceSelectionHighlights();
+	
+}
 void View3D::updateTraceSelectionHighlights()
 {
 	this->UpdateLineActor();
@@ -3265,13 +3342,60 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 	{
 		color = tline->getTraceColor();
 	}
-	iter++;
-	while(iter!=iterend)
+	
+	iter++; // skip recoloring of soma
+
+	if (highlightMode == SEGMENT)
 	{
-		//poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
-		poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
-		++iter;
+		//color traces by branch order
+		int branch_order = tline->GetLevel();
+		while (branch_order >= 5) //repeat colors after 5 orders
+			branch_order -= 5;
+
+		double color_choice[5] = {0.1,0.2,0.4,0.7,0.85}; //orange,yellow,green,aqua blue,light blue
+		//while (color > 0.75 && color < 0.9) //avoid red (<0.1) and blue(0.85-1.0)
+		//	color += 0.1;
+		//color_choice[0] = color; // initial color value
+		
+		//for (int i = 1; i < 8; i++)
+		//{
+		//	color_choice[i] = color;
+		//	//color_choice[i] = color_choice[i-1] + 0.15;
+		//	//while (color_choice[i] > 0.75 && color_choice[i] < 0.9) //avoid red and blue
+		//	//	color_choice[i] += 0.1;
+		//	//if (color_choice[i] > 1.0) //repeat after 1.0
+		//	//	color_choice[i] -= 1.0;
+		//}
+		while(iter!=iterend)
+		{
+			poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color_choice[branch_order]);
+			++iter;
+		}
+	}//highlight by branch order
+	else if (highlightMode == TIP)
+	{
+		bool isTip = tline->isLeaf();
+		while(iter!=iterend)
+		{
+			if (isTip)
+			{
+				poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,this->SelectTipColor);
+			}
+			else
+				poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
+			
+			++iter;
+		}
 	}
+	else
+	{
+		while(iter!=iterend)
+		{
+			//poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,1/t);
+			poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
+			++iter;
+		}
+	}//highlight in one color
 }
 
 void View3D::Rerender()
@@ -3324,11 +3448,11 @@ void View3D::Rerender()
 			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
-		if (this->FL_histo)
-		{
-			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-			this->FL_histo->update();
-		}
+		//if (this->FL_histo)
+		//{
+		//	this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		//	this->FL_histo->update();
+		//}
 	}//end if has cell calculations
 	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
@@ -4148,17 +4272,17 @@ void View3D::ShowCellAnalysis()
 			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
 			this->FL_MeasureTable->show();
 		}
-		/*if (this->FL_histo)
-		{
-			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-			this->FL_histo->update();
-		}
-		else
-		{
-			this->FL_histo = new HistoWindow();
-			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-			this->FL_histo->show();
-		}*/
+		//if (this->FL_histo)
+		//{
+		//	this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		//	this->FL_histo->update();
+		//}
+		//else
+		//{
+		//	this->FL_histo = new HistoWindow();
+		//	this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		//	this->FL_histo->show();
+		//}
 	}//end if new cells size > 0
 }
 void View3D::HideCellAnalysis()
