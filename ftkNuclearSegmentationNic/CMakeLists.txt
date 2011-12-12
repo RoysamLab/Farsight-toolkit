@@ -19,6 +19,24 @@ LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 
 
+#SUBDIRS(
+
+#1__1_1_BinarizeMixPoisson
+#1__1_2_BinarizeMixGaussian
+#1__1_3_BinarizeOtsu
+#1__1_4_OtherMethod
+#1__2_1_SeedDetection
+#1__3_1_MaxClustering
+#1__4_1_AlphaExpansion
+#2__1_1_RadVoting
+#2__2_1_CellShapeIni
+#2__3_1_GVFforce
+#2__3_2_AnotherForce
+#2__4_1_LevelSet
+#3__1_1_LevlSet
+
+#)
+
 ################################################################################
 ################################################################################
 
@@ -38,6 +56,8 @@ SET( FTKNUCLEARSEGMENTATIONNIC_HDRS
 
 ftkNuclearSegmentationNic.h
 ftkNuclearSegmentationNic.hxx
+
+1__1_1_BinarizeMixPoisson/BinarizeMixPoisson.h
  
 )
 
@@ -55,4 +75,4 @@ ADD_EXECUTABLE( ftkNuclearSegmentationNic
 ################################################################################
 
 
-TARGET_LINK_LIBRARIES ( ftkNuclearSegmentationNic ${VTK_LIBRARIES} ${ITK_LIBRARIES} libftkNuclearSegmentationNic )
+TARGET_LINK_LIBRARIES ( ftkNuclearSegmentationNic ${VTK_LIBRARIES} ${ITK_LIBRARIES} ftkCommon libftkNuclearSegmentationNic )
