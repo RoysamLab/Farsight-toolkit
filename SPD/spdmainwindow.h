@@ -22,6 +22,9 @@ public:
     ~SPDMainWindow();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 
+protected:
+	virtual void closeEvent(QCloseEvent *event);
+
 private slots:
     void browse();
     void load();

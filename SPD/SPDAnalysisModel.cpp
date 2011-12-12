@@ -871,6 +871,7 @@ void SPDAnalysisModel::HierachicalClustering()
 {
 	assert(TreeIndex.size() == this->ClusterIndex.max_value() + 1);
 	PublicTreeData = TreeData;
+
 	vnl_vector<int> moduleSize = GetModuleSize(this->ClusterIndex);
 	vnl_matrix<double> matrix = DataMatrix;
 	matrix.normalize_columns();
@@ -907,10 +908,12 @@ void SPDAnalysisModel::HierachicalClustering()
 	}
 
 	std::vector<unsigned int> ids;
-	int newIndex = TreeIndex.max_value() + 1;
+	TreeIndexNew = TreeIndex;
+
+	int newIndex = TreeIndexNew.max_value() + 1;
 	vnl_vector<unsigned int> cIndex = this->ClusterIndex;
 
-	for( int count = 0; count < TreeIndex.size() - 1; count++)
+	for( int count = 0; count < TreeIndexNew.size() - 1; count++)
 	{
 		int maxId = CorMat.arg_max();
 		double maxCor = CorMat.max_value();
@@ -919,10 +922,10 @@ void SPDAnalysisModel::HierachicalClustering()
 		int min = i > j ? j : i;
 		int max = i > j ? i : j;
 
-		Tree tr( TreeIndex[min], TreeIndex[max], maxCor, newIndex);
+		Tree tr( TreeIndexNew[min], TreeIndexNew[max], maxCor, newIndex);
 		PublicTreeData.push_back( tr);
-		TreeIndex[min] = newIndex;
-		TreeIndex[max] = -1;
+		TreeIndexNew[min] = newIndex;
+		TreeIndexNew[max] = -1;
 		newIndex += 1;
 
 		SubstitudeVectorElement(cIndex, max, min);       
@@ -936,7 +939,7 @@ void SPDAnalysisModel::HierachicalClustering()
 
 		for( int k = 0; k < CorMat.cols(); k++)
 		{
-			if( k != min && TreeIndex[k] != -1)
+			if( k != min && TreeIndexNew[k] != -1)
 			{
 				vnl_matrix<double> newModule(DataMatrix.rows(), moduleSize(min) + moduleSize(k));
 				vnl_vector<double> newModuleMeans;
@@ -962,7 +965,7 @@ void SPDAnalysisModel::HierachicalClustering()
 	QString str = "dendrogram_feature.txt";
 	ofstream ofs(str.toStdString().c_str());
 	ofs<< "Tree Index:"<<endl;
-	ofs<< TreeIndex<<endl;
+	ofs<< TreeIndexNew<<endl;
 	for( int i = 0; i < PublicTreeData.size(); i++)
 	{
 		Tree tr = PublicTreeData[i];

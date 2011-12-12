@@ -80,6 +80,14 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
 	heatmapButton = new QPushButton(tr("Heatmap"));
 
+	clusterButton->setEnabled(FALSE);
+	cellClusterButton->setEnabled(FALSE);
+	generateMSTButton->setEnabled(FALSE);
+	emdButton->setEnabled(FALSE);
+	psmButton->setEnabled(FALSE);
+	psdtButton->setEnabled(FALSE);
+	heatmapButton->setEnabled(FALSE);
+
 	//saveFeatureButton = new QPushButton(tr("Save Selected Features"));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
@@ -142,7 +150,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	mainLayout->addWidget(psmLable, 9, 0);
 	mainLayout->addWidget(emdThresBox, 9, 1);
-	mainLayout->addWidget(psmHisButton, 9, 2);
+	//mainLayout->addWidget(psmHisButton, 9, 2);
 
 	mainLayout->addWidget(psmPerLable, 10, 0);
 	mainLayout->addWidget(emdPercentageBox, 10, 1);
@@ -166,6 +174,8 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	histo = new HistoWindow(this);
 	this->progressionHeatmap = NULL;
 	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
+
+
 }
 
 SPDMainWindow::~SPDMainWindow()
@@ -227,6 +237,9 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
 		loadTestButton->setEnabled(FALSE);
+
+		clusterButton->setEnabled(TRUE);
+		cellClusterButton->setEnabled(TRUE);
 	}
 }
 
@@ -282,6 +295,11 @@ void SPDMainWindow::clusterFunction()
 	{
 		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
 		this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+		generateMSTButton->setEnabled(TRUE);
+		emdButton->setEnabled(FALSE);
+		psmButton->setEnabled(FALSE);
+		psdtButton->setEnabled(FALSE);
+		heatmapButton->setEnabled(FALSE);
 	}
 	catch(...)
 	{
@@ -294,6 +312,10 @@ void SPDMainWindow::generateMST()
 	try
 	{
 		this->SPDModel->GenerateMST();
+		emdButton->setEnabled(TRUE);
+		psmButton->setEnabled(FALSE);
+		psdtButton->setEnabled(FALSE);
+		heatmapButton->setEnabled(FALSE);
 	}
 	catch(...)
 	{
@@ -305,6 +327,11 @@ void SPDMainWindow::clusterCells()
 {
 	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
 	this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
+	generateMSTButton->setEnabled(TRUE);
+	emdButton->setEnabled(FALSE);
+	psmButton->setEnabled(FALSE);
+	psdtButton->setEnabled(FALSE);
+	heatmapButton->setEnabled(FALSE);
 }
 
 void SPDMainWindow::emdFunction()
@@ -312,6 +339,9 @@ void SPDMainWindow::emdFunction()
 	try
 	{
 		this->SPDModel->RunEMDAnalysis();
+		psmButton->setEnabled(TRUE);
+		psdtButton->setEnabled(FALSE);
+		heatmapButton->setEnabled(FALSE);
 	}
 	catch(...)
 	{
@@ -423,9 +453,11 @@ void SPDMainWindow::viewProgression()
 		std::cout<< "Features saved in SelFeatures.txt"<<endl;
 		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
 		//this->graph->SetGraphTable( table, headers[0], headers[1]);
+		heatmapButton->setEnabled(TRUE);
 		try
 		{
 			this->graph->ShowGraphWindow();
+			
 		}
 		catch(...)
 		{
@@ -467,6 +499,8 @@ void SPDMainWindow::updateSelMod()   // possible bugs
 		}
 		str += QString::number(selMod[num - 1]);
 		psdModuleSelectBox->setText(str);
+		psdtButton->setEnabled(TRUE);
+		heatmapButton->setEnabled(FALSE);
 	}
 }
 
@@ -574,4 +608,21 @@ void SPDMainWindow::showProgressionHeatmap()
 	delete order;
 	
 	cout<<"finish simHeatmap..."<<endl;
+}
+
+void SPDMainWindow::closeEvent(QCloseEvent *event)
+{
+	if(graph)
+	{
+		graph->close();
+	}
+	if(simHeatmap)
+	{
+		simHeatmap->close();
+	}
+	if(progressionHeatmap)
+	{
+		progressionHeatmap->close();
+	}
+	event->accept();
 }

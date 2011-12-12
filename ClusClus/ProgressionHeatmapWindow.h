@@ -165,6 +165,9 @@ public:
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
 
+protected:
+	virtual void closeEvent(QCloseEvent *event);
+
 signals:
 	void SelChanged();
 

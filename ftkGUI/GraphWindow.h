@@ -68,6 +68,7 @@ protected:
 	void UpdateChainPointList(long int attachnode, std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList);
 	Point GetNewPointFromOldPoint( Point &oldPointFirst, Point &oldPointSecond, Point &newPointFirst, double weight);
 	double GetEdgeWeight(vnl_matrix<double>& vertexList, long firstIndex, long secondIndex);
+	virtual void closeEvent(QCloseEvent *event);
 
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );

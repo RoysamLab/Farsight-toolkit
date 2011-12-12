@@ -5120,6 +5120,12 @@ void View3D::closeEvent(QCloseEvent *event)
 	{
 		this->GapsTableView->close();
 	}
+#ifdef USE_SPD
+	if( this->SPDWin)
+	{
+		this->SPDWin->close();
+	}
+#endif
 	event->accept();
 }
 

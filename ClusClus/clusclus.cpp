@@ -154,6 +154,7 @@ void clusclus::Initialize(double** feature,int numsamples, int numfeatures)
 		for(int j = 0 ; j<num_features; j++)
 			this->features[i][j] = feature[i][j];
 	}
+
 	for(int i=0; i<num_samples-1; i++)
 	{
 		this->mergers[i] = new double[5];
@@ -188,6 +189,15 @@ void clusclus::Initialize( double** treedata, int numsamples)
 			this->treedata[i][j] = treedata[i][j];
 		}
 	}
+
+	FILE *fp = fopen("ClusInitialize.txt","w");
+	for(int i=0; i<num_samples - 1; i++)
+	{
+		for(int j=0; j<4; j++)
+			fprintf(fp,"%f\t",this->treedata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 }
 
 void clusclus::Clustering()

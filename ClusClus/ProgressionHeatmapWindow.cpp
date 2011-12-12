@@ -201,6 +201,7 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 {
 	vector<double > temp;
 	temp.resize(num_features);
+	FILE *fp = fopen("progressionmapdata.txt","w");
 
 	double** tempdata;
 	tempdata = new double*[this->num_samples];
@@ -215,10 +216,16 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 		}
 	}
 
+	for(int i=0; i<num_samples; i++)
+	{
+		for(int j=0; j<num_features; j++)
+			fprintf(fp,"%f\t",tempdata[i][j]);
+		fprintf(fp,"\n");
+	}
+
 	for(int i = 0; i < this->num_samples; i++)
 		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
 
-	FILE *fp = fopen("progressionmapdata.txt","w");
 	for(int i=0; i<num_samples; i++)
 	{
 		for(int j=0; j<num_features; j++)
@@ -1780,3 +1787,7 @@ void ProgressionHeatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
+void ProgressionHeatmap::closeEvent(QCloseEvent *event)
+{
+	mainQTRenderWidget.close();
+}

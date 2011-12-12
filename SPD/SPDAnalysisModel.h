@@ -113,7 +113,7 @@ public:
 private:
 	static SPDAnalysisModel *s_pmodel;
 	std::vector< Tree> TreeData;
-
+	vnl_vector<int> TreeIndexNew;
 	//save filename
 	QString filename;
 

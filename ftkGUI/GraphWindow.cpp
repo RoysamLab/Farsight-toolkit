@@ -1320,3 +1320,8 @@ void GraphWindow::GetOrder(long int node, std::vector<long int> &order)
 	}
 	vec.clear();
 }
+
+void GraphWindow::closeEvent(QCloseEvent *event)
+{
+	mainQTRenderWidget.close();
+}
