@@ -5,6 +5,7 @@
 #include <math.h>
 #include <mbl/mbl_stats_nd.h>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
@@ -239,7 +240,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 			else
 			{
 				double var = this->DataTable->GetValue(i, j).ToDouble();
-				if( !_isnan(var))
+				if( !boost::math::isnan(var))
 				{
 					(this->DataMatrix)(rowIndex, colIndex++) = this->DataTable->GetValue(i, j).ToDouble();
 				}
