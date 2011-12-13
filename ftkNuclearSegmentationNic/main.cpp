@@ -25,10 +25,12 @@ int main( int argc, char * argv[] ){
 
 	ftk::Image::Pointer myImg;
 	//std::string inputName = "testImages\Histo_Input.xml";
+	//std::cout << std::endl << "	step 1";
 	myImg = ftk::LoadXMLImage( "/home/nicolasreyv/farsight/src/farsight-src/ftkNuclearSegmentationNic/testImages/Histo_Input.xml" );
 	
 //	ftk::Image::DataType dataType;
 // 	itk::ImageIOBase::UCHAR
+	//std::cout << std::endl << "	step 2";
 	std::cout << myImg->GetImageInfo()->dataType;
 	
 // 	switch(myImg->GetImageInfo()->dataType)
@@ -57,17 +59,19 @@ int main( int argc, char * argv[] ){
 // 		typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char> my_nucSecNic;
 // 	}	
 	
-	typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char> my_nucSecNic;
+	typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char, unsigned char> my_nucSecNic;
+	//std::cout << std::endl << "	step 3";
 	my_nucSecNic nucSecNic;
-	
-	nucSecNic.ResetRealeaseAll();
-	nucSecNic.ReleaseMemory();
-	nucSecNic.runBinarizeMixPoisson_1();
-	
-	std::cout << myImg->GetImageInfo()->numColumns;
-	
 	bool out = nucSecNic.setInput( myImg, "test_data", 0, 0 );
+	
+	//std::cout << std::endl << "	step 4";
+	nucSecNic.ResetRealeaseAll();
+	//std::cout << std::endl << "	step 5";
+	nucSecNic.ReleaseMemory();
+	//std::cout << std::endl << "	step 6";
+	nucSecNic.setBinarizeMixPoissonParameters_1(128);
 	nucSecNic.runBinarizeMixPoisson_1();
+	
 
 	int * nic;
 	nic = new int[2];

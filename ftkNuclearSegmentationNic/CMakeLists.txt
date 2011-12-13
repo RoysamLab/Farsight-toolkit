@@ -44,6 +44,8 @@ INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 SET( FTKNUCLEARSEGMENTATIONNIC_SRCS
 
 main.cpp
+1__1_1_BinarizeMixPoisson/graph.cpp
+1__1_1_BinarizeMixPoisson/maxflow.cpp
 #ftkNuclearSegmentationNic.cpp
  
 )
@@ -58,6 +60,7 @@ ftkNuclearSegmentationNic.h
 ftkNuclearSegmentationNic.hxx
 
 1__1_1_BinarizeMixPoisson/BinarizeMixPoisson.h
+1__1_1_BinarizeMixPoisson/graph.h
  
 )
 

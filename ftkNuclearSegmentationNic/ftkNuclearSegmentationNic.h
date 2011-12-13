@@ -23,6 +23,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <limits>
 
 // FTK INCLUDES
 #include <ftkObject.h>
@@ -67,6 +68,7 @@ namespace ftk{
 		* @see ftkseeddetection 
 		* @see ftkclustering
 		* @see ftkfinalalphaexpansion
+		* The number of been normally has to be a power of 2, otherwise "noise" can affect the performance
 		*/
 		template < typename inputPixelType, typename binaryPixelType = unsigned short, typename labelPixelType = unsigned short int > // Label pixel type is especially designed in case images with more cells
 		class ftkNuclearSegmentationNic
@@ -153,49 +155,49 @@ namespace ftk{
 			/**
 			 *	1.1 Set BinarizePoisson Parameters
 			 */
-			void setBinarizeMixPoissonParameters_1(unsigned int numberBins_mixPoisson_1, bool getResultImg_mixPoisson_1);
+			void setBinarizeMixPoissonParameters_1(unsigned int numberBins_mixPoisson_1, bool getResultImg_mixPoisson_1 = false);
 			void runBinarizeMixPoisson_1();					/*!< Run BinarizePoisson. */
 			void getImageBinarizeMixPoisson_1(){};				/*!< Get . */
 			
 			/**
 			 * 	1.2 Set BinarizeGaussian Parameters
 			 */
-			void setBinarizeMixGaussianParameters_1(unsigned int numberBins_mixGaussian_1, bool getResultImg_mixGaussian_1);
+			void setBinarizeMixGaussianParameters_1(unsigned int numberBins_mixGaussian_1, bool getResultImg_mixGaussian_1 = false);
 			void runBinarizeMixGaussian_1(){};				/*!< Run BinarizeGaussian. */
 			void getImageBinarizeMixGaussian_1(){};				/*!< Get BinarizeGaussian. */
 			
 			/**
 			 * 	1.3 Set BinarizeOtsu Parameters
 			 */
-			void setBinarizeOtsuParameters_1(unsigned int numberBins_otsuBina_1, bool getResultImg_otsuBina_1);
+			void setBinarizeOtsuParameters_1(unsigned int numberBins_otsuBina_1, bool getResultImg_otsuBina_1 = false);
 			void runBinarizeOtsu_1(){}; 					/*!< Run BinarizeOtsu. */
 			void getImageBinarizeOtsu_1(){};				/*!< Get BinarizeOtsu. */
 			
 			/**
 			 * 	1.4 Set Parameters of other binarization method (Adaptive, local, hard threshdold)
 			 */
-			void setOtherMethodParameters_1(unsigned int numberBins_otherMethod_1, bool getResultImg_otherMethod_1);
+			void setOtherMethodParameters_1(unsigned int numberBins_otherMethod_1, bool getResultImg_otherMethod_1 = false);
 			void runOtherMethod_1(){}; 					/*!< Run other binarization method (Adaptive, local, hard threshdold). */
 			void getImageOtherMethod_1(){};					/*!< Get other binarization method (Adaptive, local, hard threshdold). */
 					
 			/**
 			 * 	2.1 Set Parameters for Seed Detection
 			 */
-			void setSeedDetectionParameters_1(bool getResultImg_seedDetect_1);
+			void setSeedDetectionParameters_1(bool getResultImg_seedDetect_1 = false);
 			void runSeedDetection_1(){}; 					/*!< Run Seed Detection. */
 			void getImageSeedDetection_1(){};				/*!< Get Seed Detection. */
 			
 			/**
 			 * 	3.1 Set Max Clustering parameters
 			 */
-			void setMaxClusteringParameters_1(bool getResultImg_maxClust_1);
+			void setMaxClusteringParameters_1(bool getResultImg_maxClust_1 = false);
 			void runMaxClustering_1(){}; 					/*!< Run Max Clustering. */
 			void getImageMaxClustering_1(){};				/*!< Get Max Clustering. */
 			
 			/**
 			 * 	4.1 Run alpha expansion
 			 */
-			void setAlphaExpansionParameters_1(bool getResultImg_alphaExp_1);
+			void setAlphaExpansionParameters_1(bool getResultImg_alphaExp_1 = false);
 			void runAlphaExpansion_1(){}; 					/*!< Run alpha expansion. */
 			void getImageAlphaExpansion_1(){};				/*!< Get alpha expansion. */
 			
@@ -203,28 +205,28 @@ namespace ftk{
 			/**
 			 * 	1.1 Set the parameter for seed detection by voting
 			 */
-			void setRadVotingParameters_2(unsigned int voteMinScale_2, unsigned int voteMaxScale_2, bool getResultImg_radVoting_2);
+			void setRadVotingParameters_2(unsigned int voteMinScale_2, unsigned int voteMaxScale_2, bool getResultImg_radVoting_2 = false);
 			void runRadVoting_2(){}; 					/*!< Run seed detection by voting. */
 			void getImageRadVoting_2(){};					/*!< Get seed detection by voting. */
 			
 			/**
 			 * 	2.1 Set Initialization of the first cell shape Parameters
 			 */
-			void setCellShapeIniParameters_2( unsigned int numOutliers_cellShapeIni_2, bool getResultImg_cellShapeIni_2);
+			void setCellShapeIniParameters_2( unsigned int numOutliers_cellShapeIni_2, bool getResultImg_cellShapeIni_2 = false);
 			void runCellShapeIni_2(){}; 					/*!< Run Initialization of the first cell shape. */
 			void getImageCellShapeIni_2(){};				/*!< Get Initialization of the first cell shape. */
 			
 			/**
 			 * 	3.1 GVF External force !!! not sure is making this independent
 			 */
-			void setGVFforceParameters_2( double mu_GVFforce_2, double iter_GVFforce_2, bool getResultImg_GVFforce_2);
+			void setGVFforceParameters_2( double mu_GVFforce_2, double iter_GVFforce_2, bool getResultImg_GVFforce_2 = false);
 			void runGVFforce_2(){}; 					/*!< Run GVF External force. */
 			void getImageGVFforce_2(){};					/*!< Get GVF External force. */
 			
 			/**
 			 * 	3.2 Another force !!! not sure is making this independent
 			 */
-			void setAnotherForceParameters_2( double alpha_1_AnotherForce_2, double alpha_2_AnotherForce_2, bool getResultImg_AnotherForce_2);
+			void setAnotherForceParameters_2( double alpha_1_AnotherForce_2, double alpha_2_AnotherForce_2, bool getResultImg_AnotherForce_2 = false);
 			void runAnotherForce_2(){}; 					/*!< Run Another force. */
 			void getImageAnotherForce_2(){};				/*!< Get Another force. */
 			
@@ -270,6 +272,7 @@ namespace ftk{
 			unsigned int					_numColumns;					/*!< Number of colums in the input image */
 			unsigned int					_numStacks;					/*!< Number of stacks in the input image */
 			long long					_totNumPixels;					/*!< Total number of pixels */
+			long long					_maxValueInputPixelType;			/*!< Maximum value of the given input pixel type */
 
 			std::string					_labelFilename;					/*!< Name of the file that is the label image !!! Not Sure */ 
 			ftk::Image::Pointer				_labelImage;					/*!< Labeled image, result of segmentation */
@@ -297,7 +300,7 @@ namespace ftk{
 			
 			// ################################################################## PARTICULAR PARAMETERS ACCORDING TO THE MODULES OF THE PIPELINES ##################################################################
 			// ------------------------------------------------------------------ PIPELINE 1 ------------------------------------------------------------------
-			BinarizeMixPoisson< inputPixelType >		*_objBinarizeMixPoisson_1;			/*!< 1.1 Object BinarizePoisson. */
+			BinarizeMixPoisson< inputPixelType, binaryPixelType >	*_objBinarizeMixPoisson_1;			/*!< 1.1 Object BinarizePoisson. */
 			unsigned int 					_numberBins_mixPoisson_1;			/*!< 1.1 BinarizePoisson Parameters. */
 			bool 						_getResultImg_mixPoisson_1;			/*!< 1.1 BinarizePoisson Parameters. */
 			bool						_use_mixPoisson_1;				/*!< 1.1 Use up BinarizePoisson Parameters. See Note 1 */

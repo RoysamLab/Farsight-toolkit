@@ -110,6 +110,10 @@ bool ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 	
 	_totNumPixels = (long long)_numRows*(long long)_numColumns*(long long)_numStacks;
 	
+	std::cout << std::endl << "Set up and input image of size, Rows: " << _numRows << ", Col: " << _numColumns << ", Slices: " << _numStacks << ", Voxels: " << _totNumPixels;
+	
+	_maxValueInputPixelType = std::numeric_limits<inputPixelType>::max();
+	
 	return true;
 };
 
@@ -250,23 +254,23 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 	paramDoubObj.paramName = _paramNames.at(0);
 	paramDoubObj.value = 0;
 	_vectParameters.push_back(paramDoubObj);
-	
+	std::cout << std::endl << _paramNames.at(0);
 	paramDoubObj.paramName = _paramNames.at(1);
 	paramDoubObj.value = 30;
 	_vectParameters.push_back(paramDoubObj);
-	
+	std::cout << std::endl << _paramNames.at(1);
 	paramDoubObj.paramName = _paramNames.at(2);
 	paramDoubObj.value = 5;
 	_vectParameters.push_back(paramDoubObj);
-	
+	std::cout << std::endl << _paramNames.at(2);
 	paramDoubObj.paramName = _paramNames.at(3);
 	paramDoubObj.value = 8;
 	_vectParameters.push_back(paramDoubObj);
-	
+	std::cout << std::endl << _paramNames.at(3);
 	paramDoubObj.paramName = _paramNames.at(4);
 	paramDoubObj.value = 5;
 	_vectParameters.push_back(paramDoubObj);
-	
+	std::cout << std::endl << _paramNames.at(4);
 	paramDoubObj.paramName = _paramNames.at(5);
 	paramDoubObj.value = 2;
 	_vectParameters.push_back(paramDoubObj);
@@ -364,10 +368,11 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 template < typename inputPixelType, typename binaryPixelType, typename labelPixelType >
 void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, labelPixelType >::runBinarizeMixPoisson_1()
 {
-	_objBinarizeMixPoisson_1 = new BinarizeMixPoisson< inputPixelType, binaryPixelType > ();
- 	_objBinarizeMixPoisson_1->setParameters( _numberBins_mixPoisson_1, _getResultImg_mixPoisson_1 );
-	_objBinarizeMixPoisson_1->setInput( _info, _itkPointerToInputImage_3 );
-	_objBinarizeMixPoisson_1->runBinarization();
+ 	_objBinarizeMixPoisson_1 = new BinarizeMixPoisson< inputPixelType, binaryPixelType > ();
+// 	BinarizeMixPoisson< inputPixelType, binaryPixelType >* objBinarizeMixPoisson_1 = new BinarizeMixPoisson< inputPixelType, binaryPixelType > ();
+  	_objBinarizeMixPoisson_1->setParameters( _numberBins_mixPoisson_1, _getResultImg_mixPoisson_1 );
+ 	_objBinarizeMixPoisson_1->setInput( _info, _itkPointerToInputImage_3 );
+ 	_objBinarizeMixPoisson_1->runBinarization();
 	
 };
 
