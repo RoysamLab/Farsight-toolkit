@@ -424,7 +424,7 @@ run(double init_x, double init_y, double& obj_value)
     optimizer->AddObserver( itk::IterationEvent(), observer );
     
     // Now run the registration
-    registrator->StartRegistration();
+    registrator->Update();
     
     // Set the final transform
     TransformType::ParametersType final_parameters;
@@ -551,7 +551,7 @@ run(TransformType::Pointer prior_xform, double& obj_value)
     optimizer->AddObserver( itk::IterationEvent(), observer );
     
     // Now run the registration
-    registrator->StartRegistration();
+    registrator->Update();
     
     // Set the final transform
     TransformType::ParametersType final_parameters;
