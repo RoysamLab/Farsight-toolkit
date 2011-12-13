@@ -284,7 +284,7 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
     optimizer->AddObserver( itk::IterationEvent(), observer );
     
     // Now run the registration
-    registrator->StartRegistration();
+    registrator->Update();
     
     // Set the final transform
     TransformType::ParametersType final_parameters;
