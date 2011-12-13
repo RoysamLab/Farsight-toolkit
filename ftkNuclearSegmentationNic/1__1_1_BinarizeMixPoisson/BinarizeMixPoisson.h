@@ -4,9 +4,19 @@
 // ############################################################################################################################################################################
 
 #include <iostream>
+#include <fstream>
+#include <limits>
+#include <stdio.h>
+#include <math.h>
 
 // ITK INCLUDES
 #include <itkImage.h>
+#include <itkImageFileWriter.h>
+
+
+// GRAPH CUTS
+//#include "../GraphCutsBoykov/maxflow-v3.01/graph.h"
+#include "graph.h"
 
 //#include "../ftkNuclearSegmentationNic.h"
 
@@ -32,6 +42,8 @@ namespace ftk{
 			void setParameters( unsigned int numberBins_mixPoisson, bool getResultImg_mixPoisson );
 			void setInput( const ftk::Image::Info* info, typename itk::Image< inputPixelType, 3 >::Pointer inputImage );
 			void runBinarization();
+			double computePoissonProb( int intensity, double alpha);
+			void graphCuts_2D();
 // 			{
 // 				
 // 				new binary;
@@ -48,20 +60,29 @@ namespace ftk{
 			unsigned int					_numColumns;					/*!< Number of colums in the input image */
 			unsigned int					_numStacks;					/*!< Number of stacks in the input image */
 			long long					_totNumPixels;					/*!< Total number of pixels */
+			inputPixelType					_maxValueInputPixelType;			/*!< Maximum value of the given input pixel type */
+			binaryPixelType					_maxValueBinaryPixelType;
 			
 			unsigned int 					_numberBins_mixPoisson;
 			bool 						_getResultImg_mixPoisson;
+			double						_sigmaNeighCost;				/*!< Neighborhood parameter cost. */
 			
-			double						_alpha_B;
-			double						_alpha_F;
+			unsigned int 					_numPoissonDist;				/*!< Number of poissson distribution */
+			double						_alpha_B; // alpha_1 ???
+			double						_alpha_1;
+			double						_alpha_F; // alpha_2 ??
+			double						_alpha_2; 
 			double						_P_I;
 			
-			double						_alpha_C;
+			double						_alpha_C; // alpha_1 ???
+			double						_alpha_3; 
 			double						_P_I2;
 			
 			
 			typename inputImageType::Pointer		_inputImage;
+			typename inputImageType::PixelType 		*_inputImageArray; 
 			typename binaryImageType::Pointer		_binaryImage;
+			typename binaryImageType::PixelType		*_binaryImageArray;
 			
 // 			itk::image<bool>::pointer binary;
 
