@@ -1,13 +1,22 @@
-PROJECT(iMontage)
+#include "TraceObject.h"
+#include "CellTraceModel.h"
+#include "CellTrace.h"
+#include <string>
+#include <limits>
+#include <tinyxml/tinyxml.h>
+#include "vul/vul_file.h"
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/Tracing/TraceEdit)
+int main(int argc, char* argv[])
+{
 
-SET(iMontage_HDRS 
-)
+	if (argc < 2)
+	{
+		std::cout << "Must run program with correct number of arguments" << std::endl;
+		std::cout << "Usage: " << argv[0] << " project_xml_file" << std::endl;
+		return -1;
+	}
 
-SET(iMontage_SRCS 
-	main.cpp
-)
+	size_t global_cell_counter = 0;
 
 	char* xml_file = argv[1];
 	TiXmlDocument project_doc(argv[1]);
