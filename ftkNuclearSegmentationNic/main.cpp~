@@ -62,7 +62,7 @@ int main( int argc, char * argv[] ){
 // 		typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char> my_nucSecNic;
 // 	}	
 	
-	typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char, unsigned short> my_nucSecNic;
+	typedef ftk::nucSecNic::ftkNuclearSegmentationNic<unsigned char, unsigned char> my_nucSecNic;
 // 	std::cout << std::endl << "	step 3";
 // 	std::cout << std::endl << "	step 3";
 	my_nucSecNic nucSecNic;

@@ -336,7 +336,7 @@ namespace ftk{
 			bool						_use_otherMethod_1;				/*!< 1.4 Use up Binarize Other method Parameters. See Note 1 */
 			bool						_run_otherMethod_1;				/*!< 1.4 Run Binarize Other method Parameters. See Note 1 */
 			
-			SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectPixelType > *_objSeedDetectionLoG_1;	/*!< Seed Detection Object */
+			SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectionPixelType > *_objSeedDetectionLoG_1;	/*!< Seed Detection Object */
 			bool 						_getResultImg_seedDetect_1;			/*!< 2.1 Seed Detection */
 			
 			bool 						_getResultImg_maxClust_1;			/*!< 3.1 Max Clustering parameters */

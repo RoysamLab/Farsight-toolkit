@@ -6,6 +6,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::setP
 	_numberBins_mixPoisson = numberBins_mixPoisson;
 	_getResultImg_mixPoisson = getResultImg_mixPoisson;
 	_sigmaNeighCost = 100; // !! This should be changed
+	_wNeigh = 15;
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::runB
 	this->runMinErrorThresholding();
 	
 	// 2. Refine binarization using graph cuts
-	graphCuts_2D();
+	graphCuts_3D();
 // 	if( _numPoissonDist == 2 )
 // 	{
 // 		Seg_GC_Full_2D(imgIn, R, C, alpha_F, alpha_B, P_I, &n_nodes, &n_edges, imgOut);
@@ -292,12 +293,15 @@ double ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::co
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 template < typename inputPixelType, typename binaryPixelType >
-void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::graphCuts_2D()
+void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::graphCuts_3D()
 {    
 	
 	
 	int num_nodes;
 	int num_edges;
+	
+	int curr_node_z;
+	int curr_node_yz;
 	
 	int curr_node_xy;
 	int curr_node_xyz;
@@ -305,24 +309,38 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	int rght_node;
 	int down_node;
 	int diag_node;
+	
+	int diag_node_1;
+	int rght_node_1;
+	int down_node_1;
+	int diag_node_2;
+	
+	
 	double Df;
 	double Db;
 	double Dr;
 	double Dd; 
 	double Dg; 
-	double sig;
 	double F_H[_maxValueInputPixelType+1];
 	double B_H[_maxValueInputPixelType+1];
 	
 	
 	typedef Graph<int,int,int> GraphType;
+	// No much diference in the result when using double, the memory increases significatively. 
+// 	typedef Graph<double,double,double> GraphType;
 
-// 	Set the number of edges and the number of nodes and open the files that
-// 	will be used to save the weights
-// 	num_nodes = _numRows*_numColumns;
+// 	Set the number of edges and the number of nodes
 	num_nodes = _numRows*_numColumns*_numStacks;
-// 	num_edges = 3*_numRows*_numColumns-2*_numRows-2*_numColumns+1;
-	num_edges = (_numRows-1)*(_numColumns-1)*(_numStacks-1)*3;
+	if( _numStacks == 1 )
+	{
+		num_edges = (_numRows-1)*(_numColumns-1)*3;
+	}
+	else
+	{
+		num_edges = (_numRows-1)*(_numColumns-1)*(_numStacks-1)*3;
+		// In case of using 26 neighborhood
+// 		num_edges = (_numRows-1)*(_numColumns-1)*(_numStacks-1)*7;
+	}
 
 
 	//Before entering the loop, compute the poisson probs 
@@ -344,7 +362,6 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	
 	
 	std::ofstream myfile;
-	//myfile.open ("/home/nicolasreyv/farsight/src/farsight-src/ftkNuclearSegmentationNic/Results/out",ios::out); ask kedar
 	myfile.open ("out_Histogram_F_H",ios::out);
 
 	if (!myfile) {
@@ -358,7 +375,6 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	myfile.close();
 	
 	std::ofstream myfile2;
-	//myfile2.open ("/home/nicolasreyv/farsight/src/farsight-src/ftkNuclearSegmentationNic/Results/out",ios::out); ask kedar
 	myfile2.open ("out_Histogram_B_H",ios::out);
 
 	if (!myfile2) {
@@ -372,39 +388,50 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	myfile2.close();
 	
 	
+// 	std::cout << std::endl << "	step 4444235";
+// 	std::cout << std::endl << "	step 4444235";
+// 	std::cout << std::endl << "	step 4444235";
 	
+	int nic;
+// 	std::cin >> nic;
 
 // 	//Here is the main loop.. 
 // 	//For each point, compute the terminal and neighbor edge weights
+	
+	std::cout << std::endl << "	Allocating:	" << num_nodes*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for nodes.";
+	std::cout << std::endl << "	And, allocating:	" << num_edges*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for edges.";
+	
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
+	
+	//std::cin >> nic;
+	
+// 	try{
+// 		g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
+// 	}
+// 	catch (std::exception& e)
+// 	{
+// 		cerr << "exception caught: " << e.what() << endl;
+// 	}
+	
+// 	std::cout << std::endl << "	step 111111111";
+// 	std::cout << std::endl << "	step 111111111";
+// 	std::cout << std::endl << "	step 111111111";
+	
+	
 	int intenPixel;
-	for(int i=0; i<_numRows; ++i)
+	for( int k=0; k<_numStacks; ++k )
 	{
-		for(int j=0; j<_numColumns; ++j)
-		{	
-			curr_node_xy = j+(i*_numColumns);
-			for( int k=0; k<_numStacks; ++k )
-			{
-				curr_node_xyz = curr_node_xy+k*_numColumns*_numRows;
-				
-// 				curr_node_xyz = curr_node_xy;
-				
-				/*Get the terminal edges capacities and write them to a file
-				These capacities represent penalties of assigning each point to
-				either the fg or the bg. Now, I am using the distance of the point
-				to the fg and bg. Then a short distance between a point and a class (fg or bg)
-				means the penalty of the assignement is low and vice versa*/ 
-
-				//Isaac change on 5/9/08
-				//int intst = (int) IM[i][j];
-				
-				 
+		curr_node_z = k*_numColumns*_numRows;
+		for(int i=0; i<_numRows; ++i)
+		{
+			curr_node_yz = (i*_numColumns)+curr_node_z;
+			for(int j=0; j<_numColumns; ++j)
+			{	
+				curr_node_xyz = j + curr_node_yz;
+			 
 				intenPixel = (int)_inputImageArray[curr_node_xyz];
 				
-// 				intenPixel = (int)_inputImageArray[curr_node_xy+16*_numColumns*_numRows];
-
-				//Added by Yousef on jan 17, 2008
-				//check if this is a seed point
+				// This hard contraints are not a good idea, improve this !
 				if(intenPixel == _maxValueInputPixelType)
 				{
 					Df = 0;
@@ -417,101 +444,109 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 				}
 				else
 				{                
-					Df = -log(F_H[intenPixel]);  //it was multiplied by .5          
+					Df = -log(F_H[intenPixel]);
 					if(Df>1000.0)
 						Df = 1000;
 					Db = -log(B_H[intenPixel]);
 					if(Db>1000.0)
 						Db=1000;
-
 				}         
 				
-// 				if( (intenPixel > 50) && (intenPixel < 180) )
-// 				std::cout << std::endl << intenPixel << " " << Df << " " << Db;
-
 				g -> add_node();
 				g -> add_tweights( curr_node_xyz,   /* capacities */ Df,Db);  
-				
-// 				g -> add_tweights( curr_node_xy,   /* capacities */ Df,Db);  
 			}
 		}
 	}
 
-	double w = 20.0;
-	for(int i=0; i<_numRows-1; ++i)
-	{
-		for(int j=0; j<_numColumns-1; ++j)
-		{		
-			curr_node_xy = j+(i*_numColumns);
-// 			for( int k=0; k<_numStacks; ++k )
-// 			{
-// 				curr_node_xyz = curr_node_xy+k*_numColumns*_numRows;
-				
-				curr_node_xyz = curr_node_xy;
-				
-				// get the neighbor edges capacities and write them to a file.
-				// Now, each edge capacity between two neighbors p and q represent
-				// the penalty for discontinuety. Since I am using the difference in
-				// the intensities, I should take the inverse so that very similar
-				// objects should have a large discontinuety penalty between them*/
+// 	std::cout << std::endl << "	step 444";
+// 	std::cout << std::endl << "	step 444";
+// 	std::cout << std::endl << "	step 444";
 
+	//std::cin >> nic;
+	
+// 	double w = 30.0;
+	for( int k=0; k<_numStacks-1; ++k )
+	{
+		curr_node_z = k*_numColumns*_numRows;
+		for(int i=0; i<_numRows-1; ++i)
+		{
+			curr_node_yz = (i*_numColumns)+curr_node_z;
+			for(int j=0; j<_numColumns-1; ++j)
+			{	
+				curr_node_xyz = j + curr_node_yz;
+				
 				rght_node = curr_node_xyz+1;
 				down_node = curr_node_xyz+_numColumns;
-				diag_node = curr_node_xyz+_numColumns+1;
+				diag_node = curr_node_xyz+_numColumns*_numRows;
 
 
-				//from Boykov's paper instead
-				Dr = w*exp(-pow((double)_inputImageArray[curr_node_xy+16*_numColumns*_numRows]-(double)_inputImageArray[rght_node+16*_numColumns*_numRows],2)/(2*pow(_sigmaNeighCost,2)));
-				g -> add_edge( curr_node_xyz, rght_node,    /* capacities */  Dr, Dr );	
-
-
-				//from Boykov's paper instead
-				Dd = w*exp(-pow((double)_inputImageArray[curr_node_xy+16*_numColumns*_numRows]-(double)_inputImageArray[down_node+16*_numColumns*_numRows],2)/(2*pow(_sigmaNeighCost,2)));
+				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[rght_node],2)/(2*pow(_sigmaNeighCost,2)));
+				g->add_edge( curr_node_xyz, rght_node,    /* capacities */  Dr, Dr );	
+				
+				Dd = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[down_node],2)/(2*pow(_sigmaNeighCost,2)));
 				g->add_edge( curr_node_xyz, down_node,    /* capacities */  Dd, Dd );
-
-				Dg = w*exp(-pow((double)_inputImageArray[curr_node_xy+16*_numColumns*_numRows]-(double)_inputImageArray[diag_node+16*_numColumns*_numRows],2)/(2*pow(_sigmaNeighCost,2)));
-				g->add_edge( curr_node_xyz, diag_node,    /* capacities */  Dg, Dg );            
-// 			}
+				
+				Dg = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node],2)/(2*pow(_sigmaNeighCost,2)));
+				g->add_edge( curr_node_xyz, diag_node,    /* capacities */  Dg, Dg );  
+				
+				
+				// In case of using 26 neighborhood system
+// 				diag_node_1 = down_node+1;
+// 				rght_node_1 = rght_node+_numColumns*_numRows;
+// 				down_node_1 = down_node+_numColumns*_numRows;
+// 				diag_node_2 = diag_node_1+_numColumns*_numRows;
+// 				
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				g->add_edge( curr_node_xyz, diag_node_1,    /* capacities */  Dr, Dr );	
+// 				
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[rght_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				g->add_edge( curr_node_xyz, rght_node_1,    /* capacities */  Dr, Dr );	
+// 				
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[down_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				g->add_edge( curr_node_xyz, down_node_1,    /* capacities */  Dr, Dr );	
+// 				
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node_2],2)/(2*pow(_sigmaNeighCost,2)));
+// 				g->add_edge( curr_node_xyz, diag_node_2,    /* capacities */  Dr, Dr );	
+			}
 		}
 	} 
 
-	//Compute the maximum flow:
-	g->maxflow();		//Alex DO NOT REMOVE
+// 	std::cout << std::endl << "	step 55";
+// 	std::cout << std::endl << "	step 55";
+// 	std::cout << std::endl << "	step 55";
 
+	//Compute the maximum flow:
+	g->maxflow();
+
+	//std::cin >> nic;
+	
+// 	std::cout << std::endl << "	step 66";
+// 	std::cout << std::endl << "	step 66";
+// 	std::cout << std::endl << "	step 66";
 
 	int RR,CC;
 	for(int i=0; i<num_nodes; ++i)
 	{
-// 		std::cout << std::endl << _maxValueBinaryPixelType;
 		CC = ((long)i)%_numColumns;
 		RR = (i-CC)/_numColumns;
 		if(g->what_segment(i) == GraphType::SOURCE)
 		{
-			_binaryImageArray[RR*_numColumns + CC+16*_numColumns*_numRows]=0;
-// 			std::cout << std::endl << 1;
+			_binaryImageArray[RR*_numColumns + CC] = 0;
 		}
 		else
 		{
-			_binaryImageArray[RR*_numColumns + CC+16*_numColumns*_numRows] = _maxValueBinaryPixelType;
-			//std::cout << std::endl << 2;
+			_binaryImageArray[RR*_numColumns + CC] = _maxValueBinaryPixelType;
 		}
 	}
-	
-// 	for(int i=0; i<num_nodes; ++i)
-// 	{
-// // 		std::cout << std::endl << _maxValueBinaryPixelType;
-// 		CC = ((long)i)%_numColumns;
-// 		RR = (i-CC)/_numColumns;
-// 		_binaryImageArray[RR*_numColumns + CC]=250;//_maxValueBinaryPixelType;
-// 	}
-
-
-
-
- 	delete g;
+// 	std::cin >> nic;
+ 	delete g;	
+// 	std::cin >> nic;
 }
 
-
-
-
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+template < typename inputPixelType, typename binaryPixelType >
+typename itk::Image< binaryPixelType, 3 >::Pointer ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::getBinarizedImage()
+{
+	return _binaryImage;
+}
 

@@ -384,11 +384,11 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 	
 };
 
-// template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
-// typename binaryImageType::Pointer ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::getImageBinarizeMixPoisson_1()
-// {
-// 	return _binaryImage;
-// }
+template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
+typename binaryImageType::Pointer ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::getImageBinarizeMixPoisson_1()
+{
+	return _binaryImage;
+}
 
 template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
 void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::setBinarizeMixGaussianParameters_1(unsigned int numberBins_mixGaussian_1, bool getResultImg_mixGaussian_1)
