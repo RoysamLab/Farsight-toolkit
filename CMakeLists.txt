@@ -45,6 +45,7 @@ OPTION( BUILD_FTKVOTING "Build Radial Voting" ON)
 OPTION( BUILD_FTKNUCLEARSEGMENTATIONNIC "Build Nicolas Segmentation" OFF)
 OPTION( BUILD_Batch_Distance2Device "Build Distance to Device Batch Processing Code" OFF)
 OPTION( BUILD_image_dicer "Build program to dice an image based on a text file centered around a coordinate" OFF)
+OPTION( BUILD_CURVELETS "Build the curvelts based preprocessing executables" OFF)
 
 #Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
 OPTION( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
@@ -53,6 +54,7 @@ OPTION(	BUILD_CUDA "Build with CUDA support" OFF)
 MARK_AS_ADVANCED(BUILD_EMBREX)
 MARK_AS_ADVANCED(WRAP_PYTHON)
 MARK_AS_ADVANCED(BUILD_ZERNIKE)
+MARK_AS_ADVANCED(BUILD_CURVELETS)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 
@@ -187,7 +189,6 @@ IF (USE_TRACKING)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/CellTrackerLib )
   SUBDIRS( CellTrackerLib )
 ENDIF (USE_TRACKING)
-
 
 ####################################################################################
 ####################################################################################
@@ -358,7 +359,13 @@ ENDIF (BUILD_Batch_Distance2Device)
 IF (BUILD_image_dicer)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/image_dicer)
 	SUBDIRS( image_dicer)
+#	SET( BUILD_CURVELETS ON CACHE BOOL "Build the curvelts based preprocessing executables" FORCE )
 ENDIF(BUILD_image_dicer)
+
+IF (BUILD_CURVELETS)
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
+  SUBDIRS( Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
+ENDIF (BUILD_CURVELETS)
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers
 # You can check out the data directory from subversion like so:
