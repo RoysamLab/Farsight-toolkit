@@ -39,7 +39,7 @@ SET( FFTW215_INSTALL_DIR "${INSTALL_DIR}/fftw-2.1.5" )
 
 PROJECT(Curvelets)
 
-INCLUDE("${CMAKE_SOURCE_DIR}/Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src/FindFFTW215.cmake")
+#INCLUDE("${CMAKE_SOURCE_DIR}/Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src/FindFFTW215.cmake")
 
 SET( DEPENDS fftw-2.1.5 )
 
