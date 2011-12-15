@@ -219,8 +219,9 @@ ExternalProject_Add(Farsight
     -DVXL_DIR:FILEPATH=${VXL_DIR}
     -DBUILD_VESSEL:BOOL=${BUILD_VESSEL}
     -DBUILD_CURVELETS:BOOL=${BUILD_CURVELETS}
-    -DBUILD_BUILD_image_dicer=${BUILD_image_dicer}
+    -DBUILD_image_dicer=${BUILD_image_dicer}
     -DUSE_KPLS:BOOL=${USE_KPLS}
+    -DFFTW215_INSTALL_DIR=${FFTW215_INSTALL_DIR}
     ${mac_args}
   DEPENDS
     VXL
