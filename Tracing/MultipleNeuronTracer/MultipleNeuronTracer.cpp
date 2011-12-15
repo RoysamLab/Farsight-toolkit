@@ -404,14 +404,8 @@ void MultipleNeuronTracer::FeatureMain(void)
 	NDXImage->Allocate();
 	NDXImage->FillBuffer(0.0f);
 	
-	//float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };//initial
-	//float sigmas[] =  { 3.0f, 3.8284f, 5.0f, 6.6569f, 9.0f, 12.31f };//
-	//float sigmas[] =  { 8.0f, 11.31f, 14.0f };//
-	float sigmas[] =  { 2.8f, 3.2284f, 4.0f, 5.6569f, 8.0f, 11.31f };//good for 11-11,11-10
-	//float sigmas[] =  { 7.0f, 7.8284f, 9.0f, 10.6569f, 13.0f, 16.31f };//+5
-	//float sigmas[] =  { 7.0f, 7.1284f, 7.0f, 8.6569f, 11.0f, 14.31f };//+5
-
-	for (unsigned int i = 0; i < 3; ++i)
+	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };
+	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
 		GetFeature( sigmas[i] );
@@ -528,8 +522,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float val = nit.GetPixel(13) ;
 
-		const float thresh1 = 0.01;   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = 0.0005;  // -0.1 percent of range /0.001
+		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
@@ -1245,135 +1239,135 @@ void MultipleNeuronTracer::LoadSomaImage(std::string somaFileName)
 
 void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 {
-	//std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
+	std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
 
-	//unsigned int originalSize = SWCNodeContainer.size();
-	//LabelArrayType somaArray = SomaImage->GetBufferPointer();
-	//itk::Size<3> im_size = SomaImage->GetBufferedRegion().GetSize();
-	//int slice_size = im_size[0] * im_size[1];
-	//int row_size = im_size[0];
+	unsigned int originalSize = SWCNodeContainer.size();
+	LabelArrayType somaArray = SomaImage->GetBufferPointer();
+	itk::Size<3> im_size = SomaImage->GetBufferedRegion().GetSize();
+	int slice_size = im_size[0] * im_size[1];
+	int row_size = im_size[0];
 
-	////find the root nodes of each tree
-	//std::cout << "Finding the root nodes of each tree" << std::endl;
-	//std::map<long, SWCNode*> treeIDToRootMap;
-	//std::vector<SWCNode*>::iterator sit;
-	//for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
-	//{
-	//	//assume that a node with no parent is a centroid
-	//	if( (*sit)->parent == NULL )
-	//	{
-	//		treeIDToRootMap[(*sit)->TreeID] = (*sit);
-	//	}
-	//}
+	//find the root nodes of each tree
+	std::cout << "Finding the root nodes of each tree" << std::endl;
+	std::map<long, SWCNode*> treeIDToRootMap;
+	std::vector<SWCNode*>::iterator sit;
+	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
+	{
+		//assume that a node with no parent is a centroid
+		if( (*sit)->parent == NULL )
+		{
+			treeIDToRootMap[(*sit)->TreeID] = (*sit);
+		}
+	}
 
-	//if(treeIDToRootMap.size() != this->StartPoints.size()){
-	//	std::cout << "Centroids missing!!" << std::endl;
-	//	
-	//	/*std::ofstream cent_out_1("cent1.txt");
-	//	std::ofstream cent_out_2("cent2.txt");
-	//	for(int i = 0; i < this->StartPoints.size(); i++)
-	//		cent_out_1 << this->StartPoints[i][0] << "," << this->StartPoints[i][1] << "," << this->StartPoints[i][2] << std::endl;
-	//	for(int i = 0; i < treeIDToRootMap.size(); i++)
-	//		cent_out_2 << treeIDToRootMap[i]->ndx[0] << "," << treeIDToRootMap[i]->ndx[1] << "," << treeIDToRootMap[i]->ndx[2] << std::endl;
-	//	cent_out_1.close();
-	//	cent_out_2.close();*/
-	//}
-	//
-	//itk::Index<3> dummy_index;
-	////Removing nodes
-	//for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
-	//{
-	//	//don't check nodes that are outside the extent of the soma image
-	//	if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
-	//	{
-	//		++sit;
-	//		continue;
-	//	}
+	if(treeIDToRootMap.size() != this->StartPoints.size()){
+		std::cout << "Centroids missing!!" << std::endl;
+		
+		/*std::ofstream cent_out_1("cent1.txt");
+		std::ofstream cent_out_2("cent2.txt");
+		for(int i = 0; i < this->StartPoints.size(); i++)
+			cent_out_1 << this->StartPoints[i][0] << "," << this->StartPoints[i][1] << "," << this->StartPoints[i][2] << std::endl;
+		for(int i = 0; i < treeIDToRootMap.size(); i++)
+			cent_out_2 << treeIDToRootMap[i]->ndx[0] << "," << treeIDToRootMap[i]->ndx[1] << "," << treeIDToRootMap[i]->ndx[2] << std::endl;
+		cent_out_1.close();
+		cent_out_2.close();*/
+	}
+	
+	itk::Index<3> dummy_index;
+	//Removing nodes
+	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
+	{
+		//don't check nodes that are outside the extent of the soma image
+		if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
+		{
+			++sit;
+			continue;
+		}
 
-	//	//don't remove centroid nodes
-	//	if( (*sit)->parent == NULL )
-	//	{
-	//		++sit;
-	//		continue;
-	//	}
+		//don't remove centroid nodes
+		if( (*sit)->parent == NULL )
+		{
+			++sit;
+			continue;
+		}
 
-	//	//remove any other node that falls within a soma
-	//	/*if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
-	//	{
-	//		delete (*sit);
-	//		sit = SWCNodeContainer.erase(sit);
-	//	}*/
+		//remove any other node that falls within a soma
+		/*if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		{
+			delete (*sit);
+			sit = SWCNodeContainer.erase(sit);
+		}*/
 
-	//	// Removing nodes only lying in the foreground of the current soma
-	//	itk::Index<3> Node_0 = (*sit)->ndx;
-	//	itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
-	//	//if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
-	//	if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
-	//	{
-	//		//if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
-	//		if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
-	//		{
-	//			for(int i = 0; i < this->StartPoints.size(); i++){
-	//				if((*sit)->ndx[0] == this->StartPoints[i][0] && (*sit)->ndx[1] == this->StartPoints[i][1] && (*sit)->ndx[2] == this->StartPoints[i][2])
-	//					std::cout << "Centroid " << (*sit)->ndx[0] << ", " << (*sit)->ndx[1] << ", " << (*sit)->ndx[2] << " deleted!! " <<std::endl;
-	//			}
-	//			
-	//			delete (*sit);
-	//			sit = SWCNodeContainer.erase(sit);
-	//			//std::cout << "Deleted node. " << std::endl;
-	//		}
-	//		else{
-	//			SWCNode *parent = (*sit)->parent;
-	//			SWCNode *root = treeIDToRootMap[(*sit)->TreeID];
+		// Removing nodes only lying in the foreground of the current soma
+		itk::Index<3> Node_0 = (*sit)->ndx;
+		itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
+		//if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
+		if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		{
+			//if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
+			if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
+			{
+				for(int i = 0; i < this->StartPoints.size(); i++){
+					if((*sit)->ndx[0] == this->StartPoints[i][0] && (*sit)->ndx[1] == this->StartPoints[i][1] && (*sit)->ndx[2] == this->StartPoints[i][2])
+						std::cout << "Centroid " << (*sit)->ndx[0] << ", " << (*sit)->ndx[1] << ", " << (*sit)->ndx[2] << " deleted!! " <<std::endl;
+				}
+				
+				delete (*sit);
+				sit = SWCNodeContainer.erase(sit);
+				//std::cout << "Deleted node. " << std::endl;
+			}
+			else{
+				SWCNode *parent = (*sit)->parent;
+				SWCNode *root = treeIDToRootMap[(*sit)->TreeID];
 
-	//			if(parent->ndx == root->ndx){
-	//				++sit;
-	//				continue;
-	//			}
+				if(parent->ndx == root->ndx){
+					++sit;
+					continue;
+				}
 
-	//			if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx)){
-	//				(*sit)->parent = root;
-	//				(*sit)->PID = root->ID;
+				if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx)){
+					(*sit)->parent = root;
+					(*sit)->PID = root->ID;
 
-	//				++sit;
-	//			}
-	//			else{
-	//				++sit;
-	//				continue;
-	//			}
-	//		}
-	//	}
+					++sit;
+				}
+				else{
+					++sit;
+					continue;
+				}
+			}
+		}
 
-	//	//otherwise if its parent lies within a soma reassign it to be a child
-	//	//of the centroid instead.
-	//	else
-	//	{
-	//		SWCNode *parent = (*sit)->parent;
-	//		if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
-	//		{
-	//			++sit;
-	//			continue;
-	//		}
+		//otherwise if its parent lies within a soma reassign it to be a child
+		//of the centroid instead.
+		else
+		{
+			SWCNode *parent = (*sit)->parent;
+			if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
+			{
+				++sit;
+				continue;
+			}
 
-	//		itk::Index<3> Node_2 = parent->ndx;
-	//		//if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
-	//		if( SomaImage->GetPixel( parent->ndx ) != 0)
-	//		{
-	//			if( SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
-	//			{
-	//				(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
-	//				(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
-	//			}
-	//		}
+			itk::Index<3> Node_2 = parent->ndx;
+			//if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
+			if( SomaImage->GetPixel( parent->ndx ) != 0)
+			{
+				if( SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
+				{
+					(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
+					(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
+				}
+			}
 
-	//		++sit;
-	//	}
-	//}
+			++sit;
+		}
+	}
 
-	//size_t newSize = SWCNodeContainer.size();
-	//std::cout << "Just removed " << originalSize - newSize
-	//	<< " nodes (" << originalSize << " to " << newSize << ")"
-	//	<< std::endl;
+	size_t newSize = SWCNodeContainer.size();
+	std::cout << "Just removed " << originalSize - newSize
+		<< " nodes (" << originalSize << " to " << newSize << ")"
+		<< std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
