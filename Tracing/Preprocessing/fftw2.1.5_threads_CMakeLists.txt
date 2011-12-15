@@ -1,9 +1,0 @@
-
-FILE(GLOB SourceFiles *threads.c) #to avoid picking the _test.c file
-FILE(GLOB HeaderFiles ${CMAKE_SOURCE_DIR}/fftw/*.h ${CMAKE_SOURCE_DIR}/rfftw/*.h)
-
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/fftw ${CMAKE_SOURCE_DIR}/rfftw)
-ADD_LIBRARY(libfftw215_threads ${SourceFiles} ${HeaderFiles})
-INSTALL(TARGETS libfftw215_threads ARCHIVE DESTINATION lib)
-INSTALL(FILES fftw_threads.h DESTINATION include)
-INSTALL(FILES rfftw_threads.h DESTINATION include)

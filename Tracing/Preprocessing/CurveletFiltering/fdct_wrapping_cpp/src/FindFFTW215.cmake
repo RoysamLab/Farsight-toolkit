@@ -1,20 +1,20 @@
 
 SET(FFTW_INCLUDE_SEARCH_PATH
+
 	/usr/include
 	/usr/include/fftw
 	/usr/local/include
 	/usr/local/include/fftw
 	C:/users/Arun/Research/fftw/fftw_2.1.5_install/include
-	${FFTW215_INSTALL_DIR}/include
 	)
 
 SET(FFTW_LIB_SEARCH_PATH
+
 	/usr/lib
 	/usr/lib/fftw
 	/usr/local/lib
 	/usr/local/lib/fftw
 	C:/users/Arun/Research/fftw/fftw_2.1.5_install/lib
-	${FFTW215_INSTALL_DIR}/lib
 	)
 
 FIND_PATH(FFTW_INCLUDE_PATH fftw.h ${FFTW_INCLUDE_SEARCH_PATH})

@@ -10,7 +10,7 @@ Curvelet::Curvelet()
 	this->tuning_neighb = .6;
 	this->sigma_ratio = 0.03;
 	this->numt = 16;
-	this->tile_size = 512;
+	this->tile_size = 4024;
 	this->border = 100;
 	this->slices = 0;
 
