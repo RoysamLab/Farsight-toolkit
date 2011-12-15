@@ -190,7 +190,20 @@ ELSE()
   SET(BUILD_VESSEL OFF CACHE BOOL "Build Vessel Surface Segmentation")
 ENDIF()
 
-option(USE_KPLS "Use KPLS module for classification" OFF)
+option(USE_KPLS "Use KPLS module for classification" ON)
+option(BUILD_CURVELETS "Build the Curvelets preprocessing module" ON)
+option(BUILD_image_dicer "Build the image dice and trace module" ON)
+
+ExternalProject_Add(fftw-2.1.5
+  URL http://dl.dropbox.com/u/26629462/fftw-2.1.5.tar.gz
+  URL_MD5 1a89d7034071875ff703144fda121e9a
+  CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/fftw-2.1.5
+    -DCMAKE_BUILD_TYPE:STRING=${build_type}
+)
+
+#Used in the fftw search path
+SET( FFTW215_INSTALL_DIR "${install_dir}/fftw-2.1.5" )
 
 ExternalProject_Add(Farsight
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.."
@@ -205,10 +218,13 @@ ExternalProject_Add(Farsight
     -DITK_DIR:FILEPATH=${ITK_BINARY_DIR}
     -DVXL_DIR:FILEPATH=${VXL_DIR}
     -DBUILD_VESSEL:BOOL=${BUILD_VESSEL}
+    -DBUILD_CURVELETS:BOOL=${BUILD_CURVELETS}
+    -DBUILD_BUILD_image_dicer=${BUILD_image_dicer}
     -DUSE_KPLS:BOOL=${USE_KPLS}
     ${mac_args}
   DEPENDS
     VXL
     ITK
     VTK
+    fftw-2.1.5
 )

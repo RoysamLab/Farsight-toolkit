@@ -1,19 +1,5 @@
 PROJECT(Curvelets)
 
-cmake_minimum_required(VERSION 2.0)
-
-if(COMMAND cmake_policy)
-	cmake_policy(SET CMP0003 NEW)
-endif(COMMAND cmake_policy)
-
-
-FIND_PACKAGE(ITK)
-IF(ITK_FOUND)
-	INCLUDE( ${ITK_USE_FILE} )
-ELSE(ITK_FOUND)
-	MESSAGE(FATAL_ERROR "Cannot build without ITK.  Please set ITK_DIR.")
-ENDIF(ITK_FOUND)
-
 INCLUDE(FindFFTW215.cmake)
 ADD_LIBRARY(CurveletClass
 		Curvelet.h	Curvelet.cpp

@@ -1,6 +1,6 @@
 
 SET(FFTW_INCLUDE_SEARCH_PATH
-
+	"${FFTW215_INSTALL_DIR}/include" #Superbuild search path
 	/usr/include
 	/usr/include/fftw
 	/usr/local/include
@@ -9,7 +9,7 @@ SET(FFTW_INCLUDE_SEARCH_PATH
 	)
 
 SET(FFTW_LIB_SEARCH_PATH
-
+	"${FFTW215_INSTALL_DIR}/lib" #Superbuild search path
 	/usr/lib
 	/usr/lib/fftw
 	/usr/local/lib
