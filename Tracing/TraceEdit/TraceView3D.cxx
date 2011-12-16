@@ -362,10 +362,10 @@ void View3D::OkToBoot()
 		this->EditLogDisplay->append("Lab: \t" + this->LabName);
 		if (!this->TraceFiles.isEmpty())
 		{
-			this->ShowTreeData();
-			this->cursor3DDock->show();
+			//this->ShowTreeData(); //large montage this slows down
 		}
-		this->Rerender();
+		this->cursor3DDock->show();
+		//this->Rerender();
 		if (this->tobj->BranchPoints.size() >1)
 		{
 			QMessageBox::critical(this,"Branching Incomplete" ,
@@ -1129,7 +1129,7 @@ void View3D::CreateGUIObjects()
 	this->ListButton->setStatusTip("List all selections");
 
 	this->ClearButton = new QAction("Clear", this->CentralWidget); 
-	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(ClearSelection()));
+	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(FastClearSelection()));
 	this->ClearButton->setStatusTip("Clear all selections");
 
 	this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
@@ -3826,6 +3826,9 @@ void View3D::ClearSelection()
 void View3D::FastClearSelection()
 {
 	
+	this->SphereActor->VisibilityOff();
+	this->pointer3d->SetEnabled(0);
+	this->SelectedTraceIDs.clear();
 	if(this->FL_MeasurePlot || this->FL_MeasureTable)
 	{
 		this->CellModel->GetObjectSelection()->clear();
