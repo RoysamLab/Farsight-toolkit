@@ -14,27 +14,16 @@
 // All the new parameters should have a default value
 // The order of the functions definition and declaration should be keept
 // Also, the order of the parameters definitions should be keept
-
-
+// ...
+// ...
 
 // ############################################################################################################################################################################
 
-// STANDARD INCLUES
-#include <vector>
-#include <iostream>
-#include <map>
-#include <limits>
 
-// FTK INCLUDES
-#include <ftkObject.h>
-#include <ftkImage/ftkImage.h>
-#include <ftkCommon/ftkUtils.h>
+// STRUCT USED BY ALL THE FILES
+#include "ftkGlobalIncludes.h"
+#include "frkGlobalStructs.h"
 
-
-// ITK INCLUDES
-#include <itkImage.h>
-
-// VTK INCLUDES
 
 
 // NUCLEAR SEGMENTATION NIC INCLUDES
@@ -43,14 +32,14 @@
 //#include "1__1_3_BinarizeOtsu/BinarizeOtsu.h"
 //#include "1__1_4_OtherMethod/OtherMethod.h"
 #include "1__2_1_SeedDetection/SeedDetectionLoG.h"
-//#include "1__3_1_MaxClusteringParameters/MaxClusteringParameters.h"
-//#include "1__4_1_AlphaExpansion/AlphaExpansion.h"
-//#include "2__1_1_RadVotingParameters/RadVotingParameters.h"
-//#include "2__2_1_CellShapeIniParameters/CellShapeIniParameters.h"
-//#include "2__3_1_GVFforceParameters/GVFforceParameters.h"
-//#include "2__3_2_AnotherForceParameters/AnotherForceParameters.h"
-//#include "2__4_1_LevelSetParameters/LevelSetParameters.h"
-//#include "3__1_1_LevlSetParameters/LevlSetParameters.h"
+#include "1__3_1_MaxClustering/MaxClustering.h"
+#include "1__4_1_AlphaExpansion/AlphaExpansion.h"
+//#include "2__1_1_RadVoting/RadVoting.h"
+//#include "2__2_1_CellShapeIni/CellShapeIni.h"
+//#include "2__3_1_GVFforce/GVFforce.h"
+//#include "2__3_2_AnotherForce/AnotherForce.h"
+//#include "2__4_1_LevelSet/LevelSet.h"
+//#include "3__1_1_LevlSet/LevlSet.h"
 
 namespace ftk{
 	/**
@@ -70,10 +59,12 @@ namespace ftk{
 		* @see ftkfinalalphaexpansion
 		* The number of been normally has to be a power of 2, otherwise "noise" can affect the performance
 		*/
-		template < typename inputPixelType, typename binaryPixelType = unsigned short, typename seedDetectPixelType = double, typename labelPixelType = unsigned short int > // Label pixel type is especially designed in case images with more cells
+		template < typename inputPixelType, typename binaryPixelType = unsigned short, typename seedDetectPixelType = unsigned short, typename labelPixelType = unsigned short > // Label pixel type is especially designed in case images with more cells
 		class ftkNuclearSegmentationNic
 		{
 		public:
+			
+			typedef double loGResponsePixelType;
 
 			/**
 			*	Image Input image type
@@ -92,10 +83,15 @@ namespace ftk{
 			typedef itk::Image< seedDetectPixelType, 3 > seedDetectImageType;
 			
 			/**
+			 *	LoG Response
+			 */
+			typedef itk::Image< loGResponsePixelType, 3 > loGResponseImageType;
+			
+			/**
 			 * 	Label Image Type
 			 */
-			typedef itk::Image< labelPixelType, 2 > labelImageType_2;
-			typedef itk::Image< labelPixelType, 3 > labelImageType_3;
+			typedef itk::Image< seedDetectPixelType, 2 > labelImageType_2;	// THE TYPENAME LABEL PIXEL, WILL BE ELIMINATED, ONLY THE SEEDPIZEL TYPE WILL BE USED
+			typedef itk::Image< seedDetectPixelType, 3 > labelImageType_3;
 			
 			/** 
 			*	Struct to store the parameters name and their values
@@ -193,7 +189,7 @@ namespace ftk{
 			/**
 			 * 	2.1 Set Parameters for Seed Detection
 			 */
-			void setSeedDetectionParameters_1(bool getResultImg_seedDetect_1 = false);
+			void setSeedDetectionParameters_1(long long seedDetectMinScale, long long seedDetectMaxScale, bool getResultImg_seedDetect_1 = false);
 			void runSeedDetection_1(); 					/*!< Run Seed Detection. */
 			void getImageSeedDetection_1(){};				/*!< Get Seed Detection. */
 			
@@ -201,14 +197,14 @@ namespace ftk{
 			 * 	3.1 Set Max Clustering parameters
 			 */
 			void setMaxClusteringParameters_1(bool getResultImg_maxClust_1 = false);
-			void runMaxClustering_1(){}; 					/*!< Run Max Clustering. */
+			void runMaxClustering_1(); 					/*!< Run Max Clustering. */
 			void getImageMaxClustering_1(){};				/*!< Get Max Clustering. */
 			
 			/**
 			 * 	4.1 Run alpha expansion
 			 */
 			void setAlphaExpansionParameters_1(bool getResultImg_alphaExp_1 = false);
-			void runAlphaExpansion_1(){}; 					/*!< Run alpha expansion. */
+			void runAlphaExpansion_1(); 					/*!< Run alpha expansion. */
 			void getImageAlphaExpansion_1(){};				/*!< Get alpha expansion. */
 			
 			// ------------------------------------------------------------------ PIPELINE 2 ------------------------------------------------------------------
@@ -306,7 +302,13 @@ namespace ftk{
 			
 			unsigned int 					_pipelineNumber;				/*!< Pipeline number of segmentation. */
 			
+			ConnComp					*myConnComp;
 			typename binaryImageType::Pointer		_binaryImage;
+			typename seedDetectImageType::Pointer		_seedDetectImage;
+			typename loGResponseImageType::Pointer		_loGResponseImage;
+			typename labelImageType_3::Pointer		_maxClustImage;
+			
+// 			loGResponse
 			
 		private:
 			
@@ -336,11 +338,15 @@ namespace ftk{
 			bool						_use_otherMethod_1;				/*!< 1.4 Use up Binarize Other method Parameters. See Note 1 */
 			bool						_run_otherMethod_1;				/*!< 1.4 Run Binarize Other method Parameters. See Note 1 */
 			
-			SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectionPixelType > *_objSeedDetectionLoG_1;	/*!< Seed Detection Object */
+			SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > *_objSeedDetectionLoG_1;	/*!< Seed Detection Object */
+			long long					_seedDetectMinScale;				/*!< 2.1 Seed Detection Min Scale */
+			long long					_seedDetectMaxScale;				/*!< 2.1 Seed Detection Max Scale */
 			bool 						_getResultImg_seedDetect_1;			/*!< 2.1 Seed Detection */
 			
+			MaxClustering< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > *_objMaxClustering_1;	/*!< 3.1 Max Clustering Object */
 			bool 						_getResultImg_maxClust_1;			/*!< 3.1 Max Clustering parameters */
 			
+			AlphaExpansion< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > *_objAlphaExpansion_1;
 			bool 						_getResultImg_alphaExp_1;			/*!< 4.1 Run alpha expansion */
 			
 			// ------------------------------------------------------------------ PIPELINE 2 ------------------------------------------------------------------

@@ -45,6 +45,7 @@ namespace ftk{
 			double computePoissonProb( int intensity, double alpha);
 			void graphCuts_3D();
 			typename itk::Image< binaryPixelType, 3 >::Pointer getBinarizedImage();
+			ConnComp* getConnComponents();
 
 		private:
 			
@@ -55,6 +56,13 @@ namespace ftk{
 			long long					_numColumns;					/*!< Number of colums in the input image */
 			long long					_numStacks;					/*!< Number of stacks in the input image */
 			long long					_totNumPixels;					/*!< Total number of pixels */
+			double						_spacing_XY;
+			double						_spacing_Z;
+			unsigned int					_connComponentsConnectivity;			/*!< Componets connectivity */
+			unsigned int 					_minObjectSize;					/*!< Minimum object size */
+			unsigned int 					_numConnectedComponents;
+			ConnComp					*_myConnComp;
+				
 			inputPixelType					_maxValueInputPixelType;			/*!< Maximum value of the given input pixel type */
 			binaryPixelType					_maxValueBinaryPixelType;
 			

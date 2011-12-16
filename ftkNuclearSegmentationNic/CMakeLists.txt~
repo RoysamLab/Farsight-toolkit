@@ -44,6 +44,8 @@ INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 SET( FTKNUCLEARSEGMENTATIONNIC_SRCS
 
 main.cpp
+1__1_1_BinarizeMixPoisson/graph.cpp
+1__1_1_BinarizeMixPoisson/maxflow.cpp
 #ftkNuclearSegmentationNic.cpp
  
 )
@@ -54,11 +56,19 @@ main.cpp
 
 SET( FTKNUCLEARSEGMENTATIONNIC_HDRS
 
+#include "ftkGlobalIncludes.h"
+#include "frkGlobalStructs.h"
+
 ftkNuclearSegmentationNic.h
 ftkNuclearSegmentationNic.hxx
 
 1__1_1_BinarizeMixPoisson/BinarizeMixPoisson.h
+1__1_1_BinarizeMixPoisson/graph.h
+
 1__2_1_SeedDetection/SeedDetectionLoG.h
+1__2_1_SeedDetection/itklaplacianrecursivegaussianimagefilternew.h
+
+1__3_1_MaxClustering/MaxClustering.h
  
 )
 

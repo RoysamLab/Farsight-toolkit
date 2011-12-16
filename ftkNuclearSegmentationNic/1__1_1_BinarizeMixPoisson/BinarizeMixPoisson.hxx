@@ -7,6 +7,14 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::setP
 	_getResultImg_mixPoisson = getResultImg_mixPoisson;
 	_sigmaNeighCost = 100; // !! This should be changed
 	_wNeigh = 15;
+	
+	_spacing_XY = 1;
+	_spacing_Z = 2;
+	
+	_connComponentsConnectivity = 26;
+	_minObjectSize = 10;
+	
+	
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +59,14 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::runB
 	typename binaryImageType::RegionType region;
 	region.SetIndex( start );
 	region.SetSize( size );
+	
+	double spacing[3];
+	spacing[0] = 1; //spacing along x
+	spacing[1] = 1; //spacing along y
+	spacing[2] = _spacing_Z; //spacing along z
+
 	_binaryImage->SetRegions( region );
+	_binaryImage->SetSpacing( spacing );
 	
 	try{
 		_binaryImage->Allocate();
@@ -65,6 +80,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::runB
 	_binaryImage->Update();
 	
 	_binaryImageArray = _binaryImage->GetBufferPointer();
+	
 	
 	// 1. Run Binarization
 	this->runMinErrorThresholding();
@@ -81,7 +97,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::runB
 	// 3. write result
 	typedef  itk::ImageFileWriter< binaryImageType > WriterType;
 	typename WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName("imageBinarizedPoisson.tif");
+	writer->SetFileName("/media/sf_11_SharedWithUbuntu/Results/imageBinarizedPoisson.mhd");
 	writer->SetInput(_binaryImage);
 	try{
 		writer->Update();
@@ -246,7 +262,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::runM
 	
 	std::ofstream myfile;
 	//myfile.open ("/home/nicolasreyv/farsight/src/farsight-src/ftkNuclearSegmentationNic/Results/out",ios::out); ask kedar
-	myfile.open ("out_Histogram",ios::out);
+	myfile.open ("/media/sf_11_SharedWithUbuntu/Results/out_Histogram",ios::out);
 
 	if (!myfile) {
 		std::cerr << "Can't open output file " << std::endl;
@@ -300,20 +316,20 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	int num_nodes;
 	int num_edges;
 	
-	int curr_node_z;
-	int curr_node_yz;
+	long long curr_node_z;
+	long long curr_node_yz;
 	
-	int curr_node_xy;
-	int curr_node_xyz;
+	long long curr_node_xy;
+	long long curr_node_xyz;
 	
-	int rght_node;
-	int down_node;
-	int diag_node;
+	long long rght_node;
+	long long down_node;
+	long long diag_node;
 	
-	int diag_node_1;
-	int rght_node_1;
-	int down_node_1;
-	int diag_node_2;
+	long long diag_node_1;
+	long long rght_node_1;
+	long long down_node_1;
+	long long diag_node_2;
 	
 	
 	double Df;
@@ -362,7 +378,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	
 	
 	std::ofstream myfile;
-	myfile.open ("out_Histogram_F_H",ios::out);
+	myfile.open ("/media/sf_11_SharedWithUbuntu/Results/out_Histogram_F_H",ios::out);
 
 	if (!myfile) {
 		std::cerr << "Can't open output file " << std::endl;
@@ -375,7 +391,7 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 	myfile.close();
 	
 	std::ofstream myfile2;
-	myfile2.open ("out_Histogram_B_H",ios::out);
+	myfile2.open ("/media/sf_11_SharedWithUbuntu/Results/out_Histogram_B_H",ios::out);
 
 	if (!myfile2) {
 		std::cerr << "Can't open output file " << std::endl;
@@ -398,8 +414,8 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 // 	//Here is the main loop.. 
 // 	//For each point, compute the terminal and neighbor edge weights
 	
-	std::cout << std::endl << "	Allocating:	" << num_nodes*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for nodes.";
-	std::cout << std::endl << "	And, allocating:	" << num_edges*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for edges.";
+	std::cout << std::endl << "	Allocating:	" << num_nodes << " " << num_nodes*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for nodes.";
+	std::cout << std::endl << "	And, allocating:	" << num_edges << " " << num_edges*sizeof(int) / (1024.0 * 1024.0) << " MB of memory, for edges.";
 	
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
 	
@@ -454,6 +470,9 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 				
 				g -> add_node();
 				g -> add_tweights( curr_node_xyz,   /* capacities */ Df,Db);  
+				
+// 				std::cout << std::endl << curr_node_xyz << " " << rght_node << " " << down_node << " " << diag_node;
+// 				std::cout << std::endl << curr_node_xyz ;
 			}
 		}
 	}
@@ -473,20 +492,28 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 			curr_node_yz = (i*_numColumns)+curr_node_z;
 			for(int j=0; j<_numColumns-1; ++j)
 			{	
-				curr_node_xyz = j + curr_node_yz;
+				curr_node_xyz = j + curr_node_yz+1;
 				
 				rght_node = curr_node_xyz+1;
 				down_node = curr_node_xyz+_numColumns;
 				diag_node = curr_node_xyz+_numColumns*_numRows;
+				
 
 
-				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[rght_node],2)/(2*pow(_sigmaNeighCost,2)));
+				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[rght_node],2)/(2*pow(_sigmaNeighCost,2)));
+				
+// 				std::cout << std::endl << curr_node_xyz << " " << rght_node << " " << down_node << " " << diag_node << " " << Dr;
+// 				std::cout << std::endl << curr_node_xyz << " " << rght_node << " " << down_node << " " << diag_node << " " << Dr;
+				
 				g->add_edge( curr_node_xyz, rght_node,    /* capacities */  Dr, Dr );	
 				
-				Dd = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[down_node],2)/(2*pow(_sigmaNeighCost,2)));
+// 				std::cout << std::endl << curr_node_xyz << " " << rght_node << " " << down_node << " " << diag_node;
+// 				std::cout << std::endl << curr_node_xyz << " " << rght_node << " " << down_node << " " << diag_node;
+				
+				Dd = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[down_node],2)/(2*pow(_sigmaNeighCost,2)));
 				g->add_edge( curr_node_xyz, down_node,    /* capacities */  Dd, Dd );
 				
-				Dg = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node],2)/(2*pow(_sigmaNeighCost,2)));
+				Dg = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[diag_node],2)/(2*pow(_sigmaNeighCost,2)));
 				g->add_edge( curr_node_xyz, diag_node,    /* capacities */  Dg, Dg );  
 				
 				
@@ -496,16 +523,16 @@ void ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::grap
 // 				down_node_1 = down_node+_numColumns*_numRows;
 // 				diag_node_2 = diag_node_1+_numColumns*_numRows;
 // 				
-// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[diag_node_1],2)/(2*pow(_sigmaNeighCost,2)));
 // 				g->add_edge( curr_node_xyz, diag_node_1,    /* capacities */  Dr, Dr );	
 // 				
-// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[rght_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[rght_node_1],2)/(2*pow(_sigmaNeighCost,2)));
 // 				g->add_edge( curr_node_xyz, rght_node_1,    /* capacities */  Dr, Dr );	
 // 				
-// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[down_node_1],2)/(2*pow(_sigmaNeighCost,2)));
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[down_node_1],2)/(2*pow(_sigmaNeighCost,2)));
 // 				g->add_edge( curr_node_xyz, down_node_1,    /* capacities */  Dr, Dr );	
 // 				
-// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xy]-(double)_inputImageArray[diag_node_2],2)/(2*pow(_sigmaNeighCost,2)));
+// 				Dr = _wNeigh*exp(-pow((double)_inputImageArray[curr_node_xyz]-(double)_inputImageArray[diag_node_2],2)/(2*pow(_sigmaNeighCost,2)));
 // 				g->add_edge( curr_node_xyz, diag_node_2,    /* capacities */  Dr, Dr );	
 			}
 		}
@@ -549,4 +576,117 @@ typename itk::Image< binaryPixelType, 3 >::Pointer ftk::nucSecNic::BinarizeMixPo
 {
 	return _binaryImage;
 }
+
+
+
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+template < typename inputPixelType, typename binaryPixelType >
+ftk::nucSecNic::ConnComp* ftk::nucSecNic::BinarizeMixPoisson< inputPixelType, binaryPixelType >::getConnComponents()
+{
+	typedef itk::ConnectedComponentImageFilter< binaryImageType, binaryImageType > FilterType;
+	typename FilterType::Pointer filter = FilterType::New();
+	typedef itk::RelabelComponentImageFilter< binaryImageType, binaryImageType > RelabelType;
+	typename RelabelType::Pointer relabel = RelabelType::New();
+
+	filter->SetInput ( _binaryImage );
+	filter->SetFullyConnected( _connComponentsConnectivity );
+	relabel->SetInput( filter->GetOutput() );
+	relabel->SetMinimumObjectSize( _minObjectSize );
+
+	try
+	{
+		relabel->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "Relabel: exception caught !" << std::endl;
+		std::cerr << excep << std::endl;
+	}
+	
+	_numConnectedComponents = relabel->GetNumberOfObjects();
+	
+	_binaryImage = relabel->GetOutput();
+	
+	
+	
+	
+	_binaryImageArray = _binaryImage->GetBufferPointer();
+	
+	int val; 
+	int curNode;
+	
+// 	ConnComp* _myConnComp
+	
+	_myConnComp = new ConnComp[_numConnectedComponents];
+	for( int i=0; i<_numConnectedComponents; ++i)
+	{
+		_myConnComp[i].x1 =  _numColumns+1;
+		_myConnComp[i].y1 =  _numRows+1;
+		_myConnComp[i].x2 =  _myConnComp[i].y2 = -1;
+		if (_numStacks == 1)
+		{
+			_myConnComp[i].z1 = 1;
+			_myConnComp[i].z2 = 1;
+		}
+		else
+		{
+			_myConnComp[i].z1 = _numStacks+1;
+			_myConnComp[i].z2 = -1;
+		}
+	}
+	if (_numStacks == 1)
+	{
+		for ( int j=0; j<_numRows; ++j )
+		{
+			for ( int i=0; i<_numColumns; ++i )
+			{
+				curNode = (j*_numColumns)+i;
+				val = _binaryImageArray[curNode];
+				if(val>0)
+				{
+					val = val-1;
+					_myConnComp[val].y1 = (int) std::min((double)j,(double)_myConnComp[val].y1);
+					_myConnComp[val].y2 = (int) std::max((double)j,(double)_myConnComp[val].y2);
+					_myConnComp[val].x1 = (int) std::min((double)i,(double)_myConnComp[val].x1);
+					_myConnComp[val].x2 = (int) std::max((double)i,(double)_myConnComp[val].x2);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (int k=0; k<_numStacks; ++k)
+		{
+			for (int j=0; j<_numRows; ++j)
+			{
+				for (int i=0; i<_numColumns; ++i)
+				{
+					curNode = (k*_numRows*_numColumns)+(j*_numColumns)+i;
+					val = _binaryImageArray[curNode];
+					if(val>0)
+					{
+						val = val-1;
+						_myConnComp[val].y1 = (int) std::min((double)j,(double)_myConnComp[val].y1);
+						_myConnComp[val].y2 = (int) std::max((double)j,(double)_myConnComp[val].y2);
+						_myConnComp[val].x1 = (int) std::min((double)i,(double)_myConnComp[val].x1);
+						_myConnComp[val].x2 = (int) std::max((double)i,(double)_myConnComp[val].x2);
+						_myConnComp[val].z1 = (int) std::min((double)k,(double)_myConnComp[val].z1);
+						_myConnComp[val].z2 = (int) std::max((double)k,(double)_myConnComp[val].z2);
+					}
+				}
+			}
+		}
+	}
+	
+	std::cout << std::endl << "The number of connected components is: " << _numConnectedComponents;
+	
+}
+
+
+
+
+
+
+
 

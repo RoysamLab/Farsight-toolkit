@@ -318,6 +318,8 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 	_use_otherMethod_1 = false;
 	_run_otherMethod_1 = false;
 
+	_seedDetectMinScale = 4;
+	_seedDetectMaxScale = 12;
 	_getResultImg_seedDetect_1 = false;
 
 	_getResultImg_maxClust_1 = false;
@@ -374,6 +376,7 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
  	_objBinarizeMixPoisson_1->setInput( _info, _itkPointerToInputImage_3 );
  	_objBinarizeMixPoisson_1->runBinarization();
 	_binaryImage = _objBinarizeMixPoisson_1->getBinarizedImage();
+	_myConnComp = _objBinarizeMixPoisson_1->getConnComponents();
 	
 // 	int yy;
 // 	cin >> yy;
@@ -424,16 +427,34 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 	_use_otherMethod_1 = true;
 };
 
+
+
+
 template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
-void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::setSeedDetectionParameters_1(bool getResultImg_seedDetect_1){
+void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::setSeedDetectionParameters_1(long long seedDetectMinScale, long long seedDetectMaxScale, bool getResultImg_seedDetect_1){
+	_seedDetectMinScale = seedDetectMinScale;
+	_seedDetectMaxScale = seedDetectMaxScale;
 	getResultImg_seedDetect_1 = getResultImg_seedDetect_1; 
+	
 };
+
+
 
 template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
 void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::runSeedDetection_1(){
-	_objSeedDetectionLoG_1 = new SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectPixelType > ();
+	_objSeedDetectionLoG_1 = new SeedDetectionLoG< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > ();
+	_objSeedDetectionLoG_1->setParameters( _seedDetectMinScale, _seedDetectMaxScale, _getResultImg_seedDetect_1 );
+	_objSeedDetectionLoG_1->setInput( _info, _itkPointerToInputImage_3, _binaryImage );
+	
+	_objSeedDetectionLoG_1->runSeedDetection();
+	
+	_seedDetectImage = _objSeedDetectionLoG_1->getSeedDetectImage();
+	_loGResponseImage = _objSeedDetectionLoG_1->getLoGResponseImage();
+	
+	delete _objSeedDetectionLoG_1;
 	
 };
+
 
 
 
@@ -444,8 +465,40 @@ void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType,
 
 
 template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
+void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::runMaxClustering_1(  ){
+	_objMaxClustering_1 = new MaxClustering< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > ();
+	_objMaxClustering_1->setParameters( _getResultImg_seedDetect_1 );
+	_objMaxClustering_1->setInput( _info, _itkPointerToInputImage_3, _binaryImage, _seedDetectImage, _loGResponseImage );
+// 	
+	_objMaxClustering_1->runMaxClustering();
+	
+	_maxClustImage = _objMaxClustering_1->getMaxClustImage();
+	
+	delete _objMaxClustering_1;
+	
+};
+
+
+
+
+template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
 void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::setAlphaExpansionParameters_1(bool getResultImg_alphaExp_1){
 	_getResultImg_alphaExp_1 = getResultImg_alphaExp_1;
+};
+
+template < typename inputPixelType, typename binaryPixelType, typename seedDetectPixelType, typename labelPixelType >
+void ftk::nucSecNic::ftkNuclearSegmentationNic< inputPixelType, binaryPixelType, seedDetectPixelType, labelPixelType >::runAlphaExpansion_1(){
+	
+	_objAlphaExpansion_1 = new AlphaExpansion< inputPixelType, binaryPixelType, seedDetectPixelType, loGResponsePixelType > ();
+// 	_objMaxClustering_1->setParameters( _getResultImg_seedDetect_1 );
+// 	_objMaxClustering_1->setInput( _info, _itkPointerToInputImage_3, _binaryImage, _seedDetectImage, _loGResponseImage );
+// // 	
+// 	_objMaxClustering_1->runMaxClustering();
+// 	
+// 	_maxClustImage = _objMaxClustering_1->getMaxClustImage();
+// 	
+// 	delete _objMaxClustering_1;
+	
 };
 
 // ------------------------------------------------------------------ PIPELINE 2 ------------------------------------------------------------------

@@ -56,6 +56,9 @@ main.cpp
 
 SET( FTKNUCLEARSEGMENTATIONNIC_HDRS
 
+ftkGlobalIncludes.h
+frkGlobalStructs.h
+
 ftkNuclearSegmentationNic.h
 ftkNuclearSegmentationNic.hxx
 
@@ -63,6 +66,9 @@ ftkNuclearSegmentationNic.hxx
 1__1_1_BinarizeMixPoisson/graph.h
 
 1__2_1_SeedDetection/SeedDetectionLoG.h
+1__2_1_SeedDetection/itklaplacianrecursivegaussianimagefilternew.h
+
+1__3_1_MaxClustering/MaxClustering.h
  
 )
 
