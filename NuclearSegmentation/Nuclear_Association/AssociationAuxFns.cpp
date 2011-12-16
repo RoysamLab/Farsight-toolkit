@@ -184,6 +184,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		geomfilt1->SetInput( inp_labeled );
 		geomfilt1->SetCalculatePixelIndices( true );
 		geomfilt1->Update();
+		labelsList = geomfilt1->GetLabels();
 
 		USImageType::SizeType  sizee;
 		sizee[0] = inp_labeled->GetLargestPossibleRegion().GetSize()[0];  // size along X
@@ -192,7 +193,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 		std::vector<double> quantified_numbers_cell;
 		for( int j=0; j<(number_of_rois*(int)labelsList.size()); ++j ) quantified_numbers_cell.push_back((double)0.0);
-		for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
+		for( int i=0; i<labelsList.size(); ++i ){
 			//Get label indices
 			labelindicestype indices1;
 			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
