@@ -80,11 +80,209 @@ void TrackingKymoView::GenerateImages()
 	}
 	
 	m_vtkvolume = getOneVTKVolume(m_vtkim,col);
-	m_vtkvolume->Print(std::cout);
+	//m_vtkvolume->Print(std::cout);
 	m_vtkrenderer->AddVolume(m_vtkvolume);
 	m_vtkrenderer->ResetCamera(m_vtkim->GetBounds());
+
 }
 
+void TrackingKymoView::SaveMovie(void)
+{
+	std::vector<TraceLine*>* m_tline_pointer = m_tobj->GetTraceLinesPointer();
+
+	float col[3]={1.0,1.0,1.0};
+	vtkSmartPointer<vtkImageData> vtkimdata = vtkSmartPointer<vtkImageData>::New();
+//	InputImageType::SizeType imsize = m_model->getRawImagePointer(0)->GetLargestPossibleRegion().GetSize();
+	unsigned short xsize = (my4DImg->GetImageInfo()->numColumns);
+	unsigned short ysize = (my4DImg->GetImageInfo()->numRows);
+	unsigned short tsize = (my4DImg->GetImageInfo()->numTSlices);
+
+	vtkimdata->SetExtent(0,xsize-1,0,ysize-1,0,tsize-1);
+	vtkimdata->SetScalarTypeToUnsignedChar();
+	vtkimdata->AllocateScalars();
+	vtkimdata->SetSpacing(1.0,1.0,1.0);
+
+	//Loop Constants:
+	unsigned short xy = xsize*ysize;
+	ftk::Image::PtrMode mode;
+	mode = static_cast<ftk::Image::PtrMode>(0); 
+	Input2DImageType::Pointer MaxIntProjImage = Input2DImageType::New();
+	Input2DImageType::RegionType region;
+	Input2DImageType::SizeType size;
+	Input2DImageType::IndexType index;
+	index[0]=0;
+	index[1]=0;
+	size[0] = xsize;
+	size[1] = ysize;
+	region.SetSize(size);
+	region.SetIndex(index);
+	MaxIntProjImage->SetRegions(region);
+	MaxIntProjImage->Allocate();
+
+
+
+	for(int t=0; t< (int)tsize; t++)
+	{
+		// Get the 2-D max intensity projection
+		SliceIteratorType inputIt(my4DImg->GetItkPtr<InputPixelType>((unsigned short)t,0,mode),my4DImg->GetItkPtr<InputPixelType>(t,0,mode)->GetLargestPossibleRegion());
+		LinearIteratorType outputIt(MaxIntProjImage,MaxIntProjImage->GetLargestPossibleRegion());
+		inputIt.SetFirstDirection(0);
+		inputIt.SetSecondDirection(1);
+		outputIt.SetDirection(0);
+		outputIt.GoToBegin();
+		while ( ! outputIt.IsAtEnd() )
+		{
+			while ( ! outputIt.IsAtEndOfLine() )
+			{
+				outputIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
+				++outputIt;
+			}
+			outputIt.NextLine();
+		}
+		inputIt.GoToBegin();
+		outputIt.GoToBegin();
+		while( !inputIt.IsAtEnd() )
+		{
+			while ( !inputIt.IsAtEndOfSlice() )
+			{
+				while ( !inputIt.IsAtEndOfLine() )
+				{
+					outputIt.Set( MAX( outputIt.Get(), inputIt.Get() ));
+					++inputIt;
+					++outputIt;
+				}
+				outputIt.NextLine();
+				inputIt.NextLine();
+			}
+			outputIt.GoToBegin();
+			inputIt.NextSlice();
+		}
+
+		RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+		rescaleFilter->SetInput(MaxIntProjImage);
+		rescaleFilter->SetOutputMinimum(0);
+		rescaleFilter->SetOutputMaximum(255);
+		rescaleFilter->Update();
+
+		RGB2DFilterType::Pointer rgbfilter = RGB2DFilterType::New();
+		rgbfilter->SetInput(rescaleFilter->GetOutput());
+		rgbfilter->SetColormap( RGB2DFilterType::Hot );
+		rgbfilter->Update();
+		//Connector2DType::Pointer connector2d = Connector2DType::New();
+		//connector2d->SetInput(MaxIntProjImage);
+		//connector2d->Update();
+		
+
+
+		RGBConnector2DType::Pointer connector2d = RGBConnector2DType::New();
+		connector2d->SetInput(rgbfilter->GetOutput());
+		connector2d->Update();
+
+		// Get the the text image (Number Image)for this time slice:
+		vtkSmartPointer<vtkImageData> LabelImage = vtkSmartPointer<vtkImageData>::New();
+		LabelImage->SetExtent(0,xsize-1,0,ysize-1,0,0);
+		LabelImage->SetNumberOfScalarComponents(3);
+		LabelImage->SetScalarTypeToUnsignedChar();
+		LabelImage->AllocateScalars();
+
+
+		// Create an image of text
+
+		for(int i=0;i<(int)myfeatures[t].size();++i)
+		 {
+			 stringstream ss;
+			 ss<< myfeatures[t][i].num;
+			 std::cout<< i<<std::endl;
+
+			vtkSmartPointer<vtkFreeTypeUtilities> freeType = vtkSmartPointer<vtkFreeTypeUtilities>::New();
+			vtkSmartPointer<vtkTextProperty> textProperty = vtkSmartPointer<vtkTextProperty>::New();
+			textProperty->SetColor( 1.0,0.0,0.0 );
+			textProperty->SetFontSize(10);
+
+			 vtkSmartPointer<vtkImageData> textImage = vtkSmartPointer<vtkImageData>::New();
+			 textImage->SetNumberOfScalarComponents(3);
+			 freeType->RenderString(textProperty,ss.str().c_str(), textImage);
+			 std::cout<<ss.str()<<std::endl;
+
+/*			 vtkSmartPointer<vtkImageBlend> blend = vtkSmartPointer<vtkImageBlend>::New();
+			 blend->AddInputConnection(drawing->GetOutputPort());
+			 blend->AddInputConnection(textImage->GetProducerPort());
+			 blend->SetOpacity(0,.0);
+			 blend->SetOpacity(1,1);
+			 blend->Update();*/ 
+			 float bbox[4];
+			 bbox[0] = myfeatures[t][i].BoundingBox[0];
+			 bbox[1] = myfeatures[t][i].BoundingBox[1];
+			 bbox[2] = myfeatures[t][i].BoundingBox[2];
+			 bbox[3] = myfeatures[t][i].BoundingBox[3];
+
+			 this->AddLabelToVTKImage(LabelImage,textImage,bbox);
+		}
+
+		vtkSmartPointer<vtkImageBlend> newblend = vtkSmartPointer<vtkImageBlend>::New();
+		newblend->AddInput(connector2d->GetOutput());
+		newblend->AddInputConnection(LabelImage->GetProducerPort());
+	    newblend->SetOpacity(0,.6);
+		newblend->SetOpacity(1,1);
+		newblend->Update();
+
+		 std::cout<<t<<std::endl;
+//		 vtkSmartPointer<vtkTIFFWriter> tiffWriter = vtkSmartPointer<vtkTIFFWriter>::New();
+		 vtkSmartPointer<vtkPNGWriter> tiffWriter = vtkSmartPointer<vtkPNGWriter>::New();
+		 stringstream ss;
+		 ss<<t;
+//		 std::string filename = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\movie_t"+ss.str()+".tif";
+		 std::string filename = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\movie_t"+ss.str()+".png";
+		 tiffWriter->SetFileName(filename.c_str());
+	//	 tiffWriter->SetInput(connector2d->GetOutput());
+		 tiffWriter->SetInput(newblend->GetOutput());
+		 tiffWriter->Write();
+	}	
+
+}
+void TrackingKymoView::AddLabelToVTKImage(vtkSmartPointer<vtkImageData> labelImage, vtkSmartPointer<vtkImageData> newlabelImage,float bbox[])
+{
+	int* labdim = newlabelImage->GetDimensions();
+	std::cout << "Dims: " << " x: " << labdim[0] << " y: " << labdim[1] << " z: " << labdim[2] << std::endl;
+	int* dims = labelImage->GetDimensions();
+	std::cout << "Dims: " << " x: " << dims[0] << " y: " << dims[1] << " z: " << dims[2] << std::endl;
+	// Get the iteration range :
+	int xbegin = (int)bbox[0];
+	int xend = xbegin+(int)labdim[0]-1;
+	int ybegin = (int)bbox[2];
+	int yend = ybegin+(int)labdim[1]-1;
+	
+	// might crash for large size of labdim or small size of labelImage(needs more checking)
+	if(xend>=dims[0])
+	{
+		xbegin = dims[0]-labdim[0]-1;
+		xend = dims[0] - 1;
+	}
+	if(yend>=dims[1])
+	{
+		ybegin = dims[1]-labdim[1]-1;
+		yend = dims[1] - 1;
+	}
+
+	int xlab = 0;
+	int ylab = 0;
+	for (int y = ybegin; y < yend; y++)
+	{
+		for (int x = xbegin; x < xend; x++)
+		{
+			unsigned char* pixel1 = static_cast<unsigned char*>(labelImage->GetScalarPointer(x,y,0));
+			unsigned char* pixel2 = static_cast<unsigned char*>(newlabelImage->GetScalarPointer(xlab,ylab,0));
+			pixel1[0] = pixel2[0];
+			pixel1[1] = pixel2[1];
+			pixel1[2] = pixel2[2];
+			++xlab;
+		}
+		++ylab;
+		xlab = 0;
+	}
+
+
+}
 /*Input2DImageType::Pointer TrackingKymoView::getProjection(InputImageType::Pointer im)
 {
 	Input2DImageType::Pointer output = Input2DImageType::New();

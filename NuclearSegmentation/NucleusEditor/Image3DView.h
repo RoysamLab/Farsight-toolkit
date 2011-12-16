@@ -103,7 +103,7 @@
 
 
 //Macros
-#define Z_SPACING 3
+#define Z_SPACING 1
 #define MAX(a,b) (((a) > (b))?(a):(b))
 #define MIN(a,b) (((a) < (b))?(a):(b))
 
@@ -131,6 +131,9 @@ public slots:
 		void RefreshTrackActors(void);
 		void ToggleLabelVisibility(void);
 		void Toggle3DStackTrackView(void);
+		void ToggleContourVisibility(void);
+		void ToggleVolumeVisibility(void);
+		void ToggleTrackVisibility(void);
 		void ChangeOpacity(void);
 		void ChangeBrightness(void);
 
@@ -162,12 +165,16 @@ private:
 	void CreateTracks(void);
 	void CreateTrackPoints(void);
 	void CreateBoundingBox(void);
+	void GetBoudaryActorColor(int id, unsigned char color[3]);
 
 
 
 	// Flags:
 	bool labelsVisible;
 	bool stacksVisible;
+	bool volumesVisible;
+	bool countoursVisible;
+	bool tracksVisible;
 	// Data:	
 	LabelImageViewQT * ImageView;
 	ObjectSelection * Selection;

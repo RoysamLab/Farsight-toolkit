@@ -31,8 +31,11 @@ Image3DView::Image3DView(ftk::Image::Pointer image, ftk::Image::Pointer labimage
 	// Initialize Flags:
 	this->labelsVisible = true;
 	this->stacksVisible = true;
+	this->volumesVisible = true;
+	this->countoursVisible = true;
+	this->tracksVisible = true;
 	// Render:
-	this->Render3DStack(0);
+	this->Render3DStack(ImageView->GetCurrentTimeVal());
 
 	// Connect signals and slot
 	connect(ImageView, SIGNAL(emitTimeChanged()), this, SLOT(RefreshTimeActors()));
@@ -186,11 +189,17 @@ void Image3DView::CreateBoundaryActors(int currentT)
 		contourf->SetValue(0,0.9);
 		contourf->Update();
 		// Color the contour:
-		vtkSmartPointer<vtkFloatArray> cellcolor = vtkSmartPointer<vtkFloatArray>::New();
-		cellcolor->SetNumberOfComponents(1);
+		vtkSmartPointer<vtkUnsignedCharArray> cellcolor = vtkSmartPointer<vtkUnsignedCharArray>::New();
+		cellcolor->SetNumberOfComponents(3);
 		cellcolor->SetName("colors");
-		float col = (float)(*bbox_iter).first/40.0;
-		for( int i=0; i<(int) contourf->GetOutput()->GetNumberOfCells(); ++i) cellcolor->InsertNextTuple1(col);
+		//vtkSmartPointer<vtkFloatArray> cellcolor = vtkSmartPointer<vtkFloatArray>::New();
+		//cellcolor->SetNumberOfComponents(1);
+		//cellcolor->SetName("colors");
+		//float col = (float)(*bbox_iter).first/40.0;
+		unsigned char color[3];
+		this->GetBoudaryActorColor((*bbox_iter).first,color);
+//		for( int i=0; i<(int) contourf->GetOutput()->GetNumberOfCells(); ++i) cellcolor->InsertNextTuple1(col);
+		for( int i=0; i<(int) contourf->GetOutput()->GetNumberOfCells(); ++i) cellcolor->InsertNextTupleValue(color);
 		contourf->GetOutput()->GetCellData()->SetScalars(cellcolor);	
 		// Smooth the contour:
 		//vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
@@ -206,8 +215,8 @@ void Image3DView::CreateBoundaryActors(int currentT)
 		contourActor->SetMapper(mapper);
 		contourActor->GetProperty()->SetOpacity(0.8);
 //		contourActor->SetPosition((double)xmin,(double)ymin,(double)zmin);
-//		contourActor->SetPosition((double)xmin,(double)ymin,(double)(zmin*Z_SPACING));
-		contourActor->SetPosition((double)xc,(double)yc,(double)(zc*Z_SPACING));
+		contourActor->SetPosition((double)xmin,(double)ymin,(double)(zmin*Z_SPACING));
+//		contourActor->SetPosition((double)xc,(double)yc,(double)(zc*Z_SPACING));
 		//printf("my bbx: %lf, %lf\n",(double)xmin,(double)xmax);
 		//printf("my bbx: %lf, %lf\n",(double)ymin,(double)ymax);
 		//printf("my bbx: %lf, %lf\n",(double)zmin,(double)zmax);
@@ -233,6 +242,57 @@ void Image3DView::CreateBoundaryActors(int currentT)
 		actorsmap.insert(std::pair<int,CellActors>((*bbox_iter).first,act));
 	}
 	CellActorsMap.push_back(actorsmap);
+}
+void Image3DView::GetBoudaryActorColor(int id, unsigned char color[3])
+{
+	int color_index = id%6;
+	switch(color_index)
+	{
+	//Cyan
+	case 0:
+	    	color[0]=0;
+			color[1]=255;
+			color[2]=255;
+			
+					 break;
+	//Royal Blue 	65-105-225
+	case 1:
+	    	color[0]=65;
+			color[1]=105;
+			color[2]=255;
+			
+					 break;
+	//Red
+	case 2:
+	    	color[0]=255;
+			color[1]=0;
+			color[2]=0;
+			
+					 break;
+	//Blue
+	case 3:
+	    	color[0]=0;
+			color[1]=0;
+			color[2]=255;
+			
+					 break;
+	
+	//Orange 	255-165-0
+	case 4:
+	    	color[0]=255;
+			color[1]=165;
+			color[2]=0;
+			
+					 break;
+	//Violet 	238-130-238
+	case 5:
+	    	color[0]=255;
+			color[1]=255;
+			color[2]=0;
+			 
+					 break;
+	}
+
 }
 void Image3DView::CreateLabelActor(int currentT)
 {
@@ -273,6 +333,9 @@ void Image3DView::CreateLabelActor(int currentT)
 	pointSetToLabelHierarchyFilter->SetInputConnection( labelpolydata->GetProducerPort());
 	pointSetToLabelHierarchyFilter->SetLabelArrayName("labels");
 	pointSetToLabelHierarchyFilter->SetPriorityArrayName("sizes");
+	pointSetToLabelHierarchyFilter->GetTextProperty()->SetColor(1.0,1.0,1.0);
+	//pointSetToLabelHierarchyFilter->GetTextProperty()->SetFontSize (15);
+	//pointSetToLabelHierarchyFilter->GetTextProperty()->SetBold(2);
 	pointSetToLabelHierarchyFilter->Update();
 
 	// Create a mapper and actor for the labels.
@@ -302,9 +365,10 @@ void Image3DView::CreateVolumes(void)
 
 		vtkSmartPointer<vtkVolumeProperty> volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 		vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
-		colorTransferFunction->AddRGBPoint(5.0,0.0,0.0,0.0);
-		colorTransferFunction->AddRGBPoint(50.0,colors[0],colors[1],colors[2]);
-//		colorTransferFunction->AddRGBPoint(255.0,colors[0],colors[1],colors[2]);
+		//colorTransferFunction->AddRGBPoint(5.0,0.0,0.0,0.0);
+		colorTransferFunction->AddRGBPoint(0.0,0.0,0.0,0.0);
+		//colorTransferFunction->AddRGBPoint(50.0,colors[0],colors[1],colors[2]);
+		colorTransferFunction->AddRGBPoint(255.0,colors[0],colors[1],colors[2]);
 		volumeProperty->SetColor(colorTransferFunction);
 		volumeProperty->SetScalarOpacity(opacityTransferFunction);
 		volumeProperty->ShadeOff();
@@ -384,6 +448,7 @@ void Image3DView::SetupRenderWindow(void)
 	Renderer = vtkSmartPointer<vtkRenderer>::New();
 	Renderer->BackingStoreOff();
 	Renderer->SetBackground(0.0,0.0,0.0);
+//	Renderer->SetBackground(0.8,0.8,0.8);
 	RenderWindow  = QVTKView->GetRenderWindow();
 	QVTKView->GetRenderWindow()->AddRenderer(Renderer);
 	RenderWindow->Render();
@@ -402,8 +467,10 @@ void Image3DView::ChangeOpacity(void)
 	double opacityValue = (double)opacitySlider->value();
 	opacityValue /= 20.0;
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
-	opacityTransferFunction->AddPoint(50,0.0);
-	opacityTransferFunction->AddPoint(255,opacityValue);
+	//opacityTransferFunction->AddPoint(50,0.0);
+	//opacityTransferFunction->AddPoint(255,opacityValue);
+	opacityTransferFunction->AddPoint(2,0.0);
+	opacityTransferFunction->AddPoint(50,opacityValue);
 	for(int i=0; i<ImageVolumes.size(); ++i)
 	{
 		ImageVolumes.at(i)->GetProperty()->SetScalarOpacity(opacityTransferFunction);
@@ -579,19 +646,23 @@ void Image3DView::CreateTracks(void)
 
 void Image3DView::Render3DStack(int currentT)
 {
-	std::map<int, CellActors> actorsmap = CellActorsMap.at(currentT) ;
-	std::map<int, CellActors>::iterator act_iter;
-	Renderer->AddVolume(ImageVolumes.at(currentT));
-	//this->CreateSliders();
+	if(countoursVisible)
+	{
+		std::map<int, CellActors> actorsmap = CellActorsMap.at(currentT) ;
+		std::map<int, CellActors>::iterator act_iter;
 
-	//for (act_iter = actorsmap.begin(); act_iter != actorsmap.end() ; act_iter++)
-	//{
-	//	//Renderer->AddActor((*act_iter).second.boundaryActor);					// render the contours
-	//	//Renderer->AddActor((*act_iter).second.centroidActor);					// render the centroids
-	//	
-	//}
-	////if(labelsVisible)
-	//	//Renderer->AddActor(ImageLabelsVector.at(currentT));						// render the labels
+		for (act_iter = actorsmap.begin(); act_iter != actorsmap.end() ; act_iter++)
+		{
+			Renderer->AddActor((*act_iter).second.boundaryActor);					// render the contours
+		//	//Renderer->AddActor((*act_iter).second.centroidActor);					// render the centroids
+		//	
+		}
+	}
+	if(labelsVisible)
+		Renderer->AddActor(ImageLabelsVector.at(currentT));						// render the labels
+	if(volumesVisible)
+		Renderer->AddVolume(ImageVolumes.at(currentT));
+
 }
 void Image3DView::RefreshTimeActors(void)
 {
@@ -600,9 +671,12 @@ void Image3DView::RefreshTimeActors(void)
 	{
 		this->Renderer->RemoveAllViewProps();
 		this->Render3DStack(ImageView->GetCurrentTimeVal());
-		this->Renderer->AddActor(bitsActor);
-		this->Renderer->AddActor(tracksActor);
-		this->Renderer->AddActor(boxActor);
+		if(tracksVisible)
+		{
+			this->Renderer->AddActor(bitsActor);
+			this->Renderer->AddActor(tracksActor);
+		}
+		//this->Renderer->AddActor(boxActor);
 		this->Renderer->Modified();
 		this->RenderWindow->Render();
 	}
@@ -629,13 +703,81 @@ void Image3DView::HandleKeyPress(vtkObject* caller, unsigned long event, void* c
 	case 'l':
 		view->ToggleLabelVisibility();
 		break;
-
-	case 'v':
+	case 'd':
 		view->Toggle3DStackTrackView();
+		break;
+	case 'v':
+		view->ToggleVolumeVisibility();
+		break;
+	case 's':
+		view->ToggleContourVisibility();
+		break;
+	case 't':
+		view->ToggleTrackVisibility();
 		break;
 	}
 
 }
+void Image3DView::ToggleTrackVisibility()
+{
+	if(tracksVisible) 
+	{
+		this->Renderer->RemoveActor(bitsActor);
+		this->Renderer->RemoveActor(tracksActor);
+		this->tracksVisible = false;
+	}
+	else
+	{
+		this->Renderer->AddActor(bitsActor);
+		this->Renderer->AddActor(tracksActor);
+		this->tracksVisible = true;
+	}
+	this->Renderer->Modified();
+	this->RenderWindow->Render();
+}
+
+void Image3DView::ToggleContourVisibility()
+{
+	int currentT = ImageView->GetCurrentTimeVal();
+	std::map<int, CellActors> actorsmap = CellActorsMap.at(currentT) ;
+	std::map<int, CellActors>::iterator act_iter;
+	if(countoursVisible) 
+	{
+		for (act_iter = actorsmap.begin(); act_iter != actorsmap.end() ; act_iter++)
+		{
+			Renderer->RemoveActor((*act_iter).second.boundaryActor);					// render the contours
+		}
+		this->countoursVisible = false;
+	}
+	else
+	{
+		for (act_iter = actorsmap.begin(); act_iter != actorsmap.end() ; act_iter++)
+		{
+			Renderer->AddActor((*act_iter).second.boundaryActor);					// render the contours
+		}
+		this->countoursVisible = true;
+	}
+	this->Renderer->Modified();
+	this->RenderWindow->Render();
+}
+
+void Image3DView::ToggleVolumeVisibility()
+{
+	int currentT = ImageView->GetCurrentTimeVal();
+	if(volumesVisible) 
+	{
+		this->Renderer->RemoveVolume(ImageVolumes.at(currentT));
+		this->volumesVisible = false;
+	}
+	else
+	{
+		this->Renderer->AddVolume(ImageVolumes.at(currentT));
+		this->volumesVisible = true;
+	}
+	this->Renderer->Modified();
+	this->RenderWindow->Render();
+}
+
 void Image3DView::ToggleLabelVisibility()
 {
 	int currentT = ImageView->GetCurrentTimeVal();

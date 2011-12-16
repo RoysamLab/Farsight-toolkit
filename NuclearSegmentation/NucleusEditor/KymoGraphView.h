@@ -52,8 +52,17 @@
 #include <vtkCallbackCommand.h>
 #include <vtkActor2DCollection.h>
 #include "vtkSphereSource.h"
-//#include "vtkObjectFactory.h"
+#include <vtkTIFFWriter.h>
+#include <vtkImageBlend.h>
+#include <vtkImageData.h>
+#include <vtkPointData.h>
+#include <vtkPNGWriter.h>
+#include <vtkSmartPointer.h>
+#include <vtkFreeTypeUtilities.h>
+#include <vtkTextProperty.h>
+#include <vtkImageCanvasSource2D.h>
 
+//#include "vtkObjectFactory.h"
 
 //stl includes
 #include <vector>
@@ -81,6 +90,7 @@
 #include "ftkLabelImageToFeatures.h"
 #include "itkLabelStatisticsImageFilter.h"
 #include "itkScalarImageToTextureFeaturesFilter.h"
+#include <itkScalarToRGBColormapImageFilter.h>
 
 //VTK includes
 #include "vtkPolyData.h"
@@ -155,8 +165,14 @@ typedef itk::ImageRegionIterator<Input2DImageType> twoDIteratorType;
 typedef itk::ImageToVTKImageFilter<InputImageType> ConnectorType;
 typedef itk::ImageToVTKImageFilter<Input2DImageType> Connector2DType;
 
+typedef itk::RGBPixel<unsigned char> RGBPixelType;
+typedef itk::Image<RGBPixelType,2> RGB2DImageType;
 
+typedef itk::ScalarToRGBColormapImageFilter<Input2DImageType, RGB2DImageType> RGB2DFilterType;
 
+typedef itk::ImageToVTKImageFilter<RGB2DImageType> RGBConnector2DType;
+
+typedef itk::RescaleIntensityImageFilter< Input2DImageType, Input2DImageType > RescaleFilterType;
 
 class vtkSlider2DKymoCallbackBrightness : public vtkCommand
 {
@@ -248,11 +264,13 @@ public:
 
 		TraceBitVector = m_tobj->CollectTraceBits();
 		CubeActor = getTrackPoints(TraceBitVector);
+
+
 		m_vtkrenderer->AddActor(CubeActor);
 		currentTrackActor = vtkSmartPointer<vtkActor>::New();
 
 		// create widgets for interaction:
-		this->CreatePointer3D();
+		//this->CreatePointer3D();
 		this->CreateSphereActors();
 		this->CreateInteractorStyle();
 	
@@ -262,6 +280,7 @@ public:
 		m_vtkrenderer->Render();
 
 		SaveAnimation();
+		//this->SaveMovie();
 		//connect(ImageView, SIGNAL(emitTimeChanged()), this, SLOT(refreshImages()));
 		//connect(Selection, SIGNAL(changed()), this, SLOT(refreshSelection()));
 
@@ -307,8 +326,11 @@ private:
 	void ResetOriginalColors(void);
 	void UpdateViewColors(vtkSmartPointer<vtkUnsignedCharArray> ColorArray);
 	vtkSmartPointer<vtkUnsignedCharArray> CreateClassColorArray(void);
+	void AddLabelToVTKImage(vtkSmartPointer<vtkImageData> labelImage, vtkSmartPointer<vtkImageData> newlabelImage,float bbox[]);
+
 
 	void SaveAnimation();
+	void SaveMovie(void);
 	void AddSliders();
 	std::vector<std::vector<unsigned char> > GetClassColors();
 	vtkSmartPointer<vtkVolume> getOneVTKVolume(vtkSmartPointer<vtkImageData> vtkim, float colors[3]);
@@ -321,6 +343,7 @@ private:
 
 	LabelImageViewQT * ImageView;
 	ObjectSelection * Selection;
+
 	int currentTime;
 	int numClasses;
 	int numTClasses;
@@ -355,7 +378,6 @@ private:
 	vtkSmartPointer<vtkPointWidget> pointerWidget3d;
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
-
 
 	// Editing Stuff:
 	void CreateSphereActors(void);
