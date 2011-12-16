@@ -608,8 +608,8 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
 		fc2d->SetImageInputs(i2d,l2d);
 		fc2d->SetLevel(3);
-				fc2d->ComputeTexturesOn();
-		fc2d->ComputeHistogramOn();
+		//fc2d->ComputeTexturesOn();
+		//fc2d->ComputeHistogramOn();		Amin comment
 		fc2d->Update();
 		std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
 		for(unsigned int counter=0; counter<labels.size();counter++)
@@ -1505,9 +1505,9 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 {
 
 
-	//FILE *fp7 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\tracks.txt","w");
-	FILE *fp = fopen("C:\\Lab\\ArunFiles\\Data\\Peixoto\\TSeries-09012011-A-009\\Unzipped\\Data\\data3d\\bg_sub_smoothed_channels\\TrackFeatures.txt","w");
-	fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\n");
+	////FILE *fp7 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\tracks.txt","w");
+	//FILE *fp = fopen("C:\\Lab\\ArunFiles\\Data\\Peixoto\\TSeries-09012011-A-009\\Unzipped\\Data\\data3d\\bg_sub_smoothed_channels\\TrackFeatures.txt","w");
+	//fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\n");
 
 	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++) // looping over labels (tracks)
 	{
@@ -1637,13 +1637,42 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 		tfs[tcounter] = t;
 
 		// print track features:
-		fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",t.intrinsic_features[0].num,\
+		//fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",t.intrinsic_features[0].num,\
+		//		t.scalars[TF::AVG_SPEED],t.scalars[TF::MAX_SPEED],t.scalars[TF::MIN_SPEED], t.scalars[TF::DISPLACEMENT_VEC_X],t.scalars[TF::DISPLACEMENT_VEC_Y],t.scalars[TF::DISPLACEMENT_VEC_Z],t.scalars[TF::PATHLENGTH],\
+		//		1/t.scalars[TF::TOTAL_DISTANCE],1/t.scalars[TF::CONFINEMENT_RATIO],1/t.scalars[TF::CONTACT_TO_2]);
+		
+	}
+	//fclose(fp);
+	
+}
+void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs)
+{
+	FILE *fp = fopen("C:\\Lab\\Data\\Antonio\\peixoto20-12-2007H\\Stacks\\ProcessedChannel2\\TrackFeatures.txt","w");
+	fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\t T_DC_Contact\n");
+
+	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++) // looping over labels (tracks)
+	{
+		printf("Beginning to read track no: %d/%d\n",tcounter+1, (int)tfs.size());
+		//std::vector<TrackPoint> track = total_tracks[tcounter];
+		if(tfs[tcounter].intrinsic_features.size()<2)
+		{
+			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
+			continue;
+		}
+		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
+		ftk::TrackFeatures t = tfs[tcounter];
+		typedef ftk::TrackPointFeatures TPF;
+		typedef ftk::TrackFeatures TF;
+		typedef ftk::IntrinsicFeatures FeatureType;
+
+		fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",\
+				t.intrinsic_features[0].num,\
 				t.scalars[TF::AVG_SPEED],t.scalars[TF::MAX_SPEED],t.scalars[TF::MIN_SPEED], t.scalars[TF::DISPLACEMENT_VEC_X],t.scalars[TF::DISPLACEMENT_VEC_Y],t.scalars[TF::DISPLACEMENT_VEC_Z],t.scalars[TF::PATHLENGTH],\
-				1/t.scalars[TF::CONFINEMENT_RATIO]);
+				1/t.scalars[TF::TOTAL_DISTANCE],1/t.scalars[TF::CONFINEMENT_RATIO],t.scalars[TF::CONTACT_TO_2]);
 		
 	}
 	fclose(fp);
-	
+
 }
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs,float spacing[3])
 {
@@ -2371,6 +2400,12 @@ void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImage
 
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeatureType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeatureType> &fvecout)
 {
+
+	// Amin debugging k-means:
+	 typedef  itk::ImageFileWriter<LabelImageType> WriterType;
+	
+
+
 	printf("In SplitCell:\n");
 	float c1[3],c2[3];
 	c1[0] = fin.Centroid[0]-3*(1.0*rand()/RAND_MAX)-fin.BoundingBox[0];
@@ -2438,10 +2473,27 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 		}
 
 		float change = sqrt((c1[0] - index1[0]*1.0/num1)*(c1[0] - index1[0]*1.0/num1)+(c1[1] - index1[1]*1.0/num1)*(c1[1] - index1[1]*1.0/num1)+(c1[2] - index1[2]*1.0/num1)*(c1[2] - index1[2]*1.0/num1));
+		float change1 = sqrt((c2[0] - index2[0]*1.0/num2)*(c2[0] - index2[0]*1.0/num2)+(c2[1] - index2[1]*1.0/num2)*(c2[1] - index2[1]*1.0/num2)+(c2[2] - index2[2]*1.0/num2)*(c2[2] - index2[2]*1.0/num2));
+		
+		printf("change = %f\n", change);
+		printf("change1 = %f\n", change1);
+		printf("time = %d\n", fin.time);
+		printf("id = %d\n", fin.num);
 
-	//	printf("change = %f\n", change);
+
 		if(change < 0.02)
+
+		//if(change < 0.02 && change1 < 0.02)
 		{
+			//std::stringstream ss1,ss2;//create a stringstream
+			//ss1 << fin.time;
+			//ss2 << fin.num;
+			//std::string outfilenametmp = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\small_im_"+ss1.str()+"_"+ss2.str()+".tiff";
+			//WriterType::Pointer writer = WriterType::New();
+			//writer->SetFileName(outfilenametmp.c_str());
+			//writer->SetInput(lcopy);
+			//writer->Update();
+
 			converged = true;			
 
 			std::vector<FeatureType> ftemp;

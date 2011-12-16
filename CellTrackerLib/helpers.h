@@ -231,6 +231,9 @@ InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l);
 InputImageType::Pointer getMaxImage(InputImageType::Pointer,InputImageType::Pointer);
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n);
 void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
+void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs);
+void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs);
+
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim);
 void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::TrackFeatures> &tfs, int c, int num_t, float spacing[3]);
@@ -243,5 +246,6 @@ std::vector<FeatureType> get_all_connected_components(LabelImageType::Pointer,Fe
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeatureType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeatureType> &fvecout);
 void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeatureType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeatureType &fout);
 LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
+
 }
 #endif

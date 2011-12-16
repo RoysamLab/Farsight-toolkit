@@ -59,7 +59,7 @@ using namespace boost;
 #define USE_VNL_HUNGARIAN 
 
 #define CACHE_PREFIX "cache"
-#define MAX_TIME 200
+#define MAX_TIME 400
 #define MAX_TAGS 4
 #define MAX_LABEL 10000
 #define VESSEL_CHANNEL 4 // FIXME : make it dynamic based on user input
@@ -239,6 +239,7 @@ private:
 	void append_track_entropy_to_tfs();
 	std::map<int, std::vector<int> > ComputeEntropyUtilitiesAtTime(int t);
 	void ComputeVertexEntropies(void);
+	float get_LRUtility_Amin(std::vector< MultiFrameCellTracker::TGraph::vertex_descriptor > desc, int fileindex,int utilindex);
 
 	TGraph g; 
 	VVF fvector; 

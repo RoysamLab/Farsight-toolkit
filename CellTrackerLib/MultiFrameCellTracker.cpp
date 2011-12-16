@@ -122,6 +122,9 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
 			for(int counter=0; counter < f.size(); counter++)
 			{
+				LabelImageType::Pointer tmpli = extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented);
+				//if(tmpli->GetLargestPossibleRegion().GetSize()[2]==1)
+				//	continue;
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
 				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
@@ -132,6 +135,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 					printFeatures(f[counter]);
 				}
 			}
+		
 			input.push_back(cimp);
 			locfvector.push_back(f);
 			loclimages.push_back(li);
@@ -244,7 +248,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		}*/
 		convertItkImagesToftkImages(labelimage,rawimage,ItkTrackImagePtr);
 	
-		helpers::ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
+	/*	helpers::ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
 		debugstring = debugfolder + "\\" +  debugprefix + "_debugcol1.tif";
 		writeImage<helpers::ColorImageType>(debugcol1,debugstring.c_str());
 		debugstring = debugfolder+ "\\" + debugprefix + "_debugcol2.tif";
@@ -252,7 +256,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		debugstring = debugfolder + "\\" + debugprefix + "_debugcol3.tif";
 		writeImage<helpers::ColorImageType>(debugcol3,debugstring.c_str());
 		debugstring = debugfolder + "\\" + debugprefix + "_output.tif";
-		writeImage<helpers::ColorImageType>(colout,debugstring.c_str());
+		writeImage<helpers::ColorImageType>(colout,debugstring.c_str());*/
 		summarize_tracking(rawimage);
 
 
@@ -311,6 +315,7 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 	for(int t = 0; t< num_t ; t++)
 	{
 		images[t][c-1]= rawImg->GetItkPtr<helpers::InputPixelType>(t,channel_to_track,rawreadmode);	// channels FIXME
+
 	}
    for(int t = 0; t< num_t; t++)
     {
@@ -323,15 +328,50 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
     getFeatureVectorsFarsight(segmented[t][c-1],images[t][c-1],summaryfvector[t][c-1],t,c);
     }
 
- 
+
   this->createTrackFeatures(summaryfvector,tfs,c,num_t);
   //this->ComputeVertexEntropies();
-  AnalyzeTimeFeatures(tfs,spac);
+   AnalyzeTimeFeatures(tfs,spac);
+
+  
+	 // Analyze DC contact:
+	// first segment the channel image: needs to be fixed:
+
+	//std::vector<std::string> outputfilenames;
+	//std::string outfilenametmp;
+ // 	for (int t=0 ; t<num_t; ++t)
+	//{
+	//	 stringstream ss;//create a stringstream
+	//	 ss << t;
+	//	 outfilenametmp = "C:\\Lab\\Data\\Antonio\\peixoto20-12-2007H\\Stacks\\SegmentedDCells\\seg_dc_t"+ss.str()+".tiff";
+	//	 outputfilenames.push_back(outfilenametmp);
+	//	 std::cout<<outfilenametmp<<std::endl;
+	//	 outfilenametmp.clear();
+	//}
 
 
+ //  int params[3];
+ //  params[0]= 95;
+ //  params[1]= 50;//50
+ //  params[2]= 2;
+
+ //  if (rawImg->GetImageInfo()->numChannels>0)
+ //  {
+	//for(int t = 0; t< num_t ; t++)
+	//{
+	//  segmented[t][1] = getLabelled(rawImg->GetItkPtr<helpers::InputPixelType>(t,1,rawreadmode),params[0],params[1],params[2]);
+	//  writeImage<helpers::LabelImageType>(segmented[t][1],outputfilenames[t].c_str());
+
+	//}
+	//
+	// printf("I am crashing here3\n");
+	//AnalyzeDCContact(segmented,tfs,2,num_t,spac);
+
+	//PrintTrackFeatures(tfs);
+ //  }
   this->changeDataHierarchy(tfs);
   
-  std::cout<<"I finished computing features..."<<std::endl;
+  std::cout<<"I finished computing features...\n"<<std::endl;
 }
 
 void MultiFrameCellTracker::changeDataHierarchy(std::vector<ftk::TrackFeatures> vectrackfeatures)
@@ -691,6 +731,7 @@ void  MultiFrameCellTracker::printFeatures(FeatureType f)
 	printf("\t Num = %d time = %d\n", f.num, f.time);
 	printf("\t Volume = %d\n\n", int(f.ScalarFeatures[FeatureType::VOLUME]));
 }
+
 
 float MultiFrameCellTracker::overlap(float bb1[6],float bb2[6])
 {
@@ -3229,12 +3270,7 @@ float MultiFrameCellTracker::get_LRUtility(std::vector< MultiFrameCellTracker::T
 		}
 		else
 		{
-			//printf("[1]");
-			//print_vertex(desc[counter],0);
-			//printf("[2]");
-			//print_vertex(desc[counter+1],0);
-			//printf("[3]");
-			//print_vertex(desc[counter+2],0);
+
 			FeatureType f1,f2,f3;
 			f1 = fvector[g[desc[counter]].t][g[desc[counter]].findex];
 			f2 = fvector[g[desc[counter+1]].t][g[desc[counter+1]].findex];
@@ -3246,6 +3282,64 @@ float MultiFrameCellTracker::get_LRUtility(std::vector< MultiFrameCellTracker::T
 
 	return  util;
 }
+float MultiFrameCellTracker::get_LRUtility_Amin(std::vector< MultiFrameCellTracker::TGraph::vertex_descriptor > desc, int fileindex,int utilindex)
+{
+	float util = 0;
+	//printf("called get_LRUtility \n");
+	stringstream ss1,ss2;//create a stringstream
+	ss1 << fileindex;
+	ss2 << utilindex;
+
+	std::string file = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\Features_"+ss1.str()+"_Util_"+ss2.str()+".txt";
+	FILE *fp = fopen(file.c_str(),"w");
+
+	for(int counter =0; counter < desc.size()-2; counter++)
+	{
+		if(g[desc[counter]].special==1 || g[desc[counter+2]].special == 1)
+		{
+			;
+		}
+		else
+		{
+			//printf("[1]");
+			//print_vertex(desc[counter],0);
+			//printf("[2]");
+			//print_vertex(desc[counter+1],0);
+			//printf("[3]");
+			//print_vertex(desc[counter+2],0);
+			FeatureType f1,f2,f3;
+			f1 = fvector[g[desc[counter]].t][g[desc[counter]].findex];
+			f2 = fvector[g[desc[counter+1]].t][g[desc[counter+1]].findex];
+			f3 = fvector[g[desc[counter+2]].t][g[desc[counter+2]].findex];
+			fprintf(fp,"F1\t");
+			for(int fcount=0; fcount< FeatureType::N; counter++)
+			{
+				fprintf(fp,"%f\t",f1.ScalarFeatures[counter]);
+			}
+			fprintf(fp,"\n");
+			fprintf(fp,"F2\t");
+			for(int fcount=0; fcount< FeatureType::N; counter++)
+			{
+				fprintf(fp,"%f\t",f2.ScalarFeatures[counter]);
+			}
+			fprintf(fp,"\n");
+			fprintf(fp,"F3\t");
+			for(int fcount=0; fcount< FeatureType::N; counter++)
+			{
+				fprintf(fp,"%f\t",f3.ScalarFeatures[counter]);
+			}
+			fprintf(fp,"\n");
+			float dumutil =  compute_LRUtility(f1,f2,f3);
+			fprintf(fp,"Util\t%f\n",dumutil);
+			util = util +dumutil;
+		}
+	}
+
+	fclose(fp);
+
+	return  util;
+}
+
 void MultiFrameCellTracker::print_debug_info(void)
 {
 	print_vertex(rmap[2][0],1);
@@ -3262,20 +3356,20 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 	{
 		to_resolve.clear();
 		std::map< TGraph::vertex_descriptor, char> tr_map;
-		for(tie(v_i,v_end) = vertices(g);v_i!=v_end; v_i = v_next)
+		for(tie(v_i,v_end) = vertices(g);v_i!=v_end; v_i = v_next) // iterate through all the vertices
 		{
 			v_next = v_i;
 			++v_next;
 			TGraph::vertex_descriptor vd;
-			vd = *v_i;
-			bool issplit = is_split_node(vd);
-			bool ismerge = is_merge_node(vd);
+			vd = *v_i;											// that's my current node
+			bool issplit = is_split_node(vd);					// check if it is a split node
+			bool ismerge = is_merge_node(vd);					// check if it is a merge node
 			bool incomplete = false;
 			if(issplit || ismerge)
 			{
-				if(tr_map.find(*v_i)==tr_map.end())// if already added to to_resolve, dont redo it
+				if(tr_map.find(*v_i)==tr_map.end())				// if already added to to_resolve, dont redo it
 				{
-					std::vector< TGraph::vertex_descriptor > vvd;
+					std::vector< TGraph::vertex_descriptor > vvd; 
 					TGraph::vertex_descriptor vdt = vd;
 					vvd.push_back(vdt);
 					tr_map[vdt] = true;
@@ -3312,20 +3406,20 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 		}
 
 
-		for(int counter =0; counter < to_resolve.size(); counter++)
-		{
-			printf("START --- \n");
-			for(int counter1 = 0; counter1 < to_resolve[counter].size(); counter1++)
-			{
-				print_vertex(to_resolve[counter][counter1],0);
-			}
-			printf("\nEND --- \n");
-		}
+		//for(int counter =0; counter < to_resolve.size(); counter++)
+		//{
+		//	printf("START --- \n");
+		//	for(int counter1 = 0; counter1 < to_resolve[counter].size(); counter1++)
+		//	{
+		//		print_vertex(to_resolve[counter][counter1],0);
+		//	}
+		//	printf("\nEND --- \n");
+		//}
 
 
 		//is_separate check
 
-		printf("is_separate tests follows:\n");
+		//printf("is_separate tests follows:\n");
 	/*	printf("Is_separate? : %d\n", int(is_separate(rmap[3][11],rmap[3][15])));
 		printf("Is_separate? : %d\n", int(is_separate(rmap[3][6],rmap[3][8])));
 		printf("Is_separate? : %d\n", int(is_separate(rmap[3][3],rmap[3][4])));
@@ -3528,24 +3622,27 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 					printf("g[vd].t = %d g[vd].findex = %d g[vd].special = %d\n",g[vd].t, g[vd].findex,g[vd].special);
 				
 					printFeatures(fvector[g[vd].t][g[vd].findex]);
+
 					//_TRACE;
+
 					SplitCell(limages[g[vd].t][g[vd].findex],rimages[g[vd].t][g[vd].findex],fvector[g[vd].t][g[vd].findex],fvar,lout,rout,fvecout);
 					//_TRACE;
 
 					int ttemp = g[vd].t;
-					fvecout[0].time = ttemp;
+
+					fvecout[0].time = ttemp;					// assign time to splitted cells
 					fvecout[1].time = ttemp;
 
-					fvecout[0].num = fvector[ttemp].size()-2;
+					fvecout[0].num = fvector[ttemp].size()-2;	// assign new ids to the splitted cells
 					fvecout[1].num = fvector[ttemp].size()-1;
 
-					limages[g[vd].t].push_back(lout[0]);
+					limages[g[vd].t].push_back(lout[0]);		// add the new labeled cells
 					limages[g[vd].t].push_back(lout[1]);
 
-					rimages[g[vd].t].push_back(rout[0]);
+					rimages[g[vd].t].push_back(rout[0]);		// add the new image cells
 					rimages[g[vd].t].push_back(rout[1]);
 
-					fvector[g[vd].t].push_back(fvecout[0]);
+					fvector[g[vd].t].push_back(fvecout[0]);		// add the new features of the splitted cells
 					fvector[g[vd].t].push_back(fvecout[1]);
 
 					TGraph::vertex_descriptor v1, v2 ;
@@ -3577,6 +3674,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 				int utilpos = -1;
 				//_TRACE;
 				int permpc = 0;
+				int mycount = 0;
 				for(int cop = 0; cop < permutations.size(); cop++)
 				{
 					permpc = 0;
@@ -3618,6 +3716,7 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 					}
 
 					float util1 = get_LRUtility(desc);
+					//float util1 = get_LRUtility_Amin(desc,cop,1);
 
 					desc.clear();
 					permpc = 0;
@@ -3657,26 +3756,60 @@ void MultiFrameCellTracker::resolve_merges_and_splits()
 						}
 					}
 					float util2 = get_LRUtility(desc);
+					//float util2 = get_LRUtility_Amin(desc,cop,2);
 					for(int cod1 = 0; cod1 < desc.size(); cod1++)
 					{
-						if(g[desc[cod1]].t == 8 && fvector[g[desc[cod1]].t][g[desc[cod1]].findex].num == 17)
+						if(g[desc[cod1]].t == 154 && fvector[g[desc[cod1]].t][g[desc[cod1]].findex].num == 45)
 						{
 							printf("utils: %0.2f %0.2f\n", util1, util2);
-							for(int cod = 0; cod < desc.size(); cod++)
+	/*						for(int cod = 0; cod < desc.size(); cod++)
 							{
 								print_vertex(desc[cod],0);
-							}
+							}*/
 							//PAUSE;
 						}
 					}
 					float util = util1+util2;
 					//	printf("utils: %0.2f %0.2f\n", util1, util2);
 					//printf("util = %f\n", util);
+					
 					if(util > utilmax)
 					{
 						utilmax = util;
 						utilpos = cop;
 					}
+					else if(util<0)
+					{
+		/*				stringstream ss;
+						ss<<cop;
+						std::string file = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\AtUtil_"+ss.str()+".txt";
+						FILE *fp = fopen(file.c_str(),"w");
+						fprintf(fp,"utilpos or cop:%d and utilvalue:%f",cop,util);
+						fclose(fp);		
+						ss<<mycount;
+						std::string file2 = "C:\\Users\\amerouan\\Desktop\\FeaturesTests\\Features_"+ss.str()+".txt";
+						FILE *fp = fopen(file.c_str(),"w");
+						for(int cod1 = 0; cod1 < desc.size(); cod1++)
+						{
+							FeatureType f;
+							f = fvector[g[desc[cod1]].t][g[desc[cod1]].findex];
+
+
+
+
+
+
+
+						fprintf(fp,"utilpos or cop:%d and utilvalue:%f",cop,util);
+						fclose(fp);
+						++mycount;*/
+
+					}
+				}
+				if(utilpos==-1)
+				{
+					printf("There is something wrong with the utilities, check the features\n");
+					scanf("%d");
 				}
 				//_TRACE;
 				//yay! I have utilpos. All I have to do is to connect them with the right edges. first clear all original vertices. Dont delete the vertices now.
@@ -4048,7 +4181,7 @@ void MultiFrameCellTracker::run()
 	}
 // debugging end
 
-	print_debug_info();
+//	print_debug_info();			//Amin: not needed besides causes crashes.
 	solve_higher_order();
 	print_stats();
 
