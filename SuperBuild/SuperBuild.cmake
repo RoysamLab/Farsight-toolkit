@@ -203,7 +203,8 @@ ExternalProject_Add(fftw-2.1.5
 )
 
 #Used in the fftw search path
-SET( FFTW215_INSTALL_DIR "${install_dir}/fftw-2.1.5" )
+SET( FFTW_INCLUDE_DIRSS "${install_dir}/fftw-2.1.5/include" )
+SET( FFTW_LIB_SEARCH_PATHS "${install_dir}/fftw-2.1.5/lib" )
 
 ExternalProject_Add(Farsight
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.."
@@ -221,7 +222,8 @@ ExternalProject_Add(Farsight
     -DBUILD_CURVELETS:BOOL=${BUILD_CURVELETS}
     -DBUILD_image_dicer=${BUILD_image_dicer}
     -DUSE_KPLS:BOOL=${USE_KPLS}
-    -DFFTW215_INSTALL_DIR=${FFTW215_INSTALL_DIR}
+    -DFFTW_INCLUDE_DIRS=${FFTW_INCLUDE_DIRSS}
+    -DFFTW_LIB_SEARCH_PATH=${FFTW_LIB_SEARCH_PATHS}
     ${mac_args}
   DEPENDS
     VXL

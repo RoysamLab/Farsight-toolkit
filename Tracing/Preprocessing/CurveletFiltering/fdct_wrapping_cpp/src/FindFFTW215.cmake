@@ -1,6 +1,5 @@
 
 SET(FFTW_INCLUDE_SEARCH_PATH
-	${FFTW215_INSTALL_DIR}/include #Superbuild search path
 	/usr/include
 	/usr/include/fftw
 	/usr/local/include
@@ -9,7 +8,7 @@ SET(FFTW_INCLUDE_SEARCH_PATH
 	)
 
 SET(FFTW_LIB_SEARCH_PATH
-	${FFTW215_INSTALL_DIR}/lib #Superbuild search path
+	${FFTW_LIB_SEARCH_PATH}
 	/usr/lib
 	/usr/lib/fftw
 	/usr/local/lib
@@ -17,15 +16,17 @@ SET(FFTW_LIB_SEARCH_PATH
 	C:/users/Arun/Research/fftw/fftw_2.1.5_install/lib
 	)
 
-MESSAGE("Debug: fftw_lib_search ${FFTW_LIB_SEARCH_PATH}")
-MESSAGE("Debug: fftw_include_search ${FFTW_INCLUDE_SEARCH_PATH}")
-
-FIND_PATH(FFTW_INCLUDE_PATH fftw.h ${FFTW_INCLUDE_SEARCH_PATH})
+IF( FFTW_INCLUDE_DIRS )
+	SET( FFTW_INCLUDE_PATH ${FFTW_INCLUDE_DIRS} )
+ELSE( FFTW_INCLUDE_DIRS )
+	FIND_PATH(FFTW_INCLUDE_PATH fftw.h ${FFTW_INCLUDE_SEARCH_PATH})
+ENDIF( FFTW_INCLUDE_DIRS )
 
 IF(FFTW_INCLUDE_PATH)
 	SET(FFTW_INCLUDE_DIR ${FFTW_INCLUDE_PATH})
 ENDIF(FFTW_INCLUDE_PATH)
 
+MESSAGE("Debug: fftw_include_dir ${FFTW_INCLUDE_DIR}")
 
 FIND_LIBRARY(FFTW_LIB_SEARCH 
 	NAMES libfftw215 libfftw fftw 
