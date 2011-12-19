@@ -36,7 +36,7 @@
 #define SIZE_MAX ((size_t)-1)
 #endif
 
-using namespace std;
+//using namespace std;
 
 //Main function for 2-D binarization
 int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, int C, int shd)
@@ -428,7 +428,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		return -1;
 	}*/
 
-	cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	std::cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 
 	return 1;//num_objects;	
 }
@@ -451,8 +451,8 @@ double compute_poisson_prob(double intensity, double alpha)
 
 	P = P*A;
 
-	if(P < numeric_limits<long double>::epsilon())
-		P = numeric_limits<long double>::epsilon();
+	if(P < std::numeric_limits<long double>::epsilon())
+		P = std::numeric_limits<long double>::epsilon();
 
 	return P;
 }
@@ -808,7 +808,7 @@ void CompMixPoss(unsigned char* img, float* alpha_B, float* alpha_A, float* P_I,
 	//Some times you need to shift the means down. The next two lines are optional
 	if(shiftDown == 1)
 	{
-		alpha_A[0] = max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
+		alpha_A[0] = std::max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
 		alpha_B[0] = alpha_B[0]/1.5;
 	}
 
@@ -871,7 +871,7 @@ void CompMixPoss3D(unsigned char* img, float* alpha_B, float* alpha_A, float* P_
 	//Some times you need to shift the means down. The next two lines are optional
 	if(shiftDown == 1)
 	{
-		alpha_A[0] = max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
+		alpha_A[0] = std::max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
 		alpha_B[0] = alpha_B[0]/1.5;
 	}
 
@@ -972,7 +972,7 @@ void MinErrorThresholding(unsigned char* img, float* alpha_B, float* alpha_A, fl
 	//Some times you need to shift the means down. The next two lines are optional
 	if(shiftDown == 1)
 	{
-		alpha_A[0] = max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
+		alpha_A[0] = std::max(alpha_A[0]/2,(alpha_B[0]+alpha_A[0])/2);
 		alpha_B[0] = alpha_B[0]/1.5;
 	}
 	IteratorType iterate2(filter->GetOutput(),filter->GetOutput()->GetRequestedRegion());	
