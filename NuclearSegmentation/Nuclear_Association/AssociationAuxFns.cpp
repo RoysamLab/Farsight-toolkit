@@ -372,19 +372,30 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		}
 		double meean = 0, std_deev = 0, thrrrr;
 		for( uint64_t i=0; i<quantified_numbers_cell.size(); ++i )
+		{
 			if( quantified_numbers_cell.at(i)>1 )
 				meean += quantified_numbers_cell.at(i)/((double)quantified_numbers_cell.size());
+		}
+
 		for( uint64_t i=0; i<quantified_numbers_cell.size(); ++i )
+		{
 			if( quantified_numbers_cell.at(i)>1 )
 				std_deev += ((meean-quantified_numbers_cell.at(i))*(meean-quantified_numbers_cell.at(i)))/
 					    ((double)quantified_numbers_cell.size());
+		}
+
 		std_deev = sqrt( std_deev );
 		thrrrr = meean - 2 * std_deev;
-		for( uint64_t i=0; i<(uint64_t)labelsList.size(); ++i ){
+		
+		qfied_num.resize(labelsList.size())
+		for( uint64_t i=0; i<(uint64_t)labelsList.size(); ++i )
+		{
 			int count = 0;
 			for( uint64_t j=0; j<number_of_rois; ++j )
+			{
 				if( quantified_numbers_cell.at((i*number_of_rois+j)) > thrrrr )
 					++count;
+			}
 			qfied_num.at(i) = count;
 		}
 	}
