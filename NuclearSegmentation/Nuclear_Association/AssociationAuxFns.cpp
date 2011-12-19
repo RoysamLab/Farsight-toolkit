@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "itkImage.h"
+#include "itkIntTypes.h"
 #include "itkScalarImageToHistogramGenerator.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkNumericTraits.h"
@@ -44,8 +45,7 @@
 #include "itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
 
-#define MM_PI		3.14159265358979323846
-#define MM_PI_2		1.57079632679489661923
+#define _USE_MATH_DEFINES
 
 typedef unsigned short USPixelType;
 typedef itk::Image< USPixelType, 3 > USImageType;
@@ -55,7 +55,7 @@ typedef itk::Image< FloatPixelType, 3 > FloatImageType;
 std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USImageType::Pointer inp_labeled, int number_of_rois, unsigned short thresh, int surr_dist){
 
 	std::vector< float > qfied_num;
-	std::vector< unsigned short > labelsList;
+	std::vector< USImageType::PixelType > labelsList;
 	std::vector< double > quantified_numbers_cell;
 
 	typedef itk::ExtractImageFilter< USImageType, UShortImageType > LabelExtractType;
@@ -66,7 +66,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 	typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
 	typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
-	int sz_x, sz_y, sz_z;
+	itk::SizeValueType sz_x, sz_y, sz_z;
 	sz_x = input_image->GetLargestPossibleRegion().GetSize()[0];
 	sz_y = input_image->GetLargestPossibleRegion().GetSize()[1];
 	sz_z = input_image->GetLargestPossibleRegion().GetSize()[2];
@@ -127,9 +127,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		typedef itk::LabelGeometryImageFilter< USImageType > GeometryFilterType;
 		typedef GeometryFilterType::LabelIndicesType labelindicestype;
 
-		//int size1 = input_image->GetLargestPossibleRegion().GetSize()[0];
-		//int size2 = input_image->GetLargestPossibleRegion().GetSize()[1];
-
 		GeometryFilterType::Pointer geomfilt1 = GeometryFilterType::New();
 
 		geomfilt1->SetInput( input_labeled );
@@ -138,13 +135,12 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		labelsList = geomfilt1->GetLabels();
 
 		bool zp=false;
-		for( unsigned short i=0; (int)i < labelsList.size(); ++i ){
+		for( USImageType::PixelType i=0; i < labelsList.size(); ++i ){
 			if( labelsList[i] == 0 ){ zp=true; continue; }
 			std::vector<float> quantified_numbers_cell;
-			//assert(quantified_numbers_cell.size() == number_of_rois);
 			for( int j=0; j<number_of_rois; ++j ) quantified_numbers_cell.push_back((float)0.0);
-			double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
-			double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
+			double centroid_x = geomfilt1->GetCentroid(labelsList[i])[0];
+			double centroid_y = geomfilt1->GetCentroid(labelsList[i])[1];
 			labelindicestype indices1;
 			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
 			for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind ){
@@ -152,31 +148,33 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 				iterator1.SetIndex( *itPixind );
 				if( iterator1.Get() < thresh )
 					continue;
-				double x = (double)(iterator1.GetIndex()[0]);
-				double y = (double)(iterator1.GetIndex()[1]);
+				double x = iterator1.GetIndex()[0];
+				double y = iterator1.GetIndex()[1];
 				double angle = atan2((centroid_y-y),fabs(centroid_x-x));
 				if( (centroid_x-x)>0 )
-					angle += MM_PI_2;
+					angle += M_PI_2;
 				else
-					angle = MM_PI+MM_PI-(angle+MM_PI_2);
-				angle = ((number_of_rois-1)*angle)/(2*MM_PI);
+					angle = M_PI+M_PI-(angle+M_PI_2);
+				angle = ((number_of_rois-1)*angle)/(2*M_PI);
 				double angle_fraction[1];
+				int angular_index;
 				if( modf( angle, angle_fraction ) > 0.5 )
-					angle = ceil( angle );
+					angular_index = ceil( angle );
 				else
-					angle = floor( angle );
-				quantified_numbers_cell[(int)angle] += iterator1.Get();
+					angular_index = floor( angle );
+				
+				quantified_numbers_cell[angular_index] += iterator1.Get();
 			}
 			for( int j=0; j<number_of_rois; ++j ) quantified_numbers.push_back(quantified_numbers_cell[j]);
 		}
-		int qnum_sz = zp? (int)(labelsList.size()-1) : (int)(labelsList.size());
+		int qnum_sz = zp? (labelsList.size()-1) : (labelsList.size());
 		for( int i=0; i<qnum_sz; ++i ){
 			int counter=0;
 			for( int j=0; j<number_of_rois; ++j ){
 				if( quantified_numbers[(i*number_of_rois+j)] > 1 )
 					++counter;
 			}
-			qfied_num.push_back((float)counter);
+			qfied_num.push_back(counter);
 		}
 	}
 	else{
@@ -362,9 +360,9 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					unsigned short bin_num, bin_low_num;
 					bin_low_num = ceil((double)number_of_rois/2);
 					if( fin_est_angle<0 )
-						bin_num = floor(fin_est_angle/MM_PI*bin_low_num);
+						bin_num = floor(fin_est_angle/M_PI*bin_low_num);
 					else
-						bin_num = bin_low_num+floor(abs(fin_est_angle)/MM_PI*(number_of_rois-bin_low_num));
+						bin_num = bin_low_num+floor(abs(fin_est_angle)/M_PI*(number_of_rois-bin_low_num));
 					if( bin_num >= number_of_rois ) bin_num = number_of_rois-1;
 					quantified_numbers_cell.at((i*number_of_rois+bin_num)) += iterator44.Get();
 				}
@@ -387,7 +385,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		std_deev = sqrt( std_deev );
 		thrrrr = meean - 2 * std_deev;
 		
-		qfied_num.resize(labelsList.size())
+		qfied_num.resize(labelsList.size());
 		for( uint64_t i=0; i<(uint64_t)labelsList.size(); ++i )
 		{
 			int count = 0;
