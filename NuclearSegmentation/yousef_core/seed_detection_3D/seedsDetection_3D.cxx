@@ -59,11 +59,11 @@ char* LocalMaximaKernel =
 #endif
 
 #include "itkImage.h"
-#include "itklaplacianrecursivegaussianimagefilternew.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include <itkDanielssonDistanceMapImageFilter.h> 
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkCastImageFilter.h"
+#include "itkLaplacianRecursiveGaussianImageFilter.h"
 
 //added by Yousef on 8/26/2009
 #include "itkExtractImageFilter.h"
@@ -337,7 +337,7 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
 
 	//  The filter type is now instantiated using both the input image and the
 	//  output image types.
-	typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
+	typedef itk::LaplacianRecursiveGaussianImageFilter<MyInputImageType, OutputImageType >  FilterType;
 	FilterType::Pointer laplacian = FilterType::New();
 
 
@@ -405,7 +405,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		}
 		//  The filter type is now instantiated using both the input image and the 
 		//  output image types.
-		typedef itk::LaplacianRecursiveGaussianImageFilterNew<MyInputImageType, OutputImageType >  FilterType;
+		typedef itk::LaplacianRecursiveGaussianImageFilter<MyInputImageType, OutputImageType >  FilterType;
 		FilterType::Pointer laplacian = FilterType::New();
 		//  The option for normalizing across scale space can also be selected in this filter.
 		laplacian->SetNormalizeAcrossScale( true );
