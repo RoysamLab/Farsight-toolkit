@@ -36,10 +36,6 @@
 #define SIZE_MAX ((size_t)-1)
 #endif
 
-//#include "maxflow.cpp"
-//#include "graph.cpp"
-
-
 using namespace std;
 
 //Main function for 2-D binarization
