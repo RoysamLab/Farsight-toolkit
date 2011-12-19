@@ -28,6 +28,7 @@
 
 //ITK Includes
 #include "itkImage.h"
+#include "itkIntTypes.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
 #include "itkGradientMagnitudeImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"

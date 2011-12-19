@@ -101,12 +101,12 @@ void WholeCellSeg::BinarizationForRealBounds(){
 		return;
 	}
 
-	int size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
-	int size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
+	itk::SizeValueType size1=cyt_im_inp->GetLargestPossibleRegion().GetSize()[0];
+	itk::SizeValueType size2=cyt_im_inp->GetLargestPossibleRegion().GetSize()[1];
 
-	if( ( size1 != (int)nuclab_inp->GetLargestPossibleRegion().GetSize()[0] ) ||
-      ( size2 != (int)nuclab_inp->GetLargestPossibleRegion().GetSize()[1] ) )
-    {
+	if( ( size1 != nuclab_inp->GetLargestPossibleRegion().GetSize()[0] ) ||
+      	    ( size2 != nuclab_inp->GetLargestPossibleRegion().GetSize()[1] ) )
+	{
 		std::cerr<<"The input images must be of the same size\n";
 		return;
 	}
@@ -129,13 +129,13 @@ void WholeCellSeg::BinarizationForRealBounds(){
 	typedef itk::BinaryDilateImageFilter< UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
 
 	unsigned char *in_Image;
-	unsigned long int ind=0;
+	itk::SizeValueType ind=0;
 
 //Call Yousef's binarization method if the number of bin levels is < 2
 	if( num_levels < 2 ){
 		bin_Image = (unsigned short *) malloc (size1*size2*sizeof(unsigned short));
-		for(int j=0; j<size2; ++j)
-			for(int i=0; i<size1; ++i)
+		for(itk::SizeValueType j=0; j<size2; ++j)
+			for(itk::SizeValueType i=0; i<size1; ++i)
 				BIN_Image(i,j)=255;
 		in_Image = (unsigned char *) malloc (size1*size2);
 		if( ( in_Image == NULL ) || ( bin_Image == NULL ) ){
@@ -186,13 +186,13 @@ void WholeCellSeg::BinarizationForRealBounds(){
 		intermediate_bin_im_out->FillBuffer(0);
 		intermediate_bin_im_out->Update();
 
-		unsigned short int dum,dum1;
+		itk::SizeValueType dum,dum1;
 		dum = 0;
 		dum1 = USHRT_MAX;
 
 		//unsigned int asd,asd1; asd=0; asd1=0;
 		IteratorType iterator ( intermediate_bin_im_out, intermediate_bin_im_out->GetRequestedRegion() );
-		for(unsigned long int i=0; i < (unsigned long int)(size1*size2); ++i){
+		for(itk::SizeValueType i=0; i < (size1*size2); ++i){
 			if( bin_Image[i] )
 			iterator.Set( dum1 );
 			else
@@ -238,10 +238,10 @@ void WholeCellSeg::BinarizationForRealBounds(){
 
 //Fill holes left by the nuclei
 	ThresholdFilterType::Pointer binarythreshfilter = ThresholdFilterType::New();
-	binarythreshfilter->SetInsideValue( (unsigned short int)USHRT_MAX );
+	binarythreshfilter->SetInsideValue( USHRT_MAX );
 	binarythreshfilter->SetOutsideValue( 0 );
 	binarythreshfilter->SetLowerThreshold( 1 );
-	binarythreshfilter->SetUpperThreshold( (unsigned short int)USHRT_MAX );
+	binarythreshfilter->SetUpperThreshold( USHRT_MAX );
 	binarythreshfilter->SetInput( nuclab_inp );
 	OrFilterType::Pointer orfilter = OrFilterType::New();
 	orfilter->SetInput1( binarythreshfilter->GetOutput() );
@@ -253,8 +253,8 @@ void WholeCellSeg::BinarizationForRealBounds(){
 	structuringElement.SetRadius( 3 );  // 3x3 structuring element
 	structuringElement.CreateStructuringElement();
 	binaryErode->SetKernel( structuringElement );
-	binaryErode->SetErodeValue( (unsigned short int)USHRT_MAX );
-	binaryDilate->SetDilateValue( (unsigned short int)USHRT_MAX );
+	binaryErode->SetErodeValue( USHRT_MAX );
+	binaryDilate->SetDilateValue( USHRT_MAX );
 	binaryDilate->SetKernel( structuringElement );
 	binaryErode->SetInput( binaryDilate->GetOutput() );
 	binaryDilate->SetInput( orfilter->GetOutput() );
@@ -262,8 +262,8 @@ void WholeCellSeg::BinarizationForRealBounds(){
 	ErodeFilterType::Pointer  binaryErode1  = ErodeFilterType::New();
 	DilateFilterType::Pointer binaryDilate1 = DilateFilterType::New();
 	binaryErode1->SetKernel(  structuringElement );
-	binaryErode1->SetErodeValue( (unsigned short int)USHRT_MAX );
-	binaryDilate1->SetDilateValue( (unsigned short int)USHRT_MAX );
+	binaryErode1->SetErodeValue( USHRT_MAX );
+	binaryDilate1->SetDilateValue( USHRT_MAX );
 	binaryDilate1->SetKernel( structuringElement );
 	binaryErode1->SetInput( binaryErode->GetOutput() );
 	binaryDilate1->SetInput( binaryErode1->GetOutput() );
@@ -347,7 +347,7 @@ void WholeCellSeg::RealBoundaries(){
 		return;
 	}
 	ConstIteratorType1 pix_buf( grad_img, grad_img->GetRequestedRegion() );
-	long ind=0;
+	itk::IndexValueType ind=0;
 	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
 		INP_IM_2D[ind] = ( pix_buf.Get() );
 	//int testing=0;
@@ -377,8 +377,8 @@ void WholeCellSeg::RealBoundaries(){
 		ind=0;
 		for ( pix_buf2.GoToBegin(); !pix_buf2.IsAtEnd(); ++pix_buf2, ++ind )
 			INP_IM_2D1[ind]=(pix_buf2.Get());
-		for(int j=0; j<size2; j++)
-			for(int i=0; i<size1; i++)
+		for(itk::SizeValueType j=0; j<size2; j++)
+			for(itk::SizeValueType i=0; i<size1; i++)
 				inp_im_2D(i,j) = (inp_im_2D(i,j)/mem_scaling)*(inp_im_2D1(i,j)*mem_scaling);
 		free( INP_IM_2D1 );
 	}
@@ -406,25 +406,25 @@ void WholeCellSeg::RealBoundaries(){
 
 //Create Gradient Weighted Distance Map
 	float flt_mini = -1*FLT_MAX;
-	for(int i=0; i<size1; i++)
-		for(int j=0; j<size2; j++){
+	for(itk::SizeValueType i=0; i<size1; i++)
+		for(itk::SizeValueType j=0; j<size2; j++){
 			if(!nuc_im(i,j)) grad_imw(i+1,j+1) = FLT_MAX;
 			else grad_imw(i+1,j+1)=0;
 		}
 
-	for(int i=0; i<size1; i++)
-		for(int j=0; j<size2; j++)
+	for(itk::SizeValueType i=0; i<size1; i++)
+		for(itk::SizeValueType j=0; j<size2; j++)
 			if(!BIN_Image(i,j)) grad_imw(i+1,j+1)=flt_mini;
 
 	free( NUC_IM );
 	free( bin_Image );
 
-	for(int i=0; i<(size1+2); i++){
+	for(itk::SizeValueType i=0; i<(size1+2); i++){
 		grad_imw(i,0)=flt_mini;
 		grad_imw(i,size2+1)=flt_mini;
 	}
 
-	for(int i=0; i<(size2+2); i++){
+	for(itk::SizeValueType i=0; i<(size2+2); i++){
 		grad_imw(0,i)=flt_mini;
 		grad_imw(size1+1,i)=flt_mini;
 	}
@@ -457,8 +457,8 @@ void WholeCellSeg::RealBoundaries(){
 	image2->Update();
 	//copy the output image into the ITK image
 	IteratorType1 iteratort(image2,image2->GetRequestedRegion());
-	for(int j=0; j<size2; j++){
-		for(int i=0; i<size1; i++){
+	for(itk::SizeValueType j=0; j<size2; j++){
+		for(itk::SizeValueType i=0; i<size1; i++){
 			iteratort.Set(grad_imw(i+1,j+1));
 			++iteratort;
 		}
@@ -682,7 +682,7 @@ void WholeCellSeg::RemoveSmallObjs(){
 		nuclab_inp_cpy = castUSUSfilter->GetOutput();
 	}
 
-	for( unsigned short i=0; (int)i<(int)labelsList.size(); ++i ){
+	for( unsigned short i=0; i<labelsList.size(); ++i ){
 		if( !labelsList[i] ) continue;
 		labelindicestype indices1;
 		indices1 = geomfilt1->GetPixelIndices( labelsList[i] );
