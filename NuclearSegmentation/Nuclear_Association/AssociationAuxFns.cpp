@@ -26,6 +26,7 @@
 #ifndef _ASC_FEAT_AUX_FN_CPP_
 #define _ASC_FEAT_AUX_FN_CPP_
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "itkImage.h"
@@ -44,8 +45,6 @@
 
 #include "itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
-
-#define _USE_MATH_DEFINES
 
 typedef unsigned short USPixelType;
 typedef itk::Image< USPixelType, 3 > USImageType;
@@ -403,8 +402,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs, int num_in_fg ){
 	//Instantiate the different image and filter types that will be used
 	typedef itk::ImageRegionConstIterator< USImageType > ConstIteratorType;
-	//typedef itk::Statistics::ScalarImageToHistogramGenerator< USImageType > ScalarImageToHistogramGeneratorType;
-	//typedef ScalarImageToHistogramGeneratorType::HistogramType HistogramType;
 	typedef itk::Statistics::Histogram< FloatPixelType > HistogramType;
 	typedef itk::OtsuMultipleThresholdsCalculator< HistogramType > CalculatorType;
 
@@ -422,6 +419,8 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 		USPixelType pix = it.Get();
 		if(pix <= 255)
 			++tempHist[pix];
+		else
+			++tempHist[255];
 	}
 	
 	//Find max value in the histogram
@@ -461,13 +460,8 @@ unsigned short returnthresh( USImageType::Pointer input_image, int num_bin_levs,
 
 	std::cout<<"Histogram computed\n";
 
-	//ScalarImageToHistogramGeneratorType::Pointer scalarImageToHistogramGenerator = ScalarImageToHistogramGeneratorType::New();
-	//scalarImageToHistogramGenerator->SetNumberOfBins( 256 );
-	//scalarImageToHistogramGenerator->SetInput( input_image);
-	//scalarImageToHistogramGenerator->Compute();
 	CalculatorType::Pointer calculator = CalculatorType::New();
 	calculator->SetNumberOfThresholds( num_bin_levs );
-	//calculator->SetInputHistogram( scalarImageToHistogramGenerator->GetOutput() );
 	calculator->SetInputHistogram( histogram );
 	calculator->Update();
 	const CalculatorType::OutputType &thresholdVector = calculator->GetOutput(); 
