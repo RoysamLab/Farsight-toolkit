@@ -492,6 +492,10 @@ void NucleusEditor::createMenus()
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
 
+	runClusAction = new QAction(tr("Clustering Heatmap"), this);
+	connect(runClusAction, SIGNAL(triggered()), this, SLOT(runClus()));
+	toolMenu->addAction(runClusAction);
+
 
 	//EDITING MENU
 	editMenu = menuBar()->addMenu(tr("&Editing"));
@@ -2929,6 +2933,51 @@ void NucleusEditor::loadModelFromFile( std::string file_name ){
 	//this->GetTrainingNames( model_table );
 	//this->Append();
 	return;
+}
+
+//**********************************************************************
+// SLOT: Clustering Heatmap
+//**********************************************************************
+void NucleusEditor::runClus()
+{
+	#ifdef USE_Clusclus
+	this->HeatmapWin = new Heatmap();
+	if( table->GetNumberOfRows() <= 0)
+	{
+		QMessageBox mes;
+		mes.setText("Please compute cell features first!");
+		mes.exec();
+	}
+	else
+	{
+		
+
+		pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_CLUS, "", "", this);
+		connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+		connect(pWizard, SIGNAL(enableModels()), this, SLOT(EnableModels()));
+		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+		pWizard->exec();
+		
+		if(pWizard->result())
+		{
+			vtkSmartPointer<vtkTable> featureTable;
+			featureTable = pWizard->getExtractedTable();
+
+			for(int i = 0; i < 5; i++)
+			{
+				for(int j = 0; j<featureTable->GetNumberOfColumns(); j++)
+				{
+					cout<<featureTable->GetValue(i, j)<<"\t";
+				}
+				cout<<endl;
+			}
+
+			this->HeatmapWin->setModels(featureTable, this->selection);
+			this->HeatmapWin->runClus();
+			this->HeatmapWin->showGraph();
+		}
+	}
+	#endif
 }
 
 //**********************************************************************

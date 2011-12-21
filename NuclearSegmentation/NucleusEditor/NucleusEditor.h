@@ -68,6 +68,10 @@
 #include "CellTrackerLib/MultiFrameCellTracker.h"
 #endif
 
+#ifdef USE_Clusclus
+#include "ClusClus/HeatmapWindow.h"
+#endif
+
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
@@ -254,6 +258,8 @@ protected slots:
 	void classifyFromActiveLearningModel();
 	void Start_Classification(bool create_model = false);
 	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector);
+	// Clus
+	void runClus();
 	
 	//******************************************************
 	//5D Views Menu
@@ -359,6 +365,7 @@ protected:
 	QMenu *classifyMenu;
 	QAction *trainAction;	//Train the KPLS Classifier
 	QAction *kplsAction;	//Start the KPLS Classifier
+	QAction *runClusAction;
 
 	//For Editing Menu
 	QMenu *editMenu;
@@ -485,6 +492,11 @@ protected:
 	std::vector<std::string> class_names;
 	int trainName;
 	int predictName;
+
+	//Clustering
+	#ifdef	USE_Clusclus
+		Heatmap *HeatmapWin;
+	#endif
 
 	// Loads all the tables of the time series
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;

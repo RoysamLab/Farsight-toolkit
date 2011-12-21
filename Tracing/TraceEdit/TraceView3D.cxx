@@ -5385,7 +5385,6 @@ void View3D::ClusclusAnalysis()
 	this->HeatmapWin = new Heatmap();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
-		//this->SPDWin->setModels();
 		QMessageBox mes;
 		mes.setText("Please compute cell features first!");
 		mes.exec();
@@ -5401,13 +5400,10 @@ void View3D::ClusclusAnalysis()
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
 
-		//this->HeatmapWin->setAColumn(featureTable->GetColumnByName("Distance to Device"));
-
 		featureTable->RemoveColumnByName("Distance to Device");
 
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->HeatmapWin->runClus();
-		//this->HeatmapWin->printAColumn();
 		this->HeatmapWin->showGraph();
 	}
 #endif

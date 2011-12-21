@@ -96,7 +96,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 
 	featureGroup->setExclusive(false);
 	bool zernike_added = false;
-	for (int c=1; c<m_table->GetNumberOfColumns(); ++c)
+	for (int c=0; c<m_table->GetNumberOfColumns(); ++c)
 	{
 		const char * name = m_table->GetColumnName(c);
 		std::string current_name = name;
@@ -155,6 +155,7 @@ void PatternAnalysisWizard::initOptionGroup(void)
 	QRadioButton *appendTrainButton = new QRadioButton(tr("Append Training Model... (using APPENDMODEL)"));
 	QRadioButton *activeButton = new QRadioButton(tr("Choose Features for Active Learning..."));
 	QRadioButton *activeModelButton = new QRadioButton(tr("Extract Table From Active Model..."));
+	QRadioButton *clusButton = new QRadioButton(tr("Select Features for Clustering..."));
 
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
@@ -162,6 +163,7 @@ void PatternAnalysisWizard::initOptionGroup(void)
 	optionGroup->addButton(appendTrainButton, 3);
 	optionGroup->addButton(activeButton, 4);
 	optionGroup->addButton(activeModelButton, 5);
+	optionGroup->addButton(clusButton, 6);
 
 	switch(m_module)
 		{
@@ -182,6 +184,9 @@ void PatternAnalysisWizard::initOptionGroup(void)
 				break;
 			case _ACTIVEMODEL:
 				activeModelButton->setChecked(true);
+				break;
+			case _CLUS:
+				clusButton->setChecked(true);
 				break;
 		}
 }
@@ -249,6 +254,9 @@ bool PatternAnalysisWizard::validateCurrentPage()
 					break;
 				case 5:
 					extractTableFromModel(mod_table);
+					break;
+				case 6:
+					extractTable(true);
 					break;
 
 			}
@@ -895,7 +903,7 @@ void PatternAnalysisWizard::saveModel(void)
 //****************************************************************************
 // Extract the table with the features selected by the user
 //****************************************************************************
-void PatternAnalysisWizard::extractTable()
+void PatternAnalysisWizard::extractTable(bool flag)
 {	
 
 	extractedTable = true;
@@ -908,14 +916,10 @@ void PatternAnalysisWizard::extractTable()
 		
 		if( buttons.at(b)->isChecked() )
 		{
-			if(featureGroup->id(buttons.at(b)) != 0)
-			{
 				columnsToUse.push_back( featureGroup->id(buttons.at(b)) );
-			}
-			else
-			{
 				for(int col=0; col<(int)m_table->GetNumberOfColumns(); ++col)
 				{
+
 					std::string col_name = m_table->GetColumnName(col);
 					if(col_name.find("Zern")!=std::string::npos)
 					{
@@ -924,7 +928,7 @@ void PatternAnalysisWizard::extractTable()
 				}
 			}
 		}
-	}	
+		
 	if(columnsToUse.size() <= 0)
 		return;
 
@@ -935,6 +939,7 @@ void PatternAnalysisWizard::extractTable()
    
 	for(int c=0; c<(int)columnsToUse.size(); ++c)
 	{
+		
 	    vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( m_table->GetColumnName(columnsToUse.at(c)) );
 		new_table->AddColumn(column);
@@ -948,7 +953,8 @@ void PatternAnalysisWizard::extractTable()
 		new_table->InsertNextRow(model_data1);
 	}
 
-	emit start_training(new_table);
+	if(flag)
+		emit start_training(new_table);
 }
 
 
@@ -982,11 +988,6 @@ void PatternAnalysisWizard::extractTableFromModel(vtkSmartPointer<vtkTable> mod_
 		}
 	}
 }
-
-
-
-
-
 
 //****************************************************************************
 // Append Segmentation Model

@@ -38,6 +38,12 @@ SET( NucleusEditor_RCS
   icons.qrc
 )
 
+IF(BUILD_CLUSCLUS)
+SET (CLUSCLUS_LIBRARIES
+    ClusClus_lib
+    )
+ENDIF (BUILD_CLUSCLUS)
+
 # This part makes sure to include the necessary modification 
 # if tracking is to be used with nucleus editor:
 IF (USE_TRACKING)
@@ -130,6 +136,7 @@ SET (NUCLEUSEDITOR_LIBRARIES
 	NESQLITE 
 	sqlite3 
 	MCLR
+	${CLUSCLUS_LIBRARIES}
 	)
 IF (USE_TRACKING)
 	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} CellTrackerLib)
