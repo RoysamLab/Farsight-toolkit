@@ -12,8 +12,6 @@ SET( NSRCS
 SET( sd3d_SRCS
 	seed_detection_3D/seedsDetection_3D.cxx
 	seed_detection_3D/seedsdetection_3D.h
-	seed_detection_3D/itklaplacianrecursivegaussianimagefilternew.txx
-	seed_detection_3D/itklaplacianrecursivegaussianimagefilternew.h
 )
 
 SET( sd2d_SRCS
