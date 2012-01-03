@@ -9,7 +9,10 @@
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
-
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+#define NUM_THREAD 4
 #define NUM_BIN 20
 
 SPDAnalysisModel* SPDAnalysisModel::s_pmodel = NULL;
@@ -1156,15 +1159,25 @@ void SPDAnalysisModel::GenerateMST()
 
 	unsigned int num_nodes = this->MatrixAfterCellCluster.rows();
 
-	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
-	{
-		std::cout<<"Building MST for module "<<i<<endl;
 
+	std::vector< vnl_matrix<double> > clusterMatList;
+	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
+	{
 		vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), GetSingleModuleSize( this->ClusterIndex, i));
 		GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, i, i, clusterMat);
+		clusterMatList.push_back(clusterMat);
+	}
+
+	this->ModuleMST.resize( this->ClusterIndex.max_value() + 1);
+
+	#pragma omp parallel for num_threads(NUM_THREAD)
+	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
+	{
+		std::cout<<"Building MST for module " << i<<endl;
 
 		//ofsmat<<"Module:"<< i + 1<<endl;
 		//ofsmat<< clusterMat<<endl<<endl;
+		vnl_matrix<double> clusterMat = clusterMatList[i];
 
 		Graph graph(num_nodes);
 
@@ -1191,7 +1204,12 @@ void SPDAnalysisModel::GenerateMST()
 			exit(111);
 		}
 
-		this->ModuleMST.push_back(vertex);
+		this->ModuleMST[i] = vertex;
+	}
+
+	for( int n = 0; n <= this->ClusterIndex.max_value(); n++)
+	{
+		vnl_matrix<double> clusterMat = clusterMatList[n];
 
 		// construct vtk table and show it
 		vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -1205,14 +1223,14 @@ void SPDAnalysisModel::GenerateMST()
 		}
 		
 		double mapweight = 0;   // construct the vtk table and compute the overall weight
-		for( int i = 0; i < vertex.size(); i++)
+		for( int i = 0; i < this->ModuleMST[n].size(); i++)
 		{
-			if( i != vertex[i])
+			if( i != this->ModuleMST[n][i])
 			{
-				double dist = CityBlockDist( clusterMat, i, vertex[i]);
+				double dist = CityBlockDist( clusterMat, i, this->ModuleMST[n][i]);
 				vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
 				DataRow->InsertNextValue(i);
-				DataRow->InsertNextValue( vertex[i]);
+				DataRow->InsertNextValue( this->ModuleMST[n][i]);
 				DataRow->InsertNextValue(dist);
 				table->InsertNextRow(DataRow);
 				mapweight += dist;
@@ -1570,39 +1588,33 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 void SPDAnalysisModel::RunEMDAnalysis()
 {
 	vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
-	vnl_vector<double> distance;
-	vnl_vector<double> mstdis;
 
 	/** Generating the distance vector for module data and its MST data */
 	std::vector<vnl_vector<double> > moduleDistance;
+	moduleDistance.resize( this->ModuleMST.size());
 
-	std::vector<std::vector< boost::graph_traits<Graph>::vertex_descriptor> >::iterator iter = this->ModuleMST.begin();
-
-	std::cout<< this->ClusterIndex.max_value()<<endl;
-	ofstream ofs("moduleDistance.txt");
-	for( unsigned int i = 0; i <= this->ClusterIndex.max_value() && iter != this->ModuleMST.end(); i++, iter++)
+	#pragma omp parallel for num_threads(NUM_THREAD)
+	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
+		vnl_vector<double> distance;
 		std::cout<< "build module distance "<< i<<endl;
 		vnl_matrix<double> clusterData( this->MatrixAfterCellCluster.rows(), moduleSize[i]);
 		GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
-
 		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
-		moduleDistance.push_back( distance);
-
-		ofs<<i<<endl;
-		ofs<<clusterData<<endl<<endl;
-		ofs<<distance<<endl<<endl;
+		moduleDistance[i] = distance;
 	}
-	ofs.close();
 
 	//QString filenameEMD = this->filename + "emd.txt";
 	//std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
 	//histOfs.precision(4);
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
 	this->DistanceEMDVector.set_size( this->ClusterIndex.max_value() + 1);
+	this->EMDMatrix.fill(0);
+	this->DistanceEMDVector.fill(0);
 
 	if( bProgression)
 	{
+		vnl_vector<double> distance;
 		vnl_matrix<double> clusterMat( this->MatrixAfterCellCluster.rows(), 1);
 		for( int i = 0; i < this->MatrixAfterCellCluster.rows(); i++)
 		{
@@ -1627,6 +1639,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		DistanceEMDVector = DistanceEMDVector / max;
 	}
 
+	#pragma omp parallel for num_threads(NUM_THREAD)
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
 		vnl_vector<double> hist_interval;
@@ -1649,7 +1662,6 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		//}
 		//histOfs <<endl;
 		//histOfs << moduleHistPer<< endl<<endl;
-
 		for( int j = 0; j < moduleDistance.size(); j++)
 		{	
 			std::cout<< "matching module " << i<< " with MST " << j<<endl;
