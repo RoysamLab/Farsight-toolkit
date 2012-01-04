@@ -4,7 +4,6 @@
 // Create a grid
 
 #include "GridActors.h"
-#include "vtkFloatArray.h"
 
 GridlineActors::GridlineActors()
 {

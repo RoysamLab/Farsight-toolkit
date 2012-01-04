@@ -417,6 +417,8 @@ private:
 	Heatmap *HeatmapWin;
 #endif
 
+	bool renderTraceBits;
+	bool projectLoadedState;
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
 	QToolBox *SettingsToolBox;
@@ -427,7 +429,6 @@ private:
 	QDoubleSpinBox *TipColor;
 	QSpinBox *LineWidthField;
 	QCheckBox * markTraceBits;
-	bool renderTraceBits;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;

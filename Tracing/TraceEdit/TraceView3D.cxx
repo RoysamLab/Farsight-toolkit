@@ -62,6 +62,7 @@ View3D::View3D(QWidget *parent)
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
 	this->renderTraceBits = false;
+	this->projectLoadedState = false;
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
 	this->showGrid = true;
@@ -246,7 +247,7 @@ void View3D::ReloadState()
 	this->ProjectName = this->TraceEditSettings.value("lastOpen/Project").toString();
 	if (!this->ProjectName.isEmpty())
 	{
-		this->readProject(this->ProjectName);
+		this->projectLoadedState = this->readProject(this->ProjectName);
 	}
 	else
 	{
@@ -360,9 +361,9 @@ void View3D::OkToBoot()
 		allLabs.prepend(this->LabName);
 		this->TraceEditSettings.setValue("boot/LabName", allLabs);
 		this->EditLogDisplay->append("Lab: \t" + this->LabName);
-		if (!this->TraceFiles.isEmpty())
+		if (this->projectLoadedState == false)
 		{
-			//this->ShowTreeData(); //large montage this slows down
+			this->ShowTreeData(); //large montage this slows down
 		}
 		this->cursor3DDock->show();
 		//this->Rerender();
@@ -628,7 +629,7 @@ void View3D::LoadProject()
 	{
 		projectDir = QFileInfo(projectFile).absolutePath();
 		this->TraceEditSettings.setValue("projectDir", projectDir);
-		this->readProject(projectFile);
+		this->projectLoadedState = this->readProject(projectFile);
 		this->OkToBoot();
 	}// end of project !empty
 }

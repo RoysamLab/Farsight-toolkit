@@ -289,12 +289,7 @@ std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
 std::vector<TraceLine*> TraceObject::GetTraceLines()
 {
 	std::vector<TraceLine*> allTLines;
-	//for (unsigned int i = 0; i < trace_lines.size(); i++)
-	//{
-	//	this->LinearTraceLinesRecursive(allTLines, this->trace_lines[i]);
-	//}
 	this->Cells.clear();
-	//unsigned int i = 0;
 	int limit_for_loop = this->trace_lines.size();
 #pragma omp parallel for
 	for (int i = 0; i < limit_for_loop; ++i)
@@ -2483,33 +2478,6 @@ void TraceObject::ExtendTraceTo(TraceLine *tline, double pt[])
 }
 std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
 {
-//	this->Cells.clear();
-//	//unsigned int i = 0;
-//	int limit_for_loop = this->trace_lines.size();
-//#pragma omp parallel for
-//	for (int i = 0; i < limit_for_loop; ++i)
-//	{
-//		std::vector<TraceLine*> segments;
-//		this->LinearTraceLinesRecursive(segments, this->trace_lines[i]);
-//#pragma omp critical
-//		{
-//		if (segments.size() >0)
-//		{
-//			CellTrace* NextCell = new CellTrace(segments);
-//			this->Cells.push_back(NextCell);
-//		}
-//		}
-//	}
-	//std::cout<<this->Cells.size()<< "cells to names " <<this->ParsedName.size() << std::endl;
-	//if(this->Cells.size() == this->ParsedName.size())
-	//{
-	//	//std::cout<< "matched Cells to Files\n";
-	//	for (int j = 0; j< this->Cells.size(); j++)
-	//	{
-	//		this->Cells[j]->setFileName(this->ParsedName[j]);
-	//		//std::cout<<j<< "cells name " <<this->ParsedName[j] << std::endl;
-	//	}
-	//}
 	return this->Cells;
 }
 

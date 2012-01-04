@@ -7,6 +7,7 @@
 #include "ImageActors.h"
 
 #include "vtkActor.h"
+#include "vtkFloatArray.h"
 #include "vtkImageActor.h"
 #include "vtkImageCast.h"
 #include "vtkImageMapToColors.h"
