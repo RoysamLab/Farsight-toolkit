@@ -46,12 +46,12 @@ limitations under the License.
 #include "vtkImageReslice.h"
 #include "itkPermuteAxesImageFilter.h"
 
-//#include "vtkImageEllipsoidSource.h"
 //slicer
 #include "vtkImageResliceMapper.h"
 #include "vtkImageMapper3D.h"
 #include "vtkImageSlice.h"
 #include "vtkImageProperty.h"
+#include "vtkPlane.h"
 
 #include <stdio.h>
 #include <string>
@@ -145,6 +145,7 @@ public:
 	void CreateImageSlice(int i);
 	ImageSlicePointerType GetImageSlice(int i);
 	void SetSliceThickness(int numofslices);
+	void SetSlicePlane(int slicePlane);
 	//void SetSliceCreate(int i, bool sliceCreate);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);

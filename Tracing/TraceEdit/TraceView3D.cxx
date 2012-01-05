@@ -1954,7 +1954,7 @@ void View3D::chooseInteractorStyle(int iren)
 
 void View3D::rotateImage(int axis)
 {
-	int projection_axis;
+	//int projection_axis;
 	this->RollBox->setValue(0.00);
 	this->AzimuthBox->setValue(0.00);
 	this->ElevationBox->setValue(0.00);
@@ -1963,21 +1963,21 @@ void View3D::rotateImage(int axis)
 	cam->SetPosition(0,0,1);
 	cam->ComputeViewPlaneNormal();
 	double x = 0; double y = 1; double z = 0;
-	cam->SetViewUp(x,y,z);	
+	cam->SetViewUp(x,y,z);
 
 	switch(axis)
 	{
-		case 0:	
+		case 0: //xy
 			projection_axis = 2;
 			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = 0;		break; // x-y plane; z projection
-		case 1: 
+		case 1: //xz
 			cam->Elevation(90);	
 			cam->OrthogonalizeViewUp();
 			projection_axis = 1; 
 			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = -90;	break; // x-z plane; y projection
-		case 2: 
+		case 2: //yz
 			cam->Azimuth(90); cam->Roll(-90);
-			projection_axis = 0; 
+			projection_axis = 0;
 			projection_base.roll = -90; projection_base.azimuth = 90; projection_base.elevation = 0;	break; // y-z plane; x projection
 		default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
 	}
@@ -1987,6 +1987,18 @@ void View3D::rotateImage(int axis)
 	cam->ParallelProjectionOn();
 	this->Renderer->ResetCamera();
 	this->QVTK->GetRenderWindow()->Render();
+
+	if (renderMode == SLICER)
+	{
+		this->ImageActors->SetSlicePlane(axis);
+		if (SlicerBarCreated)
+		{
+			delete this->SlicerBar;
+		}
+		this->createSlicerSlider();
+		this->SlicerBar->show();
+		this->QVTK->GetRenderWindow()->Render();
+	}
 
 	if (!showGrid)
 	{
@@ -2425,7 +2437,15 @@ void View3D::setRenderFocus(double renderBounds[], int size)
 void View3D::createSlicerSlider()
 {
 	double* bounds = this->ImageActors->getSliceBounds();
-	double upperBound = bounds[5]-(bounds[4]+1);
+	double upperBound;
+	switch (this->projection_axis)
+	{
+		case 0: upperBound = bounds[1]-(bounds[0]+1);	break;
+		case 1: upperBound = bounds[3]-(bounds[2]+1);	break;
+		case 2: upperBound = bounds[5]-(bounds[4]+1);	break;
+		default: std::cerr << "View3D::createSlicerSlider error with projection axis" << std::endl;
+	}
+	//std::cout << "upper slice bound: " << upperBound << std::endl;
 
 	this->SlicerBar = new QToolBar("Slicer", this);
 	this->SlicerBar->setAllowedAreas(Qt::RightToolBarArea | Qt::LeftToolBarArea);
@@ -2455,6 +2475,7 @@ void View3D::createSlicerSlider()
 	this->SliceSlider->setTickPosition(QSlider::TicksRight);
 	this->SliceSlider->setValue(1);
 	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this->SliceSpinBox, SLOT(setValue(int)));
+	connect(this->SliceSlider, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this->SliceSlider, SLOT(setValue(int)));
 	connect(this->SliceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSlicerZValue(int)));
 	connect(this->SliceThicknessSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setSliceThickness(int)));
@@ -2499,23 +2520,53 @@ void View3D::setSlicerZValue(int value)
 	//	}
 	//}	
 	double* bounds = this->ImageActors->getSliceBounds();
-	double image_center_x = (bounds[0]+bounds[1])/2;
-	double image_center_y = (bounds[2]+bounds[3])/2;
-	//double image_center_z = (double)bounds[5]-(bounds[5]-(bounds[4]+1))*value/100.0;
-	double image_center_z = bounds[5]-abs(value);
+	double image_center_x, image_center_y, image_center_z;
 
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
-		double prevPosition[3];
-		cam->GetPosition(prevPosition);
-		double prevFocalPoint[3];
-		cam->GetFocalPoint(prevFocalPoint);
+	double prevPosition[3];
+	cam->GetPosition(prevPosition);
+	double prevFocalPoint[3];
+	cam->GetFocalPoint(prevFocalPoint);
+	double focalPoint[3];
+
+	switch (this->projection_axis)
+	{
+		case 0: 
+			image_center_x = bounds[1]-abs(value);
+			image_center_y = (bounds[2]+bounds[3])/2;
+			image_center_z = (bounds[4]+bounds[5])/2;
+			focalPoint[0] = image_center_x;
+			focalPoint[1] = prevFocalPoint[1];
+			focalPoint[2] = prevFocalPoint[2];
+			//std::cout<<"X axis projection"<<std::endl;
+			break;
+		case 1:
+			image_center_x = (bounds[0]+bounds[1])/2;
+			image_center_y = bounds[3]-abs(value);
+			image_center_z = (bounds[4]+bounds[5])/2;
+			focalPoint[0] = prevFocalPoint[0];
+			focalPoint[1] = image_center_y;
+			focalPoint[2] = prevFocalPoint[2];
+			//std::cout<<"Y axis projection"<<std::endl;
+			break;
+		case 2:
+			image_center_x = (bounds[0]+bounds[1])/2;
+			image_center_y = (bounds[2]+bounds[3])/2;
+			image_center_z = bounds[5]-abs(value);
+			focalPoint[0] = prevFocalPoint[0];
+			focalPoint[1] = prevFocalPoint[1];
+			focalPoint[2] = image_center_z;
+			//std::cout<<"Z axis projection"<<std::endl;
+			break;
+		default: std::cerr << "Invalid slice plane" << std::endl;
+	}
 
 	//std::cout << "Z Value: " << value << std::endl;
 	if (value == -1)
 	{
 		//std::cout << "image_center_x: "  << image_center_x << " image_center_y = " << image_center_y << " image_center_z " << image_center_z << std::endl;
 
-		double curDistance = cam->GetDistance();
+		//double curDistance = cam->GetDistance();
 		double ViewUp[3];
 		cam->GetViewUp(ViewUp);
 
@@ -2531,7 +2582,7 @@ void View3D::setSlicerZValue(int value)
 
 		this->Renderer->ResetCamera();
 		//cam->SetFocalPoint(image_center_x,image_center_y,image_center_z);
-		cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
+		cam->SetFocalPoint(focalPoint);
 		cam->SetPosition(prevPosition);
 		cam->SetViewUp(ViewUp);
 		cam->ComputeViewPlaneNormal();
@@ -2541,11 +2592,11 @@ void View3D::setSlicerZValue(int value)
 	}
 	else
 	{
-		cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
+		//cam->SetFocalPoint(prevFocalPoint[0],prevFocalPoint[1],image_center_z);
+		cam->SetFocalPoint(focalPoint);
 		//std::cout << "Position: " << prevPosition[0] << " " << prevPosition[1] << std::endl;
 		//cam->SetPosition(prevPosition);
 		this->QVTK->GetRenderWindow()->Render();
-		//std::cout << "SlicerZvalue changed" << std::endl;
 	}
 	if (!showGrid)
 	{
@@ -3311,6 +3362,7 @@ void View3D::CalculateCellToCellDistanceGraph()
 /*Selections*/
 void View3D::setHighlightSettings(int value)
 {
+	std::cout << "Change trace colors" << std::endl;
 	if (value == 1)
 		highlightMode = SEGMENT;
 	else if (value == 2)
@@ -3318,13 +3370,17 @@ void View3D::setHighlightSettings(int value)
 	else
 		highlightMode = TREE;
 
+	std::cout << "Highlight Mode: " << value << std::endl;
+
 	this->updateTraceSelectionHighlights();
 	
 }
 void View3D::updateTraceSelectionHighlights()
 {
+	std::cout << "updateTraceSelectionHighlights()" << std::endl;
 	this->UpdateLineActor();
 	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
+	std::cout << "Number of selections: " << Selections.size() << std::endl;
 	for (unsigned int i = 0; i < Selections.size(); i++)
 	{
 		this->HighlightSelected(Selections[i],this->SelectColor);
@@ -3337,6 +3393,7 @@ void View3D::updateTraceSelectionHighlights()
 
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
+	std::cout << "HighlightSelected()" << std::endl;
 	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
 	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
 	if (color == -1)
@@ -3348,6 +3405,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 
 	if (highlightMode == SEGMENT)
 	{
+		std::cout<< "Color segments" << std::endl;
 		//color traces by branch order
 		int branch_order = tline->GetLevel();
 		while (branch_order >= 5) //repeat colors after 5 orders
@@ -3449,11 +3507,11 @@ void View3D::Rerender()
 			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
-		//if (this->FL_histo)
-		//{
-		//	this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		//	this->FL_histo->update();
-		//}
+		/*if (this->FL_histo)
+		{
+			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_histo->update();
+		}*/
 	}//end if has cell calculations
 	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }

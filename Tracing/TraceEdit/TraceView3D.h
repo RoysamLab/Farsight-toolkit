@@ -41,7 +41,6 @@ limitations under the License.
 #include "vnl/algo/vnl_conjugate_gradient.h"
 #include "vnl/algo/vnl_powell.h"
 
-
 #include <QAction>
 #include <QtGui>
 #include <QVTKWidget.h>

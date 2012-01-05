@@ -468,7 +468,7 @@ void ImageRenderActors::CreateImageResliceMapper(int i)
 	this->LoadedImages[i]->imageResliceMapper = vtkImageResliceMapper::New();
 	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
 	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
-	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn(); 
+	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
 	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
 	this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(9);
 	this->LoadedImages[i]->imageResliceMapper->SetSlabTypeToMax();
@@ -493,31 +493,15 @@ void ImageRenderActors::SetImageSliceWindowLevel(int value)
 }
 void ImageRenderActors::CreateImageSlice(int i)
 {
-	//std::cout << "Slice Actor is created." << std::endl;
 	if (i == -1)
 	{
 		i = int (this->LoadedImages.size() - 1);
 	}
 	//this->LoadedImages[i]->ImageData->GetExtent(sliceBounds);
-	
-	//std::cout << sliceBounds[0] << " " << sliceBounds[1] << " " << sliceBounds[2] << " " << sliceBounds[3] << " " << sliceBounds[4] << " " << sliceBounds[5] << std::endl;
-	
-	//old code not working
-	/*vtkImageData * newimage = this->LoadedImages[i]->ImageData;
-	this->LoadedImages[i]->sliceActor = ImageActorPointerType::New();
-	this->LoadedImages[i]->sliceActor->SetInput(newimage);
-	this->LoadedImages[i]->sliceActor->SetDisplayExtent(sliceBounds);
-	this->LoadedImages[i]->sliceActor->SetZSlice(0);
-	this->LoadedImages[i]->sliceActor->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
-	this->LoadedImages[i]->sliceActor->SetPickable(0);*/
-
-	//return this->LoadedImages[i]->sliceActor;
 
 	this->LoadedImages[i]->imageSlice = vtkSmartPointer<vtkImageSlice>::New();
 	CreateImageResliceMapper(i);
 	CreateImageProperty(i);
-	//this->LoadedImages[i]->imageResliceMapper = GetImageResliceMapper(i,50);
-	//this->LoadedImages[i]->imageProperty = GetImageProperty(i);
 
 	this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
 	this->LoadedImages[i]->imageSlice->SetProperty(this->LoadedImages[i]->imageProperty);
@@ -550,6 +534,26 @@ void ImageRenderActors::SetSliceThickness(int numofslices)
 	{
 		this->LoadedImages[i]->imageResliceMapper->SetSlabThickness(numofslices);
 		this->LoadedImages[i]->imageSlice->Update();
+	}
+}
+void ImageRenderActors::SetSlicePlane(int slicePlane)
+{
+	vtkPlane * xyzPlane = vtkPlane::New();
+	xyzPlane->SetOrigin(0,0,0);
+
+	switch (slicePlane) 
+	{
+		case 0: xyzPlane->SetNormal(0,0,1); break; //xy plane
+		case 1: xyzPlane->SetNormal(0,1,0); break; //xz plane
+		case 2: xyzPlane->SetNormal(1,0,0); break; //yz plane
+		default: std::cerr << "View3D::rotateImage cannot handle axis = " << slicePlane << "." << std::endl;
+	}
+
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(xyzPlane);
+		this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
+		this->LoadedImages[i]->imageSlice->SetMapper(this->LoadedImages[i]->imageResliceMapper);
 	}
 }
 std::vector<int> ImageRenderActors::MinCurrentMaxSlices(int i)
