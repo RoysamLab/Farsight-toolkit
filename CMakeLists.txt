@@ -397,7 +397,7 @@ ENDIF(BUILD_TESTING)
 ######################################################################################
 SET(CPACK_PACKAGE_VERSION_MAJOR 0)
 SET(CPACK_PACKAGE_VERSION_MINOR 4)
-SET(CPACK_PACKAGE_VERSION_PATCH 3)
+SET(CPACK_PACKAGE_VERSION_PATCH 4)
 SET(CPACK_PACKAGE_VENDOR "Bio-Image Analytics Laboratory")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${Farsight_SOURCE_DIR}/farsight-description.txt")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A toolkit of image analysis methods")
