@@ -11,6 +11,7 @@
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
+#include "ClusClus/HeatmapWindow.h"
 
 class SPDMainWindow : public QWidget
 {
@@ -23,6 +24,9 @@ public:
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 
 protected:
+	void split(std::string& s, char delim, std::vector< unsigned int>& indexVec);
+	void GetFeatureOrder(std::vector< unsigned int> &selID, std::vector< int> &selIdOrder, std::vector< int> &unselIdOrder);
+	bool IsExist(std::vector< unsigned int> vec, unsigned int value);
 	virtual void closeEvent(QCloseEvent *event);
 
 private slots:
@@ -87,14 +91,14 @@ private:
 	ProgressionHeatmap *simHeatmap;
 	HistoWindow *histo;
 	ProgressionHeatmap *progressionHeatmap;
+	Heatmap *HeatmapWin;
 
 	vnl_vector<int> optimalleaforder;
 	vnl_vector<int> selMod;
 
 	vtkSmartPointer<vtkTable> data;
-	ObjectSelection *selection;
-	ObjectSelection *selection2;
-	ObjectSelection *thresholdSelection; /** to indicate the threshold of the clustering changed and regenerate the progression tree */
+	ObjectSelection *selection;  /** selection for threshold and IDs */
+	ObjectSelection *selection2; 
 
 };
 

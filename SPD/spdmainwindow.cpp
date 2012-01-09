@@ -18,7 +18,6 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	SPDModel = NULL;
 	selection = NULL;
 	selection2 = NULL;
-	thresholdSelection = NULL;
 
     dataFileLabel = new QLabel(tr("Choose file:"));
 
@@ -421,73 +420,187 @@ void SPDMainWindow::viewProgression()
 	/* needs to be changed:
 	   get orders of the features
 	   setmodels heatmap: table after dimension reduced in sample space
-	   selection 1: threshold selection
-	   selection 2: node selection
-
+	   selection: threshold selection, node selection
 	   show default heatmap and tree here
 	*/
-
+	
+	/** heatmap set models */
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
-	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
-	if( table != NULL)
+	std::vector< unsigned int> selModuleID;
+	std::vector< unsigned int> selFeatureID;
+	std::vector< int> selOrder;
+	std::vector< int> unselOrder;
+	std::vector< int> clusterSize;
+
+	split( selectModulesID, ',', selModuleID);
+	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
+	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
+	SPDModel->GetCellClusterSize( clusterSize);
+	
+	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+
+	if( selection == NULL)
 	{
-		std::vector<std::string> headers;
-		std::vector<int> index;
+		selection = new ObjectSelection();
+		connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
+	}
 
-		SPDModel->GetTableHeaders( headers);
-		SPDModel->GetClusterMapping(index);
+	//this->HeatmapWin->setModels( tableAfterCellCluster, clusterSize, selection, selOrder, unselOrder);
+	//this->HeatmapWin->runClus();
 
-		if( selection == NULL)
+	/** graph window set models */
+	std::vector<int> index;
+	SPDModel->GetClusterMapping(index);
+	if( index.size() > 0)
+	{
+		this->graph->setModels(data, selection, &index);
+	}
+	else
+	{
+		this->graph->setModels(data, selection);
+	}
+
+	/** show windows*/
+	//this->HeatmapWin->showGraph();
+
+	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
+	std::vector<std::string> headers;
+	SPDModel->GetTableHeaders( headers);
+	QString str = SPDModel->GetFileName();
+	std::set<long int> featureSelectedIDs;
+	SPDModel->GetSelectedFeatures(featureSelectedIDs);
+	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
+
+	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+	try
+	{
+		this->graph->ShowGraphWindow();
+		//this->HeatmapWin->showGraph();
+	}
+	catch(...)
+	{
+		std::cout<< "Graph window error!"<<endl;
+	}
+}
+
+void SPDMainWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
+{
+	size_t last = 0;
+	size_t index = s.find_first_of(delim,last);
+	std::vector< std::string > stringVec;
+	while( index!=std::string::npos)
+	{
+		stringVec.push_back(s.substr(last,index-last));
+		last = index+1;
+		index=s.find_first_of(delim,last);
+	}
+	if( index-last>0)
+	{
+		stringVec.push_back(s.substr(last,index-last));
+	}
+
+	for( int i = 0; i < stringVec.size(); i++)
+	{
+		unsigned int index = atoi( stringVec[i].c_str());
+		indexVec.push_back( index);
+	}
+} 
+
+void SPDMainWindow::GetFeatureOrder(std::vector< unsigned int> &selID, std::vector<int> &selIdOrder, std::vector<int> &unselIdOrder)
+{
+	SPDModel->HierachicalClustering();
+	std::vector< Tree> FeatureTreeData = SPDModel->PublicTreeData;
+	double **ftreedata = new double*[FeatureTreeData.size()];
+
+	for(int i = 0; i < FeatureTreeData.size(); i++)
+	{
+		ftreedata[i] = new double[4];
+		ftreedata[i][0] = FeatureTreeData[i].first;
+		ftreedata[i][1] = FeatureTreeData[i].second;
+		ftreedata[i][2] = (1 - FeatureTreeData[i].cor + 0.01) * 100;
+		ftreedata[i][3] = FeatureTreeData[i].parent;
+	}
+
+	clusclus *cc2 = new clusclus();
+	cc2->Initialize(ftreedata, FeatureTreeData.size() + 1);
+	cc2->GetOptimalLeafOrderD();
+
+	for( int i = 0; i < cc2->num_samples; i++)
+	{
+		if( IsExist(selID, (unsigned int)cc2->optimalleaforder[i]))
 		{
-			selection = new ObjectSelection();
-		}
-
-		if( selection2 == NULL)
-		{
-			selection2 = new ObjectSelection();
-		}
-
-		if( thresholdSelection == NULL)
-		{
-			thresholdSelection = new ObjectSelection();
-			connect(thresholdSelection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
-		}
-
-		if( index.size() > 0)
-		{
-			this->graph->setModels(data, selection, selection2, &index);
+			selIdOrder.push_back( cc2->optimalleaforder[i]);
 		}
 		else
 		{
-			this->graph->setModels(data, selection, selection2);
-		}
-
-		QString str = SPDModel->GetFileName();
-		std::set<long int> featureSelectedIDs;
-		SPDModel->GetSelectedFeatures(featureSelectedIDs);
-		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
-		std::cout<< "Features saved in SelFeatures.txt"<<endl;
-		this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-		//this->graph->SetGraphTable( table, headers[0], headers[1]);
-		heatmapButton->setEnabled(TRUE);
-		try
-		{
-			this->graph->ShowGraphWindow();
-		}
-		catch(...)
-		{
-			std::cout<< "Graph window error!"<<endl;
+			unselIdOrder.push_back( cc2->optimalleaforder[i]);
 		}
 	}
+
+	ofstream ofs("FeatureOrder.txt");
+	ofs<< "feature optimal order:"<<endl;
+	for( int i = 0; i < cc2->num_samples; i++)
+	{
+		ofs<< cc2->optimalleaforder[i]<<"\t";
+	}
+	ofs<<endl;
+	ofs<< "Selected features optimal order:"<<endl;
+	for( int i = 0; i < selIdOrder.size(); i++)
+	{
+		ofs<< selIdOrder[i]<<"\t";
+	}
+	ofs<<endl;
+	ofs<< "UnSelected features optimal order:"<<endl;
+	for( int i = 0; i < unselIdOrder.size(); i++)
+	{
+		ofs<< unselIdOrder[i]<<"\t";
+	}
+	ofs<<endl;
+	ofs.close();
+
+	for( int i = 0; i < FeatureTreeData.size(); i++)
+	{
+		delete ftreedata[i];
+	}
+	delete ftreedata;
+	delete cc2;
+}
+
+bool SPDMainWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
+{
+	for( int i = 0; i < vec.size(); i++)
+	{
+		if( value == vec[i])
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void SPDMainWindow::regenerateProgressionTree()
 {
-	if( thresholdSelection)
+	if( selection)
 	{
-		vnl_matrix<double> modAverageMat;
-		std::vector<int> modSize;
-		thresholdSelection->GetSelectedModules(modAverageMat, modSize);
+		//vnl_matrix<double> modAverageMat;
+		//std::vector<int> modSize;
+		//selection->GetSelectedModules(modAverageMat, modSize);
+		//std::cout<< "generate "<<endl;
+
+		//vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( modAverageMat);
+
+		//QString str = SPDModel->GetFileName();
+		//std::set<long int> featureSelectedIDs;
+		//SPDModel->GetSelectedFeatures(featureSelectedIDs);
+		//this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+		//try
+		//{
+		//	this->graph->RerenderView();
+		//}
+		//catch(...)
+		//{
+		//	std::cout<< "Graph window error!"<<endl;
+		//}
 	}
 }
 

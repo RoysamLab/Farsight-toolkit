@@ -51,8 +51,8 @@ public:
 	void SelectPoints(std::vector<Point> points);
 	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
-	void SetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size);
-	void GetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size);
+	void SetClusterIndex( std::vector< std::vector<int> > &clusIndex);
+	void GetClusterIndex( std::vector< std::vector<int> > &clusIndex);
 
 signals:
 	void changed();
@@ -66,8 +66,7 @@ private:
 	int Time;
 	std::vector<Point> point_selections; // see if it needs to be cleared later.
 
-	vnl_matrix<double> selModuleAverage; /** the average value of the modules */
-	std::vector<int> moduleSize;         /** corresponding size of the module */
+	std::vector< std::vector<int> > index; /** cluster index */
 };
 
 

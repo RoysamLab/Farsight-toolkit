@@ -218,42 +218,15 @@ bool SPDAnalysisModel::ReadCellTraceFile(std::string fileName, bool btest)
 void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 {
 	std::cout<< table->GetNumberOfRows()<< "\t"<< table->GetNumberOfColumns()<<endl;
-	for( long int i = 0; i < table->GetNumberOfRows(); i++)
-	{
-		long int var = table->GetValue( i, 0).ToLong();
-		this->indMapFromIndToVertex.push_back( var);
-	}
+	//for( long int i = 0; i < table->GetNumberOfRows(); i++)
+	//{
+	//	long int var = table->GetValue( i, 0).ToLong();
+	//	this->indMapFromIndToVertex.push_back( var);
+	//}
 
 	this->DataTable = table;
-
-	this->DataMatrix.set_size( this->DataTable->GetNumberOfRows(), this->DataTable->GetNumberOfColumns() - 2);
-	for( int i = 0, rowIndex = 0; i < this->DataTable->GetNumberOfRows(); i++, rowIndex++)
-	{
-		int colIndex = 0;
-		for( int j = 0; j < this->DataTable->GetNumberOfColumns(); j++)
-		{
-			if( j == 0 )
-			{
-				this->CellTraceIndex.push_back( this->DataTable->GetValue(i, j).ToInt());
-			}
-			else if( j == this->DataTable->GetNumberOfColumns() - 1)
-			{
-				this->DistanceToDevice.push_back( this->DataTable->GetValue(i, j).ToDouble());
-			}
-			else
-			{
-				double var = this->DataTable->GetValue(i, j).ToDouble();
-				if( !boost::math::isnan(var))
-				{
-					(this->DataMatrix)(rowIndex, colIndex++) = this->DataTable->GetValue(i, j).ToDouble();
-				}
-				else
-				{
-					(this->DataMatrix)(rowIndex, colIndex++) = 0;
-				}
-			}
-		}
-	}
+	
+	ConvertTableToMatrix( table, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
 
 	this->CellClusterIndex.set_size(this->DataMatrix.rows());
 	for( int i = 0; i < CellCluster.size(); i++)
@@ -265,6 +238,60 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 	for( int i = 0; i < this->DataMatrix.rows(); i++)
 	{
 		this->CellClusterIndex[i] = i;
+	}
+}
+
+void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, std::vector<double> &distance)
+{
+	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
+	for( int i = 0, rowIndex = 0; i < table->GetNumberOfRows(); i++, rowIndex++)
+	{
+		int colIndex = 0;
+		for( int j = 0; j < table->GetNumberOfColumns(); j++)
+		{
+			if( j == 0 )
+			{
+				index.push_back( table->GetValue(i, j).ToInt());
+			}
+			else if( j == table->GetNumberOfColumns() - 1)
+			{
+				distance.push_back( table->GetValue(i, j).ToDouble());
+			}
+			else
+			{
+				double var = table->GetValue(i, j).ToDouble();
+				if( !boost::math::isnan(var))
+				{
+					mat(rowIndex, colIndex++) = table->GetValue(i, j).ToDouble();
+				}
+				else
+				{
+					mat(rowIndex, colIndex++) = 0;
+				}
+			}
+		}
+	}
+}
+
+void SPDAnalysisModel::ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<double> &distance)
+{
+	for(int i = 0; i < DataTable->GetNumberOfColumns() - 1; i++)
+	{		
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( DataTable->GetColumn(i)->GetName());
+		table->AddColumn(column);
+	}
+		
+	for( int i = 0; i < mat.rows(); i++)
+	{
+		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+		DataRow->InsertNextValue(i);
+		for( int j = 0; j < mat.cols(); j++)
+		{
+			DataRow->InsertNextValue( mat(i,j));
+		}
+		//DataRow->InsertNextValue(distance[i]);
+		table->InsertNextRow(DataRow);
 	}
 }
 
@@ -425,6 +452,64 @@ void SPDAnalysisModel::ClusterCells( double cor)
 	
 	this->DataMatrix = tmpMat;   // restore datamatrix
 	ofs.close();
+}
+
+void SPDAnalysisModel::GetCellClusterSize( std::vector<int> &clusterSize)
+{
+	if( CellCluster.size() > 0)
+	{
+		for( int i = 0; i < CellCluster.size(); i++)
+		{
+			int num = CellCluster[i].size();
+			clusterSize.push_back( num);
+		}
+	}
+	else
+	{
+		for( int i = 0; i < CellClusterIndex.size(); i++)
+		{
+			int num = 1;
+			clusterSize.push_back( num);
+		}
+	}
+}
+
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataTableAfterCellCluster()
+{
+	vnl_matrix<double> mat;
+	std::vector<int> index;
+	std::vector<double> distance;
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	ConvertTableToMatrix(DataTable, mat, index, distance);
+	vnl_matrix<double> matAfterCellCluster;
+	std::vector<double> modDistance;
+	if( CellCluster.size() > 0)
+	{
+		vnl_vector<double> vec( mat.cols());
+		matAfterCellCluster.set_size( CellCluster.size(), mat.cols());
+		for( int i = 0; i < CellCluster.size(); i++)
+		{
+			vec.fill(0);
+			double dis = 0;
+			for( int j = 0; j < CellCluster[i].size(); j++)
+			{
+				int ind = CellCluster[i][j];
+				vec = vec + mat.get_row(ind);
+				dis += distance[ind];
+			}
+			vec = vec / CellCluster.size();
+			dis = dis / CellCluster.size();
+			matAfterCellCluster.set_row(i, vec);
+			modDistance.push_back(dis);
+		}
+	}
+	else
+	{
+		matAfterCellCluster = mat;
+		modDistance = distance;
+	}
+	ConvertMatrixToTable( table, mat, modDistance);
+	return table;
 }
 
 void SPDAnalysisModel::GetClusterMapping( std::vector<int> &indToclusInd)
@@ -871,6 +956,17 @@ void SPDAnalysisModel::ClusterMerge(double cor, double mer)
 	ofs.close();
 }
 
+void SPDAnalysisModel::GetFeatureIdbyModId(std::vector<unsigned int> &modID, std::vector<unsigned int> &featureID)
+{
+	for( int i = 0; i < ClusterIndex.size(); i++)
+	{
+		if( IsExist( modID, ClusterIndex[i]))
+		{
+			featureID.push_back(i);
+		}
+	}
+}
+
 void SPDAnalysisModel::HierachicalClustering()    
 {
 	assert(TreeIndex.size() == this->ClusterIndex.max_value() + 1);
@@ -1314,6 +1410,57 @@ void SPDAnalysisModel::GenerateMST()
 	//	iter++;	
 	//}
 	//ofs.close();
+}
+
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat)
+{
+	int num_nodes = mat.rows();
+	Graph graph(num_nodes);
+
+	for( unsigned int k = 0; k < num_nodes; k++)
+	{
+		for( unsigned int j = k + 1; j < num_nodes; j++)
+		{
+			double dist = CityBlockDist( mat, k, j);   // need to be modified 
+			//double dist = EuclideanBlockDist( clusterMat, k, j);
+			boost::add_edge(k, j, dist, graph);
+		}
+	}
+
+	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex( num_nodes);
+
+	try
+	{
+		boost::prim_minimum_spanning_tree(graph, &vertex[0]);
+	}
+	catch(...)
+	{
+		std::cout<< "MST construction failure!"<<endl;
+		exit(111);
+	}
+
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+	for(int i = 0; i < this->headers.size(); i++)
+	{		
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( (this->headers)[i].c_str());
+		table->AddColumn(column);
+	}
+
+	for( int i = 0; i < vertex.size(); i++)
+	{
+		if( i != vertex[i])
+		{
+			double dist = CityBlockDist( mat, i, vertex[i]);
+			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+			DataRow->InsertNextValue(i);
+			DataRow->InsertNextValue( vertex[i]);
+			DataRow->InsertNextValue(dist);
+			table->InsertNextRow(DataRow);
+		}
+	}
+	return table;
 }
 
 void SPDAnalysisModel::GenerateDistanceMST()

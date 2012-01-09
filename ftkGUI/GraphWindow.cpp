@@ -44,7 +44,7 @@ GraphWindow::~GraphWindow()
 {
 }
 
-void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2, std::vector<int> *indexCluster)
+void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector<int> *indexCluster, ObjectSelection * sels2)
 {
 	this->dataTable = table;
 	this->indMapFromVertexToInd.clear();

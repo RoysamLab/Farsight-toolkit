@@ -62,7 +62,12 @@ public:
 	void HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol = true);
 	void HierachicalClustering();
 	void ClusterCells(double cor);
+	void GetCellClusterSize( std::vector<int> &clusterSize);
+	vtkSmartPointer<vtkTable> GetDataTableAfterCellCluster();
+	void GetFeatureIdbyModId(std::vector<unsigned int> &modID, std::vector<unsigned int> &featureID);
+
 	void GenerateMST();
+	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat);
 	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
@@ -84,6 +89,8 @@ protected:
 	~SPDAnalysisModel();
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
+	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, std::vector<double> &distance);
+	void ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<double> &distance);
 	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, vnl_vector<int>& TreeIndex, int fold);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
@@ -118,12 +125,12 @@ private:
 	QString filename;
 
 	// basic data storation
-	std::vector<int> CellTraceIndex;
+	std::vector<int> indMapFromIndToVertex;    // index mapping
 	std::vector<std::string> FeatureNames;
 	std::vector<double> DistanceToDevice;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
 	vtkSmartPointer<vtkTable> DataTable;
-	std::vector<long int> indMapFromIndToVertex;    // index mapping
+	vtkSmartPointer<vtkTable> DataTableAfterCellCluster;  // average data after cell cluster without normalization
 	std::vector<std::string> headers;
 	std::vector<int> FeatureIndex;
 	

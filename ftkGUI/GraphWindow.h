@@ -42,7 +42,7 @@ class GraphWindow : public QMainWindow
 public:
 	GraphWindow(QWidget * parent = 0);
 	~GraphWindow();
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL, std::vector<int> *clusterIndex = NULL);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, std::vector<int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol);

@@ -166,17 +166,19 @@ void ObjectSelection::SelectPoints(std::vector<Point> points)
 	emit MultiChanged();
 }
 
-void ObjectSelection::SetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size)
+void ObjectSelection::SetClusterIndex( std::vector< std::vector<int> > &clusIndex)
 {
-	selModuleAverage = mat;
-	moduleSize.clear();
-	moduleSize = size;
+	for( int i = 0; i < index.size(); i++)
+	{
+		index[i].clear();
+	}
+	index.clear();
+	index = clusIndex;
 	emit thresChanged();
 }
 
-void ObjectSelection::GetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size)
+void ObjectSelection::GetClusterIndex( std::vector< std::vector<int> > &clusIndex)
 {
-	mat = selModuleAverage;
-	size.clear();
-	size = moduleSize;
+	clusIndex = index;
 }
+
