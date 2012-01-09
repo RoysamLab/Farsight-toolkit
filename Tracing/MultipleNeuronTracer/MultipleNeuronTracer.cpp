@@ -349,7 +349,7 @@ void MultipleNeuronTracer::RunTracing(void)
 		for (oit = off.begin(); oit < off.end(); ++oit) 
 		{
 			itk::Index<3> ndx2 = ndx + (*oit);
-			if ( (ndx2[0] < 0) || (ndx2[1] < 0) || (ndx2[2] < 0) || (ndx2[0] >= unsigned(size[0])) || (ndx2[1] >= unsigned(size[1])) || (ndx2[2] >= unsigned(size[2])) )  
+			if ( (ndx2[0] < 2) || (ndx2[1] < 2) || (ndx2[2] < 2) || (ndx2[0] >= unsigned(size[0] - 2)) || (ndx2[1] >= unsigned(size[1] - 2)) || (ndx2[2] >= unsigned(size[2] - 2)) )  
 				continue;
 			
 			if (SWCImage->GetPixel(ndx2) != NULL) 
@@ -522,8 +522,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float val = nit.GetPixel(13) ;
 
-		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = 0.001;  // -0.1 percent of range
+		const float thresh1 = 0.005;   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = 0.0003;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
@@ -598,12 +598,12 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
-	if ((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+	if (abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 	{
 		return true;
 	}
 	
-	return true;  /// right now this is turned off (Amit)
+	return false;  /// right now this is turned off (Amit)
 }
 
 bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
@@ -1259,7 +1259,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 			treeIDToRootMap[(*sit)->TreeID] = (*sit);
 		}
 	}
-
+	
 	if(treeIDToRootMap.size() != this->StartPoints.size()){
 		std::cout << "Centroids missing!!" << std::endl;
 		
@@ -1297,7 +1297,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 			delete (*sit);
 			sit = SWCNodeContainer.erase(sit);
 		}*/
-
+		
 		// Removing nodes only lying in the foreground of the current soma
 		itk::Index<3> Node_0 = (*sit)->ndx;
 		itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
@@ -1307,37 +1307,42 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 			//if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
 			if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
 			{
-				for(int i = 0; i < this->StartPoints.size(); i++){
+				for(int i = 0; i < this->StartPoints.size(); i++)
+				{
 					if((*sit)->ndx[0] == this->StartPoints[i][0] && (*sit)->ndx[1] == this->StartPoints[i][1] && (*sit)->ndx[2] == this->StartPoints[i][2])
 						std::cout << "Centroid " << (*sit)->ndx[0] << ", " << (*sit)->ndx[1] << ", " << (*sit)->ndx[2] << " deleted!! " <<std::endl;
 				}
-				
+
 				delete (*sit);
 				sit = SWCNodeContainer.erase(sit);
-				//std::cout << "Deleted node. " << std::endl;
-			}
-			else{
+				//std::cout << "Deleted node. " << std::endl;				
+			}	
+
+			else
+			{
 				SWCNode *parent = (*sit)->parent;
 				SWCNode *root = treeIDToRootMap[(*sit)->TreeID];
 
-				if(parent->ndx == root->ndx){
+				if(parent->ndx == root->ndx)
+				{
 					++sit;
 					continue;
-				}
-
-				if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx)){
+				}					
+				if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx))
+				{
 					(*sit)->parent = root;
 					(*sit)->PID = root->ID;
 
 					++sit;
 				}
-				else{
+				else
+				{
 					++sit;
 					continue;
-				}
+				}		
 			}
 		}
-
+		
 		//otherwise if its parent lies within a soma reassign it to be a child
 		//of the centroid instead.
 		else
@@ -1347,19 +1352,19 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 			{
 				++sit;
 				continue;
-			}
+			}			
 
 			itk::Index<3> Node_2 = parent->ndx;
 			//if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
+
 			if( SomaImage->GetPixel( parent->ndx ) != 0)
-			{
+			{					
 				if( SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
 				{
 					(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
 					(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
-				}
+				}					
 			}
-
 			++sit;
 		}
 	}
