@@ -173,6 +173,21 @@ void TraceModel::SelectByIDs(std::vector<int> IDs)
 	this->blockSignals(0);
 	emit selectionChanged();
 }
+void TraceModel::SetSelectionByIDs(std::vector<int> IDs)
+{
+	this->blockSignals(1);
+	std::set<long int> ID;
+	for (unsigned int i = 0; i < IDs.size(); i++)
+	{
+		ID.insert((long)IDs.at(i));
+	}
+	this->Selection->add(ID);
+	this->blockSignals(0);
+}
+void TraceModel::SetSelectionByIDs(std::set<long int> ID)
+{
+	this->Selection->select(ID);
+}
 std::vector<int> TraceModel::GetSelectedIDs()
 {
 	std::vector<int> SelectedIDs;

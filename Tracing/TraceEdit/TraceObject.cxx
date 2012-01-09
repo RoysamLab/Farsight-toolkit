@@ -291,16 +291,16 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 	std::vector<TraceLine*> allTLines;
 	this->Cells.clear();
 	int limit_for_loop = this->trace_lines.size();
-#pragma omp parallel for
+	#pragma omp parallel for
 	for (int i = 0; i < limit_for_loop; ++i)
 	{
 		std::vector<TraceLine*> segments;
 		this->LinearTraceLinesRecursive(segments, this->trace_lines[i]);
-#pragma omp critical
-		{
 		if (segments.size() >0)
+		{
+			CellTrace* NextCell = new CellTrace(segments);
+			#pragma omp critical
 			{
-				CellTrace* NextCell = new CellTrace(segments);
 				this->Cells.push_back(NextCell);
 				allTLines.insert(allTLines.end(), segments.begin() ,segments.end());
 			}

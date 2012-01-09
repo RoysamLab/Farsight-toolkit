@@ -289,7 +289,7 @@ ObjectSelection * CellTraceModel::GetObjectSelectionColumn()
 }
 void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 {
-	this->Selection->clear();
+	//this->Selection->clear();
 	std::set<long int> ID;
 	for (int i = 0; i < roots.size(); i++)
 	{
@@ -301,7 +301,7 @@ void CellTraceModel::SelectByRootTrace(std::vector<TraceLine*> roots)
 
 void CellTraceModel::SelectByIDs(std::vector<int> IDs)
 {
-	this->Selection->clear();
+	//this->Selection->clear();
 	std::set<long int> ID;
 	std::vector<int>::iterator IDs_iterator;
 	

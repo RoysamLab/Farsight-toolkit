@@ -55,7 +55,9 @@ public:
 	std::vector<TraceLine*> GetSelectedRoots();
 	void SelectByIDs(int ID);
 	void SelectByIDs(std::set<long int> ID);
+	void SetSelectionByIDs(std::set<long int> ID);
 	void SelectByIDs(std::vector<int> IDs);
+	void SetSelectionByIDs(std::vector<int> IDs);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
 	double scaleFactor;

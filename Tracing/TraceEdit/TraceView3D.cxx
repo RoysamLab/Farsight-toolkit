@@ -3362,7 +3362,7 @@ void View3D::CalculateCellToCellDistanceGraph()
 /*Selections*/
 void View3D::setHighlightSettings(int value)
 {
-	std::cout << "Change trace colors" << std::endl;
+	//std::cout << "Change trace colors" << std::endl;
 	if (value == 1)
 		highlightMode = SEGMENT;
 	else if (value == 2)
@@ -3370,17 +3370,18 @@ void View3D::setHighlightSettings(int value)
 	else
 		highlightMode = TREE;
 
-	std::cout << "Highlight Mode: " << value << std::endl;
+	//std::cout << "Highlight Mode: " << value << std::endl;
 
 	this->updateTraceSelectionHighlights();
 	
 }
 void View3D::updateTraceSelectionHighlights()
 {
-	std::cout << "updateTraceSelectionHighlights()" << std::endl;
-	this->UpdateLineActor();
+	//std::cout << "updateTraceSelectionHighlights()" << std::endl;
+	//this->UpdateLineActor();
+	this->poly_line_data = this->tobj->GetVTKPolyData();
 	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
-	std::cout << "Number of selections: " << Selections.size() << std::endl;
+	//std::cout << "Number of selections: " << Selections.size() << std::endl;
 	for (unsigned int i = 0; i < Selections.size(); i++)
 	{
 		this->HighlightSelected(Selections[i],this->SelectColor);
@@ -3393,7 +3394,7 @@ void View3D::updateTraceSelectionHighlights()
 
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
-	std::cout << "HighlightSelected()" << std::endl;
+	//std::cout << "HighlightSelected()" << std::endl;
 	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
 	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
 	if (color == -1)
@@ -3405,7 +3406,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 
 	if (highlightMode == SEGMENT)
 	{
-		std::cout<< "Color segments" << std::endl;
+		//std::cout<< "Color segments" << std::endl;
 		//color traces by branch order
 		int branch_order = tline->GetLevel();
 		while (branch_order >= 5) //repeat colors after 5 orders
@@ -3903,11 +3904,10 @@ void View3D::SelectTrees()
 	std::vector<TraceLine*> roots = this->TreeModel->GetSelectedRoots();
 	if (roots.size() > 0)
 	{
-		//this->ClearSelection();
 		std::vector<int> ids;
 		this->CellModel->SelectByRootTrace(roots);
 		ids = this->tobj->GetTreeIDs(roots);
-		this->TreeModel->SelectByIDs(ids);
+		this->TreeModel->SetSelectionByIDs(ids);
 	}//end root size
 }
 void View3D::updateSelectionFromCell()
@@ -3915,8 +3915,7 @@ void View3D::updateSelectionFromCell()
 	/*! 
 	* Links CellModel selection to TraceModel Selection
 	*/
-	this->TreeModel->GetObjectSelection()->clear();
-	this->TreeModel->SelectByIDs(this->CellModel->GetSelectedIDs());
+	this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()
