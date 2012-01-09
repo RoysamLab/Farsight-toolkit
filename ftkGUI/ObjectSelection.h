@@ -18,6 +18,7 @@ limitations under the License.
 #include <set>
 #include <vector>
 #include <QObject>
+#include <vnl/vnl_matrix.h>
 
 //****************************************************************************
 // A class to keep track of selected objects
@@ -29,7 +30,6 @@ class ObjectSelection: public QObject
 public:
 	ObjectSelection();
 
-	
 	bool isSelected(long int id);		
 	bool add(long int id);
 	bool add(std::set<long int> ids);
@@ -51,16 +51,23 @@ public:
 	void SelectPoints(std::vector<Point> points);
 	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
+	void SetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size);
+	void GetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size);
+
 signals:
 	void changed();
 	void TimeChanged();
 	void MultiChanged();
+	void thresChanged();
 	
 private:
 	std::set<long int> selections;
+	vnl_matrix<double> moduleAverage;
 	int Time;
 	std::vector<Point> point_selections; // see if it needs to be cleared later.
 
+	vnl_matrix<double> selModuleAverage; /** the average value of the modules */
+	std::vector<int> moduleSize;         /** corresponding size of the module */
 };
 
 

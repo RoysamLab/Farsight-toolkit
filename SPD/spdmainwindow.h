@@ -41,6 +41,7 @@ private slots:
 	void editThreshold();
 	void editPercentage();
 	void showProgressionHeatmap();
+	void regenerateProgressionTree();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -93,6 +94,7 @@ private:
 	vtkSmartPointer<vtkTable> data;
 	ObjectSelection *selection;
 	ObjectSelection *selection2;
+	ObjectSelection *thresholdSelection; /** to indicate the threshold of the clustering changed and regenerate the progression tree */
 
 };
 

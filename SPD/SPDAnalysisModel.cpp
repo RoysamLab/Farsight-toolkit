@@ -384,6 +384,7 @@ void SPDAnalysisModel::ClusterCells( double cor)
 	do
 	{
 		old_cluster_num = new_cluster_num;
+
 		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, TreeIndex, 2);
 		std::cout<< "new cluster num:"<< new_cluster_num<<" vs "<<"old cluster num:"<<old_cluster_num<<endl;
 	}
@@ -504,7 +505,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 	int newIndex = TreeIndex.max_value() + 1;
 
 	isActiveModule.set_size( moduleSize.size());
-	unsigned int i = 0;
+	int i = 0;
 	for(  i = 0; i < moduleSize.size(); i++)
 	{
 		isActiveModule[i] = 1;
@@ -545,7 +546,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_vector<unsigned int>& index, vnl_ma
 
 		unsigned int moduleId = tmp.arg_min();
 		moduleCenter = mean.get_column(moduleId);
-		moduleCor.set_size(mean.cols());
+		moduleCor.set_size( mean.cols());
 		moduleCor = moduleCenter * mean;
 		moduleCor[moduleId] = 0;
 
@@ -1159,7 +1160,6 @@ void SPDAnalysisModel::GenerateMST()
 
 	unsigned int num_nodes = this->MatrixAfterCellCluster.rows();
 
-
 	std::vector< vnl_matrix<double> > clusterMatList;
 	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
@@ -1170,6 +1170,13 @@ void SPDAnalysisModel::GenerateMST()
 
 	this->ModuleMST.resize( this->ClusterIndex.max_value() + 1);
 
+	#ifdef _OPENMP
+		omp_lock_t lock;
+		omp_init_lock(&lock);
+		omp_lock_t lock2;
+		omp_init_lock(&lock2);
+	#endif
+
 	#pragma omp parallel for num_threads(NUM_THREAD)
 	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
@@ -1177,7 +1184,13 @@ void SPDAnalysisModel::GenerateMST()
 
 		//ofsmat<<"Module:"<< i + 1<<endl;
 		//ofsmat<< clusterMat<<endl<<endl;
+		#ifdef _OPENMP
+			omp_set_lock(&lock);
+		#endif
 		vnl_matrix<double> clusterMat = clusterMatList[i];
+		#ifdef _OPENMP
+			omp_unset_lock(&lock);
+		#endif
 
 		Graph graph(num_nodes);
 
@@ -1204,8 +1217,19 @@ void SPDAnalysisModel::GenerateMST()
 			exit(111);
 		}
 
+		#ifdef _OPENMP
+			omp_set_lock(&lock2);
+		#endif
 		this->ModuleMST[i] = vertex;
+		#ifdef _OPENMP
+			omp_unset_lock(&lock2);
+		#endif
 	}
+
+	#ifdef _OPENMP
+		omp_destroy_lock(&lock);
+		omp_destroy_lock(&lock2);
+	#endif
 
 	for( int n = 0; n <= this->ClusterIndex.max_value(); n++)
 	{

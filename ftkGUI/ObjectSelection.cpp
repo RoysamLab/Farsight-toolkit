@@ -166,3 +166,17 @@ void ObjectSelection::SelectPoints(std::vector<Point> points)
 	emit MultiChanged();
 }
 
+void ObjectSelection::SetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size)
+{
+	selModuleAverage = mat;
+	moduleSize.clear();
+	moduleSize = size;
+	emit thresChanged();
+}
+
+void ObjectSelection::GetSelectedModules( vnl_matrix<double> &mat, std::vector<int> &size)
+{
+	mat = selModuleAverage;
+	size.clear();
+	size = moduleSize;
+}

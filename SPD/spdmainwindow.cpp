@@ -18,6 +18,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	SPDModel = NULL;
 	selection = NULL;
 	selection2 = NULL;
+	thresholdSelection = NULL;
 
     dataFileLabel = new QLabel(tr("Choose file:"));
 
@@ -417,6 +418,15 @@ void SPDMainWindow::showPSM()
 
 void SPDMainWindow::viewProgression()
 {
+	/* needs to be changed:
+	   get orders of the features
+	   setmodels heatmap: table after dimension reduced in sample space
+	   selection 1: threshold selection
+	   selection 2: node selection
+
+	   show default heatmap and tree here
+	*/
+
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	if( table != NULL)
@@ -435,6 +445,12 @@ void SPDMainWindow::viewProgression()
 		if( selection2 == NULL)
 		{
 			selection2 = new ObjectSelection();
+		}
+
+		if( thresholdSelection == NULL)
+		{
+			thresholdSelection = new ObjectSelection();
+			connect(thresholdSelection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
 		}
 
 		if( index.size() > 0)
@@ -457,12 +473,21 @@ void SPDMainWindow::viewProgression()
 		try
 		{
 			this->graph->ShowGraphWindow();
-			
 		}
 		catch(...)
 		{
 			std::cout<< "Graph window error!"<<endl;
 		}
+	}
+}
+
+void SPDMainWindow::regenerateProgressionTree()
+{
+	if( thresholdSelection)
+	{
+		vnl_matrix<double> modAverageMat;
+		std::vector<int> modSize;
+		thresholdSelection->GetSelectedModules(modAverageMat, modSize);
 	}
 }
 
@@ -626,3 +651,4 @@ void SPDMainWindow::closeEvent(QCloseEvent *event)
 	}
 	event->accept();
 }
+
