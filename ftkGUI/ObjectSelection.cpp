@@ -166,7 +166,7 @@ void ObjectSelection::SelectPoints(std::vector<Point> points)
 	emit MultiChanged();
 }
 
-void ObjectSelection::SetClusterIndex( std::vector< std::vector<int> > &clusIndex)
+void ObjectSelection::SetClusterIndex( std::vector< std::set<long int> > &clusIndex)
 {
 	for( int i = 0; i < index.size(); i++)
 	{
@@ -177,7 +177,7 @@ void ObjectSelection::SetClusterIndex( std::vector< std::vector<int> > &clusInde
 	emit thresChanged();
 }
 
-void ObjectSelection::GetClusterIndex( std::vector< std::vector<int> > &clusIndex)
+void ObjectSelection::GetClusterIndex( std::vector< std::set<long int> > &clusIndex)
 {
 	clusIndex = index;
 }

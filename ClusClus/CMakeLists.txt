@@ -7,6 +7,8 @@ SET( Libraries
     vtkFiltering
     vtkVolumeRendering
     vtkViews
+    vcl
+    vnl
     ${QT_LIBRARIES})
 
 SET( ClusClus_SRCS  

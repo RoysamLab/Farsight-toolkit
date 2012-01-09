@@ -84,6 +84,9 @@ void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* 
 	this->num_samples = num_samples;
 	this->num_features = num_features;
 
+	this->rowMapFromOriginalToReorder.clear();
+	this->columnMapFromOriginalToReorder.clear();
+
 	this->mapdata = new double*[num_samples];
 	for(int i=0; i<num_samples; i++)
 	{
@@ -94,11 +97,17 @@ void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* 
 
 	this->Optimal_Leaf_Order1 = new int[num_samples] ;
 	for(int i=0; i<num_samples; i++)
+	{
 		this->Optimal_Leaf_Order1[i] = optimalleaforder1[i];
+		this->rowMapFromOriginalToReorder.insert( std::pair< int, int>(optimalleaforder1[i], i));
+	}
 
 	this->Optimal_Leaf_Order2 = new int[num_features];
 	for(int i=0; i<num_features; i++)
+	{
 		this->Optimal_Leaf_Order2[i] = optimalleaforder2[i];
+		this->columnMapFromOriginalToReorder.insert( std::pair< int, int>(optimalleaforder2[i], i));
+	}
 }
 
 void Heatmap::creatDataForHeatmap(double powCof)
@@ -293,16 +302,24 @@ void Heatmap::runClusclus()
 	}
 
 	cc1 = new clusclus(datas, (int)this->table->GetNumberOfRows(), (int)this->table->GetNumberOfColumns() - 1);
-	cc1->RunClusClus();
-	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
-		"gap.txt", "treedata.txt", "Optimalleaforder.txt");
-
 	cc1->Transpose();
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
-	cc2->RunClusClus();
-	cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
-		"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
 
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{
+			cc1->RunClusClus();
+			cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+				"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+		}
+		#pragma omp section
+		{
+			cc2->RunClusClus();
+			cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+				"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+		}
+	}
 
 	cout<<"finish clusclus....."<<endl;
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
@@ -353,115 +370,115 @@ void Heatmap::runClus()
 
 	int* optimalleaforder2 = new int[cc1->num_features];
 
-	//optimalleaforder2[0] = 0;
-	//optimalleaforder2[1] = 1;
-	//optimalleaforder2[2] = 2;
-	//optimalleaforder2[3] = 9;
-	//optimalleaforder2[4] = 10;
-	//optimalleaforder2[5] = 11;
-	//optimalleaforder2[6] = 12;
-	//optimalleaforder2[7] = 13;
-	//optimalleaforder2[8] = 15;
-	//optimalleaforder2[9] = 16;
-	//optimalleaforder2[10] = 18;
-	//optimalleaforder2[11] = 19;
-	//optimalleaforder2[12] = 20;
-	//optimalleaforder2[13] = 21;
-	//optimalleaforder2[14] = 23;
-	//optimalleaforder2[15] = 24;
-	//optimalleaforder2[16] = 25;
-	//optimalleaforder2[17] = 29;
-	//optimalleaforder2[18] = 30;
-	//optimalleaforder2[19] = 32;
-	//optimalleaforder2[20] = 33;
-	//optimalleaforder2[21] = 34;
-	//optimalleaforder2[22] = 36;
-	//optimalleaforder2[23] = 42;
-	//optimalleaforder2[24] = 43;
-	//optimalleaforder2[25] = 44;
-	//optimalleaforder2[26] = 46;
-	//optimalleaforder2[27] = 47;
-	//optimalleaforder2[28] = 49;
-	//optimalleaforder2[29] = 50;
-	//optimalleaforder2[30] = 52;
-	//optimalleaforder2[31] = 53;
-	//optimalleaforder2[32] = 55;
-	//optimalleaforder2[33] = 56;
-	//optimalleaforder2[34] = 64;
-	//optimalleaforder2[35] = 65;
-	//optimalleaforder2[36] = 67;
-	//optimalleaforder2[37] = 68;
-	//optimalleaforder2[38] = 74;
-	//optimalleaforder2[39] = 75;
-	//optimalleaforder2[40] = 77;
-	//optimalleaforder2[41] = 78;
-	//optimalleaforder2[42] = 80;
-	//optimalleaforder2[43] = 81;
-	//optimalleaforder2[44] = 83;
-	//optimalleaforder2[45] = 84;
-	//optimalleaforder2[46] = 86;
-	//optimalleaforder2[47] = 87;
-	//optimalleaforder2[48] = 88;
-	//optimalleaforder2[49] = 89;
-	//optimalleaforder2[50] = 90;
-	//optimalleaforder2[51] = 91;
-	//optimalleaforder2[52] = 92;
-	//optimalleaforder2[53] = 93;
-	//optimalleaforder2[54] = 95;
-	//optimalleaforder2[55] = 96;
-	//optimalleaforder2[56] = 97;
-	//optimalleaforder2[57] = 98;
-	//optimalleaforder2[58] = 100;
-	//optimalleaforder2[59] = 101;
-	//optimalleaforder2[60] = 104;
-	//optimalleaforder2[61] = 105;
-	//optimalleaforder2[62] = 38;
-	//optimalleaforder2[63] = 39;
-	//optimalleaforder2[64] = 40;
-	//optimalleaforder2[65] = 35;
-	//optimalleaforder2[66] = 37;
-	//optimalleaforder2[67] = 71;
-	//optimalleaforder2[68] = 72;
-	//optimalleaforder2[69] = 69;
-	//optimalleaforder2[70] = 3;
-	//optimalleaforder2[71] = 4;
-	//optimalleaforder2[72] = 5;
-	//optimalleaforder2[73] = 6;
-	//optimalleaforder2[74] = 7;
-	//optimalleaforder2[75] = 8;
-	//optimalleaforder2[76] = 14;
-	//optimalleaforder2[77] = 17;
-	//optimalleaforder2[78] = 22;
-	//optimalleaforder2[79] = 26;
-	//optimalleaforder2[80] = 27;
-	//optimalleaforder2[81] = 28;
-	//optimalleaforder2[82] = 31;
-	//optimalleaforder2[83] = 41;
-	//optimalleaforder2[84] = 45;
-	//optimalleaforder2[85] = 48;
-	//optimalleaforder2[86] = 51;
-	//optimalleaforder2[87] = 54;
-	//optimalleaforder2[88] = 57;
-	//optimalleaforder2[89] = 58;
-	//optimalleaforder2[90] = 59;
-	//optimalleaforder2[91] = 60;
-	//optimalleaforder2[92] = 61;
-	//optimalleaforder2[93] = 62;
-	//optimalleaforder2[94] = 63;
-	//optimalleaforder2[95] = 66;
-	//optimalleaforder2[96] = 70;
-	//optimalleaforder2[97] = 73;
-	//optimalleaforder2[98] = 76;
-	//optimalleaforder2[99] = 79;
-	//optimalleaforder2[100] = 82;
-	//optimalleaforder2[101] = 85;
-	//optimalleaforder2[102] = 94;
-	//optimalleaforder2[103] = 99;
-	//optimalleaforder2[104] = 102;
-	//optimalleaforder2[105] = 103;
+	optimalleaforder2[0] = 0;
+	optimalleaforder2[1] = 1;
+	optimalleaforder2[2] = 2;
+	optimalleaforder2[3] = 9;
+	optimalleaforder2[4] = 10;
+	optimalleaforder2[5] = 11;
+	optimalleaforder2[6] = 12;
+	optimalleaforder2[7] = 13;
+	optimalleaforder2[8] = 15;
+	optimalleaforder2[9] = 16;
+	optimalleaforder2[10] = 18;
+	optimalleaforder2[11] = 19;
+	optimalleaforder2[12] = 20;
+	optimalleaforder2[13] = 21;
+	optimalleaforder2[14] = 23;
+	optimalleaforder2[15] = 24;
+	optimalleaforder2[16] = 25;
+	optimalleaforder2[17] = 29;
+	optimalleaforder2[18] = 30;
+	optimalleaforder2[19] = 32;
+	optimalleaforder2[20] = 33;
+	optimalleaforder2[21] = 34;
+	optimalleaforder2[22] = 36;
+	optimalleaforder2[23] = 42;
+	optimalleaforder2[24] = 43;
+	optimalleaforder2[25] = 44;
+	optimalleaforder2[26] = 46;
+	optimalleaforder2[27] = 47;
+	optimalleaforder2[28] = 49;
+	optimalleaforder2[29] = 50;
+	optimalleaforder2[30] = 52;
+	optimalleaforder2[31] = 53;
+	optimalleaforder2[32] = 55;
+	optimalleaforder2[33] = 56;
+	optimalleaforder2[34] = 64;
+	optimalleaforder2[35] = 65;
+	optimalleaforder2[36] = 67;
+	optimalleaforder2[37] = 68;
+	optimalleaforder2[38] = 74;
+	optimalleaforder2[39] = 75;
+	optimalleaforder2[40] = 77;
+	optimalleaforder2[41] = 78;
+	optimalleaforder2[42] = 80;
+	optimalleaforder2[43] = 81;
+	optimalleaforder2[44] = 83;
+	optimalleaforder2[45] = 84;
+	optimalleaforder2[46] = 86;
+	optimalleaforder2[47] = 87;
+	optimalleaforder2[48] = 88;
+	optimalleaforder2[49] = 89;
+	optimalleaforder2[50] = 90;
+	optimalleaforder2[51] = 91;
+	optimalleaforder2[52] = 92;
+	optimalleaforder2[53] = 93;
+	optimalleaforder2[54] = 95;
+	optimalleaforder2[55] = 96;
+	optimalleaforder2[56] = 97;
+	optimalleaforder2[57] = 98;
+	optimalleaforder2[58] = 100;
+	optimalleaforder2[59] = 101;
+	optimalleaforder2[60] = 104;
+	optimalleaforder2[61] = 105;
+	optimalleaforder2[62] = 38;
+	optimalleaforder2[63] = 39;
+	optimalleaforder2[64] = 40;
+	optimalleaforder2[65] = 35;
+	optimalleaforder2[66] = 37;
+	optimalleaforder2[67] = 71;
+	optimalleaforder2[68] = 72;
+	optimalleaforder2[69] = 69;
+	optimalleaforder2[70] = 3;
+	optimalleaforder2[71] = 4;
+	optimalleaforder2[72] = 5;
+	optimalleaforder2[73] = 6;
+	optimalleaforder2[74] = 7;
+	optimalleaforder2[75] = 8;
+	optimalleaforder2[76] = 14;
+	optimalleaforder2[77] = 17;
+	optimalleaforder2[78] = 22;
+	optimalleaforder2[79] = 26;
+	optimalleaforder2[80] = 27;
+	optimalleaforder2[81] = 28;
+	optimalleaforder2[82] = 31;
+	optimalleaforder2[83] = 41;
+	optimalleaforder2[84] = 45;
+	optimalleaforder2[85] = 48;
+	optimalleaforder2[86] = 51;
+	optimalleaforder2[87] = 54;
+	optimalleaforder2[88] = 57;
+	optimalleaforder2[89] = 58;
+	optimalleaforder2[90] = 59;
+	optimalleaforder2[91] = 60;
+	optimalleaforder2[92] = 61;
+	optimalleaforder2[93] = 62;
+	optimalleaforder2[94] = 63;
+	optimalleaforder2[95] = 66;
+	optimalleaforder2[96] = 70;
+	optimalleaforder2[97] = 73;
+	optimalleaforder2[98] = 76;
+	optimalleaforder2[99] = 79;
+	optimalleaforder2[100] = 82;
+	optimalleaforder2[101] = 85;
+	optimalleaforder2[102] = 94;
+	optimalleaforder2[103] = 99;
+	optimalleaforder2[104] = 102;
+	optimalleaforder2[105] = 103;
 
-	for(int i = 0;i<cc1->num_features; i++)
-		optimalleaforder2[i]=i;
+	//for(int i = 0;i<cc1->num_features; i++)
+	//	optimalleaforder2[i]=i;
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
 	this->setDataForDendrograms(cc1->treedata);
 	this->creatDataForHeatmap(0.2);
@@ -490,6 +507,7 @@ void Heatmap::showGraph()
 	this->cellData = vtkSmartPointer<vtkFloatArray>::New();
 
 	int index = 0;
+
 	for (int i = 0; i < this->num_samples; i++)
     {
 		for(int j = 0; j < this->num_features; j++)
@@ -643,22 +661,29 @@ void Heatmap::setDataForDendrograms(double** treedata1, double** treedata2)
 	if(treedata1 != NULL)
 	{
 		this->connect_Data_Tree1 = new double*[this->num_samples-1];
+		this->rowMapForTreeData.clear();
 		for(int i = 0; i<this->num_samples - 1; i++)
 		{
 			this->connect_Data_Tree1[i] = new double[4];
 			for(int j = 0; j<4; j++)
 				this->connect_Data_Tree1[i][j] = treedata1[i][j];
+
+			this->rowMapForTreeData.insert( std::pair< int, int>(treedata1[i][3], i));
+
 		}
 	}
 
 	if( treedata2 != NULL)
 	{
 		this->connect_Data_Tree2 = new double*[this->num_features-1];
+		this->columnMapForTreeData.clear();
 		for(int i = 0; i<this->num_features - 1; i++)
 		{
 			this->connect_Data_Tree2[i] = new double[4];
 			for(int j = 0; j<4; j++)
 				this->connect_Data_Tree2[i][j] = treedata2[i][j];
+
+			this->columnMapForTreeData.insert( std::pair< int, int>(treedata2[i][3], i));
 		}
 	}
 }
@@ -674,15 +699,8 @@ void Heatmap::createDataForDendogram1(double powCof)
 	for(int i = 0; i < num_samples; i++)
 	{
 		Processed_Coordinate_Data_Tree1[i][0] = i;
-
-		for(int k = 0; k < num_samples; k++)
-		{
-			if(Optimal_Leaf_Order1[k] == i)
-			{
-				Processed_Coordinate_Data_Tree1[i][2] = (k+0.5)/(double)this->num_samples - 0.5;
-			}
-		}
-
+		int k = rowMapFromOriginalToReorder.find(i)->second;
+		Processed_Coordinate_Data_Tree1[i][2] = (k + 0.5)/(double)this->num_samples - 0.5;
 		Processed_Coordinate_Data_Tree1[i][1] = -0.5;
 		Processed_Coordinate_Data_Tree1[i][3] = 0; 
 	}
@@ -726,15 +744,8 @@ void Heatmap::createDataForDendogram2()
 	for(int i = 0; i < num_features; i++)
 	{
 		Processed_Coordinate_Data_Tree2[i][0] = i;
- 
-		for(int k = 0; k < num_features; k++)
-		{
-			if(Optimal_Leaf_Order2[k] == i)
-			{
-				Processed_Coordinate_Data_Tree2[i][1] = (k+0.5)/(double)this->num_features - 0.5;
-			}
-		}
-
+		int k = columnMapFromOriginalToReorder.find(i)->second;
+		Processed_Coordinate_Data_Tree2[i][1] = (k+0.5)/(double)this->num_features - 0.5;
 		Processed_Coordinate_Data_Tree2[i][2] = 0.5;
 		Processed_Coordinate_Data_Tree2[i][3] = 0; 
 	}
@@ -752,15 +763,8 @@ void Heatmap::createDataForDendogram2(double powCof)
 	for(int i = 0; i < num_features; i++)
 	{
 		Processed_Coordinate_Data_Tree2[i][0] = i;
- 
-		for(int k = 0; k < num_features; k++)
-		{
-			if(Optimal_Leaf_Order2[k] == i)
-			{
-				Processed_Coordinate_Data_Tree2[i][1] = (k+0.5)/(double)this->num_features - 0.5;
-			}
-		}
-
+		int k = columnMapFromOriginalToReorder.find(i)->second;
+		Processed_Coordinate_Data_Tree2[i][1] = (k+0.5)/(double)this->num_features - 0.5;
 		Processed_Coordinate_Data_Tree2[i][2] = 0.5;
 		Processed_Coordinate_Data_Tree2[i][3] = 0; 
 	}
@@ -967,34 +971,26 @@ void Heatmap::GetSelecectedIDs()
 	int count1 = 0;
 	int count2 = 0;
 
-	while(iter1 != selectedIDs1.end())
+	#pragma omp parallel sections
 	{
-		int index1 = *iter1;
-
-		for(int i = 0; i<this->num_samples; i++)
+		#pragma omp section
+		while(iter1 != selectedIDs1.end())
 		{
-			if(Optimal_Leaf_Order1[i] == indMapFromVertexToInd.find(index1)->second)
-			{
-				IDs1[count1++] = i;				
-				break;
-			}		
+			int index1 = *iter1;
+			int var = indMapFromVertexToInd.find(index1)->second;
+			int id1 = rowMapFromOriginalToReorder.find(var)->second;
+			IDs1[count1++] = id1;
+			iter1++;
 		}
-		iter1++;
-	}
 
-	while(iter2 != selectedIDs2.end())
-	{
-		int index2 = *iter2;
-
-		for(int i = 0; i<this->num_features; i++)
+		#pragma omp section 
+		while(iter2 != selectedIDs2.end())
 		{
-			if(Optimal_Leaf_Order2[i] == index2)
-			{
-				IDs2[count2++] = i;				
-				break;
-			}		
+			int index2 = *iter2;
+			int id2 = columnMapFromOriginalToReorder.find(index2)->second;
+			IDs2[count2++] = id2;
+			iter2++;
 		}
-		iter2++;
 	}
 
 	if( num1 == 0 && num2 != 0)
@@ -1046,6 +1042,8 @@ void Heatmap::GetSelecectedIDs()
 	selectedActor->GetProperty()->SetEdgeColor(1,1,1);
 	selectedActor->GetProperty()->SetLineWidth(0.5);
 
+	if(this->dragLineFlag)
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor);
 	try
 	{
 		if(continueselect == false)
@@ -1072,6 +1070,8 @@ void Heatmap::GetSelecectedIDs()
 			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
 
 		}
+		if(this->dragLineFlag)
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(dragLineActor);
 		this->view->Render();
 	}
 	catch(...)
@@ -1465,6 +1465,10 @@ void Heatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int ev
 		if(cellpicker->GetCellId() != -1)
 			heatmapWin->id1 = cellpicker->GetCellId();
 	}
+	if(worldPosition[0]<-0.5)
+	{
+		heatmapWin->addDragLineforSPD(worldPosition);
+	}	
 }
 
 void Heatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
@@ -1664,23 +1668,17 @@ void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 	}
 	else
 	{
-		for (int i = 0; i < this->num_samples - 1; i++)                              
-		{
-			if(id == connect_Data_Tree1[i][3])
-			{
-				this->dencolors1->SetValue((id - this->num_samples)*9, 153);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 1, 50);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 2, 204);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 3, 153);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 4, 50);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 5, 204);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 6, 153);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 7, 50);
-				this->dencolors1->SetValue((id - this->num_samples)*9 + 8, 204);
-				this->reselectIds1(selectedIDs, connect_Data_Tree1[i][0]);
-				this->reselectIds1(selectedIDs, connect_Data_Tree1[i][1]);
-			}
-		}
+		this->dencolors1->SetValue((id - this->num_samples)*9, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 1, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 2, 204);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 3, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 4, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 5, 204);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 6, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 7, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 8, 204);
+		this->reselectIds1(selectedIDs, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0]);
+		this->reselectIds1(selectedIDs, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1]);
 	}
 }
 void Heatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
@@ -1691,23 +1689,17 @@ void Heatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
 	}
 	else
 	{
-		for (int i = 0; i < this->num_features - 1; i++)
-		{
-			if(id == connect_Data_Tree2[i][3])
-			{
-				this->dencolors2->SetValue((id - this->num_features)*9, 153);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 1, 50);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 2, 204);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 3, 153);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 4, 50);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 5, 204);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 6, 153);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 7, 50);
-				this->dencolors2->SetValue((id - this->num_features)*9 + 8, 204);
-				this->reselectIds2(selectedIDs2, connect_Data_Tree2[i][0]);
-				this->reselectIds2(selectedIDs2, connect_Data_Tree2[i][1]);
-			}
-		}
+		this->dencolors2->SetValue((id - this->num_features)*9, 153);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 1, 50);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 2, 204);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 3, 153);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 4, 50);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 5, 204);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 6, 153);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 7, 50);
+		this->dencolors2->SetValue((id - this->num_features)*9 + 8, 204);
+		this->reselectIds2(selectedIDs2, connect_Data_Tree2[columnMapForTreeData.find(id)->second][0]);
+		this->reselectIds2(selectedIDs2, connect_Data_Tree2[columnMapForTreeData.find(id)->second][1]);
 	}
 }
 
@@ -1803,3 +1795,281 @@ void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
+void Heatmap::showGraphforSPD()
+{	
+	if(this->clusflag == true)
+		this->drawPoints3();
+	else
+		this->drawPoints1();
+
+	this->dragLineFlag = false;
+
+
+	this->aPlane = vtkSmartPointer<vtkPlaneSource>::New();
+    this->aPlane->SetXResolution(this->num_features);
+    this->aPlane->SetYResolution(this->num_samples);
+
+	this->cellData = vtkSmartPointer<vtkFloatArray>::New();
+
+	int index = 0;
+
+	for (int i = 0; i < this->num_samples; i++)
+    {
+		for(int j = 0; j < this->num_features; j++)
+		{
+			cellData->InsertNextValue(index++);
+		}
+    }
+	this->celllut = vtkSmartPointer<vtkLookupTable>::New();
+	this->celllut->SetNumberOfTableValues(this->num_samples*this->num_features);
+	this->celllut->SetTableRange(0, this->num_samples*this->num_features - 1);   
+	this->celllut->Build();
+
+	int k = 0;
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			rgb rgb = GetRGBValue( mapdata[num_samples - i - 1][j]);
+			celllut->SetTableValue(k++, rgb.r, rgb.g, rgb.b);
+		}
+	}
+
+	this->aPlane->Update();
+	this->aPlane->GetOutput()->GetCellData()->SetScalars(cellData);
+	this->mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	this->mapper->SetInputConnection(aPlane->GetOutputPort());
+	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
+	this->mapper->SetLookupTable(celllut);
+
+	this->actor = vtkSmartPointer<vtkActor>::New();
+	this->actor->SetMapper(mapper);
+
+	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	scalarbarLut->SetTableRange (-1, 1);
+	scalarbarLut->SetNumberOfTableValues(COLOR_MAP_SIZE);
+	for(int index = 0; index<COLOR_MAP_SIZE;index++)
+	{
+		rgb rgbscalar = COLORMAP[index];
+		scalarbarLut->SetTableValue(index, rgbscalar.r, rgbscalar.g, rgbscalar.b);
+	}
+	scalarbarLut->Build();
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(scalarbarLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(10);
+	scalarBar->GetTitleTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->GetLabelTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->SetMaximumHeightInPixels(1000);
+	scalarBar->SetMaximumWidthInPixels(100);
+
+	this->view->GetRenderer()->AddActor(actor);
+	this->view->GetRenderer()->AddActor2D(scalarBar);
+	this->SetInteractStyle();
+	this->view->GetRenderer()->GradientBackgroundOff();
+	this->view->GetRenderer()->SetBackground(1,1,1);
+
+	try
+	{
+		if(this->clusflag == true)
+			this->showDendrogram1();
+		else
+		{
+			this->showDendrogram1();
+			this->showDendrogram2();
+		}
+	}
+	catch(...)
+	{
+		cout<<"Draw dendrogram failed ! Please try again!"<<endl;
+	}
+	this->view->Render();
+	this->view->GetInteractor()->Start();
+}
+
+void Heatmap::addDragLineforSPD(double* worldPosition)
+{
+	if(this->dragLineFlag)
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor);
+
+	double p1[3];
+	double p2[3];
+	p1[0]=worldPosition[0];
+	p1[1]=-0.75;
+	p1[2]=0;
+	p2[0]=worldPosition[0];
+	p2[1]=0.75;
+	p2[2]=0;
+	dragLineSource = vtkSmartPointer<vtkLineSource>::New();
+	dragLineSource->SetPoint1(p1);
+	dragLineSource->SetPoint2(p2);
+
+	dragLineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	dragLineMapper->SetInputConnection(dragLineSource->GetOutputPort());
+
+	dragLineActor = vtkSmartPointer<vtkActor>::New();
+	dragLineActor->SetMapper(dragLineMapper);
+	dragLineActor->GetProperty()->SetColor(0.5,0.7,0);
+	dragLineActor->GetProperty()->SetLineWidth(1.5);
+	dragLineActor->DragableOn();
+	this->view->GetRenderer()->AddActor(dragLineActor);
+	this->dragLineFlag = true;
+	this->view->Render();
+
+	this->selectClustersforSPD(worldPosition);
+}
+
+void Heatmap::selectClustersforSPD(double* worldPosition)
+{
+	std::set<long int> selectedClusterSPD;
+	long int index = 2*this->num_samples - 2;
+	while(1)
+	{	
+		if(worldPosition[0] > Processed_Coordinate_Data_Tree1[index][1])
+			selectedClusterSPD.insert(index--);
+		else
+			break;
+	}
+	this->reselectClustersforSPD(selectedClusterSPD);
+}
+
+void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
+{
+	std::set<long int> reselectedClusterSPD;
+	std::set<long int>::iterator it;
+	int clusternumber = 0;
+	for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
+	{
+		long int id = *it;
+		long int id1 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][0];
+		long int id2 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][1];
+
+		std::set<long int>::iterator it1 = selectedClusterSPD.find(id1);
+		std::set<long int>::iterator it2 = selectedClusterSPD.find(id2);
+
+		if(it1 == selectedClusterSPD.end())
+		{
+			reselectedClusterSPD.insert(id1);
+			clusternumber++;
+		}
+		if(it2 == selectedClusterSPD.end())
+		{
+			reselectedClusterSPD.insert(id2);
+			clusternumber++;
+		}	
+	}
+	cout<<"cluster number is "<<clusternumber<<endl;
+
+	std::vector< std::set< long int> > clusIndex;
+	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
+	{
+		std::set<long int> idsforSPD;
+		this->reselectIdsforSPD(idsforSPD, *it);
+		cout<<"...\n";
+		clusIndex.push_back(idsforSPD);
+	}
+
+	this->Selection->SetClusterIndex(clusIndex);
+}
+
+void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
+{
+	if(id < this->num_samples)
+	{
+		cout<<id<<"\t";
+		idsforSPD.insert( indMapFromIndToVertex[id]);
+	}
+	else
+	{
+		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0]);
+		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1]);
+	}
+}
+
+
+void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder)
+{
+	this->table = vtkSmartPointer<vtkTable>::New();
+	this->table = table;
+	this->indMapFromVertexToInd.clear();
+	this->indMapFromIndToVertex.clear();
+	if( this->table)
+	{
+		for( int i = 0; i < this->table->GetNumberOfRows(); i++)
+		{
+			int var = this->table->GetValue( i, 0).ToInt();
+			this->indMapFromVertexToInd.insert( std::pair< int, int>(var, i));
+			this->indMapFromIndToVertex.push_back( var);
+		}
+	}
+
+	if(!sels)
+		this->Selection = new ObjectSelection();
+	else
+		this->Selection = sels;
+
+	connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
+	this->runClusforSPD(selOrder, unselOrder);
+}
+
+void Heatmap::GetSelecectedIDsforSPD()
+{
+}
+
+void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder)
+{
+	this->clusflag = true;
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->table->GetNumberOfRows()];
+
+	std::cout<<this->table->GetNumberOfRows()<<endl;
+	std::cout<<this->table->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+	}
+
+	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	cc1 = new clusclus(datas, (int)this->table->GetNumberOfRows(), (int)this->table->GetNumberOfColumns() - 1);
+	cc1->RunClusClus();
+	cout<<"finish clusclus....."<<endl;
+	cout<<this->table->GetNumberOfRows();
+	cout<<this->table->GetNumberOfColumns();
+	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt", "gap.txt", "treedata.txt", "Optimalleaforder.txt");
+
+	int* optimalleaforder2 = new int[cc1->num_features];
+	int counter = 0;
+	for(int i = 0; i < selOrder.size(); i++)
+	{
+		optimalleaforder2[i] = selOrder[i];
+		counter++;
+	}
+	for(int i = counter; i < unselOrder.size() + selOrder.size(); i++)
+		optimalleaforder2[i] = unselOrder[i - counter];
+
+	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
+	this->setDataForDendrograms(cc1->treedata);
+	this->creatDataForHeatmap(0.2);
+	
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+
+	delete cc1;
+}

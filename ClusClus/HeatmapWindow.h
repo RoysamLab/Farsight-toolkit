@@ -8,6 +8,9 @@
 #include <string>
 #include <math.h>
  
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
+
 #include <QVTKWidget.h>
 #include <QtGui/QAction>
 #include <QtGui/QMainWindow>
@@ -97,9 +100,12 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
+	void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void runClusclus();
 	void runClus();
+	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
+	void showGraphforSPD();
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
@@ -126,6 +132,7 @@ signals:
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
 	void GetSelecectedIDs();
+	void GetSelecectedIDsforSPD();
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
@@ -173,6 +180,10 @@ private:
 
 	vtkSmartPointer<vtkVariantArray> featureName;
 
+	vtkSmartPointer<vtkLineSource> dragLineSource;
+	vtkSmartPointer<vtkPolyDataMapper> dragLineMapper;
+	vtkSmartPointer<vtkActor> dragLineActor;
+
 	rgb GetRGBValue(double val);
 	void readmustd(double** mustd);
 	void scaleData(double** mustd);
@@ -186,9 +197,18 @@ private:
 	void createDataForDendogram2();
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
+	void addDragLineforSPD(double* worldPosition);
+	void selectClustersforSPD(double* worldPosition);
+	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
+	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id);
 
 	std::map<int, int> indMapFromVertexToInd;
 	std::vector<int> indMapFromIndToVertex;
+
+	std::map<int, int> rowMapFromOriginalToReorder;
+	std::map<int, int> columnMapFromOriginalToReorder;
+	std::map<int, int> rowMapForTreeData;
+	std::map<int, int> columnMapForTreeData;
 
 	int     r1;
 	int     r2;
@@ -201,6 +221,7 @@ private:
 	bool	clusflag;
 	bool    continueselect;
 	bool    intersectionselect;
+	bool	dragLineFlag;
 	vtkIdType id1;
 	vtkIdType id2;
 	std::set<long int> interselectedIDs;

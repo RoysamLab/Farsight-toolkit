@@ -508,7 +508,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataTableAfterCellCluster()
 		matAfterCellCluster = mat;
 		modDistance = distance;
 	}
-	ConvertMatrixToTable( table, mat, modDistance);
+	ConvertMatrixToTable( table, matAfterCellCluster, modDistance);
 	return table;
 }
 

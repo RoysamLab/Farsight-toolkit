@@ -51,8 +51,8 @@ public:
 	void SelectPoints(std::vector<Point> points);
 	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
-	void SetClusterIndex( std::vector< std::vector<int> > &clusIndex);
-	void GetClusterIndex( std::vector< std::vector<int> > &clusIndex);
+	void SetClusterIndex( std::vector< std::set<long int> > &clusIndex);
+	void GetClusterIndex( std::vector< std::set<long int> > &clusIndex);
 
 signals:
 	void changed();
@@ -66,7 +66,7 @@ private:
 	int Time;
 	std::vector<Point> point_selections; // see if it needs to be cleared later.
 
-	std::vector< std::vector<int> > index; /** cluster index */
+	std::vector< std::set<long int> > index; /** cluster index */
 };
 
 

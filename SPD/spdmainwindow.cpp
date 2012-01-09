@@ -168,7 +168,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 	SPDModel = SPDAnalysisModel::InitInstance();
 
 	assert(SPDModel!=NULL);
-
+	this->HeatmapWin = new Heatmap();
 	graph =  new GraphWindow(this);
 	simHeatmap = new ProgressionHeatmap(this);
 	histo = new HistoWindow(this);
@@ -445,7 +445,7 @@ void SPDMainWindow::viewProgression()
 		connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
 	}
 
-	//this->HeatmapWin->setModels( tableAfterCellCluster, clusterSize, selection, selOrder, unselOrder);
+	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder);
 	//this->HeatmapWin->runClus();
 
 	/** graph window set models */
@@ -461,26 +461,26 @@ void SPDMainWindow::viewProgression()
 	}
 
 	/** show windows*/
-	//this->HeatmapWin->showGraph();
+	this->HeatmapWin->showGraph();
 
-	vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
-	std::vector<std::string> headers;
-	SPDModel->GetTableHeaders( headers);
-	QString str = SPDModel->GetFileName();
-	std::set<long int> featureSelectedIDs;
-	SPDModel->GetSelectedFeatures(featureSelectedIDs);
-	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
+	//vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
+	//std::vector<std::string> headers;
+	//SPDModel->GetTableHeaders( headers);
+	//QString str = SPDModel->GetFileName();
+	//std::set<long int> featureSelectedIDs;
+	//SPDModel->GetSelectedFeatures(featureSelectedIDs);
+	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
 
-	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-	try
-	{
-		this->graph->ShowGraphWindow();
-		//this->HeatmapWin->showGraph();
-	}
-	catch(...)
-	{
-		std::cout<< "Graph window error!"<<endl;
-	}
+	//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+	//try
+	//{
+	//	this->graph->ShowGraphWindow();
+	//	//this->HeatmapWin->showGraph();
+	//}
+	//catch(...)
+	//{
+	//	std::cout<< "Graph window error!"<<endl;
+	//}
 }
 
 void SPDMainWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)

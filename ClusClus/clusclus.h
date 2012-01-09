@@ -5,6 +5,10 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #endif
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+
 #include <math.h>
 #include <iostream>
 #include <stdio.h>

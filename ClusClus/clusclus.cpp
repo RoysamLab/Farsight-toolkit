@@ -231,6 +231,7 @@ void clusclus::Clustering()
 
 void clusclus::ComputeSampleDistances()
 {
+	#pragma omp parallel for
 	for(int i=0; i<num_samples; i++)
 	{
 		for(int j=0; j<i+1; j++)
@@ -257,6 +258,7 @@ double clusclus::MergeClusters(int num_currcluster, int *pivot1, int *pivot2)
 			}
 		}
 	}
+
 	for (int i = 0; i < num_samples; i++) 
 	{
 		pivot = (int) features[i][num_features+1];
@@ -269,6 +271,7 @@ double clusclus::MergeClusters(int num_currcluster, int *pivot1, int *pivot2)
 			features[i][num_features+1] = pivot-1;
 		}
 	}
+
 	num_cluster_samples[*pivot1] += num_cluster_samples[*pivot2];
 	for(int i=*pivot2; i<num_currcluster - 1; i++)
 	{
@@ -499,14 +502,14 @@ void clusclus::WriteClusteringOutputToFile(const char *filename1, const char *fi
 	//}
 	//fclose(fp5);
 
-	//FILE *fp6 = fopen(filename6,"w");
-	//for(int i=0; i<num_samples -1; i++)
-	//{
-	//	for(int j=0; j<4; j++)
-	//		fprintf(fp6,"%f\t",treedata[i][j]);
-	//	fprintf(fp6,"\n");
-	//}
-	//fclose(fp6);
+	FILE *fp6 = fopen(filename6,"w");
+	for(int i=0; i<num_samples -1; i++)
+	{
+		for(int j=0; j<4; j++)
+			fprintf(fp6,"%f\t",treedata[i][j]);
+		fprintf(fp6,"\n");
+	}
+	fclose(fp6);
 
 	FILE *fp7 = fopen(filename7,"w");
 	for(int i=0; i<num_samples; i++)

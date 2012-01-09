@@ -5462,7 +5462,7 @@ void View3D::ClusclusAnalysis()
 
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->HeatmapWin->runClus();
-		this->HeatmapWin->showGraph();
+		this->HeatmapWin->showGraphforSPD();
 	}
 #endif
 }
