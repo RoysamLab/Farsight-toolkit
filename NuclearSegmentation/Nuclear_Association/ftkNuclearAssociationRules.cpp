@@ -42,7 +42,11 @@ AssociativeFeatureCalculator::AssociativeFeatureCalculator()
 {
 	inFilename = "";
 	fPrefix = "";
-	inputs_set = false;
+	inputs_set = false;	
+}
+
+AssociativeFeatureCalculator::~AssociativeFeatureCalculator()
+{
 }
 
 void AssociativeFeatureCalculator::SetInputFile(std::string filename)
@@ -269,6 +273,7 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	imDim=3;	
 	objectType = "Nucleus";
 	inputs_set = false;
+	num_rois = 8;
 }
 
 NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules, LabImageType::Pointer lImage, TargImageType::Pointer iImage):ObjectAssociation(AssocFName, numOfRules){
@@ -279,6 +284,11 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	imDim=3;	
 	objectType = "Nucleus";
 	inputs_set = true;
+	num_rois = 8;
+}
+
+NuclearAssociationRules::~NuclearAssociationRules()
+{
 }
 
 /* This is the main function for computing associative features */

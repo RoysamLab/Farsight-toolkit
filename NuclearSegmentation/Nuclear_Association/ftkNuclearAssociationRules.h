@@ -61,6 +61,7 @@ class AssociativeFeatureCalculator
 {
 public:
 	AssociativeFeatureCalculator();
+	~AssociativeFeatureCalculator();
 	void SetInputFile(std::string filename);
 	void SetInputs(ftk::Image::Pointer inp_labeled_image, int inp_channel_number, ftk::Image::Pointer seg_labeled_image, int seg_channel_number, ftk::AssociationRule *associationrule);
 	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
@@ -90,6 +91,7 @@ public:
 	/* Contsructor */
 	NuclearAssociationRules(std::string segImageName, int numOfAssocRules);
 	NuclearAssociationRules(std::string AssocFName, int numOfRules, LabImageType::Pointer lImage, TargImageType::Pointer iImage);
+	~NuclearAssociationRules();
 
 	/* This method computes all the associative measurements for all the objects */
 	void Compute();
@@ -128,7 +130,7 @@ private:
 	float ComputeTotal(std::vector<int> LST);
 	float ComputeAverage(std::vector<int> LST);
 
-	static const int num_rois=8;
+	int num_rois;
 	
 }; // end NuclearAssociation
 }  // end namespace ftk
