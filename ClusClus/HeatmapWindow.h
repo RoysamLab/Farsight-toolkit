@@ -100,7 +100,7 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-	void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void runClusclus();
 	void runClus();
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);

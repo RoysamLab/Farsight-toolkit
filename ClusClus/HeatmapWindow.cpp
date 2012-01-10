@@ -953,6 +953,7 @@ void Heatmap::showDendrogram2()
 
 void Heatmap::GetSelecectedIDs()
 {
+	cout<<"get selected"<<endl;
 	std::set<long int> selectedIDs2 = this->Selection2->getSelections();
 	std::set<long int> selectedIDs1 = this->Selection->getSelections();	
 	std::set<long int>::iterator iter1 = selectedIDs1.begin();
@@ -1623,6 +1624,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 			this->interselectedIDs = selectedIDs1;
 		try
 		{
+			cout<<"set select============="<<endl;
 			this->Selection2->select(selectedIDs2);
 			this->Selection->select(selectedIDs1);
 		}
@@ -1639,10 +1641,14 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 		{
 			for(int i = 0; i<this->num_samples; i++)
 				selectedIDs1.insert( indMapFromIndToVertex[i]);
+			cout<<"set select============="<<endl;
 			this->Selection->select(selectedIDs1);
 		}
 		else
+		{
+			cout<<"set select============="<<endl;
 			this->Selection->select(interselectedIDs);
+		}
 
 		denmapper2->ScalarVisibilityOn();
 		denlinesPolyData2->Modified();
@@ -1656,6 +1662,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 	else
 	{
 		this->Selection2->clear();
+		cout<<"set select============="<<endl;
 		this->Selection->clear();
 	}
 }
