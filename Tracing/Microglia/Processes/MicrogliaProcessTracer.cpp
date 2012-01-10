@@ -315,11 +315,11 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 	float tnorm = vcl_pow(sigma, 1.6f);
 	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp) 
 	{
-		float q = ittemp.Get()*tnorm;
+		float q = ittemp.Get()*tnorm;	//Why do we manually normalize the LoG (itk has facility to normalize for us)? Isn't the LoG normalization factor sigma^2 instead of sigma^1.6?
 		ittemp.Set(-1.0f*q);
 	}
 
-	// set the diagonal terms in neighborhood iterator
+	// set the diagonal terms in neighborhood iterator, this is the diametrically opposing pixels in Zack's paper
 	itk::Offset<3>
 		xp =  {{2 ,  0 ,   0}},
 		xn =  {{-2,  0,    0}},
@@ -329,10 +329,15 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 		zn =  {{0,   0,   -2}};
 
 	itk::Size<3> rad = {{1,1,1}};
-	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
-	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::NeighborhoodIterator<ImageType3D> neighbor_iter(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> image_iter(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
 
+	//{0, 0, 0} is the center pixel of the 3x3x3 neighborhood. The constants are then the pixel index starting from the top-left corner of the front face.
+	//x: left is -1
+	//y: up is -1
+	//z: out of page is -1
 	unsigned int
+				   //{ x,    y ,  z }
 		xy1 =  17, //{ 1 ,   1 ,  0 },
 		xy2 =  9,  //{ -1,  -1 ,  0 },
 		xy3 =  15, //{ -1,   1 ,  0 },
@@ -352,38 +357,42 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
 	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
 
+	//What on earth are we doing here? Are we unpadding the image?
 	itk::Size<3> sz = this->PaddedInputImage->GetBufferedRegion().GetSize();
 	sz[0] = sz[0] - 3;
 	sz[1] = sz[1] - 3; 
 	sz[2] = sz[2] - 3;
 
-	it.GoToBegin();
-	nit.GoToBegin();
-	itk::Vector<float,3> sp = this->PaddedInputImage->GetSpacing();
-
-	long ctCnt = 0;
+	image_iter.GoToBegin();
+	neighbor_iter.GoToBegin();
+	//itk::Vector<float,3> spacing = this->PaddedInputImage->GetSpacing();	//We don't use spacing anywhere
 	ImageType3D::PointType origin = this->InputImage->GetOrigin();
-	while(!nit.IsAtEnd()) 
+
+	long ctCnt = 0;	//What is ctCnt?
+	
+	while(!neighbor_iter.IsAtEnd()) 
 	{
-		itk::Index<3> ndx = it.GetIndex();
+		itk::Index<3> ndx = image_iter.GetIndex();
 		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
 			(ndx[0] > (int)sz[0]) || (ndx[1] > (int)sz[1]) ||
 			(ndx[2] > (int)sz[2]) )
 		{
-			++it;
-			++nit;
+			++image_iter;
+			++neighbor_iter;
 			continue;
 		}
 
 		float a1 = 0.0;
+		
+		//Going through all the diametrically opposed pairs (26 neighbors, 13 pairs)
 		for (unsigned int i=0; i < 13; ++i)
 		{
-			a1 += vnl_math_max(nit.GetPixel(i), nit.GetPixel(26 - i));
+			a1 += vnl_math_max(neighbor_iter.GetPixel(i), neighbor_iter.GetPixel(26 - i));
 		}
 
-		float val = nit.GetPixel(13) ;
+		float val = neighbor_iter.GetPixel(13) ;
 
-		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh1 = 0.03;   // 3% of maximum threshold from Lowe 2004
 		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
@@ -391,19 +400,19 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 			TensorType hessian;
 			hessian[0] = gauss->GetOutput()->GetPixel( ndx + xp ) +
 				gauss->GetOutput()->GetPixel( ndx + xn ) -
-				2*nit.GetPixel( 13 );
+				2*neighbor_iter.GetPixel( 13 );
 			hessian[3] = gauss->GetOutput()->GetPixel( ndx + yp ) +
 				gauss->GetOutput()->GetPixel( ndx + yn ) -
-				2*nit.GetPixel( 13 );
+				2*neighbor_iter.GetPixel( 13 );
 			hessian[5] = gauss->GetOutput()->GetPixel( ndx + zp ) +
 				gauss->GetOutput()->GetPixel( ndx + zn ) -
-				2*nit.GetPixel( 13 );
-			hessian[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) -
-				nit.GetPixel(xy3) - nit.GetPixel(xy4);
-			hessian[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) -
-				nit.GetPixel(xz3) - nit.GetPixel(xz4);
-			hessian[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) -
-				nit.GetPixel(yz3) - nit.GetPixel(yz4);
+				2*neighbor_iter.GetPixel( 13 );
+			hessian[1] = neighbor_iter.GetPixel(xy1) + neighbor_iter.GetPixel(xy2) -
+				neighbor_iter.GetPixel(xy3) - neighbor_iter.GetPixel(xy4);
+			hessian[2] = neighbor_iter.GetPixel(xz1) + neighbor_iter.GetPixel(xz2) -
+				neighbor_iter.GetPixel(xz3) - neighbor_iter.GetPixel(xz4);
+			hessian[4] = neighbor_iter.GetPixel(yz1) + neighbor_iter.GetPixel(yz2) -
+				neighbor_iter.GetPixel(yz3) - neighbor_iter.GetPixel(yz4);
 			
 			EigenValuesArrayType ev;
 			EigenVectorMatrixType em;
@@ -434,8 +443,8 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 				ctCnt++;
 			}
 		}
-		++it;
-		++nit;
+		++image_iter;
+		++neighbor_iter;
 	}
 	std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
 }
