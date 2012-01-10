@@ -41,7 +41,6 @@ limitations under the License.
 #include "itkImageToVTKImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkExtractImageFilter.h"
-//#include "vtkImagePermute.h"
 #include "vtkImagePlaneWidget.h"
 #include "vtkImageReslice.h"
 #include "itkPermuteAxesImageFilter.h"
@@ -105,7 +104,6 @@ struct imageFileHandle
 	MeanProjectionType::Pointer MeanProjection;
 	MinProjectionType::Pointer MinProjection;
 	IntensityRescaleType::Pointer Rescale;
-	//vtkSmartPointer<vtkImagePermute> PermuteFilter;
 	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
 //!Contour Filter pointers
@@ -116,10 +114,6 @@ struct imageFileHandle
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
 	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
 //image slicer
-	//ImageActorPointerType sliceActor;
-	//ImageSlicePointerType imageSlicer;
-	//vtkSmartPointer<vtkMatrix4x4> resliceAxes;
-	//vtkSmartPointer<vtkImageReslice> reslice;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 	vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper;
 	vtkSmartPointer<vtkImageSlice> imageSlice;
@@ -128,6 +122,7 @@ struct imageFileHandle
 	vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper> volumeMapperGPU;
 #endif
 	vtkSmartPointer<vtkVolume> volume;
+	vtkSmartPointer<vtkVolume> somaVolume;
 };
 class  ImageRenderActors
 {
@@ -138,6 +133,7 @@ public:
 	int loadImage(std::string ImageSource, std::string tag, double x, double y, double z);
 //render actors
 	vtkSmartPointer<vtkActor> ContourActor(int i);
+	void setSomaColor(double colorValue);
 	vtkSmartPointer<vtkActor> GetContourActor(int i);
 	void CreateImageResliceMapper(int i);
 	void CreateImageProperty(int i);
@@ -146,11 +142,14 @@ public:
 	ImageSlicePointerType GetImageSlice(int i);
 	void SetSliceThickness(int numofslices);
 	void SetSlicePlane(int slicePlane);
-	//void SetSliceCreate(int i, bool sliceCreate);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
+	void RaycastVolumeMapperGPU(int i);
+	void TextureVolumeMapper(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
+	vtkSmartPointer<vtkVolume> RayCastSomaVolume(int i);
+	vtkSmartPointer<vtkVolume> GetRayCastSomaVolume(int i);
 	bool getRenderStatus(int i);
 	void setRenderStatus(int i, bool setStatus);
 //file information
@@ -202,7 +201,7 @@ private:
 	std::vector<std::string> ImageList;
 	std::vector<double> TotalImageSize;
 	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
-	double brightness;
+	double somaColorValue, brightness;
 	int colorValue, sliceBrightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 	double sliceBounds[6];

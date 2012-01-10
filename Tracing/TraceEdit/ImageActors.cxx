@@ -28,6 +28,7 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
 	this->colorValue = 0;
+	this->somaColorValue = 0;
 	this->sliceBrightness = 500;
 	this->RaycastSampleDist = .2;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
@@ -157,6 +158,7 @@ vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 	this->LoadedImages[i]->ContourActor->SetPickable(0);
 	return this->LoadedImages[i]->ContourActor;
 }
+
 vtkSmartPointer<vtkActor> ImageRenderActors::GetContourActor(int i)
 {
 	if (i == -1)
@@ -164,6 +166,25 @@ vtkSmartPointer<vtkActor> ImageRenderActors::GetContourActor(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	return this->LoadedImages[i]->ContourActor;
+}
+void ImageRenderActors::RaycastVolumeMapperGPU(int i)
+{
+	double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
+	this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper>::New();
+	this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryInBytes(std::min(max_memory, 1.9 * 1024 * 1024 * 1024));
+	this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryFraction(1.0);
+	this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
+	this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
+		
+	std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
+	std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
+}
+void ImageRenderActors::TextureVolumeMapper(int i)
+{
+	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+	this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
+	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
 }
 vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 {
@@ -180,29 +201,40 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(40.0,0,0,.9);
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(90.0,0,.9,0);
 	this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(150.0,.9,0,0);*/
+	
 	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-	this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
+	if (this->LoadedImages[i]->tag.compare("Soma")==0)
+	{
+		//std::cout << "setSomaColor" << std::endl;
+		this->setSomaColor(this->somaColorValue);
+	}
+	else
+	{
+		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+	}//Image
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
-	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 #ifdef USE_GPUREN
 	{
-		double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
-		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper>::New();
-		this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
-		this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryInBytes(std::min(max_memory, 1.9 * 1024 * 1024 * 1024));
-		this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryFraction(1.0);
-		this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
-		this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
+		//double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
+		//this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper>::New();
+		//this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
+		//this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryInBytes(std::min(max_memory, 1.9 * 1024 * 1024 * 1024));
+		//this->LoadedImages[i]->volumeMapperGPU->SetMaxMemoryFraction(1.0);
+		//this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
+		//this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
+		RaycastVolumeMapperGPU(i);
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
-		std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
-		std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
+		//std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
+		//std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
 	}
 #else
 	{
-		this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-		this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
-		this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+		//this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
+		//this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
+		//this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+		TextureVolumeMapper(i);
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
 	}
 #endif
@@ -212,6 +244,74 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
 }
+vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastSomaVolume(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+	this->LoadedImages[i]->somaVolume = vtkSmartPointer<vtkVolume>::New();
+	if (this->LoadedImages[i]->tag.compare("Soma")==0)
+	{
+		//std::cout << "setSomaColor" << std::endl;
+		this->setSomaColor(this->somaColorValue);
+	}
+	else
+	{
+		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+	}//Image
+	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
+	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
+#ifdef USE_GPUREN
+	{
+		RaycastVolumeMapperGPU(i);
+		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
+	}
+#else
+	{
+		TextureVolumeMapper(i);
+		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapper);
+	}
+#endif
+	this->LoadedImages[i]->somaVolume->SetProperty(this->LoadedImages[i]->volumeProperty);
+	this->LoadedImages[i]->somaVolume->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->somaVolume->SetPickable(0);
+	return this->LoadedImages[i]->somaVolume;
+}
+void ImageRenderActors::setSomaColor(double colorValue) //works when raycast mode button triggered
+{
+	//std::cout << "setSomaColor" << std::endl;
+	double r, g ,b;
+	this->somaColorValue = colorValue;
+	if (colorValue < 0.5)
+	{
+		r = 1-(colorValue/0.5);
+		g = colorValue/0.5;
+		b = 0;
+	}
+	else
+	{
+		r = 0;
+		g = 1-(colorValue-0.5)/0.5;
+		b = (colorValue-0.5)/0.5;
+	}
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunctionSoma = vtkColorTransferFunction::New();
+	colorTransferFunctionSoma->AddRGBPoint((this->b*this->brightness)/100, r, g, b); // what's this->b and others?
+
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		if (this->LoadedImages[i]->tag.compare("Soma")==0)
+		{			
+			if (this->LoadedImages[i]->volume != 0)
+			{
+				this->LoadedImages[i]->volumeProperty->SetColor(colorTransferFunctionSoma);
+				this->LoadedImages[i]->volume->Update();
+			}
+		}
+	}
+}
+
 vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
 {
 	if (i == -1)
@@ -386,12 +486,12 @@ void ImageRenderActors::syncColorTransferFunction()
 		case 2: //green
 			colorPoint1.red = 0.0;		colorPoint1.green = 0.11;		colorPoint1.blue = 0.0;
 			colorPoint2.red = 0.0;		colorPoint2.green = 0.59;		colorPoint2.blue = 0.0;
-			colorPoint1.red = 0.0;		colorPoint1.green = 0.3;		colorPoint1.blue = 0.0;
+			colorPoint3.red = 0.0;		colorPoint3.green = 0.3;		colorPoint3.blue = 0.0;
 			break;
 		case 3: //blue
 			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.11;
-			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.59;
-			colorPoint1.red = 0.0;		colorPoint1.green = 0.0;		colorPoint1.blue = 0.3;
+			colorPoint2.red = 0.0;		colorPoint2.green = 0.0;		colorPoint2.blue = 0.59;
+			colorPoint3.red = 0.0;		colorPoint3.green = 0.0;		colorPoint3.blue = 0.3;
 			break;
 		case 4: //gray
 			colorPoint1.red = 0.75;		colorPoint1.green = 0.75;		colorPoint1.blue = 0.75;
@@ -446,7 +546,8 @@ void ImageRenderActors::syncColorTransferFunction()
 	//this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, redChannelcolor[0], redChannelcolor[1], redChannelcolor[2]);//red
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
-		this->LoadedImages[i]->volume->Update();
+		if (this->LoadedImages[i]->volume != 0)
+			this->LoadedImages[i]->volume->Update();
 	}
 }
 void ImageRenderActors::syncOpacityTransferFunction()
@@ -586,7 +687,8 @@ void ImageRenderActors::SetSliceNumber(int i, int num) // i is number of images,
 	}
 	std::vector<int> slices;
 	slices = this->MinCurrentMaxSlices(i);
-	std::cout << num << " min " << slices[0] << " current " << slices[1] << " max " << slices[2] << std::endl;
+	//std::cout << num << " min " << slices[0] << " current " << slices[1] << " max " << slices[2] << std::endl;
+
 	//if (slices[2] < num)
 	//{
 	//	this->LoadedImages[i]->sliceActor->SetZSlice(slices[2]);

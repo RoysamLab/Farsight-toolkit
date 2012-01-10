@@ -228,6 +228,8 @@ public slots:
 	void RayCastOpacityValueChanged(double value);
 	void RayCastBrightnessChanged(int value);
 	void RayCastColorValueChanged(int value);
+	void chooseSomaRender(int value);
+	void SomaColorChanged(double value);
 	void showPTin3D(double value);
 	void getPosPTin3D();
 	void setPTtoSoma();
@@ -276,6 +278,9 @@ protected slots:
 	void setSlicerMode();
 	void setProjectionMode();
 	void setRaycastMode();
+
+	void setContourMode();
+	void setRaycastSomaMode();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -342,6 +347,9 @@ private:
 	QAction *SetSlicer;
 	QAction *SetProjection;
 	QAction *SetRaycast;
+
+	QAction *SetContour;
+	QAction *SetSomaRaycast;
 
 	QPushButton *ArunVesselTracingButton;
 	QAction *ColorByTreesAction;
@@ -507,7 +515,7 @@ private:
 
 	void createRayCastSliders();
 	QSpinBox * OpacitySpin, * BrightnessSpin;
-	QDoubleSpinBox * OpacityValueSpin;
+	QDoubleSpinBox * OpacityValueSpin, * SomaColorSpin;
 	QSlider *OpacitySlider, *BrightnessSlider;
 	QComboBox *ColorProfileCombo;
 
@@ -538,6 +546,7 @@ private:
 	*/
 	enum RenderModeEnum { SLICER, PROJECTION, RAYCAST, SLICERRAYCAST};
 	enum HighlightModeEnum { TREE, SEGMENT, TIP };
+	bool viewContour;
 
 	enum RenderModeEnum renderMode;
 	enum HighlightModeEnum highlightMode;

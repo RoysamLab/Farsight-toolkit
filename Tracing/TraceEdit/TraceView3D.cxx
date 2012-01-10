@@ -65,6 +65,7 @@ View3D::View3D(QWidget *parent)
 	this->projectLoadedState = false;
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
+	this->viewContour = true;
 	this->showGrid = true;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
@@ -529,7 +530,6 @@ void View3D::LoadTraces()
 
 void View3D::LoadImageData()
 {
-	std::cout << "LoadImageData called" << std::endl;
 	QString newImage = this->getImageFile();
 	if (!newImage.isEmpty())
 	{
@@ -550,7 +550,6 @@ void View3D::LoadImageData()
 		}
 		else
 		{
-			//std::cout << "View in 2D and CreateImageSlice" << std::endl;
 			//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(-1));
 			//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 			this->ImageActors->setIs2D(-1, true);
@@ -615,10 +614,9 @@ void View3D::LoadSomaFile()
 		this->ImageActors->setRenderStatus(-1, true);
 		this->QVTK->GetRenderWindow()->Render();
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
-		this->statusBar()->showMessage("Somas Rendered");
+		this->statusBar()->showMessage("Contour Somas Rendered");
 	}
 }
-
 
 void View3D::LoadProject()
 {
@@ -921,7 +919,8 @@ void View3D::choosetoRender(int row, int col)
 			//}
 			else
 			{
-				this->Renderer->AddActor(this->ImageActors->ContourActor(row));
+				if (this->viewContour)
+					this->Renderer->AddActor(this->ImageActors->ContourActor(row));
 				//this->ImageActors->setRenderStatus(row, true);
 			}
 		}
@@ -1193,23 +1192,32 @@ void View3D::CreateGUIObjects()
 	//connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
 	 
 	this->SetSlicer = new QAction("Set Slicer", this->CentralWidget);
+	this->SetSlicer->setCheckable(true);
 	connect(this->SetSlicer, SIGNAL(triggered()), this, SLOT(setSlicerMode()));
 
 	this->SetProjection = new QAction("Set Projection", this->CentralWidget);
+	this->SetProjection->setCheckable(true);
 	connect(this->SetProjection, SIGNAL(triggered()), this, SLOT(setProjectionMode()));
 
 	this->SetRaycast = new QAction("Set Raycast", this->CentralWidget);
+	this->SetRaycast->setCheckable(true);
 	connect(this->SetRaycast, SIGNAL(triggered()), this, SLOT(setRaycastMode()));
-	
+
+	this->SetContour = new QAction("Set Contour", this->CentralWidget);
+	this->SetContour->setCheckable(true);
+	this->SetContour->setChecked(true);
+	connect(this->SetContour, SIGNAL(triggered()), this, SLOT(setContourMode()));
+
+	this->SetSomaRaycast = new QAction("Set Raycast", this->CentralWidget);
+	this->SetSomaRaycast->setCheckable(true);
+	connect(this->SetSomaRaycast, SIGNAL(triggered()), this, SLOT(setRaycastSomaMode()));
 
 	this->ColorByTreesAction = new QAction("Color By Trees", this->CentralWidget);
 	this->ColorByTreesAction->setCheckable(true);
-	this->ColorByTreesAction->setChecked(false);
 	connect(this->ColorByTreesAction, SIGNAL(triggered()), this, SLOT(ToggleColorByTrees()));
 
 	this->GridAction = new QAction("Grid Lines", this->CentralWidget);
 	this->GridAction->setCheckable(true);
-	this->GridAction->setChecked(false);
 	connect(this->GridAction, SIGNAL(triggered()), this, SLOT(ToggleGridlines()));
 
 	// 3d cursor actions 
@@ -1811,6 +1819,9 @@ void View3D::CreateLayout()
 	renderer_sub_menu->addAction(this->SetSlicer);
 	renderer_sub_menu->addAction(this->SetProjection);
 	renderer_sub_menu->addAction(this->SetRaycast);
+	QMenu *soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
+	soma_sub_menu->addAction(this->SetContour);
+	soma_sub_menu->addAction(this->SetSomaRaycast);
 	this->DataViews->addAction(this->ColorByTreesAction);
 	this->DataViews->addAction(this->GridAction);
 
@@ -2007,7 +2018,6 @@ void View3D::rotateImage(int axis)
 }
 void View3D::rotationOptions()
 {
-	//std::cout << "Rotation Updated " << std::endl;
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
 	cam->SetFocalPoint(0,0,0);
 	cam->SetPosition(0,0,1);
@@ -2098,7 +2108,9 @@ void View3D::CreateActors()
 		}
 		else
 		{
-			this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+			//this->Renderer->AddVolume(this->ImageActors->GetRayCastSomaVolume(i);
+			if (this->viewContour)
+				this->Renderer->AddActor(this->ImageActors->ContourActor(i));
 			this->ImageActors->setRenderStatus(i, true);
 		}
 		//this->ImageActors->SetSliceCreate(i,false);
@@ -2125,20 +2137,6 @@ void View3D::removeImageActors()
 		this->ImageActors->setIs2D(i, false);
 		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
-
-		/*if(this->ImageActors->is2D(i))
-		{
-			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-			this->ImageActors->setIs2D(i, false);
-		}
-		else if (this->ImageActors->isRayCast(i))
-		{
-			this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-		} 
-		else
-		{
-			this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
-		}			*/
 
 		this->ImageActors->setRenderStatus(i, false);
 		//std::cout << "Turning off item " << i << std::endl;
@@ -2242,15 +2240,16 @@ void View3D::setSlicerMode()
 	}
 
 	this->QVTK->GetRenderWindow()->Render();
-	//std::cout << "Setting mode slicer" << std::endl;
 	if (!SlicerBarCreated)
 		this->createSlicerSlider();
 	else
 		this->SlicerBar->show();
-	// need to set window level to lighten image - Audrey
 	this->chooseInteractorStyle(3);
 	this->setSlicerZValue(-1);
 	renderMode = SLICER;
+	SetSlicer->setChecked(true);
+	SetProjection->setChecked(false);
+	SetRaycast->setChecked(false);
 
 	if (!showGrid)
 	{
@@ -2289,6 +2288,9 @@ void View3D::setProjectionMode()
 	this->chooseInteractorStyle(1);
 	//std::cout << "Setting mode projection" << std::endl;
 	renderMode = PROJECTION;
+	SetSlicer->setChecked(false);
+	SetProjection->setChecked(true);
+	SetRaycast->setChecked(false);
 }
 
 void View3D::setRaycastMode()
@@ -2327,6 +2329,9 @@ void View3D::setRaycastMode()
 	//std::cout << "Setting mode raycast" << std::endl;
 	
 	renderMode = RAYCAST;
+	SetSlicer->setChecked(false);
+	SetProjection->setChecked(false);
+	SetRaycast->setChecked(true);
 }
 
 void View3D::ClearRenderer(int i)
@@ -2362,6 +2367,26 @@ void View3D::ClearRenderer(int i)
 	//else if (renderMode == SLICERRAYCAST) //Slicer with raycast
 	//{
 	//}
+}
+void View3D::setContourMode()
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{  
+		this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
+	}
+	this->viewContour = true;
+	SetContour->setChecked(true);
+	SetSomaRaycast->setChecked(false);
+}
+void View3D::setRaycastSomaMode() //Is soma volume already shown? No
+{
+	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+	{
+		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
+	}
+	this->viewContour = false;
+	SetContour->setChecked(false);
+	SetSomaRaycast->setChecked(true);
 }
 
 void View3D::focusOn()
@@ -2628,7 +2653,6 @@ void View3D::ToggleColorByTrees()
 
 void View3D::ToggleGridlines() //2D gridlines
 {
-	//std::cout << "Grid Lines selected." << std::endl;
 	//If gridlines don't exist, then create
 	int num_lines = this->Gridlines->NumberOfLines();
 	int height_spacing = this->HeightSpaceBox->value();
@@ -2644,9 +2668,6 @@ void View3D::ToggleGridlines() //2D gridlines
 	{
 		double sceneBounds[6];
 		this->Renderer->ComputeVisiblePropBounds(sceneBounds);
-		//std::cout << "Create grid" << std::endl;
-		//double imageBounds[6];
-		//ImageActors->getImageBounds(imageBounds);
 		int grid_z_plane = sceneBounds[5];
 
 		if (renderMode == SLICER)
@@ -2667,7 +2688,6 @@ void View3D::ToggleGridlines() //2D gridlines
 	//if (PROJECTION)
 	if (showGrid)
 	{
-		//std::cout << "Show Grid" << std::endl;
 		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
 		for (int i = 0; i < num_horizontal_lines; i++)
 		{
@@ -2685,7 +2705,6 @@ void View3D::ToggleGridlines() //2D gridlines
 	}// turn on grid
 	else
 	{
-		//std::cout << "Hide Grid" << std::endl;
 		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
 		for (int i = 0; i < num_horizontal_lines; i++)
 		{
@@ -2705,7 +2724,6 @@ void View3D::ToggleGridlines() //2D gridlines
 }
 void View3D::AdjustGridlines(int value)
 {
-	//std::cout << "Adjust Gridlines" << std::endl;
 	//Remove actors
 	int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
 	for (int i = 0; i < num_horizontal_lines; i++)
@@ -2827,9 +2845,17 @@ void View3D::createRayCastSliders()
 	this->ColorProfileCombo->addItems(ColorProfileList);
 	connect(this->ColorProfileCombo, SIGNAL(activated(int)), this, SLOT(RayCastColorValueChanged(int)));
 
+	this->SomaColorSpin = new QDoubleSpinBox;
+	this->SomaColorSpin->setRange(0,1);
+	this->SomaColorSpin->setSingleStep(0.1);
+	this->SomaColorSpin->setValue(0.5);
+	connect(this->SomaColorSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaColorChanged(double)));
+
 	//add the widgets to the bar
 	this->RaycastBar->addWidget(new QLabel("Color Profile"));
 	this->RaycastBar->addWidget(this->ColorProfileCombo);
+	this->RaycastBar->addWidget(new QLabel("Soma Color"));
+	this->RaycastBar->addWidget(this->SomaColorSpin);
 	this->RaycastBar->addWidget(new QLabel("Opacity Threshold"));
 	this->RaycastBar->addWidget(this->OpacitySpin);
 	this->RaycastBar->addWidget(this->OpacitySlider);
@@ -2873,6 +2899,23 @@ void View3D::RayCastColorValueChanged(int value)
 	this->QVTK->GetRenderWindow()->Render();
 }
 
+void View3D::chooseSomaRender(int value) //Audrey - display original soma image (threshold contour is currently shown)
+{
+	if (value == 0) //by file toolbar or selection tool
+	{
+		//original
+	}
+	else
+	{
+		//contour - thresholded
+	}
+}
+void View3D::SomaColorChanged(double value)
+{
+	//std::cout << "SomaColorChanged()" << std::endl;
+	this->ImageActors->setSomaColor(value);
+	this->QVTK->GetRenderWindow()->Render();
+}
 void View3D::EditHelp()
 {
 	//will write help documentation here
@@ -3362,7 +3405,6 @@ void View3D::CalculateCellToCellDistanceGraph()
 /*Selections*/
 void View3D::setHighlightSettings(int value)
 {
-	//std::cout << "Change trace colors" << std::endl;
 	if (value == 1)
 		highlightMode = SEGMENT;
 	else if (value == 2)
@@ -3370,18 +3412,14 @@ void View3D::setHighlightSettings(int value)
 	else
 		highlightMode = TREE;
 
-	//std::cout << "Highlight Mode: " << value << std::endl;
-
 	this->updateTraceSelectionHighlights();
 	
 }
 void View3D::updateTraceSelectionHighlights()
 {
-	//std::cout << "updateTraceSelectionHighlights()" << std::endl;
 	//this->UpdateLineActor();
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
-	//std::cout << "Number of selections: " << Selections.size() << std::endl;
 	for (unsigned int i = 0; i < Selections.size(); i++)
 	{
 		this->HighlightSelected(Selections[i],this->SelectColor);
@@ -3394,7 +3432,6 @@ void View3D::updateTraceSelectionHighlights()
 
 void View3D::HighlightSelected(TraceLine* tline, double color)
 {
-	//std::cout << "HighlightSelected()" << std::endl;
 	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
 	TraceLine::TraceBitsType::iterator iterend = tline->GetTraceBitIteratorEnd();
 	if (color == -1)
@@ -3406,7 +3443,6 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 
 	if (highlightMode == SEGMENT)
 	{
-		//std::cout<< "Color segments" << std::endl;
 		//color traces by branch order
 		int branch_order = tline->GetLevel();
 		while (branch_order >= 5) //repeat colors after 5 orders
