@@ -56,7 +56,7 @@ void MicrogliaProcessTracer::LoadInputImage(std::string fname)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "reader Exception: " << &err << std::endl;
+		std::cerr << "reader Exception: " << err << std::endl;
 	}
 
 	this->LoadInputImage(image);
@@ -75,7 +75,7 @@ void MicrogliaProcessTracer::LoadInputImage(ImageType3D::Pointer &image)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "itkRescaleIntensityImageFilter Exception: " << &err << std::endl;
+		std::cerr << "itkRescaleIntensityImageFilter Exception: " << err << std::endl;
 	}
 
 	//pad z slices
@@ -199,7 +199,7 @@ void MicrogliaProcessTracer::LoadSomaImage(std::string somaFileName)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "somaReader Exception: " << &err << std::endl;
+		std::cerr << "somaReader Exception: " << err << std::endl;
 	}
 	
 	this->SomaImage->SetSpacing(this->InputImage->GetSpacing());
@@ -219,6 +219,7 @@ void MicrogliaProcessTracer::RunTracing()
 		return;
 	}
 
+	//Ridge Detection
 	this->CalculateCriticalPoints();
 
 	itk::ImageRegionConstIterator<ImageType3D> Nit(this->NDXImage, this->NDXImage->GetBufferedRegion());
@@ -283,6 +284,7 @@ void MicrogliaProcessTracer::CalculateCriticalPoints(void)
 
 	float power = -0.25;
 
+	//Calculate critical points at sigma = 1, 2^(1/4), 2^(1/2), 2^(3/4), 2^1, 2^(5/4)
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		power = power + 0.25;
@@ -300,7 +302,14 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 	gauss->SetInput( this->PaddedInputImage );
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
-	gauss->GetOutput()->Update();
+	try
+	{
+		gauss->GetOutput()->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "gauss Exception: " << err << std::endl;
+	}
 
 	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
 	float tnorm = vcl_pow(sigma, 1.6f);
