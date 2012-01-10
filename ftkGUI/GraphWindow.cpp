@@ -49,15 +49,6 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	this->dataTable = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
-	this->DistanceToDevice.fill(0);
-
-	/// Get the distance to device for each sample
-	int coln = this->dataTable->GetNumberOfColumns();
-	vnl_vector<double> distance(this->dataTable->GetNumberOfRows());
-	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
-	{
-		distance[i] = this->dataTable->GetValue(i, coln - 1).ToDouble();
-	}
 
 	for( long int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
@@ -87,7 +78,6 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 			this->indMapFromVertexToClusInd.insert( std::pair< int, int>(this->indMapFromIndToVertex[i], (*indexCluster)[i]));
 		}
 			/// rebuild the datamatrix for MST 
-		DistanceToDevice.set_size(clusterSize);
 		std::vector<int> clus;
 		for( int i = 0; i < clusterSize; i++)
 		{
@@ -99,32 +89,6 @@ void GraphWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 			int index = (*indexCluster)[i];
 			this->indMapFromClusIndToVertex[index].push_back( this->indMapFromIndToVertex[i]);
 			this->indMapFromClusIndToInd[index].push_back( i);
-		}
-		for( int i = 0; i < clusterSize; i++)
-		{
-			std::vector<int> tmp = this->indMapFromClusIndToInd[i];
-			double sum = 0;
-			for( int j = 0; j < tmp.size(); j++)
-			{
-				sum += distance(tmp[j]);
-			}
-			DistanceToDevice[i] = sum / tmp.size();
-		}
-	}
-	else
-	{
-		DistanceToDevice = distance;
-	}
-
-	//DistanceToDevice = DistanceToDevice - DistanceToDevice.mean();
-	//vnl_vector<double>::abs_t var = DistanceToDevice.two_norm();
-	//DistanceToDevice = DistanceToDevice / var;
-	if( DistanceToDevice.max_value() - DistanceToDevice.min_value() != 0)
-	{
-		DistanceToDevice = (DistanceToDevice - DistanceToDevice.min_value()) / ( DistanceToDevice.max_value() - DistanceToDevice.min_value());
-		for( int i = 0; i < DistanceToDevice.size(); i++)
-		{
-			DistanceToDevice[i] = 1 - exp(- 5 * DistanceToDevice[i]);
 		}
 	}
 
@@ -293,12 +257,16 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>& colSels, QString filename)
+void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>* colSels, QString filename)
 {
 	this->fileName = filename;
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
 	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
-	this->colSelectIDs = colSels;
+	if( colSels)
+	{
+		this->colSelectIDs = *colSels;
+	}
+
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	
@@ -425,22 +393,13 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	
 	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
 
-	if(DistanceToDevice.sum() <= 10)    // distance is not available
-	{
-		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
-		{             
-			vertexColors->InsertNextValue( i);
-			this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
-		}
+
+	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
+	{             
+		vertexColors->InsertNextValue( i);
+		this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
 	}
-	else
-	{
-		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
-		{
-			vertexColors->InsertNextValue( i);
-			this->lookupTable->SetTableValue(i, 1 - DistanceToDevice[i], 0, DistanceToDevice[i]); // color the vertices- blue
-		}
-	}
+
 	lookupTable->Build();
 
 	graph->GetVertexData()->AddArray(vertexColors);
@@ -667,7 +626,10 @@ void GraphWindow::SetSelectedIds(std::set<long int>& IDs)
 
 void GraphWindow::SetSelectedIds2()
 {
-	this->selection2->select( this->colSelectIDs);
+	if( this->colSelectIDs.size() > 0)
+	{
+		this->selection2->select( this->colSelectIDs);
+	}
 }
 
 void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
@@ -704,35 +666,18 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		vertexnum = this->indMapFromClusIndToVertex.size();  // vertex size equals cluster size
 	}
 
-	if(DistanceToDevice.sum() <= 10)    // distance is not available
+	for( vtkIdType i = 0; i < vertexnum; i++)
 	{
-		for( vtkIdType i = 0; i < vertexnum; i++)
+		if (selectedIDs.find(i) != selectedIDs.end())
 		{
-			if (selectedIDs.find(i) != selectedIDs.end())
-			{
-				this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
-			}
-		
-			else
-			{
-				this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
-			}
+			this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
+		}
+		else
+		{
+			this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
 		}
 	}
-	else
-	{
-		for( vtkIdType i = 0; i < vertexnum; i++)
-		{
-			if (selectedIDs.find(i) != selectedIDs.end())
-			{
-				this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
-			}
-			else
-			{
-				this->lookupTable->SetTableValue(i, 1 - DistanceToDevice[i], 0, DistanceToDevice[i]); // color the vertices- blue
-			}
-		}
-	}
+
 	this->lookupTable->Build();
 }
 
@@ -788,7 +733,12 @@ void GraphWindow::UpdateGraphView()
 		selection->RemoveAllNodes();
 		selection->AddNode(selectNodeList);
 		annotationLink->SetCurrentSelection( selection);
-		selection2->select( this->colSelectIDs);    // only select the selected feature columns
+
+		if( this->colSelectIDs.size() > 0)
+		{
+			selection2->select( this->colSelectIDs);    // only select the selected feature columns
+		}
+
 		std::set<long int> updataIDes =  this->selection->getSelections();
 		UpdataLookupTable( updataIDes);
 

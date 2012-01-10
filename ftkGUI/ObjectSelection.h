@@ -52,7 +52,7 @@ public:
 	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
 	void SetClusterIndex( std::vector< std::set<long int> > &clusIndex);
-	void GetClusterIndex( std::vector< std::set<long int> > &clusIndex);
+	void GetClusterIndex( std::vector< std::vector<long int> > &clusIndex);
 
 signals:
 	void changed();

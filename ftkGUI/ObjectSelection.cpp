@@ -177,8 +177,18 @@ void ObjectSelection::SetClusterIndex( std::vector< std::set<long int> > &clusIn
 	emit thresChanged();
 }
 
-void ObjectSelection::GetClusterIndex( std::vector< std::set<long int> > &clusIndex)
+void ObjectSelection::GetClusterIndex( std::vector< std::vector<long int> > &clusIndex)
 {
-	clusIndex = index;
+	for( int i = 0; i < index.size(); i++)
+	{
+		std::set< long int> setIndex = index[i];
+		std::set< long int>::iterator iter;
+		std::vector< long int> tmp;
+		for( iter = setIndex.begin(); iter != setIndex.end(); iter++)
+		{
+			tmp.push_back( *iter);
+		}
+		clusIndex.push_back( tmp);
+	}
 }
 

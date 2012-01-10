@@ -227,6 +227,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 	this->DataTable = table;
 	
 	ConvertTableToMatrix( table, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
+	UNMatrixAfterCellCluster = this->DataMatrix;
 
 	this->CellClusterIndex.set_size(this->DataMatrix.rows());
 	for( int i = 0; i < CellCluster.size(); i++)
@@ -340,16 +341,16 @@ void SPDAnalysisModel::split(std::string& s, char delim, std::vector< std::strin
 	}
 } 
 
-void SPDAnalysisModel::NormalizeData()
+void SPDAnalysisModel::NormalizeData( vnl_matrix<double> &mat)
 {
 	vnl_vector<double> std_vec;
 	vnl_vector<double> mean_vec;
 
-	GetMatrixRowMeanStd(this->DataMatrix, mean_vec, std_vec);
+	GetMatrixRowMeanStd(mat, mean_vec, std_vec);
 	
-	for( unsigned int i = 0; i < this->DataMatrix.columns(); ++i)
+	for( unsigned int i = 0; i < mat.columns(); ++i)
 	{
-		vnl_vector<double> temp_col = this->DataMatrix.get_column(i);
+		vnl_vector<double> temp_col = mat.get_column(i);
 		if( abs(std_vec(i)) > 0)
 		{	
 			for( unsigned int j =0; j < temp_col.size(); ++j)
@@ -365,7 +366,7 @@ void SPDAnalysisModel::NormalizeData()
 				temp_col[j] = temp_col[j] - mean_vec(i);
 			}
 		}
-		this->DataMatrix.set_column(i,temp_col);
+		mat.set_column(i,temp_col);
 	}
 }
 
@@ -378,11 +379,11 @@ void SPDAnalysisModel::ClusterCells( double cor)
 
 	vnl_matrix<double> tmpMat = this->DataMatrix;
 
-	NormalizeData();   // eliminate the differences of different features
+	NormalizeData(this->DataMatrix);   // eliminate the differences of different features
 
 	this->DataMatrix =  this->DataMatrix.transpose();
 
-	NormalizeData();   // for calculating covariance
+	NormalizeData(this->DataMatrix);   // for calculating covariance
 
 	vnl_matrix<double> moduleMean = this->DataMatrix;
 	moduleMean.normalize_columns();
@@ -415,7 +416,7 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, TreeIndex, 2);
 		std::cout<< "new cluster num:"<< new_cluster_num<<" vs "<<"old cluster num:"<<old_cluster_num<<endl;
 	}
-	while( old_cluster_num != new_cluster_num);
+	while( old_cluster_num - 2 > new_cluster_num);
 
 	this->CellClusterIndex = clusterIndex;
 	std::cout<< "Cell Cluster Size:"<<new_cluster_num<<endl;
@@ -446,9 +447,8 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		tmpVec = tmpVec / CellCluster[i].size();
 		MatrixAfterCellCluster.set_row( i, tmpVec);
 	}	
-	this->DataMatrix = MatrixAfterCellCluster;  // for normalization
-	NormalizeData();
-	MatrixAfterCellCluster = this->DataMatrix;
+	this->UNMatrixAfterCellCluster = MatrixAfterCellCluster;  // for normalization
+	NormalizeData(MatrixAfterCellCluster);
 	
 	this->DataMatrix = tmpMat;   // restore datamatrix
 	ofs.close();
@@ -476,57 +476,14 @@ void SPDAnalysisModel::GetCellClusterSize( std::vector<int> &clusterSize)
 
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataTableAfterCellCluster()
 {
-	vnl_matrix<double> mat;
-	std::vector<int> index;
-	std::vector<double> distance;
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	ConvertTableToMatrix(DataTable, mat, index, distance);
-	vnl_matrix<double> matAfterCellCluster;
-	std::vector<double> modDistance;
-	if( CellCluster.size() > 0)
-	{
-		vnl_vector<double> vec( mat.cols());
-		matAfterCellCluster.set_size( CellCluster.size(), mat.cols());
-		for( int i = 0; i < CellCluster.size(); i++)
-		{
-			vec.fill(0);
-			double dis = 0;
-			for( int j = 0; j < CellCluster[i].size(); j++)
-			{
-				int ind = CellCluster[i][j];
-				vec = vec + mat.get_row(ind);
-				dis += distance[ind];
-			}
-			vec = vec / CellCluster.size();
-			dis = dis / CellCluster.size();
-			matAfterCellCluster.set_row(i, vec);
-			modDistance.push_back(dis);
-		}
-	}
-	else
-	{
-		matAfterCellCluster = mat;
-		modDistance = distance;
-	}
-	ConvertMatrixToTable( table, matAfterCellCluster, modDistance);
+	ConvertMatrixToTable( table, UNMatrixAfterCellCluster, DistanceToDevice);
 	return table;
-}
-
-void SPDAnalysisModel::GetClusterMapping( std::vector<int> &indToclusInd)
-{
-	indToclusInd.clear();
-	if( this->CellClusterIndex.max_value() + 1 < this->DataMatrix.rows())    // cell cluster has been on
-	{
-		for( int i = 0; i < this->CellClusterIndex.size(); i++)
-		{
-			indToclusInd.push_back( this->CellClusterIndex[i]);
-		}
-	}
 }
 
 int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 {
-	NormalizeData();
+	NormalizeData( this->DataMatrix);
 	vnl_vector<unsigned int> clusterIndex;
 	clusterIndex.set_size( this->DataMatrix.cols());
 	vnl_matrix<double> moduleMean = this->DataMatrix;
@@ -967,6 +924,81 @@ void SPDAnalysisModel::GetFeatureIdbyModId(std::vector<unsigned int> &modID, std
 	}
 }
 
+void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat)  // after single linkage clustering
+{
+	clusAverageMat.set_size( index.size(), UNMatrixAfterCellCluster.cols());
+	for( int i = 0; i < index.size(); i++)
+	{
+		vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
+		tmp.fill(0);
+		for( int j = 0; j < index[i].size(); j++)
+		{
+			long int id = index[i][j];
+			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(id);
+			tmp = tmp + row;
+		}
+		tmp = tmp / index[i].size();
+		clusAverageMat.set_row(i, tmp);
+	}
+}
+
+void SPDAnalysisModel::GetSingleLinkageClusterModuleSize(std::vector< std::vector<long int> > &index, std::vector<int> &moduleSize)
+{
+	moduleSize.clear();
+	if( CellCluster.size() > 0)
+	{
+		for( int i = 0; i < index.size(); i++)
+		{
+			int tmp = 0;
+			for( int j = 0; j < index[i].size(); j++)
+			{
+				int id = index[i][j];
+				tmp += CellCluster[id].size();
+			}
+			moduleSize.push_back(tmp);
+		}
+	}
+	else
+	{
+		for( int i = 0; i < index.size(); i++)
+		{
+			moduleSize.push_back(index[i].size());
+		}
+	}
+}
+
+void SPDAnalysisModel::GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex)
+{
+	std::ofstream ofs("clusIndexMapping.txt");
+	ofs<< "Cell cluster index before single linkage:"<<endl;
+	ofs<< CellClusterIndex<<endl;
+
+	std::vector< unsigned int> tmpInd;
+	tmpInd.resize( CellClusterIndex.max_value() + 1);
+	for( unsigned int i = 0; i < index.size(); i++)
+	{
+		for( unsigned int j = 0; j < index[i].size(); j++)
+		{
+			unsigned int ind = index[i][j];
+			tmpInd[ind] = i;
+		}
+	}
+	
+	newIndex.resize( CellClusterIndex.size());
+	for( unsigned int i = 0; i < CellClusterIndex.size(); i++)
+	{
+		unsigned int ind = CellClusterIndex[i];
+		newIndex[i] = tmpInd[ind];
+	}
+
+	ofs<< "Cell cluster index after single linkage:"<<endl;
+	for( int i = 0; i < newIndex.size(); i++)
+	{
+		ofs<< newIndex[i]<<"\t";
+	}
+	ofs.close();
+}
+
 void SPDAnalysisModel::HierachicalClustering()    
 {
 	assert(TreeIndex.size() == this->ClusterIndex.max_value() + 1);
@@ -1248,7 +1280,7 @@ void SPDAnalysisModel::GenerateMST()
 	this->MSTWeight.clear();
 	this->ModuleGraph.clear();
 
-	if( this->MatrixAfterCellCluster.rows() <= 0)
+	if( CellCluster.size() <= 0)
 	{
 		this->MatrixAfterCellCluster = this->DataMatrix;
 		std::cout<< "MatrixAfterCellCluster hasn't been generated, given datamatrix instead!"<<endl;
@@ -1412,16 +1444,20 @@ void SPDAnalysisModel::GenerateMST()
 	//ofs.close();
 }
 
-vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat)
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures)
 {
-	int num_nodes = mat.rows();
+	NormalizeData(mat);
+	vnl_matrix<double> clusterMat( mat.rows(), selFeatures.size());
+	GetCombinedMatrix( mat, selFeatures, clusterMat);
+
+	int num_nodes = clusterMat.rows();
 	Graph graph(num_nodes);
 
 	for( unsigned int k = 0; k < num_nodes; k++)
 	{
 		for( unsigned int j = k + 1; j < num_nodes; j++)
 		{
-			double dist = CityBlockDist( mat, k, j);   // need to be modified 
+			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
 			//double dist = EuclideanBlockDist( clusterMat, k, j);
 			boost::add_edge(k, j, dist, graph);
 		}
@@ -1452,7 +1488,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 	{
 		if( i != vertex[i])
 		{
-			double dist = CityBlockDist( mat, i, vertex[i]);
+			double dist = CityBlockDist( clusterMat, i, vertex[i]);
 			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
 			DataRow->InsertNextValue(i);
 			DataRow->InsertNextValue( vertex[i]);
@@ -1461,6 +1497,20 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 		}
 	}
 	return table;
+}
+
+void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat)
+{
+	int count = 0;
+	for( unsigned int i = 0; i < datamat.cols(); i++)
+	{
+		if( IsExist(selFeatureIDs, i))
+		{
+			vnl_vector<double> vec = datamat.get_column(i);
+			mat.set_column(count, vec);
+			count++;
+		}
+	}
 }
 
 void SPDAnalysisModel::GenerateDistanceMST()
@@ -2180,6 +2230,20 @@ void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::set<long 
 		char* name = this->DataTable->GetColumn(index + 1)->GetName();
 		std::string featureName(name);
 		ofs<< index<<"\t"<<featureName<<endl;
+	}
+	ofs.close();
+}
+
+void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::vector<unsigned int>& selectedFeatures)
+{
+	QString file = this->filename + filename;
+	std::ofstream ofs( file.toStdString().c_str(), std::ofstream::out);
+
+	for( int i = 0; i < selectedFeatures.size(); i++)
+	{
+		char* name = this->DataTable->GetColumn(selectedFeatures[i] + 1)->GetName();
+		std::string featureName(name);
+		ofs<< selectedFeatures[i]<<"\t"<<featureName<<endl;
 	}
 	ofs.close();
 }

@@ -199,6 +199,7 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	{
 		selection = sels;
 	}
+	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
 
 	if( sels2 == NULL)
 	{
@@ -275,7 +276,7 @@ void SPDMainWindow::loadTestData()
 	{
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		this->SPDModel->NormalizeData();
+		//this->SPDModel->NormalizeData();
 	}
 }
 
@@ -427,41 +428,19 @@ void SPDMainWindow::viewProgression()
 	/** heatmap set models */
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	std::vector< unsigned int> selModuleID;
-	std::vector< unsigned int> selFeatureID;
 	std::vector< int> selOrder;
 	std::vector< int> unselOrder;
 	std::vector< int> clusterSize;
+	selFeatureID.clear();
 
 	split( selectModulesID, ',', selModuleID);
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
-	SPDModel->GetCellClusterSize( clusterSize);
 	
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
-	if( selection == NULL)
-	{
-		selection = new ObjectSelection();
-		connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
-	}
-
 	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder);
-	//this->HeatmapWin->runClus();
-
-	/** graph window set models */
-	std::vector<int> index;
-	SPDModel->GetClusterMapping(index);
-	if( index.size() > 0)
-	{
-		this->graph->setModels(data, selection, &index);
-	}
-	else
-	{
-		this->graph->setModels(data, selection);
-	}
-
-	/** show windows*/
-	this->HeatmapWin->showGraph();
+	this->HeatmapWin->showGraphforSPD( selOrder.size());
 
 	//vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	//std::vector<std::string> headers;
@@ -471,7 +450,9 @@ void SPDMainWindow::viewProgression()
 	//SPDModel->GetSelectedFeatures(featureSelectedIDs);
 	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
 
-	//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+
+	//this->graph->setModels(data, selection);
+	//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2]);
 	//try
 	//{
 	//	this->graph->ShowGraphWindow();
@@ -537,26 +518,26 @@ void SPDMainWindow::GetFeatureOrder(std::vector< unsigned int> &selID, std::vect
 		}
 	}
 
-	ofstream ofs("FeatureOrder.txt");
-	ofs<< "feature optimal order:"<<endl;
-	for( int i = 0; i < cc2->num_samples; i++)
-	{
-		ofs<< cc2->optimalleaforder[i]<<"\t";
-	}
-	ofs<<endl;
-	ofs<< "Selected features optimal order:"<<endl;
-	for( int i = 0; i < selIdOrder.size(); i++)
-	{
-		ofs<< selIdOrder[i]<<"\t";
-	}
-	ofs<<endl;
-	ofs<< "UnSelected features optimal order:"<<endl;
-	for( int i = 0; i < unselIdOrder.size(); i++)
-	{
-		ofs<< unselIdOrder[i]<<"\t";
-	}
-	ofs<<endl;
-	ofs.close();
+	//ofstream ofs("FeatureOrder.txt");
+	//ofs<< "feature optimal order:"<<endl;
+	//for( int i = 0; i < cc2->num_samples; i++)
+	//{
+	//	ofs<< cc2->optimalleaforder[i]<<"\t";
+	//}
+	//ofs<<endl;
+	//ofs<< "Selected features optimal order:"<<endl;
+	//for( int i = 0; i < selIdOrder.size(); i++)
+	//{
+	//	ofs<< selIdOrder[i]<<"\t";
+	//}
+	//ofs<<endl;
+	//ofs<< "UnSelected features optimal order:"<<endl;
+	//for( int i = 0; i < unselIdOrder.size(); i++)
+	//{
+	//	ofs<< unselIdOrder[i]<<"\t";
+	//}
+	//ofs<<endl;
+	//ofs.close();
 
 	for( int i = 0; i < FeatureTreeData.size(); i++)
 	{
@@ -582,25 +563,36 @@ void SPDMainWindow::regenerateProgressionTree()
 {
 	if( selection)
 	{
-		//vnl_matrix<double> modAverageMat;
-		//std::vector<int> modSize;
-		//selection->GetSelectedModules(modAverageMat, modSize);
-		//std::cout<< "generate "<<endl;
+		std::cout<< "rerender progression view"<<endl;
+		std::vector< std::vector< long int> > clusIndex;
+		selection->GetClusterIndex( clusIndex);
 
-		//vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( modAverageMat);
+		vnl_matrix<double> clusAverageMat;
+		std::vector<int> modSize;
 
-		//QString str = SPDModel->GetFileName();
-		//std::set<long int> featureSelectedIDs;
-		//SPDModel->GetSelectedFeatures(featureSelectedIDs);
-		//this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-		//try
-		//{
-		//	this->graph->RerenderView();
-		//}
-		//catch(...)
-		//{
-		//	std::cout<< "Graph window error!"<<endl;
-		//}
+		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
+		SPDModel->GetSingleLinkageClusterModuleSize(clusIndex, modSize);
+
+		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
+		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
+
+		/** graph window set models */
+		std::vector<int> index;
+		SPDModel->GetSingleLinkageClusterMapping(clusIndex, index);
+
+		this->graph->setModels(data, selection, &index);
+
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2]);
+		try
+		{
+			this->graph->ShowGraphWindow();
+		}
+		catch(...)
+		{
+			std::cout<< "Graph window error!"<<endl;
+		}
 	}
 }
 

@@ -105,7 +105,7 @@ public:
 	void runClus();
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
-	void showGraphforSPD();
+	void showGraphforSPD( int endCol = 0);
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
@@ -189,7 +189,7 @@ private:
 	void scaleData(double** mustd);
 	void scaleData();
 	void drawPoints1();
-	void drawPoints3();
+	void drawPoints3( int endCol = 0);
 	void setselectedCellIds();
 	void computeselectedcells();
 	void createDataForDendogram1(double powCof);

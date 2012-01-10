@@ -1218,7 +1218,7 @@ void Heatmap::drawPoints1()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void Heatmap::drawPoints3()
+void Heatmap::drawPoints3( int endCol)
 {
 	int max_table_values = 2*this->num_samples-1;
 
@@ -1309,6 +1309,31 @@ void Heatmap::drawPoints3()
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+
+	if( endCol >= 1)
+	{
+		double p1[3];
+		double p2[3];
+
+		p1[0]= ( this->Processed_Coordinate_Data_Tree2[endCol][1] + this->Processed_Coordinate_Data_Tree2[endCol - 1][1]) / 2;
+		p1[1]=-0.5;
+		p1[2]=0;
+		p2[0]= p1[0];
+		p2[1]=0.5;
+		p2[2]=0;
+
+		vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+		lineSource->SetPoint1(p1);
+		lineSource->SetPoint2(p2);
+
+		vtkSmartPointer<vtkPolyDataMapper> lineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+		lineMapper->SetInputConnection(lineSource->GetOutputPort());
+		vtkSmartPointer<vtkActor> lineActor = vtkSmartPointer<vtkActor>::New();
+		lineActor->SetMapper(dragLineMapper);
+		lineActor->GetProperty()->SetColor(1,1,1);
+		lineActor->GetProperty()->SetLineWidth(1.5);
+		this->view->GetRenderer()->AddActor(lineActor);
+	}
   
 	vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
 	lmapper->SetInputConnection(hier->GetOutputPort());
@@ -1802,10 +1827,10 @@ void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
-void Heatmap::showGraphforSPD()
+void Heatmap::showGraphforSPD( int endCol)
 {	
 	if(this->clusflag == true)
-		this->drawPoints3();
+		this->drawPoints3( endCol);
 	else
 		this->drawPoints1();
 
@@ -1968,14 +1993,14 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 			clusternumber++;
 		}	
 	}
-	cout<<"cluster number is "<<clusternumber<<endl;
+	//cout<<"cluster number is "<<clusternumber<<endl;
 
 	std::vector< std::set< long int> > clusIndex;
 	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
 	{
 		std::set<long int> idsforSPD;
 		this->reselectIdsforSPD(idsforSPD, *it);
-		cout<<"...\n";
+		//cout<<"...\n";
 		clusIndex.push_back(idsforSPD);
 	}
 
@@ -1986,7 +2011,7 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
 {
 	if(id < this->num_samples)
 	{
-		cout<<id<<"\t";
+		//cout<<id<<"\t";
 		idsforSPD.insert( indMapFromIndToVertex[id]);
 	}
 	else

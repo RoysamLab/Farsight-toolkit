@@ -56,7 +56,7 @@ public:
 	unsigned int GetSampleNum();
 	unsigned int GetFeatureNum();
 
-	void NormalizeData();
+
 	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
 	void HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol = true);
@@ -66,8 +66,12 @@ public:
 	vtkSmartPointer<vtkTable> GetDataTableAfterCellCluster();
 	void GetFeatureIdbyModId(std::vector<unsigned int> &modID, std::vector<unsigned int> &featureID);
 
+	void GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat);  // after single linkage clustering
+	void GetSingleLinkageClusterModuleSize(std::vector< std::vector< long int> > &index, std::vector<int> &moduleSize);
+	void GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex);   
+
 	void GenerateMST();
-	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat);
+	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures);
 	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
@@ -76,10 +80,10 @@ public:
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
+	void SaveSelectedFeatureNames(QString filename, std::vector<unsigned int>& selectedFeatures);
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
 	void GetMatrixData(vnl_matrix<double> &mat);
-	void GetClusterMapping( std::vector<int> &indToclusInd);
 	void SetProgressionTag(bool bProg);
 	bool GetProgressionTag();
 	void GetDistanceOrder(std::vector<long int> &order);
@@ -87,6 +91,7 @@ public:
 protected:
 	SPDAnalysisModel();
 	~SPDAnalysisModel();
+	void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, std::vector<double> &distance);
@@ -95,6 +100,7 @@ protected:
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
+	void GetCombinedMatrix( vnl_matrix<double> &datamat, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
 	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
@@ -130,15 +136,16 @@ private:
 	std::vector<double> DistanceToDevice;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
 	vtkSmartPointer<vtkTable> DataTable;
-	vtkSmartPointer<vtkTable> DataTableAfterCellCluster;  // average data after cell cluster without normalization
 	std::vector<std::string> headers;
 	std::vector<int> FeatureIndex;
 	
 	// data for cell agglomeration
+	vtkSmartPointer<vtkTable> DataTableAfterCellCluster;  // average data after cell cluster without normalization
+	vnl_matrix<double> UNMatrixAfterCellCluster; //matAfterCellCluster;
 	vnl_vector<unsigned int> CellClusterIndex;
 	std::vector< std::vector<int> > CellCluster;
-	vnl_matrix<double> MatrixAfterCellCluster;
-		
+	vnl_matrix<double> MatrixAfterCellCluster;     // 
+
 	//data for feature agglormeration
 	vnl_vector<unsigned int> ClusterIndex;
 	vnl_matrix<double> ModuleMean;

@@ -100,6 +100,7 @@ private:
 	ObjectSelection *selection;  /** selection for threshold and IDs */
 	ObjectSelection *selection2; 
 
+	std::vector< unsigned int> selFeatureID;
 };
 
 #endif // SPDMAINWINDOW_H
