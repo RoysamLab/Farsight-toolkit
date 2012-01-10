@@ -244,41 +244,41 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
 }
-vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastSomaVolume(int i)
-{
-	if (i == -1)
-	{
-		i = int (this->LoadedImages.size() - 1);
-	}
-	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-	this->LoadedImages[i]->somaVolume = vtkSmartPointer<vtkVolume>::New();
-	if (this->LoadedImages[i]->tag.compare("Soma")==0)
-	{
-		//std::cout << "setSomaColor" << std::endl;
-		this->setSomaColor(this->somaColorValue);
-	}
-	else
-	{
-		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
-	}//Image
-	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
-	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
-#ifdef USE_GPUREN
-	{
-		RaycastVolumeMapperGPU(i);
-		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
-	}
-#else
-	{
-		TextureVolumeMapper(i);
-		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapper);
-	}
-#endif
-	this->LoadedImages[i]->somaVolume->SetProperty(this->LoadedImages[i]->volumeProperty);
-	this->LoadedImages[i]->somaVolume->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
-	this->LoadedImages[i]->somaVolume->SetPickable(0);
-	return this->LoadedImages[i]->somaVolume;
-}
+//vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastSomaVolume(int i)
+//{
+//	if (i == -1)
+//	{
+//		i = int (this->LoadedImages.size() - 1);
+//	}
+//	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
+//	this->LoadedImages[i]->somaVolume = vtkSmartPointer<vtkVolume>::New();
+//	if (this->LoadedImages[i]->tag.compare("Soma")==0)
+//	{
+//		//std::cout << "setSomaColor" << std::endl;
+//		this->setSomaColor(this->somaColorValue);
+//	}
+//	else
+//	{
+//		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+//	}//Image
+//	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
+//	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
+//#ifdef USE_GPUREN
+//	{
+//		RaycastVolumeMapperGPU(i);
+//		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
+//	}
+//#else
+//	{
+//		TextureVolumeMapper(i);
+//		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapper);
+//	}
+//#endif
+//	this->LoadedImages[i]->somaVolume->SetProperty(this->LoadedImages[i]->volumeProperty);
+//	this->LoadedImages[i]->somaVolume->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+//	this->LoadedImages[i]->somaVolume->SetPickable(0);
+//	return this->LoadedImages[i]->somaVolume;
+//}
 void ImageRenderActors::setSomaColor(double colorValue) //works when raycast mode button triggered
 {
 	//std::cout << "setSomaColor" << std::endl;
@@ -320,6 +320,14 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
 	}
 	return this->LoadedImages[i]->volume;
 }
+//vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastSomaVolume(int i)
+//{
+//	if (i == -1)
+//	{
+//		i = int (this->LoadedImages.size() - 1);
+//	}
+//	return this->LoadedImages[i]->somaVolume;
+//}
 bool ImageRenderActors::getRenderStatus(int i)
 {
 	if (i == -1)

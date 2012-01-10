@@ -921,7 +921,6 @@ void View3D::choosetoRender(int row, int col)
 			{
 				if (this->viewContour)
 					this->Renderer->AddActor(this->ImageActors->ContourActor(row));
-				//this->ImageActors->setRenderStatus(row, true);
 			}
 		}
 	}
@@ -2108,9 +2107,9 @@ void View3D::CreateActors()
 		}
 		else
 		{
-			//this->Renderer->AddVolume(this->ImageActors->GetRayCastSomaVolume(i);
 			if (this->viewContour)
 				this->Renderer->AddActor(this->ImageActors->ContourActor(i));
+
 			this->ImageActors->setRenderStatus(i, true);
 		}
 		//this->ImageActors->SetSliceCreate(i,false);
@@ -2372,8 +2371,11 @@ void View3D::setContourMode()
 {
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{  
+		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 		this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
 	}
+	this->QVTK->GetRenderWindow()->Render();
+
 	this->viewContour = true;
 	SetContour->setChecked(true);
 	SetSomaRaycast->setChecked(false);
@@ -2383,7 +2385,10 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
 		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
+		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 	}
+	this->QVTK->GetRenderWindow()->Render();
+
 	this->viewContour = false;
 	SetContour->setChecked(false);
 	SetSomaRaycast->setChecked(true);
@@ -2848,7 +2853,7 @@ void View3D::createRayCastSliders()
 	this->SomaColorSpin = new QDoubleSpinBox;
 	this->SomaColorSpin->setRange(0,1);
 	this->SomaColorSpin->setSingleStep(0.1);
-	this->SomaColorSpin->setValue(0.5);
+	this->SomaColorSpin->setValue(0.0);
 	connect(this->SomaColorSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaColorChanged(double)));
 
 	//add the widgets to the bar
@@ -2914,6 +2919,11 @@ void View3D::SomaColorChanged(double value)
 {
 	//std::cout << "SomaColorChanged()" << std::endl;
 	this->ImageActors->setSomaColor(value);
+	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)//round-about
+	//{
+	//	this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i);
+	//	this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+	//}
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::EditHelp()

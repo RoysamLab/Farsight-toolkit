@@ -148,8 +148,8 @@ public:
 	void TextureVolumeMapper(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
-	vtkSmartPointer<vtkVolume> RayCastSomaVolume(int i);
-	vtkSmartPointer<vtkVolume> GetRayCastSomaVolume(int i);
+	//vtkSmartPointer<vtkVolume> RayCastSomaVolume(int i);
+	//vtkSmartPointer<vtkVolume> GetRayCastSomaVolume(int i);
 	bool getRenderStatus(int i);
 	void setRenderStatus(int i, bool setStatus);
 //file information
