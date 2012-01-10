@@ -297,21 +297,21 @@ void MicrogliaProcessTracer::CalculateCriticalPoints(void)
 ////////////////////////////////////////////////////////////////////////////////
 void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma ) 
 {
-	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
-	GFilterType::Pointer gauss = GFilterType::New();
-	gauss->SetInput( this->PaddedInputImage );
-	gauss->SetSigma( sigma );
-	gauss->SetNormalizeAcrossScale(false);
+	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> LoGFilterType;
+	LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
+	LoGFilter->SetInput( this->PaddedInputImage );
+	LoGFilter->SetSigma( sigma );
+	LoGFilter->SetNormalizeAcrossScale(false);
 	try
 	{
-		gauss->GetOutput()->Update();
+		LoGFilter->GetOutput()->Update();	//Why are we running an Update on the image instead of on the filter?
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "gauss Exception: " << err << std::endl;
 	}
 
-	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> ittemp(LoGFilter->GetOutput(), LoGFilter->GetOutput()->GetBufferedRegion());
 	float tnorm = vcl_pow(sigma, 1.6f);
 	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp) 
 	{
@@ -329,8 +329,8 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 		zn =  {{0,   0,   -2}};
 
 	itk::Size<3> rad = {{1,1,1}};
-	itk::NeighborhoodIterator<ImageType3D> neighbor_iter(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
-	itk::ImageRegionIterator<ImageType3D> image_iter(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::NeighborhoodIterator<ImageType3D> neighbor_iter(rad , LoGFilter->GetOutput(), LoGFilter->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> image_iter(LoGFilter->GetOutput(), LoGFilter->GetOutput()->GetBufferedRegion());
 
 	//{0, 0, 0} is the center pixel of the 3x3x3 neighborhood. The constants are then the pixel index starting from the top-left corner of the front face.
 	//x: left is -1
@@ -382,30 +382,31 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 			continue;
 		}
 
-		float a1 = 0.0;
+		float avg_of_greater_of_diametrically_opposing_pairs = 0.0;
 		
-		//Going through all the diametrically opposed pairs (26 neighbors, 13 pairs)
+		//Calculating the average of the greater of the diametrically pairs of pixels
 		for (unsigned int i=0; i < 13; ++i)
 		{
-			a1 += vnl_math_max(neighbor_iter.GetPixel(i), neighbor_iter.GetPixel(26 - i));
+			avg_of_greater_of_diametrically_opposing_pairs += vnl_math_max(neighbor_iter.GetPixel(i), neighbor_iter.GetPixel(26 - i));
 		}
+		avg_of_greater_of_diametrically_opposing_pairs/=13.0f;
 
-		float val = neighbor_iter.GetPixel(13) ;
+		float center_pixel_intensity = neighbor_iter.GetPixel(13) ;	//center pixel intensity
 
 		const float thresh1 = 0.03;   // 3% of maximum threshold from Lowe 2004
 		const float thresh2 = 0.001;  // -0.1 percent of range
 
-		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		if ( ((center_pixel_intensity - avg_of_greater_of_diametrically_opposing_pairs) > thresh2 ) && ( center_pixel_intensity > thresh1 ))  
 		{
 			TensorType hessian;
-			hessian[0] = gauss->GetOutput()->GetPixel( ndx + xp ) +
-				gauss->GetOutput()->GetPixel( ndx + xn ) -
+			hessian[0] = LoGFilter->GetOutput()->GetPixel( ndx + xp ) +
+				LoGFilter->GetOutput()->GetPixel( ndx + xn ) -
 				2*neighbor_iter.GetPixel( 13 );
-			hessian[3] = gauss->GetOutput()->GetPixel( ndx + yp ) +
-				gauss->GetOutput()->GetPixel( ndx + yn ) -
+			hessian[3] = LoGFilter->GetOutput()->GetPixel( ndx + yp ) +
+				LoGFilter->GetOutput()->GetPixel( ndx + yn ) -
 				2*neighbor_iter.GetPixel( 13 );
-			hessian[5] = gauss->GetOutput()->GetPixel( ndx + zp ) +
-				gauss->GetOutput()->GetPixel( ndx + zn ) -
+			hessian[5] = LoGFilter->GetOutput()->GetPixel( ndx + zp ) +
+				LoGFilter->GetOutput()->GetPixel( ndx + zn ) -
 				2*neighbor_iter.GetPixel( 13 );
 			hessian[1] = neighbor_iter.GetPixel(xy1) + neighbor_iter.GetPixel(xy2) -
 				neighbor_iter.GetPixel(xy3) - neighbor_iter.GetPixel(xy4);
@@ -432,7 +433,7 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 				value = -1 * (ev[0] + ev[1]);
 				break;
 			default:
-				std::cout << "impossible switch value" << std::endl;
+				std::cerr << "impossible switch value" << std::endl;
 				break;
 			}
 			value -= ev[w];
