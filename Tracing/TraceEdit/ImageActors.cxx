@@ -167,6 +167,8 @@ vtkSmartPointer<vtkActor> ImageRenderActors::GetContourActor(int i)
 	}
 	return this->LoadedImages[i]->ContourActor;
 }
+
+#ifdef USE_GPUREN
 void ImageRenderActors::RaycastVolumeMapperGPU(int i)
 {
 	double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
@@ -180,12 +182,14 @@ void ImageRenderActors::RaycastVolumeMapperGPU(int i)
 	std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
 	std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
 }
+#else
 void ImageRenderActors::TextureVolumeMapper(int i)
 {
 	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
 	this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
 	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
 }
+#endif
 vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 {
 	if (i == -1)
@@ -216,7 +220,6 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
 #ifdef USE_GPUREN
-	{
 		//double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
 		//this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper>::New();
 		//this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
@@ -228,15 +231,12 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
 		//std::cout << "Maximum GPU Memory: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryInBytes() / (1024 * 1024.0) << " MB" << std::endl;
 		//std::cout << "Maximum GPU Usage Fraction: " << this->LoadedImages[i]->volumeMapperGPU->GetMaxMemoryFraction() << std::endl;
-	}
 #else
-	{
 		//this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
 		//this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
 		//this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
 		TextureVolumeMapper(i);
 		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
-	}
 #endif
 	this->LoadedImages[i]->volume->SetProperty(this->LoadedImages[i]->volumeProperty);
 	this->LoadedImages[i]->volume->SetPosition(this->LoadedImages[i]->x, 
