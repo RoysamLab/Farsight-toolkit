@@ -62,7 +62,7 @@ View3D::View3D(QWidget *parent)
 	this->translateImages = false;	//this is for testing a switch is needed
 	this->viewIn2D = this->TraceEditSettings.value("mainWin/use2d",false).toBool();
 	this->renderTraceBits = false;
-	this->projectLoadedState = false;
+	this->projectLoadedState = true;
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
 	this->viewContour = true;
@@ -3961,7 +3961,24 @@ void View3D::updateSelectionFromCell()
 	/*! 
 	* Links CellModel selection to TraceModel Selection
 	*/
-	this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
+	//this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
+	this->poly_line_data = this->tobj->GetVTKPolyData();
+	std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
+	int limit = selectedCells.size();
+	for (int i = 0; i < limit; i++)
+	{
+		//
+		std::vector<TraceLine*> Selections = selectedCells[i]->getSegments();
+		
+		for (unsigned int j = 0; j < Selections.size(); j++)
+		{
+			this->HighlightSelected(Selections[j],this->SelectColor);
+		}
+	}
+	this->poly_line_data->Modified();
+	this->QVTK->GetRenderWindow()->Render();
+	this->statusBar()->showMessage(tr("Selected\t")
+		+ QString::number(limit) +tr("\tCells"));
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()
