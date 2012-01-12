@@ -100,12 +100,12 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
 	void runClus();
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
-	void showGraphforSPD( int endCol = 0);
+	void showGraphforSPD( int selCol = 0, int unselCol = 0);
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
@@ -132,11 +132,12 @@ signals:
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
 	void GetSelecectedIDs();
-	void GetSelecectedIDsforSPD();
+	void GetSelecectedIDsForSPD();
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 
 private:
@@ -189,7 +190,7 @@ private:
 	void scaleData(double** mustd);
 	void scaleData();
 	void drawPoints1();
-	void drawPoints3( int endCol = 0);
+	void drawPoints3();
 	void setselectedCellIds();
 	void computeselectedcells();
 	void createDataForDendogram1(double powCof);
@@ -201,14 +202,20 @@ private:
 	void selectClustersforSPD(double* worldPosition);
 	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
 	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id);
+	void SetdenSelectedIdsForSPD(std::set<long int>& IDs);
+	void reselectSPDIds1(std::set<long int>& selectedIDs, long int id);
 
 	std::map<int, int> indMapFromVertexToInd;
+	std::vector< std::vector<int> > indSPDMapFromIndToVertex;
 	std::vector<int> indMapFromIndToVertex;
 
 	std::map<int, int> rowMapFromOriginalToReorder;
 	std::map<int, int> columnMapFromOriginalToReorder;
 	std::map<int, int> rowMapForTreeData;
 	std::map<int, int> columnMapForTreeData;
+	std::set<long int> reselectedClusterSPD;   // for clusterSPD selection
+	std::set<long int> interselectedIDs;
+	std::set<long int> selectedFeatureIDs;
 
 	int     r1;
 	int     r2;
@@ -224,7 +231,6 @@ private:
 	bool	dragLineFlag;
 	vtkIdType id1;
 	vtkIdType id2;
-	std::set<long int> interselectedIDs;
 
 	clusclus *cc1;
 	clusclus *cc2;

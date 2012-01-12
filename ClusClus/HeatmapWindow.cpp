@@ -1,5 +1,7 @@
 #include "HeatmapWindow.h"
 
+#define pi 3.1415926
+
 Heatmap::Heatmap(QWidget *parent)
 : QMainWindow(parent)
 {
@@ -1218,7 +1220,7 @@ void Heatmap::drawPoints1()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void Heatmap::drawPoints3( int endCol)
+void Heatmap::drawPoints3()
 {
 	int max_table_values = 2*this->num_samples-1;
 
@@ -1309,31 +1311,6 @@ void Heatmap::drawPoints3( int endCol)
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
-
-	if( endCol >= 1)
-	{
-		double p1[3];
-		double p2[3];
-
-		p1[0]= ( this->Processed_Coordinate_Data_Tree2[endCol][1] + this->Processed_Coordinate_Data_Tree2[endCol - 1][1]) / 2;
-		p1[1]=-0.5;
-		p1[2]=0;
-		p2[0]= p1[0];
-		p2[1]=0.5;
-		p2[2]=0;
-
-		vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
-		lineSource->SetPoint1(p1);
-		lineSource->SetPoint2(p2);
-
-		vtkSmartPointer<vtkPolyDataMapper> lineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-		lineMapper->SetInputConnection(lineSource->GetOutputPort());
-		vtkSmartPointer<vtkActor> lineActor = vtkSmartPointer<vtkActor>::New();
-		lineActor->SetMapper(dragLineMapper);
-		lineActor->GetProperty()->SetColor(1,1,1);
-		lineActor->GetProperty()->SetLineWidth(1.5);
-		this->view->GetRenderer()->AddActor(lineActor);
-	}
   
 	vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
 	lmapper->SetInputConnection(hier->GetOutputPort());
@@ -1358,7 +1335,7 @@ void Heatmap::drawPoints3( int endCol)
 
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
-    this->selectionCallback1->SetCallback ( SelectionCallbackFunction1);
+    this->selectionCallback1->SetCallback ( SelectionCallbackFunctionForSPD);
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
@@ -1713,6 +1690,32 @@ void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 		this->reselectIds1(selectedIDs, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1]);
 	}
 }
+
+void Heatmap::reselectSPDIds1(std::set<long int>& selectedIDs, long int id)
+{
+	if(id < this->num_samples)
+	{
+		for( int i = 0; i < indSPDMapFromIndToVertex[id].size(); i++)
+		{
+			selectedIDs.insert( indSPDMapFromIndToVertex[id][i]);
+		}
+	}
+	else
+	{
+		this->dencolors1->SetValue((id - this->num_samples)*9, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 1, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 2, 204);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 3, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 4, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 5, 204);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 6, 153);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 7, 50);
+		this->dencolors1->SetValue((id - this->num_samples)*9 + 8, 204);
+		this->reselectSPDIds1(selectedIDs, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0]);
+		this->reselectSPDIds1(selectedIDs, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1]);
+	}
+}
+
 void Heatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
 {
 	if(id  < this->num_features)
@@ -1827,10 +1830,10 @@ void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
-void Heatmap::showGraphforSPD( int endCol)
+void Heatmap::showGraphforSPD( int selCol, int unselCol)
 {	
 	if(this->clusflag == true)
-		this->drawPoints3( endCol);
+		this->drawPoints3();
 	else
 		this->drawPoints1();
 
@@ -1904,6 +1907,51 @@ void Heatmap::showGraphforSPD( int endCol)
 	this->view->GetRenderer()->GradientBackgroundOff();
 	this->view->GetRenderer()->SetBackground(1,1,1);
 
+	if( selCol > 0 || unselCol > 0)
+	{
+		double p1[3];
+		double p2[3];
+		double p3[3];
+		double length = 0.3;
+		double angle = pi / 4;
+
+
+		p1[0]= -0.5 + 1.0 / (selCol + unselCol) * selCol;
+		p1[1]= -0.5;
+		p1[2]=0;
+		p2[0]= p1[0];
+		p2[1]=0.5;
+		p2[2]=0;
+
+		p3[0] = p2[0] + length * cos( angle);
+		p3[1] = p2[1] + length * sin( angle);
+		p3[2] = 0;
+
+		vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+		vtkSmartPointer<vtkLineSource> lineSourceForText = vtkSmartPointer<vtkLineSource>::New();
+		vtkSmartPointer<vtkPolyDataMapper> lineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+		vtkSmartPointer<vtkPolyDataMapper> lineMapperForText = vtkSmartPointer<vtkPolyDataMapper>::New();
+		vtkSmartPointer<vtkActor> lineActor = vtkSmartPointer<vtkActor>::New();
+		vtkSmartPointer<vtkActor> lineActorForText = vtkSmartPointer<vtkActor>::New();
+
+		lineSource->SetPoint1(p1);
+		lineSource->SetPoint2(p2);
+		lineMapper->SetInputConnection(lineSource->GetOutputPort());
+		lineActor->SetMapper(lineMapper);
+		lineActor->GetProperty()->SetColor(1,1,1);
+		lineActor->GetProperty()->SetLineWidth(2);
+
+		lineSourceForText->SetPoint1(p2);
+		lineSourceForText->SetPoint2(p3);
+		lineMapperForText->SetInputConnection(lineSourceForText->GetOutputPort());
+		lineActorForText->SetMapper(lineMapperForText);
+		lineActorForText->GetProperty()->SetColor(1,0,0);
+		lineActorForText->GetProperty()->SetLineWidth(2);
+
+		this->view->GetRenderer()->AddActor(lineActor);
+		this->view->GetRenderer()->AddActor(lineActorForText);
+	}
+
 	try
 	{
 		if(this->clusflag == true)
@@ -1956,6 +2004,7 @@ void Heatmap::addDragLineforSPD(double* worldPosition)
 
 void Heatmap::selectClustersforSPD(double* worldPosition)
 {
+	reselectedClusterSPD.clear();
 	std::set<long int> selectedClusterSPD;
 	long int index = 2*this->num_samples - 2;
 	while(1)
@@ -1970,7 +2019,6 @@ void Heatmap::selectClustersforSPD(double* worldPosition)
 
 void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 {
-	std::set<long int> reselectedClusterSPD;
 	std::set<long int>::iterator it;
 	int clusternumber = 0;
 	for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
@@ -2012,7 +2060,10 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
 	if(id < this->num_samples)
 	{
 		//cout<<id<<"\t";
-		idsforSPD.insert( indMapFromIndToVertex[id]);
+		for( int i = 0; i < indSPDMapFromIndToVertex[id].size(); i++)
+		{
+			idsforSPD.insert( indSPDMapFromIndToVertex[id][i]);
+		}
 	}
 	else
 	{
@@ -2022,19 +2073,21 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
 }
 
 
-void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder)
+void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder,  std::map< int, int> *indexCluster, ObjectSelection * sels2)
 {
-	this->table = vtkSmartPointer<vtkTable>::New();
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
-	if( this->table)
+
+	if( indexCluster) 
 	{
-		for( int i = 0; i < this->table->GetNumberOfRows(); i++)
+		indMapFromVertexToInd = *indexCluster;
+		indSPDMapFromIndToVertex.resize( table->GetNumberOfRows());
+		std::map<int, int>::iterator iter;
+		for( iter = indMapFromVertexToInd.begin(); iter != indMapFromVertexToInd.end(); iter++)
 		{
-			int var = this->table->GetValue( i, 0).ToInt();
-			this->indMapFromVertexToInd.insert( std::pair< int, int>(var, i));
-			this->indMapFromIndToVertex.push_back( var);
+			std::pair<int, int> pair = *iter;
+			indSPDMapFromIndToVertex[ pair.second].push_back( pair.first);
 		}
 	}
 
@@ -2043,21 +2096,30 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	else
 		this->Selection = sels;
 
-	connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
-	this->runClusforSPD(selOrder, unselOrder);
-}
+	if(!sels2)
+		this->Selection2 = new ObjectSelection();
+	else
+		this->Selection2 = sels2;
 
-void Heatmap::GetSelecectedIDsforSPD()
-{
+	selectedFeatureIDs.clear();
+	for( int i = 0; i < selOrder.size(); i++)
+	{
+		selectedFeatureIDs.insert( selOrder[i]);
+	}
+	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
+	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
+	this->runClusforSPD(selOrder, unselOrder);
 }
 
 void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder)
 {
 	this->clusflag = true;
 	double** datas;
+	double** datasforclus;
 	vtkVariant temp; 
 
 	datas = new double*[this->table->GetNumberOfRows()];
+	datasforclus = new double*[this->table->GetNumberOfRows()];
 
 	std::cout<<this->table->GetNumberOfRows()<<endl;
 	std::cout<<this->table->GetNumberOfColumns()<<endl;
@@ -2065,6 +2127,11 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
 		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+	}
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datasforclus[i] = new double[selOrder.size() + 2 ];
 	}
 
 	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
@@ -2076,14 +2143,33 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		}
 	}
 
-	cc1 = new clusclus(datas, (int)this->table->GetNumberOfRows(), (int)this->table->GetNumberOfColumns() - 1);
+	int index = 0;
+	for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+	{
+		if( selectedFeatureIDs.find( j - 1) != selectedFeatureIDs.end())
+		{
+			for( int i = 0; i < this->table->GetNumberOfRows(); i++)
+			{
+				temp = this->table->GetValue(i, j);
+				datasforclus[i][index] = temp.ToDouble();
+			}
+			index++;
+		}
+	}
+
+	cc1 = new clusclus(datasforclus, (int)this->table->GetNumberOfRows(), (int)selOrder.size());
 	cc1->RunClusClus();
 	cout<<"finish clusclus....."<<endl;
 	cout<<this->table->GetNumberOfRows();
 	cout<<this->table->GetNumberOfColumns();
 	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt", "gap.txt", "treedata.txt", "Optimalleaforder.txt");
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datasforclus[i];
+	}
+	delete datasforclus;
 
-	int* optimalleaforder2 = new int[cc1->num_features];
+	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
 	int counter = 0;
 	for(int i = 0; i < selOrder.size(); i++)
 	{
@@ -2093,7 +2179,7 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 	for(int i = counter; i < unselOrder.size() + selOrder.size(); i++)
 		optimalleaforder2[i] = unselOrder[i - counter];
 
-	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
+	this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
 	this->setDataForDendrograms(cc1->treedata);
 	this->creatDataForHeatmap(0.2);
 	
@@ -2104,4 +2190,239 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 	delete datas;
 
 	delete cc1;
+}
+
+void Heatmap::SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
+	vtkSelection* selection = annotationLink->GetCurrentSelection();
+	Heatmap* heatmapWin = (Heatmap*)clientData;
+
+	vtkSelectionNode* vertices = NULL;
+	vtkSelectionNode* edges = NULL;
+	vtkSelectionNode* cells = NULL;
+
+    if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+        {
+        vertices = selection->GetNode(0);
+        }
+    else if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
+        {
+        edges = selection->GetNode(0);
+        }
+ 
+    if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+        {
+        vertices = selection->GetNode(1);
+        }
+    else if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
+        {
+        edges = selection->GetNode(1);
+        }
+
+	if( vertices != NULL)
+	{
+		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+	
+		std::set<long int> IDs;
+		if(vertexList->GetNumberOfTuples() > 0)
+		{
+			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+			{
+				long int value = vertexList->GetValue(i);
+				if( heatmapWin->reselectedClusterSPD.find(value) != heatmapWin->reselectedClusterSPD.end())
+				{
+					IDs.insert(value);
+				}
+			}
+		}
+		try
+		{
+			heatmapWin->SetdenSelectedIdsForSPD( IDs);
+		}
+		catch(...)
+		{
+			cout<<"SetdenSelectedIds1 failed, please try again !"<<endl;
+		}
+	}
+}
+
+void Heatmap::SetdenSelectedIdsForSPD(std::set<long int>& IDs)
+{
+	std::set<long int> selectedIDs1;
+	std::set<long int>::iterator it;
+	long int id;
+
+	if(continueselect == false)
+	{
+		if(this->denResetflag1 == 1)
+		{
+			for(int i = 0; i<this->dencolors1->GetSize() ; i++)
+				this->dencolors1->SetValue(i, 0);
+			denlinesPolyData1->Modified();
+			denlinesPolyData1->Update();
+			denmapper1->Modified();
+			denmapper1->Update();
+			denactor1->Modified();
+		}
+	}
+
+	if( IDs.size() > 0)
+	{
+		for( it = IDs.begin(); it != IDs.end(); it++ )
+		{
+			id = *it;
+
+			if(id < 2*this->num_samples-1)
+			{
+				reselectSPDIds1(selectedIDs1, id);
+			}
+		}
+	}
+
+	if(selectedIDs1.size() > 0)	
+	{
+		denmapper1->ScalarVisibilityOn();
+		denlinesPolyData1->Modified();
+		denlinesPolyData1->Update();
+		denmapper1->Modified();
+		denmapper1->Update();
+		denactor1->Modified();
+		this->view->Render();
+		this->denResetflag1 = 1;
+
+		//std::set<long int>::iterator iter;
+		//std::set<long int> selectedIDs;
+		//for( iter = selectedIDs1.begin(); iter != selectedIDs1.end(); iter++)
+		//{
+		//	long int var = *iter;
+		//	for( int i = 0; i < indSPDMapFromIndToVertex[ var].size(); i++)
+		//	{
+		//		selectedIDs.insert( indSPDMapFromIndToVertex[ var][i]);
+		//	}
+		//}
+		
+		try
+		{
+			this->Selection2->select(selectedFeatureIDs);
+			this->Selection->select(selectedIDs1);
+		}
+		catch(...)
+		{
+			cout<<"Setcelected id after reselect failed, please try again!"<<endl;
+		}
+	}
+	//else
+	//{
+	//	this->Selection2->clear();
+	//	this->Selection->clear();
+	//}
+}
+void Heatmap::GetSelecectedIDsForSPD()
+{
+	std::set<long int> selectedIDs2 = selectedFeatureIDs;
+	std::set<long int> selectedIDs1 = this->Selection->getSelections();	
+	std::set<long int>::iterator iter1 = selectedIDs1.begin();
+	std::set<long int>::iterator iter2 = selectedIDs2.begin();
+	vtkSmartPointer<vtkIdTypeArray> cellids = vtkSmartPointer<vtkIdTypeArray>::New();
+	cellids->SetNumberOfComponents(1);
+
+	int num1 = selectedIDs1.size();
+	int num2 = selectedIDs2.size();
+
+	std::vector<int > IDs1;
+	std::vector<int > IDs2;
+	IDs1.resize(num1);
+	IDs2.resize(num2);
+
+	int count1 = 0;
+	int count2 = 0;
+
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		while(iter1 != selectedIDs1.end())
+		{
+			int index1 = *iter1;
+			int var = indMapFromVertexToInd.find(index1)->second;
+			int id1 = rowMapFromOriginalToReorder.find(var)->second;
+			IDs1[count1++] = id1;
+			iter1++;
+		}
+
+		#pragma omp section 
+		while(iter2 != selectedIDs2.end())
+		{
+			int index2 = *iter2;
+			int id2 = columnMapFromOriginalToReorder.find(index2)->second;
+			IDs2[count2++] = id2;
+			iter2++;
+		}
+	}
+
+	for(int i = 0; i<num1; i++)
+		for(int j = 0; j<num2; j++)
+			cellids->InsertNextValue( (IDs1[i])*(this->num_features) + IDs2[j]);
+
+	vtkSmartPointer<vtkSelectionNode> selectionNode = vtkSmartPointer<vtkSelectionNode>::New();
+	selectionNode->SetFieldType(vtkSelectionNode::CELL);
+	selectionNode->SetContentType(vtkSelectionNode::INDICES);
+	selectionNode->SetSelectionList(cellids);
+
+	vtkSmartPointer<vtkSelection> selection = vtkSmartPointer<vtkSelection>::New();
+	selection->AddNode(selectionNode);
+	 
+	vtkSmartPointer<vtkExtractSelection> extractSelection = vtkSmartPointer<vtkExtractSelection>::New();
+	extractSelection->SetInput(0, this->aPlane->GetOutput());
+	extractSelection->SetInput(1, selection);
+	extractSelection->Update();
+	 
+	vtkSmartPointer<vtkUnstructuredGrid> selected = vtkSmartPointer<vtkUnstructuredGrid>::New();
+	selected->ShallowCopy(extractSelection->GetOutput());
+	
+	vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+	selectedMapper->SetInputConnection(selected->GetProducerPort());
+	 
+	vtkSmartPointer<vtkActor> selectedActor = vtkSmartPointer<vtkActor>::New();
+	selectedActor->SetMapper(selectedMapper);
+	selectedActor->GetProperty()->EdgeVisibilityOn();
+	selectedActor->GetProperty()->SetEdgeColor(1,1,1);
+	selectedActor->GetProperty()->SetLineWidth(0.5);
+
+	if(this->dragLineFlag)
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor);
+	try
+	{
+		if(continueselect == false)
+		{
+			if(continueselectnum > 0)
+			{
+				cout<<"I'm here "<<continueselectnum<<endl;
+				for(int i = 0; i<continueselectnum + 1; i++)
+					this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+				continueselectnum = 0;
+			}
+			else
+			{
+				if (this->removeActorflag != 0)
+					this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+			}
+
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+			this->removeActorflag += 1;
+		}
+		else
+		{
+			this->continueselectnum += 1;
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+
+		}
+		if(this->dragLineFlag)
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(dragLineActor);
+		this->view->Render();
+	}
+	catch(...)
+	{
+		cout<<"GetSelecectedIDs failed, please try it again!"<<endl;
+	}
 }

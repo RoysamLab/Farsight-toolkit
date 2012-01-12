@@ -67,7 +67,7 @@ public:
 	void GetFeatureIdbyModId(std::vector<unsigned int> &modID, std::vector<unsigned int> &featureID);
 
 	void GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat);  // after single linkage clustering
-	void GetSingleLinkageClusterModuleSize(std::vector< std::vector< long int> > &index, std::vector<int> &moduleSize);
+	void GetClusterMapping( std::map< int, int> &index);
 	void GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex);   
 
 	void GenerateMST();
@@ -132,6 +132,7 @@ private:
 
 	// basic data storation
 	std::vector<int> indMapFromIndToVertex;    // index mapping
+	std::map< int, int> indMapFromVertexToClus;
 	std::vector<std::string> FeatureNames;
 	std::vector<double> DistanceToDevice;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis

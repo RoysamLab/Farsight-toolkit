@@ -436,11 +436,14 @@ void SPDMainWindow::viewProgression()
 	split( selectModulesID, ',', selModuleID);
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
-	
-	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
-	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder);
-	this->HeatmapWin->showGraphforSPD( selOrder.size());
+	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+	std::map< int, int> indexMap;
+	SPDModel->GetClusterMapping(indexMap);
+
+	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap);
+
+	this->HeatmapWin->showGraphforSPD( selOrder.size(), unselOrder.size());
 
 	//vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	//std::vector<std::string> headers;
@@ -564,14 +567,14 @@ void SPDMainWindow::regenerateProgressionTree()
 	if( selection)
 	{
 		std::cout<< "rerender progression view"<<endl;
+		selection->clear();
 		std::vector< std::vector< long int> > clusIndex;
 		selection->GetClusterIndex( clusIndex);
-
+		
 		vnl_matrix<double> clusAverageMat;
 		std::vector<int> modSize;
 
 		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
-		SPDModel->GetSingleLinkageClusterModuleSize(clusIndex, modSize);
 
 		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);

@@ -240,6 +240,11 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table)
 	{
 		this->CellClusterIndex[i] = i;
 	}
+	indMapFromVertexToClus.clear();
+	for( int i = 0; i < CellClusterIndex.size(); i++)
+	{
+		indMapFromVertexToClus.insert( std::pair<int, int>(indMapFromIndToVertex[i], CellClusterIndex[i]));
+	}
 }
 
 void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, std::vector<double> &distance)
@@ -416,7 +421,7 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		new_cluster_num = ClusterAggFeatures( clusterIndex, moduleMean, cor, TreeIndex, 2);
 		std::cout<< "new cluster num:"<< new_cluster_num<<" vs "<<"old cluster num:"<<old_cluster_num<<endl;
 	}
-	while( old_cluster_num - 2 > new_cluster_num);
+	while( old_cluster_num - 5 > new_cluster_num);
 
 	this->CellClusterIndex = clusterIndex;
 	std::cout<< "Cell Cluster Size:"<<new_cluster_num<<endl;
@@ -447,6 +452,13 @@ void SPDAnalysisModel::ClusterCells( double cor)
 		tmpVec = tmpVec / CellCluster[i].size();
 		MatrixAfterCellCluster.set_row( i, tmpVec);
 	}	
+
+	indMapFromVertexToClus.clear();
+	for( int i = 0; i < CellClusterIndex.size(); i++)
+	{
+		indMapFromVertexToClus.insert( std::pair<int, int>( indMapFromIndToVertex[i], CellClusterIndex[i]));
+	}
+
 	this->UNMatrixAfterCellCluster = MatrixAfterCellCluster;  // for normalization
 	NormalizeData(MatrixAfterCellCluster);
 	
@@ -934,7 +946,8 @@ void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< 
 		for( int j = 0; j < index[i].size(); j++)
 		{
 			long int id = index[i][j];
-			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(id);
+			int clusId = indMapFromVertexToClus.find(id)->second;
+			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusId);
 			tmp = tmp + row;
 		}
 		tmp = tmp / index[i].size();
@@ -942,36 +955,20 @@ void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< 
 	}
 }
 
-void SPDAnalysisModel::GetSingleLinkageClusterModuleSize(std::vector< std::vector<long int> > &index, std::vector<int> &moduleSize)
+void SPDAnalysisModel::GetClusterMapping( std::map< int, int> &index)
 {
-	moduleSize.clear();
-	if( CellCluster.size() > 0)
+	index.clear();
+	for( unsigned int i = 0; i < CellClusterIndex.size(); i++)
 	{
-		for( int i = 0; i < index.size(); i++)
-		{
-			int tmp = 0;
-			for( int j = 0; j < index[i].size(); j++)
-			{
-				int id = index[i][j];
-				tmp += CellCluster[id].size();
-			}
-			moduleSize.push_back(tmp);
-		}
-	}
-	else
-	{
-		for( int i = 0; i < index.size(); i++)
-		{
-			moduleSize.push_back(index[i].size());
-		}
+		index.insert( std::pair< int, int>(indMapFromIndToVertex[i], CellClusterIndex[i]));
 	}
 }
 
 void SPDAnalysisModel::GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex)
 {
-	std::ofstream ofs("clusIndexMapping.txt");
-	ofs<< "Cell cluster index before single linkage:"<<endl;
-	ofs<< CellClusterIndex<<endl;
+	//std::ofstream ofs("clusIndexMapping.txt");
+	//ofs<< "Cell cluster index before single linkage:"<<endl;
+	//ofs<< CellClusterIndex<<endl;
 
 	std::vector< unsigned int> tmpInd;
 	tmpInd.resize( CellClusterIndex.max_value() + 1);
@@ -979,8 +976,9 @@ void SPDAnalysisModel::GetSingleLinkageClusterMapping(std::vector< std::vector< 
 	{
 		for( unsigned int j = 0; j < index[i].size(); j++)
 		{
-			unsigned int ind = index[i][j];
-			tmpInd[ind] = i;
+			unsigned int id = index[i][j];
+			int clusId = indMapFromVertexToClus.find(id)->second;
+			tmpInd[clusId] = i;
 		}
 	}
 	
@@ -991,12 +989,12 @@ void SPDAnalysisModel::GetSingleLinkageClusterMapping(std::vector< std::vector< 
 		newIndex[i] = tmpInd[ind];
 	}
 
-	ofs<< "Cell cluster index after single linkage:"<<endl;
-	for( int i = 0; i < newIndex.size(); i++)
-	{
-		ofs<< newIndex[i]<<"\t";
-	}
-	ofs.close();
+	//ofs<< "Cell cluster index after single linkage:"<<endl;
+	//for( int i = 0; i < newIndex.size(); i++)
+	//{
+	//	ofs<< newIndex[i]<<"\t";
+	//}
+	//ofs.close();
 }
 
 void SPDAnalysisModel::HierachicalClustering()    
