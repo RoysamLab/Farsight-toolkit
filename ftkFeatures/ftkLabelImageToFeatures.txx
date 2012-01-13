@@ -833,8 +833,11 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		
 		int cvHull = qh_new_qhull(myDimension, ctr, points, ismalloc,flags, outfile, errfile);
 		qh_memfreeshort (&curlong, &totlong);
-		//featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CONVEXITY] = (featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME])/cvHull;
-		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CONVEXITY] = 0.0; // Changed By Amin, it gives inf as an output.
+		if(cvHull!=0)
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CONVEXITY] = (featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::VOLUME])/cvHull;
+		else
+			featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CONVEXITY] = 0.0; // Changed By Amin, it gives inf as an output.
+		
 		delete [] points;
 		}
 		
