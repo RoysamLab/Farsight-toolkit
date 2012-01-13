@@ -59,6 +59,17 @@ void MicrogliaProcessTracer::LoadInputImage(std::string fname)
 		std::cerr << "reader Exception: " << err << std::endl;
 	}
 
+  ImageType3D::SpacingType defaultSpacing;
+  defaultSpacing[0] = 1;
+  defaultSpacing[1] = 1;
+  defaultSpacing[2] = 1;
+
+  if(image->GetSpacing() == defaultSpacing)
+    {
+    std::cout << "WARNING: spacing not set on input image." << std::endl;
+    std::cout << "Tracing results may be inaccurate.  Spacing should be set in microns per pixel." << std::endl;
+    }
+
 	this->LoadInputImage(image);
 }
 
@@ -436,7 +447,7 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 				std::cerr << "impossible switch value" << std::endl;
 				break;
 			}
-			value -= ev[w];
+			value -= abs(ev[w]);
 
 			if (RegisterIndex(value, ndx, sz)) 
 			{
@@ -985,7 +996,8 @@ void MicrogliaProcessTracer::PruneSomaNodes()
 	LabelMapType::Pointer labelMap = binaryToLabelConverter->GetOutput();
 	binaryToLabelConverter->Update();
 
-	std::vector<Node *> somaBranches;
+	std::set<Node *> somaBranches;
+	//std::vector<Node *> somaBranches;
 
 	// Loop over each region
 	for(unsigned int i = 0; i < labelMap->GetNumberOfLabelObjects(); i++)
@@ -998,12 +1010,14 @@ void MicrogliaProcessTracer::PruneSomaNodes()
 		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
 		ImageType3D::IndexType centroidIdx;
 		this->InputImage->TransformPhysicalPointToIndex( centroid, centroidIdx );
-		int prevSize = this->IndexToNodeMap.size();
-		Node *centroidNode = this->IndexToNodeMap[centroidIdx];
-		if(this->IndexToNodeMap.size() != prevSize)
-		{
-			std::cout << "ERROR with soma centroid lookup..." << std::endl;
-		}
+    std::map<itk::Index<3>, Node *, CompareIndices>::iterator mapItr =
+      this->IndexToNodeMap.find(centroidIdx);
+    if(mapItr == this->IndexToNodeMap.end())
+      {
+      std::cout << "WARNING: seed point not found for soma #" << i << std::endl;
+      continue;
+      }
+    Node *centroidNode = (*mapItr).second; 
 
 		//iterate over this region in NDX image
 		//
@@ -1054,13 +1068,20 @@ void MicrogliaProcessTracer::PruneSomaNodes()
 				childItr =
 					std::find(centroidNode->children.begin(), centroidNode->children.end(),
 					currentNode);
+        Node *oldParent = currentNode->parent;
 				if(childItr == centroidNode->children.end())
 				{
 					centroidNode->children.push_back(currentNode);
 					currentNode->parent = centroidNode;
 				}
+
+				//remove the node from its old parent's list of children
+				std::vector< Node* >::iterator rmItr =
+					std::remove(oldParent->children.begin(), oldParent->children.end(), currentNode);
+				oldParent->children.erase(rmItr, oldParent->children.end());
+
 				currentNode->type = 1;
-				somaBranches.push_back(currentNode);
+				somaBranches.insert(currentNode);
 			}
 
 			//the rest are carefully deleted
@@ -1092,13 +1113,14 @@ void MicrogliaProcessTracer::PruneSomaNodes()
 					std::remove(grandparent->children.begin(), grandparent->children.end(), currentNode);
 				grandparent->children.erase(rmItr, grandparent->children.end());
 
-				//remove the node from Open & Closed
+				//remove the node from Open, Closed, & somaBranches
 				rmItr =
 					std::remove(this->Open.begin(), this->Open.end(), currentNode);
 				this->Open.erase(rmItr, this->Open.end());
 				rmItr =
 					std::remove(this->Closed.begin(), this->Closed.end(), currentNode);
 				this->Closed.erase(rmItr, this->Closed.end());
+				somaBranches.erase(currentNode);
 
 				//now we can actually call delete
 				delete currentNode;
@@ -1113,9 +1135,9 @@ void MicrogliaProcessTracer::PruneSomaNodes()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MicrogliaProcessTracer::PruneSomaBranches(std::vector< Node *> branches)
+void MicrogliaProcessTracer::PruneSomaBranches(std::set< Node *> branches)
 {
-	std::vector< Node * >::iterator branchItr;
+	std::set< Node * >::iterator branchItr;
 	Node *branch;
 	for(branchItr = branches.begin(); branchItr != branches.end(); ++branchItr)
 	{
@@ -1143,6 +1165,13 @@ bool MicrogliaProcessTracer::AnyBranchPoints( Node *n )
 	std::vector< Node * >::iterator childItr;
 	for(childItr = n->children.begin(); childItr != n->children.end(); ++childItr)
 	{
+    //this shouldn't happen, but avoid the segfault anyway
+    if( (*childItr) == NULL )
+      {
+      std::cout << "(1) WARNING: node # " << n->ID << " (child of #" << n->parent->ID << ") has a NULL child" << std::endl;
+      continue;
+      }
+
 		if(this->AnyBranchPoints( (*childItr) ))
 		{
 			return true;
@@ -1191,6 +1220,12 @@ void MicrogliaProcessTracer::DeleteBranch( Node *n, bool parentSurvives )
 	std::vector< Node * >::iterator childItr;
 	for(childItr = n->children.begin(); childItr != n->children.end(); ++childItr)
 	{
+    //this shouldn't happen, but avoid the segfault anyway
+    if( (*childItr) == NULL )
+      {
+      std::cout << "(2) WARNING: node # " << n->ID << " (child of #" << n->parent->ID << ") has a NULL child" << std::endl;
+      continue;
+      }
 		this->DeleteBranch( (*childItr), false );
 	}
 

@@ -25,6 +25,7 @@
 #include <list>
 #include <limits>
 #include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -97,7 +98,7 @@ protected:
   void MaskAwaySomas();
   double GetDistanceBetweenPoints(itk::Index<3> start, itk::Index<3> end);
   void PruneSomaNodes();
-  void PruneSomaBranches( std::vector<Node *> branches);
+  void PruneSomaBranches( std::set<Node *> branches);
   bool AnyBranchPoints( Node *n );
   unsigned int GetPathDepth( Node *n );
   void DeleteBranch( Node *n, bool parentSurvives );
