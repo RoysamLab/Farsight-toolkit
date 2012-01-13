@@ -254,6 +254,8 @@ public slots:
 
 	void SPDAnalysis();
 	void ClusclusAnalysis();
+	/////////////////////////////////////////////////////////////
+	void selectedFeaturesClustering();
 
 //these are for bootloadfile
 	QString getTraceFile();

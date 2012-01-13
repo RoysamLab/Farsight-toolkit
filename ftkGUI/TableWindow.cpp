@@ -265,7 +265,7 @@ void TableWindow::changeColumns()
 	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
 	{	
 		features << this->tableView->model()->headerData(i,Qt::Horizontal).toString();
-		visible << !(this->tableView->isColumnHidden(i));
+		visible << !(this->tableView->isColumnHidden(i));		
 	}
 	//Let user choose one's to display using popup:
 	ChooseItemsDialog *dialog = new ChooseItemsDialog(features, &visible, this);

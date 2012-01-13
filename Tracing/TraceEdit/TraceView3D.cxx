@@ -1069,6 +1069,10 @@ void View3D::setupLinkedSpace()
 	this->CellModel->setParent(this);
 	this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
 		this, SLOT(updateSelectionFromCell()));
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	this->connect(this->CellModel->GetObjectSelectionColumn(), SIGNAL(changed()), 
+		this, SLOT(selectedFeaturesClustering()));
+	////////////////////////////////////////////////////////////////////////
 	this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateStatistics()));
 }
 
@@ -1499,6 +1503,7 @@ void View3D::CreateGUIObjects()
 
 	this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
 	connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
+
 #ifndef USE_SPD
 	this->SPDAction->setDisabled(true);
 #endif
@@ -5515,17 +5520,48 @@ void View3D::ClusclusAnalysis()
 
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
+		cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
 		featureTable->RemoveColumnByName("Trace File");
 		
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
+		
+		featureTable->RemoveColumnByName("Total Segment Section Area");
+		featureTable->RemoveColumnByName("Min Segment Section Area");
+		featureTable->RemoveColumnByName("Max Segment Section Area");
 
 		featureTable->RemoveColumnByName("Distance to Device");
+		cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
 
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->HeatmapWin->runClus();
-		this->HeatmapWin->showGraphforSPD();
+		this->HeatmapWin->showGraph();
 	}
+#endif
+}
+
+void View3D::selectedFeaturesClustering()
+{
+#ifdef USE_Clusclus
+
+	this->HeatmapWin = new Heatmap();
+	vtkSmartPointer<vtkTable> featureTable = vtkSmartPointer<vtkTable>::New();
+
+	std::set<long int> selectedIDs2 = this->CellModel->GetObjectSelectionColumn()->getSelections();
+	std::set<long int>::iterator it = selectedIDs2.begin();
+
+	while(it != selectedIDs2.end())
+		{
+			int index = *it;
+			featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(index));
+			it++;
+		}
+
+	cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
+	this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection());
+	this->HeatmapWin->runClus();
+	this->HeatmapWin->showGraph();
+
 #endif
 }
