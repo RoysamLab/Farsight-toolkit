@@ -198,9 +198,10 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					((unsigned long)number_of_rois*(unsigned long)labelsList.size());
 		std::vector<double> quantified_numbers_cell(roi_list_size,0.0);
 
+
 		unsigned long ind;
 		ind = 0;
-		for( USPixelType i=0; i<50; ++i ){//labelsList.size(); ++i ){
+		for( USPixelType i=0; i<labelsList.size(); ++i ){
 			if( zp && (zero==i) ) continue;
 			//Get label indices
 			labelindicestype indices1;

@@ -51,7 +51,7 @@
 
 typedef itk::Image< unsigned short, 3 > LabImageType;
 typedef itk::Image< unsigned short, 3 > TargImageType;
-std::vector<float> compute_ec_features( TargImageType::Pointer input_image,  LabImageType::Pointer input_labeled, int number_of_rois, unsigned short thresh, int surr_dist  );
+std::vector<float> compute_ec_features( TargImageType::Pointer input_image,  LabImageType::Pointer input_labeled, int number_of_rois, unsigned short thresh, int surr_dist, int inside_dist  );
 unsigned short returnthresh( TargImageType::Pointer input_image, int num_bin_levs, int num_in_fg );
 
 namespace ftk
