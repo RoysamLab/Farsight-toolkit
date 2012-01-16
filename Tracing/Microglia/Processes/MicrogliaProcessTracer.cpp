@@ -59,15 +59,22 @@ void MicrogliaProcessTracer::LoadInputImage(std::string fname)
 		std::cerr << "reader Exception: " << err << std::endl;
 	}
 
-  ImageType3D::SpacingType defaultSpacing;
-  defaultSpacing[0] = 1;
-  defaultSpacing[1] = 1;
-  defaultSpacing[2] = 1;
+  ImageType3D::SpacingType spacing;
+  spacing[0] = 1;
+  spacing[1] = 1;
+  spacing[2] = 1;
 
-  if(image->GetSpacing() == defaultSpacing)
+  if(image->GetSpacing() == spacing)
     {
-    std::cout << "WARNING: spacing not set on input image." << std::endl;
-    std::cout << "Tracing results may be inaccurate.  Spacing should be set in microns per pixel." << std::endl;
+    std::cout << "WARNING: spacing not set on input image.  Spacing should be set in microns per pixel." << std::endl;
+    std::cout << "Please input spacing for X dimension now:" << std::endl;
+    std::cin >> spacing[0];
+    std::cout << "Y-spacing is assumed to be the same as X-spacing" << std::endl;
+    spacing[1] = spacing[0];
+    std::cout << "Please input spacing for Z dimension now:" << std::endl;
+    std::cin >> spacing[2];
+    image->SetSpacing(spacing);
+    std::cout << "Input image's spacing now set to " << image->GetSpacing() << std::endl;
     }
 
 	this->LoadInputImage(image);
