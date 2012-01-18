@@ -61,6 +61,7 @@ limitations under the License.
 #include "itkGrayscaleMorphologicalClosingImageFilter.h"
 #include "itkCannyEdgeDetectionImageFilter.h"
 #include "itkImageDuplicator.h"
+#include "itkThresholdImageFilter.h"
 
 #include "GraphCuts/itkMinErrorThresholdImageFilter.h"
 #include "GraphCuts/new_graph.h"
@@ -84,6 +85,7 @@ public:
 	static std::map<std::string, std::string> filterMap;
 	static std::map<std::string, std::string> CreateFilterMap();
 
+	Preprocess();
 	Preprocess(ImageType3D::Pointer img);
 	Preprocess(RGBImageType3D::Pointer img);
 	Preprocess(RGBImageType3D::Pointer img, char color);
@@ -91,6 +93,7 @@ public:
 	void RunPipe(std::string filename);
 
 	ImageType3D::Pointer GetImage(){ return myImg; };
+	void SetImage(ImageType3D::Pointer img);
 
 	void SaveVTKPoints(std::string filename, float xyFactor=1.0, int min=255, int max=255);
 

@@ -50,7 +50,8 @@ public slots:
 	void insertFilter(const QString & text);
 	void loadPipe();
 	void savePipe();
-	void preprocess();
+	void finalizePreprocessing();
+	void Process();
 
 private:
 

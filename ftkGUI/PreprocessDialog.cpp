@@ -26,7 +26,7 @@ PreprocessDialog::PreprocessDialog(QString lastPath, QWidget *parent)
 	wrapper = QString("<Preprocess>\n</Preprocess>");
 	lpath = lastPath;
 	filename = "";
-	prep = NULL;
+	prep = new ftk::Preprocess();
 
 	QVBoxLayout * masterLayout = new QVBoxLayout();
 
@@ -62,7 +62,7 @@ PreprocessDialog::PreprocessDialog(QString lastPath, QWidget *parent)
 	buttonLayout->addStretch(1);
 
 	processButton = new QPushButton(tr("Exit"));
-	connect(processButton, SIGNAL(clicked()), this, SLOT(preprocess()));
+	connect(processButton, SIGNAL(clicked()), this, SLOT(finalizePreprocessing()));
 	buttonLayout->addWidget(processButton);
 
 	masterLayout->addLayout(buttonLayout);
@@ -74,8 +74,7 @@ PreprocessDialog::PreprocessDialog(QString lastPath, QWidget *parent)
 
 void PreprocessDialog::SetImage(ftk::Preprocess::ImageType3D::Pointer im)
 {
-	prep = new ftk::Preprocess( im );
-	processButton->setText(tr("Preprocess"));
+	prep->SetImage(im);
 }
 
 void PreprocessDialog::insertFilter(const QString & text)
@@ -124,11 +123,16 @@ void PreprocessDialog::savePipe()
 	out << textEdit->toPlainText();
 }
 
-void PreprocessDialog::preprocess()
+void PreprocessDialog::finalizePreprocessing()
 {
 	if(!prep)
-		this->reject();
+		this->reject();	
 
+	this->accept();
+}
+
+void PreprocessDialog::Process()
+{
 	if( filename.isEmpty() )
 	{
 		QFile file("temp.pipe");
@@ -144,9 +148,7 @@ void PreprocessDialog::preprocess()
 	else
 	{
 		prep->RunPipe(filename.toStdString());
-	}
-
-	this->accept();
+	}	
 }
 
 ftk::Preprocess::ImageType3D::Pointer PreprocessDialog::GetImage()

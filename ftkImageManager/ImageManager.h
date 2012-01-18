@@ -7,6 +7,9 @@
 #include "itkImageFileWriter.h"
 #include "itkImageFileReader.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "ftkPreprocess2.h"
+
+#include "ftkGUI/PreprocessDialog.h"
 
 typedef unsigned short InputPixelType;
 typedef unsigned char OutputPixelType;
@@ -28,17 +31,20 @@ public:
 	std::vector<QString> readDataFile(QString FileName);
 public slots:
 	void BrowseFiles();
-	void ConvertFiles();
+	void ProcessFiles();
 	void appendLists();
+	void Preprocess();
 protected:
 	void closeEvent(QCloseEvent *event);
+	PreprocessDialog *preprocessdialog;
 private:
 	QSettings ImageManagerSettings;
 	QString imageDir;
 	QAction *exitAction;
 	QAction *loadImages;
 	QAction *append;
-	QAction *ConvertImages;
+	QAction *ProcessImages;
+	QAction *StartPreprocessing;
 	QStringList InputFileList;
 	QStringList outputDirectories;
 };

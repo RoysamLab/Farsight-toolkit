@@ -19,11 +19,18 @@ namespace ftk
 
 Preprocess::Preprocess(ImageType3D::Pointer img)
 {
-	typedef itk::ImageDuplicator< ImageType3D > DuplicatorType; 
-	DuplicatorType::Pointer duplicator = DuplicatorType::New(); 
-	duplicator->SetInputImage(img); 
-	duplicator->Update(); 
-	myImg = duplicator->GetOutput();
+	//typedef itk::ImageDuplicator< ImageType3D > DuplicatorType; 
+	//DuplicatorType::Pointer duplicator = DuplicatorType::New(); 
+	//duplicator->SetInputImage(img); 
+	//duplicator->Update(); 
+	//myImg = duplicator->GetOutput();
+	myImg=img;
+	SetImage(myImg);
+}
+
+Preprocess::Preprocess()
+{		
+	//will need SetImage called to function correctly
 }
 
 Preprocess::Preprocess(RGBImageType3D::Pointer img)
@@ -42,6 +49,7 @@ Preprocess::Preprocess(RGBImageType3D::Pointer img)
 	}
 
 	myImg = convert->GetOutput();
+	SetImage(myImg);
 }
 
 Preprocess::Preprocess(RGBImageType3D::Pointer img, const char color)
@@ -93,6 +101,12 @@ Preprocess::Preprocess(RGBImageType3D::Pointer img, const char color)
 		RGBPixelType p_rgb = iteratorRGB.Get();
 		iteratorIn.Set( p_rgb[component] );
 	}
+	SetImage(myImg);
+}
+
+void Preprocess::SetImage(ImageType3D::Pointer img){	
+	//resets the beginning of the pipeline to the image we wish to run it on right now
+	myImg=img;
 }
 
 std::map<std::string, std::string> Preprocess::filterMap = Preprocess::CreateFilterMap();

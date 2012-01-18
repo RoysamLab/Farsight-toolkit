@@ -20,10 +20,17 @@ ImageFileManger::ImageFileManger(QWidget *parent)
 	connect(this->append, SIGNAL(triggered()), this, SLOT(appendLists()));
 	this->menuBar()->addAction(this->append);
 
-	this->ConvertImages = new QAction("Convert Images", this);
-	connect(this->ConvertImages, SIGNAL(triggered()), this, SLOT(ConvertFiles()));
-	this->ConvertImages->setEnabled(false);
-	this->menuBar()->addAction(this->ConvertImages);
+	this->StartPreprocessing = new QAction("Preprocess..", this);
+	connect(this->StartPreprocessing, SIGNAL(triggered()), this, SLOT(Preprocess()));
+	this->StartPreprocessing->setEnabled(false);
+	this->menuBar()->addAction(this->StartPreprocessing);
+
+	preprocessdialog = new PreprocessDialog("",this);
+
+	this->ProcessImages = new QAction("Process Images", this);
+	connect(this->ProcessImages, SIGNAL(triggered()), this, SLOT(ProcessFiles()));
+	this->ProcessImages->setEnabled(false);
+	this->menuBar()->addAction(this->ProcessImages);
 
 	this->outputDirectories;
 	this->outputDirectories << "DAPI" << "Cy5"<< "TRITC"<<"GFP";
@@ -35,18 +42,29 @@ void ImageFileManger::BrowseFiles()
 	  tr("Image File ( *.tiff *.tif *.pic *.PIC ) "));
 	if(!this->InputFileList.isEmpty())
 	{
-		this->ConvertImages->setEnabled(true);
+		this->ProcessImages->setEnabled(true);
+		this->StartPreprocessing->setEnabled(true);
 		this->imageDir = QFileInfo(this->InputFileList[0]).absolutePath();
 		this->ImageManagerSettings.setValue("imageDir", imageDir);
 		this->FileListView->addItems(this->InputFileList);
 		this->ImageManagerSettings.sync();
 	}
 }
-void ImageFileManger::ConvertFiles()
+
+void ImageFileManger::Preprocess(void)
+{
+
+	if(!preprocessdialog->exec())
+	{
+		std::cerr << "Preprocess dialog canceled." << std::endl;
+
+	}
+}
+
+void ImageFileManger::ProcessFiles()
 {
 	if (!this->InputFileList.isEmpty())
 	{
-		//QString newDir = QString("DAPI");
 		QDir directory(this->imageDir);
 		for (int k = 0; k < this->outputDirectories.size(); k++)
 		{
@@ -78,28 +96,37 @@ void ImageFileManger::ConvertFiles()
 			tempname.replace(" ", "_");
 			tempname.prepend("8Bit");
 			QString outputFilename = QString(this->imageDir +"/"+ currentDir +"/"+tempname);
-			//std::cout<< "Output name\t" <<outputFilename.toStdString().c_str()<< "\n";
-
 
 			InputReaderType::Pointer reader = InputReaderType::New();
 			OutputWriterType::Pointer writer = OutputWriterType::New();
 			reader->SetFileName(this->InputFileList[i].toStdString().c_str());
-			reader->Update();
 
+			//16 to 8 bit conversion
 			RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
 			rescaleFilter->SetInput(reader->GetOutput());
 			rescaleFilter->SetOutputMinimum(0);
 			rescaleFilter->SetOutputMaximum(255);
 			rescaleFilter->Update();
 
-			writer->SetInput(rescaleFilter->GetOutput());
+			preprocessdialog->SetImage( rescaleFilter->GetOutput() );
+			
 			writer->SetFileName(outputFilename.toStdString().c_str());
-			writer->Update();
+			try
+			{
+				preprocessdialog->Process();
+				writer->SetInput(preprocessdialog->GetImage());
+				writer->Update();
+			}
+			catch(itk::ExceptionObject & e) 
+			{
+				std::cerr << "Exception in ITK Pipeline: " << e << std::endl;
+				continue;
+			}
 		}
 		progress.setValue(this->InputFileList.size());
 	}
 	
-	//16 to 8 bit conversion
+	
 }
 std::vector<QString> ImageFileManger::readDataFile(QString FileName)
 {
