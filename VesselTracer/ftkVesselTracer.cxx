@@ -24,8 +24,8 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		// 3D renering of original and preprocessed data
 		Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);		
-		/*Common::RenderImage3D(this->originalDataForRendering);
-		Common::RenderImage3D(this->inputDataForRendering);*/
+		//Common::RenderImage3D(this->originalDataForRendering);
+		//Common::RenderImage3D(this->inputDataForRendering);
 		
 
 		// MIP computation
@@ -38,6 +38,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->ComputeAllSecondaryNodes();
 
 		// MST and post processing
+		this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 	}
 	else{
@@ -76,7 +77,7 @@ void SphericalBinInfo::initByDefaultValues(void){
 
 void NodeDetectionParameters::initByDefaultValues(void){
 	
-	this->gridSpacing = 10; //20; //30; //10; //15; //20; //15;
+	this->gridSpacing = 30; //10; //20; //30; //10; //15; //20; //15;
 	this->iterNPrimaryNode = 100;
 
 	this->increaseLikelihoodThreshold = 0.001;
@@ -193,8 +194,9 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	data_path = data_path.substr(0, data_path.find_last_of('.')); // get rid of the extension
 	
 	try{
-		Common::ReadImage3D(data_path + std::string("_original.mhd"), this->originalData);
 		Common::ReadImage3D(data_path + std::string(".mhd"), this->inputData); //input data is preprocessed data
+
+		Common::ReadImage3D(data_path + std::string("_original.mhd"), this->originalData);	
 		Common::ReadImage3D(data_path + std::string("_gx.mhd"), this->gx);
 		Common::ReadImage3D(data_path + std::string("_gy.mhd"), this->gy);
 		Common::ReadImage3D(data_path + std::string("_gz.mhd"), this->gz);
@@ -221,11 +223,11 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	
 	
 	// Same pixel apparently has different values in ITK and Matlab!!
-	ImageType3D::IndexType test_index, test_index1;
+	/*ImageType3D::IndexType test_index, test_index1;
 	test_index[0] = 123; test_index[1] = 6; test_index[2] = 23;
 	test_index1[0] = 6; test_index1[1] = 123; test_index1[2] = 23;
 	PixelType test_pixel = this->inputData->GetPixel(test_index);
-	PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
+	PixelType test_pixel1 = this->inputData->GetPixel(test_index1);*/
 		
 }
 
@@ -358,6 +360,8 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	
 	//Calculating bin centers
 	int count = 1;
+	
+	//#pragma omp parallel for firstprivate(count)
 	for(int i = 0; i < theta.size(); i++){
 		for(int j = 0; j < phi.size(); j++){
 			x[count] = cos(double(theta[i])) * cos(double(phi[j]));
@@ -398,24 +402,23 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	int t2 = test_vec[5][2][9];
 	*/
 
-	double a_point[3] = {0.0, 0.0, 0.0}, norm = 1.0;
-	int max_d_position = 0;
-	double max_d = 0.0;
-	std::vector<double> d(x.size(), 1);
+	#pragma omp parallel for 
 	for(int i1 = -indexLength; i1 <= indexLength; i1++){
 		for(int i2 = -indexLength; i2 <= indexLength; i2++){
 			for(int i3 = -indexLength; i3 <= indexLength; i3++){
 				
+				double a_point[3] = {0.0, 0.0, 0.0}, norm = 1.0;
 				a_point[0] = (double)i1; a_point[1] = (double)i2; a_point[2] = (double)i3;
 				norm = sqrt((a_point[0]*a_point[0]) + (a_point[1]*a_point[1]) + (a_point[2]*a_point[2]));
 				a_point[0] = a_point[0] / norm; a_point[1] = a_point[1] / norm; a_point[2] = a_point[2] / norm;
 				
 				// Trying to find which point in the cartesian space is closest to the current bin point
+				std::vector<double> d(x.size(), 1);
 				for(int i = 0; i < x.size(); i++)
 					d[i] = (a_point[0] * x[i]) + (a_point[1] * y[i]) + (a_point[2] * z[i]);
 
-				max_d = *std::max_element(d.begin(), d.end());
-				max_d_position = std::find(d.begin(), d.end(), max_d) - d.begin(); 
+				double max_d = *std::max_element(d.begin(), d.end());
+				int max_d_position = std::find(d.begin(), d.end(), max_d) - d.begin(); 
 				
 				// CHECK THE VALUES HERE 
 				
@@ -516,7 +519,7 @@ void ftkVesselTracer::ComputeSeeds(void){
 
 	int grid_spacing = this->allParams.nodeDetectionParams.gridSpacing;
 
-	VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
+	//VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
 	//sub_volume_filter->SetInput(this->normalizedInputData);
 
 	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
@@ -525,19 +528,22 @@ void ftkVesselTracer::ComputeSeeds(void){
 	ImageType3D::SizeType sub_volume_size; //, size1;
 	ImageType3D::RegionType sub_volume_region;
 	ImageType3D::Pointer sub_volume;
-	MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
+	//MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
 
+	
 	int d1 = size[0], d2 = size[1], d3 = size[2];
-	int j1 = 0, j2 = 0, j3 = 0;
-	double max_val = 0, min_val = 0, pixel1 = 0, pixel2 = 0, pixel3 = 0;
+	//int j1 = 0, j2 = 0, j3 = 0;
+	//double max_val = 0, min_val = 0, pixel1 = 0, pixel2 = 0, pixel3 = 0;
 	int seed_count = 0;
+
+	#pragma omp parallel for private(starting_index, max_index, min_index, sub_volume_size, sub_volume_region, sub_volume) 
 	for(int i1 = 0; i1 < d1; i1 = i1 + grid_spacing){
 		for(int i2 = 0; i2 < d2; i2 = i2 + grid_spacing){
 			for(int i3 = 0; i3 < d3; i3 = i3 + grid_spacing){
 			
-				j1 = std::min(i1 + grid_spacing - 1, d1);
-				j2 = std::min(i2 + grid_spacing - 1, d2);
-				j3 = std::min(i3 + grid_spacing - 1, d3);
+				int j1 = std::min(i1 + grid_spacing - 1, d1);
+				int j2 = std::min(i2 + grid_spacing - 1, d2);
+				int j3 = std::min(i3 + grid_spacing - 1, d3);
 				
 				//starting_index[0] = i2; starting_index[1] = i1; starting_index[2] = i3;
 				//sub_volume_size[0] = j2 - i2; sub_volume_size[1] = j1 - i1; sub_volume_size[2] = j3 - i3;
@@ -546,7 +552,8 @@ void ftkVesselTracer::ComputeSeeds(void){
 				
 				sub_volume_region.SetIndex(starting_index);
 				sub_volume_region.SetSize(sub_volume_size);
-
+				
+				VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
 				sub_volume_filter->SetInput(this->normalizedInputData);
 				sub_volume_filter->SetRegionOfInterest(sub_volume_region);
 				sub_volume_filter->Update();
@@ -561,15 +568,16 @@ void ftkVesselTracer::ComputeSeeds(void){
 				float min = stats_filter->GetMinimum();
 
 				/*size1 = sub_volume->GetBufferedRegion().GetSize();
-				pixel1 = this->normalizedInputData->GetPixel(starting_index);
-			    pixel2 = sub_volume->GetPixel(starting_index);
-				pixel3 = this->inputData->GetPixel(starting_index);*/
-
+				double pixel1 = this->normalizedInputData->GetPixel(starting_index);
+			    double pixel2 = sub_volume->GetPixel(starting_index);
+				double pixel3 = this->inputData->GetPixel(starting_index);*/
+				
+				MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
 				min_max_calculator->SetImage(sub_volume);
 				min_max_calculator->Compute();
 				
-				max_val = min_max_calculator->GetMaximum();
-				min_val = min_max_calculator->GetMinimum();
+				double max_val = min_max_calculator->GetMaximum();
+				double min_val = min_max_calculator->GetMinimum();
 				max_index = min_max_calculator->GetIndexOfMaximum();
 				min_index = min_max_calculator->GetIndexOfMinimum();
 
@@ -578,9 +586,11 @@ void ftkVesselTracer::ComputeSeeds(void){
 				//this->initialSeeds[seed_count].z = max_index[2];
 				
 				//max_index = min_index;	
-
+				
+				#pragma omp critical
 				this->initialSeeds.push_back(Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val));
-
+				
+				//#pragma omp critical
 				//seed_count++;
 			}
 		}
@@ -774,17 +784,29 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	//seeds before fitting
 	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
 
+	std::vector<Node> filteredPrimaryNodes;
+	filteredPrimaryNodes.resize(this->initialSeeds.size());
+
+	#pragma omp parallel for
 	//for(int i = 0; i < 50; i++){
 	for(int i = 0; i < this->initialSeeds.size(); i++){
 		this->FitSphereAtNode(this->initialSeeds[i]);
 		//std::cout << i << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << " Last iter: " << this->initialSeeds[i].exitIter << std::endl; 
+		
+		//#pragma omp critical
+			if((this->initialSeeds[i].isValid == true) && (this->initialSeeds[i].likelihood > this->allParams.nodeDetectionParams.likelihoodThresholdPrimary)){
+				//this->primaryNodes.push_back(this->initialSeeds[i]);
+				filteredPrimaryNodes[i] = this->initialSeeds[i];
 
-		if((this->initialSeeds[i].isValid == true) && (this->initialSeeds[i].likelihood > this->allParams.nodeDetectionParams.likelihoodThresholdPrimary)){
-			this->primaryNodes.push_back(this->initialSeeds[i]);
-
-			//std::cout << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << std::endl;
-		}
+				//std::cout << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << std::endl;
+			}
 	}
+
+	for(int i = 0; i < filteredPrimaryNodes.size(); i++){
+		if(filteredPrimaryNodes[i].likelihood > 0)
+			this->primaryNodes.push_back(filteredPrimaryNodes[i]);
+	}
+
 	//visualize the fitted models and the filtered nodes
 	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
 	//this->VisualizeNodesWithData3D(this->primaryNodes, false);
@@ -792,7 +814,7 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	this->SortAndFilterPrimaryNodes();
 	
 	//final primary nodes
-	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+	this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
 	std::cout << "Seed processing completed for primary nodes. " << std::endl;
 	
@@ -1522,7 +1544,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 				quality_array.push_back(2*this->allParams.nodeDetectionParams.maxTraceCost);
 			}
 			
-			// Parent IDs of secondary node = circshift(parent IDs os current_node
+			// Parent IDs of secondary node = circshift(parent IDs of current_node)
 			secondary_node.parentID[0] = current_node.parentID.back(); //*(current_node.parentID.begin() + current_node.parentID.size()-1);
 			for(int j = 1; j < current_node.parentID.size(); j++){
 				secondary_node.parentID[j] = current_node.parentID[j-1];

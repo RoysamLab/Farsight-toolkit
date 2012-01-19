@@ -13,6 +13,8 @@
 #include <sstream>
 #include <string>
 
+#include <omp.h>
+
 #include "vtkSmartPointer.h"
 #include "vtkActor.h"
 #include "vtkImageActor.h"
