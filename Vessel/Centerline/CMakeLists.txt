@@ -31,9 +31,6 @@ ADD_EXECUTABLE(centerline
   )
 INCLUDE_DIRECTORIES( ${GLUT_INCLUDE_DIR})
 TARGET_LINK_LIBRARIES(centerline ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} vtksys)
-message("Glut include dir" ${GLUT_INCLUDE_DIR} )
-message("Glut lib dir" ${GLUT_LIBRARY} )
-message("Glut lib dir" ${GLUT_glut_LIBRARY} )
 
 ADD_EXECUTABLE(votestotiff votestotiff.cpp)
 TARGET_LINK_LIBRARIES(votestotiff       ${ITK_LIBRARIES} )
