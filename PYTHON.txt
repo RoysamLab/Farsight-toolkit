@@ -1,5 +1,5 @@
 Enabling Python wrapping in VTK and ITK
- 
+
 == VTK ==
 
 If you're developing on Windows you can use these pre-compiled, python-wrapped binaries:
@@ -21,7 +21,7 @@ Otherwise, to build VTK w/ Python support from source
     (an advanced option)
 
     Also, turn off VTK_USE_TK (unless you plan on generating Tk bindings)
-    
+
 3.  Generate the build files and compile VTK
 
 == ITK ==
@@ -30,23 +30,17 @@ Otherwise, to build VTK w/ Python support from source
     If you're doing this on Windows, VXL will fail to link unless you build it
     with static libraries.
 
-1.  Obtain a CVS checkout of ITK:
-      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/Insight login
-      (respond with password "insight")
-      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/Insight co Insight
+1.  Obtain a Git clone of ITK:
+      git clone http://itk.org/ITK.git
 
     You may want to check the ITK dashboard first to make sure the current state
     of the codebase will build properly for your platform & compiler:
       http://www.cdash.org/CDash/index.php?project=Insight
 
-2.  Checkout CableSwig in the Utilities directory of the ITK source tree
-      cd Insight/Utilities
-      cvs -d:pserver:anonymous@public.kitware.com:/cvsroot/CableSwig co CableSwig
-
-3.  Run CMake for ITK and set the following options:
+2.  Run CMake for ITK and set the following options:
       BUILD_SHARED_LIBS ON
-      ITK_CSWIG_PYTHON ON
-      ITK_USE_SYSTEM_VXL ON
+      ITK_WRAP_PYTHON ON
 
-4.  Generate the build files and compile ITK (this will take a long time)
+3.  Generate the build files, compile ITK (this will take a long time), and
+    install.
 
