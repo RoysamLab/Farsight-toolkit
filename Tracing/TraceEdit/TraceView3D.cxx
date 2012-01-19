@@ -1265,8 +1265,8 @@ void View3D::CreateGUIObjects()
 	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
 
-	this->LoadSeedPointsAsGliphs = new QAction("Load Seed Point gliphs", this->CentralWidget);
-	connect(this->LoadSeedPointsAsGliphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
+	this->LoadSeedPointsAsGlyphs = new QAction("Load Seed Point Glyphs", this->CentralWidget);
+	connect(this->LoadSeedPointsAsGlyphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
 
 	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
 	connect(this->AssociateCellToNucleiAction, SIGNAL(triggered()), this, SLOT(AssociateNeuronToNuclei()));
@@ -1561,7 +1561,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadCellTraceTable);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
-	this->fileMenu->addAction(this->LoadSeedPointsAsGliphs);
+	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);

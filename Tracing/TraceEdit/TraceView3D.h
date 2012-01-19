@@ -389,7 +389,7 @@ private:
 
 	QAction *LoadNucleiTable;
 	QAction *AssociateCellToNucleiAction;
-	QAction *LoadSeedPointsAsGliphs;
+	QAction *LoadSeedPointsAsGlyphs;
 
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
