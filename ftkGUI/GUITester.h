@@ -1,5 +1,4 @@
 /*=========================================================================
-Copyright 2009 Rensselaer Polytechnic Institute
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -13,30 +12,38 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#include <iostream>
+#ifndef __GUITESTER_H
+#define __GUITESTER_H
 
-#include "TraceView3D.h"
-#include <QtGui/QApplication>
-#include <QtCore/QObject>
+#include <QWidget>
+#include "vtkSmartPointer.h"
 
-#include "vtkCellArray.h"
-#include "vtkPolyData.h"
+class pqTestUtility;
+class vtkImageData;
+class vtkRenderWindow;
+class vtkTesting;
 
-int main (int argc, char* argv[])
+class GUITester : public QWidget
 {
-	//argc will be taken care of in QT app
-	QApplication app(argc, argv);
-	app.setOrganizationName("FARSIGHT Toolkit");
-	app.setOrganizationDomain("www.farsight-toolkit.org");
-	app.setApplicationName("Trace Editor");
-	app.setApplicationVersion("V2.0");
-	View3D *View = new View3D();
-	View->show();
-  int retval = View->runTests();
-  if(retval == -1)
-  {
-    retval = app.exec();
-  }
-	delete View;
-	return retval;
-}
+  Q_OBJECT
+public:
+  GUITester(QWidget *parent = 0);
+  ~GUITester();
+  bool playTestFile( QString filename );
+  void SetBaselineImage(const char *fn);
+  void SetRenderWindow(vtkRenderWindow *rw);
+  void SetThreshold(double t);
+
+protected slots:
+  void record();
+  void play();
+
+private:
+  Q_DISABLE_COPY(GUITester)
+  pqTestUtility *TestUtility;
+  vtkSmartPointer<vtkTesting> Testing;
+  double Threshold;
+  bool BaselineSet;
+};
+
+#endif

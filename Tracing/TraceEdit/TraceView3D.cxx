@@ -50,6 +50,8 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
+  this->TestInputFile = "";
+  this->TestBaselineImageFileName = "";
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -94,6 +96,8 @@ View3D::View3D(QWidget *parent)
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
 
+  this->Tester = new GUITester(this);
+
 	//Set up the main window's central widget
 	this->CentralWidget = new QWidget(this);
 	this->setCentralWidget(this->CentralWidget);
@@ -112,11 +116,18 @@ View3D::View3D(QWidget *parent)
 			this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
 		}
 		else if(nextFile.endsWith("xml",Qt::CaseInsensitive))
-		{
-			this->EditLogDisplay->append("Trace file: \t" + nextFile);
-			this->TraceFiles.append( nextFile);
-			this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
-		}
+    {
+      if(nextFile.contains("test_",Qt::CaseInsensitive))
+      {
+      this->TestInputFile = nextFile;
+      }
+      else
+      {
+        this->EditLogDisplay->append("Trace file: \t" + nextFile);
+        this->TraceFiles.append( nextFile);
+        this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
+      }
+    }
 		else if (nextFile.endsWith("vtk"))
 		{
 			this->EditLogDisplay->append("Trace file: \t" + nextFile);
@@ -129,6 +140,10 @@ View3D::View3D(QWidget *parent)
 			this->EditLogDisplay->append("Image file: \t" + nextFile);
 			this->ImageActors->loadImage(nextFile.toStdString(), "Image");
 		}
+    else if(nextFile.contains("baseline"))
+    {
+      this->TestBaselineImageFileName = nextFile;
+    }
 	}//end of arg 
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
@@ -1551,6 +1566,16 @@ void View3D::CreateGUIObjects()
 	CropBorderCellsButton = new QPushButton("Crop border cells");
 	connect(CropBorderCellsButton, SIGNAL(clicked()), this, SLOT(CropBorderCells()));
 
+  //Testing menu actions
+  #ifdef USE_QT_TESTING
+  this->recordAction = new QAction("Record Test", this->CentralWidget);
+  this->recordAction->setStatusTip("Record a test to a .xml file");
+  connect(this->recordAction, SIGNAL(triggered()), this->Tester, SLOT(record()));
+
+  this->playAction = new QAction("Play Test", this->CentralWidget);
+  this->playAction->setStatusTip("Run a previously recorded test");
+  connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
+  #endif
 }
 
 void View3D::CreateLayout()
@@ -1835,6 +1860,13 @@ void View3D::CreateLayout()
 	this->help->addAction(this->aboutAction);
 
 	//this->createSlicerSlider();
+
+  //Testing menu
+  #ifdef USE_QT_TESTING
+  this->testingMenu = this->menuBar()->addMenu("Testing");
+  this->testingMenu->addAction(this->recordAction);
+  this->testingMenu->addAction(this->playAction);
+  #endif
 
 	this->menuBar()->hide();
 
@@ -5115,10 +5147,10 @@ void View3D::saveRenderWindow(const char *filename)
 	else
 		this->WindowToImage->SetMagnification(1);
 	
-	this->JPEGWriter = vtkSmartPointer<vtkJPEGWriter>::New();
-	this->JPEGWriter->SetInput(this->WindowToImage->GetOutput());
-	this->JPEGWriter->SetFileName(filename);
-	this->JPEGWriter->Write();
+	this->PNGWriter = vtkSmartPointer<vtkPNGWriter>::New();
+	this->PNGWriter->SetInput(this->WindowToImage->GetOutput());
+	this->PNGWriter->SetFileName(filename);
+	this->PNGWriter->Write();
 }
 void View3D::SaveScreenShot()
 {
@@ -5128,7 +5160,7 @@ void View3D::SaveScreenShot()
 	savescreenshotDialog->exec();
 	filePath = savescreenshotDialog->getDir();
 	fileName = savescreenshotDialog->getfileName();
-	QString fullFileName = filePath % "/" % fileName % QString(".jpg");
+	QString fullFileName = filePath % "/" % fileName % QString(".png");
 	if (!fullFileName.isEmpty())
 	{
 		this->saveRenderWindow(fullFileName.toStdString().c_str());
@@ -5565,3 +5597,31 @@ void View3D::selectedFeaturesClustering()
 
 #endif
 }
+
+int View3D::runTests()
+{
+  if( this->TestInputFile == "" )
+    {
+    return -1;
+    }
+
+  this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );
+
+  if( this->TestBaselineImageFileName == "" )
+    {
+    std::cout << "ERROR: TestBaselineImageFileName is empty" << std::endl;
+    return 1;
+    }
+  this->Tester->SetBaselineImage(
+    this->TestBaselineImageFileName.toStdString().c_str() );
+
+  if(this->Tester->playTestFile( this->TestInputFile ) == false)
+    {
+    std::cout << "ERROR: test failed" << std::endl;
+    return 1;
+    }
+
+  std::cout << "test passed" << std::endl;
+  return 0;
+}
+

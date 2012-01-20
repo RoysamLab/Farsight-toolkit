@@ -64,7 +64,7 @@ limitations under the License.
 #include "vtkInteractorStyleRubberBandZoom.h"
 #include "vtkInteractorStyleImage.h"
 #include "vtkImagePlaneWidget.h"
-#include "vtkJPEGWriter.h"
+#include "vtkPNGWriter.h"
 #include "vtkLegendScaleActor.h"
 #include "vtkLinearExtrusionFilter.h"
 #include "vtkLODActor.h"
@@ -120,6 +120,8 @@ limitations under the License.
 #include "TraceModel.h"
 
 #include "VolumeOfInterest.h"
+  
+#include "GUITester.h"
 
 class View3D : public QMainWindow 
 {
@@ -270,6 +272,8 @@ public slots:
 	void rotateImage(int axis);
 	void rotationOptions();
 
+  int runTests();
+
 protected slots:
 	void updateSelectionFromCell();
 	void updateSelectionHighlights();
@@ -335,6 +339,13 @@ private:
 	QMenu *help;
 	QAction *aboutAction;
 	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SlicerBar;
+
+  #ifdef USE_QT_TESTING
+  //testing GUI elements
+	QMenu *testingMenu;
+  QAction *recordAction;
+  QAction *playAction;
+  #endif
 
 	//Qt widgets on the main window
 	QAction *saveAction;
@@ -465,7 +476,7 @@ private:
 
 	// save screenshots
 	vtkSmartPointer<vtkWindowToImageFilter> WindowToImage;
-	vtkSmartPointer<vtkJPEGWriter> JPEGWriter;
+	vtkSmartPointer<vtkPNGWriter> PNGWriter;
 	ScreenShotDialog * savescreenshotDialog;
 
     //interactor variables and point picking
@@ -554,6 +565,10 @@ private:
 	enum HighlightModeEnum highlightMode;
 
 	void ClearRenderer(int i);
-	
+
+  //testing support
+  GUITester *Tester;
+  QString TestInputFile;
+  QString TestBaselineImageFileName;
 };
 #endif

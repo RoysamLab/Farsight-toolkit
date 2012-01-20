@@ -120,6 +120,39 @@ ELSE(USE_OPENSLIDE)
         SET(OPENSLIDE_INCLUDE_DIR )
 ENDIF(USE_OPENSLIDE)
 
+#####################################################################################
+# Optionally find Farsight's data directory, used for testing and installers
+# You can check out the data directory from subversion like so:
+# svn co https://farsight-svn.ee.uh.edu/repos/farsight/data 
+#####################################################################################
+
+FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme 
+  ${Farsight_SOURCE_DIR}/data 
+  ${Farsight_SOURCE_DIR}/../data 
+  ${Farsight_SOURCE_DIR}/../../data 
+  $ENV{FARSIGHT_DATA_ROOT}
+  DOC "The repository for data used for testing.  To obtain from SVN: \"svn co svn://www.openworld.rpi.edu/repos/farsight/data\"")
+
+##########################################################################
+# Testing stuff
+###########################################################################
+ENABLE_TESTING()
+IF(BUILD_TESTING)
+  CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
+    ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
+  FILE(WRITE ${Farsight_BINARY_DIR}/CTestCustom.cmake
+    "INCLUDE(\"${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest\")\n")
+  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
+  MARK_AS_ADVANCED(BUILDNAME)
+
+  #Find resources needed to test Qt GUIs
+  FIND_FILE(QtTestingConfig QtTestingConfig.cmake DOC "Path to QtTestingConfig.cmake.  This file can be found in the QtTesting binary dir")
+  IF(QtTestingConfig)
+    INCLUDE(${QtTestingConfig})
+    SET(QtTestingFound TRUE)
+  ENDIF()
+ENDIF(BUILD_TESTING)
+
 ################################################################################
 ################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
@@ -376,31 +409,6 @@ IF (BUILD_CURVELETS)
   INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
   SUBDIRS( Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
 ENDIF (BUILD_CURVELETS)
-#####################################################################################
-# Optionally find Farsight's data directory, used for testing and installers
-# You can check out the data directory from subversion like so:
-# svn co svn://www.openworld.rpi.edu/repos/farsight/data
-#####################################################################################
-
-FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme 
-  ${Farsight_SOURCE_DIR}/data 
-  ${Farsight_SOURCE_DIR}/../data 
-  ${Farsight_SOURCE_DIR}/../../data 
-  $ENV{FARSIGHT_DATA_ROOT}
-  DOC "The repository for data used for testing.  To obtain from SVN: \"svn co svn://www.openworld.rpi.edu/repos/farsight/data\"")
-
-##########################################################################
-# Testing stuff
-###########################################################################
-ENABLE_TESTING()
-IF(BUILD_TESTING)
-  CONFIGURE_FILE(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
-    ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
-  FILE(WRITE ${Farsight_BINARY_DIR}/CTestCustom.cmake
-    "INCLUDE(\"${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest\")\n")
-  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
-  MARK_AS_ADVANCED(BUILDNAME)
-ENDIF(BUILD_TESTING)
 
 #####################################################################################
 # CPACK SETUP FOR BUILDING INSTALLERS

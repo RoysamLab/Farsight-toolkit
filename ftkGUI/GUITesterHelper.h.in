@@ -1,0 +1,1 @@
+#define TEST_OUTPUT_DIR "@Farsight_BINARY_DIR@/Testing/Temporary"
