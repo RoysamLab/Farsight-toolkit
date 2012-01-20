@@ -50,8 +50,11 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
-  this->TestInputFile = "";
-  this->TestBaselineImageFileName = "";
+
+	#ifdef USE_QT_TESTING
+	this->TestInputFile = "";
+	this->TestBaselineImageFileName = "";
+	#endif
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -121,7 +124,9 @@ View3D::View3D(QWidget *parent)
     {
       if(nextFile.contains("test_",Qt::CaseInsensitive))
       {
-      this->TestInputFile = nextFile;
+	#ifdef USE_QT_TESTING
+	this->TestInputFile = nextFile;
+	#endif
       }
       else
       {
@@ -144,7 +149,9 @@ View3D::View3D(QWidget *parent)
 		}
     else if(nextFile.contains("baseline"))
     {
-      this->TestBaselineImageFileName = nextFile;
+	#ifdef USE_QT_TESTING
+        this->TestBaselineImageFileName = nextFile;
+	#endif
     }
 	}//end of arg 
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
