@@ -12,7 +12,7 @@ ADD_LIBRARY(CurveletClassGUI
 		)
 IF(FFTW_FOUND)
 	INCLUDE_DIRECTORIES(${FFTW_INCLUDE_DIR})
-	ADD_LIBRARY(fdct_wrapping fdct_wrapping.cpp ifdct_wrapping.cpp fdct_wrapping_param.cpp)
+	ADD_LIBRARY(fdct_wrapping STATIC fdct_wrapping.cpp ifdct_wrapping.cpp fdct_wrapping_param.cpp)
 	TARGET_LINK_LIBRARIES(fdct_wrapping ${FFTW_LIBRARIES})
 	IF(WIN32)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
