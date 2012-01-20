@@ -51,7 +51,7 @@ else (BUILD_CUDA)
 endif (BUILD_CUDA)
 
 
-TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage
+TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage QHULL
                        vtksys vtkCommon vtkFiltering vtkIO
                        ${ITK_LIBRARIES} )
 
