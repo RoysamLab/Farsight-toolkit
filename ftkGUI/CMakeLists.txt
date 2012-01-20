@@ -52,7 +52,9 @@ QT4_WRAP_UI( GUI_UI_HDRS ${GUI_UIS} )
 # and finally this will run moc:
 QT4_WRAP_CPP( GUI_MOC_SRCS ${GUI_HDRS} )
 
-ADD_LIBRARY( ftkGUI 
+# This must be built static because libKPLS is only available as a static
+# library.
+ADD_LIBRARY( ftkGUI STATIC
   ${GUI_SRCS} ${GUI_HDRS} ${GUI_MOC_SRCS} ${GUI_UI_HDRS} ${GUI_RC_SRCS} )
 
 TARGET_LINK_LIBRARIES( ftkGUI ${GUI_LIBS} )
