@@ -144,7 +144,7 @@ ELSE (USE_TRACKING)
 	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} ftkImage)
 ENDIF (USE_TRACKING)
 
-ADD_LIBRARY( Project_Processor ftkProjectProcessor.cpp ftkProjectProcessor.h ftkProjectDefinition.cpp ftkProjectDefinition.h)
+ADD_LIBRARY( Project_Processor STATIC ftkProjectProcessor.cpp ftkProjectProcessor.h ftkProjectDefinition.cpp ftkProjectDefinition.h)
 TARGET_LINK_LIBRARIES( Project_Processor ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
