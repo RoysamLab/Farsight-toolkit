@@ -131,7 +131,8 @@ FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme
   ${Farsight_SOURCE_DIR}/../data 
   ${Farsight_SOURCE_DIR}/../../data 
   $ENV{FARSIGHT_DATA_ROOT}
-  DOC "The repository for data used for testing.  To obtain from SVN: \"svn co svn://www.openworld.rpi.edu/repos/farsight/data\"")
+  DOC "The repository for data used for testing.  To obtain from SVN: \"svn co https://farsight-svn.ee.uh.edu/repos/farsight/data\"")
+  
 
 ##########################################################################
 # Testing stuff
@@ -149,6 +150,8 @@ IF(BUILD_TESTING)
   FIND_FILE(QtTestingConfig QtTestingConfig.cmake DOC "Path to QtTestingConfig.cmake.  This file can be found in the QtTesting binary dir")
   IF(QtTestingConfig)
     INCLUDE(${QtTestingConfig})
+    INCLUDE_DIRECTORIES( ${QtTesting_INCLUDE_DIRS} )
+    LINK_DIRECTORIES( ${QtTesting_LIBRARY_DIR} )
     SET(QtTestingFound TRUE)
   ENDIF()
 ENDIF(BUILD_TESTING)

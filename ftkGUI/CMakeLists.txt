@@ -22,8 +22,6 @@ SET( GUI_LIBS
   vtkVolumeRendering vtkHybrid vnl)
 
 IF(QtTestingFound)
-  INCLUDE_DIRECTORIES( ${QtTesting_INCLUDE_DIRS} )
-  LINK_DIRECTORIES( ${QtTesting_LIBRARY_DIR} )
   LIST( APPEND GUI_SRCS GUITester.cpp )
   LIST( APPEND GUI_HDRS GUITester.h )
   LIST( APPEND GUI_LIBS QtTesting )
