@@ -472,7 +472,7 @@ QString View3D::getImageFile()
 	{
 		imageDir = QFileInfo(NewImageFile).absolutePath();
 		this->TraceEditSettings.setValue("imageDir", imageDir);
-		this->EditLogDisplay->append("Trace file: \t" + NewImageFile.section('/',-1));
+		this->EditLogDisplay->append("Image file: \t" + NewImageFile.section('/',-1));
 		this->Image.append( NewImageFile);
 		int imgNum = this->ImageActors->loadImage(NewImageFile.toStdString(), "Image");
 		if (this->translateImages)
