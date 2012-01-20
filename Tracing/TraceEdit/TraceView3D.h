@@ -121,7 +121,9 @@ limitations under the License.
 
 #include "VolumeOfInterest.h"
   
+#ifdef USE_QT_TESTING
 #include "GUITester.h"
+#endif
 
 class View3D : public QMainWindow 
 {
@@ -566,9 +568,11 @@ private:
 
 	void ClearRenderer(int i);
 
+  #ifdef USE_QT_TESTING
   //testing support
   GUITester *Tester;
   QString TestInputFile;
   QString TestBaselineImageFileName;
+  #endif
 };
 #endif

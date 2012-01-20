@@ -96,7 +96,9 @@ View3D::View3D(QWidget *parent)
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
 
+  #ifdef USE_QT_TESTING
   this->Tester = new GUITester(this);
+  #endif
 
 	//Set up the main window's central widget
 	this->CentralWidget = new QWidget(this);
@@ -5600,6 +5602,7 @@ void View3D::selectedFeaturesClustering()
 
 int View3D::runTests()
 {
+  #ifdef USE_QT_TESTING
   if( this->TestInputFile == "" )
     {
     return -1;
@@ -5623,5 +5626,6 @@ int View3D::runTests()
 
   std::cout << "test passed" << std::endl;
   return 0;
+  #endif
 }
 
