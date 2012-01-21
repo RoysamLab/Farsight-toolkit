@@ -11,6 +11,7 @@ public:
 
 	void setROI(ImageType::PointType roi_origin, ImageType::SizeType roi_size);
 	ImageType::Pointer getROI();
+        fregl_image_manager::Pointer getImageManager ();
 	
 private:
 	ImageType::PointType roi_origin;
@@ -20,5 +21,6 @@ private:
 	std::string img_path;
 	std::string anchor_image;
 	bool nearest_neighbor;
+        fregl_image_manager::Pointer region_montage;
 };
 
