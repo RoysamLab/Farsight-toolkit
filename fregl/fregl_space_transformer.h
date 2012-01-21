@@ -144,6 +144,12 @@ public:
 	//  space defined by the anchor image and the roi.
 	ImageType::Pointer transform_image_roi(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
+        //: Generate the transformed image using the given transformation
+	//
+	//  The given image is transformed to the image space of the global
+	//  space defined by the anchor image only the size of the actual image read.
+	ImageType::Pointer transform_image_whole(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+
 	//: Generate the photo-bleaching weighted transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
