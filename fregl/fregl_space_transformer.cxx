@@ -525,6 +525,60 @@ transform_image_roi(ImageType::Pointer in_image, int image_index, int background
 
 	return resampler->GetOutput();
 }
+fregl_space_transformer::ImageType::Pointer 
+fregl_space_transformer::
+transform_image_whole(ImageType::Pointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+{
+	if (!anchor_set_) {
+		std::cerr<<"Set anchor first"<<std::endl;
+		return NULL;
+	}
+
+
+	// Set the resampler to generate the transformed image
+	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
+	int index = image_id_indices_[image_index];
+	TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+	if ( !inverse_xform ) 
+		return NULL;
+
+	std::cout<<"Transform Whole Image "<<joint_register_->image_names()[image_index]<<std::endl;
+
+	TransformType::ParametersType params(12);
+	params = inverse_xform->GetParameters();
+	/*
+	std::cout<<"Inverse parameters = "<<params[0]<<", "<<params[1]<<", "
+	<<params[2]<<", "<<params[3]<<", "<<params[4]<<", "<<params[5]
+	<<", "<<params[6]<<", "<<params[7]<<", "<<params[8]<<", "
+	<<params[9]<<", "<<params[10]<<", "<<params[11]<<std::endl;
+	*/
+	ResamplerType::Pointer resampler = ResamplerType::New();
+	if (use_NN_interpolator) {
+		typedef itk::NearestNeighborInterpolateImageFunction<ImageType, double> NNInterpoType;
+		NNInterpoType::Pointer nn_interpolator = NNInterpoType::New();
+		resampler->SetInterpolator(nn_interpolator);
+	}
+	// Get the origin and size of the image in anchor space
+	std::vector<SizeType> const & image_sizes = joint_register_->image_sizes();
+	SizeType i_size = image_sizes[image_index];
+	PointType i_origin = image_origins_[image_index];
+	
+	resampler->SetInput(in_image);
+	resampler->SetTransform( inverse_xform );
+	resampler->SetSize( i_size );
+	resampler->SetOutputOrigin( i_origin );
+	resampler->SetOutputSpacing(spacing_);
+	resampler->SetDefaultPixelValue( background );
+	try {
+		resampler->Update();
+	}
+	catch(itk::ExceptionObject& e) {
+		vcl_cout << e << vcl_endl;
+		return NULL;
+	}
+
+	return resampler->GetOutput();
+}
 
 fregl_space_transformer::ImageType::Pointer 
 fregl_space_transformer::
