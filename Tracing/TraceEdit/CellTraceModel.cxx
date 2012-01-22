@@ -233,6 +233,27 @@ void CellTraceModel::SyncModel()
 	}
 }
 
+vtkSmartPointer<vtkTable> CellTraceModel::ConvertDefaultValueToNull(vtkSmartPointer<vtkTable> table)
+{	
+	vtkSmartPointer<vtkTable> convertedTable = vtkSmartPointer<vtkTable>::New();
+	convertedTable->Initialize();
+	vtkSmartPointer<vtkVariantArray> column = NULL;
+	for(int i=0; i < table->GetNumberOfColumns(); ++i)
+    {		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( table->GetColumnName(i));
+		convertedTable->AddColumn(column);
+    }
+
+	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)
+	{
+		vtkSmartPointer<vtkVariantArray> row = table->GetRow( i);
+		row = CellTrace::ConvertDefaultValueToNull(row);
+		convertedTable->InsertNextRow(row);
+	}
+	return convertedTable;
+}
+
 vtkSmartPointer<vtkTable> CellTraceModel::getDataTable()
 {
 	return this->DataTable;

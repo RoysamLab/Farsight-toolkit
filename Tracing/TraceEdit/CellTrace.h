@@ -45,6 +45,8 @@ public:
 	void SetClassifcation(int predicCol, double prediction, int confCol,double confidence);
 	void addNewFeature(vtkVariant nextFeature);
 	std::vector<TraceLine *> getSegments();
+	static vtkSmartPointer<vtkVariantArray> ConvertDefaultValueToNull(vtkSmartPointer<vtkVariantArray> row);
+
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);

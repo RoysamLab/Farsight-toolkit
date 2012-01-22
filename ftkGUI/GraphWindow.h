@@ -69,6 +69,11 @@ protected:
 	Point GetNewPointFromOldPoint( Point &oldPointFirst, Point &oldPointSecond, Point &newPointFirst, double weight);
 	double GetEdgeWeight(vnl_matrix<double>& vertexList, long firstIndex, long secondIndex);
 	virtual void closeEvent(QCloseEvent *event);
+	void SetUserDefineProgression(long int nodeID);
+	void SetProgressionStartTag(bool bstart);
+	void UpdateProgressionPath();
+	void GetProgressionPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path);
+	void ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color);
 
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
@@ -90,6 +95,7 @@ private:
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
+	vtkSmartPointer<vtkLookupTable> edgeLookupTable;
 	unsigned long observerTag;
 	vnl_vector<double> edgeWeights;
 	vnl_matrix<double> vertextList;
@@ -99,10 +105,18 @@ private:
 	std::map<long int, long int> indMapFromVertexToClusInd;
 	std::vector< std::vector<int> > indMapFromClusIndToVertex;
 	std::vector< std::vector<int> > indMapFromClusIndToInd;
+	std::map< std::pair< long int, long int>, long int> edgeMapping;
 	QString fileName;
 
+	vnl_matrix<long int> shortest_hop;
 	std::vector< long int> backbones;
 	std::vector< std::pair<long int, std::vector<long int> > > chainList;
+
+	// User Define progression
+	long int progressionStartID;
+	long int progressionEndID;
+	bool bProgressionStart;
+	std::vector< long int> progressionPath;
 };
 
 #endif

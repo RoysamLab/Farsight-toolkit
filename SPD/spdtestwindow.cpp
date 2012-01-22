@@ -1,4 +1,4 @@
-#include "spdmainwindow.h"
+#include "spdtestwindow.h"
 #include <QGridLayout>
 #include <QLCDNumber>
 #include <QFileDialog>
@@ -12,7 +12,7 @@
 using std::ifstream;
 using std::endl;
 
-SPDMainWindow::SPDMainWindow(QWidget *parent) :
+SPDtestWindow::SPDtestWindow(QWidget *parent) :
     QWidget(parent)
 {
 	SPDModel = NULL;
@@ -62,13 +62,9 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     clusterButton = new QPushButton(tr("Feature Cluster"));
 	cellClusterButton = new QPushButton(tr("Cell Cluster"));
 	
-
-	//listWidget = new QListWidget( this);
-	mstLabel = new QLabel(tr("Generate MST for each module:"));
-	generateMSTButton = new QPushButton(tr("MST"));
-	emdLabel = new QLabel(tr("Matching MSTs with modules:"));
+	emdLabel = new QLabel(tr("Matching modules based on coherence:"));
 	bcheckBox = new QCheckBox();
-	emdButton = new QPushButton(tr("EMD"));
+	emdButton = new QPushButton(tr("Match"));
 
 	emdThresBox = new QDoubleSpinBox;
 	emdThresBox->setRange(0,1);
@@ -88,7 +84,6 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
 
 	clusterButton->setEnabled(FALSE);
 	cellClusterButton->setEnabled(FALSE);
-	generateMSTButton->setEnabled(FALSE);
 	emdButton->setEnabled(FALSE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
@@ -100,7 +95,6 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
-	connect(generateMSTButton, SIGNAL(clicked()), this, SLOT(generateMST()));
 	connect(cellClusterButton , SIGNAL(clicked()), this, SLOT(clusterCells()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
@@ -120,7 +114,7 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 13; row++)
+    for ( int row = 1; row <= 12; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -150,37 +144,35 @@ SPDMainWindow::SPDMainWindow(QWidget *parent) :
     mainLayout->addWidget(clusterMergeLabel, 6, 0);
     mainLayout->addWidget(clusterMergeBox, 6, 1);
 	
-	mainLayout->addWidget(mstLabel, 7, 0);
-    mainLayout->addWidget(generateMSTButton, 7, 2);
-	mainLayout->addWidget(emdLabel, 8, 0);
-	mainLayout->addWidget(emdButton, 8, 2);
+	mainLayout->addWidget(emdLabel, 7, 0);
+	mainLayout->addWidget(emdButton, 7, 2);
 
-	mainLayout->addWidget(psmLable, 9, 0);
-	mainLayout->addWidget(emdThresBox, 9, 1);
-	mainLayout->addWidget(bcheckBox, 9, 2);
+	mainLayout->addWidget(psmLable, 8, 0);
+	mainLayout->addWidget(emdThresBox, 8, 1);
+	mainLayout->addWidget(bcheckBox, 8, 2);
 
-	mainLayout->addWidget(psmPerLable, 10, 0);
-	mainLayout->addWidget(emdPercentageBox, 10, 1);
-	mainLayout->addWidget(psmButton, 10, 2);
+	mainLayout->addWidget(psmPerLable, 9, 0);
+	mainLayout->addWidget(emdPercentageBox, 9, 1);
+	mainLayout->addWidget(psmButton, 9, 2);
 
-	mainLayout->addWidget(psdtLable, 11, 0);
-	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 12, 2);
+	mainLayout->addWidget(psdtLable, 10, 0);
+	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	mainLayout->addWidget(psdtButton, 11, 2);
 
-	mainLayout->addWidget(heatmapLabel, 13, 0);
-	mainLayout->addWidget(heatmapButton, 13, 2);
+	mainLayout->addWidget(heatmapLabel, 12, 0);
+	mainLayout->addWidget(heatmapButton, 12, 2);
 
     setLayout(mainLayout);
 
 	SPDModel = SPDAnalysisModel::InitInstance();
 }
 
-SPDMainWindow::~SPDMainWindow()
+SPDtestWindow::~SPDtestWindow()
 {
 	SPDAnalysisModel::DeInstance();
 }
 
-void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
+void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	data = table;
 
@@ -253,7 +245,7 @@ void SPDMainWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 
 }
 
-void SPDMainWindow::browse()
+void SPDtestWindow::browse()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose Data Files"),
                                                     QDir::currentPath(), tr("Text files (*.txt)"));
@@ -264,7 +256,7 @@ void SPDMainWindow::browse()
     }
 }
 
-void SPDMainWindow::load()
+void SPDtestWindow::load()
 {
 	std::string file = this->FileName.toStdString();
 
@@ -277,7 +269,7 @@ void SPDMainWindow::load()
 	}
 }
 
-void SPDMainWindow::loadTestData()
+void SPDtestWindow::loadTestData()
 {
 	std::string file = this->FileName.toStdString();
 
@@ -289,7 +281,7 @@ void SPDMainWindow::loadTestData()
 	}
 }
 
-void SPDMainWindow::clusterFunction()
+void SPDtestWindow::clusterFunction()
 {
 	if ( this->SPDModel->GetFeatureNum() <= 0 && this->SPDModel->GetSampleNum() <= 0)
 	{
@@ -305,8 +297,7 @@ void SPDMainWindow::clusterFunction()
 	{
 		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
 		this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-		generateMSTButton->setEnabled(TRUE);
-		emdButton->setEnabled(FALSE);
+		emdButton->setEnabled(TRUE);
 		psmButton->setEnabled(FALSE);
 		psdtButton->setEnabled(FALSE);
 		heatmapButton->setEnabled(FALSE);
@@ -317,35 +308,17 @@ void SPDMainWindow::clusterFunction()
 	}
 }
 
-void SPDMainWindow::generateMST()
-{
-	try
-	{
-		this->SPDModel->GenerateMST();
-		this->SPDModel->GenerateDistanceMST();
-		emdButton->setEnabled(TRUE);
-		psmButton->setEnabled(FALSE);
-		psdtButton->setEnabled(FALSE);
-		heatmapButton->setEnabled(FALSE);
-	}
-	catch(...)
-	{
-		std::cout<< "MST construction failure, please try again!"<<endl;
-	}
-}
-
-void SPDMainWindow::clusterCells()
+void SPDtestWindow::clusterCells()
 {
 	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
 	this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
-	generateMSTButton->setEnabled(TRUE);
-	emdButton->setEnabled(FALSE);
+	emdButton->setEnabled(TRUE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
 	heatmapButton->setEnabled(FALSE);
 }
 
-void SPDMainWindow::updateProgressionType()
+void SPDtestWindow::updateProgressionType()
 {
 	if( bcheckBox->isChecked())
 	{
@@ -363,11 +336,11 @@ void SPDMainWindow::updateProgressionType()
 	}
 }
 
-void SPDMainWindow::emdFunction()
+void SPDtestWindow::emdFunction()
 {
 	try
 	{
-		this->SPDModel->RunEMDAnalysis();
+		this->SPDModel->ModuleCoherenceMatchAnalysis();
 		psmButton->setEnabled(TRUE);
 		psdtButton->setEnabled(FALSE);
 		heatmapButton->setEnabled(FALSE);
@@ -378,19 +351,19 @@ void SPDMainWindow::emdFunction()
 	}
 }
 
-void SPDMainWindow::editThreshold()
+void SPDtestWindow::editThreshold()
 {
 	QString emdThres = this->emdThresBox->text();
 	double thres = this->emdThresBox->valueFromText(emdThres);
 	double per = 0;
 	if( thres >= 0 && thres <= 1)
 	{
-		per = this->SPDModel->GetEMDSelectedPercentage( thres);
+		per = this->SPDModel->GetCorMatSelectedPercentage( thres);
 	}
 	emdPercentageBox->setText(QString::number(per));
 }
 
-void SPDMainWindow::editPercentage()
+void SPDtestWindow::editPercentage()
 {
 	//std::string emdPer = this->emdPercentageBox->text().toStdString();
 	//double per = atof(emdPer.c_str());
@@ -402,7 +375,7 @@ void SPDMainWindow::editPercentage()
 	//emdThresBox->setText(QString::number(thres));
 }
 
-void SPDMainWindow::showPSMHist()
+void SPDtestWindow::showPSMHist()
 {
 	vtkSmartPointer<vtkTable> emdTable = vtkSmartPointer<vtkTable>::New();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -427,7 +400,7 @@ void SPDMainWindow::showPSMHist()
 	this->histo->show();
 }
 
-void SPDMainWindow::showPSM()
+void SPDtestWindow::showPSM()
 {
 	std::string emdThres = this->emdThresBox->text().toStdString();
 
@@ -454,7 +427,7 @@ void SPDMainWindow::showPSM()
 	}
 	else
 	{
-		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()));
+		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()));
 		optimalleaforder.set_size(clus1->num_samples);
 		for( int i = 0; i < clus1->num_samples; i++)
 		{
@@ -469,7 +442,7 @@ void SPDMainWindow::showPSM()
 	delete clus2;
 }
 
-void SPDMainWindow::viewProgression()
+void SPDtestWindow::viewProgression()
 {
 	/* needs to be changed:
 	   get orders of the features
@@ -502,7 +475,7 @@ void SPDMainWindow::viewProgression()
 	}
 	else
 	{
-		SPDModel->SaveSelectedFeatureNames("SPDMainWindow_ProgressionSelFeatures.txt", selFeatureID);
+		SPDModel->SaveSelectedFeatureNames("SPDtestWindow_ProgressionSelFeatures.txt", selFeatureID);
 	}
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
@@ -539,7 +512,7 @@ void SPDMainWindow::viewProgression()
 	//}
 }
 
-void SPDMainWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
+void SPDtestWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
 {
 	size_t last = 0;
 	size_t index = s.find_first_of(delim,last);
@@ -562,7 +535,7 @@ void SPDMainWindow::split(std::string& s, char delim, std::vector< unsigned int>
 	}
 } 
 
-void SPDMainWindow::GetFeatureOrder(std::vector< unsigned int> &selID, std::vector<int> &selIdOrder, std::vector<int> &unselIdOrder)
+void SPDtestWindow::GetFeatureOrder(std::vector< unsigned int> &selID, std::vector<int> &selIdOrder, std::vector<int> &unselIdOrder)
 {
 	SPDModel->HierachicalClustering();
 	std::vector< Tree> FeatureTreeData = SPDModel->PublicTreeData;
@@ -622,7 +595,7 @@ void SPDMainWindow::GetFeatureOrder(std::vector< unsigned int> &selID, std::vect
 	delete cc2;
 }
 
-bool SPDMainWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
+bool SPDtestWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
 {
 	for( int i = 0; i < vec.size(); i++)
 	{
@@ -634,7 +607,7 @@ bool SPDMainWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
 	return false;
 }
 
-void SPDMainWindow::regenerateProgressionTree()
+void SPDtestWindow::regenerateProgressionTree()
 {
 	if( selection)
 	{
@@ -649,6 +622,8 @@ void SPDMainWindow::regenerateProgressionTree()
 		std::vector<int> modSize;
 
 		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
+
+		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
 
 		/** graph window set models */
@@ -672,7 +647,7 @@ void SPDMainWindow::regenerateProgressionTree()
 	}
 }
 
-void SPDMainWindow::updateSelMod()   // possible bugs
+void SPDtestWindow::updateSelMod()   // possible bugs
 {
 	int r1 = 0;
 	int r2 = 0;
@@ -710,12 +685,12 @@ void SPDMainWindow::updateSelMod()   // possible bugs
 	}
 }
 
-void SPDMainWindow::GetProgressionTreeOrder(std::vector<long int> &order)
+void SPDtestWindow::GetProgressionTreeOrder(std::vector<long int> &order)
 {
 	this->graph->GetProgressionTreeOrder(order);
 }
 
-void SPDMainWindow::showProgressionHeatmap()
+void SPDtestWindow::showProgressionHeatmap()
 {
 	//ofstream ofs("SPDHeatmapOptimalOrder.txt");
 	if( this->progressionHeatmap)
@@ -723,7 +698,6 @@ void SPDMainWindow::showProgressionHeatmap()
 		delete this->progressionHeatmap;
 	}
 	this->progressionHeatmap = new Heatmap(this);
-	
 	
 	std::vector<long int> TreeOrder;
 	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
@@ -734,25 +708,25 @@ void SPDMainWindow::showProgressionHeatmap()
 	}
 
 	std::vector< std::vector< long int> > clusIndex;
-	selection->GetSampleIndex( clusIndex);
-	std::vector< int> sampleOrder;
-	SPDModel->GetClusterOrder(clusIndex, TreeOrder, sampleOrder);
+	selection->GetClusterIndex( clusIndex);
+	std::vector< int> clusterOrder;
+	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
-	this->progressionHeatmap->setModelsforSPD( tableAfterCellCluster, selection, sampleOrder, selOrder, unselOrder, &indexMap);
+	this->progressionHeatmap->setModelsforSPD( tableAfterCellCluster, selection, clusterOrder, selOrder, unselOrder, &indexMap);
 	this->progressionHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
 }
 
-void SPDMainWindow::closeEvent(QCloseEvent *event)
+void SPDtestWindow::closeEvent(QCloseEvent *event)
 {
 	closeSubWindows();
 	event->accept();
 }
 
-void SPDMainWindow::closeSubWindows()
+void SPDtestWindow::closeSubWindows()
 {
 	if(graph)
 	{
@@ -772,7 +746,7 @@ void SPDMainWindow::closeSubWindows()
 	}
 }
 
-void SPDMainWindow::ReRunSPDAnlysis()
+void SPDtestWindow::ReRunSPDAnlysis()
 {
 	closeSubWindows();
 	std::set<long int> selItems = this->selection->getSelections();
@@ -783,7 +757,7 @@ void SPDMainWindow::ReRunSPDAnlysis()
 	setModels( table, this->selection);
 }
 
-vtkSmartPointer<vtkTable> SPDMainWindow::GetSubTableExcludeItems(vtkSmartPointer<vtkTable> table, std::set<long int> &IDs)
+vtkSmartPointer<vtkTable> SPDtestWindow::GetSubTableExcludeItems(vtkSmartPointer<vtkTable> table, std::set<long int> &IDs)
 {
 	excludedIds = IDs;
 	vtkSmartPointer<vtkTable> newTable = vtkSmartPointer<vtkTable>::New();

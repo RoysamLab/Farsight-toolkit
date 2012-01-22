@@ -43,6 +43,7 @@ public:
 	bool toggle(std::set<long int> ids);
 	void clear(void);
 	std::set<long int> getSelections(void);	//Returns the selections
+	int DeleteCurrentSelectionInTable();
 
 	// Time Selections: Kymograph and 3D View Editing
 	struct Point{int id;int new_id;int time;};
@@ -51,6 +52,8 @@ public:
 	void SelectPoints(std::vector<Point> points);
 	std::vector<Point> * GetSelectedPoints(void){ return &point_selections;};
 
+	void SetSampleIndex( std::vector< std::set<long int> > &sampleIndex);
+	void GetSampleIndex( std::vector< std::vector<long int> > &sampleIndex);
 	void SetClusterIndex( std::vector< std::set<long int> > &clusIndex);
 	void GetClusterIndex( std::vector< std::vector<long int> > &clusIndex);
 
@@ -59,6 +62,7 @@ signals:
 	void TimeChanged();
 	void MultiChanged();
 	void thresChanged();
+	void ItemDeleted();
 	
 private:
 	std::set<long int> selections;
@@ -66,7 +70,8 @@ private:
 	int Time;
 	std::vector<Point> point_selections; // see if it needs to be cleared later.
 
-	std::vector< std::set<long int> > index; /** cluster index */
+	std::vector< std::set<long int> > index; /** sample index */
+	std::vector< std::set<long int> > indexClus; /** cluster index */
 };
 
 

@@ -34,6 +34,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	heatmap = new Heatmap(this);
 	progressionheatmap = new ProgressionHeatmap(this);
 	spdWin = new SPDMainWindow();
+	spdTestWin = new SPDtestWindow();
 	this->cc1 = NULL;
 	this->cc2 = NULL;
 
@@ -151,6 +152,11 @@ void SampleEditor::createMenus()
 	SPDAction = new QAction(tr("SPD"), this);
 	SPDAction->setStatusTip(tr("SPD Analysis for the data"));
 	connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
+	SPDMenu->addAction(SPDAction);
+
+	SPDAction = new QAction(tr("SPD Test"), this);
+	SPDAction->setStatusTip(tr("SPD Analysis for the data"));
+	connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDTestAnalysis()));
 	SPDMenu->addAction(SPDAction);
 
 	spdSampleDendroAction = new QAction(tr("SampleDendrogram"), this);
@@ -409,6 +415,46 @@ void SampleEditor::SPDAnalysis()
 	}
 
 	spdWin->show();
+
+	//SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
+	//SPDModel->ParseTraceFile( this->data);
+	//std::cout<< "Normalizing" << std::endl;
+	//SPDModel->NormalizeData();
+	//std::cout<< "clustering" << std::endl;
+	//SPDModel->ClusterAgglomerate( 0.5, 0.9);
+	////std::cout<< "Merging" << std::endl;
+	////SPDModel->ClusterMerge( 0.9, 0.9);
+	//std::cout<< "Generating MST" << std::endl;
+	//SPDModel->GenerateMST();
+	//SPDModel->RunEMDAnalysis();
+
+	//QString str = "0";
+	//vtkSmartPointer<vtkTable> table = SPDModel->GenerateProgressionTree(str.toStdString());
+	//if( table != NULL)
+	//{
+	//	std::vector<std::string> headers;
+	//	SPDModel->GetTableHeaders( headers);
+	//	QString str = SPDModel->GetFileName();
+	//	std::set<long int> featureSelectedIDs;
+	//	SPDModel->GetSelectedFeatures(featureSelectedIDs);
+	//	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
+	//	//this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
+	//	this->graph->ShowGraphWindow();
+	//}
+}
+
+void SampleEditor::SPDTestAnalysis()
+{
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		spdTestWin->setModels();
+	}
+	else
+	{
+		spdTestWin->setModels( this->data, selection);
+	}
+
+	spdTestWin->show();
 
 	//SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
 	//SPDModel->ParseTraceFile( this->data);

@@ -16,6 +16,12 @@ limitations under the License.
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "CellTrace.h"
+
+static double DefaultValue[115] ={-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,0,0,0,0,100,0,0,100,0,0,
+0,0,1000,0,0,100,0,0,0,100,0,100,0,0,100,0,0,0,0,0,0,-PI,-PI,-PI,100,-PI,0,0,100,0,0,100,0,0,100,
+0,0,100,0,0,100,-1,-1,100,-1,-1,100,0,0,100,100,0,-PI,180,0,-PI,180,0,0,180,0,0,180,0,0,180,0,0,180,
+0,100,100,0,0,0,0,0,100,0,0,0,0,100,0,0,100,100,-PI,0,-1,-1};
+
 CellTrace::CellTrace()
 {
 	this->clearAll();
@@ -589,6 +595,38 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
+
+vtkSmartPointer<vtkVariantArray> CellTrace::ConvertDefaultValueToNull(vtkSmartPointer<vtkVariantArray> row)
+{
+	vtkSmartPointer<vtkVariantArray> newRow = vtkSmartPointer<vtkVariantArray>::New();
+	newRow->SetNumberOfValues( row->GetNumberOfValues());
+	for( vtkIdType i = 0; i < row->GetNumberOfValues(); i++)
+	{
+		vtkVariant var = row->GetValue( i);
+		if( i == row->GetNumberOfValues() - 2) // file name
+		{
+			newRow->SetValue( i, var);
+		}
+		else
+		{
+			double varDouble = var.ToDouble();
+			if( DefaultValue[i] == -1)
+			{
+				newRow->SetValue( i, var);
+			}
+			else if( varDouble == DefaultValue[i])
+			{
+				//newRow->SetValue( i, NULL);
+			}
+			else
+			{
+				newRow->SetValue( i, var);
+			}
+		}
+	}
+	return newRow;
+}
+
 vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(int CheckAddFeatures)
 {
 	this->DataRow();

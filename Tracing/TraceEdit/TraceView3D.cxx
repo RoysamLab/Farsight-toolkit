@@ -1525,11 +1525,15 @@ void View3D::CreateGUIObjects()
 	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
 	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
+	this->SPDTestAction = new QAction("SPD Analysis", this->CentralWidget);
+	connect (this->SPDTestAction, SIGNAL(triggered()), this, SLOT(SPDTestAnalysis()));
+
 	this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
 	connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 
 #ifndef USE_SPD
 	this->SPDAction->setDisabled(true);
+	this->SPDTestAction->setDisabled(true);
 #endif
 
 
@@ -1850,6 +1854,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 	this->analysisViews->addAction(this->SPDAction);
+	this->analysisViews->addAction(this->SPDTestAction);
 	this->analysisViews->addAction(this->ClusclusAction);
 
 	//this->ShowToolBars->addSeparator();
@@ -3881,12 +3886,12 @@ void View3D::ListSelections()
 	selectionInfo->setDetailedText(selectedText);
 	selectionInfo->show();
 }
-void View3D::ShowTreeData()
+void View3D::ShowTreeData()   /// modified to table with null
 {
 	this->CloseTreePlots();
 
 	this->FTKTable = new TableWindow();
-	this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+	this->FTKTable->setModels( this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
 	this->FTKTable->setWindowTitle("Trace Object Features Table");
 	this->FTKTable->move(this->TraceEditSettings.value("TraceTable/pos",QPoint(32, 561)).toPoint());
 	this->FTKTable->resize(this->TraceEditSettings.value("TraceTable/size",QSize(600, 480)).toSize());
@@ -4408,6 +4413,7 @@ void View3D::ShowMergeStats()
 	this->GapsPlotView->setWindowTitle("Computed Features for Merge");
 	this->GapsPlotView->show();
 }
+/// modified to table with null
 void View3D::ShowCellAnalysis()
 {
 	//this->HideCellAnalysis();
@@ -4430,13 +4436,13 @@ void View3D::ShowCellAnalysis()
 		}
 		if (this->FL_MeasureTable)
 		{
-			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->setModels( CellTraceModel::ConvertDefaultValueToNull(this->CellModel->getDataTable()), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
 		else
 		{
 			this->FL_MeasureTable = new TableWindow();
-			this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->setModels( CellTraceModel::ConvertDefaultValueToNull(this->CellModel->getDataTable()), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
 			this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
 			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
@@ -5295,6 +5301,10 @@ void View3D::closeEvent(QCloseEvent *event)
 	{
 		this->SPDWin->close();
 	}
+	if( this->spdTestWin)
+	{
+		this->spdTestWin->close();
+	}
 #endif
 	event->accept();
 }
@@ -5480,7 +5490,8 @@ void View3D::CropBorderCells()
 
 
 
-void View3D::SaveComputedCellFeaturesTable()
+ /// modified to table with null
+void View3D::SaveComputedCellFeaturesTable()  
 {
 	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can write them!
 	{
@@ -5495,7 +5506,7 @@ void View3D::SaveComputedCellFeaturesTable()
 	myfile.open("L-Measures.txt");
 	
 	vtkSmartPointer<vtkTable> table = CellModel->getDataTable();
-	
+	table = CellTraceModel::ConvertDefaultValueToNull( table);
 	//table->Dump(1);
 	
 	//Dump out headers
@@ -5543,6 +5554,32 @@ void View3D::SPDAnalysis()
 	}
 
 	this->SPDWin->show();
+#endif
+}
+
+void View3D::SPDTestAnalysis()
+{
+#ifdef USE_SPD
+	this->spdTestWin = new SPDtestWindow();
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	{
+		//this->SPDWin->setModels();
+		//QMessageBox mes;
+		//mes.setText("Please compute cell features first!");
+		//mes.exec();
+	}
+	else
+	{
+		vtkSmartPointer<vtkTable> featureTable;
+		featureTable = this->CellModel->getDataTable();
+		featureTable->RemoveColumnByName("Trace File");
+		featureTable->RemoveColumnByName("Soma X Pos");
+		featureTable->RemoveColumnByName("Soma Y Pos");
+		featureTable->RemoveColumnByName("Soma Z Pos");
+		this->spdTestWin->setModels( featureTable, this->CellModel->GetObjectSelection());
+	}
+
+	this->spdTestWin->show();
 #endif
 }
 
@@ -5634,5 +5671,6 @@ int View3D::runTests()
   std::cout << "test passed" << std::endl;
   return 0;
   #endif
+  return -2;
 }
 

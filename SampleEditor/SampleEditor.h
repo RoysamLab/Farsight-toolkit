@@ -52,6 +52,7 @@ limitations under the License.
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
 #include "SPD/spdmainwindow.h"
+#include "SPD/spdtestwindow.h"
 #include <vector>
 #include <string>
 
@@ -78,6 +79,7 @@ private slots:
 	void showStatistics(void);
 	void updateStatistics(void);
 	void SPDAnalysis();
+	void SPDTestAnalysis();
 	void spdSampledendrogram();
 	void spdFeatureDendroram();
 	void spdShowHeatmap();
@@ -125,6 +127,7 @@ private:
 	ProgressionHeatmap *progressionheatmap;
 
 	SPDMainWindow *spdWin;
+	SPDtestWindow *spdTestWin;
 	SPDAnalysisModel *SPDModel;
 	int flag;
 

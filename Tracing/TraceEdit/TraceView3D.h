@@ -101,6 +101,7 @@ limitations under the License.
 #include "ftkGUI/PatternAnalysisWizard.h"
 #ifdef USE_SPD
 #include "SPD/spdmainwindow.h"
+#include "SPD/spdtestwindow.h"
 #endif
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
@@ -257,6 +258,7 @@ public slots:
 	void FocusOnCell(CellTrace* SelectedCell);
 
 	void SPDAnalysis();
+	void SPDTestAnalysis();
 	void ClusclusAnalysis();
 	/////////////////////////////////////////////////////////////
 	void selectedFeaturesClustering();
@@ -412,6 +414,7 @@ private:
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 	QAction *SPDAction;
+	QAction *SPDTestAction;
 	QAction *ClusclusAction;
 
 	/*QAction *UndoButton;
@@ -434,6 +437,7 @@ private:
 	StatisticsToolbar * statisticsToolbar;
 #ifdef USE_SPD
 	SPDMainWindow *SPDWin;
+	SPDtestWindow *spdTestWin;
 #endif
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;

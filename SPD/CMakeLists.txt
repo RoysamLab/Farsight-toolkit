@@ -13,7 +13,7 @@ SET( Libraries
     mbl
     ${QT_LIBRARIES})
 
-QT4_WRAP_CPP( GUI_MOC_SRCS spdmainwindow.h )
+QT4_WRAP_CPP( GUI_MOC_SRCS spdmainwindow.h spdtestwindow.h)
 
 SET(SPD_SRCS
 	SPDAnalysisModel.h
@@ -22,7 +22,9 @@ SET(SPD_SRCS
 	spdmainwindow.h
 	spdmainwindow.cpp
 	LCSAnalysis.h
-	LCSAnalysis.cpp)
+	LCSAnalysis.cpp
+	spdtestwindow.h
+	spdtestwindow.cpp)
 
 IF ( NOT BUILD_CLUSCLUS )
 	MESSAGE( SEND_ERROR "Must turn on BUILD_CLUSCLUS" )

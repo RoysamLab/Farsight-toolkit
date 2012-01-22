@@ -16,6 +16,7 @@
 #include <vtkRenderer.h>
 #include <vtkAbstractArray.h>
 #include <vtkVariantArray.h>
+#include <vtkCellPicker.h>
 #include <QMessageBox>
 #include <fstream>
 #include <vector>
@@ -28,7 +29,9 @@
 #define ANGLE_STEP 90
 #define MAX_HOP 200
 
-double selectColor[3]={0,1,0};
+static double selectColor[3]={0,1,0};
+static double progressionPathColor[3] = {1,0,0};
+static double edgeDefaultColor[3] = {0.6, 0.6, 0.6};
 
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -38,6 +41,10 @@ GraphWindow::GraphWindow(QWidget *parent)
 	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
 	this->observerTag = 0;
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	this->edgeLookupTable = vtkSmartPointer<vtkLookupTable>::New();
+	bProgressionStart = true;
+	progressionStartID = -1;
+	progressionEndID = -1;
 }
 
 GraphWindow::~GraphWindow()
@@ -300,46 +307,54 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		}
 	}
 
-	for( int i = 0; i < table->GetNumberOfRows(); i++)
+	edgeMapping.clear();
+
+	for( int i = 0; i < table->GetNumberOfRows(); i++) 
 	{
 
 		long int ver1 = arrayID1->GetVariantValue(i).ToLong();
 		long int ver2 = arrayID2->GetVariantValue(i).ToLong();
 
-		if (this->indMapFromClusIndToVertex.size() <= 0)
-		{
-			std::map< long int, long int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
-			std::map< long int, long int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
-			if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
-			{
-				long int index1 = iter1->second;
-				long int index2 = iter2->second;
+		//if (this->indMapFromClusIndToVertex.size() > 0)
+		//{
+			//std::map< long int, long int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
+			//std::map< long int, long int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
+			//if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
+			//{
+				long int index1 = ver1;
+				long int index2 = ver2;
 				graph->AddEdge( index1, index2);
+
+				std::pair< long int, long int> pair1 = std::pair< long int, long int>( index1, index2);
+				std::pair< long int, long int> pair2 = std::pair< long int, long int>( index2, index1);
+				edgeMapping.insert( std::pair< std::pair< long int, long int>, long int>(pair1, i));
+				edgeMapping.insert( std::pair< std::pair< long int, long int>, long int>(pair2, i));
+
 				adj_matrix( index1, index2) = 1;
 				adj_matrix( index2, index1) = 1;
 				vertextList( i, 0) = index1;
 				vertextList( i, 1) = index2;
 				edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
 				weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
-			}
-			else
-			{
-				QMessageBox msg;
-				msg.setText("Index Mapping Error!");
-				msg.exec();
-				exit(-1);
-			}
-		}
-		else    // cluster index, no mapping
-		{
-			graph->AddEdge( ver1, ver2);
-			adj_matrix( ver1, ver2) = 1;
-			adj_matrix( ver2, ver1) = 1;
-			vertextList( i, 0) = ver1;
-			vertextList( i, 1) = ver2;
-			edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
-			weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
-		}
+		//	}
+		//	else
+		//	{
+		//		QMessageBox msg;
+		//		msg.setText("Index Mapping Error!");
+		//		msg.exec();
+		//		exit(-1);
+		//	}
+		//}
+		//else    // cluster index, no mapping
+		//{
+		//	graph->AddEdge( ver1, ver2);
+		//	adj_matrix( ver1, ver2) = 1;
+		//	adj_matrix( ver2, ver1) = 1;
+		//	vertextList( i, 0) = ver1;
+		//	vertextList( i, 1) = ver2;
+		//	edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
+		//	weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
+		//}
 	}
 
 	//edgeWeights = edgeWeights - edgeWeights.mean();
@@ -390,28 +405,36 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
-	
 	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
-
-
 	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
 	{             
 		vertexColors->InsertNextValue( i);
 		this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
 	}
-
 	lookupTable->Build();
+
+	vtkSmartPointer<vtkIntArray> edgeColors = vtkSmartPointer<vtkIntArray>::New();
+
+	edgeColors->SetNumberOfComponents(1);
+	edgeColors->SetName("EdgeColor");
+	this->edgeLookupTable->SetNumberOfTableValues( table->GetNumberOfRows());
+	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)               
+	{ 
+		edgeColors->InsertNextValue(i); // color the edges by default color
+		this->edgeLookupTable->SetTableValue(i, edgeDefaultColor[0], edgeDefaultColor[1], edgeDefaultColor[2]);
+	}
 
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
 	graph->GetEdgeData()->AddArray(weights);
+	graph->GetEdgeData()->AddArray(edgeColors);
 	
 	//theme.TakeReference(vtkViewTheme::CreateMellowTheme());
 	theme->SetLineWidth(3);
 	theme->SetCellOpacity(0.9);
 	theme->SetCellAlphaRange(0.8,0.8);
 	theme->SetPointSize(5);
-	theme->SetCellColor(0.6,0.6,0.6);
+	//theme->SetCellColor(0.6,0.6,0.6);
 	theme->SetSelectedCellColor(selectColor);
 	theme->SetSelectedPointColor(selectColor); 
 	theme->SetVertexLabelColor(0.3,0.3,0.3);
@@ -422,13 +445,16 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->SetRepresentationFromInput( graph);
 	this->view->SetEdgeLabelVisibility(true);
 	this->view->SetColorVertices(true); 
+	this->view->SetColorEdges(true);
 	this->view->SetVertexLabelVisibility(true);
 
 	this->view->SetVertexColorArrayName("Color");
+	this->view->SetEdgeColorArrayName("EdgeColor");
 	this->view->SetEdgeLabelArrayName("edgeLabel");
 	this->view->SetVertexLabelArrayName("vertexIDarrays");
 
     theme->SetPointLookupTable(lookupTable);
+	theme->SetCellLookupTable(edgeLookupTable);
 	this->view->ApplyViewTheme(theme);
 
 	this->view->SetLayoutStrategyToPassThrough();
@@ -572,22 +598,106 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 	if( vertices != NULL)
 	{
 		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
-	
-		std::set<long int> IDs;
 		if(vertexList->GetNumberOfTuples() > 0)
 		{
-			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+			int key = graphWin->view->GetInteractor()->GetControlKey();
+			if( 0 == key)
 			{
-				long int value = vertexList->GetValue(i);
-				IDs.insert(value);
+				std::cout<< vertexList->GetValue(0)<<endl;
+				std::set<long int> IDs;
+				for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+				{
+					long int value = vertexList->GetValue(i);
+					IDs.insert(value);
+				}
+				graphWin->SetSelectedIds( IDs);
+				graphWin->SetSelectedIds2();  // only select the selected feature columns
+				graphWin->SetProgressionStartTag(true);
+			}
+			else
+			{
+				long int value = vertexList->GetValue(0);
+				graphWin->SetUserDefineProgression(value);
 			}
 		}
-
-		graphWin->SetSelectedIds( IDs);
-		graphWin->SetSelectedIds2();  // only select the selected feature columns
+		else
+		{
+			graphWin->SetProgressionStartTag(true);
+		}
 	}
 	//graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
 	//graphWin->view->GetRenderer()->Render();
+}
+
+void GraphWindow::SetProgressionStartTag(bool bstart)
+{
+	bProgressionStart = bstart;
+}
+
+void GraphWindow::SetUserDefineProgression(long int nodeID)
+{
+	if( bProgressionStart)
+	{
+		progressionStartID = nodeID;
+		bProgressionStart = false;
+		std::cout<< "progression start: "<<progressionStartID<<endl;
+	}
+	else
+	{
+		progressionEndID = nodeID;
+		bProgressionStart = true;
+		std::cout<< "progression end: "<<progressionEndID<<endl;
+		UpdateProgressionPath();
+	}
+}
+
+void GraphWindow::ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color)
+{
+	for( int i = 0; i < lookuptable->GetNumberOfTableValues(); i++)
+	{
+		lookuptable->SetTableValue( i, color[0], color[1], color[2]);
+	}
+}
+
+void GraphWindow::UpdateProgressionPath()
+{
+	progressionPath.clear();
+	ResetLookupTable( edgeLookupTable, edgeDefaultColor);
+	GetProgressionPath(shortest_hop, progressionStartID, progressionEndID, progressionPath);
+
+	for( int i = 0; i < progressionPath.size() - 1; i++)
+	{
+		std::pair<long int, long int> pair = std::pair<long int, long int>( progressionPath[i], progressionPath[i + 1]);
+		std::map< std::pair< long int, long int>, long int>::iterator iter = edgeMapping.find( pair);
+		if( iter != edgeMapping.end())
+		{
+			vtkIdType index = (vtkIdType)iter->second;
+			edgeLookupTable->SetTableValue( index, 0, 0 ,0);
+		}
+	}
+	//this->mainQTRenderWidget.GetRenderWindow()->Render();
+	this->view->GetRenderer()->Render();
+}
+
+void GraphWindow::GetProgressionPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path)
+{
+	std::map< long int, long int> tmpChain;  // for ordering 
+	long int maxhop = hopMat( startNode, endNode);
+
+	for( long int i = 0; i < shortest_hop.cols(); i++)
+	{
+		if( shortest_hop( startNode, i) + shortest_hop( endNode, i) == maxhop)
+		{
+			tmpChain.insert( std::pair< long int, long int>( shortest_hop( startNode, i), i));
+		}
+	}
+
+	path.clear();
+	std::map< long int, long int>::iterator iter;
+	for( iter = tmpChain.begin(); iter != tmpChain.end(); iter++)
+	{
+		path.push_back((*iter).second);
+	}
 }
 
 ObjectSelection * GraphWindow::GetSelection()
@@ -694,13 +804,16 @@ void GraphWindow::UpdateGraphView()
 		std::set<long int>::iterator iter = IDsnew.begin();
 		while( iter != IDsnew.end())
 		{
-			int var = this->indMapFromVertexToClusInd.find( *iter)->second;
-
-			if( IDs.find( var) == IDs.end())   // selectIDs doesn't have var
+			if( this->indMapFromVertexToClusInd.find( *iter) != this->indMapFromVertexToClusInd.end()) 
 			{
-				IDs.insert( var);
+				int var = this->indMapFromVertexToClusInd.find( *iter)->second;
+
+				if( IDs.find( var) == IDs.end())   // selectIDs doesn't have var
+				{
+					IDs.insert( var);
+				}
+				iter++;
 			}
-			iter++;
 		}
 	}
 
@@ -750,7 +863,7 @@ void GraphWindow::UpdateGraphView()
 
 void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::vector<Point>& pointList)
 {
-	vnl_matrix<long int> shortest_hop(adj_matrix.rows(), adj_matrix.cols());
+	shortest_hop.set_size(adj_matrix.rows(), adj_matrix.cols());
 	vnl_vector<long int> mark(adj_matrix.rows());
 	shortest_hop.fill(0);
 	mark.fill(0);
@@ -843,6 +956,11 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		debugbackbones.push_back( (*iter).second);
 		tag[ (*iter).second] = 1;
 	}
+
+	/// update the progression path
+	progressionPath = backbones;   
+	progressionStartID = backbones[0];
+	progressionEndID = backbones[ backbones.size() - 1];
 
 	/// find the branches' backbones
 	std::vector< long int> branchnodes;
@@ -1228,28 +1346,27 @@ bool GraphWindow::IsExist(std::vector<long int>& vec, long int value)
 void GraphWindow::GetProgressionTreeOrder(std::vector<long int> &order)
 {
 	order.clear();
-	std::vector<long int> clusterOrder;
 	for( long int i = 0; i < backbones.size(); i++)
 	{
-		clusterOrder.push_back(backbones[i]);
-		GetOrder(backbones[i], clusterOrder);
+		order.push_back(backbones[i]);
+		GetOrder(backbones[i], order);
 	}
 
-	if( this->indMapFromClusIndToInd.size() > 0 )
-	{
-		for( int i = 0; i < clusterOrder.size(); i++)
-		{
-			std::vector<int> clusterNodes = this->indMapFromClusIndToInd[ clusterOrder[i]];
-			for( int j = 0; j < clusterNodes.size(); j++)
-			{
-				order.push_back( clusterNodes[j]);
-			}
-		}
-	}
-	else
-	{
-		order = clusterOrder;
-	}
+	//if( this->indMapFromClusIndToInd.size() > 0 )
+	//{
+	//	for( int i = 0; i < clusterOrder.size(); i++)
+	//	{
+	//		std::vector<int> clusterNodes = this->indMapFromClusIndToInd[ clusterOrder[i]];
+	//		for( int j = 0; j < clusterNodes.size(); j++)
+	//		{
+	//			order.push_back( clusterNodes[j]);
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	order = clusterOrder;
+	//}
 }
 
 void GraphWindow::GetOrder(long int node, std::vector<long int> &order)

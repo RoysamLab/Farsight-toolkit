@@ -85,6 +85,8 @@ public:
 	void createCellToCellGraph();
 	double average(std::vector< std::pair<unsigned int, double> > ID);
 	int AddNewFeatureHeader(std::string NewHeader);
+	static vtkSmartPointer<vtkTable> ConvertDefaultValueToNull(vtkSmartPointer<vtkTable> table);
+
 signals:
 	void selectionChanged(void);
 private:

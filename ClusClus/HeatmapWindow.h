@@ -101,17 +101,59 @@ public:
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
 	void runClus();
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
+	void runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
-	void showGraphforSPD( int selCol = 0, int unselCol = 0);
+	void showGraphforSPD( int selCol = 0, int unselCol = 0, bool bprogressionHeatmap = false);
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
 	void showDendrogram1();
 	void showDendrogram2();	
 
+signals:
+	void SelChanged();
+
+protected:
+	virtual void closeEvent(QCloseEvent *event);
+
+protected slots:
+	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
+	void GetSelecectedIDs();
+	void GetSelecectedIDsForSPD();
+	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
+	
+private:
+	rgb GetRGBValue(double val);
+	void readmustd(double** mustd);
+	void scaleData(double** mustd);
+	void scaleData();
+	void drawPoints1();
+	void drawPoints3();
+	void drawPointsForOrderHeatmap();
+	void setselectedCellIds();
+	void computeselectedcells();
+	void createDataForDendogram1(double powCof);
+	void createDataForDendogram2(double powCof);
+	void createDataForDendogram2();
+	void reselectIds1(std::set<long int>& selectedIDs, long int id);
+	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
+	void addDragLineforSPD(double* worldPosition);
+	void selectClustersforSPD(double* worldPosition);
+	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
+	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD = NULL);
+	void SetdenSelectedIdsForSPD(std::set<long int>& IDs);
+	void reselectSPDIds1(std::set<long int>& selectedIDs, long int id);
+
+public:
 	int              num_samples;
 	int              num_features;
 	double**         mapdata;
@@ -125,20 +167,6 @@ public:
 
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
-
-signals:
-	void SelChanged();
-
-protected slots:
-	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
-	void GetSelecectedIDs();
-	void GetSelecectedIDsForSPD();
-	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
-	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 
 private:
 	QVTKWidget mainQTRenderWidget;
@@ -185,25 +213,7 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> dragLineMapper;
 	vtkSmartPointer<vtkActor> dragLineActor;
 
-	rgb GetRGBValue(double val);
-	void readmustd(double** mustd);
-	void scaleData(double** mustd);
-	void scaleData();
-	void drawPoints1();
-	void drawPoints3();
-	void setselectedCellIds();
-	void computeselectedcells();
-	void createDataForDendogram1(double powCof);
-	void createDataForDendogram2(double powCof);
-	void createDataForDendogram2();
-	void reselectIds1(std::set<long int>& selectedIDs, long int id);
-	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
-	void addDragLineforSPD(double* worldPosition);
-	void selectClustersforSPD(double* worldPosition);
-	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
-	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id);
-	void SetdenSelectedIdsForSPD(std::set<long int>& IDs);
-	void reselectSPDIds1(std::set<long int>& selectedIDs, long int id);
+
 
 	std::map<int, int> indMapFromVertexToInd;
 	std::vector< std::vector<int> > indSPDMapFromIndToVertex;

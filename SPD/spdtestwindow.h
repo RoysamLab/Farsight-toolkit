@@ -1,5 +1,5 @@
-#ifndef SPDMAINWINDOW_H
-#define SPDMAINWINDOW_H
+#ifndef SPDTESTWINDOW_H
+#define SPDTESTWINDOW_H
 
 #include <QWidget>
 #include <QLineEdit>
@@ -14,14 +14,14 @@
 #include "ClusClus/ProgressionHeatmapWindow.h"
 #include "ClusClus/HeatmapWindow.h"
 
-class SPDMainWindow : public QWidget
+class SPDtestWindow : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SPDMainWindow(QWidget *parent = 0);
+    explicit SPDtestWindow(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-    ~SPDMainWindow();
+    ~SPDtestWindow();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 
 protected:
@@ -37,7 +37,6 @@ protected slots:
     void load();
 	void loadTestData();
     void clusterFunction();
-	void generateMST();
 	void clusterCells();
 	void emdFunction();
 	void showPSM();
@@ -75,8 +74,7 @@ private:
     QPushButton *clusterButton;
 	QPushButton *cellClusterButton;
 	QListWidget *listWidget;
-	QLabel *mstLabel;
-	QPushButton *generateMSTButton;
+
 	QLabel *emdLabel;
 	QCheckBox *bcheckBox;   // progression overall or over distance to device
 	QPushButton *emdButton;
@@ -112,4 +110,4 @@ private:
 	std::vector< int> unselOrder;
 };
 
-#endif // SPDMAINWINDOW_H
+#endif // SPDTESTWINDOW_H

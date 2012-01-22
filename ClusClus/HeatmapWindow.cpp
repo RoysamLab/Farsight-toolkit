@@ -165,7 +165,7 @@ void Heatmap::creatDataForHeatmap(double powCof)
 	{
 		this->createDataForDendogram2(powCof);
 	}
-	if((this->connect_Data_Tree1 != NULL) && (this->connect_Data_Tree2 == NULL))
+	else
 	{
 		this->createDataForDendogram2();
 	}
@@ -1339,6 +1339,75 @@ void Heatmap::drawPoints3()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
+void Heatmap::drawPointsForOrderHeatmap()
+{
+	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
+	this->theme = vtkSmartPointer<vtkViewTheme>::New();
+	vtkSmartPointer<vtkPolyData> pd = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkCellArray> verts = vtkSmartPointer<vtkCellArray>::New();
+	verts->SetNumberOfCells(1);
+
+	vtkSmartPointer<vtkDoubleArray> orient = vtkSmartPointer<vtkDoubleArray>::New();
+	orient->SetNumberOfComponents(1);
+	orient->SetName("orientation");
+
+	vtkSmartPointer<vtkStringArray> label = vtkSmartPointer<vtkStringArray>::New();
+	label->SetNumberOfComponents(1);
+	label->SetName("label");
+
+	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
+	for(int i=0; i<this->num_features;i++)
+    {
+		pts->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1], 0.5, 0);
+	}
+
+	for(int i=0; i<this->num_features;i++)
+	{
+		verts->InsertNextCell(1);
+		verts->InsertCellPoint(i);
+		orient->InsertNextValue(45.0);
+		vtkIdType id = i+1  ;
+		label->InsertNextValue(this->table->GetColumn(id)->GetName());
+	}
+
+	pd->SetPoints(pts);
+	pd->SetVerts(verts);
+	pd->GetPointData()->AddArray(label);
+	pd->GetPointData()->AddArray(orient);
+
+	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
+	hier->SetInput(pd);
+	hier->SetOrientationArrayName("orientation");
+	hier->SetLabelArrayName("label");
+	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+  
+	vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
+	lmapper->SetInputConnection(hier->GetOutputPort());
+
+	vtkSmartPointer<vtkQtLabelRenderStrategy> strategy = vtkSmartPointer<vtkQtLabelRenderStrategy>::New();
+	lmapper->SetRenderStrategy(strategy);
+	lmapper->SetShapeToNone();
+	lmapper->SetBackgroundOpacity(0.0);
+	lmapper->SetMargin(0);
+
+	vtkSmartPointer<vtkActor2D> lactor = vtkSmartPointer<vtkActor2D>::New();
+	lactor->SetMapper(lmapper);
+
+	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	rmapper->SetInput(pd);
+
+	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
+	ractor->SetMapper(rmapper);
+
+	this->view->GetRenderer()->AddActor(lactor);
+	this->view->GetRenderer()->AddActor(ractor);
+
+    //this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
+    //this->selectionCallback1->SetClientData(this);
+    //this->selectionCallback1->SetCallback ( SelectionCallbackFunctionForSPD);
+    //this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
+}
+
 void Heatmap::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
 	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
@@ -1517,6 +1586,7 @@ void Heatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void*
 {
 	Heatmap* heatmapWin = (Heatmap*)clientData;
 	char key = heatmapWin->view->GetInteractor()->GetKeyCode();
+	int size = 0;
 	switch (key)
 	{
 	case 'c':
@@ -1528,6 +1598,18 @@ void Heatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void*
 	case 'r':
 		heatmapWin->continueselect = false;
 		heatmapWin->intersectionselect = false;
+		break;
+	case 'd':
+		size = heatmapWin->Selection->getSelections().size();
+		if( size > 0)
+		{
+			std::cout<< size<< " items deleted! Please rerun SPD analysis!"<<endl;
+			heatmapWin->Selection->DeleteCurrentSelectionInTable();
+		}
+		else
+		{
+			std::cout<< "No items have been selected!"<<endl;
+		}
 		break;
 	default:
 		break;
@@ -1830,15 +1912,18 @@ void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
-void Heatmap::showGraphforSPD( int selCol, int unselCol)
+void Heatmap::showGraphforSPD( int selCol, int unselCol, bool bprogressionHeatmap)
 {	
-	if(this->clusflag == true)
-		this->drawPoints3();
+	if(bprogressionHeatmap)
+	{
+		drawPointsForOrderHeatmap();
+	}
 	else
-		this->drawPoints1();
+	{
+		drawPoints3();
+	}
 
 	this->dragLineFlag = false;
-
 
 	this->aPlane = vtkSmartPointer<vtkPlaneSource>::New();
     this->aPlane->SetXResolution(this->num_features);
@@ -1954,12 +2039,15 @@ void Heatmap::showGraphforSPD( int selCol, int unselCol)
 
 	try
 	{
-		if(this->clusflag == true)
-			this->showDendrogram1();
-		else
+		if( bprogressionHeatmap == false)
 		{
-			this->showDendrogram1();
-			this->showDendrogram2();
+			if(this->clusflag == true)
+				this->showDendrogram1();
+			else
+			{
+				this->showDendrogram1();
+				this->showDendrogram2();
+			}
 		}
 	}
 	catch(...)
@@ -2044,22 +2132,32 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 	//cout<<"cluster number is "<<clusternumber<<endl;
 
 	std::vector< std::set< long int> > clusIndex;
+	std::vector< std::set< long int> > sampleIndex;
 	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
 	{
-		std::set<long int> idsforSPD;
-		this->reselectIdsforSPD(idsforSPD, *it);
+		std::set<long int> sampleIdsforSPD;
+		std::set<long int> clusIdsforSPD;
+		this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
 		//cout<<"...\n";
-		clusIndex.push_back(idsforSPD);
+		sampleIndex.push_back(sampleIdsforSPD);
+		clusIndex.push_back(clusIdsforSPD);
 	}
 
 	this->Selection->SetClusterIndex(clusIndex);
+	this->Selection->SetSampleIndex(sampleIndex);
+
 }
 
-void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
+void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD)
 {
 	if(id < this->num_samples)
 	{
 		//cout<<id<<"\t";
+		if( clusidforSPD != NULL)
+		{
+			clusidforSPD->insert(id);
+		}
+
 		for( int i = 0; i < indSPDMapFromIndToVertex[id].size(); i++)
 		{
 			idsforSPD.insert( indSPDMapFromIndToVertex[id][i]);
@@ -2067,11 +2165,10 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id)
 	}
 	else
 	{
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0]);
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1]);
+		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0], clusidforSPD);
+		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1], clusidforSPD);
 	}
 }
-
 
 void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder,  std::map< int, int> *indexCluster, ObjectSelection * sels2)
 {
@@ -2109,6 +2206,44 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
 	this->runClusforSPD(selOrder, unselOrder);
+}
+
+void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster, ObjectSelection * sels2)
+{
+	this->table = table;
+	this->indMapFromVertexToInd.clear();
+	this->indMapFromIndToVertex.clear();
+
+	if( indexCluster) 
+	{
+		indMapFromVertexToInd = *indexCluster;
+		indSPDMapFromIndToVertex.resize( table->GetNumberOfRows());
+		std::map<int, int>::iterator iter;
+		for( iter = indMapFromVertexToInd.begin(); iter != indMapFromVertexToInd.end(); iter++)
+		{
+			std::pair<int, int> pair = *iter;
+			indSPDMapFromIndToVertex[ pair.second].push_back( pair.first);
+		}
+	}
+
+	if(!sels)
+		this->Selection = new ObjectSelection();
+	else
+		this->Selection = sels;
+
+	if(!sels2)
+		this->Selection2 = new ObjectSelection();
+	else
+		this->Selection2 = sels2;
+
+	selectedFeatureIDs.clear();
+	for( int i = 0; i < selOrder.size(); i++)
+	{
+		selectedFeatureIDs.insert( selOrder[i]);
+	}
+	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
+	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
+	this->runClusforSPD( sampleOrder, selOrder, unselOrder);
 }
 
 void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder)
@@ -2168,7 +2303,7 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		delete datasforclus[i];
 	}
 	delete datasforclus;
-
+	
 	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
 	int counter = 0;
 	for(int i = 0; i < selOrder.size(); i++)
@@ -2176,8 +2311,10 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		optimalleaforder2[i] = selOrder[i];
 		counter++;
 	}
-	for(int i = counter; i < unselOrder.size() + selOrder.size(); i++)
-		optimalleaforder2[i] = unselOrder[i - counter];
+	for(int i = 0; i < unselOrder.size(); i++)
+	{
+		optimalleaforder2[i + counter] = unselOrder[i];
+	}
 
 	this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
 	this->setDataForDendrograms(cc1->treedata);
@@ -2192,6 +2329,60 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 	delete cc1;
 }
 
+void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder)
+{
+	this->clusflag = true;
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->table->GetNumberOfRows()];
+
+	std::cout<<this->table->GetNumberOfRows()<<endl;
+	std::cout<<this->table->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+	}
+
+	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+
+	int* optimalleaforder1 = new int[this->table->GetNumberOfRows()];
+	for(int i = 0; i < sampleOrder.size(); i++)
+	{
+		optimalleaforder1[i] = sampleOrder[i];
+	}
+	
+	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
+	int counter = 0;
+	for(int i = 0; i < selOrder.size(); i++)
+	{
+		optimalleaforder2[i] = selOrder[i];
+		counter++;
+	}
+	for(int i = 0; i < unselOrder.size(); i++)
+	{
+		optimalleaforder2[i + counter] = unselOrder[i];
+	}
+
+	this->setDataForHeatmap( datas, optimalleaforder1, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
+	//this->setDataForDendrograms();
+	this->creatDataForHeatmap(0.2);
+	
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+	}
+	delete datas;
+}
+
 void Heatmap::SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
 	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
@@ -2203,7 +2394,7 @@ void Heatmap::SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned i
 	vtkSelectionNode* cells = NULL;
 
     if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
-        {
+        {                                                                            
         vertices = selection->GetNode(0);
         }
     else if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
@@ -2306,6 +2497,7 @@ void Heatmap::SetdenSelectedIdsForSPD(std::set<long int>& IDs)
 		{
 			this->Selection2->select(selectedFeatureIDs);
 			this->Selection->select(selectedIDs1);
+
 		}
 		catch(...)
 		{
@@ -2425,4 +2617,9 @@ void Heatmap::GetSelecectedIDsForSPD()
 	{
 		cout<<"GetSelecectedIDs failed, please try it again!"<<endl;
 	}
+}
+
+void Heatmap::closeEvent(QCloseEvent *event)
+{
+	mainQTRenderWidget.close();
 }

@@ -76,7 +76,7 @@ public:
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
-	void GetClusClusData(clusclus& c1, clusclus& c2, double threshold, double magFactor = 0);
+	void GetClusClusData(clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
@@ -84,9 +84,16 @@ public:
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
 	void GetMatrixData(vnl_matrix<double> &mat);
-	void SetProgressionTag(bool bProg);
-	bool GetProgressionTag();
+	void GetClusterMatrixData(vnl_matrix<double> &mat);
+	bool SetProgressionType(bool bProg);
+	bool GetProgressionType();
 	void GetDistanceOrder(std::vector<long int> &order);
+	void GetOrderedDataTable(std::vector<long int> &order, vtkSmartPointer<vtkTable> orderTable);
+	void GetClusterOrder(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &treeOrder, std::vector< int> &clusterOrder);
+
+	void ModuleCoherenceMatchAnalysis();
+	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
+	double GetCorMatSelectedPercentage(double thres);
 
 protected:
 	SPDAnalysisModel();
@@ -94,8 +101,8 @@ protected:
 	void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
-	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, std::vector<double> &distance);
-	void ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<double> &distance);
+	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
+	void ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, vnl_vector<double> &distance);
 	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, vnl_vector<int>& TreeIndex, int fold);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
@@ -134,7 +141,8 @@ private:
 	std::vector<int> indMapFromIndToVertex;    // index mapping
 	std::map< int, int> indMapFromVertexToClus;
 	std::vector<std::string> FeatureNames;
-	std::vector<double> DistanceToDevice;
+	vnl_vector<double> DistanceToDevice;
+	double disCor;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
 	vtkSmartPointer<vtkTable> DataTable;
 	std::vector<std::string> headers;
@@ -170,7 +178,9 @@ private:
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;
 	vnl_matrix<double> heatmapMatrixNew;
-	clusclus *cc1;
-	clusclus *cc2;
+	std::vector< int> clusterOrder;
+
+	// for spdtestwindow
+	vnl_matrix<double> CorMatrix;
 };
 #endif
