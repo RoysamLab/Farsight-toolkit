@@ -5671,6 +5671,6 @@ int View3D::runTests()
   std::cout << "test passed" << std::endl;
   return 0;
   #endif
-  return -2;
+  return -1;
 }
 
