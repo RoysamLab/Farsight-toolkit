@@ -413,12 +413,12 @@ ftk::Image::Pointer LoadXMLImage(std::string filename)
 	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
-		return false;
+		return NULL;
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
 	const char* docname = rootElement->Value();
 	if ( strcmp( docname, "Image" ) != 0 )
-		return false;
+		return NULL;
 
 	std::vector<std::string> files;
 	std::vector<std::string> chName;
@@ -456,12 +456,12 @@ ftk::Image::Pointer LoadImageSeries(std::string filename)
 	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
-		return false;
+		return NULL;
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
 	const char* docname = rootElement->Value();
 	if ( strcmp( docname, "Image" ) != 0 )
-		return false;
+		return NULL;
 
 
 	ftk::Image::PtrMode mode;
@@ -519,12 +519,12 @@ ftk::Image::Pointer LoadImageSeriesLabels(std::string filename)
 	*/
 	TiXmlDocument doc;
 	if ( !doc.LoadFile( filename.c_str() ) )
-		return false;
+		return NULL;
 
 	TiXmlElement* rootElement = doc.FirstChildElement();
 	const char* docname = rootElement->Value();
 	if ( strcmp( docname, "Image" ) != 0 )
-		return false;
+		return NULL;
 
 
 	ftk::Image::PtrMode mode;
