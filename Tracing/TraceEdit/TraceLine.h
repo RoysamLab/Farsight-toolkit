@@ -159,7 +159,7 @@ public:
 	bool Orient(TraceLine * Trunk);
 	bool Orient(TraceBit bit);
 	void SetFileName(char * newFileName);
-	char * GetFileName();
+	const char * GetFileName();
 	void getEndPtBounds(double bounds[]);
 	std::string stats();	
 	std::string RootCoord();	
@@ -184,7 +184,7 @@ private:
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
 	/*double prediction, confidence;*/
 
-	char * FileName; 
+	std::string FileName;
 	unsigned int m_id, root;
 	int level, terminalDegree;
 	std::vector<unsigned int> m_markers;

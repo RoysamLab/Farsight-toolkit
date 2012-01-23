@@ -803,12 +803,10 @@ bool TraceLine::Orient(TraceBit bit)
 void TraceLine::SetFileName(char *newFileName)
 {
 	this->FileName = newFileName;
-	//std::cout<< "traceline set filename " << this->FileName << std::endl;
 }
-char * TraceLine::GetFileName()
+const char * TraceLine::GetFileName()
 {
-	return this->FileName;
-	//std::cout<< "traceline get filename " << this->FileName << std::endl;
+	return this->FileName.c_str();
 }
 void TraceLine::getEndPtBounds(double bounds[])
 {
