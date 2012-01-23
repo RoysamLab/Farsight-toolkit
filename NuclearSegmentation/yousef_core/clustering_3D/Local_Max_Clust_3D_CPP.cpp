@@ -258,15 +258,15 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 					max_response_z[i * (c * z) + j * z + k] = Z;
 				}				
 			}
-        }		
+        }
     }
 
-#endif OPENCL
-	
+#endif // OPENCL
+
 	/*for (int k = 0; k < r * c * z * 3; k+=3)
 		cout << k << " " << max_response[k] << " " << max_response[k+1] << " " << max_response[k+2] << endl;*/
-		
-	
+
+
 	std::cout << "Max_response array done" << endl;
 
 	for(int i=0; i<r; i++)

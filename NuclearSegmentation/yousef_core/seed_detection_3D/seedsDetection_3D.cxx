@@ -307,13 +307,13 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	}
 	//std::cout << "about to call Detect_Local_MaximaPoints_3D" << std::endl;
 	clock_t start_time_local_maxima = clock();
-#ifdef OPENCL	
+#ifdef OPENCL
 	Detect_Local_MaximaPoints_3D_ocl(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
 #elif CUDA
 	Detect_Local_MaximaPoints_3D_CUDA(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0]);
 #else
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
-#endif OPENCL
+#endif // OPENCL
 	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
 	std::cout << "done detecting seeds" << std::endl;
