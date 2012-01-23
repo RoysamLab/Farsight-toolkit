@@ -14,6 +14,8 @@ endif()
 set(shared ${BUILD_SHARED_LIBS}) # setting to use for BUILD_SHARED_LIBS on all subsequent projects
 set(testing OFF) # setting to use for BUILD_TESTING on all subsequent projects
 
+option(BUILD_FARSIGHT_TESTING "Download and enable the Qt GUI testing framework for use in FARSIGHT?" ON)
+
 ############################################################################
 # Boost
 #
@@ -160,6 +162,9 @@ else()
   set(ITK_BINARY_DIR "${base}/Build/ITK")
 endif()
 
+############################################################################
+# ITK
+#
 ExternalProject_Add(ITK
   URL http://farsight-toolkit.org/support/ITK-Source-Oct-5-2011.tar.gz
   URL_MD5 5b056969356b856fae677e489f0b181d
@@ -194,6 +199,9 @@ option(USE_KPLS "Use KPLS module for classification" ON)
 option(BUILD_CURVELETS "Build the Curvelets preprocessing module" ON)
 option(BUILD_image_dicer "Build the image dice and trace module" ON)
 
+############################################################################
+# fftw
+#
 ExternalProject_Add(fftw-2.1.5
   URL http://dl.dropbox.com/u/26629462/fftw-2.1.5.tar.gz
   URL_MD5 1a89d7034071875ff703144fda121e9a
@@ -206,6 +214,55 @@ ExternalProject_Add(fftw-2.1.5
 SET( FFTW_INCLUDE_DIRSS "${install_dir}/fftw-2.1.5/include" )
 SET( FFTW_LIB_SEARCH_PATHS "${install_dir}/fftw-2.1.5/lib" )
 
+############################################################################
+# Testing support for Farsight
+#
+set(testing_args)
+set(testing_deps)
+if(BUILD_FARSIGHT_TESTING)
+  #search for Farsight data directory
+  FIND_PATH(FARSIGHT_DATA_ROOT FarsightData.readme 
+    ${FarsightSuperBuild_SOURCE_DIR}/../../data 
+    $ENV{FARSIGHT_DATA_ROOT} )
+
+  #check it out if not found
+  if(NOT FARSIGHT_DATA_ROOT)
+    ExternalProject_Add(FarsightData
+      SVN_REPOSITORY "https://farsight-svn.ee.uh.edu/repos/farsight/data"
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ""
+      INSTALL_COMMAND ""
+    )  
+    set(FARSIGHT_DATA_ROOT "${base}/Source/FarsightData" CACHE FILEPATH "Location of farsight data directory" FORCE)
+    set(testing_deps FarsightData)
+  endif()
+
+  #download and build QtTesting framework
+  ExternalProject_Add(QtTesting
+    URL http://farsight-toolkit.org/support/QtTesting.tar.gz
+    URL_MD5 c23e2ad6c7ae3799ede02456eef780ee
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
+      -DCMAKE_BUILD_TYPE:STRING=${build_type}
+      -DBUILD_SHARED_LIBS:BOOL=${shared}
+      -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
+      ${mac_args}
+    INSTALL_COMMAND ""
+    DEPENDS
+      ${Qt_Target}
+  )
+  set(testing_args
+    -DBUILD_TESTING:BOOL=ON
+    -DQtTestingConfig:FILEPATH=${base}/Build/QtTesting/QtTestingConfig.cmake
+    -DFARSIGHT_DATA_ROOT:FILEPATH=${FARSIGHT_DATA_ROOT}
+    )
+  list(APPEND testing_deps QtTesting)
+endif()
+
+############################################################################
+# Farsight 
+#
 ExternalProject_Add(Farsight
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.."
   BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Farsight"
@@ -224,10 +281,12 @@ ExternalProject_Add(Farsight
     -DUSE_KPLS:BOOL=${USE_KPLS}
     -DFFTW_INCLUDE_DIRS=${FFTW_INCLUDE_DIRSS}
     -DFFTW_LIB_SEARCH_PATH=${FFTW_LIB_SEARCH_PATHS}
+    ${testing_args}
     ${mac_args}
   DEPENDS
     VXL
     ITK
     VTK
     fftw-2.1.5
+    ${testing_deps}
 )
