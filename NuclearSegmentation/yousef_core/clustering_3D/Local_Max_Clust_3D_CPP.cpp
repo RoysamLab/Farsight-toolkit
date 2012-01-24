@@ -369,7 +369,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
         }
     }    
 
-    
+    #pragma omp parallel for
     for(int i=0; i<r; i++)
     {        
         for(int j=0; j<c; j++)

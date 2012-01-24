@@ -293,11 +293,16 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 		//iCalc->SetFeaturePrefix("nuc_");
 		table = iCalc->Compute();									//Create a new table
 		delete iCalc;
+		std::cout << "Done: Instrinsic Nuclear Features\n";
 
+		//Add xml definitions or a Nucleus Editor button to build graphs when needed
+		/*
+		std::cout << "Computing Region adjacency graph\n";
 		FTKgraph* NucRAG = new FTKgraph();
 		NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
+		std::cout << "Done: Region adjacency graph\n";
+		*/
 
-		std::cout << "Done: Instrinsic Nuclear Features\n";
 	}
 
 	resultIsEditable = true;

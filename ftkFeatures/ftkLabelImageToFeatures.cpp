@@ -198,7 +198,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	}
 
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	#pragma omp parallel for num_threads(4)
+	#pragma omp parallel for
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
