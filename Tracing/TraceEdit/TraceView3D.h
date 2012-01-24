@@ -292,6 +292,7 @@ protected slots:
 	void setContourMode();
 	void setRaycastSomaMode();
   void clearSettings();
+  void recordTest();
 
 protected:
 	void closeEvent(QCloseEvent *event);

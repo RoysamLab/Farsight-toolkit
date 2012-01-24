@@ -1584,7 +1584,7 @@ void View3D::CreateGUIObjects()
   #ifdef USE_QT_TESTING
   this->recordAction = new QAction("Record Test", this->CentralWidget);
   this->recordAction->setStatusTip("Record a test to a .xml file");
-  connect(this->recordAction, SIGNAL(triggered()), this->Tester, SLOT(record()));
+  connect(this->recordAction, SIGNAL(triggered()), this, SLOT(recordTest()));
 
   this->playAction = new QAction("Play Test", this->CentralWidget);
   this->playAction->setStatusTip("Run a previously recorded test");
@@ -5661,7 +5661,9 @@ int View3D::runTests()
     return -1;
     }
 
-  this->resize(850, 480);
+  //resize QVTK to match dimensions of recorded screenshots
+	this->QVTK->resize(600, 500);
+
   this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );
 
   if( this->TestBaselineImageFileName == "" )
@@ -5699,4 +5701,12 @@ void View3D::clearSettings()
       "All QSettings have been reverted to their default values",
       QMessageBox::Ok, QMessageBox::Ok);
   }
+}
+
+void View3D::recordTest()
+{
+  //force render window to a specific size
+  //this makes image comparison much easier
+	this->QVTK->resize(600, 500);
+  this->Tester->record();
 }

@@ -34,7 +34,7 @@ public:
   void SetRenderWindow(vtkRenderWindow *rw);
   void SetThreshold(double t);
 
-protected slots:
+public slots:
   void record();
   void play();
 
