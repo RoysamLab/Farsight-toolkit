@@ -29,7 +29,9 @@ class GUITester : public QWidget
 public:
   GUITester(QWidget *parent = 0);
   ~GUITester();
-  bool playTestFile( QString filename );
+  bool playTestAndCompareResults( QString filename );
+  void playTestFile( QString filename );
+  bool compareResults();
   void SetBaselineImage(const char *fn);
   void SetRenderWindow(vtkRenderWindow *rw);
   void SetThreshold(double t);

@@ -4351,7 +4351,7 @@ void View3D::MergeTraces()
 			QPushButton *mergeAll = MergeInfo.addButton("Merge All", QMessageBox::YesRole);
 			QPushButton *EditSelection = MergeInfo.addButton("Edit Selection", QMessageBox::ActionRole);
 			QPushButton *abortButton = MergeInfo.addButton(QMessageBox::Abort);
-			MergeInfo.exec();   
+			MergeInfo.exec();
 			if(MergeInfo.clickedButton()==EditSelection)
 			{
 				this->ShowMergeStats();
@@ -4923,10 +4923,12 @@ void View3D::MergeSelectedTraces()
 					QString::number(this->candidateGaps.size()) + " traces");
 				this->EditLogDisplay->append(this->dtext);
 				this->numMerged += (int)this->candidateGaps.size();
+				std::cout << "before merging: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 				for (j=0; j<this->candidateGaps.size();j++)
 				{
 					tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
 				}
+				std::cout << "after merging: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 			}
 			else if(MergeInfo.clickedButton()==mergeNone)
 			{
@@ -4939,10 +4941,12 @@ void View3D::MergeSelectedTraces()
 			this->statusBar()->showMessage("nothing to merge");
 		}   //end else   
 	}
+	std::cout << "before last4: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 	this->ClearSelection();
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(tr("Done With Merge"));
+	std::cout << "after last4: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 }
 /*  other trace modifiers */
 void View3D::SplitTraces()
@@ -5182,6 +5186,14 @@ void View3D::SaveScreenShot()
 	filePath = savescreenshotDialog->getDir();
 	fileName = savescreenshotDialog->getfileName();
 	QString fullFileName = filePath % "/" % fileName % QString(".png");
+	#ifdef USE_QT_TESTING
+	if(savescreenshotDialog->getBaseline())
+	{
+		//resize render window to default baseline size
+		this->QVTK->resize(600, 500);
+		this->QVTK->update();
+	}
+	#endif
 	if (!fullFileName.isEmpty())
 	{
 		this->saveRenderWindow(fullFileName.toStdString().c_str());
@@ -5661,25 +5673,31 @@ int View3D::runTests()
     return -1;
     }
 
-  //resize QVTK to match dimensions of recorded screenshots
-	this->QVTK->resize(600, 500);
-
-  this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );
-
   if( this->TestBaselineImageFileName == "" )
     {
     std::cout << "ERROR: TestBaselineImageFileName is empty" << std::endl;
     return 1;
     }
+
+  //setup test utility
+  this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );  
   this->Tester->SetBaselineImage(
     this->TestBaselineImageFileName.toStdString().c_str() );
-
-  if(this->Tester->playTestFile( this->TestInputFile ) == false)
+	
+  //playback the test recording
+  this->Tester->playTestFile( this->TestInputFile );
+  
+  //resize QVTK to match dimensions of recorded screenshots
+  this->QVTK->resize(600, 500);
+  this->QVTK->update();
+  
+  //compare render window to screenshot of baseline  
+  if(this->Tester->compareResults() == false)
     {
     std::cout << "ERROR: test failed" << std::endl;
     return 1;
     }
-
+	
   std::cout << "test passed" << std::endl;
   return 0;
   #endif
@@ -5708,5 +5726,7 @@ void View3D::recordTest()
   //force render window to a specific size
   //this makes image comparison much easier
 	this->QVTK->resize(600, 500);
-  this->Tester->record();
+	#ifdef USE_QT_TESTING
+    this->Tester->record();
+	#endif
 }

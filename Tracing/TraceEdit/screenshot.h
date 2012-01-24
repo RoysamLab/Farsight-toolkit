@@ -17,6 +17,7 @@ public:
 	QString getDir();
 	int getMagnification();
 	bool getSave();
+	bool getBaseline();
 	
 private slots:	
 	void Browse();
@@ -28,6 +29,7 @@ private:
 	QPushButton * browseButton;
 	QSpinBox * ZoomSpinBox;
 	QPushButton *OkButton, *CancelButton;
+	QCheckBox *BaselineBox;
 	
 	QPushButton *createButton(const QString &text, const char *member);
 	QComboBox *createComboBox(const QString &text = QString());

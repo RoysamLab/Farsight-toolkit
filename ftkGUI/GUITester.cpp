@@ -189,10 +189,21 @@ void GUITester::play()
 }
 
 //-----------------------------------------------------------------------------
-bool GUITester::playTestFile( QString filename )
+bool GUITester::playTestAndCompareResults( QString filename )
+{
+  this->playTestFile(filename);
+  return this->compareResults();
+}
+
+//-----------------------------------------------------------------------------
+void GUITester::playTestFile( QString filename )
 {
   this->TestUtility->playTests(filename);
-  
+}
+
+//-----------------------------------------------------------------------------
+bool GUITester::compareResults()
+{
   if(this->BaselineSet && this->Testing->GetRenderWindow() != NULL)
     {
     int res = this->Testing->RegressionTest( this->Threshold );

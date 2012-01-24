@@ -42,6 +42,11 @@ ScreenShotDialog::ScreenShotDialog(QWidget* parent, QString fileName, QString im
 	mainLayout->addWidget(fileNameLine,1,1,1,3);
 	mainLayout->addWidget(ZoomLabel,2,0);
 	mainLayout->addWidget(ZoomSpinBox,2,1);
+	#ifdef USE_QT_TESTING
+	this->BaselineBox = new QCheckBox("New testing baseline?", this);
+	this->BaselineBox->setChecked(true);
+	mainLayout->addWidget(this->BaselineBox,2,3);	
+	#endif
 	mainLayout->addWidget(OkButton,3,2);
 	mainLayout->addWidget(CancelButton,3,3);
 	
@@ -106,4 +111,12 @@ int ScreenShotDialog::getMagnification()
 bool ScreenShotDialog::getSave()
 {
 	return saveclicked;
+}
+
+bool ScreenShotDialog::getBaseline()
+{
+  #ifdef USE_QT_TESTING
+  return this->BaselineBox->isChecked();
+  #endif
+  return false;
 }
