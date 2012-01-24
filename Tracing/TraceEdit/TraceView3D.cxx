@@ -50,6 +50,7 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
+  this->SaveSettingsOnExit = true;
 
 	#ifdef USE_QT_TESTING
 	this->TestInputFile = "";
@@ -1588,6 +1589,10 @@ void View3D::CreateGUIObjects()
   this->playAction = new QAction("Play Test", this->CentralWidget);
   this->playAction->setStatusTip("Run a previously recorded test");
   connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
+  
+  this->clearAction = new QAction("Clear QSettings", this->CentralWidget);
+  this->clearAction->setStatusTip("Revert all QSettings to their default values");
+  connect(this->clearAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
   #endif
 }
 
@@ -1880,6 +1885,7 @@ void View3D::CreateLayout()
   this->testingMenu = this->menuBar()->addMenu("Testing");
   this->testingMenu->addAction(this->recordAction);
   this->testingMenu->addAction(this->playAction);
+  this->testingMenu->addAction(this->clearAction);
   #endif
 
 	this->menuBar()->hide();
@@ -5277,14 +5283,17 @@ void View3D::AutoCellExport()
 }
 void View3D::closeEvent(QCloseEvent *event)
 {	
-	this->TraceEditSettings.setValue("mainWin/size", this->size());
-	this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
-	this->TraceEditSettings.setValue("mainWin/use2d", this->viewIn2D);
-	this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
-	this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
-	this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
-	this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
-	this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
+  if(this->SaveSettingsOnExit)
+  {
+    this->TraceEditSettings.setValue("mainWin/size", this->size());
+    this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+    this->TraceEditSettings.setValue("mainWin/use2d", this->viewIn2D);
+    this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
+    this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
+    this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
+    this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
+    this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
+  }
 	this->CloseTreePlots();
 	this->HideCellAnalysis();
 	this->TraceEditSettings.sync();
@@ -5652,6 +5661,7 @@ int View3D::runTests()
     return -1;
     }
 
+  this->resize(850, 480);
   this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );
 
   if( this->TestBaselineImageFileName == "" )
@@ -5674,3 +5684,19 @@ int View3D::runTests()
   return -1;
 }
 
+void View3D::clearSettings()
+{
+  int reply = QMessageBox::question(this, tr("Clear settings"), 
+    "This action will delete all custom Trace Editor settings, reverting them back\nto their default values.  Are you sure you'd like to do this?",
+    QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+
+  if (reply == QMessageBox::Yes)
+  {
+	  this->TraceEditSettings.clear();
+    this->SaveSettingsOnExit = false;
+    
+    QMessageBox::information(this, "Settings cleared!",
+      "All QSettings have been reverted to their default values",
+      QMessageBox::Ok, QMessageBox::Ok);
+  }
+}

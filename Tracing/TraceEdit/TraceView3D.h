@@ -291,6 +291,7 @@ protected slots:
 
 	void setContourMode();
 	void setRaycastSomaMode();
+  void clearSettings();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -349,6 +350,7 @@ private:
 	QMenu *testingMenu;
   QAction *recordAction;
   QAction *playAction;
+  QAction *clearAction;
   #endif
 
 	//Qt widgets on the main window
@@ -578,5 +580,7 @@ private:
   QString TestInputFile;
   QString TestBaselineImageFileName;
   #endif
+  bool SaveSettingsOnExit;
+
 };
 #endif
