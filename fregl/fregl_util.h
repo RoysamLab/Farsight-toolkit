@@ -23,7 +23,7 @@ limitations under the License.
 #define _fregl_util_
 
 #include "itkImage.h"
-#include <vil3d/vil3d_image_view.h>
+#include "vil3d/vil3d_image_view.h"
 #include "itkRGBPixel.h"
 #include "itkAffineTransform.h"
 
