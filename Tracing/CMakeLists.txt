@@ -70,3 +70,11 @@ IF(BUILD_TracingSystem)
   SET(CPACK_PACKAGE_EXECUTABLES "TheTracingSystem" "The Tracing System" ${CPACK_PACKAGE_EXECUTABLES})
 ENDIF()
 
+
+OPTION( BUILD_MicrogliaRegionTracer "Build Microglia Region Tracer" ON )
+IF( BUILD_MicrogliaRegionTracer )
+  SUBDIRS( MicrogliaRegionTracer )
+ENDIF()
+
+
+
