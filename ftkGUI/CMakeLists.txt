@@ -5,17 +5,44 @@ configure_file(
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 SET( GUI_SRCS
-  PlotWindow.cpp ScatterView.cpp TableWindow.cpp HistoWindow.cpp
-  ImageBrowser5D.cpp PatternAnalysisWizard.cpp GenericALDialog.cpp
-  Active_Learning_Dialog.cpp ObjectSelection.cpp LabelImageViewQT.cpp
-  TrainingDialog.cpp ftkPreprocessDialog.cpp PreprocessDialog.cpp
-  StatisticsToolbar.cpp GraphWindow.cpp )
+    	PlotWindow.cpp
+    	ScatterView.cpp
+    	TableWindow.cpp	
+    	HistoWindow.cpp
+    	ImageBrowser5D.cpp
+    	PatternAnalysisWizard.cpp
+    	GenericALDialog.cpp
+    	Active_Learning_Dialog.cpp
+    	ObjectSelection.cpp
+    	LabelImageViewQT.cpp
+    	TrainingDialog.cpp
+	ftkPreprocessDialog.cpp
+	PreprocessDialog.cpp
+	StatisticsToolbar.cpp
+	GraphWindow.cpp
+	SelectiveClustering.cpp
+	
+)
 
 SET( GUI_HDRS
-  PlotWindow.h ScatterView.h TableWindow.h HistoWindow.h ImageBrowser5D.h
-  PatternAnalysisWizard.h GenericALDialog.h Active_Learning_Dialog.h
-  ObjectSelection.h LabelImageViewQT.h TrainingDialog.h ftkPreprocessDialog.h
-  PreprocessDialog.h StatisticsToolbar.h GraphWindow.h ColorMap.h )
+    	PlotWindow.h
+    	ScatterView.h
+    	TableWindow.h
+    	HistoWindow.h
+    	ImageBrowser5D.h
+    	PatternAnalysisWizard.h
+    	GenericALDialog.h
+    	Active_Learning_Dialog.h
+    	ObjectSelection.h
+    	LabelImageViewQT.h
+    	TrainingDialog.h
+	ftkPreprocessDialog.h
+	PreprocessDialog.h
+	StatisticsToolbar.h
+	GraphWindow.h
+	ColorMap.h
+	SelectiveClustering.h
+)
 
 SET( GUI_LIBS 
   ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM
