@@ -270,7 +270,15 @@ void MicrogliaProcessTracer::RunTracing()
 	GradientType::Pointer gradient = GradientType::New();
 	gradient->SetInput( this->InputImage );
 	gradient->SetSigma( 0.25 );
-	gradient->Update();
+	try
+	{
+		gradient->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "gradient Exception: " << err << std::endl;
+	}
+	
 	typedef itk::RobustAutomaticThresholdImageFilter< ImageType3D, ImageType3D > ThresholdFilterType;
 	ThresholdFilterType::Pointer thresholdFilter = ThresholdFilterType::New();
 	thresholdFilter->SetInput( this->InputImage );
@@ -337,7 +345,7 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 		ittemp.Set(-1.0f*q);
 	}
 
-	// set the diagonal terms in neighborhood iterator, this is the diametrically opposing pixels in Zack's paper
+	// set the diagonal terms in neighborhood iterator, this is the offsets for the diametrically opposing pixels
 	itk::Offset<3>
 		xp =  {{2 ,  0 ,   0}},
 		xn =  {{-2,  0,    0}},
@@ -390,10 +398,10 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 	
 	while(!neighbor_iter.IsAtEnd()) 
 	{
-		itk::Index<3> ndx = image_iter.GetIndex();
-		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
-			(ndx[0] > (int)sz[0]) || (ndx[1] > (int)sz[1]) ||
-			(ndx[2] > (int)sz[2]) )
+		itk::Index<3> index = image_iter.GetIndex();
+		if ( (index[0] < 2) || (index[1] < 2) || (index[2] < 2) ||
+			(index[0] > (int)sz[0]) || (index[1] > (int)sz[1]) ||
+			(index[2] > (int)sz[2]) )
 		{
 			++image_iter;
 			++neighbor_iter;
@@ -417,14 +425,14 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 		if ( ((center_pixel_intensity - avg_of_greater_of_diametrically_opposing_pairs) > thresh2 ) && ( center_pixel_intensity > thresh1 ))  
 		{
 			TensorType hessian;
-			hessian[0] = LoGFilter->GetOutput()->GetPixel( ndx + xp ) +
-				LoGFilter->GetOutput()->GetPixel( ndx + xn ) -
+			hessian[0] = LoGFilter->GetOutput()->GetPixel( index + xp ) +
+				LoGFilter->GetOutput()->GetPixel( index + xn ) -
 				2*neighbor_iter.GetPixel( 13 );
-			hessian[3] = LoGFilter->GetOutput()->GetPixel( ndx + yp ) +
-				LoGFilter->GetOutput()->GetPixel( ndx + yn ) -
+			hessian[3] = LoGFilter->GetOutput()->GetPixel( index + yp ) +
+				LoGFilter->GetOutput()->GetPixel( index + yn ) -
 				2*neighbor_iter.GetPixel( 13 );
-			hessian[5] = LoGFilter->GetOutput()->GetPixel( ndx + zp ) +
-				LoGFilter->GetOutput()->GetPixel( ndx + zn ) -
+			hessian[5] = LoGFilter->GetOutput()->GetPixel( index + zp ) +
+				LoGFilter->GetOutput()->GetPixel( index + zn ) -
 				2*neighbor_iter.GetPixel( 13 );
 			hessian[1] = neighbor_iter.GetPixel(xy1) + neighbor_iter.GetPixel(xy2) -
 				neighbor_iter.GetPixel(xy3) - neighbor_iter.GetPixel(xy4);
@@ -456,9 +464,9 @@ void MicrogliaProcessTracer::CalculateCriticalPointsAtScale( float sigma )
 			}
 			value -= abs(ev[w]);
 
-			if (RegisterIndex(value, ndx, sz)) 
+			if (this->RegisterIndex(value, index, sz)) 
 			{
-				this->NDXImage->SetPixel(ndx,value);
+				this->NDXImage->SetPixel(index,value);
 				ctCnt++;
 			}
 		}
