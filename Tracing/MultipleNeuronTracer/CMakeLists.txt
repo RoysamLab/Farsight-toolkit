@@ -5,8 +5,8 @@ ADD_EXECUTABLE( MultipleNeuronTracer MNT_MAIN.cpp MultipleNeuronTracer.cpp Multi
 TARGET_LINK_LIBRARIES(MultipleNeuronTracer
   ${ITK_LIBRARIES} )
   
-ADD_LIBRARY( Multiple_Neuron_Tracer MultipleNeuronTracer.cpp MultipleNeuronTracer.h)
-TARGET_LINK_LIBRARIES(Multiple_Neuron_Tracer
+ADD_LIBRARY( MultipleNeuronTracerLib MultipleNeuronTracer.cpp MultipleNeuronTracer.h)
+TARGET_LINK_LIBRARIES(MultipleNeuronTracerLib
   ${ITK_LIBRARIES} )
 
 #MultipleNeuronTracer's test depends on ExtractSomas' test.
