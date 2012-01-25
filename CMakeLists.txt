@@ -17,7 +17,7 @@ ENDIF ("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 #########################################
 OPTION( BUILD_TRACING "Build Tracing Tools" ON )
 OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
-OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" OFF )
+OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" ON )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" OFF )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
 #OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
@@ -161,6 +161,12 @@ ENDIF(BUILD_TESTING)
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
 # THE PROJECT:
 ################################################################################
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/VesselTracer )
+SUBDIRS( VesselTracer )
+
+INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ItkVtkGlue )
+SUBDIRS( ItkVtkGlue )
+
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkImage )
 SUBDIRS( ftkImage )
 
