@@ -213,6 +213,10 @@ View3D::~View3D()
 	{
 		delete this->GapsTableView;
 	}
+  if(this->TreeModel)
+  {
+    delete this->TreeModel;
+  }
 	delete this->tobj;
 	delete this->ImageActors;
 	delete this->Gridlines;

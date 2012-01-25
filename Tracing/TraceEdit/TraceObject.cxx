@@ -107,6 +107,14 @@ TraceObject::~TraceObject()
 	delete (*branchItr);
 	}
 	*/
+  
+  //delete vector of cells
+  for(std::vector<CellTrace*>::const_iterator it = this->Cells.begin();
+      it != this->Cells.end(); ++it)
+  {
+    delete *it;
+  } 
+  this->Cells.clear();
 }
 
 
@@ -289,7 +297,15 @@ std::vector<TraceLine*>* TraceObject::GetTraceLinesPointer()
 std::vector<TraceLine*> TraceObject::GetTraceLines()
 {
 	std::vector<TraceLine*> allTLines;
-	this->Cells.clear();
+
+  //clear vector of cells
+  for(std::vector<CellTrace*>::const_iterator it = this->Cells.begin();
+      it != this->Cells.end(); ++it)
+  {
+    delete *it;
+  } 
+  this->Cells.clear();
+
 	int limit_for_loop = this->trace_lines.size();
 	#pragma omp parallel for
 	for (int i = 0; i < limit_for_loop; ++i)

@@ -32,10 +32,21 @@ CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
 	this->ColumnSelection = new ObjectSelection();
+	this->graphVisualize = NULL;
 	this->setCells(Cells);
 }
 CellTraceModel::~CellTraceModel()
 {	
+	delete this->Selection;
+  this->Selection = NULL;
+	delete this->ColumnSelection;
+  this->ColumnSelection = NULL;
+
+  if(this->graphVisualize != NULL)
+    {
+    delete this->graphVisualize;
+    this->graphVisualize = NULL;
+    }
 }
 void CellTraceModel::setCells(std::vector<CellTrace*> Cells)
 {
@@ -489,6 +500,8 @@ void CellTraceModel::createCellToCellGraph()
 	this->graphVisualize->setModels(this->getDataTable(), this->GetObjectSelection());
 	this->graphVisualize->SetGraphTable(graphTable, "Source", "Target", "Distance", "Soma X Pos", "Soma Y Pos", "Soma Z Pos");
 	this->graphVisualize->ShowGraphWindow();
+  delete KNObj;
+  KNObj = NULL;
 }
 
 double CellTraceModel::average(std::vector< std::pair<unsigned int, double> > ID)

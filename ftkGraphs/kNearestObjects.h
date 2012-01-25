@@ -50,7 +50,7 @@ public:
 	//constructor
 	kNearestObjects(std::map< unsigned int, std::vector<float> > centroidMap);
 	//destructor
-	~kNearestObjects();
+	~kNearestObjects() {}
 /* initialization functions */
 	std::vector<std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_All(unsigned int k, unsigned short Class_dest, unsigned short Class_src);
 	std::vector< std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest);

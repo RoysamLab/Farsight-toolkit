@@ -38,5 +38,6 @@ int main (int argc, char* argv[])
     retval = app.exec();
   }
 	delete View;
+  std::cout << "TraceEdit returns " << retval << std::endl;
 	return retval;
 }
