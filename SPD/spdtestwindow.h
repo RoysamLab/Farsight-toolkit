@@ -35,7 +35,7 @@ protected:
 protected slots:
     void browse();
     void load();
-	void loadTestData();
+	void loadContrastData();
     void clusterFunction();
 	void clusterCells();
 	void emdFunction();

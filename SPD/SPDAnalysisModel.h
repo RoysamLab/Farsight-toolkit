@@ -50,18 +50,19 @@ public:
 	vtkSmartPointer<vtkTable> GetDataTable();
 	QString GetFileName();
 
-	bool ReadCellTraceFile(std::string fileName, bool btest);
-	void ParseTraceFile(vtkSmartPointer<vtkTable> table);
+	bool ReadCellTraceFile(std::string fileName, bool bContrast);
+	void ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bContrast = false);
 
 	unsigned int GetSampleNum();
 	unsigned int GetFeatureNum();
-
+	unsigned int GetContrastDataSampleNum();
 
 	int ClusterAgglomerate( double cor, double mer);
 	void ClusterMerge( double cor, double mer);
-	void HierachicalClustering(vtkSmartPointer<vtkTable> table, bool bcol = true);
 	void HierachicalClustering();
-	void ClusterCells(double cor);
+	void ClusterSamples(double cor);
+	int ClusterSamples( double cor, vnl_matrix<double> &mat, vnl_vector<unsigned int> &index);
+								
 	void GetCellClusterSize( std::vector<int> &clusterSize);
 	vtkSmartPointer<vtkTable> GetDataTableAfterCellCluster();
 	void GetFeatureIdbyModId(std::vector<unsigned int> &modID, std::vector<unsigned int> &featureID);
@@ -88,12 +89,13 @@ public:
 	bool SetProgressionType(bool bProg);
 	bool GetProgressionType();
 	void GetDistanceOrder(std::vector<long int> &order);
-	void GetOrderedDataTable(std::vector<long int> &order, vtkSmartPointer<vtkTable> orderTable);
 	void GetClusterOrder(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &treeOrder, std::vector< int> &clusterOrder);
 
 	void ModuleCoherenceMatchAnalysis();
 	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	double GetCorMatSelectedPercentage(double thres);
+	void GetCombinedDataTable(vtkSmartPointer<vtkTable> table);
+	void GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec);
 
 protected:
 	SPDAnalysisModel();
@@ -101,13 +103,17 @@ protected:
 	void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
+	bool MergeMatrix( vnl_matrix<double> &firstMat, vnl_matrix<double> &secondMat, vnl_matrix<double> &combinedMat);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
 	void ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, vnl_vector<double> &distance);
-	int ClusterAggFeatures( vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor, vnl_vector<int>& TreeIndex, int fold);
+	void GetClusterIndexFromVnlVector(std::vector< std::vector<int> > &clusterIndex, vnl_vector<unsigned int> &index);
+	void GetAverageModule( vnl_matrix<double> &mat, vnl_vector<double> &distance, std::vector< std::vector<int> > &index, vnl_matrix<double> &averageMat, vnl_vector<double> &averageDistance);
+	int ClusterAggFeatures( vnl_matrix<double>& mainmatrix, vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
+	void GetCombinedInversedMatrix(vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleInversedId, vnl_matrix<double>& mat);
 	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
@@ -126,6 +132,8 @@ protected:
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
 	long int GetSelectedFeatures(vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs);
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
+	bool MergeTables(vtkSmartPointer<vtkTable> firstTable, vtkSmartPointer<vtkTable> secondTable, vtkSmartPointer<vtkTable> table);
+	void CopyTable( vtkSmartPointer<vtkTable> oriTable, vtkSmartPointer<vtkTable> targetTable);
 
 public:
 	std::vector< Tree> PublicTreeData;
@@ -137,23 +145,40 @@ private:
 	//save filename
 	QString filename;
 
-	// basic data storation
+	// basic data storation, main data for analysis
 	std::vector<int> indMapFromIndToVertex;    // index mapping
+	int maxVertexId;
 	std::map< int, int> indMapFromVertexToClus;
 	std::vector<std::string> FeatureNames;
 	vnl_vector<double> DistanceToDevice;
 	double disCor;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
+	vnl_matrix<double> DataMatrixAfterCellCluster;
 	vtkSmartPointer<vtkTable> DataTable;
 	std::vector<std::string> headers;
 	std::vector<int> FeatureIndex;
+
+	/// for combined data 
+	vnl_matrix<double> MatrixAfterCellCluster;     
+	vnl_matrix<double> UNMatrixAfterCellCluster; //matAfterCellCluster;
+
+	// for constrast data
+	vnl_matrix<double> ContrastDataMatrix;			// normalized data feature for analysis
+	vnl_matrix<double> ContrastMatrixAfterCellCluster;
+	vtkSmartPointer<vtkTable> ContrastDataTable;
+	std::vector<int> indMapFromIndToContrastVertex;
+	vnl_vector<double> contrastDistance;
+	vnl_vector<unsigned int> constrastCellClusterIndex;
+	std::vector< std::vector<int> > contrastCellCluster;
+	std::map< int, int> combinedIndexMapping;
+	vnl_vector<unsigned int> combinedCellClusterIndex;
 	
 	// data for cell agglomeration
 	vtkSmartPointer<vtkTable> DataTableAfterCellCluster;  // average data after cell cluster without normalization
-	vnl_matrix<double> UNMatrixAfterCellCluster; //matAfterCellCluster;
+	
 	vnl_vector<unsigned int> CellClusterIndex;
 	std::vector< std::vector<int> > CellCluster;
-	vnl_matrix<double> MatrixAfterCellCluster;     // 
+
 
 	//data for feature agglormeration
 	vnl_vector<unsigned int> ClusterIndex;
@@ -182,5 +207,6 @@ private:
 
 	// for spdtestwindow
 	vnl_matrix<double> CorMatrix;
+	vnl_matrix<double> ModuleCompareCorMatrix;
 };
 #endif

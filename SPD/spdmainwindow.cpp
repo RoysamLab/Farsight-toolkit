@@ -337,7 +337,7 @@ void SPDMainWindow::generateMST()
 void SPDMainWindow::clusterCells()
 {
 	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
-	this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
+	this->SPDModel->ClusterSamples(atof(clusterCor.c_str()));
 	generateMSTButton->setEnabled(TRUE);
 	emdButton->setEnabled(FALSE);
 	psmButton->setEnabled(FALSE);
@@ -670,7 +670,7 @@ void SPDMainWindow::regenerateProgressionTree()
 		}
 		showProgressionHeatmap();
 	}
-}
+}      
 
 void SPDMainWindow::updateSelMod()   // possible bugs
 {

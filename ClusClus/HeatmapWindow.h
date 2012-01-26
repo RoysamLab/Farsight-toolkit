@@ -137,7 +137,7 @@ private:
 	void scaleData(double** mustd);
 	void scaleData();
 	void drawPoints1();
-	void drawPoints3();
+	void drawPoints3( bool bprogression = false);
 	void drawPointsForOrderHeatmap();
 	void setselectedCellIds();
 	void computeselectedcells();

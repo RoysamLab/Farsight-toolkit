@@ -46,7 +46,7 @@ public:
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol);
-	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>* colSels = NULL, QString filename = "");
+	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
@@ -84,6 +84,7 @@ signals:
 
 private:
 	vtkSmartPointer<vtkTable> dataTable;
+	std::vector<double> colorVector;
 	ObjectSelection *selection;
 	ObjectSelection *selection2;
 	   

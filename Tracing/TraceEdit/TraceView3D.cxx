@@ -4446,13 +4446,13 @@ void View3D::ShowCellAnalysis()
 		}
 		if (this->FL_MeasureTable)
 		{
-			this->FL_MeasureTable->setModels( CellTraceModel::ConvertDefaultValueToNull(this->CellModel->getDataTable()), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
 		else
 		{
 			this->FL_MeasureTable = new TableWindow();
-			this->FL_MeasureTable->setModels( CellTraceModel::ConvertDefaultValueToNull(this->CellModel->getDataTable()), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
 			this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
 			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
@@ -5531,7 +5531,6 @@ void View3D::SaveComputedCellFeaturesTable()
 	myfile.open("L-Measures.txt");
 	
 	vtkSmartPointer<vtkTable> table = CellModel->getDataTable();
-	table = CellTraceModel::ConvertDefaultValueToNull( table);
 	//table->Dump(1);
 	
 	//Dump out headers

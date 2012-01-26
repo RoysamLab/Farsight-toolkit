@@ -17,6 +17,8 @@
 #include <vtkAbstractArray.h>
 #include <vtkVariantArray.h>
 #include <vtkCellPicker.h>
+#include <vtkScalarBarActor.h>
+#include <vtkTextProperty.h>
 #include <QMessageBox>
 #include <fstream>
 #include <vector>
@@ -264,7 +266,8 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::set<long int>* colSels, QString filename)
+void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, 
+							   std::vector<double> *colorVec, std::set<long int>* colSels, QString filename)
 {
 	this->fileName = filename;
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
@@ -402,6 +405,24 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		exit(-2);
 	}
 
+	colorVector.clear();
+	if( colorVec)
+	{
+		colorVector = *colorVec;
+		for( int i = 0; i < colorVec->size(); i++)
+		{
+			double color = (*colorVec)[i];
+			colorVector.push_back( color);
+		}
+	}
+	else
+	{
+		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			colorVector.push_back(1);
+		}
+	}
+
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
@@ -409,7 +430,8 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
 	{             
 		vertexColors->InsertNextValue( i);
-		this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
+		int k = int( colorVector[i] * COLOR_MAP2_SIZE + 0.5);
+		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); // color the vertices- blue
 	}
 	lookupTable->Build();
 
@@ -440,6 +462,29 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	theme->SetVertexLabelColor(0.3,0.3,0.3);
 	theme->SetBackgroundColor(1,1,1); 
 	theme->SetBackgroundColor2(1,1,1);
+
+	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	scalarbarLut->SetTableRange (0, 1);
+	scalarbarLut->SetNumberOfTableValues(COLOR_MAP2_SIZE);
+	for(int index = 0; index < COLOR_MAP2_SIZE; index++)
+	{
+		rgb rgbscalar = COLORMAP2[index];
+		scalarbarLut->SetTableValue(index, rgbscalar.r, rgbscalar.g, rgbscalar.b);
+	}
+	scalarbarLut->Build();
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(scalarbarLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(11);
+	scalarBar->GetTitleTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize(10);
+	scalarBar->GetLabelTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->SetMaximumHeightInPixels(1000);
+	scalarBar->SetMaximumWidthInPixels(100);
+
+	this->view->GetRenderer()->AddActor2D(scalarBar);
 
 	this->view->RemoveAllRepresentations();
 	this->view->SetRepresentationFromInput( graph);
@@ -784,7 +829,8 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		}
 		else
 		{
-			this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
+			int k = int( colorVector[i] * COLOR_MAP2_SIZE + 0.5);
+			this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); // color the vertices- blue
 		}
 	}
 

@@ -32,7 +32,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"));
     loadButton = new QPushButton(tr("Load"));
-	loadTestButton = new QPushButton(tr("Test Load"));
+	loadTestButton = new QPushButton(tr("Load Contrast Data"));
 
     featureNumLabel = new QLabel(tr("Feature size:"));
     featureNum = new QLabel;
@@ -93,7 +93,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
-	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadTestData()));
+	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadContrastData()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(cellClusterButton , SIGNAL(clicked()), this, SLOT(clusterCells()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
@@ -202,26 +202,15 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	}
 	else
 	{
-		data->RemoveColumnByName("Soma_X");
-		data->RemoveColumnByName("Soma_Y");
-		data->RemoveColumnByName("Soma_Z");
-		data->RemoveColumnByName("Trace_File");
-
-		data->RemoveColumnByName("Soma_X_Pos");
-		data->RemoveColumnByName("Soma_Y_Pos");
-		data->RemoveColumnByName("Soma_Z_Pos");
-		
 		SPDModel->ParseTraceFile( data);
-		std::cout<<"table size after parse "<<data->GetNumberOfRows()<<"\t"<<data->GetNumberOfColumns()<<endl;
 		
-
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
 		//this->SPDModel->NormalizeData();
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
-		loadTestButton->setEnabled(FALSE);
+		loadTestButton->setEnabled(TRUE);
 
 		clusterButton->setEnabled(TRUE);
 		cellClusterButton->setEnabled(TRUE);
@@ -269,16 +258,20 @@ void SPDtestWindow::load()
 	}
 }
 
-void SPDtestWindow::loadTestData()
+void SPDtestWindow::loadContrastData()
 {
-	std::string file = this->FileName.toStdString();
-
-	if ( true == this->SPDModel->ReadCellTraceFile(file, true))
-	{
-		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
-		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		//this->SPDModel->NormalizeData();
-	}
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Choose Data Files"),
+                                                    QDir::currentPath(), tr("Text files (*.txt)"));
+    if (!fileName.isEmpty())
+    {
+        std::string file = fileName.toStdString();
+		if ( true == this->SPDModel->ReadCellTraceFile(file, true))  // add the contrast data to the previous data
+		{
+			this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
+			this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum() + this->SPDModel->GetContrastDataSampleNum()));
+			//this->SPDModel->NormalizeData();
+		}
+    }
 }
 
 void SPDtestWindow::clusterFunction()
@@ -311,7 +304,7 @@ void SPDtestWindow::clusterFunction()
 void SPDtestWindow::clusterCells()
 {
 	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
-	this->SPDModel->ClusterCells(atof(clusterCor.c_str()));
+	this->SPDModel->ClusterSamples(atof(clusterCor.c_str()));
 	emdButton->setEnabled(TRUE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
@@ -620,8 +613,9 @@ void SPDtestWindow::regenerateProgressionTree()
 		
 		vnl_matrix<double> clusAverageMat;
 		std::vector<int> modSize;
-
+		std::vector< double> colorVec;
 		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
+		SPDModel->GetPercentage(clusIndex, colorVec);
 
 		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
@@ -629,12 +623,13 @@ void SPDtestWindow::regenerateProgressionTree()
 		/** graph window set models */
 		std::vector<int> index;
 		SPDModel->GetSingleLinkageClusterMapping(clusIndex, index);
-
-		this->graph->setModels(data, selection, &index);
+		vtkSmartPointer<vtkTable> dataTable = vtkSmartPointer<vtkTable>::New();
+		SPDModel->GetCombinedDataTable(dataTable);
+		this->graph->setModels(dataTable, selection, &index);
 
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
-		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2]);
+		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &colorVec);
 		try
 		{
 			this->graph->ShowGraphWindow();

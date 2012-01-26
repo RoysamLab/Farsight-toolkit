@@ -1220,7 +1220,7 @@ void Heatmap::drawPoints1()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void Heatmap::drawPoints3()
+void Heatmap::drawPoints3( bool bprogression)
 {
 	int max_table_values = 2*this->num_samples-1;
 
@@ -1335,7 +1335,14 @@ void Heatmap::drawPoints3()
 
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
-    this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
+	if( bprogression)
+	{
+		this->selectionCallback1->SetCallback (SelectionCallbackFunctionForSPD);
+	}
+	else
+	{
+		this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
+	}
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
@@ -1920,7 +1927,7 @@ void Heatmap::showGraphforSPD( int selCol, int unselCol, bool bprogressionHeatma
 	}
 	else
 	{
-		drawPoints3();
+		drawPoints3( true);
 	}
 
 	this->dragLineFlag = false;
