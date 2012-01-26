@@ -422,7 +422,7 @@ public:
 
 	/* Read nodes from text file 
 	 */
-	void ReadNodesFromTextFile(std::string&);
+	void ReadNodesFromTextFile(const std::string&);
 
 	/* Create MST 
 	 */
