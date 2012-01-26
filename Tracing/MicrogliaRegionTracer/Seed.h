@@ -1,3 +1,5 @@
+#include <cstddef>
+
 class Seed
 {
 public:
