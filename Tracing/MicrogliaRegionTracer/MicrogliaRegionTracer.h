@@ -1,31 +1,32 @@
+#ifndef MICROGLIAREGIONTRACER_H
+#define MICROGLIAREGIONTRACER_H
+
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkLaplacianRecursiveGaussianImageFilter.h"
+
 
 #include <fstream>
 #include <cstring>
 #include <vector>
 
-//Simple class to hold seed coordinates
-#include "Seed.h"
 
-//Fregl includes
-#include <fregl/fregl_joint_register.h>
-#include <fregl/fregl_space_transformer.h>
-#include <fregl/fregl_util.h>
-#include <fregl/fregl_image_manager.h>
+#include "Seed.h"				//Simple class to hold seed coordinates
+#include "ROIGrabber.h"
+#include "LoG.h"
 
+#include "time.h"
 
 class MicrogliaRegionTracer
 {
 public:
-	typedef itk::Image<unsigned char, 3> ImageType;
-	typedef itk::Image<float, 3> LoGImageType;
+	typedef fregl_roi::ImageType ImageType;
+	typedef LoG::LoGImageType LoGImageType;
 
 private:
 	ImageType::Pointer image;
 	std::vector<Seed*> seeds;
+	ROIGrabber* roi_grabber;
 
 public:
 	MicrogliaRegionTracer();
@@ -36,13 +37,18 @@ public:
 
 	void LoadSeedPoints(std::string filename);
 
-	void WriteImage(std::string filename, ImageType::Pointer image);
-	void WriteLoGImage(std::string filename, LoGImageType::Pointer image);
+	void WriteImage(std::string filename, ImageType::Pointer image);	
+	void WriteInitialMicrogliaImages();
+	
+	void Trace();
 
-	void RunLoG();
+	void CalculateCandidatePixel(Seed* seed);
+	void RidgeDetection(std::vector<LoGImageType::Pointer> log_seedimage_vector);
+
 
 private:
-	
 
 	
 };
+
+#endif

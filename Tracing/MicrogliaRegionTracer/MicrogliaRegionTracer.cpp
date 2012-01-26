@@ -2,7 +2,7 @@
 
 MicrogliaRegionTracer::MicrogliaRegionTracer()
 {
-
+	roi_grabber = new ROIGrabber();
 }
 
 void MicrogliaRegionTracer::LoadImage(ImageType::Pointer image)
@@ -58,48 +58,75 @@ void MicrogliaRegionTracer::WriteImage(std::string filename, ImageType::Pointer 
 	}
 }
 
-void MicrogliaRegionTracer::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
+void MicrogliaRegionTracer::WriteInitialMicrogliaImages()
 {
-	typedef itk::ImageFileWriter< LoGImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(image);	//image is from function parameters!
-	writer->SetFileName(filename);
-	try
+	std::vector<Seed*>::iterator seeds_iter;
+
+	//clock_t startTime = clock();
+	for (seeds_iter = seeds.begin(); seeds_iter != seeds.end(); seeds_iter++)
 	{
-		std::cout << "Writing LoG image" << std::endl;
-		writer->Update();
+		Seed* seed = *seeds_iter;
+
+		ImageType::SizeType roi_size;
+		roi_size[0] = 100;
+		roi_size[1] = 100;
+		roi_size[2] = 50;
+		
+		//Grab the seed and its ROI
+		ImageType::Pointer seed_image = roi_grabber->GetROI(seed, roi_size);
+
+		//Make the file name of the raw seed image
+		std::stringstream seed_filename_stream;
+		seed_filename_stream << seed->getX() << "_" << seed->getY() << "_" << seed->getZ() << ".TIF";	//X_Y_Z.TIF
+		
+		//Write the seed image
+		WriteImage(seed_filename_stream.str(), seed_image);
+
+		//Multiscale LoG
+		LoG *log_obj = new LoG();
+		log_obj->RunMultiScaleLoG(seed, seed_image);
 	}
-	catch (itk::ExceptionObject &err)
+	//std::cout << "Grabbed " << seeds.size() << " cells in " << (clock() - startTime)/CLOCKS_PER_SEC << " seconds" << std::endl;
+}
+
+void MicrogliaRegionTracer::Trace()
+{
+	std::vector<Seed*>::iterator seeds_iter;
+	
+	//Trace seed by seed
+	for (seeds_iter = seeds.begin(); seeds_iter != seeds.end(); seeds_iter++)
 	{
-		std::cerr << "writer Exception: " << err << std::endl;
+		Seed* seed = *seeds_iter;
+
+		CalculateCandidatePixel(seed);
 	}
 }
 
-void MicrogliaRegionTracer::RunLoG()
+void MicrogliaRegionTracer::CalculateCandidatePixel(Seed* seed)
 {
-	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
-	LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
-	LoGFilter->SetInput( image );
-	LoGFilter->SetNormalizeAcrossScale(true);
+	ImageType::SizeType roi_size;
+	roi_size[0] = 100;
+	roi_size[1] = 100;
+	roi_size[2] = 50;
 	
-	float scales[1] = {1};
-	for (int k = 0; k < 1; k++)
+	//Grab the initial seedimage
+	ImageType::Pointer seed_image = roi_grabber->GetROI(seed, roi_size);
+	
+	LoG *log_obj = new LoG();
+	std::vector<LoGImageType::Pointer> log_seedimage_vector = log_obj->RunMultiScaleLoG(seed, seed_image);
+
+	RidgeDetection(log_seedimage_vector);
+}
+
+void MicrogliaRegionTracer::RidgeDetection(std::vector<LoGImageType::Pointer> log_seedimage_vector)
+{
+	std::vector<LoGImageType::Pointer>::iterator log_seedimage_vector_iter;
+	
+	for (log_seedimage_vector_iter = log_seedimage_vector.begin(); log_seedimage_vector_iter != log_seedimage_vector.end(); log_seedimage_vector_iter++)
 	{
-		float scale = scales[k];
-		LoGFilter->SetSigma( scale );
+		LoGImageType::Pointer log_image = *log_seedimage_vector_iter;
 
-		try
-		{
-			LoGFilter->Update();
-		}
-		catch (itk::ExceptionObject &err)
-		{
-			std::cerr << "gauss Exception: " << err << std::endl;
-		}
 
-		std::stringstream scale_stream;
-		scale_stream << scale;
-		
-		WriteLoGImage("D:/farsight_images/MicrogliaRegionTracer/LoGImage" + scale_stream.str() + ".mhd", LoGFilter->GetOutput());
 	}
+
 }

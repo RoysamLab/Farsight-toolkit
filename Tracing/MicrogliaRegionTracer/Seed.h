@@ -1,4 +1,7 @@
-#include <cstddef>
+#ifndef SEED_H
+#define SEED_H
+
+#include "stdint.h"
 
 class Seed
 {
@@ -13,4 +16,8 @@ private:
 	size_t x;
 	size_t y;
 	size_t z;
+
+
 };
+
+#endif
