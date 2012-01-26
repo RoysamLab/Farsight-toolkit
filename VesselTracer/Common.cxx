@@ -1,8 +1,10 @@
 
 #include "Common.h"
 
+namespace Common
+{
 
-void Common::ReadImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
+void ReadImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
 
 	std::cout << "Reading input file " << file_name << std::endl;
 
@@ -18,7 +20,7 @@ void Common::ReadImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr)
 	std::cout << "Input file size: " << data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void Common::WriteTIFFImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
+void WriteTIFFImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
 	
 	std::cout << "Writing output file" << file_name << std::endl;
 
@@ -38,7 +40,7 @@ void Common::WriteTIFFImage3D(std::string& file_name, ImageType3D::Pointer& data
 	image_writer->Update();
 }
 
-void Common::CurvatureAnisotropicDiffusion(int& IterCount, int& conductance, ImageType3D::Pointer& data_ptr){
+void CurvatureAnisotropicDiffusion(int& IterCount, int& conductance, ImageType3D::Pointer& data_ptr){
 
 	itk::Size<3> radius;
 	radius.Fill(1);
@@ -181,7 +183,7 @@ void Common::CurvatureAnisotropicDiffusion(int& IterCount, int& conductance, Ima
 
 }
 
-void Common::MedianFilter(const int radius, ImageType3D::Pointer& data_ptr){
+void MedianFilter(const int radius, ImageType3D::Pointer& data_ptr){
 		
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	MedianFilterType::Pointer median_filter = MedianFilterType::New();
@@ -205,7 +207,7 @@ void Common::MedianFilter(const int radius, ImageType3D::Pointer& data_ptr){
 	std::cout << "Input file size: "<< data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void Common::GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageType3D::Pointer& data_ptr){
+void GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageType3D::Pointer& data_ptr){
 	
 	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
 	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
@@ -334,21 +336,21 @@ void Common::GVFDiffusion(float& smoothing_sigma, const std::string& write_path,
 	WriteImage3D(write_path + std::string(".mhd"), data_ptr);
 }
 
-float inline Common::EpsilonClip(double EPS, float x){
+float inline EpsilonClip(double EPS, float x){
 	if ( vnl_math_abs(x) < EPS ) {
 		x = (x < 0.0) ? -1*EPS : EPS ;
 	}
 	return (x);
 }
 
-double inline Common::EpsilonClip(double EPS, double x){
+double inline EpsilonClip(double EPS, double x){
 	if ( vnl_math_abs(x) < EPS ) {
 		x = (x < 0.0) ? -1*EPS : EPS ;
 	}
 	return (x);
 }
 
-void Common::WriteImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
+void WriteImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
 	
 	std::cout << "Writing output file "<< file_name << std::endl;
 	
@@ -360,7 +362,7 @@ void Common::WriteImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr
 	image_writer->Update();
 }
 
-void Common::RenderImage3D(RenderImageType3D::Pointer data_ptr){
+void RenderImage3D(RenderImageType3D::Pointer data_ptr){
 	
 	ITKToVTKConnectorType::Pointer ITK_to_VTK_connector = ITKToVTKConnectorType::New();
 
@@ -435,7 +437,7 @@ void Common::RenderImage3D(RenderImageType3D::Pointer data_ptr){
 	render_window_interactor->Start();
 }
 
-void Common::RescaleDataForRendering(ImageType3D::Pointer data, RenderImageType3D::Pointer& data_to_render){
+void RescaleDataForRendering(ImageType3D::Pointer data, RenderImageType3D::Pointer& data_to_render){
 
 	typedef itk::RescaleIntensityImageFilter<ImageType3D, RenderImageType3D> RescalerType;
 	RescalerType::Pointer rescaler = RescalerType::New();
@@ -447,7 +449,7 @@ void Common::RescaleDataForRendering(ImageType3D::Pointer data, RenderImageType3
 	data_to_render = rescaler->GetOutput();
 }
 
-PixelType Common::NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& normalizedInputData){
+PixelType NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& normalizedInputData){
 
 	// This filter gives wierd values at output !! Try the LabelStatisticsImageFilter
 	/*StatisticsFilterType::Pointer statistics_filter = StatisticsFilterType::New();
@@ -512,7 +514,9 @@ PixelType Common::NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Poi
 	return volumeMax;
 }
 
-/*int inline Common::GetSign(double value){
+} // end namespace Common
+
+/*int inline GetSign(double value){
 	if(value < 0)
 		return -1;
 	if(value > 0)

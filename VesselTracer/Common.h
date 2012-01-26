@@ -128,6 +128,6 @@ namespace Common{
 	 * (value)
 	 */
 	//int inline GetSign(double);
-}
+} // end namespace Common
 
 #endif // _Common_h
