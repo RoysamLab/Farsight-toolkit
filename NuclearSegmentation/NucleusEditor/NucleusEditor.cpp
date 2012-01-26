@@ -241,7 +241,7 @@ void NucleusEditor::createMenus()
 
 	fileMenu->addSeparator();
 
-	saveProjectAction = new QAction(tr("Save Project.."), this);
+	saveProjectAction = new QAction(tr("Save Project..."), this);
 	saveProjectAction->setStatusTip(tr("Save the active project files..."));
 	saveProjectAction->setShortcut(tr("Ctrl+S"));
 	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
