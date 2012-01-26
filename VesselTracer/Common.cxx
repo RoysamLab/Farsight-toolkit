@@ -329,11 +329,16 @@ void GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageTy
 			}
 		}
 	}
-    // Wirte the gradient images and the vol image to disk
-	WriteImage3D(write_path + std::string("_gx.mhd"), gx);
-	WriteImage3D(write_path + std::string("_gy.mhd"), gy);
-	WriteImage3D(write_path + std::string("_gz.mhd"), gz);
-	WriteImage3D(write_path + std::string(".mhd"), data_ptr);
+    // Write the gradient images and the vol image to disk
+	std::string output_file;
+	output_file = write_path + "_gx.mhd";
+	WriteImage3D(output_file, gx);
+	output_file = write_path + "_gy.mhd";
+	WriteImage3D(output_file, gy);
+	output_file = write_path + "_gz.mhd";
+	WriteImage3D(output_file, gz);
+	output_file = write_path + ".mhd";
+	WriteImage3D(output_file, data_ptr);
 }
 
 float inline EpsilonClip(double EPS, float x){
