@@ -48,7 +48,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		
 		// Reading secondary nodes from file for now
 		std::string filename = "AllNodes_grid10.txt";
-		this->ReadNodesFromTextFile( filename );
+		this->ReadNodesFromTextFile(filename);
 		//this->ReadNodesFromTextFile(std::string("AllNodes_default.txt"));
 		
 		this->allParams.graphAndMSTParams.initByDefaultValues();
@@ -126,6 +126,8 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->secondaryReversePositionRate = 0.8;
 	this->secondaryReverseScaleRate = 0.9;
 	this->maxTraceCost = 10.0;
+	this->infTraceQuality = 100;
+	this->maxQueueSize = 10000;
 	this->traceLengthCost = 0.5; //1.0; //0.5; //1.0; //0.5; //0.0;
 	this->primaryNodeSearchRadFactor = 0.75;
 }
@@ -153,10 +155,12 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 	timer.Start();
 	
 	std::string write_file_path = file_path.substr(0, file_path.find_last_of('.'));
-	
+	std::string append_str = "_original.mhd";
+
 	try{
 		Common::ReadImage3D(file_path, data_ptr);
-		Common::WriteImage3D(write_file_path + std::string("_original.mhd"), data_ptr);
+
+		Common::WriteImage3D(write_file_path + std::string(append_str), data_ptr);
 	}
 	catch(itk::ExceptionObject& e){
 		std::cout << e << std::endl;
@@ -171,9 +175,10 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 
 	Common::MedianFilter(median_radius, data_ptr);
 	Common::CurvatureAnisotropicDiffusion(anis_diffusion_N_iter, anis_diffusion_conductance, data_ptr);
-	
+	append_str = "_preprocessed.tif";
+
 	try{
-		Common::WriteTIFFImage3D(write_file_path + std::string("_preprocessed.tif"), data_ptr);
+		Common::WriteTIFFImage3D(write_file_path + std::string(append_str), data_ptr);
 	}
 	catch(itk::ExceptionObject& e){
 		std::cout << e << std::endl;
@@ -193,14 +198,19 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	
 	data_path = data_path.substr(0, data_path.find_last_of('.')); // get rid of the extension
-	
-	try{
-		Common::ReadImage3D(data_path + std::string(".mhd"), this->inputData); //input data is preprocessed data
+	std::string append_ext = ".mhd";
+	std::string append_original = "_original.mhd";
+	std::string append_gx = "_gx.mhd";
+	std::string append_gy = "_gy.mhd";
+	std::string append_gz = "_gz.mhd";
 
-		Common::ReadImage3D(data_path + std::string("_original.mhd"), this->originalData);	
-		Common::ReadImage3D(data_path + std::string("_gx.mhd"), this->gx);
-		Common::ReadImage3D(data_path + std::string("_gy.mhd"), this->gy);
-		Common::ReadImage3D(data_path + std::string("_gz.mhd"), this->gz);
+	try{
+		Common::ReadImage3D(data_path + std::string(append_ext), this->inputData); //input data is preprocessed data
+
+		Common::ReadImage3D(data_path + std::string(append_original), this->originalData);	
+		Common::ReadImage3D(data_path + std::string(append_gx), this->gx);
+		Common::ReadImage3D(data_path + std::string(append_gy), this->gy);
+		Common::ReadImage3D(data_path + std::string(append_gz), this->gz);
 	}
 	catch(itk::ExceptionObject& e){
 		std::cout << e << std::endl;		
@@ -437,7 +447,7 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	int a1 = this->allParams.oriBin.binIndexVec[46][49][49];
 	int a2 = this->allParams.oriBin.binIndexVec[49][46][49];
 	
-	std::vector<std::vector<double>> bin_centers(3, std::vector<double>(x.size(), 0));
+	std::vector<std::vector<double> > bin_centers(3, std::vector<double>(x.size(), 0));
 	//bin_centers[0] = x;
 	//bin_centers[1] = y;
 	bin_centers[0] = y;
@@ -446,7 +456,7 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	bin_centers[2] = z;
 	this->allParams.oriBin.binCenters = bin_centers;
 	
-	std::vector<std::vector<double>> D(angleCount, std::vector<double>(angleCount, 0));
+	std::vector<std::vector<double> > D(angleCount, std::vector<double>(angleCount, 0));
 	std::vector<double> temp1(3, 0), temp2(3, 0);
 	double acc = 0.0;
 	for(int r = 0; r < angleCount; r++){
@@ -661,9 +671,9 @@ void ftkVesselTracer::VisualizeNodesWithData3D(std::vector<Node> node_vec, bool 
 
 	// Prepare vtkActors for each node. Every node is displayed as a sphere
 
-	std::vector<vtkSmartPointer<vtkSphereSource>> node_spheres;
-	std::vector<vtkSmartPointer<vtkPolyDataMapper>> node_mappers;
-	std::vector<vtkSmartPointer<vtkActor>> node_actors;
+	std::vector<vtkSmartPointer<vtkSphereSource> > node_spheres;
+	std::vector<vtkSmartPointer<vtkPolyDataMapper> > node_mappers;
+	std::vector<vtkSmartPointer<vtkActor> > node_actors;
 
 	for(int i = 0; i < n_seeds; i++){
 		
@@ -789,8 +799,8 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	filteredPrimaryNodes.resize(this->initialSeeds.size());
 
 	#pragma omp parallel for
-	//for(int i = 0; i < 50; i++){
-	for(int i = 0; i < this->initialSeeds.size(); i++){
+	for(int i = 0; i < 50; i++){
+	//for(int i = 0; i < this->initialSeeds.size(); i++){
 		this->FitSphereAtNode(this->initialSeeds[i]);
 		//std::cout << i << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << " Last iter: " << this->initialSeeds[i].exitIter << std::endl; 
 		
@@ -1410,6 +1420,11 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
 	
 	
+	clock_t start_tracing_time, stop_tracing_time;
+	double tracing_time = 0;
+
+	assert((start_tracing_time = clock()) != -1);
+	
 	/*Node a_node;
 	a_node.scale = 3.8346;
 	a_node.y = 124.7428;
@@ -1419,14 +1434,16 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	a_node.meanForegroundIntensity = 0.5671;
 	a_node.meanBackgroundIntensity = 0.1502;
 	a_node.parentIDLength = 4;
-	a_node.traceLengthCost = 0.5;
+	this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
 	a_node.nHoodSecondaryMultiplier = 2;
 	this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
 	this->primaryNodesAfterHitTest[0] = a_node; */
+	this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
 	
 	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
 	PriorityQueueType node_queue(compareNodes(2));
+	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
 
 	//Node a_node;
@@ -1438,31 +1455,45 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		if(this->primaryNodesAfterHitTest[i].likelihood <= 0){
 			this->primaryNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
 			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
+			light_node_queue[i] = queue_element(i, this->allParams.nodeDetectionParams.maxTraceCost);
 		}
 		else{
 			trace_quality = -1 * std::log(this->primaryNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
 			this->primaryNodesAfterHitTest[i].traceQuality = trace_quality;
 			quality_array.push_back(trace_quality);
+			light_node_queue[i] = queue_element(i, trace_quality);
 		}
 	
 		this->primaryNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
-		node_queue.push(this->primaryNodesAfterHitTest[i]);
+		//node_queue.push(this->primaryNodesAfterHitTest[i]);
 	}
 
-	std::cout << "Primary node trace quality.. " << std::endl;
-	for(int i = 0; i < quality_array.size(); i++)
-		std::cout << quality_array[i] << std::endl;
+	//std::cout << "Primary node trace quality.. " << std::endl;
+	//for(int i = 0; i < quality_array.size(); i++)
+	//	std::cout << quality_array[i] << std::endl;
 	
-	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = 0;
+	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
+	int queue_size = this->primaryNodesAfterHitTest.size();
 	Node current_node, dir_node;
 	double dirX = 0, dirY = 0, dirZ = 0, norm = 0;
 	std::vector<double> dir_hist; 
 	std::vector<Node> badNodes, veryBadNodes;
+	queue_element current_queue_element(0, 0);
 	
 	//while(queue_iter <= this->primaryNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
-	while(!node_queue.empty() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
-		current_node = node_queue.top();
-		node_queue.pop();
+	//while(!node_queue.empty() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
+	while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
+		
+		//current_node = node_queue.top();
+		//node_queue.pop();
+		
+		this->GetBestTrace(light_node_queue, current_queue_element);
+
+		// Break if queue is empty
+		if(current_queue_element.second == this->allParams.nodeDetectionParams.infTraceQuality)
+			break;
+
+		current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
 
 		if(current_node.parentID[0] == -1)
 			current_node.isPrimary = true;
@@ -1470,7 +1501,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			current_node.isPrimary = false;
 	
 		// If the quality of trace is above the threshold, these nodes have low quality (ignore them)
-		if(current_node.traceQuality > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false)
+		if(current_queue_element.second > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false)
 			continue;
 		
 		hit = this->TraceHitTest(current_node);
@@ -1512,8 +1543,6 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 
 		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
 
-
-
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
 			continue;
 
@@ -1551,34 +1580,46 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 				secondary_node.parentID[j] = current_node.parentID[j-1];
 			}
 			secondary_node.parentID[0] = total_nodes_counter;
+			
+			//queue_size++;
+			this->primaryNodesAfterHitTest.push_back(secondary_node);
 
-			this->computeTraceQuality(secondary_node);
-
-			std::cout << "Trace quality: " << secondary_node.traceQuality << std::endl;
+			trace_quality = this->computeTraceQuality(secondary_node);
+	
+			std::cout << "Trace quality: " << trace_quality << std::endl;
 			
 			//node_queue.push(current_node);
-			node_queue.push(secondary_node);
+			//node_queue.push(secondary_node);
 
-			quality_array.push_back(secondary_node.traceQuality);
+			quality_array.push_back(trace_quality);
+
+			light_node_queue[queue_size] = queue_element(queue_size, trace_quality);
+			queue_size++;
 		}
 		queue_iter++;
-
-		//this->VisualizeNodesWithData3D(this->allNodes, true);
+		
+		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+		//this->VisualizeNodesWithData3D(this->allNodes, false);
 	}
 
+	stop_tracing_time = clock();
+	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
+
+	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
+
 	//Visualize all nodes
-	this->VisualizeNodesWithData3D(this->allNodes, true);
+	//this->VisualizeNodesWithData3D(this->allNodes, true);
 	this->VisualizeNodesWithData3D(this->allNodes, false);
 
-	
-	/*for(int i = 0; i < this->allNodes.size(); i++){
+	std::vector<Node> nodesWithNonPositiveLikelihood;
+	for(int i = 0; i < this->allNodes.size(); i++){
 		if(this->allNodes[i].likelihood <= 0.0)
 			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
 	}
-	this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);*/
+	this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
 
-	//if(badNodes.empty() == false)
-		//this->VisualizeNodesWithData3D(badNodes, false);
+	if(badNodes.empty() == false)
+		this->VisualizeNodesWithData3D(badNodes, false);
 
 	//Write all nodes to a file
 	this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
@@ -1594,6 +1635,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	}
 	else
 		std::cout << "File cannot be opened. " << std::endl;
+}
+
+bool compareQueueElement(queue_element e1, queue_element e2){
+	return(e1.second < e2.second);
+}
+
+void ftkVesselTracer::GetBestTrace(std::vector<queue_element>& queue, queue_element& top){
+
+	std::sort(queue.begin(), queue.end(), compareQueueElement);
+	top.first = queue[0].first;
+	top.second = queue[0].second;
+
+	queue[0].second = this->allParams.nodeDetectionParams.infTraceQuality;
 }
 
 int ftkVesselTracer::TraceHitTest(Node node){
@@ -1662,7 +1716,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 	return hit;
 }
 
-void ftkVesselTracer::computeTraceQuality(Node& node){
+double ftkVesselTracer::computeTraceQuality(Node& node){
 
 	double cost = 0.0; 
 	if(node.likelihood <= 0.0)
@@ -1724,6 +1778,8 @@ void ftkVesselTracer::computeTraceQuality(Node& node){
 	std_curvature = std::sqrt(std_curvature);
 
 	node.traceQuality = std_curvature + (cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count;
+
+	return node.traceQuality;
 }
 
 void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<double>& dir_hist){
@@ -1746,52 +1802,61 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	nhood_end_index[1] = floor(node.y + nHoodScale + 0.5);
 	nhood_end_index[2] = floor(node.z + nHoodScale + 0.5);
 	
-	ImageType3D::IndexType current_index, current_index_1;
-	int in_volume_count = 0, out_volume_count = 0, hist_bin = 0, max_bin_element = 0, min_bin_element = 0;
-	PixelType x_normalized = 0, y_normalized = 0, z_normalized = 0, current_pixel = 0;
-	double radial_dist = 0, hist_val_region_based = 0;
-	std::vector<int> bin_index(3, 0);
+	//ImageType3D::IndexType current_index, current_index_1;
+	int in_volume_count = 0, out_volume_count = 0; //, hist_bin = 0, max_bin_element = 0, min_bin_element = 0;
+	//PixelType x_normalized = 0, y_normalized = 0, z_normalized = 0, current_pixel = 0;
+	//double radial_dist = 0, hist_val_region_based = 0;
+	//std::vector<int> bin_index(3, 0);
 	std::vector<double> sph_hist_region_based(this->allParams.oriBin.angleCount, 0);
 	std::vector<double> sph_hist_count(this->allParams.oriBin.angleCount, 0);
 
+	//#pragma omp parallel for
 	for(int j = nhood_start_index[1]; j <= nhood_end_index[1]; j++){
 		for(int i = nhood_start_index[0]; i <= nhood_end_index[0]; i++){
 			for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
 			//for(int j = nhood_start_index[1]; j <= nhood_end_index[1]; j++){
 				
+				ImageType3D::IndexType current_index, current_index_1;
 				current_index[0] = i; current_index[1] = j; current_index[2] = k;
-				current_index_1[0] = j; current_index_1[1] = i; current_index_1[2] = k;
+				//current_index_1[0] = j; current_index_1[1] = i; current_index_1[2] = k;
+				
 				if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
 					in_volume_count++;
 				
-					x_normalized = (i - node.x)/node.scale;
-					y_normalized = (j - node.y)/node.scale;
-					z_normalized = (k - node.z)/node.scale;
-					radial_dist = std::sqrt((x_normalized * x_normalized) + (y_normalized * y_normalized) + (z_normalized * z_normalized));
+					PixelType x_normalized = (i - node.x)/node.scale;
+					PixelType y_normalized = (j - node.y)/node.scale;
+					PixelType z_normalized = (k - node.z)/node.scale;
+					double radial_dist = std::sqrt((x_normalized * x_normalized) + (y_normalized * y_normalized) + (z_normalized * z_normalized));
 
 					//if(radial_dist > 1.0 && radial_dist < node.nHoodSecondaryMultiplier){
 					if(radial_dist > 1.0 && radial_dist < node.nHoodSecondaryMultiplier	){
 						
+						std::vector<int> bin_index(3, 0);
 						bin_index[0] = floor(i - node.x + 0.5); 
 						bin_index[1] = floor(j - node.y + 0.5); 
 						bin_index[2] = floor(k - node.z + 0.5);
-						max_bin_element = *std::max_element(bin_index.begin(), bin_index.end());
-						min_bin_element = *std::min_element(bin_index.begin(), bin_index.end());
-
+						int max_bin_element = *std::max_element(bin_index.begin(), bin_index.end());
+						int min_bin_element = *std::min_element(bin_index.begin(), bin_index.end());
+						
+						//#pragma omp critical
 						if(max_bin_element < sMaxBin && min_bin_element > -1*sMaxBin){
 							
 							//int hist_bin1 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin + 1][bin_index[1] + sMaxBin + 1][bin_index[2] + sMaxBin + 1];
-							int hist_bin4 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin][bin_index[1] + sMaxBin][bin_index[2] + sMaxBin];
+							//int hist_bin4 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin][bin_index[1] + sMaxBin][bin_index[2] + sMaxBin];
 
-							int hist_bin2 = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[1] + sMaxBin][bin_index[0] + sMaxBin];
-							hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[0] + sMaxBin][bin_index[1] + sMaxBin];
+							//int hist_bin2 = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[1] + sMaxBin][bin_index[0] + sMaxBin];
+							
+							
+							int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[0] + sMaxBin][bin_index[1] + sMaxBin];
+							
 							
 							//int hist_bin3 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin][bin_index[1] + sMaxBin][bin_index[2] + sMaxBin];
 							//hist_bin = this->allParams.oriBin.binIndexVec[bin_index[1] + sMaxBin][bin_index[0] + sMaxBin][bin_index[2] + sMaxBin];
 							
-							current_pixel = this->normalizedInputData->GetPixel(current_index);
-							float current_pixel_1 = this->normalizedInputData->GetPixel(current_index_1);
-							hist_val_region_based = std::abs(current_pixel - node.meanBackgroundIntensity) - std::abs(current_pixel - node.meanForegroundIntensity);
+							PixelType current_pixel = this->normalizedInputData->GetPixel(current_index);
+							//float current_pixel_1 = this->normalizedInputData->GetPixel(current_index_1);
+							
+							double hist_val_region_based = std::abs(current_pixel - node.meanBackgroundIntensity) - std::abs(current_pixel - node.meanForegroundIntensity);
 							
 							sph_hist_region_based[hist_bin] = sph_hist_region_based[hist_bin] + hist_val_region_based;
 							sph_hist_count[hist_bin]++;
@@ -1805,8 +1870,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	}
 
 	// Print the histogram
-	for(int i = 0; i < sph_hist_region_based.size(); i++)
-		std::cout << i << ", " << sph_hist_region_based[i] << std::endl;
+	//for(int i = 0; i < sph_hist_region_based.size(); i++)
+	//	std::cout << i << ", " << sph_hist_region_based[i] << std::endl;
 
 	ofstream nodes_file_stream;
 	nodes_file_stream.open("SphHist_Cpp.txt", std::ios::out);
@@ -1817,7 +1882,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		nodes_file_stream.close();
 	}
 
-	// Normalize sphrical histogram	
+	//#pragma omp parallel for
+	// Normalize sphrical histogram
 	for(int i = 0; i < sph_hist_region_based.size(); i++){
 		sph_hist_region_based[i] = sph_hist_region_based[i]/(sph_hist_count[i] + 0.001);		
 		sph_hist_region_based[i] = std::max(this->allParams.oriBin.minSphHistCount, sph_hist_region_based[i]);
@@ -1829,6 +1895,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
 	}
+	//#pragma omp parallel for
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
@@ -1844,7 +1911,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
 			smooth_hist_2[i] = smooth_hist_2[i] + this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]];
 	}
-
+	
+	//#pragma omp parallel for
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i] * smooth_hist_2[i];
 	
@@ -1854,6 +1922,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
 	}
+	//#pragma omp parallel for
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
@@ -1869,14 +1938,14 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 			nodes_file_stream1 << sph_hist_region_based[i] << std::endl;
 		nodes_file_stream1.close();
 	}
-
 	
 	// Finding modes of the histogram
 	bool mode_flag = false;
-	std::vector<std::vector<double>> mode_bins;
+	std::vector<std::vector<double> > mode_bins;
 	std::vector<double> mode_hist_val;
 	std::vector<double> a_bin(3, 0);
 	int index1 = 0, index2 = 0;
+	// Find out the peaks of the histogram and the corresponding bin locations
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
 		mode_flag = true;
 		if(sph_hist_region_based[i] == 0)
@@ -1908,12 +1977,12 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	
 	// Refine node directions: get the top 2 peaks separated by 60 deg, see if the 3rd also higher than
 	// 0.25*(p1 + p2)
-	std::vector<std::vector<double>> mode_bins_sorted;
+	std::vector<std::vector<double> > mode_bins_sorted;
 	std::vector<double> mode_hist_val_sorted;
-	std::multimap<double, std::vector<double>> bin_and_val_map;
-	std::multimap<double, std::vector<double>>::iterator iter_map;
+	std::multimap<double, std::vector<double> > bin_and_val_map;
+	std::multimap<double, std::vector<double> >::iterator iter_map;
 	for(int i = 0; i < mode_bins.size(); i++)
-		bin_and_val_map.insert(std::pair<double, std::vector<double>>(mode_hist_val[i], mode_bins[i]));
+		bin_and_val_map.insert(std::pair<double, std::vector<double> >(mode_hist_val[i], mode_bins[i]));
 	
 	for(iter_map = bin_and_val_map.begin(); iter_map != bin_and_val_map.end(); iter_map++){
 		mode_hist_val_sorted.push_back((*iter_map).first);
@@ -1933,12 +2002,12 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		}
 	}
 
-	std::vector<std::vector<double>> mode_bins_sorted_1;
+	std::vector<std::vector<double> > mode_bins_sorted_1;
 	std::vector<double> mode_hist_val_sorted_1;
-	std::multimap<double, std::vector<double>> bin_and_val_map_1;
-	std::multimap<double, std::vector<double>>::iterator iter_map_1;
+	std::multimap<double, std::vector<double> > bin_and_val_map_1;
+	std::multimap<double, std::vector<double> >::iterator iter_map_1;
 	for(int i = 0; i < mode_bins_sorted.size(); i++)
-		bin_and_val_map_1.insert(std::pair<double, std::vector<double>>(mode_hist_val_sorted[i], mode_bins_sorted[i]));
+		bin_and_val_map_1.insert(std::pair<double, std::vector<double> >(mode_hist_val_sorted[i], mode_bins_sorted[i]));
 	
 	bin_and_val_map_1.erase(0);
 
@@ -1988,9 +2057,9 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	node.sphHistRegionBased = sph_hist_region_based;
 
 	// Print the detected maximal nodes
-	for(int i = 0; i < node.dirX.size(); i++){
-		std::cout << node.dirX[i] << ", " << node.dirY[i] << ", " << node.dirZ[i] << std::endl;
-	}
+	//for(int i = 0; i < node.dirX.size(); i++){
+	//	std::cout << node.dirX[i] << ", " << node.dirY[i] << ", " << node.dirZ[i] << std::endl;
+	//}
 }
 
 void ftkVesselTracer::writeNodesToFile(std::vector<Node> nodes, std::string& file_path){
@@ -2136,24 +2205,28 @@ void ftkVesselTracer::CreateMinimumSpanningForest(){
 
 void ftkVesselTracer::CreateAffinityGraph(void){
 
-	Node dir;
-	double norm_dist = 0.0, existingNodeDist = 0.0;
-	int angleBinLinear = 0;
+	//Node dir;
+	//double norm_dist = 0.0, existingNodeDist = 0.0;
+	//int angleBinLinear = 0;
 	
 	//allocate memory for the binned edges in every node
 	for(int i = 0; i < this->allNodes.size(); i++)
 		this->allNodes[i].connectedNodesBinned.resize(2 * this->allParams.graphAndMSTParams.NBinsAffinity, this->allParams.graphAndMSTParams.maxEdgeWeight+1);
 	
- 	for(int i = 0; i < this->allNodes.size(); i++){
+	for(int i = 0; i < this->allNodes.size(); i++){
+		
+		#pragma omp parallel for
 		for(int j = i + 1; j < this->allNodes.size(); j++){
+			
+			Node dir;
 			Node::ComputeDistanceBetweenNodes(this->allNodes[j], this->allNodes[i], dir);
-			norm_dist = Node::ComputeNorm(dir);
+			double norm_dist = Node::ComputeNorm(dir);
 			dir.NormalizeNode(norm_dist);
 
 			if(norm_dist < (1.0) * this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allNodes[j].scale, this->allNodes[i].scale)){
 				
-				angleBinLinear = this->ComputeAffinityBin(dir);
-				existingNodeDist = this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1) + 1];
+				int angleBinLinear = this->ComputeAffinityBin(dir);
+				double existingNodeDist = this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1) + 1];
 
 				if(existingNodeDist > norm_dist){
 					this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1)] = j;
@@ -2173,8 +2246,9 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 		}
 	}
 	
-	Node dir1;
+	Node dir1, dir;
 	double norm_dist1 = 0.0, edge_weight = 0.0;
+	double norm_dist = 0.0, existingNodeDist = 0.0;
 	for(int i = 0; i < this->allNodes.size(); i++){
 		for(int j = 0; j < 2*this->allParams.graphAndMSTParams.NBinsAffinity; j = j+2){
 			if(this->allNodes[i].connectedNodesBinned[j+1] > this->allParams.graphAndMSTParams.maxEdgeWeight)

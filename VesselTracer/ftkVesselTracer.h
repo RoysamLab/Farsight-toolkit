@@ -12,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <time.h>
 
 #include <omp.h>
 
@@ -112,6 +113,7 @@ typedef ArrayType3D::index ArrayIndexType3D;
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
 typedef std::vector<VectorType2D> VectorType3D;
+typedef std::pair<int, double> queue_element;
 
 struct SphericalBinInfo{
 
@@ -189,6 +191,8 @@ struct NodeDetectionParameters{
 	double maxTraceCost;
 	double traceLengthCost;
 	double primaryNodeSearchRadFactor; // Defines the factor of primary node radius which contributes to the initial position of secondary nodes
+	double infTraceQuality;
+	int maxQueueSize;
 
 	void initByDefaultValues(void);
 };
@@ -539,7 +543,7 @@ private:
 	/* Compute the cost of the trace for the given node
 	 * (Node ref)
 	 */
-	void computeTraceQuality(Node&);
+	double computeTraceQuality(Node&);
 
 	/* Compute the bin for affinity graph
 	 * (direction node)	
@@ -555,4 +559,8 @@ private:
 	 * (node 1 ID, node 2 ID)
 	 */
 	bool CheckNeighbors(int, int);
+
+	/* Sort the queue based on trace quality and return the best trace index and quality
+	 */
+	void GetBestTrace(std::vector<queue_element>&, queue_element&);
 };

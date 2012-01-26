@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
 	//std::string input_data_path = "C:\\Lab\\data\\forAstrocytes\\ASTRO_Cropped2_montage_8bitkt11410_w212TRITCdsu.tif";
 
 	bool preprocess = false; //false;
-	bool startWithMST = false; //true; //false;
+	bool startWithMST = false; //true; //false
 
 	ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST);
 
