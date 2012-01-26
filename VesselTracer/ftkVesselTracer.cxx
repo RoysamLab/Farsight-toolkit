@@ -47,7 +47,8 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
 		
 		// Reading secondary nodes from file for now
-		this->ReadNodesFromTextFile(std::string("AllNodes_grid10.txt"));
+		std::string filename = "AllNodes_grid10.txt";
+		this->ReadNodesFromTextFile( filename );
 		//this->ReadNodesFromTextFile(std::string("AllNodes_default.txt"));
 		
 		this->allParams.graphAndMSTParams.initByDefaultValues();
@@ -2013,7 +2014,7 @@ void ftkVesselTracer::writeNodesToFile(std::vector<Node> nodes, std::string& fil
 		std::cout << "Unable to open file for writing nodes: " << file_path.c_str() << std::endl;
 }
 
-void ftkVesselTracer::ReadNodesFromTextFile(std::string& file_name){
+void ftkVesselTracer::ReadNodesFromTextFile(const std::string& file_name){
 
 	if(this->allNodes.size() != 0)
 		this->allNodes.clear();
