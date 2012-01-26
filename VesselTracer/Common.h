@@ -1,3 +1,5 @@
+#ifndef _Common_h
+#define _Common_h
 
 #include <iostream>
 #include <fstream>
@@ -88,13 +90,13 @@ namespace Common{
 	 * Median filtering.
 	 * (radius, data_pointet)
 	 */
-	void MedianFilter(int&, ImageType3D::Pointer&);
+	void MedianFilter(const int, ImageType3D::Pointer&);
 
 	/**
 	 * Calculate the gradient vector field and write the result in mhd files.
 	 * (sigma for smoothing, path for writing files, data pointer)
 	 */
-	void GVFDiffusion(float&, std::string&, ImageType3D::Pointer&);
+	void GVFDiffusion(float&, const std::string&, ImageType3D::Pointer&);
 	
 	/** Clip the given data using the epsilon value.
 	 * (epsilon, float data)
@@ -127,3 +129,5 @@ namespace Common{
 	 */
 	//int inline GetSign(double);
 }
+
+#endif // _Common_h
