@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include <conio.h>
 
 #include "ftkVesselTracer.h"
 
@@ -26,5 +25,6 @@ void main(int argc, char* argv[]){
 	
 	ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST);
 	
-	_getch();
+	// Please do not use this, it is not cross platform.
+	//_getch();
 }
