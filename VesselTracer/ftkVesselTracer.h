@@ -107,7 +107,7 @@ typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
 
-typedef boost::multi_array<int, 3> ArrayType3D; 
+typedef boost::multi_array<int, 3> ArrayType3D;
 typedef ArrayType3D::index ArrayIndexType3D;
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
@@ -118,14 +118,14 @@ struct SphericalBinInfo{
 	//ArrayType3D BinIndex;
 	VectorType3D binIndexVec;
 	VectorType2D nbr;
-	std::vector<std::vector<double>> binCenters;
+	std::vector<std::vector<double> > binCenters;
 	int indexLength;
 	int angleCount;
 	int angleInrement;
 	int nLastIndicesOfInterest;
 	double histSmoothingFactor;
 	double minSphHistCount;
-	
+
 	void initByDefaultValues(void);
 };
 
@@ -298,7 +298,7 @@ struct Node{
 	std::vector<double> connectedNodesBinned;
 	
 	//Stores the filtered affinity connections for each node (affinity graph)
-	std::vector<std::pair<int, double>> connectedNodesAffinity;
+	std::vector<std::pair<int, double> > connectedNodesAffinity;
 	
 	int ID; 
 	std::vector<int> branchIDs;
