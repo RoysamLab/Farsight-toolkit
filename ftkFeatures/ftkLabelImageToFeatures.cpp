@@ -187,7 +187,6 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	column->SetName( "centroid_z" );
 	table->AddColumn(column);
 
-	#pragma omp parallel for
 	for (int i=0; i < IntrinsicFeatures::N; ++i)
 	{
 		if(doFeat[i])
@@ -199,7 +198,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	}
 
 	std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	#pragma omp parallel for
+
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);
@@ -224,7 +223,6 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 
 	//Now populate the table:
 	//std::vector< FeatureCalcType::LabelPixelType > labels = labFilter->GetLabels();
-	#pragma omp parallel for
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
 		FeatureCalcType::LabelPixelType id = labels.at(i);

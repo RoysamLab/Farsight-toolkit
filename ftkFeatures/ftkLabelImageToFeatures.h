@@ -64,10 +64,6 @@ limitations under the License.
 #include "Zernike/zernike.h"
 #endif
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif
-
 #include <iostream>
 #include <sstream>
 #include <string>
