@@ -181,7 +181,7 @@ void Common::CurvatureAnisotropicDiffusion(int& IterCount, int& conductance, Ima
 
 }
 
-void Common::MedianFilter(int& radius, ImageType3D::Pointer& data_ptr){
+void Common::MedianFilter(const int radius, ImageType3D::Pointer& data_ptr){
 		
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	MedianFilterType::Pointer median_filter = MedianFilterType::New();
@@ -205,7 +205,7 @@ void Common::MedianFilter(int& radius, ImageType3D::Pointer& data_ptr){
 	std::cout << "Input file size: "<< data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void Common::GVFDiffusion(float& smoothing_sigma, std::string& write_path, ImageType3D::Pointer& data_ptr){
+void Common::GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageType3D::Pointer& data_ptr){
 	
 	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
 	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
