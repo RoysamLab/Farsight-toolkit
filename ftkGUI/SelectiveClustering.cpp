@@ -116,6 +116,24 @@ void SelectiveClustering::RemoveSelectionFromCluster(vtkIdType key, std::set<vtk
 	(*this->iter).second = Selection;
 }
 
+vtkIdType SelectiveClustering::ClusterSelectionSize(vtkIdType key)
+{
+	/*! 
+	* How Many objects in the cluster
+	*/
+	this->iter = this->ClusterMap.find(key);
+	std::set< vtkIdType > Selection = (*this->iter).second;
+	return (vtkIdType) Selection.size();
+}
+
+vtkIdType SelectiveClustering::NumberOfClusters()
+{
+	/*! 
+	* Count of clusters created
+	*/
+	return (vtkIdType) this->ClusterMap.size();
+}
+
 std::set< vtkIdType > SelectiveClustering::SelectionFromCluster(vtkIdType key)
 {
 	/*! 
@@ -172,13 +190,13 @@ vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfAllSelected()
 	vtkIdType NumRows = this->ObjectTable->GetNumberOfRows();
 	for (vtkIdType row = 0; row <= NumRows; row++)
 	{
-		/*vtkIdType rowObjId = this->ObjectTable->GetValue(row, 1);
+		vtkIdType rowObjId = this->ObjectTable->GetValue(row, 1).ToTypeInt64();
 		std::set< vtkIdType >::iterator FoundAt = selectedIDs.find(rowObjId);
 		if (FoundAt != selectedIDs.end())
 		{
 			vtkVariantArray * RowCopy = this->ObjectTable->GetRow(row);
 			selectedTable->InsertNextRow(RowCopy);
-		}*/
+		}
 	}
 
 	return selectedTable;

@@ -45,6 +45,7 @@ limitations under the License.
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/ObjectSelection.h"
 #include "ftkGUI/StatisticsToolbar.h"
+#include "ftkGUI/SelectiveClustering.h"
 #include "ftkUtils.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ClusClus/clusclus.h"
@@ -88,6 +89,8 @@ private slots:
 	void featuredendrogram();
 	void showheatmap();
 
+	void CreateClusterSelection();
+
 signals:
     void selectionChanged(void);
 private:
@@ -116,6 +119,9 @@ private:
 	QAction *featureDendroAction;
 	QAction *heatmapAction;
 	//////////////////////////////////////////////////////
+
+	QAction *CreateCluster;
+
 	StatisticsToolbar * statisticsToolbar;
 	TableWindow *table;
 	PlotWindow *plot;
@@ -138,6 +144,8 @@ private:
 
 	clusclus *cc1;
 	clusclus *cc2;
+
+	SelectiveClustering * ClusterSelections;
  };
 
 

@@ -21,6 +21,8 @@ limitations under the License.
 #include <map>
 #include <QObject>
 #include "vtkTable.h"
+#include "vtkVariant.h"
+#include "ftkUtils.h"
 #include "vtkSmartPointer.h"
 
 class SelectiveClustering: public QObject
@@ -42,6 +44,9 @@ public:
 
 	void RemoveSelectionFromCluster(vtkIdType key, vtkIdType ID);
 	void RemoveSelectionFromCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
+
+	vtkIdType ClusterSelectionSize(vtkIdType key);
+	vtkIdType NumberOfClusters();
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();

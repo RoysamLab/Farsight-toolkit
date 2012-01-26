@@ -55,6 +55,8 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	setWindowTitle(tr("Sample Editor"));
 	connect(selection, SIGNAL(changed()), this, SLOT(updateStatistics()));
     
+	this->ClusterSelections = new SelectiveClustering();
+
 	this->resize(500,500);
 }
 
@@ -190,6 +192,10 @@ void SampleEditor::createMenus()
 	heatmapAction->setStatusTip(tr("Heatmap"));
 	connect(heatmapAction, SIGNAL(triggered()), this, SLOT(showheatmap()));
 	ClusClusMenu->addAction(heatmapAction);
+
+	this->CreateCluster =  new QAction(tr("Create Cluster"), this);
+	connect(CreateCluster, SIGNAL(triggered()), this, SLOT(CreateClusterSelection()));
+	menuBar()->addAction(CreateCluster);
 }
 
 //********************************************************************************
@@ -224,6 +230,7 @@ void SampleEditor::loadFile()
 	//this->dendro1->setModels(data,selection);
 	//this->dendro2->setModels(data,selection2);
 	//this->heatmap->setModels(data,selection,selection2);
+	this->ClusterSelections->SetObjectTable(data);
 
 }
 
@@ -856,4 +863,18 @@ void SampleEditor::showheatmap()
 
 	//delete cc1;
 	//delete cc2;
+}
+void SampleEditor::CreateClusterSelection()
+{
+	std::set<long int> curSel = this->selection->getSelections();
+	std::set<long int>::iterator iter = curSel.begin();
+	std::set< vtkIdType > Selection;
+	for (; iter != curSel.end(); iter++)
+	{
+		vtkIdType id = (vtkIdType) (*iter);
+		Selection.insert(id);
+	}
+	
+	vtkIdType clusterId = this->ClusterSelections->AddCluster(Selection);
+	std::cout << "Cluster added: " << clusterId << "num Selections: " << this->ClusterSelections->ClusterSelectionSize(clusterId) << std::endl;
 }
