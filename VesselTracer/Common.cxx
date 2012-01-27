@@ -4,7 +4,7 @@
 namespace Common
 {
 
-void ReadImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
+void ReadImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
 
 	std::cout << "Reading input file " << file_name << std::endl;
 
@@ -20,8 +20,8 @@ void ReadImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
 	std::cout << "Input file size: " << data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void WriteTIFFImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
-	
+void WriteTIFFImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
+
 	std::cout << "Writing output file" << file_name << std::endl;
 
 	typedef itk::Image<unsigned char, 3> CharImageType3D;
@@ -355,10 +355,10 @@ double inline EpsilonClip(double EPS, double x){
 	return (x);
 }
 
-void WriteImage3D(std::string& file_name, ImageType3D::Pointer& data_ptr){
-	
+void WriteImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
+
 	std::cout << "Writing output file "<< file_name << std::endl;
-	
+
 	typedef itk::ImageFileWriter<ImageType3D> WriterType;
 	WriterType::GlobalWarningDisplayOff();
 	WriterType::Pointer image_writer = WriterType::New();

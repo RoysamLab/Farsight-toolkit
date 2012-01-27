@@ -66,19 +66,19 @@ namespace Common{
 	 * Read a 3D TIFF image to disk.
 	 * (data path with extension, empty data pointer)
 	 */
-	void ReadImage3D(std::string&, ImageType3D::Pointer&);
+	void ReadImage3D(const std::string&, ImageType3D::Pointer&);
 
 	/**
 	 * Wirte a 3D TIFF image to disk. 
 	 * (data path with extension, data pointer)
 	 */
-	void WriteTIFFImage3D(std::string&, ImageType3D::Pointer&);
+	void WriteTIFFImage3D(const std::string&, ImageType3D::Pointer&);
 
 	/**
 	 * Wirte a 3D image as mhd file to disk. 
 	 * (data path with extension, data pointer)
 	 */
-	void WriteImage3D(std::string&, ImageType3D::Pointer&);
+	void WriteImage3D(const std::string&, ImageType3D::Pointer&);
 
 	/**
 	 * Curvature anisotropic diffusion filter used by Amit.
