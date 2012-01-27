@@ -1,5 +1,9 @@
 PROJECT(MicrogliaRegionTracer)
 
+if(NOT BUILD_REGISTRATION)
+  message(FATAL_ERROR "MicrogliaRegionTracer requires fregl.  Turn on BUILD_REGISTRATION")
+endif()
+
 INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
 
 SET(MicrogliaRegionTracer_HDRS 

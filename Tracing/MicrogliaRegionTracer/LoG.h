@@ -19,7 +19,7 @@ public:
 	LoGImageType::Pointer RunLoG(ImageType::Pointer image, float scale);
 	void WriteLoGImage(std::string filename, LoGImageType::Pointer image);
 
-	std::vector<LoG::LoGImageType::Pointer> LoG::RunMultiScaleLoG(Seed* seed, ImageType::Pointer seed_image);
+	std::vector<LoGImageType::Pointer> RunMultiScaleLoG(Seed* seed, ImageType::Pointer seed_image);
 };
 
 #endif
