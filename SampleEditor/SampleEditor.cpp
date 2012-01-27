@@ -196,6 +196,10 @@ void SampleEditor::createMenus()
 	this->CreateCluster =  new QAction(tr("Create Cluster"), this);
 	connect(CreateCluster, SIGNAL(triggered()), this, SLOT(CreateClusterSelection()));
 	menuBar()->addAction(CreateCluster);
+
+	this->DisplayClusterSelections = new QAction(tr("Display"), this);
+	connect(DisplayClusterSelections, SIGNAL(triggered()), this, SLOT(DumpClusterSelections()));
+	menuBar()->addAction(DisplayClusterSelections);
 }
 
 //********************************************************************************
@@ -876,5 +880,14 @@ void SampleEditor::CreateClusterSelection()
 	}
 	
 	vtkIdType clusterId = this->ClusterSelections->AddCluster(Selection);
-	std::cout << "Cluster added: " << clusterId << "num Selections: " << this->ClusterSelections->ClusterSelectionSize(clusterId) << std::endl;
+	std::cout << "Cluster added: " << clusterId << " num Selections: " << this->ClusterSelections->ClusterSelectionSize(clusterId) << std::endl;
+}
+
+void SampleEditor::DumpClusterSelections()
+{
+	//
+	vtkIdType numClus = this->ClusterSelections->NumberOfClusters();
+	std::cout << " Number of clusters: " <<  numClus << std::endl;
+	this->ClusterSelections->GetTableOfAllSelected()->Dump(16);
+	//tempTable->Dump(16);
 }

@@ -55,6 +55,11 @@ public:
 	bool SetObjectTable(vtkSmartPointer<vtkTable> InputObjectTable);
 	vtkSmartPointer<vtkTable> GetTableOfAllSelected();
 	vtkSmartPointer<vtkTable> GetTableOfSelectedFromCluster(vtkIdType key);
+
+signals:
+	void SelectionChanged();
+	void ClusterChanged();
+	void DataChanged();
 	
 private:
 	// Cluster map and iterator 

@@ -90,6 +90,7 @@ private slots:
 	void showheatmap();
 
 	void CreateClusterSelection();
+	void DumpClusterSelections();
 
 signals:
     void selectionChanged(void);
@@ -121,6 +122,7 @@ private:
 	//////////////////////////////////////////////////////
 
 	QAction *CreateCluster;
+	QAction *DisplayClusterSelections;
 
 	StatisticsToolbar * statisticsToolbar;
 	TableWindow *table;

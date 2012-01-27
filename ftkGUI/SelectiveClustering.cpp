@@ -182,18 +182,27 @@ vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfAllSelected()
 	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
 	selectedTable->Initialize();
 	std::set< vtkIdType > selectedIDs = this->GetAllSelections();
-	if ( selectedIDs.size() != 0)
+	//std::cout<< " Total obj Sel " << selectedIDs.size() << std::endl;
+	if ( selectedIDs.size() == 0)
 	{
 		return selectedTable; //should it return null?
 	}
-
+	//Add Header Columns
+	for(vtkIdType c = 0; c < this->ObjectTable->GetNumberOfColumns(); c++ )
+	{
+		vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
+		col->SetName(this->ObjectTable->GetColumnName(c));
+		selectedTable->AddColumn(col);
+	}
 	vtkIdType NumRows = this->ObjectTable->GetNumberOfRows();
 	for (vtkIdType row = 0; row <= NumRows; row++)
 	{
-		vtkIdType rowObjId = this->ObjectTable->GetValue(row, 1).ToTypeInt64();
+		vtkIdType rowObjId = this->ObjectTable->GetValue(row, 0).ToTypeInt64();
+		//std::cout << "Searching for obj: " << rowObjId << std::endl;
 		std::set< vtkIdType >::iterator FoundAt = selectedIDs.find(rowObjId);
 		if (FoundAt != selectedIDs.end())
 		{
+			//std::cout << "found obj: " << rowObjId << std::endl;
 			vtkVariantArray * RowCopy = this->ObjectTable->GetRow(row);
 			selectedTable->InsertNextRow(RowCopy);
 		}
