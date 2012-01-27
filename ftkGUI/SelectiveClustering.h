@@ -47,6 +47,7 @@ public:
 
 	vtkIdType ClusterSelectionSize(vtkIdType key);
 	vtkIdType NumberOfClusters();
+	std::set< vtkIdType > GetClusterIDs();
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();
@@ -69,5 +70,10 @@ private:
 	// Object table to cluster
 	vtkSmartPointer<vtkTable> ObjectTable;
 	vtkIdType NumberOfObjects;
+
+	//Private Table manip functions
+	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
+		vtkSmartPointer<vtkTable> selectedTable);
+
 };
 #endif

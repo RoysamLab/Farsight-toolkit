@@ -134,6 +134,19 @@ vtkIdType SelectiveClustering::NumberOfClusters()
 	return (vtkIdType) this->ClusterMap.size();
 }
 
+std::set< vtkIdType > SelectiveClustering::GetClusterIDs()
+{
+	/*! 
+	* returns set containing the ID of each cluster
+	*/
+	std::set< vtkIdType > ClusterIDs;
+	this->iter = this->ClusterMap.begin();
+	for (; this->iter != this->ClusterMap.end(); this->iter++)
+	{
+		ClusterIDs.insert((*this->iter).first);
+	}
+	return ClusterIDs;
+}
 std::set< vtkIdType > SelectiveClustering::SelectionFromCluster(vtkIdType key)
 {
 	/*! 
@@ -187,11 +200,38 @@ vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfAllSelected()
 	{
 		return selectedTable; //should it return null?
 	}
-	//Add Header Columns
-	for(vtkIdType c = 0; c < this->ObjectTable->GetNumberOfColumns(); c++ )
+	this->CopySelectedIntoTable(selectedIDs, selectedTable);
+
+	return selectedTable;
+}
+
+vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfSelectedFromCluster(vtkIdType key)
+{
+	/*! 
+	* Return a table containing all objects from specified cluster
+	*/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	selectedTable->Initialize();
+	std::set< vtkIdType > selectedIDs = this->SelectionFromCluster(key);
+	if ( selectedIDs.size() == 0)
+	{
+		return selectedTable; //should it return null?
+	}
+	this->CopySelectedIntoTable(selectedIDs, selectedTable);
+
+	return selectedTable;
+}
+
+void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs, vtkSmartPointer<vtkTable> selectedTable)
+{
+	/*! 
+	* Populate a table containing selected objects 
+	*/
+		//Add Header Columns
+	for(vtkIdType NumberOfColumns = 0; NumberOfColumns < this->ObjectTable->GetNumberOfColumns(); NumberOfColumns++ )
 	{
 		vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
-		col->SetName(this->ObjectTable->GetColumnName(c));
+		col->SetName(this->ObjectTable->GetColumnName(NumberOfColumns));
 		selectedTable->AddColumn(col);
 	}
 	vtkIdType NumRows = this->ObjectTable->GetNumberOfRows();
@@ -207,6 +247,4 @@ vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfAllSelected()
 			selectedTable->InsertNextRow(RowCopy);
 		}
 	}
-
-	return selectedTable;
 }

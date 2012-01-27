@@ -887,7 +887,14 @@ void SampleEditor::DumpClusterSelections()
 {
 	//
 	vtkIdType numClus = this->ClusterSelections->NumberOfClusters();
-	std::cout << " Number of clusters: " <<  numClus << std::endl;
+	std::cout << " Number of clusters: " <<  numClus << " Listed: " << std::endl;
+	std::set< vtkIdType > clusterIDs =  this->ClusterSelections->GetClusterIDs();
+	std::set< vtkIdType >::iterator iter = clusterIDs.begin();
+	for (; iter != clusterIDs.end(); iter++)
+	{
+		std::cout << "\nTable for Cluster: " << *iter << std::endl;
+		this->ClusterSelections->GetTableOfSelectedFromCluster(*iter)->Dump(16);
+	}
+		std::cout << "\nTable of all Clusters " << std::endl;
 	this->ClusterSelections->GetTableOfAllSelected()->Dump(16);
-	//tempTable->Dump(16);
 }
