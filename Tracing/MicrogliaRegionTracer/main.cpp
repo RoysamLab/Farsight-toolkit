@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 	MRT->LoadImage("E:/farsight_images/MicrogliaRegionTracer/input.tif");*/
 	
 	std::cout << "Loading seed points" << std::endl;
-	MRT->LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/8bitkt06041_w410DAPIdsu_seedPoints.txt");
+	MRT->LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/seedpoints.txt");
 
 	std::cout << "Entering WriteInitialMicrogliaImages" << std::endl;
 	MRT->WriteInitialMicrogliaImages();

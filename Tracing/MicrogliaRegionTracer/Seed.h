@@ -1,7 +1,7 @@
 #ifndef SEED_H
 #define SEED_H
 
-#include "stdint.h"
+#include <cstddef>
 
 class Seed
 {

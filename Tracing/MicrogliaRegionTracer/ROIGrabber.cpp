@@ -1,8 +1,8 @@
 #include "ROIGrabber.h"
 
-ROIGrabber::ROIGrabber()
+ROIGrabber::ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename)
 {
-	roi_filter = new fregl_roi("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/", "8bitkt06045_w311GFPdsu.TIF", true);
+	roi_filter = new fregl_roi(joint_transforms_filename, img_path, anchor_filename, true);
 }
 
 ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Seed* seed, ImageType::SizeType roi_size)
