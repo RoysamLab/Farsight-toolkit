@@ -422,7 +422,7 @@ public:
 	/* Write a vector of nodes to a text file for further processing
 	 * (Vector of nodes to write, file path with extension)
 	 */
-	static void writeNodesToFile(std::vector<Node>, std::string&);
+	static void writeNodesToFile(std::vector<Node>&, std::string);
 
 	/* Read nodes from text file 
 	 */

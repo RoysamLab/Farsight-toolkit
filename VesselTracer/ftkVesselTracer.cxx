@@ -2062,7 +2062,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	//}
 }
 
-void ftkVesselTracer::writeNodesToFile(std::vector<Node> nodes, std::string& file_path){
+void ftkVesselTracer::writeNodesToFile(std::vector<Node>& nodes, std::string file_path){
 
 	ofstream nodes_file_stream;
 	nodes_file_stream.open(file_path.c_str(), std::ios::out);
