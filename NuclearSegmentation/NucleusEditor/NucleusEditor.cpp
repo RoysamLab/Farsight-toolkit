@@ -456,15 +456,6 @@ void NucleusEditor::createMenus()
 	connect(activeAction, SIGNAL(triggered()), this, SLOT(startActiveLearningwithFeat()));
 	activeMenu->addAction(activeAction);
 
-
-	activeVAction = new QAction(tr("Start Active Validation"), this);
-	connect(activeVAction, SIGNAL(triggered()), this, SLOT(startActiveValidation()));
-	activeMenu->addAction(activeVAction);
-
-	//showGalleryAction = new QAction(tr("Show Query Gallery"), this);
-	//connect(showGalleryAction, SIGNAL(triggered()), this, SLOT(BuildGallery()));
-	//activeMenu->addAction(showGalleryAction);
-
 	saveActiveResultsAction = new QAction(tr("Save Active Learning Results (Only for Multiple Images)"), this);
 	connect(saveActiveResultsAction, SIGNAL(triggered()), this, SLOT(SaveActiveLearningResults()));
 	activeMenu->addAction(saveActiveResultsAction);
@@ -1265,7 +1256,7 @@ void NucleusEditor::loadProject()
 	}
 	else
 	{
-		//this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
+		this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
 	}
 
 	if(projectFiles.log == "")	//Not opposite boolean here
@@ -2213,12 +2204,16 @@ void NucleusEditor::StartTraining(vtkSmartPointer<vtkTable> pTable)
 
 	// Normalize the feature matrix
 	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pawTable, id_time));
-	mclr->Initialize(Feats,sparsity,class_list,"",pawTable,true);
+	mclr->Initialize(Feats,sparsity,class_list,"",pawTable);
 	mclr->Get_Training_Model();
 
 	// Get the active query based on information gain
 	int active_query = mclr->Active_Query();
-	active_queries = mclr->ALAMO(active_query);		
+
+	std::cout<< "Active Query # 1 is " << active_query <<std::endl;
+
+	//active_queries = mclr->ALAMO(active_query);		
+	active_queries = mclr->Submodular_AL(active_query,mclr->testData);
 
 	if(myImg->GetImageInfo()->numTSlices > 1)
 		segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
@@ -2234,7 +2229,6 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 	bool user_stop_dialog_flag = false;
 	int atleast_one_chosen = 0;
 
-
 	if(!first_pop)		
 	{
 		for(int i=0; i<active_queries.size(); ++i)
@@ -2244,7 +2238,7 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 			{	
 				QMessageBox::critical(this, tr("Oops"), tr("Please select a class for all the cells"));
 				this->show();
-				dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);	
+				dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->numberOfClasses, active_queries, mclr->top_features);	
 				connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
 				connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
 				dialog->show();
@@ -2253,13 +2247,10 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 			}
 		}
 
-
 		// Update the data & refresh the training model and refresh the Training Dialog 		
 		mclr->Update_Train_Data(query_labels);
 
 		// Update the gallery
-		//gallery.push_back(dialog->temp_pair);
-
 		if(mclr->stop_training && atleast_one_chosen!=0)
 		{
 			QMessageBox msgBox;
@@ -2282,7 +2273,7 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 				// should never be reached
 				break;
 			}
-		}
+		} 
 
 		if(user_stop_dialog_flag)
 		{
@@ -2292,11 +2283,11 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 
 		mclr->Get_Training_Model();
 		int active_query = mclr->Active_Query();
-		active_queries = mclr->ALAMO(active_query);
-	}
+		//active_queries = mclr->ALAMO(active_query);
+		active_queries = mclr->Submodular_AL(active_query,mclr->testData);
+	}// END if(!first_pop)		
 
-
-
+	
 	snapshots.resize(active_queries.size());
 	// Collect all the snapshots
 	for(int i=0;i<active_queries.size(); ++i)
@@ -2308,226 +2299,14 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 	}
 
 	//mclr->test_table is the pawTable obtained above
-	dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->no_of_classes, active_queries, mclr->top_features);
+	dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->numberOfClasses, active_queries, mclr->top_features);
 	connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
 	connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
 	dialog->show();
 
-	//Enable the Menu Items related to active Learning
-	//showGalleryAction->setEnabled(true);
-
 }
 	
 
-
-
-void NucleusEditor::startActiveValidation()
-{	
-	vtkSmartPointer<vtkTable> featureTable;
-	std::vector<int> active_queries;
-
-	ground_truth.clear();
-
-
-	if(myImg->GetImageInfo()->numTSlices<=1)
-		featureTable = table;
-	else
-	{
-		nucSeg->createMegaTable();
-		featureTable = nucSeg->megaTable;
-		segView->SetCurrentTimeVal(0);
-	}
-
-	if(!featureTable) return;
-
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-	{
-		nucSeg->AddTimeToMegaTable();
-		featureTable = nucSeg->megaTable;
-	}
-
-	pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
-	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-	pWizard->exec();
-	//pawTable does not have the id column  nor the train_default column
-	pawTable = pWizard->getExtractedTable();
-
-
-	if(!pWizard->result())
-		return;
-
-
-	MCLR *mclr = new MCLR();
-	double sparsity = 1;
-	int active_query = 1;
-	double max_info = -1e9;
-
-	//Get prediction colums, if none- return
-	prediction_names.clear();
-	prediction_names = ftk::GetColumsWithString( "prediction",featureTable);
-
-	std::vector< vtkSmartPointer<vtkTable> > tabVec;
-	std::vector< std::vector<int> > tabVecIds;
-
-	if(prediction_names.size()==0)
-		return;
-
-
-	SamplePercentDialog *dialog = new SamplePercentDialog(featureTable->GetNumberOfRows(),mclr->GetNumberOfClasses(featureTable), this);
-	
-	if( dialog->exec() )
-	{
-		this->sample_number = dialog->vSpinNumber->value();		
-	}
-	else
-	{
-		return;
-	}
-	delete dialog;
-	
-
-	//vector of vectors. Each vector contains samples of a class to be validated by the user 
-	validation_samples.resize(mclr->GetNumberOfClasses(featureTable)); 
-
-	//Used in this line below
-	//-> iter =  std::find(id_time.begin(), id_time.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
-	std::vector< std::pair<int,int> > id_time; 
-	id_time.resize(featureTable->GetNumberOfRows());
-
-	for(int i=0;i<mclr->GetNumberOfClasses(featureTable); ++i)
-	{
-		std::vector< std::pair<int,int> > id_time_PIA;	
-		vtkSmartPointer<vtkTable> table_PIA  = vtkSmartPointer<vtkTable>::New();
-		table_PIA->Initialize();
-		std::vector<int> table_PIA_ids;
-
-		//No confidence,prediction and train columns
-		for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
-		{	
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(pawTable->GetColumnName(col));
-			table_PIA->AddColumn(column);	
-		}
-
-
-		for(int row = 0; row < (int)featureTable->GetNumberOfRows(); ++row)
-		{	
-			std::pair<double,double> temp_pair;
-			if(featureTable->GetValueByName(row,prediction_names[0].c_str())== i+1)
-			{
-				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-				for(int c =0;c<(int)table_PIA->GetNumberOfColumns();++c)
-					model_data1->InsertNextValue(featureTable->GetValueByName(row,table_PIA->GetColumnName(c)));
-				table_PIA->InsertNextRow(model_data1);
-				table_PIA_ids.push_back(table_PIA->GetValue(table_PIA->GetNumberOfRows()-1,0).ToInt());
-				temp_pair.first = featureTable->GetValue(row,0).ToDouble();
-				if(myImg->GetImageInfo()->numTSlices == 1)
-					temp_pair.second = 0;
-				else
-					temp_pair.second = featureTable->GetValueByName(row,"time").ToDouble();
-				id_time_PIA.push_back(temp_pair);
-			}
-			temp_pair.first = featureTable->GetValue(row,0).ToDouble();
-			temp_pair.second = featureTable->GetValueByName(row,"time").ToDouble();
-			id_time[row] = temp_pair;
-		}		
-
-		// Plan in advance gives the vector of ids for the class "i+1"
-		validation_samples.at(i) = mclr->Plan_In_Advance(table_PIA,(sample_number/mclr->GetNumberOfClasses(featureTable)),id_time_PIA);// Choose x % of the samples for Permutation tests	
-	} 
-
-	int counter =0;
-	bool Rejected;
-	std::vector<int> errorVals;
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		featureTable->RemoveColumnByName("time");
-
-	while(counter<mclr->GetNumberOfClasses(featureTable))
-	{
-		// Display the samples 5 at a time	
-		for(int k =0; k< (validation_samples.at(counter).size()/5)+MIN(1,validation_samples.at(counter).size()%5);++k)
-		{
-			int no_of_samples  = MIN(5,validation_samples.at(counter).size() - 5*k);
-			std::vector<QImage> snapshots;
-			snapshots.resize(no_of_samples);
-
-			// Collect all the snapshots
-			for(int ctr=0;ctr<snapshots.size();++ctr)
-			{
-				if(myImg->GetImageInfo()->numTSlices > 1)
-					segView->SetCurrentTimeVal(validation_samples.at(counter).at(5*k+ctr).second);
-				snapshots[ctr] =segView->getSnapshotforID(validation_samples.at(counter).at(5*k+ctr).first);	
-			}
-
-			std::vector<int> curr_list;
-			for(int ctr=0;ctr<snapshots.size();++ctr)
-			{	
-				std::vector< std::pair<int,int> >::iterator iter;
-				iter =  std::find(id_time.begin(), id_time.end(), std::make_pair(validation_samples.at(counter).at(5*k+ctr).first,validation_samples.at(counter).at(5*k+ctr).second));
-				curr_list.push_back(iter-id_time.begin());
-			}
-
-			ActiveLearningDialog *dialog =  new ActiveLearningDialog("validate",snapshots,featureTable,counter+1,curr_list,mclr->GetNumberOfClasses(featureTable));
-			dialog->exec();
-
-			Rejected = dialog->rejectFlag;
-			if(Rejected)
-				return;
-
-
-			for(int ctr=0;ctr<curr_list.size();++ctr)
-			{
-				ground_truth.push_back(dialog->query_label[ctr]);
-				if(dialog->query_label[ctr].second != -1 && dialog->query_label[ctr].second != counter+1)
-					errorVals.push_back(1);
-				else
-					errorVals.push_back(0);
-			}
-		
-		}
-		counter++; //increment class counter
-	}
-
-	double error=0;
-	for(int i=0 ; i< (int)errorVals.size();++i)
-		error = errorVals[i]+error;
-
-
-	vtkSmartPointer<vtkTable> table_validation  = vtkSmartPointer<vtkTable>::New();
-	table_validation->Initialize();
-
-	for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
-	{	
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName(pawTable->GetColumnName(col));
-		table_validation->AddColumn(column);	
-	}
-
-	std::vector<int> classvals;	
-	for(int row = 0; row <(int)ground_truth.size();++row)
-	{	
-		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-		for(int c =0;c<(int)table_validation->GetNumberOfColumns();++c)
-			model_data1->InsertNextValue(featureTable->GetValueByName(ground_truth.at(row).first,table_validation->GetColumnName(c)));
-		table_validation->InsertNextRow(model_data1);
-		classvals.push_back(ground_truth.at(row).second);
-	}		
-	
-	double pValue = mclr->PerformPTest(table_validation,classvals,error/this->sample_number);
-	QString text = "The error rate of the classifier is " + QString::number(error/this->sample_number)+"\n";
-	text +=  "The pValue of the classifier is " + QString::number(pValue);
-	QMessageBox::about(this, tr("Validation Summary"), text);
-
-}
-
-
-//void NucleusEditor::BuildGallery()
-//{
-//	GalleryDialog *dialog =  new GalleryDialog(this->gallery,segView->CreateColorTable());
-//	dialog->exec();	 
-//}
 
 
 void NucleusEditor::SaveActiveLearningModel()
@@ -4552,7 +4331,7 @@ int Split_Params_Dialog::getSplitNumber()
 // A dialog to get the number of samples the user is willing to validate.
 // Reusing the variables of the Confidence Dialog.
 //***********************************************************************************
-SamplePercentDialog::SamplePercentDialog(int no_of_samples,int no_of_classes,QWidget *parent)
+SamplePercentDialog::SamplePercentDialog(int no_of_samples,int numberOfClasses,QWidget *parent)
 : QDialog(parent)
 {
 	sampleNumberLabel = new QLabel("The total number of cells present : "); 
@@ -4560,7 +4339,7 @@ SamplePercentDialog::SamplePercentDialog(int no_of_samples,int no_of_classes,QWi
 
 	sampleLabel = new QLabel(" % of cells you are willing to validate : "); 
 	samples = no_of_samples;
-	class_number = no_of_classes;
+	class_number = numberOfClasses;
 
 	QGridLayout * layout = new QGridLayout;
 

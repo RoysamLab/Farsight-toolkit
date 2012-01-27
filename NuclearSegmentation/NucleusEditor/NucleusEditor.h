@@ -249,8 +249,6 @@ protected slots:
 	void startTraining();
 	void startKPLS();
 	void startActiveLearningwithFeat();
-	void startActiveValidation();
-	//void BuildGallery();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
 	void StartTraining(vtkSmartPointer<vtkTable> pTable);
@@ -469,9 +467,6 @@ protected:
 	std::vector< std::pair< std::string, vnl_vector<double> > >active_model;
 	std::string prediction_col_name;
 	std::string confidence_col_name;
-	std::vector< std::vector< std::pair<int,int> > >  validation_samples; 
-	// Gallery contains both the image of the query nuclei and their class values
-	std::vector<std::pair<QImage,std::vector<int> > > gallery; 
 	////////////////////////////////////////////////////////////////////////////////
 
 	//This does not belong here, but is a temporary fix:
