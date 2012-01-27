@@ -957,7 +957,7 @@ std::vector<int> MCLR::Submodular_AL(int activeQuery,vnl_matrix<double> testData
 	std::vector<int> submodularALQueries;
 	submodularALQueries.push_back(activeQuery);
 	
-	int batchSize = 2;
+	int batchSize = 2; 
 	
 	vnl_matrix<double> currentCRB;
 	vnl_matrix<double> tempX = x; // x corresponds to the feature matrix of current labeled samples
