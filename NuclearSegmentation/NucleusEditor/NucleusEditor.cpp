@@ -550,6 +550,7 @@ void NucleusEditor::createMenus()
 	connect(splitZAction, SIGNAL(triggered()), this, SLOT(splitCellAlongZ()));
 	editMenu->addAction(splitZAction);
 
+
 	splitAction = new QAction(tr("Split Objects X-Y"), this);
 	splitAction->setStatusTip(tr("Split objects by choosing two seed points"));
 	splitAction->setShortcut(tr("Ctrl+P"));
@@ -558,6 +559,12 @@ void NucleusEditor::createMenus()
 	connect(splitAction, SIGNAL(triggered()), this, SLOT(splitCells()));
 	connect(segView, SIGNAL(pointsClicked(int,int,int,int,int,int)), this, SLOT(splitCell(int,int,int,int,int,int)));
 	editMenu->addAction(splitAction);
+
+	batchSplitAction = new QAction(tr("Batch Split Objects "), this);
+	batchSplitAction->setStatusTip(tr("Batch Split objects by selecting the objects"));
+	batchSplitAction->setShortcut(tr("Ctrl+Shift+P"));
+	connect(batchSplitAction, SIGNAL(triggered()), this, SLOT(batchSplitCells()));
+	editMenu->addAction(batchSplitAction);
 
 	editMenu->addSeparator();
 
@@ -3811,6 +3818,51 @@ void NucleusEditor::mergeCells(void)
 	}
 }
 
+void NucleusEditor::batchSplitCells(void)
+{
+	if(!nucSeg) return;
+
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+	
+	Split_Params_Dialog *dialog = new Split_Params_Dialog(this);
+	int numSplitObjects;
+	if( dialog->exec() )
+	{
+		numSplitObjects = dialog->getSplitNumber();		
+	}
+	else
+	{
+		delete dialog;
+		return;
+	}	
+
+	std::vector< std::vector<int> > new_grps = nucSeg->BatchSplit(ids, numSplitObjects, table, NucAdjTable);
+	if(new_grps.size() != 0)
+	{
+		projectFiles.outputSaved = false;
+		projectFiles.tableSaved = false;
+		projectFiles.adjTablesSaved = false;
+		selection->clear();
+		this->updateViews();
+
+		for(int i=0; i<(int)new_grps.size(); ++i)
+		{
+			std::string log_entry = "SPLIT , ";
+			log_entry += ftk::NumToString(new_grps[i][0]) + " , ";
+			for(int j=1; j<(int)new_grps[i].size(); ++j)
+			{
+				log_entry += ftk::NumToString(new_grps[i][j]) + " ";
+			}
+			log_entry += " , ";
+			log_entry += ftk::TimeStamp();
+			ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
+		}
+	}
+	
+
+}
+
 
 void NucleusEditor::splitCells(void)
 {
@@ -4439,6 +4491,60 @@ double ClassName_Confidence_Dialog::getConfThresh()
 	}
 	return CT;
 }
+
+
+//***************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// A dialog to get the parameters for batch split:
+//***********************************************************************************
+Split_Params_Dialog::Split_Params_Dialog(QWidget *parent)
+: QDialog(parent)
+{
+	//splitNumberLabel = new QLabel("Split Into ? ");
+	//splitNumber = new QLineEdit();
+	//splitNumber->setMinimumWidth(20);
+	//splitNumber->setFocusPolicy(Qt::StrongFocus);
+	//splitNumberLayout = new QHBoxLayout;
+	//splitNumberLayout->addWidget(splitNumberLabel);
+	//splitNumberLayout->addWidget(splitNumber);
+
+	splitNumberLabel = new QLabel("Split Into ? ");
+	splitNumber = new QComboBox();
+	for(int v=2; v<=5; ++v)
+	{
+		splitNumber->addItem(QString::number(v));
+	}
+	splitNumberLayout = new QHBoxLayout;
+	splitNumberLayout->addWidget(splitNumberLabel);
+	splitNumberLayout->addWidget(splitNumber);
+	
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
+
+	layout = new QVBoxLayout;
+	layout->addLayout(splitNumberLayout);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Number Of Objects After Split"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+int Split_Params_Dialog::getSplitNumber()
+{
+	int num;
+	QString input = splitNumber->currentText();
+	num = input.toInt();
+	return num;
+}
+
+
 
 //***************************************************************************
 //***********************************************************************************

@@ -196,6 +196,7 @@ protected slots:
 	void splitCellAlongZ(void);		//Split single cell along current z
 	void splitCells(void);
 	void splitCell(int x1, int y1, int z1, int x2, int y2, int z2);
+	void batchSplitCells(void);
 	void applyExclusionMargin(void);
 	void changeClass(void);
 	void markVisited(void);
@@ -376,6 +377,7 @@ protected:
 	QAction *fillAction;
 	QAction *splitZAction;			//for split along z direction
 	QAction *splitAction;			//for split along x-y direction
+	QAction *batchSplitAction;
 	QAction *exclusionAction;
 	QAction *classAction;
 	QAction *visitAction;			//Mark an object as visited
@@ -541,6 +543,23 @@ private:
 	QLabel *confidenceLabel;
 	QLineEdit *conf_thresh;
 	QHBoxLayout *confLayout;
+	QPushButton *okButton;
+	QHBoxLayout *bLayout;
+	QVBoxLayout *layout;
+};
+
+class Split_Params_Dialog : public QDialog
+{
+	Q_OBJECT
+public:
+	Split_Params_Dialog(QWidget *parent = 0);
+	int getSplitNumber();
+
+private:
+	QLabel *splitNumberLabel;
+	//QLineEdit *splitNumber;
+	QComboBox *splitNumber;
+	QHBoxLayout *splitNumberLayout;
 	QPushButton *okButton;
 	QHBoxLayout *bLayout;
 	QVBoxLayout *layout;
