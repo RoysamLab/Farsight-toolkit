@@ -48,9 +48,8 @@ public:
 
 
 	vnl_matrix<double> x; // Data
-	vnl_matrix<double> training_data;
-	vnl_matrix<double> test_data;
-	vnl_matrix<double> train_data;
+	vnl_matrix<double> testData;
+	vnl_matrix<double> trainData;
 	vnl_vector<double> y; // labels (-1 for training)
 	vnl_vector<double> y_ground_truth;
 	std::vector< std::pair<int,int> > id_time_val;
@@ -61,7 +60,7 @@ public:
 	vnl_vector<int> class_vector;
 
 	std::vector<int> top_features;
-	std::vector<double> max_info_vector;
+	std::vector<double> maxInfoVector;
 	vtkSmartPointer<vtkTable> test_table;
 
 	vnl_vector<double> diff_info_3_it;//difference in g vals for last 3 iterations
@@ -74,23 +73,21 @@ public:
 	bool stop_training;
 	vnl_vector<double> stop_cond;
 	double delta;
-	int no_of_features;
-	int no_of_classes;
+	int numberOfFeatures;
+	int numberOfClasses;
 	int current_label;
 
 	double max_info;
-
-	std::string validation;
 	double confidence_threshold;
 
 public:
 
-	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table,bool PIA );
+	void Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classes, std::string str,vtkSmartPointer<vtkTable> table);
 	vnl_matrix<double> act_learn_matrix;
 	vnl_matrix<double> Add_Bias(vnl_matrix<double> data);
 
 	void Get_Gradient(vnl_matrix<double> data_with_bias);
-	void Get_Hessian(vnl_matrix<double> data_with_bias);
+	vnl_matrix<double> Get_Hessian(vnl_matrix<double> data_with_bias,vnl_matrix<double> w);
 	void Ameliorate_Hessian_Conditions();
 	double Compute_Mean_Abs_Eig(vnl_symmetric_eigensystem<double> eig);
 	vnl_vector<double> Column_Order_Matrix(vnl_matrix<double> mat);
@@ -101,16 +98,16 @@ public:
 	double logit_stepsize();
 	vnl_matrix<double> Get_F_Matrix(vnl_matrix<double> data_bias,vnl_matrix<double> w_temp);
 	vnl_matrix<double> Normalize_F_Sum(vnl_matrix<double> f);
-	vnl_matrix<double> Test_Current_Model(vnl_matrix<double> test_data);
-	vnl_matrix<double> Test_Current_Model_w(vnl_matrix<double> test_data, vnl_matrix<double> m_w_matrix);
+	vnl_matrix<double> Test_Current_Model(vnl_matrix<double> testData);
+	vnl_matrix<double> Test_Current_Model_w(vnl_matrix<double> testData, vnl_matrix<double> m_w_matrix);
 	vnl_matrix<double> GetActiveLearningMatrix(){ return m.w;};
 	model Get_Training_Model();
 	MCLR::model Get_Temp_Training_Model(int query,int label);
 	void Update_Train_Data(std::vector< std::pair<int,int> > query_label);
 
-	void Update_Train_Data(std::vector< std::pair<int,int> > query_label,bool PIA);
+	void Update_trainData(std::vector< std::pair<int,int> > query_label,bool PIA);
 	vnl_matrix<double> Kron(vnl_vector<double> x,vnl_vector<double> y);
-	void Get_Label_Sample(int query);
+	vnl_matrix<double> Kron(vnl_matrix<double> x,vnl_vector<double> y );
 	FILE* FDeclare2(char *root, char *extension, char key);
 	vnl_matrix <double> tableToMatrix(vtkSmartPointer<vtkTable> table,std::vector< std::pair<int,int> > id_list);
 	vnl_matrix <double> tableToMatrix_w(vtkSmartPointer<vtkTable> table);
@@ -122,15 +119,15 @@ public:
 	std::vector<int> Get_Top_Features();
 	vnl_vector<double> Get_Std_Dev(){ return std_vec; };
 	vnl_vector<double> Get_Mean(){ return mean_vec; };
-	void Set_Number_Of_Classes(int num){ no_of_classes = num; };
-	void Set_Number_Of_Features(int num){ no_of_features = num; };
+	void Set_Number_Of_Classes(int num){ numberOfClasses = num; };
+	void Set_Number_Of_Features(int num){ numberOfFeatures = num; };
 	bool MyDataSortPredicate(std::pair<int, int>& lhs, std::pair<int, int>& rhs) ;
 	std::vector< std::pair< std::string, vnl_vector<double> > >act_learn_model;
 	std::vector< std::pair< std::string, vnl_vector<double> > > CreateActiveLearningModel(vtkSmartPointer<vtkTable> pWizard_table);
-	std::vector<std::pair<int,int> > Plan_In_Advance(vtkSmartPointer<vtkTable> new_table, int num,std::vector< std::pair<int,int> > id_time_PIA);
 	int GetNumberOfClasses(vtkSmartPointer<vtkTable> table);
-	double PerformPTest(vtkSmartPointer<vtkTable> featureTable,std::vector<int> ground_truth,double errorVal);
-	double LOOCV(vtkSmartPointer<vtkTable> featureTable,std::vector<int> ground_truth);
+	vnl_matrix<double> Update_Temp_Train_Data(int query,vnl_matrix<double> testDataTemp );
+	std::vector<int> Submodular_AL(int activeQuery,vnl_matrix<double> testDataTemp );
+	vnl_matrix<double> Update_Temp_x(int query, vnl_matrix<double> tempTestData, vnl_matrix<double> xBatchMode );
 
 };
 #endif
