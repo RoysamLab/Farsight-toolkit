@@ -444,6 +444,8 @@ private:
 #endif
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
+	Heatmap *HeatmapWins;
+
 #endif
 
 	bool renderTraceBits;

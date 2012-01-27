@@ -5636,7 +5636,7 @@ void View3D::ClusclusAnalysis()
 		featureTable->RemoveColumnByName("Distance to Device");
 		cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
 
-		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection());
 		this->HeatmapWin->runClus();
 		this->HeatmapWin->showGraph();
 	}
@@ -5647,7 +5647,7 @@ void View3D::selectedFeaturesClustering()
 {
 #ifdef USE_Clusclus
 
-	this->HeatmapWin = new Heatmap();
+	HeatmapWins = new Heatmap();
 	vtkSmartPointer<vtkTable> featureTable = vtkSmartPointer<vtkTable>::New();
 
 	std::set<long int> selectedIDs2 = this->CellModel->GetObjectSelectionColumn()->getSelections();
@@ -5661,9 +5661,9 @@ void View3D::selectedFeaturesClustering()
 		}
 
 	cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
-	this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection());
-	this->HeatmapWin->runClus();
-	this->HeatmapWin->showGraph();
+	this->HeatmapWins->setModels(featureTable,this->CellModel->GetObjectSelection());
+	this->HeatmapWins->runClus();
+	this->HeatmapWins->showGraph();
 
 #endif
 }
