@@ -184,6 +184,7 @@ private:
 	bool RunLabelGeometryFilter();
 	bool RunLabelStatisticsFilter();
 	bool RunTextureFilter();
+	bool RunTextureFilter2D();
 	void RunZernikeFilter();
 	void LabelImageScan();
 	void CalculateScanFeatures();

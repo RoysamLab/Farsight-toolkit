@@ -353,7 +353,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//TEXTURE CALCULATOR:
 	if (this->computeTextures)
     {
-		//if(!this->RunTextureFilter()) return;		//Should throw exception
+		if(!this->RunTextureFilter()) return;		//Should throw exception
     }
     
 }
@@ -982,9 +982,10 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	if(	labelImage->GetLargestPossibleRegion().GetSize()[0]==1 ||
 		labelImage->GetLargestPossibleRegion().GetSize()[1]==1 ||
 		labelImage->GetLargestPossibleRegion().GetSize()[2]==1	)
-		return false; //Till we figure out why it is failing on 2D images
-
-	
+  {
+    return this->RunTextureFilter2D(); 
+  }
+    
 	LabelImagePointer tempIntensityImage;
 
 	typedef itk::RescaleIntensityImageFilter< IntensityImageType, LabelImageType > RescaleFilterType;
@@ -1083,6 +1084,123 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	}
 	
 	tempIntensityImage = 0;
+	return true;
+}
+
+//**************************************************************************
+// RUN THE ITK TEXTURE FILTER FOR A 2D IMAGE
+//**************************************************************************
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
+::RunTextureFilter2D()
+{
+	
+  //define our 2D image types
+  typedef itk::Image< IntensityPixelType, 2 > IntensityImageType2D;
+	typedef typename IntensityImageType2D::Pointer IntensityImagePointer2D;
+	typedef itk::Image< LabelPixelType, 2 > LabelImageType2D;
+	typedef typename LabelImageType2D::Pointer LabelImagePointer2D;
+	
+  //recast labelImage into two dimensions
+  typename LabelImageType::IndexType labelStart;
+  labelStart.Fill(0);
+  typename LabelImageType::SizeType labelSize; 
+  labelSize = labelImage->GetLargestPossibleRegion().GetSize();
+  labelSize[2] = 0;  //this tells the filter to collapse the Z-dimension
+  
+  typename LabelImageType::RegionType labelRegion;
+  labelRegion.SetSize(labelSize);
+  labelRegion.SetIndex(labelStart);
+
+  typedef itk::ExtractImageFilter< LabelImageType, LabelImageType2D >
+    ExtractLabelFilterType;
+  typename ExtractLabelFilterType::Pointer extractLabel = ExtractLabelFilterType::New();
+  extractLabel->SetExtractionRegion(labelRegion);
+  extractLabel->SetInput(labelImage);
+  extractLabel->SetDirectionCollapseToIdentity(); // This is required.
+  extractLabel->Update();
+  LabelImagePointer2D labelImage2D = extractLabel->GetOutput();
+
+  //do the same for intensityImage
+  typename IntensityImageType::IndexType intensityStart;
+  intensityStart.Fill(0);
+  typename IntensityImageType::SizeType intensitySize;
+  intensitySize = intensityImage->GetLargestPossibleRegion().GetSize();
+  intensitySize[2] = 0;  //this tells the filter to collapse the Z-dimension
+  
+  typename IntensityImageType::RegionType intensityRegion;
+  intensityRegion.SetSize(intensitySize);
+  intensityRegion.SetIndex(intensityStart);
+
+  typedef itk::ExtractImageFilter< IntensityImageType, IntensityImageType2D >
+    ExtractIntensityFilterType;
+  typename ExtractIntensityFilterType::Pointer extractIntensity = ExtractIntensityFilterType::New();
+  extractIntensity->SetExtractionRegion(intensityRegion);
+  extractIntensity->SetInput(intensityImage);
+  extractIntensity->SetDirectionCollapseToIdentity(); // This is required.
+  extractIntensity->Update();
+  IntensityImagePointer2D intensityImage2D = extractIntensity->GetOutput();
+
+	typedef itk::RescaleIntensityImageFilter< IntensityImageType2D, LabelImageType2D > RescaleFilterType;
+	typedef typename RescaleFilterType::Pointer RescaleFilterPointer;
+	RescaleFilterPointer rescaleFilter = RescaleFilterType::New();
+	rescaleFilter->SetOutputMinimum(0);
+	rescaleFilter->SetOutputMaximum(255);
+	rescaleFilter->SetInput(intensityImage2D);
+	rescaleFilter->Update();
+	LabelImagePointer2D tempIntensityImage2D = rescaleFilter->GetOutput();
+	
+	typedef itk::Statistics::ScalarImageToTextureFeaturesFilter< LabelImageType2D > TextureCalcType;
+	typedef typename TextureCalcType::Pointer TextureCalcPointer;
+	TextureCalcPointer textureCalculator = TextureCalcType::New();
+	textureCalculator->SetInput(tempIntensityImage2D);
+	textureCalculator->SetMaskImage(labelImage2D);
+	textureCalculator->SetPixelValueMinMax(0,255);
+	textureCalculator->SetFastCalculations(true);
+	
+	TLPixel currentLabel;
+	for (int lab=0; lab<(int)labels.size(); ++lab)
+	{
+		currentLabel = labels.at(lab);
+		if ((int)currentLabel <= 0) continue;
+		
+		typename LabelImageType2D::RegionType region;
+		typename LabelImageType2D::SizeType size;
+		typename LabelImageType2D::IndexType index;
+
+		int loc = 0;
+		for (unsigned int dim=0; dim<2; dim++)
+		{
+			index[dim] = (long int)this->featureVals[currentLabel].BoundingBox[loc];	//bbox min
+			size[dim] = (long unsigned int)this->featureVals[currentLabel].BoundingBox[loc+1]- index[dim] + 1;	//bbox max - min + 1
+			loc += 2;
+		}
+
+        region.SetSize(size);
+        region.SetIndex(index);
+        labelImage2D->SetRequestedRegion(region);
+        tempIntensityImage2D->SetRequestedRegion(region);
+		textureCalculator->SetInsidePixelValue( currentLabel );
+		
+		try
+		{
+			textureCalculator->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cerr << "textureCalculator error: " << err << std::endl;
+		}
+		
+		typename TextureCalcType::FeatureValueVector *tex = textureCalculator->GetFeatureMeans();
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENERGY] = float( tex->ElementAt(0) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::T_ENTROPY] = float( tex->ElementAt(1) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INVERSE_DIFFERENCE_MOMENT] = float( tex->ElementAt(2) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::INERTIA] = float( tex->ElementAt(3) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CLUSTER_SHADE] = float( tex->ElementAt(4) );
+		featureVals[currentLabel].ScalarFeatures[IntrinsicFeatures::CLUSTER_PROMINENCE] = float( tex->ElementAt(5) );
+	}
+	
+	tempIntensityImage2D = 0;
 	return true;
 }
 
