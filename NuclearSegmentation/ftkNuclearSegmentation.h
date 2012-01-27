@@ -87,6 +87,7 @@ public:
 	
 	//Editing Functions 
 	std::vector< int > Split(ftk::Object::Point P1, ftk::Object::Point P2, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
+	std::vector< std::vector<int> > BatchSplit(std::vector<int> ids, int numObjs, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	std::vector< int > SplitAlongZ(int objID, int cutSlice, vtkSmartPointer<vtkTable> table = NULL);
 	std::vector< std::vector< int > > GroupMerge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
 	int Merge(vector<int> ids, vtkSmartPointer<vtkTable> table = NULL, vtkSmartPointer<vtkTable> NucAdjTable = NULL);
