@@ -215,8 +215,8 @@ set_roi(PointType s_origin, SizeType s_size) {
 		roi_size_[1] = (origin_[1] + image_size_[1]) - roi_origin_[1];
 	if (roi_origin_[1] + roi_size_[1] > origin_[1] + image_size_[1])
 		roi_size_[1] = (origin_[1] + image_size_[1]) - roi_origin_[1];
-	std::cout<<"ROI Origin = "<<roi_origin_[0]<<","<<roi_origin_[1]<<","<<roi_origin_[2]<<std::endl;
-	std::cout<<"ROI Size = "<<roi_size_[0]<<" x "<<roi_size_[1]<<" x "<<roi_size_[2]<<std::endl;
+//	std::cout<<"ROI Origin = "<<roi_origin_[0]<<","<<roi_origin_[1]<<","<<roi_origin_[2]<<std::endl;
+//	std::cout<<"ROI Size = "<<roi_size_[0]<<" x "<<roi_size_[1]<<" x "<<roi_size_[2]<<std::endl;
 }
 
 
@@ -493,7 +493,7 @@ transform_image_roi(ImageType::Pointer in_image, int image_index, int background
 	if ( !inverse_xform ) 
 		return NULL;
 
-	std::cout<<"Transform image in ROI "<<joint_register_->image_names()[image_index]<<std::endl;
+//	std::cout<<"Transform image in ROI "<<joint_register_->image_names()[image_index]<<std::endl;
 
 	TransformType::ParametersType params(12);
 	params = inverse_xform->GetParameters();
@@ -542,7 +542,7 @@ transform_image_whole(ImageType::Pointer in_image, int image_index, int backgrou
 	if ( !inverse_xform ) 
 		return NULL;
 
-	std::cout<<"Transform Whole Image "<<joint_register_->image_names()[image_index]<<std::endl;
+//	std::cout<<"Transform Whole Image "<<joint_register_->image_names()[image_index]<<std::endl;
 
 	TransformType::ParametersType params(12);
 	params = inverse_xform->GetParameters();
