@@ -47,7 +47,7 @@ fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::
     //    std::cout << "Creating Space Transformer" << std::endl;
     global_space_transformer = new fregl_space_transformer(global_joint_register);
     //    std::cout << "Created Space Transformer" << std::endl;
-//    std::cout << "Setting Anchor" << std::endl;
+    //    std::cout << "Setting Anchor" << std::endl;
     global_space_transformer->set_anchor(global_anchor, false, false);
     //    std::cout << "Anchor Set" << std::endl;
     image_names = global_space_transformer->image_names();
@@ -58,13 +58,15 @@ fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::
     roi_index[1] = roi_origin[1];
     roi_index[2] = roi_origin[2];
     roi_size = global_size;
-//    std::cout << "GLOBAL Origin = " << global_origin[0] << "," << global_origin[1] << "," << global_origin[2] << std::endl;
-//    std::cout << "GLOBAL Size = " << global_size[0] << " x " << global_size[1] << " x " << global_size[2] << std::endl;
+    //    std::cout << "GLOBAL Origin = " << global_origin[0] << "," << global_origin[1] << "," << global_origin[2] << std::endl;
+    //    std::cout << "GLOBAL Size = " << global_size[0] << " x " << global_size[1] << " x " << global_size[2] << std::endl;
     global_space_transformer->set_roi(roi_origin, roi_size);
     global_channel = 0;
     global_use_channel = false;
     // Set up caching stuff
     set_cache_buffer_count(6);
+    use_file_caching = false;
+    cache_dir = ".";
 }
 
 //: Set the Region of Interest
@@ -120,7 +122,7 @@ void fregl_image_manager::Update() {
     //        std::cout << image_names[i] << std::endl;
     //    }
     ImageType::Pointer image, xformed_image;
-//    std::cout << "Composing the final image ..." << std::endl;
+    //    std::cout << "Composing the final image ..." << std::endl;
     //Create a blank ROI then merge in the images that are in the space
     ImageType::IndexType source_index;
     ImageType::RegionType region;
@@ -220,17 +222,34 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
         //        std::cout << "Here 1" << std::endl;
         cache_time++;
         if (!is_cached[image_index]) {
-            //If the image is not cached then read it in. Put it in a slot
-            //         std::cout << "Here 3" << std::endl;
-            is_cached[image_index] = true;
-            cache_slot[image_index] = get_next_slot();
-            image = fregl_util_read_image(file_name, global_use_channel, global_channel, false);
-            cached_images[cache_slot[image_index]] = global_space_transformer->transform_image_whole(image, image_index, 0, use_NN_interpolator);
-            //        std::cout << "Here 4" << std::endl;
+            // If we are file caching and its not already cached lets try to read it from the disk first.  If it is there
+            // then use it otherwise read it in and transform it.
+            if (use_file_caching) {
+                image = cache_read_image(image_index);
+                if (image) {
+                    is_cached[image_index] = true;
+                    is_cached_on_disk[image_index] = true;
+                    cache_slot[image_index] = get_next_slot();
+                    cached_images[cache_slot[image_index]] = image;
+                }
+            }
+            // If we did not get the image from the disk then read and transform
+            if (!is_cached[image_index]) {
+                is_cached[image_index] = true;
+                cache_slot[image_index] = get_next_slot();
+                image = fregl_util_read_image(file_name, global_use_channel, global_channel, false);
+                cached_images[cache_slot[image_index]] = global_space_transformer->transform_image_whole(image, image_index, 0, use_NN_interpolator);
+                //        std::cout << "Here 4" << std::endl;
+            }
         }
-        cached_image = cached_images[cache_slot[image_index]];
-        cache_last_used[cache_slot[image_index]] = cache_time;
     }
+    //If we are using file caching and we did not read the transformed file from
+    //the disk then write it out.
+    if (use_file_caching && !is_cached_on_disk[image_index])
+        is_cached_on_disk[image_index] = cache_write_image(image_index, cached_images[cache_slot[image_index]]);
+    cached_image = cached_images[cache_slot[image_index]];
+    cache_last_used[cache_slot[image_index]] = cache_time;
+
     //Create a new image for the region of interest
     out_image = ImageType::New();
 
@@ -249,7 +268,7 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
     source_size = cached_image->GetLargestPossibleRegion().GetSize();
     source_origin = cached_image->GetOrigin();
     save_origin = source_origin;
-//    std::cout << "Starting Source origin: " << source_origin[0] << " " << source_origin[1] << " " << source_origin[2] << std::endl;
+    //    std::cout << "Starting Source origin: " << source_origin[0] << " " << source_origin[1] << " " << source_origin[2] << std::endl;
     //    std::cout << "Calculating index and size" << std::endl;
 
     //If you have to move the origin clamp down the size as well.
@@ -303,10 +322,10 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
     destination_index[0] = (source_origin[0] - roi_origin[0]);
     destination_index[1] = (source_origin[1] - roi_origin[1]);
     destination_index[2] = (source_origin[2] - roi_origin[2]);
-//    std::cout << "Source Index: " << source_index[0] << " " << source_index[1] << " " << source_index[2] << std::endl;
-//    std::cout << "Source Origin: " << source_origin[0] << " " << source_origin[1] << " " << source_origin[2] << std::endl;
-//    std::cout << "Destination Index: " << destination_index[0] << " " << destination_index[1] << " " << destination_index[2] << std::endl;
-//    std::cout << "Source Size: " << source_size[0] << " " << source_size[1] << " " << source_size[2] << std::endl;
+    //    std::cout << "Source Index: " << source_index[0] << " " << source_index[1] << " " << source_index[2] << std::endl;
+    //    std::cout << "Source Origin: " << source_origin[0] << " " << source_origin[1] << " " << source_origin[2] << std::endl;
+    //    std::cout << "Destination Index: " << destination_index[0] << " " << destination_index[1] << " " << destination_index[2] << std::endl;
+    //    std::cout << "Source Size: " << source_size[0] << " " << source_size[1] << " " << source_size[2] << std::endl;
     source_region.SetIndex(source_index);
     source_region.SetSize(source_size);
     destination_region.SetIndex(destination_index);
@@ -398,9 +417,32 @@ void fregl_image_manager::set_cache_buffer_count(int count) {
         }
         for (unsigned int i = 0; i < image_names.size(); i++) {
             is_cached.push_back(false);
+            is_cached_on_disk.push_back(false);
             cache_slot.push_back(-1);
         }
     } else use_caching = false;
+}
+
+//: Set disk caching on or off.  
+
+void fregl_image_manager::set_file_caching(bool use) {
+    use_file_caching = use;
+    //reset the cashed on disk information when we change the state
+    for (unsigned int i = 0; i < is_cached_on_disk.size(); i++) {
+        is_cached_on_disk[i] = false;
+    }
+}
+
+//: Set the directory for the disk caching.  The default is current
+// directory "."
+
+void fregl_image_manager::set_file_cache_dir(std::string use_dir) {
+    cache_dir = use_dir;
+    //reset the cashed on disk information when we change the directory since
+    //it may no longer be accurate.
+    for (unsigned int i = 0; i < is_cached_on_disk.size(); i++) {
+        is_cached_on_disk[i] = false;
+    }
 }
 
 int fregl_image_manager::get_next_slot() {
@@ -427,3 +469,41 @@ int fregl_image_manager::get_next_slot() {
     //    std::cout << "Returning slot " << oldest << cache_time << std::endl;
     return oldest;
 }
+
+bool fregl_image_manager::cache_write_image(int image_index, ImageType::Pointer t_image) {
+    // Write a transformed image to disk for caching.  The file name is made up of 
+    // "cache_anchorimagename_transformedimagename.mhd"
+    std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
+            + std::string("_") + vul_file::strip_extension(image_names[image_index]) + std::string(".mhd");
+    typedef itk::ImageFileWriter< ImageType > WriterType;
+    WriterType::Pointer writer = WriterType::New();
+    //    std::cout << "File name: " << name << std::endl;
+    writer->SetFileName(name);
+    writer->SetInput(t_image);
+    try {
+        writer->Update();
+    } catch (itk::ExceptionObject& e) {
+        vcl_cout << e << vcl_endl;
+        return false;
+    }
+    return true;
+}
+
+fregl_image_manager::ImageType::Pointer fregl_image_manager::cache_read_image(int image_index) {
+    // Read a transformed cache file from the disk return NULL if the file is not there or
+    // can not be read for some other reason.
+    std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
+            + std::string("_") + vul_file::strip_extension(image_names[image_index]) + std::string(".mhd");
+    //    std::cout << "File name: " << name << std::endl;
+    typedef itk::ImageFileReader< ImageType > ReaderType;
+    ReaderType::Pointer reader = ReaderType::New();
+    reader->SetFileName(name);
+    try {
+        reader->Update();
+    } catch (itk::ExceptionObject& e) {
+        //        vcl_cout << e << vcl_endl;
+        return NULL;
+    }
+    return reader->GetOutput();
+}
+
