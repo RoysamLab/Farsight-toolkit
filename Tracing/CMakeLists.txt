@@ -71,7 +71,7 @@ IF(BUILD_TracingSystem)
 ENDIF()
 
 
-OPTION( BUILD_MicrogliaRegionTracer "Build Microglia Region Tracer" ON )
+OPTION( BUILD_MicrogliaRegionTracer "Build Microglia Region Tracer" OFF )
 IF( BUILD_MicrogliaRegionTracer )
   SUBDIRS( MicrogliaRegionTracer )
 ENDIF()
