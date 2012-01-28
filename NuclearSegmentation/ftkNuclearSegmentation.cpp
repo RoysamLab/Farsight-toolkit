@@ -1451,241 +1451,318 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 	for(int i=0; i<ids.size(); ++i)
 	{
 		groups[i].push_back(ids[i]);
-		//int volume_ID = table->GetValueByName(idToIndexMap[ids[i]], "volume").ToInt();
-		//double estimatedScale;
-		//if(dataImage->GetImageInfo()->numZSlices > 1)
-		//{
-		//	estimatedScale = pow((double)volume_ID/numObjs*(3/4)*(1/Pi),1/3);
-		//}
-		//else
-		//{
-		//	estimatedScale = sqrt((double)volume_ID/(numObjs*3.1415));
-		//}
+		int volume_ID = table->GetValueByName(idToIndexMap[ids[i]], "volume").ToInt();
+		double estimatedScale;
+		if(dataImage->GetImageInfo()->numZSlices > 1)
+		{
+			estimatedScale = pow((double)volume_ID/numObjs*(3/4)*(1/Pi),1/3);
+		}
+		else
+		{
+			estimatedScale = sqrt((double)volume_ID/(numObjs*3.1415));
+		}
 
-		//int	deltaScale = 5;
-		//ftk::IntrinsicFeatures * features = labFilter->GetFeatures(ids[i]);
-		//Object::Box b;
-		//b.min.x = (int)features->BoundingBox[0];
-		//b.max.x = (int)features->BoundingBox[1];
-		//b.min.y = (int)features->BoundingBox[2];
-		//b.max.y = (int)features->BoundingBox[3];
-		//b.min.z = (int)features->BoundingBox[4];
-		//b.max.z = (int)features->BoundingBox[5];
+		int	deltaScale = 5;
+		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(ids[i]);
+		Object::Box b;
+		b.min.x = (int)features->BoundingBox[0];
+		b.max.x = (int)features->BoundingBox[1];
+		b.min.y = (int)features->BoundingBox[2];
+		b.max.y = (int)features->BoundingBox[3];
+		b.min.z = (int)features->BoundingBox[4];
+		b.max.z = (int)features->BoundingBox[5];
 
-		//int numRowsSplit = b.max.y - b.min.y + 1;
-		//int numColumnsSplit = b.max.x - b.min.x + 1;
-		//int numStacksSplit = b.max.z - b.min.z + 1;
-		////double scaleMin = (double)max<int>((estimatedScale - deltaScale)/1.4142, 3);
-		////double scaleMax = (double)(estimatedScale + deltaScale)/1.4142;
-		//double scaleMin = 3;
-		//double scaleMax = 17;
+		int numRowsSplit = b.max.y - b.min.y + 1;
+		int numColumnsSplit = b.max.x - b.min.x + 1;
+		int numStacksSplit = b.max.z - b.min.z + 1;
+		//double scaleMin = (double)max<int>((estimatedScale - deltaScale)/1.4142, 3);
+		//double scaleMax = (double)(estimatedScale + deltaScale)/1.4142;
+		double scaleMin = 1;
+		double scaleMax = 50;
 
-		//unsigned short *binImagePtr = new unsigned short[numStacksSplit*numRowsSplit*numColumnsSplit];
-		//float *imgPtr = new float[numStacksSplit*numRowsSplit*numColumnsSplit];
-		//long ctr=0;
-		//for(int z=0; z<numStacksSplit; ++z)
-		//{
-		//	for(int y=0; y<numRowsSplit; ++y)
-		//	{
-		//		for(int x=0; x<numColumnsSplit; ++x)
-		//		{
-		//			unsigned short label = labelArray[(sz[0] * sz[1] * (b.min.z+z)) + (sz[0] * (b.min.y+y)) + (b.min.x+x)];
-		//			if(label == ids[i])
-		//			{
-		//				binImagePtr[ctr] = 255;
-		//				imgPtr[ctr] = 255 - (float)dataArray[(sz[0] * sz[1] * (b.min.z+z)) + (sz[0] * (b.min.y+y)) + (b.min.x+x)];
-		//			}
-		//			else 
-		//			{
-		//				binImagePtr[ctr] = 0;
-		//				imgPtr[ctr] = 255;
-		//			}	
-		//			++ctr;
-		//		}
-		//	}
-		//}
+		unsigned short *binImagePtr = new unsigned short[numStacksSplit*numRowsSplit*numColumnsSplit];
+		float *imgPtr = new float[numStacksSplit*numRowsSplit*numColumnsSplit];
+		long ctr=0;
+		for(int z=0; z<numStacksSplit; ++z)
+		{
+			for(int y=0; y<numRowsSplit; ++y)
+			{
+				for(int x=0; x<numColumnsSplit; ++x)
+				{
+					unsigned short label = labelArray[(sz[0] * sz[1] * (b.min.z+z)) + (sz[0] * (b.min.y+y)) + (b.min.x+x)];
+					if(label == ids[i])
+					{
+						binImagePtr[ctr] = 255;
+						imgPtr[ctr] = 255 - (float)dataArray[(sz[0] * sz[1] * (b.min.z+z)) + (sz[0] * (b.min.y+y)) + (b.min.x+x)];
+					}
+					else 
+					{
+						binImagePtr[ctr] = 0;
+						imgPtr[ctr] = 255;
+					}	
+					++ctr;
+				}
+			}
+		}
 
-		//typedef itk::Image<unsigned char, 3> UCharImageType;
-		//typedef itk::Image<unsigned short, 3> UShortImageType;
+		typedef itk::Image<unsigned char, 3> UCharImageType;
+		typedef itk::Image<unsigned short, 3> UShortImageType;
 
-		//UCharImageType::Pointer rawImage = UCharImageType::New();
-		//itk::Size<3> im_size;
-		//im_size[0] = numColumnsSplit;
-		//im_size[1] = numRowsSplit;
-		//im_size[2] = numStacksSplit;
-		//UCharImageType::IndexType start;
-		//start[0] =   0;  // first index on X
-		//start[1] =   0;  // first index on Y    
-		//start[2] =   0;  // first index on Z  
-		//UCharImageType::PointType origin;
-		//origin[0] = 0; 
-		//origin[1] = 0;    
-		//origin[2] = 0;    
-		//rawImage->SetOrigin( origin );
-		//UCharImageType::RegionType region;
-		//region.SetSize( im_size );
-		//region.SetIndex( start );
-		//rawImage->SetRegions( region );
-		//rawImage->Allocate();
-		//rawImage->FillBuffer(0);
-		//rawImage->Update();
-		//UCharImageType::PixelType * rawArray = rawImage->GetBufferPointer();
+		UCharImageType::Pointer rawImage = UCharImageType::New();
+		itk::Size<3> im_size;
+		im_size[0] = numColumnsSplit;
+		im_size[1] = numRowsSplit;
+		im_size[2] = numStacksSplit;
+		UCharImageType::IndexType start;
+		start[0] =   0;  // first index on X
+		start[1] =   0;  // first index on Y    
+		start[2] =   0;  // first index on Z  
+		UCharImageType::PointType origin;
+		origin[0] = 0; 
+		origin[1] = 0;    
+		origin[2] = 0;    
+		rawImage->SetOrigin( origin );
+		UCharImageType::RegionType region;
+		region.SetSize( im_size );
+		region.SetIndex( start );
+		rawImage->SetRegions( region );
+		rawImage->Allocate();
+		rawImage->FillBuffer(0);
+		rawImage->Update();
+		UCharImageType::PixelType * rawArray = rawImage->GetBufferPointer();
 
-		//ctr = 0;
-		//for(int z=0; z<numStacksSplit; ++z)
-		//{
-		//	for(int y=0; y<numRowsSplit; ++y)
-		//	{
-		//		for(int x=0; x<numColumnsSplit; ++x)
-		//		{
-		//			rawArray[ctr] = imgPtr[ctr];
-		//			++ctr;
-		//		}
-		//	}
-		//}
-
-
-		//itk::ImageFileWriter<itk::Image<unsigned char, 3>>::Pointer writer1 = itk::ImageFileWriter<itk::Image<unsigned char, 3>>::New();
-		//writer1->SetInput(rawImage);
-		//writer1->SetFileName("C:\\raw_window_1.tif");
-		//writer1->Update();
-
-		//UShortImageType::Pointer binImage = UShortImageType::New();
-		//UShortImageType::IndexType start1;
-		//start1[0] =   0;  // first index on X
-		//start1[1] =   0;  // first index on Y    
-		//start1[2] =   0;  // first index on Z  
-		//UShortImageType::PointType origin1;
-		//origin1[0] = 0; 
-		//origin1[1] = 0;    
-		//origin1[2] = 0;    
-		//binImage->SetOrigin( origin1 );
-		//UShortImageType::RegionType region1;
-		//region1.SetSize( im_size );
-		//region1.SetIndex( start1 );
-		//binImage->SetRegions( region1 );
-		//binImage->Allocate();
-		//binImage->FillBuffer(0);
-		//binImage->Update();
-		//UShortImageType::PixelType * binArray = binImage->GetBufferPointer();
-
-		//ctr = 0;
-		//for(int z=0; z<numStacksSplit; ++z)
-		//{
-		//	for(int y=0; y<numRowsSplit; ++y)
-		//	{
-		//		for(int x=0; x<numColumnsSplit; ++x)
-		//		{
-		//			binArray[ctr] = binImagePtr[ctr];
-		//			++ctr;
-		//		}
-		//	}
-		//}
-
-		//itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer2 = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
-		//writer2->SetInput(binImage);
-		//writer2->SetFileName("C:\\bin_window.tif");
-		//writer2->Update();
-		////ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
-
-		//float* logImagePtr;	// dont need to create outside of the function, memory allocated inside the function
-		//unsigned short* seedImagePtr; 
-
-		//double regionXY = 2;//(double)myParameters[4].value;
-		//double regionZ = 2;//(double)myParameters[5].value;
-		//double sampling_ratio_XY_to_Z = 2;//(double)myParameters[7].value;
-
-		//int useDistMap = 1;
-		//int minLoGImg = 10000;
-		//bool autoParamEstimation = false;
-
-		////int ok = Seeds_Detection_2D( imgPtr, &logImagePtr, &seedImagePtr, numRowsSplit, numColumnsSplit, numStacksSplit, &scaleMin, &scaleMax, &regionXY, &regionZ, sampling_ratio_XY_to_Z, binImagePtr, useDistMap, &minLoGImg, autoParamEstimation);		
-		//
-		//int ok = 0;
-		//if (numStacksSplit == 1)
-		//{		
-		//	seedImagePtr = new unsigned short[numStacksSplit*numRowsSplit*numColumnsSplit];		
-		//	logImagePtr = new float[numStacksSplit*numRowsSplit*numColumnsSplit];
-		//	ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRowsSplit, numColumnsSplit, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
-		//}
-		//else
-		//{	
-		//	minLoGImg = 10000;
-		//	//ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
-		//}
-
-		//itk::Image<float, 3>::Pointer logImage = itk::Image<float, 3>::New();
-		//itk::Image<float, 3>::IndexType start3;
-		//start3[0] =   0;  // first index on X
-		//start3[1] =   0;  // first index on Y    
-		//start3[2] =   0;  // first index on Z  
-		//itk::Image<float, 3>::PointType origin3;
-		//origin3[0] = 0; 
-		//origin3[1] = 0;    
-		//origin3[2] = 0;    
-		//logImage->SetOrigin( origin3 );
-		//itk::Image<float, 3>::RegionType region3;
-		//region3.SetSize( im_size );
-		//region3.SetIndex( start3 );
-		//logImage->SetRegions( region3 );
-		//logImage->Allocate();
-		//logImage->FillBuffer(0);
-		//logImage->Update();
-		//itk::Image<float, 3>::PixelType * logArray = logImage->GetBufferPointer();
-		//ctr = 0;
-		//for(int z=0; z<numStacksSplit; ++z)
-		//{
-		//	for(int y=0; y<numRowsSplit; ++y)
-		//	{
-		//		for(int x=0; x<numColumnsSplit; ++x)
-		//		{
-		//			logArray[ctr] = logImagePtr[ctr];
-		//			++ctr;
-		//		}
-		//	}
-		//}
-		//itk::ImageFileWriter<itk::Image<float, 3>>::Pointer writer3 = itk::ImageFileWriter<itk::Image<float, 3>>::New();
-		//writer3->SetInput(logImage);
-		//writer3->SetFileName("C:\\log_window.mhd");
-		//writer3->Update();
+		ctr = 0;
+		for(int z=0; z<numStacksSplit; ++z)
+		{
+			for(int y=0; y<numRowsSplit; ++y)
+			{
+				for(int x=0; x<numColumnsSplit; ++x)
+				{
+					rawArray[ctr] = imgPtr[ctr];
+					++ctr;
+				}
+			}
+		}
 
 
+		itk::ImageFileWriter<itk::Image<unsigned char, 3>>::Pointer writer1 = itk::ImageFileWriter<itk::Image<unsigned char, 3>>::New();
+		writer1->SetInput(rawImage);
+		writer1->SetFileName("C:\\raw_window_1.tif");
+		writer1->Update();
 
-		//UShortImageType::Pointer seedsImage = UShortImageType::New();
-		//UShortImageType::IndexType start2;
-		//start2[0] =   0;  // first index on X
-		//start2[1] =   0;  // first index on Y    
-		//start2[2] =   0;  // first index on Z  
-		//UShortImageType::PointType origin2;
-		//origin2[0] = 0; 
-		//origin2[1] = 0;    
-		//origin2[2] = 0;    
-		//seedsImage->SetOrigin( origin2 );
-		//UShortImageType::RegionType region2;
-		//region2.SetSize( im_size );
-		//region2.SetIndex( start2 );
-		//seedsImage->SetRegions( region2 );
-		//seedsImage->Allocate();
-		//seedsImage->FillBuffer(0);
-		//seedsImage->Update();
-		//UShortImageType::PixelType * seedsArray = seedsImage->GetBufferPointer();
+		UShortImageType::Pointer binImage = UShortImageType::New();
+		UShortImageType::IndexType start1;
+		start1[0] =   0;  // first index on X
+		start1[1] =   0;  // first index on Y    
+		start1[2] =   0;  // first index on Z  
+		UShortImageType::PointType origin1;
+		origin1[0] = 0; 
+		origin1[1] = 0;    
+		origin1[2] = 0;    
+		binImage->SetOrigin( origin1 );
+		UShortImageType::RegionType region1;
+		region1.SetSize( im_size );
+		region1.SetIndex( start1 );
+		binImage->SetRegions( region1 );
+		binImage->Allocate();
+		binImage->FillBuffer(0);
+		binImage->Update();
+		UShortImageType::PixelType * binArray = binImage->GetBufferPointer();
 
-		//ctr = 0;
-		//for(int z=0; z<numStacksSplit; ++z)
-		//{
-		//	for(int y=0; y<numRowsSplit; ++y)
-		//	{
-		//		for(int x=0; x<numColumnsSplit; ++x)
-		//		{
-		//			seedsArray[ctr] = seedImagePtr[ctr];
-		//			++ctr;
-		//		}
-		//	}
-		//}
-		//itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
-		//writer->SetInput(seedsImage);
-		//writer->SetFileName("C:\\seeds_window.tif");
-		//writer->Update();
+		ctr = 0;
+		for(int z=0; z<numStacksSplit; ++z)
+		{
+			for(int y=0; y<numRowsSplit; ++y)
+			{
+				for(int x=0; x<numColumnsSplit; ++x)
+				{
+					binArray[ctr] = binImagePtr[ctr];
+					++ctr;
+				}
+			}
+		}
+
+		itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer2 = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+		writer2->SetInput(binImage);
+		writer2->SetFileName("C:\\bin_window.tif");
+		writer2->Update();
+		//ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+
+		float* logImagePtr;	// dont need to create outside of the function, memory allocated inside the function
+		unsigned short* seedImagePtr; 
+
+		double regionXY = 2;//(double)myParameters[4].value;
+		double regionZ = 2;//(double)myParameters[5].value;
+		double sampling_ratio_XY_to_Z = 2;//(double)myParameters[7].value;
+
+		int useDistMap = 1;
+		int minLoGImg = 10000;
+		bool autoParamEstimation = false;
+
+		//int ok = Seeds_Detection_2D( imgPtr, &logImagePtr, &seedImagePtr, numRowsSplit, numColumnsSplit, numStacksSplit, &scaleMin, &scaleMax, &regionXY, &regionZ, sampling_ratio_XY_to_Z, binImagePtr, useDistMap, &minLoGImg, autoParamEstimation);		
+		
+		int ok = 0;
+		if (numStacksSplit == 1)
+		{		
+			seedImagePtr = new unsigned short[numStacksSplit*numRowsSplit*numColumnsSplit];		
+			logImagePtr = new float[numStacksSplit*numRowsSplit*numColumnsSplit];
+			for(int a=scaleMin; a<=scaleMax; ++a)
+			{
+				double aa = (double)a;
+				ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRowsSplit, numColumnsSplit, &aa, &aa, &regionXY, binImagePtr, autoParamEstimation );	
+				std::stringstream ss; ss << a;
+
+				itk::Image<float, 3>::Pointer logImage = itk::Image<float, 3>::New();
+				itk::Image<float, 3>::IndexType start3;
+				start3[0] =   0;  // first index on X
+				start3[1] =   0;  // first index on Y    
+				start3[2] =   0;  // first index on Z  
+				itk::Image<float, 3>::PointType origin3;
+				origin3[0] = 0; 
+				origin3[1] = 0;    
+				origin3[2] = 0;    
+				logImage->SetOrigin( origin3 );
+				itk::Image<float, 3>::RegionType region3;
+				region3.SetSize( im_size );
+				region3.SetIndex( start3 );
+				logImage->SetRegions( region3 );
+				logImage->Allocate();
+				logImage->FillBuffer(0);
+				logImage->Update();
+				itk::Image<float, 3>::PixelType * logArray = logImage->GetBufferPointer();
+				ctr = 0;
+				for(int z=0; z<numStacksSplit; ++z)
+				{
+					for(int y=0; y<numRowsSplit; ++y)
+					{
+						for(int x=0; x<numColumnsSplit; ++x)
+						{
+							logArray[ctr] = logImagePtr[ctr];
+							++ctr;
+						}
+					}
+				}
+				itk::ImageFileWriter<itk::Image<float, 3>>::Pointer writer3 = itk::ImageFileWriter<itk::Image<float, 3>>::New();
+				writer3->SetInput(logImage);
+				writer3->SetFileName("C:\\log_window_" + ss.str() + ".mhd");
+				writer3->Update();
+
+				UShortImageType::Pointer seedsImage = UShortImageType::New();
+				UShortImageType::IndexType start2;
+				start2[0] =   0;  // first index on X
+				start2[1] =   0;  // first index on Y    
+				start2[2] =   0;  // first index on Z  
+				UShortImageType::PointType origin2;
+				origin2[0] = 0; 
+				origin2[1] = 0;    
+				origin2[2] = 0;    
+				seedsImage->SetOrigin( origin2 );
+				UShortImageType::RegionType region2;
+				region2.SetSize( im_size );
+				region2.SetIndex( start2 );
+				seedsImage->SetRegions( region2 );
+				seedsImage->Allocate();
+				seedsImage->FillBuffer(0);
+				seedsImage->Update();
+				UShortImageType::PixelType * seedsArray = seedsImage->GetBufferPointer();
+
+				ctr = 0;
+				for(int z=0; z<numStacksSplit; ++z)
+				{
+					for(int y=0; y<numRowsSplit; ++y)
+					{
+						for(int x=0; x<numColumnsSplit; ++x)
+						{
+							seedsArray[ctr] = seedImagePtr[ctr];
+							++ctr;
+						}
+					}
+				}
+				itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+				writer->SetInput(seedsImage);
+				writer->SetFileName("C:\\seeds_window_" + ss.str() + ".mhd");
+				writer->Update();
+
+			}
+		}
+		else
+		{	
+			minLoGImg = 10000;
+			//ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
+		}
+
+		itk::Image<float, 3>::Pointer logImage = itk::Image<float, 3>::New();
+		itk::Image<float, 3>::IndexType start3;
+		start3[0] =   0;  // first index on X
+		start3[1] =   0;  // first index on Y    
+		start3[2] =   0;  // first index on Z  
+		itk::Image<float, 3>::PointType origin3;
+		origin3[0] = 0; 
+		origin3[1] = 0;    
+		origin3[2] = 0;    
+		logImage->SetOrigin( origin3 );
+		itk::Image<float, 3>::RegionType region3;
+		region3.SetSize( im_size );
+		region3.SetIndex( start3 );
+		logImage->SetRegions( region3 );
+		logImage->Allocate();
+		logImage->FillBuffer(0);
+		logImage->Update();
+		itk::Image<float, 3>::PixelType * logArray = logImage->GetBufferPointer();
+		ctr = 0;
+		for(int z=0; z<numStacksSplit; ++z)
+		{
+			for(int y=0; y<numRowsSplit; ++y)
+			{
+				for(int x=0; x<numColumnsSplit; ++x)
+				{
+					logArray[ctr] = logImagePtr[ctr];
+					++ctr;
+				}
+			}
+		}
+		itk::ImageFileWriter<itk::Image<float, 3>>::Pointer writer3 = itk::ImageFileWriter<itk::Image<float, 3>>::New();
+		writer3->SetInput(logImage);
+		writer3->SetFileName("C:\\log_window.mhd");
+		writer3->Update();
+
+
+
+		UShortImageType::Pointer seedsImage = UShortImageType::New();
+		UShortImageType::IndexType start2;
+		start2[0] =   0;  // first index on X
+		start2[1] =   0;  // first index on Y    
+		start2[2] =   0;  // first index on Z  
+		UShortImageType::PointType origin2;
+		origin2[0] = 0; 
+		origin2[1] = 0;    
+		origin2[2] = 0;    
+		seedsImage->SetOrigin( origin2 );
+		UShortImageType::RegionType region2;
+		region2.SetSize( im_size );
+		region2.SetIndex( start2 );
+		seedsImage->SetRegions( region2 );
+		seedsImage->Allocate();
+		seedsImage->FillBuffer(0);
+		seedsImage->Update();
+		UShortImageType::PixelType * seedsArray = seedsImage->GetBufferPointer();
+
+		ctr = 0;
+		for(int z=0; z<numStacksSplit; ++z)
+		{
+			for(int y=0; y<numRowsSplit; ++y)
+			{
+				for(int x=0; x<numColumnsSplit; ++x)
+				{
+					seedsArray[ctr] = seedImagePtr[ctr];
+					++ctr;
+				}
+			}
+		}
+		itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+		writer->SetInput(seedsImage);
+		writer->SetFileName("C:\\seeds_window.tif");
+		writer->Update();
 
 
 	}
