@@ -34,6 +34,10 @@ limitations under the License.
 #include "itkPoint.h"
 #include "itkImage.h"
 
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include <vul/vul_file.h>
+
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
 
@@ -124,10 +128,19 @@ public:
     // Will reset all cache buffers when called.
     void set_cache_buffer_count(int count);
 
+    //: Set disk caching on or off.  
+    void set_file_caching(bool use);
+    
+    //: Set the directory for the disk caching.  The default is current
+    // directory "."
+    void set_file_cache_dir(std::string use_dir);
+
 
 
 private:
     int get_next_slot();
+    bool cache_write_image(int image_index, ImageType::Pointer t_image);
+    ImageType::Pointer cache_read_image(int image_index);
     
     fregl_joint_register::Pointer global_joint_register;
     fregl_space_transformer::Pointer global_space_transformer;
@@ -147,12 +160,15 @@ private:
     bool global_use_channel;
     ImageType::Pointer montage_image;
     std::vector<bool> is_cached;
+    std::vector<bool> is_cached_on_disk;
     std::vector<ImageType::Pointer> cached_images;
     std::vector<int> cache_slot;
     std::vector<int> cache_last_used;
     int cache_time;
     int cache_size;
     bool use_caching;
+    bool use_file_caching;
+    std::string cache_dir;
 
 
 };
