@@ -332,7 +332,8 @@ int detect_seeds(itk::SmartPointer<InputImageType> im, int r, int c, const doubl
   IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
   while ( i<r*c)
   {
-    IMG[i] = sigma*iterate.Get();
+    //IMG[i] = sigma*iterate.Get();
+	IMG[i] = iterate.Get();
     ++i;
 	++iterate;
   }
