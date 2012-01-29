@@ -1545,7 +1545,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 		}
 
 
-		itk::ImageFileWriter<itk::Image<unsigned char, 3>>::Pointer writer1 = itk::ImageFileWriter<itk::Image<unsigned char, 3>>::New();
+		itk::ImageFileWriter< itk::Image < unsigned char, 3 > >::Pointer writer1 = itk::ImageFileWriter< itk::Image< unsigned char, 3 > >::New();
 		writer1->SetInput(rawImage);
 		writer1->SetFileName("C:\\raw_window_1.tif");
 		writer1->Update();
@@ -1582,7 +1582,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 			}
 		}
 
-		itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer2 = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+		itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::Pointer writer2 = itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::New();
 		writer2->SetInput(binImage);
 		writer2->SetFileName("C:\\bin_window.tif");
 		writer2->Update();
@@ -1642,7 +1642,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 						}
 					}
 				}
-				itk::ImageFileWriter<itk::Image<float, 3>>::Pointer writer3 = itk::ImageFileWriter<itk::Image<float, 3>>::New();
+				itk::ImageFileWriter< itk::Image < float, 3 > >::Pointer writer3 = itk::ImageFileWriter< itk::Image < float, 3 > >::New();
 				writer3->SetInput(logImage);
 				writer3->SetFileName("C:\\log_window_" + ss.str() + ".mhd");
 				writer3->Update();
@@ -1678,7 +1678,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 						}
 					}
 				}
-				itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+				itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::Pointer writer = itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::New();
 				writer->SetInput(seedsImage);
 				writer->SetFileName("C:\\seeds_window_" + ss.str() + ".mhd");
 				writer->Update();
@@ -1721,7 +1721,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 				}
 			}
 		}
-		itk::ImageFileWriter<itk::Image<float, 3>>::Pointer writer3 = itk::ImageFileWriter<itk::Image<float, 3>>::New();
+		itk::ImageFileWriter < itk::Image < float, 3 > >::Pointer writer3 = itk::ImageFileWriter < itk::Image < float, 3 > >::New();
 		writer3->SetInput(logImage);
 		writer3->SetFileName("C:\\log_window.mhd");
 		writer3->Update();
@@ -1759,7 +1759,7 @@ std::vector< std::vector<int> > NuclearSegmentation::BatchSplit(std::vector<int>
 				}
 			}
 		}
-		itk::ImageFileWriter<itk::Image<unsigned short, 3>>::Pointer writer = itk::ImageFileWriter<itk::Image<unsigned short, 3>>::New();
+		itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::Pointer writer = itk::ImageFileWriter< itk::Image < unsigned short, 3 > >::New();
 		writer->SetInput(seedsImage);
 		writer->SetFileName("C:\\seeds_window.tif");
 		writer->Update();
