@@ -96,6 +96,8 @@ public:
 	double GetCorMatSelectedPercentage(double thres);
 	void GetCombinedDataTable(vtkSmartPointer<vtkTable> table);
 	void GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec);
+	void GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold);
+	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
 
 protected:
 	SPDAnalysisModel();
@@ -149,7 +151,6 @@ private:
 	std::vector<int> indMapFromIndToVertex;    // index mapping
 	int maxVertexId;
 	std::map< int, int> indMapFromVertexToClus;
-	std::vector<std::string> FeatureNames;
 	vnl_vector<double> DistanceToDevice;
 	double disCor;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis

@@ -111,11 +111,13 @@ public:
 	void GetSelRowCol(int &r1, int &c1, int &r2, int &c2);
 	void SetSelRowCol(int r1, int c1, int r2, int c2);
 	void SetInteractStyle();
+	void SetSPDInteractStyle();
 	void showDendrogram1();
 	void showDendrogram2();	
 
 signals:
 	void SelChanged();
+	void columnToColorChanged(int value);
 
 protected:
 	virtual void closeEvent(QCloseEvent *event);
@@ -137,7 +139,8 @@ private:
 	void scaleData(double** mustd);
 	void scaleData();
 	void drawPoints1();
-	void drawPoints3( bool bprogression = false);
+	void drawPoints3();
+	void drawPointsForSPD();
 	void drawPointsForOrderHeatmap();
 	void setselectedCellIds();
 	void computeselectedcells();

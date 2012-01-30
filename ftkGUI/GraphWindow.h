@@ -21,6 +21,7 @@
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include "ftkGUI/ColorMap.h"
+#include <vtkCornerAnnotation.h>
 
 typedef struct Point
 {
@@ -46,11 +47,12 @@ public:
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol);
-	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
+	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
-	
+	void ColorTreeAccordingToFeatures(vnl_vector<double> &feature, const char *featureName);
+
 protected:
 	void SetSelectedIds(std::set<long int>& IDs);
 	void SetSelectedIds2();
@@ -74,9 +76,11 @@ protected:
 	void UpdateProgressionPath();
 	void GetProgressionPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path);
 	void ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color);
+	void RestoreLookupTable();
 
 protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
+	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 	void UpdateGraphView();
 
 signals:
@@ -84,7 +88,8 @@ signals:
 
 private:
 	vtkSmartPointer<vtkTable> dataTable;
-	std::vector<double> colorVector;
+	vnl_vector<double> colorVector;
+	vnl_vector<double> featureColorVector;
 	ObjectSelection *selection;
 	ObjectSelection *selection2;
 	   
@@ -95,8 +100,10 @@ private:
 	vtkSmartPointer<vtkTableToGraph> TTG;	
 	vtkSmartPointer<vtkGraphLayoutView> view;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
+	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkLookupTable> lookupTable;
 	vtkSmartPointer<vtkLookupTable> edgeLookupTable;
+	vtkSmartPointer<vtkCornerAnnotation> cornAnnotation;
 	unsigned long observerTag;
 	vnl_vector<double> edgeWeights;
 	vnl_matrix<double> vertextList;

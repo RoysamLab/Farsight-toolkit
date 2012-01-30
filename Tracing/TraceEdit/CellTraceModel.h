@@ -86,6 +86,7 @@ public:
 	double average(std::vector< std::pair<unsigned int, double> > ID);
 	int AddNewFeatureHeader(std::string NewHeader);
 	static vtkSmartPointer<vtkTable> ConvertDefaultValueToNull(vtkSmartPointer<vtkTable> table);
+	void SyncModel();
 
 signals:
 	void selectionChanged(void);
@@ -94,7 +95,6 @@ private:
 	std::vector<QString> headers;
 	std::vector<QString> AdditionalHeaders;
 	void SetupHeaders();
-	void SyncModel();
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
 	//////////////////////////////////////////////

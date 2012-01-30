@@ -591,7 +591,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->GetFileName().c_str());
 	/*CellData->InsertNextValue(this->prediction);
 	CellData->InsertNextValue(this->confidence);*/
-	CellData->InsertNextValue(this->DeviceDistance);
+	CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
 	//std::cout << this->FileName << std::endl;
 	return CellData;
 }

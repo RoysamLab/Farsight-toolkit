@@ -3355,6 +3355,7 @@ void View3D::CalculateDistanceToDevice()
 	if (cellCount >= 1)
 	{
 		this->VOIType->CalculateCellDistanceToVOI(this->CellModel);
+		this->CellModel->SyncModel();
 		this->ShowCellAnalysis();
 	}
 	//vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
@@ -4423,7 +4424,7 @@ void View3D::ShowMergeStats()
 	this->GapsPlotView->setWindowTitle("Computed Features for Merge");
 	this->GapsPlotView->show();
 }
-/// modified to table with null
+
 void View3D::ShowCellAnalysis()
 {
 	//this->HideCellAnalysis();

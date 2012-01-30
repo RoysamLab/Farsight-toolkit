@@ -50,6 +50,7 @@ protected slots:
 	void regenerateProgressionTree();
 	void updateProgressionType();
 	void ReRunSPDAnlysis();
+	void ReColorProgressionTree(int nfeature);
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -89,8 +90,9 @@ private:
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
-
-    QString FileName;
+	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
+   
+	QString FileName;
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
 	HistoWindow *histo;

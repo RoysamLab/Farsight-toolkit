@@ -2553,3 +2553,45 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 		colorVec.push_back( (double)count / clusIndex[i].size());
 	}
 }
+
+void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
+{
+	for( int i = 0; i < clusIndex.size(); i++)
+	{
+		int count = 0;
+		int distanceCount = 0;
+		for( int j = 0; j < clusIndex[i].size(); j++)
+		{
+			long int index = clusIndex[i][j];
+			if( index <= maxVertexId)
+			{
+				count++;
+				std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
+				if( iter != indMapFromVertexToClus.end() && DistanceToDevice[iter->second] <= disThreshold)
+				{
+					distanceCount++;
+				}
+			}
+		}
+		disPer.push_back( (double)distanceCount / count);
+	}
+}
+
+void SPDAnalysisModel::GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName)
+{
+	vnl_vector<double> selCol = UNMatrixAfterCellCluster.get_column( nfeature);
+	featureValue.set_size(clusIndex.size());
+	for(int i = 0; i < clusIndex.size(); i++)
+	{
+		double averFeature = 0;
+		for( int j = 0; j < clusIndex[i].size(); j++)
+		{
+			averFeature += selCol[clusIndex[i][j] ];
+		}
+		averFeature /= clusIndex[i].size();
+		featureValue[i] = averFeature;
+	}
+
+	char* name = this->DataTable->GetColumn(nfeature + 1)->GetName();
+	featureName = "Colored by " + std::string(name);
+}

@@ -1220,7 +1220,7 @@ void Heatmap::drawPoints1()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void Heatmap::drawPoints3( bool bprogression)
+void Heatmap::drawPoints3()
 {
 	int max_table_values = 2*this->num_samples-1;
 
@@ -1335,14 +1335,133 @@ void Heatmap::drawPoints3( bool bprogression)
 
     this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
     this->selectionCallback1->SetClientData(this);
-	if( bprogression)
-	{
-		this->selectionCallback1->SetCallback (SelectionCallbackFunctionForSPD);
+	this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
+
+    this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
+}
+
+void Heatmap::drawPointsForSPD()
+{
+	int max_table_values = 2 * this->num_samples-1 + this->num_features;
+
+	this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
+	this->points = vtkSmartPointer<vtkPoints>::New();
+	this->v = vtkSmartPointer<vtkIdTypeArray>::New();
+	v->SetNumberOfValues (max_table_values);
+
+	for( int i = 0; i < 2 * this->num_samples - 1; i++)
+    {
+		v->SetValue(i, graph_Layout->AddVertex());
+		this->points->InsertNextPoint(this->Processed_Coordinate_Data_Tree1[i][1],this->Processed_Coordinate_Data_Tree1[i][2],this->Processed_Coordinate_Data_Tree1[i][3]);
 	}
-	else
+	for( int i = 0; i < this->num_features; i++)
 	{
-		this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
+		v->SetValue(i + 2 * this->num_samples - 1, graph_Layout->AddVertex());
+		this->points->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1],this->Processed_Coordinate_Data_Tree2[i][2],this->Processed_Coordinate_Data_Tree2[i][3]);
 	}
+	
+    this->graph_Layout->SetPoints(this->points);
+     
+	this->vertexColors = vtkSmartPointer<vtkIntArray>::New();
+    vertexColors->SetNumberOfComponents(1);
+    vertexColors->SetName("Color1");
+	
+	this->vetexlut = vtkSmartPointer<vtkLookupTable>::New();
+	vetexlut->SetNumberOfTableValues(max_table_values);
+    for(int i=0; i<max_table_values;i++)
+    {
+		vetexlut->SetTableValue(i, 0.5, 0.5,0.5); 
+    }  
+    vetexlut->Build();
+   
+	vtkSmartPointer<vtkFloatArray> scales1 = vtkSmartPointer<vtkFloatArray>::New(); /// scales for vertex size
+    scales1->SetNumberOfComponents(1);
+	scales1->SetName("Scales1");
+
+    for(int j=0; j<max_table_values;j++)
+    {
+		vertexColors->InsertNextValue(j);
+		scales1->InsertNextValue(1);
+    }
+
+	this->graph_Layout->GetVertexData()->AddArray(scales1);
+	this->graph_Layout->GetVertexData()->AddArray(vertexColors);
+	
+	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
+    this->view->AddRepresentationFromInput(graph_Layout);
+    this->view->SetLayoutStrategy("Pass Through");
+    this->view->ScaledGlyphsOn();
+    this->view->SetScalingArrayName("Scales1");
+	this->view->ColorVerticesOn();
+	this->view->SetVertexColorArrayName("Color1");
+    vtkRenderedGraphRepresentation::SafeDownCast(this->view->GetRepresentation()) ->SetGlyphType(vtkGraphToGlyphs::CIRCLE);
+
+	this->theme = vtkSmartPointer<vtkViewTheme>::New();
+	this->theme->SetPointLookupTable(vetexlut);
+
+	vtkSmartPointer<vtkPolyData> pd = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkCellArray> verts = vtkSmartPointer<vtkCellArray>::New();
+	verts->SetNumberOfCells(1);
+
+	vtkSmartPointer<vtkDoubleArray> orient = vtkSmartPointer<vtkDoubleArray>::New();
+	orient->SetNumberOfComponents(1);
+	orient->SetName("orientation");
+
+	vtkSmartPointer<vtkStringArray> label = vtkSmartPointer<vtkStringArray>::New();
+	label->SetNumberOfComponents(1);
+	label->SetName("label");
+
+	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
+	for(int i=0; i<this->num_features;i++)
+    {
+		pts->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1], 0.5, 0);
+	}
+
+	for(int i=0; i<this->num_features;i++)
+	{
+		verts->InsertNextCell(1);
+		verts->InsertCellPoint(i);
+		orient->InsertNextValue(45.0);
+		vtkIdType id = i+1  ;
+		label->InsertNextValue(this->table->GetColumn(id)->GetName());
+	}
+
+	pd->SetPoints(pts);
+	pd->SetVerts(verts);
+	pd->GetPointData()->AddArray(label);
+	pd->GetPointData()->AddArray(orient);
+
+	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
+	hier->SetInput(pd);
+	hier->SetOrientationArrayName("orientation");
+	hier->SetLabelArrayName("label");
+	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+  
+	vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
+	lmapper->SetInputConnection(hier->GetOutputPort());
+
+	vtkSmartPointer<vtkQtLabelRenderStrategy> strategy = vtkSmartPointer<vtkQtLabelRenderStrategy>::New();
+	lmapper->SetRenderStrategy(strategy);
+	lmapper->SetShapeToNone();
+	lmapper->SetBackgroundOpacity(0.0);
+	lmapper->SetMargin(0);
+
+	vtkSmartPointer<vtkActor2D> lactor = vtkSmartPointer<vtkActor2D>::New();
+	lactor->SetMapper(lmapper);
+
+	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	rmapper->SetInput(pd);
+
+	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
+	ractor->SetMapper(rmapper);
+
+	this->view->GetRenderer()->AddActor(lactor);
+	this->view->GetRenderer()->AddActor(ractor);
+
+    this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
+    this->selectionCallback1->SetClientData(this);
+
+	this->selectionCallback1->SetCallback (SelectionCallbackFunctionForSPD);
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
@@ -1919,6 +2038,30 @@ void Heatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
+void Heatmap::SetSPDInteractStyle()
+{
+	this->theme->SetCellValueRange(0, this->num_samples*this->num_features - 1);
+	this->theme->SetSelectedCellColor(1,0,1);
+	this->theme->SetSelectedPointColor(1,0,1);
+	this->view->ApplyViewTheme(theme);
+
+	this->myCellPicker = vtkSmartPointer<vtkCellPicker>::New();
+	this->view->GetInteractor()->SetPicker(this->myCellPicker);
+	this->myCellPicker->SetTolerance(0.004);
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback2 =vtkSmartPointer<vtkCallbackCommand>::New();
+	selectionCallback2->SetClientData(this);
+	selectionCallback2->SetCallback(SelectionCallbackFunction2);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::RightButtonReleaseEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::KeyPressEvent);
+	this->view->GetInteractor()->RemoveObservers(vtkCommand::KeyReleaseEvent);
+	this->view->GetInteractor()->AddObserver(vtkCommand::RightButtonReleaseEvent, selectionCallback2);
+
+	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
+	this->mainQTRenderWidget.resize(600, 600);
+	this->mainQTRenderWidget.show();
+}
+
 void Heatmap::showGraphforSPD( int selCol, int unselCol, bool bprogressionHeatmap)
 {	
 	if(bprogressionHeatmap)
@@ -1927,7 +2070,7 @@ void Heatmap::showGraphforSPD( int selCol, int unselCol, bool bprogressionHeatma
 	}
 	else
 	{
-		drawPoints3( true);
+		drawPointsForSPD();
 	}
 
 	this->dragLineFlag = false;
@@ -1995,7 +2138,7 @@ void Heatmap::showGraphforSPD( int selCol, int unselCol, bool bprogressionHeatma
 
 	this->view->GetRenderer()->AddActor(actor);
 	this->view->GetRenderer()->AddActor2D(scalarBar);
-	this->SetInteractStyle();
+	this->SetSPDInteractStyle();
 	this->view->GetRenderer()->GradientBackgroundOff();
 	this->view->GetRenderer()->SetBackground(1,1,1);
 
@@ -2428,10 +2571,19 @@ void Heatmap::SelectionCallbackFunctionForSPD(vtkObject* caller, long unsigned i
 			for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
 			{
 				long int value = vertexList->GetValue(i);
-				if( heatmapWin->reselectedClusterSPD.find(value) != heatmapWin->reselectedClusterSPD.end())
+				if( value < 2 * heatmapWin->num_samples - 1)
 				{
-					IDs.insert(value);
+					if( heatmapWin->reselectedClusterSPD.find(value) != heatmapWin->reselectedClusterSPD.end())
+					{
+						IDs.insert(value);
+					}
 				}
+				else
+				{
+					value = value - 2 * heatmapWin->num_samples + 1;
+					emit heatmapWin->columnToColorChanged(value);
+					break;
+				}			
 			}
 		}
 		try

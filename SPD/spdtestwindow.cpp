@@ -81,7 +81,11 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     psdtButton = new QPushButton(tr("View Progression"));
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
 	heatmapButton = new QPushButton(tr("Heatmap"));
-
+	distanceThres = new QDoubleSpinBox;
+	distanceThres->setRange(0,2000);
+	distanceThres->setSingleStep(0.1);
+	distanceThres->setValue(700.0);
+	
 	clusterButton->setEnabled(FALSE);
 	cellClusterButton->setEnabled(FALSE);
 	emdButton->setEnabled(FALSE);
@@ -156,6 +160,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psmButton, 9, 2);
 
 	mainLayout->addWidget(psdtLable, 10, 0);
+	mainLayout->addWidget(distanceThres, 10, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
 	mainLayout->addWidget(psdtButton, 11, 2);
 
@@ -476,6 +481,7 @@ void SPDtestWindow::viewProgression()
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
 	connect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
+	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorProgressionTree(int)));
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
@@ -606,6 +612,7 @@ void SPDtestWindow::regenerateProgressionTree()
 	{
 		heatmapButton->setEnabled(TRUE);
 
+		std::string distanceThres = this->distanceThres->text().toStdString();
 		std::cout<< "rerender progression view"<<endl;
 		selection->clear();
 		std::vector< std::vector< long int> > clusIndex;
@@ -614,8 +621,10 @@ void SPDtestWindow::regenerateProgressionTree()
 		vnl_matrix<double> clusAverageMat;
 		std::vector<int> modSize;
 		std::vector< double> colorVec;
+		std::vector< double> percentVec;
 		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
 		SPDModel->GetPercentage(clusIndex, colorVec);
+		SPDModel->GetCloseToDevicePercentage(clusIndex, percentVec, atof(distanceThres.c_str()));
 
 		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
@@ -629,7 +638,7 @@ void SPDtestWindow::regenerateProgressionTree()
 
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
-		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &colorVec);
+		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &colorVec, &percentVec);
 		try
 		{
 			this->graph->ShowGraphWindow();
@@ -639,6 +648,19 @@ void SPDtestWindow::regenerateProgressionTree()
 			std::cout<< "Graph window error!"<<endl;
 		}
 		showProgressionHeatmap();
+	}
+}
+
+void SPDtestWindow::ReColorProgressionTree(int nfeature)
+{
+	if( this->graph)
+	{
+		std::vector< std::vector< long int> > clusIndex;
+		vnl_vector<double> featureValue;
+		std::string featureName;
+		selection->GetClusterIndex( clusIndex);
+		SPDModel->GetClusterFeatureValue(clusIndex, nfeature, featureValue, featureName);
+		this->graph->ColorTreeAccordingToFeatures(featureValue, featureName.c_str());
 	}
 }
 

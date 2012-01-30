@@ -16,10 +16,12 @@
 #include <vtkRenderer.h>
 #include <vtkAbstractArray.h>
 #include <vtkVariantArray.h>
+#include <vtkStringArray.h>
 #include <vtkCellPicker.h>
 #include <vtkScalarBarActor.h>
 #include <vtkTextProperty.h>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <fstream>
 #include <vector>
 #include <map>
@@ -30,6 +32,7 @@
 #define pi 3.1415926
 #define ANGLE_STEP 90
 #define MAX_HOP 200
+#define ANNOTATION_CORNER 0
 
 static double selectColor[3]={0,1,0};
 static double progressionPathColor[3] = {1,0,0};
@@ -266,8 +269,8 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, 
-							   std::vector<double> *colorVec, std::set<long int>* colSels, QString filename)
+void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec,
+							    std::vector<double> *disVec, std::set<long int>* colSels, QString filename)
 {
 	this->fileName = filename;
 	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
@@ -275,6 +278,45 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	if( colSels)
 	{
 		this->colSelectIDs = *colSels;
+	}
+
+	
+	if( colorVec)
+	{
+		colorVector.set_size(colorVec->size());
+		for( int i = 0; i < colorVec->size(); i++)
+		{
+			double color = (*colorVec)[i];
+			colorVector[i] = color;
+		}
+	}
+	else
+	{
+		colorVector.set_size(table->GetNumberOfRows() + 1);
+		for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			colorVector[i] = 1;
+		}
+	}
+	featureColorVector = colorVector;
+
+
+	vnl_vector<double> distanceVec;
+	if(disVec) 
+	{
+		distanceVec.set_size( disVec->size());
+		for( int i = 0; i < disVec->size(); i++)
+		{
+			distanceVec[i] = (*disVec)[i];
+		}
+	}
+	else
+	{
+		distanceVec.set_size(table->GetNumberOfRows() + 1);
+		for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			distanceVec[i] = -1;
+		}
 	}
 
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
@@ -285,7 +327,11 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	vertexIDarrays->SetNumberOfComponents(1);
 	vertexIDarrays->SetName("vertexIDarrays");
 
-  // Create the edge weight array
+	vtkSmartPointer<vtkStringArray> vertexLabel = vtkSmartPointer<vtkStringArray>::New();
+	vertexLabel->SetNumberOfComponents(1);
+	vertexLabel->SetName("vertexLabel");
+
+	// Create the edge weight array
 	vtkSmartPointer<vtkDoubleArray> weights = vtkSmartPointer<vtkDoubleArray>::New();
 	weights->SetNumberOfComponents(1);
 	weights->SetName("edgeLabel");
@@ -303,10 +349,36 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		if (this->indMapFromClusIndToVertex.size() <= 0)
 		{
 			vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
+			QString str = QString::number(this->indMapFromIndToVertex[i]);
+			vertexLabel->InsertNextValue( str.toUtf8().constData());
 		}
 		else
 		{
 			vertexIDarrays->InsertNextValue( this->indMapFromClusIndToVertex[i].size());   // which should be the cluster index
+			int per = colorVector[i] * 100 + 0.5;
+			int disper = distanceVec[i] * 100 + 0.5;
+			if( per > 100)
+			{
+				per = 100;
+			}
+			if( disper > 100)
+			{
+				disper = 100;
+			}
+			QString strPercent = QString::number(per);
+
+			if( disper >= 0 && disper <= 100)
+			{
+				QString disPercent = QString::number(disper);
+				strPercent = "(" + strPercent + "%," + disPercent + "%)";
+			}
+			else
+			{
+				strPercent = "(" + strPercent + "%)";
+			}
+		
+			QString str = QString::number(this->indMapFromClusIndToVertex[i].size()) + strPercent;
+			vertexLabel->InsertNextValue(str.toUtf8().constData());
 		}
 	}
 
@@ -405,33 +477,20 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		exit(-2);
 	}
 
-	colorVector.clear();
-	if( colorVec)
-	{
-		colorVector = *colorVec;
-		for( int i = 0; i < colorVec->size(); i++)
-		{
-			double color = (*colorVec)[i];
-			colorVector.push_back( color);
-		}
-	}
-	else
-	{
-		for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)
-		{
-			colorVector.push_back(1);
-		}
-	}
-
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(1);
 	vertexColors->SetName("Color");
 	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
+
 	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
 	{             
 		vertexColors->InsertNextValue( i);
-		int k = int( colorVector[i] * COLOR_MAP2_SIZE + 0.5);
-		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); // color the vertices- blue
+		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
+		if( k >= COLOR_MAP2_SIZE)
+		{
+			k = COLOR_MAP2_SIZE - 1;
+		}
+		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
 	}
 	lookupTable->Build();
 
@@ -448,6 +507,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	graph->GetVertexData()->AddArray(vertexColors);
 	graph->GetVertexData()->AddArray(vertexIDarrays);
+	graph->GetVertexData()->AddArray(vertexLabel);
 	graph->GetEdgeData()->AddArray(weights);
 	graph->GetEdgeData()->AddArray(edgeColors);
 	
@@ -496,7 +556,8 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->SetVertexColorArrayName("Color");
 	this->view->SetEdgeColorArrayName("EdgeColor");
 	this->view->SetEdgeLabelArrayName("edgeLabel");
-	this->view->SetVertexLabelArrayName("vertexIDarrays");
+	this->view->SetVertexLabelArrayName("vertexLabel");
+	this->view->SetVertexLabelFontSize(5);
 
     theme->SetPointLookupTable(lookupTable);
 	theme->SetCellLookupTable(edgeLookupTable);
@@ -594,6 +655,12 @@ void GraphWindow::ShowGraphWindow()
 	this->mainQTRenderWidget.show();
 	std::cout<< "view->ResetCamera"<<endl;
 	view->ResetCamera();
+	cornAnnotation = vtkSmartPointer<vtkCornerAnnotation>::New();
+	cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
+	cornAnnotation->GetTextProperty()->SetFontSize(10);
+	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
+	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+
 	std::cout<< "view->Render"<<endl;
 	view->Render();
 	std::cout<< "Successfully rendered"<<endl;
@@ -603,6 +670,11 @@ void GraphWindow::ShowGraphWindow()
     this->selectionCallback->SetCallback ( SelectionCallbackFunction);
 	vtkAnnotationLink *link = view->GetRepresentation()->GetAnnotationLink();
 	this->observerTag = link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
+
+	this->keyPress = vtkSmartPointer<vtkCallbackCommand>::New();
+	this->keyPress->SetCallback(HandleKeyPress);
+	this->keyPress->SetClientData(this);
+	this->view->GetInteractor()->AddObserver(vtkCommand::KeyPressEvent, this->keyPress);
 
 	view->GetInteractor()->Start();
 }
@@ -672,6 +744,41 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 	}
 	//graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
 	//graphWin->view->GetRenderer()->Render();
+}
+
+void GraphWindow::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+{
+	GraphWindow* graphWin = (GraphWindow*)clientData;
+	char key = graphWin->view->GetInteractor()->GetKeyCode();
+	switch (key)
+	{
+	case 'r':
+		graphWin->RestoreLookupTable();
+		break;
+	default:
+		break;
+	}
+}
+
+void GraphWindow::RestoreLookupTable()
+{
+	for( int i = 0; i < colorVector.size(); i++)               
+	{
+		featureColorVector[i] = colorVector[i];
+		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
+		if( k >= COLOR_MAP2_SIZE)
+		{
+			k = COLOR_MAP2_SIZE - 1;
+		}
+		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
+	}
+	lookupTable->Build();
+	cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
+	cornAnnotation->GetTextProperty()->SetFontSize(10);
+	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
+	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+	this->view->GetRenderer()->Render();
+	this->selection->clear();
 }
 
 void GraphWindow::SetProgressionStartTag(bool bstart)
@@ -829,7 +936,11 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		}
 		else
 		{
-			int k = int( colorVector[i] * COLOR_MAP2_SIZE + 0.5);
+			int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
+			if( k >= COLOR_MAP2_SIZE)
+			{
+				k = COLOR_MAP2_SIZE - 1;
+			}
 			this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); // color the vertices- blue
 		}
 	}
@@ -1432,6 +1543,37 @@ void GraphWindow::GetOrder(long int node, std::vector<long int> &order)
 		}
 	}
 	vec.clear();
+}
+
+void GraphWindow::ColorTreeAccordingToFeatures(vnl_vector<double> &feature, const char *featureName)
+{
+	featureColorVector = feature;
+	featureColorVector -= feature.mean();
+	double var = featureColorVector.two_norm();
+	featureColorVector /= var;
+
+	double max = featureColorVector.max_value();
+	double min = featureColorVector.min_value();
+	featureColorVector = (featureColorVector - min) / ( max - min);
+	
+	for( int i = 0; i < colorVector.size(); i++)               
+	{
+		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
+		if( k >= COLOR_MAP2_SIZE)
+		{
+			k = COLOR_MAP2_SIZE - 1;
+		}
+		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
+	}
+	lookupTable->Build();
+
+	cornAnnotation->SetText(ANNOTATION_CORNER, featureName);
+	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+	cornAnnotation->GetTextProperty()->SetFontSize(10);
+	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
+	this->view->GetRenderer()->Render();
+	this->mainQTRenderWidget.GetRenderWindow()->Render();
+	this->selection->clear();
 }
 
 void GraphWindow::closeEvent(QCloseEvent *event)

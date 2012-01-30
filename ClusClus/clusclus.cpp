@@ -217,8 +217,13 @@ void clusclus::Clustering()
 			cluster_distances[i*(1+i)/2+j]=sample_distances[i*(1+i)/2+j];
 		}
 	}
+
 	for(int i=0; i<num_samples-1; i++)
 	{
+		if( num_currcluster % 100 == 0)
+		{
+			std::cout<<"left: "<<num_currcluster<<endl;
+		}
 		mergers[i][0] = i;
 		mergers[i][4]=MergeClusters(num_currcluster, &pivot1, &pivot2);
 		mergers[i][1]=pivot1;
