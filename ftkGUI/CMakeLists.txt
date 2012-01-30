@@ -40,7 +40,6 @@ SET( GUI_HDRS
 	PreprocessDialog.h
 	StatisticsToolbar.h
 	GraphWindow.h
-	ColorMap.h
 	SelectiveClustering.h
 )
 
@@ -80,6 +79,6 @@ QT4_WRAP_CPP( GUI_MOC_SRCS ${GUI_HDRS} )
 # This must be built static because libKPLS is only available as a static
 # library.
 ADD_LIBRARY( ftkGUI STATIC
-  ${GUI_SRCS} ${GUI_HDRS} ${GUI_MOC_SRCS} ${GUI_UI_HDRS} ${GUI_RC_SRCS} )
+  ${GUI_SRCS} ${GUI_MOC_SRCS} ${GUI_UI_HDRS} ${GUI_RC_SRCS} )
 
 TARGET_LINK_LIBRARIES( ftkGUI ${GUI_LIBS} )
