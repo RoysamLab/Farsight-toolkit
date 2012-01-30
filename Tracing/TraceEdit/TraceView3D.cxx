@@ -2706,6 +2706,7 @@ void View3D::setSliceWindowLevel(int value)
 void View3D::ToggleColorByTrees()
 {
 	bool colorByTrees = !this->tobj->GetColorByTrees();
+	//this->lineWidth = (float)this->LineWidthField->value();
 	this->tobj->SetColorByTrees(colorByTrees);
 	this->ColorByTreesAction->setChecked(colorByTrees);
 	if(colorByTrees)
@@ -2713,7 +2714,6 @@ void View3D::ToggleColorByTrees()
 		this->tobj->UpdateRootToTree();
 	}
 	this->tobj->RecolorTraces();
-	this->UpdateLineActor();
 	this->Rerender();
 }
 
@@ -3062,6 +3062,7 @@ void View3D::ApplyNewSettings()
 	this->renderTraceBits = this->markTraceBits->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
+	//this->UpdateLineActor();
 	this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -3489,7 +3490,10 @@ void View3D::setHighlightSettings(int value)
 }
 void View3D::updateTraceSelectionHighlights()
 {
-	//this->UpdateLineActor();
+	if (this->LineActor->GetProperty()->GetLineWidth() != lineWidth)
+	{
+		this->UpdateLineActor();
+	}
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
 	for (unsigned int i = 0; i < Selections.size(); i++)
