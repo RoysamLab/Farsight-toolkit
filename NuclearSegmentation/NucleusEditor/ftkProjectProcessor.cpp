@@ -738,8 +738,7 @@ bool ProjectProcessor::Classify_mclr(void)
 				model_data1->InsertNextValue(table->GetValueByName(row,test_table->GetColumnName(c)));
 			test_table->InsertNextRow(model_data1);
 		}	
-		std::cout<< test_table->GetNumberOfRows() << "_" << test_table->GetNumberOfColumns();
-
+		
 		////// Final Data  to classify from the model
 		vnl_matrix<double> data_classify;
 		data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
