@@ -232,7 +232,7 @@ void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 	//Now update the table:
 	std::vector<unsigned short> labels = assoc->GetLabels();
 	float** vals = assoc->GetAssocFeaturesList();
-	#pragma omp parallel for num_threads(4)
+	//#pragma omp parallel for num_threads(4)
 	for (int i=0; i<(int)labels.size(); ++i)
 	{
 		unsigned short id = labels.at(i);
