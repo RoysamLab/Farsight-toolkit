@@ -227,7 +227,7 @@ void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs,
 	/*! 
 	* Populate a table containing selected objects 
 	*/
-		//Add Header Columns
+	//Add Header Columns
 	for(vtkIdType NumberOfColumns = 0; NumberOfColumns < this->ObjectTable->GetNumberOfColumns(); NumberOfColumns++ )
 	{
 		vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
@@ -247,4 +247,72 @@ void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs,
 			selectedTable->InsertNextRow(RowCopy);
 		}
 	}
+}
+
+vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)
+{
+	/*!
+	*  	adds two clusters - Union
+	*   @param1 : vtkIdType key1 argument, 
+	*	@param2	: vtkIdType argument
+	*	@return the vtktable with the result
+	**/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	std::set< vtkIdType > selectedIDs = this->SelectionFromCluster(key1);
+	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
+	selectedIDs.insert(tempSet.begin(), tempSet.end());
+	this->CopySelectedIntoTable(selectedIDs, selectedTable);	
+	return selectedTable;
+}
+
+
+vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_SUBTRACT(vtkIdType key1, vtkIdType key2)
+{
+	/*!
+	*  s	ubtracts cluster with key2 from cluster with key1
+	*   @param1 : vtkIdType key1 argument, 
+	*	@param2	: vtkIdType argument
+	*	@return the vtktable with the result
+	**/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	std::set< vtkIdType > selectedIDs = this->SelectionFromCluster(key1);
+	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
+	std::set< vtkIdType > result ;
+	std::set_difference(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
+	this->CopySelectedIntoTable(result, selectedTable);	
+	return selectedTable;
+}
+
+vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_AND(vtkIdType key1, vtkIdType key2)
+{
+	/*!
+	*  	subtracts two clusters
+	*   @param1 : vtkIdType key1 argument
+	*	@param2	: vtkIdType argument
+	*	@return the vtktable with the result
+	**/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	std::set< vtkIdType > selectedIDs = this->SelectionFromCluster(key1);
+	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
+	std::set< vtkIdType > result ;
+	std::set_intersection(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
+	this->CopySelectedIntoTable(result, selectedTable);	
+	return selectedTable;
+}
+
+vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_XOR(vtkIdType key1, vtkIdType key2)
+{
+	/*!
+	*  	subtracts two clusters
+	*   @param1 : vtkIdType key1 argument
+	*	@param2	: vtkIdType argument
+	*	@return the vtktable with the result
+	**/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	std::set< vtkIdType > selectedIDs = this->SelectionFromCluster(key1);
+	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
+	std::set< vtkIdType > result ;
+	std::set_symmetric_difference(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
+	this->CopySelectedIntoTable(result, selectedTable);	
+	return selectedTable;
 }

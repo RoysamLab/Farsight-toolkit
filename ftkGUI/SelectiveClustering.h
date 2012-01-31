@@ -56,6 +56,10 @@ public:
 	bool SetObjectTable(vtkSmartPointer<vtkTable> InputObjectTable);
 	vtkSmartPointer<vtkTable> GetTableOfAllSelected();
 	vtkSmartPointer<vtkTable> GetTableOfSelectedFromCluster(vtkIdType key);
+	vtkSmartPointer<vtkTable> cluster_operator_ADD(vtkIdType key1,vtkIdType key2);
+	vtkSmartPointer<vtkTable> cluster_operator_SUBTRACT(vtkIdType key1,vtkIdType key2);
+	vtkSmartPointer<vtkTable> cluster_operator_AND(vtkIdType key1,vtkIdType key2);
+	vtkSmartPointer<vtkTable> cluster_operator_XOR(vtkIdType key1,vtkIdType key2);
 
 signals:
 	void SelectionChanged();
