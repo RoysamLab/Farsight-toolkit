@@ -3,7 +3,6 @@
 
 #include "Seed.h"
 #include "fregl/fregl_roi.h"
-#include "stdint.h"
 
 class ROIGrabber
 {

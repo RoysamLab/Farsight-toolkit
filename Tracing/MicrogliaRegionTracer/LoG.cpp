@@ -22,10 +22,10 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 	}
 
 
-	//Inversion filter, since the peak response in LoG is negative, we want to convert this to positive
+	//Scale to (-1, 1) range and invert
 	typedef itk::ShiftScaleImageFilter<LoGImageType, LoGImageType> InvertFilterType;
 	InvertFilterType::Pointer invertFilter = InvertFilterType::New();
-	invertFilter->SetScale(-1.0f);
+	invertFilter->SetScale(-1.0 / std::numeric_limits<ImageType::PixelType>::max());
 	invertFilter->SetInput(LoGFilter->GetOutput());
 
 	try
@@ -61,7 +61,7 @@ std::vector<LoG::LoGImageType::Pointer> LoG::RunMultiScaleLoG(Seed* seed, ImageT
 {
 	std::vector<LoGImageType::Pointer> multiscale_LoG_vector;
 
-	for (float scale = 0.5; scale <= 2.0; scale+=0.5)
+	for (float scale = 1; scale <= 3; scale+=0.25)
 	{
 		LoG *log_obj = new LoG();
 		LoGImageType::Pointer LoGimage = log_obj->RunLoG(seed_image, scale);

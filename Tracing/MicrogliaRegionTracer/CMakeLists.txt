@@ -11,6 +11,8 @@ SET(MicrogliaRegionTracer_HDRS
 	Seed.h
 	ROIGrabber.h
 	LoG.h
+	Node.h
+	Tree.h
 )
 
 SET(MicrogliaRegionTracer_SRCS 
@@ -19,6 +21,8 @@ SET(MicrogliaRegionTracer_SRCS
 	main.cpp
 	ROIGrabber.cpp
 	LoG.cpp
+	Node.cpp
+	Tree.cpp
 )
 
 ADD_EXECUTABLE(MicrogliaRegionTracer main.cpp ${MicrogliaRegionTracer_HDRS} ${MicrogliaRegionTracer_SRCS})

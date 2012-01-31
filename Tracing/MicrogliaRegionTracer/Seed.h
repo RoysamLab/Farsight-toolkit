@@ -1,21 +1,21 @@
 #ifndef SEED_H
 #define SEED_H
 
-#include <cstddef>
+#include "itkIntTypes.h"
 
 class Seed
 {
 public:
-	Seed(size_t x, size_t y, size_t z);
+	Seed(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z);
 	
-	size_t getX() const;
-	size_t getY() const;
-	size_t getZ() const;
+	itk::uint64_t getX() const;
+	itk::uint64_t getY() const;
+	itk::uint64_t getZ() const;
 
 private:
-	size_t x;
-	size_t y;
-	size_t z;
+	itk::uint64_t x;
+	itk::uint64_t y;
+	itk::uint64_t z;
 
 
 };
