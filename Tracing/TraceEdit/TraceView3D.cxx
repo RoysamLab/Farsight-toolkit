@@ -854,7 +854,7 @@ void View3D::ShowProjectTable()
 			else
 			{
 				found = true;
-			}  
+			}
 			
 			if (found && type == "Image")
 			{
@@ -1039,7 +1039,6 @@ void View3D::TraceBitImageIntensity(int ImgID)
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(ImgID));
 	}
 }
-
 
 void View3D::Initialize()
 {
@@ -1329,22 +1328,27 @@ void View3D::CreateGUIObjects()
 	this->SettingsWidget = new QWidget(this);
 	this->MaxGapField = new QSpinBox(this->SettingsWidget);
 	this->MaxGapField->setRange(0,1000);
+	connect(this->MaxGapField, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
 	this->GapToleranceField->setRange(0,100);
 	this->GapToleranceField->setSingleStep(.1);
+	connect(this->GapToleranceField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
 	this->ColorValueField->setRange(0,1);
 	this->ColorValueField->setSingleStep(.01);
+	connect(this->ColorValueField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->TipColor = new QDoubleSpinBox(this->SettingsWidget);
 	this->TipColor->setRange(0,1);
 	this->TipColor->setSingleStep(.01);
 	this->TipColor->setValue(0.5);
+	connect(this->TipColor, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->LineWidthField = new QSpinBox(this->SettingsWidget);
 	this->LineWidthField->setRange(1,5);
+	connect(this->LineWidthField, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->markTraceBits = new QCheckBox("Mark all traced Points",this->SettingsWidget);
 	this->markTraceBits->setChecked(this->renderTraceBits);
@@ -1352,14 +1356,17 @@ void View3D::CreateGUIObjects()
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setRange(0,1);
 	this->BackgroundRBox->setSingleStep(.01);
+	connect(this->BackgroundRBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->BackgroundGBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundGBox->setRange(0,1);
 	this->BackgroundGBox->setSingleStep(.01);
+	connect(this->BackgroundGBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->BackgroundBBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundBBox->setRange(0,1);
 	this->BackgroundBBox->setSingleStep(.01);
+	connect(this->BackgroundBBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->RollBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->RollBox->setRange(-360,360);
@@ -1409,6 +1416,7 @@ void View3D::CreateGUIObjects()
 	connect(this->GridOpacitySlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
+	this->ApplySettingsButton->setEnabled(false);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
@@ -3036,8 +3044,14 @@ void View3D::ShowSettingsWindow()
 	this->SettingsWidget->show();
 }
 
+void View3D::activateSaveAllButton()
+{
+	this->ApplySettingsButton->setEnabled(true);
+}
+
 void View3D::ApplyNewSettings()
 {
+	this->ApplySettingsButton->setEnabled(false);
 	this->tobj->gapMax = this->MaxGapField->text().toInt();
 	this->tobj->gapTol = this->GapToleranceField->value();
 	this->SmallLineLength = (float)this->LineLengthField->value();

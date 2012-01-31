@@ -289,10 +289,12 @@ protected slots:
 	void setProjectionMode();
 	void setRaycastMode();
 
+	void activateSaveAllButton();
+
 	void setContourMode();
 	void setRaycastSomaMode();
-  void clearSettings();
-  void recordTest();
+	void clearSettings();
+	void recordTest();
 
 protected:
 	void closeEvent(QCloseEvent *event);
