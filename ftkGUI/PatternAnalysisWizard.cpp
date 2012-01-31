@@ -100,7 +100,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 	{
 		const char * name = m_table->GetColumnName(c);
 		std::string current_name = name;
-		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos || current_name.find("confidence")!=std::string::npos )
+		if( current_name.find("train")!=std::string::npos || current_name.find("prediction")!=std::string::npos || current_name.find("confidence")!=std::string::npos || current_name.find("time")!=std::string::npos)
 			continue;
 		if( current_name.find("Zern")!=std::string::npos)
 		{
@@ -250,7 +250,7 @@ bool PatternAnalysisWizard::validateCurrentPage()
 					appendModel(mod_table, filename);
 					break;
 				case 4:
-					extractTable();
+					extractTable(true);
 					break;
 				case 5:
 					extractTableFromModel(mod_table);
@@ -954,7 +954,10 @@ void PatternAnalysisWizard::extractTable(bool flag)
 	}
 
 	if(flag)
+	{
 		emit start_training(new_table);
+	}
+
 }
 
 
