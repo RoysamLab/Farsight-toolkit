@@ -675,7 +675,7 @@ bool View3D::readProject(QString projectFile)
 			return false;
 		}
 		RelativeProjectPath = ProjectFileInfo.absolutePath();
-		ftk::ProjectManager * project = new ftk::ProjectManager((char*)projectFile.toStdString().c_str());
+		ftk::ProjectManager * project = new ftk::ProjectManager(projectFile.toStdString().c_str());
 		for ( i = 0; i < project->size(); i++)
 		{ 
 			bool found = false;

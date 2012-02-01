@@ -31,6 +31,10 @@ void ProjectManager::readProject(const char *filename)
 {
 	TiXmlDocument doc(filename);
 	doc.LoadFile();
+	if( doc.Error() )
+	  {
+	  std::cerr << "Error while parsing " << filename << ": " << doc.ErrorDesc() << std::endl;
+	  }
 	TiXmlHandle docHandle( &doc );
 	TiXmlElement* sourceFile = docHandle.FirstChild("Source").FirstChild("File").Element();
 	while (sourceFile)
