@@ -2306,11 +2306,13 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 	connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
 	dialog->show();
 	
+	#ifdef	USE_Clusclus
 	this->HeatmapWin = new Heatmap();
 	this->HeatmapWin->setModels(pawTable, this->selection);
 	this->HeatmapWin->setPriority(mclr->Get_Feature_Order());
 	this->HeatmapWin->runClus();
 	this->HeatmapWin->showGraph();
+	#endif
 
 }
 	
