@@ -128,6 +128,6 @@ public:
 	vnl_matrix<double> Update_Temp_Train_Data(int query,vnl_matrix<double> testDataTemp );
 	std::vector<int> Submodular_AL(int activeQuery,vnl_matrix<double> testDataTemp );
 	vnl_matrix<double> Update_Temp_x(int query, vnl_matrix<double> tempTestData, vnl_matrix<double> xBatchMode );
-
+	std::vector<int> Get_Feature_Order();
 };
 #endif

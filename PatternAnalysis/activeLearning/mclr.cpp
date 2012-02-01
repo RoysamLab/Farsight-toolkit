@@ -616,7 +616,39 @@ std::vector<int> MCLR::Get_Top_Features()
 }
 
 
+std::vector<int> MCLR::Get_Feature_Order()
+{	
 
+	//Need the indices of the top 5 features
+	// Remove Bias and ID rows. hence m.w -2
+	std::vector<int> indices(m.w.rows()-2);
+
+	std::vector<std::pair<double, int> > val_idx; // value and index
+
+	// find the maximum in each row
+	// Remove Bias and ID rows. hence i = 2
+	for(int i = 2; i< m.w.rows() ; ++i)
+	{
+		vnl_vector<double> temp_row = m.w.get_row(i);
+		val_idx.push_back(std::pair<double, int>(temp_row.max_value(),i-2));
+	}
+
+	// sorts by first element of the pair automatically
+	std::sort(val_idx.begin(), val_idx.end());
+	std::vector<std::pair<double, int> >::const_iterator itr;
+	int counter = 0;
+
+
+	reverse(val_idx.begin(),val_idx.end());
+
+	for(itr = val_idx.begin(); itr != val_idx.begin()+indices.size(); ++itr)
+	{
+		indices[counter] = (*itr).second;
+		counter++;
+	}
+
+	return indices;
+}
 
 MCLR::model MCLR::Get_Training_Model()
 {	
