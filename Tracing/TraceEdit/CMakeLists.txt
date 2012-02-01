@@ -2,25 +2,25 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(TraceEdit)
 
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
-  
+
 SET( TRACE_SRCS
-  TraceBit.h        TraceBit.cxx
-  TraceLine.h       TraceLine.cxx
-  TraceGap.h        TraceGap.cxx
-  TraceObject.h     TraceObject.cxx
-  TraceModel.h      TraceModel.cxx
-  MergeModel.h      MergeModel.cxx
-  branchPT.h        BranchPT.cxx
-  ImageActors.h     ImageActors.cxx
-  CellTrace.h       CellTrace.cxx
-  CellTraceModel.h  CellTraceModel.cxx
-  vtkPlotEdges.h    vtkPlotEdges.cxx 
-  TraceView3D.h     TraceView3D.cxx 
-  cellexport.h	    cellexport.cxx
-  screenshot.h	    screenshot.cxx
-  GridActors.h		GridActors.cxx
-  VolumeOfInterest.h VolumeOfInterest.cxx
-  ${GUI_MOC_SRCS} ) 
+  TraceBit.cxx
+  TraceLine.cxx
+  TraceGap.cxx
+  TraceObject.cxx
+  TraceModel.cxx
+  MergeModel.cxx
+  BranchPT.cxx
+  ImageActors.cxx
+  CellTrace.cxx
+  CellTraceModel.cxx
+  vtkPlotEdges.cxx
+  TraceView3D.cxx
+  cellexport.cxx
+  screenshot.cxx
+  GridActors.cxx
+  VolumeOfInterest.cxx
+  ${GUI_MOC_SRCS} )
 
 SET( TRACE_LIBS
     tiff
@@ -40,8 +40,8 @@ SET( TRACE_LIBS
     MCLR
     ${QT_LIBRARIES} )
 
-IF (BUILD_SPD)	
-  LIST( APPEND TRACE_LIBS SPD ) 
+IF (BUILD_SPD)
+  LIST( APPEND TRACE_LIBS SPD )
 ENDIF (BUILD_SPD)
 
 IF(BUILD_CLUSCLUS)
