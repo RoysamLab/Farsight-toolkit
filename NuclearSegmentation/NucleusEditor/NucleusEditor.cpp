@@ -2285,6 +2285,7 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 		int active_query = mclr->Active_Query();
 		//active_queries = mclr->ALAMO(active_query);
 		active_queries = mclr->Submodular_AL(active_query,mclr->testData);
+
 	}// END if(!first_pop)		
 
 	
@@ -2297,16 +2298,23 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 			segView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
 		snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
 	}
-
+	
+	
 	//mclr->test_table is the pawTable obtained above
 	dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->numberOfClasses, active_queries, mclr->top_features);
 	connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
 	connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
 	dialog->show();
+	
+	this->HeatmapWin = new Heatmap();
+	this->HeatmapWin->setModels(pawTable, this->selection);
+	this->HeatmapWin->setPriority(mclr->Get_Feature_Order());
+	this->HeatmapWin->runClus();
+	this->HeatmapWin->showGraph();
 
 }
 	
-
+	
 
 
 void NucleusEditor::SaveActiveLearningModel()
