@@ -422,6 +422,10 @@ void View3D::OkToBoot()
 		this->chooseInteractorStyle(0);
 		renderMode = RAYCAST;
 	}
+	if (!this->SomaFile.isEmpty())
+	{
+		soma_sub_menu->setEnabled(true);
+	}
 }
 
 //!Dialogs to Find File Names
@@ -644,6 +648,7 @@ void View3D::LoadSomaFile()
 		this->QVTK->GetRenderWindow()->Render();
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 		this->statusBar()->showMessage("Contour Somas Rendered");
+		soma_sub_menu->setEnabled(true);
 	}
 }
 
@@ -675,7 +680,7 @@ bool View3D::readProject(QString projectFile)
 			return false;
 		}
 		RelativeProjectPath = ProjectFileInfo.absolutePath();
-		ftk::ProjectManager * project = new ftk::ProjectManager(projectFile.toStdString().c_str());
+		ftk::ProjectManager * project = new ftk::ProjectManager((char*)projectFile.toStdString().c_str());
 		for ( i = 0; i < project->size(); i++)
 		{ 
 			bool found = false;
@@ -1107,7 +1112,6 @@ void View3D::setupLinkedSpace()
 /*!Set up the components of the interface */
 void View3D::CreateGUIObjects()
 {
-
 	//Set up the menu bar
 
 	this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
@@ -1879,9 +1883,10 @@ void View3D::CreateLayout()
 	renderer_sub_menu->addAction(this->SetSlicer);
 	renderer_sub_menu->addAction(this->SetProjection);
 	renderer_sub_menu->addAction(this->SetRaycast);
-	QMenu *soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
+	soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
 	soma_sub_menu->addAction(this->SetContour);
 	soma_sub_menu->addAction(this->SetSomaRaycast);
+	soma_sub_menu->setEnabled(false);
 	this->DataViews->addAction(this->ColorByTreesAction);
 	this->DataViews->addAction(this->GridAction);
 

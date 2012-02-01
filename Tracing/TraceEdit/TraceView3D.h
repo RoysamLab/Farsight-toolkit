@@ -16,19 +16,12 @@ limitations under the License.
 #ifndef TRACEVIEW3D_H_
 #define TRACEVIEW3D_H_
 
-#include "cellexport.h"
-#include "screenshot.h"
-#include "GridActors.h"
-#include "vtkInteractorStyleImage.h"
-#include "vtkSmartPointer.h"
 //#include "UndoBuffer.h"
 //#include "undobuff.h"
 #include <stdio.h>
 #include <string>
 #include <set>
 #include <QtGui>
-#include <QDate>
-#include <QTime>
 #include <time.h>
 
 #include "ftkGUI/PlotWindow.h"
@@ -41,8 +34,6 @@ limitations under the License.
 #include "vnl/algo/vnl_conjugate_gradient.h"
 #include "vnl/algo/vnl_powell.h"
 
-#include <QAction>
-#include <QtGui>
 #include <QVTKWidget.h>
 
 #include "vtkActor.h"
@@ -60,6 +51,7 @@ limitations under the License.
 #include "vtkGlyph3D.h"
 #include "vtkImageData.h"
 #include "vtkImageToStructuredPoints.h"
+#include "vtkInteractorStyleImage.h"
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkInteractorStyleRubberBandZoom.h"
 #include "vtkInteractorStyleImage.h"
@@ -90,6 +82,7 @@ limitations under the License.
 #include "vtkRenderWindowInteractor.h"
 #include "vtkSliderRepresentation2D.h"
 #include "vtkSliderWidget.h"
+#include "vtkSmartPointer.h"
 #include "vtkSphereSource.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
@@ -113,6 +106,10 @@ limitations under the License.
 #include "ftkUtils.h"
 #include "ImageActors.h"
 #include "MergeModel.h"
+
+#include "cellexport.h"
+#include "screenshot.h"
+#include "GridActors.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -323,6 +320,7 @@ private:
 	QGroupBox * ImageListBox;
 	QListView * ImageListView; 
 	QCheckBox * Use2DSlicer;
+	QMenu * soma_sub_menu;
 	bool translateImages;
 	QDate  Date;
 	QTime  Time;
