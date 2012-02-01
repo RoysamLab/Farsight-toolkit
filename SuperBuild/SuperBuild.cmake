@@ -141,6 +141,7 @@ ExternalProject_Add(VTK
     -DVTK_QT_USE_WEBKIT:BOOL=OFF
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
     ${mac_args}
+    ${VTK_EXTRA_SUPERBUILD_CMAKE_ARGS}
   INSTALL_COMMAND ""
   DEPENDS
     ${Qt_Target}
@@ -182,6 +183,7 @@ ExternalProject_Add(ITK
     -DITK_USE_SYSTEM_VXL:BOOL=ON
     -DVXL_DIR:FILEPATH=${base}/Build/VXL
     ${mac_args}
+    ${ITK_EXTRA_SUPERBUILD_CMAKE_ARGS}
   INSTALL_COMMAND ""
   DEPENDS
     "VXL"
