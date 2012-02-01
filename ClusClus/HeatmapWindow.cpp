@@ -2780,5 +2780,8 @@ void Heatmap::GetSelecectedIDsForSPD()
 
 void Heatmap::closeEvent(QCloseEvent *event)
 {
+	//
+	emit closing(this);
+	event->accept();
 	mainQTRenderWidget.close();
 }

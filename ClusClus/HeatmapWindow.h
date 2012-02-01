@@ -17,11 +17,15 @@
 #include <QtGui/QApplication>
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QWidget>
+#include <QtGui/QCloseEvent>
 #include <QApplication>
 #include <QFileDialog>
 #include <QFile>
 #include <QCoreApplication>
 #include <QTextStream>
+
+#include <QtCore/QMap>
+#include <QtCore/QSignalMapper>
 
 #include <vtkTable.h>
 #include <vtkLookupTable.h>
@@ -118,9 +122,10 @@ public:
 signals:
 	void SelChanged();
 	void columnToColorChanged(int value);
+	void closing(QWidget *widget);
 
 protected:
-	virtual void closeEvent(QCloseEvent *event);
+	void closeEvent(QCloseEvent *event);
 
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);

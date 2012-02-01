@@ -5388,6 +5388,14 @@ void View3D::closeEvent(QCloseEvent *event)
 		this->spdTestWin->close();
 	}
 #endif
+	
+#ifdef USE_Clusclus
+	if (this->HeatmapWin)
+	{
+		this->HeatmapWin->close();
+	}
+#endif
+
 	event->accept();
 }
 
@@ -5696,6 +5704,7 @@ void View3D::ClusclusAnalysis()
 		this->HeatmapWin->setModels(featureTable,this->CellModel->GetObjectSelection());
 		this->HeatmapWin->runClus();
 		this->HeatmapWin->showGraph();
+		//this->HeatmapWin->close();
 	}
 #endif
 }
