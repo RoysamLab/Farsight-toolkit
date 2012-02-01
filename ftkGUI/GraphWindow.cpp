@@ -50,6 +50,7 @@ GraphWindow::GraphWindow(QWidget *parent)
 	bProgressionStart = true;
 	progressionStartID = -1;
 	progressionEndID = -1;
+	cornAnnotation = NULL;
 }
 
 GraphWindow::~GraphWindow()
@@ -367,7 +368,7 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 			}
 			QString strPercent = QString::number(per);
 
-			if( disper >= 0 && disper <= 100)
+			if( disper > 0 && disper <= 100)
 			{
 				QString disPercent = QString::number(disper);
 				strPercent = "(" + strPercent + "%," + disPercent + "%)";
@@ -655,11 +656,21 @@ void GraphWindow::ShowGraphWindow()
 	this->mainQTRenderWidget.show();
 	std::cout<< "view->ResetCamera"<<endl;
 	view->ResetCamera();
-	cornAnnotation = vtkSmartPointer<vtkCornerAnnotation>::New();
-	cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
-	cornAnnotation->GetTextProperty()->SetFontSize(10);
-	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
-	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+
+	if( cornAnnotation == NULL)
+	{
+		cornAnnotation = vtkSmartPointer<vtkCornerAnnotation>::New();
+		cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
+		cornAnnotation->GetTextProperty()->SetFontSize(10);
+		cornAnnotation->GetTextProperty()->SetColor(0,0,0);
+		this->view->GetRenderer()->AddActor2D(cornAnnotation);
+	}
+	else
+	{
+		cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
+		cornAnnotation->GetTextProperty()->SetFontSize(10);
+		cornAnnotation->GetTextProperty()->SetColor(0,0,0);
+	}
 
 	std::cout<< "view->Render"<<endl;
 	view->Render();
@@ -773,10 +784,11 @@ void GraphWindow::RestoreLookupTable()
 		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
 	}
 	lookupTable->Build();
+	//this->view->GetRenderer()->RemoveActor2D(cornAnnotation);
 	cornAnnotation->SetText(ANNOTATION_CORNER, "Colored by Device Sample Percentage");
 	cornAnnotation->GetTextProperty()->SetFontSize(10);
 	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
-	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+	//this->view->GetRenderer()->AddActor2D(cornAnnotation);
 	this->view->GetRenderer()->Render();
 	this->selection->clear();
 }
@@ -1567,8 +1579,9 @@ void GraphWindow::ColorTreeAccordingToFeatures(vnl_vector<double> &feature, cons
 	}
 	lookupTable->Build();
 
+	//this->view->GetRenderer()->RemoveActor2D(cornAnnotation);
 	cornAnnotation->SetText(ANNOTATION_CORNER, featureName);
-	this->view->GetRenderer()->AddActor2D(cornAnnotation);
+	//this->view->GetRenderer()->AddActor2D(cornAnnotation);
 	cornAnnotation->GetTextProperty()->SetFontSize(10);
 	cornAnnotation->GetTextProperty()->SetColor(0,0,0);
 	this->view->GetRenderer()->Render();

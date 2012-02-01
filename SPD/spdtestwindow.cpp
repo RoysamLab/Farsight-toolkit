@@ -43,7 +43,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
 	sampleCoherenceLabel = new QLabel(tr("Sample Coherence(0.0 ~ 1.0):"));;
 	sampleCoherenceBox = new QDoubleSpinBox;
-	sampleCoherenceBox->setValue( 0.9);
+	sampleCoherenceBox->setValue( 0.9);	
 	sampleCoherenceBox->setRange(0,1); 
 	sampleCoherenceBox->setSingleStep(0.1);
 

@@ -3409,10 +3409,18 @@ void View3D::CalculateDistanceToDevice()
 }
 void View3D::readNucleiTable()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr(".txt(*.txt)"));
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr("project( *.xml)"));
 	if (!fileName.isEmpty())
 	{
-		this->nucleiTable = ftk::LoadTable(fileName.toStdString());
+		if (fileName.endsWith("xml"))
+		{
+			this->readProject(fileName);
+		}
+		else
+		{
+			this->nucleiTable = ftk::LoadTable(fileName.toStdString());
+		}
+		std::cout << "loading table \n";
 	}
 	this->AssociateCellToNucleiAction->setDisabled(false);
 }
@@ -3471,9 +3479,10 @@ void View3D::AssociateNeuronToNuclei()
 				}
 			}
 		}//end of soma row		
-		this->AddDebugPoints(this->nucleiTable);
-		this->QVTK->GetRenderWindow()->Render();
 		this->ShowCellAnalysis();
+		//this->AddDebugPoints(this->nucleiTable);
+		this->AddDebugPoints(this->CellModel->getDataTable());
+		this->QVTK->GetRenderWindow()->Render();
 	}// end of matching soma to nuclei
 }
 void View3D::ShowSeedPoints()
@@ -3673,8 +3682,8 @@ void View3D::UpdateBranchActor()
 
 void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 {
-	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
-	cube_src->SetBounds(-0.2,0.2,-0.2,0.2,-0.2,0.2);
+	vtkSmartPointer<vtkCubeSource> sphere_src = vtkSmartPointer<vtkCubeSource>::New();
+	sphere_src->SetBounds(-0.2,0.2,-0.2,0.2,-0.2,0.2);
 	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
@@ -3688,7 +3697,7 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	point_poly->SetPoints(points);
 	point_poly->SetVerts(cells);
 	vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
-	glyphs->SetSource(cube_src->GetOutput());
+	glyphs->SetSource(sphere_src->GetOutput());
 	glyphs->SetInput(point_poly);
 	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
 	cubemap->SetInput(glyphs->GetOutput());
@@ -3705,11 +3714,20 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 {
 	if(centroidsTable->GetNumberOfRows() ==0)
 		return;
-	vtkSmartPointer<vtkCubeSource> cube_src = vtkSmartPointer<vtkCubeSource>::New();
-	cube_src->SetBounds(-1,1,-1,1,-1,1);
+	vtkSmartPointer<vtkSphereSource> sphere_src = vtkSmartPointer<vtkSphereSource>::New();
 	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
+
+	vtkSmartPointer<vtkDoubleArray> sizeArray = vtkSmartPointer<vtkDoubleArray>::New();
+	sizeArray->SetName("SizeArray");
+	sizeArray->SetNumberOfTuples(centroidsTable->GetNumberOfRows());
+
+	vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colors->SetName("Colors");
+	colors->SetNumberOfComponents(3);
+	colors->SetNumberOfTuples(centroidsTable->GetNumberOfRows());
+
 	for(vtkIdType counter=0; counter<centroidsTable->GetNumberOfRows(); counter++)
 	{
 		int return_id = points->InsertNextPoint(
@@ -3717,24 +3735,39 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 			centroidsTable->GetValueByName(counter, "centroid_y").ToDouble(),
 			centroidsTable->GetValueByName(counter, "centroid_z").ToDouble()
 			);
+		double radii = 0.75  * centroidsTable->GetValueByName(counter, "volume").ToDouble()/ PI;
+		radii = pow( radii, (double) 1 / 3);
+		sizeArray->SetTuple1(counter, radii);
+		colors->InsertTuple3(counter, 255, 255, 0);
+
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(return_id);
 	}
 	//printf("About to create poly\n");
 	point_poly->SetPoints(points);
 	point_poly->SetVerts(cells);
+	point_poly->GetPointData()->AddArray(sizeArray);
+	point_poly->GetPointData()->SetActiveScalars("SizeArray");
+	point_poly->GetPointData()->AddArray(colors);
+
 	vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
-	glyphs->SetSource(cube_src->GetOutput());
+	//glyphs->ScalingOn();
+	//glyphs->SetScaleModeToScaleByScalar(); 	
+	glyphs->SetSource(sphere_src->GetOutput());
 	glyphs->SetInput(point_poly);
+
 	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
 	cubemap->SetInput(glyphs->GetOutput());
-	cubemap->GlobalImmediateModeRenderingOn();
+	//cubemap->GlobalImmediateModeRenderingOn();
+	cubemap->ScalarVisibilityOn();
+	cubemap->SetScalarModeToUsePointFieldData();
+	cubemap->SelectColorArray("Colors");
+
 	CentroidsActor = vtkSmartPointer<vtkActor>::New();
 	CentroidsActor->SetMapper(cubemap);
 	CentroidsActor->SetPickable(0);
-	CentroidsActor->GetProperty()->SetPointSize(5);
+	CentroidsActor->GetProperty()->SetPointSize(1);
 	CentroidsActor->GetProperty()->SetOpacity(.5);
-	CentroidsActor->GetProperty()->SetColor(1,1,0);
 	Renderer->AddActor(CentroidsActor);
 }
 
