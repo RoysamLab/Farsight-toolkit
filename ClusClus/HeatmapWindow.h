@@ -17,15 +17,11 @@
 #include <QtGui/QApplication>
 #include <QtGui/QDesktopWidget>
 #include <QtGui/QWidget>
-#include <QtGui/QCloseEvent>
 #include <QApplication>
 #include <QFileDialog>
 #include <QFile>
 #include <QCoreApplication>
 #include <QTextStream>
-
-#include <QtCore/QMap>
-#include <QtCore/QSignalMapper>
 
 #include <vtkTable.h>
 #include <vtkLookupTable.h>
@@ -108,6 +104,8 @@ public:
 	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
 	void runClus();
+	inline void setPriority(std::vector<int> order){ priority_order = order; };
+	inline void closeWindow(){ close(); };
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
 	void runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
@@ -118,14 +116,16 @@ public:
 	void SetSPDInteractStyle();
 	void showDendrogram1();
 	void showDendrogram2();	
+	void reRunClus();
+	void showGraphforNe();
+	void drawPointsforNe();
 
 signals:
 	void SelChanged();
 	void columnToColorChanged(int value);
-	void closing(QWidget *widget);
 
 protected:
-	void closeEvent(QCloseEvent *event);
+	virtual void closeEvent(QCloseEvent *event);
 
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
@@ -226,6 +226,7 @@ private:
 	std::map<int, int> indMapFromVertexToInd;
 	std::vector< std::vector<int> > indSPDMapFromIndToVertex;
 	std::vector<int> indMapFromIndToVertex;
+	std::vector<int> priority_order;
 
 	std::map<int, int> rowMapFromOriginalToReorder;
 	std::map<int, int> columnMapFromOriginalToReorder;

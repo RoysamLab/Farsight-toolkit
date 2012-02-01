@@ -253,6 +253,8 @@ void Heatmap::readmustd(double** mustd)
 
 void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
+	
+	std::cout<<"entered" <<std::endl;
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
@@ -266,6 +268,7 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels,
 		}
 	}
 
+	std::cout<<"About to enter selections" <<std::endl;
 	if(!sels)
 		this->Selection = new ObjectSelection();
 	else
@@ -276,6 +279,7 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels,
 	else
 		this->Selection2 = sels2;
 
+	std::cout<<"About to connect" <<std::endl;
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDs()));
 }
 
@@ -479,8 +483,10 @@ void Heatmap::runClus()
 	//optimalleaforder2[104] = 102;
 	//optimalleaforder2[105] = 103;
 
+
 	for(int i = 0;i<cc1->num_features; i++)
 		optimalleaforder2[i]=i;
+
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
 	this->setDataForDendrograms(cc1->treedata);
 	this->creatDataForHeatmap(0.2);
@@ -501,7 +507,7 @@ void Heatmap::showGraph()
 	else
 		this->drawPoints1();
 
-
+	
 	this->aPlane = vtkSmartPointer<vtkPlaneSource>::New();
     this->aPlane->SetXResolution(this->num_features);
     this->aPlane->SetYResolution(this->num_samples);
@@ -1710,7 +1716,7 @@ void Heatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int ev
 
 void Heatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
-	Heatmap* heatmapWin = (Heatmap*)clientData;
+	/*Heatmap* heatmapWin = (Heatmap*)clientData;
 	char key = heatmapWin->view->GetInteractor()->GetKeyCode();
 	int size = 0;
 	switch (key)
@@ -1739,7 +1745,7 @@ void Heatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void*
 		break;
 	default:
 		break;
-	}
+	}*/
 }
 
 void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
@@ -2257,44 +2263,44 @@ void Heatmap::selectClustersforSPD(double* worldPosition)
 
 void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 {
-	std::set<long int>::iterator it;
-	int clusternumber = 0;
-	for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
-	{
-		long int id = *it;
-		long int id1 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][0];
-		long int id2 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][1];
+	//std::set<long int>::iterator it;
+	//int clusternumber = 0;
+	//for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
+	//{
+	//	long int id = *it;
+	//	long int id1 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][0];
+	//	long int id2 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][1];
 
-		std::set<long int>::iterator it1 = selectedClusterSPD.find(id1);
-		std::set<long int>::iterator it2 = selectedClusterSPD.find(id2);
+	//	std::set<long int>::iterator it1 = selectedClusterSPD.find(id1);
+	//	std::set<long int>::iterator it2 = selectedClusterSPD.find(id2);
 
-		if(it1 == selectedClusterSPD.end())
-		{
-			reselectedClusterSPD.insert(id1);
-			clusternumber++;
-		}
-		if(it2 == selectedClusterSPD.end())
-		{
-			reselectedClusterSPD.insert(id2);
-			clusternumber++;
-		}	
-	}
-	//cout<<"cluster number is "<<clusternumber<<endl;
+	//	if(it1 == selectedClusterSPD.end())
+	//	{
+	//		reselectedClusterSPD.insert(id1);
+	//		clusternumber++;
+	//	}
+	//	if(it2 == selectedClusterSPD.end())
+	//	{
+	//		reselectedClusterSPD.insert(id2);
+	//		clusternumber++;
+	//	}	
+	//}
+	////cout<<"cluster number is "<<clusternumber<<endl;
 
-	std::vector< std::set< long int> > clusIndex;
-	std::vector< std::set< long int> > sampleIndex;
-	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
-	{
-		std::set<long int> sampleIdsforSPD;
-		std::set<long int> clusIdsforSPD;
-		this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
-		//cout<<"...\n";
-		sampleIndex.push_back(sampleIdsforSPD);
-		clusIndex.push_back(clusIdsforSPD);
-	}
+	//std::vector< std::set< long int> > clusIndex;
+	//std::vector< std::set< long int> > sampleIndex;
+	//for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
+	//{
+	//	std::set<long int> sampleIdsforSPD;
+	//	std::set<long int> clusIdsforSPD;
+	//	this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
+	//	//cout<<"...\n";
+	//	sampleIndex.push_back(sampleIdsforSPD);
+	//	clusIndex.push_back(clusIdsforSPD);
+	//}
 
-	this->Selection->SetClusterIndex(clusIndex);
-	this->Selection->SetSampleIndex(sampleIndex);
+	//this->Selection->SetClusterIndex(clusIndex);
+	//this->Selection->SetSampleIndex(sampleIndex);
 
 }
 
@@ -2780,8 +2786,194 @@ void Heatmap::GetSelecectedIDsForSPD()
 
 void Heatmap::closeEvent(QCloseEvent *event)
 {
-	//
-	emit closing(this);
-	event->accept();
 	mainQTRenderWidget.close();
+}
+void Heatmap::reRunClus()
+{
+	double** datas;
+	vtkVariant temp; 
+
+	datas = new double*[this->table->GetNumberOfRows()];
+
+	std::cout<<this->table->GetNumberOfRows()<<endl;
+	std::cout<<this->table->GetNumberOfColumns()<<endl;
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+	}
+
+	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{		
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+	}
+	int* optimalleaforder1 = new int[this->table->GetNumberOfRows()];
+	for(int i = 0;i<this->table->GetNumberOfRows(); i++)
+		optimalleaforder1[i]=i;
+	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
+	for(int i = 0;i<this->table->GetNumberOfColumns() - 1; i++)
+		optimalleaforder2[i]=i;
+	
+	this->setDataForHeatmap(datas, optimalleaforder1, optimalleaforder2,this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
+	this->creatDataForHeatmap(0.2);	
+}
+
+void Heatmap::showGraphforNe()
+{	
+	this->drawPointsforNe();
+
+
+	this->aPlane = vtkSmartPointer<vtkPlaneSource>::New();
+    this->aPlane->SetXResolution(this->num_features);
+    this->aPlane->SetYResolution(this->num_samples);
+
+	this->cellData = vtkSmartPointer<vtkFloatArray>::New();
+
+	int index = 0;
+
+	for (int i = 0; i < this->num_samples; i++)
+    {
+		for(int j = 0; j < this->num_features; j++)
+		{
+			cellData->InsertNextValue(index++);
+		}
+    }
+	this->celllut = vtkSmartPointer<vtkLookupTable>::New();
+	this->celllut->SetNumberOfTableValues(this->num_samples*this->num_features);
+	this->celllut->SetTableRange(0, this->num_samples*this->num_features - 1);   
+	this->celllut->Build();
+
+	int k = 0;
+	for(int i = 0; i < this->num_samples; i++)
+	{
+		for(int j = 0; j < this->num_features; j++)
+		{
+			rgb rgb = GetRGBValue( mapdata[num_samples - i - 1][j]);
+			celllut->SetTableValue(k++, rgb.r, rgb.g, rgb.b);
+		}
+	}
+
+	this->aPlane->Update();
+	this->aPlane->GetOutput()->GetCellData()->SetScalars(cellData);
+	this->mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	this->mapper->SetInputConnection(aPlane->GetOutputPort());
+	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
+	this->mapper->SetLookupTable(celllut);
+
+	this->actor = vtkSmartPointer<vtkActor>::New();
+	this->actor->SetMapper(mapper);
+
+	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	scalarbarLut->SetTableRange (-1, 1);
+	scalarbarLut->SetNumberOfTableValues(COLOR_MAP_SIZE);
+	for(int index = 0; index<COLOR_MAP_SIZE;index++)
+	{
+		rgb rgbscalar = COLORMAP[index];
+		scalarbarLut->SetTableValue(index, rgbscalar.r, rgbscalar.g, rgbscalar.b);
+	}
+	scalarbarLut->Build();
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(scalarbarLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(10);
+	scalarBar->GetTitleTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->GetLabelTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->SetMaximumHeightInPixels(1000);
+	scalarBar->SetMaximumWidthInPixels(100);
+
+	
+	this->view->GetRenderer()->AddActor(actor);
+	this->view->GetRenderer()->AddActor2D(scalarBar);
+	this->SetInteractStyle();
+	this->view->GetRenderer()->GradientBackgroundOff();
+	this->view->GetRenderer()->SetBackground(1,1,1);
+
+	//this->showDendrogram2();
+	this->view->Render();
+	//this->view->GetInteractor()->Start();
+	return;
+}
+
+void Heatmap::drawPointsforNe()
+{
+	this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
+
+	this->view = vtkSmartPointer<vtkGraphLayoutView>::New();
+    this->view->AddRepresentationFromInput(graph_Layout);
+    this->view->SetLayoutStrategy("Pass Through");
+    this->view->ScaledGlyphsOn();
+
+	this->theme = vtkSmartPointer<vtkViewTheme>::New();
+
+	vtkSmartPointer<vtkPolyData> pd = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkCellArray> verts = vtkSmartPointer<vtkCellArray>::New();
+	verts->SetNumberOfCells(1);
+
+	vtkSmartPointer<vtkDoubleArray> orient = vtkSmartPointer<vtkDoubleArray>::New();
+	orient->SetNumberOfComponents(1);
+	orient->SetName("orientation");
+
+	vtkSmartPointer<vtkStringArray> label = vtkSmartPointer<vtkStringArray>::New();
+	label->SetNumberOfComponents(1);
+	label->SetName("label");
+
+	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
+	for(int i=0; i<this->num_features;i++)
+    {
+		pts->InsertNextPoint(this->Processed_Coordinate_Data_Tree2[i][1], 0.5, 0);
+	}
+
+	for(int i=0; i<this->num_features;i++)
+	{
+		verts->InsertNextCell(1);
+		verts->InsertCellPoint(i);
+		orient->InsertNextValue(45.0);
+		vtkIdType id = i+1  ;
+		label->InsertNextValue(this->table->GetColumn(id)->GetName());
+	}
+
+	pd->SetPoints(pts);
+	pd->SetVerts(verts);
+	pd->GetPointData()->AddArray(label);
+	pd->GetPointData()->AddArray(orient);
+
+	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
+	hier->SetInput(pd);
+	hier->SetOrientationArrayName("orientation");
+	hier->SetLabelArrayName("label");
+	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+  
+	vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
+	lmapper->SetInputConnection(hier->GetOutputPort());
+
+	vtkSmartPointer<vtkQtLabelRenderStrategy> strategy = vtkSmartPointer<vtkQtLabelRenderStrategy>::New();
+	lmapper->SetRenderStrategy(strategy);
+	lmapper->SetShapeToNone();
+	lmapper->SetBackgroundOpacity(0.0);
+	lmapper->SetMargin(0);
+
+	vtkSmartPointer<vtkActor2D> lactor = vtkSmartPointer<vtkActor2D>::New();
+	lactor->SetMapper(lmapper);
+
+	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	rmapper->SetInput(pd);
+
+	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
+	ractor->SetMapper(rmapper);
+
+	this->view->GetRenderer()->AddActor(lactor);
+	this->view->GetRenderer()->AddActor(ractor);
+
+    this->selectionCallback1 = vtkSmartPointer<vtkCallbackCommand>::New();
+    this->selectionCallback1->SetClientData(this);
+	this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
+
+    this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
