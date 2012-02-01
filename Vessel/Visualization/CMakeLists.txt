@@ -16,6 +16,7 @@ ADD_EXECUTABLE(
   ../Common/gl_picking.cpp
   ../Common/glCanvas.cpp
   ../Common/glCanvas.h
+  
   main.cpp
   ../Common/matrix.cpp
   ../Common/matrix.h
@@ -29,5 +30,10 @@ ADD_EXECUTABLE(
   ../Common/vertex_parent.h
 )
 TARGET_LINK_LIBRARIES(visualize ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} vtksys)
+INCLUDE_DIRECTORIES( ${GLUT_INCLUDE_DIR})
+
+
 
 INSTALL( TARGETS visualize DESTINATION ${INSTALL_BIN_DIR} )
+
+#Notes:set the Optimization option of the compiler(visual studio) as "Disabled/Od" other than "Maximize Speed/O2" before building

@@ -475,12 +475,14 @@ void GLCanvas::initialize(ArgParser *_args, Radiosity *_radiosity) {
   glShadeModel(GL_SMOOTH);
 
   // Set window parameters
+  //printf("have i come here just before glutCreateWindow?66");
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
   glEnable(GL_DEPTH_TEST);
   glutInitWindowSize(args->width, args->height);
   glutInitWindowPosition(100,100);
   glutCreateWindow("OpenGL Viewer");
-
+  //printf("have i come here just after glutCreateWindow?66");
+  
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
   glEnable(GL_NORMALIZE);
 

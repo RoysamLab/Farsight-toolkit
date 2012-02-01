@@ -4934,6 +4934,9 @@ int main(int argc, char* argv[])
 	printf("Finished Initializing Radiosity .....\n");
 	//scanf("%*d");
 	//    glBegin(GL_LINES);
+	//printf("is it here now?66");
+    glutInit(&argc, argv);
+    //printf("get here successfully?666");
 	GLCanvas *g = new GLCanvas();
 	//BoundingBox *b = m->getBoundingBox();
 	//      m->PaintWireframe();

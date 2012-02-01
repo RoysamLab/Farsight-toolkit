@@ -53,9 +53,9 @@ int window=2;
 // window1 - max window width for Z direction
 int window1=2;
 // lower threshold
-double lambda_lower_threshold = 5;
+double lambda_lower_threshold = 18;//original 5,  changed  on 01,29,2012
 // higher threshold
-double lambda_higher_threshold = 8;
+double lambda_higher_threshold = 23;//original 8,  changed  on 01,29,2012
 //prune value
 double prune=3;
 double epsilonw=1.5,alpha1;
