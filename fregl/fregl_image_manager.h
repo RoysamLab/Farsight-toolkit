@@ -28,6 +28,7 @@ limitations under the License.
 #include <vnl/vnl_vector_fixed.h>
 #include <vector>
 #include <string>
+#include <pthread.h>
 
 #include "itkIndex.h"
 #include "itkSize.h"
@@ -95,11 +96,16 @@ public:
     // Montage coordinates are in Normalized space (0,0) space.
     //
     ImageType::Pointer GetOutput();
+    
+    //: Return an ITK image pointer the the region of interest passed an argument
+    // This entry is mutex protected for multi threading operations.  It combines
+    // the set region, update and get output methods.
+    ImageType::Pointer MutexGetRegionOfInterest(PointType origin, SizeType size);
 
     //: Return an ITK image pointer to the Region of Interest in the passed
     //  file name.  Return from cache if file is cached otherwise read the file
     //  into cache then get the region.
-    ImageType::Pointer ReadFileRegion(std::string file_name, int image_index);
+    void ReadFileRegion(std::string file_name, int image_index, ImageType::Pointer montage_image);
 
     //: Return the global (anchor) space origin
     //
@@ -169,6 +175,7 @@ private:
     bool use_caching;
     bool use_file_caching;
     std::string cache_dir;
+    pthread_mutex_t region_mutex;
 
 
 };
