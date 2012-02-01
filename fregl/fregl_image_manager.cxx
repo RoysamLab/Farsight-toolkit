@@ -67,6 +67,7 @@ fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::
     set_cache_buffer_count(6);
     use_file_caching = false;
     cache_dir = ".";
+    pthread_mutex_init(&region_mutex, NULL);
 }
 
 //: Set the Region of Interest
@@ -139,20 +140,9 @@ void fregl_image_manager::Update() {
     for (unsigned int i = 0; i < image_names.size(); i++) {
         if (global_space_transformer->image_in_roi(i)) {
             image_name = global_image_path + std::string("/") + image_names[i];
-            xformed_image = ReadFileRegion(image_name, i);
+            ReadFileRegion(image_name, i, montage_image);
         } else
             continue;
-        if (!xformed_image)
-            continue;
-
-        //fuse the image
-        RegionConstIterator inputIt(xformed_image, xformed_image->GetLargestPossibleRegion());
-        RegionIterator outputIt(montage_image, montage_image->GetLargestPossibleRegion());
-
-        for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();
-                ++inputIt, ++outputIt) {
-            outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
-        }
     }
 }
 
@@ -202,12 +192,27 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::GetOutput() {
         return resampleFilter->GetOutput();*/
 }
 
+//: Return an ITK image pointer the the region of interest passed an argument
+// This entry is mutex protected for multi threading operations.  It combines
+// the set region, update and get output methods.
+
+fregl_image_manager::ImageType::Pointer fregl_image_manager::MutexGetRegionOfInterest(PointType origin, SizeType size) {
+    ImageType::Pointer image;
+    pthread_mutex_lock(&region_mutex);
+    set_regionofinterest(origin, size);
+    Update();
+    image = GetOutput();
+    pthread_mutex_unlock(&region_mutex);
+    return image;
+}
+
+
 //: Return an ITK image pointer to the Region of Interest in the passed
 //  file name.  Return from cache if file is cached otherwise read the file
 //  into cache then get the region.
 
-fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std::string file_name, int image_index) {
-    ImageType::Pointer image, cached_image, out_image;
+void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index, ImageType::Pointer montage_image) {
+    ImageType::Pointer image, cached_image, xformed_image;
     ImageType::RegionType region, source_region, destination_region;
     ImageType::IndexType source_index;
     ImageType::SizeType source_size;
@@ -216,7 +221,16 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
     if (!use_caching) {
         //If no caching then read in the image
         image = fregl_util_read_image(file_name, global_use_channel, global_channel, false);
-        return global_space_transformer->transform_image_roi(image, image_index, 0, use_NN_interpolator);
+        xformed_image = global_space_transformer->transform_image_roi(image, image_index, 0, use_NN_interpolator);
+        RegionConstIterator inputIt(xformed_image, xformed_image->GetLargestPossibleRegion());
+        if (!xformed_image) return;
+        RegionIterator outputIt(montage_image, montage_image->GetLargestPossibleRegion());
+
+        for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();
+                ++inputIt, ++outputIt) {
+            outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
+        }
+        return;
     } else {
         //Using caching
         //        std::cout << "Here 1" << std::endl;
@@ -250,18 +264,6 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
     cached_image = cached_images[cache_slot[image_index]];
     cache_last_used[cache_slot[image_index]] = cache_time;
 
-    //Create a new image for the region of interest
-    out_image = ImageType::New();
-
-    source_index[0] = 0;
-    source_index[1] = 0;
-    source_index[2] = 0.;
-    region.SetIndex(source_index);
-    region.SetSize(roi_size);
-    out_image->SetOrigin(roi_origin);
-    out_image->SetRegions(region);
-    out_image->Allocate();
-    out_image->FillBuffer(0);
 
     //Now paste in the part of the cached file that is in the Region of interest
     //Calculate the region of the cached image that is in the Region of interest
@@ -331,18 +333,18 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::ReadFileRegion(std:
     destination_region.SetIndex(destination_index);
     destination_region.SetSize(source_size);
     cached_image->SetRequestedRegion(source_region);
-    out_image->SetRequestedRegion(destination_region);
+    montage_image->SetRequestedRegion(destination_region);
 
     RegionConstIterator inputIt(cached_image, source_region);
-    RegionIterator outputIt(out_image, destination_region);
+    RegionIterator outputIt(montage_image, destination_region);
 
     for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();
             ++inputIt, ++outputIt) {
-        outputIt.Set(inputIt.Get());
+        outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
     }
     //    return PasteFilter->GetOutput();
-    out_image->SetRequestedRegion(out_image->GetLargestPossibleRegion());
-    return out_image;
+    montage_image->SetRequestedRegion(montage_image->GetLargestPossibleRegion());
+    return;
 }
 
 //: Set the image channel to montage
