@@ -260,8 +260,8 @@ void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> l
 	{
 		if (vesselness_image_iter.Get() > 0.04)
 			critical_points_vector.push_back(vesselness_image_iter.GetIndex());
-
-		vesselness_image_iter++;
+		
+		++vesselness_image_iter;
 	}
 }
 
