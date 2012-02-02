@@ -117,6 +117,11 @@ SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXE_DIR})
 SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR})
 SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR})
 
+#bundle location is used to make drag-n-droppable Mac OS X applications
+set(FARSIGHT_BUNDLE_LOCATION 
+  "FARSIGHT ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+
 ################################################################################
 # FARSIGHT DEPENDS UPON A NUMBER OF OUTSIDE LIBRARIES
 # THESE ARE ITK, VTK, VXL, QT, and CUDA
@@ -451,10 +456,6 @@ ENDIF (BUILD_CURVELETS)
 #####################################################################################
 # SOME INSTALL RULES
 ######################################################################################
-
-#stuff to make drag-n-droppable Mac OS X applications
-set(FARSIGHT_BUNDLE_LOCATION 
-  "FARSIGHT ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 #Qt libraries 
 IF(WIN32)
