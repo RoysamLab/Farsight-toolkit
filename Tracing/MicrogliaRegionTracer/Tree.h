@@ -2,6 +2,7 @@
 #define TREE_H
 
 #include "Node.h"
+#include <stdexcept>
 
 class Tree
 {
