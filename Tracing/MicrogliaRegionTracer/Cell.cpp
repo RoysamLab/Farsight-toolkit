@@ -1,10 +1,10 @@
 #include "Cell.h"
 
-Cell::Cell(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z)
+Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z)
 {
-	this->x = x;
-	this->y = y;
-	this->z = z;
+	this->cell_x = cell_x;
+	this->cell_y = cell_y;
+	this->cell_z = cell_z;
 }
 
 size_t Cell::getX() const

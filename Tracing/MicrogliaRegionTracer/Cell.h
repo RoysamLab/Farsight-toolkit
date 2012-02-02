@@ -6,7 +6,7 @@
 class Cell
 {
 public:
-	Cell(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z);
+	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
 	
 	itk::uint64_t getX() const;
 	itk::uint64_t getY() const;
