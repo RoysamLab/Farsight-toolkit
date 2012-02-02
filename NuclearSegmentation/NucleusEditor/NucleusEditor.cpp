@@ -4782,47 +4782,48 @@ void NucleusEditor::unmixChannels(void)
 //*******************************************************************************************************************************
 void NucleusEditor::parseArguments(QStringList args)
 {
-  for(int i = 1; i < args.size(); ++i)
-  {
-    QString arg = args[i];
-    QString fileName;
+	for(int i = 1; i < args.size(); ++i)
+	{
+		QString arg = args[i];
+		QString fileName;
 
-    //worry about relative paths...
-    if(QString::compare(arg, "--image", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    fileName = args[i];
-    this->loadImage(fileName);
-    }
-    if(QString::compare(arg, "--result", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    fileName = args[i];
-    this->loadResult(fileName);
-    }
-    if(QString::compare(arg, "--table", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    fileName = args[i];
-    this->loadTable(fileName);
-    }
-    if(QString::compare(arg, "--adjtables", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    fileName = args[i];
-    this->loadAdjTables(fileName);
-    }
-    if(QString::compare(arg, "--test", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    this->TestInputFile = args[i];
-    }
-    if(QString::compare(arg, "--baseline", Qt::CaseInsensitive) == 0)
-    {
-    ++i;
-    this->TestBaselineImageFileName = args[i];
-    }
-
+		//worry about relative paths...
+		if(QString::compare(arg, "--image", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			fileName = args[i];
+			this->loadImage(fileName);
+		}
+		if(QString::compare(arg, "--result", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			fileName = args[i];
+			this->loadResult(fileName);
+		}
+		if(QString::compare(arg, "--table", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			fileName = args[i];
+			this->loadTable(fileName);
+		}
+		if(QString::compare(arg, "--adjtables", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			fileName = args[i];
+			this->loadAdjTables(fileName);
+		}
+#ifdef USE_QT_TESTING
+		if(QString::compare(arg, "--test", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			this->TestInputFile = args[i];
+		}
+		if(QString::compare(arg, "--baseline", Qt::CaseInsensitive) == 0)
+		{
+			++i;
+			this->TestBaselineImageFileName = args[i];
+		}
+#endif
     /*
     else if(QString::compare(arg, "--5dimage", Qt::CaseInsensitive) == 0)
     {
