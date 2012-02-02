@@ -37,7 +37,12 @@ int main(int argc, char *argv[])
 	NucleusEditor nucEdit(0,0);
 	nucEdit.show();
 
-   	return app.exec();
+  int retval = nucEdit.runTest();
+  if(retval == -1)
+  {
+    retval = app.exec();
+  }
+  return retval;
 }
 
 //This function is used to create a GUI application that does not show the console.

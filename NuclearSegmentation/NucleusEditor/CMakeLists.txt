@@ -100,6 +100,15 @@ SET( NucleusEditor_MOC_REQD_HDRS
 	
 ENDIF (USE_TRACKING)
 
+IF(QtTestingFound)
+  ADD_DEFINITIONS(-DUSE_QT_TESTING)
+  INCLUDE_DIRECTORIES(${Farsight_BINARY_DIR}/ftkGUI)
+  LINK_DIRECTORIES( ${QtTesting_LIBRARY_DIR} )
+ENDIF()
+IF(BUILD_TESTING) 
+  ADD_SUBDIRECTORY(Testing)
+ENDIF()
+
 # this command will generate rules that will run rcc on all files from SAMPLE_RCS
 # in result SAMPLE_RC_SRCS variable will contain paths to files produced by rcc
 QT4_ADD_RESOURCES( NucleusEditor_RC_SRCS ${NucleusEditor_RCS} )

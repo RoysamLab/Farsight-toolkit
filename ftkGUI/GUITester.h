@@ -32,6 +32,7 @@ public:
   bool playTestAndCompareResults( QString filename );
   void playTestFile( QString filename );
   bool compareResults();
+  bool compareResults( QString testImgFileName );
   void SetBaselineImage(const char *fn);
   void SetRenderWindow(vtkRenderWindow *rw);
   void SetThreshold(double t);
@@ -46,6 +47,7 @@ private:
   vtkSmartPointer<vtkTesting> Testing;
   double Threshold;
   bool BaselineSet;
+  QString BaselineImage;
 };
 
 #endif

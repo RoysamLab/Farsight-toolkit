@@ -44,6 +44,12 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	connect(selection, SIGNAL(MultiChanged()), this, SLOT(updateMultiLabels()));
 	this->setCentralWidget(segView);
 
+  #ifdef USE_QT_TESTING
+  this->TestInputFile = "";
+  this->TestBaselineImageFileName = "";
+  this->Tester = new GUITester(this);
+  #endif
+
 	createMenus();
 	createStatusBar();
 	createProcessToolBar();
@@ -92,6 +98,13 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	activateWindow();
 	//Crashes when this is enabled!
 	//setAttribute ( Qt::WA_DeleteOnClose );
+
+  //parse command line arguments (if any)
+  QStringList args = QCoreApplication::arguments();
+  if(args.size() > 1)
+    {
+    this->parseArguments(args);
+    }
 }
 
 NucleusEditor::~NucleusEditor()
@@ -604,6 +617,21 @@ void NucleusEditor::createMenus()
 	connect(kymoViewAction, SIGNAL(triggered()), this, SLOT(displayKymoGraph()));
 	fiveDMenu->addAction(kymoViewAction);
 #endif
+
+  #ifdef USE_QT_TESTING
+  //Testing menu & actions
+	testingMenu = menuBar()->addMenu(tr("Testing"));
+
+  this->recordAction = new QAction("Record Test", this);
+  this->recordAction->setStatusTip("Record a test to a .xml file");
+  connect(this->recordAction, SIGNAL(triggered()), this->Tester, SLOT(record()));
+  testingMenu->addAction(this->recordAction);
+
+  this->playAction = new QAction("Play Test", this);
+  this->playAction->setStatusTip("Run a previously recorded test");
+  connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
+  testingMenu->addAction(this->playAction);
+  #endif
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
@@ -4748,3 +4776,106 @@ void NucleusEditor::unmixChannels(void)
 	printf("done with unmixing\n");
 
 }
+	
+//*******************************************************************************************************************************
+//Load files from command line arguments
+//*******************************************************************************************************************************
+void NucleusEditor::parseArguments(QStringList args)
+{
+  for(int i = 1; i < args.size(); ++i)
+  {
+    QString arg = args[i];
+    QString fileName;
+
+    //worry about relative paths...
+    if(QString::compare(arg, "--image", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    fileName = args[i];
+    this->loadImage(fileName);
+    }
+    if(QString::compare(arg, "--result", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    fileName = args[i];
+    this->loadResult(fileName);
+    }
+    if(QString::compare(arg, "--table", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    fileName = args[i];
+    this->loadTable(fileName);
+    }
+    if(QString::compare(arg, "--adjtables", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    fileName = args[i];
+    this->loadAdjTables(fileName);
+    }
+    if(QString::compare(arg, "--test", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    this->TestInputFile = args[i];
+    }
+    if(QString::compare(arg, "--baseline", Qt::CaseInsensitive) == 0)
+    {
+    ++i;
+    this->TestBaselineImageFileName = args[i];
+    }
+
+    /*
+    else if(QString::compare(arg, "--5dimage", Qt::CaseInsensitive) == 0)
+    {
+    }
+    else if(QString::compare(arg, "--labelimage", Qt::CaseInsensitive) == 0)
+    {
+    }
+    if(QString::compare(arg, "--project", Qt::CaseInsensitive) == 0)
+    {
+    }
+    */
+  }
+}
+
+//******************************************************************************
+int NucleusEditor::runTest()
+{
+  #ifdef USE_QT_TESTING
+  if( this->TestInputFile == "" )
+  {
+    return -1;
+  }
+
+  if( this->TestBaselineImageFileName == "" )
+  {
+    std::cout << "ERROR: TestBaselineImageFileName is empty" << std::endl;
+    return 1;
+  }
+
+  //setup test utility
+  this->Tester->SetBaselineImage(
+    this->TestBaselineImageFileName.toStdString().c_str() );
+
+  //playback the test recording
+  this->Tester->playTestFile( this->TestInputFile );
+
+  //write our QImage to disk so the testing framework can read it back in
+  QString tmpFile = TEST_OUTPUT_DIR;
+  tmpFile += "/";
+  tmpFile += "nucleus_test_output.png";
+	segView->SaveDisplayImageToFile(tmpFile);
+
+  //compare displayed image to baseline, then print & return the results of
+  //this test
+  if(this->Tester->compareResults(tmpFile) == false)
+  {
+    std::cout << "ERROR: test failed" << std::endl;
+    return 1;
+  }
+  std::cout << "test passed" << std::endl;
+  return 0;
+
+  #endif
+  return -1;
+}
+

@@ -15,6 +15,8 @@
 #include "vtkRenderWindow.h"
 #include "vtkTesting.h"
 
+#include "itkTestDriverInclude.h"
+
 class XMLEventObserver : public pqEventObserver
 {
   QXmlStreamWriter* XMLStream;
@@ -216,10 +218,28 @@ bool GUITester::compareResults()
 }
 
 //-----------------------------------------------------------------------------
+bool GUITester::compareResults( QString testImgFileName )
+{
+  if(this->BaselineSet)
+    {
+    int res = RegressionTestImage(
+      testImgFileName.toStdString().c_str(),  
+      this->BaselineImage.toStdString().c_str(),
+      1, 0.0, (unsigned int)this->Threshold, 0);
+    if(res == 0 )
+      {
+      return true;
+      }
+    }
+  return false;
+}
+
+//-----------------------------------------------------------------------------
 void GUITester::SetBaselineImage(const char *fn)
 {
   this->Testing->AddArgument("-V");
   this->Testing->AddArgument(fn);
+  this->BaselineImage = fn;
   this->BaselineSet = true;
 }
 

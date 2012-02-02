@@ -72,6 +72,11 @@
 #include "ClusClus/HeatmapWindow.h"
 #endif
 
+#ifdef USE_QT_TESTING
+#include "GUITester.h"
+#include "GUITesterHelper.h"
+#endif
+
 //Farsight Includes:
 #include "NuclearSegmentation/ftkNuclearSegmentation.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/CytoplasmSegmentation.h"
@@ -112,9 +117,11 @@ public:
 	void getColorInfo(int numChann,std::vector<std::string> *channelNames,std::vector<unsigned char> *channelColors);
 	void getColor(int numChann,std::vector<unsigned char> *channelColors);
 	void loadTableSeries(QString fileName);
+  int runTest();
 
 protected:
 	void closeEvent(QCloseEvent *event);
+  void parseArguments(QStringList args);
 
 protected slots:
 	void setMouseStatus(int,int,int,int,list<int>);
@@ -415,6 +422,14 @@ protected:
 	QAction *CurvAnisotropicAction;
 	//QAction *ResampleAction;
 
+  #ifdef USE_QT_TESTING
+	//************************************************************************
+	//Testing menu
+  QMenu *testingMenu;
+  QAction *recordAction;
+  QAction *playAction;
+  #endif
+
 	//*********************************************************************
 	QLabel *statusLabel;						//Shown at bottom of main window
 	QString standardImageTypes;					//Image types that can be opened
@@ -501,6 +516,12 @@ protected:
 
 	std::vector<std::pair<int,int> > ground_truth;
 
+  #ifdef USE_QT_TESTING
+  //testing support
+  GUITester *Tester;
+  QString TestInputFile;
+  QString TestBaselineImageFileName;
+  #endif
 
 };
 
