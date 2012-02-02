@@ -8,7 +8,7 @@ INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
 
 SET(MicrogliaRegionTracer_HDRS 
 	MicrogliaRegionTracer.h
-	Seed.h
+	Cell.h
 	ROIGrabber.h
 	LoG.h
 	Node.h
@@ -17,7 +17,7 @@ SET(MicrogliaRegionTracer_HDRS
 
 SET(MicrogliaRegionTracer_SRCS 
 	MicrogliaRegionTracer.cpp
-	Seed.cpp
+	Cell.cpp
 	main.cpp
 	ROIGrabber.cpp
 	LoG.cpp

@@ -7,9 +7,9 @@ int main(int argc, char* argv[])
 	/*std::cout << "Loading image" << std::endl;
 	MRT->LoadImage("E:/farsight_images/MicrogliaRegionTracer/input.tif");*/
 	
-	std::cout << "Entering LoadSeedPoints" << std::endl;
-	//MRT->LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
-	MRT->LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
+	std::cout << "Entering LoadCellPoints" << std::endl;
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
+	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
 
 	//std::cout << "Entering LoadSeedImages" << std::endl;
 	//MRT->WriteSeedImages();

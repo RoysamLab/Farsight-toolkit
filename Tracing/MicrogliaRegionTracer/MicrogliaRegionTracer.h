@@ -14,7 +14,7 @@
 #include <cstddef>
 
 
-#include "Seed.h"				//Simple class to hold seed coordinates
+#include "Cell.h"				//Simple class to hold seed coordinates
 #include "ROIGrabber.h"
 #include "LoG.h"
 #include "Tree.h"
@@ -31,7 +31,7 @@ public:
 
 private:
 	ImageType::Pointer image;
-	std::vector<Seed*> seeds;
+	std::vector<Cell*> cells;
 	ROIGrabber* roi_grabber;
 
 public:
@@ -41,20 +41,20 @@ public:
 	void LoadImage(ImageType::Pointer image);
 	void LoadImage(std::string filename);
 
-	void LoadSeedPoints(std::string filename);
+	void LoadCellPoints(std::string filename);
 
 	void WriteImage(std::string filename, ImageType::Pointer image);
 	void WriteVesselnessImage(std::string filename, VesselnessImageType::Pointer image);
-	void WriteSeedImages();
+	void WriteCellImages();
 	
 	void Trace();
 
-	void CalculateCandidatePixels(Seed* seed, std::vector<ImageType::IndexType> &critical_points_vector);
-	void RidgeDetection(std::vector<LoGImageType::Pointer> log_seedimage_vector, ImageType::SizeType size, std::vector<ImageType::IndexType> &critical_points_vector);
+	void CalculateCandidatePixels(Cell* cell, std::vector<ImageType::IndexType> &critical_points_vector);
+	void RidgeDetection(std::vector<LoGImageType::Pointer> log_cellimage_vector, ImageType::SizeType size, std::vector<ImageType::IndexType> &critical_points_vector);
 	double RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter);
 	double ComputeVesselness( double ev1, double ev2, double ev3 );
 	
-	void BuildTree(Seed* seed, std::vector<ImageType::IndexType> &critical_points_vector);
+	void BuildTree(Cell* cell, std::vector<ImageType::IndexType> &critical_points_vector);
 	double** BuildAdjacencyGraph(std::vector<ImageType::IndexType> critical_points_vector);
 	double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t k, itk::uint64_t l, std::vector<ImageType::IndexType> critical_points_vector);
 	Tree* BuildMST(std::vector<ImageType::IndexType> critical_points_vector, double** AdjGraph);

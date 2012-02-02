@@ -27,18 +27,18 @@ void MicrogliaRegionTracer::LoadImage(std::string filename)
 	LoadImage(reader->GetOutput());
 }
 
-void MicrogliaRegionTracer::LoadSeedPoints(std::string filename)
+void MicrogliaRegionTracer::LoadCellPoints(std::string filename)
 {
 	std::ifstream seed_point_file;
 	seed_point_file.open(filename.c_str());
 
 	while (!seed_point_file.eof())
 	{
-		size_t seedX, seedY, seedZ;
-		seed_point_file >> seedX >> seedY >> seedZ;
+		size_t cellX, cellY, cellZ;
+		seed_point_file >> cellX >> cellY >> cellZ;
 
-		//std::cout << "Reading in seed: (" << seedX << ", " << seedY << ", " << seedZ << ")" << std::endl;
-		seeds.push_back(new Seed(seedX, seedY, seedZ));
+		//std::cout << "Reading in cell: (" << cellX << ", " << cellY << ", " << cellZ << ")" << std::endl;
+		cells.push_back(new Cell(cellX, cellY, cellZ));
 	}
 }
 
@@ -74,80 +74,80 @@ void MicrogliaRegionTracer::WriteVesselnessImage(std::string filename, Vesselnes
 	}
 }
 
-void MicrogliaRegionTracer::WriteSeedImages()
+void MicrogliaRegionTracer::WriteCellImages()
 {
-	std::vector<Seed*>::iterator seeds_iter;
+	std::vector<Cell*>::iterator cells_iter;
 
-	if (seeds.size() == 0)
+	if (cells.size() == 0)
 	{
-		std::cout << "There are no seeds" << std::endl;
+		std::cout << "There are no cells" << std::endl;
 		exit(0);
 	}
 	//clock_t startTime = clock();
-	for (seeds_iter = seeds.begin(); seeds_iter != seeds.end(); seeds_iter++)
+	for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
 	{
-		Seed* seed = *seeds_iter;
+		Cell* cell = *cells_iter;
 
 		ImageType::SizeType roi_size;
 		roi_size[0] = 200;
 		roi_size[1] = 200;
 		roi_size[2] = 100;
 		
-		//Grab the seed and its ROI
-		ImageType::Pointer seed_image = roi_grabber->GetROI(seed, roi_size);
+		//Grab the cell and its ROI
+		ImageType::Pointer cell_image = roi_grabber->GetROI(cell, roi_size);
 
-		//Make the file name of the raw seed image
-		std::stringstream seed_filename_stream;
-		seed_filename_stream << seed->getX() << "_" << seed->getY() << "_" << seed->getZ() << ".TIF";	//X_Y_Z.TIF
+		//Make the file name of the raw cell image
+		std::stringstream cell_filename_stream;
+		cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
 		
-		//Write the seed image
-		WriteImage(seed_filename_stream.str(), seed_image);
+		//Write the cell image
+		WriteImage(cell_filename_stream.str(), cell_image);
 	}
-	//std::cout << "Grabbed " << seeds.size() << " cells in " << (clock() - startTime)/CLOCKS_PER_SEC << " seconds" << std::endl;
+	//std::cout << "Grabbed " << cells.size() << " cells in " << (clock() - startTime)/CLOCKS_PER_SEC << " seconds" << std::endl;
 }
 
 void MicrogliaRegionTracer::Trace()
 {
-	std::vector<Seed*>::iterator seeds_iter;
+	std::vector<Cell*>::iterator cells_iter;
 	
-	//Trace seed by seed
-	for (seeds_iter = seeds.begin(); seeds_iter != seeds.end(); seeds_iter++)
+	//Trace cell by cell
+	for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
 	{
-		Seed* seed = *seeds_iter;
+		Cell* cell = *cells_iter;
 		std::vector<ImageType::IndexType> critical_points_vector;
 		
-		std::cout << "Calculating candidate pixels for a new seed" << std::endl;
-		CalculateCandidatePixels(seed, critical_points_vector);
+		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
+		CalculateCandidatePixels(cell, critical_points_vector);
 
 		std::cout << "Tree Building" << std::endl;
-		BuildTree(seed, critical_points_vector);
+		BuildTree(cell, critical_points_vector);
 	}
 }
 
-void MicrogliaRegionTracer::CalculateCandidatePixels(Seed* seed, std::vector<ImageType::IndexType> &critical_points_vector)
+void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell, std::vector<ImageType::IndexType> &critical_points_vector)
 {
 	ImageType::SizeType roi_size;
 	roi_size[0] = 200;
 	roi_size[1] = 200;
 	roi_size[2] = 100;
 	
-	//Grab the initial seedimage
-	std::cout << "Grabbing ROI for seed" << std::endl;
-	ImageType::Pointer seed_image = roi_grabber->GetROI(seed, roi_size);
+	//Grab the initial cellimage
+	std::cout << "Grabbing ROI for cell" << std::endl;
+	ImageType::Pointer cell_image = roi_grabber->GetROI(cell, roi_size);
 	
-	//WriteImage("seed.tif", seed_image);
+	//WriteImage("cell.tif", cell_image);
 
 	LoG *log_obj = new LoG();
 	
 	//Calculate the LoG on multiple scales and put them into a vector
 	std::cout << "Calculating Multiscale LoG" << std::endl;
-	std::vector<LoGImageType::Pointer> log_seedimage_vector = log_obj->RunMultiScaleLoG(seed, seed_image);
+	std::vector<LoGImageType::Pointer> log_cellimage_vector = log_obj->RunMultiScaleLoG(cell, cell_image);
 
 //	std::cout << "Starting ridge detection" << std::endl;
-//	RidgeDetection(log_seedimage_vector, seed_image->GetBufferedRegion().GetSize(), critical_points_vector);
+//	RidgeDetection(log_cellimage_vector, cell_image->GetBufferedRegion().GetSize(), critical_points_vector);
 }
 
-void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> log_seedimage_vector, ImageType::SizeType size, std::vector<ImageType::IndexType> &critical_points_vector )
+void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> log_cellimage_vector, ImageType::SizeType size, std::vector<ImageType::IndexType> &critical_points_vector )
 {
 	//Make a new image to store the critical points	
 	ImageType::Pointer critical_point_image = ImageType::New();
@@ -172,13 +172,13 @@ void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> l
 	itk::ImageRegionIterator<ImageType> critical_point_img_iter(critical_point_image, critical_point_image->GetBufferedRegion());
 	itk::ImageRegionIterator<VesselnessImageType> vesselness_image_iter(vesselness_image, vesselness_image->GetBufferedRegion());
 	
-	std::vector<LoGImageType::Pointer>::iterator log_seedimage_vector_iter;
+	std::vector<LoGImageType::Pointer>::iterator log_cellimage_vector_iter;
 	
 	//For each log image, get the critical points
-	for (log_seedimage_vector_iter = log_seedimage_vector.begin(); log_seedimage_vector_iter != log_seedimage_vector.end(); log_seedimage_vector_iter++)
+	for (log_cellimage_vector_iter = log_cellimage_vector.begin(); log_cellimage_vector_iter != log_cellimage_vector.end(); log_cellimage_vector_iter++)
 	{
 		std::cout << "Starting ridge detection for a new scale" << std::endl;
-		LoGImageType::Pointer log_image = *log_seedimage_vector_iter;
+		LoGImageType::Pointer log_image = *log_cellimage_vector_iter;
 
 		itk::Size<3> rad = {{1,1,1}};
 		itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, log_image, log_image->GetBufferedRegion());
@@ -347,14 +347,14 @@ double MicrogliaRegionTracer::ComputeVesselness( double ev1, double ev2, double 
 		return (ev1_magnitude + ev2_magnitude)/2 - ev3_magnitude;
 }
 
-void MicrogliaRegionTracer::BuildTree(Seed* seed, std::vector<ImageType::IndexType> &critical_points_vector)
+void MicrogliaRegionTracer::BuildTree(Cell* cell, std::vector<ImageType::IndexType> &critical_points_vector)
 {
-	ImageType::IndexType seed_index;
-	seed_index[0] = 100;
-	seed_index[1] = 100;
-	seed_index[2] = 50;
+	ImageType::IndexType cell_index;
+	cell_index[0] = 100;
+	cell_index[1] = 100;
+	cell_index[2] = 50;
 
-	critical_points_vector.push_back(seed_index);	//Add the centroid to the critical points
+	critical_points_vector.push_back(cell_index);	//Add the centroid to the critical points
 
 	double** AdjGraph = BuildAdjacencyGraph(critical_points_vector);
 

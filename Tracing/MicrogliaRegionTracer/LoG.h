@@ -5,7 +5,7 @@
 #include "itkShiftScaleImageFilter.h"
 #include "itkImageFileWriter.h"
 
-#include "Seed.h"
+#include "Cell.h"
 
 class LoG
 {
@@ -19,7 +19,7 @@ public:
 	LoGImageType::Pointer RunLoG(ImageType::Pointer image, float scale);
 	void WriteLoGImage(std::string filename, LoGImageType::Pointer image);
 
-	std::vector<LoGImageType::Pointer> RunMultiScaleLoG(Seed* seed, ImageType::Pointer seed_image);
+	std::vector<LoGImageType::Pointer> RunMultiScaleLoG(Cell* cell, ImageType::Pointer cell_image);
 };
 
 #endif

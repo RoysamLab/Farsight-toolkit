@@ -1,7 +1,7 @@
 #ifndef ROIGRABBER_H
 #define ROIGRABBER_H
 
-#include "Seed.h"
+#include "Cell.h"
 #include "fregl/fregl_roi.h"
 
 class ROIGrabber
@@ -13,7 +13,7 @@ public:
 	ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
 	~ROIGrabber();
 	
-	ImageType::Pointer GetROI(Seed* seed, ImageType::SizeType roi_size);
+	ImageType::Pointer GetROI(Cell* cell, ImageType::SizeType roi_size);
 
 private:
 	fregl_roi *roi_filter;
