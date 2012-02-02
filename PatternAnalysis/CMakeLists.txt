@@ -1,8 +1,8 @@
-SUBDIRS( fuzzyClustering )
-SUBDIRS( libsvm )
-SUBDIRS( activeLearning )
-SUBDIRS( agf )
+ADD_SUBDIRECTORY( fuzzyClustering )
+ADD_SUBDIRECTORY( libsvm )
+ADD_SUBDIRECTORY( activeLearning )
+ADD_SUBDIRECTORY( agf )
 
 IF(BUILD_EMBREX)
-  SUBDIRS( embrex )
+  ADD_SUBDIRECTORY( embrex )
 ENDIF(BUILD_EMBREX)

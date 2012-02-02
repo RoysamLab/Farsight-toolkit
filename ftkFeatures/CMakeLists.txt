@@ -22,7 +22,7 @@ ADD_LIBRARY( ftkFeatures
 
 
 
-SUBDIRS(Qhull)
+ADD_SUBDIRECTORY(Qhull)
 
 
 TARGET_LINK_LIBRARIES( ftkFeatures TinyXML ftkImage

@@ -28,7 +28,7 @@ ADD_LIBRARY( fregl ${fregl_sources} )
 TARGET_LINK_LIBRARIES( fregl ftkImage rgrl vil3d vnl vbl  TinyXML ${ITK_LIBRARIES} )
 
 #IF(BUILD_TESTING)
-#  SUBDIRS(tests)
+#  ADD_SUBDIRECTORY(tests)
 #ENDIF(BUILD_TESTING)
 
 INSTALL( TARGETS fregl DESTINATION ${INSTALL_BIN_DIR} )

@@ -25,6 +25,6 @@ ENDIF(WIN32)
 
 INCLUDE_DIRECTORIES(Common)
 
-SUBDIRS(Segmentation)
-SUBDIRS(Visualization)
-SUBDIRS(Centerline)
+ADD_SUBDIRECTORY(Segmentation)
+ADD_SUBDIRECTORY(Visualization)
+ADD_SUBDIRECTORY(Centerline)

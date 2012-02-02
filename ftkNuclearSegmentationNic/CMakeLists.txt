@@ -19,7 +19,7 @@ LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
 
 
-#SUBDIRS(
+#ADD_SUBDIRECTORY(
 
 #1__1_1_BinarizeMixPoisson
 #1__1_2_BinarizeMixGaussian

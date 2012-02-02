@@ -29,5 +29,5 @@ TARGET_LINK_LIBRARIES(mdl_mst mdlMST)
 ADD_LIBRARY(mdlBSplineFitting mdlBSplineFitting.cpp mdlBSplineFitting.h)
 TARGET_LINK_LIBRARIES(mdlBSplineFitting mdlUtils      ${ITK_LIBRARIES} )
 
-SUBDIRS( wizard )
+ADD_SUBDIRECTORY( wizard )
 
