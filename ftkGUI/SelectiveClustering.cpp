@@ -31,6 +31,7 @@ vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSe
 	*/
 	vtkIdType newKey = this->ClusterMap.size();
 	this->ClusterMap[newKey] = ClusterSelectionSet;
+	emit ClusterChanged();
 	return newKey;
 }
 
@@ -47,6 +48,7 @@ bool SelectiveClustering::AddCluster(vtkIdType key, std::set<vtkIdType> ClusterS
 		this->ClusterMap.erase(iter);
 	}
 	this->ClusterMap[key] = ClusterSelectionSet;
+	emit ClusterChanged();
 	return true;
 }
 
@@ -60,6 +62,7 @@ bool SelectiveClustering::RemoveCluster(vtkIdType key)
 	{
 		//found and removed
 		this->ClusterMap.erase(this->iter);
+		emit ClusterChanged();
 		return true;
 	}
 	//not found in map
@@ -72,6 +75,7 @@ void SelectiveClustering::ClearClusters()
 	* All Clusters must go
 	*/
 	this->ClusterMap.clear();
+	emit ClusterChanged();
 }
 
 void SelectiveClustering::AddSelectionToCluster(vtkIdType key, vtkIdType ID)
@@ -132,6 +136,21 @@ vtkIdType SelectiveClustering::NumberOfClusters()
 	* Count of clusters created
 	*/
 	return (vtkIdType) this->ClusterMap.size();
+}
+
+vtkIdType SelectiveClustering::GetNumberOfSelections()
+{
+	/*! 
+	* Count of total number of selections
+	*/
+	vtkIdType totalCount = 0;
+	this->iter = this->ClusterMap.begin();
+	for (; this->iter != this->ClusterMap.end(); this->iter++)
+	{
+		std::set< vtkIdType > tempSet = (*this->iter).second;
+		totalCount += tempSet.size();
+	}
+	return totalCount;
 }
 
 std::set< vtkIdType > SelectiveClustering::GetClusterIDs()
@@ -315,4 +334,51 @@ vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_XOR(vtkIdType ke
 	std::set_symmetric_difference(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
 	this->CopySelectedIntoTable(result, selectedTable);	
 	return selectedTable;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+ClusterManager::ClusterManager()
+{
+	/*! 
+	* Create Gui 
+	*/
+	this->ClusterModel = new SelectiveClustering();
+	this->setModal(false);
+
+	this->NumObjects = new QLabel(" None ");
+	this->NumClusters = new QLabel(" None ");
+	this->NumSelected = new QLabel(" None ");
+
+	QFormLayout *RightLayout = new QFormLayout();
+	RightLayout->addRow("Number of Objects: ", this->NumObjects);
+	RightLayout->addRow("Number of Clusters: ", this->NumClusters);
+	RightLayout->addRow("Number Selected: ", this->NumSelected);
+
+	this->MainLayout = new QHBoxLayout;
+	this->MainLayout->addLayout(RightLayout);
+
+	this->setLayout(this->MainLayout);
+	this->setWindowTitle(tr("Cluster Manager"));
+}
+
+void ClusterManager::setClusteringModel(SelectiveClustering * newClusterModel)
+{
+	/*! 
+	* Create link to SelectiveClustering 
+	*/
+	this->ClusterModel = newClusterModel;
+	connect(this->ClusterModel, SIGNAL(ClusterChanged()), this, SLOT(ChangeInClusters()));
+}
+
+void ClusterManager::ChangeInClusters()
+{
+	/*! 
+	* updates information when clusters change
+	*/
+	int numClust = (int) this->ClusterModel->NumberOfClusters();
+	this->NumClusters->setNum(numClust);
+	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
+	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
+	//
 }

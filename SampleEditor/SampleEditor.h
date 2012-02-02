@@ -148,6 +148,7 @@ private:
 	clusclus *cc2;
 
 	SelectiveClustering * ClusterSelections;
+	ClusterManager * SampleClusterManager;
  };
 
 

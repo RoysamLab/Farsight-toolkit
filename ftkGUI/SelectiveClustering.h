@@ -19,11 +19,33 @@ limitations under the License.
 #include <vector>
 #include <string>
 #include <map>
+
 #include <QObject>
+#include <QtGui/QStatusBar>
+#include <QtGui/QMenuBar>
+#include <QtGui/QTableView>
+#include <QtGui/QVBoxLayout>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QFormLayout>
+
+#include <QtGui/QItemSelection>
+#include <QtGui/QItemSelectionModel>
+
+#include <QtGui/QPushButton>
+#include <QtGui/QComboBox>
+#include <QtGui/QGroupBox>
+#include <QtGui/QLabel>
+#include <QtGui/QCheckBox>
+
+#include <QtGui/QCloseEvent>
+#include <QtGui/QDialog>
+
+
 #include "vtkTable.h"
 #include "vtkVariant.h"
 #include "ftkUtils.h"
 #include "vtkSmartPointer.h"
+class ClusterManager;
 
 class SelectiveClustering: public QObject
 {
@@ -47,6 +69,8 @@ public:
 
 	vtkIdType ClusterSelectionSize(vtkIdType key);
 	vtkIdType NumberOfClusters();
+	vtkIdType GetNumberOfSelections();
+	vtkIdType GetNumberOfObjects() { return NumberOfObjects; }
 	std::set< vtkIdType > GetClusterIDs();
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
@@ -78,6 +102,28 @@ private:
 	//Private Table manip functions
 	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
 		vtkSmartPointer<vtkTable> selectedTable);
+
+};
+
+class ClusterManager : public QDialog
+{
+	Q_OBJECT
+public:
+	ClusterManager();
+	void setClusteringModel(SelectiveClustering * newClusterModel);
+
+public slots:
+
+	void ChangeInClusters();
+
+private:
+	SelectiveClustering * ClusterModel;
+
+	//QT Gui Layouts
+	QHBoxLayout * MainLayout;
+	QLabel * NumClusters;
+	QLabel * NumObjects;
+	QLabel * NumSelected;
 
 };
 #endif

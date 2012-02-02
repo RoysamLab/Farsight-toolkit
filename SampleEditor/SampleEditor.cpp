@@ -56,6 +56,9 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	connect(selection, SIGNAL(changed()), this, SLOT(updateStatistics()));
     
 	this->ClusterSelections = new SelectiveClustering();
+	this->SampleClusterManager = new ClusterManager();
+	this->SampleClusterManager->setClusteringModel(this->ClusterSelections );
+	//this->SampleClusterManager->setVisible(true);
 
 	this->resize(500,500);
 }
@@ -229,12 +232,13 @@ void SampleEditor::loadFile()
 	plot->show();
 	this->histo->setModels(data, selection);
 	this->histo->show();
-	std::cout << "I reached here inside the sample editor"<<std::endl;
+	//std::cout << "I reached here inside the sample editor"<<std::endl;
 	//this->graph->setModels(data, selection, selection2);
 	//this->dendro1->setModels(data,selection);
 	//this->dendro2->setModels(data,selection2);
 	//this->heatmap->setModels(data,selection,selection2);
 	this->ClusterSelections->SetObjectTable(data);
+	this->SampleClusterManager->setVisible(true);
 
 }
 
@@ -880,7 +884,7 @@ void SampleEditor::CreateClusterSelection()
 	}
 	
 	vtkIdType clusterId = this->ClusterSelections->AddCluster(Selection);
-	std::cout << "Cluster added: " << clusterId << " num Selections: " << this->ClusterSelections->ClusterSelectionSize(clusterId) << std::endl;
+	//std::cout << "Cluster added: " << clusterId << " num Selections: " << this->ClusterSelections->ClusterSelectionSize(clusterId) << std::endl;
 }
 
 void SampleEditor::DumpClusterSelections()
