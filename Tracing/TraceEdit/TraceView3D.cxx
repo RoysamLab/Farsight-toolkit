@@ -30,6 +30,7 @@ v7: new GUI and file control
 */
 
 #include "TraceView3D.h"
+#include <QFrame>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -254,13 +255,26 @@ void View3D::CreateBootLoader()
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
 	LoadLayout->addRow(tr("User Name "), this->GetAUserName);
 	LoadLayout->addRow(tr("Lab Name "), this->GetLab);
+	QFrame *frame = new QFrame(this);
+	const int separatorWidth = 2;
+	frame->setFrameShape( QFrame::HLine );
+	frame->setFrameShadow( QFrame::Sunken );
+	frame->setLineWidth( separatorWidth );
+	LoadLayout->addRow( frame );
+	//---
 	LoadLayout->addRow(tr("Trace Files"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
-	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
+	LoadLayout->addRow(tr("Project"), this->BootProject);
+	frame = new QFrame(this);
+	frame->setFrameShape( QFrame::HLine );
+	frame->setFrameShadow( QFrame::Sunken );
+	frame->setLineWidth( separatorWidth );
+	LoadLayout->addRow( frame );
+	//---
+	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
-	LoadLayout->addRow(tr("Project"), this->BootProject);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	this->BootDock = new QDockWidget(tr("Start Trace Editor"), this);
 	this->BootDock->setAllowedAreas(Qt::LeftDockWidgetArea |
