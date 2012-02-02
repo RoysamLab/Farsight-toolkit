@@ -19,7 +19,7 @@ void Tree::SetRoot(Node *root)
 void Tree::AddNode(Node* node, Node* parent)
 {
 	if (parent == NULL)
-		throw new std::exception("AddNode needs a parent");
+		throw new std::runtime_error("AddNode needs a parent");
 
 	member_nodes.push_back(node);
 	parent->AddChild(node);
