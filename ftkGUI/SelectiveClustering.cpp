@@ -21,6 +21,7 @@ SelectiveClustering::SelectiveClustering()
 	* Initalize selective clustering
 	*/
 	this->ClusterMap.clear();
+	this->TableIDMap.clear();
 	this->ObjectTable = vtkSmartPointer<vtkTable>::New();
 }
 
@@ -203,6 +204,12 @@ bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTab
 	this->ObjectTable->Initialize();
 	this->ObjectTable = InputObjectTable;
 	this->NumberOfObjects = rows;
+	for ( vtkIdType currow = 0; currow <= this->NumberOfObjects; currow++ )
+	{
+		vtkIdType rowObjId = this->ObjectTable->GetValue( currow, 0 ).ToTypeInt64();
+		this->TableIDMap[ rowObjId ] = currow;
+	}
+	emit DataChanged();
 	return true;
 }
 
@@ -253,19 +260,33 @@ void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs,
 		col->SetName(this->ObjectTable->GetColumnName(NumberOfColumns));
 		selectedTable->AddColumn(col);
 	}
-	vtkIdType NumRows = this->ObjectTable->GetNumberOfRows();
-	for (vtkIdType row = 0; row <= NumRows; row++)
+	// 
+	std::set< vtkIdType >::iterator selectionIter = selectedIDs.begin();
+	for (; selectionIter != selectedIDs.end(); selectionIter++)
 	{
-		vtkIdType rowObjId = this->ObjectTable->GetValue(row, 0).ToTypeInt64();
-		//std::cout << "Searching for obj: " << rowObjId << std::endl;
-		std::set< vtkIdType >::iterator FoundAt = selectedIDs.find(rowObjId);
-		if (FoundAt != selectedIDs.end())
+		vtkIdType curSelection = *selectionIter;
+		this->TableIDIter = this->TableIDMap.find(curSelection);
+		if (this->TableIDIter != this->TableIDMap.end())
 		{
-			//std::cout << "found obj: " << rowObjId << std::endl;
-			vtkVariantArray * RowCopy = this->ObjectTable->GetRow(row);
+			vtkVariantArray * RowCopy = this->ObjectTable->GetRow((*this->TableIDIter).second);
 			selectedTable->InsertNextRow(RowCopy);
 		}
 	}
+	////Code to compare timing map vs search
+
+	//vtkIdType NumRows = this->ObjectTable->GetNumberOfRows();
+	//for (vtkIdType row = 0; row <= this->NumberOfObjects; row++)
+	//{
+	//	vtkIdType rowObjId = this->ObjectTable->GetValue(row, 0).ToTypeInt64();
+	//	//std::cout << "Searching for obj: " << rowObjId << std::endl;
+	//	std::set< vtkIdType >::iterator FoundAt = selectedIDs.find(rowObjId);
+	//	if (FoundAt != selectedIDs.end())
+	//	{
+	//		//std::cout << "found obj: " << rowObjId << std::endl;
+	//		vtkVariantArray * RowCopy = this->ObjectTable->GetRow(row);
+	//		selectedTable->InsertNextRow(RowCopy);
+	//	}
+	//}
 }
 
 vtkSmartPointer<vtkTable> SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)

@@ -95,6 +95,11 @@ private:
 	std::map<vtkIdType, std::set< vtkIdType > > ClusterMap;
 	std::map<vtkIdType, std::set< vtkIdType > >::iterator iter;
 
+	//Map ID to row in table
+	std::map< vtkIdType, vtkIdType> TableIDMap;
+	//Table ID map Maps Object ID to Row
+	std::map< vtkIdType, vtkIdType>::iterator TableIDIter;
+
 	// Object table to cluster
 	vtkSmartPointer<vtkTable> ObjectTable;
 	vtkIdType NumberOfObjects;
