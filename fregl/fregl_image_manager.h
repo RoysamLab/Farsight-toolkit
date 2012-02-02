@@ -28,7 +28,7 @@ limitations under the License.
 #include <vnl/vnl_vector_fixed.h>
 #include <vector>
 #include <string>
-#include <pthread.h>
+#include "pthread.h"
 
 #include "itkIndex.h"
 #include "itkSize.h"

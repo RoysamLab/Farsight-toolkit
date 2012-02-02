@@ -18,6 +18,8 @@ public:
 	void AddNode(Node* node, Node* parent);
 
 	std::vector<Node*> GetMemberNodes();
+
+	Node* getRoot();
 };
 
 #endif

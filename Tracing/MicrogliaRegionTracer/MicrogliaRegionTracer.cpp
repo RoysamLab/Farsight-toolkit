@@ -135,7 +135,7 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Seed* seed, std::vector<Ima
 	std::cout << "Grabbing ROI for seed" << std::endl;
 	ImageType::Pointer seed_image = roi_grabber->GetROI(seed, roi_size);
 	
-	WriteImage("seed.tif", seed_image);
+	//WriteImage("seed.tif", seed_image);
 
 	LoG *log_obj = new LoG();
 	
@@ -143,8 +143,8 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Seed* seed, std::vector<Ima
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	std::vector<LoGImageType::Pointer> log_seedimage_vector = log_obj->RunMultiScaleLoG(seed, seed_image);
 
-	std::cout << "Starting ridge detection" << std::endl;
-	RidgeDetection(log_seedimage_vector, seed_image->GetBufferedRegion().GetSize(), critical_points_vector);
+//	std::cout << "Starting ridge detection" << std::endl;
+//	RidgeDetection(log_seedimage_vector, seed_image->GetBufferedRegion().GetSize(), critical_points_vector);
 }
 
 void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> log_seedimage_vector, ImageType::SizeType size, std::vector<ImageType::IndexType> &critical_points_vector )
@@ -251,8 +251,8 @@ void MicrogliaRegionTracer::RidgeDetection( std::vector<LoGImageType::Pointer> l
 		}
 	}
 
-	WriteImage("critical_points.TIF", critical_point_image);
-	WriteVesselnessImage("vesselness.mhd", vesselness_image);
+	//WriteImage("critical_points.TIF", critical_point_image);
+	//WriteVesselnessImage("vesselness.mhd", vesselness_image);
 
 	vesselness_image_iter.GoToBegin();
 
@@ -355,31 +355,16 @@ void MicrogliaRegionTracer::BuildTree(Seed* seed, std::vector<ImageType::IndexTy
 	seed_index[2] = 50;
 
 	critical_points_vector.push_back(seed_index);	//Add the centroid to the critical points
-	
-	int next_point_index = 2;
-
-	/*std::vector<ImageType::IndexType> all_points = critical_points_vector;
-	all_points.push_back(seed_index);*/
-
-	//std::vector<ImageType::IndexType> unconnected_points = critical_points_vector;
-	//
-	//std::vector<ImageType::IndexType> connected_points;
-	//connected_points.push_back(seed_index);
-
-	std::ofstream testFile;
-	testFile.open("traces.swc");
-	testFile << "1 3 100 100 50 1 -1" << std::endl;	//writing the seed point
 
 	double** AdjGraph = BuildAdjacencyGraph(critical_points_vector);
 
-	//Tree* tree = BuildMST(critical_points_vector, AdjGraph);
+	Tree* tree = BuildMST(critical_points_vector, AdjGraph);
 
-
-	for (int k = 0; critical_points_vector.size(); k++)
+	for (int k = 0; k < critical_points_vector.size(); k++)
 		delete[] AdjGraph[k];
 	delete[] AdjGraph;
 
-	//delete tree;
+	delete tree;
 }
 
 double** MicrogliaRegionTracer::BuildAdjacencyGraph(std::vector<ImageType::IndexType> critical_points_vector)
@@ -414,29 +399,39 @@ Tree* MicrogliaRegionTracer::BuildMST(std::vector<MicrogliaRegionTracer::ImageTy
 {	
 	Tree* tree = new Tree();
 	ImageType::IndexType root_index = critical_points_vector.back();
-	critical_points_vector.pop_back();
-	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], critical_points_vector.size()));
+	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], critical_points_vector.size() - 1));
 	
-	//do this until there are no more unconnected points
-	while (!critical_points_vector.empty())
+	std::ofstream traceFile;
+	std::ostringstream traceFileNameStream;
+	traceFileNameStream << root_index[0] << "_" << root_index[1] << "_" << root_index[2] << ".swc" << std::endl;
+	traceFile.open(traceFileNameStream.str().c_str());
+	//traceFile.open("trace.swc");
+	std::cout << "Opening " << traceFileNameStream.str() << std::endl;
+
+	//Root node should have infinite weights to connect to
+	for (int m = 0; m < critical_points_vector.size(); m++)
+		AdjGraph[m][critical_points_vector.size() - 1] = std::numeric_limits<double>::max();
+
+	traceFile << "1 3 100 100 50 1 -1" << std::endl;
+	//do this for each point but the root point
+	for (itk::uint64_t l = 0; l < critical_points_vector.size() - 1; l++)
 	{
-		
 		itk::uint64_t minimum_node_index_from_id = 0;
 		itk::uint64_t minimum_node_index_to_id = 0;
 		double minimum_node_distance = std::numeric_limits<double>::max();
 		Node* minimum_parent_node = NULL;
-		std::vector<Node*> member_nodes = tree->GetMemberNodes();
-		std::vector<Node*>::iterator member_nodes_iter;
 		
 		//For each connected point
+		std::vector<Node*> member_nodes = tree->GetMemberNodes();
+		std::vector<Node*>::iterator member_nodes_iter;
 		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
 		{
 			Node* node = *member_nodes_iter;
 
-			//Search through the unconnected points and find the minimum distance
+			//Search through all the points and find the minimum distance
 			for (itk::uint64_t k = 0; k < critical_points_vector.size(); k++)
 			{
-				if (AdjGraph[node->getID()][k] < minimum_node_distance)
+				if (AdjGraph[node->getID()][k] < minimum_node_distance && node->getID() != k)
 				{
 					minimum_parent_node = node;
 					minimum_node_index_from_id = node->getID();
@@ -446,14 +441,25 @@ Tree* MicrogliaRegionTracer::BuildMST(std::vector<MicrogliaRegionTracer::ImageTy
 			}	
 		}
 
-		std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << std::endl;
+		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << critical_points_vector[minimum_node_index_from_id][0] << " " << critical_points_vector[minimum_node_index_from_id][1] << " " << critical_points_vector[minimum_node_index_from_id][2] << " " << critical_points_vector[minimum_node_index_to_id][0] << " " << critical_points_vector[minimum_node_index_to_id][1] << " "  << critical_points_vector[minimum_node_index_to_id][2] << std::endl;
+		
+		if (minimum_node_index_from_id == critical_points_vector.size() - 1)	//parent is root
+			traceFile << minimum_node_index_to_id + 2 << " 3 " << critical_points_vector[minimum_node_index_to_id][0] << " " << critical_points_vector[minimum_node_index_to_id][1] << " "  << critical_points_vector[minimum_node_index_to_id][2] << " 1 1" << std::endl;
+		else
+			traceFile << minimum_node_index_to_id + 2 << " 3 " << critical_points_vector[minimum_node_index_to_id][0] << " " << critical_points_vector[minimum_node_index_to_id][1] << " "  << critical_points_vector[minimum_node_index_to_id][2] << " 1 " << minimum_node_index_from_id + 2 << std::endl;
 
-		//Put the unconnected point into the connected point list
+		//Set the weight of the AdjGraph entry for this minimum edge to infinite so it is not visited again
+		for (int m = 0; m < critical_points_vector.size(); m++)
+			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();
+		AdjGraph[minimum_node_index_to_id][minimum_node_index_from_id] = std::numeric_limits<double>::max();
+
+		//Connect the unconnected point
 		Node* new_connected_node = new Node(critical_points_vector.at(minimum_node_index_to_id)[0], critical_points_vector.at(minimum_node_index_to_id)[1], critical_points_vector.at(minimum_node_index_to_id)[2], minimum_node_index_to_id);
 		new_connected_node->SetParent(minimum_parent_node);
 		tree->AddNode(new_connected_node, minimum_parent_node);
-		critical_points_vector.erase(critical_points_vector.begin()+minimum_node_index_to_id);
+		//critical_points_vector.erase(critical_points_vector.begin()+minimum_node_index_to_id);
 	}
-
+	std::cout << "Closing " << traceFileNameStream.str() << std::endl;
+	traceFile.close();
 	return tree;
 }

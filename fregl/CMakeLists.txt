@@ -25,7 +25,7 @@ AUX_SOURCE_DIRECTORY( Templates fregl_sources )
 
 ADD_LIBRARY( fregl ${fregl_sources} )
 
-TARGET_LINK_LIBRARIES( fregl ftkImage rgrl vil3d vnl vbl  TinyXML ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES( fregl ftkImage rgrl vil3d vnl vbl  TinyXML ${ITK_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 #IF(BUILD_TESTING)
 #  ADD_SUBDIRECTORY(tests)

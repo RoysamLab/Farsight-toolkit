@@ -276,6 +276,18 @@ IF (USE_TRACKING)
   ADD_SUBDIRECTORY( CellTrackerLib )
 ENDIF (USE_TRACKING)
 
+IF (WIN32)
+    IF ( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+        INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/pthreads/win32/ )
+        LINK_DIRECTORIES( ${CMAKE_SOURCE_DIR}/pthreads/win32/ )
+        SET( PTHREAD_LIBRARIES optimized pthreadVC2 debug pthreadVC2d)
+    ELSE ( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+        INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/pthreads/win64/ )
+        LINK_DIRECTORIES( ${CMAKE_SOURCE_DIR}/pthreads/win64/ )
+        SET( PTHREAD_LIBRARIES optimized pthreadVC2 debug pthreadVC2d)
+    ENDIF( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
+ENDIF(WIN32)
+
 ####################################################################################
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:

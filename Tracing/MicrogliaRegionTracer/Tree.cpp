@@ -29,3 +29,8 @@ std::vector<Node*> Tree::GetMemberNodes()
 {
 	return member_nodes;
 }
+
+Node* Tree::getRoot()
+{
+	return root;
+}

@@ -44,3 +44,8 @@ itk::uint64_t Node::getID()
 {
 	return id;
 }
+
+Node* Node::GetParent()
+{
+	return parent;
+}

@@ -10,11 +10,12 @@ private:
 	Node *parent;
 	std::vector<Node*> children;
 	
+	itk::uint64_t id;
+
+public:
 	itk::uint64_t x;
 	itk::uint64_t y;
 	itk::uint64_t z;
-
-	itk::uint64_t id;
 
 	
 
@@ -26,6 +27,7 @@ public:
 	std::vector<Node*> GetChildren();
 
 	itk::uint64_t getID();
+	Node* GetParent();
 };
 
 #endif
