@@ -1,12 +1,12 @@
 #ifndef ROIGRABBER_H
 #define ROIGRABBER_H
 
-#include "Cell.h"
 #include "fregl/fregl_roi.h"
+#include "Cell.h"
 
 class ROIGrabber
 {
-private:
+public:
 	typedef fregl_roi::ImageType ImageType;
 
 public:

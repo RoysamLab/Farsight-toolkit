@@ -57,14 +57,14 @@ void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
 	}
 }
 
-std::vector<LoG::LoGImageType::Pointer> LoG::RunMultiScaleLoG(Cell* cell, ImageType::Pointer cell_image)
+std::vector<LoG::LoGImageType::Pointer> LoG::RunMultiScaleLoG(Cell* cell)
 {
 	std::vector<LoGImageType::Pointer> multiscale_LoG_vector;
 
 	for (float scale = 1; scale <= 3; scale+=0.25)
 	{
 		LoG *log_obj = new LoG();
-		LoGImageType::Pointer LoGimage = log_obj->RunLoG(cell_image, scale);
+		LoGImageType::Pointer LoGimage = log_obj->RunLoG(cell->image, scale);
 
 		multiscale_LoG_vector.push_back(LoGimage);
 	}
