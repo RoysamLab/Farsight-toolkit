@@ -167,6 +167,16 @@ std::set< vtkIdType > SelectiveClustering::GetClusterIDs()
 	}
 	return ClusterIDs;
 }
+QStringList SelectiveClustering::GetClusterIDsList()
+{
+	QStringList clusterList;
+	this->iter = this->ClusterMap.begin();
+	for (; this->iter != this->ClusterMap.end(); this->iter++)
+	{
+		clusterList << QString::number((int)(*this->iter).first);
+	}
+	return clusterList;
+}
 std::set< vtkIdType > SelectiveClustering::SelectionFromCluster(vtkIdType key)
 {
 	/*! 
@@ -370,14 +380,17 @@ ClusterManager::ClusterManager()
 	this->NumObjects = new QLabel(" None ");
 	this->NumClusters = new QLabel(" None ");
 	this->NumSelected = new QLabel(" None ");
+	
+	this->ClusterListView = new QListWidget(this);
 
-	QFormLayout *RightLayout = new QFormLayout();
-	RightLayout->addRow("Number of Objects: ", this->NumObjects);
-	RightLayout->addRow("Number of Clusters: ", this->NumClusters);
-	RightLayout->addRow("Number Selected: ", this->NumSelected);
+	QFormLayout *InfoLayout = new QFormLayout();
+	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
+	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
+	InfoLayout->addRow("Number Selected: ", this->NumSelected);
 
 	this->MainLayout = new QHBoxLayout;
-	this->MainLayout->addLayout(RightLayout);
+	this->MainLayout->addWidget(this->ClusterListView);
+	this->MainLayout->addLayout(InfoLayout);
 
 	this->setLayout(this->MainLayout);
 	this->setWindowTitle(tr("Cluster Manager"));
@@ -401,5 +414,11 @@ void ClusterManager::ChangeInClusters()
 	this->NumClusters->setNum(numClust);
 	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
 	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
+
+	//display of clusters in a list
+	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
+	this->ClusterListView->clear();
+	this->ClusterListView->addItems( ClusterList);
+
 	//
 }

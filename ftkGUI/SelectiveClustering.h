@@ -30,12 +30,14 @@ limitations under the License.
 
 #include <QtGui/QItemSelection>
 #include <QtGui/QItemSelectionModel>
+#include <QStringList>
 
 #include <QtGui/QPushButton>
 #include <QtGui/QComboBox>
 #include <QtGui/QGroupBox>
 #include <QtGui/QLabel>
 #include <QtGui/QCheckBox>
+#include <QListWidget>
 
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDialog>
@@ -72,6 +74,7 @@ public:
 	vtkIdType GetNumberOfSelections();
 	vtkIdType GetNumberOfObjects() { return NumberOfObjects; }
 	std::set< vtkIdType > GetClusterIDs();
+	QStringList GetClusterIDsList();
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();
@@ -126,6 +129,7 @@ private:
 
 	//QT Gui Layouts
 	QHBoxLayout * MainLayout;
+	QListWidget * ClusterListView;
 	QLabel * NumClusters;
 	QLabel * NumObjects;
 	QLabel * NumSelected;
