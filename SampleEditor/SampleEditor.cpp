@@ -58,6 +58,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	this->ClusterSelections = new SelectiveClustering();
 	this->SampleClusterManager = new ClusterManager();
 	this->SampleClusterManager->setClusteringModel(this->ClusterSelections );
+	this->SampleClusterManager->setObjectSelection(selection);
 	//this->SampleClusterManager->setVisible(true);
 
 	this->resize(500,500);

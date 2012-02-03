@@ -42,6 +42,7 @@ limitations under the License.
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDialog>
 
+#include "ftkGUI/ObjectSelection.h"
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
@@ -119,20 +120,31 @@ class ClusterManager : public QDialog
 public:
 	ClusterManager();
 	void setClusteringModel(SelectiveClustering * newClusterModel);
+	void setObjectSelection(ObjectSelection * ObjSelection);
 
 public slots:
 
+	void SelectionToClusterModification();
 	void ChangeInClusters();
+	void ChangeInObjectSelection();
 
 private:
+
+	//Selection Classes 
 	SelectiveClustering * ClusterModel;
+	ObjectSelection * LegacyObjectSelection;
+
+	//Private Functions
+	std::set< vtkIdType > ObjectSelectionToIDSet();
 
 	//QT Gui Layouts
 	QHBoxLayout * MainLayout;
 	QListWidget * ClusterListView;
+
 	QLabel * NumClusters;
 	QLabel * NumObjects;
 	QLabel * NumSelected;
 
+	QPushButton * AddClusterButton;
 };
 #endif

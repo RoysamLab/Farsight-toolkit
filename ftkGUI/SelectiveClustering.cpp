@@ -376,6 +376,8 @@ ClusterManager::ClusterManager()
 	this->NumObjects = new QLabel(" None ");
 	this->NumClusters = new QLabel(" None ");
 	this->NumSelected = new QLabel(" None ");
+	this->AddClusterButton = new QPushButton(" Add Cluster ");
+	connect(this->AddClusterButton, SIGNAL(clicked()), this, SLOT(SelectionToClusterModification()));
 	
 	this->ClusterListView = new QListWidget(this);
 
@@ -383,6 +385,7 @@ ClusterManager::ClusterManager()
 	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
 	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
+	InfoLayout->addRow(this->AddClusterButton);
 
 	this->MainLayout = new QHBoxLayout;
 	this->MainLayout->addWidget(this->ClusterListView);
@@ -401,6 +404,25 @@ void ClusterManager::setClusteringModel(SelectiveClustering * newClusterModel)
 	connect(this->ClusterModel, SIGNAL(ClusterChanged()), this, SLOT(ChangeInClusters()));
 }
 
+void ClusterManager::setObjectSelection(ObjectSelection *ObjSelection)
+{
+	/*! 
+	* allows for use of Object Selection
+	*/
+	this->LegacyObjectSelection = ObjSelection;
+	connect(this->LegacyObjectSelection, SIGNAL(changed()), this, SLOT(ChangeInObjectSelection()));
+
+}
+
+void ClusterManager::SelectionToClusterModification()
+{
+	/*! 
+	* Currently test of object Selection to Clusters
+	*/
+	std::set< vtkIdType > sel = this->ObjectSelectionToIDSet();
+	this->ClusterModel->AddCluster(sel);
+}
+
 void ClusterManager::ChangeInClusters()
 {
 	/*! 
@@ -417,4 +439,28 @@ void ClusterManager::ChangeInClusters()
 	this->ClusterListView->addItems( ClusterList);
 
 	//
+}
+
+void ClusterManager::ChangeInObjectSelection()
+{
+	/*! 
+	* Signal Slot interface for objectSelection
+	*/
+}
+
+std::set< vtkIdType > ClusterManager::ObjectSelectionToIDSet()
+{
+	/*! 
+	* convert objectSelection into form selective
+	* clustering can use for operations
+	*/
+	std::set<long int> curSel = this->LegacyObjectSelection->getSelections();
+	std::set<long int>::iterator iter = curSel.begin();
+	std::set< vtkIdType > Selection;
+	for (; iter != curSel.end(); iter++)
+	{
+		vtkIdType id = (vtkIdType) (*iter);
+		Selection.insert(id);
+	}
+	return Selection;
 }
