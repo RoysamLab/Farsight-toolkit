@@ -5726,7 +5726,6 @@ void View3D::ClusclusAnalysis()
 void View3D::selectedFeaturesClustering()
 {
 #ifdef USE_Clusclus
-
 	HeatmapWins = new Heatmap();
 	vtkSmartPointer<vtkTable> featureTable = vtkSmartPointer<vtkTable>::New();
 
