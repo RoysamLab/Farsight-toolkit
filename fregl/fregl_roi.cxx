@@ -6,15 +6,19 @@ fregl_roi::fregl_roi(std::string joint_xforms_xml_file, std::string img_path, st
     this->anchor_image = anchor_image;
     this->nearest_neighbor = nearest_neighbor;
     this->region_montage = new fregl_image_manager(joint_xforms_xml_file, img_path, anchor_image, nearest_neighbor);
+	
+	this->region_montage->set_file_caching(true);
+	this->region_montage->set_file_cache_dir("./cache");
 }
 
 void fregl_roi::setROI(ImageType::PointType roi_origin, ImageType::SizeType roi_size) {
     this->roi_origin = roi_origin;
     this->roi_size = roi_size;
+	region_montage->set_regionofinterest(roi_origin, roi_size);
 }
 
 fregl_roi::ImageType::Pointer fregl_roi::getROI() {
-    region_montage->set_regionofinterest(roi_origin, roi_size);
+    
 
     region_montage->Update();
     return region_montage->GetOutput();
