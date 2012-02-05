@@ -77,17 +77,40 @@ fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::
 void fregl_image_manager::set_regionofinterest(PointType origin, SizeType size) {
     //    roi_origin = origin;
     // Convert the request from normal space(0,0,0) to anchor space
-    roi_origin[0] = origin[0] + global_origin[0];
+    //roi_origin is in global space
+
+	roi_origin[0] = origin[0] + global_origin[0];
     roi_origin[1] = origin[1] + global_origin[1];
     roi_origin[2] = origin[2] + global_origin[2];
-    roi_size = size;
-    if (roi_origin[0] < global_origin[0]) roi_origin[0] = global_origin[0];
-    if (roi_origin[1] < global_origin[1]) roi_origin[1] = global_origin[1];
-    if (roi_origin[2] < global_origin[2]) roi_origin[2] = global_origin[2];
-    if (roi_origin[0] > global_origin[0] + global_size[0]) roi_origin[0] = global_origin[0] + global_size[0];
+    
+	roi_size = size;
+	std::cout << "origin: " << origin[0] << " " << origin[1] << " " << origin[2] << std::endl;
+	std::cout << "global_origin: " << global_origin[0] << " " << global_origin[1] << " " << global_origin[2] << std::endl;
+	std::cout << "roi_origin: " << roi_origin[0] << " " << roi_origin[1] << " " << roi_origin[2] << std::endl;
+    
+	//if the roi_origin is less than the global_origin in anchor space, then we need to fit it by moving the roi_origin to the global_origin and then lowering the size
+	if (roi_origin[0] < global_origin[0]) 
+	{
+		roi_size[0] -= (global_origin[0] - roi_origin[0]);
+		roi_origin[0] = global_origin[0];
+	}
+	if (roi_origin[1] < global_origin[1]) 
+	{
+		roi_size[1] -= (global_origin[1] - roi_origin[1]);
+		roi_origin[1] = global_origin[1];
+	}
+
+	if (roi_origin[2] < global_origin[2]) 
+	{
+		roi_size[2] -= (global_origin[2] - roi_origin[2]);
+		roi_origin[2] = global_origin[2];
+	}
+	
+	if (roi_origin[0] > global_origin[0] + global_size[0]) roi_origin[0] = global_origin[0] + global_size[0];
     if (roi_origin[1] > global_origin[1] + global_size[1]) roi_origin[1] = global_origin[1] + global_size[1];
     if (roi_origin[2] > global_origin[2] + global_size[2]) roi_origin[2] = global_origin[2] + global_size[2];
-    // Make sure size is in range or fix
+    
+	// Make sure size is in range or fix
     if (roi_origin[0] + roi_size[0] > global_origin[0] + global_size[0])
         roi_size[0] = (global_origin[0] + global_size[0]) - roi_origin[0];
     if (roi_origin[1] + roi_size[1] > global_origin[1] + global_size[1])
@@ -97,6 +120,10 @@ void fregl_image_manager::set_regionofinterest(PointType origin, SizeType size) 
     roi_index[0] = roi_origin[0];
     roi_index[1] = roi_origin[1];
     roi_index[2] = roi_origin[2];
+
+	/*std::cout << "ROI origin: " << roi_origin[0] << "x" << roi_origin[1] << "x" << roi_origin[2] << std::endl;
+	std::cout << "ROI size: " << roi_size[0] << "x" << roi_size[1] << "x" << roi_size[2] << std::endl;*/
+
     global_space_transformer->set_roi(roi_origin, roi_size);
 }
 
