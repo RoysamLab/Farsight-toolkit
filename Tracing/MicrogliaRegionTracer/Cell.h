@@ -23,6 +23,15 @@ public:
 	itk::uint64_t getY() const;
 	itk::uint64_t getZ() const;
 
+	void setSize(ImageType::SizeType size);
+	ImageType::SizeType getSize();
+
+	void setRequestedSize(ImageType::SizeType cell_requested_size);
+	ImageType::SizeType getRequestedSize();
+
+	void Cell::setShiftIndex(Cell::ImageType::IndexType shift_index);
+	Cell::ImageType::IndexType Cell::getShiftIndex();
+
 public:
 	std::vector<ImageType::IndexType> critical_points_vector;
 	
@@ -35,6 +44,10 @@ private:
 	itk::uint64_t cell_x;
 	itk::uint64_t cell_y;
 	itk::uint64_t cell_z;
+
+	ImageType::SizeType cell_size;
+	ImageType::SizeType cell_requested_size;
+	ImageType::IndexType shift_index;
 };
 
 #endif

@@ -34,11 +34,34 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string filename)
 
 	while (!seed_point_file.eof())
 	{
+		
 		itk::uint64_t cellX, cellY, cellZ;
 		seed_point_file >> cellX >> cellY >> cellZ;
-
 		//std::cout << "Reading in cell: (" << cellX << ", " << cellY << ", " << cellZ << ")" << std::endl;
-		cells.push_back(new Cell(cellX, cellY, cellZ));
+		
+		Cell* cell = new Cell(cellX, cellY, cellZ);
+
+		//Setup the size of the initial ROI
+		ImageType::SizeType roi_size;
+		roi_size[0] = 200;
+		roi_size[1] = 200;
+		roi_size[2] = 100;
+
+		cell->setRequestedSize(roi_size);
+
+		//Grab the initial cellimage
+		//std::cout << "Grabbing ROI for cell" << std::endl;
+		ImageType::IndexType shift_index;
+		cell->image = roi_grabber->GetROI(cell, roi_size, shift_index);
+		cell->setShiftIndex(shift_index);
+		//std::cout << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
+		
+		//WriteImage("cell.tif", cell->image);
+
+		roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
+		cell->setSize(roi_size);
+
+		cells.push_back(cell);
 	}
 }
 
@@ -94,7 +117,8 @@ void MicrogliaRegionTracer::WriteCellImages()
 		roi_size[2] = 100;
 		
 		//Grab the cell and its ROI
-		ImageType::Pointer cell_image = roi_grabber->GetROI(cell, roi_size);
+		ImageType::IndexType shift_index;
+		ImageType::Pointer cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
 
 		//Make the file name of the raw cell image
 		std::stringstream cell_filename_stream;
@@ -111,9 +135,12 @@ void MicrogliaRegionTracer::Trace()
 	std::vector<Cell*>::iterator cells_iter;
 	
 	//Trace cell by cell
-	for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
+	#pragma omp parallel for
+	for (int k = 0; k < cells.size(); k++)
+	//for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
 	{
-		Cell* cell = *cells_iter;
+		//Cell* cell = *cells_iter;
+		Cell* cell = cells[k];
 		
 		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
 		CalculateCandidatePixels(cell);
@@ -126,16 +153,6 @@ void MicrogliaRegionTracer::Trace()
 
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 {
-	ImageType::SizeType roi_size;
-	roi_size[0] = 200;
-	roi_size[1] = 200;
-	roi_size[2] = 100;
-	
-	//Grab the initial cellimage
-	std::cout << "Grabbing ROI for cell" << std::endl;
-	cell->image = roi_grabber->GetROI(cell, roi_size);
-	//WriteImage("cell.tif", cell->image);
-
 	LoG *log_obj = new LoG();
 	//Calculate the LoG on multiple scales and put them into a vector
 	std::cout << "Calculating Multiscale LoG" << std::endl;
@@ -147,7 +164,7 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 
 void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 {
-	ImageType::SizeType size = cell->image->GetBufferedRegion().GetSize();
+	ImageType::SizeType size = cell->image->GetLargestPossibleRegion().GetSize();
 
 	//Make a new image to store the critical points	
 	cell->critical_point_image = ImageType::New();
@@ -169,8 +186,8 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	cell->vesselness_image->Allocate();
 	cell->vesselness_image->FillBuffer(0);
 
-	itk::ImageRegionIterator<ImageType> critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetBufferedRegion());
-	itk::ImageRegionIterator<VesselnessImageType> vesselness_image_iter(cell->vesselness_image, cell->vesselness_image->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType> critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator<VesselnessImageType> vesselness_image_iter(cell->vesselness_image, cell->vesselness_image->GetLargestPossibleRegion());
 	
 	std::vector<LoGImageType::Pointer>::iterator LoG_image_vector_iter;
 	
@@ -181,10 +198,10 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 		LoGImageType::Pointer log_image = *LoG_image_vector_iter;
 
 		itk::Size<3> rad = {{1,1,1}};
-		itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, log_image, log_image->GetBufferedRegion());
+		itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, log_image, log_image->GetLargestPossibleRegion());
 		
 		//Making a size value that removes some room (kind of like reverse padding) so we dont go out of bounds later
-		itk::Size<3> unpad_size = log_image->GetBufferedRegion().GetSize();
+		itk::Size<3> unpad_size = log_image->GetLargestPossibleRegion().GetSize();
 		unpad_size[0] = unpad_size[0] - 3;
 		unpad_size[1] = unpad_size[1] - 3; 
 		unpad_size[2] = unpad_size[2] - 3;
@@ -351,9 +368,9 @@ double MicrogliaRegionTracer::ComputeVesselness( double ev1, double ev2, double 
 void MicrogliaRegionTracer::BuildTree(Cell* cell)
 {
 	ImageType::IndexType cell_index;
-	cell_index[0] = 100;
-	cell_index[1] = 100;
-	cell_index[2] = 50;
+	cell_index[0] = cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0];
+	cell_index[1] = cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1];
+	cell_index[2] = cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2];
 
 	cell->critical_points_vector.push_back(cell_index);	//Add the centroid to the critical points
 
@@ -403,9 +420,13 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], cell->critical_points_vector.size() - 1));
 	
 	std::ofstream traceFile;
+	std::ofstream traceFile_local;
 	std::ostringstream traceFileNameStream;
+	std::ostringstream traceFileNameLocalStream;
 	traceFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".swc";
+	traceFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_local.swc";
 	traceFile.open(traceFileNameStream.str().c_str());
+	traceFile_local.open(traceFileNameLocalStream.str().c_str());
 	//traceFile.open("trace.swc");
 	std::cout << "Opening " << traceFileNameStream.str() << std::endl;
 
@@ -414,7 +435,8 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 		AdjGraph[m][cell->critical_points_vector.size() - 1] = std::numeric_limits<double>::max();
 
 	//Write out the root point
-	traceFile << "1 3 " << cell->getX() << " " << cell->getY() << " " << cell->getZ() << " 1 -1" << std::endl;
+	traceFile << "1 3 " << cell->getX() << " " << cell->getY() << " " << cell->getZ() << " 1 -1" << std::endl;	//global coordinates
+	traceFile_local << "1 3 " << cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0] << " " << cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1] << " " << cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2] << " 1 -1" << std::endl;	//local coordinates
 
 	//do this for each point but the root point
 	for (itk::uint64_t l = 0; l < cell->critical_points_vector.size() - 1; l++)
@@ -444,16 +466,27 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 			}	
 		}
 
-		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << critical_points_vector[minimum_node_index_from_id][0] << " " << critical_points_vector[minimum_node_index_from_id][1] << " " << critical_points_vector[minimum_node_index_from_id][2] << " " << critical_points_vector[minimum_node_index_to_id][0] << " " << critical_points_vector[minimum_node_index_to_id][1] << " "  << critical_points_vector[minimum_node_index_to_id][2] << std::endl;
+		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_vector[minimum_node_index_from_id][0] << " " << cell->critical_points_vector[minimum_node_index_from_id][1] << " " << cell->critical_points_vector[minimum_node_index_from_id][2] << " " << cell->critical_points_vector[minimum_node_index_to_id][0] << " " << cell->critical_points_vector[minimum_node_index_to_id][1] << " "  << cell->critical_points_vector[minimum_node_index_to_id][2] << std::endl;
 		ImageType::IndexType cell_origin;
-		cell_origin[0] = cell->critical_points_vector[minimum_node_index_to_id][0] + cell->getX();
-		cell_origin[1] = cell->critical_points_vector[minimum_node_index_to_id][0] + cell->getY();
-		cell_origin[2] = cell->critical_points_vector[minimum_node_index_to_id][0] + cell->getZ();
 		
+		cell_origin[0] = cell->critical_points_vector[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
+		cell_origin[1] = cell->critical_points_vector[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
+		cell_origin[2] = cell->critical_points_vector[minimum_node_index_to_id][2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
+		
+		ImageType::IndexType cell_origin_local;
+		cell_origin_local[0] = cell->critical_points_vector[minimum_node_index_to_id][0];
+		cell_origin_local[1] = cell->critical_points_vector[minimum_node_index_to_id][1];
+		cell_origin_local[2] = cell->critical_points_vector[minimum_node_index_to_id][2];
+
 		if (minimum_node_index_from_id == cell->critical_points_vector.size() - 1)	//parent is root
 			traceFile << minimum_node_index_to_id + 2 << " 3 " << cell_origin[0] << " " << cell_origin[1] << " "  << cell_origin[2] << " 1 1" << std::endl;
 		else
 			traceFile << minimum_node_index_to_id + 2 << " 3 " << cell_origin[0] << " " << cell_origin[1] << " "  << cell_origin[2] << " 1 " << minimum_node_index_from_id + 2 << std::endl;
+
+		if (minimum_node_index_from_id == cell->critical_points_vector.size() - 1)	//parent is root
+			traceFile_local << minimum_node_index_to_id + 2 << " 3 " << cell_origin_local[0] << " " << cell_origin_local[1] << " "  << cell_origin_local[2] << " 1 1" << std::endl;
+		else
+			traceFile_local << minimum_node_index_to_id + 2 << " 3 " << cell_origin_local[0] << " " << cell_origin_local[1] << " "  << cell_origin_local[2] << " 1 " << minimum_node_index_from_id + 2 << std::endl;
 
 		//Set the weight of the AdjGraph entry for this minimum edge to infinite so it is not visited again
 		for (int m = 0; m < cell->critical_points_vector.size(); m++)
@@ -464,9 +497,12 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 		Node* new_connected_node = new Node(cell->critical_points_vector[minimum_node_index_to_id][0], cell->critical_points_vector[minimum_node_index_to_id][1], cell->critical_points_vector[minimum_node_index_to_id][2], minimum_node_index_to_id);
 		new_connected_node->SetParent(minimum_parent_node);
 		tree->AddNode(new_connected_node, minimum_parent_node);
-		//critical_points_vector.erase(critical_points_vector.begin()+minimum_node_index_to_id);
 	}
+
+	std::cout << cell->getRequestedSize()[0] << " " << cell->getRequestedSize()[1] << " " << cell->getRequestedSize()[2] << std::endl;
+	std::cout << "Shift: " << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
 	std::cout << "Closing " << traceFileNameStream.str() << std::endl;
 	traceFile.close();
+	traceFile_local.close();
 	return tree;
 }

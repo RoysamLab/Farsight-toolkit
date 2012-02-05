@@ -20,6 +20,10 @@
 #include "Tree.h"
 #include "time.h"
 
+#ifdef _OPENMP
+	#include "omp.h"
+#endif
+
 class MicrogliaRegionTracer
 {
 private:
