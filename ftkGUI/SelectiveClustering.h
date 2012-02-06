@@ -144,7 +144,8 @@ private:
 	QLabel * NumClusters;
 	QLabel * NumObjects;
 	QLabel * NumSelected;
-
+	
+	QComboBox *OperatorList;
 	QPushButton * AddClusterButton;
 };
 #endif

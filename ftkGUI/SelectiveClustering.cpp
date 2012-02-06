@@ -380,11 +380,18 @@ ClusterManager::ClusterManager()
 	connect(this->AddClusterButton, SIGNAL(clicked()), this, SLOT(SelectionToClusterModification()));
 	
 	this->ClusterListView = new QListWidget(this);
+	
+	this->OperatorList = new QComboBox(this);
+	OperatorList->addItem("ADD");
+	OperatorList->addItem("SUBRACT");
+	OperatorList->addItem("AND");
+	OperatorList->addItem("XOR");
 
 	QFormLayout *InfoLayout = new QFormLayout();
 	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
 	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
+	InfoLayout->addRow("Operator: ", this->OperatorList);
 	InfoLayout->addRow(this->AddClusterButton);
 
 	this->MainLayout = new QHBoxLayout;
