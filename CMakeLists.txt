@@ -216,6 +216,9 @@ IF(BUILD_TESTING)
     LINK_DIRECTORIES( ${QtTesting_LIBRARY_DIR} )
     SET(QtTestingFound TRUE)
   ENDIF()
+
+  # CSV Testing Support.
+  ADD_SUBDIRECTORY( ftkTesting )
 ENDIF(BUILD_TESTING)
 
 ################################################################################
