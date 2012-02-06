@@ -172,7 +172,7 @@ View3D::View3D(TraceObject *Traces)
 	this->FL_histo = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
-
+	CentroidsActor = NULL;
 	this->tobj = Traces;
 	//	this->Volume=0;
 	this->Initialize();
@@ -3713,11 +3713,11 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
 	glyphs->SetSource(sphere_src->GetOutput());
 	glyphs->SetInput(point_poly);
-	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	cubemap->SetInput(glyphs->GetOutput());
-	cubemap->GlobalImmediateModeRenderingOn();
+	vtkSmartPointer<vtkPolyDataMapper> spheremap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	spheremap->SetInput(glyphs->GetOutput());
+	spheremap->GlobalImmediateModeRenderingOn();
 	PointsActor = vtkSmartPointer<vtkActor>::New();
-	PointsActor->SetMapper(cubemap);
+	PointsActor->SetMapper(spheremap);
 	PointsActor->SetPickable(0);
 	PointsActor->GetProperty()->SetPointSize(5);
 	PointsActor->GetProperty()->SetOpacity(.5);
@@ -3728,8 +3728,9 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 {
 	if(centroidsTable->GetNumberOfRows() ==0)
 		return;
+
 	vtkSmartPointer<vtkSphereSource> sphere_src = vtkSmartPointer<vtkSphereSource>::New();
-	vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
+	point_poly = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cells=vtkSmartPointer<vtkCellArray>::New();
 
@@ -3737,7 +3738,7 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 	sizeArray->SetName("SizeArray");
 	sizeArray->SetNumberOfTuples(centroidsTable->GetNumberOfRows());
 
-	vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colors->SetName("Colors");
 	colors->SetNumberOfComponents(3);
 	colors->SetNumberOfTuples(centroidsTable->GetNumberOfRows());
@@ -3752,7 +3753,7 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 		double radii = 0.75  * centroidsTable->GetValueByName(counter, "volume").ToDouble()/ PI;
 		radii = pow( radii, (double) 1 / 3);
 		sizeArray->SetTuple1(counter, radii);
-		colors->InsertTuple3(counter, 255, 255, 0);
+		colors->InsertTuple3(counter, 255, 0, 0);
 
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(return_id);
@@ -3764,21 +3765,21 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 	point_poly->GetPointData()->SetActiveScalars("SizeArray");
 	point_poly->GetPointData()->AddArray(colors);
 
-	vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
+	glyphs = vtkSmartPointer<vtkGlyph3D>::New();
 	//glyphs->ScalingOn();
 	//glyphs->SetScaleModeToScaleByScalar(); 	
 	glyphs->SetSource(sphere_src->GetOutput());
 	glyphs->SetInput(point_poly);
 
-	vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	cubemap->SetInput(glyphs->GetOutput());
-	//cubemap->GlobalImmediateModeRenderingOn();
-	cubemap->ScalarVisibilityOn();
-	cubemap->SetScalarModeToUsePointFieldData();
-	cubemap->SelectColorArray("Colors");
+	spheremap = vtkSmartPointer<vtkPolyDataMapper>::New();
+	spheremap->SetInput(glyphs->GetOutput());
+	//spheremap->GlobalImmediateModeRenderingOn();
+	spheremap->ScalarVisibilityOn();
+	spheremap->SetScalarModeToUsePointFieldData();
+	spheremap->SelectColorArray("Colors");
 
 	CentroidsActor = vtkSmartPointer<vtkActor>::New();
-	CentroidsActor->SetMapper(cubemap);
+	CentroidsActor->SetMapper(spheremap);
 	CentroidsActor->SetPickable(0);
 	CentroidsActor->GetProperty()->SetPointSize(1);
 	CentroidsActor->GetProperty()->SetOpacity(.5);
@@ -4107,6 +4108,36 @@ void View3D::updateSelectionFromCell()
 			this->HighlightSelected(Selections[j],this->SelectColor);
 		}
 	}
+
+	if( CentroidsActor)  // color the nucleus
+	{
+		
+		std::set<long int> Ids = this->CellModel->GetSelectedContinuousIDs();
+		unsigned int cellCount = this->CellModel->getCellCount();
+		for (unsigned int i = 0; i < cellCount; i++)
+		{
+			if( Ids.find(i) != Ids.end())
+			{
+				colors->SetTuple3(i, 0, 255, 0);
+			}
+			else
+			{
+				colors->SetTuple3(i, 255, 0, 0);
+			}
+		}
+
+		point_poly->GetPointData()->RemoveArray("Colors");
+		point_poly->GetPointData()->AddArray(colors);
+
+		glyphs->SetInput(point_poly);
+		spheremap->SetInput(glyphs->GetOutput());
+
+		spheremap->ScalarVisibilityOn();
+		spheremap->SetScalarModeToUsePointFieldData();
+		spheremap->SelectColorArray("Colors");
+		CentroidsActor->SetMapper(spheremap);
+	}
+
 	this->poly_line_data->Modified();
 	this->QVTK->GetRenderWindow()->Render();
 	this->statusBar()->showMessage(tr("Selected\t")

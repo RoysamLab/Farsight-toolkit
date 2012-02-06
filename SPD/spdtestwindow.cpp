@@ -23,6 +23,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	histo = NULL;
 	progressionHeatmap = NULL;
 	HeatmapWin = NULL;
+	plot = NULL;
 
     dataFileLabel = new QLabel(tr("Choose file:"));
 
@@ -615,23 +616,23 @@ void SPDtestWindow::regenerateProgressionTree()
 		std::string distanceThres = this->distanceThres->text().toStdString();
 		std::cout<< "rerender progression view"<<endl;
 		selection->clear();
-		std::vector< std::vector< long int> > clusIndex;
-		selection->GetSampleIndex( clusIndex);
+		std::vector< std::vector< long int> > sampleIndex;
+		selection->GetSampleIndex( sampleIndex);
 		
 		vnl_matrix<double> clusAverageMat;
 		std::vector<int> modSize;
 		std::vector< double> colorVec;
 		std::vector< double> percentVec;
-		SPDModel->GetSingleLinkageClusterAverage(clusIndex, clusAverageMat);
-		SPDModel->GetPercentage(clusIndex, colorVec);
-		SPDModel->GetCloseToDevicePercentage(clusIndex, percentVec, atof(distanceThres.c_str()));
+		SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
+		SPDModel->GetPercentage(sampleIndex, colorVec);
+		SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
 
 		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
 
 		/** graph window set models */
 		std::vector<int> index;
-		SPDModel->GetSingleLinkageClusterMapping(clusIndex, index);
+		SPDModel->GetSingleLinkageClusterMapping(sampleIndex, index);
 		vtkSmartPointer<vtkTable> dataTable = vtkSmartPointer<vtkTable>::New();
 		SPDModel->GetCombinedDataTable(dataTable);
 		this->graph->setModels(dataTable, selection, &index);
@@ -719,16 +720,35 @@ void SPDtestWindow::showProgressionHeatmap()
 	std::vector<long int> TreeOrder;
 	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
 	if( TreeOrder.size() <=0)
-	{
+	{          
 		std::cout<< "progression tree hasn't been built yet"<<endl;
 		return;
 	}
 
+	std::vector< std::vector< long int> > sampleIndex;
+	selection->GetSampleIndex( sampleIndex);
 	std::vector< std::vector< long int> > clusIndex;
 	selection->GetClusterIndex( clusIndex);
 	std::vector< int> clusterOrder;
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
 
+	// module feature and percentage plot
+	std::vector< double> percentageOfSamples;
+	std::vector< double> percentageOfNearDeviceSamples;
+	std::string distanceThres = this->distanceThres->text().toStdString();
+	SPDModel->GetPercentage(sampleIndex, percentageOfSamples);
+	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentageOfNearDeviceSamples, atof(distanceThres.c_str()));
+
+	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, percentageOfSamples, percentageOfNearDeviceSamples, selOrder, unselOrder);
+	if( plot)
+	{
+		delete plot;
+	}
+	plot = new PlotWindow(this);
+	plot->setModels(tableForAverModulePlot);
+	plot->show();
+
+	// progression heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
 	std::map< int, int> indexMap;
@@ -760,6 +780,10 @@ void SPDtestWindow::closeSubWindows()
 	if(HeatmapWin)
 	{
 		HeatmapWin->close();
+	}
+	if(plot)
+	{
+		plot->close();
 	}
 }
 

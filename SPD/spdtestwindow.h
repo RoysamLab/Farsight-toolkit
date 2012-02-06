@@ -11,6 +11,7 @@
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
+#include "ftkGUI/PlotWindow.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
 #include "ClusClus/HeatmapWindow.h"
 
@@ -98,6 +99,7 @@ private:
 	HistoWindow *histo;
 	Heatmap *progressionHeatmap;
 	Heatmap *HeatmapWin;
+	PlotWindow *plot;
 
 	vnl_vector<int> optimalleaforder;
 	vnl_vector<int> selMod;

@@ -502,6 +502,12 @@ private:
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
 
+	// for nucleus
+	vtkSmartPointer<vtkUnsignedCharArray> colors;
+	vtkSmartPointer<vtkPolyDataMapper>  spheremap;
+	vtkSmartPointer<vtkPolyData> point_poly;
+	vtkSmartPointer<vtkGlyph3D> glyphs;
+
 	//
 	MCLR_SM *mclr;
 	GenericALDialog *ALDialog;

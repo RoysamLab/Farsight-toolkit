@@ -356,6 +356,31 @@ std::vector<CellTrace*> CellTraceModel::getCells(std::vector<long> IDs)
 	return cells;
 }
 
+std::set<long int> CellTraceModel::GetSelectedContinuousIDs()
+{
+	std::set<long int> ids;
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{
+		long int id = (long int) *it;
+		bool found = false;
+		long int j = 0;
+		while(!found && ( j < this->Cells.size()))
+		{
+			if (id == this->Cells.at(j)->rootID())
+			{
+				ids.insert(j);
+				found = true;
+			}else
+			{
+				j++;
+			}
+		}//end while !found
+	}//end for selected
+	return ids;
+}
+
 std::set<long int> CellTraceModel::GetSelectedIDs()
 {
 	std::set<long int> allSelectedIDs, nextIDs;

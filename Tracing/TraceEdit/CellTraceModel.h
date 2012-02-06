@@ -76,6 +76,7 @@ public:
 	void SelectByRootTrace(std::vector<TraceLine*> roots);
 	void SelectByIDs(std::vector<int> IDs);
 	std::set<long int> GetSelectedIDs();
+	std::set<long int> GetSelectedContinuousIDs();
 	std::vector<CellTrace*> GetSelectedCells();
 	unsigned int getCellCount();
 	CellTrace * GetCellAt( int i);

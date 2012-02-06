@@ -2263,44 +2263,44 @@ void Heatmap::selectClustersforSPD(double* worldPosition)
 
 void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 {
-	//std::set<long int>::iterator it;
-	//int clusternumber = 0;
-	//for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
-	//{
-	//	long int id = *it;
-	//	long int id1 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][0];
-	//	long int id2 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][1];
+	std::set<long int>::iterator it;
+	int clusternumber = 0;
+	for(it = selectedClusterSPD.begin(); it != selectedClusterSPD.end(); it++)
+	{
+		long int id = *it;
+		long int id1 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][0];
+		long int id2 = connect_Data_Tree1[rowMapForTreeData.find(id)->second][1];
 
-	//	std::set<long int>::iterator it1 = selectedClusterSPD.find(id1);
-	//	std::set<long int>::iterator it2 = selectedClusterSPD.find(id2);
+		std::set<long int>::iterator it1 = selectedClusterSPD.find(id1);
+		std::set<long int>::iterator it2 = selectedClusterSPD.find(id2);
 
-	//	if(it1 == selectedClusterSPD.end())
-	//	{
-	//		reselectedClusterSPD.insert(id1);
-	//		clusternumber++;
-	//	}
-	//	if(it2 == selectedClusterSPD.end())
-	//	{
-	//		reselectedClusterSPD.insert(id2);
-	//		clusternumber++;
-	//	}	
-	//}
-	////cout<<"cluster number is "<<clusternumber<<endl;
+		if(it1 == selectedClusterSPD.end())
+		{
+			reselectedClusterSPD.insert(id1);
+			clusternumber++;
+		}
+		if(it2 == selectedClusterSPD.end())
+		{
+			reselectedClusterSPD.insert(id2);
+			clusternumber++;
+		}	
+	}
+	//cout<<"cluster number is "<<clusternumber<<endl;
 
-	//std::vector< std::set< long int> > clusIndex;
-	//std::vector< std::set< long int> > sampleIndex;
-	//for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
-	//{
-	//	std::set<long int> sampleIdsforSPD;
-	//	std::set<long int> clusIdsforSPD;
-	//	this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
-	//	//cout<<"...\n";
-	//	sampleIndex.push_back(sampleIdsforSPD);
-	//	clusIndex.push_back(clusIdsforSPD);
-	//}
+	std::vector< std::set< long int> > clusIndex;
+	std::vector< std::set< long int> > sampleIndex;
+	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
+	{
+		std::set<long int> sampleIdsforSPD;
+		std::set<long int> clusIdsforSPD;
+		this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
+		//cout<<"...\n";
+		sampleIndex.push_back(sampleIdsforSPD);
+		clusIndex.push_back(clusIdsforSPD);
+	}
 
-	//this->Selection->SetClusterIndex(clusIndex);
-	//this->Selection->SetSampleIndex(sampleIndex);
+	this->Selection->SetClusterIndex(clusIndex);
+	this->Selection->SetSampleIndex(sampleIndex);
 
 }
 

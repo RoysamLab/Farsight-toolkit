@@ -2160,7 +2160,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 
 	std::cout<<"Construct vtk table"<<endl;
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> column;
 
 	for(int i = 0; i < this->headers.size(); i++)
 	{		
@@ -2594,4 +2594,81 @@ void SPDAnalysisModel::GetClusterFeatureValue(std::vector< std::vector< long int
 
 	char* name = this->DataTable->GetColumn(nfeature + 1)->GetName();
 	featureName = "Colored by " + std::string(name);
+}
+
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
+				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	vnl_matrix<double> averFeatureModule( clusIndex.size(), UNMatrixAfterCellCluster.cols());
+	for( int i = 0; i < clusIndex.size(); i++)
+	{
+		vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
+		tmp.fill(0);
+		for( int j = 0; j < clusIndex[i].size(); j++)
+		{
+			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusIndex[i][j]);
+			tmp += row;
+		}
+		tmp /= clusIndex[i].size();
+		averFeatureModule.set_row(i, tmp);
+	}
+
+	std::ofstream ofs("averFeatureModule.txt");
+	ofs<< averFeatureModule<<endl;
+	vnl_vector<long int> order( TreeOrder.size());
+	for( int i = 0; i < TreeOrder.size(); i++)
+	{
+		order[ TreeOrder[i]] = i;
+	}
+	ofs<< order<<endl;
+	ofs.close();
+
+	vtkSmartPointer<vtkVariantArray> column;
+	column = vtkSmartPointer<vtkVariantArray>::New();
+	column->SetName( "Id");
+	table->AddColumn(column);
+	column = vtkSmartPointer<vtkVariantArray>::New();
+	column->SetName( "Progression Order");
+	table->AddColumn(column);
+	column = vtkSmartPointer<vtkVariantArray>::New();
+	column->SetName( "Device Sample Percentage");
+	table->AddColumn(column);
+	column = vtkSmartPointer<vtkVariantArray>::New();
+	column->SetName( "Near Device Sample Percentage");
+	table->AddColumn(column);
+	
+	for(int i = 0; i < selFeatureOrder.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( DataTable->GetColumn(selFeatureOrder[i] + 1)->GetName());
+		table->AddColumn(column);
+	}
+	for(int i = 0; i < unselFeatureOrder.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( DataTable->GetColumn(unselFeatureOrder[i] + 1)->GetName());
+		table->AddColumn(column);
+	}
+
+	for( int i = 0; i < clusIndex.size(); i++)
+	{
+		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+		DataRow->InsertNextValue( i);
+		DataRow->InsertNextValue( order[i]);
+		DataRow->InsertNextValue( percentageOfSamples[i]);
+		DataRow->InsertNextValue( percentageOfNearDeviceSamples[i]);
+
+		for( int j = 0; j < selFeatureOrder.size(); j++)
+		{
+			DataRow->InsertNextValue( averFeatureModule(i, selFeatureOrder[j]));
+		}
+		for( int j = 0; j < unselFeatureOrder.size(); j++)
+		{
+			DataRow->InsertNextValue( averFeatureModule(i, unselFeatureOrder[j]));
+		}
+
+		table->InsertNextRow(DataRow);
+	}
+	return table;
 }

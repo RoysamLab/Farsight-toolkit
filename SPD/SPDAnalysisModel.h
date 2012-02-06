@@ -98,7 +98,8 @@ public:
 	void GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec);
 	void GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold);
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
-
+	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
+				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
 protected:
 	SPDAnalysisModel();
 	~SPDAnalysisModel();
