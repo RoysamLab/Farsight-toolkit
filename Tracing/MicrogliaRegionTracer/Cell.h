@@ -29,8 +29,8 @@ public:
 	void setRequestedSize(ImageType::SizeType cell_requested_size);
 	ImageType::SizeType getRequestedSize();
 
-	void Cell::setShiftIndex(Cell::ImageType::IndexType shift_index);
-	Cell::ImageType::IndexType Cell::getShiftIndex();
+	void setShiftIndex(ImageType::IndexType shift_index);
+	ImageType::IndexType getShiftIndex();
 
 public:
 	std::vector<ImageType::IndexType> critical_points_vector;
