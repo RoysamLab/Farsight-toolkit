@@ -1,0 +1,1018 @@
+#include "itkImageFileReader.h"
+#include "itkImage.h"
+#include "itkIntTypes.h"
+#include "boost/tokenizer.hpp"
+#include <fstream>
+#include "vul/vul_file.h"
+#include "iostream"
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkImageRegionConstIterator.h"
+#include "itkImageRegionIterator.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
+#include "vtkTable.h"
+#include "ftkUtils.h"
+#include "ftkImage.h"
+
+//#include "../NuclearSegmentation/yousef_core/yousef_seg.h"
+//#include "../ftkFeatures/ftkLabelImageToFeatures.h"
+#include "../NuclearSegmentation/NucleusEditor/ftkProjectProcessor.h"
+#include <iostream>
+#include <sstream>
+#include <time.h>
+#include <limits.h>
+#include <math.h>
+#include <algorithm>
+
+#include "omp.h"
+
+typedef itk::Image<unsigned char,  3> rawImageType;
+typedef itk::Image<unsigned short, 3> LabelType;
+typedef MultipleNeuronTracer::ImageType3D gfpImageType;
+typedef itk::RegionOfInterestImageFilter< rawImageType, rawImageType > rawROIFilterType;
+typedef itk::RegionOfInterestImageFilter< gfpImageType, gfpImageType > gfpROIFilterType;
+typedef itk::RegionOfInterestImageFilter< LabelType, LabelType > LabelROIFilterType;
+typedef std::pair< ftk::Image::Pointer, vtkSmartPointer< vtkTable > > segResultsType;
+
+segResultsType RunNuclearSegmentation( rawImageType::Pointer, rawImageType::Pointer, const char*);
+std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< vtkTable > );
+void WriteCenterTrace(vtkSmartPointer< vtkTable >, int, int, int, std::string);
+
+//typedef struct{ double x_d; double y_d; double z_d; } Table;
+bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
+
+int main(int argc, char* argv[])
+{
+	if(argc < 4)
+	{
+		std::cout<<"Usage1: darpa_tracer <DAPI_Montage_File> <GFP_Montage_File> <Project_Definition_File> \n";
+		return 0;
+	}
+
+	//argv[1] = "C:/Data/Darpa/TEST_FOR_PIPELINE/My_Image.tif";
+	//argv[2] = "C:/Data/Darpa/TEST_FOR_PIPELINE/My_Image.tif";	
+	//argv[3] = "C:/Data/Darpa/TEST_FOR_PIPELINE/ProjectDefinition.xml";
+
+	//Input: Somas_file, nucleus_montage, trace_channel_montage, nuc_seg_parameters
+	//std::fstream soma_centroid_file;
+	//soma_centroid_file.open(argv[1], std::fstream::in);
+	//std::vector<Table> centroid_list;
+	//while (soma_centroid_file.good()){
+	//	Table new_centroid;
+	//	soma_centroid_file >> new_centroid.x_d >> new_centroid.y_d >> new_centroid.z_d;
+	//	centroid_list.push_back( new_centroid );
+	//}
+	//soma_centroid_file.close();
+
+	std::string MyName = argv[0];
+
+	std::string nucFileName(argv[1]);
+	std::string filePath = ftk::GetFilePath(nucFileName);
+
+	typedef itk::ImageFileReader<rawImageType> rawReaderType;
+	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
+	typedef itk::ImageFileWriter<LabelType> labelWriterType;
+
+	rawReaderType::Pointer reader_nuc = rawReaderType::New();
+	reader_nuc->SetFileName(argv[1]);
+	reader_nuc->Update();
+	rawImageType::Pointer montage_nuc = reader_nuc->GetOutput();
+	itk::SizeValueType size_nuc_montage[3];
+	size_nuc_montage[0] = montage_nuc->GetLargestPossibleRegion().GetSize()[0];
+	size_nuc_montage[1] = montage_nuc->GetLargestPossibleRegion().GetSize()[1];
+	size_nuc_montage[2] = montage_nuc->GetLargestPossibleRegion().GetSize()[2];
+
+	rawReaderType::Pointer reader_gfp = rawReaderType::New();
+	reader_gfp->SetFileName(argv[2]);
+	reader_gfp->Update();
+	rawImageType::Pointer montage_gfp = reader_gfp->GetOutput();
+	itk::SizeValueType size_gfp_montage[3];
+	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
+	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
+	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
+
+	//ftk::Image::Pointer sourceImages = NULL;
+	//std::vector< unsigned char > color;
+	//color.push_back(255); color.push_back(0); color.push_back(0);
+	//sourceImages->AppendChannelFromData3D( montage_nuc->GetBufferPointer(), itk::ImageIOBase::UCHAR, 8, size_nuc_montage[0], size_nuc_montage[1], size_nuc_montage[2], std::string(argv[1]), color, false);
+	//color[0] = 0; color[1] = 255; color[2] = 0;
+	//sourceImages->AppendChannelFromData3D( montage_gfp->GetBufferPointer(), itk::ImageIOBase::UCHAR, 8, size_nuc_montage[0], size_nuc_montage[1], size_nuc_montage[2], std::string(argv[2]), color, false);
+
+
+	//#####################################################################################################################
+	//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
+	//#####################################################################################################################
+	
+	int num_rows = (int)ceil((double)size_nuc_montage[1]/1000);
+	int num_cols = (int)ceil((double)size_nuc_montage[0]/1000);
+	std::cout << "Image divided into " << num_rows << " rows and " << num_cols << " columns\n";
+	
+	//##################	ALLOCATING MEMORY FOR THE SEGMENTATION MONTAGE	  ###################
+
+	LabelType::Pointer montageSeg = LabelType::New();
+	LabelType::PointType origin_montage;
+	origin_montage[0] = 0; 
+	origin_montage[1] = 0;
+	origin_montage[2] = 0;
+	montageSeg->SetOrigin( origin_montage );
+	LabelType::IndexType start_montage;
+	start_montage[0] = 0;
+	start_montage[1] = 0;
+	start_montage[2] = 0;
+	LabelType::SizeType size_montage;
+	size_montage[0] = size_nuc_montage[0];
+	size_montage[1] = size_nuc_montage[1];
+	size_montage[2] = size_nuc_montage[2];
+	LabelType::RegionType region_montage;
+	region_montage.SetSize ( size_montage  );
+	region_montage.SetIndex( start_montage );
+	montageSeg->SetRegions( region_montage );
+	montageSeg->Allocate();
+	montageSeg->FillBuffer(0);
+	montageSeg->Update();
+	LabelType::PixelType * montageSegArray = montageSeg->GetBufferPointer();
+	int montage_slice_size = size_montage[1] * size_montage[0];
+	int montage_row_size = size_montage[0];	
+
+	vtkSmartPointer< vtkTable > montageTable = vtkSmartPointer<vtkTable>::New();
+	montageTable->Initialize();
+	
+	unsigned short max_value_1 = 0, current_max_1 = 0;
+
+	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
+
+	for(int row=0; row<num_rows; ++row)
+	{
+		//##################	ALLOCATING MEMORY FOR A ROW	  ###################
+
+		LabelType::Pointer rowSeg = LabelType::New();
+		LabelType::PointType origin_row;
+		origin_row[0] = 0; 
+		origin_row[1] = 0;
+		origin_row[2] = 0;
+		rowSeg->SetOrigin( origin_row );
+		LabelType::IndexType start_row;
+		start_row[0] = 0;
+		start_row[1] = 0;
+		start_row[2] = 0;
+		LabelType::SizeType size_row;
+		size_row[0] = size_nuc_montage[0];
+		size_row[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+		size_row[2] = size_nuc_montage[2];
+		LabelType::RegionType region_row;
+		region_row.SetSize ( size_row  );
+		region_row.SetIndex( start_row );
+		rowSeg->SetRegions( region_row );
+		rowSeg->Allocate();
+		rowSeg->FillBuffer(0);
+		rowSeg->Update();
+		LabelType::PixelType * rowSegArray = rowSeg->GetBufferPointer();
+		int row_slice_size = size_row[1] * size_row[0];
+		int row_row_size = size_row[0];		
+
+		vtkSmartPointer< vtkTable > rowTable = vtkSmartPointer<vtkTable>::New();
+		rowTable->Initialize();
+
+		std::map< unsigned int, itk::Index<3> > rowCentroids;
+
+		unsigned short max_value = 0, current_max = 0;
+
+		//##################	SEGMENTING EACH TILE IN A ROW    ###################
+
+		//#pragma omp parallel for
+		for(int col=0; col<num_cols; ++col)
+		{
+
+			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
+
+			std::cout<<"Extracting Tile " << col*1000 << "_" << row*1000 << "\n";			
+			rawImageType::IndexType start_tile;
+			start_tile[0] = col*1000;
+			start_tile[1] = row*1000;
+			start_tile[2] = 0;
+
+			rawImageType::SizeType size_tile;
+			size_tile[0] = (((col+1)*1000) < size_nuc_montage[0]) ? 1000 : (size_nuc_montage[0] - (col*1000));
+			size_tile[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+			size_tile[2] = size_nuc_montage[2];
+
+			rawImageType::RegionType region_tile;
+			region_tile.SetSize(size_tile);
+			region_tile.SetIndex(start_tile);
+
+			rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
+			ROIfilter_tile_nuc->SetRegionOfInterest(region_tile);
+			ROIfilter_tile_nuc->SetInput(montage_nuc);
+			ROIfilter_tile_nuc->Update();
+			rawImageType::Pointer tile_nuc = ROIfilter_tile_nuc->GetOutput();
+
+			rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
+			ROIfilter_tile_gfp->SetRegionOfInterest(region_tile);
+			ROIfilter_tile_gfp->SetInput(montage_gfp);
+			ROIfilter_tile_gfp->Update();
+			rawImageType::Pointer tile_gfp = ROIfilter_tile_gfp->GetOutput();
+
+			std::cout<<"Starting segmentation for Tile " << col*1000 << "_" << row*1000 << "\n";
+			segResultsType tileSegResults;
+			tileSegResults = RunNuclearSegmentation(tile_nuc, tile_gfp, argv[3]);
+			std::cout<<"Done with nucleus segmentation for Tile " << col*1000 << "_" << row*1000 << "\n\n";
+			LabelType::Pointer tileSeg = tileSegResults.first->GetItkPtr<unsigned short>(0,0);
+			vtkSmartPointer< vtkTable > tileTable = tileSegResults.second;
+			std::map< unsigned int, itk::Index<3> > tileCentroids = GetLabelToCentroidMap(tileTable);
+
+
+			//##################	STITCHING THE TILE INTO THE ROW	  ###################
+
+			LabelType::PixelType * tileSegArray = tileSeg->GetBufferPointer();
+			itk::Size<3> tile_size = tileSeg->GetLargestPossibleRegion().GetSize();
+			int tile_slice_size = tile_size[1] * tile_size[0];
+			int tile_row_size = tile_size[0];	
+			int x_offset = col*1000;
+			for(int z=0; z<tile_size[2]; ++z)
+			{
+				for(int y=0; y<tile_size[1]; ++y)
+				{
+					for(int x=0; x<tile_size[0]; ++x)
+					{
+						unsigned short value = tileSegArray[(tile_slice_size*z) + (tile_row_size*y) + x];
+						if(value == 0) continue;
+						int lab_cen_x = tileCentroids[value][0];
+						if((col != 0) && (lab_cen_x < 20)) continue;
+						if((col != (num_cols-1)) && (lab_cen_x >= (tile_size[0]-20))) continue;
+						rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
+						if((max_value + value) > current_max)
+							current_max = max_value + value;
+					}
+				}
+			}
+
+
+			//##################	STITCHING THE TILE_TABLE INTO THE ROW_TABLE	  ###################
+
+			if(col == 0)
+			{
+				for(int c=0; c<(int)tileTable->GetNumberOfColumns(); ++c)
+				{
+					vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+					column->SetName( tileTable->GetColumnName(c) );
+					rowTable->AddColumn(column);
+				}
+			}
+
+			for(int r=0; r<(int)tileTable->GetNumberOfRows(); ++r)
+			{
+				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+				for(int c=0; c<(int)tileTable->GetNumberOfColumns(); ++c)
+				{
+					if(c == 0)
+						model_data1->InsertNextValue(vtkVariant(tileTable->GetValue(r,c).ToInt() + max_value));
+					else if(c == 1)
+						model_data1->InsertNextValue(vtkVariant(tileTable->GetValue(r,c).ToInt() + x_offset));
+					else
+						model_data1->InsertNextValue(tileTable->GetValue(r,c));
+				}
+				rowTable->InsertNextRow(model_data1);
+			}
+
+			max_value = current_max;
+
+
+			//##################	EXTRACT A TILE_BORDER AND START SEGMENTING	  ###################
+
+			if(col == 0) continue;
+
+			std::cout<<"Extracting tile border X = " << col*1000 << ", Row = " << row << "\n";
+			rawImageType::IndexType start_tileBorder;
+			start_tileBorder[0] = (col*1000) - (2*20);
+			start_tileBorder[1] = (row*1000);
+			start_tileBorder[2] = 0;
+
+			rawImageType::SizeType size_tileBorder;
+			size_tileBorder[0] = (4*20);
+			size_tileBorder[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+			size_tileBorder[2] = size_nuc_montage[2];
+
+			rawImageType::RegionType region_tileBorder;
+			region_tileBorder.SetSize(size_tileBorder);
+			region_tileBorder.SetIndex(start_tileBorder);
+
+			rawROIFilterType::Pointer ROIfilter_tileBorder_nuc = rawROIFilterType::New();
+			ROIfilter_tileBorder_nuc->SetRegionOfInterest(region_tileBorder);
+			ROIfilter_tileBorder_nuc->SetInput(montage_nuc);
+			ROIfilter_tileBorder_nuc->Update();
+			rawImageType::Pointer tileBorder_nuc = ROIfilter_tileBorder_nuc->GetOutput();
+
+			rawROIFilterType::Pointer ROIfilter_tileBorder_gfp = rawROIFilterType::New();
+			ROIfilter_tileBorder_gfp->SetRegionOfInterest(region_tileBorder);
+			ROIfilter_tileBorder_gfp->SetInput(montage_gfp);
+			ROIfilter_tileBorder_gfp->Update();
+			rawImageType::Pointer tileBorder_gfp = ROIfilter_tileBorder_gfp->GetOutput();
+
+			std::cout<<"Starting segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n";
+			segResultsType tileBorderSegResults;
+			tileBorderSegResults = RunNuclearSegmentation(tileBorder_nuc, tileBorder_gfp, argv[3]);
+			std::cout<<"Done with nucleus segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n\n";
+			LabelType::Pointer tileBorderSeg = tileBorderSegResults.first->GetItkPtr<unsigned short>(0,0);
+			vtkSmartPointer< vtkTable > tileBorderTable = tileBorderSegResults.second;
+			std::map< unsigned int, itk::Index<3> > tileBorderCentroids = GetLabelToCentroidMap(tileBorderTable);
+
+			//##################	STITCHING THE TILE_BORDER INTO THE ROW	  ###################
+
+			LabelType::PixelType * tileBorderSegArray = tileBorderSeg->GetBufferPointer();
+			itk::Size<3> tileBorder_size = tileBorderSeg->GetLargestPossibleRegion().GetSize();
+			int tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
+			int tileBorder_row_size = tileBorder_size[0];	
+			x_offset = (col*1000) - (2*20);
+			for(int z=0; z<tileBorder_size[2]; ++z)
+			{
+				for(int y=0; y<tileBorder_size[1]; ++y)
+				{
+					for(int x=0; x<tileBorder_size[0]; ++x)
+					{
+						unsigned short value = tileBorderSegArray[(tileBorder_slice_size*z) + (tileBorder_row_size*y) + (x)];
+						if(value == 0) continue;
+						int lab_cen_x = tileBorderCentroids[value][0];
+						if((lab_cen_x < 20) || (lab_cen_x >= (3*20))) continue;
+						rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
+						if((max_value + value) > current_max)
+							current_max = max_value + value;
+					}
+				}
+			}
+
+			//##################	STITCHING THE TILE_BORDER_TABLE INTO THE ROW_TABLE	  ###################
+			for(int r=0; r<(int)tileBorderTable->GetNumberOfRows(); ++r)
+			{
+				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+				for(int c=0; c<(int)tileBorderTable->GetNumberOfColumns(); ++c)
+				{
+					if(c == 0)
+						model_data1->InsertNextValue(vtkVariant(tileBorderTable->GetValue(r,c).ToInt() + max_value));
+					else if(c == 1)
+						model_data1->InsertNextValue(vtkVariant(tileBorderTable->GetValue(r,c).ToInt() + x_offset));
+					else
+						model_data1->InsertNextValue(tileBorderTable->GetValue(r,c));
+				}
+				rowTable->InsertNextRow(model_data1);
+			}
+
+			max_value = current_max;
+		}		
+		
+		rowCentroids = GetLabelToCentroidMap(rowTable);
+
+
+		//##################	STITCHING THE ROW INTO THE MONTAGE	  ###################
+
+		itk::Size<3> row_size = rowSeg->GetLargestPossibleRegion().GetSize();
+		int row_slice_size_1 = row_size[1] * row_size[0];
+		int row_row_size_1 = row_size[0];	
+		int y_offset = row*1000;
+		for(int z=0; z<row_size[2]; ++z)
+		{
+			for(int y=0; y<row_size[1]; ++y)
+			{
+				for(int x=0; x<row_size[0]; ++x)
+				{
+					unsigned short value_1 = rowSegArray[(row_slice_size_1*z) + (row_row_size_1*y) + (x)];
+					if(value_1 == 0) continue;
+					int lab_cen_y = rowCentroids[value_1][1];
+					if((row != 0) && (lab_cen_y < 20)) continue;
+					if((row != (num_rows-1)) && (lab_cen_y >= (row_size[0]-20))) continue;
+					montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
+					if((max_value_1 + value_1) > current_max_1)
+						current_max_1 = max_value_1 + value_1;
+				}
+			}
+		}
+
+
+		//##################	STITCHING THE ROW_TABLE INTO THE MONTAGE_TABLE	  ###################
+
+		if(row == 0)
+		{
+			for(int c=0; c<(int)rowTable->GetNumberOfColumns(); ++c)
+			{
+				vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+				column->SetName( rowTable->GetColumnName(c) );
+				montageTable->AddColumn(column);
+			}
+		}
+
+		for(int r=0; r<(int)rowTable->GetNumberOfRows(); ++r)
+		{
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			for(int c=0; c<(int)rowTable->GetNumberOfColumns(); ++c)
+			{
+				if(c == 0)
+					model_data1->InsertNextValue(vtkVariant(rowTable->GetValue(r,c).ToInt() + max_value_1));
+				else if(c == 2)
+					model_data1->InsertNextValue(vtkVariant(rowTable->GetValue(r,c).ToInt() + y_offset));
+				else
+					model_data1->InsertNextValue(rowTable->GetValue(r,c));
+			}
+			montageTable->InsertNextRow(model_data1);
+		}
+
+		max_value_1 = current_max_1;
+
+
+		//##################	EXTRACT A ROW_BORDER AND START SEGMENTING	  ###################
+
+		if(row == 0) continue;
+
+		std::cout<<"Extracting row border Y = " << row*1000 << "\n";
+		rawImageType::IndexType start_rowBorder;
+		start_rowBorder[0] = 0;
+		start_rowBorder[1] = (row*1000) - (2*20);
+		start_rowBorder[2] = 0;
+
+		rawImageType::SizeType size_rowBorder;
+		size_rowBorder[0] = size_nuc_montage[0];
+		size_rowBorder[1] = (4*20);
+		size_rowBorder[2] = size_nuc_montage[2];
+
+		rawImageType::RegionType region_rowBorder;
+		region_rowBorder.SetSize(size_rowBorder);
+		region_rowBorder.SetIndex(start_rowBorder);
+
+		rawROIFilterType::Pointer ROIfilter_rowBorder_nuc = rawROIFilterType::New();
+		ROIfilter_rowBorder_nuc->SetRegionOfInterest(region_rowBorder);
+		ROIfilter_rowBorder_nuc->SetInput(montage_nuc);
+		ROIfilter_rowBorder_nuc->Update();
+		rawImageType::Pointer rowBorder_nuc = ROIfilter_rowBorder_nuc->GetOutput();
+
+		rawROIFilterType::Pointer ROIfilter_rowBorder_gfp = rawROIFilterType::New();
+		ROIfilter_rowBorder_gfp->SetRegionOfInterest(region_rowBorder);
+		ROIfilter_rowBorder_gfp->SetInput(montage_gfp);
+		ROIfilter_rowBorder_gfp->Update();
+		rawImageType::Pointer rowBorder_gfp = ROIfilter_rowBorder_gfp->GetOutput();
+
+		std::cout<<"Starting segmentation for row border Y = " << row*1000 << "\n";
+		segResultsType rowBorderSegResults;
+		rowBorderSegResults = RunNuclearSegmentation(rowBorder_nuc, rowBorder_gfp, argv[3]);
+		std::cout<<"Done with nucleus segmentation for border Y = " << row*1000 << "\n\n";
+		LabelType::Pointer rowBorderSeg = rowBorderSegResults.first->GetItkPtr<unsigned short>(0,0);
+		vtkSmartPointer< vtkTable > rowBorderTable = rowBorderSegResults.second;
+		std::map< unsigned int, itk::Index<3> > rowBorderCentroids = GetLabelToCentroidMap(rowBorderTable);
+
+		
+		//##################	STITCHING THE ROW_BORDER INTO THE MONTAGE	  ###################
+		
+		LabelType::PixelType * rowBorderSegArray = rowBorderSeg->GetBufferPointer();
+		itk::Size<3> rowBorder_size = rowBorderSeg->GetLargestPossibleRegion().GetSize();
+		int rowBorder_slice_size = rowBorder_size[1] * rowBorder_size[0];
+		int rowBorder_row_size = rowBorder_size[0];	
+		y_offset = (row*1000) - (2*20);
+		for(int z=0; z<rowBorder_size[2]; ++z)
+		{
+			for(int y=0; y<rowBorder_size[1]; ++y)
+			{
+				for(int x=0; x<rowBorder_size[0]; ++x)
+				{
+					unsigned short value_1 = rowBorderSegArray[(rowBorder_slice_size*z) + (rowBorder_row_size*y) + (x)];
+					if(value_1 == 0) continue;
+					int lab_cen_y = rowBorderCentroids[value_1][1];
+					if((lab_cen_y < 20) || (lab_cen_y >= (3*20))) continue;
+					montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
+					if((max_value_1 + value_1) > current_max_1)
+						current_max_1 = max_value_1 + value_1;
+				}
+			}
+		}
+
+		
+		//##################	STITCHING THE ROW_BORDER_TABLE INTO THE MONTAGE_TABLE	  ###################
+
+		for(int r=0; r<(int)rowBorderTable->GetNumberOfRows(); ++r)
+		{
+			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+			for(int c=0; c<(int)rowBorderTable->GetNumberOfColumns(); ++c)
+			{
+				if(c == 0)
+					model_data1->InsertNextValue(vtkVariant(rowBorderTable->GetValue(r,c).ToInt() + max_value_1));
+				else if(c == 2)
+					model_data1->InsertNextValue(vtkVariant(rowBorderTable->GetValue(r,c).ToInt() + y_offset));
+				else
+					model_data1->InsertNextValue(rowBorderTable->GetValue(r,c));
+			}
+			montageTable->InsertNextRow(model_data1);
+		}
+
+		max_value_1 = current_max_1;
+	}
+
+	std::cout<<"done !!\n\n";
+
+	std::string temp = nucFileName;
+	string::iterator it;
+	it = temp.end() - 4;
+	temp.erase(it, it+4);
+
+	labelWriterType::Pointer writer = labelWriterType::New();
+	writer->SetFileName(temp + "_label.mhd");
+	writer->SetInput(montageSeg);
+	writer->Update();
+
+	ftk::SaveTable(temp + "_table.txt", montageTable);
+
+
+	//ftk::Image::Pointer nucSegImage = NULL;
+	//nucSegImage->AppendImageFromData3D( montageSeg->GetBufferPointer(), itk::ImageIOBase::USHORT, 16, size_montage[0], size_montage[1], size_montage[2], "", false);
+
+
+	//#####################################################################################################################
+	//	EXTRACTING SOMA and SOMA CENTROIDS
+	//#####################################################################################################################
+
+	LabelType::Pointer somaMontage = LabelType::New();
+	itk::Size<3> im_size = montageSeg->GetBufferedRegion().GetSize();
+	LabelType::IndexType start;
+	start[0] =   0;  // first index on X
+	start[1] =   0;  // first index on Y    
+	start[2] =   0;  // first index on Z  
+	LabelType::PointType origin;
+	origin[0] = 0; 
+	origin[1] = 0;    
+	origin[2] = 0;    
+	somaMontage->SetOrigin( origin );
+	LabelType::RegionType region;
+	region.SetSize( im_size );
+	region.SetIndex( start );
+	somaMontage->SetRegions( region );
+	somaMontage->Allocate();
+	somaMontage->FillBuffer(0);
+	somaMontage->Update();
+	somaMontage->Register();
+	LabelType::PixelType * somaArray = somaMontage->GetBufferPointer();
+	LabelType::PixelType * labelArray = montageSeg->GetBufferPointer();
+
+	int slice_size = im_size[1] * im_size[0];
+	int row_size = im_size[0];
+	std::map<unsigned short, int> classMap;
+	for(int row=0; row<(int)montageTable->GetNumberOfRows(); ++row)
+	{
+		classMap[montageTable->GetValue(row,0).ToUnsignedShort()] = montageTable->GetValueByName(row, "prediction_active_mg").ToInt();
+	}
+
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			for(int k=0; k<im_size[0]; ++k)
+			{
+				unsigned long offset = (i*slice_size)+(j*row_size)+k;
+				if(classMap[labelArray[offset]] == 1)
+					somaArray[offset] = labelArray[offset];
+			}
+		}
+	}
+
+	writer = labelWriterType::New();
+	writer->SetFileName(temp + "_soma_montage.mhd");
+	writer->SetInput(somaMontage);
+	writer->Update();
+
+	vtkSmartPointer<vtkTable> somaCentroidsTable = vtkSmartPointer<vtkTable>::New();
+	somaCentroidsTable->Initialize();
+
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "somaCen_x" );
+	somaCentroidsTable->AddColumn(column);
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "somaCen_y" );
+	somaCentroidsTable->AddColumn(column);
+	column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName( "somaCen_z" );
+	somaCentroidsTable->AddColumn(column);
+
+	for(int row = 0; row < (int)montageTable->GetNumberOfRows(); ++row)
+	{
+		if(montageTable->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+		{
+			vtkSmartPointer<vtkVariantArray> centroid_data = vtkSmartPointer<vtkVariantArray>::New();
+			centroid_data->InsertNextValue(montageTable->GetValue(row,1));
+			centroid_data->InsertNextValue(montageTable->GetValue(row,2));
+			centroid_data->InsertNextValue(montageTable->GetValue(row,3));
+			somaCentroidsTable->InsertNextRow(centroid_data);		
+		}
+	}
+
+	for(int row = 0; row < (int)montageTable->GetNumberOfRows(); ++row)
+	{
+		if(montageTable->GetValueByName(row, "prediction_active_mg").ToInt() != 1)
+		{
+			montageTable->RemoveRow(row);
+			--row;
+		}
+	}
+
+	ftk::SaveTable(temp + "_soma_centroids_table.txt", somaCentroidsTable);
+	ftk::SaveTable(temp + "_soma_table.txt", montageTable);
+
+
+
+	//#####################################################################################################################
+	//	MULTIPLE NEURON TACER
+	//#####################################################################################################################
+
+	std::vector< itk::Index<3> > centroid_list;
+	for(int r=0; r<(int)somaCentroidsTable->GetNumberOfRows(); ++r)
+	{
+		int cx = somaCentroidsTable->GetValue(r, 0).ToInt();
+		int cy = somaCentroidsTable->GetValue(r, 1).ToInt();
+		int cz = somaCentroidsTable->GetValue(r, 2).ToInt();
+
+		itk::Index<3> cen;
+		cen[0] = cx; cen[1] = cy; cen[2] = cz; 
+		centroid_list.push_back(cen);
+	}
+
+	std::cout << "Number of cells to be traced : " << centroid_list.size() << "\n";
+
+	//itk::CastImageFilter< rawImageType, gfpImageType >::Pointer caster = itk::CastImageFilter< rawImageType, gfpImageType>::New();
+	//caster->SetInput(montage_gfp);
+	//caster->Update();
+	//gfpImageType::Pointer montage_for_tracing = caster->GetOutput();
+
+	gfpReaderType::Pointer reader_gfp_trace = gfpReaderType::New();
+	reader_gfp_trace->SetFileName(argv[2]);
+	reader_gfp_trace->Update();
+	gfpImageType::Pointer montage_for_tracing = reader_gfp_trace->GetOutput();
+
+	std::string SWCFilename = filePath + "/OnlySWC.xml";
+	std::ofstream outfile;
+	outfile.open(SWCFilename.c_str());
+	outfile << "<?xml\tversion=\"1.0\"\t?>\n";
+	outfile << "<Source>\n\n";
+
+	#pragma omp parallel for
+	for( long int a=0; a<centroid_list.size(); ++a )
+	{
+		int x, y, z;
+		x = centroid_list[a][0];
+		y = centroid_list[a][1];
+		z = centroid_list[a][2];
+
+		std::stringstream ssx, ssy, ssz;
+		ssx << x; ssy << y; ssz << z;
+
+		std::cout << "Tracing Dice " << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "\n";
+
+		std::stringstream ssx_off, ssy_off, ssz_off;		
+		if(x >= 200)
+			ssx_off << x - 200;
+		else 
+			ssx_off << 0;
+		if(y >= 200)
+			ssy_off << y - 200;
+		else 
+			ssy_off << 0;
+		if(z >= 100)
+			ssz_off << z - 100;
+		else 
+			ssz_off << 0;
+
+		//########    CROP THE DESIRED DICE FROM THE GFP AND SOMA MONTAGES   ########
+		LabelType::IndexType start;
+		start[0] = ((x - 200)>0) ? (x - 200):0;
+		start[1] = ((y - 200)>0) ? (y - 200):0;
+		if(size_nuc_montage[2] <= 200)
+			start[2] = 0;
+		else
+			start[2] = ((z - 100)>0) ? (z - 100):0;
+
+		LabelType::SizeType size;
+		size[0] = ((x+200)<size_nuc_montage[0]) ? 400 : (200+size_nuc_montage[0]-x-1); 
+		size[1] = ((y+200)<size_nuc_montage[1]) ? 400 : (200+size_nuc_montage[1]-y-1);
+		if(size_nuc_montage[2] <= 200)
+			size[2] = size_nuc_montage[2];
+		else
+			size[2] = ((z+100)<size_nuc_montage[2]) ? 200 : (100+size_nuc_montage[2]-z-1);
+
+
+		gfpImageType::IndexType start2;
+		start2[0] = ((x - 200)>0) ? (x - 200):0;
+		start2[1] = ((y - 200)>0) ? (y - 200):0;
+		if(size_gfp_montage[2] <= 200)
+			start2[2] = 0;
+		else
+			start2[2] = ((z - 100)>0) ? (z - 100):0;
+
+		gfpImageType::SizeType size2;
+		size2[0] = ((x+200)<size_gfp_montage[0]) ? 400 : (200+size_gfp_montage[0]-x-1);
+		size2[1] = ((y+200)<size_gfp_montage[1]) ? 400 : (200+size_gfp_montage[1]-y-1);
+		if(size_gfp_montage[2] <= 200)
+			size2[2] = size_gfp_montage[2];
+		else
+			size2[2] = ((z+100)<size_gfp_montage[2]) ? 200 : (100+size_gfp_montage[2]-z-1);
+
+		LabelType::RegionType desiredRegion;
+		desiredRegion.SetSize(size);
+		desiredRegion.SetIndex(start);
+
+		gfpImageType::RegionType desiredRegion2;
+		desiredRegion2.SetSize(size2);
+		desiredRegion2.SetIndex(start2);
+
+		gfpROIFilterType::Pointer ROIfilter2 = gfpROIFilterType::New();
+		ROIfilter2->SetRegionOfInterest(desiredRegion2);
+		ROIfilter2->SetInput(montage_for_tracing);
+		ROIfilter2->Update();
+		gfpImageType::Pointer img_gfp = ROIfilter2->GetOutput();
+
+		LabelROIFilterType::Pointer ROIfilter3 = LabelROIFilterType::New();
+		ROIfilter3->SetRegionOfInterest(desiredRegion);
+		ROIfilter3->SetInput(somaMontage);
+		ROIfilter3->Update();
+		LabelType::Pointer img_soma = ROIfilter3->GetOutput();
+
+		//########    FETCH ALL CENTROIDS THAT FALL WITHIN THE DICE    ########
+		itk::Index<3> centroid;
+		centroid[0] = ((x - 200)>0) ? 200:x; 
+		centroid[1] = ((y - 200)>0) ? 200:y;
+		if(size_gfp_montage[2] <= 200)
+			centroid[2] = z;
+		else
+			centroid[2] = ((z - 100)>0) ? 100:z;
+
+		std::vector< itk::Index<3> > soma_Table;      
+		for(int ctr=0; ctr<centroid_list.size() ; ++ctr)
+		{
+			itk::Index<3> cen = centroid_list[ctr];
+			//if(abs((double)(cen[0]-x))<=200 && abs((double)(cen[1]-y))<=200 && abs((double)(cen[2]-z))<=100 )
+			if( (cen[0]>=start2[0]) && (cen[0]<(start2[0]+size2[0])) && (cen[1]>=start2[1]) && (cen[1]<(start2[1]+size2[1])) && (cen[2]>=start2[2]) && (cen[2]<(start2[2]+size2[2])) )
+			{
+				itk::Index<3> centroid2;
+				centroid2[0] = centroid[0] + cen[0] - x;
+				centroid2[1] = centroid[1] + cen[1] - y;
+				centroid2[2] = centroid[2] + cen[2] - z;
+				soma_Table.push_back(centroid2);
+			}
+		}
+
+		//########    RUN TRACING    ########
+		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
+		MNT->LoadCurvImage_1(img_gfp, 0);
+		MNT->ReadStartPoints_1(soma_Table, 0);
+		MNT->SetCostThreshold(1000);
+		MNT->LoadSomaImage_1(img_soma);
+		MNT->RunTracing();
+		
+		x = min(200, x);
+		y = min(200, y);
+		if(size_gfp_montage[2] > 200)
+			z = min(100, z);
+
+		//MNT->WriteSWCFile(filePath + "/____Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", 0);
+		
+		vtkSmartPointer< vtkTable > swcTable = MNT->GetSWCTable(0);
+		std::string swcFilename = filePath + "/Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc";
+		WriteCenterTrace(swcTable, x, y, z, swcFilename);
+		//bool ok  = MNT->WriteSWCforDice(filePath + "/Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc", x, y, z, 0);
+		outfile << "\t<File\tFileName=\"Trace_" << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "_ANT.swc\"\tType=\"Trace\"\ttX=\"" << ssx_off.str() << "\"\ttY=\"" << ssy_off.str() << "\"\ttZ=\"" << ssz_off.str() << "\"/>\n";
+
+		delete MNT;
+	}
+
+	outfile << "\n</Source>";
+	outfile.close();
+
+	somaMontage->UnRegister();
+	
+
+}
+
+
+//#############################################################################################################
+//#############################################################################################################
+//  ADDITIONAL FINCTIONS
+//#############################################################################################################
+//#############################################################################################################
+
+
+
+//#############################################################################################################
+//  NUCLEAR SEGMENTATION
+//#############################################################################################################
+segResultsType RunNuclearSegmentation(rawImageType::Pointer nucImg, rawImageType::Pointer gfpImg, const char* fileName)
+{
+
+	ftk::ProjectDefinition projectDef;
+	projectDef.Load( fileName );
+	
+	vtkSmartPointer<vtkTable> table = NULL;
+	ftk::Image::Pointer nucSegRes = NULL;
+	ftk::ProjectProcessor * myProc = new ftk::ProjectProcessor();
+
+	itk::SizeValueType tileSize[3];
+	tileSize[0] = nucImg->GetLargestPossibleRegion().GetSize()[0];
+	tileSize[1] = nucImg->GetLargestPossibleRegion().GetSize()[1];
+	tileSize[2] = nucImg->GetLargestPossibleRegion().GetSize()[2];
+
+	ftk::Image::Pointer sourceImages = ftk::Image::New();
+	std::vector< unsigned char > color;
+	color.push_back(255); color.push_back(0); color.push_back(0);
+	sourceImages->AppendChannelFromData3D( nucImg->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "dapi", color, true);
+	color[0] = 0; color[1] = 255; color[2] = 0;
+	sourceImages->AppendChannelFromData3D( gfpImg->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "gfp", color, true);
+
+	
+	myProc->SetInputImage(sourceImages);
+	myProc->SetDefinition(&projectDef);
+	myProc->Initialize();
+
+	while(!myProc->DoneProcessing())
+		myProc->ProcessNext();
+
+	nucSegRes = myProc->GetOutputImage();
+	table = myProc->GetTable();
+
+	segResultsType results;
+	results.first = nucSegRes;
+	results.second = table;
+
+	projectDef.Write(fileName);	
+	delete myProc;
+
+	return results;
+	
+
+	//itk::SizeValueType size[3];
+	//size[0] = inpImg->GetLargestPossibleRegion().GetSize()[0];
+	//size[1] = inpImg->GetLargestPossibleRegion().GetSize()[1];
+	//size[2] = inpImg->GetLargestPossibleRegion().GetSize()[2];
+
+	//unsigned char *in_Image;
+	//in_Image = (unsigned char *) malloc (size[0]*size[1]*size[2]);
+	//if( in_Image == NULL )
+	//{
+	//	std::cerr<<"Nucleus Seg failed because malloc failed\n";
+	//	return NULL;
+	//}
+
+	//memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
+	//typedef itk::ImageRegionConstIterator< rawImageType > ConstIteratorType;
+	//ConstIteratorType pix_buf( inpImg, inpImg->GetRequestedRegion() );
+	//itk::SizeValueType ind=0;
+	//for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
+	//{
+	//	in_Image[ind]=(pix_buf.Get());
+	//}
+	//yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
+	//NucleusSeg->readParametersFromFile(fileName);
+	//NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/home/gramak/Desktop/11_10_tracing/montage_kt11306_w410DAPIdsu.mhd");
+	//NucleusSeg->runBinarization();
+
+	//try 
+	//{
+	//	std::cout<<"Starting seed detection\n";
+	//	NucleusSeg->runSeedDetection();
+	//}
+	//catch( bad_alloc & excp )
+	//{
+	//	std::cout<<"You have requested more memory than "
+	//		<<"what is currently available in this "
+	//		<<"system, please try again with a smaller "
+	//		<<"input image\n";
+	//}
+	//catch( itk::ExceptionObject & excp )
+	//{
+	//	std::cout<<"Error: " << excp <<std::endl;
+	//}
+
+	//NucleusSeg->runClustering();
+	//unsigned short *output_img;
+
+	////if(NucleusSeg->isSegmentationFinEnabled())
+	////{
+	////NucleusSeg->runAlphaExpansion();
+	////output_img=NucleusSeg->getSegImage();
+	////} 
+	////else
+
+	//output_img=NucleusSeg->getClustImage();
+
+	//LabelType::Pointer image = LabelType::New();
+	//LabelType::PointType origin;
+	//origin[0] = 0; //Is this OK?
+	//origin[1] = 0;
+	//origin[2] = 0;
+	//image->SetOrigin( origin );
+	//LabelType::IndexType start1;
+	//start1[0] = 0;
+	//start1[1] = 0;
+	//start1[2] = 0;
+	//LabelType::SizeType size1;
+	//size1[0] = size[0];
+	//size1[1] = size[1];
+	//size1[2] = size[2];
+	//LabelType::RegionType region;
+	//region.SetSize ( size1  );
+	//region.SetIndex( start1 );
+	//image->SetRegions( region );
+	//image->Allocate();
+	//image->FillBuffer(0);
+	//image->Update();
+
+	//typedef itk::ImageRegionIteratorWithIndex< LabelType > IteratorType;
+	//IteratorType iterator1(image,image->GetRequestedRegion());
+	//for(itk::SizeValueType i=0; i<(size[0]*size[1]*size[2]); ++i)
+	//{
+	//	unsigned short val = (unsigned short)output_img[i];
+	//	iterator1.Set(val);
+	//	++iterator1;
+	//}
+
+	//delete NucleusSeg;
+
+	//return image;
+
+}
+
+
+//#############################################################################################################
+//  LABEL TO CENTROID MAP
+//#############################################################################################################
+std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< vtkTable > table)
+{
+	std::map< unsigned int, itk::Index<3> > centroidMap;
+	for (int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		unsigned int id = table->GetValue(row, 0).ToUnsignedInt();
+		itk::Index<3> indx;
+		indx[0] = table->GetValueByName(row, "centroid_x").ToUnsignedInt();
+		indx[1] = table->GetValueByName(row, "centroid_y").ToUnsignedInt();
+		indx[2] = table->GetValueByName(row, "centroid_z").ToUnsignedInt();
+		centroidMap[id] = indx;
+	}
+
+	return centroidMap;
+}
+
+
+//#############################################################################################################
+//  WRITE ONLY THE CENTER TRACE OF THE DICE
+//#############################################################################################################
+void WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, int x, int y, int z, std::string filename)
+{
+	std::cout << "Writing SWCImage file " << filename << " with " << swcNodes->GetNumberOfRows() << " nodes...";
+	
+	std::vector<int> soma_ids;
+	std::vector<int> del_ids;
+
+	for(int r=0; r<(int)swcNodes->GetNumberOfRows(); ++r)
+	{
+		if(swcNodes->GetValue(r,6).ToInt() == -1)
+			soma_ids.push_back(swcNodes->GetValue(r,0).ToInt());
+		else
+			break;
+	}
+
+	for(int i=0; i<soma_ids.size(); ++i)
+	{
+		if( (swcNodes->GetValue(i,2).ToInt() != x) || (swcNodes->GetValue(i,3).ToInt() != y) || (swcNodes->GetValue(i,4).ToInt() != z) )//if( ((int)swcNodes[i][2] + x > 1800) && ((int)swcNodes[i][2] + x < 3600) && ((int)swcNodes[i][3] + y < 8000) )
+		{
+			del_ids.push_back(soma_ids[i]);
+		}
+	}
+
+	for(int r=0 ; r<(int)swcNodes->GetNumberOfRows(); ++r)
+	{
+		if(r+1 > (int)swcNodes->GetNumberOfRows()) break;
+		std::vector<int>::iterator posn1 = find(del_ids.begin(), del_ids.end(), swcNodes->GetValue(r,6).ToInt());
+		if(posn1 != del_ids.end())
+		{
+			del_ids.push_back(swcNodes->GetValue(r,0).ToInt());
+			swcNodes->RemoveRow(r);
+			--r;
+		}
+	}
+
+	for(int i=0; i<soma_ids.size(); ++i)
+	{
+		if(i+1 > (int)swcNodes->GetNumberOfRows()) break;
+		std::vector<int>::iterator posn1 = find(del_ids.begin(), del_ids.end(), swcNodes->GetValue(i,0).ToInt());
+		if(posn1 != del_ids.end())
+		{
+			swcNodes->RemoveRow(i);
+			--i;
+		}
+	}
+
+	std::ofstream outfile(filename.c_str());
+	
+	for (int row = 0; row < (int)swcNodes->GetNumberOfRows(); ++row) 
+	{
+		for (int col = 0; col < (int)swcNodes->GetNumberOfColumns(); ++col) 
+		{
+			outfile << swcNodes->GetValue(row,col) << " ";
+		}
+		outfile << "\n";
+	}
+	outfile.close();
+
+	std::cout << " done! " << std::endl;
+
+}
+
