@@ -410,6 +410,19 @@ void MultipleNeuronTracer::FeatureMain(void)
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
 		GetFeature( sigmas[i] );
 	}
+
+	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
+	//rescaler->SetInput(NDXImage);;
+	//rescaler->SetOutputMaximum(255);
+	//rescaler->SetOutputMinimum(0);
+
+	//itk::CastImageFilter<ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter<ImageType3D, CharImageType3D>::New();
+	//caster->SetInput(rescaler->GetOutput());
+
+	//itk::ImageFileWriter<CharImageType3D>::Pointer writer = itk::ImageFileWriter<CharImageType3D>::New();
+	//writer->SetInput(caster->GetOutput());
+	//writer->SetFileName("C:\\Data\\Darpa\\TEST_FOR_PIPELINE\\23_2100_4200\\seed_points.tif");
+	//writer->Update();
 	
 	/*ImageType3D::Pointer temp = ImageType3D::New();
 	temp->SetRegions(PaddedCurvImage->GetBufferedRegion());
@@ -438,6 +451,21 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
 	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
+	//rescaler->SetInput(gauss->GetOutput());;
+	//rescaler->SetOutputMaximum(255);
+	//rescaler->SetOutputMinimum(0);
+
+	//itk::CastImageFilter<ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter<ImageType3D, CharImageType3D>::New();
+	//caster->SetInput(rescaler->GetOutput());
+
+	//std::stringstream ss;
+	//ss << ceil(sigma);
+	//itk::ImageFileWriter<CharImageType3D>::Pointer writer = itk::ImageFileWriter<CharImageType3D>::New();
+	//writer->SetInput(caster->GetOutput());
+	//writer->SetFileName("C:\\Data\\Darpa\\TEST_FOR_PIPELINE\\23_2100_4200\\LOG_" + ss.str() + ".tif");
+	//writer->Update();
 
 	float tot = 0.0f, num = 0.0f;
 	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
@@ -598,7 +626,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
-	if (abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 	{
 		return true;
 	}
@@ -1525,6 +1553,54 @@ void MultipleNeuronTracer::WriteSWCFile(std::string fname, unsigned int padz)
 	}
 	ofile.close();
 	std::cout << " done! " << std::endl;
+}
+
+
+vtkSmartPointer< vtkTable > MultipleNeuronTracer::GetSWCTable(unsigned int padz) 
+{
+	vtkSmartPointer< vtkTable > SWCTable = vtkSmartPointer< vtkTable >::New();
+	SWCTable->Initialize();
+
+	vtkSmartPointer< vtkDoubleArray > column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("A");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("B");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("C");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("D");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("E");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("F");
+	SWCTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("G");
+	SWCTable->AddColumn(column);
+
+	std::vector<SWCNode*>::iterator sit;
+	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	{
+		//get radius estimate for this node
+		float radius = getRadius((*sit)->pos);
+		vtkSmartPointer< vtkVariantArray > row = vtkSmartPointer< vtkVariantArray >::New();
+		row->InsertNextValue(vtkVariant((*sit)->ID));
+		row->InsertNextValue(vtkVariant(3));
+		row->InsertNextValue(vtkVariant((*sit)->pos[0]));
+		row->InsertNextValue(vtkVariant((*sit)->pos[1]));
+		row->InsertNextValue(vtkVariant((*sit)->pos[2]-padz));
+		row->InsertNextValue(vtkVariant(radius));
+		row->InsertNextValue(vtkVariant((*sit)->PID));
+		SWCTable->InsertNextRow(row);
+		delete (*sit);
+	}
+
+	return SWCTable;	
 }
 
 ///////////////////////////////////////////////////////////////////////

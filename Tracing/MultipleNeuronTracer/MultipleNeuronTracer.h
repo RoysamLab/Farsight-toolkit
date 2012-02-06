@@ -42,6 +42,10 @@
 #include "itkSymmetricEigenAnalysis.h"
 #include "itkMedianImageFilter.h"
 #include "vnl/vnl_math.h"
+#include "vtkSmartPointer.h"
+#include "vtkTable.h"
+#include "vtkVariantArray.h"
+#include "vtkDoubleArray.h"
 
 #include <queue>
 #include <algorithm>
@@ -109,6 +113,7 @@ public:
 	void RunTracing();
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
+	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
 	void GenerateTestImage(); 
 		
 protected:
