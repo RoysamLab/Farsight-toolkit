@@ -160,16 +160,19 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   vcl_string from_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_") + vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
   vcl_string to_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_")+to_image_filename+vcl_string("_proj.tif");
 
-  typedef itk::ImageFileWriter< ImageType2D >  WriterType2D;
+  typedef itk::ImageFileWriter< GDBICPImageType >  WriterType2D;
+  typedef itk::RescaleIntensityImageFilter< ImageType2D , GDBICPImageType > RescaleIntensityImageFilterType2D;
 
   try {
+	RescaleIntensityImageFilterType2D::Pointer rescaleFilter = RescaleIntensityImageFilterType2D::New();
     WriterType2D::Pointer writer2D = WriterType2D::New();
+	rescaleFilter->SetInput( from_image_2d );
     writer2D->SetFileName( from_2dfilename );
-    writer2D->SetInput( from_image_2d );
+    writer2D->SetInput( rescaleFilter->GetOutput() );
     writer2D->Update();
     
     writer2D->SetFileName( to_2dfilename );
-    writer2D->SetInput( to_image_2d );
+	rescaleFilter->SetInput( to_image_2d );
     writer2D->Update();
   }
   catch(itk::ExceptionObject& e) {

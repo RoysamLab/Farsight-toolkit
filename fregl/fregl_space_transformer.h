@@ -38,9 +38,10 @@ class fregl_space_transformer: public vbl_ref_count
 {
 public:
 	typedef vbl_smart_ptr< fregl_space_transformer >  Pointer;
+	typedef unsigned int						InputPixelType;
 	typedef fregl_joint_register::TransformType TransformType;
-	typedef itk::Image<unsigned char, 3>        ImageType;
-	typedef itk::Image<unsigned char, 2>        ImageType2D;
+	typedef itk::Image<InputPixelType, 3>        ImageType;
+	typedef itk::Image<InputPixelType, 2>        ImageType2D;
 	typedef ImageType::PointType                PointType; //physical space
 	typedef ImageType::SizeType                 SizeType;
 	typedef ImageType::SpacingType              SpacingType;

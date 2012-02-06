@@ -45,7 +45,7 @@ limitations under the License.
 class fregl_image_manager : public vbl_ref_count {
 public:
     typedef vbl_smart_ptr< fregl_image_manager > Pointer;
-    typedef itk::Image<unsigned char, 3 > ImageType;
+    typedef itk::Image<unsigned int, 3 > ImageType;
     typedef ImageType::PointType PointType; //physical space
     typedef ImageType::SizeType SizeType;
     typedef ImageType::SpacingType SpacingType;

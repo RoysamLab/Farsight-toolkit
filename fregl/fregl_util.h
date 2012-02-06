@@ -27,9 +27,11 @@ limitations under the License.
 #include "itkRGBPixel.h"
 #include "itkAffineTransform.h"
 
-typedef unsigned char                    InputPixelType;
+typedef unsigned int                    InputPixelType;
+typedef unsigned char                    GDBICPPixelType;
 typedef itk::Image< InputPixelType, 3 >  ImageType;
 typedef itk::Image< InputPixelType, 2 >  ImageType2D;
+typedef itk::Image< GDBICPPixelType, 2 >  GDBICPImageType;
 typedef itk::Image< float, 2 >           FloatImageType2D;
 typedef itk::RGBPixel< unsigned char >   ColorPixelType;
 typedef itk::Image< ColorPixelType, 3 > ColorImageType;
