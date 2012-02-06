@@ -903,5 +903,33 @@ vtkSmartPointer<vtkTable> CopyTable(vtkSmartPointer<vtkTable> featureTable )
 	return table_validation;
 }
 
+double GetMean(std::vector<double> data)
+{
+	if(data.empty())
+		return 0.0;
+
+	double sum;
+	for(int i=0; i<(int)data.size(); ++i)
+	{
+		sum+=data[i];
+	}
+	return sum/(double)data.size();
+}
+double GetStd(std::vector<double> data)
+{
+	if(data.empty())
+		return 0.0;
+
+	double sum,sumx2;
+	for(int i=0; i<(int)data.size(); ++i)
+	{
+		sum+=data[i];
+		sumx2+= data[i]*data[i]; 
+	}
+	sum /=(double)data.size();
+	sumx2 /= (double)data.size();
+
+	return sumx2-(sum*sum);
+}
 
 }  // end namespace ftk
