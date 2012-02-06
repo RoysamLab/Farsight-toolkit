@@ -3,11 +3,11 @@ project( MultipleNeuronTracer )
 
 ADD_EXECUTABLE( MultipleNeuronTracer MNT_MAIN.cpp MultipleNeuronTracer.cpp MultipleNeuronTracer.h)
 TARGET_LINK_LIBRARIES(MultipleNeuronTracer
-  ${ITK_LIBRARIES} )
+  ${ITK_LIBRARIES} ${VTK_LIBRARIES} )
   
 ADD_LIBRARY( MultipleNeuronTracerLib MultipleNeuronTracer.cpp MultipleNeuronTracer.h)
 TARGET_LINK_LIBRARIES(MultipleNeuronTracerLib
-  ${ITK_LIBRARIES} )
+  ${ITK_LIBRARIES} ${VTK_LIBRARIES} )
 
 #MultipleNeuronTracer's test depends on ExtractSomas' test.
 if(BUILD_ExtractSomas AND BUILD_TESTING AND FARSIGHT_DATA_ROOT AND PYTHON_EXECUTABLE)
