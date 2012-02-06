@@ -15,3 +15,6 @@ INSTALL( TARGETS image_dicer RUNTIME DESTINATION bin )
 
 ADD_EXECUTABLE(darpa_tracer darpa_pipeline.cpp ${image_dicer_HDRS})
 TARGET_LINK_LIBRARIES(darpa_tracer vul ${ITK_LIBRARIES} Yousef_Nucleus_Seg MultipleNeuronTracerLib)
+
+ADD_EXECUTABLE(darpa_tracer_w_seg darpa_pipeline_w_seg.cpp )
+TARGET_LINK_LIBRARIES(darpa_tracer_w_seg vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib)
