@@ -908,7 +908,7 @@ double GetMean(std::vector<double> data)
 	if(data.empty())
 		return 0.0;
 
-	double sum;
+	double sum = 0;
 	for(int i=0; i<(int)data.size(); ++i)
 	{
 		sum+=data[i];
@@ -920,7 +920,8 @@ double GetStd(std::vector<double> data)
 	if(data.empty())
 		return 0.0;
 
-	double sum,sumx2;
+	double sum = 0;
+	double sumx2 = 0;
 	for(int i=0; i<(int)data.size(); ++i)
 	{
 		sum+=data[i];

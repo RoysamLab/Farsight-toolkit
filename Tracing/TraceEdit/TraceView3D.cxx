@@ -51,6 +51,14 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
+#ifdef USE_SPD
+	this->SPDWin = NULL;
+#endif
+	
+#ifdef USE_Clusclus
+	this->HeatmapWin = NULL;
+#endif
+
   this->SaveSettingsOnExit = true;
 
 	#ifdef USE_QT_TESTING
@@ -218,6 +226,19 @@ View3D::~View3D()
   {
     delete this->TreeModel;
   }
+#ifdef USE_SPD
+  	if(this->SPDWin)
+	{
+		delete this->SPDWin;
+	}
+#endif
+	
+#ifdef USE_Clusclus
+	if(this->HeatmapWin)
+	{
+		delete this->HeatmapWin;
+	}
+#endif
 	delete this->tobj;
 	delete this->ImageActors;
 	delete this->Gridlines;
@@ -1553,18 +1574,18 @@ void View3D::CreateGUIObjects()
 	connect (this->CellAnalysis, SIGNAL(triggered()), this, SLOT(ShowCellAnalysis()));
 	this->CellAnalysis->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
 
-	this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
-	connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
+	//this->SPDAction = new QAction("SPD Analysis", this->CentralWidget);
+	//connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
-	this->SPDTestAction = new QAction("SPD Analysis", this->CentralWidget);
-	connect (this->SPDTestAction, SIGNAL(triggered()), this, SLOT(SPDTestAnalysis()));
+	this->SPDAnalysisAction = new QAction("SPD Analysis", this->CentralWidget);
+	connect (this->SPDAnalysisAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
 	this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
 	connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 
 #ifndef USE_SPD
-	this->SPDAction->setDisabled(true);
-	this->SPDTestAction->setDisabled(true);
+	//this->SPDAction->setDisabled(true);
+	this->SPDAnalysisAction->setDisabled(true);
 #endif
 
 
@@ -1888,8 +1909,8 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->CellAnalysis);
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
-	this->analysisViews->addAction(this->SPDAction);
-	this->analysisViews->addAction(this->SPDTestAction);
+	//this->analysisViews->addAction(this->SPDAction);
+	this->analysisViews->addAction(this->SPDAnalysisAction);
 	this->analysisViews->addAction(this->ClusclusAction);
 
 	//this->ShowToolBars->addSeparator();
@@ -5428,9 +5449,9 @@ void View3D::closeEvent(QCloseEvent *event)
 	{
 		this->SPDWin->close();
 	}
-	if( this->spdTestWin)
+	if( this->SPDWin)
 	{
-		this->spdTestWin->close();
+		this->SPDWin->close();
 	}
 #endif
 	
@@ -5664,11 +5685,10 @@ void View3D::SaveComputedCellFeaturesTable()
 	myfile.close();
 }
 
-
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
-	this->SPDWin = new SPDMainWindow();
+	this->SPDWin = new SPDtestWindow();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		//this->SPDWin->setModels();
@@ -5686,34 +5706,7 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("Soma Z Pos");
 		this->SPDWin->setModels( featureTable, this->CellModel->GetObjectSelection());
 	}
-
 	this->SPDWin->show();
-#endif
-}
-
-void View3D::SPDTestAnalysis()
-{
-#ifdef USE_SPD
-	this->spdTestWin = new SPDtestWindow();
-	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
-	{
-		//this->SPDWin->setModels();
-		//QMessageBox mes;
-		//mes.setText("Please compute cell features first!");
-		//mes.exec();
-	}
-	else
-	{
-		vtkSmartPointer<vtkTable> featureTable;
-		featureTable = this->CellModel->getDataTable();
-		featureTable->RemoveColumnByName("Trace File");
-		featureTable->RemoveColumnByName("Soma X Pos");
-		featureTable->RemoveColumnByName("Soma Y Pos");
-		featureTable->RemoveColumnByName("Soma Z Pos");
-		this->spdTestWin->setModels( featureTable, this->CellModel->GetObjectSelection());
-	}
-
-	this->spdTestWin->show();
 #endif
 }
 

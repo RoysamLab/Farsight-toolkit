@@ -2556,24 +2556,34 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 
 void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
 {
-	for( int i = 0; i < clusIndex.size(); i++)
+	if( DistanceToDevice.sum() > 1)
 	{
-		int count = 0;
-		int distanceCount = 0;
-		for( int j = 0; j < clusIndex[i].size(); j++)
+		for( int i = 0; i < clusIndex.size(); i++)
 		{
-			long int index = clusIndex[i][j];
-			if( index <= maxVertexId)
+			int count = 0;
+			int distanceCount = 0;
+			for( int j = 0; j < clusIndex[i].size(); j++)
 			{
-				count++;
-				std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
-				if( iter != indMapFromVertexToClus.end() && DistanceToDevice[iter->second] <= disThreshold)
+				long int index = clusIndex[i][j];
+				if( index <= maxVertexId)
 				{
-					distanceCount++;
+					count++;
+					std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
+					if( iter != indMapFromVertexToClus.end() && DistanceToDevice[iter->second] <= disThreshold)
+					{
+						distanceCount++;
+					}
 				}
 			}
+			disPer.push_back( (double)distanceCount / count);
 		}
-		disPer.push_back( (double)distanceCount / count);
+	}
+	else
+	{
+		for( int i = 0; i < clusIndex.size(); i++)
+		{
+			disPer.push_back( -1);
+		}
 	}
 }
 

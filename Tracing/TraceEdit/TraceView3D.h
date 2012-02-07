@@ -255,7 +255,6 @@ public slots:
 	void FocusOnCell(CellTrace* SelectedCell);
 
 	void SPDAnalysis();
-	void SPDTestAnalysis();
 	void ClusclusAnalysis();
 	/////////////////////////////////////////////////////////////
 	void selectedFeaturesClustering();
@@ -417,7 +416,7 @@ private:
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 	QAction *SPDAction;
-	QAction *SPDTestAction;
+	QAction *SPDAnalysisAction;
 	QAction *ClusclusAction;
 
 	/*QAction *UndoButton;
@@ -439,8 +438,8 @@ private:
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
 #ifdef USE_SPD
-	SPDMainWindow *SPDWin;
-	SPDtestWindow *spdTestWin;
+	//SPDMainWindow *SPDWin;
+	SPDtestWindow *SPDWin;
 #endif
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
