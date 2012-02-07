@@ -512,8 +512,8 @@ sqlite3 * sqliteOpenConnection()
 	GetCurDir(cCurrentPath, sizeof(cCurrentPath));
 	cCurrentPath[sizeof(cCurrentPath) - 1] = '/';
 
-	std::cout<<cCurrentPath<<"/bin/NE.s3db"<<std::endl;
-	exeStatus = sqlite3_open("./bin/NE.s3db",&dbConn);
+	std::cout<<cCurrentPath<<"/NE.s3db"<<std::endl;
+	exeStatus = sqlite3_open("./NE.s3db",&dbConn);
 
  	// int sqlite3_open(
     //    const char *filename,  Database filename (UTF-8) 
