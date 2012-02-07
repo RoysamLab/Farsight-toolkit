@@ -91,6 +91,7 @@ ExternalProject_Add(VXL
     -DBUILD_TESTING:BOOL=${testing}
     ${mac_args}
     ${png_arg}
+    ${VXL_EXTRA_SUPERBUILD_CMAKE_ARGS}
   INSTALL_COMMAND ""
 )
 set(VXL_DIR ${base}/Build/VXL)
