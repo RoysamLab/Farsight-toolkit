@@ -223,6 +223,47 @@ ENDIF(BUILD_TESTING)
 
 ################################################################################
 ################################################################################
+# COMPILER FLAGS AND OTHERS FOR PARALLELIZATION
+#
+################################################################################
+
+IF (BUILD_OPENMP)
+    IF (MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
+    elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+    
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    
+endif (MSVC)
+ENDIF(BUILD_OPENMP)
+
+
+IF (BUILD_OPENCL)
+    IF (MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D OPENCL")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D OPENCL")
+    
+endif (MSVC)
+ENDIF(BUILD_OPENCL)
+
+IF (BUILD_CUDA)
+    FIND_PACKAGE(CUDA)
+        IF (CUDA_FOUND)
+    	    IF (MSVC)
+       	        #SET (CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
+	        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D CUDA")
+ 	        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D CUDA")
+	        SET (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
+	    INCLUDE_DIRECTORIES( $ENV{CUDA_INC_PATH} )
+        ENDIF(MSVC)
+    ENDIF (CUDA_FOUND)
+ENDIF(BUILD_CUDA)
+
+
+################################################################################
+################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
 # THE PROJECT:
 ################################################################################
@@ -364,40 +405,6 @@ IF(BUILD_IMAGE_MANAGER)
 	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ftkImageManager )
 	ADD_SUBDIRECTORY( ftkImageManager )
 ENDIF(BUILD_IMAGE_MANAGER)
-
-IF (BUILD_OPENMP)
-    IF (MSVC)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
-    elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-    
-endif (MSVC)
-ENDIF(BUILD_OPENMP)
-
-
-IF (BUILD_OPENCL)
-    IF (MSVC)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D OPENCL")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D OPENCL")
-    
-endif (MSVC)
-ENDIF(BUILD_OPENCL)
-
-IF (BUILD_CUDA)
-    FIND_PACKAGE(CUDA)
-        IF (CUDA_FOUND)
-    	    IF (MSVC)
-       	        #SET (CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
-	        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D CUDA")
- 	        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D CUDA")
-	        SET (CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
-	    INCLUDE_DIRECTORIES( $ENV{CUDA_INC_PATH} )
-        ENDIF(MSVC)
-    ENDIF (CUDA_FOUND)
-ENDIF(BUILD_CUDA)
 
 IF (BUILD_ZERNIKE)
  	INCLUDE_DIRECTORIES (${PROJECT_SOURCE_DIR}/Zernike)
