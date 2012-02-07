@@ -30,7 +30,6 @@ limitations under the License.
 //#include <Common/fsc_channel_accessor.h>
 #include <fregl/fregl_util.h>
 
-typedef itk::Image< unsigned char, 3 > ImageType;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 

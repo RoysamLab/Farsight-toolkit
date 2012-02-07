@@ -30,11 +30,7 @@ limitations under the License.
 #include <vul/vul_file_iterator.h>
 #include <vul/vul_arg.h>
 
-typedef unsigned char                        InputPixelType;
-typedef itk::Image< InputPixelType, 3 >      ImageType;
-typedef itk::Image< InputPixelType, 2 >      ImageType2D;
 typedef itk::ImageFileWriter< ImageType2D >  WriterType;
-typedef itk::ImageSeriesReader< ImageType  >  ReaderType;
 
 std::vector<std::string>
 gen_names(const std::string dir, const std::string ext)

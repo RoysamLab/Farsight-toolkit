@@ -54,8 +54,6 @@ using std::endl;
 #include "itkImageSeriesWriter.h"
 #include "itkNumericSeriesFileNames.h"
 
-typedef unsigned char                    InputPixelType;
-typedef itk::Image< InputPixelType, 3 >  ImageType;
 typedef itk::RGBPixel< unsigned char >   OutputPixelType;
 typedef itk::Image< OutputPixelType, 3 > ColorImageType;
 typedef itk::Image< OutputPixelType, 2 > ColorImageType2D;

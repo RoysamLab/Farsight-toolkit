@@ -35,9 +35,6 @@ limitations under the License.
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkRecursiveGaussianImageFilter.h"
 
-typedef unsigned char                    InputPixelType;
-typedef itk::Image< InputPixelType, 3 >  ImageType;
-typedef itk::Image< InputPixelType, 2 >  ImageType2D;
 typedef itk::Image< float, 3 >           FloatImageType;
 typedef itk::Image< float, 2 >           FloatImageType2D;
 typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;

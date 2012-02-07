@@ -53,8 +53,6 @@ using std::endl;
 
 #include "fregl_roi.h"
 
-typedef unsigned char InputPixelType;
-typedef itk::Image< InputPixelType, 3 > ImageType;
 typedef itk::Image< InputPixelType, 2 > ImageType2D;
 typedef ImageType::PointType PointType; //physical space
 typedef ImageType::IndexType IndexType; //physical space
