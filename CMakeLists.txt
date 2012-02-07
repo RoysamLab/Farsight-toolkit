@@ -262,6 +262,9 @@ IF (BUILD_CUDA)
 ENDIF(BUILD_CUDA)
 
 
+IF(USE_KPLS)
+ADD_DEFINITIONS(-DUSE_KPLS)
+ENDIF(USE_KPLS)
 ################################################################################
 ################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
@@ -289,7 +292,6 @@ FOREACH( _lib ${common_libraries} )
 ENDFOREACH()
 
 IF(USE_KPLS)
-ADD_DEFINITIONS(-DUSE_KPLS)
 IF( NOT BUILD_EMBREX )
   IF(WIN32)
     IF(CMAKE_CL_64)
