@@ -266,6 +266,8 @@ endif()
 ############################################################################
 # Farsight 
 #
+option(BUILD_REGISTRATION "Build the registration/mosaicing utilities" ON)
+
 ExternalProject_Add(Farsight
   SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.."
   BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/Farsight"
@@ -280,6 +282,7 @@ ExternalProject_Add(Farsight
     -DVXL_DIR:FILEPATH=${VXL_DIR}
     -DBUILD_VESSEL:BOOL=${BUILD_VESSEL}
     -DBUILD_CURVELETS:BOOL=${BUILD_CURVELETS}
+    -DBUILD_REGISTRATION:BOOL=${BUILD_REGISTRATION}
     -DBUILD_image_dicer=${BUILD_image_dicer}
     -DUSE_KPLS:BOOL=${USE_KPLS}
     -DFFTW_INCLUDE_DIRS=${FFTW_INCLUDE_DIRSS}
