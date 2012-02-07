@@ -60,7 +60,7 @@ class fregl_pairwise_register
 {
 public:
 
-	typedef unsigned int                     InputPixelType;
+	typedef unsigned short                     InputPixelType;
 	typedef itk::Image< InputPixelType, 3 >   InputImageType;
 	typedef float                             InternalPixelType;
 	typedef itk::Image<InternalPixelType, 3 > InternalImageType;
