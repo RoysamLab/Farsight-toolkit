@@ -26,6 +26,7 @@ SelectiveClustering::SelectiveClustering()
 	this->ObjectTable = vtkSmartPointer<vtkTable>::New();
 
 	this->ClusterTable = vtkSmartPointer<vtkTable>::New();
+	this->ClusterTableIDMap.clear();
 	this->CreateClusterTableHeaders();
 
 }
@@ -36,13 +37,14 @@ vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSe
 	* Create a new cluster from a selection
 	*/
 	vtkIdType newKey = this->ClusterMap.size();
+	this->iter = this->ClusterMap.find(newKey);
+	while ((this->ClusterMap.size() > 0) &&(this->iter != this->ClusterMap.end()))
+	{
+		newKey++;
+		this->iter = this->ClusterMap.find(newKey);
+	}
 	this->ClusterMap[newKey] = ClusterSelectionSet;
-
-	vtkVariantArray * NewRow = vtkVariantArray::New();
-	NewRow->InsertNextValue(newKey); 
-	NewRow->InsertNextValue(vtkVariant(ClusterSelectionSet.size())); 
-	NewRow->InsertNextValue(NULL);
-	this->ClusterTable->InsertNextRow(NewRow);
+	this->AddRowToClusterTable(newKey, vtkVariant(ClusterSelectionSet.size()), NULL);
 
 	emit ClusterChanged();
 	return newKey;
@@ -61,6 +63,7 @@ bool SelectiveClustering::AddCluster(vtkIdType key, std::set<vtkIdType> ClusterS
 		this->ClusterMap.erase(iter);
 	}
 	this->ClusterMap[key] = ClusterSelectionSet;
+	this->AddRowToClusterTable(key, vtkVariant(ClusterSelectionSet.size()), NULL);
 	emit ClusterChanged();
 	return true;
 }
@@ -75,11 +78,40 @@ bool SelectiveClustering::RemoveCluster(vtkIdType key)
 	{
 		//found and removed
 		this->ClusterMap.erase(this->iter);
+		this->RemoveRowFromClusterTable(key);
 		emit ClusterChanged();
 		return true;
 	}
 	//not found in map
 	return false;
+}
+
+bool SelectiveClustering::RemoveCluster(vtkIdTypeArray *SelectedClusters)
+{
+	/*! 
+	* Find and removes multiple clusters and selections
+	*/
+	bool removed = false;
+	for (vtkIdType count = 0; count < SelectedClusters->GetSize(); count++)
+	{
+		vtkIdType key = SelectedClusters->GetValue(count);
+		std::cout<< "\n" << key;
+		this->iter = this->ClusterMap.find(key);
+		if (this->iter != this->ClusterMap.end())
+		{
+			//found and removed
+			std::cout<< " removed ";
+			this->ClusterMap.erase(this->iter);
+			this->RemoveRowFromClusterTable(key);
+			removed = true;
+		}
+		//
+	}
+	if (removed)
+	{
+		emit ClusterChanged();
+	}
+	return removed;
 }
 
 void SelectiveClustering::ClearClusters()
@@ -89,6 +121,7 @@ void SelectiveClustering::ClearClusters()
 	*/
 	this->ClusterMap.clear();
 	this->CreateClusterTableHeaders();
+	this->ClusterTableIDMap.clear();
 	emit ClusterChanged();
 }
 
@@ -341,6 +374,32 @@ void SelectiveClustering::CreateClusterTableHeaders()
 	this->ClusterTable->AddColumn(Namecol);
 }
 
+void SelectiveClustering::AddRowToClusterTable(vtkIdType Key, vtkVariant ClusterSize, vtkVariant ClusterName)
+{
+	/*!
+	* Builds table of Cluster ID size and name if any
+	*/
+	vtkVariantArray * NewRow = vtkVariantArray::New();
+	NewRow->InsertNextValue(Key); 
+	NewRow->InsertNextValue(ClusterSize); 
+	NewRow->InsertNextValue(ClusterName);
+	vtkIdType RowAdded = this->ClusterTable->InsertNextRow(NewRow);
+	this->ClusterTableIDMap[Key] = RowAdded;
+}
+
+void SelectiveClustering::RemoveRowFromClusterTable(vtkIdType Key)
+{
+	/*!
+	* removes entry from cluster table 
+	*/
+	this->TableIDIter = this->ClusterTableIDMap.find(Key);
+	if (this->TableIDIter != this->ClusterTableIDMap.end())
+	{
+		this->ClusterTable->RemoveRow((*this->TableIDIter).second);
+	}
+	this->ClusterTableIDMap.erase(this->TableIDIter);
+}
+
 std::set< vtkIdType > SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)
 {
 	/*!
@@ -427,6 +486,9 @@ ClusterManager::ClusterManager()
 
 	this->ClearClusterButton = new QPushButton(" Clear Cluster ");
 	connect(this->ClearClusterButton, SIGNAL(clicked()), this, SLOT(ClearClusters()));
+
+	this->RemoveClusterButton = new QPushButton(" Remove Cluster ");
+	connect(this->RemoveClusterButton, SIGNAL(clicked()), this, SLOT(RemoveSelectedClusters()));
 	
 	//this->ClusterListView = new QListWidget(this);
 	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
@@ -450,6 +512,7 @@ ClusterManager::ClusterManager()
 	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
 	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
+	InfoLayout->addRow(this->RemoveClusterButton);
 
 	HOperatorDisplayLayout= new QHBoxLayout();
 	this->HOperatorDisplayLayout->addWidget(Operand1);
@@ -517,7 +580,20 @@ void ClusterManager::SelectionToClusterModification()
 
 void ClusterManager::ClearClusters()
 {
+	/*! 
+	* Clears from the cluster model signals/slots auto update displays
+	*/
 	this->ClusterModel->ClearClusters();
+}
+
+void ClusterManager::RemoveSelectedClusters()
+{
+	/*!
+	* 
+	*/
+	vtkIdTypeArray * SelectedClusters = vtkIdTypeArray::New() ;
+	this->ClusterTableView->GetSelectedItems(SelectedClusters);
+	this->ClusterModel->RemoveCluster(SelectedClusters);
 }
 
 void ClusterManager::ChangeInClusters()
@@ -530,6 +606,8 @@ void ClusterManager::ChangeInClusters()
 	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
 	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
 
+	this->ClusterTableView->RemoveAllRepresentations();
+	this->ClusterTableView->Update();
 	vtkQtTableModelAdapter adapt(this->ClusterModel->GetClusterTable());
 	this->ClusterTableView->SetRepresentationFromInput(adapt.GetVTKDataObject());
 	this->ClusterTableView->Update();

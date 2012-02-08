@@ -46,6 +46,7 @@ limitations under the License.
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
+#include "vtkIdTypeArray.h"
 
 #include <vtkQtTableView.h>
 #include <vtkQtTableModelAdapter.h>
@@ -67,6 +68,7 @@ public:
 	bool AddCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 
 	bool RemoveCluster(vtkIdType key);
+	bool RemoveCluster(vtkIdTypeArray * SelectedClusters);
 	void ClearClusters();
 	
 	//Modify Clusters
@@ -125,7 +127,10 @@ private:
 
 	// Cluster Table 
 	vtkSmartPointer<vtkTable> ClusterTable;
+	std::map< vtkIdType, vtkIdType> ClusterTableIDMap;
 	void CreateClusterTableHeaders();
+	void AddRowToClusterTable(vtkIdType Key, vtkVariant ClusterSize, vtkVariant ClusterName);
+	void RemoveRowFromClusterTable(vtkIdType Key);
 
 };
 
@@ -140,8 +145,11 @@ public:
 public slots:
 
 	void SelectionToClusterModification();
+
 	void ClearClusters();
+	void RemoveSelectedClusters();
 	void ChangeInClusters();
+
 	void ChangeInObjectSelection();
 	void RunOperatorOnSelectedClusters();
 
@@ -172,5 +180,6 @@ private:
 	QPushButton * AddClusterButton;
 	QPushButton * RunOperatorButton;
 	QPushButton * ClearClusterButton;
+	QPushButton * RemoveClusterButton;
 };
 #endif
