@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 	Centroids_RowBorders.resize(num_rows-1);
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(int row=0; row<num_rows; ++row)
 	{
 
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 		Centroids_TileBorders.resize(num_cols-1);
 
 		//##################	SEGMENTING EACH TILE IN A ROW    ###################
-		#pragma omp parallel for
+		#pragma omp parallel for num_threads(10)
 		for(int col=0; col<num_cols; ++col)
 		{
 
