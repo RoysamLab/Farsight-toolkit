@@ -4,6 +4,7 @@
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkShiftScaleImageFilter.h"
 #include "itkImageFileWriter.h"
+#include "itkMedianImageFilter.h"
 
 #include "fregl/fregl_roi.h"
 #include "Cell.h"
@@ -21,7 +22,7 @@ public:
 	LoGImageType::Pointer RunLoG(ImageType::Pointer image, float scale);
 	void WriteLoGImage(std::string filename, LoGImageType::Pointer image);
 
-	std::vector<LoGImageType::Pointer> RunMultiScaleLoG(Cell* cell);
+	LoGImageType::Pointer RunMultiScaleLoG(Cell* cell);
 };
 
 #endif

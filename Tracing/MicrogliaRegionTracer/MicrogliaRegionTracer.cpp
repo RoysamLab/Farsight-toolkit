@@ -5,14 +5,27 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filena
 	roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 }
 
-void MicrogliaRegionTracer::LoadImage(ImageType::Pointer image)
+MicrogliaRegionTracer::ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(MaskedImageType::Pointer mask, ImageType::Pointer image)
 {
-	this->image = image;
+	typedef itk::MaskNegatedImageFilter< ImageType, MaskedImageType, ImageType > MaskFilterType;
+	MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+	maskFilter->SetMaskImage(mask);
+	maskFilter->SetInput(image);
+	try
+	{
+		maskFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "maskFilter Exception: " << err << std::endl;
+	}
+
+	return maskFilter->GetOutput();
 }
 
-void MicrogliaRegionTracer::LoadImage(std::string filename)
+MicrogliaRegionTracer::ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(std::string filename, ImageType::Pointer image)
 {
-	typedef itk::ImageFileReader< ImageType > ReaderType;
+	typedef itk::ImageFileReader< MaskedImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(filename);
 	try
@@ -24,13 +37,13 @@ void MicrogliaRegionTracer::LoadImage(std::string filename)
 		std::cerr << "reader Exception: " << err << std::endl;
 	}
 
-	LoadImage(reader->GetOutput());
+	return GetMaskedImage(reader->GetOutput(), image);
 }
 
-void MicrogliaRegionTracer::LoadCellPoints(std::string filename)
+void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std::string soma_filename)
 {
 	std::ifstream seed_point_file;
-	seed_point_file.open(filename.c_str());
+	seed_point_file.open(seedpoints_filename.c_str());
 
 	while (!seed_point_file.eof())
 	{
@@ -53,13 +66,37 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string filename)
 		//std::cout << "Grabbing ROI for cell" << std::endl;
 		ImageType::IndexType shift_index;
 		cell->image = roi_grabber->GetROI(cell, roi_size, shift_index);
+
+		//Need to do this to make the MaskImageFilter work since it expects similar origins
+		ImageType::PointType origin = cell->image->GetOrigin();
+		origin[0] = 0;
+		origin[1] = 0;
+		origin[2] = 0;
+		cell->image->SetOrigin(origin);
+
+
 		cell->setShiftIndex(shift_index);
 		//std::cout << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
 		
-		//WriteImage("cell.tif", cell->image);
+		//Make the file name of the raw cell image
+		std::stringstream cell_filename_stream;
+		cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
+
+		//Write the cell image
+		WriteImage(cell_filename_stream.str(), cell->image);
 
 		roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
 		cell->setSize(roi_size);
+
+		////Get the masked image
+		//cell->masked_image = GetMaskedImage(soma_filename, cell->image);
+
+		////Make the file name of the masked cell image
+		//std::stringstream masked_cell_filename_stream;
+		//masked_cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_masked.TIF";	//X_Y_Z_masked.TIF
+		//
+		////Write the masked cell image
+		//WriteImage(masked_cell_filename_stream.str(), cell->masked_image);
 
 		cells.push_back(cell);
 	}
@@ -97,39 +134,6 @@ void MicrogliaRegionTracer::WriteVesselnessImage(std::string filename, Vesselnes
 	}
 }
 
-void MicrogliaRegionTracer::WriteCellImages()
-{
-	std::vector<Cell*>::iterator cells_iter;
-
-	if (cells.size() == 0)
-	{
-		std::cout << "There are no cells" << std::endl;
-		exit(0);
-	}
-	//clock_t startTime = clock();
-	for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
-	{
-		Cell* cell = *cells_iter;
-
-		ImageType::SizeType roi_size;
-		roi_size[0] = 200;
-		roi_size[1] = 200;
-		roi_size[2] = 100;
-		
-		//Grab the cell and its ROI
-		ImageType::IndexType shift_index;
-		ImageType::Pointer cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
-
-		//Make the file name of the raw cell image
-		std::stringstream cell_filename_stream;
-		cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
-		
-		//Write the cell image
-		WriteImage(cell_filename_stream.str(), cell_image);
-	}
-	//std::cout << "Grabbed " << cells.size() << " cells in " << (clock() - startTime)/CLOCKS_PER_SEC << " seconds" << std::endl;
-}
-
 void MicrogliaRegionTracer::Trace()
 {
 	std::vector<Cell*>::iterator cells_iter;
@@ -148,6 +152,7 @@ void MicrogliaRegionTracer::Trace()
 		std::cout << "Detected " << cell->critical_points_vector.size() << " critical points" << std::endl;
 		std::cout << "Tree Building" << std::endl;
 		BuildTree(cell);
+		delete cell;
 	}
 }
 
@@ -156,9 +161,9 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 	LoG *log_obj = new LoG();
 	//Calculate the LoG on multiple scales and put them into a vector
 	std::cout << "Calculating Multiscale LoG" << std::endl;
-	cell->LoG_image_vector = log_obj->RunMultiScaleLoG(cell);
+	cell->multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
 
-//	std::cout << "Starting ridge detection" << std::endl;
+	std::cout << "Starting ridge detection" << std::endl;
 	RidgeDetection(cell);
 }
 
@@ -189,100 +194,83 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	itk::ImageRegionIterator<ImageType> critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
 	itk::ImageRegionIterator<VesselnessImageType> vesselness_image_iter(cell->vesselness_image, cell->vesselness_image->GetLargestPossibleRegion());
 	
-	std::vector<LoGImageType::Pointer>::iterator LoG_image_vector_iter;
+	itk::Size<3> rad = {{1,1,1}};
+	itk::Size<3> local_rad = {{1,1,1}};
+
+	itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
+	itk::NeighborhoodIterator<LoGImageType> local_maxima_iter(local_rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
+
+	//Making a size value that removes some room (kind of like reverse padding) so we dont go out of bounds later
+	itk::Size<3> unpad_size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
+	unpad_size[0] = unpad_size[0] - (rad[0] + 1);
+	unpad_size[1] = unpad_size[1] - (rad[1] + 1); 
+	unpad_size[2] = unpad_size[2] - (rad[2] + 1);
 	
-	//For each log image, get the critical points
-	for (LoG_image_vector_iter = cell->LoG_image_vector.begin(); LoG_image_vector_iter != cell->LoG_image_vector.end(); LoG_image_vector_iter++)
+	critical_point_img_iter.GoToBegin();
+	neighbor_iter.GoToBegin();
+	vesselness_image_iter.GoToBegin();
+	local_maxima_iter.GoToBegin();
+
+	//Need the maximum intensity of the multiscale LoG image for Vesselness
+	typedef itk::MinimumMaximumImageCalculator< LoGImageType > ImageCalculatorFilterType;
+	ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New();
+	imageCalculatorFilter->SetImage(cell->multiscale_LoG_image);
+	imageCalculatorFilter->ComputeMaximum();
+	double max_intensity_multiscale = imageCalculatorFilter->GetMaximum();
+
+
+	while(!neighbor_iter.IsAtEnd()) 
 	{
-		std::cout << "Starting ridge detection for a new scale" << std::endl;
-		LoGImageType::Pointer log_image = *LoG_image_vector_iter;
-
-		itk::Size<3> rad = {{1,1,1}};
-		itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, log_image, log_image->GetLargestPossibleRegion());
+		itk::Index<3> index = neighbor_iter.GetIndex();
 		
-		//Making a size value that removes some room (kind of like reverse padding) so we dont go out of bounds later
-		itk::Size<3> unpad_size = log_image->GetLargestPossibleRegion().GetSize();
-		unpad_size[0] = unpad_size[0] - 3;
-		unpad_size[1] = unpad_size[1] - 3; 
-		unpad_size[2] = unpad_size[2] - 3;
-		
-		critical_point_img_iter.GoToBegin();
-		neighbor_iter.GoToBegin();
-		vesselness_image_iter.GoToBegin();
-
-		while(!neighbor_iter.IsAtEnd()) 
+		//checking to see if we are at the edge of the image
+		if ( (index[0] < rad[0] + 1) || (index[1] < rad[1] + 1) || (index[2] < rad[2] + 1) ||								
+			(index[0] >= (int)unpad_size[0]) || (index[1] >= (int)unpad_size[1]) || (index[2] >= (int)unpad_size[2]) )		
 		{
-			itk::Index<3> index = neighbor_iter.GetIndex();
-			
-			//checking to see if we are at the edge of the image
-			if ( (index[0] < 2) || (index[1] < 2) || (index[2] < 2) ||								
-				(index[0] > (int)unpad_size[0]) || (index[1] > (int)unpad_size[1]) || (index[2] > (int)unpad_size[2]) )		
-			{
-				++critical_point_img_iter;
-				++neighbor_iter;
-				++vesselness_image_iter;
-				continue;
-			}
-
-			//Diametrically opposing pairs
-			////Summing the average of the greater of the diametrically pairs of pixels
-			//float sum_of_greater_of_diametrically_opposing_pairs = 0.0;
-			//for (unsigned int i=0; i < 13; ++i)
-			//{
-			//	sum_of_greater_of_diametrically_opposing_pairs += std::max<float>(neighbor_iter.GetPixel(i), neighbor_iter.GetPixel(26 - i));
-			//}
-			//
-			////Now divide by the number of pairs to get the average
-			//float avg_of_greater_of_diametrically_opposing_pairs = sum_of_greater_of_diametrically_opposing_pairs / 13.0f;
-
-			//float center_pixel_intensity = neighbor_iter.GetPixel(13) ;	//center pixel intensity
-			//if (center_pixel_intensity - avg_of_greater_of_diametrically_opposing_pairs > 0)
-			//{
-			//	critical_point_img_iter.Set(255);
-			//	
-			//	float vesselness_score = RunHessian(log_image, neighbor_iter);
-			//	if (vesselness_image_iter.Get() < vesselness_score)
-			//		vesselness_image_iter.Set(vesselness_score);
-			//}
-
-			//Local maximum
-			bool local_maximum = true;
-			for (int i = 0; i <= 26; ++i)
-			{
-				if (neighbor_iter.GetPixel(i) > neighbor_iter.GetPixel(13))
-					local_maximum = false;
-			}
-			
-			if (local_maximum)
-			{
-				critical_point_img_iter.Set(255);
-		
-				float vesselness_score = RunHessian(log_image, neighbor_iter);
-				if (vesselness_image_iter.Get() < vesselness_score)
-					vesselness_image_iter.Set(vesselness_score);
-			}
-
 			++critical_point_img_iter;
 			++neighbor_iter;
 			++vesselness_image_iter;
+			++local_maxima_iter;
+			continue;
 		}
-	}
 
-	//WriteImage("critical_points.TIF", critical_point_image);
-	//WriteVesselnessImage("vesselness.mhd", vesselness_image);
+		//Non-maximal suppression (only keep the seedpoint with the maximum value in the 5x5x5 neighborhood)
+		bool local_maximum = true;
+		itk::uint64_t local_maximum_search_size = local_maxima_iter.GetSize(0) * local_maxima_iter.GetSize(1) * local_maxima_iter.GetSize(2);
+		for (int i = 0; i < local_maximum_search_size; ++i)
+		{
+			if (local_maxima_iter.GetPixel(i) > local_maxima_iter.GetPixel(local_maximum_search_size / 2))
+				local_maximum = false;
+		}
+		
+		if (local_maximum)
+		{		
+			critical_point_img_iter.Set(255);
+		}
 
-	vesselness_image_iter.GoToBegin();
-
-	while(!vesselness_image_iter.IsAtEnd())
-	{
-		if (vesselness_image_iter.Get() > 0.04)
+		float vesselness_score = RunHessian(cell->multiscale_LoG_image, neighbor_iter, max_intensity_multiscale);
+		vesselness_image_iter.Set(vesselness_score);
+		
+		if (vesselness_image_iter.Get() > 0.025 && local_maximum)
 			cell->critical_points_vector.push_back(vesselness_image_iter.GetIndex());
 		
+		++local_maxima_iter;
+		++critical_point_img_iter;
+		++neighbor_iter;
 		++vesselness_image_iter;
 	}
+
+	std::ostringstream criticalpointsFileNameStream;
+	std::ostringstream vesselnessFileNameLocalStream;	
+
+	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
+	vesselnessFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
+
+	WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
+	WriteVesselnessImage(vesselnessFileNameLocalStream.str(), cell->vesselness_image);
 }
 
-double MicrogliaRegionTracer::RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter )
+double MicrogliaRegionTracer::RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter, double max_intensity_multiscale )
 {
 	// set the diagonal terms in neighborhood iterator, this is the offsets for the diametrically opposing pixels
 	itk::Offset<3>
@@ -342,26 +330,95 @@ double MicrogliaRegionTracer::RunHessian( LoGImageType::Pointer log_image, itk::
 
 	hessian.ComputeEigenAnalysis (ev, em);	//Compute Eigenvalues
 
-	double vesselness_score = ComputeVesselness(ev[0], ev[1], ev[2]);
+	double vesselness_score = ComputeVesselness(ev[0], ev[1], ev[2], max_intensity_multiscale);
 	
 	if (vesselness_score < 0)
-		std::cout << "negative vesselness score detected" << std::endl;
+		std::cout << "negative vesselness score detected: " << vesselness_score << std::endl;
 
 	return vesselness_score;
 }
 
-double MicrogliaRegionTracer::ComputeVesselness( double ev1, double ev2, double ev3 )
+double MicrogliaRegionTracer::ComputeVesselness( double ev1, double ev2, double ev3, double maximum_intensity )
 {
+	double lambda1, lambda2, lambda3; //constrain lambda1 <= lambda2 <= lambda3
+
 	double ev1_magnitude = std::abs(ev1);
 	double ev2_magnitude = std::abs(ev2);
 	double ev3_magnitude = std::abs(ev3);
+
+
+	///std::cout << ev1_magnitude << " " << ev2_magnitude << " " << ev3_magnitude << std::endl;
 	
-	if (ev1_magnitude < ev2_magnitude && ev1_magnitude < ev3_magnitude) //ev1 is the smallest eigenvalue
-		return (ev2_magnitude + ev3_magnitude)/2 - ev1_magnitude;
-	else if (ev2_magnitude < ev1_magnitude && ev2_magnitude < ev3_magnitude) //ev2 is the smallest eigenvalue
-		return (ev1_magnitude + ev3_magnitude)/2 - ev2_magnitude;
+	if (ev1_magnitude <= ev2_magnitude && ev1_magnitude <= ev3_magnitude) //ev1 is the smallest eigenvalue
+	{
+		lambda1 = ev1;
+		if (ev2_magnitude < ev3_magnitude)
+		{
+			lambda2 = ev2;
+			lambda3 = ev3;
+		}
+		else
+		{
+			lambda2 = ev3;
+			lambda3 = ev2;
+		}
+	}
+	else if (ev2_magnitude <= ev1_magnitude && ev2_magnitude <= ev3_magnitude) //ev2 is the smallest eigenvalue
+	{
+		lambda1 = ev2;
+		if (ev1_magnitude < ev3_magnitude)
+		{
+			lambda2 = ev1;
+			lambda3 = ev3;
+		}
+		else
+		{
+			lambda2 = ev3;
+			lambda3 = ev1;
+		}
+	}
 	else
-		return (ev1_magnitude + ev2_magnitude)/2 - ev3_magnitude;
+	{
+		lambda1 = ev3;
+		if (ev1_magnitude < ev2_magnitude)
+		{
+			lambda2 = ev1;
+			lambda3 = ev2;
+		}
+		else
+		{
+			lambda2 = ev2;
+			lambda3 = ev1;
+		}
+	}
+
+
+	double vesselness_score;
+	if (lambda3 < 0 && lambda2 < 0)
+	{
+		lambda1 = std::abs(lambda1);
+		lambda2 = std::abs(lambda2);
+		lambda3 = std::abs(lambda3);
+
+		double r_a = lambda1 / sqrt(lambda2 * lambda3);
+		double r_b = lambda2 / lambda3;
+		double s = sqrt(pow(lambda1, 2) + pow(lambda2, 2) + pow(lambda3, 2));
+
+		//std::cout << r_a << " " << r_b << " " << s << std::endl;
+
+		double alpha = 0.5 * maximum_intensity;
+		double beta = 0.5 * maximum_intensity;
+		double gamma = 0.25 * maximum_intensity;
+		
+		vesselness_score =			exp(-1 * pow(r_a, 2) / (2 * pow(alpha, 2))) 
+								* (1 -	exp(-1 * pow(r_b, 2) / (2 * pow(beta, 2)))) 
+								* (1 -	exp(-1 * pow(s, 2) / (2 * pow(gamma, 2))));
+
+		//std::cout << vesselness_score << std::endl;
+	}
+	else
+		vesselness_score = 0;
+	return vesselness_score;
 }
 
 
@@ -391,7 +448,8 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_vector.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_vector.size()];
 
-	for (itk::uint64_t k = 0; k < cell->critical_points_vector.size(); k++)
+	#pragma omp parallel for
+	for (itk::int64_t k = 0; k < cell->critical_points_vector.size(); k++)
 	{
 		for (itk::uint64_t l = 0; l < cell->critical_points_vector.size(); l++)
 		{
@@ -441,6 +499,7 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 	//do this for each point but the root point
 	for (itk::uint64_t l = 0; l < cell->critical_points_vector.size() - 1; l++)
 	{
+		//std::cout << "Calculating nearest neighbor for point " << l << std::endl;
 		itk::uint64_t minimum_node_index_from_id = 0;
 		itk::uint64_t minimum_node_index_to_id = 0;
 		double minimum_node_distance = std::numeric_limits<double>::max();
@@ -449,12 +508,13 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 		//For each connected point
 		std::vector<Node*> member_nodes = tree->GetMemberNodes();
 		std::vector<Node*>::iterator member_nodes_iter;
+		
 		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
 		{
 			Node* node = *member_nodes_iter;
 
 			//Search through all the points and find the minimum distance
-			for (itk::uint64_t k = 0; k < cell->critical_points_vector.size(); k++)
+			for (itk::int64_t k = 0; k < cell->critical_points_vector.size(); k++)
 			{
 				if (AdjGraph[node->getID()][k] < minimum_node_distance && node->getID() != k)
 				{
@@ -465,6 +525,9 @@ Tree* MicrogliaRegionTracer::BuildMST(Cell* cell, double** AdjGraph)
 				}
 			}	
 		}
+
+		if (minimum_node_distance > 15)
+			break;
 
 		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_vector[minimum_node_index_from_id][0] << " " << cell->critical_points_vector[minimum_node_index_from_id][1] << " " << cell->critical_points_vector[minimum_node_index_from_id][2] << " " << cell->critical_points_vector[minimum_node_index_to_id][0] << " " << cell->critical_points_vector[minimum_node_index_to_id][1] << " "  << cell->critical_points_vector[minimum_node_index_to_id][2] << std::endl;
 		ImageType::IndexType cell_origin;

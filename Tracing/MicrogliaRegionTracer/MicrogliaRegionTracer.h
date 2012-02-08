@@ -6,7 +6,9 @@
 #include "itkImageFileWriter.h"
 #include "itkNeighborhoodIterator.h"
 #include "itkHessianRecursiveGaussianImageFilter.h"
+#include "itkMinimumMaximumImageCalculator.h"
 #include "itkIntTypes.h"
+#include "itkMaskNegatedImageFilter.h"
 
 #include <fstream>
 #include <cstring>
@@ -30,9 +32,9 @@ private:
 	typedef Cell::ImageType ImageType;
 	typedef Cell::LoGImageType LoGImageType;
 	typedef Cell::VesselnessImageType VesselnessImageType;
+	typedef itk::Image<unsigned char, 3> MaskedImageType;
 
 private:
-	ImageType::Pointer image;
 	std::vector<Cell*> cells;
 	ROIGrabber* roi_grabber;
 
@@ -40,21 +42,20 @@ public:
 	MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
 	~MicrogliaRegionTracer();
 
-	void LoadImage(ImageType::Pointer image);
-	void LoadImage(std::string filename);
-
-	void LoadCellPoints(std::string filename);
+	ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(MaskedImageType::Pointer mask, ImageType::Pointer image);
+	ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(std::string filename, ImageType::Pointer image);
+	
+	void LoadCellPoints(std::string image_filename, std::string soma_filename);
 
 	void WriteImage(std::string filename, ImageType::Pointer image);
 	void WriteVesselnessImage(std::string filename, VesselnessImageType::Pointer image);
-	void WriteCellImages();
 	
 	void Trace();
 
 	void CalculateCandidatePixels(Cell* cell);
 	void RidgeDetection(Cell* cell);
-	double RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter);
-	double ComputeVesselness( double ev1, double ev2, double ev3 );
+	double RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter, double max_intensity_multiscale);
+	double ComputeVesselness( double ev1, double ev2, double ev3, double maximum_intensity );
 	
 	void BuildTree(Cell* cell);
 	double** BuildAdjacencyGraph(Cell* cell);

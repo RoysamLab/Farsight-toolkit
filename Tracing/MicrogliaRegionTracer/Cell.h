@@ -37,8 +37,9 @@ public:
 	
 	ImageType::Pointer image;
 	ImageType::Pointer critical_point_image;
-	std::vector<LoGImageType::Pointer> LoG_image_vector;
+	LoGImageType::Pointer multiscale_LoG_image;
 	VesselnessImageType::Pointer vesselness_image;
+	ImageType::Pointer masked_image;
 
 private:
 	itk::uint64_t cell_x;
