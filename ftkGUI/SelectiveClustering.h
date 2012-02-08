@@ -75,6 +75,7 @@ public:
 
 	void RemoveSelectionFromCluster(vtkIdType key, vtkIdType ID);
 	void RemoveSelectionFromCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
+	void UpdateSelectionFromCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 
 	//Cluster information 
 	vtkIdType ClusterSelectionSize(vtkIdType key);
@@ -86,6 +87,8 @@ public:
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();
+	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
+		vtkSmartPointer<vtkTable> selectedTable);
 
 	//Cluster Table
 
@@ -119,9 +122,6 @@ private:
 	vtkSmartPointer<vtkTable> ObjectTable;
 	vtkIdType NumberOfObjects;
 
-	//Private Table manip functions
-	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
-		vtkSmartPointer<vtkTable> selectedTable);
 
 	// Cluster Table 
 	vtkSmartPointer<vtkTable> ClusterTable;
@@ -143,6 +143,7 @@ public slots:
 	void ClearClusters();
 	void ChangeInClusters();
 	void ChangeInObjectSelection();
+	void RunOperatorOnSelectedClusters();
 
 private:
 
@@ -154,16 +155,22 @@ private:
 	std::set< vtkIdType > ObjectSelectionToIDSet();
 
 	//QT Gui Layouts
-	QHBoxLayout * MainLayout;
+	QVBoxLayout* MainLayout;
+	QHBoxLayout* HLayout ;
+	QHBoxLayout* HOperatorDisplayLayout;
+	QVBoxLayout* VLayout;
 	QListWidget * ClusterListView;
+	
 	vtkSmartPointer<vtkQtTableView> ClusterTableView;
+
 
 	QLabel * NumClusters;
 	QLabel * NumObjects;
 	QLabel * NumSelected;
 	
-	QComboBox *OperatorList;
+	QComboBox *OperatorList, *Operand1, *Operand2, *ActionType;
 	QPushButton * AddClusterButton;
+	QPushButton * RunOperatorButton;
 	QPushButton * ClearClusterButton;
 };
 #endif

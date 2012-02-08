@@ -370,7 +370,7 @@ std::set< vtkIdType > SelectiveClustering::cluster_operator_SUBTRACT(vtkIdType k
 	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
 	std::set< vtkIdType > result ;
 	std::set_difference(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
-	return selectedIDs;
+	return result;
 }
 
 std::set< vtkIdType > SelectiveClustering::cluster_operator_AND(vtkIdType key1, vtkIdType key2)
@@ -386,7 +386,7 @@ std::set< vtkIdType > SelectiveClustering::cluster_operator_AND(vtkIdType key1, 
 	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
 	std::set< vtkIdType > result ;
 	std::set_intersection(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
-	return selectedIDs;
+	return result;
 }
 
 std::set< vtkIdType > SelectiveClustering::cluster_operator_XOR(vtkIdType key1, vtkIdType key2)
@@ -402,7 +402,7 @@ std::set< vtkIdType > SelectiveClustering::cluster_operator_XOR(vtkIdType key1, 
 	std::set< vtkIdType > tempSet = this->SelectionFromCluster(key2);
 	std::set< vtkIdType > result ;
 	std::set_symmetric_difference(selectedIDs.begin(),selectedIDs.end(),tempSet.begin(),tempSet.end(),std::inserter(result, result.end()));
-	return selectedIDs;
+	return result;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,7 +420,10 @@ ClusterManager::ClusterManager()
 	this->NumSelected = new QLabel(" None ");
 
 	this->AddClusterButton = new QPushButton(" Add Cluster ");
+	this->RunOperatorButton = new QPushButton(" Run Operator ");
+
 	connect(this->AddClusterButton, SIGNAL(clicked()), this, SLOT(SelectionToClusterModification()));
+	connect(this->RunOperatorButton, SIGNAL(clicked()), this, SLOT(RunOperatorOnSelectedClusters()));
 
 	this->ClearClusterButton = new QPushButton(" Clear Cluster ");
 	connect(this->ClearClusterButton, SIGNAL(clicked()), this, SLOT(ClearClusters()));
@@ -433,19 +436,52 @@ ClusterManager::ClusterManager()
 	OperatorList->addItem("SUBRACT");
 	OperatorList->addItem("AND");
 	OperatorList->addItem("XOR");
+	
+	this->ActionType = new QComboBox(this);	
+	ActionType->addItem("Display");
+	ActionType->addItem("Override I");
+	ActionType->addItem("Override II");
 
+
+	this->Operand1 = new QComboBox(this);
+	this->Operand2  = new QComboBox(this);
+	
 	QFormLayout *InfoLayout = new QFormLayout();
 	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
 	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
-	InfoLayout->addRow("Operator: ", this->OperatorList);
-	InfoLayout->addRow(this->AddClusterButton);
-	InfoLayout->addRow(this->ClearClusterButton);
 
-	this->MainLayout = new QHBoxLayout;
+	HOperatorDisplayLayout= new QHBoxLayout();
+	this->HOperatorDisplayLayout->addWidget(Operand1);
+	this->HOperatorDisplayLayout->addWidget(OperatorList);
+	this->HOperatorDisplayLayout->addWidget(ActionType);
+	this->HOperatorDisplayLayout->addWidget(Operand2);
+	InfoLayout->addRow(this->HOperatorDisplayLayout);
+
+	QHBoxLayout* ButtonLayout = new QHBoxLayout();
+	ButtonLayout->addWidget(this->AddClusterButton);
+	ButtonLayout->addWidget(this->RunOperatorButton);
+	ButtonLayout->addWidget(this->ClearClusterButton);
+
+	//InfoLayout->addRow("Operator: ", this->OperatorList);
+
+	this->MainLayout = new QVBoxLayout();
+	this->HLayout = new QHBoxLayout();
+
 	//this->MainLayout->addWidget(this->ClusterListView);
-	this->MainLayout->addWidget(this->ClusterTableView->GetWidget());
-	this->MainLayout->addLayout(InfoLayout);
+	this->HLayout->addWidget(this->ClusterTableView->GetWidget());
+	this->HLayout->addLayout(InfoLayout);
+	
+	this->MainLayout->addLayout(ButtonLayout);
+	this->MainLayout->addLayout(HLayout);
+
+	//this->MainLayout->addWidget(this->ClusterListView,0,0);
+	//this->MainLayout->addWidget(this->ClusterTableView->GetWidget(),0,1);
+	//this->MainLayout->addWidget(Operand1,1,0);
+	//this->MainLayout->addWidget(OperatorList,1,1);
+	//this->MainLayout->addWidget(Operand2,1,2);
+	//this->MainLayout->addLayout(InfoLayout,2,0);
+
 
 	this->setLayout(this->MainLayout);
 	this->setWindowTitle(tr("Cluster Manager"));
@@ -504,6 +540,15 @@ void ClusterManager::ChangeInClusters()
 	this->ClusterListView->addItems( ClusterList);*/
 
 	//
+
+
+
+	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
+	Operand1->clear();
+	Operand2->clear();
+	Operand1->addItems(ClusterList);
+	Operand2->addItems(ClusterList);
+
 }
 
 void ClusterManager::ChangeInObjectSelection()
@@ -528,4 +573,81 @@ std::set< vtkIdType > ClusterManager::ObjectSelectionToIDSet()
 		Selection.insert(id);
 	}
 	return Selection;
+}
+
+void ClusterManager::RunOperatorOnSelectedClusters()
+{
+	/*! 
+	* Runs the Operator on the selected Clusters
+	*/
+	int index = this->OperatorList->currentIndex();
+	std::set< vtkIdType > clusterIDs;
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	selectedTable->Initialize();
+	
+	//create vtkVariant and convert it to vtkIDType .ToTypeInt64(); :::::::::this is to convert the string to vtkIDType
+	vtkVariant a ;
+	vtkVariant b ;
+	a = this->Operand1->currentText().toInt();
+	b = this->Operand2->currentText().toInt();
+	
+	switch(index)
+	{
+		case 0: //ADD
+			clusterIDs =  this->ClusterModel->cluster_operator_ADD(a.ToTypeInt64(),b.ToTypeInt64());
+			break;
+		case 1: //SUBRACT
+			clusterIDs =  this->ClusterModel->cluster_operator_SUBTRACT(a.ToTypeInt64(),b.ToTypeInt64());
+			break;
+		case 2: //AND
+			clusterIDs =  this->ClusterModel->cluster_operator_AND(a.ToTypeInt64(),b.ToTypeInt64());
+			break;
+		case 3: //XOR
+			clusterIDs =  this->ClusterModel->cluster_operator_XOR(a.ToTypeInt64(),b.ToTypeInt64());
+			break;
+		default: 
+			std::cerr << "Incorrect Operator = " << index << std::endl;
+			break;
+	}
+	
+	//Display the Data in the console
+	this->ClusterModel->CopySelectedIntoTable(clusterIDs, selectedTable);
+	selectedTable->Dump(16);
+	std::set< vtkIdType > tempClusterIds;
+	index  = this->ActionType->currentIndex();
+	switch(index)
+	{
+		case 0: //Display
+			//tempClusterIds = this->ClusterModel->SelectionFromCluster(a.ToTypeInt64());
+			//this->ClusterModel->RemoveSelectionFromCluster(a.ToTypeInt64(),tempClusterIds);
+			break;
+		case 1: //Override I
+			tempClusterIds = this->ClusterModel->SelectionFromCluster(a.ToTypeInt64());
+			this->ClusterModel->RemoveSelectionFromCluster(a.ToTypeInt64(),tempClusterIds);
+			this->ClusterModel->AddSelectionToCluster(a.ToTypeInt64(),clusterIDs);
+
+			std::cout<< "Value of Cluster " << a.ToString() << std::endl;
+			tempClusterIds = this->ClusterModel->SelectionFromCluster(a.ToTypeInt64());
+			selectedTable->Initialize();
+			this->ClusterModel->CopySelectedIntoTable(tempClusterIds, selectedTable);
+			selectedTable->Dump(16);	
+
+			break;
+		case 2: //Override II
+			tempClusterIds = this->ClusterModel->SelectionFromCluster(b.ToTypeInt64());
+			this->ClusterModel->RemoveSelectionFromCluster(b.ToTypeInt64(),tempClusterIds);
+			this->ClusterModel->AddSelectionToCluster(b.ToTypeInt64(),clusterIDs);
+
+
+			std::cout<< "Value of Cluster " << b.ToString() << std::endl;
+			tempClusterIds = this->ClusterModel->SelectionFromCluster(b.ToTypeInt64());
+			selectedTable->Initialize();
+			this->ClusterModel->CopySelectedIntoTable(tempClusterIds, selectedTable);
+			selectedTable->Dump(16);	
+
+			break;
+		default: 
+			std::cerr << "Incorrect Action Type = " << index << std::endl;
+			break;
+	}
 }
