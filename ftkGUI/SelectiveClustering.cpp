@@ -21,8 +21,13 @@ SelectiveClustering::SelectiveClustering()
 	* Initalize selective clustering
 	*/
 	this->ClusterMap.clear();
-	this->TableIDMap.clear();
+
+	this->ObjectTableIDMap.clear();
 	this->ObjectTable = vtkSmartPointer<vtkTable>::New();
+
+	this->ClusterTable = vtkSmartPointer<vtkTable>::New();
+	this->CreateClusterTableHeaders();
+
 }
 
 vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSet)
@@ -32,6 +37,13 @@ vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSe
 	*/
 	vtkIdType newKey = this->ClusterMap.size();
 	this->ClusterMap[newKey] = ClusterSelectionSet;
+
+	vtkVariantArray * NewRow = vtkVariantArray::New();
+	NewRow->InsertNextValue(newKey); 
+	NewRow->InsertNextValue(vtkVariant(ClusterSelectionSet.size())); 
+	NewRow->InsertNextValue(NULL);
+	this->ClusterTable->InsertNextRow(NewRow);
+
 	emit ClusterChanged();
 	return newKey;
 }
@@ -43,7 +55,7 @@ bool SelectiveClustering::AddCluster(vtkIdType key, std::set<vtkIdType> ClusterS
 	* replaces cluster if one with the key currently exists
 	*/
 	this->iter = this->ClusterMap.find(key);
-	if (this->iter == this->ClusterMap.end())
+	if ((this->ClusterMap.size() > 0) && (this->iter != this->ClusterMap.end()))
 	{
 		//Remove old item
 		this->ClusterMap.erase(iter);
@@ -76,6 +88,7 @@ void SelectiveClustering::ClearClusters()
 	* All Clusters must go
 	*/
 	this->ClusterMap.clear();
+	this->CreateClusterTableHeaders();
 	emit ClusterChanged();
 }
 
@@ -169,6 +182,9 @@ std::set< vtkIdType > SelectiveClustering::GetClusterIDs()
 }
 QStringList SelectiveClustering::GetClusterIDsList()
 {
+	/*! 
+	* Returns QSTring List of Cluster Ids for display
+	*/
 	QStringList clusterList;
 	this->iter = this->ClusterMap.begin();
 	for (; this->iter != this->ClusterMap.end(); this->iter++)
@@ -201,6 +217,12 @@ std::set< vtkIdType > SelectiveClustering::GetAllSelections()
 	return selections;
 }
 
+vtkSmartPointer<vtkTable> SelectiveClustering::GetClusterTable()
+{
+	return this->ClusterTable;
+}
+
+
 bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTable)
 {
 	/*! 
@@ -217,7 +239,7 @@ bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTab
 	for ( vtkIdType currow = 0; currow <= this->NumberOfObjects; currow++ )
 	{
 		vtkIdType rowObjId = this->ObjectTable->GetValue( currow, 0 ).ToTypeInt64();
-		this->TableIDMap[ rowObjId ] = currow;
+		this->ObjectTableIDMap[ rowObjId ] = currow;
 	}
 	emit DataChanged();
 	return true;
@@ -275,8 +297,8 @@ void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs,
 	for (; selectionIter != selectedIDs.end(); selectionIter++)
 	{
 		vtkIdType curSelection = *selectionIter;
-		this->TableIDIter = this->TableIDMap.find(curSelection);
-		if (this->TableIDIter != this->TableIDMap.end())
+		this->TableIDIter = this->ObjectTableIDMap.find(curSelection);
+		if (this->TableIDIter != this->ObjectTableIDMap.end())
 		{
 			vtkVariantArray * RowCopy = this->ObjectTable->GetRow((*this->TableIDIter).second);
 			selectedTable->InsertNextRow(RowCopy);
@@ -297,6 +319,26 @@ void SelectiveClustering::CopySelectedIntoTable(std::set<vtkIdType> selectedIDs,
 	//		selectedTable->InsertNextRow(RowCopy);
 	//	}
 	//}
+}
+
+void SelectiveClustering::CreateClusterTableHeaders()
+{
+	/*!
+	* Creates an empty table then sets col headers to id size and name
+	*/
+	this->ClusterTable->Initialize();
+
+	vtkSmartPointer<vtkVariantArray> IDcol = vtkSmartPointer<vtkVariantArray>::New();
+	IDcol->SetName("Cluster ID");
+	this->ClusterTable->AddColumn(IDcol);
+
+	vtkSmartPointer<vtkVariantArray> Countcol = vtkSmartPointer<vtkVariantArray>::New();
+	Countcol->SetName("Number Of Objects");
+	this->ClusterTable->AddColumn(Countcol);
+
+	vtkSmartPointer<vtkVariantArray> Namecol = vtkSmartPointer<vtkVariantArray>::New();
+	Namecol->SetName("Cluster Name");
+	this->ClusterTable->AddColumn(Namecol);
 }
 
 std::set< vtkIdType > SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)
@@ -376,10 +418,15 @@ ClusterManager::ClusterManager()
 	this->NumObjects = new QLabel(" None ");
 	this->NumClusters = new QLabel(" None ");
 	this->NumSelected = new QLabel(" None ");
+
 	this->AddClusterButton = new QPushButton(" Add Cluster ");
 	connect(this->AddClusterButton, SIGNAL(clicked()), this, SLOT(SelectionToClusterModification()));
+
+	this->ClearClusterButton = new QPushButton(" Clear Cluster ");
+	connect(this->ClearClusterButton, SIGNAL(clicked()), this, SLOT(ClearClusters()));
 	
-	this->ClusterListView = new QListWidget(this);
+	//this->ClusterListView = new QListWidget(this);
+	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
 	
 	this->OperatorList = new QComboBox(this);
 	OperatorList->addItem("ADD");
@@ -393,9 +440,11 @@ ClusterManager::ClusterManager()
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
 	InfoLayout->addRow("Operator: ", this->OperatorList);
 	InfoLayout->addRow(this->AddClusterButton);
+	InfoLayout->addRow(this->ClearClusterButton);
 
 	this->MainLayout = new QHBoxLayout;
-	this->MainLayout->addWidget(this->ClusterListView);
+	//this->MainLayout->addWidget(this->ClusterListView);
+	this->MainLayout->addWidget(this->ClusterTableView->GetWidget());
 	this->MainLayout->addLayout(InfoLayout);
 
 	this->setLayout(this->MainLayout);
@@ -430,6 +479,11 @@ void ClusterManager::SelectionToClusterModification()
 	this->ClusterModel->AddCluster(sel);
 }
 
+void ClusterManager::ClearClusters()
+{
+	this->ClusterModel->ClearClusters();
+}
+
 void ClusterManager::ChangeInClusters()
 {
 	/*! 
@@ -440,10 +494,14 @@ void ClusterManager::ChangeInClusters()
 	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
 	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
 
+	vtkQtTableModelAdapter adapt(this->ClusterModel->GetClusterTable());
+	this->ClusterTableView->SetRepresentationFromInput(adapt.GetVTKDataObject());
+	this->ClusterTableView->Update();
+
 	//display of clusters in a list
-	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
+	/*QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	this->ClusterListView->clear();
-	this->ClusterListView->addItems( ClusterList);
+	this->ClusterListView->addItems( ClusterList);*/
 
 	//
 }

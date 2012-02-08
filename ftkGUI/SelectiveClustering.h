@@ -46,6 +46,10 @@ limitations under the License.
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
+
+#include <vtkQtTableView.h>
+#include <vtkQtTableModelAdapter.h>
+
 #include "ftkUtils.h"
 #include "vtkSmartPointer.h"
 class ClusterManager;
@@ -58,18 +62,21 @@ public:
 
 	SelectiveClustering();
 
+	// Add and remove clusters
 	vtkIdType AddCluster(std::set<vtkIdType> ClusterSelectionSet);
 	bool AddCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 
 	bool RemoveCluster(vtkIdType key);
 	void ClearClusters();
 	
+	//Modify Clusters
 	void AddSelectionToCluster(vtkIdType key, vtkIdType ID);
 	void AddSelectionToCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 
 	void RemoveSelectionFromCluster(vtkIdType key, vtkIdType ID);
 	void RemoveSelectionFromCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 
+	//Cluster information 
 	vtkIdType ClusterSelectionSize(vtkIdType key);
 	vtkIdType NumberOfClusters();
 	vtkIdType GetNumberOfSelections();
@@ -79,6 +86,10 @@ public:
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();
+
+	//Cluster Table
+
+	vtkSmartPointer<vtkTable> GetClusterTable();
 
 	// Object Table Functions
 	bool SetObjectTable(vtkSmartPointer<vtkTable> InputObjectTable);
@@ -100,8 +111,8 @@ private:
 	std::map<vtkIdType, std::set< vtkIdType > >::iterator iter;
 
 	//Map ID to row in table
-	std::map< vtkIdType, vtkIdType> TableIDMap;
-	//Table ID map Maps Object ID to Row
+	std::map< vtkIdType, vtkIdType> ObjectTableIDMap;
+	//Table ID map Maps Object ID to Row ID
 	std::map< vtkIdType, vtkIdType>::iterator TableIDIter;
 
 	// Object table to cluster
@@ -111,6 +122,10 @@ private:
 	//Private Table manip functions
 	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
 		vtkSmartPointer<vtkTable> selectedTable);
+
+	// Cluster Table 
+	vtkSmartPointer<vtkTable> ClusterTable;
+	void CreateClusterTableHeaders();
 
 };
 
@@ -125,6 +140,7 @@ public:
 public slots:
 
 	void SelectionToClusterModification();
+	void ClearClusters();
 	void ChangeInClusters();
 	void ChangeInObjectSelection();
 
@@ -140,6 +156,7 @@ private:
 	//QT Gui Layouts
 	QHBoxLayout * MainLayout;
 	QListWidget * ClusterListView;
+	vtkSmartPointer<vtkQtTableView> ClusterTableView;
 
 	QLabel * NumClusters;
 	QLabel * NumObjects;
@@ -147,5 +164,6 @@ private:
 	
 	QComboBox *OperatorList;
 	QPushButton * AddClusterButton;
+	QPushButton * ClearClusterButton;
 };
 #endif
