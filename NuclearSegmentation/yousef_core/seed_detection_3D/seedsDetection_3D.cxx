@@ -251,9 +251,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	clock_t start_time_multiscale_log = clock();
 
-//#ifdef _OPENMP
-//	omp_set_nested(1);
-//#endif
+#ifdef _OPENMP
+	omp_set_nested(1);
+#endif
 #ifdef _MSC_VER 
 	#pragma omp parallel for private(min_x, min_y, max_x, max_y) // collapse(2)
 #else
@@ -282,9 +282,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		}
 	}
 
-//#ifdef _OPENMP
-//	omp_set_nested(0);
-//#endif
+#ifdef _OPENMP
+	omp_set_nested(0);
+#endif
 
 	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
