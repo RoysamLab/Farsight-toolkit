@@ -812,7 +812,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		facetT *facet;            /* set by FORALLfacets */
 		int curlong, totlong;     /* memory remaining after qh_memfreeshort */
 		int i;
-			
+		/*	
 		if(flag==1)
 		{
 		coordT *points = new coordT[(dim+1)*ctr];
