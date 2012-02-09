@@ -94,7 +94,7 @@ public:
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	typedef itk::Image< unsigned char, 3 > CharImageType3D;
 	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
-	typedef itk::Image< unsigned short, 3 > LabelImageType3D;
+	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
 
 	//Constructor
