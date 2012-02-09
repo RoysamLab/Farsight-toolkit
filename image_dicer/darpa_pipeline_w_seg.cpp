@@ -45,6 +45,7 @@ bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
+	int counterTiles = 0;
 	if(argc < 4)
 	{
 		std::cout<<"usage1: darpa_tracer <dapi_montage_file> <gfp_montage_file> <project_definition_file> \n";
@@ -169,14 +170,14 @@ int main(int argc, char* argv[])
 			rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
 			ROIfilter_tile_nuc->SetRegionOfInterest(region_tile);
 			ROIfilter_tile_nuc->SetInput(montage_nuc);
-			#pragma omp critical
+			//#pragma omp critical
 				ROIfilter_tile_nuc->Update();
 			rawImageType::Pointer tile_nuc = ROIfilter_tile_nuc->GetOutput();
 
 			rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
 			ROIfilter_tile_gfp->SetRegionOfInterest(region_tile);
 			ROIfilter_tile_gfp->SetInput(montage_gfp);
-			#pragma omp critical
+			//#pragma omp critical
 				ROIfilter_tile_gfp->Update();
 			rawImageType::Pointer tile_gfp = ROIfilter_tile_gfp->GetOutput();
 
@@ -224,12 +225,12 @@ int main(int argc, char* argv[])
 
 			std::cout<<"Extracting tile border X = " << col*1000 << ", Row = " << row << "\n";
 			rawImageType::IndexType start_tileBorder;
-			start_tileBorder[0] = (col*1000) - (2*20);
+			start_tileBorder[0] = (col*1000) - (2*25);
 			start_tileBorder[1] = (row*1000);
 			start_tileBorder[2] = 0;
 
 			rawImageType::SizeType size_tileBorder;
-			size_tileBorder[0] = (4*20);
+			size_tileBorder[0] = (4*25);
 			size_tileBorder[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
 			size_tileBorder[2] = size_nuc_montage[2];
 
@@ -240,14 +241,14 @@ int main(int argc, char* argv[])
 			rawROIFilterType::Pointer ROIfilter_tileBorder_nuc = rawROIFilterType::New();
 			ROIfilter_tileBorder_nuc->SetRegionOfInterest(region_tileBorder);
 			ROIfilter_tileBorder_nuc->SetInput(montage_nuc);
-			#pragma omp critical
+			//#pragma omp critical
 				ROIfilter_tileBorder_nuc->Update();
 			rawImageType::Pointer tileBorder_nuc = ROIfilter_tileBorder_nuc->GetOutput();
 
 			rawROIFilterType::Pointer ROIfilter_tileBorder_gfp = rawROIFilterType::New();
 			ROIfilter_tileBorder_gfp->SetRegionOfInterest(region_tileBorder);
 			ROIfilter_tileBorder_gfp->SetInput(montage_gfp);
-			#pragma omp critical
+			//#pragma omp critical
 				ROIfilter_tileBorder_gfp->Update();
 			rawImageType::Pointer tileBorder_gfp = ROIfilter_tileBorder_gfp->GetOutput();
 
@@ -287,6 +288,13 @@ int main(int argc, char* argv[])
 			Table_TileBorders[col-1] = ComputeFeatures(tileBorder_nuc, tileBorder_gfp, temp_TileBorder, argv[4] );
 			//Centroids_TileBorders[col-1] = GetLabelToCentroidMap(tileBorderSegResults.second);
 			Centroids_TileBorders[col-1] = GetLabelToCentroidMap(Table_TileBorders[col-1]);
+
+			#pragma omp critical
+			{
+				counterTiles++;
+				std::cout << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows;
+				std::cout << std::endl;
+			}
 		}
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
@@ -343,7 +351,7 @@ int main(int argc, char* argv[])
 				itk::Size<3> tileBorder_size = myTileBorder->GetLargestPossibleRegion().GetSize();
 				int tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
 				int tileBorder_row_size = tileBorder_size[0];	
-				int x_offset = (m*1000) - (2*20);
+				int x_offset = (m*1000) - (2*25);
 				for(int z=0; z<tileBorder_size[2]; ++z)
 				{
 					for(int y=0; y<tileBorder_size[1]; ++y)
@@ -353,7 +361,7 @@ int main(int argc, char* argv[])
 							unsigned short value = myTileBorderArray[(tileBorder_slice_size*z) + (tileBorder_row_size*y) + (x)];
 							if(value == 0) continue;
 							int lab_cen_x = Centroids_TileBorders[m-1][value][0];
-							if((lab_cen_x < 20) || (lab_cen_x >= (3*20))) continue;
+							if((lab_cen_x < 25) || (lab_cen_x >= (3*25))) continue;
 							rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
 							if((max_value + value) > current_max)
 								current_max = max_value + value;
@@ -399,8 +407,8 @@ int main(int argc, char* argv[])
 						unsigned short value = myTileArray[(tile_slice_size*z) + (tile_row_size*y) + x];
 						if(value == 0) continue;
 						int lab_cen_x = Centroids_Tiles[m][value][0];
-						if((m != 0) && (lab_cen_x < 20)) continue;
-						if((m != (Label_Tiles.size()-1)) && (lab_cen_x >= (tile_size[0]-20))) continue;
+						if((m != 0) && (lab_cen_x < 25)) continue;
+						if((m != (Label_Tiles.size()-1)) && (lab_cen_x >= (tile_size[0]-25))) continue;
 						rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
 						if((max_value + value) > current_max)
 							current_max = max_value + value;
@@ -444,12 +452,12 @@ int main(int argc, char* argv[])
 		std::cout<<"Extracting row border Y = " << row*1000 << "\n";
 		rawImageType::IndexType start_rowBorder;
 		start_rowBorder[0] = 0;
-		start_rowBorder[1] = (row*1000) - (2*20);
+		start_rowBorder[1] = (row*1000) - (2*25);
 		start_rowBorder[2] = 0;
 
 		rawImageType::SizeType size_rowBorder;
 		size_rowBorder[0] = size_nuc_montage[0];
-		size_rowBorder[1] = (4*20);
+		size_rowBorder[1] = (4*25);
 		size_rowBorder[2] = size_nuc_montage[2];
 
 		rawImageType::RegionType region_rowBorder;
@@ -459,14 +467,14 @@ int main(int argc, char* argv[])
 		rawROIFilterType::Pointer ROIfilter_rowBorder_nuc = rawROIFilterType::New();
 		ROIfilter_rowBorder_nuc->SetRegionOfInterest(region_rowBorder);
 		ROIfilter_rowBorder_nuc->SetInput(montage_nuc);
-		#pragma omp critical
+		//#pragma omp critical
 			ROIfilter_rowBorder_nuc->Update();
 		rawImageType::Pointer rowBorder_nuc = ROIfilter_rowBorder_nuc->GetOutput();
 
 		rawROIFilterType::Pointer ROIfilter_rowBorder_gfp = rawROIFilterType::New();
 		ROIfilter_rowBorder_gfp->SetRegionOfInterest(region_rowBorder);
 		ROIfilter_rowBorder_gfp->SetInput(montage_gfp);
-		#pragma omp critical
+		//#pragma omp critical
 			ROIfilter_rowBorder_gfp->Update();
 		rawImageType::Pointer rowBorder_gfp = ROIfilter_rowBorder_gfp->GetOutput();
 
@@ -565,7 +573,7 @@ int main(int argc, char* argv[])
 			itk::Size<3> rowBorder_size = myRowBorder->GetLargestPossibleRegion().GetSize();
 			unsigned long long rowBorder_slice_size = rowBorder_size[1] * rowBorder_size[0];
 			unsigned long long rowBorder_row_size = rowBorder_size[0];	
-			int y_offset = (n*1000) - (2*20);
+			int y_offset = (n*1000) - (2*25);
 			for(int z=0; z<rowBorder_size[2]; ++z)
 			{
 				for(int y=0; y<rowBorder_size[1]; ++y)
@@ -575,7 +583,7 @@ int main(int argc, char* argv[])
 						unsigned short value_1 = myRowBorderArray[(rowBorder_slice_size*z) + (rowBorder_row_size*y) + (x)];
 						if(value_1 == 0) continue;
 						int lab_cen_y = Centroids_RowBorders[n-1][value_1][1];
-						if((lab_cen_y < 20) || (lab_cen_y >= (3*20))) continue;
+						if((lab_cen_y < 25) || (lab_cen_y >= (3*25))) continue;
 						montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
 						if((max_value_1 + value_1) > current_max_1)
 							current_max_1 = max_value_1 + value_1;
@@ -623,8 +631,8 @@ int main(int argc, char* argv[])
 					unsigned short value_1 = myRowArray[(row_slice_size_1*z) + (row_row_size_1*y) + (x)];					
 					if(value_1 == 0) continue;
 					int lab_cen_y = Centroids_Rows[n][value_1][1];
-					if((n != 0) && (lab_cen_y < 20)) continue;
-					if((n != (Label_Rows.size()-1)) && (lab_cen_y >= (row_size[0]-20))) continue;
+					if((n != 0) && (lab_cen_y < 25)) continue;
+					if((n != (Label_Rows.size()-1)) && (lab_cen_y >= (row_size[0]-25))) continue;
 					montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
 					if((max_value_1 + value_1) > current_max_1)
 						current_max_1 = max_value_1 + value_1;
