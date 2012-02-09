@@ -433,21 +433,19 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 			std::cout<<"Center "<<i<<" "<<centers.at(i)<<"\n";
 
 		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (500.0*thresh)?
-								 ((centers.at(0)+centers.at(1))/2) : (500.0*thresh); //Arbitrary upper thresh
+					 ((centers.at(0)+centers.at(1))/2) : (500.0*thresh); //Arbitrary upper thresh
 
 		std::cout<<"Done k-means\n";
 		ind = 0;
-		for( USPixelType i=0; i<labelsList.size(); ++i ){
+		for( USPixelType i=0; i<labelsList.size(); ++i, ++ind ){
 			if( zp && (zero==i) ) continue;
 			int num_positive_rois = 0;
 			for( unsigned j=0; j<number_of_rois; ++j ){
-				unsigned long index_of_roi = (unsigned long)ind*(unsigned long)number_of_rois+(unsigned long)j;
-				std::cout<<index_of_roi<<"\t";
+				itk::SizeValueType index_of_roi = ind*number_of_rois+j;
 				if( quantified_numbers_cell.at(index_of_roi)>Positive_thresh )
 					++num_positive_rois;
 			}
 			qfied_num.push_back(num_positive_rois);
-			++ind;
 		}
 	}
 	std::cout<<"Done surroundedness\n";
