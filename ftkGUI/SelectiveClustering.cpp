@@ -591,11 +591,28 @@ void ClusterManager::RemoveSelectedClusters()
 	/*!
 	* 
 	*/
-	vtkIdTypeArray * SelectedClusters = vtkIdTypeArray::New() ;
-	this->ClusterTableView->GetSelectedItems(SelectedClusters);
+	vtkIdTypeArray * SelectedClusters = this->GetClusterTableSelections();
 	this->ClusterModel->RemoveCluster(SelectedClusters);
 }
 
+vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
+{
+	/*!
+	* maps selected vtkTable rows to selected vtkIDS
+	*/
+	vtkIdTypeArray * SelectedClusters = vtkIdTypeArray::New() ;
+	vtkIdTypeArray * SelectedRows = vtkIdTypeArray::New() ;
+
+	this->ClusterTableView->GetSelectedItems(SelectedRows);
+	vtkSmartPointer<vtkTable> table = this->ClusterModel->GetClusterTable();
+
+	for (vtkIdType count = 0; count < SelectedRows->GetSize(); count++)
+	{
+		vtkIdType row = SelectedRows->GetValue(count);
+		SelectedClusters->InsertNextValue(table->GetValue(row, 0).ToTypeInt64());
+	}
+	return SelectedClusters;
+}
 void ClusterManager::ChangeInClusters()
 {
 	/*! 

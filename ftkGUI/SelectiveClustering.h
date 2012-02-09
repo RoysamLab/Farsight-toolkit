@@ -170,7 +170,7 @@ private:
 	QListWidget * ClusterListView;
 	
 	vtkSmartPointer<vtkQtTableView> ClusterTableView;
-
+	vtkIdTypeArray * GetClusterTableSelections();
 
 	QLabel * NumClusters;
 	QLabel * NumObjects;
