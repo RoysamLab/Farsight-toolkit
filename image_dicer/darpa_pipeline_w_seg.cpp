@@ -107,8 +107,8 @@ int main(int argc, char* argv[])
 	//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 	//#####################################################################################################################
 	
-	int num_rows = (int)ceil((double)size_nuc_montage[1]/1000);
-	int num_cols = (int)ceil((double)size_nuc_montage[0]/1000);
+	unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/1000);
+	unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/1000);
 	std::cout << "Image divided into " << num_rows << " rows and " << num_cols << " columns\n";
 
 	//##################	INITIALIZING VARIABLES FOR ROWS AND ROW_BORDERS	  ###################
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
 	#pragma omp parallel for
-	for(int row=0; row<num_rows; ++row)
+	for(unsigned long long row=0; row<num_rows; ++row)
 	{
 
 		//##################	INITIALIZING VARIABLES FOR TILES AND TILE_BORDERS	  ###################
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 
 		//##################	SEGMENTING EACH TILE IN A ROW    ###################
 		#pragma omp parallel for
-		for(int col=0; col<num_cols; ++col)
+		for(unsigned long long col=0; col<num_cols; ++col)
 		{
 
 			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
@@ -350,18 +350,18 @@ int main(int argc, char* argv[])
 				LabelType::Pointer myTileBorder = Label_TileBorders[m-1];
 				LabelType::PixelType * myTileBorderArray = myTileBorder->GetBufferPointer();
 				itk::Size<3> tileBorder_size = myTileBorder->GetLargestPossibleRegion().GetSize();
-				int tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
-				int tileBorder_row_size = tileBorder_size[0];	
-				int x_offset = (m*1000) - (2*25);
-				for(int z=0; z<tileBorder_size[2]; ++z)
+				unsigned long long tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
+				unsigned long long tileBorder_row_size = tileBorder_size[0];	
+				unsigned long long x_offset = (m*1000) - (2*25);
+				for(unsigned long long z=0; z<tileBorder_size[2]; ++z)
 				{
-					for(int y=0; y<tileBorder_size[1]; ++y)
+					for(unsigned long long y=0; y<tileBorder_size[1]; ++y)
 					{
-						for(int x=0; x<tileBorder_size[0]; ++x)
+						for(unsigned long long x=0; x<tileBorder_size[0]; ++x)
 						{
 							unsigned short value = myTileBorderArray[(tileBorder_slice_size*z) + (tileBorder_row_size*y) + (x)];
 							if(value == 0) continue;
-							int lab_cen_x = Centroids_TileBorders[m-1][value][0];
+							unsigned long long lab_cen_x = Centroids_TileBorders[m-1][value][0];
 							if((lab_cen_x < 25) || (lab_cen_x >= (3*25))) continue;
 							rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
 							if((max_value + value) > current_max)
@@ -396,18 +396,18 @@ int main(int argc, char* argv[])
 			LabelType::Pointer myTile = Label_Tiles[m];
 			LabelType::PixelType * myTileArray = myTile->GetBufferPointer();
 			itk::Size<3> tile_size = myTile->GetLargestPossibleRegion().GetSize();
-			int tile_slice_size = tile_size[1] * tile_size[0];
-			int tile_row_size = tile_size[0];	
-			int x_offset = m*1000;
-			for(int z=0; z<tile_size[2]; ++z)
+			unsigned long long tile_slice_size = tile_size[1] * tile_size[0];
+			unsigned long long tile_row_size = tile_size[0];	
+			unsigned long long x_offset = m*1000;
+			for(unsigned long long z=0; z<tile_size[2]; ++z)
 			{
-				for(int y=0; y<tile_size[1]; ++y)
+				for(unsigned long long y=0; y<tile_size[1]; ++y)
 				{
-					for(int x=0; x<tile_size[0]; ++x)
+					for(unsigned long long x=0; x<tile_size[0]; ++x)
 					{
 						unsigned short value = myTileArray[(tile_slice_size*z) + (tile_row_size*y) + x];
 						if(value == 0) continue;
-						int lab_cen_x = Centroids_Tiles[m][value][0];
+						unsigned long long lab_cen_x = Centroids_Tiles[m][value][0];
 						if((m != 0) && (lab_cen_x < 25)) continue;
 						if((m != (Label_Tiles.size()-1)) && (lab_cen_x >= (tile_size[0]-25))) continue;
 						rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
@@ -420,10 +420,10 @@ int main(int argc, char* argv[])
 
 			//##################	STITCHING THE TILE_TABLE INTO THE ROW_TABLE	  ###################
 
-			for(int r=0; r<(int)Table_Tiles[m]->GetNumberOfRows(); ++r)
+			for(unsigned long long r=0; r<(unsigned long long)Table_Tiles[m]->GetNumberOfRows(); ++r)
 			{
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-				for(int c=0; c<(int)Table_Tiles[m]->GetNumberOfColumns(); ++c)
+				for(unsigned long long c=0; c<(unsigned long long)Table_Tiles[m]->GetNumberOfColumns(); ++c)
 				{
 					if(c == 0)
 						model_data1->InsertNextValue(vtkVariant(Table_Tiles[m]->GetValue(r,c).ToInt() + max_value));
@@ -546,7 +546,7 @@ int main(int argc, char* argv[])
 	
 	vtkSmartPointer< vtkTable > montageTable = vtkSmartPointer<vtkTable>::New();
 	montageTable->Initialize();
-	for(int c=0; c<(int)Table_Rows[0]->GetNumberOfColumns(); ++c)
+	for(unsigned long long c=0; c<(unsigned long long)Table_Rows[0]->GetNumberOfColumns(); ++c)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( Table_Rows[0]->GetColumnName(c) );
@@ -560,7 +560,7 @@ int main(int argc, char* argv[])
 	unsigned long long montage_row_size = size_montage[0];	
 
 	unsigned short max_value_1 = 0, current_max_1 = 0;
-	for(int n=0; n<(int)Label_Rows.size(); ++n)
+	for(unsigned long long n=0; n<(int)Label_Rows.size(); ++n)
 	{
 		std::cout << "stitching row " << n << "\n";
 		if(n != 0)
@@ -574,16 +574,16 @@ int main(int argc, char* argv[])
 			itk::Size<3> rowBorder_size = myRowBorder->GetLargestPossibleRegion().GetSize();
 			unsigned long long rowBorder_slice_size = rowBorder_size[1] * rowBorder_size[0];
 			unsigned long long rowBorder_row_size = rowBorder_size[0];	
-			int y_offset = (n*1000) - (2*25);
-			for(int z=0; z<rowBorder_size[2]; ++z)
+			unsigned long long y_offset = (n*1000) - (2*25);
+			for(unsigned long long z=0; z<rowBorder_size[2]; ++z)
 			{
-				for(int y=0; y<rowBorder_size[1]; ++y)
+				for(unsigned long long y=0; y<rowBorder_size[1]; ++y)
 				{
-					for(int x=0; x<rowBorder_size[0]; ++x)
+					for(unsigned long long x=0; x<rowBorder_size[0]; ++x)
 					{
 						unsigned short value_1 = myRowBorderArray[(rowBorder_slice_size*z) + (rowBorder_row_size*y) + (x)];
 						if(value_1 == 0) continue;
-						int lab_cen_y = Centroids_RowBorders[n-1][value_1][1];
+						unsigned long long lab_cen_y = Centroids_RowBorders[n-1][value_1][1];
 						if((lab_cen_y < 25) || (lab_cen_y >= (3*25))) continue;
 						montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
 						if((max_value_1 + value_1) > current_max_1)
@@ -596,10 +596,10 @@ int main(int argc, char* argv[])
 			//##################	STITCHING THE ROW_BORDER_TABLE INTO THE MONTAGE_TABLE	  ###################
 
 			std::cout << "stitchin the row border table\n" ;
-			for(int r=0; r<(int)Table_RowBorders[n-1]->GetNumberOfRows(); ++r)
+			for(unsigned long long r=0; r<(unsigned long long)Table_RowBorders[n-1]->GetNumberOfRows(); ++r)
 			{
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-				for(int c=0; c<(int)Table_RowBorders[n-1]->GetNumberOfColumns(); ++c)
+				for(unsigned long long c=0; c<(unsigned long long)Table_RowBorders[n-1]->GetNumberOfColumns(); ++c)
 				{
 					if(c == 0)
 						model_data1->InsertNextValue(vtkVariant(Table_RowBorders[n-1]->GetValue(r,c).ToInt() + max_value_1));
@@ -622,16 +622,16 @@ int main(int argc, char* argv[])
 		itk::Size<3> row_size = myRow->GetLargestPossibleRegion().GetSize();
 		unsigned long long row_slice_size_1 = row_size[1] * row_size[0];
 		unsigned long long row_row_size_1 = row_size[0];	
-		int y_offset = n*1000;
-		for(int z=0; z<row_size[2]; ++z)
+		unsigned long long y_offset = n*1000;
+		for(unsigned long long z=0; z<row_size[2]; ++z)
 		{
-			for(int y=0; y<row_size[1]; ++y)
+			for(unsigned long long y=0; y<row_size[1]; ++y)
 			{
-				for(int x=0; x<row_size[0]; ++x)
+				for(unsigned long long x=0; x<row_size[0]; ++x)
 				{
 					unsigned short value_1 = myRowArray[(row_slice_size_1*z) + (row_row_size_1*y) + (x)];					
 					if(value_1 == 0) continue;
-					int lab_cen_y = Centroids_Rows[n][value_1][1];
+					unsigned long long lab_cen_y = Centroids_Rows[n][value_1][1];
 					if((n != 0) && (lab_cen_y < 25)) continue;
 					if((n != (Label_Rows.size()-1)) && (lab_cen_y >= (row_size[0]-25))) continue;
 					montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
@@ -645,10 +645,10 @@ int main(int argc, char* argv[])
 		//##################	STITCHING THE ROW_TABLE INTO THE MONTAGE_TABLE	  ###################
 
 		std::cout << "stitchin the row table\n" ;
-		for(int r=0; r<(int)Table_Rows[n]->GetNumberOfRows(); ++r)
+		for(unsigned long long r=0; r<(unsigned long long)Table_Rows[n]->GetNumberOfRows(); ++r)
 		{
 			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-			for(int c=0; c<(int)Table_Rows[n]->GetNumberOfColumns(); ++c)
+			for(unsigned long long c=0; c<(unsigned long long)Table_Rows[n]->GetNumberOfColumns(); ++c)
 			{
 				if(c == 0)
 					model_data1->InsertNextValue(vtkVariant(Table_Rows[n]->GetValue(r,c).ToInt() + max_value_1));
