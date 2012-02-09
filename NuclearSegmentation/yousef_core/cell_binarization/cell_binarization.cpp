@@ -339,7 +339,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 #endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	#pragma omp parallel for collapse(3)
+	#pragma omp parallel for //collapse(3)
 	for(int i=0; i< num_blocks_R; i++)			
 	{
 		for(int j = 0; j < num_blocks_C; j++)
