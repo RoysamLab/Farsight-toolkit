@@ -23,7 +23,7 @@
 #include "omp.h"
 
 typedef itk::Image<unsigned char,  3> nucImageType;
-typedef itk::Image<unsigned short, 3> LabelType;
+typedef itk::Image<unsigned int, 3> LabelType;
 typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 
 //typedef struct{ double x_d; double y_d; double z_d; } centroids;
