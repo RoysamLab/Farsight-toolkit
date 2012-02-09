@@ -27,7 +27,7 @@
 #include "omp.h"
 
 typedef itk::Image<unsigned char,  3> rawImageType;
-typedef itk::Image<unsigned short, 3> LabelType;
+typedef itk::Image<unsigned int, 3> LabelType;
 typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 typedef itk::RegionOfInterestImageFilter< rawImageType, rawImageType > rawROIFilterType;
 typedef itk::RegionOfInterestImageFilter< gfpImageType, gfpImageType > gfpROIFilterType;
