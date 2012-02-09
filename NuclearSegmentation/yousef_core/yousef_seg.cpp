@@ -224,7 +224,7 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
 		std::cout << "Entering getConnCompInfo3D" << std::endl;
 		getConnCompInfo3D();																			//Populate myConnComp
-		cerr << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
+		std::cout << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
 	}
 	else
 	{
@@ -452,9 +452,9 @@ void yousef_nucleus_seg::runClustering()
 	}
 	else
 	{*/
-		std::cerr << "Starting Initial Clustering" << std::endl;
-		std::cerr << "scale_xy = " << regionXY << std::endl;
-		std::cerr << "scale_z = " << regionZ << std::endl;
+		std::cout << "Starting Initial Clustering" << std::endl;
+		std::cout << "scale_xy = " << regionXY << std::endl;
+		std::cout << "scale_z = " << regionZ << std::endl;
 		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,numRows, numColumns, numStacks, regionXY, regionZ);		
 	//}	
 }
@@ -491,7 +491,7 @@ void yousef_nucleus_seg::fitMixGaussians()
 	int objects_count = 0;
 	for(int n=0; n<numConnComp; n++)
 	{
-		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
+		std::cout<<"Processing Connected Component #"<<n+1<<"...";
 		//Now, get the subimages (the bounding box) for the current connected component
 		ind = 0;
 		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
@@ -538,7 +538,7 @@ void yousef_nucleus_seg::fitMixGaussians()
 					}
 				}
 			}			
-			std::cerr<<"done"<<std::endl;
+			std::cout<<"done"<<std::endl;
 			continue;
 		}
 
@@ -597,9 +597,9 @@ void yousef_nucleus_seg::fitMixGaussians()
 		}
 		X.empty();
 		objects_count = new_obj_count;
-		std::cerr<<"done"<<std::endl;
+		std::cout<<"done"<<std::endl;
 	}
-	std::cerr<<"Initial segmentation done with "<<objects_count<<" objects"<<std::endl;
+	std::cout<<"Initial segmentation done with "<<objects_count<<" objects"<<std::endl;
 }
 /////////
 void yousef_nucleus_seg::ExtractSeeds()
@@ -641,7 +641,7 @@ void yousef_nucleus_seg::ExtractSeeds()
 			}
 		}
 	}
-	std::cerr << id-1 << " seeds were detected"<<std::endl;
+	std::cout << id-1 << " seeds were detected"<<std::endl;
 }
 
 void yousef_nucleus_seg::outputSeeds(void)
@@ -860,7 +860,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	//Now clear all subsequent variables
 	clearSegImagePtr();
 
-	std::cerr<<"Finalizing Segmentation"<<std::endl;
+	std::cout<<"Finalizing Segmentation"<<std::endl;
 
 	//Now, we apply the next steps into the connected components one by one
 	int ind, x_len, y_len, val;
@@ -869,7 +869,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
 
 	for( int n=0; n<numConnComp; n++ ){
-		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
+		std::cout<<"Processing Connected Component #"<<n+1<<"...";
 		//Now, get the subimages (the bounding box) for the current connected component
 		ind = 0;
 		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
@@ -906,15 +906,15 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		//Now, if this connected component has one cell (one label) only, 
 		//then take the clustering results of that connected as the final segmentation
 		if(labelsList.size() == 1){
-			std::cerr<<"Done with only one object"<<std::endl;
+			std::cout<<"Done with only one object"<<std::endl;
 			delete[] sublogImg;
 			delete[] subclustImg;
 			continue;
 		}
-		std::cerr<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
+		std::cout<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
 		//If you reach here, it means that the current connected component contains two or more cells
 		//First, sort the labels list
-		std::cerr<<"    "<<"sorting labels"<<std::endl;
+		std::cout<<"    "<<"sorting labels"<<std::endl;
 		for(unsigned int l1=0; l1<labelsList.size(); l1++){
 			for(unsigned int l2=l1+1; l2<labelsList.size(); l2++){
 				if(labelsList[l2]<labelsList[l1]){
@@ -966,7 +966,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 			}
 		}
 		//std::cerr<<"Done with "<<labelsList.size()<<" objects"<<std::endl;
-		std::cerr<<"Done"<<std::endl;
+		std::cout<<"Done"<<std::endl;
 		delete [] sublogImg;
 		delete [] subclustImg;
 		delete [] subDataImg;
@@ -974,8 +974,8 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	//relabel the cells
 	int numOfObjs = getRelabeledImage(segImagePtr, 8, 50, numRows, numColumns,numStacks, 1);		
     numOfObjs--;
-	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
-	std::cerr << "Creating Final Label Image" << std::endl;	
+	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
+	std::cout << "Creating Final Label Image" << std::endl;	
 }
 
 void yousef_nucleus_seg::runAlphaExpansion3D()
@@ -992,7 +992,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	//We no longer need to use the seeds image
 	clearSeedImagePtr(); //This assumes that you can't go back to run clustering again in the segmentation wizard!
 
-	std::cerr<<"Finalizing Segmentation"<<std::endl;
+	std::cout<<"Finalizing Segmentation"<<std::endl;
 
 	//by yousef on 9/2/2009
 	int maxNumColors = 0;
@@ -1015,7 +1015,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 
 	for(int n=0; n<numConnComp; n++)
 	{
-		std::cerr<<"Processing Connected Component #"<<n+1<<"...";
+		std::cout<<"Processing Connected Component #"<<n+1<<"...";
 		//Now, get the subimages (the bounding box) for the current connected component
 		ind = 0;
 		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
@@ -1064,16 +1064,16 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		//then take the clustering results of that connected as the final segmentation
 		if(labelsList.size() == 1)
 		{
-			std::cerr<<"Done with only one object"<<std::endl;
+			std::cout<<"Done with only one object"<<std::endl;
 			delete[] sublogImg;
 			delete[] subclustImg;
 			continue;
 		}
 		
-		std::cerr<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
+		std::cout<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
 		//If you reach here, it means that the current connected component contains two or more cells
 		//First, sort the labels list
-		std::cerr<<"    "<<"sorting labels"<<std::endl;
+		std::cout<<"    "<<"sorting labels"<<std::endl;
 		for(unsigned int l1=0; l1<labelsList.size(); l1++)
 		{
 			for(unsigned int l2=l1+1; l2<labelsList.size(); l2++)
@@ -1130,7 +1130,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 		if(NC>maxNumColors)
 			maxNumColors = NC;
 
-		std::cerr<<"    Starting alpha-expansion..";		
+		std::cout<<"    Starting alpha-expansion..";		
 		start_alpha_expansion(subDataImg, subsegImg, Dterms, y_len, x_len, z_len, NC+1);										
 
 		//relable and copy the output of the alpha expansion to the segmentaion image
@@ -1149,7 +1149,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 				}
 			}
 		}	
-		std::cerr<<"Done"<<std::endl;
+		std::cout<<"Done"<<std::endl;
 		delete [] sublogImg;
 		delete [] subsegImg;
 		delete [] subclustImg;
@@ -1160,8 +1160,8 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 
 	//relabel the cells
 	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 6, 25, numRows, numColumns,numStacks, 1);			
-	std::cerr << "done with " << numOfObjs<<" found"<<std::endl;
-	std::cerr << "Creating Final Label Image" << std::endl;		
+	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
+	std::cout << "Creating Final Label Image" << std::endl;		
 }
 
 //Added by Yousef on 9/14/2009
