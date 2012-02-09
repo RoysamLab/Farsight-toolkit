@@ -802,16 +802,16 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 			myDimension = 2;
 		}
 		
-		int dim= myDimension;             /* dimension of points */
-		int numpoints;            /* number of points */
-		boolT ismalloc= True;    /* True if qhull should free points in qh_freeqhull() or reallocation */
-		char flags[250] = "qhull file.txt";          /* option flags for qhull, see qh_opt.htm */
-		FILE *outfile= NULL;    /* output from qh_produce_output() use NULL to skip qh_produce_output() */
-		FILE *errfile= fopen("qhull file.txt","w+");    /* error messages from qhull code */
-		int exitcode;             /* 0 if no error from qhull */
-		facetT *facet;            /* set by FORALLfacets */
-		int curlong, totlong;     /* memory remaining after qh_memfreeshort */
-		int i;
+		//int dim= myDimension;             /* dimension of points */
+		//int numpoints;            /* number of points */
+		//boolT ismalloc= True;    /* True if qhull should free points in qh_freeqhull() or reallocation */
+		//char flags[250] = "qhull file.txt";          /* option flags for qhull, see qh_opt.htm */
+		//FILE *outfile= NULL;    /* output from qh_produce_output() use NULL to skip qh_produce_output() */
+		//FILE *errfile= fopen("qhull file.txt","w+");    /* error messages from qhull code */
+		//int exitcode;             /* 0 if no error from qhull */
+		//facetT *facet;            /* set by FORALLfacets */
+		//int curlong, totlong;     /* memory remaining after qh_memfreeshort */
+		//int i;
 		/*	
 		if(flag==1)
 		{
