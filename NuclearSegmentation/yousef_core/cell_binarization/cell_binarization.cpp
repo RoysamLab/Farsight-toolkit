@@ -334,32 +334,26 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-//#ifdef _OPENMP
-//	omp_set_nested(1);
-//#endif
+#ifdef _OPENMP
+	omp_set_nested(1);
+#endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	#pragma omp parallel for
+	#pragma omp parallel for collapse(3)
 	for(int i=0; i< num_blocks_R; i++)			
 	{
-		#pragma omp parallel for
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			#pragma omp parallel for
 			for (int k = 0; k < num_blocks_Z; k++)
 			{
-				#pragma omp critical
-				{
-					std::cout<<"    Binarizing block " << blk++ <<" of "<<cntr<<std::endl;	
-				}
 				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, alpha_F, alpha_B, P_I, imgOut, subImgBlockArray[i][j][k]); //imgIn is dataImagePtr, imgOut is binImagePtr
 			}
 		}
 	}
 
-//#ifdef _OPENMP
-//	omp_set_nested(0);
-//#endif
+#ifdef _OPENMP
+	omp_set_nested(0);
+#endif
 
 	for(int i=0; i< num_blocks_R; i++)
 	{			

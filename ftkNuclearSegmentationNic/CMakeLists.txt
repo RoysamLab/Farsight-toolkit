@@ -1,4 +1,4 @@
-ADD_SUBDIRECTORY(
+#ADD_SUBDIRECTORY(
 
 #1__1_1_BinarizeMixPoisson
 #1__1_2_BinarizeMixGaussian

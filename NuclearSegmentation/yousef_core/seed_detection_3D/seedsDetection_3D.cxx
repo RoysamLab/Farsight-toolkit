@@ -255,7 +255,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 //	omp_set_nested(1);
 //#endif
 
-#pragma omp parallel for private(min_x, min_y, max_x, max_y)
+#pragma omp parallel for private(min_x, min_y, max_x, max_y) collapse(2)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
