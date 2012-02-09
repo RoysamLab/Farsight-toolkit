@@ -32,9 +32,6 @@ limitations under the License.
 #include "itkPasteImageFilter.h"
 
 
-typedef itk::ImageRegionIterator< ImageType > RegionIterator;
-typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
-
 static std::string ToString(double val);
 
 fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::string const & image_path, std::string const & anchor_image,
@@ -247,7 +244,7 @@ void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index,
     ImageType::PointType source_origin, save_origin;
     if (!use_caching) {
         //If no caching then read in the image
-        image = fregl_util_read_image(file_name, global_use_channel, global_channel, false);
+		image = fregl_util::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
         xformed_image = global_space_transformer->transform_image_roi(image, image_index, 0, use_NN_interpolator);
         RegionConstIterator inputIt(xformed_image, xformed_image->GetLargestPossibleRegion());
         if (!xformed_image) return;
@@ -278,7 +275,7 @@ void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index,
             if (!is_cached[image_index]) {
                 is_cached[image_index] = true;
                 cache_slot[image_index] = get_next_slot();
-                image = fregl_util_read_image(file_name, global_use_channel, global_channel, false);
+                image = fregl_util::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
                 cached_images[cache_slot[image_index]] = global_space_transformer->transform_image_whole(image, image_index, 0, use_NN_interpolator);
                 //        std::cout << "Here 4" << std::endl;
             }

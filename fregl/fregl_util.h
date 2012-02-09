@@ -27,37 +27,60 @@ limitations under the License.
 #include "itkRGBPixel.h"
 #include "itkAffineTransform.h"
 
-typedef unsigned short                   InputPixelType;
-typedef unsigned char                    GDBICPPixelType;
-typedef itk::Image< InputPixelType, 3 >  ImageType;
-typedef itk::Image< InputPixelType, 2 >  ImageType2D;
-typedef itk::Image< GDBICPPixelType, 2 >  GDBICPImageType;
-typedef itk::Image< float, 2 >           FloatImageType2D;
-typedef itk::RGBPixel< unsigned char >   ColorPixelType;
-typedef itk::Image< ColorPixelType, 3 > ColorImageType;
-typedef itk::Image< ColorPixelType, 2 > ColorImageType2D;
-typedef itk::AffineTransform< double, 3>   TransformType;
+#include "itkImageSliceIteratorWithIndex.h"
+#include "itkImageLinearIteratorWithIndex.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkCastImageFilter.h"
+#include "itkDiscreteGaussianImageFilter.h"
+#include "itkLaplacianRecursiveGaussianImageFilter.h"
+#include "itkSubtractImageFilter.h"
+#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
+#include "itkTIFFImageIO.h"
+#include "itkRGBAPixel.h"
+#include "itkRGBPixel.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
 
-// Maximum is taken between the two images
-ImageType::Pointer fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2);
+#include <vtkImageData.h>
+#include <ftkImage/ftkImage.h>
 
-ImageType::Pointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
+namespace fregl_util
+{
+	typedef unsigned short                   InputPixelType;
+	typedef unsigned char                    GDBICPPixelType;
+	typedef itk::Image< InputPixelType, 3 >  ImageType;
+	typedef itk::Image< InputPixelType, 2 >  ImageType2D;
+	typedef itk::Image< GDBICPPixelType, 2 >  GDBICPImageType;
+	typedef itk::Image< float, 2 >           FloatImageType2D;
+	typedef itk::RGBPixel< unsigned char >   ColorPixelType;
+	typedef itk::Image< ColorPixelType, 3 > ColorImageType;
+	typedef itk::Image< ColorPixelType, 2 > ColorImageType2D;
+	typedef itk::AffineTransform< double, 3>   TransformType;
 
-ImageType2D::Pointer fregl_util_max_projection(ImageType::Pointer image, float sigma = 0);
+	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 
-//: Computer the ammount of overlap between two images given the transformation
-double fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to);
+	// Maximum is taken between the two images
+	ImageType::Pointer fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2);
 
-ColorImageType2D::Pointer fregl_util_max_projection_color(ColorImageType::Pointer image);
+	ImageType::Pointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
 
-//: High frequency image (LoG) is removed from the original image
-void fregl_util_reduce_noise(ImageType::Pointer image);
+	ImageType2D::Pointer fregl_util_max_projection(ImageType::Pointer image, float sigma = 0);
 
-//: convert vil_image_view to itk::Image 
-//
-//  The code is hacked from ril_itk_convert.h in rpi package
-ImageType::Pointer fregl_util_convert_vil_to_itk( vil3d_image_view<InputPixelType> img );
+	//: Computer the ammount of overlap between two images given the transformation
+	double fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to);
 
-//: extract single channel from lsm image
-//ImageType::Pointer fregl_util_lsm_one_channel(std::string filename, int channel);
+	ColorImageType2D::Pointer fregl_util_max_projection_color(ColorImageType::Pointer image);
+
+	//: High frequency image (LoG) is removed from the original image
+	void fregl_util_reduce_noise(ImageType::Pointer image);
+
+	//: convert vil_image_view to itk::Image 
+	//
+	//  The code is hacked from ril_itk_convert.h in rpi package
+	ImageType::Pointer fregl_util_convert_vil_to_itk( vil3d_image_view<InputPixelType> img );
+
+	//: extract single channel from lsm image
+	//ImageType::Pointer fregl_util_lsm_one_channel(std::string filename, int channel);
+}
 #endif

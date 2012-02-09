@@ -292,7 +292,7 @@ build_graph(int anchor)
   
   // update overlaps
   for (unsigned int from = 0; from<transforms_.rows(); from++) {
-    overlap_(from, anchor) = fregl_util_overlap(transforms_(from, anchor), image_sizes_[from], image_sizes_[anchor]);
+    overlap_(from, anchor) = fregl_util::fregl_util_overlap(transforms_(from, anchor), image_sizes_[from], image_sizes_[anchor]);
   }
   
   /*for (unsigned int from = 0; from<transforms_.rows(); from++) 

@@ -2,12 +2,15 @@
 #define fregl_roi_H
 
 #include "itkImage.h"
+#include "fregl_util.h"
 #include "fregl_image_manager.h"
+
 
 class fregl_roi
 {
 public:
-	typedef itk::Image< unsigned short, 3 >  ImageType;
+	typedef fregl_util::InputPixelType InputPixelType;
+	typedef itk::Image< InputPixelType, 3 >  ImageType;
 
 	fregl_roi(std::string joint_xforms_xml_file, std::string img_path, std::string anchor_image, bool nearest_neighbor = false);
 	~fregl_roi();

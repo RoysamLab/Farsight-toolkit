@@ -148,9 +148,9 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
 
-  ImageType2D::Pointer from_image_2d = fregl_util_max_projection(from_image_);
+  ImageType2D::Pointer from_image_2d = fregl_util::fregl_util_max_projection(from_image_);
   vcl_cout << "Projecting the from_image ....\n";
-  ImageType2D::Pointer to_image_2d = fregl_util_max_projection(to_image_);
+  ImageType2D::Pointer to_image_2d = fregl_util::fregl_util_max_projection(to_image_);
   vcl_cout << "Projecting the to_image ....\n";
 
   // output max projected images to files and read them back as vxl
@@ -160,8 +160,8 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   vcl_string from_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_") + vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
   vcl_string to_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_")+to_image_filename+vcl_string("_proj.tif");
 
-  typedef itk::ImageFileWriter< GDBICPImageType >  WriterType2D;
-  typedef itk::RescaleIntensityImageFilter< ImageType2D , GDBICPImageType > RescaleIntensityImageFilterType2D;
+  typedef itk::ImageFileWriter< fregl_util::GDBICPImageType >  WriterType2D;
+  typedef itk::RescaleIntensityImageFilter< ImageType2D , fregl_util::GDBICPImageType > RescaleIntensityImageFilterType2D;
 
   try {
 	RescaleIntensityImageFilterType2D::Pointer rescaleFilter = RescaleIntensityImageFilterType2D::New();
@@ -315,9 +315,9 @@ run(double init_x, double init_y, double& obj_value)
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
 
-  ImageType2D::Pointer from_image_2d =fregl_util_max_projection(from_image_);
+  ImageType2D::Pointer from_image_2d = fregl_util::fregl_util_max_projection(from_image_);
   vcl_cout << "Projecting the from_image ....\n";
-  ImageType2D::Pointer to_image_2d = fregl_util_max_projection(to_image_);
+  ImageType2D::Pointer to_image_2d = fregl_util::fregl_util_max_projection(to_image_);
   vcl_cout << "Projecting the to_image ....\n";
 
   // output max projected images to files and read them back as vxl

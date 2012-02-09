@@ -24,6 +24,7 @@ limitations under the License.
 #include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkAffineTransform.h"
 #include <rgrl/rgrl_transformation_sptr.h>
+#include "fregl/fregl_util.h"
 
 // For debugging purpose
 class CommandIteration : public itk::Command {
@@ -60,7 +61,7 @@ class fregl_pairwise_register
 {
 public:
 
-	typedef unsigned short                    InputPixelType;
+	typedef fregl_util::InputPixelType        InputPixelType;
 	typedef itk::Image< InputPixelType, 3 >   InputImageType;
 	typedef float                             InternalPixelType;
 	typedef itk::Image<InternalPixelType, 3 > InternalImageType;

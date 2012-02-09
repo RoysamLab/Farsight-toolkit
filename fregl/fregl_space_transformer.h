@@ -22,6 +22,7 @@ limitations under the License.
 #ifndef _fregl_space_transformer_h_
 #define _fregl_space_transformer_h_
 
+#include <fregl/fregl_util.h>
 #include <vbl/vbl_ref_count.h>
 #include <vbl/vbl_smart_ptr.h>
 #include <vnl/vnl_vector_fixed.h>
@@ -38,7 +39,7 @@ class fregl_space_transformer: public vbl_ref_count
 {
 public:
 	typedef vbl_smart_ptr< fregl_space_transformer >  Pointer;
-	typedef unsigned short						InputPixelType;
+	typedef fregl_util::InputPixelType			InputPixelType;
 	typedef fregl_joint_register::TransformType TransformType;
 	typedef itk::Image<InputPixelType, 3>        ImageType;
 	typedef itk::Image<InputPixelType, 2>        ImageType2D;

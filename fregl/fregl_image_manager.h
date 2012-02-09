@@ -41,16 +41,21 @@ limitations under the License.
 
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
+#include <fregl/fregl_util.h>
 
 class fregl_image_manager : public vbl_ref_count {
 public:
     typedef vbl_smart_ptr< fregl_image_manager > Pointer;
-    typedef itk::Image<unsigned short, 3 > ImageType;
+	typedef fregl_util::InputPixelType InputPixelType;
+    typedef itk::Image< InputPixelType, 3 > ImageType;
     typedef ImageType::PointType PointType; //physical space
     typedef ImageType::SizeType SizeType;
     typedef ImageType::SpacingType SpacingType;
     typedef ImageType::IndexType IndexType;
     typedef itk::Image< float, 2 > FloatImageType2D;
+
+	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
+	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 
     //: Constructor
     // xml_filename - joint register xml file
