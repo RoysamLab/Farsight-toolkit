@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 	Centroids_RowBorders.resize(num_rows-1);
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for(unsigned long long row=0; row<num_rows; ++row)
 	{
 
