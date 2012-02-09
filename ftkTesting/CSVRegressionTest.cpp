@@ -4,7 +4,7 @@
 
 #include "CSVRegressionTestArgs.h"
 #include "CSVRegressionTestparseArgs.h"
-#include "CSVRegressionTestcompareTestBaseline.h"
+#include "CSVRegressionTestCompareTestBaseline.h"
 
 // Holds the command line arguments to the CSVRegressionTest program.
 int main( int argc, char *argv[] )
@@ -36,18 +36,30 @@ int main( int argc, char *argv[] )
 		std::cerr << "Error: Could not open the BaselineCSVFile." << std::endl;
 		return EXIT_FAILURE;
 		}
-	std::string comparisonMessage;
 	// do the comparison
-	bool comparisonResult = compareTestBaseline( args, testCSVFile, baselineCSVFile, comparisonMessage );
+	CSVRegressionTest::CompareTestBaseline compareTestBaseline;
+	compareTestBaseline.SetArgs( &args );
+	bool comparisonResult;
+	try
+		{
+		comparisonResult = compareTestBaseline.DoComparison( testCSVFile, baselineCSVFile );
+		}
+	catch( const std::exception & e )
+		{
+		testCSVFile.close();
+		baselineCSVFile.close();
+		std::cerr << "Error: " << e.what() << std::endl;
+		return EXIT_FAILURE;
+		}
 	// close the files
 	testCSVFile.close();
 	baselineCSVFile.close();
 	// output the result
 	if( !comparisonResult )
 	  {
-	  std::cerr << "Error: " << comparisonMessage << std::endl;
+	  std::cerr << "Error: " << compareTestBaseline.GetComparisonMessage() << std::endl;
 	  return EXIT_FAILURE;
 	  }
-	std::cout << comparisonMessage << std::endl;
+	std::cout << compareTestBaseline.GetComparisonMessage() << std::endl;
 	return EXIT_SUCCESS;
 }

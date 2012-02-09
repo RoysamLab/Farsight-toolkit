@@ -12,8 +12,12 @@ struct Args
   std::string TestCSVFile;
   std::string BaselineCSVFile;
 
+  std::string OutputFilePrefix;
+
   double AbsoluteTolerance;
   double FractionalTolerance;
+
+  char Delimiter;
 };
 
 } // end namespace CSVRegressionTest
