@@ -38,7 +38,7 @@
 ////////////////////
 
 int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, int C, int shd); 
-int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div, unsigned short number_of_bins); 
+int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div, unsigned short number_of_bins, float alpha_F=0, float alpha_B=0, float P_I=0); 
 double compute_poisson_prob(double intensity, double alpha);
 void Seg_GC_Full_2D(unsigned char* IM, int r, int c, double alpha_F, double alpha_B, double P_I, size_t* num_nodes, size_t* num_edges, unsigned short* Seg_out);
 void Seg_GC_Full_3D(unsigned char* IM, int r, int c, int z, double alpha_F, double alpha_B, double P_I, unsigned short* Seg_out);

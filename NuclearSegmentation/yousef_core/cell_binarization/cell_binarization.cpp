@@ -72,7 +72,7 @@ int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, in
 }
 
 //Main function for 3-D binarization
-int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div, unsigned short number_of_bins) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
+int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, int C, int Z, int shd, int div, unsigned short number_of_bins, float alpha_F, float alpha_B, float P_I) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
 {			
 	/*typedef unsigned short LoGTestPixelType;
 	LoGTestPixelType*** image_3D = (LoGTestPixelType***) malloc(C * sizeof(LoGTestPixelType **));
@@ -199,11 +199,14 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//Now, to do the binarization, follow these steps:
 	//1- Assuming that the histogram of the image is modeled by a mixture of two 
 	//Poisson distributions, estimate the parameters of the mixture model 
-	float alpha_B, alpha_F, P_I;
-	alpha_B = alpha_F = P_I = 0;	
-	//CompMixPoss3D(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd); 	
-	std::cout << "Entering MinErrorThresholding" << std::endl;
-	MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd, imgOut, number_of_bins); 	
+	//float aalpha_B, aalpha_F, aP_I;
+	//aalpha_B = aalpha_F = aP_I = 0;	
+	//CompMixPoss3D(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd);
+	if( alpha_B == 0 || alpha_F==0 || P_I==0 ){
+		std::cout << "Entering MinErrorThresholding" << std::endl;
+		MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd, imgOut, number_of_bins);
+//		std::cout<< alpha_B <<"\t"<< aalpha_B << "\t" << alpha_F << "\t" << aalpha_F << "\t" << P_I << "\t" << aP_I <<"\n";
+	}
 	//threeLevelMinErrorThresh(imgIn, &alpha_1, &alpha_2, &alpha_3, P_I1, P_I2, R, C, Z);
 
 	//2- Use graph cuts to binarize the image
@@ -223,7 +226,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	uint64_t mem_needed = image_size * 512; //512 bytes per pixel needed for graph cuts (empirically determined)
 	std::cout << "mem_needed: " << mem_needed / (1024.0 * 1024 * 1024) << " GB" << std::endl;
 
-	unsigned int num_blocks_preferred = (mem_needed/mem_size + 1) * 16; //The "+1" is for rounding up, the "16" is so 16 threads will only chew up 1/16th of the memory each
+	unsigned int num_blocks_preferred=1;
+	if( image_size > (512.0*512.0) ) //Too many threads spawned when segmenting ccs in parallel
+		num_blocks_preferred = (mem_needed/mem_size + 1) * 16; //The "+1" is for rounding up, the "16" is so 16 threads will only chew up 1/16th of the memory each
 	std::cout << "num_blocks_preferred: " << num_blocks_preferred << std::endl;
 	//#ifdef _OPENMP			
 	//	int block_divisor_X = 16;
@@ -263,7 +268,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	for (int k=0; k<Z; k+=num_pixels_per_block_Z)
 		num_blocks_Z++;
 
-	int cntr = 0;							//cntr holds the total number of blocks (should be num_blocks_C * num_blocks_R)
+	int cntr = 0;						//cntr holds the total number of blocks (should be num_blocks_C * num_blocks_R)
 	for(int i=0; i<R; i += num_pixels_per_block_R)
 		for(int j=0; j<C; j += num_pixels_per_block_C)
 			for (int k = 0; k<Z; k += num_pixels_per_block_Z)
@@ -329,18 +334,18 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-#ifdef _OPENMP
-	omp_set_nested(1);
-#endif
+//#ifdef _OPENMP
+//	omp_set_nested(1);
+//#endif
 
 	std::cout << "Starting Graph Cuts" << std::endl;
-	#pragma omp parallel for num_threads(4)
+	#pragma omp parallel for
 	for(int i=0; i< num_blocks_R; i++)			
 	{
-		#pragma omp parallel for num_threads(2)
+		#pragma omp parallel for
 		for(int j = 0; j < num_blocks_C; j++)
 		{
-			#pragma omp parallel for num_threads(2)
+			#pragma omp parallel for
 			for (int k = 0; k < num_blocks_Z; k++)
 			{
 				#pragma omp critical
@@ -352,9 +357,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-#ifdef _OPENMP
-	omp_set_nested(0);
-#endif
+//#ifdef _OPENMP
+//	omp_set_nested(0);
+//#endif
 
 	for(int i=0; i< num_blocks_R; i++)
 	{			
