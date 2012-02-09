@@ -93,7 +93,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
         }
     }
     
-    cerr << "max_nghbr_im initialized" << endl;
+	std::cout << "max_nghbr_im initialized" << endl;
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
@@ -294,7 +294,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	
     int change = 1;
     double LM;
-	cerr << "Entering main Clustering Loop" << endl;
+	std::cout << "Entering main Clustering Loop" << endl;
 	//Now continue to update until no more changes occur, eventually will have clusters pointing to seeds	
 	int iterr = 0;
     while(change)	
@@ -334,7 +334,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 				}
             }
         }
-		cerr<<"change="<<change<<endl;
+		std::cout<<"change="<<change<<endl;
     }
     
 	//cerr << "Preparing Output" << endl;
