@@ -39,9 +39,10 @@ limitations under the License.
 
 #include <vcl_fstream.h>
 
-fregl_pairwise_register::
-fregl_pairwise_register( InputImageType::Pointer from_image, 
-                         InputImageType::Pointer to_image,
+template < class TPixel >
+fregl_pairwise_register< TPixel >::
+fregl_pairwise_register( InputImageTypePointer from_image, 
+                         InputImageTypePointer to_image,
                          std::string from_image_filename,
                          std::string to_image_filename,
                          float background )
@@ -56,35 +57,40 @@ fregl_pairwise_register( InputImageType::Pointer from_image,
   smoothing_ = 0;
 }
 
-fregl_pairwise_register::
+template < class TPixel >
+fregl_pairwise_register< TPixel >::
 ~fregl_pairwise_register()
 {}
 
+template < class TPixel >
 void
-fregl_pairwise_register::
-set_from_image( InputImageType::Pointer from_image )
+fregl_pairwise_register< TPixel >::
+set_from_image( InputImageTypePointer from_image )
 {
   from_image_ = from_image;
   transform_ = NULL;
 }
 
+template < class TPixel >
 void
-fregl_pairwise_register::
-set_to_image( InputImageType::Pointer to_image )
+fregl_pairwise_register< TPixel >::
+set_to_image( InputImageTypePointer to_image )
 {
   to_image_ = to_image;
   transform_ = NULL;
 }
 
+template < class TPixel >
 void 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 set_exhausive_search(bool exhaustive)
 {
   exhaustive_ =  exhaustive;
 }
 
+template < class TPixel >
 void 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 set_stack_size(int size)
 {
   // check if the size is smaller than the image size for both
@@ -102,22 +108,25 @@ set_stack_size(int size)
   }
 }
 
+template < class TPixel >
 void 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 unset_stack_size()
 {
   stack_size_set_ = false;
 }
 
-fregl_pairwise_register::TransformType::Pointer 
-fregl_pairwise_register::
+template < class TPixel >
+fregl_pairwise_register< TPixel >::TransformType::Pointer 
+fregl_pairwise_register< TPixel >::
 transform()
 {
   return transform_;
 }
 
+template < class TPixel >
 void
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 set_smoothing(double variance)
 {
   smoothing_ = variance;
@@ -137,20 +146,21 @@ static unsigned replace(char from, char to, vcl_string &s)
 }
 #endif
 
+template < class TPixel >
 bool 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 {
-  std::cout<<"fregl_pairwise_register::run--full registration..."<<std::endl;
+  std::cout<<"fregl_pairwise_register< TPixel >::run--full registration..."<<std::endl;
   // Read the 3D image and project it to a 2D image using maximum
   // projection for GDBICP. The idea is to run GDBICP on the 2D image
   // to obtain a transformation accurate in x-y plan, since it is
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
 
-  ImageType2D::Pointer from_image_2d = fregl_util::fregl_util_max_projection(from_image_);
+  ImageType2DPointer from_image_2d = fregl_util< TPixel >::fregl_util_max_projection(from_image_);
   vcl_cout << "Projecting the from_image ....\n";
-  ImageType2D::Pointer to_image_2d = fregl_util::fregl_util_max_projection(to_image_);
+  ImageType2DPointer to_image_2d = fregl_util< TPixel >::fregl_util_max_projection(to_image_);
   vcl_cout << "Projecting the to_image ....\n";
 
   // output max projected images to files and read them back as vxl
@@ -160,8 +170,8 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   vcl_string from_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_") + vcl_string("xxx_")+from_image_filename+vcl_string("_proj.tif");
   vcl_string to_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_")+to_image_filename+vcl_string("_proj.tif");
 
-  typedef itk::ImageFileWriter< fregl_util::GDBICPImageType >  WriterType2D;
-  typedef itk::RescaleIntensityImageFilter< ImageType2D , fregl_util::GDBICPImageType > RescaleIntensityImageFilterType2D;
+  typedef itk::ImageFileWriter< fregl_util< TPixel >::GDBICPImageType >  WriterType2D;
+  typedef itk::RescaleIntensityImageFilter< ImageType2D , fregl_util< TPixel >::GDBICPImageType > RescaleIntensityImageFilterType2D;
 
   try {
 	RescaleIntensityImageFilterType2D::Pointer rescaleFilter = RescaleIntensityImageFilterType2D::New();
@@ -223,7 +233,7 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
     // Image type of float are needed for intensity-based
     // registration. Crop only the overlap volume and release the
     // original images.
-    InternalImageType:: Pointer from_image_crop, to_image_crop;
+    InternalImageType::Pointer from_image_crop, to_image_crop;
     from_image_crop = crop_image(from_image_);
     to_image_crop = crop_image(to_image_);
     
@@ -304,20 +314,21 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
   return true;
 }
 
+template < class TPixel >
 bool 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 run(double init_x, double init_y, double& obj_value)
 {
-    std::cout<<"fregl_pairwise_register::run--x-y initialized registration..."<<std::endl;
+    std::cout<<"fregl_pairwise_register< TPixel >::run--x-y initialized registration..."<<std::endl;
   // Read the 3D image and project it to a 2D image using maximum
   // projection for GDBICP. The idea is to run GDBICP on the 2D image
   // to obtain a transformation accurate in x-y plan, since it is
   // where the major motion is. The shift in the z-stack is taken care
   // of later by the coarse-to-fine refinement in 3D
 
-  ImageType2D::Pointer from_image_2d = fregl_util::fregl_util_max_projection(from_image_);
+  ImageType2DPointer from_image_2d = fregl_util< TPixel >::fregl_util_max_projection(from_image_);
   vcl_cout << "Projecting the from_image ....\n";
-  ImageType2D::Pointer to_image_2d = fregl_util::fregl_util_max_projection(to_image_);
+  ImageType2DPointer to_image_2d = fregl_util< TPixel >::fregl_util_max_projection(to_image_);
   vcl_cout << "Projecting the to_image ....\n";
 
   // output max projected images to files and read them back as vxl
@@ -444,12 +455,13 @@ run(double init_x, double init_y, double& obj_value)
   return true;
   
 }
-    
+
+template < class TPixel >
 bool 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 run(TransformType::Pointer prior_xform, double& obj_value)
 {
-  std::cout<<"fregl_pairwise_register::run--initialized registration..."<<std::endl;
+  std::cout<<"fregl_pairwise_register< TPixel >::run--initialized registration..."<<std::endl;
   // Set the overlap regions of the two images first by using the
   // translation only.
   TransformType::ParametersType params = prior_xform->GetParameters();
@@ -574,13 +586,14 @@ run(TransformType::Pointer prior_xform, double& obj_value)
 /************** Private Functions ************************************/
 
 // Compute the z shift, and set the region of interest to the overlap
+template < class TPixel >
 double
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 compute_z_shift( rgrl_transformation_sptr fw_xform, 
-                 InputImageType::Pointer from_image_3d,
-                 InputImageType::Pointer to_image_3d,
-                 ImageType2D::Pointer from_image_2d, 
-                 ImageType2D::Pointer to_image_2d,
+                 InputImageTypePointer from_image_3d,
+                 InputImageTypePointer to_image_3d,
+                 ImageType2DPointer from_image_2d, 
+                 ImageType2DPointer to_image_2d,
                  float bg)
 {
 
@@ -762,9 +775,10 @@ compute_z_shift( rgrl_transformation_sptr fw_xform,
 // memory consumption, since it is too expensive to have image type of
 // float. If smoothing_ is non-zero, DiscreteGaussianImageFilter is
 // applied.
-fregl_pairwise_register::InternalImageType::Pointer
-fregl_pairwise_register::
-crop_image( InputImageType::Pointer image )
+template < class TPixel >
+fregl_pairwise_register< TPixel >::InternalImageType::Pointer
+fregl_pairwise_register< TPixel >::
+crop_image( InputImageTypePointer image )
 {
   typedef itk::ImageRegionConstIterator< InputImageType > ConstIteratorType;
   typedef itk::ImageRegionIterator< InternalImageType> IteratorType;
@@ -838,8 +852,9 @@ crop_image( InputImageType::Pointer image )
 
 // Check the validity of the 2D xform to be sure the affine components
 // is more or less identity.
+template < class TPixel >
 bool 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 valid_2d_xform( rgrl_transformation_sptr xform2d, bool scaling )
 {
   vnl_matrix<double> A;
@@ -884,8 +899,9 @@ valid_2d_xform( rgrl_transformation_sptr xform2d, bool scaling )
 
 // Convert the transform from the rgrl format to itk format. The
 // result can be either affine or similarity
+template < class TPixel >
 void 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 convert_rgrl_to_itk_xform( rgrl_transformation_sptr xform2d,
                            double z_displacement,
                            TransformType::ParametersType& parameters)
@@ -943,8 +959,9 @@ convert_rgrl_to_itk_xform( rgrl_transformation_sptr xform2d,
   
 }
 
+template < class TPixel >
 rgrl_transformation_sptr 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 read_2d_xform( vcl_istream& reg_info )
 {
   vcl_string line, val, name, contents;
@@ -1017,8 +1034,9 @@ read_2d_xform( vcl_istream& reg_info )
   return rgrl_trans_reader::read( istrstr );
 }
 
+template < class TPixel >
 vcl_string 
-fregl_pairwise_register::
+fregl_pairwise_register< TPixel >::
 string_trim (const vcl_string& source, const vcl_string& pat)
 {
   vcl_string::size_type po;
@@ -1047,3 +1065,7 @@ string_trim (const vcl_string& source, const vcl_string& pat)
   
   return result;
 }
+
+//Explicit Instantiation
+template class fregl_pairwise_register< unsigned char >;
+template class fregl_pairwise_register< unsigned short >;

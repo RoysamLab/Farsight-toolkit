@@ -30,9 +30,6 @@ limitations under the License.
 //#include <Common/fsc_channel_accessor.h>
 #include <fregl/fregl_util.h>
 
-typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
-typedef itk::ImageRegionIterator< ImageType > RegionIterator;
-
 /*
 ImageType::Pointer
 read_image( std::string const & file_name, int channel )
@@ -76,7 +73,13 @@ read_image( std::string const & file_name, int channel )
 
 int main(int argc, char* argv[])
 {
-  if (argc<4) {
+	typedef unsigned short PixelType;
+	typedef itk::Image< PixelType, 3 > ImageType;
+
+	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
+	
+	if (argc<4) {
     std::cerr << "Usage: " << argv[0] << " Inputimage1 InputImage2 OutputGrayImage rgb_channel_1 rgb_channel_2  ";
     return EXIT_FAILURE;
   }
@@ -91,8 +94,8 @@ int main(int argc, char* argv[])
   else channel2 = channel1;
 
   ImageType::Pointer image1, image2, image_out;
-  image1 = fregl_util_read_image( filename1, true, channel1, false );
-  image2 = fregl_util_read_image( filename2, true, channel2, false );
+  image1 = fregl_util< PixelType >::fregl_util_read_image( filename1, true, channel1, false );
+  image2 = fregl_util< PixelType >::fregl_util_read_image( filename2, true, channel2, false );
 
   // Perform the fusing here
   //

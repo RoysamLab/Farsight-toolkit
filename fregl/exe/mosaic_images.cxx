@@ -82,7 +82,7 @@ main(  int argc, char* argv[] )
   vul_arg_parse( argc, argv );
   
   // Cosntruct the graph of joint registration
-  fregl_joint_register::Pointer joint_register = new fregl_joint_register( arg_xml_file() );
+  fregl_joint_register< InputPixelType >::Pointer joint_register = new fregl_joint_register< InputPixelType >( arg_xml_file() );
   if (arg_old_str.set() && arg_new_str.set()) {
     std::cout<<"Replace the name substr"<<std::endl;
     joint_register->replace_image_name_substr(arg_old_str(), arg_new_str());
@@ -102,7 +102,7 @@ main(  int argc, char* argv[] )
   
   // Transform the images
   //
-  fregl_space_transformer space_transformer(joint_register);
+  fregl_space_transformer< InputPixelType > space_transformer(joint_register);
   
   //bool in_anchor = false;
   space_transformer.set_anchor( arg_anchor(), arg_in_anchor(), arg_overlap() );
@@ -126,7 +126,7 @@ main(  int argc, char* argv[] )
     for (unsigned int  i = 0; i<image_names.size(); i++) {
       std::string image_name = arg_img_path()+std::string("/")+image_names[i];
       std::cout<<"Image "<<image_name<<std::endl;
-      ImageType::Pointer image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
+      ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
       float alpha = 5;
       space_transformer.set_individual_weight_map(i, image, alpha);
     }
@@ -135,12 +135,12 @@ main(  int argc, char* argv[] )
     // Now doing the blending
     std::string image_name = arg_img_path()+std::string("/")+image_names[0];
     ImageType::Pointer image, xformed_image;
-    image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
+	image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
     std::cout<<"Composing the final image ..."<<std::endl;
     final_image = space_transformer.transform_image_weighted(image, 0, 0, arg_nn());
     for (unsigned int  i = 1; i<image_names.size(); i++) {
       std::string image_name = arg_img_path()+std::string("/")+image_names[i];
-      ImageType::Pointer image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
+	  ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
       xformed_image = space_transformer.transform_image_weighted(image, i, 0, arg_nn());
       if ( !xformed_image ) 
         continue;
@@ -176,7 +176,7 @@ main(  int argc, char* argv[] )
       {
         std::string image_name = arg_img_path()+std::string("/")+image_names[i];
         ImageType::Pointer image, xformed_image;
-        image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
+        image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise() );
         xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
         if ( !xformed_image ) 
           continue;
@@ -232,13 +232,13 @@ main(  int argc, char* argv[] )
     { //Taking the maximum
       std::string image_name = arg_img_path()+std::string("/")+image_names[0];
       ImageType::Pointer image, xformed_image;
-      image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
+      image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
       std::cout<<"Composing the final image ..."<<std::endl;
       final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
       for (unsigned int  i = 1; i<image_names.size(); i++) 
         {
           image_name = arg_img_path()+std::string("/")+image_names[i];
-          image = fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
+          image = fregl_util< InputPixelType >::fregl_util_read_image( image_name, arg_channel.set(), arg_channel(), arg_denoise());
           xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
           if ( !xformed_image ) 
             continue;
@@ -298,7 +298,7 @@ main(  int argc, char* argv[] )
     }
   
   // doing the 2d maximum projection and dump it out
-  ImageType2D::Pointer image_2d = fregl_util_max_projection(final_image);
+  ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_max_projection(final_image);
   typedef itk::ImageFileWriter< ImageType2D >  WriterType2D;
   WriterType2D::Pointer writer2D = WriterType2D::New();
   std::string name_2d = name_prefix + std::string("_2d_proj.png");

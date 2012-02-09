@@ -34,15 +34,16 @@ limitations under the License.
 
 static std::string ToString(double val);
 
-fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::string const & image_path, std::string const & anchor_image,
+template < class TPixel >
+fregl_image_manager< TPixel >::fregl_image_manager(std::string const & xml_filename, std::string const & image_path, std::string const & anchor_image,
 										 bool use_NN) {
 											 //    std::cout << "Anchor Image " << anchor_image << std::endl;
 											 use_NN_interpolator = use_NN;
 											 global_anchor = anchor_image;
 											 global_image_path = image_path;
-											 global_joint_register = new fregl_joint_register(xml_filename);
+											 global_joint_register = new fregl_joint_register< TPixel >(xml_filename);
 											 //    std::cout << "Creating Space Transformer" << std::endl;
-											 global_space_transformer = new fregl_space_transformer(global_joint_register);
+											 global_space_transformer = new fregl_space_transformer< TPixel >(global_joint_register);
 											 //    std::cout << "Created Space Transformer" << std::endl;
 											 //    std::cout << "Setting Anchor" << std::endl;
 											 global_space_transformer->set_anchor(global_anchor, false, false);
@@ -70,8 +71,8 @@ fregl_image_manager::fregl_image_manager(std::string const & xml_filename, std::
 //: Set the Region of Interest
 //
 //  Index and size are updated accordingly.
-
-void fregl_image_manager::set_regionofinterest(PointType origin, SizeType size) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_regionofinterest(PointType origin, SizeType size) {
 	//    roi_origin = origin;
 	// Convert the request from normal space(0,0,0) to anchor space
 	//roi_origin is in global space
@@ -127,8 +128,8 @@ void fregl_image_manager::set_regionofinterest(PointType origin, SizeType size) 
 //: Set the Region of Interest
 //
 //  Index and size are updated accordingly.
-
-void fregl_image_manager::set_regionofinterest(IndexType origin, SizeType size) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_regionofinterest(IndexType origin, SizeType size) {
 	roi_origin[0] = origin[0];
 	roi_origin[1] = origin[1];
 	roi_origin[2] = origin[2];
@@ -138,15 +139,15 @@ void fregl_image_manager::set_regionofinterest(IndexType origin, SizeType size) 
 //:  Build the Montage based on the current Region
 //   "s_origin" is the new roi origin point
 //   "s_size" is the new roi size
-
-void fregl_image_manager::Update() {
+template < class TPixel >
+void fregl_image_manager< TPixel >::Update() {
 
 	std::string image_name = global_image_path + std::string("/") + image_names[0];
 	//    std::cout << "Image names list" << std::endl;
 	//    for (unsigned int i = 0; i < image_names.size(); i++) {
 	//        std::cout << image_names[i] << std::endl;
 	//    }
-	ImageType::Pointer image, xformed_image;
+	ImageTypePointer image, xformed_image;
 	//    std::cout << "Composing the final image ..." << std::endl;
 	//Create a blank ROI then merge in the images that are in the space
 	ImageType::IndexType source_index;
@@ -172,8 +173,8 @@ void fregl_image_manager::Update() {
 
 //: Return an ITK image pointer to the current Montage
 //
-
-fregl_image_manager::ImageType::Pointer fregl_image_manager::GetOutput() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TPixel >::GetOutput() {
 	ImageType::PointType new_origin;
 	typedef itk::ImageDuplicator< ImageType > DuplicatorType;
 	DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -182,7 +183,7 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::GetOutput() {
 	new_origin[0] = roi_origin[0] - global_origin[0];
 	new_origin[1] = roi_origin[1] - global_origin[1];
 	new_origin[2] = roi_origin[2] - global_origin[2];
-	ImageType::Pointer image = duplicator->GetOutput();
+	ImageTypePointer image = duplicator->GetOutput();
 	image->SetOrigin(new_origin);
 	return image;
 
@@ -219,9 +220,9 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::GetOutput() {
 //: Return an ITK image pointer the the region of interest passed an argument
 // This entry is mutex protected for multi threading operations.  It combines
 // the set region, update and get output methods.
-
-fregl_image_manager::ImageType::Pointer fregl_image_manager::MutexGetRegionOfInterest(PointType origin, SizeType size) {
-	ImageType::Pointer image;
+template < class TPixel >
+typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TPixel >::MutexGetRegionOfInterest(PointType origin, SizeType size) {
+	ImageTypePointer image;
 	pthread_mutex_lock(&region_mutex);
 	set_regionofinterest(origin, size);
 	Update();
@@ -234,9 +235,9 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::MutexGetRegionOfInt
 //: Return an ITK image pointer to the Region of Interest in the passed
 //  file name.  Return from cache if file is cached otherwise read the file
 //  into cache then get the region.
-
-void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index, ImageType::Pointer montage_image) {
-	ImageType::Pointer image, cached_image, xformed_image;
+template < class TPixel >
+void fregl_image_manager< TPixel >::ReadFileRegion(std::string file_name, int image_index, ImageTypePointer montage_image) {
+	ImageTypePointer image, cached_image, xformed_image;
 	ImageType::RegionType region, source_region, destination_region;
 	ImageType::IndexType source_index;
 	ImageType::SizeType source_size;
@@ -244,7 +245,7 @@ void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index,
 	ImageType::PointType source_origin, save_origin;
 	if (!use_caching) {
 		//If no caching then read in the image
-		image = fregl_util::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
+		image = fregl_util< TPixel >::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
 		xformed_image = global_space_transformer->transform_image_roi(image, image_index, 0, use_NN_interpolator);
 		RegionConstIterator inputIt(xformed_image, xformed_image->GetLargestPossibleRegion());
 		if (!xformed_image) return;
@@ -275,7 +276,7 @@ void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index,
 			if (!is_cached[image_index]) {
 				is_cached[image_index] = true;
 				cache_slot[image_index] = get_next_slot();
-				image = fregl_util::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
+				image = fregl_util< TPixel >::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
 				cached_images[cache_slot[image_index]] = global_space_transformer->transform_image_whole(image, image_index, 0, use_NN_interpolator);
 				//        std::cout << "Here 4" << std::endl;
 			}
@@ -373,30 +374,30 @@ void fregl_image_manager::ReadFileRegion(std::string file_name, int image_index,
 
 //: Set the image channel to montage
 //
-
-void fregl_image_manager::set_channel(int channel) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_channel(int channel) {
 	global_channel = channel;
 	global_use_channel = true;
 }
 
 //: Return the global space origin in anchor space
 //
-
-fregl_image_manager::PointType fregl_image_manager::get_global_origin() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::PointType fregl_image_manager< TPixel >::get_global_origin() {
 	return global_origin;
 }
 
 //: Return return the global space size
 //
-
-fregl_image_manager::SizeType fregl_image_manager::get_global_size() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::SizeType fregl_image_manager< TPixel >::get_global_size() {
 	return global_size;
 }
 
 //: Return the current Region origin in normalized (0,0,0) space
 //
-
-fregl_image_manager::PointType fregl_image_manager::get_region_origin() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::PointType fregl_image_manager< TPixel >::get_region_origin() {
 	ImageType::PointType temp;
 	temp[0] = roi_origin[0] - global_origin[0];
 	temp[1] = roi_origin[1] - global_origin[1];
@@ -406,29 +407,29 @@ fregl_image_manager::PointType fregl_image_manager::get_region_origin() {
 
 //: Return the current Region Size
 //
-
-fregl_image_manager::SizeType fregl_image_manager::get_region_size() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::SizeType fregl_image_manager< TPixel >::get_region_size() {
 	return roi_size;
 }
 
 //: Return the anchor image name
-
+template < class TPixel >
 std::string const
-fregl_image_manager::get_anchor_name() {
+fregl_image_manager< TPixel >::get_anchor_name() {
 	return global_anchor;
 }
 
 //: Return a pointer the space transformer
-
-fregl_space_transformer::Pointer fregl_image_manager::get_space_transformer() {
+template < class TPixel >
+typename fregl_space_transformer< TPixel >::Pointer fregl_image_manager< TPixel >::get_space_transformer() {
 	return global_space_transformer;
 }
 
 //: Set up the cache buffer count.  If 0 Turn off caching
 // Will reset all cache buffers when called.
 // Returns the state of caching (off or on)
-
-void fregl_image_manager::set_cache_buffer_count(int count) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_cache_buffer_count(int count) {
 	cache_size = count;
 	cache_time = 0;
 	cached_images.clear();
@@ -450,8 +451,8 @@ void fregl_image_manager::set_cache_buffer_count(int count) {
 }
 
 //: Set disk caching on or off.  
-
-void fregl_image_manager::set_file_caching(bool use) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_file_caching(bool use) {
 	use_file_caching = use;
 	//reset the cashed on disk information when we change the state
 	for (unsigned int i = 0; i < is_cached_on_disk.size(); i++) {
@@ -461,8 +462,8 @@ void fregl_image_manager::set_file_caching(bool use) {
 
 //: Set the directory for the disk caching.  The default is current
 // directory "."
-
-void fregl_image_manager::set_file_cache_dir(std::string use_dir) {
+template < class TPixel >
+void fregl_image_manager< TPixel >::set_file_cache_dir(std::string use_dir) {
 	cache_dir = use_dir;
 	//reset the cashed on disk information when we change the directory since
 	//it may no longer be accurate.
@@ -471,7 +472,8 @@ void fregl_image_manager::set_file_cache_dir(std::string use_dir) {
 	}
 }
 
-int fregl_image_manager::get_next_slot() {
+template < class TPixel >
+int fregl_image_manager< TPixel >::get_next_slot() {
 	// First look for unused slots and return it if there.
 	int oldest = 0;
 	//        std::cout << "Here 6" << std::endl;
@@ -496,7 +498,8 @@ int fregl_image_manager::get_next_slot() {
 	return oldest;
 }
 
-bool fregl_image_manager::cache_write_image(int image_index, ImageType::Pointer t_image) {
+template < class TPixel >
+bool fregl_image_manager< TPixel >::cache_write_image(int image_index, ImageTypePointer t_image) {
 	// Write a transformed image to disk for caching.  The file name is made up of 
 	// "cache_anchorimagename_transformedimagename.mhd"
 	std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
@@ -515,7 +518,8 @@ bool fregl_image_manager::cache_write_image(int image_index, ImageType::Pointer 
 	return true;
 }
 
-fregl_image_manager::ImageType::Pointer fregl_image_manager::cache_read_image(int image_index) {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TPixel >::cache_read_image(int image_index) {
 	// Read a transformed cache file from the disk return NULL if the file is not there or
 	// can not be read for some other reason.
 	std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
@@ -533,3 +537,6 @@ fregl_image_manager::ImageType::Pointer fregl_image_manager::cache_read_image(in
 	return reader->GetOutput();
 }
 
+//Explicit Instantiation
+template class fregl_image_manager< unsigned char >;
+template class fregl_image_manager< unsigned short >;

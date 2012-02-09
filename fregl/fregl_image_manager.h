@@ -41,21 +41,23 @@ limitations under the License.
 
 #include <fregl/fregl_joint_register.h>
 #include <fregl/fregl_space_transformer.h>
-#include <fregl/fregl_util.h>
 
+template < class TPixel >
 class fregl_image_manager : public vbl_ref_count {
 public:
-    typedef vbl_smart_ptr< fregl_image_manager > Pointer;
-	typedef fregl_util::InputPixelType InputPixelType;
-    typedef itk::Image< InputPixelType, 3 > ImageType;
-    typedef ImageType::PointType PointType; //physical space
-    typedef ImageType::SizeType SizeType;
-    typedef ImageType::SpacingType SpacingType;
-    typedef ImageType::IndexType IndexType;
+    typedef vbl_smart_ptr< fregl_image_manager >	Pointer;
+	typedef TPixel									InputPixelType;
+	typedef itk::Image<InputPixelType, 3 >			ImageType;
+	typedef typename ImageType::Pointer				ImageTypePointer;
+
+    typedef typename ImageType::PointType PointType; //physical space
+    typedef typename ImageType::SizeType SizeType;
+    typedef typename ImageType::SpacingType SpacingType;
+    typedef typename ImageType::IndexType IndexType;
     typedef itk::Image< float, 2 > FloatImageType2D;
 
-	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
-	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+	typedef typename itk::ImageRegionIterator< ImageType > RegionIterator;
+	typedef typename itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 
     //: Constructor
     // xml_filename - joint register xml file
@@ -100,17 +102,17 @@ public:
     //
     // Montage coordinates are in Normalized space (0,0) space.
     //
-    ImageType::Pointer GetOutput();
+    ImageTypePointer GetOutput();
     
     //: Return an ITK image pointer the the region of interest passed an argument
     // This entry is mutex protected for multi threading operations.  It combines
     // the set region, update and get output methods.
-    ImageType::Pointer MutexGetRegionOfInterest(PointType origin, SizeType size);
+    ImageTypePointer MutexGetRegionOfInterest(PointType origin, SizeType size);
 
     //: Return an ITK image pointer to the Region of Interest in the passed
     //  file name.  Return from cache if file is cached otherwise read the file
     //  into cache then get the region.
-    void ReadFileRegion(std::string file_name, int image_index, ImageType::Pointer montage_image);
+    void ReadFileRegion(std::string file_name, int image_index, ImageTypePointer montage_image);
 
     //: Return the global (anchor) space origin
     //
@@ -133,7 +135,7 @@ public:
     std::string const get_anchor_name();
 
     //: Return a pointer the space transformer
-    fregl_space_transformer::Pointer get_space_transformer();
+    typename fregl_space_transformer< TPixel >::Pointer get_space_transformer();
     
     //: Set up the cache buffer count.  If 0 Turn off caching
     // Will reset all cache buffers when called.
@@ -150,11 +152,11 @@ public:
 
 private:
     int get_next_slot();
-    bool cache_write_image(int image_index, ImageType::Pointer t_image);
-    ImageType::Pointer cache_read_image(int image_index);
+    bool cache_write_image(int image_index, ImageTypePointer t_image);
+    ImageTypePointer cache_read_image(int image_index);
     
-    fregl_joint_register::Pointer global_joint_register;
-    fregl_space_transformer::Pointer global_space_transformer;
+    typename fregl_joint_register< TPixel >::Pointer global_joint_register;
+    typename fregl_space_transformer< TPixel >::Pointer global_space_transformer;
 
     // The physical space is defined by the reference image
     PointType global_origin;
@@ -169,10 +171,10 @@ private:
     bool use_NN_interpolator;
     int global_channel;
     bool global_use_channel;
-    ImageType::Pointer montage_image;
+    ImageTypePointer montage_image;
     std::vector<bool> is_cached;
     std::vector<bool> is_cached_on_disk;
-    std::vector<ImageType::Pointer> cached_images;
+    std::vector<ImageTypePointer> cached_images;
     std::vector<int> cache_slot;
     std::vector<int> cache_last_used;
     int cache_time;
@@ -181,7 +183,5 @@ private:
     bool use_file_caching;
     std::string cache_dir;
     pthread_mutex_t region_mutex;
-
-
 };
 #endif

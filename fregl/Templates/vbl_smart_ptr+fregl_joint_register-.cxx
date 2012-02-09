@@ -16,4 +16,5 @@ limitations under the License.
 #include <vbl/vbl_smart_ptr.txx>
 #include <fregl/fregl_joint_register.h>
 
-VBL_SMART_PTR_INSTANTIATE( fregl_joint_register );
+VBL_SMART_PTR_INSTANTIATE( fregl_joint_register< unsigned short > );
+VBL_SMART_PTR_INSTANTIATE( fregl_joint_register< unsigned char > );

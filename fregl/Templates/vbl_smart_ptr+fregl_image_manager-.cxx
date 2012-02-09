@@ -16,4 +16,5 @@ limitations under the License.
 #include <vbl/vbl_smart_ptr.txx>
 #include <fregl/fregl_image_manager.h>
 
-VBL_SMART_PTR_INSTANTIATE( fregl_image_manager );
+VBL_SMART_PTR_INSTANTIATE( fregl_image_manager< unsigned char > );
+VBL_SMART_PTR_INSTANTIATE( fregl_image_manager< unsigned short > );

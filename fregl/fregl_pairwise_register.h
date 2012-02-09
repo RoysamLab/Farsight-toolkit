@@ -57,21 +57,26 @@ public:
 	}
 };
 
+template < class TPixel >
 class fregl_pairwise_register
 {
 public:
 
-	typedef fregl_util::InputPixelType        InputPixelType;
-	typedef itk::Image< InputPixelType, 3 >   InputImageType;
-	typedef float                             InternalPixelType;
-	typedef itk::Image<InternalPixelType, 3 > InternalImageType;
-	typedef itk::Image<InputPixelType, 2 >    ImageType2D;
+	typedef TPixel								InputPixelType;
+	typedef itk::Image< InputPixelType, 3 >		InputImageType;
+	typedef typename InputImageType::Pointer	InputImageTypePointer;
+	
+	typedef float								InternalPixelType;
+	typedef itk::Image<InternalPixelType, 3 >	InternalImageType;
+	
+	typedef itk::Image<InputPixelType, 2 >		ImageType2D;
+	typedef typename ImageType2D::Pointer		ImageType2DPointer;
 
 	typedef itk::AffineTransform< double, 3>   TransformType;
 
 	//: constructor
-	fregl_pairwise_register(InputImageType::Pointer from_image, 
-		InputImageType::Pointer to_image, 
+	fregl_pairwise_register(InputImageTypePointer from_image, 
+		InputImageTypePointer to_image, 
 		std::string from_image_filename,
 		std::string to_image_filename,
 		float background = 30);
@@ -89,10 +94,10 @@ public:
 	bool run(double init_x, double init_y, double& obj_value);
 
 	//: Set the from_image
-	void set_from_image(InputImageType::Pointer from_image);
+	void set_from_image(InputImageTypePointer from_image);
 
 	//: Set the to_image
-	void set_to_image(InputImageType::Pointer to_image);
+	void set_to_image(InputImageTypePointer to_image);
 
 	//: Set the flag for exhaustive search in z direction
 	void set_exhausive_search(bool exhaustive);
@@ -118,17 +123,17 @@ private:
 	//  This function also set the region of interest to the overlap
 	//  area.
 	double compute_z_shift( rgrl_transformation_sptr fw_xform, 
-		InputImageType::Pointer from_image_3d,
-		InputImageType::Pointer to_image_3d,
-		ImageType2D::Pointer from_image_2d, 
-		ImageType2D::Pointer to_image_2d,
+		InputImageTypePointer from_image_3d,
+		InputImageTypePointer to_image_3d,
+		ImageType2DPointer from_image_2d, 
+		ImageType2DPointer to_image_2d,
 		float bg );
 
 	//: Crop the image to the region of interest
 	//
 	//  This step is to reduce memory consumption, since it is too
 	//  expensive to have image type of float.
-	InternalImageType::Pointer crop_image(InputImageType::Pointer image);
+	InternalImageType::Pointer crop_image(InputImageTypePointer image);
 
 	//: Check the validity of the 2D xform
 	//
@@ -150,8 +155,8 @@ private:
 private:
 	std::string from_image_filename;
 	std::string to_image_filename;
-	InputImageType::Pointer from_image_; 
-	InputImageType::Pointer to_image_;
+	InputImageTypePointer from_image_; 
+	InputImageTypePointer to_image_;
 	TransformType::Pointer  transform_;
 	float background_;    //threshold value to be considered as background
 	bool exhaustive_;

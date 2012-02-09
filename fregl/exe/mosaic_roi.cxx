@@ -53,13 +53,17 @@ using std::endl;
 
 #include "fregl_roi.h"
 
-typedef itk::Image< InputPixelType, 2 > ImageType2D;
-typedef ImageType::PointType PointType; //physical space
-typedef ImageType::IndexType IndexType; //physical space
-typedef ImageType::SizeType SizeType;
+
 
 int
 main(int argc, char* argv[]) {
+	typedef unsigned short InputPixelType;
+	typedef itk::Image< InputPixelType, 3 > ImageType;
+	typedef itk::Image< InputPixelType, 2 > ImageType2D;
+	typedef ImageType::PointType PointType; //physical space
+	typedef ImageType::IndexType IndexType; //physical space
+	typedef ImageType::SizeType SizeType;
+
 	vul_arg< vcl_string > arg_xml_file(0, "A xml file containing transformations");
 	vul_arg< vcl_string > arg_anchor(0, "Anchor image name");
 	vul_arg< double > arg_roi_originx(0, "The x of the roi origin");
@@ -96,12 +100,12 @@ main(int argc, char* argv[]) {
 
 	
 	ImageType::Pointer final_image;
-	fregl_roi *roi_filter = new fregl_roi(arg_xml_file(), arg_img_path(), arg_anchor(), arg_nn());
+	fregl_roi< InputPixelType > *roi_filter = new fregl_roi< InputPixelType >(arg_xml_file(), arg_img_path(), arg_anchor(), arg_nn());
 	roi_filter->setROI(roi_origin, roi_size);
 	final_image = roi_filter->getROI();
 
 
-	// Cosntruct the montage
+	// Costruct the montage
 	/*fregl_image_manager::Pointer region_montage = new fregl_image_manager(arg_xml_file(), arg_img_path(), arg_anchor(),
 			arg_nn());
 	
@@ -152,7 +156,7 @@ main(int argc, char* argv[]) {
 	}
 
 	// doing the 2d maximum projection and dump it out
-	ImageType2D::Pointer image_2d = fregl_util_max_projection(final_image);
+	ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_max_projection(final_image);
 	typedef itk::ImageFileWriter< ImageType2D > WriterType2D;
 	WriterType2D::Pointer writer2D = WriterType2D::New();
 	std::string name_2d = vul_file::strip_extension(output_name) + std::string("_2d_proj.png");

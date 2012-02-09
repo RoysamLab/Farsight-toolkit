@@ -35,22 +35,29 @@ limitations under the License.
 
 #include <fregl/fregl_joint_register.h>
 // The space transformer assumes [1,1,1] for voxel spacing. 
+template < class TPixel >
 class fregl_space_transformer: public vbl_ref_count
 {
 public:
-	typedef vbl_smart_ptr< fregl_space_transformer >  Pointer;
-	typedef fregl_util::InputPixelType			InputPixelType;
-	typedef fregl_joint_register::TransformType TransformType;
-	typedef itk::Image<InputPixelType, 3>        ImageType;
-	typedef itk::Image<InputPixelType, 2>        ImageType2D;
-	typedef ImageType::PointType                PointType; //physical space
-	typedef ImageType::SizeType                 SizeType;
-	typedef ImageType::SpacingType              SpacingType;
-	typedef ImageType::IndexType                IndexType;
-	typedef itk::Image< float, 2 >              FloatImageType2D;
+	typedef vbl_smart_ptr< fregl_space_transformer >				Pointer;
+	typedef TPixel													InputPixelType;
+	
+	typedef typename fregl_joint_register < TPixel >::TransformType	TransformType;
+	typedef typename TransformType::Pointer							TransformTypePointer;
+
+	typedef itk::Image<InputPixelType, 3>							ImageType;
+	typedef typename ImageType::Pointer								ImageTypePointer;
+	typedef itk::Image<InputPixelType, 2>							ImageType2D;
+	typedef	typename ImageType2D::Pointer							ImageType2DPointer;
+
+	typedef typename ImageType::PointType							PointType; //physical space
+	typedef typename ImageType::SizeType							SizeType;
+	typedef typename ImageType::SpacingType							SpacingType;
+	typedef typename ImageType::IndexType							IndexType;
+	typedef itk::Image< float, 2 >									FloatImageType2D;
 
 	fregl_space_transformer();
-	fregl_space_transformer( fregl_joint_register::Pointer joint_reg );
+	fregl_space_transformer( typename fregl_joint_register< TPixel>::Pointer joint_reg );
 	~fregl_space_transformer(){}
 
 	//: Set the new anchor image.
@@ -138,30 +145,30 @@ public:
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image.
-	ImageType::Pointer transform_image(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+	ImageTypePointer transform_image(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
 	//: Generate the transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image and the roi.
-	ImageType::Pointer transform_image_roi(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+	ImageTypePointer transform_image_roi(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
         //: Generate the transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image only the size of the actual image read.
-	ImageType::Pointer transform_image_whole(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+	ImageTypePointer transform_image_whole(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
 	//: Generate the photo-bleaching weighted transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image.
-	ImageType::Pointer transform_image_weighted(ImageType::Pointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+	ImageTypePointer transform_image_weighted(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
 	//: Generate the image which keeps track of the number of images overlapping at each pixel
 	//
 	//  The function returns an image of the same dimension as the final image. 
-	ImageType::Pointer compute_weighted_image() const;
+	ImageTypePointer compute_weighted_image() const;
 
 	//: Generate the image which keeps track of the number of images overlapping at each pixel
 	//
@@ -169,7 +176,7 @@ public:
 	//  final image. The 2D image is taken as the middle slice of the
 	//  global volume. It is a good approximation since images sharing
 	//  sections contain cells which show up in both images.
-	ImageType2D::Pointer compute_weighted_image_2D() const;
+	ImageType2DPointer compute_weighted_image_2D() const;
 
 	//: Return the names of the set of images 
 	std::vector<std::string> image_names() const;
@@ -189,31 +196,31 @@ public:
 	//: Return the list of xforms from the given image to its neighbors
 	//
 	//  Neighbors are a set of overlapping images
-	std::vector<TransformType::Pointer> xforms_to_neighbors(int image_index) const;
+	std::vector<TransformTypePointer> xforms_to_neighbors(int image_index) const;
 
 	//: Return the list of xforms to the given image from its neighbors
 	//
 	//  Neighbors are a set of overlapping images
-	std::vector<TransformType::Pointer> xforms_from_neighbors(int image_index) const;
+	std::vector<TransformTypePointer> xforms_from_neighbors(int image_index) const;
 
 	//: Return the list of xforms from the given image to all other images
 	//
 	//  The other images are from the set of images in consideration. If
 	//  "overlap_only" is set, then the other images are only those
 	//  overlap with the anchor image.
-	std::vector<TransformType::Pointer> xforms_to_all(int image_index) const;
+	std::vector<TransformTypePointer> xforms_to_all(int image_index) const;
 
 	//: Return the list of xforms to the given image from all other images
 	//
 	//  The other images are from the set of images in consideration. If
 	//  "overlap_only" is set, then the other images are only those
 	//  overlap with the anchor image.
-	std::vector<TransformType::Pointer> xforms_from_all(int image_index) const;
+	std::vector<TransformTypePointer> xforms_from_all(int image_index) const;
 
 	//: Set 2D weight map for the given image
 	//
 	// This is handle different weighting due to photobleaching
-	void set_individual_weight_map(int index, ImageType::Pointer image, float alpha);
+	void set_individual_weight_map(int index, ImageTypePointer image, float alpha);
 
 	//: Normalized the weight map by the weighted sum
 	//
@@ -221,7 +228,7 @@ public:
 	void normalize_individual_weight_maps();
 
 	//: Return the normalized weight map of given index
-	ImageType2D::Pointer get_weight_map(int index) const;
+	ImageType2DPointer get_weight_map(int index) const;
 
 	// IO with xml file
 	void write_xml(std::string const & montage_xml, 
@@ -233,15 +240,15 @@ public:
 		std::string& montage_2d_name);
 
 private:
-	ImageType2D::Pointer max_projection(ImageType::Pointer image, float sigma = 0) const;
+	ImageType2DPointer max_projection(ImageTypePointer image, float sigma = 0) const;
 
 private: 
-	fregl_joint_register::Pointer joint_register_;
+	typename fregl_joint_register< TPixel >::Pointer joint_register_;
 	int anchor_;
-	//std::vector<TransformType::Pointer> inverse_xforms_; //taking anchor to other spaces
+	//std::vector<TransformTypePointer> inverse_xforms_; //taking anchor to other spaces
 	std::vector<int> image_id_indices_;
-	std::vector<ImageType2D::Pointer> weight_images_2D_; //same size as image_id_indices
-	std::vector<ImageType2D::Pointer> normalized_weight_images_2D_;
+	std::vector<ImageType2DPointer> weight_images_2D_; //same size as image_id_indices
+	std::vector<ImageType2DPointer> normalized_weight_images_2D_;
 	std::vector<PointType> image_origins_;
 
 	// The physical space is defined by the reference image

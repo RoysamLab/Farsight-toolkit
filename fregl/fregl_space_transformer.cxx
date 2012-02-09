@@ -27,7 +27,8 @@ limitations under the License.
 
 static std::string ToString(double val);
 
-fregl_space_transformer::
+template <class TPixel>
+fregl_space_transformer< TPixel >::
 fregl_space_transformer( )
 {
   anchor_ = -1;
@@ -39,7 +40,8 @@ fregl_space_transformer( )
   spacing_[2] = 1;
 }
 
-fregl_space_transformer::fregl_space_transformer( fregl_joint_register::Pointer joint_reg )
+template <class TPixel>
+fregl_space_transformer< TPixel >::fregl_space_transformer( typename fregl_joint_register< TPixel >::Pointer joint_reg )
 {
   joint_register_ = joint_reg;
   anchor_ = -1;
@@ -51,7 +53,8 @@ fregl_space_transformer::fregl_space_transformer( fregl_joint_register::Pointer 
   spacing_[2] = 1;
 }
 
-void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in_anchor, bool overlap_only, bool space_set)
+template <class TPixel>
+void fregl_space_transformer< TPixel >::set_anchor(std::string const &anchor_name, bool in_anchor, bool overlap_only, bool space_set)
 {
   std::vector<std::string> const & image_names = joint_register_->image_names();
   
@@ -127,7 +130,7 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
     if (!joint_register_->in_same_subgraph(anchor_index, i))
       continue;
      
-    TransformType::Pointer xform = joint_register_->get_transform(i, anchor_);
+    TransformTypePointer xform = joint_register_->get_transform(i, anchor_);
     // Only images which can be transformed to the anchor space will
     // be considered
     if ( !xform ) continue;
@@ -189,8 +192,9 @@ void fregl_space_transformer::set_anchor(std::string const &anchor_name, bool in
 }
 
   //  Set the roi for processing
+template <class TPixel>
 void 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 set_roi(PointType s_origin, SizeType s_size) {
 	
 	roi_origin_[0] = s_origin[0];
@@ -219,14 +223,14 @@ set_roi(PointType s_origin, SizeType s_size) {
 //	std::cout<<"ROI Size = "<<roi_size_[0]<<" x "<<roi_size_[1]<<" x "<<roi_size_[2]<<std::endl;
 }
 
-
+template <class TPixel>
 bool 
-fregl_space_transformer::in_image(PointType loc, int image_index, 
+fregl_space_transformer< TPixel >::in_image(PointType loc, int image_index, 
                                   PointType& xformed_loc) const
 {
   bool failed = false;
   int index = image_id_indices_[image_index];
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if ( !inverse_xform ) return false;
   
   /*
@@ -247,8 +251,9 @@ fregl_space_transformer::in_image(PointType loc, int image_index,
   return !failed;
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 in_image(vnl_vector_fixed< float, 3 > loc, int image_index, 
          vnl_vector_fixed< float, 3 > & xformed_loc) const
 {
@@ -264,12 +269,13 @@ in_image(vnl_vector_fixed< float, 3 > loc, int image_index,
   return in_range;
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 image_in_roi(int image_index) const {
 	
 	int index = image_id_indices_[image_index];
-	TransformType::Pointer xform = joint_register_->get_transform(index, anchor_);
+	TransformTypePointer xform = joint_register_->get_transform(index, anchor_);
 	// If the image is not even in anchor space then return false
 	if (!xform) return false;
 	std::vector<SizeType> const & image_sizes = joint_register_->image_sizes();
@@ -297,8 +303,9 @@ image_in_roi(int image_index) const {
 	
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 in_image_2d(vnl_vector_fixed< float, 3 > loc, int image_index, 
             vnl_vector_fixed< float, 2 > & xformed_loc) const
 {
@@ -308,7 +315,7 @@ in_image_2d(vnl_vector_fixed< float, 3 > loc, int image_index,
   pt_loc[1] = loc[1];
   pt_loc[2] = loc[2];
   int index = image_id_indices_[image_index];
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if ( !inverse_xform ) return false;
   
   xformed_pt_loc = inverse_xform->TransformPoint(pt_loc);
@@ -325,15 +332,16 @@ in_image_2d(vnl_vector_fixed< float, 3 > loc, int image_index,
   return !failed;
 }
 
+template <class TPixel>
 bool
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 in_range(PointType loc, int from_index, int to_index,
          PointType& xformed_loc) const
 {
   bool failed = false;
   int to = image_id_indices_[to_index];
   int from = image_id_indices_[from_index];
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(from,to);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(from,to);
   if ( !inverse_xform ) return false;
   
   xformed_loc = inverse_xform->TransformPoint(loc);
@@ -348,8 +356,9 @@ in_range(PointType loc, int from_index, int to_index,
   return !failed;
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 in_range(vnl_vector_fixed< float, 3 > loc, int from_index, int to_index, 
          vnl_vector_fixed< float, 3 >& xformed_loc) const
 {
@@ -365,13 +374,14 @@ in_range(vnl_vector_fixed< float, 3 > loc, int from_index, int to_index,
   return is_in_range;
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::in_anchor(PointType loc, int image_index, 
+fregl_space_transformer< TPixel >::in_anchor(PointType loc, int image_index, 
                                    PointType& xformed_loc) const
 {
   bool failed = false;
   int index = image_id_indices_[image_index];
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(index, anchor_);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(index, anchor_);
   if ( !inverse_xform ) return false;
   
   /*
@@ -392,8 +402,9 @@ fregl_space_transformer::in_anchor(PointType loc, int image_index,
   return !failed;
 }
 
+template <class TPixel>
 bool 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 in_anchor(vnl_vector_fixed< float, 3 > loc, int image_index, 
           vnl_vector_fixed< float, 3 > & xformed_loc) const
 {
@@ -409,9 +420,10 @@ in_anchor(vnl_vector_fixed< float, 3 > loc, int image_index,
   return in_range;
 }
 
-fregl_space_transformer::ImageType::Pointer 
-fregl_space_transformer::
-transform_image(ImageType::Pointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageTypePointer 
+fregl_space_transformer< TPixel >::
+transform_image(ImageTypePointer in_image, int image_index, int background, bool use_NN_interpolator ) const
 {
   if (!anchor_set_) {
     std::cerr<<"Set anchor first"<<std::endl;
@@ -419,7 +431,7 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
   }
   
   /*
-    imageType::Pointer image = ImageType::New();
+    ImageTypePointer image = ImageType::New();
     
     ImageType::IndexType start;
     start[0] = 0;
@@ -439,7 +451,7 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
   // Set the resampler to generate the transformed image
   typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
   int index = image_id_indices_[image_index];
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if ( !inverse_xform ) 
     return NULL;
   
@@ -476,9 +488,10 @@ transform_image(ImageType::Pointer in_image, int image_index, int background, bo
   return resampler->GetOutput();
 }
 
-fregl_space_transformer::ImageType::Pointer 
-fregl_space_transformer::
-transform_image_roi(ImageType::Pointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageTypePointer 
+fregl_space_transformer< TPixel >::
+transform_image_roi(ImageTypePointer in_image, int image_index, int background, bool use_NN_interpolator ) const
 {
 	if (!anchor_set_) {
 		std::cerr<<"Set anchor first"<<std::endl;
@@ -489,7 +502,7 @@ transform_image_roi(ImageType::Pointer in_image, int image_index, int background
 	// Set the resampler to generate the transformed image
 	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
 	int index = image_id_indices_[image_index];
-	TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+	TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
 	if ( !inverse_xform ) 
 		return NULL;
 
@@ -525,9 +538,11 @@ transform_image_roi(ImageType::Pointer in_image, int image_index, int background
 
 	return resampler->GetOutput();
 }
-fregl_space_transformer::ImageType::Pointer 
-fregl_space_transformer::
-transform_image_whole(ImageType::Pointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageTypePointer 
+fregl_space_transformer< TPixel >::
+transform_image_whole(ImageTypePointer in_image, int image_index, int background, bool use_NN_interpolator ) const
 {
 	if (!anchor_set_) {
 		std::cerr<<"Set anchor first"<<std::endl;
@@ -538,7 +553,7 @@ transform_image_whole(ImageType::Pointer in_image, int image_index, int backgrou
 	// Set the resampler to generate the transformed image
 	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
 	int index = image_id_indices_[image_index];
-	TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+	TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
 	if ( !inverse_xform ) 
 		return NULL;
 
@@ -580,9 +595,10 @@ transform_image_whole(ImageType::Pointer in_image, int image_index, int backgrou
 	return resampler->GetOutput();
 }
 
-fregl_space_transformer::ImageType::Pointer 
-fregl_space_transformer::
-transform_image_weighted(ImageType::Pointer image, int image_index, int background, bool use_NN_interpolator ) const
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageTypePointer 
+fregl_space_transformer< TPixel >::
+transform_image_weighted(ImageTypePointer image, int image_index, int background, bool use_NN_interpolator ) const
 {
   if (!anchor_set_) {
     std::cerr<<"Set anchor first"<<std::endl;
@@ -591,7 +607,7 @@ transform_image_weighted(ImageType::Pointer image, int image_index, int backgrou
   
   int index = image_id_indices_[image_index];
   std::cout<<"Computing photo-bleached weighted image for "<<joint_register_->image_names()[index]<<std::endl;
-  TransformType::Pointer inverse_xform = joint_register_->get_transform(anchor_,index);
+  TransformTypePointer inverse_xform = joint_register_->get_transform(anchor_,index);
   if (!inverse_xform) return NULL;
   
   // Set the resampler to generate the transformed image
@@ -622,7 +638,7 @@ transform_image_weighted(ImageType::Pointer image, int image_index, int backgrou
     vcl_cout << e << vcl_endl;
     return NULL;
   }
-  ImageType::Pointer xformed_image = resampler->GetOutput();
+  ImageTypePointer xformed_image = resampler->GetOutput();
   
   // Set the interpolator
   InterpoType2D::Pointer interpolator;
@@ -660,8 +676,9 @@ transform_image_weighted(ImageType::Pointer image, int image_index, int backgrou
   return xformed_image;
 }
 
-fregl_space_transformer::ImageType::Pointer 
-fregl_space_transformer::
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageTypePointer 
+fregl_space_transformer< TPixel >::
 compute_weighted_image() const
 {
   if (!anchor_set_) {
@@ -670,7 +687,7 @@ compute_weighted_image() const
   }
   
   std::cout<<"Computing the weight image"<<std::endl;
-  ImageType::Pointer weight_image = ImageType::New();
+  ImageTypePointer weight_image = ImageType::New();
   ImageType::IndexType start;
   start[0] = 0;
   start[1] = 0;
@@ -699,7 +716,7 @@ compute_weighted_image() const
   std::cout<<"Computing the weight contribution from image "<<names[i]<<std::endl;
   int index = image_id_indices_[i];
   SizeType size = joint_register_->image_size(index);
-  TransformType::Pointer xform = joint_register_->get_transform(index, anchor_);
+  TransformTypePointer xform = joint_register_->get_transform(index, anchor_);
   for (unsigned long xi = 0; xi<size[0]; xi++) 
   for (unsigned long yi = 0; yi<size[1]; yi++) 
   for (unsigned long zi = 0; zi<size[2]; zi++) {
@@ -737,8 +754,9 @@ compute_weighted_image() const
   return weight_image;
 }
 
-fregl_space_transformer::ImageType2D::Pointer 
-fregl_space_transformer::
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageType2DPointer
+fregl_space_transformer< TPixel >::
 compute_weighted_image_2D() const
 {
   if (!anchor_set_) {
@@ -747,7 +765,7 @@ compute_weighted_image_2D() const
   }
   
   std::cout<<"Computing the weight image"<<std::endl;
-  ImageType2D::Pointer weight_image = ImageType2D::New();
+  ImageType2DPointer weight_image = ImageType2D::New();
   ImageType2D::IndexType start;
   start[0] = 0;
   start[1] = 0;
@@ -800,8 +818,9 @@ compute_weighted_image_2D() const
   return weight_image;
 }
 
+template <class TPixel>
 std::vector<std::string>
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 image_names() const
 {
   std::vector<std::string> names;
@@ -812,8 +831,9 @@ image_names() const
   return names;
 }
 
-std::vector<fregl_space_transformer::SizeType>
-fregl_space_transformer::
+template <class TPixel>
+std::vector<typename fregl_space_transformer< TPixel >::SizeType >
+fregl_space_transformer< TPixel >::
 image_sizes() const
 {
   std::vector<SizeType> sizes;
@@ -824,11 +844,12 @@ image_sizes() const
   return sizes;
 }
 
-std::vector<fregl_space_transformer::TransformType::Pointer> 
-fregl_space_transformer::
+template <class TPixel>
+std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer> 
+fregl_space_transformer< TPixel >::
 xforms_to_neighbors(int image_index) const
 {
-  std::vector<fregl_space_transformer::TransformType::Pointer> xforms;
+  std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
   int from = image_id_indices_[image_index];
   for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
     int to = image_id_indices_[i];
@@ -838,11 +859,12 @@ xforms_to_neighbors(int image_index) const
   return xforms;
 }
 
-std::vector<fregl_space_transformer::TransformType::Pointer> 
-fregl_space_transformer::
+template <class TPixel>
+std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer> 
+fregl_space_transformer< TPixel >::
 xforms_from_neighbors(int image_index) const
 {
-  std::vector<fregl_space_transformer::TransformType::Pointer> xforms;
+  std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
   int to = image_id_indices_[image_index];
   for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
     int from = image_id_indices_[i];
@@ -852,11 +874,12 @@ xforms_from_neighbors(int image_index) const
   return xforms;
 }
 
-std::vector<fregl_space_transformer::TransformType::Pointer> 
-fregl_space_transformer::
+template <class TPixel>
+std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer> 
+fregl_space_transformer< TPixel >::
 xforms_to_all(int image_index) const
 {
-  std::vector<fregl_space_transformer::TransformType::Pointer> xforms;
+  std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
   int from = image_id_indices_[image_index];
   for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
     int to = image_id_indices_[i];   
@@ -866,11 +889,12 @@ xforms_to_all(int image_index) const
   return xforms;
 }
 
-std::vector<fregl_space_transformer::TransformType::Pointer> 
-fregl_space_transformer::
+template <class TPixel>
+std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer> 
+fregl_space_transformer< TPixel >::
 xforms_from_all(int image_index) const
 {
-  std::vector<fregl_space_transformer::TransformType::Pointer> xforms;
+  std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
   int to = image_id_indices_[image_index];
   for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
     int from = image_id_indices_[i];   
@@ -880,17 +904,18 @@ xforms_from_all(int image_index) const
   return xforms;
 }
 
+template <class TPixel>
 void 
-fregl_space_transformer::
-set_individual_weight_map(int index, ImageType::Pointer image, float alpha)
+fregl_space_transformer< TPixel >::
+set_individual_weight_map(int index, ImageTypePointer image, float alpha)
 {
   typedef itk::ImageRegionIterator< ImageType2D > RegionIterator2D;
   typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
   
   //float sigma = 1.0;
-  ImageType2D::Pointer max_image = max_projection( image );
-  std::vector<TransformType::Pointer> xforms = xforms_from_neighbors( index );
-  ImageType2D::Pointer weight_image = ImageType2D::New();
+  ImageType2DPointer max_image = max_projection( image );
+  std::vector<TransformTypePointer> xforms = xforms_from_neighbors( index );
+  ImageType2DPointer weight_image = ImageType2D::New();
   weight_image->SetRegions(max_image->GetLargestPossibleRegion());
   
   /*
@@ -1015,8 +1040,9 @@ set_individual_weight_map(int index, ImageType::Pointer image, float alpha)
   weight_images_2D_[index]=caster->GetOutput();
 }
 
+template <class TPixel>
 void 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 normalize_individual_weight_maps()
 {
   typedef itk::ImageRegionConstIterator< ImageType2D > RegionConstIterator2D;
@@ -1026,7 +1052,7 @@ normalize_individual_weight_maps()
   for (unsigned int index = 0; index<normalized_weight_images_2D_.size(); index++) {    
     if (!weight_images_2D_[index]) continue;
     
-    ImageType2D::Pointer image = ImageType2D::New();
+    ImageType2DPointer image = ImageType2D::New();
     image->SetRegions( weight_images_2D_[index]->GetLargestPossibleRegion() );
     image->Allocate();
     ImageType2D::PointType origin;
@@ -1080,16 +1106,18 @@ normalize_individual_weight_maps()
   weight_images_2D_.clear();
 }
 
-fregl_space_transformer::ImageType2D::Pointer
-fregl_space_transformer::
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageType2D::Pointer
+fregl_space_transformer< TPixel >::
 get_weight_map(int index) const 
 {
   assert(normalized_weight_images_2D_[index]);
   return normalized_weight_images_2D_[index];
 }
 
+template <class TPixel>
 void 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 write_xml(std::string const & montage_xml, std::string const & montage_directory, 
           std::string const & montage_2d_name, bool overlap_only, 
           bool in_anchor, int channel, int blending, bool use_nn, bool denoised)
@@ -1196,8 +1224,9 @@ write_xml(std::string const & montage_xml, std::string const & montage_directory
   
 }
 
+template <class TPixel>
 void 
-fregl_space_transformer::
+fregl_space_transformer< TPixel >::
 read_xml(std::string const & filename, std::string& montage_directory, 
          std::string& montage_2d_name)
 {
@@ -1289,7 +1318,7 @@ read_xml(std::string const & filename, std::string& montage_directory,
       continue;
     }
   }
-  joint_register_ = new fregl_joint_register(reg_records);
+  joint_register_ = new fregl_joint_register< TPixel >(reg_records);
   
   //Set anchor_ and image_id_indices_
   this->set_anchor(anchor_image_name, in_anchor, overlap_only, true);
@@ -1304,10 +1333,10 @@ ToString(double val)
   return strm.str();
 }
 
-
-fregl_space_transformer::ImageType2D::Pointer
-fregl_space_transformer::
-max_projection(ImageType::Pointer image, float sigma) const
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::ImageType2DPointer
+fregl_space_transformer< TPixel >::
+max_projection(ImageTypePointer image, float sigma) const
 {
   typedef itk::ImageLinearIteratorWithIndex< ImageType2D > LinearIteratorType;
   typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
@@ -1324,7 +1353,7 @@ max_projection(ImageType::Pointer image, float sigma) const
   size[ 1 ] = requestedRegion.GetSize()[ 1 ];
   region.SetSize( size );
   region.SetIndex( index );
-  ImageType2D::Pointer image2D = ImageType2D::New();
+  ImageType2DPointer image2D = ImageType2D::New();
   image2D->SetRegions( region );
   image2D->Allocate();
   
@@ -1389,3 +1418,6 @@ max_projection(ImageType::Pointer image, float sigma) const
   return caster->GetOutput();
 }
 
+//Explicit Instantiation
+template class fregl_space_transformer< unsigned char >;
+template class fregl_space_transformer< unsigned short >;

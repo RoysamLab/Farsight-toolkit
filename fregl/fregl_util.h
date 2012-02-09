@@ -44,43 +44,49 @@ limitations under the License.
 #include <vtkImageData.h>
 #include <ftkImage/ftkImage.h>
 
-namespace fregl_util
+template < class TPixel >
+class fregl_util
 {
-	typedef unsigned short                   InputPixelType;
-	typedef unsigned char                    GDBICPPixelType;
-	typedef itk::Image< InputPixelType, 3 >  ImageType;
-	typedef itk::Image< InputPixelType, 2 >  ImageType2D;
-	typedef itk::Image< GDBICPPixelType, 2 >  GDBICPImageType;
-	typedef itk::Image< float, 2 >           FloatImageType2D;
-	typedef itk::RGBPixel< unsigned char >   ColorPixelType;
-	typedef itk::Image< ColorPixelType, 3 > ColorImageType;
-	typedef itk::Image< ColorPixelType, 2 > ColorImageType2D;
-	typedef itk::AffineTransform< double, 3>   TransformType;
+public: 
+	typedef TPixel								InputPixelType;
+	typedef unsigned char						GDBICPPixelType;
 
-	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
-	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
+	typedef itk::Image< InputPixelType, 3 >		ImageType;
+	typedef typename ImageType::Pointer			ImageTypePointer;
+	typedef itk::Image< InputPixelType, 2 >		ImageType2D;
+	typedef typename ImageType2D::Pointer		ImageType2DPointer;
+
+	typedef itk::Image< GDBICPPixelType, 2 >	GDBICPImageType;
+	typedef itk::Image< float, 2 >				FloatImageType2D;
+	typedef itk::RGBPixel< unsigned char >		ColorPixelType;
+	typedef itk::Image< ColorPixelType, 3 >		ColorImageType;
+	typedef itk::Image< ColorPixelType, 2 >		ColorImageType2D;
+	typedef itk::AffineTransform< double, 3>	TransformType;
+
+	typedef typename itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+	typedef typename itk::ImageRegionIterator< ImageType > RegionIterator;
 
 	// Maximum is taken between the two images
-	ImageType::Pointer fregl_util_fuse_images(ImageType::Pointer image1, ImageType::Pointer image2);
+	static ImageTypePointer fregl_util_fuse_images(ImageTypePointer image1, ImageTypePointer image2);
 
-	ImageType::Pointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
+	static ImageTypePointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
 
-	ImageType2D::Pointer fregl_util_max_projection(ImageType::Pointer image, float sigma = 0);
+	static ImageType2DPointer fregl_util_max_projection(ImageTypePointer image, float sigma = 0);
 
 	//: Computer the ammount of overlap between two images given the transformation
-	double fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to);
+	static double fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to);
 
-	ColorImageType2D::Pointer fregl_util_max_projection_color(ColorImageType::Pointer image);
+	static ColorImageType2D::Pointer fregl_util_max_projection_color(ColorImageType::Pointer image);
 
 	//: High frequency image (LoG) is removed from the original image
-	void fregl_util_reduce_noise(ImageType::Pointer image);
+	static void fregl_util_reduce_noise(ImageTypePointer image);
 
 	//: convert vil_image_view to itk::Image 
 	//
 	//  The code is hacked from ril_itk_convert.h in rpi package
-	ImageType::Pointer fregl_util_convert_vil_to_itk( vil3d_image_view<InputPixelType> img );
+	static ImageTypePointer fregl_util_convert_vil_to_itk( vil3d_image_view<InputPixelType> img );
 
 	//: extract single channel from lsm image
-	//ImageType::Pointer fregl_util_lsm_one_channel(std::string filename, int channel);
-}
+	//ImageTypePointer fregl_util_lsm_one_channel(std::string filename, int channel);
+};
 #endif

@@ -44,6 +44,8 @@ typedef itk::AffineTransform< double, 3>   TransformType; //temporary
 int
 main(  int argc, char* argv[] )
 {
+	typedef unsigned short PixelType;
+	
 	vul_arg< vcl_string > arg_in_file     ( 0, "A file containing filenames of xml files, each containing a pairwise transformation." );
 	vul_arg< vcl_string > arg_xml_file    ( "-output", "Output xml filename","joint_transforms.xml" );
 
@@ -77,9 +79,9 @@ main(  int argc, char* argv[] )
 	}
 	in_file_str.close();
 
-	fregl_joint_register::Pointer jointer_register;
+	fregl_joint_register< PixelType >::Pointer jointer_register;
 	if ( !arg_roi_file.set() ) {
-		jointer_register = new fregl_joint_register( filenames, arg_multiplier(), arg_error_bound() );
+		jointer_register = new fregl_joint_register < PixelType >( filenames, arg_multiplier(), arg_error_bound() );
 	}
 	else 
 	{
@@ -101,7 +103,7 @@ main(  int argc, char* argv[] )
 		}
 		in_file_str2.close(); 
 
-		std::vector<fregl_reg_record::Pointer> reg_records;
+		std::vector< fregl_reg_record::Pointer > reg_records;
 		for (unsigned int i = 0; i<filenames.size(); i++) {
 			fregl_reg_record::Pointer reg_record = new fregl_reg_record();
 			reg_record->read_xml(filenames[i]);
@@ -114,7 +116,7 @@ main(  int argc, char* argv[] )
 			if (to_found && from_found) reg_records.push_back( reg_record );
 		}
 
-		jointer_register = new fregl_joint_register( reg_records, arg_multiplier(), arg_error_bound() );
+		jointer_register = new fregl_joint_register < PixelType >( reg_records, arg_multiplier(), arg_error_bound() );
 
 	}
 

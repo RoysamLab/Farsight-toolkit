@@ -1,29 +1,37 @@
 #include "fregl_roi.h"
 
-fregl_roi::fregl_roi(std::string joint_xforms_xml_file, std::string img_path, std::string anchor_image, bool nearest_neighbor) {
+template < class TPixel >
+fregl_roi< TPixel >::fregl_roi(std::string joint_xforms_xml_file, std::string img_path, std::string anchor_image, bool nearest_neighbor) {
     this->joint_xforms_xml_file = joint_xforms_xml_file;
     this->img_path = img_path;
     this->anchor_image = anchor_image;
     this->nearest_neighbor = nearest_neighbor;
-    this->region_montage = new fregl_image_manager(joint_xforms_xml_file, img_path, anchor_image, nearest_neighbor);
+    this->region_montage = new fregl_image_manager< TPixel >(joint_xforms_xml_file, img_path, anchor_image, nearest_neighbor);
 	
 	this->region_montage->set_file_caching(true);
 	this->region_montage->set_file_cache_dir("./cache");
 }
 
-void fregl_roi::setROI(ImageType::PointType roi_origin, ImageType::SizeType roi_size) {
+template < class TPixel >
+void fregl_roi< TPixel >::setROI(PointType roi_origin, SizeType roi_size) {
     this->roi_origin = roi_origin;
     this->roi_size = roi_size;
 	region_montage->set_regionofinterest(roi_origin, roi_size);
 }
 
-fregl_roi::ImageType::Pointer fregl_roi::getROI() {
-    
-
+template < class TPixel >
+typename fregl_roi< TPixel >::ImageTypePointer 
+fregl_roi< TPixel >::getROI() {
     region_montage->Update();
     return region_montage->GetOutput();
 }
 
-fregl_image_manager::Pointer fregl_roi::getImageManager() {
+template < class TPixel >
+typename fregl_image_manager< TPixel >::Pointer 
+fregl_roi< TPixel >::getImageManager() {
     return this->region_montage;
 }
+
+//Explicit Instantiation
+template class fregl_roi< unsigned char >;
+template class fregl_roi< unsigned short >;

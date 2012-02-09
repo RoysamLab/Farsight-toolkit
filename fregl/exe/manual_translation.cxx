@@ -47,8 +47,9 @@ limitations under the License.
 #include "itkAffineTransform.h"
 #include "itkSize.h"
 
-typedef itk::AffineTransform< double, 3>   TransformType;
-typedef itk::Size<3>                       SizeType;
+typedef unsigned short						InputPixelType;
+typedef itk::AffineTransform< double, 3>	TransformType;
+typedef itk::Size<3>						SizeType;
 
 int 
 main( int argc, char* argv[] )
@@ -99,7 +100,7 @@ main( int argc, char* argv[] )
     transform->SetParameters( parameters );
     reg_record->set_transform(transform);
     reg_record->set_obj_value( 0 );
-    double vol_overlap = fregl_util_overlap(transform, from_size, anchor_size);
+	double vol_overlap = fregl_util< InputPixelType >::fregl_util_overlap(transform, from_size, anchor_size);
     reg_record->set_overlap(vol_overlap);
     reg_records.push_back(reg_record);
     
@@ -107,7 +108,7 @@ main( int argc, char* argv[] )
   }
   
   // Run joint-registration without mutual consistency
-  fregl_joint_register::Pointer joint_register = new fregl_joint_register( reg_records, 0, 1 );
+  fregl_joint_register< InputPixelType >::Pointer joint_register = new fregl_joint_register< InputPixelType >( reg_records, 0, 1 );
   joint_register->infer_graph();
     
   // Output to xml file

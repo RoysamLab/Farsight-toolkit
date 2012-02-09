@@ -37,35 +37,36 @@ limitations under the License.
 int 
 main( int argc, char* argv[] )
 {
-  typedef itk::AffineTransform< double, 3>   TransformType;
-  
-  // 1. Get the input arguments
-  vul_arg< vcl_string > arg_file_xforms  ( 0, "The xml file containing transformations." );
-  vul_arg< vcl_string > arg_file_to    ( 0, "The reference image name in the transformation file." );
-  vul_arg< vcl_string > arg_output    ( 0,"Name of the ascii file containg the translations");
-  vul_arg_parse( argc, argv );
-  
-  // 2. Get the space transformer ready
-  //
-  fregl_joint_register::Pointer joint_register = new fregl_joint_register( arg_file_xforms() );
-  fregl_space_transformer space_transformer(joint_register);
-  bool overlap_only = false;
-  bool in_anchor = false;
-  space_transformer.set_anchor( arg_file_to(), in_anchor, overlap_only );
-  fregl_space_transformer::PointType origin = space_transformer.origin();
-  std::vector<std::string> const& image_names = space_transformer.image_names();
-  std::ofstream output;
-  output.open(arg_output().c_str());
+	typedef unsigned short						InputPixelType;
+	typedef itk::AffineTransform< double, 3>	TransformType;
 
-  for (unsigned int img_ind = 0; img_ind<image_names.size(); img_ind++) {
-    TransformType::Pointer xform = joint_register->get_transform(image_names[img_ind], arg_file_to().c_str());
-    if ( xform ) { //there might be no xform for the image pair
-      TransformType::ParametersType params = xform->GetParameters();
-      output<<image_names[img_ind]<<" "<<params[9]-origin[0]<<" "<<params[10]-origin[1]<<" "<<params[11]-origin[2]<<std::endl;
-    }
-  }
-  
-  output.close();
-  return 0;
+	// 1. Get the input arguments
+	vul_arg< vcl_string > arg_file_xforms  ( 0, "The xml file containing transformations." );
+	vul_arg< vcl_string > arg_file_to    ( 0, "The reference image name in the transformation file." );
+	vul_arg< vcl_string > arg_output    ( 0,"Name of the ascii file containg the translations");
+	vul_arg_parse( argc, argv );
+
+	// 2. Get the space transformer ready
+	//
+	fregl_joint_register< InputPixelType >::Pointer joint_register = new fregl_joint_register< InputPixelType >( arg_file_xforms() );
+	fregl_space_transformer< InputPixelType > space_transformer(joint_register);
+	bool overlap_only = false;
+	bool in_anchor = false;
+	space_transformer.set_anchor( arg_file_to(), in_anchor, overlap_only );
+	fregl_space_transformer< InputPixelType >::PointType origin = space_transformer.origin();
+	std::vector<std::string> const& image_names = space_transformer.image_names();
+	std::ofstream output;
+	output.open(arg_output().c_str());
+
+	for (unsigned int img_ind = 0; img_ind<image_names.size(); img_ind++) {
+		TransformType::Pointer xform = joint_register->get_transform(image_names[img_ind], arg_file_to().c_str());
+		if ( xform ) { //there might be no xform for the image pair
+			TransformType::ParametersType params = xform->GetParameters();
+			output<<image_names[img_ind]<<" "<<params[9]-origin[0]<<" "<<params[10]-origin[1]<<" "<<params[11]-origin[2]<<std::endl;
+		}
+	}
+
+	output.close();
+	return 0;
 }
 
