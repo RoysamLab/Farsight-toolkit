@@ -406,6 +406,7 @@ void NuclearAssociationRules::Compute()
 		} else {
 
 #ifdef _OPENMP
+			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
 		omp_set_nested(1);
 #endif
 #pragma omp parallel for 
@@ -414,8 +415,12 @@ void NuclearAssociationRules::Compute()
 				//cout<<j+1;
 				int lbl = labelsList[j];
 				if(lbl == 0) continue;
-				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
-				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);						
+				//cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
+				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
+#pragma omp critical
+				{
+					std::cout << std::endl << "Fea Rule " << i+i << " " << j << " DONE";
+				}
 			}
 #ifdef _OPENMP
 			omp_set_nested(0);
