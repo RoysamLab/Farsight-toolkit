@@ -48,6 +48,8 @@
 #include "itkLabelGeometryImageFilter.h"
 #include "NuclearSegmentation/CytoplasmSegmentation/whole_cell.h"
 
+#include "ftkNuclearAssociationRules.h"
+
 typedef unsigned short USPixelType;
 typedef itk::Image< USPixelType, 3 > USImageType;
 typedef float FloatPixelType;
