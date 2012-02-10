@@ -48,16 +48,16 @@ template < class TPixel >
 class fregl_util
 {
 public: 
-	typedef TPixel								InputPixelType;
+	typedef TPixel							InputPixelType;
 	typedef unsigned char						GDBICPPixelType;
 
 	typedef itk::Image< InputPixelType, 3 >		ImageType;
-	typedef typename ImageType::Pointer			ImageTypePointer;
+	typedef typename ImageType::Pointer		ImageTypePointer;
 	typedef itk::Image< InputPixelType, 2 >		ImageType2D;
 	typedef typename ImageType2D::Pointer		ImageType2DPointer;
 
 	typedef itk::Image< GDBICPPixelType, 2 >	GDBICPImageType;
-	typedef itk::Image< float, 2 >				FloatImageType2D;
+	typedef itk::Image< float, 2 >			FloatImageType2D;
 	typedef itk::RGBPixel< unsigned char >		ColorPixelType;
 	typedef itk::Image< ColorPixelType, 3 >		ColorImageType;
 	typedef itk::Image< ColorPixelType, 2 >		ColorImageType2D;

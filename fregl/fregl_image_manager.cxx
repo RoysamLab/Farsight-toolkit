@@ -150,8 +150,8 @@ void fregl_image_manager< TPixel >::Update() {
 	ImageTypePointer image, xformed_image;
 	//    std::cout << "Composing the final image ..." << std::endl;
 	//Create a blank ROI then merge in the images that are in the space
-	ImageType::IndexType source_index;
-	ImageType::RegionType region;
+	IndexType source_index;
+	typename ImageType::RegionType region;
 	source_index[0] = 0;
 	source_index[1] = 0;
 	source_index[2] = 0.;
@@ -175,9 +175,9 @@ void fregl_image_manager< TPixel >::Update() {
 //
 template < class TPixel >
 typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TPixel >::GetOutput() {
-	ImageType::PointType new_origin;
+	typename ImageType::PointType new_origin;
 	typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-	DuplicatorType::Pointer duplicator = DuplicatorType::New();
+	typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
 	duplicator->SetInputImage(montage_image);
 	duplicator->Update();
 	new_origin[0] = roi_origin[0] - global_origin[0];
@@ -238,11 +238,11 @@ typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TP
 template < class TPixel >
 void fregl_image_manager< TPixel >::ReadFileRegion(std::string file_name, int image_index, ImageTypePointer montage_image) {
 	ImageTypePointer image, cached_image, xformed_image;
-	ImageType::RegionType region, source_region, destination_region;
-	ImageType::IndexType source_index;
-	ImageType::SizeType source_size;
-	ImageType::IndexType destination_index;
-	ImageType::PointType source_origin, save_origin;
+	typename ImageType::RegionType region, source_region, destination_region;
+	typename ImageType::IndexType source_index;
+	typename ImageType::SizeType source_size;
+	typename ImageType::IndexType destination_index;
+	typename ImageType::PointType source_origin, save_origin;
 	if (!use_caching) {
 		//If no caching then read in the image
 		image = fregl_util< TPixel >::fregl_util_read_image(file_name, global_use_channel, global_channel, false);
@@ -398,7 +398,7 @@ typename fregl_image_manager< TPixel >::SizeType fregl_image_manager< TPixel >::
 //
 template < class TPixel >
 typename fregl_image_manager< TPixel >::PointType fregl_image_manager< TPixel >::get_region_origin() {
-	ImageType::PointType temp;
+	typename ImageType::PointType temp;
 	temp[0] = roi_origin[0] - global_origin[0];
 	temp[1] = roi_origin[1] - global_origin[1];
 	temp[2] = roi_origin[2] - global_origin[2];
@@ -505,7 +505,7 @@ bool fregl_image_manager< TPixel >::cache_write_image(int image_index, ImageType
 	std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
 		+ std::string("_") + vul_file::strip_extension(image_names[image_index]) + std::string(".mhd");
 	typedef itk::ImageFileWriter< ImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
+	typename WriterType::Pointer writer = WriterType::New();
 	//    std::cout << "File name: " << name << std::endl;
 	writer->SetFileName(name);
 	writer->SetInput(t_image);
@@ -526,7 +526,7 @@ typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TP
 		+ std::string("_") + vul_file::strip_extension(image_names[image_index]) + std::string(".mhd");
 	//    std::cout << "File name: " << name << std::endl;
 	typedef itk::ImageFileReader< ImageType > ReaderType;
-	ReaderType::Pointer reader = ReaderType::New();
+	typename ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(name);
 	try {
 		reader->Update();

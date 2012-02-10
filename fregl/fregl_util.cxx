@@ -97,10 +97,10 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	typedef itk::DiscreteGaussianImageFilter< ImageType2D,FloatImageType2D > SmoothingFilterType;
 	typedef itk::CastImageFilter< FloatImageType2D, ImageType2D > CastFilterType;
 
-	ImageType2D::RegionType region;
-	ImageType2D::RegionType::SizeType size;
-	ImageType2D::RegionType::IndexType index;
-	ImageType::RegionType requestedRegion = image->GetRequestedRegion();
+	typename ImageType2D::RegionType region;
+	typename ImageType2D::RegionType::IndexType index;
+	typename ImageType2D::RegionType::SizeType size;
+	typename ImageType::RegionType requestedRegion = image->GetRequestedRegion();
 	index[ 0 ] = 0;
 	index[ 1 ] = 0;
 	size[ 0 ] = requestedRegion.GetSize()[ 0 ];
@@ -154,8 +154,8 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	if (sigma <= 0) return image2D;
 
 	// Perform Gaussian smoothing if the 
-	SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
-	CastFilterType::Pointer caster = CastFilterType::New();
+	typename SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
+	typename CastFilterType::Pointer caster = CastFilterType::New();
 	smoother->SetInput( image2D );
 	smoother->SetVariance(sigma);
 	smoother->SetMaximumKernelWidth(15);
@@ -313,9 +313,9 @@ fregl_util< TPixel >::fregl_util_reduce_noise(ImageTypePointer image)
 
 	// run LoG on the 2D image to define the max intensity for each pixel.
 	//
-	LoGFilterType2D::Pointer laplacian = LoGFilterType2D::New();
-	SubtractFilterType::Pointer subtracter = SubtractFilterType::New();
-	RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+	typename LoGFilterType2D::Pointer laplacian = LoGFilterType2D::New();
+	typename SubtractFilterType::Pointer subtracter = SubtractFilterType::New();
+	typename RescaleFilterType::Pointer rescale = RescaleFilterType::New();
 	laplacian->SetInput( image_2D );
 	laplacian->SetSigma( 2 );
 	try {
@@ -412,17 +412,17 @@ fregl_util< TPixel >::fregl_util_convert_vil_to_itk( vil3d_image_view<InputPixel
 		return image;
 	}
 
-	ImageType::IndexType start;
+	typename ImageType::IndexType start;
 	start[0] =   0;  // first index on X
 	start[1] =   0;  // first index on Y
 	start[2] =   0;
 
-	ImageType::SizeType  size;
+	typename ImageType::SizeType  size;
 	size[0]  = img.ni();  // size along X
 	size[1]  = img.nj();  // size along Y
 	size[2]  = img.nk(); 
 
-	ImageType::RegionType region;
+	typename ImageType::RegionType region;
 	region.SetSize( size );  
 	region.SetIndex( start );
 
