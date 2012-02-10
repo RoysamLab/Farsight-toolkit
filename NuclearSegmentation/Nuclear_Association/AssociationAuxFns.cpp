@@ -211,6 +211,8 @@ omp_set_nested(1);
 		#pragma omp parallel for
 		for( USPixelType i=0; i<labelsList.size(); ++i ){
 			if( zp && (zero==i) ) continue;
+			if( zp && (i>zero)  ) ind = i-1;
+			else ind = i;
 			//Get label indices
 			labelindicestype indices1;
 			double centroid_x,centroid_y,centroid_z;
@@ -387,7 +389,6 @@ omp_set_nested(1);
 					quantified_numbers_cell.at((ind*number_of_rois+bin_num)) += pixel_intensity;
 				}
 			}
-			++ind;
 		}
 #ifdef _OPENMP
 omp_set_nested(0);
