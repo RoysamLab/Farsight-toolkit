@@ -375,9 +375,6 @@ int main(int argc, char* argv[])
 				myfile<<"Done Extracting Tile " << col*1000 << "_" << row*1000 << " ThreadID " << counterTiles << "\n"<<std::flush;
 			}
 
-				//std::cout << ;
-			}
-
 		}
 		myfile.close();
 
