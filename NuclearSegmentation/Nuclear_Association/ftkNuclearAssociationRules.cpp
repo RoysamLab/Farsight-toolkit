@@ -33,7 +33,7 @@
 #include <iomanip>
 
 //just for testing
-#include "itkImageFileWriter.h"
+//#include "itkImageFileWriter.h"
 
 namespace ftk 
 {	
@@ -372,7 +372,7 @@ void NuclearAssociationRules::Compute()
 			else
 				thresh=returnthresh( inpImage, 1, 1 );
 			//Write Binary Mask
-			std::string out_filename;
+			/*std::string out_filename;
 			out_filename = assocRulesList[i].get_path()+assocRulesList[i].GetRuleName();
 			if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS )
 				out_filename = out_filename + "binary_surroundedness.tif";
@@ -394,7 +394,7 @@ void NuclearAssociationRules::Compute()
 			WriterType::Pointer writer1 = WriterType::New();
 			writer1->SetInput( threshfilt->GetOutput() );
 			writer1->SetFileName( out_filename.c_str() );
-			writer1->Update();
+			writer1->Update();*/
 		}
 		else
 			thresh = 0;
