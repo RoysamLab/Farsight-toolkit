@@ -405,6 +405,7 @@ void NuclearAssociationRules::Compute()
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {
 
+			int counterLables = 0;
 #ifdef _OPENMP
 			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
 		omp_set_nested(1);
@@ -419,7 +420,8 @@ void NuclearAssociationRules::Compute()
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
 #pragma omp critical
 				{
-					std::cout << std::endl << "Fea Rule " << i+i << " " << j << " DONE";
+					counterLabels++;
+					std::cout << std::endl << "Fea, Rule " << i+1 << ": " << counterLabels << " of " << numOfLabels-1 << " DONE";
 				}
 			}
 #ifdef _OPENMP
