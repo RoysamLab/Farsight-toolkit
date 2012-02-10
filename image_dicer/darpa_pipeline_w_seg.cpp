@@ -25,7 +25,11 @@
 #include <math.h>
 #include <algorithm>
 
+#include <iostream>
+
+#ifdef _OPENMP
 #include "omp.h"
+#endif _OPENMP
 
 typedef itk::Image<unsigned char,  3> rawImageType;
 typedef itk::Image<unsigned int, 3> LabelType;
@@ -49,7 +53,10 @@ bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
-	//omp_set_nested(1);
+	omp_set_nested(1);
+	
+
+
 	int counterTiles = 0;
 	if(argc < 4)
 	{
@@ -164,9 +171,25 @@ int main(int argc, char* argv[])
 		for(int col=0; col<num_cols; ++col)
 		{
 
+			tid = omp_get_thread_num();
+			stringstream out;
+			out<<tid;
+			string s = out.str();
+			string filename = "outFile_"+s+".txt";
+			ofstream myfile (filename.c_str());
+
+			#pragma omp critical
+			{
+				counterTiles++;
+			}
+
 			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
 
-			std::cout<<"Extracting Tile " << col*1000 << "_" << row*1000 << "\n";			
+			//#pragma omp critical
+			//{
+			//	myfile<<"Extracting Tile " << col*1000 << "_" << row*1000 << "\n";			
+			//}
+			
 			rawImageType::IndexType start_tile;
 			start_tile[0] = col*1000;
 			start_tile[1] = row*1000;
@@ -243,7 +266,11 @@ int main(int argc, char* argv[])
 			//segResultsType tileSegResults;
 			//tileSegResults = RunNuclearSegmentation(tile_nuc, tile_gfp, argv[3]);
 			temp_Tile = RunNuclearSegmentation(tile_nuc, argv[4]);
-			std::cout<<"Done with nucleus segmentation for Tile " << col*1000 << "_" << row*1000 << "\n\n";
+			
+			#pragma omp critical
+			{
+				myfile<<"Done with nucleus segmentation for Tile " << col*1000 << "_" << row*1000 << ", tid: " << tid << "\n";
+			}
 			//temp_Tile = tileSegResults.first;
 			Label_Tiles[col] = temp_Tile;
 			//Table_Tiles[col] = tileSegResults.second;
@@ -343,9 +370,8 @@ int main(int argc, char* argv[])
 
 			#pragma omp critical
 			{
-				counterTiles++;
-				std::cout << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows;
-				std::cout << std::endl;
+				myfile << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows << ", tid: " << tid << std::endl;
+				//std::cout << ;
 			}
 		}
 
