@@ -40,7 +40,7 @@ typedef std::pair< LabelType::Pointer, vtkSmartPointer< vtkTable > > segResultsT
 
 //segResultsType RunNuclearSegmentation( rawImageType::Pointer, rawImageType::Pointer, const char*);
 LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer, const char* );
-vtkSmartPointer<vtkTable> ComputeFeatures(rawImageType::Pointer, rawImageType::Pointer, LabelType::Pointer, const char* );
+vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer, rawImageType::Pointer, rawImageType::Pointer, LabelType::Pointer, const char* );
 std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< vtkTable > );
 void WriteCenterTrace(vtkSmartPointer< vtkTable >, int, int, int, std::string);
 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 	int counterTiles = 0;
 	if(argc < 4)
 	{
-		std::cout<<"usage1: darpa_tracer <dapi_montage_file> <gfp_montage_file> <project_definition_file> \n";
+		std::cout<<"usage1: darpa_tracer <dapi_montage_file> <gfp_montage_file> <cy5_montage_file> <seg_params_file> <project_definition_file> \n";
 		return 0;
 	}
 
@@ -98,6 +98,15 @@ int main(int argc, char* argv[])
 	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
 	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
+
+	rawReaderType::Pointer reader_cy5 = rawReaderType::New();
+	reader_cy5->SetFileName(argv[3]);
+	reader_cy5->Update();
+	rawImageType::Pointer montage_cy5 = reader_cy5->GetOutput();
+	itk::SizeValueType size_cy5_montage[3];
+	size_cy5_montage[0] = montage_cy5->GetLargestPossibleRegion().GetSize()[0];
+	size_cy5_montage[1] = montage_cy5->GetLargestPossibleRegion().GetSize()[1];
+	size_cy5_montage[2] = montage_cy5->GetLargestPossibleRegion().GetSize()[2];
 
 	//ftk::Image::Pointer sourceImages = NULL;
 	//std::vector< unsigned char > color;
@@ -194,6 +203,17 @@ int main(int argc, char* argv[])
 				rawDuplicator_tile_gfp->Update();
 			rawImageType::Pointer tile_gfp = rawDuplicator_tile_gfp->GetOutput();
 
+			rawROIFilterType::Pointer ROIfilter_tile_cy5 = rawROIFilterType::New();
+			ROIfilter_tile_cy5->SetRegionOfInterest(region_tile);
+			ROIfilter_tile_cy5->SetInput(montage_cy5);
+			#pragma omp critical
+				ROIfilter_tile_cy5->Update();
+			rawDuplicatorType::Pointer rawDuplicator_tile_cy5 = rawDuplicatorType::New();
+			rawDuplicator_tile_cy5->SetInputImage(ROIfilter_tile_cy5->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tile_cy5->Update();
+			rawImageType::Pointer tile_cy5 = rawDuplicator_tile_cy5->GetOutput();
+
 			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE	  ###################
 			
 			LabelType::Pointer temp_Tile = LabelType::New();
@@ -222,12 +242,12 @@ int main(int argc, char* argv[])
 			std::cout<<"Starting segmentation for Tile " << col*1000 << "_" << row*1000 << "\n";
 			//segResultsType tileSegResults;
 			//tileSegResults = RunNuclearSegmentation(tile_nuc, tile_gfp, argv[3]);
-			temp_Tile = RunNuclearSegmentation(tile_nuc, argv[3]);
+			temp_Tile = RunNuclearSegmentation(tile_nuc, argv[4]);
 			std::cout<<"Done with nucleus segmentation for Tile " << col*1000 << "_" << row*1000 << "\n\n";
 			//temp_Tile = tileSegResults.first;
 			Label_Tiles[col] = temp_Tile;
 			//Table_Tiles[col] = tileSegResults.second;
-			Table_Tiles[col] = ComputeFeatures(tile_nuc, tile_gfp, temp_Tile, argv[4] );
+			Table_Tiles[col] = ComputeFeaturesAndAssociations(tile_nuc, tile_gfp, tile_cy5, temp_Tile, argv[5] );
 			//Centroids_Tiles[col] = GetLabelToCentroidMap(tileSegResults.second);
 			Centroids_Tiles[col] = GetLabelToCentroidMap(Table_Tiles[col]);
 
@@ -273,6 +293,17 @@ int main(int argc, char* argv[])
 				rawDuplicator_tileBorder_gfp->Update();
 			rawImageType::Pointer tileBorder_gfp = rawDuplicator_tileBorder_gfp->GetOutput();
 
+			rawROIFilterType::Pointer ROIfilter_tileBorder_cy5 = rawROIFilterType::New();
+			ROIfilter_tileBorder_cy5->SetRegionOfInterest(region_tileBorder);
+			ROIfilter_tileBorder_cy5->SetInput(montage_cy5);
+			#pragma omp critical
+				ROIfilter_tileBorder_cy5->Update();
+			rawDuplicatorType::Pointer rawDuplicator_tileBorder_cy5 = rawDuplicatorType::New();
+			rawDuplicator_tileBorder_cy5->SetInputImage(ROIfilter_tileBorder_cy5->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tileBorder_cy5->Update();
+			rawImageType::Pointer tileBorder_cy5 = rawDuplicator_tileBorder_cy5->GetOutput();
+
 			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE_BORDER	  ###################
 			
 			LabelType::Pointer temp_TileBorder = LabelType::New();
@@ -301,12 +332,12 @@ int main(int argc, char* argv[])
 			std::cout<<"Starting segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n";
 			//segResultsType tileBorderSegResults;
 			//tileBorderSegResults = RunNuclearSegmentation(tileBorder_nuc, tileBorder_gfp, argv[3]);
-			temp_TileBorder = RunNuclearSegmentation(tileBorder_nuc, argv[3]);
+			temp_TileBorder = RunNuclearSegmentation(tileBorder_nuc, argv[4]);
 			std::cout<<"Done with nucleus segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n\n";
 			//temp_TileBorder = tileBorderSegResults.first;
 			Label_TileBorders[col-1] = temp_TileBorder;
 			//Table_TileBorders[col-1] = tileBorderSegResults.second;
-			Table_TileBorders[col-1] = ComputeFeatures(tileBorder_nuc, tileBorder_gfp, temp_TileBorder, argv[4] );
+			Table_TileBorders[col-1] = ComputeFeaturesAndAssociations(tileBorder_nuc, tileBorder_gfp, tileBorder_cy5, temp_TileBorder, argv[5] );
 			//Centroids_TileBorders[col-1] = GetLabelToCentroidMap(tileBorderSegResults.second);
 			Centroids_TileBorders[col-1] = GetLabelToCentroidMap(Table_TileBorders[col-1]);
 
@@ -507,6 +538,17 @@ int main(int argc, char* argv[])
 			rawDuplicator_rowBorder_gfp->Update();
 		rawImageType::Pointer rowBorder_gfp = rawDuplicator_rowBorder_gfp->GetOutput();
 
+		rawROIFilterType::Pointer ROIfilter_rowBorder_cy5 = rawROIFilterType::New();
+		ROIfilter_rowBorder_cy5->SetRegionOfInterest(region_rowBorder);
+		ROIfilter_rowBorder_cy5->SetInput(montage_cy5);
+		#pragma omp critical
+			ROIfilter_rowBorder_cy5->Update();
+		rawDuplicatorType::Pointer rawDuplicator_rowBorder_cy5 = rawDuplicatorType::New();
+		rawDuplicator_rowBorder_cy5->SetInputImage(ROIfilter_rowBorder_cy5->GetOutput());
+		#pragma omp critical
+			rawDuplicator_rowBorder_cy5->Update();
+		rawImageType::Pointer rowBorder_cy5 = rawDuplicator_rowBorder_cy5->GetOutput();
+
 		//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED ROW_BORDER	  ###################
 
 		LabelType::Pointer temp_RowBorder = LabelType::New();
@@ -535,12 +577,12 @@ int main(int argc, char* argv[])
 		std::cout<<"Starting segmentation for row border Y = " << row*1000 << "\n";
 		//segResultsType rowBorderSegResults;
 		//rowBorderSegResults = RunNuclearSegmentation(rowBorder_nuc, rowBorder_gfp, argv[3]);
-		temp_RowBorder = RunNuclearSegmentation(rowBorder_nuc, argv[3]);
+		temp_RowBorder = RunNuclearSegmentation(rowBorder_nuc, argv[4]);
 		std::cout<<"Done with nucleus segmentation for border Y = " << row*1000 << "\n\n";
 		//temp_RowBorder = rowBorderSegResults.first;
 		Label_RowBorders[row-1] = temp_RowBorder;
 		//Table_RowBorders[row-1] = rowBorderSegResults.second;
-		Table_RowBorders[row-1] = ComputeFeatures(rowBorder_nuc, rowBorder_gfp, temp_RowBorder, argv[4] );
+		Table_RowBorders[row-1] = ComputeFeaturesAndAssociations(rowBorder_nuc, rowBorder_gfp, rowBorder_cy5, temp_RowBorder, argv[5] );
 		//Centroids_RowBorders[row-1] = GetLabelToCentroidMap(rowBorderSegResults.second);
 		Centroids_RowBorders[row-1] = GetLabelToCentroidMap(Table_RowBorders[row-1]);
 
@@ -1097,7 +1139,7 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 //  COMPUTE FEATURES
 //#############################################################################################################
 
-vtkSmartPointer<vtkTable> ComputeFeatures(rawImageType::Pointer nucImg, rawImageType::Pointer gfpImg, LabelType::Pointer labImg, const char* fileName)
+vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer nucImg, rawImageType::Pointer gfpImg, rawImageType::Pointer cy5Img, LabelType::Pointer labImg, const char* fileName)
 {
 	ftk::ProjectDefinition projectDef;
 	projectDef.Load( fileName );
@@ -1117,6 +1159,8 @@ vtkSmartPointer<vtkTable> ComputeFeatures(rawImageType::Pointer nucImg, rawImage
 	sourceImages->AppendChannelFromData3D( nucImg->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "dapi", color, true);
 	color[0] = 0; color[1] = 255; color[2] = 0;
 	sourceImages->AppendChannelFromData3D( gfpImg->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "gfp", color, true);
+	color[0] = 255; color[1] = 255; color[2] = 0;
+	sourceImages->AppendChannelFromData3D( cy5Img->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "cy5", color, true);
 
 	ftk::Image::Pointer labelImage = ftk::Image::New();
 	color[0] = 255; color[1] = 255; color[2] = 255;
