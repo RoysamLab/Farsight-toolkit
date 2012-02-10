@@ -406,7 +406,7 @@ void NuclearAssociationRules::Compute()
 		} else {
 
 #ifdef _OPENMP
-			omp_set_nested(1);
+		omp_set_nested(1);
 #endif
 #pragma omp parallel for 
 			for(int j=0; j<numOfLabels; ++j)
@@ -417,11 +417,11 @@ void NuclearAssociationRules::Compute()
 				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);						
 			}
+#ifdef _OPENMP
+			omp_set_nested(0);
+#endif
 		}
 		std::cout<<"\tdone"<<std::endl;
-#ifdef _OPENMP
-		omp_set_nested(0);
-#endif
 	}	
 	
 	//Flag invalid objects
