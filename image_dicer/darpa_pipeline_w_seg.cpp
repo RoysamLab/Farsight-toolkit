@@ -146,6 +146,9 @@ int main(int argc, char* argv[])
 	std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_RowBorders;
 	Centroids_RowBorders.resize(num_rows-1);
 
+	string filename = "outFile_"+s+".txt";
+	ofstream myfile (filename.c_str());
+
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
 	//#pragma omp parallel for
 	for(int row=0; row<num_rows; ++row)
@@ -167,28 +170,27 @@ int main(int argc, char* argv[])
 		Centroids_TileBorders.resize(num_cols-1);
 
 		//##################	SEGMENTING EACH TILE IN A ROW    ###################
-		#pragma omp parallel for num_threads(16)
+		#pragma omp parallel for num_threads(7)
 		for(int col=0; col<num_cols; ++col)
 		{
 
 			int tid = omp_get_thread_num();
-			stringstream out;
-			out<<tid;
-			string s = out.str();
-			string filename = "outFile_"+s+".txt";
-			ofstream myfile (filename.c_str());
-
-			#pragma omp critical
-			{
-				counterTiles++;
-			}
-
-			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
+			//stringstream out;
+			//out<<tid;
+			//string s = out.str();
 
 			//#pragma omp critical
 			//{
-			//	myfile<<"Extracting Tile " << col*1000 << "_" << row*1000 << "\n";			
+			//	counterTiles++;
 			//}
+
+			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
+
+			#pragma omp critical
+			{
+				++counterTiles;
+				myfile<<"Extracting Tile " << col*1000 << "_" << row*1000 << " ThreadID " << counterTiles << "\n"<<std::flush;
+			}
 			
 			rawImageType::IndexType start_tile;
 			start_tile[0] = col*1000;
@@ -371,11 +373,14 @@ int main(int argc, char* argv[])
 			#pragma omp critical
 			{
 				myfile << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows << ", tid: " << tid << std::endl;
+				myfile<<"Done Extracting Tile " << col*1000 << "_" << row*1000 << " ThreadID " << counterTiles << "\n"<<std::flush;
+			}
+
 				//std::cout << ;
 			}
 
-			myfile.close();
 		}
+		myfile.close();
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
 
