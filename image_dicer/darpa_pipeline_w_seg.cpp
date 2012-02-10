@@ -146,8 +146,7 @@ int main(int argc, char* argv[])
 	std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_RowBorders;
 	Centroids_RowBorders.resize(num_rows-1);
 
-	string filename = "outFile_"+s+".txt";
-	ofstream myfile (filename.c_str());
+	ofstream myfile ("outPutFile.txt");
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
 	//#pragma omp parallel for
