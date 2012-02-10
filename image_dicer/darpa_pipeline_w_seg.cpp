@@ -49,7 +49,7 @@ bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
-	omp_set_nested(1);
+	//omp_set_nested(1);
 	int counterTiles = 0;
 	if(argc < 4)
 	{
