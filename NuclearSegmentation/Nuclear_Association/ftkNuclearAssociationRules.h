@@ -48,6 +48,8 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
+#include "omp.h"
+
 
 typedef itk::Image< unsigned short, 3 > LabImageType;
 typedef itk::Image< unsigned short, 3 > TargImageType;

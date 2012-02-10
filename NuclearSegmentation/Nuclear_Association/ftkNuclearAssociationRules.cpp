@@ -404,6 +404,11 @@ void NuclearAssociationRules::Compute()
 			for(int j=0; j<numOfLabels; ++j)
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {
+
+#ifdef _OPENMP
+			omp_set_nested(1);
+#endif
+#pragma omp parallel for 
 			for(int j=0; j<numOfLabels; ++j)
 			{
 				//cout<<j+1;
@@ -414,6 +419,9 @@ void NuclearAssociationRules::Compute()
 			}
 		}
 		std::cout<<"\tdone"<<std::endl;
+#ifdef _OPENMP
+		omp_set_nested(0);
+#endif
 	}	
 	
 	//Flag invalid objects
