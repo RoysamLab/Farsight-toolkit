@@ -405,7 +405,7 @@ void NuclearAssociationRules::Compute()
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {
 
-			int counterLables = 0;
+			int counterLabels = 0;
 #ifdef _OPENMP
 			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
 		omp_set_nested(1);
