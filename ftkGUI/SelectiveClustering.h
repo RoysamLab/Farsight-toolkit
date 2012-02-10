@@ -47,6 +47,11 @@ limitations under the License.
 #include "vtkTable.h"
 #include "vtkVariant.h"
 #include "vtkIdTypeArray.h"
+#include "vtkAnnotationLink.h"
+#include "vtkSelection.h"
+#include "vtkSelectionNode.h"
+#include "vtkViewUpdater.h"
+#include "vtkDataRepresentation.h"
 
 #include <vtkQtTableView.h>
 #include <vtkQtTableModelAdapter.h>
@@ -104,7 +109,12 @@ public:
 	std::set< vtkIdType > cluster_operator_SUBTRACT(vtkIdType key1,vtkIdType key2);
 	std::set< vtkIdType > cluster_operator_AND(vtkIdType key1,vtkIdType key2);
 	std::set< vtkIdType > cluster_operator_XOR(vtkIdType key1,vtkIdType key2);
-
+	
+	vtkSmartPointer<vtkAnnotationLink> ClusterAnnotationLink;
+	vtkSmartPointer<vtkViewUpdater> ClusterVtkViewUpdater;
+	
+	vtkSmartPointer<vtkAnnotationLink> ObjectAnnotationLink;
+	vtkSmartPointer<vtkViewUpdater> ObjectVtkViewUpdater;
 signals:
 	void SelectionChanged();
 	void ClusterChanged();
@@ -181,5 +191,7 @@ private:
 	QPushButton * RunOperatorButton;
 	QPushButton * ClearClusterButton;
 	QPushButton * RemoveClusterButton;
+
+	bool AnnotationLinkSetUp;
 };
 #endif

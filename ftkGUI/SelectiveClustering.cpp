@@ -29,6 +29,11 @@ SelectiveClustering::SelectiveClustering()
 	this->ClusterTableIDMap.clear();
 	this->CreateClusterTableHeaders();
 
+	this->ClusterAnnotationLink = vtkSmartPointer<vtkAnnotationLink>::New();
+	this->ClusterVtkViewUpdater = vtkSmartPointer<vtkViewUpdater>::New();
+
+	this->ObjectAnnotationLink = vtkSmartPointer<vtkAnnotationLink>::New();
+	this->ObjectVtkViewUpdater = vtkSmartPointer<vtkViewUpdater>::New();
 }
 
 vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSet)
@@ -95,12 +100,12 @@ bool SelectiveClustering::RemoveCluster(vtkIdTypeArray *SelectedClusters)
 	for (vtkIdType count = 0; count < SelectedClusters->GetSize(); count++)
 	{
 		vtkIdType key = SelectedClusters->GetValue(count);
-		std::cout<< "\n" << key;
+		//std::cout<< "\n" << key;
 		this->iter = this->ClusterMap.find(key);
 		if (this->iter != this->ClusterMap.end())
 		{
 			//found and removed
-			std::cout<< " removed ";
+			//std::cout<< " removed ";
 			this->ClusterMap.erase(this->iter);
 			this->RemoveRowFromClusterTable(key);
 			removed = true;
@@ -397,7 +402,11 @@ void SelectiveClustering::RemoveRowFromClusterTable(vtkIdType Key)
 	{
 		this->ClusterTable->RemoveRow((*this->TableIDIter).second);
 	}
-	this->ClusterTableIDMap.erase(this->TableIDIter);
+	for (vtkIdType row = 0; row != this->ClusterTable->GetNumberOfRows(); row++)
+	{
+		vtkIdType value = this->ClusterTable->GetValue(row,0).ToTypeInt64();
+		this->ClusterTableIDMap[value] = row;
+	}
 }
 
 std::set< vtkIdType > SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)
@@ -519,11 +528,12 @@ ClusterManager::ClusterManager()
 	this->HOperatorDisplayLayout->addWidget(OperatorList);
 	this->HOperatorDisplayLayout->addWidget(ActionType);
 	this->HOperatorDisplayLayout->addWidget(Operand2);
-	InfoLayout->addRow(this->HOperatorDisplayLayout);
+	this->HOperatorDisplayLayout->addWidget(this->RunOperatorButton);
+	//InfoLayout->addRow(this->HOperatorDisplayLayout);
 
 	QHBoxLayout* ButtonLayout = new QHBoxLayout();
 	ButtonLayout->addWidget(this->AddClusterButton);
-	ButtonLayout->addWidget(this->RunOperatorButton);
+	//ButtonLayout->addWidget(this->RunOperatorButton);
 	ButtonLayout->addWidget(this->ClearClusterButton);
 
 	//InfoLayout->addRow("Operator: ", this->OperatorList);
@@ -537,6 +547,7 @@ ClusterManager::ClusterManager()
 	
 	this->MainLayout->addLayout(ButtonLayout);
 	this->MainLayout->addLayout(HLayout);
+	this->MainLayout->addLayout(this->HOperatorDisplayLayout);
 
 	//this->MainLayout->addWidget(this->ClusterListView,0,0);
 	//this->MainLayout->addWidget(this->ClusterTableView->GetWidget(),0,1);
@@ -548,6 +559,7 @@ ClusterManager::ClusterManager()
 
 	this->setLayout(this->MainLayout);
 	this->setWindowTitle(tr("Cluster Manager"));
+	AnnotationLinkSetUp = false;
 }
 
 void ClusterManager::setClusteringModel(SelectiveClustering * newClusterModel)
@@ -593,6 +605,7 @@ void ClusterManager::RemoveSelectedClusters()
 	*/
 	vtkIdTypeArray * SelectedClusters = this->GetClusterTableSelections();
 	this->ClusterModel->RemoveCluster(SelectedClusters);
+	//this->ClusterModel->GetClusterTable()->Dump(16);
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
@@ -605,11 +618,12 @@ vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
 
 	this->ClusterTableView->GetSelectedItems(SelectedRows);
 	vtkSmartPointer<vtkTable> table = this->ClusterModel->GetClusterTable();
-
+	//table->Dump(16);
 	for (vtkIdType count = 0; count < SelectedRows->GetSize(); count++)
 	{
 		vtkIdType row = SelectedRows->GetValue(count);
-		SelectedClusters->InsertNextValue(table->GetValue(row, 0).ToTypeInt64());
+		vtkVariant value = table->GetValue(row, 0);
+		SelectedClusters->InsertNextValue(value.ToTypeInt64());
 	}
 	return SelectedClusters;
 }
@@ -627,16 +641,20 @@ void ClusterManager::ChangeInClusters()
 	this->ClusterTableView->Update();
 	vtkQtTableModelAdapter adapt(this->ClusterModel->GetClusterTable());
 	this->ClusterTableView->SetRepresentationFromInput(adapt.GetVTKDataObject());
+	if(!AnnotationLinkSetUp)
+	{
+		this->ClusterTableView->GetRepresentation()->SetAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
+		this->ClusterTableView->GetRepresentation()->SetSelectionType(vtkSelectionNode::PEDIGREEIDS);
+		this->ClusterModel->ClusterVtkViewUpdater->AddView(this->ClusterTableView);
+		this->ClusterModel->ClusterVtkViewUpdater->AddAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
+		AnnotationLinkSetUp = true;
+	}
 	this->ClusterTableView->Update();
 
 	//display of clusters in a list
 	/*QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	this->ClusterListView->clear();
 	this->ClusterListView->addItems( ClusterList);*/
-
-	//
-
-
 
 	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	Operand1->clear();
