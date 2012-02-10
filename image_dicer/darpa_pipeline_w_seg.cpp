@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
 		for(int col=0; col<num_cols; ++col)
 		{
 
-			tid = omp_get_thread_num();
+			int tid = omp_get_thread_num();
 			stringstream out;
 			out<<tid;
 			string s = out.str();
@@ -373,6 +373,8 @@ int main(int argc, char* argv[])
 				myfile << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows << ", tid: " << tid << std::endl;
 				//std::cout << ;
 			}
+
+			myfile.close();
 		}
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
