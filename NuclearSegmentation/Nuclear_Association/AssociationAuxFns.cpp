@@ -208,8 +208,14 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 #ifdef _OPENMP
 omp_set_nested(1);
 #endif
+
+#ifdef _MSC_VER
+		#pragma omp parallel for
+		for( int i=0; i<labelsList.size(); ++i ){
+#else
 		#pragma omp parallel for
 		for( USPixelType i=0; i<labelsList.size(); ++i ){
+#endif
 			if( zp && (zero==i) ) continue;
 			if( zp && (i>zero)  ) ind = i-1;
 			else ind = i;
