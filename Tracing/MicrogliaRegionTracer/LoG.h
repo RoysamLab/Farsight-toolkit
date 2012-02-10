@@ -6,13 +6,12 @@
 #include "itkImageFileWriter.h"
 #include "itkMedianImageFilter.h"
 
-#include "fregl/fregl_roi.h"
 #include "Cell.h"
 
 class LoG
 {
 private:
-	typedef fregl_roi::ImageType ImageType;
+	typedef Cell::ImageType ImageType;
 	typedef Cell::LoGImageType LoGImageType;
 
 public:

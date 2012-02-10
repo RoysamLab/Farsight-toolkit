@@ -22,7 +22,7 @@ itk::uint64_t Cell::getZ() const
 	return cell_z;
 }
 
-void Cell::setSize(Cell::ImageType::SizeType cell_size)
+void Cell::setSize(ImageType::SizeType cell_size)
 {
 	this->cell_size = cell_size;
 }
@@ -32,7 +32,7 @@ Cell::ImageType::SizeType Cell::getSize()
 	return cell_size;
 }
 
-void Cell::setRequestedSize(Cell::ImageType::SizeType cell_requested_size)
+void Cell::setRequestedSize(ImageType::SizeType cell_requested_size)
 {
 	this->cell_requested_size = cell_requested_size;
 }
@@ -42,7 +42,7 @@ Cell::ImageType::SizeType Cell::getRequestedSize()
 	return cell_requested_size;
 }
 
-void Cell::setShiftIndex(Cell::ImageType::IndexType shift_index)
+void Cell::setShiftIndex(ImageType::IndexType shift_index)
 {
 	this->shift_index = shift_index;
 }

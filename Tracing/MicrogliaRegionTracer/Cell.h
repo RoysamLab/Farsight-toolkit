@@ -1,7 +1,7 @@
 #ifndef Cell_H
 #define Cell_H
 
-#include <vector>
+#include <deque>
 
 #include "itkImage.h"
 #include "itkIntTypes.h"
@@ -12,9 +12,15 @@
 class Cell
 {
 public:
-	typedef fregl_roi::ImageType ImageType;
-	typedef itk::Image<float, 3> LoGImageType;
-	typedef itk::Image<float, 3> VesselnessImageType;
+	typedef	unsigned char							InputPixelType;
+	typedef fregl_roi< InputPixelType >::ImageType	ImageType;
+	
+	//typedef ImageType::Pointer					ImageTypePointer;
+	//typedef ImageType::SizeType					ImageSizeType;
+	//typedef ImageType::IndexType					ImageIndexType;
+
+	typedef itk::Image<float, 3>					LoGImageType;
+	typedef itk::Image<float, 3>					VesselnessImageType;
 
 public:
 	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
@@ -33,7 +39,7 @@ public:
 	ImageType::IndexType getShiftIndex();
 
 public:
-	std::vector<ImageType::IndexType> critical_points_vector;
+	std::deque< ImageType::IndexType > critical_points_queue; //deque is double-ended queue
 	
 	ImageType::Pointer image;
 	ImageType::Pointer critical_point_image;

@@ -13,8 +13,8 @@ int main(int argc, char* argv[])
 	
 	std::cout << "Entering LoadCellPoints" << std::endl;
 	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/787_684_81_soma.TIF" );
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/114_81_17_soma.TIF");
-	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
+	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/114_81_17_soma.TIF");
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
 
 	std::cout << "Entering Trace" << std::endl;
 	MRT->Trace();

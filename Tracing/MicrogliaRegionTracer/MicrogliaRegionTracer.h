@@ -60,7 +60,8 @@ public:
 	void BuildTree(Cell* cell);
 	double** BuildAdjacencyGraph(Cell* cell);
 	double CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
-	Tree* BuildMST(Cell* cell, double** AdjGraph);
+	Tree* BuildMST1(Cell* cell, double** AdjGraph);
+	Tree* BuildMST2(Cell* cell, double** AdjGraph);
 	
 };
 

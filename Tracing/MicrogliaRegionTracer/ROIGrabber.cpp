@@ -2,7 +2,7 @@
 
 ROIGrabber::ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename)
 {
-	roi_filter = new fregl_roi(joint_transforms_filename, img_path, anchor_filename, true);
+	roi_filter = new fregl_roi< InputPixelType >(joint_transforms_filename, img_path, anchor_filename, true);
 }
 
 ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
