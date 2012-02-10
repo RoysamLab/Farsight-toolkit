@@ -193,31 +193,36 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		sizee[1] = inp_labeled->GetLargestPossibleRegion().GetSize()[1];  // size along Y
 		sizee[2] = inp_labeled->GetLargestPossibleRegion().GetSize()[2];  // size along Z
 
-		unsigned long roi_list_size = zp ?
-					((unsigned long)number_of_rois*((unsigned long)labelsList.size()-1)) : 
-					((unsigned long)number_of_rois*(unsigned long)labelsList.size());
+		itk::SizeValueType roi_list_size = zp ?
+					((itk::SizeValueType)number_of_rois*(labelsList.size()-1)) : 
+					((itk::SizeValueType)number_of_rois*labelsList.size());
 		std::vector<double> quantified_numbers_cell(roi_list_size,0.0);
 
 
-		unsigned long ind;
+		itk::SizeValueType ind;
 		ind = 0;
+		std::cout<<"Bounding boxes computed"<<std::endl;
+		#pragma omp parallel for
 		for( USPixelType i=0; i<labelsList.size(); ++i ){
 			if( zp && (zero==i) ) continue;
 			//Get label indices
 			labelindicestype indices1;
-			indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
-
+			double centroid_x,centroid_y,centroid_z;
+			GeometryFilterType::BoundingBoxType boundbox;
+			#pragma omp critical
+			{
+				indices1 = geomfilt1->GetPixelIndices(labelsList[i]);
+				//Get Centroid
+				centroid_x = geomfilt1->GetCentroid(labelsList[i])[0];
+				centroid_y = geomfilt1->GetCentroid(labelsList[i])[1];
+				centroid_z = geomfilt1->GetCentroid(labelsList[i])[2];
+				//Create an image with bounding box + 2 * outside distance + 2
+				//and get distance map for the label
+				boundbox = geomfilt1->GetBoundingBox(labelsList[i]);
+			}
 			//Create vnl array 3xN( label indicies )
 			vnl_matrix<double> B(3,indices1.size());
 
-			//Get Centroid
-			double centroid_x = (double)(geomfilt1->GetCentroid(labelsList[i])[0]);
-			double centroid_y = (double)(geomfilt1->GetCentroid(labelsList[i])[1]);
-			double centroid_z = (double)(geomfilt1->GetCentroid(labelsList[i])[2]);
-
-			//Create an image with bounding box + 2 * outside distance + 2
-			//and get distance map for the label
-			GeometryFilterType::BoundingBoxType boundbox = geomfilt1->GetBoundingBox(labelsList[i]);
 			FloatImageType::Pointer inp_lab = FloatImageType::New();
 			FloatImageType::PointType origint; origint[0] = 0; origint[1] = 0; origint[2] = 0;
 			inp_lab->SetOrigin( origint );
@@ -240,7 +245,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 			//Populate matrix with deviations from the centroid for principal axes and
 			//at the same time set up distance-transform computation
-			unsigned long ind1=0;
+			itk::SizeValueType ind1=0;
 			for( labelindicestype::iterator itPixind = indices1.begin(); itPixind!=indices1.end(); ++itPixind ){
 				IteratorType iterator3( input_image, input_image->GetRequestedRegion() );
 				iterator3.SetIndex( *itPixind );
@@ -264,7 +269,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 			try{
 				dt_obj->Update() ;
 			} catch( itk::ExceptionObject & err ){
-				std::cout << "Error in Distance Transform: " << err << std::endl;
+				std::cerr << "Error in Distance Transform: " << err << std::endl;
 			}
 			FloatImageType::Pointer dist_im = dt_obj->GetOutput();
 
@@ -341,16 +346,18 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					if( cur_in[0] < 0 || cur_in[1] < 0 || cur_in[2] < 0 ) continue;
 					if( cur_in[0] >= sizee[0] || cur_in[1] >= sizee[1] || cur_in[2] >= sizee[2] ) continue;
 					iterator44.SetIndex( cur_in );
-					USImageType::PixelType pixel_intensity = iterator44.Get();
+					USImageType::PixelType pixel_intensity;
+					#pragma omp critical
+						pixel_intensity = iterator44.Get();
 					if( pixel_intensity < thresh ) continue;
 
 					//The projection of the point on the plane formed by the fist two major axes
 					double xxx, yyy, zzz;
-					xxx = (double)cur_in[0] - EP_norm[0]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
+					xxx = cur_in[0] - EP_norm[0]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
 									/(EP_norm[0]*EP_norm[0]+EP_norm[1]*EP_norm[1]+EP_norm[2]*EP_norm[2]));
-					yyy = (double)cur_in[1] - EP_norm[1]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
+					yyy = cur_in[1] - EP_norm[1]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
 									/(EP_norm[0]*EP_norm[0]+EP_norm[1]*EP_norm[1]+EP_norm[2]*EP_norm[2]));
-					zzz = (double)cur_in[2] - EP_norm[2]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
+					zzz = cur_in[2] - EP_norm[2]*((EP_norm[0]*cur_in[0]+EP_norm[1]*cur_in[1]+EP_norm[2]*cur_in[2]+dee)
 									/(EP_norm[0]*EP_norm[0]+EP_norm[1]*EP_norm[1]+EP_norm[2]*EP_norm[2]));
 					//The vector from the centroid to the projected point
 					n_vec[0] = centroid_x-xxx;
@@ -377,6 +384,8 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 			++ind;
 		}
 		std::cout<<"Starting k-means\n";
+		std::vector<double> quantified_numbers_cell_cpy(roi_list_size);
+		std::copy(quantified_numbers_cell.begin(), quantified_numbers_cell.end(), quantified_numbers_cell_cpy.begin() );
 		//Run k-means
 		//Most of the code is adapted from mul/mbl/mbl_k_means.cxx
 		std::sort(quantified_numbers_cell.begin(), quantified_numbers_cell.end());
@@ -388,8 +397,8 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		std::vector< USImageType::PixelType > nNearest( k, 0 );
 		//Use the elements that are evenly spaced to get the intial centers
 		for( unsigned i=0; i<k; ++i ){
-			double index = (double)((i+1)*roi_list_size)/(k+1);
-			centers.at(i) = quantified_numbers_cell.at((unsigned long)index);
+			double index = ((double)(i+1)*roi_list_size)/(k+1);
+			centers.at(i) = quantified_numbers_cell.at((itk::SizeValueType)index);
 			bool duplicated;
 			if(i){
 				if( centers.at((i-1)) == centers.at(i) ){
@@ -409,7 +418,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		bool changed = true;
 		while(changed){
 			changed = false;
-			for(unsigned long i=0; i<roi_list_size; ++i){
+			for(itk::SizeValueType i=0; i<roi_list_size; ++i){
 				unsigned bestCentre = 0;
 				double bestDist = fabs((centers.at(0)-quantified_numbers_cell.at(i)));
 				for(unsigned j=1; j<k; ++j){
@@ -432,23 +441,26 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		for( unsigned i=0; i<k; ++i )
 			std::cout<<"Center "<<i<<" "<<centers.at(i)<<"\n";
 
-		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (500.0*thresh)?
-					 ((centers.at(0)+centers.at(1))/2) : (500.0*thresh); //Arbitrary upper thresh
+		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (100.0*thresh)?
+					 ((centers.at(0)+centers.at(1))/2) : (100.0*thresh); //Arbitrary upper thresh
+
+		std::cout<<"Positive_thresh "<<Positive_thresh<<"\n";
 
 		std::cout<<"Done k-means\n";
 		ind = 0;
-		for( USPixelType i=0; i<labelsList.size(); ++i, ++ind ){
+		for( USPixelType i=0; i<labelsList.size(); ++i ){
 			if( zp && (zero==i) ) continue;
 			int num_positive_rois = 0;
 			for( unsigned j=0; j<number_of_rois; ++j ){
 				itk::SizeValueType index_of_roi = ind*number_of_rois+j;
-				if( quantified_numbers_cell.at(index_of_roi)>Positive_thresh )
+				if( quantified_numbers_cell_cpy.at(index_of_roi)>Positive_thresh )
 					++num_positive_rois;
 			}
 			qfied_num.push_back(num_positive_rois);
+			++ind;
 		}
 	}
-	std::cout<<"Done surroundedness\n";
+	std::cout<<"Done surroundedness\n"<<std::flush;
 	return qfied_num;
 }
 
