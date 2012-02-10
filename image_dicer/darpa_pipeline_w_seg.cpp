@@ -15,8 +15,8 @@
 #include "ftkUtils.h"
 #include "ftkImage.h"
 
-//#include "../NuclearSegmentation/yousef_core/yousef_seg.h"
-//#include "../ftkFeatures/ftkLabelImageToFeatures.h"
+#include "../NuclearSegmentation/yousef_core/yousef_seg.h"
+#include "../ftkFeatures/ftkLabelImageToFeatures.h"
 #include "../NuclearSegmentation/NucleusEditor/ftkProjectProcessor.h"
 #include <iostream>
 #include <sstream>
