@@ -164,7 +164,7 @@ protected:
 	bool GetResultImage();									//Gets the result of last module and puts it in labelImage
 	void GetParameters(void);								//Retrieve the Parameters from nuclear segmentation.
 	void ResetAll(void);									//Clear all memory and variables
-	void ConvertParameters(int params[11]);
+	void ConvertParameters(int params[12]);
 	
 	//Editing Utilities:
 	long int maxID(void);										//Get the maximum ID in the table!

@@ -44,6 +44,7 @@ NuclearSegmentation::NuclearSegmentation()
 	this->ResetAll();
 
 	paramNames.push_back("high_sensitivity");
+	paramNames.push_back("adaptive_binarization");
 	paramNames.push_back("LoG_size");
 	paramNames.push_back("min_scale");
 	paramNames.push_back("max_scale");
@@ -157,20 +158,21 @@ int NuclearSegmentation::GetParameter(std::string name)
 	return -1;
 }
 
-void NuclearSegmentation::ConvertParameters(int params[11])
+void NuclearSegmentation::ConvertParameters(int params[12])
 {
 	//These are defaults:
 	params[0]=0;
-	params[1]=30;
-	params[2]=5;
-	params[3]=8;
-	params[4]=5;
-	params[5]=2;
-	params[6]=1;
-	params[7]=2;
-	params[8]=1;
-	params[9]=6;
-	params[10]=100;
+	params[1]=0;
+	params[2]=30;
+	params[3]=5;
+	params[4]=8;
+	params[5]=5;
+	params[6]=2;
+	params[7]=1;
+	params[8]=2;
+	params[9]=1;
+	params[10]=6;
+	params[11]=100;
 
 	for(int i=0; i<(int)myParameters.size(); ++i)
 	{
@@ -196,6 +198,8 @@ void NuclearSegmentation::ConvertParameters(int params[11])
 			params[9] = myParameters.at(i).value;
 		if(myParameters.at(i).name == paramNames.at(10))
 			params[10] = myParameters.at(i).value;
+		if(myParameters.at(i).name == paramNames.at(11))
+			params[11] = myParameters.at(i).value;
 	}
 }
 
@@ -226,7 +230,7 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 	}
 	else
 	{
-		int params[11];
+		int params[12];
 		ConvertParameters(params);
 		NucleusSeg->setParams(params); //Will use the parameters that have been set and defauls for the rest
 	}
@@ -314,7 +318,7 @@ bool NuclearSegmentation::SegmentAllTimes(bool finalize)
 	}
 	else
 	{
-		int params[11];
+		int params[12];
 		ConvertParameters(params);
 		NucleusSeg->setParams(params); //Will use the parameters that have been set and defauls for the rest
 	}
@@ -375,45 +379,49 @@ void NuclearSegmentation::GetParameters()
 	p1.value = NucleusSeg->getShift();
 	this->myParameters.push_back(p1);
 	Parameter p2;
-	p2.name = "LoG_size";
-	p2.value = NucleusSeg->getSigma();
+	p2.name = "adaptive_binarization";
+	p2.value = NucleusSeg->isAdaptiveBinEnabled();
 	this->myParameters.push_back(p2);
 	Parameter p3;
-	p3.name = "min_scale";
-	p3.value = NucleusSeg->getScaleMin();
+	p3.name = "LoG_size";
+	p3.value = NucleusSeg->getSigma();
 	this->myParameters.push_back(p3);
 	Parameter p4;
-	p4.name = "max_scale";
-	p4.value = NucleusSeg->getScaleMax();
+	p4.name = "min_scale";
+	p4.value = NucleusSeg->getScaleMin();
 	this->myParameters.push_back(p4);
 	Parameter p5;
-	p5.name = "xy_clustering_res";
-	p5.value = NucleusSeg->getRegionXY();
+	p5.name = "max_scale";
+	p5.value = NucleusSeg->getScaleMax();
 	this->myParameters.push_back(p5);
 	Parameter p6;
-	p6.name = "z_clustering_res";
-	p6.value = NucleusSeg->getRegionZ();
+	p6.name = "xy_clustering_res";
+	p6.value = NucleusSeg->getRegionXY();
 	this->myParameters.push_back(p6);
 	Parameter p7;
-	p7.name = "finalize_segmentation";
-	p7.value = NucleusSeg->isSegmentationFinEnabled();
+	p7.name = "z_clustering_res";
+	p7.value = NucleusSeg->getRegionZ();
 	this->myParameters.push_back(p7);
 	Parameter p8;
-	p8.name = "sampling_ratio_XY_to_Z";
-	p8.value = NucleusSeg->getSamplingRatio();
+	p8.name = "finalize_segmentation";
+	p8.value = NucleusSeg->isSegmentationFinEnabled();
 	this->myParameters.push_back(p8);
 	Parameter p9;
-	p9.name = "Use_Distance_Map";
-	p9.value = NucleusSeg->isUseDapEnabled();
+	p9.name = "sampling_ratio_XY_to_Z";
+	p9.value = NucleusSeg->getSamplingRatio();
 	this->myParameters.push_back(p9);
 	Parameter p10;
-	p10.name = "refinement_range";
-	p10.value = NucleusSeg->getRefineRange();
+	p10.name = "Use_Distance_Map";
+	p10.value = NucleusSeg->isUseDapEnabled();
 	this->myParameters.push_back(p10);
 	Parameter p11;
-	p11.name = "min_object_size";
-	p11.value = NucleusSeg->getMinObjSize();
+	p11.name = "refinement_range";
+	p11.value = NucleusSeg->getRefineRange();
 	this->myParameters.push_back(p11);
+	Parameter p12;
+	p12.name = "min_object_size";
+	p12.value = NucleusSeg->getMinObjSize();
+	this->myParameters.push_back(p12);
 }
 
 bool NuclearSegmentation::GetResultImage()
