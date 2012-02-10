@@ -122,6 +122,7 @@ public:
 
 	//Come from parameters
 	int getShift(){ return shift; };
+	int isAdaptiveBinEnabled(){ return adaptive_bin; };
 	int getSigma(){ return sigma; };
 	int getScaleMin(){ return scaleMin; };
 	int getScaleMax(){ return scaleMax; };
@@ -193,6 +194,8 @@ private:
 	
 	//parameters
 	int shift;
+	int adaptive_bin;
+	//added by vinay on 02/09/2012
 	int sigma;
 	double scaleMin;
 	double scaleMax;

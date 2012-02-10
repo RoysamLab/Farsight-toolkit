@@ -57,6 +57,7 @@ yousef_nucleus_seg::~yousef_nucleus_seg()
 void yousef_nucleus_seg::setParams(int *params)
 {
 	shift = *params; params++;
+	adaptive_bin = *params; params++;
 	sigma = *params; params++;
 	scaleMin = *params; params++;
 	scaleMax = *params; params++;
@@ -1339,20 +1340,22 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	char* pchStr = NULL;
 	int iCounter = 0;
 	int m_iNumOfElements = 0;
-	int params[11];//modified by yousef on 11/4/2008
+	int params[12];//modified by yousef on 11/4/2008
 	params[0]=0;	//sensitivity
-	params[1]=30;	//loG size
-	params[2]=5;	//min_scale
-	params[3]=8;	//max_scale
-	params[4]=5;	//xy_clustering
-	params[5]=2;	//z_clust
-	params[6]=0;	//finalize
-	params[7]=2;	//sampling ratio
-	params[8]=1;	//use_dist_map
+	params[1]=0;	//adaptive binarization
+	//added by vinay on 02/09/2012
+	params[2]=30;	//loG size
+	params[3]=5;	//min_scale
+	params[4]=8;	//max_scale
+	params[5]=5;	//xy_clustering
+	params[6]=2;	//z_clust
+	params[7]=0;	//finalize
+	params[8]=2;	//sampling ratio
+	params[9]=1;	//use_dist_map
 	//added by yousef on 11/4/2008
-	params[9]=6;	//refinement range
+	params[10]=6;	//refinement range
 	//added by yousef on 12/5/2008
-	params[10]=100;	//min_object_size
+	params[11]=100;	//min_object_size
 	std::ifstream inFile(pFname);
 	if (! inFile)
 	{
@@ -1425,26 +1428,28 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	{
 		if(!strcmp(m_pData[i].m_pName,"high_sensitivity"))
 			params[0] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"LoG_size"))
+		else if(!strcmp(m_pData[i].m_pName,"adaptive_binarization"))
 			params[1] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"min_scale"))
+		else if(!strcmp(m_pData[i].m_pName,"LoG_size"))
 			params[2] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"max_scale"))
+		else if(!strcmp(m_pData[i].m_pName,"min_scale"))
 			params[3] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"xy_clustering_res"))
+		else if(!strcmp(m_pData[i].m_pName,"max_scale"))
 			params[4] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"z_clustering_res"))
+		else if(!strcmp(m_pData[i].m_pName,"xy_clustering_res"))
 			params[5] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"finalize_segmentation"))
+		else if(!strcmp(m_pData[i].m_pName,"z_clustering_res"))
 			params[6] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"sampling_ratio_XY_to_Z"))
+		else if(!strcmp(m_pData[i].m_pName,"finalize_segmentation"))
 			params[7] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"Use_Distance_Map"))
+		else if(!strcmp(m_pData[i].m_pName,"sampling_ratio_XY_to_Z"))
 			params[8] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"refinement_range"))
+		else if(!strcmp(m_pData[i].m_pName,"Use_Distance_Map"))
 			params[9] = m_pData[i].m_pValue;
-		else if(!strcmp(m_pData[i].m_pName,"min_object_size"))
+		else if(!strcmp(m_pData[i].m_pName,"refinement_range"))
 			params[10] = m_pData[i].m_pValue;
+		else if(!strcmp(m_pData[i].m_pName,"min_object_size"))
+			params[11] = m_pData[i].m_pValue;
 		else
 			continue;
 	}
@@ -1470,6 +1475,7 @@ void yousef_nucleus_seg::writeParametersToFile()
 	outFile << "! All parameters are case sensitive"<<std::endl;
 	outFile << std::endl;
 	outFile << "high_sensitivity\t:\t"<<shift<<std::endl;
+	outFile << "adaptive_binarization\t:\t"<<adaptive_bin<<std::endl;
 	outFile << "LoG_size\t:\t"<<sigma<<std::endl;
 	outFile << "min_scale\t:\t"<<scaleMin<<std::endl;
 	outFile << "max_scale\t:\t"<<scaleMax<<std::endl;
