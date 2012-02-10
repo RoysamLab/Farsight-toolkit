@@ -8,6 +8,7 @@
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageDuplicator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 #include "vtkTable.h"
@@ -29,6 +30,9 @@
 typedef itk::Image<unsigned char,  3> rawImageType;
 typedef itk::Image<unsigned int, 3> LabelType;
 typedef MultipleNeuronTracer::ImageType3D gfpImageType;
+typedef itk::ImageDuplicator< rawImageType >  rawDuplicatorType;
+typedef itk::ImageDuplicator< LabelType >  LabelDuplicatorType;
+typedef itk::ImageDuplicator< gfpImageType >  gfpDuplicatorType;
 typedef itk::RegionOfInterestImageFilter< rawImageType, rawImageType > rawROIFilterType;
 typedef itk::RegionOfInterestImageFilter< gfpImageType, gfpImageType > gfpROIFilterType;
 typedef itk::RegionOfInterestImageFilter< LabelType, LabelType > LabelROIFilterType;
@@ -128,7 +132,7 @@ int main(int argc, char* argv[])
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
 	//#pragma omp parallel for
-	for(unsigned long long row=0; row<num_rows; ++row)
+	for(int row=0; row<num_rows; ++row)
 	{
 
 		//##################	INITIALIZING VARIABLES FOR TILES AND TILE_BORDERS	  ###################
@@ -147,8 +151,8 @@ int main(int argc, char* argv[])
 		Centroids_TileBorders.resize(num_cols-1);
 
 		//##################	SEGMENTING EACH TILE IN A ROW    ###################
-		#pragma omp parallel for
-		for(unsigned long long col=0; col<num_cols; ++col)
+		#pragma omp parallel for num_threads(16)
+		for(int col=0; col<num_cols; ++col)
 		{
 
 			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
@@ -171,16 +175,24 @@ int main(int argc, char* argv[])
 			rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
 			ROIfilter_tile_nuc->SetRegionOfInterest(region_tile);
 			ROIfilter_tile_nuc->SetInput(montage_nuc);
-			//#pragma omp critical
+			#pragma omp critical
 				ROIfilter_tile_nuc->Update();
-			rawImageType::Pointer tile_nuc = ROIfilter_tile_nuc->GetOutput();
+			rawDuplicatorType::Pointer rawDuplicator_tile_nuc = rawDuplicatorType::New();
+			rawDuplicator_tile_nuc->SetInputImage(ROIfilter_tile_nuc->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tile_nuc->Update();
+			rawImageType::Pointer tile_nuc = rawDuplicator_tile_nuc->GetOutput();
 
 			rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
 			ROIfilter_tile_gfp->SetRegionOfInterest(region_tile);
 			ROIfilter_tile_gfp->SetInput(montage_gfp);
-			//#pragma omp critical
+			#pragma omp critical
 				ROIfilter_tile_gfp->Update();
-			rawImageType::Pointer tile_gfp = ROIfilter_tile_gfp->GetOutput();
+			rawDuplicatorType::Pointer rawDuplicator_tile_gfp = rawDuplicatorType::New();
+			rawDuplicator_tile_gfp->SetInputImage(ROIfilter_tile_gfp->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tile_gfp->Update();
+			rawImageType::Pointer tile_gfp = rawDuplicator_tile_gfp->GetOutput();
 
 			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE	  ###################
 			
@@ -242,16 +254,24 @@ int main(int argc, char* argv[])
 			rawROIFilterType::Pointer ROIfilter_tileBorder_nuc = rawROIFilterType::New();
 			ROIfilter_tileBorder_nuc->SetRegionOfInterest(region_tileBorder);
 			ROIfilter_tileBorder_nuc->SetInput(montage_nuc);
-			//#pragma omp critical
+			#pragma omp critical
 				ROIfilter_tileBorder_nuc->Update();
-			rawImageType::Pointer tileBorder_nuc = ROIfilter_tileBorder_nuc->GetOutput();
+			rawDuplicatorType::Pointer rawDuplicator_tileBorder_nuc = rawDuplicatorType::New();
+			rawDuplicator_tileBorder_nuc->SetInputImage(ROIfilter_tileBorder_nuc->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tileBorder_nuc->Update();
+			rawImageType::Pointer tileBorder_nuc = rawDuplicator_tileBorder_nuc->GetOutput();
 
 			rawROIFilterType::Pointer ROIfilter_tileBorder_gfp = rawROIFilterType::New();
 			ROIfilter_tileBorder_gfp->SetRegionOfInterest(region_tileBorder);
 			ROIfilter_tileBorder_gfp->SetInput(montage_gfp);
-			//#pragma omp critical
+			#pragma omp critical
 				ROIfilter_tileBorder_gfp->Update();
-			rawImageType::Pointer tileBorder_gfp = ROIfilter_tileBorder_gfp->GetOutput();
+			rawDuplicatorType::Pointer rawDuplicator_tileBorder_gfp = rawDuplicatorType::New();
+			rawDuplicator_tileBorder_gfp->SetInputImage(ROIfilter_tileBorder_gfp->GetOutput());
+			#pragma omp critical
+				rawDuplicator_tileBorder_gfp->Update();
+			rawImageType::Pointer tileBorder_gfp = rawDuplicator_tileBorder_gfp->GetOutput();
 
 			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE_BORDER	  ###################
 			
@@ -468,16 +488,24 @@ int main(int argc, char* argv[])
 		rawROIFilterType::Pointer ROIfilter_rowBorder_nuc = rawROIFilterType::New();
 		ROIfilter_rowBorder_nuc->SetRegionOfInterest(region_rowBorder);
 		ROIfilter_rowBorder_nuc->SetInput(montage_nuc);
-		//#pragma omp critical
+		#pragma omp critical
 			ROIfilter_rowBorder_nuc->Update();
-		rawImageType::Pointer rowBorder_nuc = ROIfilter_rowBorder_nuc->GetOutput();
+		rawDuplicatorType::Pointer rawDuplicator_rowBorder_nuc = rawDuplicatorType::New();
+		rawDuplicator_rowBorder_nuc->SetInputImage(ROIfilter_rowBorder_nuc->GetOutput());
+		#pragma omp critical
+			rawDuplicator_rowBorder_nuc->Update();
+		rawImageType::Pointer rowBorder_nuc = rawDuplicator_rowBorder_nuc->GetOutput();
 
 		rawROIFilterType::Pointer ROIfilter_rowBorder_gfp = rawROIFilterType::New();
 		ROIfilter_rowBorder_gfp->SetRegionOfInterest(region_rowBorder);
 		ROIfilter_rowBorder_gfp->SetInput(montage_gfp);
-		//#pragma omp critical
+		#pragma omp critical
 			ROIfilter_rowBorder_gfp->Update();
-		rawImageType::Pointer rowBorder_gfp = ROIfilter_rowBorder_gfp->GetOutput();
+		rawDuplicatorType::Pointer rawDuplicator_rowBorder_gfp = rawDuplicatorType::New();
+		rawDuplicator_rowBorder_gfp->SetInputImage(ROIfilter_rowBorder_gfp->GetOutput());
+		#pragma omp critical
+			rawDuplicator_rowBorder_gfp->Update();
+		rawImageType::Pointer rowBorder_gfp = rawDuplicator_rowBorder_gfp->GetOutput();
 
 		//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED ROW_BORDER	  ###################
 
@@ -879,7 +907,11 @@ int main(int argc, char* argv[])
 		ROIfilter3->SetInput(somaMontage);
 		#pragma omp critical
 			ROIfilter3->Update();
-		LabelType::Pointer img_soma = ROIfilter3->GetOutput();
+		LabelDuplicatorType::Pointer LabelDuplicator = LabelDuplicatorType::New();
+		LabelDuplicator->SetInputImage(ROIfilter3->GetOutput());
+		#pragma omp critical
+			LabelDuplicator->Update();
+		LabelType::Pointer img_soma = LabelDuplicator->GetOutput();
 
 		rawROIFilterType::Pointer ROIfilter2 = rawROIFilterType::New();
 		ROIfilter2->SetRegionOfInterest(desiredRegion2);
@@ -887,9 +919,13 @@ int main(int argc, char* argv[])
 		#pragma omp critical
 			ROIfilter2->Update();
 		rawImageType::Pointer img_gfp = ROIfilter2->GetOutput();
-
+		rawDuplicatorType::Pointer rawDuplicator = rawDuplicatorType::New();
+		rawDuplicator->SetInputImage(ROIfilter2->GetOutput());
+		#pragma omp critical
+			rawDuplicator->Update();
+		
 		itk::CastImageFilter< rawImageType, gfpImageType >::Pointer caster = itk::CastImageFilter< rawImageType, gfpImageType>::New();
-		caster->SetInput(img_gfp);
+		caster->SetInput(rawDuplicator->GetOutput());
 		caster->Update();
 		gfpImageType::Pointer img_trace = caster->GetOutput();
 
