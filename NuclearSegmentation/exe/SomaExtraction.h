@@ -41,9 +41,9 @@ public:
 	typedef std::vector<OutputImageType::IndexType> centroidVectorType;
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
 	typedef itk::ImageRegionConstIterator< OutputImageType > ConstIteratorType;
-	typedef itk::Image< unsigned short, Dim > SegmentedImageType;
+	typedef itk::Image< unsigned int, Dim > SegmentedImageType;
 	typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
-	typedef itk::BinaryBallStructuringElement< unsigned short, Dim > KernelType;
+	typedef itk::BinaryBallStructuringElement< unsigned int, Dim > KernelType;
 	//typedef itk::FlatStructuringElement< Dim > KernelType;
 	typedef itk::GrayscaleMorphologicalOpeningImageFilter< SegmentedImageType, SegmentedImageType, KernelType > morphOpenFilterType;
 	typedef itk::RelabelComponentImageFilter< SegmentedImageType, SegmentedImageType > RelabelFilterType;
@@ -53,7 +53,7 @@ public:
 	typedef itk::LabelMap< LabelObjectType > LabelMapType;
 	typedef itk::BinaryImageToShapeLabelMapFilter< OutputImageType, LabelMapType >	ConverterType;
 	typedef itk::ImageFileWriter< OutputImageType > WriterType;
-	typedef itk::ImageFileWriter< SegmentedImageType > BinImageWriter;
+	typedef itk::ImageFileWriter< SegmentedImageType > somaImageWriter;
 
 
 	void SetInputImage(char * fileName);
@@ -69,7 +69,7 @@ public:
 	
 private:
 	OutputImageType::Pointer inputImage, outputImage;
-	SegmentedImageType::Pointer binImage;
+	SegmentedImageType::Pointer binImage, somaImage;
 	centroidVectorType Centroids;
 	unsigned char *in_Image;
 	//ConstIteratorType pix_buf;

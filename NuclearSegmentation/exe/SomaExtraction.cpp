@@ -211,7 +211,7 @@ int SomaExtractor::relabelBinaryImage(void)
 		return EXIT_FAILURE;
     }
 
-	binImage = relabel->GetOutput();
+	somaImage = relabel->GetOutput();
 	
 	std::cout << "Originally there were " << relabel->GetOriginalNumberOfObjects() << " objects" << std::endl;
 	std::cout << "After relabel there are now " << relabel->GetNumberOfObjects() << " objects" << std::endl;
@@ -337,12 +337,12 @@ void SomaExtractor::writeSomaImage(char* writeFileName)
 	}
 	
 	
-	BinImageWriter::Pointer bin_image_writer = BinImageWriter::New();
-	bin_image_writer->SetFileName("binImage.mhd");
-	bin_image_writer->SetInput(binImage);
+	somaImageWriter::Pointer soma_image_writer = somaImageWriter::New();
+	soma_image_writer->SetFileName("somaImage.mhd");
+	soma_image_writer->SetInput(somaImage);
 	try
 	{
-		bin_image_writer->Update();
+		soma_image_writer->Update();
 	}
 	catch ( itk::ExceptionObject &err)
 	{
