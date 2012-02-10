@@ -29,7 +29,7 @@
 
 #ifdef _OPENMP
 #include "omp.h"
-#endif _OPENMP
+#endif
 
 typedef itk::Image<unsigned char,  3> rawImageType;
 typedef itk::Image<unsigned int, 3> LabelType;
