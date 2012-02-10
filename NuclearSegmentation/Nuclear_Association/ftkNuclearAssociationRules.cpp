@@ -406,27 +406,27 @@ void NuclearAssociationRules::Compute()
 		} else {
 
 			int counterLabels = 0;
-#ifdef _OPENMP
-			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
-		omp_set_nested(1);
-#endif
-#pragma omp parallel for 
+//#ifdef _OPENMP
+//			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
+//		omp_set_nested(1);
+//#endif
+//#pragma omp parallel for 
 			for(int j=0; j<numOfLabels; ++j)
 			{
 				//cout<<j+1;
 				int lbl = labelsList[j];
 				if(lbl == 0) continue;
-				//cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
+				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
-#pragma omp critical
+//#pragma omp critical
 				{
 					counterLabels++;
 					std::cout << std::endl << "Fea, Rule " << i+1 << ": " << counterLabels << " of " << numOfLabels-1 << " DONE";
 				}
 			}
-#ifdef _OPENMP
-			omp_set_nested(0);
-#endif
+//#ifdef _OPENMP
+			//omp_set_nested(0);
+//#endif
 		}
 		std::cout<<"\tdone"<<std::endl;
 	}	
