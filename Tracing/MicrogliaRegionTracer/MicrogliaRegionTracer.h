@@ -42,8 +42,8 @@ public:
 	MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
 	~MicrogliaRegionTracer();
 
-	ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(MaskedImageType::Pointer mask, ImageType::Pointer image);
-	ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(std::string filename, ImageType::Pointer image);
+	ImageType::Pointer GetMaskedImage(MaskedImageType::Pointer mask, ImageType::Pointer image);
+	ImageType::Pointer GetMaskedImage(std::string filename, ImageType::Pointer image);
 	
 	void LoadCellPoints(std::string image_filename, std::string soma_filename);
 
