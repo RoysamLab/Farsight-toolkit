@@ -92,6 +92,8 @@ public:
 	std::set< vtkIdType > GetClusterIDs();
 	QStringList GetClusterIDsList();
 
+	vtkSmartPointer<vtkTable> ClusterFeatureTable();
+
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
 	std::set< vtkIdType > GetAllSelections();
 	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
@@ -142,6 +144,8 @@ private:
 	void AddRowToClusterTable(vtkIdType Key, vtkVariant ClusterSize, vtkVariant ClusterName);
 	void RemoveRowFromClusterTable(vtkIdType Key);
 
+	vtkSmartPointer<vtkVariantArray> CondenseClusterToFeatureRow(vtkIdType Key);
+
 };
 
 class ClusterManager : public QDialog
@@ -158,6 +162,7 @@ public slots:
 
 	void ClearClusters();
 	void RemoveSelectedClusters();
+	void ShowClusterFeatures();
 	void ChangeInClusters();
 
 	void ChangeInObjectSelection();
@@ -191,6 +196,7 @@ private:
 	QPushButton * RunOperatorButton;
 	QPushButton * ClearClusterButton;
 	QPushButton * RemoveClusterButton;
+	QPushButton * ClusterFeaturesButton;
 
 	bool AnnotationLinkSetUp;
 };

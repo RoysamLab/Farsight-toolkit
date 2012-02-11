@@ -409,6 +409,60 @@ void SelectiveClustering::RemoveRowFromClusterTable(vtkIdType Key)
 	}
 }
 
+vtkSmartPointer<vtkVariantArray> SelectiveClustering::CondenseClusterToFeatureRow(vtkIdType Key)
+{
+	/*!
+	* Returns a row from the statistics of the
+	* features of the objects in each cluster 
+	*/
+	vtkSmartPointer<vtkTable> clustersTable = this->GetTableOfSelectedFromCluster(Key);
+
+	vtkSmartPointer<vtkVariantArray> rowForCluster = vtkSmartPointer<vtkVariantArray>::New();
+	rowForCluster->Initialize();
+	rowForCluster->InsertNextValue(Key);
+
+	for(vtkIdType col= 1; col != clustersTable->GetNumberOfColumns(); col ++)
+	{
+		vtkIdType rowCount = clustersTable->GetNumberOfRows();
+		//
+		vtkIdType sum = 0; 
+		vtkAbstractArray * columnData = clustersTable->GetColumn(col);
+		for (vtkIdType row = 0; row != rowCount; row++)
+		{
+			sum += columnData->GetVariantValue(row).ToTypeInt64();
+		}
+		sum = sum / rowCount;
+		rowForCluster->InsertNextValue(sum);
+	}
+	return rowForCluster;
+}
+
+vtkSmartPointer<vtkTable> SelectiveClustering::ClusterFeatureTable()
+{
+	/*!
+	* 
+	*/
+	vtkSmartPointer<vtkTable> selectedTable = vtkSmartPointer<vtkTable>::New();
+	selectedTable->Initialize();	
+	
+	for(vtkIdType NumberOfColumns = 0; NumberOfColumns < this->ObjectTable->GetNumberOfColumns(); NumberOfColumns++ )
+	{
+		vtkSmartPointer<vtkVariantArray> col = vtkSmartPointer<vtkVariantArray>::New();
+		col->SetName(this->ObjectTable->GetColumnName(NumberOfColumns));
+		selectedTable->AddColumn(col);
+	}
+
+	this->iter = this->ClusterMap.begin();
+	for (; this->iter != this->ClusterMap.end(); this->iter++)
+	{
+		vtkSmartPointer<vtkVariantArray> NextCluster = this->CondenseClusterToFeatureRow((*this->iter).first);
+		selectedTable->InsertNextRow(NextCluster);
+	}
+	selectedTable->Dump(16);
+	return selectedTable;
+
+}
+
 std::set< vtkIdType > SelectiveClustering::cluster_operator_ADD(vtkIdType key1, vtkIdType key2)
 {
 	/*!
@@ -498,6 +552,9 @@ ClusterManager::ClusterManager()
 
 	this->RemoveClusterButton = new QPushButton(" Remove Cluster ");
 	connect(this->RemoveClusterButton, SIGNAL(clicked()), this, SLOT(RemoveSelectedClusters()));
+
+	this->ClusterFeaturesButton = new QPushButton(" show Cluster ");
+	connect(this->ClusterFeaturesButton, SIGNAL(clicked()), this, SLOT(ShowClusterFeatures()));
 	
 	//this->ClusterListView = new QListWidget(this);
 	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
@@ -535,6 +592,7 @@ ClusterManager::ClusterManager()
 	ButtonLayout->addWidget(this->AddClusterButton);
 	//ButtonLayout->addWidget(this->RunOperatorButton);
 	ButtonLayout->addWidget(this->ClearClusterButton);
+	ButtonLayout->addWidget(this->ClusterFeaturesButton);
 
 	//InfoLayout->addRow("Operator: ", this->OperatorList);
 
@@ -606,6 +664,11 @@ void ClusterManager::RemoveSelectedClusters()
 	vtkIdTypeArray * SelectedClusters = this->GetClusterTableSelections();
 	this->ClusterModel->RemoveCluster(SelectedClusters);
 	//this->ClusterModel->GetClusterTable()->Dump(16);
+}
+
+void ClusterManager::ShowClusterFeatures()
+{
+	this->ClusterModel->ClusterFeatureTable();
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
