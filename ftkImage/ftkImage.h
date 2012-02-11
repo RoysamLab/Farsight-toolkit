@@ -60,6 +60,9 @@ class Image : public itk::LightObject
 {
 public:
 
+	Image();
+	~Image();
+
 	/** Smart pointer typedef support. */
 	typedef Image Self;
 	typedef itk::SmartPointer<Self> Pointer;
@@ -137,8 +140,7 @@ public:
 #endif
 
 protected:
-	Image();
-	~Image();
+
 
 private:
 	Image(const Self&);				//purposely not implemented
