@@ -457,8 +457,8 @@ omp_set_nested(0);
 		for( unsigned i=0; i<k; ++i )
 			std::cout<<"Center "<<i<<" "<<centers.at(i)<<"\n";
 
-		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (100.0*thresh)?
-					 ((centers.at(0)+centers.at(1))/2) : (100.0*thresh); //Arbitrary upper thresh
+		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (255.0*thresh)?
+					 ((centers.at(0)+centers.at(1))/2) : (255.0*thresh); //Arbitrary upper thresh
 
 		std::cout<<"Positive_thresh "<<Positive_thresh<<"\n";
 
