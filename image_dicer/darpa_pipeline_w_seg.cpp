@@ -1238,6 +1238,7 @@ std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< 
 //#############################################################################################################
 void WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, int x, int y, int z, std::string filename)
 {
+	if( (int)swcNodes->GetNumberOfRows() == 0)  return;
 	std::cout << "Writing SWCImage file " << filename << " with " << swcNodes->GetNumberOfRows() << " nodes...";
 	
 	std::vector<int> soma_ids;
