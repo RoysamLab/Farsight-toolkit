@@ -542,22 +542,21 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 
 	typedef itk::RegionOfInterestImageFilter< TargImageType, TargImageType > ROIFilterType1;
 	typedef itk::ImageDuplicator< TargImageType > DuplicatorType1;
-	ROIFilterType1::Pointer roifilter1 = ROIFilterType1::New();
-	roifilter1->SetRegionOfInterest( region3 );
-	roifilter1->SetInput( trgIm );
-	DuplicatorType1::Pointer dupfilter1 = DuplicatorType1::New();
-	dupfilter1->SetInputImage( roifilter1->GetOutput() );
-
 	typedef itk::RegionOfInterestImageFilter< LabImageType,  LabImageType  > ROIFilterType2;
 	typedef itk::ImageDuplicator< LabImageType > DuplicatorType2;
-	ROIFilterType2::Pointer roifilter2 = ROIFilterType2::New();
-	roifilter2->SetRegionOfInterest( region2 );
-	roifilter2->SetInput( labImage );
-	DuplicatorType2::Pointer dupfilter2 = DuplicatorType2::New();
-	dupfilter2->SetInputImage( roifilter2->GetOutput() );
-
 	#pragma omp critical
 	{
+		ROIFilterType1::Pointer roifilter1 = ROIFilterType1::New();
+		roifilter1->SetRegionOfInterest( region3 );
+		roifilter1->SetInput( trgIm );
+		DuplicatorType1::Pointer dupfilter1 = DuplicatorType1::New();
+		dupfilter1->SetInputImage( roifilter1->GetOutput() );
+
+		ROIFilterType2::Pointer roifilter2 = ROIFilterType2::New();
+		roifilter2->SetRegionOfInterest( region2 );
+		roifilter2->SetInput( labImage );
+		DuplicatorType2::Pointer dupfilter2 = DuplicatorType2::New();
+		dupfilter2->SetInputImage( roifilter2->GetOutput() );
 		try{
 			dupfilter1->Update();
 			dupfilter2->Update();
