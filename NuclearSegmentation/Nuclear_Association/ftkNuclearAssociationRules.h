@@ -38,6 +38,8 @@
 #include "itkImageFileWriter.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkImageDuplicator.h"
+#include "itkRegionOfInterestImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"

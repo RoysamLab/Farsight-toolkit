@@ -452,8 +452,9 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	//fisrt, get the bounding box around the object
 	//The bounding box is defined by the area around the object such that the object+outerdistance are included	
 	int imBounds[6] = {0,x_Size,0,y_Size,0,z_Size};
+	LabelGeometryType::BoundingBoxType bbox;
 	#pragma omp critical
-		LabelGeometryType::BoundingBoxType bbox = labGeometryFilter->GetBoundingBox(objID);
+		bbox = labGeometryFilter->GetBoundingBox(objID);
 	//make sure the object exists
 	int valid = 0;
 	for(int dim=0; dim < imDim*2; ++dim)
@@ -539,16 +540,13 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	region3.SetSize( size3 );
 	region3.SetIndex( start3 );
 
-	TargImageType::Pointer trgIm;
-	LabImageType::Pointer  labImage;
-
 	typedef itk::RegionOfInterestImageFilter< TargImageType, TargImageType > ROIFilterType1;
 	typedef itk::ImageDuplicator< TargImageType > DuplicatorType1;
 	ROIFilterType1::Pointer roifilter1 = ROIFilterType1::New();
 	roifilter1->SetRegionOfInterest( region3 );
 	roifilter1->SetInput( trgIm );
 	DuplicatorType1::Pointer dupfilter1 = DuplicatorType1::New();
-	dupfilter1->SetInput( roifilter1->GetOutput() );
+	dupfilter1->SetInputImage( roifilter1->GetOutput() );
 
 	typedef itk::RegionOfInterestImageFilter< LabImageType,  LabImageType  > ROIFilterType2;
 	typedef itk::ImageDuplicator< LabImageType > DuplicatorType2;
@@ -556,16 +554,16 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	roifilter2->SetRegionOfInterest( region2 );
 	roifilter2->SetInput( labImage );
 	DuplicatorType2::Pointer dupfilter2 = DuplicatorType2::New();
-	dupfilter2->SetInput( roifilter2->GetOutput() );
+	dupfilter2->SetInputImage( roifilter2->GetOutput() );
 
 	#pragma omp critical
 	{
-	
+		try{
 			dupfilter1->Update();
 			dupfilter2->Update();
 		}
-		catch{
-	
+		catch( itk::ExceptionObject & excep ){
+			std::cerr << excep << std::endl;
 		}
 	}
 	LabImageType::Pointer  labImageCrop = dupfilter2->GetOutput();
