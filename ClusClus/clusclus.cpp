@@ -206,7 +206,6 @@ void clusclus::Clustering()
 	int pivot1,pivot2;
 
 	ComputeSampleDistances();
-
 	for (int i = 0; i < num_samples; i++)
 	{
 		features[i][num_features]=i;
@@ -217,7 +216,6 @@ void clusclus::Clustering()
 			cluster_distances[i*(1+i)/2+j]=sample_distances[i*(1+i)/2+j];
 		}
 	}
-
 	for(int i=0; i<num_samples-1; i++)
 	{
 		if( num_currcluster % 100 == 0)

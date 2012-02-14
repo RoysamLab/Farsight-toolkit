@@ -11,25 +11,33 @@ SET( Libraries
     vnl
     ${QT_LIBRARIES})
 
-SET( ClusClus_SRCS  
+SET( ClusClus_SRCS 
+	Kmeans.cpp
+	Tree.cpp
+	Biclustering.cpp 
 	Dendrogram.cpp
 	clusclus.cpp
 	clusgap.cpp
 	clusclusMainwindow.cpp
 	HeatmapWindow.cpp
+	Heatmap.cpp
 	ProgressionHeatmapWindow.cpp)
 
 SET( ClusClus_HDRS 
+	Kmeans.h
+	Tree.h
+	Biclustering.h
 	Dendrogram.h
 	clusclus.h
 	clusgap.h
 	clusclusMainwindow.h
 	HeatmapWindow.h
+	Heatmap.h
 	ProgressionHeatmapWindow.h)
 	
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
-QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h ProgressionHeatmapWindow.h)  
+QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h ProgressionHeatmapWindow.h Heatmap.h)  
 
 ADD_LIBRARY( ClusClus_lib ${ClusClus_SRCS} ${ClusClus_HDRS} ${ClusClus_MOC_REQD_HDRS} )
 

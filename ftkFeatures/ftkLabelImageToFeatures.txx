@@ -353,7 +353,7 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//TEXTURE CALCULATOR:
 	if (this->computeTextures)
     {
-		//if(!this->RunTextureFilter()) return;		//Should throw exception
+		if(!this->RunTextureFilter()) return;		//Should throw exception
     }
     
 }

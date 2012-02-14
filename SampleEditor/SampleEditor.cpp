@@ -30,8 +30,9 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	histo = new HistoWindow(this);
 	//graph =  new GraphWindow(this);
 	dendro1 = new Dendrogram(this);
-	dendro2 = new Dendrogram(this);////////////////////////////////////////////////////////////////
+	dendro2 = new Dendrogram(this);
 	heatmap = new Heatmap(this);
+	biheatmap = new BiHeatmap(this);
 	progressionheatmap = new ProgressionHeatmap(this);
 	spdWin = new SPDMainWindow();
 	spdTestWin = new SPDtestWindow();
@@ -42,7 +43,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	data = vtkSmartPointer<vtkTable>::New();		//Start with a new table
 
 	selection = new ObjectSelection();
-	selection2 = new ObjectSelection();/////////////////////////////////////
+	selection2 = new ObjectSelection();
 
 	lastPath = ".";
 	
@@ -180,7 +181,6 @@ void SampleEditor::createMenus()
 	connect(spdHeatmapAction, SIGNAL(triggered()), this, SLOT(spdShowHeatmap()));
 	SPDMenu->addAction(spdHeatmapAction);
 
-	//////////////////////////////////////////////////////////////////////////////
 	ClusClusMenu = editMenu->addMenu(tr("&ClusClus"));
 	sampleDendroAction = new QAction(tr("SampleDendrogram"), this);
 	sampleDendroAction->setStatusTip(tr("SampleDandrogram"));
@@ -196,6 +196,12 @@ void SampleEditor::createMenus()
 	heatmapAction->setStatusTip(tr("Heatmap"));
 	connect(heatmapAction, SIGNAL(triggered()), this, SLOT(showheatmap()));
 	ClusClusMenu->addAction(heatmapAction);
+
+	BiclusMenu = editMenu->addMenu(tr("&Biclus"));
+	biclusHeatmapAction = new QAction(tr("BiclusHeatmap"), this);
+	biclusHeatmapAction->setStatusTip(tr("BiclusHeatmap"));
+	connect(biclusHeatmapAction, SIGNAL(triggered()), this, SLOT(biclusheatmap()));
+	BiclusMenu->addAction(biclusHeatmapAction);
 
 	this->CreateCluster =  new QAction(tr("Create Cluster"), this);
 	connect(CreateCluster, SIGNAL(triggered()), this, SLOT(CreateClusterSelection()));
@@ -824,54 +830,42 @@ void SampleEditor::showheatmap()
 	this->heatmap->setModels(featureTable,selection,selection2);
 	this->heatmap->runClus();
 	this->heatmap->showGraph();
+}
 
-	//double** datas;
-	//vtkVariant temp; 
+void SampleEditor::biclusheatmap()
+{
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
 
-	//datas = new double*[this->data->GetNumberOfRows()];
+	vtkSmartPointer<vtkTable> featureTable;
+	featureTable = this->data;
+	featureTable->RemoveColumnByName("Trace File");		
+	featureTable->RemoveColumnByName("Soma X Pos");
+	featureTable->RemoveColumnByName("Soma Y Pos");
+	featureTable->RemoveColumnByName("Soma Z Pos");
+	featureTable->RemoveColumnByName("Distance to Device");
 
-	//std::cout<<this->data->GetNumberOfRows()<<endl;
-	//std::cout<<this->data->GetNumberOfColumns()<<endl;
+	std::vector<std::vector<double > > points;
+	points.resize(this->data->GetNumberOfRows());
+	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+			points[i].push_back(featureTable->GetValue(i,j).ToDouble());
+	Bicluster* bicluster = new Bicluster();
+	bicluster->setDataToBicluster(points);
+	bicluster->biclustering();
+	bicluster->WriteFile("order1.txt", "order2.txt");
 
-	//for (int i = 0; i < this->data->GetNumberOfRows(); i++)
-	//{
-	//	datas[i] = new double[this->data->GetNumberOfColumns() - 1 + 2 ];
-	//}
+	this->biheatmap->setModels(featureTable, selection);
+	this->biheatmap->setDataForHeatmap(bicluster->order1, bicluster->order2);
+	this->biheatmap->setDataForTree1(bicluster->levels1);
+	this->biheatmap->setDataForTree2(bicluster->levels2);
+	this->biheatmap->showHeatmap();
+	this->biheatmap->showTree1();
+	this->biheatmap->showTree2();
 
-	//for(int i = 0; i < this->data->GetNumberOfRows(); i++)
-	//{		
-	//	for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
-	//	{
-	//		temp = this->data->GetValue(i, j);
-	//		datas[i][j-1] = temp.ToDouble();
-	//	}
-	//}
-
-	//cc1 = new clusclus(datas, (int)this->data->GetNumberOfRows(), (int)this->data->GetNumberOfColumns() - 1);
-	//cc1->RunClusClus();
-	//cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
-	//	"gap.txt", "treedata.txt", "Optimalleaforder.txt");
-
-	//cc1->Transpose();
-	//cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
-	//cc2->RunClusClus();
-	//cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
-	//	"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
-
-
-	//cout<<"finish clusclus....."<<endl;
-	//this->heatmap->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
-	//this->heatmap->setDataForDendrograms(cc1->treedata, cc2->treedata);
-	//this->heatmap->creatDataForHeatmap();	
-	//this->heatmap->showGraph();
-	//for (int i = 0; i < this->data->GetNumberOfRows(); i++)
-	//{
-	//	delete datas[i];
-	//}
-	//delete datas;
-
-	//delete cc1;
-	//delete cc2;
+	delete bicluster;
 }
 void SampleEditor::CreateClusterSelection()
 {

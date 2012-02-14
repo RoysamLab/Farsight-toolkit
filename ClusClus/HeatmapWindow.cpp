@@ -253,8 +253,6 @@ void Heatmap::readmustd(double** mustd)
 
 void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
-	
-	std::cout<<"entered" <<std::endl;
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
@@ -268,7 +266,6 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels,
 		}
 	}
 
-	std::cout<<"About to enter selections" <<std::endl;
 	if(!sels)
 		this->Selection = new ObjectSelection();
 	else
@@ -279,7 +276,6 @@ void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels,
 	else
 		this->Selection2 = sels2;
 
-	std::cout<<"About to connect" <<std::endl;
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDs()));
 }
 
@@ -483,10 +479,8 @@ void Heatmap::runClus()
 	//optimalleaforder2[104] = 102;
 	//optimalleaforder2[105] = 103;
 
-
 	for(int i = 0;i<cc1->num_features; i++)
 		optimalleaforder2[i]=i;
-
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
 	this->setDataForDendrograms(cc1->treedata);
 	this->creatDataForHeatmap(0.2);
@@ -507,7 +501,7 @@ void Heatmap::showGraph()
 	else
 		this->drawPoints1();
 
-	
+
 	this->aPlane = vtkSmartPointer<vtkPlaneSource>::New();
     this->aPlane->SetXResolution(this->num_features);
     this->aPlane->SetYResolution(this->num_samples);
@@ -2788,6 +2782,7 @@ void Heatmap::closeEvent(QCloseEvent *event)
 {
 	mainQTRenderWidget.close();
 }
+
 void Heatmap::reRunClus()
 {
 	double** datas;
@@ -2976,4 +2971,5 @@ void Heatmap::drawPointsforNe()
 	this->selectionCallback1->SetCallback (SelectionCallbackFunction1);
 
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
+
 }

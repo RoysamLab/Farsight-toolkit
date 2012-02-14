@@ -51,6 +51,7 @@ limitations under the License.
 #include "ClusClus/clusclus.h"
 #include "ClusClus/Dendrogram.h"
 #include "ClusClus/HeatmapWindow.h"
+#include "ClusClus/Heatmap.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
 #include "SPD/spdmainwindow.h"
 #include "SPD/spdtestwindow.h"
@@ -88,6 +89,7 @@ private slots:
 	void sampledendrogram();
 	void featuredendrogram();
 	void showheatmap();
+	void biclusheatmap();
 
 	void CreateClusterSelection();
 	void DumpClusterSelections();
@@ -114,12 +116,13 @@ private:
 	QAction *spdFeatureDendroAction;
 	QAction *spdHeatmapAction;
 
-	/////////////////////////////
 	QMenu *ClusClusMenu;
 	QAction *sampleDendroAction;
 	QAction *featureDendroAction;
 	QAction *heatmapAction;
-	//////////////////////////////////////////////////////
+
+	QMenu *BiclusMenu;
+	QAction *biclusHeatmapAction;
 
 	QAction *CreateCluster;
 	QAction *DisplayClusterSelections;
@@ -130,8 +133,9 @@ private:
 	HistoWindow *histo;
 	//GraphWindow *graph;
 	Dendrogram *dendro1;
-	Dendrogram *dendro2;///////////////////////////////////////////////////////////////////////////////////////
+	Dendrogram *dendro2;
 	Heatmap *heatmap;
+	BiHeatmap *biheatmap;
 	ProgressionHeatmap *progressionheatmap;
 
 	SPDMainWindow *spdWin;
@@ -141,11 +145,12 @@ private:
 
 	vtkSmartPointer<vtkTable> data;
 	ObjectSelection *selection;
-	ObjectSelection *selection2;/////////////////////////////////////////////////////////////////////////////
+	ObjectSelection *selection2;
 	QString lastPath;
 
 	clusclus *cc1;
 	clusclus *cc2;
+	Bicluster *bc;
 
 	SelectiveClustering * ClusterSelections;
 	ClusterManager * SampleClusterManager;

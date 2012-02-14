@@ -2771,10 +2771,52 @@ void NucleusEditor::loadModelFromFile( std::string file_name ){
 //**********************************************************************
 // SLOT: Clustering Heatmap
 //**********************************************************************
+//void NucleusEditor::runClus()
+//{
+//	#ifdef USE_Clusclus
+//	this->HeatmapWin = new Heatmap();
+//	if( table->GetNumberOfRows() <= 0)
+//	{
+//		QMessageBox mes;
+//		mes.setText("Please compute cell features first!");
+//		mes.exec();
+//	}
+//	else
+//	{
+//		
+//
+//		pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_CLUS, "", "", this);
+//		connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+//		connect(pWizard, SIGNAL(enableModels()), this, SLOT(EnableModels()));
+//		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+//		pWizard->exec();
+//		
+//		if(pWizard->result())
+//		{
+//			vtkSmartPointer<vtkTable> featureTable;
+//			featureTable = pWizard->getExtractedTable();
+//
+//			for(int i = 0; i < 5; i++)
+//			{
+//				for(int j = 0; j<featureTable->GetNumberOfColumns(); j++)
+//				{
+//					cout<<featureTable->GetValue(i, j)<<"\t";
+//				}
+//				cout<<endl;
+//			}
+//
+//			this->HeatmapWin->setModels(featureTable, this->selection);
+//			this->HeatmapWin->runClus();
+//			this->HeatmapWin->showGraph();
+//		}
+//	}
+//	#endif
+//}
+
 void NucleusEditor::runClus()
 {
 	#ifdef USE_Clusclus
-	this->HeatmapWin = new Heatmap();
+	this->biheatmap = new BiHeatmap();
 	if( table->GetNumberOfRows() <= 0)
 	{
 		QMessageBox mes;
@@ -2796,23 +2838,35 @@ void NucleusEditor::runClus()
 			vtkSmartPointer<vtkTable> featureTable;
 			featureTable = pWizard->getExtractedTable();
 
-			for(int i = 0; i < 5; i++)
+			std::vector<std::vector<double > > points;
+			points.resize(featureTable->GetNumberOfRows());
+			for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
 			{
-				for(int j = 0; j<featureTable->GetNumberOfColumns(); j++)
+				for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
 				{
-					cout<<featureTable->GetValue(i, j)<<"\t";
+					points[i].push_back(featureTable->GetValue(i,j).ToDouble());
 				}
-				cout<<endl;
 			}
+			std::cout<<".............aha1"<<std::endl;
+			Bicluster* bicluster = new Bicluster();
+			bicluster->setDataToBicluster(points);
+			bicluster->biclustering();
+			bicluster->WriteFile("order1.txt", "order2.txt");
+			
+			std::cout<<".............aha2"<<std::endl;
+			this->biheatmap->setModels(featureTable, selection);
+			this->biheatmap->setDataForHeatmap(bicluster->order1, bicluster->order2);
+			this->biheatmap->setDataForTree1(bicluster->levels1);
+			this->biheatmap->setDataForTree2(bicluster->levels2);
+			this->biheatmap->showHeatmap();
+			this->biheatmap->showTree1();
+			this->biheatmap->showTree2();
 
-			this->HeatmapWin->setModels(featureTable, this->selection);
-			this->HeatmapWin->runClus();
-			this->HeatmapWin->showGraph();
+			delete bicluster;
 		}
 	}
 	#endif
 }
-
 //**********************************************************************
 // SLOT: Query K Nearest Neighbors
 //**********************************************************************

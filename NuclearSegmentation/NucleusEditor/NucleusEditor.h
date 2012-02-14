@@ -70,6 +70,7 @@
 
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
+#include "ClusClus/Heatmap.h"
 #endif
 
 #ifdef USE_QT_TESTING
@@ -508,6 +509,7 @@ protected:
 	//Clustering
 	#ifdef	USE_Clusclus
 		Heatmap *HeatmapWin;
+		BiHeatmap *biheatmap;
 	#endif
 
 	// Loads all the tables of the time series

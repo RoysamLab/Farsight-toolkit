@@ -98,6 +98,7 @@ limitations under the License.
 #endif
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
+#include "ClusClus/Heatmap.h"
 #endif
 #include "branchPT.h"
 #include "CellTrace.h"
@@ -256,6 +257,7 @@ public slots:
 
 	void SPDAnalysis();
 	void ClusclusAnalysis();
+	void BiclusAnalysis();
 	/////////////////////////////////////////////////////////////
 	void selectedFeaturesClustering();
 
@@ -418,6 +420,7 @@ private:
 	QAction *SPDAction;
 	QAction *SPDAnalysisAction;
 	QAction *ClusclusAction;
+	QAction *BiClusAction;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -444,6 +447,7 @@ private:
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
 	Heatmap *HeatmapWins;
+	BiHeatmap *Biheatmap;
 
 #endif
 
