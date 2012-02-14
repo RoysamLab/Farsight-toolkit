@@ -8,7 +8,7 @@ cd /data/research/ppl-0.11.2
 cd .. && rm ppl-0.11.2.tar.bz2 && rm -fr ppl-0.11.2
 
 ##cloog
-wget http://www.bastoul.net/cloog/pages/download/count.php3?url=./cloog-0.17.0.tar.gz
+wget ftp://gcc.gnu.org/pub/gcc/infrastructure/cloog-0.16.1.tar.gz
 tar -xvzf cloog-0.17.0.tar.gz
 cd cloog-0.17.0
 ./configure --prefix=/data/research/gcc --with-gmp=system --with-gmp-prefix=/data/research/gcc > output.log 2>&1 && make -j75 install >> output.log 2>&1
