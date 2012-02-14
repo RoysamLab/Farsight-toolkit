@@ -406,11 +406,11 @@ void NuclearAssociationRules::Compute()
 		} else {
 
 			int counterLabels = 0;
-#ifdef _OPENMP
-	std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
-	omp_set_nested(1);
-#endif
-#pragma omp parallel for 
+//#ifdef _OPENMP
+//			std::cout << std::endl << "ASSOCIATED FEATURES WILL BE COMPUTED USING OPENMP";
+//		omp_set_nested(1);
+//#endif
+//#pragma omp parallel for 
 			for(int j=0; j<numOfLabels; ++j)
 			{
 				//cout<<j+1;
@@ -418,15 +418,15 @@ void NuclearAssociationRules::Compute()
 				if(lbl == 0) continue;
 				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
-#pragma omp critical
+//#pragma omp critical
 				{
 					counterLabels++;
 					std::cout << std::endl << "Fea, Rule " << i+1 << ": " << counterLabels << " of " << numOfLabels-1 << " DONE";
 				}
 			}
-#ifdef _OPENMP
-	omp_set_nested(0);
-#endif
+//#ifdef _OPENMP
+			//omp_set_nested(0);
+//#endif
 		}
 		std::cout<<"\tdone"<<std::endl;
 	}	
@@ -452,9 +452,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	//fisrt, get the bounding box around the object
 	//The bounding box is defined by the area around the object such that the object+outerdistance are included	
 	int imBounds[6] = {0,x_Size,0,y_Size,0,z_Size};
-	LabelGeometryType::BoundingBoxType bbox;
-	#pragma omp critical
-		bbox = labGeometryFilter->GetBoundingBox(objID);
+	LabelGeometryType::BoundingBoxType bbox = labGeometryFilter->GetBoundingBox(objID);
 	//make sure the object exists
 	int valid = 0;
 	for(int dim=0; dim < imDim*2; ++dim)
@@ -488,92 +486,46 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	//the bounding box defines the region of interest we need (from both segmentation and target images)
 	//so, use it to get sub images
 	DistImageType::Pointer subSegImg = DistImageType::New();
-
+	
 	LabImageType::IndexType start;
-	start[0] =   0;  // first index on X
-	start[1] =   0;  // first index on Y    
+    start[0] =   0;  // first index on X
+    start[1] =   0;  // first index on Y    
 	start[2] =   0;  // first index on Z    
 	
-	LabImageType::SizeType size;
-	size[0]  = retBbox[1]-retBbox[0]+1;  // size along X
-	size[1]  = retBbox[3]-retBbox[2]+1;  // size along Y
+    LabImageType::SizeType  size;
+    size[0]  = retBbox[1]-retBbox[0]+1;  // size along X
+    size[1]  = retBbox[3]-retBbox[2]+1;  // size along Y
 	if(imDim == 3)
 		size[2]  = retBbox[5]-retBbox[4]+1;  // size along Z
 	else
 		size[2] = 1;
   
-	LabImageType::RegionType region;
-	region.SetSize( size );
-	region.SetIndex( start );
+    LabImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( start );
 	subSegImg->SetRegions( region );	
-	subSegImg->Allocate();
-	subSegImg->FillBuffer(0);
-	subSegImg->Update();
+    subSegImg->Allocate();
+    subSegImg->FillBuffer(0);
+	subSegImg->Update();	
+	
 
 	LabImageType::IndexType start2;
-	start2[0] =   retBbox[0];  // first index on X
-	start2[1] =   retBbox[2];  // first index on Y    
+    start2[0] =   retBbox[0];  // first index on X
+    start2[1] =   retBbox[2];  // first index on Y    
 	if(imDim == 3)
 		start2[2] =   retBbox[4];  // first index on Z   
 	else
 		start2[2] = 0;
 	LabImageType::RegionType region2;
-	region2.SetSize( size );
-	region2.SetIndex( start2 );
-
-	TargImageType::IndexType start3;
-	start3[0] = start2[0];  // first index on X
-	start3[1] = start2[1];  // first index on Y    
-	if(imDim == 3)
-		start3[2] = start2[2];  // first index on Z   
-	else
-		start3[2] = 0;
-	TargImageType::SizeType size3;
-	size3[0] = size[0];  // size along X
-	size3[1] = size[1];  // size along Y
-	if(imDim == 3)
-		size3[2] = size[2];  // size along Z
-	else
-		size3[2] = size[2];
-
-	TargImageType::RegionType region3;
-	region3.SetSize( size3 );
-	region3.SetIndex( start3 );
-
-	typedef itk::RegionOfInterestImageFilter< TargImageType, TargImageType > ROIFilterType1;
-	typedef itk::ImageDuplicator< TargImageType > DuplicatorType1;
-	typedef itk::RegionOfInterestImageFilter< LabImageType,  LabImageType  > ROIFilterType2;
-	typedef itk::ImageDuplicator< LabImageType > DuplicatorType2;
-	#pragma omp critical
-	{
-		ROIFilterType1::Pointer roifilter1 = ROIFilterType1::New();
-		roifilter1->SetRegionOfInterest( region3 );
-		roifilter1->SetInput( trgIm );
-		DuplicatorType1::Pointer dupfilter1 = DuplicatorType1::New();
-		dupfilter1->SetInputImage( roifilter1->GetOutput() );
-
-		ROIFilterType2::Pointer roifilter2 = ROIFilterType2::New();
-		roifilter2->SetRegionOfInterest( region2 );
-		roifilter2->SetInput( labImage );
-		DuplicatorType2::Pointer dupfilter2 = DuplicatorType2::New();
-		dupfilter2->SetInputImage( roifilter2->GetOutput() );
-		try{
-			dupfilter1->Update();
-			dupfilter2->Update();
-		}
-		catch( itk::ExceptionObject & excep ){
-			std::cerr << excep << std::endl;
-		}
-	}
-	LabImageType::Pointer  labImageCrop = dupfilter2->GetOutput();
-	TargImageType::Pointer trgImCrop    = dupfilter1->GetOutput();
+    region2.SetSize( size );
+    region2.SetIndex( start2 );
+	labImage->SetRequestedRegion(region2);
+	trgIm->SetRequestedRegion(region2);
 
 	typedef itk::ImageRegionIteratorWithIndex< LabImageType > IteratorType;	
-	IteratorType iterator1(labImageCrop, labImageCrop->GetRequestedRegion());
-	iterator1.GoToBegin();
+	IteratorType iterator1(labImage, labImage->GetRequestedRegion());
 	typedef itk::ImageRegionIteratorWithIndex< DistImageType > IteratorType2;	
 	IteratorType2 iterator2(subSegImg, subSegImg->GetRequestedRegion());
-	iterator2.GoToBegin();
 
 	//in the sub-segmentation image, we need to mask out any pixel from another object	
 	int counter = 0;
@@ -631,8 +583,7 @@ float NuclearAssociationRules::ComputeOneAssocMeasurement(itk::SmartPointer<Targ
 	
 	//now, mask out all the pixels (in the sub-seg image) that are not in the region of interest as defined by the association rule and get the intensities of the needed pixels from the target image. The intensities are saved into an std vector
 	IteratorType2 iterator3(dt_obj->GetOutput(), dt_obj->GetOutput()->GetRequestedRegion());
-	IteratorType iterator4(trgImCrop, trgImCrop->GetRequestedRegion());
-	iterator4.GoToBegin();
+	IteratorType iterator4(trgIm, trgIm->GetRequestedRegion());
 	std::vector<int> trgInt;
 	int counter_in = 0;
 	int counter_at = 0;
