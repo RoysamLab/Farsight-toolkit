@@ -19,6 +19,6 @@ wget http://www.netgull.com/gcc/releases/gcc-4.6.2/gcc-4.6.2.tar.bz2
 tar -xvjf gcc-4.6.2.tar.bz2
 mkdir gcc-4.6.2-bin
 cd gcc-4.6.2-bin
-/data/research/gcc-4.6.2/configure --enable-threads=posix --prefix=/data/research/gcc --enable-cloog-backend=isl --with-gmp=/data/research/gcc --with-mpfr=/data/research/gcc --with-mpc=/data/research/gcc --with-ppl=/data/research/gcc --with-cloog=/data/research/gcc > output.log 2>&1 && make -j75 >> output.log 2>&1 && make install >> output.log 2>&1
+/data/research/gcc-4.6.2/configure --enable-threads=posix --disable-multilib --disable-shared --prefix=/data/research/gcc --enable-cloog-backend=isl --with-gmp=/data/research/gcc --with-mpfr=/data/research/gcc --with-mpc=/data/research/gcc --with-ppl=/data/research/gcc --with-cloog=/data/research/gcc > output.log 2>&1 && make -j75 >> output.log 2>&1 && make install >> output.log 2>&1
 cd .. && rm gcc-4.6.2.tar.bz2 && rm -fr gcc-4.6.2 gcc-4.6.2-bin
 libtool --finish /data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2
