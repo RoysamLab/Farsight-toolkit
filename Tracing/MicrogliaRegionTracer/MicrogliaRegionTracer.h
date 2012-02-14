@@ -10,6 +10,10 @@
 #include "itkIntTypes.h"
 #include "itkMaskNegatedImageFilter.h"
 
+#include "InsightJournalFilters/FastMarchingMinimalPathExtraction/itkSpeedFunctionToPathFilter.h"
+#include "itkGradientDescentOptimizer.h"
+#include "itkPathIterator.h"
+
 #include <fstream>
 #include <cstring>
 #include <vector>
@@ -62,6 +66,8 @@ public:
 	double CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
 	Tree* BuildMST1(Cell* cell, double** AdjGraph);
 	Tree* BuildMST2(Cell* cell, double** AdjGraph);
+
+	void SmoothPath(Cell* cell);
 	
 };
 

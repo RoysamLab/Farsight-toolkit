@@ -152,6 +152,7 @@ void MicrogliaRegionTracer::Trace()
 		std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
 		std::cout << "Tree Building" << std::endl;
 		BuildTree(cell);
+		//SmoothPath(cell);
 		delete cell;
 	}
 }
@@ -558,4 +559,77 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	traceFile.close();
 	traceFile_local.close();
 	return tree;
+}
+
+void MicrogliaRegionTracer::SmoothPath(Cell* cell)
+{
+	typedef itk::PolyLineParametricPath< 3 > PathType;
+	typedef itk::SpeedFunctionToPathFilter< VesselnessImageType, PathType > PathFilterType;
+
+	PathFilterType::CostFunctionType::Pointer cost = PathFilterType::CostFunctionType::New();
+
+	typedef itk::GradientDescentOptimizer OptimizerType;
+	OptimizerType::Pointer optimizer = OptimizerType::New();
+	optimizer->SetNumberOfIterations(1000);
+
+	PathFilterType::Pointer pathFilter = PathFilterType::New();
+	pathFilter->SetInput(cell->vesselness_image);
+	pathFilter->SetCostFunction (cost);
+	pathFilter->SetOptimizer(optimizer);
+	pathFilter->SetTerminationValue(2.0);
+
+	PathFilterType::PointType start, end;
+	start[0] = cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0];
+	start[1] = cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1];
+	start[2] = cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2];
+
+	end[0] = 0;
+	end[1] = 0;
+	end[2] = 0;
+
+	PathFilterType::PathInfo info;
+	info.SetStartPoint(start);
+	info.SetEndPoint(end);
+	pathFilter->AddPathInfo(info);
+
+	try
+	{
+		pathFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "pathFilter Exception" << std::endl;
+	}
+	// Allocate output image
+	VesselnessImageType::Pointer output = VesselnessImageType::New();
+	output->SetRegions( cell->vesselness_image->GetLargestPossibleRegion() );
+	output->SetSpacing( cell->vesselness_image->GetSpacing() );
+	output->SetOrigin( cell->vesselness_image->GetOrigin() );
+	output->Allocate( );
+	output->FillBuffer( itk::NumericTraits< VesselnessImageType::PixelType >::Zero );
+
+	// Rasterize path
+	for (unsigned int i=0; i<pathFilter->GetNumberOfOutputs(); i++)
+	{
+		// Get the path
+		PathType::Pointer path = pathFilter->GetOutput( i );
+
+		// Check path is valid
+		if ( path->GetVertexList()->Size() == 0 )
+		{
+			std::cout << "WARNING: Path " << (i+1) << " contains no points!" << std::endl;
+			continue;
+		}
+
+		// Iterate path and convert to image
+		typedef itk::PathIterator< VesselnessImageType, PathType > PathIteratorType;
+		PathIteratorType it( output, path );
+		for (it.GoToBegin(); !it.IsAtEnd(); ++it)
+		{
+			it.Set( itk::NumericTraits< VesselnessImageType::PixelType >::max() );
+		}
+	}
+
+	// Write output
+	WriteVesselnessImage("SmoothedPath.mhd", output);
 }
