@@ -419,10 +419,10 @@ void NuclearAssociationRules::Compute()
 				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
 //#pragma omp critical
-				{
-					counterLabels++;
-					std::cout << std::endl << "Fea, Rule " << i+1 << ": " << counterLabels << " of " << numOfLabels-1 << " DONE";
-				}
+				//{
+				//	counterLabels++;
+				//	std::cout << std::endl << "Fea, Rule " << i+1 << ": " << counterLabels << " of " << numOfLabels-1 << " DONE";
+				//}
 			}
 //#ifdef _OPENMP
 			//omp_set_nested(0);
