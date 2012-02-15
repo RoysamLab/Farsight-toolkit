@@ -1,0 +1,67 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+USRHOM="/data/kedar"
+USRDAT="/FSdata/gbkedar"
+
+SFXXA=$HOSTNAME
+SFXX1="Farsight-01.EE.UH.EDU"
+SFXX2="Farsight-02.EE.UH.EDU"
+SFXX3="Farsight-03.EE.UH.EDU"
+SFXX4="Farsight-04.EE.UH.EDU"
+SFXX5="Farsight-05.EE.UH.EDU"
+
+if [[ $SFXXA == $SFXX1 ]]; then
+	cd $USRDAT
+	#HOME=$USRDAT
+fi
+if [[ $SFXXA == $SFXX2 ]]; then
+	cd $USRHOM
+	#HOME=$USRHOM
+fi
+if [[ $SFXXA == $SFXX3 ]]; then
+	cd $USRHOM
+	#HOME=$USRHOM
+	PATH=/data/research/gcc/bin:/data/research/cmake/bin:$PATH
+	export PATH
+	alias ij='/data/research/ImageJ/run'
+	alias fj='/data/research/Fiji.app/fiji-linux64'
+	ILOG_LICENSE_FILE=/data/research/ILOG/access.ilm
+	export ILOG_LICENSE_FILE
+	LD_LIBRARY_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_LIBRARY_PATH
+	LD_RUN_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_RUN_PATH
+fi
+if [[ $SFXXA == $SFXX4 ]]; then
+	cd $USRHOM
+	#HOME=$USRHOM
+	PATH=/data/research/gcc/bin:/data/research/cmake/bin:$PATH
+	export PATH
+	alias ij='/data/research/ImageJ/run'
+	alias fj='/data/research/Fiji.app/fiji-linux64'
+	ILOG_LICENSE_FILE=/data/research/ILOG/access.ilm
+	export ILOG_LICENSE_FILE
+	LD_LIBRARY_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_LIBRARY_PATH
+	LD_RUN_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_RUN_PATH
+fi
+if [[ $SFXXA == $SFXX5 ]]; then
+	cd $USRHOM
+	#HOME=$USRHOM
+	PATH=/data/research/gcc/bin:/data/research/cmake/bin:$PATH
+	export PATH
+	alias ij='/data/research/ImageJ/run'
+	alias fj='/data/research/Fiji.app/fiji-linux64'
+	LD_LIBRARY_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_LIBRARY_PATH
+	LD_RUN_PATH='/data/research/gcc/lib:/data/research/gcc/libexec/gcc/x86_64-unknown-linux-gnu/4.6.2'
+	export LD_RUN_PATH
+fi
+#
+# User specific aliases and functions
