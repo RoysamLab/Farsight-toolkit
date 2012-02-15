@@ -55,6 +55,11 @@ vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSe
 	return newKey;
 }
 
+void SelectiveClustering::emitSelectionFinished()
+{
+	emit selectionFinished();
+}
+
 bool SelectiveClustering::AddCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet)
 {
 	/*! 
@@ -425,13 +430,13 @@ vtkSmartPointer<vtkVariantArray> SelectiveClustering::CondenseClusterToFeatureRo
 	{
 		vtkIdType rowCount = clustersTable->GetNumberOfRows();
 		//
-		vtkIdType sum = 0; 
+		double sum = 0; 
 		vtkAbstractArray * columnData = clustersTable->GetColumn(col);
 		for (vtkIdType row = 0; row != rowCount; row++)
 		{
-			sum += columnData->GetVariantValue(row).ToTypeInt64();
+			sum += columnData->GetVariantValue(row).ToDouble();
 		}
-		sum = sum / rowCount;
+		sum = sum / (double)rowCount;
 		rowForCluster->InsertNextValue(sum);
 	}
 	return rowForCluster;

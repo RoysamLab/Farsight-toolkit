@@ -19,6 +19,7 @@ SET( GUI_SRCS
 	ftkPreprocessDialog.cpp
 	PreprocessDialog.cpp
 	StatisticsToolbar.cpp
+	GraphWindowForNewSelection.cpp
 	GraphWindow.cpp
 	SelectiveClustering.cpp
 	
@@ -39,6 +40,7 @@ SET( GUI_HDRS
 	ftkPreprocessDialog.h
 	PreprocessDialog.h
 	StatisticsToolbar.h
+	GraphWindowForNewSelection.h
 	GraphWindow.h
 	SelectiveClustering.h
 )

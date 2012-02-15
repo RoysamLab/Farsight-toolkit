@@ -47,14 +47,15 @@ limitations under the License.
 #include "ftkGUI/StatisticsToolbar.h"
 #include "ftkGUI/SelectiveClustering.h"
 #include "ftkUtils.h"
-#include "ftkGUI/GraphWindow.h"
+//#include "ftkGUI/GraphWindow.h"
+#include "ftkGUI/GraphWindowForNewSelection.h"
 #include "ClusClus/clusclus.h"
 #include "ClusClus/Dendrogram.h"
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
-#include "SPD/spdmainwindow.h"
-#include "SPD/spdtestwindow.h"
+//#include "SPD/spdmainwindow.h"
+#include "SPD/spdtestwindowForNewSelection.h"
 #include <vector>
 #include <string>
 
@@ -80,11 +81,11 @@ private slots:
 	void changeRowData(void);
 	void showStatistics(void);
 	void updateStatistics(void);
-	void SPDAnalysis();
+	//void SPDAnalysis();
 	void SPDTestAnalysis();
-	void spdSampledendrogram();
-	void spdFeatureDendroram();
-	void spdShowHeatmap();
+	//void spdSampledendrogram();
+	//void spdFeatureDendroram();
+	//void spdShowHeatmap();
 
 	void sampledendrogram();
 	void featuredendrogram();
@@ -112,9 +113,9 @@ private:
 
 	QMenu *SPDMenu;
 	QAction *SPDAction;
-	QAction *spdSampleDendroAction;
-	QAction *spdFeatureDendroAction;
-	QAction *spdHeatmapAction;
+	//QAction *spdSampleDendroAction;
+	//QAction *spdFeatureDendroAction;
+	//QAction *spdHeatmapAction;
 
 	QMenu *ClusClusMenu;
 	QAction *sampleDendroAction;
@@ -138,8 +139,8 @@ private:
 	BiHeatmap *biheatmap;
 	ProgressionHeatmap *progressionheatmap;
 
-	SPDMainWindow *spdWin;
-	SPDtestWindow *spdTestWin;
+	//SPDMainWindow *spdWin;
+	SPDWindowForNewSelection *spdTestWin;
 	SPDAnalysisModel *SPDModel;
 	int flag;
 

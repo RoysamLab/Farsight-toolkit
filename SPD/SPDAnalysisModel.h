@@ -100,6 +100,8 @@ public:
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
 	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
 				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
+	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
+
 protected:
 	SPDAnalysisModel();
 	~SPDAnalysisModel();
@@ -107,7 +109,6 @@ protected:
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
 	bool MergeMatrix( vnl_matrix<double> &firstMat, vnl_matrix<double> &secondMat, vnl_matrix<double> &combinedMat);
-	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
 	void ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, vnl_vector<double> &distance);
 	void GetClusterIndexFromVnlVector(std::vector< std::vector<int> > &clusterIndex, vnl_vector<unsigned int> &index);
 	void GetAverageModule( vnl_matrix<double> &mat, vnl_vector<double> &distance, std::vector< std::vector<int> > &index, vnl_matrix<double> &averageMat, vnl_vector<double> &averageDistance);

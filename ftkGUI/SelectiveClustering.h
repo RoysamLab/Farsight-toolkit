@@ -71,7 +71,6 @@ public:
 	// Add and remove clusters
 	vtkIdType AddCluster(std::set<vtkIdType> ClusterSelectionSet);
 	bool AddCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
-
 	bool RemoveCluster(vtkIdType key);
 	bool RemoveCluster(vtkIdTypeArray * SelectedClusters);
 	void ClearClusters();
@@ -117,7 +116,11 @@ public:
 	
 	vtkSmartPointer<vtkAnnotationLink> ObjectAnnotationLink;
 	vtkSmartPointer<vtkViewUpdater> ObjectVtkViewUpdater;
+
+	void emitSelectionFinished();
+
 signals:
+	void selectionFinished();
 	void SelectionChanged();
 	void ClusterChanged();
 	void DataChanged();
