@@ -1,4 +1,4 @@
-#include "kmeans.h"
+#include "Kmeans.h"
 
 //Constructor
 Kmeans::Kmeans()
