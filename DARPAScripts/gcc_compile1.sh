@@ -34,7 +34,7 @@ cd .. && rm mpc-0.9.tar.gz && rm -fr mpc-0.9
 wget ftp://ftp.cs.unipr.it/pub/ppl/releases/0.11.2/ppl-0.11.2.tar.bz2
 tar -xvjf ppl-0.11.2.tar.bz2
 cd ppl-0.11.2
-## in file config on line 11156 insert: MAX_PAIN='-I/data/research/gcc_tools/install/include'
+## in file config on line 11156 insert: MAX_PAIN='-I/data/research/gcc/include'
 ## change two subsequent variables
 ## ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS $MAX_PAIN conftest.$ac_ext >&5'
 ## ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $MAX_PAIN $LDFLAGS conftest.$ac_ext $LIBS >&5'

@@ -1,5 +1,5 @@
 #!/bin/sh
-## in file config on line 11156 insert: MAX_PAIN='-I/data/research/gcc_tools/install/include'
+## in file config on line 11156 insert: MAX_PAIN='-I/data/research/gcc/include'
 ## change two subsequent variables
 ## ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS $MAX_PAIN conftest.$ac_ext >&5'
 ## ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $MAX_PAIN $LDFLAGS conftest.$ac_ext $LIBS >&5'
