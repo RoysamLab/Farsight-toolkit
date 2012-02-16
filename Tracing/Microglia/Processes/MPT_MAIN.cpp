@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {	
 	if(argc < 6)
 	{
-		std::cout << argv[0] << " input-image seedfile.txt soma-image distance-threshold output.swc" << std::endl;
+		std::cout << argv[0] << " input-image seedfile.txt soma-image distance-threshold output.swc [spacingXY spacingZ]" << std::endl;
 		return 1;
 	}
 
@@ -15,6 +15,13 @@ int main(int argc, char* argv[])
 	SWCFilename.append("_ANT.swc");
 
 	MicrogliaProcessTracer * MPT = new MicrogliaProcessTracer();
+  
+  //check if image spacing was provided on command-line
+  if( argc > 6)
+    {
+    MPT->SetXSpacing( atof(argv[6]) );
+    MPT->SetZSpacing( atof(argv[7]) );
+    }
 
 	std::cout << "Loading the input image" << std::endl;
 	MPT->LoadInputImage(std::string(argv[1]));

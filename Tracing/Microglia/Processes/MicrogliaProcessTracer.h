@@ -80,6 +80,8 @@ public:
   void SetMaxDistance(double d) { this->MaxDistance = d; }
   void SetProcessRadius(double d) { this->ProcessRadius = d; }
   void SetSeparateFilePerCell(bool b) { this->SeparateFilePerCell = b; }
+  void SetXSpacing(float f) { this->Spacing[0] = f; this ->Spacing[1] = f; }
+  void SetZSpacing(float f) { this->Spacing[2] = f; }
 
   void RunTracing();
   void WriteToSWC( std::string fname );
@@ -124,6 +126,7 @@ private:
   bool SeparateFilePerCell;
 
   std::map< Node *, std::list< std::pair< double, Node *> > > AdjacencyMap;
+  ImageType3D::SpacingType Spacing;
 };
 
 #endif

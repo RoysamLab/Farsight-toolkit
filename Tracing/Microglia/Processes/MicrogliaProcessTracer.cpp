@@ -27,6 +27,10 @@ MicrogliaProcessTracer::MicrogliaProcessTracer()
 	//no default distance threshold
 	//this means all nodes will be added to a tree
 	this->MaxDistance = std::numeric_limits<double>::max();
+
+  this->Spacing[0] = 1;
+  this->Spacing[1] = 1;
+  this->Spacing[2] = 1;
 }
 
 MicrogliaProcessTracer::~MicrogliaProcessTracer()
@@ -64,7 +68,13 @@ void MicrogliaProcessTracer::LoadInputImage(std::string fname)
   spacing[1] = 1;
   spacing[2] = 1;
 
-  if(image->GetSpacing() == spacing)
+  if(this->Spacing != spacing)
+    {
+    //image spacing was provided on command-line
+    image->SetSpacing(this->Spacing);
+    std::cout << "Input image's spacing now set to " << image->GetSpacing() << std::endl;
+    }
+  else if(image->GetSpacing() == spacing)
     {
     std::cout << "WARNING: spacing not set on input image.  Spacing should be set in microns per pixel." << std::endl;
     std::cout << "Please input spacing for X dimension now:" << std::endl;
