@@ -48,17 +48,12 @@ IF( BUILD_Rendering )
   ADD_SUBDIRECTORY( Rendering )
 ENDIF()
 
-OPTION( BUILD_ExtractSomas "Build Soma Extraction executables" ${ITK_USE_REVIEW} )
-IF( BUILD_ExtractSomas )
-  ADD_SUBDIRECTORY( ExtractSomas )
-ENDIF()
-
 OPTION( BUILD_MultipleNeuronTracer "Build Multiple Neuron Tracer" ON )
 IF( BUILD_MultipleNeuronTracer )
   ADD_SUBDIRECTORY( MultipleNeuronTracer )
 ENDIF()
 
-OPTION( BUILD_Microglia "Build Microglia" OFF )
+OPTION( BUILD_Microglia "Build Microglia Tracing Module" ON )
 IF( BUILD_Microglia )
     ADD_SUBDIRECTORY( Microglia )
 ENDIF()
