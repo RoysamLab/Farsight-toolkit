@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 		std::cout << "from_image: " << from_image_name << std::endl;
 		std::cout << "to_image: " << to_image_name << std::endl << std::endl;
 
-		fregl_util_read_image< unsigned char >( from_image_name, 0, 0);
+		fregl_util< unsigned char >::fregl_util_read_image( from_image_name, 0, 0);
 	}
 
 	
