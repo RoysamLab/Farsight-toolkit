@@ -849,7 +849,8 @@ std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
 fregl_space_transformer< TPixel >::
 xforms_to_neighbors(int image_index) const
 {
-	std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
+	std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
+    xforms;
 	int from = image_id_indices_[image_index];
 	for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
 		int to = image_id_indices_[i];
@@ -864,7 +865,8 @@ std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
 fregl_space_transformer< TPixel >::
 xforms_from_neighbors(int image_index) const
 {
-	std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
+	std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
+    xforms;
 	int to = image_id_indices_[image_index];
 	for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
 		int from = image_id_indices_[i];
@@ -879,7 +881,8 @@ std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
 fregl_space_transformer< TPixel >::
 xforms_to_all(int image_index) const
 {
-	std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
+	std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
+    xforms;
 	int from = image_id_indices_[image_index];
 	for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
 		int to = image_id_indices_[i];   
@@ -894,7 +897,8 @@ std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
 fregl_space_transformer< TPixel >::
 xforms_from_all(int image_index) const
 {
-	std::vector<fregl_space_transformer< TPixel >::TransformTypePointer> xforms;
+	std::vector<typename fregl_space_transformer< TPixel >::TransformTypePointer>
+    xforms;
 	int to = image_id_indices_[image_index];
 	for (unsigned int i = 0; i<image_id_indices_.size(); i++) {
 		int from = image_id_indices_[i];   
