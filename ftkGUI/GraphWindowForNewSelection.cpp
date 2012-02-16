@@ -63,11 +63,11 @@ void GraphWindowForNewSelection::setModels(vtkSmartPointer<vtkTable> table, Sele
 	vtkAbstractArray *idArray = table->GetColumn(0);
 	indVectorFromIndToVertex.resize(idArray->GetNumberOfTuples());
 	std::cout<< idArray->GetNumberOfTuples()<<endl;
-	for( vtkIdType i = 0; i < idArray->GetNumberOfTuples(); i++)
+	for( int i = 0; i < idArray->GetNumberOfTuples(); i++)
 	{
 		indVectorFromIndToVertex[i] = idArray->GetVariantValue(i).ToInt();
 		this->clusterIds->InsertNextValue(indVectorFromIndToVertex[i]);
-		indMapFromVertexToInd.insert( std::pair< vtkIdType, vtkIdType>(indVectorFromIndToVertex[i], i));
+		indMapFromVertexToInd.insert( std::pair< int, int>(indVectorFromIndToVertex[i], i));
 	}
 
 	if( clusterSelection == NULL)
@@ -163,16 +163,16 @@ void GraphWindowForNewSelection::SetGraphTable(vtkSmartPointer<vtkTable> table, 
 		vertexIDarrays->InsertNextValue( this->indVectorFromIndToVertex[i]);
 	}
 
-	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)
+	for( int i = 0; i < table->GetNumberOfRows(); i++)
 	{
-		vtkIdType ver1 = arrayID1->GetVariantValue(i).ToLong();
-		vtkIdType ver2 = arrayID2->GetVariantValue(i).ToLong();
-		std::map< vtkIdType, vtkIdType>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
-		std::map< vtkIdType, vtkIdType>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
+		int ver1 = arrayID1->GetVariantValue(i).ToLong();
+		int ver2 = arrayID2->GetVariantValue(i).ToLong();
+		std::map< int, int>::iterator iter1 = this->indMapFromVertexToInd.find( ver1);
+		std::map< int, int>::iterator iter2 = this->indMapFromVertexToInd.find( ver2);
 		if( iter1 != this->indMapFromVertexToInd.end() && iter2 != this->indMapFromVertexToInd.end())
 		{
-			vtkIdType index1 = iter1->second;
-			vtkIdType index2 = iter2->second;
+			int index1 = iter1->second;
+			int index2 = iter2->second;
 			graph->AddEdge( index1, index2);
 			weights->InsertNextValue(table->GetValueByName(i, edgeLabel.c_str()).ToDouble());
 		}
@@ -202,7 +202,7 @@ void GraphWindowForNewSelection::SetGraphTable(vtkSmartPointer<vtkTable> table, 
 
 	//std::cerr << "Number of Lookup Table values: " << this->dataTable->GetNumberOfRows() << std::endl;
 
-	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		vertexColors->InsertNextValue( i);
 		this->lookupTable->SetTableValue(i, 0, 0, 1); // color the vertices- blue
@@ -234,7 +234,7 @@ void GraphWindowForNewSelection::SetGraphTable(vtkSmartPointer<vtkTable> table, 
 	this->view->SetVertexLabelFontSize(20);
 }
 
-void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<vtkIdType>* clusterSize,
+void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<int>* clusterSize,
 							   std::vector<double> *percentVec, std::vector<double> *disVec, QString filename)
 {
 	this->fileName = filename;
@@ -311,30 +311,30 @@ void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, s
 	std::cout<< "construct graph"<<endl;
 	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
 	graph->GetVertexData()->SetPedigreeIds( this->clusterIds);   // set pedigree ids
-	vnl_matrix<vtkIdType> adj_matrix( dataTable->GetNumberOfRows(), dataTable->GetNumberOfRows());
+	vnl_matrix<int> adj_matrix( dataTable->GetNumberOfRows(), dataTable->GetNumberOfRows());
 	
 	vnl_matrix<double> vertextList( table->GetNumberOfRows(), 3);
 	vnl_vector<double> edgeWeights( table->GetNumberOfRows());
-	std::vector< vtkIdType> size;
+	std::vector< int> size;
 
 	if( clusterSize == NULL)
 	{
-		for( vtkIdType i = 0; i < dataTable->GetNumberOfRows(); i++)
+		for( int i = 0; i < dataTable->GetNumberOfRows(); i++)
 		{
 			size.push_back(1);
 		}
 	}
 	else
 	{
-		for( vtkIdType i = 0; i < dataTable->GetNumberOfRows(); i++)
+		for( int i = 0; i < dataTable->GetNumberOfRows(); i++)
 		{
 			size.push_back((*clusterSize)[i]);
 		}
 	}
 
-	for( vtkIdType i = 0; i < dataTable->GetNumberOfRows(); i++)
+	for( int i = 0; i < dataTable->GetNumberOfRows(); i++)
 	{
-		vtkIdType vertexID = graph->AddVertex(this->clusterIds->GetValue(i));
+		int vertexID = graph->AddVertex(this->clusterIds->GetValue(i));
 
 		vertexIDarrays->InsertNextValue( size[i]);   // which should be the cluster index
 
@@ -366,17 +366,17 @@ void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, s
 
 	edgeMapping.clear();
 
-	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++) 
+	for( int i = 0; i < table->GetNumberOfRows(); i++) 
 	{
-		vtkIdType ver1 = arrayID1->GetVariantValue(i).ToInt();
-		vtkIdType ver2 = arrayID2->GetVariantValue(i).ToInt();
+		int ver1 = arrayID1->GetVariantValue(i).ToInt();
+		int ver2 = arrayID2->GetVariantValue(i).ToInt();
 
 		graph->AddEdge( ver1, ver2);
 
-		std::pair< vtkIdType, vtkIdType> pair1 = std::pair< vtkIdType, vtkIdType>( ver1, ver2);
-		std::pair< vtkIdType, vtkIdType> pair2 = std::pair< vtkIdType, vtkIdType>( ver2, ver1);
-		edgeMapping.insert( std::pair< std::pair< vtkIdType, vtkIdType>, vtkIdType>(pair1, i));
-		edgeMapping.insert( std::pair< std::pair< vtkIdType, vtkIdType>, vtkIdType>(pair2, i));
+		std::pair< int, int> pair1 = std::pair< int, int>( ver1, ver2);
+		std::pair< int, int> pair2 = std::pair< int, int>( ver2, ver1);
+		edgeMapping.insert( std::pair< std::pair< int, int>, int>(pair1, i));
+		edgeMapping.insert( std::pair< std::pair< int, int>, int>(pair2, i));
 
 		adj_matrix( ver1, ver2) = 1;
 		adj_matrix( ver2, ver1) = 1;
@@ -425,7 +425,7 @@ void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, s
 	vertexColors->SetName("Color");
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	this->lookupTable->SetNumberOfTableValues( dataTable->GetNumberOfRows());
-	for( vtkIdType i = 0; i < dataTable->GetNumberOfRows(); i++)               
+	for( int i = 0; i < dataTable->GetNumberOfRows(); i++)               
 	{             
 		vertexColors->InsertNextValue( i);
 		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
@@ -442,7 +442,7 @@ void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, s
 	edgeColors->SetName("EdgeColor");
 	this->edgeLookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	this->edgeLookupTable->SetNumberOfTableValues( table->GetNumberOfRows());
-	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)               
+	for( int i = 0; i < table->GetNumberOfRows(); i++)               
 	{ 
 		edgeColors->InsertNextValue(i); // color the edges by default color
 		this->edgeLookupTable->SetTableValue(i, edgeDefaultColor[0], edgeDefaultColor[1], edgeDefaultColor[2]);
@@ -511,8 +511,8 @@ void GraphWindowForNewSelection::SetTreeTable(vtkSmartPointer<vtkTable> table, s
 
 void GraphWindowForNewSelection::UpdateCoordinatesByEdgeWeights(std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
 {
-	vtkIdType oldFirstIndex = backbones[0];
-	vtkIdType oldSecondIndex = 0;
+	int oldFirstIndex = backbones[0];
+	int oldSecondIndex = 0;
 	newPointList[ oldFirstIndex] = oldPointList[oldFirstIndex];
 	Point newFirst = oldPointList[oldFirstIndex];
 	Point oldFirst = oldPointList[oldFirstIndex];
@@ -532,20 +532,20 @@ void GraphWindowForNewSelection::UpdateCoordinatesByEdgeWeights(std::vector<Poin
 }
 
 // attachnode's coordinate has been updated already in pointlist
-void GraphWindowForNewSelection::UpdateChainPointList(vtkIdType attachnode, std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
+void GraphWindowForNewSelection::UpdateChainPointList(int attachnode, std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
 {
-	for( vtkIdType i = 0; i < chainList.size(); i++)
+	for( int i = 0; i < chainList.size(); i++)
 	{
-		std::pair<vtkIdType, std::vector<vtkIdType> > pair = chainList[i];
+		std::pair<int, std::vector<int> > pair = chainList[i];
 		if( pair.first == attachnode)
 		{
  			Point oldFirst = oldPointList[ attachnode];
 			Point newFirst = newPointList[ attachnode];
-			std::vector<vtkIdType> vec = pair.second;	
+			std::vector<int> vec = pair.second;	
 			Point oldSecond(0,0);
-			vtkIdType oldFirstIndex = attachnode; 
-			vtkIdType oldSecondIndex = 0;
-			for( vtkIdType j = 0; j < vec.size(); j++)
+			int oldFirstIndex = attachnode; 
+			int oldSecondIndex = 0;
+			for( int j = 0; j < vec.size(); j++)
 			{
 				oldSecondIndex = vec[j];
 				oldSecond = oldPointList[ oldSecondIndex];
@@ -669,20 +669,20 @@ void GraphWindowForNewSelection::SelectionCallbackFunction(vtkObject* caller, lo
 		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
 		if( vertexList != NULL && vertexList->GetNumberOfTuples() > 0)
 		{
-			std::vector<vtkIdType> ClusterIDs;
+			std::vector<int> ClusterIDs;
 			int key = graphWin->view->GetInteractor()->GetControlKey();
 			if( 0 == key)
 			{
-				for( vtkIdType i = 0; i < vertexList->GetNumberOfTuples(); i++)
+				for( int i = 0; i < vertexList->GetNumberOfTuples(); i++)
 				{
-					vtkIdType value = vertexList->GetValue(i);
+					int value = vertexList->GetValue(i);
 					ClusterIDs.push_back(value);
 				}
 				graphWin->SetProgressionStartTag(true);
 			}
 			else
 			{
-				vtkIdType value = vertexList->GetValue(0);
+				int value = vertexList->GetValue(0);
 				ClusterIDs.push_back(value);
 				graphWin->SetUserDefineProgression(value);
 			}
@@ -737,7 +737,7 @@ void GraphWindowForNewSelection::SetProgressionStartTag(bool bstart)
 	bProgressionStart = bstart;
 }
 
-void GraphWindowForNewSelection::SetUserDefineProgression(vtkIdType nodeID)
+void GraphWindowForNewSelection::SetUserDefineProgression(int nodeID)
 {
 	if( bProgressionStart)
 	{
@@ -756,26 +756,26 @@ void GraphWindowForNewSelection::SetUserDefineProgression(vtkIdType nodeID)
 
 void GraphWindowForNewSelection::ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color)
 {
-	for( vtkIdType i = 0; i < lookuptable->GetNumberOfTableValues(); i++)
+	for( int i = 0; i < lookuptable->GetNumberOfTableValues(); i++)
 	{
 		lookuptable->SetTableValue( i, color[0], color[1], color[2]);
 	}
 }
 
-void GraphWindowForNewSelection::UpdataLookupTable( std::vector<vtkIdType>& IDs)
+void GraphWindowForNewSelection::UpdataLookupTable( std::vector<int>& IDs)
 {
-	std::set<vtkIdType> selectedIDs; 
+	std::set<int> selectedIDs; 
 
 	for( int i = 0; i < IDs.size(); i++)
 	{
-		std::map<vtkIdType, vtkIdType>::iterator iter2 = this->indMapFromVertexToInd.find( IDs[i]);
+		std::map<int, int>::iterator iter2 = this->indMapFromVertexToInd.find( IDs[i]);
 		if( iter2 != this->indMapFromVertexToInd.end())
 		{
 			selectedIDs.insert( iter2->second);
 		}
 	}
 
-	for( vtkIdType i = 0; i < this->dataTable->GetNumberOfRows(); i++)
+	for( int i = 0; i < this->dataTable->GetNumberOfRows(); i++)
 	{
 		if (selectedIDs.find(i) != selectedIDs.end())
 		{
@@ -802,11 +802,11 @@ void GraphWindowForNewSelection::UpdateProgressionPath()
 
 	for( int i = 0; i < progressionPath.size() - 1; i++)
 	{
-		std::pair<vtkIdType, vtkIdType> pair = std::pair<vtkIdType, vtkIdType>( progressionPath[i], progressionPath[i + 1]);
-		std::map< std::pair< vtkIdType, vtkIdType>, vtkIdType>::iterator iter = edgeMapping.find( pair);
+		std::pair<int, int> pair = std::pair<int, int>( progressionPath[i], progressionPath[i + 1]);
+		std::map< std::pair< int, int>, int>::iterator iter = edgeMapping.find( pair);
 		if( iter != edgeMapping.end())
 		{
-			vtkIdType index = (vtkIdType)iter->second;
+			int index = (int)iter->second;
 			edgeLookupTable->SetTableValue( index, 0, 0 ,0);
 		}
 	}
@@ -814,46 +814,46 @@ void GraphWindowForNewSelection::UpdateProgressionPath()
 	this->view->GetRenderer()->Render();
 }
 
-void GraphWindowForNewSelection::GetProgressionPath(vnl_matrix<vtkIdType> &hopMat, vtkIdType startNode, vtkIdType endNode, std::vector< vtkIdType> &path)
+void GraphWindowForNewSelection::GetProgressionPath(vnl_matrix<int> &hopMat, int startNode, int endNode, std::vector< int> &path)
 {
-	std::map< vtkIdType, vtkIdType> tmpChain;  // for ordering 
-	vtkIdType maxhop = hopMat( startNode, endNode);
+	std::map< int, int> tmpChain;  // for ordering 
+	int maxhop = hopMat( startNode, endNode);
 
-	for( vtkIdType i = 0; i < shortest_hop.cols(); i++)
+	for( int i = 0; i < shortest_hop.cols(); i++)
 	{
 		if( shortest_hop( startNode, i) + shortest_hop( endNode, i) == maxhop)
 		{
-			tmpChain.insert( std::pair< vtkIdType, vtkIdType>( shortest_hop( startNode, i), i));
+			tmpChain.insert( std::pair< int, int>( shortest_hop( startNode, i), i));
 		}
 	}
 
 	path.clear();
-	std::map< vtkIdType, vtkIdType>::iterator iter;
+	std::map< int, int>::iterator iter;
 	for( iter = tmpChain.begin(); iter != tmpChain.end(); iter++)
 	{
 		path.push_back((*iter).second);
 	}
 }
 
-void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj_matrix, std::vector<Point>& pointList)
+void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<int>& adj_matrix, std::vector<Point>& pointList)
 {
 	shortest_hop.set_size(adj_matrix.rows(), adj_matrix.cols());
-	vnl_vector<vtkIdType> mark(adj_matrix.rows());
+	vnl_vector<int> mark(adj_matrix.rows());
 	shortest_hop.fill(0);
 	mark.fill(0);
 	mark[0] = 1;
-	std::vector< vtkIdType> checkNode;
-	std::vector<vtkIdType> noncheckNode;
+	std::vector< int> checkNode;
+	std::vector<int> noncheckNode;
 	find( mark, 0, noncheckNode, checkNode);
 
 	/// calculate the shortest hop matrix
 	while( noncheckNode.size() > 0)
 	{
-		vtkIdType checkNodeInd = -1;
-		vtkIdType noncheckNodeInd = -1;
-		for( vtkIdType i = 0; i < checkNode.size(); i++)
+		int checkNodeInd = -1;
+		int noncheckNodeInd = -1;
+		for( int i = 0; i < checkNode.size(); i++)
 		{
-			for( vtkIdType j = 0; j < noncheckNode.size(); j++)
+			for( int j = 0; j < noncheckNode.size(); j++)
 			{
 				if( adj_matrix(checkNode[i], noncheckNode[j]) != 0)
 				{
@@ -868,7 +868,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 			}
 		}
 
-		for( vtkIdType i = 0; i < checkNode.size(); i++)
+		for( int i = 0; i < checkNode.size(); i++)
 		{
 			int size = (this->size[noncheckNodeInd] + this->size[checkNodeInd]) / 2;
 			shortest_hop( checkNode[i], noncheckNodeInd) =  shortest_hop( checkNode[i], checkNodeInd) + size;
@@ -888,7 +888,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	ofs.close();
 
 	/// find the root and chains of the tree
-	vtkIdType maxhop = shortest_hop.max_value();
+	int maxhop = shortest_hop.max_value();
 	unsigned int maxId = shortest_hop.arg_max();
 	unsigned int coln = maxId / shortest_hop.rows();
 	unsigned int rown = maxId  - coln * shortest_hop.rows();
@@ -896,9 +896,9 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	backbones.clear();
 	chainList.clear();  // store the chains, no repeat
 
-	std::queue<vtkIdType> tmpbackbones;   // for calculating all the sidechains
-	std::vector<vtkIdType> debugbackbones;  // for debugging
-	std::map< vtkIdType, vtkIdType> tmpChain;  // for ordering 
+	std::queue<int> tmpbackbones;   // for calculating all the sidechains
+	std::vector<int> debugbackbones;  // for debugging
+	std::map< int, int> tmpChain;  // for ordering 
 	vnl_vector< int> tag( shortest_hop.rows());     // whether the node has been included in the chain
 	tag.fill( 0);
 
@@ -906,15 +906,15 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	QString chainStr = this->fileName + "chains.txt";
 	ofstream ofChains( chainStr.toStdString().c_str());
 	/// find the backbone
-	for( vtkIdType i = 0; i < shortest_hop.cols(); i++)
+	for( int i = 0; i < shortest_hop.cols(); i++)
 	{
 		if( shortest_hop( coln, i) + shortest_hop( rown, i) == maxhop)
 		{
-			tmpChain.insert( std::pair< vtkIdType, vtkIdType>( shortest_hop( coln, i), i));
+			tmpChain.insert( std::pair< int, int>( shortest_hop( coln, i), i));
 		}
 	}
 
-	std::map< vtkIdType, vtkIdType>::iterator iter;
+	std::map< int, int>::iterator iter;
 	for( iter = tmpChain.begin(); iter != tmpChain.end(); iter++)
 	{
 		backbones.push_back((*iter).second);
@@ -929,18 +929,18 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	progressionEndID = backbones[ backbones.size() - 1];
 
 	/// find the branches' backbones
-	std::vector< vtkIdType> branchnodes;
-	std::vector< vtkIdType> chains;
+	std::vector< int> branchnodes;
+	std::vector< int> chains;
 	while( !tmpbackbones.empty())
 	{
-		vtkIdType ind = tmpbackbones.front(); 
-		for( vtkIdType i = 0; i < adj_matrix.cols(); i++)
+		int ind = tmpbackbones.front(); 
+		for( int i = 0; i < adj_matrix.cols(); i++)
 		{
 			if( adj_matrix( ind, i) != 0 && tag[i] == 0)    // ind's  neighbours that haven't been checked
 			{
 				branchnodes.clear();
 				branchnodes.push_back( ind);
-				for( vtkIdType j = 0; j < shortest_hop.cols(); j++)
+				for( int j = 0; j < shortest_hop.cols(); j++)
 				{
 					if( shortest_hop( ind, j) > shortest_hop( i, j))  // find neighbour i's branch nodes including i
 					{
@@ -951,7 +951,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 						else
 						{
 							ofChains<< "already searched branchnode: "<< ind<<"\t"<< i <<"\t"<< j<<endl;
-							for( vtkIdType st = 0; st < debugbackbones.size(); st++)
+							for( int st = 0; st < debugbackbones.size(); st++)
 							{
 								ofChains<< debugbackbones[st] + 1<<endl;
 							}
@@ -963,8 +963,8 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 				if( branchnodes.size() > 1)
 				{
 					getBackBones( shortest_hop, branchnodes, chains);
-					chainList.push_back( std::pair< vtkIdType, std::vector<vtkIdType> >(ind, chains));
-					for( vtkIdType k = 0; k < chains.size(); k++)
+					chainList.push_back( std::pair< int, std::vector<int> >(ind, chains));
+					for( int k = 0; k < chains.size(); k++)
 					{
 						tmpbackbones.push( chains[k]);
 						debugbackbones.push_back( chains[k]);
@@ -977,19 +977,19 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	}
 
 	ofChains << "backbones:" <<endl;
-	for( vtkIdType i = 0; i < backbones.size(); i++)
+	for( int i = 0; i < backbones.size(); i++)
 	{
 		ofChains << backbones[i]<<"\t";
 	}
 	ofChains <<endl;
 	ofChains << "branch chains:"<<endl;
-	std::vector< std::pair< vtkIdType, std::vector<vtkIdType> > >::iterator chainIter;
+	std::vector< std::pair< int, std::vector<int> > >::iterator chainIter;
 	for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
 	{
-		std::pair< vtkIdType, std::vector< vtkIdType> >tmp = *chainIter;
+		std::pair< int, std::vector< int> >tmp = *chainIter;
 		ofChains << tmp.first;
-		std::vector< vtkIdType> branchlist = tmp.second;
-		for( vtkIdType i = 0; i < branchlist.size(); i++)
+		std::vector< int> branchlist = tmp.second;
+		for( int i = 0; i < branchlist.size(); i++)
 		{
 			ofChains << "\t"<< branchlist[i];
 		}
@@ -999,10 +999,10 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	SortChainList( shortest_hop, backbones, chainList);   // the order to draw the subbones
 	//for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
 	//{
-	//	std::pair< vtkIdType, std::vector< vtkIdType> >tmp = *chainIter;
+	//	std::pair< int, std::vector< int> >tmp = *chainIter;
 	//	ofChains << tmp.first;
-	//	std::vector< vtkIdType> branchlist = tmp.second;
-	//	for( vtkIdType i = 0; i < branchlist.size(); i++)
+	//	std::vector< int> branchlist = tmp.second;
+	//	for( int i = 0; i < branchlist.size(); i++)
 	//	{
 	//		ofChains << "\t"<< branchlist[i];
 	//	}
@@ -1023,7 +1023,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 
 	/// calculate backbone node position
 	vnl_vector< double> backboneAngle( backbones.size());
-	for( vtkIdType i = 0; i < backboneAngle.size(); i++)
+	for( int i = 0; i < backboneAngle.size(); i++)
 	{
 		backboneAngle[i] = i + 1;
 	}
@@ -1036,8 +1036,8 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 
 	if( backbones.size() > 500)
 	{
-		vtkIdType size = backbones.size();
-		for( vtkIdType i = 0; i < backbones.size(); i++)
+		int size = backbones.size();
+		for( int i = 0; i < backbones.size(); i++)
 		{
 			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm * 500 / size;
 			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm * 500 / size;
@@ -1046,7 +1046,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	}
 	else
 	{
-		for( vtkIdType i = 0; i < backbones.size(); i++)
+		for( int i = 0; i < backbones.size(); i++)
 		{
 			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm;
 			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm;
@@ -1055,18 +1055,18 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	}
 
 	/// cacluate the branch backbone nodes position
-	for( vtkIdType i = 0; i < chainList.size(); i++)
+	for( int i = 0; i < chainList.size(); i++)
 	{
 		if( i % 100 == 0)
 		{
 			std::cout<<i<<endl;
 		}
-		std::pair< vtkIdType, std::vector<vtkIdType> > branch = chainList[i];
-		vtkIdType attachNode = branch.first;
-		std::vector< vtkIdType> branchNode = branch.second;
-		for( vtkIdType j = 0; j < branchNode.size(); j++)
+		std::pair< int, std::vector<int> > branch = chainList[i];
+		int attachNode = branch.first;
+		std::vector< int> branchNode = branch.second;
+		for( int j = 0; j < branchNode.size(); j++)
 		{
-			vtkIdType newNode = branchNode[j];
+			int newNode = branchNode[j];
 			double bestR = 0.3;
 			double bestTheta = 0;
 			vnl_vector< double> minForce( 7);
@@ -1087,7 +1087,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 
 					newNodePoint.x = nodePos( 0, attachNode) + r * cos( theta);
 					newNodePoint.y = nodePos( 1, attachNode) + r * sin( theta);
-					for( vtkIdType k = 0; k < repel_mat.cols(); k++)
+					for( int k = 0; k < repel_mat.cols(); k++)
 					{
 						repel_mat(0, k) = newNodePoint.x - repel_mat( 0, k);
 						repel_mat(1, k) = newNodePoint.y - repel_mat( 1, k);
@@ -1095,7 +1095,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 
 					vnl_vector< double> repel_tmp_xvector(repel_mat.cols());
 					vnl_vector< double> repel_tmp_yvector(repel_mat.cols());
-					for( vtkIdType k = 0; k < repel_mat.cols(); k++)
+					for( int k = 0; k < repel_mat.cols(); k++)
 					{
 						double force = sqrt( pow(repel_mat(0, k),2) + pow(repel_mat(1, k),2));
 						force = pow( force, 5);
@@ -1151,7 +1151,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	{
 		vnl_vector<double> tmpNodePos = nodePos.get_row(i) - medianXY[i];
 		vnl_vector<double> tmp = tmpNodePos;
-		for( vtkIdType j = 0; j < tmpNodePos.size(); j++)
+		for( int j = 0; j < tmpNodePos.size(); j++)
 		{
 			tmp[j] = abs( tmp[j]);
 		}
@@ -1163,7 +1163,7 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 	ofCoordinate << setiosflags(ios::fixed)<< nodePos.transpose()<<endl;
 	ofCoordinate.close();
 
-	for( vtkIdType i = 0; i < nodePos.cols(); i++)
+	for( int i = 0; i < nodePos.cols(); i++)
 	{
 		Point pt( nodePos(0, i), nodePos(1, i));
 		pointList.push_back( pt);
@@ -1171,31 +1171,31 @@ void GraphWindowForNewSelection::CalculateCoordinates(vnl_matrix<vtkIdType>& adj
 }
 
 /// branchnodes first element is the chain's attach node
-void GraphWindowForNewSelection::getBackBones(vnl_matrix< vtkIdType>& shortest_hop, std::vector< vtkIdType>& branchnodes, std::vector< vtkIdType>& chains)
+void GraphWindowForNewSelection::getBackBones(vnl_matrix< int>& shortest_hop, std::vector< int>& branchnodes, std::vector< int>& chains)
 {
 	chains.clear();
-	vnl_vector< vtkIdType> branchShortestHop( branchnodes.size());
+	vnl_vector< int> branchShortestHop( branchnodes.size());
 
-	vtkIdType attachNode = branchnodes.front();
-	std::map< vtkIdType, vtkIdType> tmpChain;  // for ordering 
+	int attachNode = branchnodes.front();
+	std::map< int, int> tmpChain;  // for ordering 
 
-	for( vtkIdType i = 0; i < branchShortestHop.size(); i++)
+	for( int i = 0; i < branchShortestHop.size(); i++)
 	{
 		branchShortestHop[i] = shortest_hop( attachNode, branchnodes[i]);
 	}
 
-	vtkIdType maxHop = branchShortestHop.max_value();
-	vtkIdType endNodeIndex = branchShortestHop.arg_max();
-	vtkIdType endNode = branchnodes[ endNodeIndex];
-	for( vtkIdType i = 0; i < shortest_hop.cols(); i++)
+	int maxHop = branchShortestHop.max_value();
+	int endNodeIndex = branchShortestHop.arg_max();
+	int endNode = branchnodes[ endNodeIndex];
+	for( int i = 0; i < shortest_hop.cols(); i++)
 	{
 		if( shortest_hop( attachNode, i) + shortest_hop( endNode, i) == maxHop)
 		{
-			tmpChain.insert( std::pair< vtkIdType, vtkIdType>( shortest_hop( attachNode, i), i));
+			tmpChain.insert( std::pair< int, int>( shortest_hop( attachNode, i), i));
 		}
 	}
 
-	std::map< vtkIdType, vtkIdType>::iterator iter;
+	std::map< int, int>::iterator iter;
 	for( iter = tmpChain.begin(); iter != tmpChain.end(); iter++)
 	{
 		if( (*iter).second != attachNode)
@@ -1205,7 +1205,7 @@ void GraphWindowForNewSelection::getBackBones(vnl_matrix< vtkIdType>& shortest_h
 	}
 }
 
-void GraphWindowForNewSelection::find(vnl_vector<vtkIdType>& vec, vtkIdType val, std::vector<vtkIdType>& equal, std::vector<vtkIdType>& nonequal)
+void GraphWindowForNewSelection::find(vnl_vector<int>& vec, int val, std::vector<int>& equal, std::vector<int>& nonequal)
 {
 	for( unsigned int i = 0; i < vec.size(); i++)
 	{
@@ -1220,10 +1220,10 @@ void GraphWindowForNewSelection::find(vnl_vector<vtkIdType>& vec, vtkIdType val,
 	}
 }
 
-void GraphWindowForNewSelection::GetElementsIndexInMatrix(vnl_matrix<vtkIdType>& mat, vtkIdType rownum, vtkIdType max, vnl_matrix<double>& oldmat, vnl_matrix<double>& newmat, vnl_vector< int>& tag)
+void GraphWindowForNewSelection::GetElementsIndexInMatrix(vnl_matrix<int>& mat, int rownum, int max, vnl_matrix<double>& oldmat, vnl_matrix<double>& newmat, vnl_vector< int>& tag)
 {
-	std::vector< vtkIdType> index;
-	for( vtkIdType i = 0; i < mat.cols(); i++)
+	std::vector< int> index;
+	for( int i = 0; i < mat.cols(); i++)
 	{
 		if( mat( rownum, i) < max && tag[i] == 1)
 		{
@@ -1232,7 +1232,7 @@ void GraphWindowForNewSelection::GetElementsIndexInMatrix(vnl_matrix<vtkIdType>&
 	}
 
 	newmat.set_size( oldmat.rows(), index.size());
-	for( vtkIdType i = 0; i < index.size(); i++)
+	for( int i = 0; i < index.size(); i++)
 	{
 		vnl_vector< double> tmpcol = oldmat.get_column( index[i]);
 		newmat.set_column( i, tmpcol);
@@ -1245,14 +1245,14 @@ double GraphWindowForNewSelection::Median( vnl_vector<double> vec)
 	vnl_vector<double> tmp( vec.size());
 	double max = vect.max_value() + 1;
 	double med;
-	for( vtkIdType i = 0; i < vect.size(); i++)
+	for( int i = 0; i < vect.size(); i++)
 	{
 		tmp[i] = vect.min_value();
-		vtkIdType ind = vect.arg_min();
+		int ind = vect.arg_min();
 		vect[ind] = max;
 	}
 
-	vtkIdType size = tmp.size();
+	int size = tmp.size();
 	if( size % 2 == 1)
 	{
 		med = tmp[ size / 2];
@@ -1264,30 +1264,30 @@ double GraphWindowForNewSelection::Median( vnl_vector<double> vec)
 	return med;
 }
 
-void GraphWindowForNewSelection::SortChainList( vnl_matrix<vtkIdType>& shortest_hop, std::vector<vtkIdType>& backbones, 
-				   std::vector< std::pair<vtkIdType, std::vector<vtkIdType> > >& chainList)
+void GraphWindowForNewSelection::SortChainList( vnl_matrix<int>& shortest_hop, std::vector<int>& backbones, 
+				   std::vector< std::pair<int, std::vector<int> > >& chainList)
 {
-	std::vector< std::pair<vtkIdType, std::vector<vtkIdType> > > tmpchainList;
-	std::multimap< vtkIdType, vtkIdType> sortMap;
-	vtkIdType startNode = backbones[0];
-	vtkIdType endNode = backbones[ backbones.size() - 1];
-	for( vtkIdType i = 0; i < chainList.size(); i++)
+	std::vector< std::pair<int, std::vector<int> > > tmpchainList;
+	std::multimap< int, int> sortMap;
+	int startNode = backbones[0];
+	int endNode = backbones[ backbones.size() - 1];
+	for( int i = 0; i < chainList.size(); i++)
 	{
-		std::pair<vtkIdType, std::vector<vtkIdType> > chainPair = chainList[i];
+		std::pair<int, std::vector<int> > chainPair = chainList[i];
 		if( IsExist( backbones, chainPair.first))
 		{
-			vtkIdType abHop = abs( (int)shortest_hop(chainPair.first, startNode) - (int)shortest_hop( chainPair.first, endNode));
-			sortMap.insert( std::pair< vtkIdType, vtkIdType>(abHop, i));
+			int abHop = abs( (int)shortest_hop(chainPair.first, startNode) - (int)shortest_hop( chainPair.first, endNode));
+			sortMap.insert( std::pair< int, int>(abHop, i));
 		}
 		else
 		{
-			std::multimap< vtkIdType, vtkIdType>::iterator iter;
+			std::multimap< int, int>::iterator iter;
 			for( iter = sortMap.begin(); iter != sortMap.end(); iter++)
 			{
-				std::pair<vtkIdType, std::vector<vtkIdType> > pair = chainList[ (*iter).second];
+				std::pair<int, std::vector<int> > pair = chainList[ (*iter).second];
 				tmpchainList.push_back( pair);
 			}
-			for( vtkIdType k = i; k < chainList.size(); k++)
+			for( int k = i; k < chainList.size(); k++)
 			{
 				tmpchainList.push_back( chainList[k]);
 			}
@@ -1297,9 +1297,9 @@ void GraphWindowForNewSelection::SortChainList( vnl_matrix<vtkIdType>& shortest_
 	}
 }
 
-bool GraphWindowForNewSelection::IsExist(std::vector<vtkIdType>& vec, vtkIdType value)
+bool GraphWindowForNewSelection::IsExist(std::vector<int>& vec, int value)
 {
-	for( vtkIdType i = 0; i < vec.size(); i++)
+	for( int i = 0; i < vec.size(); i++)
 	{
 		if( value == vec[i])
 		{
@@ -1312,23 +1312,23 @@ bool GraphWindowForNewSelection::IsExist(std::vector<vtkIdType>& vec, vtkIdType 
 void GraphWindowForNewSelection::GetProgressionTreeOrder(std::vector<long int> &order)
 {
 	order.clear();
-	for( vtkIdType i = 0; i < backbones.size(); i++)
+	for( int i = 0; i < backbones.size(); i++)
 	{
 		order.push_back(backbones[i]);
 		GetOrder(backbones[i], order);
 	}
 }
 
-void GraphWindowForNewSelection::GetOrder(vtkIdType node, std::vector<long int> &order)
+void GraphWindowForNewSelection::GetOrder(int node, std::vector<long int> &order)
 {
-	std::vector<vtkIdType> vec;
-	for( vtkIdType i = 0; i < chainList.size(); i++)
+	std::vector<int> vec;
+	for( int i = 0; i < chainList.size(); i++)
 	{
-		std::pair<vtkIdType, std::vector<vtkIdType> > pair = chainList[i];
+		std::pair<int, std::vector<int> > pair = chainList[i];
 		if( pair.first == node)
 		{
 			vec = pair.second;
-			for( vtkIdType j = 0; j < vec.size(); j++)
+			for( int j = 0; j < vec.size(); j++)
 			{
 				order.push_back( vec[j]);
 				GetOrder( vec[j], order);
@@ -1349,7 +1349,7 @@ void GraphWindowForNewSelection::ColorTreeAccordingToFeatures(vnl_vector<double>
 	double min = featureColorVector.min_value();
 	featureColorVector = (featureColorVector - min) / ( max - min);
 	
-	for( vtkIdType i = 0; i < featureColorVector.size(); i++)               
+	for( int i = 0; i < featureColorVector.size(); i++)               
 	{
 		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
 		if( k >= COLOR_MAP2_SIZE)

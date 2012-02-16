@@ -81,7 +81,7 @@
 #include "ftkGUI/ColorMap.h"
 #include "Biclustering.h"
 
-typedef struct Treestructure
+struct Treestructure
 {
 	std::vector<std::vector<int > > treeid;
 	std::vector<std::vector<double > > coordinates;	
