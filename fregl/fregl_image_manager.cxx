@@ -520,7 +520,8 @@ bool fregl_image_manager< TPixel >::cache_write_image(int image_index, ImageType
 
 template < class TPixel >
 typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TPixel >::cache_read_image(int image_index) {
-	// Read a transformed cache file from the disk return NULL if the file is not there or
+	// Read a transformed cache file from the disk 
+	// return NULL if the file is not there or
 	// can not be read for some other reason.
 	std::string name = cache_dir + std::string("/cache_") + vul_file::strip_extension(global_anchor)
 		+ std::string("_") + vul_file::strip_extension(image_names[image_index]) + std::string(".mhd");
@@ -531,7 +532,7 @@ typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TP
 	try {
 		reader->Update();
 	} catch (itk::ExceptionObject& e) {
-		vcl_cout << "reader exception: " << e << vcl_endl;
+		std::cerr << "Cached image does not exist on disk, transforming a new one" << std::endl;
 		return NULL;
 	}
 	return reader->GetOutput();
