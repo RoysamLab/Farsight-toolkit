@@ -10,9 +10,20 @@
 #include "itkIntTypes.h"
 #include "itkMaskNegatedImageFilter.h"
 
-#include "InsightJournalFilters/FastMarchingMinimalPathExtraction/itkSpeedFunctionToPathFilter.h"
-#include "itkGradientDescentOptimizer.h"
-#include "itkPathIterator.h"
+#include "itkDanielssonDistanceMapImageFilter.h"
+
+#include "itkKappaSigmaThresholdImageFilter.h"
+#include "itkHuangThresholdImageFilter.h"
+#include "itkIntermodesThresholdImageFilter.h"
+#include "itkIsoDataThresholdImageFilter.h"
+#include "itkMaximumEntropyThresholdImageFilter.h"
+#include "itkMomentsThresholdImageFilter.h"
+#include "itkOtsuThresholdImageFilter.h"
+#include "itkOtsuMultipleThresholdsImageFilter.h"
+#include "itkRenyiEntropyThresholdImageFilter.h"
+#include "itkShanbhagThresholdImageFilter.h"
+#include "itkYenThresholdImageFilter.h"
+
 
 #include <fstream>
 #include <cstring>
@@ -33,10 +44,12 @@
 class MicrogliaRegionTracer
 {
 private:
-	typedef Cell::ImageType ImageType;
-	typedef Cell::LoGImageType LoGImageType;
-	typedef Cell::VesselnessImageType VesselnessImageType;
-	typedef itk::Image<unsigned char, 3> MaskedImageType;
+	typedef Cell::ImageType						ImageType;
+	typedef Cell::LoGImageType					LoGImageType;
+	typedef Cell::VesselnessImageType			VesselnessImageType;
+	typedef itk::Image< float, 3 >				DistanceImageType;
+	typedef itk::Image< float, 3 >		VoronoiImageType;
+	typedef itk::Image< unsigned char, 3 >		MaskedImageType;
 
 private:
 	std::vector<Cell*> cells;
@@ -51,8 +64,9 @@ public:
 	
 	void LoadCellPoints(std::string image_filename, std::string soma_filename);
 
-	void WriteImage(std::string filename, ImageType::Pointer image);
-	void WriteVesselnessImage(std::string filename, VesselnessImageType::Pointer image);
+	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
+	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
+	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
 	
 	void Trace();
 
@@ -68,6 +82,18 @@ public:
 	Tree* BuildMST2(Cell* cell, double** AdjGraph);
 
 	void SmoothPath(Cell* cell);
+
+	void KappaSigmaThreshold(Cell* cell);
+	void HuangThreshold(Cell* cell);
+	void IntermodesThreshold(Cell* cell);
+	void IsoDataThreshold(Cell* cell);
+	void MaximumEntropyThreshold(Cell* cell);
+	void MomentsThreshold(Cell* cell);
+	void OtsuThreshold(Cell* cell);
+	void OtsuMultipleThreshold(Cell* cell);
+	void RenyiEntropyThreshold(Cell* cell);
+	void ShanbhagThreshold(Cell* cell);
+	void YenThreshold(Cell* cell);
 	
 };
 

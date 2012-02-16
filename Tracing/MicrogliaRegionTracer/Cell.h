@@ -19,8 +19,8 @@ public:
 	//typedef ImageType::SizeType					ImageSizeType;
 	//typedef ImageType::IndexType					ImageIndexType;
 
-	typedef itk::Image<float, 3>					LoGImageType;
-	typedef itk::Image<float, 3>					VesselnessImageType;
+	typedef itk::Image< float, 3 >					LoGImageType;
+	typedef itk::Image< float, 3 >					VesselnessImageType;
 
 public:
 	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
