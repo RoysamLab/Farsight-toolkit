@@ -64,9 +64,9 @@ public:
 	
 	void LoadCellPoints(std::string image_filename, std::string soma_filename);
 
-	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
-	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
-	void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
+	void WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
+	void WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
+	void WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
 	
 	void Trace();
 
