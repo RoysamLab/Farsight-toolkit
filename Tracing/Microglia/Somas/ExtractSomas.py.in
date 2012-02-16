@@ -10,26 +10,31 @@ if scriptPath != "":
   os.chdir(scriptPath)
 
 if len(sys.argv) < 3:
-  print sys.argv[0] + " <input image> <output image>"
+  print sys.argv[0] + " <input image> <output image> [spacingXY spacingZ]"
   sys.exit(1)
 
 input = sys.argv[1]
 output = sys.argv[2] 
 
+
 outputDir = os.path.dirname(output)
 
-subprocess.call([
-  "./${CMAKE_CFG_INTDIR}/MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
-  input, outputDir + "/median.mhd"])
+if len(sys.argv) > 3: 
+  spacingXY = sys.argv[3]
+  spacingZ = sys.argv[4]
+  subprocess.call([
+    "./${CMAKE_CFG_INTDIR}/MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
+    input, outputDir + "/median.mhd", spacingXY, spacingZ])
+else:
+  subprocess.call([
+    "./${CMAKE_CFG_INTDIR}/MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
+    input, outputDir + "/median.mhd"])
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/RobustAutomaticThreshold${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/median.mhd", outputDir + "/robust.mhd", "2", "2.0"])
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/Open${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/robust.mhd", outputDir + "/opened.mhd", "1"])
-subprocess.call([
-  "./${CMAKE_CFG_INTDIR}/HoleFilling${CMAKE_EXECUTABLE_SUFFIX}",
-  outputDir + "/opened.mhd", outputDir + "/filled.mhd", "1000", "1"])
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/IsolateCentroids${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/opened.mhd", "75", outputDir + "/soma-centroids.txt", output])

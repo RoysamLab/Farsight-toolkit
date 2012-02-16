@@ -52,7 +52,8 @@ int main( int argc, char ** argv )
   const char * textOutputFilename = argv[3];
   const char * imageOutputFilename = argv[4];
 
-  std::cout << "(Debug) minimum volume: " << minimumVolume << std::endl;
+  std::cout << "minimum volume required to be considered a soma: " <<
+    minimumVolume << std::endl;
 
   reader->SetFileName( inputFilename  );
 
@@ -99,7 +100,8 @@ int main( int argc, char ** argv )
   for(unsigned int label=1; label<= numSomas; ++label)
     {
     const LabelObjectType * labelObject = Somas->GetLabelObject(label);
-    std::cout << "(Debug) size: " << labelObject->GetPhysicalSize() << std::endl;
+    std::cout << "Blob #" << label << " has a volume of " <<
+      labelObject->GetPhysicalSize() << std::endl;
     if(labelObject->GetPhysicalSize() < minimumVolume)
       {
       //skip small blobs: they aren't real somas
@@ -110,7 +112,8 @@ int main( int argc, char ** argv )
     const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
     ImageType::IndexType pixelIndex;
     reader->GetOutput()->TransformPhysicalPointToIndex( centroid, pixelIndex );
-    outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " << pixelIndex[2] << endl;
+    outfile << std::fixed << pixelIndex[0] << " " << pixelIndex[1] << " " <<
+      pixelIndex[2] << endl;
 
     double elongation = labelObject->GetElongation();
     if(elongation < minElongation)
@@ -199,7 +202,11 @@ int main( int argc, char ** argv )
     }
   else
     {
-    colorOutputFilename += "color";
+    found = colorOutputFilename.rfind(".tif");
+    if (found != string::npos)
+      {
+      colorOutputFilename.replace(found, 4, "-color.tif");
+      }
     }
   ColorWriterType::Pointer colorWriter = ColorWriterType::New();
   colorWriter->SetFileName( colorOutputFilename );
