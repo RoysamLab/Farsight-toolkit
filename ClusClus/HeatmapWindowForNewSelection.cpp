@@ -2362,7 +2362,7 @@ void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, Ob
 	else
 		this->Selection2 = sels2;
 
-	if(!ClusterSelections)
+	if(!clusterSelection)
 	{
 		ClusterSelections = new SelectiveClustering();
 	}
