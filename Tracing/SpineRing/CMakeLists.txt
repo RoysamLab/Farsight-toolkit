@@ -11,7 +11,7 @@ PROJECT ( SpineSegmentation )
 SET(VXL_NUMERICS_LIBRARIES vnl vnl_algo netlib vcl)
 
 SET( Libraries
-	${ITK_USE_LIBRARIES}
+	${ITK_LIBRARIES}
 	TinyXML
 )
 
