@@ -53,9 +53,10 @@ bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
-	omp_set_nested(1);
-	
 
+#ifdef _OPENMP
+	omp_set_nested(1);
+#endif
 
 	int counterTiles = 0;
 	if(argc < 4)
@@ -173,7 +174,11 @@ int main(int argc, char* argv[])
 		for(int col=0; col<num_cols; ++col)
 		{
 
+#ifdef _OPENMP
 			int tid = omp_get_thread_num();
+#else
+      int tid = 0;
+#endif
 			//stringstream out;
 			//out<<tid;
 			//string s = out.str();
