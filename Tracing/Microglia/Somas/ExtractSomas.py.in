@@ -19,6 +19,10 @@ output = sys.argv[2]
 
 outputDir = os.path.dirname(output)
 
+# 1st step: median image filtering to eliminate "salt & pepper" noise.
+# During this step we check that the image has its spacing set in physical
+# units.  This spacing will persist throughout the pipeline, so it only
+# needs to be set at the beginning.
 if len(sys.argv) > 3: 
   spacingXY = sys.argv[3]
   spacingZ = sys.argv[4]
@@ -29,12 +33,34 @@ else:
   subprocess.call([
     "./${CMAKE_CFG_INTDIR}/MedianImageFilter${CMAKE_EXECUTABLE_SUFFIX}",
     input, outputDir + "/median.mhd"])
+
+# 2nd step: separate image foreground from background.  This produces a binary
+# image.
+#
+# 4th argument is sigma: the width of Gaussian smoothing kernel (in microns)
+# 3rd argument is a power term used to achieve better results on noisy images.
+# See here for more info: http://hdl.handle.net/1926/370
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/RobustAutomaticThreshold${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/median.mhd", outputDir + "/robust.mhd", "2", "2.0"])
+
+# 3rd step: erode away the narrow processes of the microglia; leaving behind
+# only larger "blobs".
+#
+# 3rd argument is the radius of the structuring element used during
+# morphological opening.  This is measured in microns.  Any structures narrower
+# than this will be eroded away during this step.
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/Open${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/robust.mhd", outputDir + "/opened.mhd", "1"])
+
+# 4th step: blob thresholding & centroid calculation.  Here we remove any blobs
+# that are smaller than some threhold.  As an additional output, we save a .txt
+# list of the coordinates of the centroids of the surviving blobs, which we
+# assume to be somata.
+#
+# The 2nd argument is the minimum volume (in microns) necessary for a blob to
+# be considered a soma.
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/IsolateCentroids${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/opened.mhd", "75", outputDir + "/soma-centroids.txt", output])
