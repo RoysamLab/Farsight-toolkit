@@ -27,4 +27,4 @@ SET(MicrogliaRegionTracer_SRCS
 
 ADD_EXECUTABLE(MicrogliaRegionTracer main.cpp ${MicrogliaRegionTracer_HDRS} ${MicrogliaRegionTracer_SRCS})
 TARGET_LINK_LIBRARIES(MicrogliaRegionTracer fregl)
-INSTALL( TARGETS MicrogliaRegionTracer RUNTIME DESTINATION bin )
+INSTALL( TARGETS MicrogliaRegionTracer RUNTIME DESTINATION ${INSTALL_BIN_DIR} )

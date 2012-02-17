@@ -19,9 +19,14 @@ if(COMMAND CMAKE_POLICY)
   if(POLICY CMP0011)
     cmake_policy(SET CMP0011 NEW)
   endif(POLICY CMP0011)
+  
+  # Allow CMake to evaluate a boolean constant as an argument to if()
+  if(POLICY CMP0012)
+    cmake_policy(SET CMP0012 NEW)
+  endif(POLICY CMP0012)
 endif(COMMAND CMAKE_POLICY)
 
-# Fixup the .app bundle in the install tree:
+# Fixup the .app bundles in the install tree:
 #
 include(BundleUtilities)
 
@@ -37,3 +42,18 @@ fixup_bundle(
   "@BUNDLE_LIB_DIRS@"
   )
 
+if(@BUILD_TracingSystem@)
+  fixup_bundle(
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TracingSystem.app"
+    ""
+    "@BUNDLE_LIB_DIRS@"
+    )
+endif()
+
+if(@BUILD_IMAGE_MANAGER@)
+  fixup_bundle(
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/ImageManager.app"
+    ""
+    "@BUNDLE_LIB_DIRS@"
+    )
+endif()

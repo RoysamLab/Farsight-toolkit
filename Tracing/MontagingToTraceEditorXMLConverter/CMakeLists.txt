@@ -17,4 +17,4 @@ SET( MontagingToTraceEditorXMLConverter_HDRS
 ADD_EXECUTABLE( MontagingToTraceEditorXMLConverter ${MontagingToTraceEditorXMLConverter_HDRS} ${MontagingToTraceEditorXMLConverter_SRCS} )
 TARGET_LINK_LIBRARIES( MontagingToTraceEditorXMLConverter TinyXML )
 
-INSTALL( TARGETS MontagingToTraceEditorXMLConverter RUNTIME DESTINATION bin )
+INSTALL( TARGETS MontagingToTraceEditorXMLConverter RUNTIME DESTINATION ${INSTALL_BIN_DIR} )

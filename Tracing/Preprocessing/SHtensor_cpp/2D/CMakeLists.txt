@@ -14,5 +14,5 @@ add_executable(tensor_voting_2d tensor_voting_2d.cpp)
 
 target_link_libraries(scalar_voting_2d ${ITK_LIBRARIES} vnl vnl_algo ${FFTW3_LIBRARIES})
 target_link_libraries(tensor_voting_2d ${ITK_LIBRARIES} vnl vnl_algo ${FFTW3_LIBRARIES})
-install(TARGETS scalar_voting_2d RUNTIME DESTINATION bin)
-install(TARGETS tensor_voting_2d RUNTIME DESTINATION bin)
+install(TARGETS scalar_voting_2d RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+install(TARGETS tensor_voting_2d RUNTIME DESTINATION ${INSTALL_BIN_DIR})

@@ -11,4 +11,4 @@ SET(Batch_Distance2Device_SRCS
 
 ADD_EXECUTABLE(Batch_Distance2Device ${Batch_Distance2Device_HDRS} ${Batch_Distance2Device_SRCS})
 TARGET_LINK_LIBRARIES(Batch_Distance2Device Trace)
-INSTALL( TARGETS Batch_Distance2Device RUNTIME DESTINATION bin )
+INSTALL( TARGETS Batch_Distance2Device RUNTIME DESTINATION ${INSTALL_BIN_DIR} )

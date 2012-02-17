@@ -8,4 +8,4 @@ SET( cb_SRCS
 ADD_LIBRARY( cell_binarization ${cb_SRCS} )
 TARGET_LINK_LIBRARIES ( cell_binarization        ${ITK_LIBRARIES} )
 
-#INSTALL( TARGETS cell_binarization DESTINATION . )
+#INSTALL( TARGETS cell_binarization DESTINATION ${INSTALL_BIN_DIR} )

@@ -158,7 +158,7 @@ TARGET_LINK_LIBRARIES( Project_Processor ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkIm
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
 TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
-install(TARGETS projproc DESTINATION bin )
+install(TARGETS projproc DESTINATION ${INSTALL_BIN_DIR} )
 
 IF (BUILD_MODEL_SEG)
     IF (MSVC)

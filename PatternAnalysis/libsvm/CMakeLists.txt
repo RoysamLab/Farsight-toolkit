@@ -13,4 +13,4 @@ ADD_LIBRARY( libSVM svm.cpp svm.h)
 #ADD_EXECUTABLE(svm-train svm-train.cpp)
 #TARGET_LINK_LIBRARIES(svm-train libSVM ${MY_MATH_LIB})
 
-#INSTALL(TARGETS svm-predict svm-scale svm-train DESTINATION bin)
+#INSTALL(TARGETS svm-predict svm-scale svm-train DESTINATION ${INSTALL_BIN_DIR})

@@ -9,8 +9,5 @@ ADD_LIBRARY( MultipleNeuronTracerLib MultipleNeuronTracer.cpp MultipleNeuronTrac
 TARGET_LINK_LIBRARIES(MultipleNeuronTracerLib
   ${ITK_LIBRARIES} ${VTK_LIBRARIES} )
 
-if(APPLE)
-   install(TARGETS MultipleNeuronTracer DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
-else(APPLE)
-   install(TARGETS MultipleNeuronTracer DESTINATION bin )
-endif(APPLE)
+install(TARGETS MultipleNeuronTracer RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+
