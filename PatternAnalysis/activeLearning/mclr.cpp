@@ -166,6 +166,90 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 	return feats;
 }
 
+// rearrange feature matrix based on current classification and current top features
+// this will reflect in the heat map at each AL iteration
+vtkSmartPointer<vtkTable> MCLR::Rearrange_Table(vtkSmartPointer<vtkTable> pawTable)
+{
+
+
+	vnl_matrix<double> feats = tableToMatrix(pawTable,this->id_time_val);
+
+	//std::cout<< feats.get_row(208) <<std::endl;
+	//getchar();	
+	//for(int col = 0; (int)col < pawTable->GetNumberOfColumns(); ++col)
+	//	 std::cout<< pawTable->GetValue(208,col)<<"\t";
+	//getchar();
+
+	vnl_matrix<double> feats2 = Normalize_Feature_Matrix(tableToMatrix(pawTable, this->id_time_val));
+	feats2 = feats2.transpose();
+
+	vnl_matrix<double> rearrangeFeatsTemp(feats.rows(),feats.cols());
+	vnl_matrix<double> currprob = Test_Current_Model_w(feats2, m.w);
+		
+
+	int counter = 0;
+	// Re arrange the rows of the matrix according to class
+	for(int i = 0; i<numberOfClasses ; ++i)
+	{
+		for(int j = 0; j<feats.rows() ; ++j)
+		{
+			vnl_vector<double> curr_col = currprob.get_column(j);
+
+			if(curr_col.arg_max() == i ) 
+			{	
+				rearrangeFeatsTemp.set_row(counter,feats.get_row(j));			
+				counter++;
+			}
+		}
+	}
+	
+	
+	std::vector<int> priorityOrder = Get_Feature_Order();
+	counter = 0;	
+	
+	vnl_matrix<double> rearrangeFeats(feats.rows(),feats.cols());
+
+	for(int j = 0; j<rearrangeFeatsTemp.cols() ; ++j)
+	{
+		rearrangeFeats.set_column(j,rearrangeFeatsTemp.get_column(priorityOrder[j]));
+	}
+
+	
+
+	vtkSmartPointer<vtkTable> tableRearrange = vtkSmartPointer<vtkTable>::New();
+	tableRearrange->Initialize();
+
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName("Dummy");
+	column->SetNumberOfValues(rearrangeFeats.rows());
+	tableRearrange->AddColumn(column);
+	for(int row = 0; (int)row < tableRearrange->GetNumberOfRows(); ++row)  
+	{
+		tableRearrange->SetValue(row, 0, vtkVariant(row));
+	}
+
+
+	for(int i = 0; i<rearrangeFeats.cols(); ++i)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(pawTable->GetColumnName(priorityOrder[i]));
+		column->SetNumberOfValues(rearrangeFeats.rows());
+		tableRearrange->AddColumn(column);
+	}
+
+	for(int row = 0; (int)row < tableRearrange->GetNumberOfRows(); ++row)  
+	{
+		for(int col = 1; (int)col < tableRearrange->GetNumberOfColumns(); ++col)  
+		{
+			tableRearrange->SetValue(row, col, vtkVariant(rearrangeFeats(row,col-1)));
+		}
+	}
+	
+	return tableRearrange;
+}
+
+
+
 
 
 vnl_matrix<double> MCLR::Get_F_Matrix(vnl_matrix<double> data_bias,vnl_matrix<double> w_temp)
@@ -620,17 +704,17 @@ std::vector<int> MCLR::Get_Feature_Order()
 {	
 
 	//Need the indices of the top 5 features
-	// Remove Bias and ID rows. hence m.w -2
-	std::vector<int> indices(m.w.rows()-2);
+	// Remove Bias rows. hence m.w -1
+	std::vector<int> indices(m.w.rows()-1);
 
 	std::vector<std::pair<double, int> > val_idx; // value and index
 
 	// find the maximum in each row
-	// Remove Bias and ID rows. hence i = 2
-	for(int i = 2; i< m.w.rows() ; ++i)
+	// Remove Bias rows. hence i = 1
+	for(int i = 1; i< m.w.rows() ; ++i)
 	{
 		vnl_vector<double> temp_row = m.w.get_row(i);
-		val_idx.push_back(std::pair<double, int>(temp_row.max_value(),i-2));
+		val_idx.push_back(std::pair<double, int>(temp_row.max_value(),i-1));
 	}
 
 	// sorts by first element of the pair automatically
@@ -646,7 +730,6 @@ std::vector<int> MCLR::Get_Feature_Order()
 		indices[counter] = (*itr).second;
 		counter++;
 	}
-
 	return indices;
 }
 
@@ -785,8 +868,6 @@ int MCLR::Active_Query()
 	vnl_matrix<double> testDataTranspose =  testData.transpose();
 	//testDataTranspose = testDataTranspose.get_n_rows(0,testDataTranspose.rows()-1);
 	vnl_matrix<double> prob = Test_Current_Model(testDataTranspose);
-
-
 	vnl_matrix<double> testDataBias = Add_Bias(testDataTranspose);
 	vnl_vector<double> infoVector(testDataTranspose.cols());
 
@@ -836,7 +917,7 @@ int MCLR::Active_Query()
 
 	info_3_it((maxInfoVector.size()-1)%3) = max_info;	
 
-	if (maxInfoVector.size()>=1) 
+	if (maxInfoVector.size()>=3) 
 	{
 		int sum = 0;
 		for(int iter =0; iter < 3; iter++)
@@ -1052,14 +1133,20 @@ std::vector<int> MCLR::Submodular_AL(int activeQuery,vnl_matrix<double> testData
 				activeQuery = i;
 				max_info = infoVector(i);
 			}
-		}
-		std::cout<<rowIDs.at(activeQuery)<<std::endl;
-		std::cout<< max_info << std::endl;
-		std::cout<< "----------------------------------------" <<std::endl;
+		
+
 		// Check for correct row ----------------------------------------
+		}
+		maxInfoVector.push_back(max_info);
+		if(maxInfoVector.size()>1)
+			diff_info_3_it((maxInfoVector.size()-1)%3) =  maxInfoVector.at((maxInfoVector.size()-1)) - maxInfoVector.at((maxInfoVector.size()-2));
+	
+		info_3_it((maxInfoVector.size()-1)%3) = max_info;	
+
+		std::cout<< max_info << std::endl;
 		submodularALQueries.push_back(rowIDs.at(activeQuery));
 	}
-
+	
 	return submodularALQueries;
 }
 
