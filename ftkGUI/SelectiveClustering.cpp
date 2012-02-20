@@ -463,7 +463,7 @@ vtkSmartPointer<vtkTable> SelectiveClustering::ClusterFeatureTable()
 		vtkSmartPointer<vtkVariantArray> NextCluster = this->CondenseClusterToFeatureRow((*this->iter).first);
 		selectedTable->InsertNextRow(NextCluster);
 	}
-	selectedTable->Dump(16);
+	//selectedTable->Dump(16);
 	return selectedTable;
 
 }
@@ -713,8 +713,15 @@ void ClusterManager::ChangeInClusters()
 	{
 		this->ClusterTableView->GetRepresentation()->SetAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
 		this->ClusterTableView->GetRepresentation()->SetSelectionType(vtkSelectionNode::PEDIGREEIDS);
-		this->ClusterModel->ClusterVtkViewUpdater->AddView(this->ClusterTableView);
-		this->ClusterModel->ClusterVtkViewUpdater->AddAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
+		this->ClusterTableView->GetRepresentation()->SetSelectionArrayName("Cluster ID");
+		/*this->ClusterModel->ClusterVtkViewUpdater->AddView(this->ClusterTableView);
+		this->ClusterModel->ClusterVtkViewUpdater->AddAnnotationLink(this->ClusterModel->ClusterAnnotationLink);*/
+
+		this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New(); 
+		this->selectionCallback->SetClientData(this);
+		this->selectionCallback->SetCallback ( SelectionCallbackFunction);
+		vtkAnnotationLink *link = this->ClusterTableView->GetRepresentation()->GetAnnotationLink();
+		link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
 		AnnotationLinkSetUp = true;
 	}
 	this->ClusterTableView->Update();
@@ -831,4 +838,62 @@ void ClusterManager::RunOperatorOnSelectedClusters()
 			std::cerr << "Incorrect Action Type = " << index << std::endl;
 			break;
 	}
+}
+void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
+{
+	/*! 
+	* 
+	*/ 
+	//std::cout<< "in callback function \n";
+	vtkAnnotationLink * annotationLink = static_cast<vtkAnnotationLink*>(caller);
+	vtkSelection * selection = annotationLink->GetCurrentSelection();
+	ClusterManager * ClusMan = (ClusterManager*)clientData;
+	vtkSelection * TableRowSelection = vtkSelection::New();
+	vtkSelectionNode* vertices = NULL;
+	//vtkSelectionNode* edges = NULL;
+
+	if( selection->GetNode(0))
+	{
+		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(0);
+		}/*
+		else if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
+		{
+			edges = selection->GetNode(0);
+		}*/
+	}
+
+	if( selection->GetNode(1))
+	{
+		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = selection->GetNode(1);
+		}/*
+		else if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
+		{
+			edges = selection->GetNode(1);
+		}*/
+	}
+	
+	if( vertices != NULL)
+	{
+		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+		vtkIdType numTuples = vertexList->GetNumberOfTuples();
+		if( vertexList != NULL && numTuples > 0)
+		{
+			//std::cout<< "number of selections: " << numTuples << "\nselected:\n";
+			for( vtkIdType i = 0; i < numTuples; i++)
+			{
+				vtkIdType value = vertexList->GetValue(i);
+				//std::cout<< value << "\n";
+				//selectedRows->InsertTuple(
+			}
+			//TableRowSelection->GetNode(0)->SetSelectionList(vertexList);
+		}
+		//ClusMan->ClusterTableView->GetRepresentation()->UpdateSelection(selection);
+	}//end verticies != null
+	ClusMan->ClusterTableView->GetRepresentation()->GetAnnotationLink()->SetCurrentSelection(selection);
+	ClusMan->ClusterTableView->Update();
+
 }

@@ -52,6 +52,7 @@ limitations under the License.
 #include "vtkSelectionNode.h"
 #include "vtkViewUpdater.h"
 #include "vtkDataRepresentation.h"
+#include "vtkCallbackCommand.h"
 
 #include <vtkQtTableView.h>
 #include <vtkQtTableModelAdapter.h>
@@ -171,6 +172,9 @@ public slots:
 	void ChangeInObjectSelection();
 	void RunOperatorOnSelectedClusters();
 
+protected slots:
+	static void SelectionCallbackFunction(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
+
 private:
 
 	//Selection Classes 
@@ -202,5 +206,6 @@ private:
 	QPushButton * ClusterFeaturesButton;
 
 	bool AnnotationLinkSetUp;
+	vtkSmartPointer<vtkCallbackCommand> selectionCallback;
 };
 #endif
