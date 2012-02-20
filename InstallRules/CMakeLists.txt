@@ -1,29 +1,25 @@
 if(APPLE)
-  #
-  # Run the CompleteBundles.cmake script during "make install"
-  #
-  # This will pull all the required libraries into each bundle listed in
-  # CompleteBundles.cmake.
-  #
 
-  #
-  # WARNING:
-  #   The file CompleteBundles.cmake.in is based on
-  #   ParaView3/Applications/Client/CompleteBundle.cmake.in.
-  #   If that file changes, this one will likely need a similar change.
-  #
-
+#list of directories where CMake can search for dependent libs
 set(BUNDLE_LIB_DIRS
   ${LIB_DIR}
   ${VXL_DIR}/lib
 )
 
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/CompleteBundles.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake"
-    @ONLY
-  )
+#plugins loaded by TraceEdit at runtime
+get_filename_component(qgif_plugin ${QT_QGIF_PLUGIN_RELEASE} NAME)
+get_filename_component(qico_plugin ${QT_QICO_PLUGIN_RELEASE} NAME)
+get_filename_component(qjpeg_plugin ${QT_QJPEG_PLUGIN_RELEASE} NAME)
+get_filename_component(qmng_plugin ${QT_QMNG_PLUGIN_RELEASE} NAME)
+get_filename_component(qsvg_plugin ${QT_QSVG_PLUGIN_RELEASE} NAME)
+get_filename_component(qtiff_plugin ${QT_QTIFF_PLUGIN_RELEASE} NAME)
 
-  install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/CompleteBundles.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake"
+  @ONLY
+)
+
+install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")
 
 endif(APPLE)

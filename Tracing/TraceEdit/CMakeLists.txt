@@ -70,7 +70,20 @@ endif(BUILD_TESTING)
 
 if(APPLE)
    install(TARGETS ${PROJECT_NAME} DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
+   set(plugin_path ${FARSIGHT_BUNDLE_LOCATION}/${PROJECT_NAME}.app/Contents/plugins/imageformats)
+   set(resources_path ${FARSIGHT_BUNDLE_LOCATION}/${PROJECT_NAME}.app/Contents/Resources)
 else(APPLE)
    install(TARGETS ${PROJECT_NAME} DESTINATION bin )
+   set(plugin_path "${CMAKE_INSTALL_PREFIX}/bin")
+   set(resources_path "${CMAKE_INSTALL_PREFIX}/bin")
 endif(APPLE)
+
+#install qt.conf & Qt plugins loaded by TraceEdit at runtime
+install(FILES ${QT_QGIF_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${QT_QICO_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${QT_QJPEG_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${QT_QMNG_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${QT_QSVG_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${QT_QTIFF_PLUGIN_RELEASE} DESTINATION ${plugin_path})
+install(FILES ${Farsight_SOURCE_DIR}/InstallRules/qt.conf DESTINATION ${resources_path})
 
