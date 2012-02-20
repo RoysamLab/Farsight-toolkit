@@ -143,6 +143,17 @@ bool TraceLine::isFree()
 		return false;
 	}
 }
+bool TraceLine::isBranch()
+{
+	if (this->m_branches.size() > 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 {
 	this->root = RootID;

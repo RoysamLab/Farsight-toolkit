@@ -106,6 +106,7 @@ public:
 	bool isLeaf();
 	bool isRoot();
 	bool isFree();
+	bool isBranch();
 	unsigned char GetType();
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
