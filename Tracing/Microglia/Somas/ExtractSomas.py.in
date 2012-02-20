@@ -5,24 +5,31 @@ import os.path
 import subprocess
 import sys
 
-scriptPath = os.path.dirname(sys.argv[0])
-if scriptPath != "":
-  os.chdir(scriptPath)
-
 if len(sys.argv) < 3:
   print sys.argv[0] + " <input image> <output image> [spacingXY spacingZ]"
   sys.exit(1)
 
-input = sys.argv[1]
-output = sys.argv[2] 
+if not os.path.exists(sys.argv[1]):
+  print "cannot read input image %s" % sys.argv[1]
+  sys.exit(1)
 
-
+# Find absolute path to input & output images
+input = os.path.realpath(sys.argv[1])
+output = os.path.realpath(sys.argv[2])
 outputDir = os.path.dirname(output)
+
+# Now that we have absolute paths to input & output images, we can safely
+# change directory so we can call the executables directly.
+scriptPath = os.path.dirname(sys.argv[0])
+cwd = os.getcwd()
+if scriptPath != "":
+  os.chdir(scriptPath)
 
 # 1st step: median image filtering to eliminate "salt & pepper" noise.
 # During this step we check that the image has its spacing set in physical
 # units.  This spacing will persist throughout the pipeline, so it only
 # needs to be set at the beginning.
+print "Preprocessing input image"
 if len(sys.argv) > 3: 
   spacingXY = sys.argv[3]
   spacingZ = sys.argv[4]
@@ -40,6 +47,7 @@ else:
 # 4th argument is sigma: the width of Gaussian smoothing kernel (in microns)
 # 3rd argument is a power term used to achieve better results on noisy images.
 # See here for more info: http://hdl.handle.net/1926/370
+print "Separating image foreground from background"
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/RobustAutomaticThreshold${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/median.mhd", outputDir + "/robust.mhd", "2", "2.0"])
@@ -50,6 +58,7 @@ subprocess.call([
 # 3rd argument is the radius of the structuring element used during
 # morphological opening.  This is measured in microns.  Any structures narrower
 # than this will be eroded away during this step.
+print "Eroding away microglia processes"
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/Open${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/robust.mhd", outputDir + "/opened.mhd", "1"])
@@ -61,6 +70,7 @@ subprocess.call([
 #
 # The 2nd argument is the minimum volume (in microns) necessary for a blob to
 # be considered a soma.
+print "Isolating somata"
 subprocess.call([
   "./${CMAKE_CFG_INTDIR}/IsolateCentroids${CMAKE_EXECUTABLE_SUFFIX}",
   outputDir + "/opened.mhd", "75", outputDir + "/soma-centroids.txt", output])

@@ -22,7 +22,6 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include "itkSimpleFilterWatcher.h"
 #include "itkRobustAutomaticThresholdImageFilter.h"
 #include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
 
@@ -58,8 +57,6 @@ int main(int argc, char * argv[])
   filter->SetInput( reader->GetOutput() );
   filter->SetGradientImage( gradient->GetOutput() );
   filter->SetPow( atof(argv[3]) );
-
-  itk::SimpleFilterWatcher watcher(filter, "filter");
 
   typedef itk::ImageFileWriter< IType > WriterType;
   WriterType::Pointer writer = WriterType::New();
