@@ -58,7 +58,7 @@
 #include <vtkPointData.h>
 #include <vtkPNGWriter.h>
 #include <vtkSmartPointer.h>
-#include <vtkFreeTypeUtilities.h>
+//#include <vtkFreeTypeUtilities.h>
 #include <vtkTextProperty.h>
 #include <vtkImageCanvasSource2D.h>
 

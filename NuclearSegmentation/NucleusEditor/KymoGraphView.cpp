@@ -88,7 +88,7 @@ void TrackingKymoView::GenerateImages()
 
 void TrackingKymoView::SaveMovie(void)
 {
-	std::vector<TraceLine*>* m_tline_pointer = m_tobj->GetTraceLinesPointer();
+/*	std::vector<TraceLine*>* m_tline_pointer = m_tobj->GetTraceLinesPointer();
 
 	float col[3]={1.0,1.0,1.0};
 	vtkSmartPointer<vtkImageData> vtkimdata = vtkSmartPointer<vtkImageData>::New();
@@ -204,12 +204,12 @@ void TrackingKymoView::SaveMovie(void)
 			 freeType->RenderString(textProperty,ss.str().c_str(), textImage);
 			 std::cout<<ss.str()<<std::endl;
 
-/*			 vtkSmartPointer<vtkImageBlend> blend = vtkSmartPointer<vtkImageBlend>::New();
-			 blend->AddInputConnection(drawing->GetOutputPort());
-			 blend->AddInputConnection(textImage->GetProducerPort());
-			 blend->SetOpacity(0,.0);
-			 blend->SetOpacity(1,1);
-			 blend->Update();*/ 
+			 //vtkSmartPointer<vtkImageBlend> blend = vtkSmartPointer<vtkImageBlend>::New();
+			 //blend->AddInputConnection(drawing->GetOutputPort());
+			 //blend->AddInputConnection(textImage->GetProducerPort());
+			 //blend->SetOpacity(0,.0);
+			 //blend->SetOpacity(1,1);
+			 //blend->Update();
 			 float bbox[4];
 			 bbox[0] = myfeatures[t][i].BoundingBox[0];
 			 bbox[1] = myfeatures[t][i].BoundingBox[1];
@@ -238,7 +238,7 @@ void TrackingKymoView::SaveMovie(void)
 		 tiffWriter->SetInput(newblend->GetOutput());
 		 tiffWriter->Write();
 	}	
-
+*/
 }
 void TrackingKymoView::AddLabelToVTKImage(vtkSmartPointer<vtkImageData> labelImage, vtkSmartPointer<vtkImageData> newlabelImage,float bbox[])
 {
