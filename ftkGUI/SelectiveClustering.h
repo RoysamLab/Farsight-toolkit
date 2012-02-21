@@ -118,6 +118,8 @@ public:
 	vtkSmartPointer<vtkAnnotationLink> ObjectAnnotationLink;
 	vtkSmartPointer<vtkViewUpdater> ObjectVtkViewUpdater;
 
+	std::map< vtkIdType, vtkIdType> GetObjectTableIDMap();
+	std::map< vtkIdType, vtkIdType> GetClusterTableIDMap();
 	void emitSelectionFinished();
 
 signals:

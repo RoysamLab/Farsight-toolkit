@@ -532,6 +532,23 @@ std::set< vtkIdType > SelectiveClustering::cluster_operator_XOR(vtkIdType key1, 
 	return result;
 }
 
+std::map< vtkIdType, vtkIdType> SelectiveClustering::GetObjectTableIDMap()
+{
+	/*! 
+	* Find Object Row by ID
+	*/
+	return this->ObjectTableIDMap;
+}
+
+
+std::map< vtkIdType, vtkIdType> SelectiveClustering::GetClusterTableIDMap()
+{
+	/*! 
+	* Find Cluster Row by Cluster ID
+	*/
+	return this->ClusterTableIDMap;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 ClusterManager::ClusterManager()
@@ -875,11 +892,17 @@ void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long 
 			edges = selection->GetNode(1);
 		}*/
 	}
-	
+	std::map< vtkIdType, vtkIdType> IdLookUP = ClusMan->ClusterModel->GetClusterTableIDMap();
+	std::map< vtkIdType, vtkIdType>::iterator  idIter;
+
 	if( vertices != NULL)
 	{
 		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
 		vtkIdType numTuples = vertexList->GetNumberOfTuples();
+
+		vtkSmartPointer<vtkIdTypeArray> ConvertedVertexList = vtkSmartPointer<vtkIdTypeArray>::New();
+		ConvertedVertexList->SetNumberOfComponents(1);
+
 		if( vertexList != NULL && numTuples > 0)
 		{
 			//std::cout<< "number of selections: " << numTuples << "\nselected:\n";
@@ -887,13 +910,29 @@ void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long 
 			{
 				vtkIdType value = vertexList->GetValue(i);
 				//std::cout<< value << "\n";
-				//selectedRows->InsertTuple(
+				idIter = IdLookUP.find(value);
+				if ( idIter != IdLookUP.end())
+				{
+					vtkIdType convertedValue = (*idIter).second;
+					ConvertedVertexList->InsertNextValue(convertedValue );
+				//std::cout<< value << " converted to " << convertedValue << "\n";
+				}
+				
 			}
-			//TableRowSelection->GetNode(0)->SetSelectionList(vertexList);
+			
 		}
-		//ClusMan->ClusterTableView->GetRepresentation()->UpdateSelection(selection);
+		vtkSmartPointer<vtkSelectionNode> selectNodeList = vtkSmartPointer<vtkSelectionNode>::New();
+		selectNodeList->SetSelectionList( ConvertedVertexList);
+		selectNodeList->SetFieldType( vtkSelectionNode::VERTEX);
+		selectNodeList->SetContentType( vtkSelectionNode::INDICES);
+
+		//TableRowSelection->GetNode(0)->SetSelectionList(selectNodeList);
+		TableRowSelection->RemoveAllNodes();
+		TableRowSelection->AddNode(selectNodeList);
+
+		ClusMan->ClusterTableView->GetRepresentation()->UpdateSelection(TableRowSelection);
 	}//end verticies != null
-	ClusMan->ClusterTableView->GetRepresentation()->GetAnnotationLink()->SetCurrentSelection(selection);
+	ClusMan->ClusterTableView->GetRepresentation()->GetAnnotationLink()->SetCurrentSelection(TableRowSelection);
 	ClusMan->ClusterTableView->Update();
 
 }
