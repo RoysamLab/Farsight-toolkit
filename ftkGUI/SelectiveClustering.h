@@ -161,6 +161,7 @@ public:
 	ClusterManager();
 	void setClusteringModel(SelectiveClustering * newClusterModel);
 	void setObjectSelection(ObjectSelection * ObjSelection);
+	vtkSmartPointer<vtkIdType> TableID;
 
 public slots:
 
@@ -170,8 +171,10 @@ public slots:
 	void RemoveSelectedClusters();
 	void ShowClusterFeatures();
 	void ChangeInClusters();
+	
 
 	void ChangeInObjectSelection();
+	void ShowDistribution();
 	void RunOperatorOnSelectedClusters();
 
 protected slots:
@@ -206,6 +209,7 @@ private:
 	QPushButton * ClearClusterButton;
 	QPushButton * RemoveClusterButton;
 	QPushButton * ClusterFeaturesButton;
+	QPushButton * ShowDistributionButton;
 
 	bool AnnotationLinkSetUp;
 	vtkSmartPointer<vtkCallbackCommand> selectionCallback;

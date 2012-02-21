@@ -213,6 +213,7 @@ vtkIdType SelectiveClustering::GetNumberOfSelections()
 std::set< vtkIdType > SelectiveClustering::GetClusterIDs()
 {
 	/*! 
+
 	* returns set containing the ID of each cluster
 	*/
 	std::set< vtkIdType > ClusterIDs;
@@ -575,8 +576,11 @@ ClusterManager::ClusterManager()
 	this->RemoveClusterButton = new QPushButton(" Remove Cluster ");
 	connect(this->RemoveClusterButton, SIGNAL(clicked()), this, SLOT(RemoveSelectedClusters()));
 
-	this->ClusterFeaturesButton = new QPushButton(" show Cluster ");
+	this->ClusterFeaturesButton = new QPushButton(" Show Cluster ");
 	connect(this->ClusterFeaturesButton, SIGNAL(clicked()), this, SLOT(ShowClusterFeatures()));
+	
+	this->ShowDistributionButton = new QPushButton(" Show Distribution ");
+	connect(this->ShowDistributionButton, SIGNAL(clicked()), this, SLOT(ShowDistribution()));
 	
 	//this->ClusterListView = new QListWidget(this);
 	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
@@ -615,6 +619,7 @@ ClusterManager::ClusterManager()
 	//ButtonLayout->addWidget(this->RunOperatorButton);
 	ButtonLayout->addWidget(this->ClearClusterButton);
 	ButtonLayout->addWidget(this->ClusterFeaturesButton);
+	ButtonLayout->addWidget(this->ShowDistributionButton);
 
 	//InfoLayout->addRow("Operator: ", this->OperatorList);
 
@@ -710,6 +715,8 @@ vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
 		vtkVariant value = table->GetValue(row, 0);
 		SelectedClusters->InsertNextValue(value.ToTypeInt64());
 	}
+	
+	cout << SelectedClusters;
 	return SelectedClusters;
 }
 void ClusterManager::ChangeInClusters()
@@ -855,6 +862,41 @@ void ClusterManager::RunOperatorOnSelectedClusters()
 			std::cerr << "Incorrect Action Type = " << index << std::endl;
 			break;
 	}
+}
+void ClusterManager::ShowDistribution()
+{
+	cout<<"I have reached into the ShowDistribution Function \n";
+	this->ClusterModel->GetClusterTable()->Dump(16);
+	//vtkSmartPointer<vtkTable> distributionTable = vtkSmartPointer<vtkTable>::New();
+	//this->ClusterModel->distributionTable->Initialize();
+	vtkSmartPointer<vtkTable> distributionTable = this->ClusterModel->GetClusterTable();
+	//this->distributionTable->Dump(16);
+	vtkSmartPointer<vtkVariantArray> rowForCluster = vtkSmartPointer<vtkVariantArray>::New();
+	rowForCluster->Initialize();
+
+
+	//Copy of the old vtkTable into the new DistributionTable
+	//this->distributionTable[1] = 0;
+	
+	//rowForCluster->GetPointer(vtkIdType id);
+
+	
+
+	//this->ClusterModel->AddRowToClusterTable(newKey,vtkVariant(ClusterSelectionSet.size()),Null);
+
+
+	/*std::set< vtkIdType >::iterator iter = curSel.begin();
+	std::set< vtkIdType > Selection = this->ObjectSelectionToIDSet();
+	for (; iter !=curSel.end(); iter++)
+	{
+		cout<<Selection (*iter);
+	}*/
+
+
+	this->ClusterModel->GetClusterIDsList();
+
+
+	
 }
 void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
 {
