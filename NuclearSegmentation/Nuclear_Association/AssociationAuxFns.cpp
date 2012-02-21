@@ -199,10 +199,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					((itk::SizeValueType)number_of_rois*(labelsList.size()-1)) : 
 					((itk::SizeValueType)number_of_rois*labelsList.size());
 		std::vector<double> quantified_numbers_cell(roi_list_size,0.0);
-
-
-		itk::SizeValueType ind;
-		ind = 0;
 		std::cout<<"Bounding boxes computed"<<std::endl;
 
 #ifdef _OPENMP
@@ -216,6 +212,7 @@ omp_set_nested(1);
 		#pragma omp parallel for
 		for( USPixelType i=0; i<labelsList.size(); ++i ){
 #endif
+			itk::SizeValueType ind;
 			if( zp && (zero==i) ) continue;
 			if( zp && (i>zero)  ) ind = i-1;
 			else ind = i;
