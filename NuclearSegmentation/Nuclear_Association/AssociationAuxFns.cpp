@@ -416,7 +416,7 @@ omp_set_nested(0);
 			if(i){
 				if( centers.at((i-1)) == centers.at(i) ){
 					duplicated = true;
-					ind=i+1;
+					itk::SizeValueType ind=i+1;
 					while( centers.at((i-1))==quantified_numbers_cell.at(ind) )
 						++ind;
 					centers.at(i) = quantified_numbers_cell.at(ind);
@@ -460,7 +460,7 @@ omp_set_nested(0);
 		std::cout<<"Positive_thresh "<<Positive_thresh<<"\n";
 
 		std::cout<<"Done k-means\n";
-		ind = 0;
+		itk::SizeValueType ind = 0;
 		for( USPixelType i=0; i<labelsList.size(); ++i ){
 			if( zp && (zero==i) ) continue;
 			int num_positive_rois = 0;
