@@ -506,7 +506,7 @@ endif(APPLE)
 #the top-level CMakeLists.txt file whenever you want to include a new sample
 #data set in the installers
 IF(FARSIGHT_DATA_ROOT)
-	ADD_SUBDIRECTORY( ${FARSIGHT_DATA_ROOT} ${FARSIGHT_BINARY_DIR}/data )
+	ADD_SUBDIRECTORY( ${FARSIGHT_DATA_ROOT} ${Farsight_BINARY_DIR}/data )
 ENDIF(FARSIGHT_DATA_ROOT)
 
 INCLUDE(InstallRequiredSystemLibraries)
