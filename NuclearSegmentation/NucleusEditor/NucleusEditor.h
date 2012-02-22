@@ -648,6 +648,27 @@ private:
 	QVBoxLayout * layout;
 };
 
+class ChangeClassDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ChangeClassDialog(QVector<QString> classifiers, QWidget *parent = 0);
+	std::string getClassColumn(void);
+	unsigned short getClass(void);
+	
+private:
+	QVector<QString> classifiers;
+	QLabel * classifierLabel;
+	QComboBox * classifierCombo;
+	QHBoxLayout * classifierLayout;
+	QLabel * classLabel;
+	QComboBox * classCombo;
+	QHBoxLayout * classLayout;
+	QPushButton * okButton;
+	QHBoxLayout * bLayout;
+	QVBoxLayout * layout;
+};
+
 class ProcessThread : public QThread
 {
 public:

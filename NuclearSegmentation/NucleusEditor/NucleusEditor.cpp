@@ -2344,11 +2344,11 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 	dialog->show();
 	
 	#ifdef	USE_Clusclus
-	this->HeatmapWin = new Heatmap();
-	this->HeatmapWin->setModels(pawTable, this->selection);
-	this->HeatmapWin->setPriority(mclr->Get_Feature_Order());
-	this->HeatmapWin->runClus();
-	this->HeatmapWin->showGraph();
+	//this->HeatmapWin = new Heatmap();
+	//this->HeatmapWin->setModels(pawTable, this->selection);
+	//this->HeatmapWin->setPriority(mclr->Get_Feature_Order());
+	//this->HeatmapWin->runClus();
+	//this->HeatmapWin->showGraph();
 	#endif
 
 }
@@ -3499,9 +3499,9 @@ void NucleusEditor::startEditing(void)
 	ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 
 	projectFiles.nucSegValidated = false;
-	if(projectFiles.type == "multi")
-		setEditsEnabled(false);
-	else
+	//if(projectFiles.type == "multi")
+	//	setEditsEnabled(false);
+	//else
 		setEditsEnabled(true);
 
 	setCommonEnabled(true);
@@ -3528,19 +3528,52 @@ void NucleusEditor::stopEditing(void)
 void NucleusEditor::changeClass(void)
 {
 
-	//if(!nucSeg) return;
+	if(!nucSeg) return;
 
-	//std::set<long int> sels = selection->getSelections();
-	//std::vector<int> ids(sels.begin(), sels.end());
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+	std::vector<int> allIds;
 
-	//Get the new class number:
-	//bool ok;
-	//QString msg = tr("Change the class of all selected items to: \n");
-	//int newClass = QInputDialog::getInteger(NULL, tr("Change Class"), msg, -1, -1, 10, 1, &ok);
+//	Get the new class number:
+	prediction_names = ftk::GetColumsWithString( "prediction" , table);
+	QVector<QString> classifiers;
+	for(int i=0; i<(int)prediction_names.size(); ++i)
+	{
+		classifiers.push_back(QString::fromStdString(prediction_names[i]));
+	}
+
+	std::string classifier;
+	unsigned short new_class;
+	ChangeClassDialog *dialog = new ChangeClassDialog (classifiers,this);
+	if( dialog->exec() )
+	{
+		classifier = dialog->getClassColumn();
+		new_class = dialog->getClass();		
+		std::cout << classifier << "_" << new_class << "\n";
+	}
+	else
+		return;
+	delete dialog;
+
+	vtkAbstractArray * columnData = table->GetColumn(0);
+	for (vtkIdType row = 0; row != table->GetNumberOfRows(); row++)
+	{
+		allIds.push_back(columnData->GetVariantValue(row).ToTypeInt64());
+	}
+
+	
+	for(int i = 0 ; i<ids.size() ;++i)
+	{
+		vector<int>::iterator posn1 = std::find(allIds.begin(), allIds.end(), ids.at(i));
+		table->SetValueByName(posn1-allIds.begin(),classifier.c_str(),new_class);
+	}
+
+	this->updateViews();
 
 	//Change the class of these objects:
 	//if(ok)
 	//{
+
 	//nucSeg->SetClass(ids,newClass);
 	//this->updateViews();
 	//}
@@ -4663,6 +4696,82 @@ bool QueryDialog::getKMutual()
 {
 	return check->isChecked();
 }
+
+
+//***************************************************************************
+//***********************************************************************************
+//***********************************************************************************
+// A dialog to get the paramaters file to use and specify the channel if image has
+// more than one:
+//***********************************************************************************
+ChangeClassDialog::ChangeClassDialog(QVector<QString> cls, QWidget *parent)
+: QDialog(parent)
+{
+
+	classifiers = cls;
+	classifierLabel = new QLabel("Choose Classifier: ");
+	classifierCombo = new QComboBox();
+	for(int v = 0; v<classifiers.size(); ++v)
+	{
+		classifierCombo->addItem(classifiers.at(v));
+	}
+	QHBoxLayout *classifierLayout = new QHBoxLayout;
+	classifierLayout->addWidget(classifierLabel);
+	classifierLayout->addWidget(classifierCombo);
+
+	classLabel = new QLabel("Choose New Class Value: ");
+	classCombo = new QComboBox();
+	for(int v = 0; v<=10; ++v)
+	{
+		classCombo->addItem(QString::number(v));
+	}
+	QHBoxLayout *classLayout = new QHBoxLayout;
+	classLayout->addWidget(classLabel);
+	classLayout->addWidget(classCombo);
+
+	//autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
+	//autoButton->setChecked(true);
+
+	//fileButton = new QRadioButton(tr("Use Parameter File..."),this);
+
+	//fileCombo = new QComboBox();
+	//fileCombo->addItem(tr(""));
+	//fileCombo->addItem(tr("Browse..."));
+	//connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
+
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);	
+
+	layout = new QVBoxLayout;
+	layout->addLayout(classifierLayout);
+	layout->addLayout(classLayout);
+	//layout->addWidget(autoButton);
+	//layout->addWidget(quitButton);
+	//layout->addWidget(okButton);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Change Class"));
+	
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+
+
+std::string ChangeClassDialog::getClassColumn()
+{
+	return classifiers[classifierCombo->currentIndex()].toStdString();
+}
+
+unsigned short ChangeClassDialog::getClass()
+{
+	return classCombo->currentIndex();
+}
+
 
 
 
