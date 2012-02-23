@@ -108,8 +108,8 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Hillman Taper");
 	this->headers.push_back("Max Hillman Taper");
 
-	this->headers.push_back("Total Euclidian Length");
-	this->headers.push_back("Average Segment Euclidian Length");
+	this->headers.push_back("Total Euclidean Length");
+	this->headers.push_back("Average Segment Euclidean Length");
 	this->headers.push_back("Total Path Length");
 	this->headers.push_back("Average Segment Path Length");
 
@@ -182,10 +182,10 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Ave Leaf Level");
 	this->headers.push_back("Ave Leaf Path Length");
 
-	this->headers.push_back( "Total Terminal Compartments");
-	this->headers.push_back( "Min Terminal Compartments");
-	this->headers.push_back( "Average Terminal Compartments");
-	this->headers.push_back( "Max Terminal Compartments");
+	this->headers.push_back("Total Terminal Compartments");
+	this->headers.push_back("Min Terminal Compartments");
+	this->headers.push_back("Average Terminal Compartments");
+	this->headers.push_back("Max Terminal Compartments");
 
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");

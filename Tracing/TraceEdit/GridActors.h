@@ -28,17 +28,22 @@ public:
 	void createGrid(double bounds[],int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity, int z_plane_value);
 	void createGridxz(double bounds[],int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity, int z_plane_value);
 	void createGridyz(double bounds[],int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity, int z_plane_value);
+	void createGrid3D(double bounds[],int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity);
 	vtkSmartPointer<vtkActor> GetHorizontalGridlines(int i);
 	vtkSmartPointer<vtkActor> GetVerticalGridlines(int i);
+	vtkSmartPointer<vtkActor> GetDepthGridlines(int i);
 	int NumberOfLines();
 	int NumberOfHorizontalLines();
 	int NumberOfVerticalLines();
+	int NumberOfDepthLines();
 
 private:
 	vtkSmartPointer<vtkActor>* GridlineActorVectorHorizontal;
 	vtkSmartPointer<vtkActor>* GridlineActorVectorVertical;
+	vtkSmartPointer<vtkActor>* GridlineActorVectorDepth;
 
 	int num_horizontal_lines;
 	int num_vertical_lines;
+	int num_depth_lines;
 };
 #endif

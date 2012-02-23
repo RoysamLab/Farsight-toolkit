@@ -190,6 +190,31 @@ void GridlineActors::createGridxz(double bounds[],int height_spacing, int width_
 		//Add the GridlineActor to the renderer
 		GridlineActor->SetMapper(mapper);
 		GridlineActor->SetPickable(0);
+
+		for (double increment = bounds[2]; increment < bounds[3]; increment+=height_spacing, horizontal_line_index++)
+		{	
+			// Create two points, P0 and P1
+			double p0[3] = {bounds[0], increment, z_plane_value};
+			double p1[3] = {bounds[1], increment, z_plane_value};
+
+			vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+			lineSource->SetPoint1(p0);
+			lineSource->SetPoint2(p1);
+			lineSource->Update();
+
+			// Visualize
+			vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+			mapper->SetInputConnection(lineSource->GetOutputPort());
+			//Create GridlineActor
+			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
+			GridlineActor->SetProperty(lineproperty);
+			//Store it to the GridlineActorVector
+			GridlineActorVectorHorizontal[horizontal_line_index] = GridlineActor;
+			
+			//Add the GridlineActor to the renderer
+			GridlineActor->SetMapper(mapper);
+			GridlineActor->SetPickable(0);
+		}
 	}
 
 	/// vertical lines
@@ -289,6 +314,107 @@ void GridlineActors::createGridyz(double bounds[],int height_spacing, int width_
 		GridlineActorVectorVertical[vertical_line_index] = GridlineActor;
 		GridlineActor->SetMapper(mapper);
 		GridlineActor->SetPickable(0);
+	}
+}
+void GridlineActors::createGrid3D(double bounds[],int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity)
+{
+	double r_color = r/256.0;
+	double g_color = g/256.0;
+	double b_color = b/256.0;
+	double line_opacity = opacity/100.0;
+
+	vtkSmartPointer<vtkProperty> lineproperty = vtkSmartPointer<vtkProperty>::New();
+	lineproperty->SetColor(r_color,g_color,b_color);
+	lineproperty->SetOpacity(line_opacity);
+	lineproperty->SetLineWidth(line_width);
+
+	//Manually create lines
+	
+	//temporary
+	int depth_spacing = height_spacing;
+	//
+	num_depth_lines = (bounds[5] - bounds[4]) / depth_spacing + 1;
+
+	/// horizontal lines
+	num_horizontal_lines = ((bounds[3] - bounds[2]) / height_spacing + 1)*num_depth_lines;
+	GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
+
+	/// vertical lines
+	num_vertical_lines = ((bounds[1] - bounds[0]) / width_spacing + 1)*num_depth_lines;
+	GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
+
+	unsigned int horizontal_line_index = 0;
+	unsigned int vertical_line_index = 0;
+	unsigned int depth_line_index = 0;
+	for (double depthIncrement = bounds[4]; depthIncrement < bounds[5]; depthIncrement+= depth_spacing, depth_line_index++)
+	{
+		for (double increment = bounds[2]; increment < bounds[3]; increment+=height_spacing, horizontal_line_index++)
+		{	
+			// Create two points, P0 and P1
+			double p0[3] = {bounds[0], increment, depthIncrement};
+			double p1[3] = {bounds[1], increment, depthIncrement};
+
+			vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+			lineSource->SetPoint1(p0);
+			lineSource->SetPoint2(p1);
+			lineSource->Update();
+
+			// Visualize
+			vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+			mapper->SetInputConnection(lineSource->GetOutputPort());
+			//Create GridlineActor
+			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
+			GridlineActor->SetProperty(lineproperty);
+			//Store it to the GridlineActorVector
+			GridlineActorVectorHorizontal[horizontal_line_index] = GridlineActor;
+			
+			//Add the GridlineActor to the renderer
+			GridlineActor->SetMapper(mapper);
+			GridlineActor->SetPickable(0);
+		}
+
+		// vertical lines
+		for (double increment = bounds[0]; increment < bounds[1]; increment+=width_spacing, vertical_line_index++)
+		{	
+			// Create two points, P0 and P1
+			double p0[3] = {increment, bounds[2], depthIncrement};
+			double p1[3] = {increment, bounds[3], depthIncrement};
+
+			vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+			lineSource->SetPoint1(p0);
+			lineSource->SetPoint2(p1);
+			lineSource->Update();
+
+			// Visualize
+			vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+			mapper->SetInputConnection(lineSource->GetOutputPort());
+			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
+			GridlineActor->SetProperty(lineproperty);
+			GridlineActorVectorVertical[vertical_line_index] = GridlineActor;
+			GridlineActor->SetMapper(mapper);
+			GridlineActor->SetPickable(0);
+
+			//depth lines
+			// Create two points, P0 and P1
+			double p2[3] = {increment, depthIncrement, bounds[4]};
+			double p3[3] = {increment, depthIncrement, bounds[5]};
+
+			vtkSmartPointer<vtkLineSource> lineSource2 = vtkSmartPointer<vtkLineSource>::New();
+			lineSource2->SetPoint1(p2);
+			lineSource2->SetPoint2(p3);
+			lineSource2->Update();
+
+			// Visualize
+			vtkSmartPointer<vtkPolyDataMapper> mapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
+			mapper2->SetInputConnection(lineSource2->GetOutputPort());
+			vtkSmartPointer<vtkActor> GridlineActor2 = vtkSmartPointer<vtkActor>::New();
+			GridlineActor2->SetProperty(lineproperty);
+			GridlineActorVectorDepth[depth_line_index] = GridlineActor2;
+			
+			//Add the GridlineActor to the renderer
+			GridlineActor->SetMapper(mapper2);
+			GridlineActor->SetPickable(0);
+		}
 	}
 }
 vtkSmartPointer<vtkActor> GridlineActors::GetHorizontalGridlines(int i)

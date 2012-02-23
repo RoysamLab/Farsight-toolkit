@@ -109,8 +109,9 @@ limitations under the License.
 #include "MergeModel.h"
 
 #include "cellexport.h"
-#include "screenshot.h"
+#include "FeatureRelation.h"
 #include "GridActors.h"
+#include "screenshot.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -560,9 +561,13 @@ private:
 	int projection_axis;
 //!Gridline controls
 	bool showGrid;
+	QComboBox * GridOrientationBox, * GridDimensionMode;
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox, * LineWidthBox;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
+
+//!Feature Graph
+	FeatureRelation * feature;
 
 //!ROI data objects
 	std::vector<double*> ROIPoints;

@@ -70,7 +70,7 @@ public:
 
 	double TotalPathLength, minPathLength, MaxPathLength;
 	double TotalVolume, minSegmentVolume, maxSegmentVolume;
-	double TotalEuclidianPath, MinEuclidianPath, MaxEuclidianPath;
+	double TotalEuclideanPath, MinEuclideanPath, MaxEuclideanPath;
 	double TerminalPathLength, maxTerminalPathLength, minTerminalPathLength;
 	int TotalTerminalSegment, MaxTerminalSegment, MinTerminalSegment;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ, skewnessX, skewnessY, skewnessZ, euclideanSkewness; 

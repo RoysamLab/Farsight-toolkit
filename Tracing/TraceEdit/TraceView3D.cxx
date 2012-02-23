@@ -1812,6 +1812,8 @@ void View3D::CreateLayout()
 	GridlineSettings->setCheckable(true);
 	connect(GridlineSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
+	//GridlineLayout->addRow(tr("2D/3D Axis:"),this->GridDimensionMode);
+	//GridlineLayout->addRow(tr("Orientation:"),this->GridOrientationBox);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
 	GridlineLayout->addRow(tr("Line Thickness: "),this->LineWidthBox);
@@ -2371,6 +2373,8 @@ void View3D::setSlicerMode()
 
 void View3D::setProjectionMode()
 {
+	/*feature = new FeatureRelation;
+	feature->FeatureGraph();*/
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
 		ClearRenderer(i);
@@ -2795,11 +2799,12 @@ void View3D::ToggleGridlines() //2D gridlines
 		}
 		else if (this->projection_axis == 2)
 			Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			//Gridlines->createGrid3D(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
 		else if (this->projection_axis == 1)
 			Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 		else
 			Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
-		//num_lines = this->Gridlines->NumberOfLines();
+		//num_lines = this->Gridlines->NumberOfLines();`	
 		//std::cout << "Number of lines: " << num_lines << std::endl;
 	}
 
@@ -2871,6 +2876,7 @@ void View3D::AdjustGridlines(int value)
 		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	}
 	else if (this->projection_axis == 2)
+		//Gridlines->createGrid3D(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
 		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	else if (this->projection_axis == 1)
 		Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
@@ -3030,7 +3036,6 @@ void View3D::chooseSomaRender(int value) //Audrey - display original soma image 
 }
 void View3D::SomaColorChanged(double value)
 {
-	//std::cout << "SomaColorChanged()" << std::endl;
 	this->ImageActors->setSomaColor(value);
 	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)//round-about
 	//{
@@ -4015,7 +4020,10 @@ void View3D::showStatistics(void)
 {
 	if (this->flag == 1)
 	{
-		this->statisticsToolbar->statisticsDockWidget->close();
+		this->statisticsToolbar->statisticsDockWidget->close(); //QT not closing properly
+		delete this->statisticsToolbar->statisticsDockWidget;
+		this->statisticsToolbar->statisticsDockWidget = NULL;
+		//std::cout << "Statistics widget close" << std::endl;
 	}
 	this->statisticsDockWidget = new QDockWidget();
 	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
@@ -4182,7 +4190,7 @@ void View3D::DeleteTraces()
 	{
 		EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 		EditLogDisplay->append(traceList[0]->statHeaders().c_str());
-		//this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidian Length\tRadii\tFragmentation Smoothness\tParent ID");
+		//this->EditLogDisplay->append( "\tID\tType\tSize\tLength\tEuclidean Length\tRadii\tFragmentation Smoothness\tParent ID");
 		for (unsigned int i=0; i<traceList.size()-1; i++)
 		{			
 			if (traceList[i]->isLeaf()&&!traceList[i]->isRoot())

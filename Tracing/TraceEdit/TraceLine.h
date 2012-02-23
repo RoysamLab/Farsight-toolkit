@@ -51,7 +51,7 @@ public:
 	void calculateVol();
 	void calculateBifFeatures();
 	double GetLength() {return length;}
-	double GetEuclidianLength();
+	double GetEuclideanLength();
 	double GetBitDensity();
 	double GetDistToParent();
 	double GetFragmentationSmoothness();
@@ -169,9 +169,11 @@ public:
 	double GetAzimuth();
 	double GetElevation();
 
+	//Compartment Level Features
+	double GetCompartmentCurvature();
 private:
 
-	double Euclidian(TraceBit bit1, TraceBit bit2);
+	double Euclidean(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
 	double AzimuthAngle(TraceBit vertex, TraceBit bit1);
@@ -179,11 +181,12 @@ private:
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
-	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclidianD, DistToParent;
+	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
 	/*double prediction, confidence;*/
+
 
 	std::string FileName;
 	unsigned int m_id, root;

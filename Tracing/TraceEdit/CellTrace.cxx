@@ -79,7 +79,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		this->IDs.insert(this->segments[i]->GetId());
 		this->MaxMin(this->segments[i]->GetLength(), this->TotalPathLength, this->minPathLength, this->MaxPathLength);
 		this->MaxMin(this->segments[i]->GetVolume(), this->TotalVolume, this->minSegmentVolume, this->maxSegmentVolume);
-		this->MaxMin(this->segments[i]->GetEuclidianLength(),this->TotalEuclidianPath, this->MinEuclidianPath, this->MaxEuclidianPath);
+		this->MaxMin(this->segments[i]->GetEuclideanLength(),this->TotalEuclideanPath, this->MinEuclideanPath, this->MaxEuclideanPath);
 		this->MaxMin(this->segments[i]->GetSurfaceArea(), this->surfaceAreaTotal, this->SurfaceAreaMin, this->SurfaceAreaMax);
 		this->MaxMin(this->segments[i]->GetSectionArea(), this->sectionAreaTotal, this->SectionAreaMin, this->SectionAreaMax);
 		this->MaxMin(this->segments[i]->GetSize(), this->TotalFragmentation, this->MinFragmentation, this->MaxFragmentation);
@@ -263,9 +263,9 @@ void CellTrace::clearAll()
 	this->MinDiameterPower = 100;
 	this->MaxDiameterPower = 0;
 
-	this->TotalEuclidianPath = 0;
-	this->MinEuclidianPath = 1000;
-	this->MaxEuclidianPath = 0;
+	this->TotalEuclideanPath = 0;
+	this->MinEuclideanPath = 1000;
+	this->MaxEuclideanPath = 0;
 
 	this->TotalPathLength = 0;
 	this->minPathLength = 1000;
@@ -479,8 +479,8 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalHillmanTaper / this->NumSegments);
 	CellData->InsertNextValue(this->MaxBurkTaper);
 
-	CellData->InsertNextValue(this->TotalEuclidianPath);
-	CellData->InsertNextValue(this->TotalEuclidianPath/this->NumSegments);//average segment euclidian length
+	CellData->InsertNextValue(this->TotalEuclideanPath);
+	CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length
 	CellData->InsertNextValue(this->TotalPathLength);
 	CellData->InsertNextValue(this->TotalPathLength/this->NumSegments);//average segment length
 

@@ -34,7 +34,7 @@ TraceLine::TraceLine()
 	this->level = 0;
 	this->m_id = -(1<<30);
 	this->m_branches.clear();
-	this->EuclidianD = -1;
+	this->EuclideanD = -1;
 	this->length = 0;
 	this->radii = 0; 
 	this->sectionArea = 0;
@@ -176,7 +176,7 @@ void TraceLine::calculateVol()
 		{
 			cur = *it;
 			r += cur.r;
-			dist += Euclidian(pre, cur);
+			dist += Euclidean(pre, cur);
 			pre = cur;
 		}
 		if (Df !=Dl)
@@ -278,19 +278,19 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 	}
 	//should have ended
 }
-double TraceLine::GetEuclidianLength()
+double TraceLine::GetEuclideanLength()
 {
 	if (this->m_trace_bits.size() <2)
 	{
-		this->EuclidianD =0;
+		this->EuclideanD =0;
 	}
 	else
 	{
 		TraceBit front = this->m_trace_bits.front();
 		TraceBit back  = this->m_trace_bits.back();
-		this->EuclidianD = this->Euclidian(front, back);
+		this->EuclideanD = this->Euclidean(front, back);
 	}
-	return this->EuclidianD;
+	return this->EuclideanD;
 }
 double TraceLine::GetBitDensity()
 {
@@ -308,7 +308,7 @@ double TraceLine::GetDistToParent()
 {
 	if (this->m_parent)
 	{
-		this->DistToParent = this->Euclidian(this->m_trace_bits.front(), 
+		this->DistToParent = this->Euclidean(this->m_trace_bits.front(), //
 			this->m_parent->m_trace_bits.back());
 		if (this->m_trace_bits.size()>1)
 		{
@@ -318,7 +318,7 @@ double TraceLine::GetDistToParent()
 			pre = *it; 
 			it++;
 			cur = *it;
-			Leading = Euclidian(pre, cur);
+			Leading = Euclidean(pre, cur);
 			if (Leading > 2*this->DistToParent)
 			{
 				this->DistToParent = Leading;
@@ -334,14 +334,14 @@ double TraceLine::GetDistToParent()
 }
 double TraceLine::GetFragmentationSmoothness()
 {
-	if (!(this->EuclidianD > -1))
+	if (!(this->EuclideanD > -1))
 	{
-		this->GetEuclidianLength();
+		this->GetEuclideanLength();
 	}
 	double t = -1;
 	if ( this->m_trace_bits.size() > 1)
 	{
-		t = this->length/this->EuclidianD;
+		t = this->length/this->EuclideanD;
 	}
 	return t;
 }
@@ -443,12 +443,12 @@ bool TraceLine::removeLeadingBit()
 		pre = *it; 
 		it++;
 		cur = *it;
-		Leading = Euclidian(pre, cur);
+		Leading = Euclidean(pre, cur);
 		it++;
 		for (; it != this->m_trace_bits.end(); it++)
 		{
 			cur = *it;
-			dist += this->Euclidian(pre, cur);
+			dist += this->Euclidean(pre, cur);
 			pre = cur;
 		}//end for
 		if(Leading > (dist/ (this->m_trace_bits.size() -1)))
@@ -611,7 +611,7 @@ void TraceLine::Getstats()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-double TraceLine::Euclidian(TraceBit bit1, TraceBit bit2)
+double TraceLine::Euclidean(TraceBit bit1, TraceBit bit2)
 {
 	double distance, x, y, z;
 	x = pow((bit1.x -bit2.x),2);
@@ -710,10 +710,10 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 
   int Xbits = 10; //small step from end to determine 
   //compute the endpt distances
-  distances[0]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.front());//0 F-F
-  distances[1]=Euclidian(m_trace_bits.front(), Trace2->m_trace_bits.back());//1 F-B
-  distances[2]=Euclidian(m_trace_bits.back(), Trace2->m_trace_bits.front());//2 B-F
-  distances[3]=Euclidian(m_trace_bits.back(), Trace2->m_trace_bits.back());//3 B-B
+  distances[0]=Euclidean(m_trace_bits.front(), Trace2->m_trace_bits.front());//0 F-F
+  distances[1]=Euclidean(m_trace_bits.front(), Trace2->m_trace_bits.back());//1 F-B
+  distances[2]=Euclidean(m_trace_bits.back(), Trace2->m_trace_bits.front());//2 B-F
+  distances[3]=Euclidean(m_trace_bits.back(), Trace2->m_trace_bits.back());//3 B-B
 
   //determine minimum spacing
   min = distances[0];
@@ -790,8 +790,8 @@ bool TraceLine::Orient(TraceLine * Trunk)
 {
 	double distances[2];
 	//compute the endpt distances
-	distances[0]= Euclidian(m_trace_bits.front(),	Trunk->m_trace_bits.back());// F-B
-	distances[1]= Euclidian(m_trace_bits.back(),	Trunk->m_trace_bits.back());// B-B
+	distances[0]= Euclidean(m_trace_bits.front(),	Trunk->m_trace_bits.back());// F-B
+	distances[1]= Euclidean(m_trace_bits.back(),	Trunk->m_trace_bits.back());// B-B
 	if(distances[0] < distances[1])
 	{
 		return true;	//oriented correctly
@@ -802,8 +802,8 @@ bool TraceLine::Orient(TraceBit bit)
 {
 	double distances[2];
 	//compute the endpt distances
-	distances[0]= Euclidian(m_trace_bits.front(),	bit);// F-Bit
-	distances[1]= Euclidian(m_trace_bits.back(),	bit);// B-Bit
+	distances[0]= Euclidean(m_trace_bits.front(),	bit);// F-Bit
+	distances[1]= Euclidean(m_trace_bits.back(),	bit);// B-Bit
 	if(distances[0] > distances[1])
 	{
 		return true;	//oriented correctly
@@ -871,7 +871,7 @@ std::string TraceLine::stats()
 	thisStats << "\t";
 	thisStats << this->GetLength();
 	thisStats << "\t" ;
-	thisStats << this->GetEuclidianLength();
+	thisStats << this->GetEuclideanLength();
 	thisStats << "\t" ;
 	thisStats << this->GetRadii();
 	thisStats << "\t";
@@ -898,7 +898,7 @@ std::string TraceLine::statHeaders()
 		<<"\tType"
 		<<"\tSize"
 		<<"\tLength"
-		<<"\tEuclidian L"
+		<<"\tEuclidean L"
 		<<"\tRadii"
 		<<"\tContraction"
 		<<"\tParent ID";
@@ -918,6 +918,28 @@ std::string TraceLine::statHeaders()
 //	azimuthangle = this->Azimuth(P1,D1);
 //	elevationangle = this->Elevation(P1,D1);
 //}
+
+double TraceLine::GetCompartmentCurvature()
+{
+	double angle = 0;
+	if (this->m_parent)
+	{
+		if (this->m_trace_bits.size()>2)
+		{
+			TraceBit pre, cur, next;
+			TraceBitsType::iterator it = this->m_trace_bits.begin();
+			pre = *it;
+			it++;
+			cur = *it;
+			it++;
+			next = *it;
+			angle = this->Angle(pre,cur,next);
+		}
+		return angle;
+	}
+	else
+		return -1;
+}
 
 double TraceLine::GetAzimuth()
 {

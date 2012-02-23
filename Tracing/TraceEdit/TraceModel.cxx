@@ -56,7 +56,7 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("ID");
 	this->headers.push_back("# of Bits");
 	this->headers.push_back("Path Length");
-	this->headers.push_back("Euclidian Length");
+	this->headers.push_back("Euclidean Length");
 	this->headers.push_back("Trace Density");
 	this->headers.push_back("Tortuosity");
 	this->headers.push_back("Radius");
@@ -117,7 +117,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLength());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetEuclidianLength());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetEuclideanLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBitDensity());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetFragmentationSmoothness());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRadii());
