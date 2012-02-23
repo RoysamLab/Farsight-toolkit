@@ -33,6 +33,7 @@
 
 //LOCAL INCLUDES
 #include "cell_binarization/cell_binarization.h"
+#include "cell_binarization/adaptive_binarization.h"
 #include "seed_detection/seedsdetection.h"
 #include "seed_detection_3D/seedsdetection_3D.h"
 #include "clustering_3D/local_max_clust_3D.h"
@@ -94,6 +95,7 @@ public:
   
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								
 	unsigned short* getBinImage(){ return binImagePtr; }; 
+	void setBinImage(unsigned short* ptr); 
 	unsigned short* getSeedImage(){ return seedImagePtr; };
 	float* getLogImage(){ return logImagePtr; };
 	unsigned short* getClustImage(){ return clustImagePtr; };

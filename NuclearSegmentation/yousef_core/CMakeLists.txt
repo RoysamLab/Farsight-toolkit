@@ -49,6 +49,8 @@ SET( border_SRCS
 SET( cbin_SRCS
   cell_binarization/cell_binarization.h
   cell_binarization/cell_binarization.cpp    
+  cell_binarization/adaptive_binarization.h
+  cell_binarization/adaptive_binarization.cpp
   cell_binarization/new_graph.h
   cell_binarization/block_b.h   
 )

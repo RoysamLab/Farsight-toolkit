@@ -278,6 +278,16 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 	std::cout << "Bin Image written to binImage.tif" << endl;*/
 }
 
+void yousef_nucleus_seg::setBinImage(unsigned short* ptr)
+{
+	binImagePtr = ptr;
+	std::cout << "Entering getConnCompImage" << std::endl;
+	numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
+	std::cout << "Entering getConnCompInfo3D" << std::endl;
+	getConnCompInfo3D();																			//Populate myConnComp
+	std::cout << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
+}
+
 void yousef_nucleus_seg::runSeedDetection()
 {
 	//Check for required images
