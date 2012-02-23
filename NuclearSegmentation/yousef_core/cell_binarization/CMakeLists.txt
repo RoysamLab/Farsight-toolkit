@@ -1,6 +1,8 @@
 SET( cb_SRCS
   cell_binarization.h
   cell_binarization.cpp    
+  adaptive_binarization.h
+  adaptive_binarization.cpp
   new_graph.h
   block_b.h   
 )
