@@ -20,6 +20,8 @@ SET( TRACE_SRCS
   screenshot.h	    screenshot.cxx
   GridActors.h		GridActors.cxx
   VolumeOfInterest.h VolumeOfInterest.cxx
+  FeatureRelation.h	FeatureRelation.cxx
+  
   ${GUI_MOC_SRCS} ) 
 
 SET( TRACE_LIBS
