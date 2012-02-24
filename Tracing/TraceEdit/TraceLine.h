@@ -19,6 +19,7 @@ limitations under the License.
 #define PI 3.14159265
 
 #include <list>
+#include <cmath>
 #include <vector>
 #include <set>
 #include <sstream>
@@ -72,10 +73,31 @@ public:
 	double GetPk_classic() {return Pk_classic;}
 	double GetBifAmplLocal() {return BifAmplLocal;}
 	double GetBifAmpRemote() {return BifAmpRemote;}
-	double GetBifTiltLocal() {return BifTiltLocal;}
 	void setBifTiltLocal(double NewBifTiltLocal) {BifTiltLocal = NewBifTiltLocal;}
+	double GetBifTiltLocal() {return BifTiltLocal;}
+	void setBifTiltRemote(double NewBifTiltRemote) {BifTiltRemote = NewBifTiltRemote;}
 	double GetBifTiltRemote() {return BifTiltRemote;}
-	void setBifTiltRemote(double NewBifTiltRemote) { BifTiltRemote = NewBifTiltRemote;}
+	void setBifTorqueLocal(double NewBifTorqueLocal) {BifTorqueLocal = NewBifTorqueLocal;}
+	double GetBifTorqueLocal() {return BifTorqueLocal;}
+	void setBifTorqueRemote(double NewBifTorqueRemote) {BifTorqueRemote = NewBifTorqueRemote;}
+	double GetBifTorqueRemote() {return BifTorqueRemote;}
+	
+	double GetBifTiltLocalBig() {return BifTiltLocalBig;}
+	void setBifTiltLocalBig(double NewBifTiltLocal)			{BifTiltLocalBig = NewBifTiltLocal;}
+	double GetBifTiltLocalSmall() {return BifTiltLocalSmall;}
+	void setBifTiltLocalSmall(double NewBifTiltLocal)		{BifTiltLocalSmall = NewBifTiltLocal;}
+	double GetBifTiltRemoteBig() {return BifTiltRemoteBig;}
+	void setBifTiltRemoteBig(double NewBifTiltRemote)		{BifTiltRemoteBig = NewBifTiltRemote;}
+	double GetBifTiltRemoteSmall() {return BifTiltRemoteSmall;}
+	void setBifTiltRemoteSmall(double NewBifTiltRemote)		{BifTiltRemoteSmall = NewBifTiltRemote;}
+	double GetBifTorqueLocalBig() {return BifTorqueLocalBig;}
+	void setBifTorqueLocalBig(double NewBifTorqueLocal)		{BifTorqueLocalBig = NewBifTorqueLocal;}
+	double GetBifTorqueLocalSmall() {return BifTorqueLocalSmall;}
+	void setBifTorqueLocalSmall(double NewBifTorqueLocal)	{BifTorqueLocalSmall = NewBifTorqueLocal;}
+	double GetBifTorqueRemoteBig() {return BifTorqueRemoteBig;}
+	void setBifTorqueRemoteBig(double NewBifTorqueRemote)	{BifTorqueRemoteBig = NewBifTorqueRemote;}
+	double GetBifTorqueRemoteSmall() {return BifTorqueRemoteSmall;}
+	void setBifTorqueRemoteSmall(double NewBifTorqueRemote) {BifTorqueRemoteSmall = NewBifTorqueRemote;}
 
 	double GetDistanceToROI() {return DistanceToROI;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
@@ -178,9 +200,13 @@ private:
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
 	double AzimuthAngle(TraceBit vertex, TraceBit bit1);
 	double ElevationAngle(TraceBit vertex, TraceBit bit1);
+	double* Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2);
+	double PlaneAngle(double* plane1, double* plane2);
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
-	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
+	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
+	double BifTiltLocalBig, BifTiltRemoteBig, BifTorqueLocalBig, BifTorqueRemoteBig;
+	double BifTiltLocalSmall, BifTiltRemoteSmall, BifTorqueLocalSmall, BifTorqueRemoteSmall;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	//cell level features 

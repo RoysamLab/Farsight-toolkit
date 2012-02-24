@@ -82,13 +82,18 @@ public:
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
 
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
-	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote;
+	//double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
+	double BifAmplLocal, BifAmpRemote, BifTiltLocalBig, BifTiltRemoteBig, BifTorqueLocalBig, BifTorqueRemoteBig;
+	double BifTiltLocalSmall, BifTiltRemoteSmall, BifTorqueLocalSmall, BifTorqueRemoteSmall;
 
 	double daughterRatioMin, parentDaughterRatioMin, partitionAsymmetryMin, rallPowerMin, PkMin, Pk_2Min, Pk_classicMin;
-	double BifAmplLocalMin, BifAmpRemoteMin, BifTiltLocalMin, BifTiltRemoteMin;
+	double BifAmplLocalMin, BifAmpRemoteMin, BifTiltLocalBigMin, BifTiltRemoteBigMin, BifTorqueLocalBigMin, BifTorqueRemoteBigMin;
+	double BifTiltLocalSmallMin, BifTiltRemoteSmallMin, BifTorqueLocalSmallMin, BifTorqueRemoteSmallMin;
 
 	double daughterRatioMax, parentDaughterRatioMax, partitionAsymmetryMax, rallPowerMax, PkMax, Pk_2Max, Pk_classicMax;
-	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax;
+	//double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;
+	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalBigMax, BifTiltRemoteBigMax, BifTorqueLocalBigMax, BifTorqueRemoteBigMax;
+	double BifTiltLocalSmallMax, BifTiltRemoteSmallMax, BifTorqueLocalSmallMax, BifTorqueRemoteSmallMax;
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;

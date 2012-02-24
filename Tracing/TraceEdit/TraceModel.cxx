@@ -72,8 +72,12 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("D To Parent");
 	this->headers.push_back("Path To Root");
 	this->headers.push_back("Num Children");
+	this->headers.push_back("Bif amp Local");
+	this->headers.push_back("Bif amp Remote");
 	this->headers.push_back("Bif tilt Local");
 	this->headers.push_back("Bif tilt Remote");
+	this->headers.push_back("Bif torque Local");
+	this->headers.push_back("Bif torque Remote");
 	this->headers.push_back("Azimuth");
 	this->headers.push_back("Elevation");
 	this->headers.push_back("Terminal Degree");
@@ -133,8 +137,12 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplLocal());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmpRemote());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocal());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltRemote());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueLocal());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueRemote());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetAzimuth());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetElevation());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetTerminalDegree());

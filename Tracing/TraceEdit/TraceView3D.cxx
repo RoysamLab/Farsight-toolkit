@@ -721,19 +721,6 @@ bool View3D::readProject(QString projectFile)
 			bool found = false;
 			std::string FileName = project->GetFileName(i);
 
-			//this->projectFilesTable->setRowCount(project->size());
-
-			//QTableWidgetItem *newfileItem = new QTableWidgetItem(QString::fromStdString(FileName));
-			//newfileItem->setFlags(newfileItem->flags() & (~Qt::ItemIsEditable));
-			//projectFilesTable->setItem(i,0,newfileItem);
-
-			//{
-			//	QTableWidgetItem *newrenderItem = new QTableWidgetItem(tr("on"));
-			//	newrenderItem->setFlags(newrenderItem->flags() & (~Qt::ItemIsEditable));
-			//	projectFilesTable->setItem(i,2,newrenderItem);
-			//	//this->ImageActors->setRenderStatus(i);
-			//}
-
 			QFileInfo  NewFileInfo(QString(FileName.c_str()));
 			if (!NewFileInfo.exists())
 			{
@@ -923,7 +910,6 @@ void View3D::ShowProjectTable()
 					projectFilesTable->setItem(j,3,dimensionItem);
 				}
 				j++; //move on to the next row of the project table
-				//this->ImageActors->setRenderStatus(i);	
 			} //end of found and imagetype
 		} //end of filetype is image or soma
 	}// end of project !empty
@@ -936,13 +922,6 @@ void View3D::choosetoRender(int row, int col)
 {
 	QList<QTableWidgetSelectionRange> ranges = this->projectFilesTable->selectedRanges(); //for future use
 	//add buttons to change all highlighted cells to "on" or "off"
-
-	/*std::cout << "row count: " << ranges.first().rowCount() << "\n";
-	std::cout << "column count: " << ranges.first().columnCount() << "\n";
-	std::cout << "top row: " << ranges.first().topRow() << "\n";
-	std::cout << "bottom row: " << ranges.first().bottomRow() << std::endl;
-	std::cout << "left column: " << ranges.first().leftColumn() << "\n";
-	std::cout << "right column: " << ranges.first().rightColumn() << std::endl;*/
 
 	if(col == 2) //click on one cell in the 3rd column (Renderstatus) only to activate
 	{
@@ -1011,32 +990,22 @@ void View3D::changeDimension(int row, int col)
 
 			if(this->projectFilesTable->item(row,3)->text() == "3d")
 			{
-				//std::cout << this->projectFilesTable->item(rowselected,3) << std::endl;
-				//std::cout << "Row selected was 3D" << std::endl;
 				this->projectFilesTable->setItem(row,3,Item2D);
 				if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
 				{
-					//std::cout << "Image is Raycast" << std::endl;
 					this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
 					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
 					this->ImageActors->setIs2D(row, true);
 					this->ImageActors->setRenderStatus(row, false);
 				}
-				//this->SlicerBar->show();
-				//this->QVTK->GetRenderWindow()->Render();
-				//this->chooseInteractorStyle(1);
 			} //end if 3d to 2d
 			else
 			{
 				this->projectFilesTable->setItem(row,3,Item3D);
-				//if (this->ImageActors->is2D(row))
-				//{
-				//std::cout << "Removing projection... and set is not 2D" << std::endl;
 				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 				this->ImageActors->setIs2D(row, false);
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
 				this->ImageActors->setRenderStatus(row, true);
-				//}
 			} //end else 2d to 3d
 		}
 		// Check if there are 3D images

@@ -58,6 +58,16 @@ TraceLine::TraceLine()
 	this->BifAmpRemote = 0;
 	this->BifTiltLocal = -1;
 	this->BifTiltRemote = -1;
+	this->BifTiltLocalBig = -1;
+	this->BifTiltLocalSmall = -1;
+	this->BifTiltRemoteBig = -1;
+	this->BifTiltRemoteSmall = -1;
+	this->BifTorqueLocal = -1;
+	this->BifTorqueRemote = -1;
+	this->BifTorqueLocalBig = -1;
+	this->BifTorqueLocalSmall = -1;
+	this->BifTorqueRemoteBig = -1;
+	this->BifTorqueRemoteSmall = -1;
 
 	this->CellFeatures.clear();
 //for Dist to device calculations
@@ -214,11 +224,13 @@ void TraceLine::calculateBifFeatures()
 	TraceLine* Daughter1 = this->GetBranch1();
 	TraceBit  D1F = Daughter1->GetTraceBitsPointer()->front();
 	TraceBit  D1B = Daughter1->GetTraceBitsPointer()->back();
+
 	int n1 = Daughter1->GetTerminalDegree();
 	double D1Radii = D1F.r;
 	TraceLine* Daughter2 = this->GetBranch2();
 	TraceBit  D2F = Daughter2->GetTraceBitsPointer()->front();
 	TraceBit  D2B = Daughter2->GetTraceBitsPointer()->back();
+
 	int n2 = Daughter2->GetTerminalDegree();
 	double D2Radii = D2F.r;
 	if (D1Radii > D2Radii)
@@ -254,13 +266,100 @@ void TraceLine::calculateBifFeatures()
 	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
 	this->BifAmpRemote = this->Angle(D1B, BranchBit, D2B);
 
-	Daughter1->setBifTiltLocal( this->Angle(previousBit, BranchBit, D1F));
-	Daughter2->setBifTiltLocal( this->Angle(previousBit, BranchBit, D2F));
+	//Identify bigger vs smaller daughter angle
+	double angle1 = this->Angle(previousBit, BranchBit, D1F);
+	double angle2 = this->Angle(previousBit, BranchBit, D2F);
+	if (angle1 >= angle2)
+	{
+		this->setBifTiltLocalBig(angle1);
+		this->setBifTiltLocalSmall(angle2);
+	}
+	else
+	{
+		this->setBifTiltLocalBig(angle2);
+		this->setBifTiltLocalSmall(angle1);
+	}
 
-	Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
-	Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
+	this->setBifTiltLocal((angle1+angle2)/2); //average
 
+	angle1 = this->Angle(previousBit, BranchBit, D1B);
+	angle2 = this->Angle(previousBit, BranchBit, D2B);
+	if (angle1 >= angle2)
+	{
+		this->setBifTiltRemoteBig(angle1);
+		this->setBifTiltRemoteSmall(angle2);
+	}
+	else
+	{
+		this->setBifTiltRemoteBig(angle2);
+		this->setBifTiltRemoteSmall(angle1);
+	}
 
+	this->setBifTiltRemote((angle1+angle2)/2);
+
+	//Daughter1->setBifTiltLocal( this->Angle(previousBit, BranchBit, D1F));
+	//Daughter2->setBifTiltLocal( this->Angle(previousBit, BranchBit, D2F));
+
+	//Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
+	//Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
+
+	double* ParentPlaneLocal_ptr  = this->Plane(D1F, BranchBit, D2F);
+	double* ParentPlaneRemote_ptr = this->Plane(D1B, BranchBit, D2B);
+	double* Daughter1PlaneLocal_ptr;
+	double* Daughter1PlaneRemote_ptr;
+	double* Daughter2PlaneLocal_ptr;
+	double* Daughter2PlaneRemote_ptr;
+	if (!Daughter1->isLeaf())
+	{
+		TraceLine* GrandDaughter1of1 = Daughter1->GetBranch1();
+		TraceLine* GrandDaughter2of1 = Daughter1->GetBranch2();
+		TraceBit GD1F1 = GrandDaughter1of1->GetTraceBitsPointer()->front();
+		TraceBit GD1B1 = GrandDaughter1of1->GetTraceBitsPointer()->back();
+		TraceBit GD2F1 = GrandDaughter2of1->GetTraceBitsPointer()->front();
+		TraceBit GD2B1 = GrandDaughter2of1->GetTraceBitsPointer()->back();
+		Daughter1PlaneLocal_ptr  = this->Plane(GD1F1,D1B,GD2F1);
+		Daughter1PlaneRemote_ptr = this->Plane(GD1B1,D1B,GD2B1);
+	}
+	if (!Daughter2->isLeaf())
+	{
+		TraceLine* GrandDaughter1of2 = Daughter2->GetBranch1();
+		TraceLine* GrandDaughter2of2 = Daughter2->GetBranch2();
+		TraceBit GD1F2 = GrandDaughter1of2->GetTraceBitsPointer()->front();
+		TraceBit GD1B2 = GrandDaughter1of2->GetTraceBitsPointer()->back();
+		TraceBit GD2F2 = GrandDaughter2of2->GetTraceBitsPointer()->front();
+		TraceBit GD2B2 = GrandDaughter2of2->GetTraceBitsPointer()->back();
+		Daughter2PlaneLocal_ptr  = this->Plane(GD1F2,D2B,GD2F2);
+		Daughter2PlaneRemote_ptr = this->Plane(GD1B2,D2B,GD2B2);
+	}
+		
+	double planeAngle1 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter1PlaneLocal_ptr);
+	double planeAngle2 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter2PlaneLocal_ptr);
+	if (planeAngle1 >= planeAngle2)
+	{
+		this->setBifTorqueLocalBig(planeAngle1);
+		this->setBifTorqueLocalSmall(planeAngle2);
+	}
+	else
+	{
+		this->setBifTorqueLocalBig(planeAngle2);
+		this->setBifTorqueLocalSmall(planeAngle1);
+	}
+	//if (!Daughter1->isLeaf() && !Daughter2->isLeaf()) //need to fix math
+		this->setBifTorqueLocal((planeAngle1+planeAngle2)/2);
+
+	planeAngle1 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter1PlaneRemote_ptr);
+	planeAngle2 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter2PlaneRemote_ptr);
+	if (planeAngle1 >= planeAngle2)
+	{
+		this->setBifTorqueRemoteBig(planeAngle1);
+		this->setBifTorqueRemoteSmall(planeAngle2);
+	}
+	else
+	{
+		this->setBifTorqueRemoteBig(planeAngle2);
+		this->setBifTorqueRemoteSmall(planeAngle1);
+	}
+	this->setBifTorqueRemote((planeAngle1+planeAngle2)/2);
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
@@ -903,6 +1002,22 @@ std::string TraceLine::statHeaders()
 		<<"\tContraction"
 		<<"\tParent ID";
 	return thisStatsHeaders.str();
+}
+
+double* TraceLine::Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2)
+{
+	double vector[3];
+	vector[0] = bit1.x - vertex.x;
+	vector[1] = bit1.y - vertex.y;
+	vector[2] = bit1.z - vertex.z;
+	return vector;
+}
+
+double TraceLine::PlaneAngle(double *plane1, double *plane2)
+{
+	double top = plane1[0]*plane2[0] + plane1[1]*plane2[1] + plane1[2]*plane2[2];
+	double bottom = sqrt(plane1[0]*plane1[0] + plane1[1]*plane1[1]+ plane1[2]*plane1[2])*sqrt(plane2[0]*plane2[0] + plane2[1]*plane2[1]+ plane2[2]*plane2[2]);
+	return std::acos(top/bottom)*180/PI;
 }
 
 //void TraceLine::calculateAzimuthElevation()
