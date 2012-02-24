@@ -196,9 +196,10 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		sizee[2] = inp_labeled->GetLargestPossibleRegion().GetSize()[2];  // size along Z
 
 		itk::SizeValueType roi_list_size = zp ?
-					((itk::SizeValueType)number_of_rois*(labelsList.size()-1)) : 
-					((itk::SizeValueType)number_of_rois*labelsList.size());
-		std::vector<double> quantified_numbers_cell((roi_list_size*2),0.0);
+					((itk::SizeValueType)number_of_rois*(labelsList.size()-1)*2) : 
+					((itk::SizeValueType)number_of_rois*labelsList.size()*2);
+		std::vector<double> quantified_numbers_cell((roi_list_size),0.0
+			);
 		std::cout<<"Bounding boxes computed"<<std::endl;
 
 #ifdef _OPENMP
@@ -335,7 +336,7 @@ omp_set_nested(1);
 			V2[1] = V1[2]*EP_norm[0]-V1[0]*EP_norm[2];
 			V2[2] = V1[0]*EP_norm[1]-V1[1]*EP_norm[0];
 			//Now we have the point normal form; EP_norm is the normal and
-			//centroid_x, centroid_y, centroid_z is the normal
+			//centroid_x, centroid_y, centroid_z is the point
 			//The equation to the plane is EP_norm[0](x-centroid_x)+EP_norm[1](y-centroid_y)+EP_norm[2](z-centroid_z)=0
 			double dee = (centroid_x*EP_norm[0]+centroid_y*EP_norm[1]+centroid_z*EP_norm[2])*(-1.00);
 
@@ -389,9 +390,17 @@ omp_set_nested(1);
 					if( fin_est_angle<0 )
 						fin_est_angle += (2*M_PI);
 					bin_num = floor(fin_est_angle*number_of_rois/(2*M_PI));
-					if( doooot<0 )
+
+					//Check which side of the plane the point lies on
+					double v_norm = (cur_in[0]-centroid_x)*(cur_in[0]-centroid_x)
+									+(cur_in[1]-centroid_y)*(cur_in[1]-centroid_y)
+									+(cur_in[2]-centroid_z)*(cur_in[2]-centroid_z);
+					v_norm = sqrt( v_norm );
+					double doot   = (cur_in[0]-centroid_x)*EP_norm[0]/v_norm + (cur_in[1]-centroid_y)*EP_norm[1]/v_norm + (cur_in[2]-centroid_z)*EP_norm[2]/v_norm;
+
+					if( doot<0 )
 						bin_num += number_of_rois;
-					quantified_numbers_cell.at((2*ind*number_of_rois+bin_num)) += pixel_intensity;
+					quantified_numbers_cell.at((ind*(2*number_of_rois)+bin_num)) += pixel_intensity;
 				}
 			}
 		}
