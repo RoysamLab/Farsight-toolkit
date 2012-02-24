@@ -198,7 +198,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		itk::SizeValueType roi_list_size = zp ?
 					((itk::SizeValueType)number_of_rois*(labelsList.size()-1)) : 
 					((itk::SizeValueType)number_of_rois*labelsList.size());
-		std::vector<double> quantified_numbers_cell(roi_list_size,0.0);
+		std::vector<double> quantified_numbers_cell((roi_list_size*2),0.0);
 		std::cout<<"Bounding boxes computed"<<std::endl;
 
 #ifdef _OPENMP
@@ -389,13 +389,16 @@ omp_set_nested(1);
 					if( fin_est_angle<0 )
 						fin_est_angle += (2*M_PI);
 					bin_num = floor(fin_est_angle*number_of_rois/(2*M_PI));
-					quantified_numbers_cell.at((ind*number_of_rois+bin_num)) += pixel_intensity;
+					if( doooot<0 )
+						bin_num += number_of_rois;
+					quantified_numbers_cell.at((2*ind*number_of_rois+bin_num)) += pixel_intensity;
 				}
 			}
 		}
 #ifdef _OPENMP
 omp_set_nested(0);
 #endif
+		number_of_rois = number_of_rois*2;
 		std::cout<<"Starting k-means\n";
 		std::vector<double> quantified_numbers_cell_cpy(roi_list_size);
 		std::copy(quantified_numbers_cell.begin(), quantified_numbers_cell.end(), quantified_numbers_cell_cpy.begin() );
