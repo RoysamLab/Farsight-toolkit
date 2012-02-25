@@ -47,7 +47,7 @@ SET( GUI_HDRS
 
 SET( GUI_LIBS 
   ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM
-  vtkVolumeRendering vtkHybrid vnl)
+  vtkVolumeRendering vtkHybrid vtkCharts vnl)
 
 IF(QtTestingFound)
   LIST( APPEND GUI_SRCS GUITester.cpp )

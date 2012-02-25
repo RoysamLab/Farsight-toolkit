@@ -47,12 +47,24 @@ limitations under the License.
 #include "vtkTable.h"
 #include "vtkVariant.h"
 #include "vtkIdTypeArray.h"
+#include "vtkIntArray.h"
+#include "vtkStringArray.h"
 #include "vtkAnnotationLink.h"
 #include "vtkSelection.h"
 #include "vtkSelectionNode.h"
 #include "vtkViewUpdater.h"
 #include "vtkDataRepresentation.h"
 #include "vtkCallbackCommand.h"
+// PieChart
+#include "vtkChartPie.h"
+#include "vtkPlotPie.h"
+#include "vtkPlot.h"
+#include "vtkColorSeries.h"
+#include "vtkContextView.h"
+#include "vtkContextScene.h"
+#include "vtkRenderer.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
 
 #include <vtkQtTableView.h>
 #include <vtkQtTableModelAdapter.h>

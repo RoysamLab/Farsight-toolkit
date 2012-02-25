@@ -865,37 +865,58 @@ void ClusterManager::RunOperatorOnSelectedClusters()
 }
 void ClusterManager::ShowDistribution()
 {
+	
+//======================================================================================================================
 	cout<<"I have reached into the ShowDistribution Function \n";
 	this->ClusterModel->GetClusterTable()->Dump(16);
-	//vtkSmartPointer<vtkTable> distributionTable = vtkSmartPointer<vtkTable>::New();
-	//this->ClusterModel->distributionTable->Initialize();
-	vtkSmartPointer<vtkTable> distributionTable = this->ClusterModel->GetClusterTable();
-	//this->distributionTable->Dump(16);
-	vtkSmartPointer<vtkVariantArray> rowForCluster = vtkSmartPointer<vtkVariantArray>::New();
-	rowForCluster->Initialize();
-
-
-	//Copy of the old vtkTable into the new DistributionTable
-	//this->distributionTable[1] = 0;
 	
-	//rowForCluster->GetPointer(vtkIdType id);
+	vtkSmartPointer<vtkTable> distributionTable = vtkSmartPointer<vtkTable>::New();
+	vtkSmartPointer<vtkChartPie> PieChart = vtkSmartPointer<vtkChartPie>::New();
+	vtkSmartPointer<vtkColorSeries> colorSeries = vtkSmartPointer<vtkColorSeries>::New();
+	vtkSmartPointer<vtkContextView> view = vtkSmartPointer<vtkContextView>::New();
 
+	vtkSmartPointer<vtkIntArray> DistributionArray = vtkSmartPointer<vtkIntArray>::New();
+	DistributionArray->SetName("Number of Object");
+	vtkSmartPointer<vtkStringArray> ClusterIdArray = vtkSmartPointer<vtkStringArray>::New();
+	ClusterIdArray->SetName("Cluster ID's");
 	
-
-	//this->ClusterModel->AddRowToClusterTable(newKey,vtkVariant(ClusterSelectionSet.size()),Null);
-
-
-	/*std::set< vtkIdType >::iterator iter = curSel.begin();
-	std::set< vtkIdType > Selection = this->ObjectSelectionToIDSet();
-	for (; iter !=curSel.end(); iter++)
+	vtkTable *  clusterTable= this->ClusterModel->GetClusterTable();
+	cout<< "this is clusterTable: \n";
+	clusterTable->Dump();
+	
+	vtkIdType rowCount = this->ClusterModel->GetClusterTable()->GetNumberOfRows();
+	for (vtkIdType row = 0; row != rowCount; row++)
 	{
-		cout<<Selection (*iter);
-	}*/
+		DistributionArray->InsertNextValue(clusterTable->GetValue(row, 1).ToInt());
+		ClusterIdArray->InsertNextValue(clusterTable->GetValue(row,0).ToString());
+	}
 
+	distributionTable->AddColumn(ClusterIdArray);
+	distributionTable->AddColumn(DistributionArray);
+	cout<< "This is the distributionTable to draw the PieChart: \n";
+	distributionTable->Dump(16);
+	
+	colorSeries->SetColorScheme(vtkColorSeries::WARM);
+	vtkPlotPie * pie = vtkPlotPie::SafeDownCast(PieChart->AddPlot(0));
+	pie->SetColorSeries(colorSeries);
 
-	this->ClusterModel->GetClusterIDsList();
+	#if VTK_MAJOR_VERSION <= 5
+	  pie->SetInput(distributionTable);
+	#else
+	  pie->SetInputData(distributionTable);
+	#endif
+	 pie->SetInputArray(0,"Number of Object");
+	 pie->SetLabels(ClusterIdArray);
+	
+	PieChart->SetTitle("Cluster Distribution");
+	PieChart->SetShowLegend(true);
 
-
+	view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+	view->GetRenderWindow()->SetSize(600,350);
+	view->GetScene()->AddItem(PieChart);
+	view->GetRenderWindow()->SetMultiSamples(0);
+	view->GetInteractor()->Initialize();
+	view->GetInteractor()->Start();
 	
 }
 void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
