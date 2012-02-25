@@ -218,7 +218,7 @@ void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 		assoc->ReadRulesFromXML(inFilename);
 	}
 	assoc->PrintSelf();
-	assoc->Compute();
+	assoc->Compute();	
 
 	//Init the table (headers):
 	for (int i=0; i < assoc->GetNumofAssocRules(); ++i)
@@ -292,9 +292,22 @@ NuclearAssociationRules::~NuclearAssociationRules()
 }
 
 /* This is the main function for computing associative features */
-void NuclearAssociationRules::Compute()
+void NuclearAssociationRules::Compute(vtkSmartPointer<vtkTable> tbl)
 {
 	std::cout<<"Starting Associative Features Computation\n";
+
+	/*f(assocRulesList[ruleID].GetAssocType() == ASSOC_DIST_DEVICE)
+	{*/
+	for(int i=0; i<GetNumofAssocRules(); i++)
+	{
+		if(assocRulesList[i].GetAssocType() == ASSOC_DIST_OBJECT)
+		{
+			std::string object_file = assocRulesList[i].GetTargetFileNmae();
+			VolumeOfInterest * VOIType = new VolumeOfInterest();
+			VOIType->ReadVTPVOI(object_file);
+			assocMeasurementsList[i] = VOIType->CalculateCentroidDistanceToVOI(tbl);			
+		}
+	}
 
 	//1. read the label image
 	if( inputs_set == false ){
@@ -345,6 +358,9 @@ void NuclearAssociationRules::Compute()
 	//3. then, for each type of the associations get the requested reigion based on the type and the value of the inside and outside distances.
 	for(int i=0; i<GetNumofAssocRules(); i++)
 	{
+		if(assocRulesList[i].GetAssocType() == ASSOC_DIST_OBJECT )
+			continue;
+
 		assocMeasurementsList[i] = new float[numOfLabels];
 		//read the ith target image (the image from which we need to compute the ith assoc. rule
 		if( inputs_set == false ){

@@ -50,6 +50,8 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
+#include "../../Tracing/TraceEdit/VolumeOfInterest.h"
+
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -70,7 +72,7 @@ public:
 	void SetInputFile(std::string filename);
 	void SetInputs(ftk::Image::Pointer inp_labeled_image, int inp_channel_number, ftk::Image::Pointer seg_labeled_image, int seg_channel_number, ftk::AssociationRule *associationrule);
 	void SetFeaturePrefix(std::string prefix);			//Set Prefix for feature names
-	vtkSmartPointer<vtkTable> Compute(void);			//Compute and return table with values (for all objects)
+	vtkSmartPointer<vtkTable> Compute();			//Compute and return table with values (for all objects)
 	void Update(vtkSmartPointer<vtkTable> table);		//Update the features in this table whose names match (sets doFeat)
 	void Append(vtkSmartPointer<vtkTable> table);		//Compute features that are ON and append them to the existing table
 	bool AreInputsSet(){ return inputs_set; }
@@ -99,7 +101,7 @@ public:
 	~NuclearAssociationRules();
 
 	/* This method computes all the associative measurements for all the objects */
-	void Compute();
+	void Compute(vtkSmartPointer<vtkTable> tbl = NULL);
 		
 	/* Get the number of objects */
 	int GetNumOfObjects() {return numOfLabels;};
