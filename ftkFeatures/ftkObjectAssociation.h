@@ -43,7 +43,8 @@ enum AssociationType {
       ASSOC_MAX = 2,
       ASSOC_TOTAL = 3,
       ASSOC_AVERAGE = 4,
-	  ASSOC_SURROUNDEDNESS = 5
+	  ASSOC_SURROUNDEDNESS = 5,
+	  ASSOC_DIST_OBJECT = 6,
 };
 typedef itk::Image< unsigned short, 3 > UShortImageType3D;
 class AssociationRule

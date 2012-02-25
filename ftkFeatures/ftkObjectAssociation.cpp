@@ -101,6 +101,9 @@ void ObjectAssociation::AddAssociation(std::string ruleName,std::string targFile
 	case 5:
 		assocRule->SetAssocType(ASSOC_SURROUNDEDNESS);
 		break;
+	case 6:
+		assocRule->SetAssocType(ASSOC_DIST_OBJECT);
+		break;
 	default:
 		assocRule->SetAssocType(ASSOC_AVERAGE);
 	}
@@ -163,6 +166,9 @@ void ObjectAssociation::WriteRulesToXML(std::string xmlFname)
 			break;
 		case ASSOC_SURROUNDEDNESS:
 			element->SetAttribute("Association_Type","SURROUNDEDNESS");
+			break;
+		case ASSOC_DIST_OBJECT:
+			element->SetAttribute("Association_Type","DIST_OBJECT");
 			break;
 		default:
 			element->SetAttribute("Association_Type","AVERAGE");
@@ -298,6 +304,8 @@ int ObjectAssociation::ReadRulesFromXML(std::string xmlFname)
 					assocRule->SetAssocType(ASSOC_TOTAL);
 				else if(strcmp(V,"SURROUNDEDNESS")==0)
 					assocRule->SetAssocType(ASSOC_SURROUNDEDNESS);
+				else if(strcmp(V,"DIST_OBJECT")==0)
+					assocRule->SetAssocType(ASSOC_DIST_OBJECT);
 				else 
 					assocRule->SetAssocType(ASSOC_AVERAGE);
 
@@ -414,6 +422,9 @@ void ObjectAssociation::PrintSelf()
 			break;
 		case ASSOC_SURROUNDEDNESS:
 			std::cout<<"Association_Type("<<i<<"): SURROUNDEDNESS"<<std::endl;
+			break;
+		case ASSOC_DIST_OBJECT:
+			std::cout<<"Association_Type("<<i<<"): DIST_OBJECT"<<std::endl;
 			break;
 		default:
 			std::cout<<"Association_Type("<<i<<"): AVERAGE"<<std::endl;
