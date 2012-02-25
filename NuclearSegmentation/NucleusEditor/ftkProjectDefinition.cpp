@@ -308,8 +308,11 @@ std::vector<ftk::AssociationRule> ProjectDefinition::ReadAssociationRules(TiXmlE
 				assocRule.SetAssocType(ASSOC_TOTAL);
 			else if(strcmp(parameterElement->Attribute("Association_Type"),"SURROUNDEDNESS")==0)
 				assocRule.SetAssocType(ASSOC_SURROUNDEDNESS);
+			else if(strcmp(parameterElement->Attribute("Association_Type"),"DIST_OBJECT")==0)
+				assocRule.SetAssocType(ASSOC_DIST_OBJECT);
 			else
 				assocRule.SetAssocType(ASSOC_AVERAGE);
+
 		}
 		returnVector.push_back(assocRule);
 		parameterElement = parameterElement->NextSiblingElement();
