@@ -48,6 +48,7 @@ public:
 	bool ExtrudeVOI();
 	vtkSmartPointer<vtkActor> GetActor();
 	void CalculateCellDistanceToVOI(CellTraceModel *CellModel);
+	float* CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable> tbl);
 	void ReadBinaryVOI(std::string filename);
 	void ReadVTPVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
