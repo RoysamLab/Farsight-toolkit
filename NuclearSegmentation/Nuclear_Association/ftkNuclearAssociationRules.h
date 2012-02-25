@@ -50,7 +50,7 @@
 #include <vtkVariantArray.h>
 #include <vtkTable.h>
 
-#include "../../Tracing/TraceEdit/VolumeOfInterest.h"
+#include "VolumeOfInterest.h"
 
 #ifdef _OPENMP
 #include "omp.h"
