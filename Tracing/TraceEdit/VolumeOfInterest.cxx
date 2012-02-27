@@ -104,15 +104,15 @@ float* VolumeOfInterest::CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable
 	{
 		//double testPoint[3] = {500, 600, 50};
 		double centroid[3];
-		centroid[0] = this->tbl->GetValueByName(rowID,"centroid_x").ToDouble();
-		centroid[1] = this->tbl->GetValueByName(rowID,"centroid_y").ToDouble();
-		centroid[2] = this->tbl->GetValueByName(rowID,"centroid_z").ToDouble();
+		centroid[0] = tbl->GetValueByName(rowID,"centroid_x").ToDouble();
+		centroid[1] = tbl->GetValueByName(rowID,"centroid_y").ToDouble();
+		centroid[2] = tbl->GetValueByName(rowID,"centroid_z").ToDouble();
 		//Find the closest points to TestPoint
 		double closestPoint[3];//the coordinates of the closest point will be returned here
 		double closestPointDist2; //the squared distance to the closest point will be returned here
 		vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
 		int subId; //this is rarely used (in triangle strips only, I believe)
-		cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
+		cellLocator->FindClosestPoint(centroid, closestPoint, cellId, subId, closestPointDist2);
 		dist_object[row] = sqrt(closestPointDist2);		
 	}//end for cell count
 
