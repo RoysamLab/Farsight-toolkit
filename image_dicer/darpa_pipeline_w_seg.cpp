@@ -1,3 +1,6 @@
+// make -j80;./exe/darpa_tracer_w_seg ../../data/0103/DAPI_montage.mhd ../../data/0103/GFP_montage.mhd ../../data/0103/Cy5_montage_BS.mhd ../../data/0103/Seg_Params.ini ../../data/0103/ProjectDefinition.xml
+// make -j80;((time ./exe/darpa_tracer_w_seg ../../data/0103/DAPI_montage.mhd ../../data/0103/GFP_montage.mhd ../../data/0103/Cy5_montage_BS.mhd ../../data/0103/Seg_Params.ini ../../data/0103/ProjectDefinition.xml) 2>&1) >> salida.log
+
 #include "itkImageFileReader.h"
 #include "itkImage.h"
 #include "itkIntTypes.h"
@@ -14,6 +17,7 @@
 #include "vtkTable.h"
 #include "ftkUtils.h"
 #include "ftkImage.h"
+#include "itkMultiThreader.h"
 
 #include "../NuclearSegmentation/yousef_core/yousef_seg.h"
 #include "../ftkFeatures/ftkLabelImageToFeatures.h"
@@ -32,19 +36,22 @@
 #endif
 
 typedef itk::Image<unsigned char,  3> rawImageType;
-typedef itk::Image<unsigned int, 3> LabelType;
+typedef itk::Image<unsigned short, 3> LabelType;
+typedef itk::Image<unsigned int, 3> montageLabelType;
+
 typedef MultipleNeuronTracer::ImageType3D gfpImageType;
 typedef itk::ImageDuplicator< rawImageType >  rawDuplicatorType;
-typedef itk::ImageDuplicator< LabelType >  LabelDuplicatorType;
+typedef itk::ImageDuplicator< montageLabelType >  LabelDuplicatorType;
 typedef itk::ImageDuplicator< gfpImageType >  gfpDuplicatorType;
 typedef itk::RegionOfInterestImageFilter< rawImageType, rawImageType > rawROIFilterType;
 typedef itk::RegionOfInterestImageFilter< gfpImageType, gfpImageType > gfpROIFilterType;
-typedef itk::RegionOfInterestImageFilter< LabelType, LabelType > LabelROIFilterType;
+typedef itk::RegionOfInterestImageFilter< montageLabelType, montageLabelType > LabelROIFilterType;
 typedef std::pair< LabelType::Pointer, vtkSmartPointer< vtkTable > > segResultsType;
 
 //segResultsType RunNuclearSegmentation( rawImageType::Pointer, rawImageType::Pointer, const char*);
-LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer, const char* );
+inline LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer, const char*);
 vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer, rawImageType::Pointer, rawImageType::Pointer, LabelType::Pointer, const char* );
+void RunEverything(rawImageType::RegionType, rawImageType::Pointer, rawImageType::Pointer, rawImageType::Pointer, std::vector< LabelType::Pointer> &, std::vector < vtkSmartPointer< vtkTable > >&, std::map< unsigned int, itk::Index<3> >*, const char*, const char*, int col);
 std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< vtkTable > );
 void WriteCenterTrace(vtkSmartPointer< vtkTable >, int, int, int, std::string);
 
@@ -53,12 +60,19 @@ bool myfunction (itk::SizeValueType i,itk::SizeValueType j) { return (i<j); }
 
 int main(int argc, char* argv[])
 {
-
-#ifdef _OPENMP
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
+	std::cout<<std::endl<<"TEST"<<std::flush;
 	omp_set_nested(1);
-#endif
+
+	omp_set_max_active_levels(2);
+	
+ 	int num_threads = 1;
+	omp_set_num_threads(num_threads);
+
 
 	int counterTiles = 0;
+	int counterTiles2 = 0;
+	int counterTiles3 = 0;
 	if(argc < 4)
 	{
 		std::cout<<"usage1: darpa_tracer <dapi_montage_file> <gfp_montage_file> <cy5_montage_file> <seg_params_file> <project_definition_file> \n";
@@ -87,7 +101,7 @@ int main(int argc, char* argv[])
 
 	typedef itk::ImageFileReader<rawImageType> rawReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
-	typedef itk::ImageFileWriter<LabelType> labelWriterType;
+	typedef itk::ImageFileWriter<montageLabelType> labelWriterType;
 
 	rawReaderType::Pointer reader_nuc = rawReaderType::New();
 	reader_nuc->SetFileName(argv[1]);
@@ -123,14 +137,18 @@ int main(int argc, char* argv[])
 	//color[0] = 0; color[1] = 255; color[2] = 0;
 	//sourceImages->AppendChannelFromData3D( montage_gfp->GetBufferPointer(), itk::ImageIOBase::UCHAR, 8, size_nuc_montage[0], size_nuc_montage[1], size_nuc_montage[2], std::string(argv[2]), color, false);
 
+	int onlyTrace = 1;
+	if( onlyTrace == 0 )
+	{
 
 	//#####################################################################################################################
 	//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 	//#####################################################################################################################
 	
-	unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/1000);
-	unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/1000);
-	std::cout << "Image divided into " << num_rows << " rows and " << num_cols << " columns\n";
+	unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/861);
+	unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/640);
+	std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
+	std::cout << "Image divided into " << num_rows << " rows and " << num_cols << " columns\n"<<std::flush;
 
 	//##################	INITIALIZING VARIABLES FOR ROWS AND ROW_BORDERS	  ###################
 	
@@ -147,12 +165,18 @@ int main(int argc, char* argv[])
 	std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_RowBorders;
 	Centroids_RowBorders.resize(num_rows-1);
 
-	ofstream myfile ("outPutFile.txt");
+	//ofstream myfile ("outPutFile.txt");
 
 	//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-	//#pragma omp parallel for
+ 	#pragma omp parallel for num_threads(7)
 	for(int row=0; row<num_rows; ++row)
 	{
+		omp_set_nested(1);
+
+		#pragma omp critical
+		{	
+			std::cout<<std::endl<<"\t Row " << row;
+		}
 
 		//##################	INITIALIZING VARIABLES FOR TILES AND TILE_BORDERS	  ###################
 
@@ -170,15 +194,11 @@ int main(int argc, char* argv[])
 		Centroids_TileBorders.resize(num_cols-1);
 
 		//##################	SEGMENTING EACH TILE IN A ROW    ###################
-		#pragma omp parallel for num_threads(7)
-		for(int col=0; col<num_cols; ++col)
+		#pragma omp parallel for num_threads(11)
+		for(unsigned int col=0; col<num_cols; ++col)
 		{
 
-#ifdef _OPENMP
 			int tid = omp_get_thread_num();
-#else
-      int tid = 0;
-#endif
 			//stringstream out;
 			//out<<tid;
 			//string s = out.str();
@@ -190,198 +210,236 @@ int main(int argc, char* argv[])
 
 			//##################	EXTRACT A TILE AND START SEGMENTING	  ###################
 
-			#pragma omp critical
-			{
-				++counterTiles;
-				myfile<<"Extracting Tile " << col*1000 << "_" << row*1000 << " ThreadID " << counterTiles << "\n"<<std::flush;
-			}
+			//#pragma omp critical
+			//{
+			//	++counterTiles;
+			//	myfile<<"Extracting Tile " << col*861 << "_" << row*861 << " ThreadID " << counterTiles << "\n"<<std::flush;
+			//}
 			
 			rawImageType::IndexType start_tile;
-			start_tile[0] = col*1000;
-			start_tile[1] = row*1000;
+			start_tile[0] = col*640;
+			start_tile[1] = row*861;
 			start_tile[2] = 0;
 
 			rawImageType::SizeType size_tile;
-			size_tile[0] = (((col+1)*1000) < size_nuc_montage[0]) ? 1000 : (size_nuc_montage[0] - (col*1000));
-			size_tile[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+			size_tile[0] = (((col+1)*640) < size_nuc_montage[0]) ? 640 : (size_nuc_montage[0] - (col*640));
+			size_tile[1] = (((row+1)*861) < size_nuc_montage[1]) ? 861 : (size_nuc_montage[1] - (row*861));
 			size_tile[2] = size_nuc_montage[2];
 
 			rawImageType::RegionType region_tile;
 			region_tile.SetSize(size_tile);
 			region_tile.SetIndex(start_tile);
 
-			rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
-			ROIfilter_tile_nuc->SetRegionOfInterest(region_tile);
-			ROIfilter_tile_nuc->SetInput(montage_nuc);
-			#pragma omp critical
-				ROIfilter_tile_nuc->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tile_nuc = rawDuplicatorType::New();
-			rawDuplicator_tile_nuc->SetInputImage(ROIfilter_tile_nuc->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tile_nuc->Update();
-			rawImageType::Pointer tile_nuc = rawDuplicator_tile_nuc->GetOutput();
+//			rawImageType::Pointer tile_nuc;
+//			rawImageType::Pointer tile_gfp;
+//			rawImageType::Pointer tile_cy5;
+//
+////#pragma omp critical
+////			{
+//				rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
+//				ROIfilter_tile_nuc->SetRegionOfInterest(region_tile);
+//				ROIfilter_tile_nuc->SetInput(montage_nuc);
+//				#pragma omp critical
+//					ROIfilter_tile_nuc->Update();
+//				rawDuplicatorType::Pointer rawDuplicator_tile_nuc = rawDuplicatorType::New();
+//				rawDuplicator_tile_nuc->SetInputImage(ROIfilter_tile_nuc->GetOutput());
+//				#pragma omp critical
+//					rawDuplicator_tile_nuc->Update();
+//				tile_nuc = rawDuplicator_tile_nuc->GetOutput();
+//
+//				rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
+//				ROIfilter_tile_gfp->SetRegionOfInterest(region_tile);
+//				ROIfilter_tile_gfp->SetInput(montage_gfp);
+//				#pragma omp critical
+//					ROIfilter_tile_gfp->Update();
+//				rawDuplicatorType::Pointer rawDuplicator_tile_gfp = rawDuplicatorType::New();
+//				rawDuplicator_tile_gfp->SetInputImage(ROIfilter_tile_gfp->GetOutput());
+//				#pragma omp critical
+//					rawDuplicator_tile_gfp->Update();
+//				tile_gfp = rawDuplicator_tile_gfp->GetOutput();
+//
+//				rawROIFilterType::Pointer ROIfilter_tile_cy5 = rawROIFilterType::New();
+//				ROIfilter_tile_cy5->SetRegionOfInterest(region_tile);
+//				ROIfilter_tile_cy5->SetInput(montage_cy5);
+//				#pragma omp critical
+//					ROIfilter_tile_cy5->Update();
+//				rawDuplicatorType::Pointer rawDuplicator_tile_cy5 = rawDuplicatorType::New();
+//				rawDuplicator_tile_cy5->SetInputImage(ROIfilter_tile_cy5->GetOutput());
+//				#pragma omp critical
+//					rawDuplicator_tile_cy5->Update();
+//				tile_cy5 = rawDuplicator_tile_cy5->GetOutput();
+//			//}
+//			
+//		//	#pragma omp barrier
+//			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE	  ###################
+//			
+//			//LabelType::Pointer temp_Tile = LabelType::New();
+//			//LabelType::PointType origin_Tile;
+//			//origin_Tile[0] = 0; 
+//			//origin_Tile[1] = 0;
+//			//origin_Tile[2] = 0;
+//			//temp_Tile->SetOrigin( origin_Tile );
+//			//LabelType::IndexType start_Tile;
+//			//start_Tile[0] = 0;
+//			//start_Tile[1] = 0;
+//			//start_Tile[2] = 0;
+//			//LabelType::SizeType size_Tile;
+//			//size_Tile[0] = size_tile[0];
+//			//size_Tile[1] = size_tile[1];
+//			//size_Tile[2] = size_tile[2];
+//			//LabelType::RegionType region_Tile;
+//			//region_Tile.SetSize ( size_Tile  );
+//			//region_Tile.SetIndex( start_Tile );
+//			//temp_Tile->SetRegions( region_Tile );
+//			//temp_Tile->Allocate();
+//			//temp_Tile->FillBuffer(0);
+//			//temp_Tile->Update();
+//			//temp_Tile->Register();
+//	//	#pragma omp barrier	
+//// 			std::cout<<"Starting segmentation for Tile " << col*861 << "_" << row*861 << "\n";
+//			//segResultsType tileSegResults;
+//			//tileSegResults = RunNuclearSegmentation(tile_nuc, tile_gfp, argv[3]);
+//			//#pragma omp critical
+//			LabelType::Pointer temp_Tile = RunNuclearSegmentation(tile_nuc, argv[4], counterTiles );
+//
+//			int uu;
+//			std::cout<<std::endl<<"FINAL";
+//			std::cin>>uu;
+//		
+//		
+//	
+//	
+//
+//			#pragma omp critical
+//			{
+//				++counterTiles2;
+//			//	myfile<<"Done with nucleus segmentation for Tile " << col*861 << "_" << row*861 << ", tid: " << tid << "\n";
+//				std::cout<<std::endl<<"\t\t\t\t ---->>>> Done with nucleus segmentation for Tile " << col << "_" << row << ", tid: " << counterTiles2 << "\n";
+//			}
+//			//temp_Tile = tileSegResults.first;
+//			Label_Tiles[col] = temp_Tile;
+//			//Table_Tiles[col] = tileSegResults.second;
+//			Table_Tiles[col] = ComputeFeaturesAndAssociations(tile_nuc, tile_gfp, tile_cy5, temp_Tile, argv[5] );
+//			//Centroids_Tiles[col] = GetLabelToCentroidMap(tileSegResults.second);
+//			Centroids_Tiles[col] = GetLabelToCentroidMap(Table_Tiles[col]);
+//
+//			#pragma omp critical
+//			{
+//				++counterTiles3;
+//				std::cout<<std::endl<<"asdfasdf "<<counterTiles3;
+//			}
 
-			rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
-			ROIfilter_tile_gfp->SetRegionOfInterest(region_tile);
-			ROIfilter_tile_gfp->SetInput(montage_gfp);
-			#pragma omp critical
-				ROIfilter_tile_gfp->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tile_gfp = rawDuplicatorType::New();
-			rawDuplicator_tile_gfp->SetInputImage(ROIfilter_tile_gfp->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tile_gfp->Update();
-			rawImageType::Pointer tile_gfp = rawDuplicator_tile_gfp->GetOutput();
+//std::cout<<std::endl<<"TESTEST";
+//omp_set_nested(0);
+			RunEverything(region_tile, montage_nuc, montage_gfp, montage_cy5, Label_Tiles, Table_Tiles, &(Centroids_Tiles[col]), argv[4], argv[5], col);
+			std::cout<<std::endl<<"\t\t\t\t ---->>>> Done with nucleus segmentation for Tile " << col << "_" << row << "\n";
 
-			rawROIFilterType::Pointer ROIfilter_tile_cy5 = rawROIFilterType::New();
-			ROIfilter_tile_cy5->SetRegionOfInterest(region_tile);
-			ROIfilter_tile_cy5->SetInput(montage_cy5);
-			#pragma omp critical
-				ROIfilter_tile_cy5->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tile_cy5 = rawDuplicatorType::New();
-			rawDuplicator_tile_cy5->SetInputImage(ROIfilter_tile_cy5->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tile_cy5->Update();
-			rawImageType::Pointer tile_cy5 = rawDuplicator_tile_cy5->GetOutput();
-
-			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE	  ###################
-			
-			LabelType::Pointer temp_Tile = LabelType::New();
-			LabelType::PointType origin_Tile;
-			origin_Tile[0] = 0; 
-			origin_Tile[1] = 0;
-			origin_Tile[2] = 0;
-			temp_Tile->SetOrigin( origin_Tile );
-			LabelType::IndexType start_Tile;
-			start_Tile[0] = 0;
-			start_Tile[1] = 0;
-			start_Tile[2] = 0;
-			LabelType::SizeType size_Tile;
-			size_Tile[0] = size_tile[0];
-			size_Tile[1] = size_tile[1];
-			size_Tile[2] = size_tile[2];
-			LabelType::RegionType region_Tile;
-			region_Tile.SetSize ( size_Tile  );
-			region_Tile.SetIndex( start_Tile );
-			temp_Tile->SetRegions( region_Tile );
-			temp_Tile->Allocate();
-			temp_Tile->FillBuffer(0);
-			temp_Tile->Update();
-			//temp_Tile->Register();
-			
-			std::cout<<"Starting segmentation for Tile " << col*1000 << "_" << row*1000 << "\n";
-			//segResultsType tileSegResults;
-			//tileSegResults = RunNuclearSegmentation(tile_nuc, tile_gfp, argv[3]);
-			temp_Tile = RunNuclearSegmentation(tile_nuc, argv[4]);
-			
-			#pragma omp critical
-			{
-				myfile<<"Done with nucleus segmentation for Tile " << col*1000 << "_" << row*1000 << ", tid: " << tid << "\n";
-			}
-			//temp_Tile = tileSegResults.first;
-			Label_Tiles[col] = temp_Tile;
-			//Table_Tiles[col] = tileSegResults.second;
-			Table_Tiles[col] = ComputeFeaturesAndAssociations(tile_nuc, tile_gfp, tile_cy5, temp_Tile, argv[5] );
-			//Centroids_Tiles[col] = GetLabelToCentroidMap(tileSegResults.second);
-			Centroids_Tiles[col] = GetLabelToCentroidMap(Table_Tiles[col]);
 
 			
 			//##################	EXTRACT A TILE_BORDER AND START SEGMENTING	  ###################
 			
-			if(col == 0) continue;
+			if(col != 0)
+			{
 
-			std::cout<<"Extracting tile border X = " << col*1000 << ", Row = " << row << "\n";
+// 			std::cout<<"Extracting tile border X = " << col*861 << ", Row = " << row << "\n";
 			rawImageType::IndexType start_tileBorder;
-			start_tileBorder[0] = (col*1000) - (2*25);
-			start_tileBorder[1] = (row*1000);
+			start_tileBorder[0] = (col*640) - (2*25);
+			start_tileBorder[1] = (row*861);
 			start_tileBorder[2] = 0;
 
 			rawImageType::SizeType size_tileBorder;
 			size_tileBorder[0] = (4*25);
-			size_tileBorder[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+			size_tileBorder[1] = (((row+1)*861) < size_nuc_montage[1]) ? 861 : (size_nuc_montage[1] - (row*861));
 			size_tileBorder[2] = size_nuc_montage[2];
 
 			rawImageType::RegionType region_tileBorder;
 			region_tileBorder.SetSize(size_tileBorder);
 			region_tileBorder.SetIndex(start_tileBorder);
 
-			rawROIFilterType::Pointer ROIfilter_tileBorder_nuc = rawROIFilterType::New();
-			ROIfilter_tileBorder_nuc->SetRegionOfInterest(region_tileBorder);
-			ROIfilter_tileBorder_nuc->SetInput(montage_nuc);
-			#pragma omp critical
-				ROIfilter_tileBorder_nuc->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tileBorder_nuc = rawDuplicatorType::New();
-			rawDuplicator_tileBorder_nuc->SetInputImage(ROIfilter_tileBorder_nuc->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tileBorder_nuc->Update();
-			rawImageType::Pointer tileBorder_nuc = rawDuplicator_tileBorder_nuc->GetOutput();
-
-			rawROIFilterType::Pointer ROIfilter_tileBorder_gfp = rawROIFilterType::New();
-			ROIfilter_tileBorder_gfp->SetRegionOfInterest(region_tileBorder);
-			ROIfilter_tileBorder_gfp->SetInput(montage_gfp);
-			#pragma omp critical
-				ROIfilter_tileBorder_gfp->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tileBorder_gfp = rawDuplicatorType::New();
-			rawDuplicator_tileBorder_gfp->SetInputImage(ROIfilter_tileBorder_gfp->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tileBorder_gfp->Update();
-			rawImageType::Pointer tileBorder_gfp = rawDuplicator_tileBorder_gfp->GetOutput();
-
-			rawROIFilterType::Pointer ROIfilter_tileBorder_cy5 = rawROIFilterType::New();
-			ROIfilter_tileBorder_cy5->SetRegionOfInterest(region_tileBorder);
-			ROIfilter_tileBorder_cy5->SetInput(montage_cy5);
-			#pragma omp critical
-				ROIfilter_tileBorder_cy5->Update();
-			rawDuplicatorType::Pointer rawDuplicator_tileBorder_cy5 = rawDuplicatorType::New();
-			rawDuplicator_tileBorder_cy5->SetInputImage(ROIfilter_tileBorder_cy5->GetOutput());
-			#pragma omp critical
-				rawDuplicator_tileBorder_cy5->Update();
-			rawImageType::Pointer tileBorder_cy5 = rawDuplicator_tileBorder_cy5->GetOutput();
-
-			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE_BORDER	  ###################
+//			rawROIFilterType::Pointer ROIfilter_tileBorder_nuc = rawROIFilterType::New();
+//			ROIfilter_tileBorder_nuc->SetRegionOfInterest(region_tileBorder);
+//			ROIfilter_tileBorder_nuc->SetInput(montage_nuc);
+//			#pragma omp critical
+//				ROIfilter_tileBorder_nuc->Update();
+//			rawDuplicatorType::Pointer rawDuplicator_tileBorder_nuc = rawDuplicatorType::New();
+//			rawDuplicator_tileBorder_nuc->SetInputImage(ROIfilter_tileBorder_nuc->GetOutput());
+//			#pragma omp critical
+//				rawDuplicator_tileBorder_nuc->Update();
+//			rawImageType::Pointer tileBorder_nuc = rawDuplicator_tileBorder_nuc->GetOutput();
+//
+//			rawROIFilterType::Pointer ROIfilter_tileBorder_gfp = rawROIFilterType::New();
+//			ROIfilter_tileBorder_gfp->SetRegionOfInterest(region_tileBorder);
+//			ROIfilter_tileBorder_gfp->SetInput(montage_gfp);
+//			#pragma omp critical
+//				ROIfilter_tileBorder_gfp->Update();
+//			rawDuplicatorType::Pointer rawDuplicator_tileBorder_gfp = rawDuplicatorType::New();
+//			rawDuplicator_tileBorder_gfp->SetInputImage(ROIfilter_tileBorder_gfp->GetOutput());
+//			#pragma omp critical
+//				rawDuplicator_tileBorder_gfp->Update();
+//			rawImageType::Pointer tileBorder_gfp = rawDuplicator_tileBorder_gfp->GetOutput();
+//
+//			rawROIFilterType::Pointer ROIfilter_tileBorder_cy5 = rawROIFilterType::New();
+//			ROIfilter_tileBorder_cy5->SetRegionOfInterest(region_tileBorder);
+//			ROIfilter_tileBorder_cy5->SetInput(montage_cy5);
+//			#pragma omp critical
+//				ROIfilter_tileBorder_cy5->Update();
+//			rawDuplicatorType::Pointer rawDuplicator_tileBorder_cy5 = rawDuplicatorType::New();
+//			rawDuplicator_tileBorder_cy5->SetInputImage(ROIfilter_tileBorder_cy5->GetOutput());
+//			#pragma omp critical
+//				rawDuplicator_tileBorder_cy5->Update();
+//			rawImageType::Pointer tileBorder_cy5 = rawDuplicator_tileBorder_cy5->GetOutput();
+//
+//			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED TILE_BORDER	  ###################
+//			
+//			//LabelType::Pointer temp_TileBorder = LabelType::New();
+//			//LabelType::PointType origin_TileBorder;
+//			//origin_TileBorder[0] = 0; 
+//			//origin_TileBorder[1] = 0;
+//			//origin_TileBorder[2] = 0;
+//			//temp_TileBorder->SetOrigin( origin_TileBorder );
+//			//LabelType::IndexType start_TileBorder;
+//			//start_TileBorder[0] = 0;
+//			//start_TileBorder[1] = 0;
+//			//start_TileBorder[2] = 0;
+//			//LabelType::SizeType size_TileBorder;
+//			//size_TileBorder[0] = size_tileBorder[0];
+//			//size_TileBorder[1] = size_tileBorder[1];
+//			//size_TileBorder[2] = size_tileBorder[2];
+//			//LabelType::RegionType region_TileBorder;
+//			//region_TileBorder.SetSize ( size_TileBorder  );
+//			//region_TileBorder.SetIndex( start_TileBorder );
+//			//temp_TileBorder->SetRegions( region_TileBorder );
+//			//temp_TileBorder->Allocate();
+//			//temp_TileBorder->FillBuffer(0);
+//			//temp_TileBorder->Update();
+//			//temp_TileBorder->Register();
+//
+//// 			std::cout<<"Starting segmentation for tile border X = " << col*861 << ", Row = " << row << "\n";
+//			//segResultsType tileBorderSegResults;
+//			//tileBorderSegResults = RunNuclearSegmentation(tileBorder_nuc, tileBorder_gfp, argv[3]);
+//			LabelType::Pointer temp_TileBorder = RunNuclearSegmentation(tileBorder_nuc, argv[4], counterTiles );
+//			
+//// 			std::cout<<"Done with nucleus segmentation for tile border X = " << col*861 << ", Row = " << row << "\n\n";
+//			//temp_TileBorder = tileBorderSegResults.first;
+//			Label_TileBorders[col-1] = temp_TileBorder;
+//			//Table_TileBorders[col-1] = tileBorderSegResults.second;
+//			Table_TileBorders[col-1] = ComputeFeaturesAndAssociations(tileBorder_nuc, tileBorder_gfp, tileBorder_cy5, temp_TileBorder, argv[5] );
+//			//Centroids_TileBorders[col-1] = GetLabelToCentroidMap(tileBorderSegResults.second);
+//			Centroids_TileBorders[col-1] = GetLabelToCentroidMap(Table_TileBorders[col-1]);
+//
+//			#pragma omp critical
+//			{
+//// 				myfile << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows << ", tid: " << tid << std::endl;
+//				std::cout<<"Done Extracting Tile " << col*640 << "_" << row*861 << " ThreadID " << counterTiles << "\n"<<std::flush;
+//			}
 			
-			LabelType::Pointer temp_TileBorder = LabelType::New();
-			LabelType::PointType origin_TileBorder;
-			origin_TileBorder[0] = 0; 
-			origin_TileBorder[1] = 0;
-			origin_TileBorder[2] = 0;
-			temp_TileBorder->SetOrigin( origin_TileBorder );
-			LabelType::IndexType start_TileBorder;
-			start_TileBorder[0] = 0;
-			start_TileBorder[1] = 0;
-			start_TileBorder[2] = 0;
-			LabelType::SizeType size_TileBorder;
-			size_TileBorder[0] = size_tileBorder[0];
-			size_TileBorder[1] = size_tileBorder[1];
-			size_TileBorder[2] = size_tileBorder[2];
-			LabelType::RegionType region_TileBorder;
-			region_TileBorder.SetSize ( size_TileBorder  );
-			region_TileBorder.SetIndex( start_TileBorder );
-			temp_TileBorder->SetRegions( region_TileBorder );
-			temp_TileBorder->Allocate();
-			temp_TileBorder->FillBuffer(0);
-			temp_TileBorder->Update();
-			//temp_TileBorder->Register();
-
-			std::cout<<"Starting segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n";
-			//segResultsType tileBorderSegResults;
-			//tileBorderSegResults = RunNuclearSegmentation(tileBorder_nuc, tileBorder_gfp, argv[3]);
-			temp_TileBorder = RunNuclearSegmentation(tileBorder_nuc, argv[4]);
-			std::cout<<"Done with nucleus segmentation for tile border X = " << col*1000 << ", Row = " << row << "\n\n";
-			//temp_TileBorder = tileBorderSegResults.first;
-			Label_TileBorders[col-1] = temp_TileBorder;
-			//Table_TileBorders[col-1] = tileBorderSegResults.second;
-			Table_TileBorders[col-1] = ComputeFeaturesAndAssociations(tileBorder_nuc, tileBorder_gfp, tileBorder_cy5, temp_TileBorder, argv[5] );
-			//Centroids_TileBorders[col-1] = GetLabelToCentroidMap(tileBorderSegResults.second);
-			Centroids_TileBorders[col-1] = GetLabelToCentroidMap(Table_TileBorders[col-1]);
-
-			#pragma omp critical
-			{
-				myfile << std::endl << "\t\t\t ->-> Tile " << counterTiles << " of " << num_cols*num_rows << ", tid: " << tid << std::endl;
-				myfile<<"Done Extracting Tile " << col*1000 << "_" << row*1000 << " ThreadID " << counterTiles << "\n"<<std::flush;
+			RunEverything(region_tileBorder, montage_nuc, montage_gfp, montage_cy5, Label_TileBorders, Table_TileBorders, &(Centroids_TileBorders[col-1]), argv[4], argv[5],col-1);
+			
 			}
 
 		}
-		myfile.close();
+		omp_set_nested(0);
+// 		myfile.close();
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
 
@@ -399,7 +457,7 @@ int main(int argc, char* argv[])
 		start_row[2] = 0;
 		LabelType::SizeType size_row;
 		size_row[0] = size_nuc_montage[0];
-		size_row[1] = (((row+1)*1000) < size_nuc_montage[1]) ? 1000 : (size_nuc_montage[1] - (row*1000));
+		size_row[1] = (((row+1)*861) < size_nuc_montage[1]) ? 861 : (size_nuc_montage[1] - (row*861));
 		size_row[2] = size_nuc_montage[2];
 		LabelType::RegionType region_row;
 		region_row.SetSize ( size_row  );
@@ -427,6 +485,7 @@ int main(int argc, char* argv[])
 		unsigned short max_value = 0, current_max = 0;
 		for(int m=0; m<(int)Label_Tiles.size(); ++m)
 		{
+			std::cout<<std::endl<<m<<" "<<(int)Label_Tiles.size()<<" asdfasdf2";
 			if(m != 0)
 			{
 
@@ -437,7 +496,7 @@ int main(int argc, char* argv[])
 				itk::Size<3> tileBorder_size = myTileBorder->GetLargestPossibleRegion().GetSize();
 				unsigned long long tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
 				unsigned long long tileBorder_row_size = tileBorder_size[0];	
-				unsigned long long x_offset = (m*1000) - (2*25);
+				unsigned long long x_offset = (m*640) - (2*25);
 				for(unsigned long long z=0; z<tileBorder_size[2]; ++z)
 				{
 					for(unsigned long long y=0; y<tileBorder_size[1]; ++y)
@@ -483,7 +542,7 @@ int main(int argc, char* argv[])
 			itk::Size<3> tile_size = myTile->GetLargestPossibleRegion().GetSize();
 			unsigned long long tile_slice_size = tile_size[1] * tile_size[0];
 			unsigned long long tile_row_size = tile_size[0];	
-			unsigned long long x_offset = m*1000;
+			unsigned long long x_offset = m*640;
 			for(unsigned long long z=0; z<tile_size[2]; ++z)
 			{
 				for(unsigned long long y=0; y<tile_size[1]; ++y)
@@ -522,23 +581,27 @@ int main(int argc, char* argv[])
 
 			max_value = current_max;
 		}
+
+		std::cout<<std::endl<<"asdfasdf1 ";
+
 		Table_Tiles.clear();
 		Label_TileBorders.clear();
 
 		//#############################################################
-		std::cout<<"done !!\n\n";
+// 		std::cout<<"done !!\n\n";
 		Label_Rows[row] = rowSeg;
 		Table_Rows[row] = rowTable;
 		Centroids_Rows[row] = GetLabelToCentroidMap(rowTable);
 
 		//##################	EXTRACT A ROW_BORDER AND START SEGMENTING	  ###################
 
-		if(row == 0) continue;
+		if(row != 0)
+		{
 
-		std::cout<<"Extracting row border Y = " << row*1000 << "\n";
+// 		std::cout<<"Extracting row border Y = " << row*861 << "\n";
 		rawImageType::IndexType start_rowBorder;
 		start_rowBorder[0] = 0;
-		start_rowBorder[1] = (row*1000) - (2*25);
+		start_rowBorder[1] = (row*861) - (2*25);
 		start_rowBorder[2] = 0;
 
 		rawImageType::SizeType size_rowBorder;
@@ -550,75 +613,81 @@ int main(int argc, char* argv[])
 		region_rowBorder.SetSize(size_rowBorder);
 		region_rowBorder.SetIndex(start_rowBorder);
 
-		rawROIFilterType::Pointer ROIfilter_rowBorder_nuc = rawROIFilterType::New();
-		ROIfilter_rowBorder_nuc->SetRegionOfInterest(region_rowBorder);
-		ROIfilter_rowBorder_nuc->SetInput(montage_nuc);
-		#pragma omp critical
-			ROIfilter_rowBorder_nuc->Update();
-		rawDuplicatorType::Pointer rawDuplicator_rowBorder_nuc = rawDuplicatorType::New();
-		rawDuplicator_rowBorder_nuc->SetInputImage(ROIfilter_rowBorder_nuc->GetOutput());
-		#pragma omp critical
-			rawDuplicator_rowBorder_nuc->Update();
-		rawImageType::Pointer rowBorder_nuc = rawDuplicator_rowBorder_nuc->GetOutput();
+//		rawROIFilterType::Pointer ROIfilter_rowBorder_nuc = rawROIFilterType::New();
+//		ROIfilter_rowBorder_nuc->SetRegionOfInterest(region_rowBorder);
+//		ROIfilter_rowBorder_nuc->SetInput(montage_nuc);
+//		#pragma omp critical
+//			ROIfilter_rowBorder_nuc->Update();
+//		rawDuplicatorType::Pointer rawDuplicator_rowBorder_nuc = rawDuplicatorType::New();
+//		rawDuplicator_rowBorder_nuc->SetInputImage(ROIfilter_rowBorder_nuc->GetOutput());
+//		#pragma omp critical
+//			rawDuplicator_rowBorder_nuc->Update();
+//		rawImageType::Pointer rowBorder_nuc = rawDuplicator_rowBorder_nuc->GetOutput();
+//
+//		rawROIFilterType::Pointer ROIfilter_rowBorder_gfp = rawROIFilterType::New();
+//		ROIfilter_rowBorder_gfp->SetRegionOfInterest(region_rowBorder);
+//		ROIfilter_rowBorder_gfp->SetInput(montage_gfp);
+//		#pragma omp critical
+//			ROIfilter_rowBorder_gfp->Update();
+//		rawDuplicatorType::Pointer rawDuplicator_rowBorder_gfp = rawDuplicatorType::New();
+//		rawDuplicator_rowBorder_gfp->SetInputImage(ROIfilter_rowBorder_gfp->GetOutput());
+//		#pragma omp critical
+//			rawDuplicator_rowBorder_gfp->Update();
+//		rawImageType::Pointer rowBorder_gfp = rawDuplicator_rowBorder_gfp->GetOutput();
+//
+//		rawROIFilterType::Pointer ROIfilter_rowBorder_cy5 = rawROIFilterType::New();
+//		ROIfilter_rowBorder_cy5->SetRegionOfInterest(region_rowBorder);
+//		ROIfilter_rowBorder_cy5->SetInput(montage_cy5);
+//		#pragma omp critical
+//			ROIfilter_rowBorder_cy5->Update();
+//		rawDuplicatorType::Pointer rawDuplicator_rowBorder_cy5 = rawDuplicatorType::New();
+//		rawDuplicator_rowBorder_cy5->SetInputImage(ROIfilter_rowBorder_cy5->GetOutput());
+//		#pragma omp critical
+//			rawDuplicator_rowBorder_cy5->Update();
+//		rawImageType::Pointer rowBorder_cy5 = rawDuplicator_rowBorder_cy5->GetOutput();
+//
+//		//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED ROW_BORDER	  ###################
+//
+//		//LabelType::Pointer temp_RowBorder = LabelType::New();
+//		//LabelType::PointType origin_RowBorder;
+//		//origin_RowBorder[0] = 0; 
+//		//origin_RowBorder[1] = 0;
+//		//origin_RowBorder[2] = 0;
+//		//temp_RowBorder->SetOrigin( origin_RowBorder );
+//		//LabelType::IndexType start_RowBorder;
+//		//start_RowBorder[0] = 0;
+//		//start_RowBorder[1] = 0;
+//		//start_RowBorder[2] = 0;
+//		//LabelType::SizeType size_RowBorder;
+//		//size_RowBorder[0] = size_rowBorder[0];
+//		//size_RowBorder[1] = size_rowBorder[1];
+//		//size_RowBorder[2] = size_rowBorder[2];
+//		//LabelType::RegionType region_RowBorder;
+//		//region_RowBorder.SetSize ( size_RowBorder  );
+//		//region_RowBorder.SetIndex( start_RowBorder );
+//		//temp_RowBorder->SetRegions( region_RowBorder );
+//		//temp_RowBorder->Allocate();
+//		//temp_RowBorder->FillBuffer(0);
+//		//temp_RowBorder->Update();
+//
+//		std::cout<<std::endl<<"asdfasdf4";
+//		//temp_RowBorder->Register();
+//
+//// 		std::cout<<"Starting segmentation for row border Y = " << row*861 << "\n";
+//		//segResultsType rowBorderSegResults;
+//		//rowBorderSegResults = RunNuclearSegmentation(rowBorder_nuc, rowBorder_gfp, argv[3]);
+//		LabelType::Pointer temp_RowBorder = RunNuclearSegmentation(rowBorder_nuc, argv[4], counterTiles );
+//// 		std::cout<<"Done with nucleus segmentation for border Y = " << row*861 << "\n\n";
+//		//temp_RowBorder = rowBorderSegResults.first;
+//		Label_RowBorders[row-1] = temp_RowBorder;
+//		//Table_RowBorders[row-1] = rowBorderSegResults.second;
+//		Table_RowBorders[row-1] = ComputeFeaturesAndAssociations(rowBorder_nuc, rowBorder_gfp, rowBorder_cy5, temp_RowBorder, argv[5] );
+//		//Centroids_RowBorders[row-1] = GetLabelToCentroidMap(rowBorderSegResults.second);
+//		Centroids_RowBorders[row-1] = GetLabelToCentroidMap(Table_RowBorders[row-1]);
 
-		rawROIFilterType::Pointer ROIfilter_rowBorder_gfp = rawROIFilterType::New();
-		ROIfilter_rowBorder_gfp->SetRegionOfInterest(region_rowBorder);
-		ROIfilter_rowBorder_gfp->SetInput(montage_gfp);
-		#pragma omp critical
-			ROIfilter_rowBorder_gfp->Update();
-		rawDuplicatorType::Pointer rawDuplicator_rowBorder_gfp = rawDuplicatorType::New();
-		rawDuplicator_rowBorder_gfp->SetInputImage(ROIfilter_rowBorder_gfp->GetOutput());
-		#pragma omp critical
-			rawDuplicator_rowBorder_gfp->Update();
-		rawImageType::Pointer rowBorder_gfp = rawDuplicator_rowBorder_gfp->GetOutput();
+		RunEverything(region_rowBorder, montage_nuc, montage_gfp, montage_cy5, Label_RowBorders, (Table_RowBorders), &(Centroids_RowBorders[row-1]), argv[4], argv[5],row-1);
 
-		rawROIFilterType::Pointer ROIfilter_rowBorder_cy5 = rawROIFilterType::New();
-		ROIfilter_rowBorder_cy5->SetRegionOfInterest(region_rowBorder);
-		ROIfilter_rowBorder_cy5->SetInput(montage_cy5);
-		#pragma omp critical
-			ROIfilter_rowBorder_cy5->Update();
-		rawDuplicatorType::Pointer rawDuplicator_rowBorder_cy5 = rawDuplicatorType::New();
-		rawDuplicator_rowBorder_cy5->SetInputImage(ROIfilter_rowBorder_cy5->GetOutput());
-		#pragma omp critical
-			rawDuplicator_rowBorder_cy5->Update();
-		rawImageType::Pointer rowBorder_cy5 = rawDuplicator_rowBorder_cy5->GetOutput();
-
-		//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED ROW_BORDER	  ###################
-
-		LabelType::Pointer temp_RowBorder = LabelType::New();
-		LabelType::PointType origin_RowBorder;
-		origin_RowBorder[0] = 0; 
-		origin_RowBorder[1] = 0;
-		origin_RowBorder[2] = 0;
-		temp_RowBorder->SetOrigin( origin_RowBorder );
-		LabelType::IndexType start_RowBorder;
-		start_RowBorder[0] = 0;
-		start_RowBorder[1] = 0;
-		start_RowBorder[2] = 0;
-		LabelType::SizeType size_RowBorder;
-		size_RowBorder[0] = size_rowBorder[0];
-		size_RowBorder[1] = size_rowBorder[1];
-		size_RowBorder[2] = size_rowBorder[2];
-		LabelType::RegionType region_RowBorder;
-		region_RowBorder.SetSize ( size_RowBorder  );
-		region_RowBorder.SetIndex( start_RowBorder );
-		temp_RowBorder->SetRegions( region_RowBorder );
-		temp_RowBorder->Allocate();
-		temp_RowBorder->FillBuffer(0);
-		temp_RowBorder->Update();
-		//temp_RowBorder->Register();
-
-		std::cout<<"Starting segmentation for row border Y = " << row*1000 << "\n";
-		//segResultsType rowBorderSegResults;
-		//rowBorderSegResults = RunNuclearSegmentation(rowBorder_nuc, rowBorder_gfp, argv[3]);
-		temp_RowBorder = RunNuclearSegmentation(rowBorder_nuc, argv[4]);
-		std::cout<<"Done with nucleus segmentation for border Y = " << row*1000 << "\n\n";
-		//temp_RowBorder = rowBorderSegResults.first;
-		Label_RowBorders[row-1] = temp_RowBorder;
-		//Table_RowBorders[row-1] = rowBorderSegResults.second;
-		Table_RowBorders[row-1] = ComputeFeaturesAndAssociations(rowBorder_nuc, rowBorder_gfp, rowBorder_cy5, temp_RowBorder, argv[5] );
-		//Centroids_RowBorders[row-1] = GetLabelToCentroidMap(rowBorderSegResults.second);
-		Centroids_RowBorders[row-1] = GetLabelToCentroidMap(Table_RowBorders[row-1]);
+		}
 
 	}
 
@@ -626,21 +695,21 @@ int main(int argc, char* argv[])
 
 	//##################	ALLOCATING MEMORY FOR THE SEGMENTED MONTAGE	  ###################
 
-	LabelType::Pointer montageSeg = LabelType::New();
-	LabelType::PointType origin_montage;
+	montageLabelType::Pointer montageSeg = montageLabelType::New();
+	montageLabelType::PointType origin_montage;
 	origin_montage[0] = 0; 
 	origin_montage[1] = 0;
 	origin_montage[2] = 0;
 	montageSeg->SetOrigin( origin_montage );
-	LabelType::IndexType start_montage;
+	montageLabelType::IndexType start_montage;
 	start_montage[0] = 0;
 	start_montage[1] = 0;
 	start_montage[2] = 0;
-	LabelType::SizeType size_montage;
+	montageLabelType::SizeType size_montage;
 	size_montage[0] = size_nuc_montage[0];
 	size_montage[1] = size_nuc_montage[1];
 	size_montage[2] = size_nuc_montage[2];
-	LabelType::RegionType region_montage;
+	montageLabelType::RegionType region_montage;
 	region_montage.SetSize ( size_montage  );
 	region_montage.SetIndex( start_montage );
 	montageSeg->SetRegions( region_montage );
@@ -659,26 +728,26 @@ int main(int argc, char* argv[])
 
 	//#############################################################
 
-	LabelType::PixelType * montageSegArray = montageSeg->GetBufferPointer();
+	montageLabelType::PixelType * montageSegArray = montageSeg->GetBufferPointer();
 	unsigned long long montage_slice_size = size_montage[1] * size_montage[0];
 	unsigned long long montage_row_size = size_montage[0];	
 
 	unsigned short max_value_1 = 0, current_max_1 = 0;
 	for(unsigned long long n=0; n<(int)Label_Rows.size(); ++n)
 	{
-		std::cout << "stitching row " << n << "\n";
+// 		std::cout << "stitching row " << n << "\n";
 		if(n != 0)
 		{
 
 			//##################	STITCHING THE ROW_BORDER INTO THE MONTAGE	  ###################
 
-			std::cout << "stitchin the row border\n" ;
+// 			std::cout << "stitchin the row border\n" ;
 			LabelType::Pointer myRowBorder = Label_RowBorders[n-1];
 			LabelType::PixelType * myRowBorderArray = myRowBorder->GetBufferPointer();
 			itk::Size<3> rowBorder_size = myRowBorder->GetLargestPossibleRegion().GetSize();
 			unsigned long long rowBorder_slice_size = rowBorder_size[1] * rowBorder_size[0];
 			unsigned long long rowBorder_row_size = rowBorder_size[0];	
-			unsigned long long y_offset = (n*1000) - (2*25);
+			unsigned long long y_offset = (n*861) - (2*25);
 			for(unsigned long long z=0; z<rowBorder_size[2]; ++z)
 			{
 				for(unsigned long long y=0; y<rowBorder_size[1]; ++y)
@@ -699,7 +768,7 @@ int main(int argc, char* argv[])
 
 			//##################	STITCHING THE ROW_BORDER_TABLE INTO THE MONTAGE_TABLE	  ###################
 
-			std::cout << "stitchin the row border table\n" ;
+// 			std::cout << "stitchin the row border table\n" ;
 			for(unsigned long long r=0; r<(unsigned long long)Table_RowBorders[n-1]->GetNumberOfRows(); ++r)
 			{
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
@@ -720,13 +789,13 @@ int main(int argc, char* argv[])
 
 		//##################	STITCHING THE ROW INTO THE MONTAGE	  ###################
 
-		std::cout << "stitchin the row\n" ;
+// 		std::cout << "stitchin the row\n" ;
 		LabelType::Pointer myRow = Label_Rows[n];
 		LabelType::PixelType * myRowArray = myRow->GetBufferPointer();
 		itk::Size<3> row_size = myRow->GetLargestPossibleRegion().GetSize();
 		unsigned long long row_slice_size_1 = row_size[1] * row_size[0];
 		unsigned long long row_row_size_1 = row_size[0];	
-		unsigned long long y_offset = n*1000;
+		unsigned long long y_offset = n*861;
 		for(unsigned long long z=0; z<row_size[2]; ++z)
 		{
 			for(unsigned long long y=0; y<row_size[1]; ++y)
@@ -748,7 +817,7 @@ int main(int argc, char* argv[])
 
 		//##################	STITCHING THE ROW_TABLE INTO THE MONTAGE_TABLE	  ###################
 
-		std::cout << "stitchin the row table\n" ;
+// 		std::cout << "stitchin the row table\n" ;
 		for(unsigned long long r=0; r<(unsigned long long)Table_Rows[n]->GetNumberOfRows(); ++r)
 		{
 			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
@@ -795,26 +864,26 @@ int main(int argc, char* argv[])
 	//	EXTRACTING SOMA and SOMA CENTROIDS
 	//#####################################################################################################################
 
-	LabelType::Pointer somaMontage = LabelType::New();
+	montageLabelType::Pointer somaMontage = montageLabelType::New();
 	itk::Size<3> im_size = montageSeg->GetBufferedRegion().GetSize();
-	LabelType::IndexType start;
+	montageLabelType::IndexType start;
 	start[0] =   0;  // first index on X
 	start[1] =   0;  // first index on Y    
 	start[2] =   0;  // first index on Z  
-	LabelType::PointType origin;
+	montageLabelType::PointType origin;
 	origin[0] = 0; 
 	origin[1] = 0;    
 	origin[2] = 0;    
 	somaMontage->SetOrigin( origin );
-	LabelType::RegionType region;
+	montageLabelType::RegionType region;
 	region.SetSize( im_size );
 	region.SetIndex( start );
 	somaMontage->SetRegions( region );
 	somaMontage->Allocate();
 	somaMontage->FillBuffer(0);
 	somaMontage->Update();
-	LabelType::PixelType * somaArray = somaMontage->GetBufferPointer();
-	LabelType::PixelType * labelArray = montageSeg->GetBufferPointer();
+	montageLabelType::PixelType * somaArray = somaMontage->GetBufferPointer();
+	montageLabelType::PixelType * labelArray = montageSeg->GetBufferPointer();
 
 	unsigned long long slice_size = im_size[1] * im_size[0];
 	unsigned long long row_size = im_size[0];
@@ -879,6 +948,8 @@ int main(int argc, char* argv[])
 	ftk::SaveTable(temp + "_soma_table.txt", montageTable);
 	ftk::SaveTable(temp + "_soma_centroids_table.txt", somaCentroidsTable);
 
+	}
+
 
 
 	//#####################################################################################################################
@@ -910,9 +981,25 @@ int main(int argc, char* argv[])
 	outfile << "<?xml\tversion=\"1.0\"\t?>\n";
 	outfile << "<Source>\n\n";
 
+
+	omp_set_nested(1);
+
+	omp_set_max_active_levels(1);
+	
+ 	num_threads = 79;
+ 	omp_set_num_threads(num_threads);
+	
+	
+	int counterCentro = 0;
 	#pragma omp parallel for
 	for( long int a=0; a<centroid_list.size(); ++a )
 	{
+		
+		#pragma omp critical
+		{
+			counterCentro++;
+			std::cout<<std::endl<<"\t\t\t\t asdfasdf ----->>>>> " << counterCentro << ", of " << centroid_list.size();
+		}
 		int x, y, z;
 		x = centroid_list[a][0];
 		y = centroid_list[a][1];
@@ -938,7 +1025,7 @@ int main(int argc, char* argv[])
 			ssz_off << 0;
 
 		//########    CROP THE DESIRED DICE FROM THE GFP AND SOMA MONTAGES   ########
-		LabelType::IndexType start;
+		montageLabelType::IndexType start;
 		start[0] = ((x - 200)>0) ? (x - 200):0;
 		start[1] = ((y - 200)>0) ? (y - 200):0;
 		if(size_nuc_montage[2] <= 200)
@@ -952,9 +1039,9 @@ int main(int argc, char* argv[])
 		if(size_gfp_montage[2] <= 200)
 			start2[2] = 0;
 		else
-			start2[2] = ((z - 100)>0) ? (z - 100):0;
+			start2[2] = ((z - 200)>0) ? (z - 200):0;
 
-		LabelType::SizeType size;
+		montageLabelType::SizeType size;
 		size[0] = ((x+200)<size_nuc_montage[0]) ? 400 : (200+size_nuc_montage[0]-x-1); 
 		size[1] = ((y+200)<size_nuc_montage[1]) ? 400 : (200+size_nuc_montage[1]-y-1);
 		if(size_nuc_montage[2] <= 200)
@@ -970,7 +1057,7 @@ int main(int argc, char* argv[])
 		else
 			size2[2] = ((z+100)<size_gfp_montage[2]) ? 200 : (100+size_gfp_montage[2]-z-1);
 
-		LabelType::RegionType desiredRegion;
+		montageLabelType::RegionType desiredRegion;
 		desiredRegion.SetSize(size);
 		desiredRegion.SetIndex(start);
 
@@ -987,7 +1074,7 @@ int main(int argc, char* argv[])
 		LabelDuplicator->SetInputImage(ROIfilter3->GetOutput());
 		#pragma omp critical
 			LabelDuplicator->Update();
-		LabelType::Pointer img_soma = LabelDuplicator->GetOutput();
+		montageLabelType::Pointer img_soma = LabelDuplicator->GetOutput();
 
 		rawROIFilterType::Pointer ROIfilter2 = rawROIFilterType::New();
 		ROIfilter2->SetRegionOfInterest(desiredRegion2);
@@ -1019,7 +1106,7 @@ int main(int argc, char* argv[])
 		for(int ctr =0; ctr<centroid_list.size() ; ++ctr)
 		{
 			itk::Index<3> cen = centroid_list[ctr];
-			//if(abs((double)(cen[0]-x))<=200 && abs((double)(cen[1]-y))<=200 && abs((double)(cen[2]-z))<=100 )
+			//if(abs((double)(cen[0]-x))<=200 && abs((double)(cen[1]-y))<=200 && abs((double)(cen[2]-z))<=861 )
 			if( (cen[0]>=start2[0]) && (cen[0]<(start2[0]+size2[0])) && (cen[1]>=start2[1]) && (cen[1]<(start2[1]+size2[1])) && (cen[2]>=start2[2]) && (cen[2]<(start2[2]+size2[2])) )
 			{
 				itk::Index<3> centroid2;
@@ -1035,7 +1122,7 @@ int main(int argc, char* argv[])
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->LoadCurvImage_1(img_trace, 0);
 		MNT->ReadStartPoints_1(soma_Table, 0);
-		MNT->SetCostThreshold(1000);
+		MNT->SetCostThreshold(700);
 		MNT->LoadSomaImage_1(img_soma);
 		MNT->RunTracing();
 		
@@ -1070,12 +1157,17 @@ int main(int argc, char* argv[])
 
 
 
-//#############################################################################################################
+//######	#######################################################################################################
 //  NUCLEAR SEGMENTATION
 //#############################################################################################################
 LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const char* fileName)
 {
-
+	rawImageType::PointType origin_row;
+	origin_row[0] = 0; 
+	origin_row[1] = 0;
+	origin_row[2] = 0;
+	inpImg->SetOrigin( origin_row );
+	
 	itk::SizeValueType size[3];
 	size[0] = inpImg->GetLargestPossibleRegion().GetSize()[0];
 	size[1] = inpImg->GetLargestPossibleRegion().GetSize()[1];
@@ -1089,9 +1181,9 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 		return NULL;
 	}
 
-	memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
-	typedef itk::ImageRegionConstIterator< rawImageType > ConstIteratorType;
-	ConstIteratorType pix_buf( inpImg, inpImg->GetRequestedRegion() );
+	//memset(in_Image/*destination*/,0/*value*/,size[0]*size[1]*size[2]*sizeof(unsigned char)/*num bytes to move*/);
+	typedef itk::ImageRegionIterator< rawImageType > IteratorType22;
+	IteratorType22 pix_buf( inpImg, inpImg->GetRequestedRegion() );
 	itk::SizeValueType ind=0;
 	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
 	{
@@ -1099,13 +1191,27 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 	}
 	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg();
 	NucleusSeg->readParametersFromFile(fileName);
-	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/home/gramak/Desktop/11_10_tracing/montage_kt11306_w410DAPIdsu.mhd");
+	NucleusSeg->setDataImage(in_Image,size[0],size[1],size[2],"/home/gramak/Desktop/11_10_tracing/montage_kt86106_w410DAPIdsu.mhd");
+// 	#pragma omp critical
 	NucleusSeg->runBinarization();
+	
+	std::cout<<std::endl << "\t\t Done binarization:" <<std::flush;
+
+
+	
+ 	//#pragma omp barrier
+	
+// 	std::cout<<std::endl << "\t\t Start Seed:";
 
 	try 
 	{
-		std::cout<<"Starting seed detection\n";
+// 		std::cout<<"Starting seed detection\n";
 		NucleusSeg->runSeedDetection();
+// 	#pragma omp critical
+// 	#pragma omp barrier
+// 	{
+		std::cout<<std::endl << "\t\t\t Done Seed Detect: " <<std::flush;
+// 	}
 	}
 	catch( bad_alloc & excp )
 	{
@@ -1120,6 +1226,11 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 	}
 
 	NucleusSeg->runClustering();
+	
+// 	#pragma omp critical
+// 	{
+		std::cout<<std::endl << "\t\t\t\t Done Clus: ";
+// 	}
 	unsigned short *output_img;
 
 	//if(NucleusSeg->isSegmentationFinEnabled())
@@ -1157,12 +1268,73 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 	IteratorType iterator1(image,image->GetRequestedRegion());
 	for(itk::SizeValueType i=0; i<(size[0]*size[1]*size[2]); ++i)
 	{
-		unsigned short val = (unsigned short)output_img[i];
-		iterator1.Set(val);
+		//unsigned short val = (unsigned short)output_img[i];
+		iterator1.Set(output_img[i]);
 		++iterator1;
 	}
 
 	delete NucleusSeg;
+
+/*
+	// DELETING ALL LABELS WITH LESS THAN 8610 PIXELS OF VOLUME
+	typedef itk::LabelGeometryImageFilter< LabelType, rawImageType > LabelGeometryType;
+	LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();	
+
+	labelGeometryFilter->SetInput( image );
+	labelGeometryFilter->SetIntensityInput( inpImg );
+
+	labelGeometryFilter->CalculatePixelIndicesOff();
+	labelGeometryFilter->CalculateOrientedBoundingBoxOff();
+	labelGeometryFilter->CalculateOrientedLabelRegionsOff();
+	labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
+
+	try
+	{
+		labelGeometryFilter->Update();
+	}
+	catch (itk::ExceptionObject & e) 
+	{
+		std::cerr << "Exception in Dirk's Label Geometry Filter: " << e << std::endl;
+		return false;
+	}
+
+	std::vector< unsigned short > labels, del_labels;
+	labels.clear();
+	std::vector< LabelGeometryType::LabelPixelType > ls = labelGeometryFilter->GetLabels();
+	for (int i = 0; i < (int)ls.size(); ++i)
+	{
+		unsigned short l = ls.at(i);
+		labels.push_back( (unsigned short)l );
+	}
+
+	for (int i = 0; i < (int)labels.size(); ++i)
+	{
+		if( labelGeometryFilter->GetVolume( labels[i] ) < 8610 )
+			del_labels.push_back( labels[i] );
+	}
+
+	std::cout<<std::endl<<"We have: " << (int)labels.size()-(int)del_labels.size()<<" seeds";
+
+	LabelType::PixelType * imageArray = image->GetBufferPointer();
+	itk::Size<3> size_image = image->GetLargestPossibleRegion().GetSize();
+	unsigned long long image_slice_size = size_image[1] * size_image[0];
+	unsigned long long image_row_size = size_image[0];	
+
+	for(int i=0; i<size_image[2]; ++i)
+	{
+		for(int j=0; j<size_image[1]; ++j)
+		{
+			for(int k=0; k<size_image[0]; ++k)
+			{
+				unsigned short value = imageArray[(i*image_slice_size)+(j*image_row_size)+k];
+				std::vector<unsigned short>::iterator posn1 = find(del_labels.begin(), del_labels.end(), value);
+				if(posn1 != del_labels.end())
+				{
+					imageArray[(i*image_slice_size)+(j*image_row_size)+k] = 0;
+				}
+			}
+		}
+	}*/
 
 	return image;
 
@@ -1181,6 +1353,8 @@ vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer n
 	vtkSmartPointer<vtkTable> table = NULL;
 	ftk::Image::Pointer nucSegRes = NULL;
 	ftk::ProjectProcessor * myProc = new ftk::ProjectProcessor();
+
+//std::cout<<std::endl<<nucImg->GetLargestPossibleRegion().GetSize()[0];
 
 	itk::SizeValueType tileSize[3];
 	tileSize[0] = nucImg->GetLargestPossibleRegion().GetSize()[0];
@@ -1211,6 +1385,10 @@ vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer n
 
 	nucSegRes = myProc->GetOutputImage();
 	table = myProc->GetTable();
+
+//std::cout<<"houston we have a problem";
+//std::cout<<"houston we have a proble";
+//std::cout<<std::endl<<table->GetNumberOfRows()<<"_uuasdf";
 
 	projectDef.Write(fileName);	
 	delete myProc;
@@ -1243,7 +1421,6 @@ std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< 
 //#############################################################################################################
 void WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, int x, int y, int z, std::string filename)
 {
-	if( (int)swcNodes->GetNumberOfRows() == 0)  return;
 	std::cout << "Writing SWCImage file " << filename << " with " << swcNodes->GetNumberOfRows() << " nodes...";
 	
 	std::vector<int> soma_ids;
@@ -1259,7 +1436,7 @@ void WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, int x, int y, int z,
 
 	for(int i=0; i<soma_ids.size(); ++i)
 	{
-		if( (swcNodes->GetValue(i,2).ToInt() != x) || (swcNodes->GetValue(i,3).ToInt() != y) || (swcNodes->GetValue(i,4).ToInt() != z) )//if( ((int)swcNodes[i][2] + x > 1800) && ((int)swcNodes[i][2] + x < 3600) && ((int)swcNodes[i][3] + y < 8000) )
+		if( (swcNodes->GetValue(i,2).ToInt() != x) || (swcNodes->GetValue(i,3).ToInt() != y) || (swcNodes->GetValue(i,4).ToInt() != z) )//if( ((int)swcNodes[i][2] + x > 861) && ((int)swcNodes[i][2] + x < 3861) && ((int)swcNodes[i][3] + y < 8610) )
 		{
 			del_ids.push_back(soma_ids[i]);
 		}
@@ -1303,4 +1480,56 @@ void WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, int x, int y, int z,
 	std::cout << " done! " << std::endl;
 
 }
+
+void RunEverything(rawImageType::RegionType region, rawImageType::Pointer m_nuc, rawImageType::Pointer m_gfp, rawImageType::Pointer m_cy5, std::vector<LabelType::Pointer> &myLabel, std::vector < vtkSmartPointer< vtkTable > > &myTable, std::map< unsigned int, itk::Index<3> > *myCentroids, const char* segParams, const char* projectDef, int col)
+{
+	rawImageType::Pointer tile_nuc;
+	rawImageType::Pointer tile_gfp;
+	rawImageType::Pointer tile_cy5;
+//#pragma omp critical
+//	{
+		rawROIFilterType::Pointer ROIfilter_tile_nuc = rawROIFilterType::New();
+		ROIfilter_tile_nuc->SetRegionOfInterest(region);
+		ROIfilter_tile_nuc->SetInput(m_nuc);
+		#pragma omp critical
+			ROIfilter_tile_nuc->Update();
+		rawDuplicatorType::Pointer rawDuplicator_tile_nuc = rawDuplicatorType::New();
+		rawDuplicator_tile_nuc->SetInputImage(ROIfilter_tile_nuc->GetOutput());
+		#pragma omp critical
+			rawDuplicator_tile_nuc->Update();
+		tile_nuc = rawDuplicator_tile_nuc->GetOutput();
+
+		rawROIFilterType::Pointer ROIfilter_tile_gfp = rawROIFilterType::New();
+		ROIfilter_tile_gfp->SetRegionOfInterest(region);
+		ROIfilter_tile_gfp->SetInput(m_gfp);
+		#pragma omp critical
+			ROIfilter_tile_gfp->Update();
+		rawDuplicatorType::Pointer rawDuplicator_tile_gfp = rawDuplicatorType::New();
+		rawDuplicator_tile_gfp->SetInputImage(ROIfilter_tile_gfp->GetOutput());
+		#pragma omp critical
+			rawDuplicator_tile_gfp->Update();
+		tile_gfp = rawDuplicator_tile_gfp->GetOutput();
+
+		rawROIFilterType::Pointer ROIfilter_tile_cy5 = rawROIFilterType::New();
+		ROIfilter_tile_cy5->SetRegionOfInterest(region);
+		ROIfilter_tile_cy5->SetInput(m_cy5);
+		#pragma omp critical
+			ROIfilter_tile_cy5->Update();
+		rawDuplicatorType::Pointer rawDuplicator_tile_cy5 = rawDuplicatorType::New();
+		rawDuplicator_tile_cy5->SetInputImage(ROIfilter_tile_cy5->GetOutput());
+		#pragma omp critical
+			rawDuplicator_tile_cy5->Update();
+		tile_cy5 = rawDuplicator_tile_cy5->GetOutput();
+//	}
+
+		myLabel[col] = RunNuclearSegmentation(tile_nuc, segParams);
+		//temp_Tile = tileSegResults.first;
+		//Table_Tiles[col] = tileSegResults.second;
+		myTable[col] = ComputeFeaturesAndAssociations(tile_nuc, tile_gfp, tile_cy5, myLabel[col], projectDef );
+		//Centroids_Tiles[col] = GetLabelToCentroidMap(tileSegResults.second);
+		*myCentroids = GetLabelToCentroidMap(myTable[col]);
+
+}
+
+
 
