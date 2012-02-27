@@ -102,6 +102,14 @@ int main(int argc, char* argv[])
 	typedef itk::ImageFileReader<rawImageType> rawReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
 	typedef itk::ImageFileWriter<montageLabelType> labelWriterType;
+	typedef itk::ImageFileReader<montageLabelType> labelReaderType;
+
+	vtkSmartPointer<vtkTable> somaCentroidsTable = NULL;
+	montageLabelType::Pointer somaMontage;
+
+	int onlyTrace = 1;
+	if( onlyTrace == 0 )
+	{
 
 	rawReaderType::Pointer reader_nuc = rawReaderType::New();
 	reader_nuc->SetFileName(argv[1]);
@@ -137,9 +145,7 @@ int main(int argc, char* argv[])
 	//color[0] = 0; color[1] = 255; color[2] = 0;
 	//sourceImages->AppendChannelFromData3D( montage_gfp->GetBufferPointer(), itk::ImageIOBase::UCHAR, 8, size_nuc_montage[0], size_nuc_montage[1], size_nuc_montage[2], std::string(argv[2]), color, false);
 
-	int onlyTrace = 1;
-	if( onlyTrace == 0 )
-	{
+
 
 	//#####################################################################################################################
 	//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
@@ -864,7 +870,7 @@ int main(int argc, char* argv[])
 	//	EXTRACTING SOMA and SOMA CENTROIDS
 	//#####################################################################################################################
 
-	montageLabelType::Pointer somaMontage = montageLabelType::New();
+	somaMontage = montageLabelType::New();
 	itk::Size<3> im_size = montageSeg->GetBufferedRegion().GetSize();
 	montageLabelType::IndexType start;
 	start[0] =   0;  // first index on X
@@ -911,7 +917,7 @@ int main(int argc, char* argv[])
 	writer->SetInput(somaMontage);
 	writer->Update();
 
-	vtkSmartPointer<vtkTable> somaCentroidsTable = vtkSmartPointer<vtkTable>::New();
+	somaCentroidsTable = vtkSmartPointer<vtkTable>::New();
 	somaCentroidsTable->Initialize();
 
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -947,6 +953,27 @@ int main(int argc, char* argv[])
 
 	ftk::SaveTable(temp + "_soma_table.txt", montageTable);
 	ftk::SaveTable(temp + "_soma_centroids_table.txt", somaCentroidsTable);
+
+	}
+
+	if( onlyTrace == 1 )
+	{
+	rawReaderType::Pointer reader_gfp = rawReaderType::New();
+	reader_gfp->SetFileName(argv[2]);
+	reader_gfp->Update();
+	rawImageType::Pointer montage_gfp = reader_gfp->GetOutput();
+	itk::SizeValueType size_gfp_montage[3];
+	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
+	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
+	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
+
+	labelReaderType::Pointer reader1 = labelReaderType::New();
+	reader1->SetFileName(temp + "_soma_montage.mhd");
+	reader1->Update();
+	montageLabelType::Pointer somaMontage = reader1->GetOutput();
+
+	somaCentroidsTable = ftk::LoadTable(temp + "_soma_centroids_table.txt")
+
 
 	}
 
@@ -1042,7 +1069,7 @@ int main(int argc, char* argv[])
 			start2[2] = ((z - 200)>0) ? (z - 200):0;
 
 		montageLabelType::SizeType size;
-		size[0] = ((x+200)<size_nuc_montage[0]) ? 400 : (200+size_nuc_montage[0]-x-1); 
+		size[0] = ((x+200)<size_gfp_montage[0]) ? 400 : (200+size_nuc_montage[0]-x-1); 
 		size[1] = ((y+200)<size_nuc_montage[1]) ? 400 : (200+size_nuc_montage[1]-y-1);
 		if(size_nuc_montage[2] <= 200)
 			size[2] = size_nuc_montage[2];
