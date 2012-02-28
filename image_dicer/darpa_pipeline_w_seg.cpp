@@ -62,13 +62,16 @@ int main(int argc, char* argv[])
 {
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
 	std::cout<<std::endl<<"TEST"<<std::flush;
+#ifdef _OPENMP
 	omp_set_nested(1);
-
 	omp_set_max_active_levels(2);
+#endif
 	
  	int num_threads = 1;
-	omp_set_num_threads(num_threads);
 
+#ifdef _OPENMP
+	omp_set_num_threads(num_threads);
+#endif
 
 	int counterTiles = 0;
 	int counterTiles2 = 0;
@@ -108,6 +111,10 @@ int main(int argc, char* argv[])
 	montageLabelType::Pointer somaMontage;
 
 	int onlyTrace = 1;
+	std::string temp = nucFileName;
+	itk::SizeValueType size_nuc_montage[3];
+	itk::SizeValueType size_gfp_montage[3];
+	rawImageType::Pointer montage_gfp;
 	if( onlyTrace == 0 )
 	{
 
@@ -115,7 +122,6 @@ int main(int argc, char* argv[])
 	reader_nuc->SetFileName(argv[1]);
 	reader_nuc->Update();
 	rawImageType::Pointer montage_nuc = reader_nuc->GetOutput();
-	itk::SizeValueType size_nuc_montage[3];
 	size_nuc_montage[0] = montage_nuc->GetLargestPossibleRegion().GetSize()[0];
 	size_nuc_montage[1] = montage_nuc->GetLargestPossibleRegion().GetSize()[1];
 	size_nuc_montage[2] = montage_nuc->GetLargestPossibleRegion().GetSize()[2];
@@ -123,8 +129,7 @@ int main(int argc, char* argv[])
 	rawReaderType::Pointer reader_gfp = rawReaderType::New();
 	reader_gfp->SetFileName(argv[2]);
 	reader_gfp->Update();
-	rawImageType::Pointer montage_gfp = reader_gfp->GetOutput();
-	itk::SizeValueType size_gfp_montage[3];
+	montage_gfp = reader_gfp->GetOutput();
 	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
 	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
@@ -177,7 +182,9 @@ int main(int argc, char* argv[])
  	#pragma omp parallel for num_threads(7)
 	for(int row=0; row<num_rows; ++row)
 	{
+#ifdef _OPENMP
 		omp_set_nested(1);
+#endif
 
 		#pragma omp critical
 		{	
@@ -204,7 +211,9 @@ int main(int argc, char* argv[])
 		for(unsigned int col=0; col<num_cols; ++col)
 		{
 
+#ifdef _OPENMP
 			int tid = omp_get_thread_num();
+#endif
 			//stringstream out;
 			//out<<tid;
 			//string s = out.str();
@@ -444,7 +453,9 @@ int main(int argc, char* argv[])
 			}
 
 		}
+#ifdef _OPENMP
 		omp_set_nested(0);
+#endif
 // 		myfile.close();
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
@@ -849,7 +860,6 @@ int main(int argc, char* argv[])
 	//#############################################################
 	std::cout<<"done !!\n\n";
 			
-	std::string temp = nucFileName;
 	string::iterator it;
 	it = temp.end() - 4;
 	temp.erase(it, it+4);
@@ -961,7 +971,7 @@ int main(int argc, char* argv[])
 	rawReaderType::Pointer reader_gfp = rawReaderType::New();
 	reader_gfp->SetFileName(argv[2]);
 	reader_gfp->Update();
-	rawImageType::Pointer montage_gfp = reader_gfp->GetOutput();
+	montage_gfp = reader_gfp->GetOutput();
 	itk::SizeValueType size_gfp_montage[3];
 	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
@@ -972,7 +982,7 @@ int main(int argc, char* argv[])
 	reader1->Update();
 	montageLabelType::Pointer somaMontage = reader1->GetOutput();
 
-	somaCentroidsTable = ftk::LoadTable(temp + "_soma_centroids_table.txt")
+	somaCentroidsTable = ftk::LoadTable(temp + "_soma_centroids_table.txt");
 
 
 	}
@@ -1009,12 +1019,16 @@ int main(int argc, char* argv[])
 	outfile << "<Source>\n\n";
 
 
+#ifdef _OPENMP
 	omp_set_nested(1);
-
 	omp_set_max_active_levels(1);
+#endif
 	
  	num_threads = 79;
+
+#ifdef _OPENMP
  	omp_set_num_threads(num_threads);
+#endif
 	
 	
 	int counterCentro = 0;
