@@ -1,13 +1,14 @@
 #include "fregl_roi.h"
 
 template < class TPixel >
-fregl_roi< TPixel >::fregl_roi(std::string joint_xforms_xml_file, std::string img_path, std::string anchor_image, bool nearest_neighbor) {
+fregl_roi< TPixel >::fregl_roi(std::string joint_xforms_xml_file, std::string img_path, std::string anchor_image, unsigned int cache_buffer_count, bool nearest_neighbor ) {
     this->joint_xforms_xml_file = joint_xforms_xml_file;
     this->img_path = img_path;
     this->anchor_image = anchor_image;
     this->nearest_neighbor = nearest_neighbor;
     this->region_montage = new fregl_image_manager< TPixel >(joint_xforms_xml_file, img_path, anchor_image, nearest_neighbor);
 	
+	this->region_montage->set_cache_buffer_count(cache_buffer_count);
 	this->region_montage->set_file_caching(true);
 	this->region_montage->set_file_cache_dir("./cache");
 }
