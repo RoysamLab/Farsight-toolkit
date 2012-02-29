@@ -64,7 +64,6 @@
 #define IMAGE_UNMIX_OUTPUT 1
 #define MAX_CHANNELS 4
 
-#define EPSILON 1e-6
 
 
 #define MAX(a,b) (((a) > (b))?(a):(b))
