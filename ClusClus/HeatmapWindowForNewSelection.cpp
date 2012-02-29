@@ -2564,24 +2564,29 @@ void HeatmapForNewSelection::SelectionCallbackFunctionForSPD(vtkObject* caller, 
 	vtkSelectionNode* edges = NULL;
 	vtkSelectionNode* cells = NULL;
 
-    if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
-        {                                                                            
-        vertices = selection->GetNode(0);
-        }
-    else if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
-        {
-        edges = selection->GetNode(0);
-        }
- 
-    if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
-        {
-        vertices = selection->GetNode(1);
-        }
-    else if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
-        {
-        edges = selection->GetNode(1);
-        }
+	if( selection->GetNode(0))
+	{
+		if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+			{                                                                            
+			vertices = selection->GetNode(0);
+			}
+		else if(selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
+			{
+			edges = selection->GetNode(0);
+			}
+	}
 
+	if( selection->GetNode(1))
+	{
+		if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+			{
+			vertices = selection->GetNode(1);
+			}
+		else if(selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
+			{
+			edges = selection->GetNode(1);
+			}
+	}
 	if( vertices != NULL)
 	{
 		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());

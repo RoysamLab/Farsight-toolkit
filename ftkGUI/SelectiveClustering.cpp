@@ -584,6 +584,10 @@ ClusterManager::ClusterManager()
 	
 	//this->ClusterListView = new QListWidget(this);
 	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
+	std::cout<< "Test add widget\n";
+	this->QVTKClusterTableView = new QvtkTableView();
+	
+	std::cout<< "Test add widget\n";
 	
 	this->OperatorList = new QComboBox(this);
 	OperatorList->addItem("ADD");
@@ -632,6 +636,7 @@ ClusterManager::ClusterManager()
 	
 	this->MainLayout->addLayout(ButtonLayout);
 	this->MainLayout->addLayout(HLayout);
+	this->MainLayout->addWidget(this->QVTKClusterTableView);
 	this->MainLayout->addLayout(this->HOperatorDisplayLayout);
 
 	//this->MainLayout->addWidget(this->ClusterListView,0,0);
@@ -695,7 +700,7 @@ void ClusterManager::RemoveSelectedClusters()
 
 void ClusterManager::ShowClusterFeatures()
 {
-	this->ClusterModel->ClusterFeatureTable();
+	this->ClusterModel->ClusterFeatureTable()->Dump(16);
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
@@ -735,17 +740,19 @@ void ClusterManager::ChangeInClusters()
 	this->ClusterTableView->SetRepresentationFromInput(adapt.GetVTKDataObject());
 	if(!AnnotationLinkSetUp)
 	{
-		this->ClusterTableView->GetRepresentation()->SetAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
+		/*this->ClusterTableView->GetRepresentation()->SetAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
 		this->ClusterTableView->GetRepresentation()->SetSelectionType(vtkSelectionNode::PEDIGREEIDS);
-		this->ClusterTableView->GetRepresentation()->SetSelectionArrayName("Cluster ID");
+		this->ClusterTableView->GetRepresentation()->SetSelectionArrayName("Cluster ID");*/
 		/*this->ClusterModel->ClusterVtkViewUpdater->AddView(this->ClusterTableView);
 		this->ClusterModel->ClusterVtkViewUpdater->AddAnnotationLink(this->ClusterModel->ClusterAnnotationLink);*/
 
 		this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New(); 
 		this->selectionCallback->SetClientData(this);
 		this->selectionCallback->SetCallback ( SelectionCallbackFunction);
-		vtkAnnotationLink *link = this->ClusterTableView->GetRepresentation()->GetAnnotationLink();
+
+		vtkAnnotationLink *link = this->ClusterModel->ClusterAnnotationLink;
 		link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
+
 		AnnotationLinkSetUp = true;
 	}
 	this->ClusterTableView->Update();
@@ -754,6 +761,7 @@ void ClusterManager::ChangeInClusters()
 	/*QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	this->ClusterListView->clear();
 	this->ClusterListView->addItems( ClusterList);*/
+	this->QVTKClusterTableView->SetInputLink(this->ClusterModel->GetClusterTable(), this->ClusterModel->ClusterAnnotationLink);
 
 	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	Operand1->clear();
@@ -937,11 +945,7 @@ void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long 
 		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
 		{
 			vertices = selection->GetNode(0);
-		}/*
-		else if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::EDGE)
-		{
-			edges = selection->GetNode(0);
-		}*/
+		}
 	}
 
 	if( selection->GetNode(1))
@@ -949,11 +953,7 @@ void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long 
 		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
 		{
 			vertices = selection->GetNode(1);
-		}/*
-		else if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::EDGE)
-		{
-			edges = selection->GetNode(1);
-		}*/
+		}
 	}
 	std::map< vtkIdType, vtkIdType> IdLookUP = ClusMan->ClusterModel->GetClusterTableIDMap();
 	std::map< vtkIdType, vtkIdType>::iterator  idIter;

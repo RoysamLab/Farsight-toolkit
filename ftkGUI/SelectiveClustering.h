@@ -43,6 +43,7 @@ limitations under the License.
 #include <QtGui/QDialog>
 
 #include "ftkGUI/ObjectSelection.h"
+#include "QvtkTableView.h"
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
@@ -207,6 +208,8 @@ private:
 	QHBoxLayout* HOperatorDisplayLayout;
 	QVBoxLayout* VLayout;
 	QListWidget * ClusterListView;
+
+	QvtkTableView * QVTKClusterTableView;
 	
 	vtkSmartPointer<vtkQtTableView> ClusterTableView;
 	vtkIdTypeArray * GetClusterTableSelections();
