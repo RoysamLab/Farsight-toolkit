@@ -62,16 +62,13 @@ int main(int argc, char* argv[])
 {
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
 	std::cout<<std::endl<<"TEST"<<std::flush;
-#ifdef _OPENMP
 	omp_set_nested(1);
+
 	omp_set_max_active_levels(2);
-#endif
 	
  	int num_threads = 1;
-
-#ifdef _OPENMP
 	omp_set_num_threads(num_threads);
-#endif
+
 
 	int counterTiles = 0;
 	int counterTiles2 = 0;
@@ -101,6 +98,11 @@ int main(int argc, char* argv[])
 
 	std::string nucFileName(argv[1]);
 	std::string filePath = ftk::GetFilePath(nucFileName);
+	
+	std::string temp = nucFileName;
+	string::iterator it;
+	it = temp.end() - 4;
+	temp.erase(it, it+4);
 
 	typedef itk::ImageFileReader<rawImageType> rawReaderType;
 	typedef itk::ImageFileReader<gfpImageType> gfpReaderType;
@@ -109,12 +111,10 @@ int main(int argc, char* argv[])
 
 	vtkSmartPointer<vtkTable> somaCentroidsTable = NULL;
 	montageLabelType::Pointer somaMontage;
+	rawImageType::Pointer montage_gfp;
+	itk::SizeValueType size_gfp_montage[3];
 
 	int onlyTrace = 1;
-	std::string temp = nucFileName;
-	itk::SizeValueType size_nuc_montage[3];
-	itk::SizeValueType size_gfp_montage[3];
-	rawImageType::Pointer montage_gfp;
 	if( onlyTrace == 0 )
 	{
 
@@ -122,6 +122,7 @@ int main(int argc, char* argv[])
 	reader_nuc->SetFileName(argv[1]);
 	reader_nuc->Update();
 	rawImageType::Pointer montage_nuc = reader_nuc->GetOutput();
+	itk::SizeValueType size_nuc_montage[3];
 	size_nuc_montage[0] = montage_nuc->GetLargestPossibleRegion().GetSize()[0];
 	size_nuc_montage[1] = montage_nuc->GetLargestPossibleRegion().GetSize()[1];
 	size_nuc_montage[2] = montage_nuc->GetLargestPossibleRegion().GetSize()[2];
@@ -129,7 +130,8 @@ int main(int argc, char* argv[])
 	rawReaderType::Pointer reader_gfp = rawReaderType::New();
 	reader_gfp->SetFileName(argv[2]);
 	reader_gfp->Update();
-	montage_gfp = reader_gfp->GetOutput();
+	rawImageType::Pointer montage_gfp = reader_gfp->GetOutput();
+	itk::SizeValueType size_gfp_montage[3];
 	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
 	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
@@ -182,9 +184,7 @@ int main(int argc, char* argv[])
  	#pragma omp parallel for num_threads(7)
 	for(int row=0; row<num_rows; ++row)
 	{
-#ifdef _OPENMP
 		omp_set_nested(1);
-#endif
 
 		#pragma omp critical
 		{	
@@ -211,9 +211,7 @@ int main(int argc, char* argv[])
 		for(unsigned int col=0; col<num_cols; ++col)
 		{
 
-#ifdef _OPENMP
 			int tid = omp_get_thread_num();
-#endif
 			//stringstream out;
 			//out<<tid;
 			//string s = out.str();
@@ -453,9 +451,7 @@ int main(int argc, char* argv[])
 			}
 
 		}
-#ifdef _OPENMP
 		omp_set_nested(0);
-#endif
 // 		myfile.close();
 
 		std::cout<<"Stitching all tiles in Row " << row << "...";
@@ -859,10 +855,6 @@ int main(int argc, char* argv[])
 		
 	//#############################################################
 	std::cout<<"done !!\n\n";
-			
-	string::iterator it;
-	it = temp.end() - 4;
-	temp.erase(it, it+4);
 
 	labelWriterType::Pointer writer = labelWriterType::New();
 	writer->SetFileName(temp + "_label.mhd");
@@ -972,7 +964,6 @@ int main(int argc, char* argv[])
 	reader_gfp->SetFileName(argv[2]);
 	reader_gfp->Update();
 	montage_gfp = reader_gfp->GetOutput();
-	itk::SizeValueType size_gfp_montage[3];
 	size_gfp_montage[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 	size_gfp_montage[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
 	size_gfp_montage[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
@@ -980,9 +971,11 @@ int main(int argc, char* argv[])
 	labelReaderType::Pointer reader1 = labelReaderType::New();
 	reader1->SetFileName(temp + "_soma_montage.mhd");
 	reader1->Update();
-	montageLabelType::Pointer somaMontage = reader1->GetOutput();
+	somaMontage = reader1->GetOutput();
 
 	somaCentroidsTable = ftk::LoadTable(temp + "_soma_centroids_table.txt");
+	
+	std::cout<<std::endl<<temp + "_soma_montage.mhd";
 
 
 	}
@@ -1003,6 +996,7 @@ int main(int argc, char* argv[])
 		itk::Index<3> cen;
 		cen[0] = cx; cen[1] = cy; cen[2] = cz; 
 		centroid_list.push_back(cen);
+		//std::cout<<cx<<" "<<cy<<" "<<cz;
 	}
 
 	std::cout << "Number of cells to be traced : " << centroid_list.size() << "\n";
@@ -1019,16 +1013,16 @@ int main(int argc, char* argv[])
 	outfile << "<Source>\n\n";
 
 
-#ifdef _OPENMP
-	omp_set_nested(1);
-	omp_set_max_active_levels(1);
-#endif
-	
- 	num_threads = 79;
+	omp_set_nested(0);
 
-#ifdef _OPENMP
+	omp_set_max_active_levels(1);
+	
+
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
+
+
+ 	num_threads = 80;
  	omp_set_num_threads(num_threads);
-#endif
 	
 	
 	int counterCentro = 0;
@@ -1036,18 +1030,25 @@ int main(int argc, char* argv[])
 	for( long int a=0; a<centroid_list.size(); ++a )
 	{
 		
+
 		#pragma omp critical
 		{
 			counterCentro++;
 			std::cout<<std::endl<<"\t\t\t\t asdfasdf ----->>>>> " << counterCentro << ", of " << centroid_list.size();
+			std::cout<<centroid_list[a][0]<<" "<<centroid_list[a][1]<<" "<<centroid_list[a][2];
 		}
+		
+
 		int x, y, z;
+		std::stringstream ssx, ssy, ssz;
+		
 		x = centroid_list[a][0];
 		y = centroid_list[a][1];
 		z = centroid_list[a][2];
 
-		std::stringstream ssx, ssy, ssz;
+		
 		ssx << x; ssy << y; ssz << z;
+		
 
 		std::cout << "Tracing Dice " << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "\n";
 
@@ -1064,12 +1065,14 @@ int main(int argc, char* argv[])
 			ssz_off << z - 100;
 		else 
 			ssz_off << 0;
+		
+		//#pragma omp barrier
 
 		//########    CROP THE DESIRED DICE FROM THE GFP AND SOMA MONTAGES   ########
 		montageLabelType::IndexType start;
 		start[0] = ((x - 200)>0) ? (x - 200):0;
 		start[1] = ((y - 200)>0) ? (y - 200):0;
-		if(size_nuc_montage[2] <= 200)
+		if(size_gfp_montage[2] <= 200)
 			start[2] = 0;
 		else
 			start[2] = ((z - 100)>0) ? (z - 100):0;
@@ -1080,15 +1083,15 @@ int main(int argc, char* argv[])
 		if(size_gfp_montage[2] <= 200)
 			start2[2] = 0;
 		else
-			start2[2] = ((z - 200)>0) ? (z - 200):0;
+			start2[2] = ((z - 100)>0) ? (z - 100):0;
 
 		montageLabelType::SizeType size;
-		size[0] = ((x+200)<size_gfp_montage[0]) ? 400 : (200+size_nuc_montage[0]-x-1); 
-		size[1] = ((y+200)<size_nuc_montage[1]) ? 400 : (200+size_nuc_montage[1]-y-1);
-		if(size_nuc_montage[2] <= 200)
-			size[2] = size_nuc_montage[2];
+		size[0] = ((x+200)<size_gfp_montage[0]) ? 400 : (200+size_gfp_montage[0]-x-1); 
+		size[1] = ((y+200)<size_gfp_montage[1]) ? 400 : (200+size_gfp_montage[1]-y-1);
+		if(size_gfp_montage[2] <= 200)
+			size[2] = size_gfp_montage[2];
 		else
-			size[2] = ((z+100)<size_nuc_montage[2]) ? 200 : (100+size_nuc_montage[2]-z-1);
+			size[2] = ((z+100)<size_gfp_montage[2]) ? 200 : (100+size_gfp_montage[2]-z-1);
 
 		rawImageType::SizeType size2;
 		size2[0] = ((x+200)<size_gfp_montage[0]) ? 400 : (200+size_gfp_montage[0]-x-1);
@@ -1098,6 +1101,24 @@ int main(int argc, char* argv[])
 		else
 			size2[2] = ((z+100)<size_gfp_montage[2]) ? 200 : (100+size_gfp_montage[2]-z-1);
 
+		
+// #pragma omp critical
+// {
+// 	itk::SizeValueType size_gfp_montage2[3];
+// 	itk::SizeValueType size_gfp_montage3[3];
+// 	size_gfp_montage2[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
+// 	size_gfp_montage2[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
+// 	size_gfp_montage2[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
+// 	size_gfp_montage3[0] = somaMontage->GetLargestPossibleRegion().GetSize()[0];
+// 	size_gfp_montage3[1] = somaMontage->GetLargestPossibleRegion().GetSize()[1];
+// 	size_gfp_montage3[2] = somaMontage->GetLargestPossibleRegion().GetSize()[2];
+// 	
+// 	std::cout<<std::endl << size_gfp_montage2[0]<< " " <<size_gfp_montage2[1]<<" "<<size_gfp_montage2[2];
+// 	std::cout<<std::endl << size_gfp_montage3[0]<< " " <<size_gfp_montage3[1]<<" "<<size_gfp_montage3[2];
+// 	
+// }
+		
+		
 		montageLabelType::RegionType desiredRegion;
 		desiredRegion.SetSize(size);
 		desiredRegion.SetIndex(start);
