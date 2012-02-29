@@ -30,7 +30,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 	}
 
 
-	//Scale to (-1, 1) range and invert
+	//Scale to (-1, 1) range and invert   
 	typedef itk::ShiftScaleImageFilter<LoGImageType, LoGImageType> InvertFilterType;
 	InvertFilterType::Pointer invertFilter = InvertFilterType::New();
 	invertFilter->SetScale(-1.0 / std::numeric_limits<ImageType::PixelType>::max());
@@ -70,7 +70,7 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 	std::vector<LoGImageType::Pointer> LoG_vector;
 
 	//Calculate all the LoG scales
-	for (float scale = 1; scale <= 3; scale+=0.50)
+	for (float scale = 1.5; scale <= 2.5; scale+=0.1)
 	{
 		LoGImageType::Pointer LoGimage = RunLoG(cell->image, scale);
 		
@@ -116,6 +116,6 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 
 	logimageFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_LoG.mhd";
 
-	WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
+	//WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
 	return multiscale_LoG_image;
 }

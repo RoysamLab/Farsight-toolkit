@@ -12,12 +12,17 @@ int main(int argc, char* argv[])
 	MRT->LoadImage("E:/farsight_images/MicrogliaRegionTracer/input.tif");*/
 	
 	std::cout << "Entering LoadCellPoints" << std::endl;
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/787_684_81_soma.TIF" );
-	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/114_81_17_soma.TIF");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
-
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd" );
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
+	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedPoint.txt", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/montage_8bitkt06041_w311GFPdsu_soma.mhd");
+	
 	std::cout << "Entering Trace" << std::endl;
 	MRT->Trace();
+	//MRT->Trace2();
 
 	std::cout << "Total time for MicrogliaRegionTracing is: " << (clock() - start_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+
+	//getchar();
 }

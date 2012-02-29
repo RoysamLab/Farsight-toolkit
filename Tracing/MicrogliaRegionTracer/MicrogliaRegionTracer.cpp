@@ -5,41 +5,6 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filena
 	roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 }
 
-MicrogliaRegionTracer::ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(MaskedImageType::Pointer mask, ImageType::Pointer image)
-{
-	typedef itk::MaskNegatedImageFilter< ImageType, MaskedImageType, ImageType > MaskFilterType;
-	MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-	maskFilter->SetMaskImage(mask);
-	maskFilter->SetInput(image);
-	try
-	{
-		maskFilter->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "maskFilter Exception: " << err << std::endl;
-	}
-
-	return maskFilter->GetOutput();
-}
-
-MicrogliaRegionTracer::ImageType::Pointer MicrogliaRegionTracer::GetMaskedImage(std::string filename, ImageType::Pointer image)
-{
-	typedef itk::ImageFileReader< MaskedImageType > ReaderType;
-	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName(filename);
-	try
-	{
-		reader->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "reader Exception: " << err << std::endl;
-	}
-
-	return GetMaskedImage(reader->GetOutput(), image);
-}
-
 void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std::string soma_filename)
 {
 	std::ifstream seed_point_file;
@@ -69,6 +34,7 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std:
 
 		//Need to do this to make the MaskImageFilter work since it expects similar origins
 		ImageType::PointType origin = cell->image->GetOrigin();
+		cell->SetOrigin(origin);
 		origin[0] = 0;
 		origin[1] = 0;
 		origin[2] = 0;
@@ -83,122 +49,180 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std:
 		cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
 
 		//Write the cell image
-		WriteImage(cell_filename_stream.str(), cell->image);
+		Cell::WriteImage(cell_filename_stream.str(), cell->image);
 
 		roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
-		cell->setSize(roi_size);
+		cell->SetSize(roi_size);
 
-		////Get the masked image
-		//cell->masked_image = GetMaskedImage(soma_filename, cell->image);
+		//Get the mask
+		//cell->GetMask(soma_filename);
 
-		////Make the file name of the masked cell image
-		//std::stringstream masked_cell_filename_stream;
-		//masked_cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_masked.TIF";	//X_Y_Z_masked.TIF
-		//
-		////Write the masked cell image
-		//WriteImage(masked_cell_filename_stream.str(), cell->masked_image);
+		//Get the masked image
+		//cell->ComputeMaskedImage();
 
 		cells.push_back(cell);
 	}
 }
 
-void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image)
-{
-	typedef itk::ImageFileWriter< itk::Image< unsigned char, 3 > > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(image);	//image is from function parameters!
-	writer->SetFileName(filename);
-	try
-	{
-		writer->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "writer Exception: " << err << std::endl;
-	}
-}
-
-void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image)
-{
-	typedef itk::ImageFileWriter< itk::Image< unsigned short, 3 > > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(image);	//image is from function parameters!
-	writer->SetFileName(filename);
-	try
-	{
-		writer->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "writer Exception: " << err << std::endl;
-	}
-}
-
-void MicrogliaRegionTracer::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image)
-{
-	typedef itk::ImageFileWriter< itk::Image< float, 3 > > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(image);	//image is from function parameters!
-	writer->SetFileName(filename);
-	try
-	{
-		writer->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "writer Exception: " << err << std::endl;
-	}
-}
-
 void MicrogliaRegionTracer::Trace()
 {
-	std::vector<Cell*>::iterator cells_iter;
-	
 	//Trace cell by cell
 	#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
-	//for (cells_iter = cells.begin(); cells_iter != cells.end(); cells_iter++)
 	{
-		//Cell* cell = *cells_iter;
 		Cell* cell = cells[k];
 		
 		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
 		CalculateCandidatePixels(cell);
 
 		std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
+		
 		std::cout << "Tree Building" << std::endl;
 		BuildTree(cell);
 
-		std::cout << "Kappa Sigma Thresholding" << std::endl;
-		KappaSigmaThreshold(cell);
-		HuangThreshold(cell);
-		IntermodesThreshold(cell);
-		IsoDataThreshold(cell);
-		MaximumEntropyThreshold(cell);
-		MomentsThreshold(cell);
-		OtsuThreshold(cell);
-		OtsuMultipleThreshold(cell);
-		RenyiEntropyThreshold(cell);
-		ShanbhagThreshold(cell);
-		YenThreshold(cell);
+		delete cell;
+	}
+}
 
-		//SmoothPath(cell);
+void MicrogliaRegionTracer::Trace2()
+{
+	//Trace cell by cell
+	//#pragma omp parallel for
+	for (int k = 0; k < cells.size(); k++)
+	{	
+		Cell* cell = cells[k];
+
+		std::cout << "Thresholding" << std::endl;
+		cell->MaximumEntropyThreshold();
+
+		std::cout << "Skeletonize" << std::endl;
+		cell->Skeletonize();
+		cell->critical_point_image = cell->skeleton_image;
+  
+		cell->ComputeCriticalPointsVector(cell->skeleton_image);
+
+		std::cout << "Tracing based on skeleton" << std::endl;
+		TraceSkeletonImage(cell);
+
 		delete cell;
 	}
 }
 
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 {
-	LoG *log_obj = new LoG();
-	//Calculate the LoG on multiple scales and put them into a vector
-	std::cout << "Calculating Multiscale LoG" << std::endl;
-	cell->multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
-
-	std::cout << "Starting ridge detection" << std::endl;
+	std::cout << "Ridge Detection" << std::endl;
 	RidgeDetection(cell);
+	
+	std::cout << "VesselnessDetection" << std::endl;
+	VesselnessDetection(cell);
+	
+	std::cout << "BuildTree" << std::endl;
+	BuildTree(cell);
 }
 
 void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
+{
+	itk::Index<3> seed_index = {{cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0], cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1], cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2] }};
+	cell->critical_points_queue.push_front(seed_index);
+	
+	LoG *log_obj = new LoG();
+	//Calculate the LoG on multiple scales and store into an iamge
+	std::cout << "Calculating Multiscale LoG" << std::endl;
+	cell->multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
+	
+	//Make a new image to store the critical points	
+	ImageType::SizeType size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
+	cell->critical_point_image = ImageType::New();
+	ImageType::IndexType start;
+	start.Fill(0);
+
+	ImageType::RegionType region(start, size);
+	cell->critical_point_image->SetRegions(region);
+	cell->critical_point_image->Allocate();
+	cell->critical_point_image->FillBuffer(0);
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
+	itk::ConstNeighborhoodIterator< LoGImageType > LoG_neighbor_iter(rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
+
+	while(!LoG_neighbor_iter.IsAtEnd()) 
+	{
+		unsigned int neighborhood_size = (rad[0] * 2 + 1) * (rad[1] * 2 + 1) * (rad[2] * 2 + 1);
+		unsigned int center_pixel_offset_index = neighborhood_size / 2;
+
+		LoGImageType::PixelType center_pixel_intensity = LoG_neighbor_iter.GetPixel(center_pixel_offset_index);
+		
+		if (center_pixel_intensity >= 0.02)	//Must have greater than 2% response from LoG to even be considered for local maximum
+		{	
+			bool local_maximum = true;
+			
+			for (unsigned int neighborhood_index = 0; neighborhood_index < neighborhood_size; ++neighborhood_index)
+			{
+				if (neighborhood_index != center_pixel_offset_index)
+				{
+					bool isInBounds; //true if the pixel is in bounds
+					LoGImageType::PixelType neighbor_pixel_intensity = LoG_neighbor_iter.GetPixel(neighborhood_index, isInBounds);
+
+					if (isInBounds && neighbor_pixel_intensity > center_pixel_intensity)
+						local_maximum = false;
+				}
+			}
+
+			if (local_maximum)
+			{
+				critical_point_img_iter.Set(255);
+				cell->critical_points_queue.push_back(critical_point_img_iter.GetIndex());
+			}
+		}
+
+		++critical_point_img_iter;
+		++LoG_neighbor_iter;
+	}
+
+	std::ostringstream criticalpointsFileNameStream;
+	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
+	//Cell::WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
+}
+
+void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
+{
+	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
+	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
+	vesselness_filter->SetAlpha1(0.5);
+	vesselness_filter->SetAlpha2(0.5);
+
+	typedef itk::SymmetricSecondRankTensor< double, 3 >	HessianTensorType;
+	typedef itk::Image< HessianTensorType, 3 >			HessianImageType;
+
+	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
+
+	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
+	multiscale_hessian_filter->SetInput(cell->image);
+	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
+	multiscale_hessian_filter->SetSigmaMinimum(2.0);
+	multiscale_hessian_filter->SetSigmaMaximum(6.0);
+	multiscale_hessian_filter->SetNumberOfSigmaSteps(10);
+	multiscale_hessian_filter->SetNonNegativeHessianBasedMeasure(true);
+	multiscale_hessian_filter->SetHessianToMeasureFilter(vesselness_filter);
+
+	try
+	{
+		multiscale_hessian_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "multiscale_hessian_filter exception: " << &err << std::endl;
+	}
+
+	cell->vesselness_image = multiscale_hessian_filter->GetOutput();
+	
+	std::ostringstream vesselnessFileNameStream;
+
+	vesselnessFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
+	//Cell::WriteImage(vesselnessFileNameLocalStream.str(), cell->vesselness_image);
+}
+
+void MicrogliaRegionTracer::RidgeDetection2( Cell* cell )
 {
 	ImageType::SizeType size = cell->image->GetLargestPossibleRegion().GetSize();
 
@@ -222,21 +246,21 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	cell->vesselness_image->Allocate();
 	cell->vesselness_image->FillBuffer(0);
 
-	itk::ImageRegionIterator<ImageType> critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
-	itk::ImageRegionIterator<VesselnessImageType> vesselness_image_iter(cell->vesselness_image, cell->vesselness_image->GetLargestPossibleRegion());
-	
+	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< VesselnessImageType > vesselness_image_iter(cell->vesselness_image, cell->vesselness_image->GetLargestPossibleRegion());
+
 	itk::Size<3> rad = {{1,1,1}};
 	itk::Size<3> local_rad = {{1,1,1}};
 
-	itk::NeighborhoodIterator<LoGImageType> neighbor_iter(rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
-	itk::NeighborhoodIterator<LoGImageType> local_maxima_iter(local_rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
+	itk::NeighborhoodIterator< LoGImageType > neighbor_iter(rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
+	itk::NeighborhoodIterator< LoGImageType > local_maxima_iter(local_rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
 
 	//Making a size value that removes some room (kind of like reverse padding) so we dont go out of bounds later
 	itk::Size<3> unpad_size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
 	unpad_size[0] = unpad_size[0] - (rad[0] + 1);
 	unpad_size[1] = unpad_size[1] - (rad[1] + 1); 
 	unpad_size[2] = unpad_size[2] - (rad[2] + 1);
-	
+
 	critical_point_img_iter.GoToBegin();
 	neighbor_iter.GoToBegin();
 	vesselness_image_iter.GoToBegin();
@@ -253,7 +277,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	while(!neighbor_iter.IsAtEnd()) 
 	{
 		itk::Index<3> index = neighbor_iter.GetIndex();
-		
+
 		//checking to see if we are at the edge of the image
 		if ( (index[0] < rad[0] + 1) || (index[1] < rad[1] + 1) || (index[2] < rad[2] + 1) ||								
 			(index[0] >= (int)unpad_size[0]) || (index[1] >= (int)unpad_size[1]) || (index[2] >= (int)unpad_size[2]) )		
@@ -273,18 +297,22 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 			if (local_maxima_iter.GetPixel(i) > local_maxima_iter.GetPixel(local_maximum_search_size / 2))
 				local_maximum = false;
 		}
-		
+
 		if (local_maximum)
 		{		
 			critical_point_img_iter.Set(255);
 		}
 
 		float vesselness_score = RunHessian(cell->multiscale_LoG_image, neighbor_iter, max_intensity_multiscale);
+
+		if (vesselness_score > cell->vesselness_image_maximum_intensity)
+			cell->vesselness_image_maximum_intensity = vesselness_score;
+
 		vesselness_image_iter.Set(vesselness_score);
-		
-		if (vesselness_image_iter.Get() > 0.025 && local_maximum)
+
+		if (vesselness_image_iter.Get() > 0.010 && local_maximum)
 			cell->critical_points_queue.push_back(vesselness_image_iter.GetIndex());
-		
+
 		++local_maxima_iter;
 		++critical_point_img_iter;
 		++neighbor_iter;
@@ -297,8 +325,8 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
 	vesselnessFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
 
-	WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
-	WriteImage(vesselnessFileNameLocalStream.str(), cell->vesselness_image);
+	Cell::WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
+	Cell::WriteImage(vesselnessFileNameLocalStream.str(), cell->vesselness_image);
 }
 
 double MicrogliaRegionTracer::RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter, double max_intensity_multiscale )
@@ -449,6 +477,7 @@ double MicrogliaRegionTracer::ComputeVesselness( double ev1, double ev2, double 
 	}
 	else
 		vesselness_score = 0;
+
 	return vesselness_score;
 }
 
@@ -462,6 +491,7 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 
 	cell->critical_points_queue.push_front(cell_index);	//Add the centroid to the critical points
 
+	std::cout << "Building Adjacency Graph" << std::endl;
 	double** AdjGraph = BuildAdjacencyGraph(cell);
 
 	Tree* tree = BuildMST1(cell, AdjGraph);
@@ -479,27 +509,67 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
-	#pragma omp parallel for
-	for (itk::int64_t k = 0; k < cell->critical_points_queue.size(); k++)
+	//#pragma omp parallel for
+	for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
 	{
+		//std::cout << "Calculating distance for node " << k << std::endl;
 		for (itk::uint64_t l = 0; l < cell->critical_points_queue.size(); l++)
 		{
 			AdjGraph[k][l] = CalculateDistance(k, l, cell);
 		}
 	}
+
+	std::cout << "Done calculating distance graph" << std::endl;
 	return AdjGraph;
 }
 
-double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell)
+double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::uint64_t node_to, Cell* cell)
 {
-	ImageType::IndexType node1 = cell->critical_points_queue[k];
-	ImageType::IndexType node2 = cell->critical_points_queue[l];
+	ImageType::IndexType node1 = cell->critical_points_queue[node_from];
+	ImageType::IndexType node2 = cell->critical_points_queue[node_to];
 
-	itk::int64_t distance_x = node1[0] - node2[0];
-	itk::int64_t distance_y = node1[1] - node2[1];
-	itk::int64_t distance_z = node1[2] - node2[2];
+	ImageType::IndexType trace_vector;
+	trace_vector[0] = node2[0] - node1[0];
+	trace_vector[1] = node2[1] - node1[1];
+	trace_vector[2] = node2[2] - node1[2];
 
-	return sqrt(pow(distance_x, 2.0) + pow(distance_y, 2.0) + pow(distance_z, 2.0));
+	double mag_trace_vector = sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
+	
+	if (node_from == node_to || mag_trace_vector < 0.0001)
+		return std::numeric_limits< double >::max();
+	//return mag_trace_vector;
+
+	typedef itk::PolyLineParametricPath< 3 > PathType;
+	PathType::Pointer path = PathType::New();
+	path->Initialize();
+
+	//std::cout << "Start Index: " << node1 << " " << "End Index: " << node2 << std::endl;
+
+	path->AddVertex(node1);
+	path->AddVertex(node2);
+
+	typedef itk::PathIterator< VesselnessImageType, PathType > PathIteratorType;
+	PathIteratorType path_iter(cell->vesselness_image, path);
+
+	double sum_of_vesselness_values = 0;
+	itk::uint64_t path_length = 0;
+	itk::uint64_t num_blank_pixels = 0;
+	
+	//path_iter.GoToBegin();
+	while (!path_iter.IsAtEnd())
+	{
+		//std::cout << "Path iterator position: " << path_iter.GetPathPosition() << std::endl;
+		//std::cout << "Path iterator index: " << path_iter.GetIndex() << std::endl;
+		if (path_iter.Get() < 1.0)
+			++num_blank_pixels;
+		++path_iter;
+		++path_length;
+	}
+	
+	if (num_blank_pixels >= 5)
+		return 100000;
+	else
+		return mag_trace_vector;
 }
 
 Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
@@ -555,7 +625,8 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 			}	
 		}
 
-		
+		if (minimum_node_distance >= 100000)
+			break;	//Minimum distance way too far
 		
 		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_node_index_from_id][0] << " " << cell->critical_points_queue[minimum_node_index_from_id][1] << " " << cell->critical_points_queue[minimum_node_index_from_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
 		ImageType::IndexType cell_origin;
@@ -591,166 +662,99 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	return tree;
 }
 
-void MicrogliaRegionTracer::SmoothPath(Cell* cell)
+
+
+void MicrogliaRegionTracer::TraceSkeletonImage(Cell* cell)
 {
-	typedef itk::DanielssonDistanceMapImageFilter< LoGImageType, DistanceImageType, VoronoiImageType > DistanceMapFilterType;
-	DistanceMapFilterType::Pointer dist_map_filter = DistanceMapFilterType::New();
-	dist_map_filter->SetInput(cell->multiscale_LoG_image);
-	try
+	ImageType::IndexType root_index = FindNearestCriticalPointToCentroid(cell);
+
+	//Make a new image to store the visited points	
+	ImageType::Pointer visited_image = ImageType::New();
+	ImageType::IndexType start;
+	start.Fill(0);
+
+	itk::Size<3> size = cell->thresholded_image->GetLargestPossibleRegion().GetSize();
+
+	ImageType::RegionType region(start, size);
+	visited_image->SetRegions(region);
+	visited_image->Allocate();
+	visited_image->FillBuffer(0);
+		
+	std::ofstream traceFile;
+	std::ofstream traceFile_local;
+	std::ostringstream traceFileNameStream;
+	std::ostringstream traceFileNameLocalStream;
+	traceFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".swc";
+	traceFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_local.swc";
+	traceFile.open(traceFileNameStream.str().c_str());
+	traceFile_local.open(traceFileNameLocalStream.str().c_str());
+	std::cout << "Opening " << traceFileNameStream.str() << std::endl;
+
+	itk::int64_t swc_line_number = 1;
+	FollowSkeleton(cell, root_index, visited_image, -1, swc_line_number, traceFile, traceFile_local);
+
+	traceFile.close();
+	traceFile_local.close();
+}
+
+void MicrogliaRegionTracer::FollowSkeleton( Cell* cell, ImageType::IndexType index, ImageType::Pointer visited_image, itk::int64_t parent_id, itk::int64_t &swc_line_number, std::ofstream &traceFile, std::ofstream &traceFile_local)
+{
+	itk::int64_t id = swc_line_number;
+	traceFile_local << id << " 3 " << index[0] << " " << index[1] << " "  << index[2] << " 1 " << parent_id << std::endl;
+	itk::Size<3> rad = {{1,1,1}};
+
+	itk::uint64_t neighborhood_size = (2 * rad[0] + 1) * (2 * rad[1] + 1) * (2 * rad[2] + 1);
+
+	itk::NeighborhoodIterator< ImageType > neighborhood_iter(rad, cell->skeleton_image, cell->skeleton_image->GetLargestPossibleRegion().GetSize());
+	neighborhood_iter.SetLocation(index);
+
+	for (int k = 0; k < neighborhood_size; k++)
 	{
-		dist_map_filter->Update();
+		bool IsInBounds;
+		ImageType::PixelType intensity = neighborhood_iter.GetPixel(k, IsInBounds);
+		if (k != neighborhood_size/2 && IsInBounds)
+		{
+			ImageType::IndexType child_index = neighborhood_iter.GetIndex(k);
+
+			if (visited_image->GetPixel(child_index) == 0)	//Not visited, so we can go on
+			{
+				if (intensity != 0)
+				{
+					//std::cout << " Index: " << index << " Child Index: " << child_index << std::endl;
+					visited_image->SetPixel(index, std::numeric_limits< ImageType::PixelType >::max());
+					FollowSkeleton(cell, child_index, visited_image, id, ++swc_line_number, traceFile, traceFile_local);
+				}
+			}
+		}
 	}
-	catch (itk::ExceptionObject &err)
-	{                                             
-		std::cerr << "dist_map_filter exception at " << __FILE__ << " " << __LINE__ << std::endl;
-		std::cerr << &err << std::endl;
+}
+
+MicrogliaRegionTracer::ImageType::IndexType MicrogliaRegionTracer::FindNearestCriticalPointToCentroid(Cell* cell)
+{
+	ImageType::IndexType centroid_location_local, root_location;
+	centroid_location_local[0] = cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0];
+	centroid_location_local[1] = cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1];
+	centroid_location_local[2] = cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2];
+
+	double min_distance = std::numeric_limits< double >::max();
+
+	std::deque< ImageType::IndexType >::iterator critical_points_queue_iter;
+
+	for (critical_points_queue_iter = cell->critical_points_queue.begin(); critical_points_queue_iter != cell->critical_points_queue.end(); ++critical_points_queue_iter)
+	{
+		ImageType::IndexType critical_point_index = *critical_points_queue_iter;
+
+		double distance = sqrt(
+								pow(critical_point_index[0] - centroid_location_local[0], 2.0) +
+								pow(critical_point_index[1] - centroid_location_local[1], 2.0) +
+								pow(critical_point_index[2] - centroid_location_local[2], 2.0) ) ;
+
+		if (distance < min_distance)
+		{
+			min_distance = distance;
+			root_location = critical_point_index;
+		}
 	}
 
-	VoronoiImageType::Pointer voronoi_image = dist_map_filter->GetVoronoiMap();
-	DistanceImageType::Pointer dist_image = dist_map_filter->GetDistanceMap();
-
-	std::ostringstream voronoi_image_filename_stream;
-	std::ostringstream dist_image_filename_stream;
-	voronoi_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_voronoi.mhd";
-	dist_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_dist.mhd";
-
-	WriteImage(voronoi_image_filename_stream.str(), voronoi_image);
-	WriteImage(dist_image_filename_stream.str(), dist_image);
+	return root_location;
 }
-
-void MicrogliaRegionTracer::KappaSigmaThreshold(Cell* cell)
-{
-	typedef itk::KappaSigmaThresholdImageFilter< ImageType > KappaSigmaFilterType;
-	KappaSigmaFilterType::Pointer kappa_sigma_filter = KappaSigmaFilterType::New();
-	kappa_sigma_filter->SetInput(cell->image);
-	kappa_sigma_filter->SetSigmaFactor(2.0);
-	kappa_sigma_filter->SetNumberOfIterations(2);
-	kappa_sigma_filter->Update();
-	
-	std::ostringstream kappa_sigma_filename_stream;
-	kappa_sigma_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_kappa_sigma.mhd";
-	WriteImage(kappa_sigma_filename_stream.str(), kappa_sigma_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::HuangThreshold(Cell* cell)
-{
-	typedef itk::HuangThresholdImageFilter< ImageType, ImageType > HuangThresholdImageFilterType;
-	HuangThresholdImageFilterType::Pointer huang_threshold_filter = HuangThresholdImageFilterType::New();
-	huang_threshold_filter->SetInput(cell->image);
-	huang_threshold_filter->Update();
-
-	std::ostringstream huang_filename_stream;
-	huang_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_huang.mhd";
-	WriteImage(huang_filename_stream.str(), huang_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::IntermodesThreshold(Cell* cell)
-{
-	typedef itk::IntermodesThresholdImageFilter< ImageType, ImageType > IntermodesThresholdImageFilterType;
-	IntermodesThresholdImageFilterType::Pointer Intermodes_threshold_filter = IntermodesThresholdImageFilterType::New();
-	Intermodes_threshold_filter->SetInput(cell->image);
-	Intermodes_threshold_filter->Update();
-
-	std::ostringstream Intermodes_filename_stream;
-	Intermodes_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Intermodes.mhd";
-	WriteImage(Intermodes_filename_stream.str(), Intermodes_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::IsoDataThreshold(Cell* cell)
-{
-	typedef itk::IsoDataThresholdImageFilter< ImageType, ImageType > IsoDataThresholdImageFilterType;
-	IsoDataThresholdImageFilterType::Pointer IsoData_threshold_filter = IsoDataThresholdImageFilterType::New();
-	IsoData_threshold_filter->SetInput(cell->image);
-	IsoData_threshold_filter->Update();
-
-	std::ostringstream IsoData_filename_stream;
-	IsoData_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_IsoData.mhd";
-	WriteImage(IsoData_filename_stream.str(), IsoData_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::MaximumEntropyThreshold(Cell* cell)
-{
-	typedef itk::MaximumEntropyThresholdImageFilter< ImageType, ImageType > MaximumEntropyThresholdImageFilterType;
-	MaximumEntropyThresholdImageFilterType::Pointer MaximumEntropy_threshold_filter = MaximumEntropyThresholdImageFilterType::New();
-	MaximumEntropy_threshold_filter->SetInput(cell->image);
-	MaximumEntropy_threshold_filter->Update();
-
-	std::ostringstream MaximumEntropy_filename_stream;
-	MaximumEntropy_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_MaximumEntropy.mhd";
-	WriteImage(MaximumEntropy_filename_stream.str(), MaximumEntropy_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::MomentsThreshold(Cell* cell)
-{
-	typedef itk::MomentsThresholdImageFilter< ImageType, ImageType > MomentsThresholdImageFilterType;
-	MomentsThresholdImageFilterType::Pointer Moments_threshold_filter = MomentsThresholdImageFilterType::New();
-	Moments_threshold_filter->SetInput(cell->image);
-	Moments_threshold_filter->Update();
-
-	std::ostringstream Moments_filename_stream;
-	Moments_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Moments.mhd";
-	WriteImage(Moments_filename_stream.str(), Moments_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::OtsuThreshold(Cell* cell)
-{
-	typedef itk::OtsuThresholdImageFilter< ImageType, ImageType > OtsuThresholdImageFilterType;
-	OtsuThresholdImageFilterType::Pointer Otsu_threshold_filter = OtsuThresholdImageFilterType::New();
-	Otsu_threshold_filter->SetInput(cell->image);
-	Otsu_threshold_filter->Update();
-
-	std::ostringstream Otsu_filename_stream;
-	Otsu_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Otsu.mhd";
-	WriteImage(Otsu_filename_stream.str(), Otsu_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::OtsuMultipleThreshold(Cell* cell)
-{
-	typedef itk::OtsuMultipleThresholdsImageFilter< ImageType, ImageType > OtsuMultipleThresholdImageFilterType;
-	OtsuMultipleThresholdImageFilterType::Pointer Otsu_Multiple_thresholds_filter = OtsuMultipleThresholdImageFilterType::New();
-	Otsu_Multiple_thresholds_filter->SetInput(cell->image);
-	Otsu_Multiple_thresholds_filter->Update();
-
-	std::ostringstream Otsu_Multiple_filename_stream;
-	Otsu_Multiple_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Otsu_Multiple.mhd";
-	WriteImage(Otsu_Multiple_filename_stream.str(), Otsu_Multiple_thresholds_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::RenyiEntropyThreshold(Cell* cell)
-{
-	typedef itk::RenyiEntropyThresholdImageFilter< ImageType, ImageType > RenyiEntropyThresholdImageFilterType;
-	RenyiEntropyThresholdImageFilterType::Pointer RenyiEntropy_threshold_filter = RenyiEntropyThresholdImageFilterType::New();
-	RenyiEntropy_threshold_filter->SetInput(cell->image);
-	RenyiEntropy_threshold_filter->Update();
-
-	std::ostringstream RenyiEntropy_filename_stream;
-	RenyiEntropy_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_RenyiEntropy.mhd";
-	WriteImage(RenyiEntropy_filename_stream.str(), RenyiEntropy_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::ShanbhagThreshold(Cell* cell)
-{
-	typedef itk::ShanbhagThresholdImageFilter< ImageType, ImageType > ShanbhagThresholdImageFilterType;
-	ShanbhagThresholdImageFilterType::Pointer Shanbhag_threshold_filter = ShanbhagThresholdImageFilterType::New();
-	Shanbhag_threshold_filter->SetInput(cell->image);
-	Shanbhag_threshold_filter->Update();
-
-	std::ostringstream Shanbhag_filename_stream;
-	Shanbhag_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Shanbhag.mhd";
-	WriteImage(Shanbhag_filename_stream.str(), Shanbhag_threshold_filter->GetOutput());
-}
-
-void MicrogliaRegionTracer::YenThreshold(Cell* cell)
-{
-	typedef itk::YenThresholdImageFilter< ImageType, ImageType > YenThresholdImageFilterType;
-	YenThresholdImageFilterType::Pointer Yen_threshold_filter = YenThresholdImageFilterType::New();
-	Yen_threshold_filter->SetInput(cell->image);
-	Yen_threshold_filter->Update();
-
-	std::ostringstream Yen_filename_stream;
-	Yen_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_Yen.mhd";
-	WriteImage(Yen_filename_stream.str(), Yen_threshold_filter->GetOutput());
-}
-
-
-
