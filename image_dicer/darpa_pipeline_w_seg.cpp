@@ -31,9 +31,7 @@
 
 #include <iostream>
 
-#ifdef _OPENMP
 #include "omp.h"
-#endif
 
 typedef itk::Image<unsigned char,  3> rawImageType;
 typedef itk::Image<unsigned short, 3> LabelType;
