@@ -55,7 +55,10 @@ public:
 	//QvtkTableView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
 
 	void SetInputLink(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
+
 	vtkIdTypeArray * getSelectedObjects();
+	vtkSelection * ConvertIDsToVTKSelection(vtkIdTypeArray * vtkIDs);
+	void setCurrentVTKSelection(vtkSelection * TableRowSelection);
 
 private slots:
 

@@ -190,9 +190,6 @@ public slots:
 	void ShowDistribution();
 	void RunOperatorOnSelectedClusters();
 
-protected slots:
-	static void SelectionCallbackFunction(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
-
 private:
 
 	//Selection Classes 
@@ -211,7 +208,6 @@ private:
 
 	QvtkTableView * QVTKClusterTableView;
 	
-	vtkSmartPointer<vtkQtTableView> ClusterTableView;
 	vtkIdTypeArray * GetClusterTableSelections();
 
 	QLabel * NumClusters;

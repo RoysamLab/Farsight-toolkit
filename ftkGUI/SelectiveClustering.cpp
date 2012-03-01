@@ -583,11 +583,8 @@ ClusterManager::ClusterManager()
 	connect(this->ShowDistributionButton, SIGNAL(clicked()), this, SLOT(ShowDistribution()));
 	
 	//this->ClusterListView = new QListWidget(this);
-	this->ClusterTableView = vtkSmartPointer<vtkQtTableView>::New();
-	std::cout<< "Test add widget\n";
+
 	this->QVTKClusterTableView = new QvtkTableView();
-	
-	std::cout<< "Test add widget\n";
 	
 	this->OperatorList = new QComboBox(this);
 	OperatorList->addItem("ADD");
@@ -631,12 +628,13 @@ ClusterManager::ClusterManager()
 	this->HLayout = new QHBoxLayout();
 
 	//this->MainLayout->addWidget(this->ClusterListView);
-	this->HLayout->addWidget(this->ClusterTableView->GetWidget());
+	//this->HLayout->addWidget(this->ClusterTableView->GetWidget());
+	this->HLayout->addWidget(this->QVTKClusterTableView);
 	this->HLayout->addLayout(InfoLayout);
 	
 	this->MainLayout->addLayout(ButtonLayout);
 	this->MainLayout->addLayout(HLayout);
-	this->MainLayout->addWidget(this->QVTKClusterTableView);
+	//this->MainLayout->addWidget(this->QVTKClusterTableView);
 	this->MainLayout->addLayout(this->HOperatorDisplayLayout);
 
 	//this->MainLayout->addWidget(this->ClusterListView,0,0);
@@ -708,21 +706,8 @@ vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
 	/*!
 	* maps selected vtkTable rows to selected vtkIDS
 	*/
-	vtkIdTypeArray * SelectedClusters = vtkIdTypeArray::New() ;
-	vtkIdTypeArray * SelectedRows = vtkIdTypeArray::New() ;
-
-	this->ClusterTableView->GetSelectedItems(SelectedRows);
-	vtkSmartPointer<vtkTable> table = this->ClusterModel->GetClusterTable();
-	//table->Dump(16);
-	for (vtkIdType count = 0; count < SelectedRows->GetSize(); count++)
-	{
-		vtkIdType row = SelectedRows->GetValue(count);
-		vtkVariant value = table->GetValue(row, 0);
-		SelectedClusters->InsertNextValue(value.ToTypeInt64());
-	}
 	
-	cout << SelectedClusters;
-	return SelectedClusters;
+	return this->QVTKClusterTableView->getSelectedObjects();
 }
 void ClusterManager::ChangeInClusters()
 {
@@ -733,29 +718,6 @@ void ClusterManager::ChangeInClusters()
 	this->NumClusters->setNum(numClust);
 	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
 	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
-
-	this->ClusterTableView->RemoveAllRepresentations();
-	this->ClusterTableView->Update();
-	vtkQtTableModelAdapter adapt(this->ClusterModel->GetClusterTable());
-	this->ClusterTableView->SetRepresentationFromInput(adapt.GetVTKDataObject());
-	if(!AnnotationLinkSetUp)
-	{
-		/*this->ClusterTableView->GetRepresentation()->SetAnnotationLink(this->ClusterModel->ClusterAnnotationLink);
-		this->ClusterTableView->GetRepresentation()->SetSelectionType(vtkSelectionNode::PEDIGREEIDS);
-		this->ClusterTableView->GetRepresentation()->SetSelectionArrayName("Cluster ID");*/
-		/*this->ClusterModel->ClusterVtkViewUpdater->AddView(this->ClusterTableView);
-		this->ClusterModel->ClusterVtkViewUpdater->AddAnnotationLink(this->ClusterModel->ClusterAnnotationLink);*/
-
-		this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New(); 
-		this->selectionCallback->SetClientData(this);
-		this->selectionCallback->SetCallback ( SelectionCallbackFunction);
-
-		vtkAnnotationLink *link = this->ClusterModel->ClusterAnnotationLink;
-		link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
-
-		AnnotationLinkSetUp = true;
-	}
-	this->ClusterTableView->Update();
 
 	//display of clusters in a list
 	/*QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
@@ -926,76 +888,4 @@ void ClusterManager::ShowDistribution()
 	view->GetInteractor()->Initialize();
 	view->GetInteractor()->Start();
 	
-}
-void ClusterManager::SelectionCallbackFunction(vtkObject *caller, unsigned long eventId, void *clientData, void *callData)
-{
-	/*! 
-	* 
-	*/ 
-	//std::cout<< "in callback function \n";
-	vtkAnnotationLink * annotationLink = static_cast<vtkAnnotationLink*>(caller);
-	vtkSelection * selection = annotationLink->GetCurrentSelection();
-	ClusterManager * ClusMan = (ClusterManager*)clientData;
-	vtkSelection * TableRowSelection = vtkSelection::New();
-	vtkSelectionNode* vertices = NULL;
-	//vtkSelectionNode* edges = NULL;
-
-	if( selection->GetNode(0))
-	{
-		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
-		{
-			vertices = selection->GetNode(0);
-		}
-	}
-
-	if( selection->GetNode(1))
-	{
-		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
-		{
-			vertices = selection->GetNode(1);
-		}
-	}
-	std::map< vtkIdType, vtkIdType> IdLookUP = ClusMan->ClusterModel->GetClusterTableIDMap();
-	std::map< vtkIdType, vtkIdType>::iterator  idIter;
-
-	if( vertices != NULL)
-	{
-		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
-		vtkIdType numTuples = vertexList->GetNumberOfTuples();
-
-		vtkSmartPointer<vtkIdTypeArray> ConvertedVertexList = vtkSmartPointer<vtkIdTypeArray>::New();
-		ConvertedVertexList->SetNumberOfComponents(1);
-
-		if( vertexList != NULL && numTuples > 0)
-		{
-			//std::cout<< "number of selections: " << numTuples << "\nselected:\n";
-			for( vtkIdType i = 0; i < numTuples; i++)
-			{
-				vtkIdType value = vertexList->GetValue(i);
-				//std::cout<< value << "\n";
-				idIter = IdLookUP.find(value);
-				if ( idIter != IdLookUP.end())
-				{
-					vtkIdType convertedValue = (*idIter).second;
-					ConvertedVertexList->InsertNextValue(convertedValue );
-				//std::cout<< value << " converted to " << convertedValue << "\n";
-				}
-				
-			}
-			
-		}
-		vtkSmartPointer<vtkSelectionNode> selectNodeList = vtkSmartPointer<vtkSelectionNode>::New();
-		selectNodeList->SetSelectionList( ConvertedVertexList);
-		selectNodeList->SetFieldType( vtkSelectionNode::VERTEX);
-		selectNodeList->SetContentType( vtkSelectionNode::INDICES);
-
-		//TableRowSelection->GetNode(0)->SetSelectionList(selectNodeList);
-		TableRowSelection->RemoveAllNodes();
-		TableRowSelection->AddNode(selectNodeList);
-
-		ClusMan->ClusterTableView->GetRepresentation()->UpdateSelection(TableRowSelection);
-	}//end verticies != null
-	ClusMan->ClusterTableView->GetRepresentation()->GetAnnotationLink()->SetCurrentSelection(TableRowSelection);
-	ClusMan->ClusterTableView->Update();
-
 }
