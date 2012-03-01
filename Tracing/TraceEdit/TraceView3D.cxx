@@ -1640,6 +1640,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	this->processingMenu = this->menuBar()->addMenu(tr("Processing"));
 	this->DataViews = this->menuBar()->addMenu(tr("Visualization"));
 	this->analysisViews = this->menuBar()->addMenu(tr("Analysis"));
 
@@ -1721,6 +1722,11 @@ void View3D::CreateLayout()
 	this->BranchToolBar->addWidget(new QLabel("Unsolved Branches: "));
 	this->BranchToolBar->addWidget(this->BranchesLabel);
 	this->BranchToolBar->hide();
+
+	//processingmenu
+	QAction *startTracingGui = new QAction("Trace...",this);
+	connect(startTracingGui,SIGNAL(triggered()),this,SLOT(openTracingDialog()));
+	this->processingMenu->addAction(startTracingGui);
 
 	//settings widget layout
 	//this->SettingsToolBox = new QToolBox(this);
@@ -1925,6 +1931,102 @@ void View3D::CreateLayout()
 	/**************************************************************************/
 
 }
+
+void View3D::openTracingDialog()
+{
+	this->tracingGui = new QDialog(this);
+	this->tracingGui->setWindowTitle("Trace...");
+	QVBoxLayout *tracingLayout = new QVBoxLayout(this->tracingGui);
+	tracingLayout->addWidget(new QLabel("Choose tracing algorithm"));	
+	tracingLayout->setSizeConstraint(QLayout::SetMinimumSize);
+
+	this->tracerCombo = new QComboBox;
+	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
+	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
+	tracingLayout->addWidget(this->tracerCombo);
+	connect(this->tracerCombo, SIGNAL(activated(int)), this, SLOT(PickTracer(int)));
+
+	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
+	QFormLayout *mntLayout = new QFormLayout();
+	this->mntCostThreshold = new QSpinBox;
+	this->mntCostThreshold->setRange(100,1000);
+	this->mntCostThreshold->setSingleStep(10);
+	this->mntCostThreshold->setValue(700);
+	mntLayout->addRow("Cost Threshold",this->mntCostThreshold);
+	this->mntSeedsButton = new QPushButton("Seed Points",this->mntBox);
+	connect(this->mntSeedsButton, SIGNAL(clicked()), this, SLOT(seedPointFileDialog()));
+	this->mntSomaButton = new QPushButton("Soma Image",this->mntBox);
+	mntLayout->addRow(mntSeedsButton,mntSomaButton);
+	connect(this->mntSomaButton, SIGNAL(clicked()), this, SLOT(somaFileDialog()));
+	this->mntBox->setLayout(mntLayout);
+	tracingLayout->addWidget(this->mntBox);
+	this->mntBox->setVisible(true);
+
+	QPushButton * traceButton = new QPushButton("Run Tracer", this->tracingGui);
+	QPushButton * cancelButton = new QPushButton("Nevermind", this->tracingGui);
+	tracingLayout->addWidget(traceButton);
+	tracingLayout->addWidget(cancelButton);
+	connect(traceButton, SIGNAL(clicked()), this->tracingGui, SLOT(accept()));
+	connect(cancelButton, SIGNAL(clicked()), this->tracingGui, SLOT(reject()));
+	connect(this->tracingGui,SIGNAL(accepted()), this, SLOT(RunTracer()));
+
+	//this->tracingGui->setWindowModality();	
+	this->tracingGui->exec();
+
+	
+}
+
+void View3D::seedPointFileDialog()
+{
+	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	this->seedsFile = QFileDialog::getOpenFileName(this , "Load Seed Point Data", traceDir,
+		tr("All Seed Files ( *.xml *.swc *.vtk *.txt);;Text files (*.txt);;SWC (*.swc);;VTK (*.vtk);; XML ( *.xml )" ));
+}
+
+void View3D::somaFileDialog()
+{
+	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	this->somaFile = QFileDialog::getOpenFileName(this , "Load Somata Data", traceDir,
+		tr("All Images ( *.tif *.mhd)" ));
+}
+
+void View3D::PickTracer(int choice)
+{
+	//turn tracer guis off
+	this->mntBox->setVisible(false);
+
+	//turn selected one on
+	switch(choice)
+	{
+		case 0:
+			this->mntBox->setVisible(true); break;
+	}
+	this->tracingGui->resize(this->tracingGui->minimumSize());
+}
+
+void View3D::RunTracer()
+{
+	//start selected tracer
+	switch(this->tracerCombo->currentIndex())
+	{
+		case 0:
+			StartMNTracerAmit(this->mntCostThreshold->value()); break;
+	}
+}
+
+
+void View3D::StartMNTracerAmit(int costThreshold)
+{
+	//Multiple Neuron Tracer, Amit's version
+	std::cout<<"Starting Amit's Tracer w threshold "<<costThreshold<<std::endl;
+}
+
+void View3D::ArunCenterline()
+{
+	//stub for now to check if it works
+	std::cout<<"What is this?  Is this a working button?  WHY YES I BELIEVE IT IS." <<std::endl;
+}
+
 void View3D::adjustEditorSettingsSize(bool changesize) // Replace with QToolBar
 {
 	if (selectionSettings->isChecked())
@@ -3249,12 +3351,6 @@ void View3D::setUsePointer(int i)
 		this->ShowPointer3DDefault = false;
 		this->pointer3d->SetEnabled(0);
 	}
-}
-
-void View3D::ArunCenterline()
-{
-	//stub for now to check if it works
-	std::cout<<"What is this?  Is this a working button?  WHY YES I BELIEVE IT IS." <<std::endl;
 }
 
 void View3D::createNewTraceBit()

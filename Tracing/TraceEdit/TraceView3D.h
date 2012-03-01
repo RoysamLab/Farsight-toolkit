@@ -199,10 +199,19 @@ public slots:
 	void AutomaticEdits();
 	void ShowAutomatedEdits();
 
+	//tracing gui slots
+	void PickTracer(int choice);
+	void RunTracer();
+	void StartMNTracerAmit(int costThreshold);
+	void seedPointFileDialog();
+	void somaFileDialog();
+
 	void SLine(double d);
 	void FakeSpines(double d);
 	void FakeBridges(double d);
 	void HalfBridges(double d);
+
+	void openTracingDialog();
 
 	void LoadTraces();
 	void LoadImageData();
@@ -342,9 +351,11 @@ private:
     QWidget *CentralWidget;
 	QMenu *fileMenu;
 	QMenu *ShowToolBars;
+	QMenu *processingMenu;
 	QMenu *DataViews;
 	QMenu *analysisViews;
 	QMenu *help;
+	QDialog *tracingGui;
 	QAction *aboutAction;
 	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SlicerBar;
 
@@ -499,6 +510,16 @@ private:
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkCellPicker> CellPicker;
+
+	//tracing gui widgets
+	QComboBox * tracerCombo;
+	QGroupBox * mntBox;
+	QSpinBox * mntCostThreshold;
+	QPushButton * mntSeedsButton;
+	QPushButton * mntSomaButton;
+	QString seedsFile;
+	QString somaFile;
+
 
 	//vessel segmentation
 	QWidget * vesselSegWidget;
