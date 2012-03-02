@@ -205,11 +205,17 @@ QvtkTableDialog::QvtkTableDialog()
 	QVBoxLayout * MainVBoxLayout = new QVBoxLayout();
 	MainVBoxLayout->addWidget(TableView);
 	this->setLayout(MainVBoxLayout);
-	this->setVisible(true);
 }
 QvtkTableDialog::~QvtkTableDialog()
 {
 }
+
+void QvtkTableDialog::UpdateView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink)
+{
+	this->TableView->SetInputLink(InputTable, InputAnnotationLink);
+	this->setVisible(true);
+}
+
 void QvtkTableDialog::closeEvent(QCloseEvent *event)
 {
 	event->accept();
