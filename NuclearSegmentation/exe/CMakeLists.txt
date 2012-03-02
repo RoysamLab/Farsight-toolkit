@@ -19,7 +19,7 @@ ENDIF(BUILD_MODEL_SEG)
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
-TARGET_LINK_LIBRARIES( SomaExtraction  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES( SomaExtraction  Yousef_Nucleus_Seg   TraceCoreLibrary  ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
 TARGET_LINK_LIBRARIES( compute_nuclei_features NuclearSegmentation ftkCommon ftkFeatures     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 

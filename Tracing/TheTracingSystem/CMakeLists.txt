@@ -53,6 +53,19 @@ INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 #INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/tinyxml )
 #ADD_SUBDIRECTORY( tinyxml )
 
+SET(TracingCore
+	TracingCore/PointOperation.h
+    TracingCore/PointOperation.cpp
+    TracingCore/ImageOperation.h
+    TracingCore/ImageOperation.cpp
+    TracingCore/SnakeOperation.h
+    TracingCore/SnakeOperation.cpp
+    TracingCore/Montage/Register.h
+    TracingCore/Montage/Register.cpp
+    )
+
+ADD_LIBRARY( TraceCoreLibrary ${TracingCore})
+
 ADD_EXECUTABLE(TracingSystem ${EXE_TYPE} 
       main.cpp 
       SlidersGroup.cpp
@@ -70,39 +83,12 @@ ADD_EXECUTABLE(TracingSystem ${EXE_TYPE}
       Rendering/ImageActors.cxx
       Rendering/itkImageToVTKImageFilter.h
       Rendering/itkImageToVTKImageFilter.txx
-
-      TracingCore/PointOperation.h
-      TracingCore/PointOperation.cpp
-      TracingCore/ImageOperation.h
-      TracingCore/ImageOperation.cpp
-      TracingCore/SnakeOperation.h
-      TracingCore/SnakeOperation.cpp
-
-      #TracingCore/Filters/itkLabelGeometryImageFilter.h
-      #TracingCore/Filters/itkLabelGeometryImageFilter.txx
-      #TracingCore/Filters/itkBinaryThinningImageFilter3D.h
-      #TracingCore/Filters/itkBinaryThinningImageFilter3D.txx
-      #TracingCore/Filters/itkMaximumProjectionImageFilter.h
-      #TracingCore/Filters/itkProjectionImageFilter.h
-      #TracingCore/Filters/itkProjectionImageFilter.txx
  
-      TracingCore/Montage/Register.h
-      TracingCore/Montage/Register.cpp
-
-#TracingCore/Vesselness/itkHessianSmoothed3DToVesselnessMeasureImageFilter.h
-#      TracingCore/Vesselness/itkHessianSmoothed3DToVesselnessMeasureImageFilter.txx
-
-#TracingCore/Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h
-#      TracingCore/Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.txx
-
-#TracingCore/Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h
-#      TracingCore/Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.txx
-
-     ${GUI_MOC_SRCS}
-     ${GUI_RC_SRCS})
+      ${GUI_MOC_SRCS}
+      ${GUI_RC_SRCS})
 
 
-TARGET_LINK_LIBRARIES(TracingSystem ${QT_LIBRARIES} ${TracingSysLibraries} TinyXML)
+TARGET_LINK_LIBRARIES(TracingSystem ${QT_LIBRARIES} TraceCoreLibrary ftkCommon ${TracingSysLibraries} TinyXML)
  
 #MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
 #SET_TARGET_PROPERTIES( TracingSystem PROPERTIES WIN32_EXECUTABLE 1)

@@ -23,6 +23,10 @@ limitations under the License.
 =========================================================================*/
 
 #include "ImageOperation.h"
+#include "itkCurvatureAnisotropicDiffusionImageFilter.h"
+#include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
+#include "itkSigmoidImageFilter.h"
+#include "itkShapeDetectionLevelSetImageFilter.h"
 
 ImageOperation::ImageOperation()
 {
@@ -36,6 +40,7 @@ ImageOperation::ImageOperation()
   sigma1 = sigma2 = 100;
   num_soma = 0;
   coding_method = 1;
+  IMask = NULL;
 }
 
 void ImageOperation::ImComputeInitBackgroundModel(double th)
@@ -1247,12 +1252,19 @@ void ImageOperation::ImWrite(const char *filename, ImagePointer ROI)
 
 void ImageOperation::ImWrite_Soma(const char *filename)
 {
+	typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> RescaleFilterType;
+     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+	 rescale->SetInput( IMask ); 
+     rescale->SetOutputMinimum( 0);
+     rescale->SetOutputMaximum( 255);
+     rescale->Update();
+
 	IOImagePointer IIO;
 	typedef itk::ImageFileWriter<IOImageType> WriterType;
 	typedef itk::CastImageFilter<ImageType, IOImageType> CasterType;
 	CasterType::Pointer caster = CasterType::New(); 
 
-	caster->SetInput(IMask);
+	caster->SetInput(rescale->GetOutput());
 	IIO = caster->GetOutput();
 	caster->Update();
 
@@ -3371,12 +3383,11 @@ void ImageOperation::ImFastMarching_Spine(PointList3D seg_seeds)
 
 	 std::cout<<"check point 4"<<std::endl;
 }
+ 
 
-void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
+void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold, double curvatureScaling, double rmsError, const char *somaFileName)
 {
-
-   typedef itk::NearestNeighborInterpolateImageFunction< 
-                       ImageType, float>  InterpolatorType;
+   typedef itk::NearestNeighborInterpolateImageFunction< ImageType, float>  InterpolatorType;
    InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
    I_Interpolator->SetInputImage(I);
 
@@ -3400,14 +3411,6 @@ void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
 	   }
 	}
 
-	 bool auto_threshold = true;
-
-	 int  timeThreshold = 300;//
-	 int intTh = 5;
-     int maxTh = 400;//100
-	 int stepTh = 5;
-	 std::vector<float> score;
-
      if( !IMask )
 	 {
 	   IMask = ImageType::New();
@@ -3419,25 +3422,23 @@ void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
      RescaleFilterType::Pointer rescale = RescaleFilterType::New();
 
 	if( display_set )
-     rescale->SetInput( IDisplay );
+	{
+		std::cout<< "Display_Set"<<std::endl;
+		rescale->SetInput( IDisplay );
+	}
 	else
-	 rescale->SetInput( I ); 
+	{
+		std::cout<< "Image"<<std::endl;
+		rescale->SetInput( I ); 
+	}
 
      rescale->SetOutputMinimum( 0 );
      rescale->SetOutputMaximum( 1 );
      rescale->Update();
 
-	 typedef itk::BinaryThresholdImageFilter< ProbImageType, 
-                        ImageType>    ThresholdingFilterType;
-     ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
-     
-     thresholder->SetLowerThreshold( 0.0 );
-     //thresholder->SetUpperThreshold( timeThreshold  );
-     thresholder->SetOutsideValue(  0  );
-     thresholder->SetInsideValue(  1 );
-
-	 typedef  itk::FastMarchingImageFilter< ProbImageType, 
-                              ProbImageType >    FastMarchingFilterType;
+	 std::cout<< "Generating Distance Map..." <<std::endl;
+	 clock_t SomaExtraction_start_time = clock();
+	 typedef  itk::FastMarchingImageFilter< ProbImageType, ProbImageType >    FastMarchingFilterType;
 	 FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
 
 	 typedef FastMarchingFilterType::NodeContainer           NodeContainer;
@@ -3452,206 +3453,59 @@ void ImageOperation::ImFastMarching_Soma(PointList3D seg_seeds)
        seedPosition[1] = seg_seeds.Pt[i].y;
 	   seedPosition[2] = seg_seeds.Pt[i].z;
 	   NodeType node;
-	   const double seedValue = 0.0;
+	   const double seedValue = -3;
        node.SetValue( seedValue );
        node.SetIndex( seedPosition );
        seeds->InsertElement( i, node );
 	 }
 
-
-	 fastMarching->SetTrialPoints(  seeds  );
-     fastMarching->SetOutputSize( 
-             rescale->GetOutput()->GetBufferedRegion().GetSize() );
+	 fastMarching->SetTrialPoints(  seeds);
+     fastMarching->SetOutputSize( I->GetBufferedRegion().GetSize() );
 	 const double stoppingTime = timeThreshold * 1.1;
-     fastMarching->SetStoppingValue(  stoppingTime  );
+     fastMarching->SetStoppingValue(  stoppingTime);
+	 fastMarching->SetSpeedConstant( 1.0 );
+	 fastMarching->Update();
+	 std::cout<< "Total time for Distance Map is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
-     fastMarching->SetInput( rescale->GetOutput() );
-     thresholder->SetInput( fastMarching->GetOutput() );
-     //thresholder->Update();
+	 SomaExtraction_start_time = clock();
+	std::cout<< "Shape Detection..." <<std::endl;
+	/// Shape Detection
+	typedef itk::ShapeDetectionLevelSetImageFilter< ProbImageType, ProbImageType> ShapeDetectionFilterType;
+	ShapeDetectionFilterType::Pointer shapeDetection = ShapeDetectionFilterType::New();
+	
+	shapeDetection->SetPropagationScaling(1.0);
+	shapeDetection->SetCurvatureScaling(curvatureScaling);
+	shapeDetection->SetMaximumRMSError( rmsError);
+	shapeDetection->SetNumberOfIterations( 800);
 
-     if( auto_threshold )
-	 {
-	   for( int i = intTh; i < maxTh; i = i + stepTh )
-	   {
-	    thresholder->SetUpperThreshold( i );
-		thresholder->Update();
+	shapeDetection->SetInput( fastMarching->GetOutput());
+	shapeDetection->SetFeatureImage( rescale->GetOutput());
 
-		float score_temp = 0;
+	typedef itk::BinaryThresholdImageFilter< ProbImageType, ImageType> ShapeThresholdingFilterType;
+    ShapeThresholdingFilterType::Pointer thresholder2 = ShapeThresholdingFilterType::New();
+	thresholder2->SetLowerThreshold( std::numeric_limits< ProbImageType::PixelType >::min());
+	thresholder2->SetUpperThreshold(0.0);
+	thresholder2->SetOutsideValue( 0);
+	thresholder2->SetInsideValue(255);
+	thresholder2->SetInput( shapeDetection->GetOutput());
+	thresholder2->Update();
+	std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
+	std::cout << "RMS change: " << shapeDetection->GetRMSChange() << std::endl;
+	std::cout<< "Total time for Shape Detection is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
-	    //estimate u1 and u2
-		float u1, u2;
-		int size_u1, size_u2;
-		size_u1 = size_u2 = 0;
-		u1 = u2 = 0;
-        typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
-        SliceIteratorType it1( I, I->GetRequestedRegion() );
-	    SliceIteratorType it2( thresholder->GetOutput(), thresholder->GetOutput()->GetRequestedRegion() );
+	typedef itk::CastImageFilter<ImageType, IOImageType> CasterType;
+	CasterType::Pointer caster = CasterType::New(); 
 
-		it1.SetFirstDirection( 0 );
-        it1.SetSecondDirection( 1 );
-	    it2.SetFirstDirection( 0 );
-        it2.SetSecondDirection( 1 );
+	caster->SetInput(thresholder2->GetOutput());
 
-	    it1.GoToBegin();
-        it2.GoToBegin();
+	typedef itk::ImageFileWriter<IOImageType> WriterType;
+	WriterType::Pointer writer1 = WriterType::New();
+	writer1->SetInput( caster->GetOutput());
+	writer1->SetFileName(somaFileName);
+	writer1->Update();
 
-        while( !it1.IsAtEnd() )
-        {
-	     while ( !it1.IsAtEndOfSlice() )
-         {
-	 	  while( !it1.IsAtEndOfLine())
-	 	  {
-	         if( it2.Get() == 1)
-			 {
-			   u1 += it1.Get();
-			   size_u1++;
-			 }
-			 else
-			 {
-			   u2 += (float)it1.Get();
-			   size_u2++;
-			 }
-   	         ++it1;
-             ++it2;
- 		  }
-		   it1.NextLine();
-		   it2.NextLine();
-	     }
-	 	 it1.NextSlice();
-		 it2.NextSlice();
-		} 
-
-        u1 = (float)u1/(float)size_u1;
-		u2 = (float)u2/(float)size_u2;
-		//std::cout<<"u1,u2:"<<u1<<","<<u2<<std::endl;
-        //compute the score
-	    it1.GoToBegin();
-        it2.GoToBegin();
-
-        while( !it1.IsAtEnd() )
-        {
-	     while ( !it1.IsAtEndOfSlice() )
-         {
-	 	  while( !it1.IsAtEndOfLine())
-	 	  {
-	         if( it2.Get() == 1)
-			 {
-			   score_temp += pow(it1.Get() - u1, 2);
-			   //score_temp -=  log(MAX(norm_density(it1.Get(),u1,sigma1),std::numeric_limits<float>::epsilon()));
-			 }
-			 else
-			 {
-			   score_temp += pow(it1.Get() - u2, 2);
-			   //score_temp -=  log(MAX(norm_density(it1.Get(),u2,sigma2),std::numeric_limits<float>::epsilon()));
-			 }
-   	         ++it1;
-             ++it2;
- 		  }
-		   it1.NextLine();
-		   it2.NextLine();
-	     }
-	 	 it1.NextSlice();
-		 it2.NextSlice();
-		}
-		score.push_back(score_temp);
-	   }
-
-	   vnl_vector<float> score_vnl(score.size());
-	   //pick the threshold with lowest score (cost)
-	   for( int j = 0; j < score.size(); j++ )
-	   {
-	     score_vnl(j) = score[j];
-		 //std::cout<<score_vnl(j)<<",";
-	   }
-	   //std::cout<<std::endl;
-
-	   int idx = score_vnl.arg_min();
-	   std::cout<<"Selected Threshold:"<<intTh + stepTh * idx<<std::endl;
-       thresholder->SetUpperThreshold( intTh + stepTh * idx );
-	   thresholder->Update();
-
-	 }
-	 else
-	 {
-	  thresholder->SetUpperThreshold( timeThreshold  );
-	  thresholder->Update();
-	 }
-
-  
-	 //IDist = fastMarching->GetOutput();
-
-	 /*typedef itk::CastImageFilter<ProbImageType,IOImageType1> ProbCasterType;
-     ProbCasterType::Pointer prob_caster = ProbCasterType::New();
-     prob_caster->SetInput(IDist);
-     IOImagePointer1 IIO = prob_caster->GetOutput();
-     prob_caster->Update();
-
-	 typedef itk::ImageFileWriter<IOImageType1> WriterType;
-
-	 WriterType::Pointer writer;	
-	 writer = WriterType::New();	
-
-	 writer->SetFileName("DistanceMap.tif");
-	 writer->SetInput(IIO);
-	 writer->Update(); */
-
-     ImagePointer BW_temp = thresholder->GetOutput();
-     
-	 /*//dilate
-	 typedef itk::BinaryBallStructuringElement<
-     ImageType::PixelType,
-     3 > StructuringElementType;
-     StructuringElementType structuringElement;
-     structuringElement.SetRadius( 3 );
-     structuringElement.CreateStructuringElement();
-
-     typedef itk::BinaryDilateImageFilter<
-     ImageType,
-     ImageType,
-     StructuringElementType > DilateFilterType;
-
-     DilateFilterType::Pointer binaryDilate = DilateFilterType::New();
-
-     binaryDilate->SetKernel( structuringElement );
-     binaryDilate->SetDilateValue( 1 );
-     binaryDilate->SetInput(BW_temp);
-	 binaryDilate->Update();
-
-
-	 BW_temp = binaryDilate->GetOutput();*/
-
-
-
-	 typedef itk::ImageSliceIteratorWithIndex< ImageType > SliceIteratorType;
-     SliceIteratorType it1( BW_temp, BW_temp->GetRequestedRegion() );
-	 SliceIteratorType it2( IMask, IMask->GetRequestedRegion() );
-
-	 it1.SetFirstDirection( 0 );
-     it1.SetSecondDirection( 1 );
-	 it2.SetFirstDirection( 0 );
-     it2.SetSecondDirection( 1 );
-
-	 it1.GoToBegin();
-     it2.GoToBegin();
-
-    while( !it1.IsAtEnd() )
-    {
-	  while ( !it1.IsAtEndOfSlice() )
-      {
-	 	while( !it1.IsAtEndOfLine())
-	 	{
-	       if( it1.Get() == 1 && it2.Get() == 0 )
-	 		 it2.Set(1);
- 
-   	      ++it1;
-          ++it2;
- 		}
-		 it1.NextLine();
-		 it2.NextLine();
-	  }
-	 	 it1.NextSlice();
-		 it2.NextSlice();
-    } 
+	/// Write the image to IMask
+	//IMask = thresholder2->GetOutput();
 }
 
 std::vector<float> ImageOperation::ImFastMarchingI(PointList3D seg_seeds)

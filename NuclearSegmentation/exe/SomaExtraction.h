@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <time.h>
-
+#include "tracing/thetracingsystem/tracingcore/PointOperation.h"
 
 class SomaExtractor
 {
@@ -38,10 +38,11 @@ public:
 
 
 	typedef itk::Image< unsigned char, Dim > OutputImageType;
+	typedef itk::Image< float, Dim > ProbImageType;
 	typedef std::vector<OutputImageType::IndexType> centroidVectorType;
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
 	typedef itk::ImageRegionConstIterator< OutputImageType > ConstIteratorType;
-	typedef itk::Image< unsigned int, Dim > SegmentedImageType;
+	typedef itk::Image< int, Dim > SegmentedImageType;
 	typedef itk::ImageRegionIteratorWithIndex< SegmentedImageType > IteratorType;
 	typedef itk::BinaryBallStructuringElement< unsigned int, Dim > KernelType;
 	//typedef itk::FlatStructuringElement< Dim > KernelType;
@@ -66,7 +67,10 @@ public:
 	void writeSomaCentroids(char* writeFileName);
 	void writeSomaImage(char* writeFileName);
 
-	
+	void SegmentSoma(char* centroidsFileName, const char * somafileName, int timethreshold, double curvatureScaling, double rmsThres);
+	int GenerateSeedPoints(char* paramFile, unsigned short num_bins);
+	void ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold, double curvatureScaling, double rmsError, const char *somaFileName);
+
 private:
 	OutputImageType::Pointer inputImage, outputImage;
 	SegmentedImageType::Pointer binImage, somaImage;
@@ -77,7 +81,8 @@ private:
 	size_t size1, size2, size3;
 	morphOpenFilterType::Pointer morphOpenFilter;
 	int minObjSize, KernelSize;
-
+	vector<Seed> seeds;
+	int SM,SN,SZ;
 };
 
 #endif

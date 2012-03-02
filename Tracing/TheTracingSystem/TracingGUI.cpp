@@ -23,6 +23,7 @@ Version:   $Revision: 0.00 $
 =========================================================================*/
 
 #include "TracingGUI.h"
+#include "ftkUtils.h"
 
 QtTracer::QtTracer(QWidget * parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {  
@@ -3536,36 +3537,22 @@ void QtTracer::removeSoma()
 
 void QtTracer::loadSomaSeeds()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Load SWC file"),
-		".", tr("SWC File (*.txt)"));
-	QFile file(fileName);
-	if (!file.open(QIODevice::ReadOnly)) 
-	{
-		QMessageBox::information(this, tr("Warning"), tr("Cannot load this file"));
-		return;
-	}
-	else
-	{
-		picked_pts.RemoveAllPts();
-		QTextStream in(&file);
-		QStringList fields;
-		bool end_of_txt = false;
-		while( !end_of_txt )
-		{
-			QString line = in.readLine();
-			fields = line.split(' ',QString::SkipEmptyParts);
-			//std::cout<<"fields.size():"<<fields.size()<<std::endl;
-			if( fields.size() == 0 )
-			{
-				end_of_txt = true;
-				break;
-			}
-			//std::cout<<fields.at(0).toFloat()<<","<<fields.at(1).toFloat()<<","<<fields.at(2).toFloat()<<std::endl;
-			picked_pts.AddPt(fields.at(0).toFloat(),fields.at(1).toFloat(),fields.at(2).toFloat());
-		}
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Load Soma Seeds file"),
+		".", tr("Text File (*.txt)"));
 
-		std::cout<<"Seeds Loaded:"<<picked_pts.NP<<std::endl;
+	std::cout<< "Load Centroids Table"<<endl;
+	vtkSmartPointer<vtkTable> centroidsTable = ftk::LoadXYZTable( fileName.toStdString());
+
+	picked_pts.RemoveAllPts();
+	for( vtkIdType i = 0; i < centroidsTable->GetNumberOfRows(); i++)
+	{
+		float x = centroidsTable->GetValue( i, 0).ToDouble();
+		float y = centroidsTable->GetValue( i, 1).ToDouble();
+		float z = centroidsTable->GetValue( i, 2).ToDouble();
+		picked_pts.AddPt(x, y, z);
 	}
+
+	std::cout<<"Seeds Loaded:"<<picked_pts.NP<<std::endl;
 }
 
 void QtTracer::pickSomaSeeds()

@@ -296,7 +296,7 @@ public:
 
 	void clear_IMask();
 	void ImFastMarching_Spine(PointList3D spine_seeds); //segment the spines
-	void ImFastMarching_Soma(PointList3D seg_seeds);//segment single soma
+	void ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold = 100, double curvatureScaling = 0.5, double rmsError = 0.02, const char *somaFileName = "Soma.tif");//segment single soma
 	std::vector<float> ImFastMarchingI(PointList3D seg_seeds);
 	void ImFastMarchingI_New(PointList3D seg_seeds); //automatic threshold selecting
     void ImFastMarchingII(PointList3D seg_seeds, int idx);

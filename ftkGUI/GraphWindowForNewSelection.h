@@ -25,6 +25,8 @@
 #include "ftkGUI/SelectiveClustering.h"
 #include <vtkCornerAnnotation.h>
 
+#ifndef MYPOINT
+#define MYPOINT
 typedef struct Point
 {
 	Point(){};
@@ -37,6 +39,7 @@ typedef struct Point
 	double x;
 	double y;
 }Point;
+#endif
 
 class GraphWindowForNewSelection : public QMainWindow
 {
