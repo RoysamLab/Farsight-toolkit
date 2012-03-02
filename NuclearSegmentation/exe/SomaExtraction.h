@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <time.h>
-#include "tracing/thetracingsystem/tracingcore/PointOperation.h"
+#include "Tracing/TheTracingSystem/TracingCore/PointOperation.h"
 
 class SomaExtractor
 {
