@@ -9,7 +9,8 @@ kNearestObjects::kNearestObjects(std::map< unsigned int, std::vector<float> > ce
 	sample = SampleType::New();
 	treeGenerator = TreeGeneratorType::New();
 
-	sample->SetMeasurementVectorSize( 3 );
+	num_dimensions = (*(centerMap.begin())).second.size();
+	sample->SetMeasurementVectorSize( num_dimensions );
 
 	MeasurementVectorType mv;
 	unsigned int id;
@@ -20,9 +21,13 @@ kNearestObjects::kNearestObjects(std::map< unsigned int, std::vector<float> > ce
 	for (It = centerMap.begin(); It != centerMap.end(); ++It )
 	{
 		id = (*It).first;
-		mv[0] = centerMap[id].at(0);
-		mv[1] = centerMap[id].at(1);
-		mv[2] = centerMap[id].at(2);
+		for(int i=0; i<num_dimensions; ++i)
+		{
+			mv[i] = centerMap[id].at(i);
+		}
+		//mv[0] = centerMap[id].at(0);
+		//mv[1] = centerMap[id].at(1);
+		//mv[2] = centerMap[id].at(2);
 		idToCentroidMap[id] = mv;
 		sample->PushBack( mv );
     }
@@ -126,7 +131,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 	if(Class_dest == 0)
 	{
 		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-		DistanceMetricType::OriginType origin( 3 );
+		DistanceMetricType::OriginType origin( num_dimensions );
 		for (unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i)
 		{
 			origin[i] = idToCentroidMap[id][i];
@@ -157,7 +162,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects::k_nearest_neighb
 	else
 	{
 		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-		DistanceMetricType::OriginType origin( 3 );
+		DistanceMetricType::OriginType origin( num_dimensions );
 		for (unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i)
 		{
 			origin[i] = idToCentroidMap[id][i];
@@ -345,7 +350,7 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects::n
 std::vector< std::pair<unsigned int, double> > kNearestObjects::neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest)
 {
 	DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-	DistanceMetricType::OriginType origin( 3 );
+	DistanceMetricType::OriginType origin( num_dimensions );
 	for ( unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i )
 	{
 		origin[i] = idToCentroidMap[id][i];

@@ -73,6 +73,7 @@ public:
 private:
 	
 	int allIds;
+	int num_dimensions;
 	SampleType::Pointer sample;
 	TreeGeneratorType::Pointer treeGenerator;
 	std::map< unsigned int, std::vector<float> > centerMap;
