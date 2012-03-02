@@ -12,6 +12,9 @@
 #include "itkMinimumMaximumImageCalculator.h"
 #include "itkPolyLineParametricPath.h"
 #include "itkIntTypes.h"
+#include "itkImageDuplicator.h"
+
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 
 #include "itkMaximumEntropyThresholdImageFilter.h"
 #include "itkShiftScaleImageFilter.h"
@@ -73,6 +76,8 @@ public:
 	ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
 	void					Trace2();
 	void					FollowSkeleton(Cell* cell, ImageType::IndexType index, ImageType::Pointer visited_image, itk::int64_t parent_id, itk::int64_t &swc_line_number, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
+	void					WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
 
 };
 

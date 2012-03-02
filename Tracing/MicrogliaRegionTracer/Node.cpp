@@ -19,17 +19,7 @@ void Node::SetParent(Node *parent)
 {
 	//Search for the reference in the old parent to this child and delete it
 	Node* old_parent = this->parent;
-	if (old_parent != NULL)
-	{
-		std::vector<Node*>::iterator children_iter;
-		for (children_iter = old_parent->children.begin(); children_iter != old_parent->children.end(); ++children_iter)
-		{
-			Node* old_parent_child = *children_iter;
 
-			if (this == old_parent_child)
-				old_parent_child->children.erase(children_iter);
-		}
-	}
 
 	parent->AddChild(this);	//Add the child to the new parent
 	this->parent = parent;	//Set the new parent

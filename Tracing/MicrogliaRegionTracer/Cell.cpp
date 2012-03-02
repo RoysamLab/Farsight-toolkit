@@ -135,6 +135,34 @@ void Cell::GetMask(std::string soma_filename)
 
 	//Write the masked cell image
 	WriteImage(mask_filename_stream.str(), this->mask);
+
+	//Get the label image from the binary image
+	typedef itk::BinaryImageToLabelMapFilter<MaskImageType> BinaryToLabelFilterType;
+	BinaryToLabelFilterType::Pointer labelMapFilter = BinaryToLabelFilterType::New();
+	labelMapFilter->SetInput(this->mask);
+	
+	try
+	{
+		labelMapFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "labelMapFilter exception: " << err << std::endl;
+	}
+
+	typedef itk::LabelMapToLabelImageFilter< BinaryToLabelFilterType::OutputImageType, LabelImageType > LabelMapToLabelImageFilterType;
+	LabelMapToLabelImageFilterType::Pointer labelImageFilter = LabelMapToLabelImageFilterType::New();
+	labelImageFilter->SetInput(labelMapFilter->GetOutput());
+	try
+	{
+		labelImageFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "labelImageFilter exception: " << err << std::endl;
+	}
+
+	this->soma_label_image = labelImageFilter->GetOutput();
 }
 
 void Cell::ComputeMaskedImage()   

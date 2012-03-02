@@ -22,7 +22,6 @@ void Tree::AddNode(Node* node, Node* parent)
 		throw std::runtime_error("AddNode needs a parent");
 
 	member_nodes.push_back(node);
-	parent->AddChild(node);
 }
 
 std::vector<Node*> Tree::GetMemberNodes()

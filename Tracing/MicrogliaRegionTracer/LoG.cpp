@@ -27,6 +27,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "LoGFilter Exception: " << err << std::endl;
+		throw; //Rethrowing exception, since only RunMultiScaleLoG knows the location of the cell
 	}
 
 
@@ -72,8 +73,21 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 	//Calculate all the LoG scales
 	for (float scale = 1.5; scale <= 2.5; scale+=0.1)
 	{
-		LoGImageType::Pointer LoGimage = RunLoG(cell->image, scale);
-		
+		LoGImageType::Pointer LoGimage;
+
+		try
+		{
+			LoGimage = RunLoG(cell->image, scale);
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			ImageType::PointType origin = cell->image->GetOrigin();
+			ImageType::SizeType size = cell->image->GetLargestPossibleRegion().GetSize();
+			
+			std::cerr << "RunMultiScaleLoG exception: " << std::endl;
+			std::cerr << "For cell: " << cell->getX() << ", " << cell->getY() << ", " << cell->getZ() << " at scale: " << scale << " Origin: " << origin << " Size: " << size << std::endl;
+		}
+
 		LoG_vector.push_back(LoGimage);
 	}
 

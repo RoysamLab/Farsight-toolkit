@@ -16,6 +16,8 @@
 #include "itkBinaryThinningImageFilter3D.h"
 #include "itkShiftScaleImageFilter.h"
 #include "itkRegionOfInterestImageFilter.h"
+#include "itkBinaryImageToLabelMapFilter.h"
+#include "itkLabelMapToLabelImageFilter.h"
 
 #include <fstream>
 #include <cstring>
@@ -36,6 +38,7 @@ public:
 	typedef itk::Image< float, 3 >						DistanceImageType;
 	typedef itk::Image< unsigned char, 3 >				MaskImageType;
 	typedef itk::Image< unsigned char, 3 >				SomaImageType;
+	typedef itk::Image< unsigned short, 3 >				LabelImageType;
 
 public:
 	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
@@ -83,6 +86,7 @@ public:
 	ImageType::Pointer				skeleton_image;
 	DistanceImageType::Pointer		distance_map_image;
 	MaskImageType::Pointer			mask;
+	LabelImageType::Pointer			soma_label_image;
 
 	float vesselness_image_maximum_intensity;
 
