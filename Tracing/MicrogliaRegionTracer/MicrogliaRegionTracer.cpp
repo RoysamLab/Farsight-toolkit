@@ -674,7 +674,6 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		tree->AddNode(new_connected_node, minimum_parent_node);
 	}
 
-	std::cout << cell->getRequestedSize()[0] << " " << cell->getRequestedSize()[1] << " " << cell->getRequestedSize()[2] << std::endl;
 	std::cout << "Shift: " << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
 	//std::cout << "Closing " << traceFileNameStream.str() << std::endl;
 	//traceFile.close();
