@@ -585,6 +585,7 @@ ClusterManager::ClusterManager()
 	//this->ClusterListView = new QListWidget(this);
 
 	this->QVTKClusterTableView = new QvtkTableView();
+	this->ClusterFeatureDialog = NULL;
 	
 	this->OperatorList = new QComboBox(this);
 	OperatorList->addItem("ADD");
@@ -698,7 +699,11 @@ void ClusterManager::RemoveSelectedClusters()
 
 void ClusterManager::ShowClusterFeatures()
 {
-	this->ClusterModel->ClusterFeatureTable()->Dump(16);
+	if (!this->ClusterFeatureDialog)
+	{
+		this->ClusterFeatureDialog = new QvtkTableDialog();
+	}
+	this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
@@ -724,6 +729,10 @@ void ClusterManager::ChangeInClusters()
 	this->ClusterListView->clear();
 	this->ClusterListView->addItems( ClusterList);*/
 	this->QVTKClusterTableView->SetInputLink(this->ClusterModel->GetClusterTable(), this->ClusterModel->ClusterAnnotationLink);
+	if (this->ClusterFeatureDialog)
+	{
+		this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
+	}
 
 	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();
 	Operand1->clear();

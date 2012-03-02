@@ -207,6 +207,7 @@ private:
 	QListWidget * ClusterListView;
 
 	QvtkTableView * QVTKClusterTableView;
+	QvtkTableDialog * ClusterFeatureDialog;
 	
 	vtkIdTypeArray * GetClusterTableSelections();
 

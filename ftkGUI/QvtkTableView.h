@@ -84,4 +84,19 @@ private:
 
 };
 
+
+class  QvtkTableDialog: public QDialog
+{
+	Q_OBJECT
+public:
+	QvtkTableDialog();
+	~QvtkTableDialog();
+
+	void UpdateView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
+
+	void closeEvent(QCloseEvent *event);
+	
+	QvtkTableView * TableView;
+};
+
 #endif

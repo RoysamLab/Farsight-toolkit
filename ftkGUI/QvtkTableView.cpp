@@ -195,3 +195,22 @@ void QvtkTableView::setCurrentVTKSelection(vtkSelection * TableRowSelection)
      SIGNAL(selectionChanged(const QItemSelection&,const QItemSelection&)),
      this, SLOT(slotQtSelectionChanged(const QItemSelection&,const QItemSelection&)));
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+QvtkTableDialog::QvtkTableDialog()
+{
+	TableView = new QvtkTableView();
+	this->setModal(false);
+	QVBoxLayout * MainVBoxLayout = new QVBoxLayout();
+	MainVBoxLayout->addWidget(TableView);
+	this->setLayout(MainVBoxLayout);
+	this->setVisible(true);
+}
+QvtkTableDialog::~QvtkTableDialog()
+{
+}
+void QvtkTableDialog::closeEvent(QCloseEvent *event)
+{
+	event->accept();
+}
