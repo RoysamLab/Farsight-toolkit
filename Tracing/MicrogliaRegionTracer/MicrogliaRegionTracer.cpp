@@ -77,7 +77,7 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std:
 void MicrogliaRegionTracer::Trace()
 {
 	//Trace cell by cell
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
 	{
 		Cell* cell = cells[k];
@@ -548,14 +548,17 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 
 	double mag_trace_vector = sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
 	
-	if (node_from == node_to || mag_trace_vector < 0.0001)	//Very likely that these two points are equal so we shouldn't try to connect them
+	if ((node_from == node_to) || (mag_trace_vector < 0.0001))	//Very likely that these two points are equal so we shouldn't try to connect them
 		return std::numeric_limits< double >::max();
 
-	//If we are connecting from the root node, we need to check if it is inside the soma. If it is, then we should give it a zero-weight
+	//If we are connecting from the root node
 	if (node_from == 0)
-		if (cell->soma_label_image->GetPixel(node1) == cell->soma_label_image->GetPixel(node2))
+	{	
+		if (cell->soma_label_image->GetPixel(node1) == cell->soma_label_image->GetPixel(node2)) //If it is inside the soma our centroid belongs to, we give it 0 weight
 			return 0;
-
+		else
+			return std::numeric_limits< double >::max();	
+	}
 	typedef itk::PolyLineParametricPath< 3 > PathType;
 	PathType::Pointer path = PathType::New();
 	path->Initialize();
@@ -595,23 +598,23 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	ImageType::IndexType root_index = cell->critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
 	
-	std::ofstream traceFile;
-	std::ofstream traceFile_local;
-	std::ostringstream traceFileNameStream;
-	std::ostringstream traceFileNameLocalStream;
-	traceFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".swc";
-	traceFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_local.swc";
-	traceFile.open(traceFileNameStream.str().c_str());
-	traceFile_local.open(traceFileNameLocalStream.str().c_str());
-	std::cout << "Opening " << traceFileNameStream.str() << std::endl;
+	//std::ofstream traceFile;
+	//std::ofstream traceFile_local;
+	//std::ostringstream traceFileNameStream;
+	//std::ostringstream traceFileNameLocalStream;
+	//traceFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".swc";
+	//traceFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_local.swc";
+	//traceFile.open(traceFileNameStream.str().c_str());
+	//traceFile_local.open(traceFileNameLocalStream.str().c_str());
+	//std::cout << "Opening " << traceFileNameStream.str() << std::endl;
 
 	//Root node should have infinite weights to connect to
 	for (int m = 0; m < cell->critical_points_queue.size(); m++)
 		AdjGraph[m][0] = std::numeric_limits<double>::max();
 
 	//Write out the root point
-	traceFile << "1 3 " << cell->getX() << " " << cell->getY() << " " << cell->getZ() << " 1 -1" << std::endl;	//global coordinates
-	traceFile_local << "1 3 " << cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0] << " " << cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1] << " " << cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2] << " 1 -1" << std::endl;	//local coordinates
+	//traceFile << "1 3 " << cell->getX() << " " << cell->getY() << " " << cell->getZ() << " 1 -1" << std::endl;	//global coordinates
+	//traceFile_local << "1 3 " << cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0] << " " << cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1] << " " << cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2] << " 1 -1" << std::endl;	//local coordinates
 
 	//for each node but the last, find its child
 	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
@@ -656,9 +659,9 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		cell_origin_local[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
 		cell_origin_local[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
 
-		traceFile << minimum_node_index_to_id + 1 << " 3 " << cell_origin[0] << " " << cell_origin[1] << " "  << cell_origin[2] << " 1 " << minimum_parent_node->getID() << std::endl;
+		//traceFile << minimum_node_index_to_id + 1 << " 3 " << cell_origin[0] << " " << cell_origin[1] << " "  << cell_origin[2] << " 1 " << minimum_parent_node->getID() << std::endl;
 
-		traceFile_local << minimum_node_index_to_id + 1 << " 3 " << cell_origin_local[0] << " " << cell_origin_local[1] << " "  << cell_origin_local[2] << " 1 " << minimum_parent_node->getID() << std::endl;
+		//traceFile_local << minimum_node_index_to_id + 1 << " 3 " << cell_origin_local[0] << " " << cell_origin_local[1] << " "  << cell_origin_local[2] << " 1 " << minimum_parent_node->getID() << std::endl;
 
 		//Set the weight of the AdjGraph entries for this minimum edge to infinite so it is not visited again
 		for (int m = 0; m < cell->critical_points_queue.size(); m++)
@@ -673,9 +676,9 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 
 	std::cout << cell->getRequestedSize()[0] << " " << cell->getRequestedSize()[1] << " " << cell->getRequestedSize()[2] << std::endl;
 	std::cout << "Shift: " << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
-	std::cout << "Closing " << traceFileNameStream.str() << std::endl;
-	traceFile.close();
-	traceFile_local.close();
+	//std::cout << "Closing " << traceFileNameStream.str() << std::endl;
+	//traceFile.close();
+	//traceFile_local.close();
 	return tree;
 }
 
