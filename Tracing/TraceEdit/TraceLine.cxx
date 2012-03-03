@@ -54,14 +54,17 @@ TraceLine::TraceLine()
 	this->Pk_2 = 0;
 	this->Pk_classic = 0;
 
-	this->BifAmplLocal = 0;
-	this->BifAmpRemote = 0;
+	this->BifAmplLocal = -1;
+	this->BifAmpRemote = -1;
+
 	this->BifTiltLocal = -1;
 	this->BifTiltRemote = -1;
+	//there are 4 tilts per segment (need to add two more)
 	this->BifTiltLocalBig = -1;
 	this->BifTiltLocalSmall = -1;
 	this->BifTiltRemoteBig = -1;
 	this->BifTiltRemoteSmall = -1;
+
 	this->BifTorqueLocal = -1;
 	this->BifTorqueRemote = -1;
 	this->BifTorqueLocalBig = -1;
@@ -69,12 +72,19 @@ TraceLine::TraceLine()
 	this->BifTorqueRemoteBig = -1;
 	this->BifTorqueRemoteSmall = -1;
 
+	this->BifTiltLocalTwoDaughter = -1;
+	this->BifTiltRemoteTwoDaughter = -1;
+	this->BifTorqueLocalTwoDaughter = -1;
+	this->BifTorqueRemoteTwoDaughter = -1;
+
 	this->CellFeatures.clear();
 //for Dist to device calculations
 	this->DistanceToROI = 0;
 	this->ROICoord_X = 0;
 	this->ROICoord_Y = 0;
 	this->ROICoord_Z = 0;
+
+	this->actualBifurcation = false;
 
 	//// classification results
 	//this->prediction = -1;
@@ -164,6 +174,14 @@ bool TraceLine::isBranch()
 		return false;
 	}
 }
+void TraceLine::setActualBifurcation(bool bifurcate)
+{
+	this->actualBifurcation = bifurcate;
+}
+bool TraceLine::isActualBifurcation()
+{
+	return this->actualBifurcation;
+}
 void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 {
 	this->root = RootID;
@@ -218,6 +236,7 @@ void TraceLine::calculateVol()
 }//end vol calculation
 void TraceLine::calculateBifFeatures()
 {
+	this->actualBifurcation = true;
 	TraceBit BranchBit= this->m_trace_bits.back();
 	TraceBit previousBit = this->GetBitXFromEnd(2);
 	double BranchBitRadii = BranchBit.r;
@@ -309,6 +328,11 @@ void TraceLine::calculateBifFeatures()
 	double* Daughter1PlaneRemote_ptr;
 	double* Daughter2PlaneLocal_ptr;
 	double* Daughter2PlaneRemote_ptr;
+	double planeAnglelocal1 = -1;
+	double planeAnglelocal2 = -1;
+	double planeAngleremote1 = -1;
+	double planeAngleremote2 = -1;
+
 	if (!Daughter1->isLeaf())
 	{
 		TraceLine* GrandDaughter1of1 = Daughter1->GetBranch1();
@@ -319,6 +343,8 @@ void TraceLine::calculateBifFeatures()
 		TraceBit GD2B1 = GrandDaughter2of1->GetTraceBitsPointer()->back();
 		Daughter1PlaneLocal_ptr  = this->Plane(GD1F1,D1B,GD2F1);
 		Daughter1PlaneRemote_ptr = this->Plane(GD1B1,D1B,GD2B1);
+		planeAnglelocal1 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter1PlaneLocal_ptr);
+		planeAngleremote1 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter1PlaneRemote_ptr);
 	}
 	if (!Daughter2->isLeaf())
 	{
@@ -330,36 +356,88 @@ void TraceLine::calculateBifFeatures()
 		TraceBit GD2B2 = GrandDaughter2of2->GetTraceBitsPointer()->back();
 		Daughter2PlaneLocal_ptr  = this->Plane(GD1F2,D2B,GD2F2);
 		Daughter2PlaneRemote_ptr = this->Plane(GD1B2,D2B,GD2B2);
+		planeAnglelocal2 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter2PlaneLocal_ptr);
+		planeAngleremote2 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter2PlaneRemote_ptr);
 	}
-		
-	double planeAngle1 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter1PlaneLocal_ptr);
-	double planeAngle2 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter2PlaneLocal_ptr);
-	if (planeAngle1 >= planeAngle2)
-	{
-		this->setBifTorqueLocalBig(planeAngle1);
-		this->setBifTorqueLocalSmall(planeAngle2);
-	}
-	else
-	{
-		this->setBifTorqueLocalBig(planeAngle2);
-		this->setBifTorqueLocalSmall(planeAngle1);
-	}
-	//if (!Daughter1->isLeaf() && !Daughter2->isLeaf()) //need to fix math
-		this->setBifTorqueLocal((planeAngle1+planeAngle2)/2);
 
-	planeAngle1 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter1PlaneRemote_ptr);
-	planeAngle2 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter2PlaneRemote_ptr);
-	if (planeAngle1 >= planeAngle2)
+	if (planeAnglelocal1 >= planeAnglelocal2)
 	{
-		this->setBifTorqueRemoteBig(planeAngle1);
-		this->setBifTorqueRemoteSmall(planeAngle2);
+		this->setBifTorqueLocalBig(planeAnglelocal1);
+		this->setBifTorqueLocalSmall(planeAnglelocal2);
 	}
 	else
 	{
-		this->setBifTorqueRemoteBig(planeAngle2);
-		this->setBifTorqueRemoteSmall(planeAngle1);
+		this->setBifTorqueLocalBig(planeAnglelocal2);
+		this->setBifTorqueLocalSmall(planeAnglelocal1);
 	}
-	this->setBifTorqueRemote((planeAngle1+planeAngle2)/2);
+	if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+	{
+		if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
+		{
+			this->setBifTorqueLocal((planeAnglelocal1+planeAnglelocal2)/2);
+			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1+planeAnglelocal2);
+		}
+		else if (!Daughter1->isLeaf())
+		{
+			this->setBifTorqueLocal(planeAnglelocal1);
+			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1);
+		}
+		else
+		{
+			this->setBifTorqueLocal(planeAnglelocal2);
+			this->setBifTorqueLocalTwoDaughter(planeAnglelocal2);
+		}
+	}
+
+	////test
+	//if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+	//{
+	//	if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
+	//	{
+	//		this->setBifTorqueLocal((planeAngle1+planeAngle2)/2);
+	//		this->setBifTorqueLocalTwoDaughter(200);
+	//	}
+	//	else if (!Daughter1->isLeaf())
+	//	{
+	//		this->setBifTorqueLocal(planeAngle1);
+	//		this->setBifTorqueLocalTwoDaughter(100);
+	//	}
+	//	else
+	//	{
+	//		this->setBifTorqueLocal(planeAngle2);
+	//		this->setBifTorqueLocalTwoDaughter(100);
+	//	}
+	//}
+
+	if (planeAngleremote1 >= planeAngleremote2)
+	{
+		this->setBifTorqueRemoteBig(planeAngleremote1);
+		this->setBifTorqueRemoteSmall(planeAngleremote2);
+	}
+	else
+	{
+		this->setBifTorqueRemoteBig(planeAngleremote2);
+		this->setBifTorqueRemoteSmall(planeAngleremote1);
+	}
+	
+	if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+	{
+		if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
+		{
+			this->setBifTorqueRemote((planeAngleremote1+planeAngleremote2)/2);
+			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1+planeAngleremote2);
+		}
+		else if (!Daughter1->isLeaf())
+		{
+			this->setBifTorqueRemote(planeAngleremote1);
+			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1);
+		}
+		else
+		{
+			this->setBifTorqueRemote(planeAngleremote2);
+			this->setBifTorqueRemoteTwoDaughter(planeAngleremote2);
+		}
+	}
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
@@ -449,7 +527,6 @@ void TraceLine::AddBranch(TraceLine* b)
 { 
   this->m_branches.push_back(b);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine* TraceLine::GetBranch1()

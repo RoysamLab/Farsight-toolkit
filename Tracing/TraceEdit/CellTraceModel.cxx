@@ -77,7 +77,9 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Segments");
 	this->headers.push_back("Stems");
+	this->headers.push_back("Branching Stems");
 	this->headers.push_back("Branch Pt");
+	this->headers.push_back("Bifurcations");
 	this->headers.push_back("Leaf Nodes");
 
 	this->headers.push_back("Min Diameter");
@@ -98,6 +100,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Max Segment Surface Area");
 	this->headers.push_back("Total Segment Section Area");
 	this->headers.push_back("Min Segment Section Area");
+	this->headers.push_back("Average Segment Section Area");
 	this->headers.push_back("Max Segment Section Area");
 
 	this->headers.push_back("Min Burk Taper");
@@ -170,10 +173,12 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Local Bifurcation Tilt Larger");
 	this->headers.push_back("Min Local Bifurcation Tilt Larger");
 	this->headers.push_back("Max Local Bifurcation Tilt Larger");
-	this->headers.push_back("Average Local Bifurcation Torque Smaller");
+	//this->headers.push_back("AVG TORQUE");
+	this->headers.push_back("Average Local Bifurcation Torque");
+	//this->headers.push_back("Average Local Bifurcation Torque Smaller");
 	this->headers.push_back("Min Local Bifurcation Torque Smaller");
 	this->headers.push_back("Max Local Bifurcation Torque Smaller");
-	this->headers.push_back("Average Local Bifurcation Torque Larger");
+	//this->headers.push_back("Average Local Bifurcation Torque Larger");
 	this->headers.push_back("Min Local Bifurcation Torque Larger");
 	this->headers.push_back("Max Local Bifurcation Torque Larger");
 	
@@ -186,10 +191,11 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Remote Bifurcation Tilt Larger");
 	this->headers.push_back("Min Remote Bifurcation Tilt Larger");
 	this->headers.push_back("Max Remote Bifurcation Tilt Larger");
-	this->headers.push_back("Average Remote Bifurcation Torque Smaller");
+	this->headers.push_back("Average Remote Bifurcation Torque");
+	//this->headers.push_back("Average Remote Bifurcation Torque Smaller");
 	this->headers.push_back("Min Remote Bifurcation Torque Smaller");
 	this->headers.push_back("Max Remote Bifurcation Torque Smaller");
-	this->headers.push_back("Average Remote Bifurcation Torque Larger");
+	//this->headers.push_back("Average Remote Bifurcation Torque Larger");
 	this->headers.push_back("Min Remote Bifurcation Torque Larger");
 	this->headers.push_back("Max Remote Bifurcation Torque Larger");
 

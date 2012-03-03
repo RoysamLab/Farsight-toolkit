@@ -56,7 +56,7 @@ private:
 	int terminalBifCount;
 	
 public:
-	int NumSegments, stems, branchPoints,terminalTips;
+	int NumSegments, stems, branchPoints,terminalTips, actualBifurcations, branchingStem;
 	int MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 
 	int TotalFragmentation, MaxFragmentation, MinFragmentation;
@@ -94,6 +94,10 @@ public:
 	//double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;
 	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalBigMax, BifTiltRemoteBigMax, BifTorqueLocalBigMax, BifTorqueRemoteBigMax;
 	double BifTiltLocalSmallMax, BifTiltRemoteSmallMax, BifTorqueLocalSmallMax, BifTorqueRemoteSmallMax;
+	double BifTiltLocalTwoDaughter, BifTiltLocalTwoDaughterMax, BifTiltLocalTwoDaughterMin;
+	double BifTorqueLocalTwoDaughter, BifTorqueLocalTwoDaughterMax, BifTorqueLocalTwoDaughterMin;
+		double BifTiltRemoteTwoDaughter, BifTiltRemoteTwoDaughterMax, BifTiltRemoteTwoDaughterMin;
+	double BifTorqueRemoteTwoDaughter, BifTorqueRemoteTwoDaughterMax, BifTorqueRemoteTwoDaughterMin;
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;

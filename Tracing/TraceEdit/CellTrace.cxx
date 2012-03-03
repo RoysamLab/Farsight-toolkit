@@ -47,6 +47,9 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		{
 			this->MaxMin(this->segments[0]->GetBranchPointer()->at(j)->GetDistToParent(), 
 				this->TotalStemDistance, this->MinStemDistance, this->MaxStemDistance);
+			if(this->segments[0]->GetBranchPointer()->at(j)->GetTerminalDegree() > 1)
+				this->branchingStem++;
+
 		}
 		this->EstimatedSomaRadius = this->TotalStemDistance/(double)this->stems;
 	}
@@ -135,6 +138,10 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		}//end if leaf
 		else if(!this->segments[i]->isRoot())
 		{
+			if (this->segments[i]->isActualBifurcation())
+			{
+				this->actualBifurcations++;
+			}
 			this->branchPoints++;
 			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
 			this->MaxMin(this->segments[i]->GetdaughterRatio(), this->daughterRatio, this->daughterRatioMin, this->daughterRatioMax);
@@ -148,18 +155,27 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
 			this->MaxMin(this->segments[i]->GetBifTiltLocalSmall(), this->BifTiltLocalSmall, this->BifTiltLocalSmallMin, this->BifTiltLocalSmallMax);
 			this->MaxMin(this->segments[i]->GetBifTiltLocalBig(), this->BifTiltLocalBig, this->BifTiltLocalBigMin, this->BifTiltLocalBigMax);
-			this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
-			this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
+			this->MaxMin(this->segments[i]->GetBifTiltLocalTwoDaughter(), this->BifTiltLocalTwoDaughter, this->BifTiltLocalTwoDaughterMin, this->BifTiltLocalTwoDaughterMax);
+			this->MaxMin(this->segments[i]->GetBifTiltRemoteTwoDaughter(), this->BifTiltRemoteTwoDaughter, this->BifTiltRemoteTwoDaughterMin, this->BifTiltRemoteTwoDaughterMax);
+			this->MaxMin(this->segments[i]->GetBifTorqueLocalTwoDaughter(), this->BifTorqueLocalTwoDaughter, this->BifTorqueLocalTwoDaughterMin, this->BifTorqueLocalTwoDaughterMax);
+			this->MaxMin(this->segments[i]->GetBifTorqueRemoteTwoDaughter(), this->BifTorqueRemoteTwoDaughter, this->BifTorqueRemoteTwoDaughterMin, this->BifTorqueRemoteTwoDaughterMax);
 			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTorqueLocal(), this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax);
-			this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax);
-			this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax);
-			this->MaxMin(this->segments[i]->GetBifTorqueRemoteSmall(), this->BifTorqueRemoteSmall, this->BifTorqueRemoteSmallMin, this->BifTorqueRemoteSmallMax);
+      if(this->segments[i]->isBranch())
+      {
+		this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
+		this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
+		this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax);
+		this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax);
+		if (this->segments[i]->GetTerminalDegree() > 2)
+		{
 			this->MaxMin(this->segments[i]->GetBifTorqueRemoteBig(), this->BifTorqueRemoteBig, this->BifTorqueRemoteBigMin, this->BifTorqueRemoteBigMax);
-      //if(this->segments[i]->isBranch())
-      //{
-      //  this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
-      //  this->MaxMin(this->segments[i]->GetBranch2()->GetBifTorqueRemote(), this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax);
-      //}
+			//make test if there is a small angle (maybe if getTorque = -1)
+			this->MaxMin(this->segments[i]->GetBifTorqueRemoteSmall(), this->BifTorqueRemoteSmall, this->BifTorqueRemoteSmallMin, this->BifTorqueRemoteSmallMax);
+		}
+
+        //this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
+        //this->MaxMin(this->segments[i]->GetBranch2()->GetBifTorqueRemote(), this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax);
+      }
 			if (this->segments[i]->GetLevel() == 1)
 			{
 				this->MaxMin(this->segments[i]->GetAzimuth(), this->Azimuth, this->AzimuthMin, this->AzimuthMax);
@@ -235,6 +251,8 @@ void CellTrace::clearAll()
 	this->stems = 0;
 	this->branchPoints = 0;
 	this->terminalTips = 0;
+	this->actualBifurcations = 0;
+	this->branchingStem = 0;
 
 	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
@@ -378,6 +396,9 @@ void CellTrace::clearAll()
 	this->BifTiltRemoteBigMin = 180;
 	this->BifTiltRemoteBigMax = 0;
 
+	this->BifTiltLocalTwoDaughter = 0;
+	this->BifTiltRemoteTwoDaughter = 0;
+
 	this->BifTorqueLocalSmall = 0;
 	this->BifTorqueLocalSmallMin = 180;
 	this->BifTorqueLocalSmallMax = 0;
@@ -391,6 +412,11 @@ void CellTrace::clearAll()
 	this->BifTorqueRemoteBig = 0;
 	this->BifTorqueRemoteBigMin = 180;
 	this->BifTorqueRemoteBigMax = 0;
+
+	this->BifTorqueLocalTwoDaughter = 0;
+	this->BifTorqueRemoteTwoDaughter = 0;
+	this->BifTorqueLocalTwoDaughterMax = 0;
+	this->BifTorqueRemoteTwoDaughterMax = 0;
 
 	this->Azimuth = 0;
 	this->AzimuthMin = 180;
@@ -472,12 +498,18 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 	CellData->InsertNextValue(this->NumSegments);
 	CellData->InsertNextValue(this->stems);
+	CellData->InsertNextValue(this->branchingStem);
 	CellData->InsertNextValue(this->branchPoints);
+	CellData->InsertNextValue(this->actualBifurcations);
 	CellData->InsertNextValue(this->terminalTips);
 	if (this->branchPoints == 0) 
 	{
 		this->branchPoints = 1;
 	}//protect from divide by zero
+	if (this->actualBifurcations == 0)
+	{
+		this->actualBifurcations = 1;
+	}
 
 	CellData->InsertNextValue(this->MinDiameter);
 	CellData->InsertNextValue(this->TotalDiameter / this->NumSegments);
@@ -497,6 +529,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->SurfaceAreaMax);
 	CellData->InsertNextValue(this->sectionAreaTotal);
 	CellData->InsertNextValue(this->SectionAreaMin);
+	CellData->InsertNextValue(this->sectionAreaTotal/this->NumSegments);
 	CellData->InsertNextValue(this->SectionAreaMax);
 
 	//CellData->InsertNextValue(this->TotalBurkTaper);
@@ -532,35 +565,35 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 	CellData->InsertNextValue(this->TotalFragmentation);
 	CellData->InsertNextValue(this->MinFragmentation);
-	CellData->InsertNextValue(this->TotalFragmentation / this->NumSegments);
+	CellData->InsertNextValue(this->TotalFragmentation / this->actualBifurcations);
 	CellData->InsertNextValue(this->MaxFragmentation);
 
 	CellData->InsertNextValue(this->daughterRatioMin);
-	CellData->InsertNextValue(this->daughterRatio / this->branchPoints);
+	CellData->InsertNextValue(this->daughterRatio / this->actualBifurcations);
 	CellData->InsertNextValue(this->daughterRatioMax);
 
 	CellData->InsertNextValue(this->parentDaughterRatioMin);
-	CellData->InsertNextValue(this->parentDaughterRatio/ this->branchPoints);
+	CellData->InsertNextValue(this->parentDaughterRatio/ this->actualBifurcations);
 	CellData->InsertNextValue(this->parentDaughterRatioMax);
 
 	CellData->InsertNextValue(this->partitionAsymmetryMin);
-	CellData->InsertNextValue(this->partitionAsymmetry / this->branchPoints);
+	CellData->InsertNextValue(this->partitionAsymmetry / this->actualBifurcations);
 	CellData->InsertNextValue(this->partitionAsymmetryMax);
 
 	CellData->InsertNextValue(this->rallPowerMin);
-	CellData->InsertNextValue(this->rallPower / this->branchPoints);
+	CellData->InsertNextValue(this->rallPower / this->actualBifurcations);
 	CellData->InsertNextValue(this->rallPowerMax);
 
 	CellData->InsertNextValue(this->PkMin);
-	CellData->InsertNextValue(this->Pk / this->branchPoints);
+	CellData->InsertNextValue(this->Pk / this->actualBifurcations);
 	CellData->InsertNextValue(this->PkMax);
 
 	CellData->InsertNextValue(this->Pk_classicMin);
-	CellData->InsertNextValue(this->Pk_classic / this->branchPoints);
+	CellData->InsertNextValue(this->Pk_classic / this->actualBifurcations);
 	CellData->InsertNextValue(this->Pk_classicMax);
 
 	CellData->InsertNextValue(this->Pk_2Min);
-	CellData->InsertNextValue(this->Pk_2 / this->branchPoints);
+	CellData->InsertNextValue(this->Pk_2 / this->actualBifurcations);
 	CellData->InsertNextValue(this->Pk_2Max);
 
 	double AveAzimuth = -PI;
@@ -577,35 +610,38 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->ElevationMin);
 	CellData->InsertNextValue(this->ElevationMax);
 
-	CellData->InsertNextValue(this->BifAmplLocal / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifAmplLocalMin);
 	CellData->InsertNextValue(this->BifAmplLocalMax);
-	CellData->InsertNextValue(this->BifTiltLocalSmall/ this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltLocalSmall/ this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltLocalSmallMin);
 	CellData->InsertNextValue(this->BifTiltLocalSmallMax);
-	CellData->InsertNextValue(this->BifTiltLocalBig/ this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltLocalBig/ this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltLocalBigMin);
 	CellData->InsertNextValue(this->BifTiltLocalBigMax);
-	CellData->InsertNextValue(this->BifTorqueLocalSmall/ (this->branchPoints-2));
+	CellData->InsertNextValue(this->BifTorqueLocalTwoDaughter/ (this->actualBifurcations-this->branchingStem)); //errors with trifurcations not leaf // some above 100 and some below
+	//CellData->InsertNextValue(this->BifTorqueLocalSmall/ (this->branchPoints-2)); //how to keep track of number of small ones?
 	CellData->InsertNextValue(this->BifTorqueLocalSmallMin);
 	CellData->InsertNextValue(this->BifTorqueLocalSmallMax);
-	CellData->InsertNextValue(this->BifTorqueLocalBig/ (this->branchPoints-2));
+	//CellData->InsertNextValue(this->BifTorqueLocalBig/ (this->branchPoints-2));
 	CellData->InsertNextValue(this->BifTorqueLocalBigMin);
 	CellData->InsertNextValue(this->BifTorqueLocalBigMax);
 
-	CellData->InsertNextValue(this->BifAmpRemote / this->branchPoints);
+	CellData->InsertNextValue(this->BifAmpRemote / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifAmpRemoteMin);
 	CellData->InsertNextValue(this->BifAmpRemoteMax);
-	CellData->InsertNextValue(this->BifTiltRemoteSmall / this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltRemoteSmall / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltRemoteSmallMin);
 	CellData->InsertNextValue(this->BifTiltRemoteSmallMax);
-	CellData->InsertNextValue(this->BifTiltRemoteBig / this->branchPoints);
+	CellData->InsertNextValue(this->BifTiltRemoteBig / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltRemoteBigMin);
 	CellData->InsertNextValue(this->BifTiltRemoteBigMax);
-	CellData->InsertNextValue(this->BifTorqueRemoteSmall / (this->branchPoints-2));
+	//CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughterMax);
+	CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughter/ (this->branchPoints-this->branchingStem));
+	//CellData->InsertNextValue(this->BifTorqueRemoteSmall / (this->branchPoints-2));
 	CellData->InsertNextValue(this->BifTorqueRemoteSmallMin);
 	CellData->InsertNextValue(this->BifTorqueRemoteSmallMax);
-	CellData->InsertNextValue(this->BifTorqueRemoteBig / (this->branchPoints-2));
+	//CellData->InsertNextValue(this->BifTorqueRemoteBig / (this->branchPoints-2));
 	CellData->InsertNextValue(this->BifTorqueRemoteBigMin);
 	CellData->InsertNextValue(this->BifTorqueRemoteBigMax);
 

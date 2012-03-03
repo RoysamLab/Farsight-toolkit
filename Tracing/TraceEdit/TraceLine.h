@@ -99,6 +99,15 @@ public:
 	double GetBifTorqueRemoteSmall() {return BifTorqueRemoteSmall;}
 	void setBifTorqueRemoteSmall(double NewBifTorqueRemote) {BifTorqueRemoteSmall = NewBifTorqueRemote;}
 
+	void setBifTiltLocalTwoDaughter(double NewBifTiltLocalTwo)	 {BifTiltLocalTwoDaughter = NewBifTiltLocalTwo;}
+	double GetBifTiltLocalTwoDaughter() {return BifTiltLocalTwoDaughter;}
+	void setBifTiltRemoteTwoDaughter(double NewBifTiltRemoteTwo) {BifTiltRemoteTwoDaughter = NewBifTiltRemoteTwo;}
+	double GetBifTiltRemoteTwoDaughter() {return BifTiltRemoteTwoDaughter;}
+	void setBifTorqueLocalTwoDaughter(double NewBifTorqueLocalTwo)	{BifTorqueLocalTwoDaughter = NewBifTorqueLocalTwo;}
+	double GetBifTorqueLocalTwoDaughter() {return BifTorqueLocalTwoDaughter;}
+	void setBifTorqueRemoteTwoDaughter(double NewBifTorqueRemoteTwo){BifTorqueRemoteTwoDaughter = NewBifTorqueRemoteTwo;}
+	double GetBifTorqueRemoteTwoDaughter() {return BifTorqueRemoteTwoDaughter;}
+
 	double GetDistanceToROI() {return DistanceToROI;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
 	void SetDistanceToROICoord_X(double coord) {ROICoord_X = coord;}
@@ -129,6 +138,8 @@ public:
 	bool isRoot();
 	bool isFree();
 	bool isBranch();
+	bool isActualBifurcation();
+	void setActualBifurcation(bool bifurcate);
 	unsigned char GetType();
 	void SetType(unsigned char t) ;
 	void AddTraceBit(TraceBit tbit);
@@ -205,10 +216,12 @@ private:
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
 	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
-	double BifTiltLocalBig, BifTiltRemoteBig, BifTorqueLocalBig, BifTorqueRemoteBig;
-	double BifTiltLocalSmall, BifTiltRemoteSmall, BifTorqueLocalSmall, BifTorqueRemoteSmall;
+	double BifTiltLocalTwoDaughter, BifTiltRemoteTwoDaughter, BifTorqueLocalTwoDaughter, BifTorqueRemoteTwoDaughter;
+	double BifTiltLocalBig, BifTiltLocalSmall,  BifTiltRemoteBig, BifTiltRemoteSmall;
+	double BifTorqueLocalBig, BifTorqueLocalSmall,  BifTorqueRemoteBig, BifTorqueRemoteSmall;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
+	bool actualBifurcation;
 	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;
 	/*double prediction, confidence;*/
