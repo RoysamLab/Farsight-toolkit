@@ -92,8 +92,8 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Total Volume");
 	this->headers.push_back("Min Segment Volume");
-	this->headers.push_back("Max Segment Volume");
 	this->headers.push_back("Average Segment Volume");
+	this->headers.push_back("Max Segment Volume");
 	this->headers.push_back("Total Surface Area");
 	this->headers.push_back("Min Segment Surface Area");
 	this->headers.push_back("Average Segment Surface Area");

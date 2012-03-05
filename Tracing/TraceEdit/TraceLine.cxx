@@ -272,7 +272,7 @@ void TraceLine::calculateBifFeatures()
 		this->Pk = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, this->rallPower);
 	}
 	this->Pk_classic = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
-	this->Pk_2 = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 1.5);
+	this->Pk_2 = this->CalculatePk(BranchBitRadii, D1Radii, D2Radii, 2);
 
 	if ((n1+n2) > 2)
 	{
