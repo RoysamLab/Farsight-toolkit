@@ -172,9 +172,9 @@ public:
 	void setColorValues(int i, double value);
 	void setBrightness(int value);
 	int getBrightness();
-	void setOpacity(int  value);//this is the threshold
+	void setOpacity(int value);//this is the threshold
 	int getOpacity();
-	void setOpacityMax(int  value);//this is the threshold
+	void setOpacityMax(int value);//this is the threshold
 	int getOpacityMax();
 	void setOpacityValue(double opacity);
 	double getOpacityValue();
@@ -184,6 +184,16 @@ public:
 	void getImageBounds(double bounds[]);
 	void setImageBounds(double bounds[]);
 	double* getSliceBounds();
+	void setSomaBrightness(int value);
+	int getSomaBrightness();
+	void setSomaOpacity(int value);//this is the threshold
+	int getSomaOpacity();
+	void setSomaOpacityMax(int value);//this is the threshold
+	int getSomaOpacityMax();
+	void setSomaOpacityValue(double opacity);
+	double getSomaOpacityValue();
+	void setSomaOpacityValueMax(double opacity);
+	double getSomaOpacityValueMax();
 
 	struct ColorType
 	{
@@ -195,13 +205,18 @@ private:
 	bool useGPURendering;
 	void syncColorTransferFunction();
 	void syncOpacityTransferFunction();
+	void syncSomaColorTransferFunction();
+	void syncSomaOpacityTransferFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
+	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunctionSoma;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunctionSoma;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
 	std::vector<double> TotalImageSize;
-	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
-	double somaColorValue, brightness;
+	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, brightness, RaycastSampleDist;
+	double somaColorValue, somaBrightness;
+	double somaOpacity, somaOpacityValue;
 	int colorValue, sliceBrightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 	double sliceBounds[6];

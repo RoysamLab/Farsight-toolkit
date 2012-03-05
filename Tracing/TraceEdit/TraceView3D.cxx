@@ -1907,6 +1907,7 @@ void View3D::CreateLayout()
 	this->DataViews->addAction(this->GridAction);
 
 	this->createRayCastSliders();
+
 	this->menuBar()->addSeparator();
 	this->help = this->menuBar()->addMenu("Help");
 	this->help->addAction(this->aboutAction);
@@ -2580,6 +2581,8 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 	this->viewContour = false;
 	SetContour->setChecked(false);
 	SetSomaRaycast->setChecked(true);
+
+	this->createSomaSliders();
 }
 
 void View3D::focusOn()
@@ -2989,14 +2992,82 @@ void View3D::CreateSphereActor()
 	this->pointer3d->SetInteractor(this->QVTK->GetInteractor());
 	this->pointer3d->AllOff();
 }
+void View3D::createSomaSliders()
+{
+	this->SomaBar = new QToolBar("Soma Tools", this);
+	this->SomaBar->setAllowedAreas(Qt::BottomToolBarArea);
+	//this->SomaBar->setMovable(false);
+	this->addToolBar(Qt::BottomToolBarArea,this->SomaBar);
+	this->SomaBar->setToolTip("Soma settings");
+	this->addToolBarBreak(Qt::BottomToolBarArea);
+	this->SomaOpacitySpin = new QSpinBox(this);
+	this->SomaOpacitySpin->setRange(0,250);
 
+	this->SomaOpacityValueSpin = new QDoubleSpinBox(this);
+	this->SomaOpacityValueSpin->setRange(0,1);
+	this->SomaOpacityValueSpin->setSingleStep(.01);
+	this->ImageActors->setSomaOpacityValue(this->TraceEditSettings.value("RayCast/SomaOpacityValue", .1).toDouble() );
+	this->SomaOpacityValueSpin->setValue(this->ImageActors->getSomaOpacityValue());
+	connect (this->SomaOpacityValueSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaOpacityValueChanged(double)));
+
+	this->SomaOpacitySlider = new QSlider(Qt::Horizontal);
+	this->SomaOpacitySlider->setRange(0,250);
+	this->SomaOpacitySlider->setSingleStep(1);
+	this->SomaOpacitySlider->setTickInterval(5);
+	this->SomaOpacitySlider->setTickPosition(QSlider::TicksAbove);
+	connect (this->SomaOpacitySlider, SIGNAL(valueChanged(int)), this->SomaOpacitySpin, SLOT(setValue(int)));
+	this->ImageActors->setSomaOpacity(this->TraceEditSettings.value("RayCast/SomaOpacity", 50).toInt() );
+	this->SomaOpacitySlider->setValue((int) this->ImageActors->getSomaOpacity());
+	connect (this->SomaOpacitySpin, SIGNAL(valueChanged(int)), this->SomaOpacitySlider, SLOT(setValue(int)));
+	connect (this->SomaOpacitySpin, SIGNAL(valueChanged(int)), this, SLOT(SomaOpacityChanged(int)));	
+
+	//functions to control soma Brightness
+	this->SomaBrightnessSpin = new QSpinBox(this);
+	this->SomaBrightnessSpin->setRange(0,250);
+
+	this->SomaBrightnessSlider = new QSlider(Qt::Horizontal);
+	this->SomaBrightnessSlider->setRange(0,255);
+	this->SomaBrightnessSlider->setSingleStep(1);
+	this->SomaBrightnessSlider->setTickInterval(5);
+	this->SomaBrightnessSlider->setTickPosition(QSlider::TicksAbove);
+	connect (this->SomaBrightnessSlider, SIGNAL(valueChanged(int)), this->SomaBrightnessSpin, SLOT(setValue(int)));
+	this->ImageActors->setSomaBrightness(this->TraceEditSettings.value("RayCast/SomaBrightness", 150).toInt() );
+	this->SomaBrightnessSlider->setValue(this->ImageActors->getSomaBrightness());
+	connect (this->SomaBrightnessSpin, SIGNAL(valueChanged(int)), this->SomaBrightnessSlider, SLOT(setValue(int)));
+	connect (this->SomaBrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(SomaBrightnessChanged(int)));
+
+	this->SomaColorSpin = new QDoubleSpinBox;
+	this->SomaColorSpin->setRange(0,1);
+	this->SomaColorSpin->setSingleStep(0.1);
+	this->SomaColorSpin->setValue(0.0);
+	connect(this->SomaColorSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaColorValueChanged(double)));
+
+	//add the widgets to the bar
+	this->SomaBar->addWidget(new QLabel("Soma Color"));
+	this->SomaBar->addWidget(this->SomaColorSpin);
+	this->SomaBar->addWidget(new QLabel("Opacity Threshold"));
+	this->SomaBar->addWidget(this->SomaOpacitySpin);
+	this->SomaBar->addWidget(this->SomaOpacitySlider);
+	this->SomaBar->addWidget(new QLabel("Opacity Value"));
+	this->SomaBar->addWidget(this->SomaOpacityValueSpin);
+	this->SomaBar->addSeparator();
+	this->SomaBar->addWidget(new QLabel("Brightness"));
+	this->SomaBar->addWidget(this->SomaBrightnessSpin);
+	this->SomaBar->addWidget(this->SomaBrightnessSlider);
+	this->ShowToolBars->addAction(this->SomaBar->toggleViewAction());
+	if(this->ImageActors->NumberOfImages() < 1)
+	{
+		this->SomaBar->hide();
+	}
+}
 void View3D::createRayCastSliders()
 {
 	this->RaycastBar = new QToolBar("RayCast Tools", this);
 	this->RaycastBar->setAllowedAreas(Qt::BottomToolBarArea);
-	this->RaycastBar->setMovable(false);
+	//this->RaycastBar->setMovable(false);
 	this->addToolBar(Qt::BottomToolBarArea,this->RaycastBar);
-	this->RaycastBar->setToolTip("Racaster settings");
+	this->RaycastBar->setToolTip("Raycaster settings");
+	this->addToolBarBreak(Qt::BottomToolBarArea);
 	//functions to control raycast opacity 
 	this->OpacitySpin = new QSpinBox(this);
 	this->OpacitySpin->setRange(0,250);
@@ -3033,24 +3104,16 @@ void View3D::createRayCastSliders()
 	this->BrightnessSlider->setValue(this->ImageActors->getBrightness());
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this->BrightnessSlider, SLOT(setValue(int)));
 	connect (this->BrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(RayCastBrightnessChanged(int)));
-	
+
 	QStringList ColorProfileList;
 	ColorProfileList << "RGB" << "Red" << "Green" << "Blue" << "Gray";
 	this->ColorProfileCombo = new QComboBox;
 	this->ColorProfileCombo->addItems(ColorProfileList);
 	connect(this->ColorProfileCombo, SIGNAL(activated(int)), this, SLOT(RayCastColorValueChanged(int)));
 
-	this->SomaColorSpin = new QDoubleSpinBox;
-	this->SomaColorSpin->setRange(0,1);
-	this->SomaColorSpin->setSingleStep(0.1);
-	this->SomaColorSpin->setValue(0.0);
-	connect(this->SomaColorSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaColorChanged(double)));
-
 	//add the widgets to the bar
 	this->RaycastBar->addWidget(new QLabel("Color Profile"));
 	this->RaycastBar->addWidget(this->ColorProfileCombo);
-	this->RaycastBar->addWidget(new QLabel("Soma Color"));
-	this->RaycastBar->addWidget(this->SomaColorSpin);
 	this->RaycastBar->addWidget(new QLabel("Opacity Threshold"));
 	this->RaycastBar->addWidget(this->OpacitySpin);
 	this->RaycastBar->addWidget(this->OpacitySlider);
@@ -3060,7 +3123,7 @@ void View3D::createRayCastSliders()
 	this->RaycastBar->addWidget(new QLabel("Brightness"));
 	this->RaycastBar->addWidget(this->BrightnessSpin);
 	this->RaycastBar->addWidget(this->BrightnessSlider);
-	this->DataViews->addAction(this->RaycastBar->toggleViewAction());
+	this->ShowToolBars->addAction(this->RaycastBar->toggleViewAction());
 	if(this->ImageActors->NumberOfImages() < 1)
 	{
 		this->RaycastBar->hide();
@@ -3105,16 +3168,33 @@ void View3D::chooseSomaRender(int value) //Audrey - display original soma image 
 		//contour - thresholded
 	}
 }
-void View3D::SomaColorChanged(double value)
+void View3D::SomaBrightnessChanged(int value)
 {
-	this->ImageActors->setSomaColor(value);
-	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)//round-about
-	//{
-	//	this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i);
-	//	this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-	//}
+	this->ImageActors->setSomaBrightness(value);
+	this->TraceEditSettings.setValue("Soma/Brightness", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
+
+void View3D::SomaOpacityChanged(int value)
+{
+	this->ImageActors->setSomaOpacity(value);
+	this->TraceEditSettings.setValue("Soma/Opacity", value);
+	this->QVTK->GetRenderWindow()->Render();
+}
+
+void View3D::SomaOpacityValueChanged(double value)
+{
+	this->ImageActors->setSomaOpacityValue(value);
+	this->TraceEditSettings.setValue("Soma/OpacityValue", value);
+	this->QVTK->GetRenderWindow()->Render();
+}
+
+void View3D::SomaColorValueChanged(double value)
+{
+	this->ImageActors->setSomaColor(value);
+	this->QVTK->GetRenderWindow()->Render();
+}
+
 void View3D::EditHelp()
 {
 	//will write help documentation here

@@ -27,13 +27,19 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity1Value = .1;
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
+	this->somaOpacity = 50;
+	this->somaOpacityValue = .1;
+
 	this->colorValue = 0;
 	this->somaColorValue = 0;
+	this->somaBrightness = 150;
 	this->sliceBrightness = 500;
 	this->RaycastSampleDist = .2;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+	this->opacityTransferFunctionSoma = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->syncOpacityTransferFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+	this->colorTransferFunctionSoma = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->syncColorTransferFunction();
 	this->TotalImageSize.clear();
 	for (int i = 0; i <6; i++)
@@ -279,25 +285,56 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 //	this->LoadedImages[i]->somaVolume->SetPickable(0);
 //	return this->LoadedImages[i]->somaVolume;
 //}
-void ImageRenderActors::setSomaColor(double colorValue) //works when raycast mode button triggered
+void ImageRenderActors::setSomaBrightness(int value)
+{
+	this->somaBrightness = (double) value;
+	this->syncSomaColorTransferFunction();
+}
+int ImageRenderActors::getSomaBrightness()
+{
+	return (int) this->somaBrightness;
+}
+void ImageRenderActors::setSomaOpacity(int value)
+{
+	this->somaOpacity = (double) value;
+	this->syncSomaColorTransferFunction();
+}
+int ImageRenderActors::getSomaOpacity()
+{
+	return (int) this->somaOpacity;
+}
+void ImageRenderActors::setSomaOpacityValue(double opacity)
+{
+	this->somaOpacityValue = opacity;
+	this->syncSomaOpacityTransferFunction();
+}
+double ImageRenderActors::getSomaOpacityValue()
+{
+	return this->somaOpacityValue;
+}
+void ImageRenderActors::setSomaColor(double value)
+{
+	this->somaColorValue = value;
+	this->syncSomaColorTransferFunction();
+}
+void ImageRenderActors::syncSomaColorTransferFunction() //works when raycast mode button triggered
 {
 	//std::cout << "setSomaColor" << std::endl;
+	colorTransferFunctionSoma->RemoveAllPoints();
 	double r, g ,b;
-	this->somaColorValue = colorValue;
-	if (colorValue < 0.5)
+	if (somaColorValue < 0.5)
 	{
-		r = 1-(colorValue/0.5);
-		g = colorValue/0.5;
+		r = (1-(somaColorValue/0.5))*this->somaBrightness/250.0;
+		g = (somaColorValue/0.5)*this->somaBrightness/250.0;
 		b = 0;
 	}
 	else
 	{
 		r = 0;
-		g = 1-(colorValue-0.5)/0.5;
-		b = (colorValue-0.5)/0.5;
+		g = (1-(somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
+		b = ((somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
 	}
-	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunctionSoma = vtkColorTransferFunction::New();
-	colorTransferFunctionSoma->AddRGBPoint((this->b*this->brightness)/100, r, g, b); // what's this->b and others?
+	colorTransferFunctionSoma->AddRGBPoint(0, r, g, b); // what's this->b and others?
 
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
@@ -311,7 +348,23 @@ void ImageRenderActors::setSomaColor(double colorValue) //works when raycast mod
 		}
 	}
 }
-
+void ImageRenderActors::syncSomaOpacityTransferFunction()
+{
+	this->opacityTransferFunctionSoma->RemoveAllPoints();
+	this->opacityTransferFunctionSoma->AddPoint(2,0.0);
+	this->opacityTransferFunctionSoma->AddPoint(this->somaOpacity,this->somaOpacityValue);
+	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	{
+		if (this->LoadedImages[i]->tag.compare("Soma")==0)
+		{		
+			if(this->LoadedImages[i]->volume)
+			{
+				this->LoadedImages[i]->volumeProperty->SetScalarOpacity(opacityTransferFunctionSoma);
+				this->LoadedImages[i]->volume->Update();
+			}
+		}
+	}
+}
 vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
 {
 	if (i == -1)
@@ -454,7 +507,7 @@ int ImageRenderActors::getBrightness()
 }
 void ImageRenderActors::setOpacity(int value)
 {
-	this->opacity1 = (double ) value;
+	this->opacity1 = (double) value;
 	this->syncOpacityTransferFunction();
 }
 int ImageRenderActors::getOpacity()

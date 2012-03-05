@@ -242,7 +242,10 @@ public slots:
 	void RayCastBrightnessChanged(int value);
 	void RayCastColorValueChanged(int value);
 	void chooseSomaRender(int value);
-	void SomaColorChanged(double value);
+	void SomaOpacityChanged(int value);
+	void SomaOpacityValueChanged(double value);
+	void SomaBrightnessChanged(int value);
+	void SomaColorValueChanged(double value);
 	void showPTin3D(double value);
 	void getPosPTin3D();
 	void setPTtoSoma();
@@ -357,7 +360,7 @@ private:
 	QMenu *help;
 	QDialog *tracingGui;
 	QAction *aboutAction;
-	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SlicerBar;
+	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SomaBar, *SlicerBar;
 
   #ifdef USE_QT_TESTING
   //testing GUI elements
@@ -568,10 +571,10 @@ private:
 	QSpinBox * SliceSpinBox, * SliceThicknessSpinBox;
 	QSlider * SliceSlider, * SliceBrightnessSlider;
 
-	void createRayCastSliders();
-	QSpinBox * OpacitySpin, * BrightnessSpin;
-	QDoubleSpinBox * OpacityValueSpin, * SomaColorSpin;
-	QSlider *OpacitySlider, *BrightnessSlider;
+	void createRayCastSliders(), createSomaSliders();
+	QSpinBox * OpacitySpin, * BrightnessSpin, * SomaOpacitySpin, * SomaBrightnessSpin;
+	QDoubleSpinBox * OpacityValueSpin, * SomaOpacityValueSpin, * SomaColorSpin;
+	QSlider *OpacitySlider, *BrightnessSlider, *SomaOpacitySlider, *SomaBrightnessSlider;
 	QComboBox *ColorProfileCombo;
 
 	struct projection {
