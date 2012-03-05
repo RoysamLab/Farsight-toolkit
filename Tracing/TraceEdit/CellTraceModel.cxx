@@ -157,11 +157,11 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Pk 2");
 	this->headers.push_back("Max Pk 2");
 
-	this->headers.push_back("Average Azimuth");
 	this->headers.push_back("Min Azimuth");
+	this->headers.push_back("Average Azimuth");
 	this->headers.push_back("Max Azimuth");
-	this->headers.push_back("Average Elevation");
 	this->headers.push_back("Min Elevation");
+	this->headers.push_back("Average Elevation");
 	this->headers.push_back("Max Elevation");
 
 	this->headers.push_back("Average Local Bifurcation Amp");
@@ -173,7 +173,6 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Local Bifurcation Tilt Larger");
 	this->headers.push_back("Min Local Bifurcation Tilt Larger");
 	this->headers.push_back("Max Local Bifurcation Tilt Larger");
-	//this->headers.push_back("AVG TORQUE");
 	this->headers.push_back("Average Local Bifurcation Torque");
 	//this->headers.push_back("Average Local Bifurcation Torque Smaller");
 	this->headers.push_back("Min Local Bifurcation Torque Smaller");
@@ -211,12 +210,12 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Average Terminal Compartments");
 	this->headers.push_back("Max Terminal Compartments");
 
+	this->headers.push_back("Diameter Threshold Min");
 	this->headers.push_back("Average Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
-	this->headers.push_back("Diameter Threshold Min");
+	this->headers.push_back("Terminal Parent Diameter Min");
 	this->headers.push_back("Average Terminal Parent Diameter");
 	this->headers.push_back("Terminal Parent Diameter Max");
-	this->headers.push_back("Terminal Parent Diameter Min");
 
 	this->headers.push_back("Min Terminal Hillman Thresh"); //extend for all branches
 	this->headers.push_back("Average Terminal Hillman Thresh");

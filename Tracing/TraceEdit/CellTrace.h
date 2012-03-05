@@ -50,10 +50,13 @@ public:
 private:
 	void clearAll();
 	void MaxMin(double NewValue, double &total, double &Min, double &Max);
+	void MaxMin(double NewValue, double &total, double &Min, double &Max, int &Count);
 	void MaxMin(float NewValue, float &total, float &Min, float &Max);
 	void MaxMin(int NewValue, int &total, int &Min, int &Max);
 	std::vector<TraceLine*>  segments;
 	int terminalBifCount;
+	//int TerminalTriCount, notTerminalTriCount;
+	//int TriCount;
 	
 public:
 	int NumSegments, stems, branchPoints,terminalTips, actualBifurcations, branchingStem;
@@ -96,8 +99,9 @@ public:
 	double BifTiltLocalSmallMax, BifTiltRemoteSmallMax, BifTorqueLocalSmallMax, BifTorqueRemoteSmallMax;
 	double BifTiltLocalTwoDaughter, BifTiltLocalTwoDaughterMax, BifTiltLocalTwoDaughterMin;
 	double BifTorqueLocalTwoDaughter, BifTorqueLocalTwoDaughterMax, BifTorqueLocalTwoDaughterMin;
-		double BifTiltRemoteTwoDaughter, BifTiltRemoteTwoDaughterMax, BifTiltRemoteTwoDaughterMin;
+	double BifTiltRemoteTwoDaughter, BifTiltRemoteTwoDaughterMax, BifTiltRemoteTwoDaughterMin;
 	double BifTorqueRemoteTwoDaughter, BifTorqueRemoteTwoDaughterMax, BifTorqueRemoteTwoDaughterMin;
+	int TwoDaughterTorqueCount;
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;

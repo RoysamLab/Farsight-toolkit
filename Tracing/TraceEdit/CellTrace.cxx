@@ -164,8 +164,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
       {
 		this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
 		this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
-		this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax);
-		this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax);
+		this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax, this->TwoDaughterTorqueCount);
+		this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax, this->TwoDaughterTorqueCount);
 		if (this->segments[i]->GetTerminalDegree() > 2)
 		{
 			this->MaxMin(this->segments[i]->GetBifTorqueRemoteBig(), this->BifTorqueRemoteBig, this->BifTorqueRemoteBigMin, this->BifTorqueRemoteBigMax);
@@ -188,6 +188,9 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			}
 		}//end bifurcation features
 	}//end for segment size
+	//this->TerminalTriCount = this->terminalTips - this->stems - this->terminalBifCount;
+	//this->TriCount = this->branchPoints - this->actualBifurcations;
+	//this->notTerminalTriCount = this->TriCount - this->TerminalTriCount;
 	this->skewnessX = (somaX - (minX + (maxX - minX)/2)); /// ((float)(maxX - minX)/2);
 	this->skewnessY = (somaY - (minY + (maxY - minY)/2)); /// ((float)(maxY - minY)/2);
 	this->skewnessZ = (somaZ - (minZ + (maxZ - minZ)/2)); /// ((float)(maxZ - minZ)/2);
@@ -253,6 +256,9 @@ void CellTrace::clearAll()
 	this->terminalTips = 0;
 	this->actualBifurcations = 0;
 	this->branchingStem = 0;
+	//this->TriCount = 0;
+	//this->TerminalTriCount = 0;
+	//this->notTerminalTriCount = 0;
 
 	this->MinTerminalLevel = 100; //something large for initial value
 	this->MaxTerminalLevel = 0;
@@ -417,6 +423,7 @@ void CellTrace::clearAll()
 	this->BifTorqueRemoteTwoDaughter = 0;
 	this->BifTorqueLocalTwoDaughterMax = 0;
 	this->BifTorqueRemoteTwoDaughterMax = 0;
+	this->TwoDaughterTorqueCount = 0;
 
 	this->Azimuth = 0;
 	this->AzimuthMin = 180;
@@ -443,6 +450,14 @@ void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 		{
 			Min = NewValue;
 		}
+	}
+}
+void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max, int &Count)
+{
+	if (NewValue != -1)
+	{
+		this->MaxMin(NewValue,total,Min,Max);
+		Count++;
 	}
 }
 void CellTrace::MaxMin(float NewValue, float &total, float &Min, float &Max)
@@ -603,11 +618,11 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		AveAzimuth = this->Azimuth / this->stems;
 		AveElevation = this->Elevation / this->stems;
 	}
-	CellData->InsertNextValue(AveAzimuth);
 	CellData->InsertNextValue(this->AzimuthMin);
-	CellData->InsertNextValue(this->AzimuthMax); 
-	CellData->InsertNextValue(AveElevation);
+	CellData->InsertNextValue(AveAzimuth);
+	CellData->InsertNextValue(this->AzimuthMax);
 	CellData->InsertNextValue(this->ElevationMin);
+	CellData->InsertNextValue(AveElevation);
 	CellData->InsertNextValue(this->ElevationMax);
 
 	CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
@@ -619,8 +634,13 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltLocalBig/ this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltLocalBigMin);
 	CellData->InsertNextValue(this->BifTiltLocalBigMax);
-	CellData->InsertNextValue(this->BifTorqueLocalTwoDaughter/ (this->actualBifurcations-this->branchingStem)); //errors with trifurcations not leaf // some above 100 and some below
-	//CellData->InsertNextValue(this->BifTorqueLocalSmall/ (this->branchPoints-2)); //how to keep track of number of small ones?
+
+	if (this->TwoDaughterTorqueCount == 0)
+	{
+		this->TwoDaughterTorqueCount = 1;
+	}
+	CellData->InsertNextValue(this->BifTorqueLocalTwoDaughter/ this->TwoDaughterTorqueCount);
+	//CellData->InsertNextValue(this->BifTorqueLocalSmall/ (this->branchPoints-2));
 	CellData->InsertNextValue(this->BifTorqueLocalSmallMin);
 	CellData->InsertNextValue(this->BifTorqueLocalSmallMax);
 	//CellData->InsertNextValue(this->BifTorqueLocalBig/ (this->branchPoints-2));
@@ -636,8 +656,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTiltRemoteBig / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifTiltRemoteBigMin);
 	CellData->InsertNextValue(this->BifTiltRemoteBigMax);
-	//CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughterMax);
-	CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughter/ (this->branchPoints-this->branchingStem));
+	CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughter/ this->TwoDaughterTorqueCount);
 	//CellData->InsertNextValue(this->BifTorqueRemoteSmall / (this->branchPoints-2));
 	CellData->InsertNextValue(this->BifTorqueRemoteSmallMin);
 	CellData->InsertNextValue(this->BifTorqueRemoteSmallMax);
@@ -657,12 +676,12 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->TotalTerminalSegment / this->terminalTips); //average
 	CellData->InsertNextValue(this->MaxTerminalSegment);
 
+	CellData->InsertNextValue(this->DiamThresholdMin);
 	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
 	CellData->InsertNextValue(this->DiamThresholdMax);
-	CellData->InsertNextValue(this->DiamThresholdMin);
+	CellData->InsertNextValue(this->LastParentDiamMin);
 	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
 	CellData->InsertNextValue(this->LastParentDiamMax);
-	CellData->InsertNextValue(this->LastParentDiamMin);
 
 	CellData->InsertNextValue(this->MinHillmanThresh); 
 	if (this->terminalBifCount != 0)
