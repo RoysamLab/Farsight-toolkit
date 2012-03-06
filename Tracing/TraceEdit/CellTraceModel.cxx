@@ -512,7 +512,7 @@ void CellTraceModel::createCellToCellGraph()
 		cellCoord.push_back(this->Cells.at(i)->somaZ);
 		centroidMap[id] = cellCoord;
 	}//end for cell size
-	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
 	//KNObj->setFeatureTable(this->getCellBoundsTable());
 	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
 	kNeighborIDs = KNObj->k_nearest_neighbors_All(4, 0, 0);	//guess at parameters, dist, no classes 
