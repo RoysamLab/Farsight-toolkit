@@ -581,6 +581,9 @@ ClusterManager::ClusterManager()
 
 	this->ShowObjectTables = new QPushButton(" Show Cluster Tables");
 	connect(this->ShowObjectTables, SIGNAL(clicked()), this, SLOT(ShowClusterObjectTables()));
+
+	this->HideObjectTables = new QPushButton(" Close Cluster Tables");
+	connect(this->HideObjectTables, SIGNAL(clicked()), this, SLOT(CloseClusterObjectTables()));
 	
 	this->ShowDistributionButton = new QPushButton(" Show Distribution ");
 	connect(this->ShowDistributionButton, SIGNAL(clicked()), this, SLOT(ShowDistribution()));
@@ -626,6 +629,7 @@ ClusterManager::ClusterManager()
 	ButtonLayout->addWidget(this->ClearClusterButton);
 	ButtonLayout->addWidget(this->ClusterFeaturesButton);
 	ButtonLayout->addWidget(this->ShowObjectTables);
+	ButtonLayout->addWidget(this->HideObjectTables);
 	ButtonLayout->addWidget(this->ShowDistributionButton);
 
 	//InfoLayout->addRow("Operator: ", this->OperatorList);
@@ -718,18 +722,12 @@ void ClusterManager::ShowClusterFeatures()
 void ClusterManager::ShowClusterObjectTables()
 {
 	/*!
-	* 
+	* Displays a table for each cluster
+	* each row is an object and its features
 	*/
 	if (this->ClusterObjectTables.size() > 0)
 	{
-		for (int tablesOpen =0 ; this->ClusterObjectTables.size() > tablesOpen ; tablesOpen++)
-		{
-			if (this->ClusterObjectTables[tablesOpen])
-			{
-				this->ClusterObjectTables[tablesOpen]->close();
-			}
-		}
-		this->ClusterObjectTables.clear();
+		this->CloseClusterObjectTables();
 	}
 
 	vtkIdType numClus = this->ClusterModel->NumberOfClusters();
@@ -745,6 +743,22 @@ void ClusterManager::ShowClusterObjectTables()
 			this->ClusterModel->ObjectAnnotationLink);
 		this->ClusterObjectTables.push_back(newTable);
 	}
+}
+
+void ClusterManager::CloseClusterObjectTables()
+{
+	/*!
+	* Closes and deletes tables views of 
+	* the objects in each Cluster 
+	*/
+	for (int tablesOpen =0 ; this->ClusterObjectTables.size() > tablesOpen ; tablesOpen++)
+	{
+		if (this->ClusterObjectTables[tablesOpen])
+		{
+			this->ClusterObjectTables[tablesOpen]->close();
+		}
+	}
+	this->ClusterObjectTables.clear();
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()

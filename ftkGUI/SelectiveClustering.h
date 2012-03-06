@@ -184,7 +184,10 @@ public slots:
 	void ClearClusters();
 	void RemoveSelectedClusters();
 	void ShowClusterFeatures();
+
 	void ShowClusterObjectTables();
+	void CloseClusterObjectTables();
+
 	void ChangeInClusters();
 	
 
@@ -225,6 +228,7 @@ private:
 	QPushButton * RemoveClusterButton;
 	QPushButton * ClusterFeaturesButton;
 	QPushButton * ShowObjectTables;
+	QPushButton * HideObjectTables;
 	QPushButton * ShowDistributionButton;
 
 	bool AnnotationLinkSetUp;

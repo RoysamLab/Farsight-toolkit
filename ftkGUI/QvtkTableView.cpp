@@ -40,6 +40,9 @@ QvtkTableView::QvtkTableView()
 QvtkTableView::~QvtkTableView()
 {
 	//
+	this->AnnotationLink->RemoveAllInputs();
+	this->AnnotationLink->RemoveAllObservers();
+	this->TableView->~QTableView();
 }
 void QvtkTableView::SetInputLink(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink)
 {
