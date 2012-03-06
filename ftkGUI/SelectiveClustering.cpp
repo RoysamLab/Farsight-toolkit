@@ -613,6 +613,8 @@ ClusterManager::ClusterManager()
 	InfoLayout->addRow("Number of Objects: ", this->NumObjects);
 	InfoLayout->addRow("Number of Clusters: ", this->NumClusters);
 	InfoLayout->addRow("Number Selected: ", this->NumSelected);
+	InfoLayout->addRow(this->ClearClusterButton);
+	InfoLayout->addRow(this->AddClusterButton);
 	InfoLayout->addRow(this->RemoveClusterButton);
 
 	HOperatorDisplayLayout= new QHBoxLayout();
@@ -624,9 +626,9 @@ ClusterManager::ClusterManager()
 	//InfoLayout->addRow(this->HOperatorDisplayLayout);
 
 	QHBoxLayout* ButtonLayout = new QHBoxLayout();
-	ButtonLayout->addWidget(this->AddClusterButton);
+	//ButtonLayout->addWidget(this->AddClusterButton);
 	//ButtonLayout->addWidget(this->RunOperatorButton);
-	ButtonLayout->addWidget(this->ClearClusterButton);
+	//ButtonLayout->addWidget(this->ClearClusterButton);
 	ButtonLayout->addWidget(this->ClusterFeaturesButton);
 	ButtonLayout->addWidget(this->ShowObjectTables);
 	ButtonLayout->addWidget(this->HideObjectTables);
@@ -737,12 +739,19 @@ void ClusterManager::ShowClusterObjectTables()
 	{
 		QvtkTableDialog* newTable = new QvtkTableDialog();
 		std::stringstream temp;
-		temp<<"Cluster" << (*iter);
+		temp<<"Cluster: " << (*iter);
 		newTable->setTitle(temp.str());
 		newTable->UpdateView(this->ClusterModel->GetTableOfSelectedFromCluster(*iter), 
 			this->ClusterModel->ObjectAnnotationLink);
 		this->ClusterObjectTables.push_back(newTable);
 	}
+	//Table Of all objects
+	QvtkTableDialog* newTable = new QvtkTableDialog();
+	newTable->setTitle("All Selected Objects");
+	newTable->UpdateView(this->ClusterModel->GetTableOfAllSelected(), 
+		this->ClusterModel->ObjectAnnotationLink);
+	this->ClusterObjectTables.push_back(newTable);
+
 }
 
 void ClusterManager::CloseClusterObjectTables()
@@ -842,19 +851,25 @@ void ClusterManager::RunOperatorOnSelectedClusters()
 	a = this->Operand1->currentText().toInt();
 	b = this->Operand2->currentText().toInt();
 	
+	std::stringstream temp;
+	
 	switch(index)
 	{
 		case 0: //ADD
 			clusterIDs =  this->ClusterModel->cluster_operator_ADD(a.ToTypeInt64(),b.ToTypeInt64());
+			temp << a.ToTypeInt64() << " + " << b.ToTypeInt64();
 			break;
 		case 1: //SUBRACT
 			clusterIDs =  this->ClusterModel->cluster_operator_SUBTRACT(a.ToTypeInt64(),b.ToTypeInt64());
+			temp << a.ToTypeInt64() << " - " << b.ToTypeInt64();
 			break;
 		case 2: //AND
 			clusterIDs =  this->ClusterModel->cluster_operator_AND(a.ToTypeInt64(),b.ToTypeInt64());
+			temp << a.ToTypeInt64() << " And " << b.ToTypeInt64();
 			break;
 		case 3: //XOR
 			clusterIDs =  this->ClusterModel->cluster_operator_XOR(a.ToTypeInt64(),b.ToTypeInt64());
+			temp << a.ToTypeInt64() << " XOR " << b.ToTypeInt64();
 			break;
 		default: 
 			std::cerr << "Incorrect Operator = " << index << std::endl;
@@ -863,14 +878,19 @@ void ClusterManager::RunOperatorOnSelectedClusters()
 	
 	//Display the Data in the console
 	this->ClusterModel->CopySelectedIntoTable(clusterIDs, selectedTable);
-	selectedTable->Dump(16);
+	QvtkTableDialog* newTable = new QvtkTableDialog();
+	//selectedTable->Dump(16);
 	std::set< vtkIdType > tempClusterIds;
 	index  = this->ActionType->currentIndex();
 	switch(index)
 	{
-		case 0: //Display
-			//tempClusterIds = this->ClusterModel->SelectionFromCluster(a.ToTypeInt64());
-			//this->ClusterModel->RemoveSelectionFromCluster(a.ToTypeInt64(),tempClusterIds);
+		case 0: 	
+
+			
+			newTable->setTitle(temp.str());
+			newTable->UpdateView(selectedTable, this->ClusterModel->ObjectAnnotationLink);
+			this->ClusterObjectTables.push_back(newTable);
+
 			break;
 		case 1: //Override I
 			tempClusterIds = this->ClusterModel->SelectionFromCluster(a.ToTypeInt64());
