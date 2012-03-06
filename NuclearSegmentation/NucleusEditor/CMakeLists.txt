@@ -145,6 +145,7 @@ SET (NUCLEUSEDITOR_LIBRARIES
 	NESQLITE 
 	sqlite3 
 	MCLR
+	diffusion_map
 	${CLUSCLUS_LIBRARIES}
 	)
 IF (USE_TRACKING)
@@ -154,10 +155,10 @@ ELSE (USE_TRACKING)
 ENDIF (USE_TRACKING)
 
 ADD_LIBRARY( Project_Processor STATIC ftkProjectProcessor.cpp ftkProjectProcessor.h ftkProjectDefinition.cpp ftkProjectDefinition.h)
-TARGET_LINK_LIBRARIES( Project_Processor ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
+TARGET_LINK_LIBRARIES( Project_Processor ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR diffusion_map)
 
 ADD_EXECUTABLE( projproc processor_main.cpp ftkProjectProcessor.cpp ftkProjectDefinition.cpp)
-TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR)
+TARGET_LINK_LIBRARIES( projproc ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR diffusion_map)
 install(TARGETS projproc DESTINATION ${INSTALL_BIN_DIR} )
 
 IF (BUILD_MODEL_SEG)

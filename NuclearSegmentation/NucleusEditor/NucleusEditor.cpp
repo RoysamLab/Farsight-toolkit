@@ -74,6 +74,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	nucSeg = NULL;
 	pProc = NULL;
+	diffusion_map = NULL;
 	processThread = NULL;
 	table = NULL;
 	NucAdjTable = NULL;
@@ -599,6 +600,14 @@ void NucleusEditor::createMenus()
 	inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
 	connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
 	queriesMenu->addAction(inRadiusNeighborsAction);
+
+	computeDiffusionMapAction = new QAction(tr("Compute Diffusion Map..."), this);
+	connect(computeDiffusionMapAction, SIGNAL(triggered()), this, SLOT(computeDistanceMap()));
+	queriesMenu->addAction(computeDiffusionMapAction);
+
+	kNearestDiffusionAction = new QAction(tr("Query K Nearest Diffusion Neighbors..."), this);
+	connect(kNearestDiffusionAction, SIGNAL(triggered()), this, SLOT(queryKDiffusion()));
+	queriesMenu->addAction(kNearestDiffusionAction);
 
 	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
 	queryViewsOffAction->setShortcut(tr("Shift+O"));
@@ -2898,9 +2907,9 @@ void NucleusEditor::queryKNearest()
 
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
+	
 
-
-	QueryDialog *dialog = new QueryDialog(1,classes,this);
+	QueryDialog *dialog = new QueryDialog(1, classes, false, this);
 	if( dialog->exec() )
 	{
 		IDs = dialog->parseIDs();
@@ -2926,7 +2935,7 @@ void NucleusEditor::queryKNearest()
 		centroidMap[id] = c;				
 	}
 
-	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
 	KNObj->setFeatureTable(table);
 	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
 	if(IDs.at(0) == 0)
@@ -3019,7 +3028,7 @@ void NucleusEditor::queryInRadius()
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
 
-	QueryDialog *dialog = new QueryDialog(2,classes,this);
+	QueryDialog *dialog = new QueryDialog(2, classes, false, this);
 	if( dialog->exec() )
 	{
 		IDs = dialog->parseIDs();
@@ -3044,7 +3053,7 @@ void NucleusEditor::queryInRadius()
 		centroidMap[id] = c;
 	}
 
-	kNearestObjects* KNObj = new kNearestObjects(centroidMap);
+	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
 	KNObj->setFeatureTable(table);
 	std::vector<std::vector< std::pair<unsigned int, double> > > radNeighborIDs;
 	if(IDs.at(0) == 0)
@@ -3093,6 +3102,63 @@ void NucleusEditor::queryInRadius()
 	segView->SetRadNeighborTable(radNeighborTable);
 	segView->SetRadNeighborsVisibleOn();
 
+}
+
+
+//**********************************************************************
+// SLOT: Compute Diffusion Map
+//**********************************************************************
+void NucleusEditor::computeDistanceMap()
+{
+	if(!table) return;
+
+	pWizard = new PatternAnalysisWizard( table, PatternAnalysisWizard::_ACTIVE,"","", this);
+	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+	pWizard->exec();
+
+	if(pWizard->result())
+	{	
+		// Extracted Table containing features of trained model 
+		pawTable = pWizard->getExtractedTable();
+		//if(diffusion_map)
+		//	delete diffusion_map;
+		
+		diffusion_map = new DiffusionMap();
+		diffusion_map->Initialize(table, true);
+		diffusion_map->ComputeDiffusionMap();		
+	}
+}
+
+//**********************************************************************
+// SLOT: Compute Diffusion Map
+//**********************************************************************
+void NucleusEditor::queryKDiffusion()
+{
+	if(!table) return;
+	if(!diffusion_map)
+	{
+		std::cout<< "Diffusion Map not computed !!\n";
+		return;
+	}
+
+	std::vector<unsigned int> IDs;
+	unsigned int k;
+	bool k_mutual;
+
+	QVector<QString> classes;
+	classes.clear();
+	QueryDialog *dialog = new QueryDialog(1, classes, true, this);
+	if( dialog->exec() )
+	{
+		IDs = dialog->parseIDs();
+		k = dialog->parseK();
+		k_mutual = dialog->getKMutual();
+	}
+	delete dialog;
+	std::cout << k;
+	vtkSmartPointer<vtkTable> kNeighborTable = diffusion_map->GetKDiffusionNeighbors(IDs, k);
+	segView->SetKNeighborTable(kNeighborTable);
+	segView->SetKNeighborsVisibleOn(k_mutual);
 }
 
 //**********************************************************************
@@ -4552,9 +4618,11 @@ void SamplePercentDialog::setPercent(int x)
 // A dialog to get the paramaters file to use and specify the channel if image has
 // more than one:
 //***********************************************************************************
-QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *parent)
+QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, bool diffusion_graph, QWidget *parent)
 : QDialog(parent)
 {
+	layout = new QVBoxLayout;
+
 	idLabel = new QLabel("Choose Object IDs ('0' for all IDs) :");
 	IDs = new QLineEdit();
 	IDs->setMinimumWidth(100);
@@ -4562,6 +4630,7 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 	idLayout = new QHBoxLayout;
 	idLayout->addWidget(idLabel);
 	idLayout->addWidget(IDs);
+	layout->addLayout(idLayout);
 
 	if(QueryType == 1)
 	{
@@ -4572,6 +4641,7 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 		kLayout = new QHBoxLayout;
 		kLayout->addWidget(kLabel);
 		kLayout->addWidget(K);
+		layout->addLayout(kLayout);
 	}
 	else if(QueryType == 2)
 	{
@@ -4582,29 +4652,35 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 		radLayout = new QHBoxLayout;
 		radLayout->addWidget(radLabel);
 		radLayout->addWidget(RAD);
+		layout->addLayout(radLayout);
 	}	
 
-	classLabel1 = new QLabel("Choose Source Class: ");
-	classCombo1 = new QComboBox();
-	classCombo1->addItem("All");
-	for(int v = 0; v<classes.size(); ++v)
+	if(!diffusion_graph)
 	{
-		classCombo1->addItem(classes.at(v));
+		classLabel1 = new QLabel("Choose Source Class: ");
+		classCombo1 = new QComboBox();
+		classCombo1->addItem("All");
+		for(int v = 0; v<classes.size(); ++v)
+		{
+			classCombo1->addItem(classes.at(v));
+		}
+		QHBoxLayout *classLayout1 = new QHBoxLayout;
+		classLayout1->addWidget(classLabel1);
+		classLayout1->addWidget(classCombo1);
+		layout->addLayout(classLayout1);
+		
+		classLabel2 = new QLabel("Choose Destination Class: ");
+		classCombo2 = new QComboBox();
+		classCombo2->addItem("All");
+		for(int v = 0; v<classes.size(); ++v)
+		{
+			classCombo2->addItem(classes.at(v));
+		}
+		QHBoxLayout *classLayout2 = new QHBoxLayout;
+		classLayout2->addWidget(classLabel2);
+		classLayout2->addWidget(classCombo2);
+		layout->addLayout(classLayout2);
 	}
-	QHBoxLayout *classLayout1 = new QHBoxLayout;
-	classLayout1->addWidget(classLabel1);
-	classLayout1->addWidget(classCombo1);
-
-	classLabel2 = new QLabel("Choose Destination Class: ");
-	classCombo2 = new QComboBox();
-	classCombo2->addItem("All");
-	for(int v = 0; v<classes.size(); ++v)
-	{
-		classCombo2->addItem(classes.at(v));
-	}
-	QHBoxLayout *classLayout2 = new QHBoxLayout;
-	classLayout2->addWidget(classLabel2);
-	classLayout2->addWidget(classCombo2);
 
 	//autoButton = new QRadioButton(tr("Automatic Parameter Selection"),this);
 	//autoButton->setChecked(true);
@@ -4616,34 +4692,45 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, QWidget *paren
 	//fileCombo->addItem(tr("Browse..."));
 	//connect(fileCombo, SIGNAL(currentIndexChanged(QString)),this,SLOT(ParamBrowse(QString)));
 
+	if(QueryType == 1)
+	{
+		check = new QCheckBox("Show k mutual graph");
+		check->setChecked(false);
+		layout->addWidget(check);
+	}
+
 	okButton = new QPushButton(tr("OK"),this);
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
 	bLayout = new QHBoxLayout;
 	bLayout->addStretch(20);
 	bLayout->addWidget(okButton);	
-	if(QueryType == 1)
-	{
-		check = new QCheckBox("Show k mutual graph");
-		check->setChecked(false);
-	}
-
-	layout = new QVBoxLayout;
-	layout->addLayout(idLayout);
-	if(QueryType == 1)
-		layout->addLayout(kLayout);
-	if(QueryType == 2)
-		layout->addLayout(radLayout);
-	layout->addLayout(classLayout1);
-	layout->addLayout(classLayout2);
-	if(QueryType == 1)
-		layout->addWidget(check);
-	//layout->addWidget(autoButton);
-	//layout->addWidget(quitButton);
-	//layout->addWidget(okButton);
 	layout->addLayout(bLayout);
+
+	//layout = new QVBoxLayout;
+	//layout->addLayout(idLayout);
+	//if(QueryType == 1)
+	//	layout->addLayout(kLayout);
+	//if(QueryType == 2)
+	//	layout->addLayout(radLayout);
+	//if(!diffusion_graph)
+	//{
+	//	layout->addLayout(classLayout1);
+	//	layout->addLayout(classLayout2);
+	//}
+	//if(QueryType == 1)
+	//	layout->addWidget(check);
+	////layout->addWidget(autoButton);
+	////layout->addWidget(quitButton);
+	////layout->addWidget(okButton);
+	//layout->addLayout(bLayout);
 	this->setLayout(layout);
 	if(QueryType == 1)
-		this->setWindowTitle(tr("K Nearest Neighbors"));
+	{
+		if(!diffusion_graph)
+			this->setWindowTitle(tr("K Nearest Neighbors"));
+		else
+			this->setWindowTitle(tr("K Nearest Diffusion Neighbors"));
+	}
 	else if(QueryType == 2)
 		this->setWindowTitle(tr("Neighbors Within Radius"));
 

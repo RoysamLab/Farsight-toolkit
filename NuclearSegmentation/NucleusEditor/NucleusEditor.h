@@ -94,6 +94,7 @@
 #include "ftkGUI/PreprocessDialog.h"
 #include "ftkGraphs/kNearestObjects.h"
 #include "ftkSpectralUnmixing/ftkSpectralUnmixing.h"
+#include "PatternAnalysis/DiffusionMap/DiffusionMap.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -233,6 +234,8 @@ protected slots:
 	//Queries Menu
 	void queryKNearest(void);
 	void queryInRadius(void);
+	void computeDistanceMap(void);
+	void queryKDiffusion(void);
 	void queryViewsOff(void);
 	double average(std::vector< std::pair<unsigned int, double> > ID);
 
@@ -400,6 +403,8 @@ protected:
 	QMenu *queriesMenu;
 	QAction *kNearestNeighborsAction;
 	QAction *inRadiusNeighborsAction;
+	QAction *computeDiffusionMapAction;
+	QAction *kNearestDiffusionAction;
 	QAction *queryViewsOffAction;
 #ifdef USE_TRACKING
 	//For 5D Image Menu
@@ -505,6 +510,9 @@ protected:
 	std::vector<std::string> class_names;
 	int trainName;
 	int predictName;
+
+	//Diffusion Map
+	DiffusionMap * diffusion_map;
 
 	//Clustering
 	#ifdef	USE_Clusclus
@@ -618,7 +626,7 @@ class QueryDialog : public QDialog
 {
 	Q_OBJECT
 public:
-	QueryDialog(int QueryType, QVector<QString> classes, QWidget *parent = 0);
+	QueryDialog(int QueryType, QVector<QString> classes, bool diffusion_graph, QWidget *parent = 0);
 	std::vector<unsigned int> parseIDs(void);
 	unsigned int parseK(void);
 	double parseRad(void);
