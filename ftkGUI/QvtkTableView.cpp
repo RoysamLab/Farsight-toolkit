@@ -129,7 +129,10 @@ void QvtkTableView::SelectionCallbackFunction(vtkObject *caller, unsigned long e
 				vtkIdType value = vertexList->GetValue(i);
 				//std::cout<< value << "\n";
 				idIter = QvtkView->IdLookUP.find(value);
-				TableRowIDs->InsertNextValue((*idIter).second);
+				if (idIter != QvtkView->IdLookUP.end())
+				{
+					TableRowIDs->InsertNextValue((*idIter).second);
+				}
 			}
 		}//end vertex list
 		TableRowSelection = QvtkView->ConvertIDsToVTKSelection(TableRowIDs);
@@ -202,6 +205,7 @@ QvtkTableDialog::QvtkTableDialog()
 {
 	TableView = new QvtkTableView();
 	this->setModal(false);
+	this->setAttribute( Qt::WA_DeleteOnClose, true );
 	QVBoxLayout * MainVBoxLayout = new QVBoxLayout();
 	MainVBoxLayout->addWidget(TableView);
 	this->setLayout(MainVBoxLayout);
@@ -210,10 +214,21 @@ QvtkTableDialog::~QvtkTableDialog()
 {
 }
 
+void QvtkTableDialog::setTitle(std::string title)
+{
+	this->setWindowTitle( QString(title.c_str()));
+}
+
 void QvtkTableDialog::UpdateView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink)
 {
 	this->TableView->SetInputLink(InputTable, InputAnnotationLink);
 	this->setVisible(true);
+}
+
+void QvtkTableDialog::close()
+{
+	this->setVisible(0);
+	this->TableView->~QvtkTableView();
 }
 
 void QvtkTableDialog::closeEvent(QCloseEvent *event)

@@ -578,6 +578,9 @@ ClusterManager::ClusterManager()
 
 	this->ClusterFeaturesButton = new QPushButton(" Show Cluster ");
 	connect(this->ClusterFeaturesButton, SIGNAL(clicked()), this, SLOT(ShowClusterFeatures()));
+
+	this->ShowObjectTables = new QPushButton(" Show Cluster Tables");
+	connect(this->ShowObjectTables, SIGNAL(clicked()), this, SLOT(ShowClusterObjectTables()));
 	
 	this->ShowDistributionButton = new QPushButton(" Show Distribution ");
 	connect(this->ShowDistributionButton, SIGNAL(clicked()), this, SLOT(ShowDistribution()));
@@ -586,6 +589,7 @@ ClusterManager::ClusterManager()
 
 	this->QVTKClusterTableView = new QvtkTableView();
 	this->ClusterFeatureDialog = NULL;
+	this->ClusterObjectTables.clear();
 	
 	this->OperatorList = new QComboBox(this);
 	OperatorList->addItem("ADD");
@@ -621,6 +625,7 @@ ClusterManager::ClusterManager()
 	//ButtonLayout->addWidget(this->RunOperatorButton);
 	ButtonLayout->addWidget(this->ClearClusterButton);
 	ButtonLayout->addWidget(this->ClusterFeaturesButton);
+	ButtonLayout->addWidget(this->ShowObjectTables);
 	ButtonLayout->addWidget(this->ShowDistributionButton);
 
 	//InfoLayout->addRow("Operator: ", this->OperatorList);
@@ -699,11 +704,47 @@ void ClusterManager::RemoveSelectedClusters()
 
 void ClusterManager::ShowClusterFeatures()
 {
+	/*!
+	* Shows window with all clusters and average feature values
+	*/
 	if (!this->ClusterFeatureDialog)
 	{
 		this->ClusterFeatureDialog = new QvtkTableDialog();
+		this->ClusterFeatureDialog->setTitle("Table of feature averages");
 	}
 	this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
+}
+
+void ClusterManager::ShowClusterObjectTables()
+{
+	/*!
+	* 
+	*/
+	if (this->ClusterObjectTables.size() > 0)
+	{
+		for (int tablesOpen =0 ; this->ClusterObjectTables.size() > tablesOpen ; tablesOpen++)
+		{
+			if (this->ClusterObjectTables[tablesOpen])
+			{
+				this->ClusterObjectTables[tablesOpen]->close();
+			}
+		}
+		this->ClusterObjectTables.clear();
+	}
+
+	vtkIdType numClus = this->ClusterModel->NumberOfClusters();
+	std::set< vtkIdType > clusterIDs =  this->ClusterModel->GetClusterIDs();
+	std::set< vtkIdType >::iterator iter = clusterIDs.begin();
+	for (; iter != clusterIDs.end(); iter++)
+	{
+		QvtkTableDialog* newTable = new QvtkTableDialog();
+		std::stringstream temp;
+		temp<<"Cluster" << (*iter);
+		newTable->setTitle(temp.str());
+		newTable->UpdateView(this->ClusterModel->GetTableOfSelectedFromCluster(*iter), 
+			this->ClusterModel->ObjectAnnotationLink);
+		this->ClusterObjectTables.push_back(newTable);
+	}
 }
 
 vtkIdTypeArray * ClusterManager::GetClusterTableSelections()
@@ -732,6 +773,11 @@ void ClusterManager::ChangeInClusters()
 	if (this->ClusterFeatureDialog)
 	{
 		this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
+	}
+	//delete the tables
+	if (this->ClusterObjectTables.size() > 0)
+	{
+		this->ShowClusterObjectTables();
 	}
 
 	QStringList ClusterList = this->ClusterModel->GetClusterIDsList();

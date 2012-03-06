@@ -18,6 +18,7 @@ limitations under the License.
 #include <set>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <map>
 
 #include <QObject>
@@ -183,6 +184,7 @@ public slots:
 	void ClearClusters();
 	void RemoveSelectedClusters();
 	void ShowClusterFeatures();
+	void ShowClusterObjectTables();
 	void ChangeInClusters();
 	
 
@@ -208,6 +210,7 @@ private:
 
 	QvtkTableView * QVTKClusterTableView;
 	QvtkTableDialog * ClusterFeatureDialog;
+	std::vector<QvtkTableDialog *> ClusterObjectTables;
 	
 	vtkIdTypeArray * GetClusterTableSelections();
 
@@ -221,6 +224,7 @@ private:
 	QPushButton * ClearClusterButton;
 	QPushButton * RemoveClusterButton;
 	QPushButton * ClusterFeaturesButton;
+	QPushButton * ShowObjectTables;
 	QPushButton * ShowDistributionButton;
 
 	bool AnnotationLinkSetUp;

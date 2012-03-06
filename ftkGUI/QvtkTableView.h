@@ -12,7 +12,8 @@
 #include <QtGui/QVBoxLayout>
 
 #include <QtGui/QCloseEvent>
-#include <QtGui/QDialog>
+#include <QtGui/QDialog> 
+#include <QString>
 
 #include "vtkAbstractArray.h"
 #include "vtkAddMembershipArray.h"
@@ -43,6 +44,9 @@
 #include "vtkQtAbstractModelAdapter.h"
 #include "vtkSmartPointer.h"
 #include "vtkCallbackCommand.h"
+
+#include <string>
+#include <map>
 
 
 
@@ -92,8 +96,10 @@ public:
 	QvtkTableDialog();
 	~QvtkTableDialog();
 
+	void setTitle(std::string title);
 	void UpdateView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
 
+	void close();
 	void closeEvent(QCloseEvent *event);
 	
 	QvtkTableView * TableView;
