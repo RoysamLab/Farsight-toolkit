@@ -2,6 +2,7 @@ ADD_SUBDIRECTORY( fuzzyClustering )
 ADD_SUBDIRECTORY( libsvm )
 ADD_SUBDIRECTORY( activeLearning )
 ADD_SUBDIRECTORY( agf )
+ADD_SUBDIRECTORY( DiffusionMap )
 
 IF(BUILD_EMBREX)
   ADD_SUBDIRECTORY( embrex )
