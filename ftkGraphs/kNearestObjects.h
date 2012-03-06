@@ -30,14 +30,15 @@
 
 using namespace boost;
 
+template <int num_dimensions>
 class kNearestObjects
 {
 public: 
-	typedef itk::Vector< float, 3 > MeasurementVectorType;
+	typedef itk::Vector< float, num_dimensions > MeasurementVectorType;
 	typedef itk::Statistics::ListSample< MeasurementVectorType > SampleType;
 	typedef itk::Statistics::KdTreeGenerator< SampleType > TreeGeneratorType;
 	typedef itk::Statistics::KdTreeNode< MeasurementVectorType > KdTreeNodeType;
-	typedef TreeGeneratorType::KdTreeType TreeType;
+	typedef typename TreeGeneratorType::KdTreeType TreeType;
 	typedef itk::Statistics::EuclideanDistanceMetric< MeasurementVectorType > DistanceMetricType;
 	typedef property<vertex_name_t, std::string > VertexProperties;
 	typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> NeighborGraph;
@@ -73,14 +74,13 @@ public:
 private:
 	
 	int allIds;
-	int num_dimensions;
-	SampleType::Pointer sample;
-	TreeGeneratorType::Pointer treeGenerator;
+	typename SampleType::Pointer sample;
+	typename TreeGeneratorType::Pointer treeGenerator;
 	std::map< unsigned int, std::vector<float> > centerMap;
 	std::map< unsigned int, std::vector<float> >::iterator It;
 	std::map<int, MeasurementVectorType> idToCentroidMap;
-	std::map<int, MeasurementVectorType>::iterator IdIt;
-	TreeType::Pointer tree;
+	typename std::map<int, MeasurementVectorType>::iterator IdIt;
+	typename TreeType::Pointer tree;
 	NeighborGraph NG;
 	vtkSmartPointer<vtkTable> graphtable;
 	node_name nodeName;
@@ -93,4 +93,5 @@ private:
 	
 };
 
+#include "kNearestObjects.txx"
 #endif
