@@ -5,8 +5,6 @@ Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z)
 	this->cell_x = cell_x;
 	this->cell_y = cell_y;
 	this->cell_z = cell_z;
-
-	this->vesselness_image_maximum_intensity = std::numeric_limits<float>::min();
 }
 
 itk::uint64_t Cell::getX() const
@@ -131,8 +129,6 @@ void Cell::GetMask(std::string soma_filename)
 	std::stringstream mask_filename_stream;
 	mask_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_mask.TIF";	//X_Y_Z_masked.TIF
 
-	std::cout << this->mask->GetLargestPossibleRegion().GetSize() << " " << this->mask->GetOrigin() << std::endl;
-
 	//Write the masked cell image
 	WriteImage(mask_filename_stream.str(), this->mask);
 
@@ -236,117 +232,4 @@ void Cell::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer ima
 	{
 		std::cerr << "writer Exception: " << err << std::endl;
 	}
-}
-
-void Cell::MaximumEntropyThreshold()
-{
-	typedef itk::MaximumEntropyThresholdImageFilter< ImageType, ImageType > MaximumEntropyThresholdImageFilterType;
-	MaximumEntropyThresholdImageFilterType::Pointer MaximumEntropy_threshold_filter = MaximumEntropyThresholdImageFilterType::New();
-	MaximumEntropy_threshold_filter->SetInput(this->image);
-	MaximumEntropy_threshold_filter->Update();
-
-	//Inverts the image
-	typedef itk::ShiftScaleImageFilter< ImageType, ImageType > InvertFilterType;
-	InvertFilterType::Pointer invertFilter = InvertFilterType::New();
-	invertFilter->SetShift(-1.0 * std::numeric_limits<ImageType::PixelType>::max());
-	invertFilter->SetScale(-1.0 );
-	invertFilter->SetInput(MaximumEntropy_threshold_filter->GetOutput());
-
-	try
-	{
-		invertFilter->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "invertFilter Exception: " << err << std::endl;
-	}
-
-	this->thresholded_image = invertFilter->GetOutput();
-
-	std::ostringstream MaximumEntropy_filename_stream;
-	MaximumEntropy_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_MaximumEntropy.mhd";
-	WriteImage(MaximumEntropy_filename_stream.str(), this->thresholded_image);
-
-	
-}
-
-void Cell::Skeletonize()
-{
-	//typedef itk::SignedMaurerDistanceMapImageFilter< ImageType, DistanceImageType > DistanceMapFilterType;
-	//DistanceMapFilterType::Pointer dist_map_filter = DistanceMapFilterType::New();
-	//dist_map_filter->SetInput(this->thresholded_image);
-	//dist_map_filter->SetSquaredDistance(false);
-	//dist_map_filter->SetInsideIsPositive(true);
-
-	//try
-	//{
-	//	dist_map_filter->Update();
-	//}
-	//catch (itk::ExceptionObject &err)
-	//{                                             
-	//	std::cerr << "dist_map_filter exception at " << __FILE__ << " " << __LINE__ << std::endl;
-	//	std::cerr << &err << std::endl;
-	//}
-
-	//std::ostringstream dist_image_filename_stream;
-	//dist_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_dist.mhd";
-	//WriteImage(dist_image_filename_stream.str(), dist_map_filter->GetOutput());
-	//this->distance_map_image = dist_map_filter->GetOutput();
-
-	//Generate the skeleton image
-	//skeleton_image = ImageType::New();
-	//ImageType::IndexType start;
-	//start.Fill(0);
-	//ImageType::SizeType size = cell->thresholded_image->GetLargestPossibleRegion().GetSize();
-
-	//ImageType::RegionType region(start, size);
-	//skeleton_image->SetRegions(region);
-	//skeleton_image->Allocate();
-	//skeleton_image->FillBuffer(0);
-
-	//itk::Size<3> rad = {{1,1,1}};
-	//itk::NeighborhoodIterator<DistanceImageType> dist_neighbor_iter(rad, this->distance_map_image, this->distance_map_image->GetLargestPossibleRegion());
-	//itk::ImageRegionIterator<ImageType> skeleton_img_iter(this->skeleton_image, this->skeleton_image->GetLargestPossibleRegion());
-
-	//skeleton_img_iter.GoToBegin();
-	//dist_neighbor_iter.GoToBegin();
-
-	//while (!dist_neighbor_iter.IsAtEnd())
-	//{
-	//	DistanceImageType::PixelType center_pixel_intensity = dist_neighbor_iter.GetCenterPixel();
-	//	unsigned int num_greater = 0;
-
-	//	for (int k = 0; k < 26; k++)
-	//	{
-	//		if (k != 13)
-	//		{
-	//			bool IsInBounds;
-	//			if (dist_neighbor_iter.GetPixel(k, IsInBounds) > center_pixel_intensity && IsInBounds)
-	//				++num_greater;
-	//		}
-	//	}
-
-	//	if (num_greater < 2) //Largest value or the 2nd largest value in the neighborhood
-	//		skeleton_img_iter.Set(std::numeric_limits< ImageType::PixelType >::max());
-	//	
-	//	++skeleton_img_iter;
-	//	++dist_neighbor_iter;
-	//}
-
-	typedef itk::BinaryFillholeImageFilter< ImageType > FillholeFilterType;
-	FillholeFilterType::Pointer fillhole_filter = FillholeFilterType::New();
-	fillhole_filter->SetInput(this->thresholded_image);
-	fillhole_filter->SetFullyConnected(false);
-	fillhole_filter->SetForegroundValue(255);
-
-	typedef itk::BinaryThinningImageFilter3D< ImageType, ImageType > SkeletonFilterType;
-	SkeletonFilterType::Pointer skeleton_filter = SkeletonFilterType::New();
-	skeleton_filter->SetInput(fillhole_filter->GetOutput());
-	skeleton_filter->Update();
-
-	this->skeleton_image = skeleton_filter->GetOutput();
-
-	std::ostringstream skeleton_filename_stream;
-	skeleton_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_skeleton.mhd";
-	WriteImage(skeleton_filename_stream.str(), this->skeleton_image);
 }

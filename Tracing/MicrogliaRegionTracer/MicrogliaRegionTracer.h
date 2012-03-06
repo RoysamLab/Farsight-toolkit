@@ -9,14 +9,10 @@
 #include "itkPathConstIterator.h"
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
 #include "itkMultiScaleHessianBasedMeasureImageFilter.h"
-#include "itkMinimumMaximumImageCalculator.h"
+//#include "itkMinimumMaximumImageCalculator.h"
 #include "itkPolyLineParametricPath.h"
 #include "itkIntTypes.h"
 #include "itkImageDuplicator.h"
-
-#include "itkSignedMaurerDistanceMapImageFilter.h"
-
-#include "itkMaximumEntropyThresholdImageFilter.h"
 #include "itkShiftScaleImageFilter.h"
 
 #include <cstring>

@@ -82,13 +82,9 @@ public:
 	LoGImageType::Pointer			multiscale_LoG_image;
 	VesselnessImageType::Pointer	vesselness_image;
 	ImageType::Pointer				masked_image;
-	ImageType::Pointer				thresholded_image;
-	ImageType::Pointer				skeleton_image;
-	DistanceImageType::Pointer		distance_map_image;
 	MaskImageType::Pointer			mask;
 	LabelImageType::Pointer			soma_label_image;
 
-	float vesselness_image_maximum_intensity;
 
 private:
 	itk::uint64_t cell_x;
