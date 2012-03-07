@@ -38,7 +38,7 @@ kNearestObjects<num_dimensions>::kNearestObjects(std::map< unsigned int, std::ve
 	treeGenerator->SetBucketSize( 16 );
 	treeGenerator->Update();
 
-	tree = treeGenerator->GetOutput();
+	tree = treeGenerator->GetOutput();	
 }
 
 
@@ -131,20 +131,20 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 	// to get the K nearest neighbors of all classes
 	if(Class_dest == 0)
 	{
-		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-		DistanceMetricType::OriginType origin( num_dimensions );
+		typename DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
+		typename DistanceMetricType::OriginType origin( num_dimensions );
 		for (unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i)
 		{
 			origin[i] = idToCentroidMap[id][i];
 		}
 		distanceMetric->SetOrigin( origin );
 
-		TreeType::InstanceIdentifierVectorType kNeighbors;
+		typename TreeType::InstanceIdentifierVectorType kNeighbors;
 		tree->Search( idToCentroidMap[id], k+1, kNeighbors ); 
 		kNearestIds.push_back( std::make_pair(id,0) );
 		for ( unsigned int i = 0 ; i < kNeighbors.size() ; ++i )
 		{
-		    std::map<int, MeasurementVectorType>::iterator iter;
+		    typename std::map<int, MeasurementVectorType>::iterator iter;
 			MeasurementVectorType mvt = tree->GetMeasurementVector(kNeighbors[i]);
 			for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
 			{
@@ -162,8 +162,8 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 	// to get the K nearest neighbors of a particular class
 	else
 	{
-		DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-		DistanceMetricType::OriginType origin( num_dimensions );
+		typename DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
+		typename DistanceMetricType::OriginType origin( num_dimensions );
 		for (unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i)
 		{
 			origin[i] = idToCentroidMap[id][i];
@@ -175,18 +175,18 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 		int count = 0;
 		unsigned int num_neighbors = k+1;
 		int increment = 10;
-		TreeType::InstanceIdentifierVectorType temp_vector;
+		typename TreeType::InstanceIdentifierVectorType temp_vector;
 		
 		// repeat till the number of nearest neighbors is greater than or equal to k
 		while(count < k)
 		{
 			count = 0;
 			temp_vector.clear();
-			TreeType::InstanceIdentifierVectorType kNeighbors;
+			typename TreeType::InstanceIdentifierVectorType kNeighbors;
 			tree->Search( idToCentroidMap[id], num_neighbors, kNeighbors ); 
 			for ( unsigned int i = 0 ; i < kNeighbors.size() ; ++i )
 			{
-			    std::map<int, MeasurementVectorType>::iterator iter;
+			    typename std::map<int, MeasurementVectorType>::iterator iter;
 				MeasurementVectorType mvt = tree->GetMeasurementVector(kNeighbors[i]);
 				for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
 				{
@@ -225,7 +225,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 		// calculate the distance of each neighbor and store it in a vector of pairs
 		for ( unsigned int i = 0 ; i < temp_vector.size() ; ++i )
 		{
-			std::map<int, MeasurementVectorType>::iterator iter;
+			typename std::map<int, MeasurementVectorType>::iterator iter;
 			MeasurementVectorType mvt = tree->GetMeasurementVector(temp_vector[i]);
 			{
 				for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
@@ -262,7 +262,14 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 		}
 	}
 
+	for(int i=0; i<kNearestIds.size(); ++i)
+	{
+		std::cout << kNearestIds[i].first << "_";
+	}
+	std::cout << "\n";
+
 	return kNearestIds;
+
 }
 
 
@@ -350,21 +357,21 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects<nu
 template <int num_dimensions>
 std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest)
 {
-	DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
-	DistanceMetricType::OriginType origin( num_dimensions );
+	typename DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
+	typename DistanceMetricType::OriginType origin( num_dimensions );
 	for ( unsigned int i = 0 ; i < (unsigned int)sample->GetMeasurementVectorSize() ; ++i )
 	{
 		origin[i] = idToCentroidMap[id][i];
     }
 	distanceMetric->SetOrigin( origin );
 
-	TreeType::InstanceIdentifierVectorType radNeighbors;
+	typename TreeType::InstanceIdentifierVectorType radNeighbors;
 	tree->Search( idToCentroidMap[id], radius, radNeighbors ); 
 	std::vector< std::pair<unsigned int, double> > inRadiusIds;
 	inRadiusIds.push_back( std::make_pair(id,0) );
 	for ( unsigned int i = 0 ; i < radNeighbors.size() ; ++i )
 	{
-	    std::map<int, MeasurementVectorType>::iterator iter;
+	    typename std::map<int, MeasurementVectorType>::iterator iter;
 		MeasurementVectorType mvt = tree->GetMeasurementVector(radNeighbors[i]);
 		for(iter = idToCentroidMap.begin(); iter != idToCentroidMap.end(); ++iter)
 		{
