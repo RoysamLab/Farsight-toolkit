@@ -718,6 +718,11 @@ void ClusterManager::ShowClusterFeatures()
 		this->ClusterFeatureDialog = new QvtkTableDialog();
 		this->ClusterFeatureDialog->setTitle("Table of feature averages");
 	}
+	if (this->ClusterFeatureDialog->closed)
+	{
+		this->ClusterFeatureDialog = new QvtkTableDialog();
+		this->ClusterFeatureDialog->setTitle("Table of feature averages");
+	}
 	this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
 }
 
