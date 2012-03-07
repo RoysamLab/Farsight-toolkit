@@ -103,6 +103,8 @@ public:
 	void closeEvent(QCloseEvent *event);
 	
 	QvtkTableView * TableView;
+
+	bool closed;
 };
 
 #endif

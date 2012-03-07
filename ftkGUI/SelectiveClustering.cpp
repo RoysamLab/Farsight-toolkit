@@ -762,7 +762,7 @@ void ClusterManager::CloseClusterObjectTables()
 	*/
 	for (int tablesOpen =0 ; this->ClusterObjectTables.size() > tablesOpen ; tablesOpen++)
 	{
-		if (this->ClusterObjectTables[tablesOpen])
+		if (!this->ClusterObjectTables[tablesOpen]->closed)
 		{
 			this->ClusterObjectTables[tablesOpen]->close();
 		}

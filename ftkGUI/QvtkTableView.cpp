@@ -207,6 +207,7 @@ void QvtkTableView::setCurrentVTKSelection(vtkSelection * TableRowSelection)
 QvtkTableDialog::QvtkTableDialog()
 {
 	TableView = new QvtkTableView();
+	this->closed = false; 
 	this->setModal(false);
 	this->setAttribute( Qt::WA_DeleteOnClose, true );
 	QVBoxLayout * MainVBoxLayout = new QVBoxLayout();
@@ -236,5 +237,7 @@ void QvtkTableDialog::close()
 
 void QvtkTableDialog::closeEvent(QCloseEvent *event)
 {
+	this->closed = true;
+	this->close();
 	event->accept();
 }
