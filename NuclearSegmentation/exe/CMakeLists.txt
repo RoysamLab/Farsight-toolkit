@@ -9,17 +9,18 @@ ADD_EXECUTABLE( graph_coloring_on_output graph_coloring_on_output.cpp )
 
 ADD_EXECUTABLE( convert_dat_to_label convert_dat_to_label.cpp )
 
-
-ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp SomaExtraction.cpp SomaExtraction.h)
-
 IF(BUILD_MODEL_SEG)
 ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
 TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
 ENDIF(BUILD_MODEL_SEG)
 
-TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
+if(BUILD_TracingSystem)
+  ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp SomaExtraction.cpp SomaExtraction.h)
+  TARGET_LINK_LIBRARIES( SomaExtraction  Yousef_Nucleus_Seg   TraceCoreLibrary  ${ITK_LIBRARIES} )
+  INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
+endif()
 
-TARGET_LINK_LIBRARIES( SomaExtraction  Yousef_Nucleus_Seg   TraceCoreLibrary  ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
 TARGET_LINK_LIBRARIES( compute_nuclei_features NuclearSegmentation ftkCommon ftkFeatures     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
@@ -44,7 +45,6 @@ ENDIF(BUILD_OPENCL)
 
 INSTALL( TARGETS segment_nuclei DESTINATION ${INSTALL_BIN_DIR} )
 
-INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
 INSTALL( TARGETS compute_nuclei_features DESTINATION ${INSTALL_BIN_DIR} )
 
 INSTALL( TARGETS compute_associative_measures DESTINATION ${INSTALL_BIN_DIR} )
