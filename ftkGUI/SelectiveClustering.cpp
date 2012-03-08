@@ -135,6 +135,15 @@ void SelectiveClustering::ClearClusters()
 	emit ClusterChanged();
 }
 
+
+bool SelectiveClustering::ValidKey(vtkIdType key)
+{
+	/*!
+	* 
+	*/
+	return (this->ClusterMap.end() != this->ClusterMap.find(key));
+}
+
 void SelectiveClustering::AddSelectionToCluster(vtkIdType key, vtkIdType ID)
 {
 	/*!
@@ -736,19 +745,40 @@ void ClusterManager::ShowClusterObjectTables()
 	{
 		this->CloseClusterObjectTables();
 	}
-
-	vtkIdType numClus = this->ClusterModel->NumberOfClusters();
-	std::set< vtkIdType > clusterIDs =  this->ClusterModel->GetClusterIDs();
-	std::set< vtkIdType >::iterator iter = clusterIDs.begin();
-	for (; iter != clusterIDs.end(); iter++)
+	vtkIdTypeArray * SelectedClusters = this->GetClusterTableSelections();
+	if (SelectedClusters->GetSize() > 0)
 	{
-		QvtkTableDialog* newTable = new QvtkTableDialog();
-		std::stringstream temp;
-		temp<<"Cluster: " << (*iter);
-		newTable->setTitle(temp.str());
-		newTable->UpdateView(this->ClusterModel->GetTableOfSelectedFromCluster(*iter), 
-			this->ClusterModel->ObjectAnnotationLink);
-		this->ClusterObjectTables.push_back(newTable);
+		for (vtkIdType count = 0; count < SelectedClusters->GetSize(); count++)
+		{
+			vtkIdType key = SelectedClusters->GetValue(count);
+			if (!this->ClusterModel->ValidKey(key))
+			{
+				continue;
+			}
+			QvtkTableDialog* newTable = new QvtkTableDialog();
+			std::stringstream temp;
+			temp<<"Cluster: " << key;
+			newTable->setTitle(temp.str());
+			newTable->UpdateView(this->ClusterModel->GetTableOfSelectedFromCluster(key), 
+				this->ClusterModel->ObjectAnnotationLink);
+			this->ClusterObjectTables.push_back(newTable);
+		}
+	}
+	else
+	{
+		vtkIdType numClus = this->ClusterModel->NumberOfClusters();
+		std::set< vtkIdType > clusterIDs =  this->ClusterModel->GetClusterIDs();
+		std::set< vtkIdType >::iterator iter = clusterIDs.begin();
+		for (; iter != clusterIDs.end(); iter++)
+		{
+			QvtkTableDialog* newTable = new QvtkTableDialog();
+			std::stringstream temp;
+			temp<<"Cluster: " << (*iter);
+			newTable->setTitle(temp.str());
+			newTable->UpdateView(this->ClusterModel->GetTableOfSelectedFromCluster(*iter), 
+				this->ClusterModel->ObjectAnnotationLink);
+			this->ClusterObjectTables.push_back(newTable);
+		}
 	}
 	//Table Of all objects
 	QvtkTableDialog* newTable = new QvtkTableDialog();

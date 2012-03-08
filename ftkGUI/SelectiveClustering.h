@@ -89,6 +89,7 @@ public:
 	bool RemoveCluster(vtkIdType key);
 	bool RemoveCluster(vtkIdTypeArray * SelectedClusters);
 	void ClearClusters();
+	bool ValidKey(vtkIdType key);
 	
 	//Modify Clusters
 	void AddSelectionToCluster(vtkIdType key, vtkIdType ID);
