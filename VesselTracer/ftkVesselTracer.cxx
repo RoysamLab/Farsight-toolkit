@@ -309,8 +309,12 @@ void ftkVesselTracer::RenderMaximumProjectionImage(void){
 	// The new rendering pipeline
 	vtkSmartPointer<vtkImageViewer2> image_viewer = vtkSmartPointer<vtkImageViewer2>::New();
 	vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	
-	image_viewer->SetInput(itk_to_vtk_connector->GetOutput()); 
+
+#ifdef USE_VTK6
+	image_viewer->SetInputData(itk_to_vtk_connector->GetOutput()); 
+#else
+	image_viewer->SetInput(itk_to_vtk_connector->GetOutput());
+#endif
 	image_viewer->SetupInteractor(render_window_interactor);
 	image_viewer->Render();
 	image_viewer->GetRenderer()->ResetCamera();
