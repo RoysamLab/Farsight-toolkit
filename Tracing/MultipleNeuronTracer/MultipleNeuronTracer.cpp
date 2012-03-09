@@ -191,7 +191,7 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 ///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::RunTracing(void)
 {
-	FeatureMain();
+	FeatureMain();			//Nice function here that is easy to miss....
 
 	CurrentID = 1;
 
@@ -199,7 +199,7 @@ void MultipleNeuronTracer::RunTracing(void)
 	ConnImage = ImageType3D::New();
 	ConnImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
 	ConnImage->Allocate();
-	ConnImage->FillBuffer(MAXVAL);
+	ConnImage->FillBuffer(MAXVAL);	//MAXVAL is ... needs to be replaced with std::numeric_limit< float >::max()...
 
 	SWCImage = SWCImageType3D::New(); //major memory
 	SWCImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
@@ -213,35 +213,37 @@ void MultipleNeuronTracer::RunTracing(void)
 	clock_t fillSWCImage1_start_time = clock();
 	for (startIt = StartPoints.begin(); startIt != StartPoints.end(); ++startIt, ++tID)
 	{
-		itk::Index<3> stndx = (*startIt);
-		stndx[2] += padz;
-		SWCNode* s1 = new SWCNode(CurrentID++, -1, tID, stndx);
-		SWCImage->SetPixel(stndx,s1);
-		ConnImage->SetPixel(stndx,0.0f);
-		SWCNodeContainer.push_back(s1);
-		HeapNode *h = new HeapNode(s1->ndx, 0.0);
-		PQ.push(h);
+		itk::Index<3> startIndex = (*startIt);
+		startIndex[2] += padz;													//Convert to padded image index
+		SWCNode* start_node = new SWCNode(CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode
+		SWCImage->SetPixel(startIndex,start_node);								//Adding all seed points to the SWCImage
+		ConnImage->SetPixel(startIndex,0.0f);									//Set the ConnectedImage to 0.0 at all the seed nodes (remember that the Connected image is all initialized with MAXVAL)... 
+		SWCNodeContainer.push_back(start_node);									//Fill the SWCNodeContainer with start points
+		HeapNode *h = new HeapNode(start_node->ndx, 0.0);						//Heap nodes hold an (index, value) pair
+		PQ.push(h);																//Priority Queue contains the seed nodes now...
 	}
 	std::cout << "fillSWCImage1 took: " << (clock() - fillSWCImage1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t fillSWCImage2_start_time = clock();
+	
 	long eCounter = 0, TotalePoints;
 	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
 	for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
 	{
-		if (Nit.Get() > 0) 
+		if (Nit.Get() > 0)	//Vesselness value is greater than 0
 		{
 			itk::Index<3> endx = Nit.GetIndex();
-			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);
-			SWCImage->SetPixel(endx,s2);
+			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);	//id = 0, parent_id = -1, tree id = -1 * eCounter, index that this vesselness value is greater than 0
+			SWCImage->SetPixel(endx,s2);								//Adding all critical points where vesselness value is greater than 0 to the SWC image
 		}
 	}
 	std::cout << "fillSWCImage2 took: " << (clock() - fillSWCImage2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	TotalePoints = eCounter;
-	std::cout<<"eCounter = "<<eCounter<<std::endl;
+	std::cout<<"eCounter = "<<eCounter<<std::endl;	//eCounter is just number of nodes that are critical points (but not seed points)
 	//std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
 
+	//Generating some kind of offset neighborhood... this needs to be done with itkNeighborhoodIterator
 	itk::Offset<3> x1 = {{-1, 0 ,0}};
 	off.push_back( x1 );
 	x1[0] = 1;					// x1 = {{1, 0, 0}}
@@ -264,18 +266,22 @@ void MultipleNeuronTracer::RunTracing(void)
 	
 	clock_t PQ_popping_start_time = clock();
 	
-	while(!PQ.empty())  
+	while(!PQ.empty())	//For each seed node
 	{
+		//Take the top HeapNode and remove it from the Priority Queue 
 		HeapNode *h = PQ.top();
 		PQ.pop();
+
+		//Temporarily store the index and value of the node
 		itk::Index<3> ndx = h->ndx;
 		KeyValue = h->KeyValue;
 		delete h;
 
-
+		//Don't do anything if the heapnode value is larger than the one in the connected image
 		if ( KeyValue > ConnImage->GetPixel(ndx) ) 
 			continue;
 		
+
 		if ((eCounter <= 0) || (KeyValue > CostThreshold)) 
 		{
 			if (showMessage == true) 
@@ -285,6 +291,7 @@ void MultipleNeuronTracer::RunTracing(void)
 				//std::cout<<"keyvalue = "<<KeyValue<<std::endl;
 				showMessage = false;
 			}
+			
 			SWCNode* t  = SWCImage->GetPixel(ndx);
 			if ( t != NULL) 
 			{
@@ -371,6 +378,8 @@ void MultipleNeuronTracer::RunTracing(void)
 			}
 		}
 	}
+	
+	
 	std::cout << "PQ popping took: " << (clock() - PQ_popping_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 	
 	clock_t Interpolate1_start_time = clock();
@@ -404,11 +413,11 @@ void MultipleNeuronTracer::FeatureMain(void)
 	NDXImage->Allocate();
 	NDXImage->FillBuffer(0.0f);
 	
-	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };
+	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
-		GetFeature( sigmas[i] );
+		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
 	}
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
@@ -524,7 +533,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
 
 	long win = long(sigma)/2;
-	if (win <2) 
+	if (win < 2) 
 	{
 		win = 2;
 	}
@@ -571,10 +580,10 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 			if (IsPlate(ev, w)) 
 			{
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
-				if (RegisterIndex(value, ndx, sz, win)) 
+				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
 				{
 					NDXImage->SetPixel(ndx,value);
-					ctCnt++;
+					ctCnt++;			//CriTical Counter I guess
 				}
 			}
 		}
@@ -634,6 +643,9 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 	return false;  /// right now this is turned off (Amit)
 }
 
+
+//Searches in some specified window in NDXImage around ndx and see if something larger than value is present
+//If there is a value in the neighborhood larger than value then return false, else set the NDXImage at ndx to 0 and return true 
 bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
 {
 	itk::Index<3> n;
@@ -653,7 +665,7 @@ bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, 
 				float curval = NDXImage->GetPixel(n);
 				if (value > curval) 
 				{
-					NDXImage->SetPixel(n,0.0f);
+					NDXImage->SetPixel(n,0.0f);	//Why do we set this to 0.0? We overwrite with value later anyways...
 				}
 				else if (value < curval) 
 				{
@@ -664,7 +676,7 @@ bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, 
 	}
 	if (higherPresent == true) 
 	{
-		return false;
+		return false;	
 	}
 	
 	return true;
@@ -1685,37 +1697,37 @@ void MultipleNeuronTracer::BlackOut(itk::Index<3> &stndx)
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 SWCNode::SWCNode()
 {
-	ID = -1;
-	PID = -1;
-	TreeID = -1;
-	IsLeaf = false;
-	IsBranch = false;
-	parent = NULL;
-	children.reserve(2);
+	this->ID = -1;
+	this->PID = -1;
+	this->TreeID = -1;
+	this->IsLeaf = false;
+	this->IsBranch = false;
+	this->parent = NULL;
+	this->children.reserve(2);
 }
 
-SWCNode::SWCNode(long id, long pid, long tid, itk::Index<3> n)
+SWCNode::SWCNode(long id, long parent_id, long tree_id, itk::Index<3> index)
 {
-	ID = id;
-	PID = pid;
-	TreeID = tid;
-	ndx = n;
-	IsLeaf = false;
-	IsBranch = false;
-	parent = NULL;
-	children.reserve(2);
+	this->ID = id;
+	this->PID = parent_id;
+	this->TreeID = tree_id;
+	this->ndx = index;
+	this->IsLeaf = false;
+	this->IsBranch = false;
+	this->parent = NULL;
+	this->children.reserve(2);
 }
 
-SWCNode::SWCNode(long id, SWCNode * p, long tid, itk::Index<3> n)
+SWCNode::SWCNode(long id, SWCNode * parent, long tree_id, itk::Index<3> index)
 {
-	ID = id;
-	PID = p->ID;
-	TreeID = tid;
-	ndx = n;
-	IsLeaf = false;
-	IsBranch = false;
-	parent = p;
-	children.reserve(2);
+	this->ID = id;
+	this->PID = parent->ID;
+	this->TreeID = tree_id;
+	this->ndx = index;
+	this->IsLeaf = false;
+	this->IsBranch = false;
+	this->parent = parent;
+	this->children.reserve(2);
 }
 
 HeapNode::HeapNode(itk::Index<3> n1, PixelType d)

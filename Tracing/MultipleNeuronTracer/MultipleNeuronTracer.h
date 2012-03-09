@@ -162,8 +162,8 @@ public:
 	std::vector<SWCNode*> children;
 
 	SWCNode(); 
-	SWCNode(long, long, long, itk::Index<3> );
-	SWCNode(long, SWCNode *, long, itk::Index<3> ); 
+	SWCNode(long id, long parent_id, long tree_id, itk::Index<3> index );
+	SWCNode(long id, SWCNode *parent, long tree_id, itk::Index<3> index ); 
 	
 	//static bool IsIndexSame(itk::Index<3>, itk::Index<3>);
 
