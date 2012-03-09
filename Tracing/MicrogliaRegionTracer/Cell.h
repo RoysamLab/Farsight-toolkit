@@ -39,6 +39,7 @@ public:
 	typedef itk::Image< unsigned char, 3 >				MaskImageType;
 	typedef itk::Image< unsigned char, 3 >				SomaImageType;
 	typedef itk::Image< unsigned short, 3 >				LabelImageType;
+	typedef itk::ImageFileReader < SomaImageType >		SomaReaderType;
 
 public:
 	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
@@ -64,9 +65,6 @@ public:
 	//Various methods to perform filters on image
 	void GetMask(std::string soma_filename);
 	void ComputeMaskedImage();
-	void MaximumEntropyThreshold();
-	void Skeletonize();
-
 
 	//Writes various images
 	static void WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
@@ -84,7 +82,6 @@ public:
 	ImageType::Pointer				masked_image;
 	MaskImageType::Pointer			mask;
 	LabelImageType::Pointer			soma_label_image;
-
 
 private:
 	itk::uint64_t cell_x;

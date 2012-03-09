@@ -22,14 +22,22 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 
 	try
 	{
+		std::cerr << "Modified Time: " << LoGFilter->GetMTime() << std::endl;
 		LoGFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "LoGFilter Exception: " << err << std::endl;
+		std::cerr << "LoGFilter: " << LoGFilter << std::endl;
+		std::cerr << "image: " << image << std::endl;
+		std::cerr << "Requested Region: " << image->GetRequestedRegion() << std::endl;
+		std::cerr << "Largest Possible Region: " << image->GetLargestPossibleRegion() << std::endl;
+		std::cerr << "Buffered Region: " << image->GetBufferedRegion() << std::endl;
 		throw; //Rethrowing exception, since only RunMultiScaleLoG knows the location of the cell
 	}
+	LoGImageType::Pointer LoG_image = LoGFilter->GetOutput();
 
+	LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 
 	//Scale to (-1, 1) range and invert   
 	typedef itk::ShiftScaleImageFilter<LoGImageType, LoGImageType> InvertFilterType;
@@ -46,7 +54,11 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 		std::cerr << "invertFilter Exception: " << err << std::endl;
 	}
 
-	return invertFilter->GetOutput();
+	LoGImageType::Pointer inverted_LoG_image = invertFilter->GetOutput();
+
+	inverted_LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
+
+	return inverted_LoG_image;
 }
 
 void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
@@ -121,7 +133,8 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 			if (LoGimage_iter.Get() > multiscale_LoG_image_iter.Get())
 				multiscale_LoG_image_iter.Set(LoGimage_iter.Get());
 
-			++multiscale_LoG_image_iter; ++LoGimage_iter;
+			++multiscale_LoG_image_iter; 
+			++LoGimage_iter;
 		}
 		
 	}

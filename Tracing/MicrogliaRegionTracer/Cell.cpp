@@ -82,14 +82,16 @@ void Cell::GetMask(std::string soma_filename)
 	typedef itk::ImageFileReader< MaskImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(soma_filename);
-	try
-	{
-		reader->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "reader Exception: " << err << std::endl;
-	}
+	
+	//PURPOSELY COMMENTED OUT SO YOU DO NOT TRY TO WRITE THIS CODE, THIS KILLS PERFORMANCE BECAUSE IT ATTEMPTS TO READ THE ENTIRE IMAGE FOR EACH CELL INSTEAD OF THE ROI
+	//try
+	//{
+	//	reader->Update();
+	//}
+	//catch (itk::ExceptionObject &err)
+	//{
+	//	std::cerr << "reader Exception: " << err << std::endl;
+	//}
 
 	typedef itk::RegionOfInterestImageFilter< SomaImageType, ImageType > ROIFilterType;
 	ROIFilterType::Pointer roi_filter = ROIFilterType::New();
@@ -118,8 +120,9 @@ void Cell::GetMask(std::string soma_filename)
 	}
 
 	this->mask = roi_filter->GetOutput();
+	this->mask->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 
-	ImageType::PointType origin;
+	ImageType::PointType origin;   
 	origin[0] = 0;
 	origin[1] = 0;
 	origin[2] = 0;
@@ -146,9 +149,12 @@ void Cell::GetMask(std::string soma_filename)
 		std::cerr << "labelMapFilter exception: " << err << std::endl;
 	}
 
+	BinaryToLabelFilterType::OutputImageType::Pointer label_map_image = labelMapFilter->GetOutput();
+	label_map_image->DisconnectPipeline();
+
 	typedef itk::LabelMapToLabelImageFilter< BinaryToLabelFilterType::OutputImageType, LabelImageType > LabelMapToLabelImageFilterType;
 	LabelMapToLabelImageFilterType::Pointer labelImageFilter = LabelMapToLabelImageFilterType::New();
-	labelImageFilter->SetInput(labelMapFilter->GetOutput());
+	labelImageFilter->SetInput(label_map_image);
 	try
 	{
 		labelImageFilter->Update();
@@ -159,6 +165,7 @@ void Cell::GetMask(std::string soma_filename)
 	}
 
 	this->soma_label_image = labelImageFilter->GetOutput();
+	this->soma_label_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 }
 
 void Cell::ComputeMaskedImage()   
@@ -177,6 +184,7 @@ void Cell::ComputeMaskedImage()
 	}
 
 	this->masked_image = maskFilter->GetOutput();
+	this->masked_image->DisconnectPipeline();		//Disconnect pipeline so we don't propagate...
 
 	//Make the file name of the masked cell image
 	std::stringstream masked_cell_filename_stream;

@@ -1,18 +1,20 @@
 #include "MicrogliaRegionTracer.h"
 
-MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename)
+MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename, std::string soma_filename)
 {
-	roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
+	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
+	this->soma_filename = soma_filename;
+
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );
 }
 
-void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std::string soma_filename)
+void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename)
 {
 	std::ifstream seed_point_file;
 	seed_point_file.open(seedpoints_filename.c_str());
 
 	while (!seed_point_file.eof())
-	{
-		
+	{	
 		itk::uint64_t cellX, cellY, cellZ;
 		seed_point_file >> cellX >> cellY >> cellZ;
 		//std::cout << "Reading in cell: (" << cellX << ", " << cellY << ", " << cellZ << ")" << std::endl;
@@ -32,22 +34,23 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std:
 		ImageType::IndexType shift_index;
 		ImageType::Pointer temp_cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
 
+		//Need to do this to make the MaskImageFilter work since it expects similar origins
+		ImageType::PointType origin = temp_cell_image->GetOrigin();
+		origin[0] = 0;
+		origin[1] = 0;
+		origin[2] = 0;
+		temp_cell_image->SetOrigin(origin);
+
 		//Duplicate the image so that the requests don't propagate back up to roi_grabber
 		typedef itk::ImageDuplicator< ImageType > DuplicatorType;
 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
 		duplicator->SetInputImage(temp_cell_image);
 		duplicator->Update();
 
-		cell->image = duplicator->GetOutput();
-
-		//Need to do this to make the MaskImageFilter work since it expects similar origins
-		ImageType::PointType origin = cell->image->GetOrigin();
 		cell->SetOrigin(origin);
-		origin[0] = 0;
-		origin[1] = 0;
-		origin[2] = 0;
-		cell->image->SetOrigin(origin);
 
+		cell->image = duplicator->GetOutput();
+		cell->image->DisconnectPipeline();
 
 		cell->setShiftIndex(shift_index);
 		//std::cout << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
@@ -62,12 +65,6 @@ void MicrogliaRegionTracer::LoadCellPoints(std::string seedpoints_filename, std:
 		roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
 		cell->SetSize(roi_size);
 
-		//Get the mask
-		cell->GetMask(soma_filename);
-
-		//Get the masked image
-		//cell->ComputeMaskedImage();
-
 		cells.push_back(cell);
 	}
 }
@@ -79,6 +76,9 @@ void MicrogliaRegionTracer::Trace()
 	for (int k = 0; k < cells.size(); k++)
 	{
 		Cell* cell = cells[k];
+
+		//Get the mask
+		cell->GetMask(this->soma_filename);
 		
 		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
 		CalculateCandidatePixels(cell);
@@ -110,7 +110,8 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	//Calculate the LoG on multiple scales and store into an iamge
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	cell->multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
-	
+
+
 	//Make a new image to store the critical points	
 	ImageType::SizeType size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
 	cell->critical_point_image = ImageType::New();
@@ -133,7 +134,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 		LoGImageType::PixelType center_pixel_intensity = LoG_neighbor_iter.GetPixel(center_pixel_offset_index);
 		
-		if (center_pixel_intensity >= 0.02)	//Must have greater than 2% response from LoG to even be considered for local maximum
+		if (center_pixel_intensity >= 0.03)	//Must have greater than 3% response from LoG to even be considered for local maximum (so we dont choose points that are part of noise)
 		{	
 			bool local_maximum = true;
 			
@@ -196,6 +197,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	}
 
 	cell->vesselness_image = multiscale_hessian_filter->GetOutput();
+	cell->vesselness_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 	
 	std::ostringstream vesselnessFileNameStream;
 
@@ -237,7 +239,8 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
-	for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
+	#pragma omp parallel for
+	for (itk::int64_t k = 0; k < cell->critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
 		for (itk::uint64_t l = 0; l < cell->critical_points_queue.size(); l++)
@@ -302,7 +305,7 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 	}
 	
 	if (num_blank_pixels >= 5)
-		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gaps
+		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gasp
 	else
 		return mag_trace_vector;
 }
@@ -312,24 +315,10 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	Tree* tree = new Tree();
 	ImageType::IndexType root_index = cell->critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
-	
-	//std::ofstream traceFile;
-	//std::ofstream traceFile_local;
-	//std::ostringstream traceFileNameStream;
-	//std::ostringstream traceFileNameLocalStream;
-	//traceFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".swc";
-	//traceFileNameLocalStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_local.swc";
-	//traceFile.open(traceFileNameStream.str().c_str());
-	//traceFile_local.open(traceFileNameLocalStream.str().c_str());
-	//std::cout << "Opening " << traceFileNameStream.str() << std::endl;
 
 	//Root node should have infinite weights to connect to
 	for (int m = 0; m < cell->critical_points_queue.size(); m++)
 		AdjGraph[m][0] = std::numeric_limits<double>::max();
-
-	//Write out the root point
-	//traceFile << "1 3 " << cell->getX() << " " << cell->getY() << " " << cell->getZ() << " 1 -1" << std::endl;	//global coordinates
-	//traceFile_local << "1 3 " << cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0] << " " << cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1] << " " << cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2] << " 1 -1" << std::endl;	//local coordinates
 
 	//for each node but the last, find its child
 	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
@@ -350,10 +339,12 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 			//Search through all the nodes and find the minimum distance
 			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
 			{
-				if (AdjGraph[node->getID() - 1][k] < minimum_node_distance) //from l (connected point) to k (unconnected point) if the current distance is less than the minimum distance
+				itk::uint64_t node_index_from_id = node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
+				
+				if (AdjGraph[node_index_from_id][k] < minimum_node_distance) //from l (connected point) to k (unconnected point) if the current distance is less than the minimum distance
 				{
 					minimum_parent_node = node;
-					minimum_node_index_from_id = node->getID() - 1;
+					minimum_node_index_from_id = node_index_from_id;			
 					minimum_node_index_to_id = k;
 					minimum_node_distance = AdjGraph[minimum_node_index_from_id][minimum_node_index_to_id];
 				}
@@ -374,25 +365,17 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		cell_origin_local[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
 		cell_origin_local[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
 
-		//traceFile << minimum_node_index_to_id + 1 << " 3 " << cell_origin[0] << " " << cell_origin[1] << " "  << cell_origin[2] << " 1 " << minimum_parent_node->getID() << std::endl;
-
-		//traceFile_local << minimum_node_index_to_id + 1 << " 3 " << cell_origin_local[0] << " " << cell_origin_local[1] << " "  << cell_origin_local[2] << " 1 " << minimum_parent_node->getID() << std::endl;
-
-		//Set the weight of the AdjGraph entries for this minimum edge to infinite so it is not visited again
+		
 		for (int m = 0; m < cell->critical_points_queue.size(); m++)
-			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();
+			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
 		AdjGraph[minimum_node_index_to_id][minimum_node_index_from_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
 
 		//Connect the unconnected point
-		Node* new_connected_node = new Node(cell_origin_local[0], cell_origin_local[1], cell_origin_local[2], minimum_node_index_to_id + 1);
+		Node* new_connected_node = new Node(cell_origin_local[0], cell_origin_local[1], cell_origin_local[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
 		new_connected_node->SetParent(minimum_parent_node);
 		tree->AddNode(new_connected_node, minimum_parent_node);
 	}
 
-	std::cout << "Shift: " << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
-	//std::cout << "Closing " << traceFileNameStream.str() << std::endl;
-	//traceFile.close();
-	//traceFile_local.close();
 	return tree;
 }
 
@@ -415,7 +398,7 @@ void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::stri
 	traceFile_local.close();	
 }
 
-//Depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal?
+//This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
 //CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively if this is the case...
 void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local)
 {

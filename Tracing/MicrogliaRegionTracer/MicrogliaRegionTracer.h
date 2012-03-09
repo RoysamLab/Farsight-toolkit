@@ -23,7 +23,6 @@
 #include "Cell.h"				//Simple class to hold seed coordinates
 #include "ROIGrabber.h"
 #include "LoG.h"
-//#include "Vesselness.h"
 
 #include "Tree.h"
 #include "time.h"
@@ -47,22 +46,20 @@ private:
 private:
 	std::vector<Cell*> cells;
 	ROIGrabber* roi_grabber;
+	std::string soma_filename;
 
 public:
-	MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
+	MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename, std::string soma_filename);
 	~MicrogliaRegionTracer();
 	
-	void LoadCellPoints(std::string image_filename, std::string soma_filename);
+	void LoadCellPoints(std::string image_filename);
 	
 	void Trace();
 
 	void	CalculateCandidatePixels(Cell* cell);
 	void	RidgeDetection(Cell* cell);
-	void	RidgeDetection2(Cell* cell);
 	void	VesselnessDetection(Cell* cell);
-	double	RunHessian( LoGImageType::Pointer log_image, itk::NeighborhoodIterator<LoGImageType> neighbor_iter, double max_intensity_multiscale);
-	double	ComputeVesselness( double ev1, double ev2, double ev3, double maximum_intensity );
-
+	
 	void		BuildTree(Cell* cell);
 	double**	BuildAdjacencyGraph(Cell* cell);
 	double		CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
@@ -70,8 +67,6 @@ public:
 	
 	void					TraceSkeletonImage(Cell* cell);
 	ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
-	void					Trace2();
-	void					FollowSkeleton(Cell* cell, ImageType::IndexType index, ImageType::Pointer visited_image, itk::int64_t parent_id, itk::int64_t &swc_line_number, std::ofstream &traceFile, std::ofstream &traceFile_local);
 	void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
 	void					WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
 
