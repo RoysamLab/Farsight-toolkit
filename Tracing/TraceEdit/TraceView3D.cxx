@@ -3632,7 +3632,7 @@ void View3D::AssociateNeuronToNuclei()
 			double somaPoint[3];
 			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
 			currCell->getSomaCoord(somaPoint);
-			somaRadii = currCell->SomaRadii;
+			somaRadii = currCell->somaRadii;
 			bool found = false;
 			vtkIdType nucleiRowIter = 0;
 			while (!found && (nucleiRowIter < nucleiRowSize))
@@ -4736,6 +4736,7 @@ void View3D::ShowCellAnalysis()
 			this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
 			this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
 			this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
+			//this->FL_MeasureTable->hideSomeColumns();
 			this->FL_MeasureTable->show();
 		}
 		//if (this->FL_histo)

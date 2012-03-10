@@ -389,26 +389,6 @@ void TraceLine::calculateBifFeatures()
 		}
 	}
 
-	////test
-	//if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
-	//{
-	//	if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
-	//	{
-	//		////this->setBifTorqueLocal((planeAngle1+planeAngle2)/2);
-	//		this->setBifTorqueLocalTwoDaughter(200);
-	//	}
-	//	else if (!Daughter1->isLeaf())
-	//	{
-	//		//this->setBifTorqueLocal(planeAngle1);
-	//		this->setBifTorqueLocalTwoDaughter(100);
-	//	}
-	//	else
-	//	{
-	//		//this->setBifTorqueLocal(planeAngle2);
-	//		this->setBifTorqueLocalTwoDaughter(100);
-	//	}
-	//}
-
 	if (planeAngleremote1 >= planeAngleremote2)
 	{
 		this->setBifTorqueRemoteBig(planeAngleremote1);

@@ -204,9 +204,9 @@ public:
 
 	//Compartment Level Features
 	double GetCompartmentCurvature();
+	double Euclidean(TraceBit bit1, TraceBit bit2);
 private:
 
-	double Euclidean(TraceBit bit1, TraceBit bit2);
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
 	double AzimuthAngle(TraceBit vertex, TraceBit bit1);
@@ -221,6 +221,7 @@ private:
 	double BifTorqueLocalBig, BifTorqueLocalSmall,  BifTorqueRemoteBig, BifTorqueRemoteSmall;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
+	double BifToSomaEucDistance;
 	bool actualBifurcation;
 	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;

@@ -59,27 +59,27 @@ private:
 	//int TriCount;
 	
 public:
-	int NumSegments, stems, branchPoints,terminalTips, actualBifurcations, branchingStem;
+	int NumSegments, stems, branchPoints, terminalTips, actualBifurcations, branchingStem;
 	int MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 
-	int TotalFragmentation, MaxFragmentation, MinFragmentation;
-	double TotalBurkTaper, MaxBurkTaper, MinBurkTaper;
-	double TotalHillmanTaper, MaxHillmanTaper, MinHillmanTaper;
-	double TotalHillmanThresh, MaxHillmanThresh, MinHillmanThresh;
-	double TotalContraction, MaxContraction, MinContraction;
+	int FragmentationTotal, FragmentationMin, FragmentationMax;
+	double BurkTaperTotal, BurkTaperMin, BurkTaperMax;
+	double HillmanTaperTotal, HillmanTaperMin, HillmanTaperMax;
+	double HillmanThreshTotal, HillmanThreshMin, HillmanThreshMax;
+	double ContractionTotal, ContractionMin, ContractionMax;
 
-	double TotalDiameter, MaxDiameter, MinDiameter;
-	double TotalDiameterPower, MaxDiameterPower, MinDiameterPower;
+	double DiameterTotal, DiameterMin, DiameterMax;
+	double DiameterPowerTotal, DiameterPowerMin, DiameterPowerMax;
 
-	double TotalPathLength, minPathLength, MaxPathLength;
-	double TotalVolume, minSegmentVolume, maxSegmentVolume;
+	double PathLengthTotal, PathLengthMin, PathLengthMax;
+	double TotalVolume, SegmentVolumeMin, SegmentVolumeMax;
 	double TotalEuclideanPath, MinEuclideanPath, MaxEuclideanPath;
-	double TerminalPathLength, maxTerminalPathLength, minTerminalPathLength;
-	int TotalTerminalSegment, MaxTerminalSegment, MinTerminalSegment;
+	double TerminalPathLength, TerminalPathLengthMax, TerminalPathLengthMin;
+	int TerminalSegmentTotal, TerminalSegmentMax, TerminalSegmentMin;
 	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ, skewnessX, skewnessY, skewnessZ, euclideanSkewness; 
 
 	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
-	double somaVolume, somaSurface, SomaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
+	double somaVolume, somaSurface, somaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
 	double MinStemDistance, MaxStemDistance, TotalStemDistance, EstimatedSomaRadius;
 
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
@@ -105,6 +105,9 @@ public:
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;
+
+	double TipToSomaEucDisTotal, TipToSomaEucDisMin, TipToSomaEucDisMax;
+	double BranchPtToSomaEucDisTotal, BranchPtToSomaEucDisMin, BranchPtToSomaEucDisMax;
 
 	double DeviceDistance;
 	double prediction, confidence;

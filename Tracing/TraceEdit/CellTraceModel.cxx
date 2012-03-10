@@ -114,7 +114,9 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Total Euclidean Length");
 	this->headers.push_back("Average Segment Euclidean Length");
 	this->headers.push_back("Total Path Length");
+	this->headers.push_back("Min Segment Path Length");
 	this->headers.push_back("Average Segment Path Length");
+	this->headers.push_back("Max Segment Path Length");
 
 	this->headers.push_back("Min Stem Distance");
 	this->headers.push_back("Average Stem Distance");
@@ -200,10 +202,10 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Min Leaf Level");
 	this->headers.push_back("Min Leaf Path Length");
-	this->headers.push_back("Max Leaf Level");
-	this->headers.push_back("Max Leaf Path Length");
 	this->headers.push_back("Ave Leaf Level");
 	this->headers.push_back("Ave Leaf Path Length");
+	this->headers.push_back("Max Leaf Level");
+	this->headers.push_back("Max Leaf Path Length");
 
 	this->headers.push_back("Total Terminal Compartments");
 	this->headers.push_back("Min Terminal Compartments");
@@ -220,6 +222,14 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Terminal Hillman Thresh"); //extend for all branches
 	this->headers.push_back("Average Terminal Hillman Thresh");
 	this->headers.push_back("Max Terminal Hillman Thresh");
+
+	this->headers.push_back("Min Tip to Soma Euclidean Distance");
+	this->headers.push_back("Average Tip to Soma Euclidean Distance");
+	this->headers.push_back("Max Tip to Soma Euclidean Distance");
+
+	this->headers.push_back("Min Branch Pt to Soma Euclidean Distance");
+	this->headers.push_back("Average Branch Pt to Soma Euclidean Distance");
+	this->headers.push_back("Max Branch Pt to Soma Euclidean Distance");
 
 	this->headers.push_back("Trace File");
 

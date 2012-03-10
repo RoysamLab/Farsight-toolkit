@@ -73,7 +73,6 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->renderStatus = false;
 	newImage->ren2d = false;
 	newImage->sliceCreated = false;
-	//newImage->sliceActor = 0;
 	newImage->imageResliceMapper = 0;
 	newImage->imageProperty = 0;
 	newImage->imageSlice = 0;
@@ -216,7 +215,6 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
 	if (this->LoadedImages[i]->tag.compare("Soma")==0)
 	{
-		//std::cout << "setSomaColor" << std::endl;
 		this->setSomaColor(this->somaColorValue);
 	}
 	else
@@ -250,41 +248,6 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
 }
-//vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastSomaVolume(int i)
-//{
-//	if (i == -1)
-//	{
-//		i = int (this->LoadedImages.size() - 1);
-//	}
-//	this->LoadedImages[i]->volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-//	this->LoadedImages[i]->somaVolume = vtkSmartPointer<vtkVolume>::New();
-//	if (this->LoadedImages[i]->tag.compare("Soma")==0)
-//	{
-//		//std::cout << "setSomaColor" << std::endl;
-//		this->setSomaColor(this->somaColorValue);
-//	}
-//	else
-//	{
-//		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
-//	}//Image
-//	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
-//	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
-//#ifdef USE_GPUREN
-//	{
-//		RaycastVolumeMapperGPU(i);
-//		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
-//	}
-//#else
-//	{
-//		TextureVolumeMapper(i);
-//		this->LoadedImages[i]->somaVolume->SetMapper(this->LoadedImages[i]->volumeMapper);
-//	}
-//#endif
-//	this->LoadedImages[i]->somaVolume->SetProperty(this->LoadedImages[i]->volumeProperty);
-//	this->LoadedImages[i]->somaVolume->SetPosition(this->LoadedImages[i]->x,this->LoadedImages[i]->y,this->LoadedImages[i]->z);
-//	this->LoadedImages[i]->somaVolume->SetPickable(0);
-//	return this->LoadedImages[i]->somaVolume;
-//}
 void ImageRenderActors::setSomaBrightness(int value)
 {
 	this->somaBrightness = (double) value;
@@ -319,7 +282,6 @@ void ImageRenderActors::setSomaColor(double value)
 }
 void ImageRenderActors::syncSomaColorTransferFunction() //works when raycast mode button triggered
 {
-	//std::cout << "setSomaColor" << std::endl;
 	colorTransferFunctionSoma->RemoveAllPoints();
 	double r, g ,b;
 	if (somaColorValue < 0.5)
@@ -334,7 +296,7 @@ void ImageRenderActors::syncSomaColorTransferFunction() //works when raycast mod
 		g = (1-(somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
 		b = ((somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
 	}
-	colorTransferFunctionSoma->AddRGBPoint(0, r, g, b); // what's this->b and others?
+	colorTransferFunctionSoma->AddRGBPoint(0, r, g, b);
 
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
@@ -570,41 +532,6 @@ void ImageRenderActors::syncColorTransferFunction()
 	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, colorPoint2.red, colorPoint2.green, colorPoint2.blue);
 	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, colorPoint3.red, colorPoint3.green, colorPoint3.blue);
 
-	/*double blueChannelcolor[3] = {0.0,0.0,0.0};
-	double greenChannelcolor[3] = {0.0,0.0,0.0};
-	double redChannelcolor[3] = {0.0,0.0,0.0};*/
-
-	//switch (colorValue)
-	//{
-	//	case 1: //red
-	//		blueChannelcolor[0] = .11;
-	//		greenChannelcolor[0] = .59;
-	//		redChannelcolor[0] = .3;
-	//		break;
-	//	case 2: //green
-	//		blueChannelcolor[1] = .11;
-	//		greenChannelcolor[1] = .59;
-	//		redChannelcolor[1] = .3;
-	//		break;
-	//	case 3: //blue
-	//		blueChannelcolor[2] = .11;
-	//		greenChannelcolor[2] = .59;
-	//		redChannelcolor[2] = .3;
-	//		break;
-	//	case 4: //gray
-	//		blueChannelcolor[0] = blueChannelcolor[1] = blueChannelcolor[2] = .75;
-	//		greenChannelcolor[0] = greenChannelcolor[1] = greenChannelcolor[2] = .75;
-	//		redChannelcolor[0] = redChannelcolor[1] = redChannelcolor[2] = .75;
-	//		break;
-	//	default: 
-	//		blueChannelcolor[2] = .5;
-	//		greenChannelcolor[1] = .5;
-	//		redChannelcolor[0] = .5;
-	//		break; 
-	//}
-	//this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, blueChannelcolor[0],blueChannelcolor[1],blueChannelcolor[2]);//blue
-	//this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, greenChannelcolor[0],greenChannelcolor[1],greenChannelcolor[2]);//green
-	//this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, redChannelcolor[0], redChannelcolor[1], redChannelcolor[2]);//red
 	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 	{
 		if (this->LoadedImages[i]->volume != 0)
