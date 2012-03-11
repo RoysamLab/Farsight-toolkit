@@ -16,7 +16,7 @@ ENDIF(BUILD_MODEL_SEG)
 
 if(BUILD_TracingSystem)
   ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp SomaExtraction.cpp SomaExtraction.h)
-  TARGET_LINK_LIBRARIES( SomaExtraction  Yousef_Nucleus_Seg   TraceCoreLibrary  ${ITK_LIBRARIES} )
+  TARGET_LINK_LIBRARIES( SomaExtraction  ftkCommon ${ITK_LIBRARIES} )
   INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
 endif()
 

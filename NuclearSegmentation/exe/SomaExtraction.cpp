@@ -21,6 +21,10 @@
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkFastMarchingImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkConnectedComponentImageFilter.h"
+#include <vtkTable.h>
+#include <vtkSmartPointer.h>
 
 SomaExtractor::SomaExtractor()
 {
@@ -29,14 +33,11 @@ SomaExtractor::SomaExtractor()
 void SomaExtractor::SetInputImage(char * fileName)
 {
 	ReaderType::Pointer reader = ReaderType::New();
-	reader->SetFileName (fileName);
-	reader->Update();	
-	//read the input image into an ITK image
-	OutputImageType::Pointer inputImage = reader->GetOutput();	
+	reader->SetFileName (fileName);	
 
-	typedef itk::CastImageFilter<OutputImageType, SegmentedImageType> CasterType;
+	typedef itk::CastImageFilter<OutputImageType, ProbImageType> CasterType;
     CasterType::Pointer caster = CasterType::New();
-    caster->SetInput(inputImage);
+    caster->SetInput(reader->GetOutput());
 	caster->Update();
 	binImage = caster->GetOutput();
 
@@ -45,271 +46,35 @@ void SomaExtractor::SetInputImage(char * fileName)
     SZ = binImage->GetLargestPossibleRegion().GetSize()[2];
 }
 
-bool SomaExtractor::LoadSegParams(int kernel, int minObj)
+SomaExtractor::ProbImageType::Pointer SomaExtractor::GetFloatInputImage()
 {
-	KernelSize = kernel;
-	minObjSize = minObj;
-
-	return true;
+	return binImage;
 }
 
-int SomaExtractor::GenerateSeedPoints(char* paramFile, unsigned short num_bins)
+void SomaExtractor::ReadSeedpoints(char * fileName, std::vector< itk::Index<3> > &seedVec)
 {
-	std::cout << "Constructing youself_nucleus_seg" << std::endl;
-	NucleusSeg = new yousef_nucleus_seg(); //
-	
-	std::cout << "Reading parameters file" << std::endl;
-	if(!paramFile)
-		NucleusSeg->readParametersFromFile("");
-	else
-	NucleusSeg->readParametersFromFile(paramFile);
-	
-	std::cout << "Entering setDataImage" << std::endl;
-	NucleusSeg->setDataImage(in_Image, size1, size2, size3, "");
-	std::cout << "Entering runBinarization" << std::endl;
-	NucleusSeg->runBinarization(num_bins);
-
-	NucleusSeg->runSeedDetection();
-	NucleusSeg->outputSeeds();
-	seeds = NucleusSeg->getSeedsList();
-
-	std::cout << "Writing Seeds into image file"<<endl;
-	SegmentedImageType::PointType origin;
-   	origin[0] = 0; 
-    origin[1] = 0;    
-	origin[2] = 0;    
-
-    SegmentedImageType::IndexType start;
-    start[0] = 0;  // first index on X
-    start[1] = 0;  // first index on Y    
-	start[2] = 0;  // first index on Z    
-    SegmentedImageType::SizeType  size;
-    size[0] = size1;  // size along X
-    size[1] = size2;  // size along Y
-	size[2] = size3;  // size along Z
-	//
-	SegmentedImageType::RegionType region;
-   	region.SetSize( size );
-   	region.SetIndex( start );
-
-	OutputImageType::Pointer seedImage = OutputImageType::New();
-
-    seedImage->SetOrigin( origin );
-	seedImage->SetRegions( region );
-   	seedImage->Allocate();
-   	seedImage->FillBuffer(0);
-	seedImage->Update();
-
-	//set the seedpoints into the image	
-	for(int i=0; i < seeds.size(); i++)
-	{	
-		Seed seedIndex = seeds[i];
-		OutputImageType::IndexType pixelIndex;
-		pixelIndex[0] = seedIndex.x();
-		pixelIndex[1] = seedIndex.y();
-		pixelIndex[2] = seedIndex.z();
-			
-		seedImage->SetPixel(pixelIndex, 255);
-	}
-	WriterType::Pointer image_writer = WriterType::New();
-	image_writer->SetFileName("SeedImage.mhd");
-	image_writer->SetInput(seedImage);
-	try
+	seedVec.clear();
+	vtkSmartPointer<vtkTable> table = ftk::LoadXYZTable( std::string(fileName));
+	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)
 	{
-		image_writer->Update();
+		itk::Index<3> index;
+		index[0] = table->GetValue(i,0).ToUnsignedInt();
+		index[1] = table->GetValue(i,1).ToUnsignedInt();
+		index[2] = table->GetValue(i,2).ToUnsignedInt();
+		seedVec.push_back(index);
 	}
-	catch ( itk::ExceptionObject &err)
-	{
-		std::cout << "Error in bin_image_writer: " << err << std::endl; 
-	} 
-	return EXIT_SUCCESS;
-}
-
-int SomaExtractor::binarizeImage(char* paramFile, unsigned short num_bins)
-{
-	std::cout << "Constructing youself_nucleus_seg" << std::endl;
-	NucleusSeg = new yousef_nucleus_seg(); //
-	
-	std::cout << "Reading parameters file" << std::endl;
-	if(!paramFile)
-		NucleusSeg->readParametersFromFile("");
-	else
-	NucleusSeg->readParametersFromFile(paramFile);
-	
-	std::cout << "Entering setDataImage" << std::endl;
-	NucleusSeg->setDataImage(in_Image, size1, size2, size3, "");
-	
-	
-	unsigned short *output_img;
-	//segmentation steps
-	//1-Binarization
-	
-	std::cout << "Entering runBinarization" << std::endl;
-	NucleusSeg->runBinarization(num_bins);
-	
-	std::cout << "Entering getBinImage" << std::endl;
-	output_img = NucleusSeg->getBinImage();	
-	
-	binImage = SegmentedImageType::New();
-	SegmentedImageType::PointType origin;
-   	origin[0] = 0; 
-    origin[1] = 0;    
-	origin[2] = 0;    
-    binImage->SetOrigin( origin );
-
-    SegmentedImageType::IndexType start;
-    start[0] = 0;  // first index on X
-    start[1] = 0;  // first index on Y    
-	start[2] = 0;  // first index on Z    
-    SegmentedImageType::SizeType  size;
-    size[0] = size1;  // size along X
-    size[1] = size2;  // size along Y
-	size[2] = size3;  // size along Z
-	
-	SegmentedImageType::RegionType region;
-   	region.SetSize( size );
-   	region.SetIndex( start );
-
-	binImage->SetRegions( region );
-   	binImage->Allocate();
-   	binImage->FillBuffer(0);
-	binImage->Update();
-
-	//copy the output image into the ITK image
-	IteratorType iterator1(binImage, binImage->GetRequestedRegion());		
-	for(size_t i=0; i<(size1*size2*size3); i++)
-	{				
-		unsigned short val = (unsigned short)output_img[i];
-		iterator1.Set(val);			
-		++iterator1;				
-	}
-
-	KernelType ball;
-	KernelType::SizeType ballSize;
-	//ballSize.Fill( atoi(argv[4]) ); //for now, set the radius to 4
-	ballSize[0] = ( KernelSize );
-	ballSize[1] = ( KernelSize );
-	ballSize[2] = ( 2 );
-	ball.SetRadius( ballSize );
-	ball.CreateStructuringElement();
-	
-	morphOpenFilter = morphOpenFilterType::New();
-	morphOpenFilter->SetInput( binImage );
-	morphOpenFilter->SetKernel( ball );
-	//filter->SetForegroundValue( 255 ); 
-
-	std::cout << "Running GrayscaleMorphologicalOpeningImageFilter" << std::endl;
-    try
-    {
-		morphOpenFilter->Update();
-    } 
-    catch ( itk::ExceptionObject & excp )
-    {
-		std::cerr << excp << std::endl;
-		return EXIT_FAILURE;
-    }
-	binImage = morphOpenFilter->GetOutput();
-	std::cout << "Done with binarizeImage" << std::endl;	
-}
-
-int SomaExtractor::relabelBinaryImage(void)
-{
-	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
-	relabel->SetInput( binImage );
-	relabel->SetMinimumObjectSize( minObjSize );  //Still have to read the segParams file before this
-	//std::cout<<"minObjSize = "<<minObjSize<<std::endl;
-	
-	//relabel->InPlaceOn();
-
-	//Calculate labels
-	try
-    {
-		relabel->Update();
-    }
-    catch( itk::ExceptionObject & excep )
-    {
-		std::cerr << "Relabel: soma extraction exception caught !" << std::endl;
-		std::cerr << excep << std::endl;
-		return EXIT_FAILURE;
-    }
-
-	somaImage = relabel->GetOutput();
-	
-	std::cout << "Originally there were " << relabel->GetOriginalNumberOfObjects() << " objects" << std::endl;
-	std::cout << "After relabel there are now " << relabel->GetNumberOfObjects() << " objects" << std::endl;
-
-	std::cout << "Creating Binary Threshold Image" << std::endl;
-	BinaryThresholdImageType::Pointer  BinaryThreshold = BinaryThresholdImageType::New();
-	BinaryThreshold->SetInput( binImage );
-	BinaryThreshold->SetLowerThreshold( 1 );
-	//BinaryThresholdImage->SetUpperThreshold( 255 );	//save for potential later use
-	BinaryThreshold->SetInsideValue(255);
-	BinaryThreshold->SetOutsideValue(0);
-	BinaryThreshold->Update();
-	outputImage = BinaryThreshold->GetOutput();
-
-	return 1;	
-}
-
-SomaExtractor::centroidVectorType SomaExtractor::GetSomaCentroids()
-{
-	ConverterType::Pointer converter = ConverterType::New();
-	converter->SetInputForegroundValue(255);
-	converter->SetInput(outputImage);
-	LabelMapType::Pointer Somas = converter->GetOutput();
-	converter->Update();
-	unsigned int numSomas = Somas->GetNumberOfLabelObjects();
-
-	for(unsigned int label=1; label<= numSomas; ++label)
-	{
-		const LabelObjectType * labelObject = Somas->GetLabelObject(label);
-		/*if(labelObject->GetPhysicalSize() < minObjSize)
-		{	
-			//skip small blobs: they probably aren't real somas
-			std::cout<< "rejected cell "<< label <<" of size " << labelObject->GetPhysicalSize() << std::endl;
-			continue;
-		}*/
-		const LabelObjectType::CentroidType centroid = labelObject->GetCentroid();
-		OutputImageType::IndexType pixelIndex;
-		outputImage->TransformPhysicalPointToIndex( centroid, pixelIndex );
-		Centroids.push_back(pixelIndex);
-	}
-	return Centroids;
-}
-
-void SomaExtractor::writeSomaCentroids(char* writeFileName)
-{
-	std::string FileName = writeFileName;
-	FileName.erase(FileName.length() -4, FileName.length());
-	FileName.append(".txt");
-	std::ofstream outfile(FileName.c_str());
-	outfile.precision(1);
-	for(int i=0; i<(int)Centroids.size(); ++i)
-	{
-		OutputImageType::IndexType Index = Centroids.at(i);
-		outfile << std::fixed << Index[0] << " " << Index[1] << " " << Index[2] << std::endl;
-	}
-	outfile.close();
 }
 
 void SomaExtractor::writeSomaImage(char* writeFileName)
 {
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName(writeFileName);
-	writer->SetInput(outputImage);
-	try
-	{
-		writer->Update();
-	}
-	catch ( itk::ExceptionObject &err)
-	{
-		std::cout << "Error in writer: " << err << std::endl; 
-	}
-	
-	
-	somaImageWriter::Pointer soma_image_writer = somaImageWriter::New();
-	soma_image_writer->SetFileName("somaImage.mhd");
-	soma_image_writer->SetInput(somaImage);
+	typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+    caster->SetInput(somaImage);
+
+	WriterType::Pointer soma_image_writer = WriterType::New();
+	soma_image_writer->SetFileName(writeFileName);
+	soma_image_writer->SetInput(caster->GetOutput());
+
 	try
 	{
 		soma_image_writer->Update();
@@ -320,75 +85,62 @@ void SomaExtractor::writeSomaImage(char* writeFileName)
 	}
 }
 
-void SomaExtractor::SegmentSoma(char* centroidsFileName, const char * somafileName, int timethreshold, double curvatureScaling, double rmsThres)
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, 
+													    int timethreshold, double curvatureScaling, double rmsThres)
 {
-	std::cout<< "Load Centroids Table"<<endl;
-	vtkSmartPointer<vtkTable> centroidsTable = ftk::LoadXYZTable( std::string(centroidsFileName));
-	
-	PointList3D centroidsList;
-
-	for( vtkIdType i = 0; i < centroidsTable->GetNumberOfRows(); i++)
-	{
-		float x = centroidsTable->GetValue( i, 0).ToDouble();
-		float y = centroidsTable->GetValue( i, 1).ToDouble();
-		float z = centroidsTable->GetValue( i, 2).ToDouble();
-		centroidsList.AddPt(x, y, z);
-	}
-
-	ImFastMarching_Soma(centroidsList, timethreshold, curvatureScaling, rmsThres, somafileName);
-}
-
-void SomaExtractor::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold, double curvatureScaling, double rmsError, const char *somaFileName)
-{
-	typedef itk::NearestNeighborInterpolateImageFunction< SegmentedImageType, float>  InterpolatorType;
+	typedef itk::NearestNeighborInterpolateImageFunction< ProbImageType, float>  InterpolatorType;
 	InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
-	I_Interpolator->SetInputImage(binImage);
+	I_Interpolator->SetInputImage(inputImage);
 
-	//move the picked points along z axis
-    for( int i = 0; i < seg_seeds.NP; i++ )
+	SM = inputImage->GetLargestPossibleRegion().GetSize()[0];
+    SN = inputImage->GetLargestPossibleRegion().GetSize()[1];
+    SZ = inputImage->GetLargestPossibleRegion().GetSize()[2];
+
+	//move the seed points along z axis
+    for( int i = 0; i < somaCentroids.size(); i++ )
 	{
-		seg_seeds.Pt[i].check_out_of_range_3D(SM,SN,SZ);
 		SegmentedImageType::IndexType index;
 		SegmentedImageType::IndexType index1;
-		index[0] = index1[0] = seg_seeds.Pt[i].x;
-		index[1] = index1[1] = seg_seeds.Pt[i].y;
-		index[2] = seg_seeds.Pt[i].z;
+		index[0] = index1[0] = somaCentroids[i][0];
+		index[1] = index1[1] = somaCentroids[i][1];
+		index[2] = somaCentroids[i][2];
 		for( int j = 0; j < SZ; j++ )
 		{
 			index1[2] = j;
 			if( I_Interpolator->EvaluateAtIndex(index1) > I_Interpolator->EvaluateAtIndex(index) )
 			{
-				seg_seeds.Pt[i].z = j;
+				somaCentroids[i][2] = j;
 				index[2] = j;
 			}
 		}
 	}
 
+	/// rescaled image as speed image
 	std::cout << "RescaleIntensity"<<endl;
-	typedef itk::RescaleIntensityImageFilter< SegmentedImageType, ProbImageType> RescaleFilterType;
+	typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFilterType;
     RescaleFilterType::Pointer rescale = RescaleFilterType::New();
-	rescale->SetInput( binImage); 
+	rescale->SetInput( inputImage); 
     rescale->SetOutputMinimum( 0 );
     rescale->SetOutputMaximum( 1 );
     rescale->Update();
 
+	/// generate distance map of the seeds using Fastmarching method
 	std::cout<< "Generating Distance Map..." <<endl;
 
 	clock_t SomaExtraction_start_time = clock();
 	typedef  itk::FastMarchingImageFilter< ProbImageType, ProbImageType >    FastMarchingFilterType;
 	FastMarchingFilterType::Pointer  fastMarching = FastMarchingFilterType::New();
-
 	typedef FastMarchingFilterType::NodeContainer           NodeContainer;
     typedef FastMarchingFilterType::NodeType                NodeType;
     NodeContainer::Pointer seeds = NodeContainer::New();
     seeds->Initialize();
 
-	for( int i = 0; i< seg_seeds.NP; i++ )
+	for( int i = 0; i< somaCentroids.size(); i++ )
 	{
 		ProbImageType::IndexType  seedPosition;
-		seedPosition[0] = seg_seeds.Pt[i].x;
-		seedPosition[1] = seg_seeds.Pt[i].y;
-		seedPosition[2] = seg_seeds.Pt[i].z;
+		seedPosition[0] = somaCentroids[i][0];
+		seedPosition[1] = somaCentroids[i][1];
+		seedPosition[2] = somaCentroids[i][2];
 		NodeType node;
 		const double seedValue = -3;
 		node.SetValue( seedValue );
@@ -397,9 +149,8 @@ void SomaExtractor::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold
 	}
 
 	fastMarching->SetTrialPoints(  seeds);
-    fastMarching->SetOutputSize( binImage->GetBufferedRegion().GetSize() );
-	const double stoppingTime = timeThreshold * 1.1;
-    fastMarching->SetStoppingValue(  stoppingTime);
+    fastMarching->SetOutputSize( inputImage->GetBufferedRegion().GetSize() );
+    fastMarching->SetStoppingValue(  timethreshold);
 	fastMarching->SetSpeedConstant( 1.0 );
 	fastMarching->Update();
 	std::cout<< "Total time for Distance Map is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
@@ -412,7 +163,7 @@ void SomaExtractor::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold
 	
 	shapeDetection->SetPropagationScaling(1.0);
 	shapeDetection->SetCurvatureScaling(curvatureScaling);
-	shapeDetection->SetMaximumRMSError( rmsError);
+	shapeDetection->SetMaximumRMSError( rmsThres);
 	shapeDetection->SetNumberOfIterations( 800);
 
 	shapeDetection->SetInput( fastMarching->GetOutput());
@@ -422,6 +173,7 @@ void SomaExtractor::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold
 	std::cout << "RMS change: " << shapeDetection->GetRMSChange() << std::endl;
 	std::cout<< "Total time for Shape Detection is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
+	/// Get binarized image by thresholding
 	std::cout<< "Thresholding..."<<endl;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, SegmentedImageType> ShapeThresholdingFilterType;
     ShapeThresholdingFilterType::Pointer thresholder = ShapeThresholdingFilterType::New();
@@ -430,14 +182,12 @@ void SomaExtractor::ImFastMarching_Soma(PointList3D seg_seeds, int timeThreshold
 	thresholder->SetOutsideValue( 0);
 	thresholder->SetInsideValue(255);
 	thresholder->SetInput( shapeDetection->GetOutput());
-	thresholder->Update();
 
-	typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
-	CasterType::Pointer caster = CasterType::New(); 
-	caster->SetInput(thresholder->GetOutput());
-
-	WriterType::Pointer writer1 = WriterType::New();
-	writer1->SetInput( caster->GetOutput());
-	writer1->SetFileName(somaFileName);
-	writer1->Update();
+	/// Label image
+	typedef itk::ConnectedComponentImageFilter< SegmentedImageType, SegmentedImageType, SegmentedImageType> LabelFilterType;
+	LabelFilterType::Pointer label = LabelFilterType::New();
+	label->SetInput(thresholder->GetOutput());
+	label->Update();
+	somaImage = label->GetOutput();
+	return somaImage;
 }
