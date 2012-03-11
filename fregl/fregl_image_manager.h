@@ -28,7 +28,6 @@ limitations under the License.
 #include <vnl/vnl_vector_fixed.h>
 #include <vector>
 #include <string>
-#include "pthread.h"
 
 #include "itkIndex.h"
 #include "itkSize.h"
@@ -37,6 +36,9 @@ limitations under the License.
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+
+#include "itkSimpleFastMutexLock.h"
+
 #include <vul/vul_file.h>
 
 #include <fregl/fregl_joint_register.h>
@@ -45,10 +47,10 @@ limitations under the License.
 template < class TPixel >
 class fregl_image_manager : public vbl_ref_count {
 public:
-    typedef vbl_smart_ptr< fregl_image_manager >	Pointer;
-	typedef TPixel									InputPixelType;
-	typedef itk::Image<InputPixelType, 3 >			ImageType;
-	typedef typename ImageType::Pointer				ImageTypePointer;
+    typedef vbl_smart_ptr< fregl_image_manager > Pointer;
+    typedef TPixel InputPixelType;
+    typedef itk::Image<InputPixelType, 3 > ImageType;
+    typedef typename ImageType::Pointer ImageTypePointer;
 
     typedef typename ImageType::PointType PointType; //physical space
     typedef typename ImageType::SizeType SizeType;
@@ -56,8 +58,9 @@ public:
     typedef typename ImageType::IndexType IndexType;
     typedef itk::Image< float, 2 > FloatImageType2D;
 
-	typedef typename itk::ImageRegionIterator< ImageType > RegionIterator;
-	typedef typename itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+    typedef typename itk::ImageRegionIterator< ImageType > RegionIterator;
+    typedef typename itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
+
 
     //: Constructor
     // xml_filename - joint register xml file
@@ -103,7 +106,7 @@ public:
     // Montage coordinates are in Normalized space (0,0) space.
     //
     ImageTypePointer GetOutput();
-    
+
     //: Return an ITK image pointer the the region of interest passed an argument
     // This entry is mutex protected for multi threading operations.  It combines
     // the set region, update and get output methods.
@@ -136,14 +139,14 @@ public:
 
     //: Return a pointer the space transformer
     typename fregl_space_transformer< TPixel >::Pointer get_space_transformer();
-    
+
     //: Set up the cache buffer count.  If 0 Turn off caching
     // Will reset all cache buffers when called.
     void set_cache_buffer_count(int count);
 
     //: Set disk caching on or off.  
     void set_file_caching(bool use);
-    
+
     //: Set the directory for the disk caching.  The default is current
     // directory "."
     void set_file_cache_dir(std::string use_dir);
@@ -154,7 +157,7 @@ private:
     int get_next_slot();
     bool cache_write_image(int image_index, ImageTypePointer t_image);
     ImageTypePointer cache_read_image(int image_index);
-    
+
     typename fregl_joint_register< TPixel >::Pointer global_joint_register;
     typename fregl_space_transformer< TPixel >::Pointer global_space_transformer;
 
@@ -182,6 +185,6 @@ private:
     bool use_caching;
     bool use_file_caching;
     std::string cache_dir;
-    pthread_mutex_t region_mutex;
+    itk::SimpleFastMutexLock region_mutex;
 };
 #endif
