@@ -110,6 +110,7 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	ImageType2DPointer image2D = ImageType2D::New();
 	image2D->SetRegions( region );
 	image2D->Allocate();
+        image2D->FillBuffer(0);
 
 	//Set the iterator
 	SliceIteratorType output3DIt( image, image->GetRequestedRegion() );
@@ -123,15 +124,15 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	output3DIt.SetSecondDirection( direction[0] );
 	output2DIt.SetDirection( 1 - direction[0] );
 
-	// Initialized the 2D image
-	output2DIt.GoToBegin();
-	while ( ! output2DIt.IsAtEnd() ) {
-		while ( ! output2DIt.IsAtEndOfLine() ) {
-			output2DIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
-			++output2DIt;
-		}
-		output2DIt.NextLine();
-	}
+	// Initialized the 2D image -- Done in the fillbuffer above
+//	output2DIt.GoToBegin();
+//	while ( ! output2DIt.IsAtEnd() ) {
+//		while ( ! output2DIt.IsAtEndOfLine() ) {
+//			output2DIt.Set( itk::NumericTraits<unsigned short>::NonpositiveMin() );
+//			++output2DIt;
+//		}
+//		output2DIt.NextLine();
+//	}
 
 	// Now do the max projection, 
 	output3DIt.GoToBegin();
