@@ -49,7 +49,7 @@ private:
 	std::string soma_filename;
 
 public:
-	MicrogliaRegionTracer::MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename, std::string soma_filename);
+	MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename, std::string soma_filename);
 	~MicrogliaRegionTracer();
 	
 	void LoadCellPoints(std::string image_filename);
