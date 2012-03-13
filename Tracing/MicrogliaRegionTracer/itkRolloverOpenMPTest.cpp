@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 		std::cout << LoGFilter->GetMTime() << std::endl;
 		LoGFilter->SetInput( image );
 		LoGFilter->SetNormalizeAcrossScale(true);
-		LoGFilter->SetSigma( scale/100.0f );				//OpenMP only wants integral types so this is how we get float type
+		LoGFilter->SetSigma( scale );				//OpenMP only wants integral types so this is how we get float type
 
 		try
 		{
