@@ -983,7 +983,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		delete [] subDataImg;
 	}
 	//relabel the cells
-	int numOfObjs = getRelabeledImage(segImagePtr, 8, minSize, numRows, numColumns,numStacks, 1);		
+	int numOfObjs = getRelabeledImage(segImagePtr, 8, minObjSize, numRows, numColumns,numStacks, 1);		
     numOfObjs--;
 	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cout << "Creating Final Label Image" << std::endl;	
@@ -1564,6 +1564,7 @@ int yousef_nucleus_seg::getRelabeledImage(unsigned short *IM, int connectivity, 
 	//}
 
     //set the minimum object size
+		std::cout<<"Min obj size: "<<minSize<<std::endl;
 	relabel->SetMinimumObjectSize( minSize );
 
 	try
