@@ -23,8 +23,12 @@
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkConnectedComponentImageFilter.h"
-#include <vtkTable.h>
-#include <vtkSmartPointer.h>
+#include "itkLabelGeometryImageFilter.h"
+#include <itkShapeLabelObject.h>
+
+#define N 11
+std::string SomaInfo[N]={"ID", "centroid_x", "centroid_y", "centroid_z", "volume", "eccentricity", "elongation", "orientation", 
+						"majorAxisLength", "minorAxisLength", "surface_area_volume_ratio"};
 
 SomaExtractor::SomaExtractor()
 {
@@ -190,4 +194,137 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	label->Update();
 	somaImage = label->GetOutput();
 	return somaImage;
+}
+
+void SomaExtractor::SomaBoundaryScan(SegmentedImageType::Pointer labelImage)
+{
+	if(!labelImage) return;
+	
+	typedef itk::ConstantBoundaryCondition< SegmentedImageType> boundaryConditionType;
+	typedef itk::ConstNeighborhoodIterator< SegmentedImageType, boundaryConditionType > NeighborhoodIteratorType;
+
+	// The offsets for the neighboring pixels for 4-connectivity
+	bool cyto_image = false;
+	unsigned int dim;
+	if ( cyto_image == true)
+		dim = 4 * Dim;
+	else
+		dim = 2 * Dim;
+
+	std::vector< NeighborhoodIteratorType::OffsetType > offsets(dim);
+	for ( unsigned int i=0; i < dim; ++i)
+	{
+		offsets[i].Fill(0);
+	}
+	unsigned int p = 0, o = 0;
+	while ( p < Dim)
+	{
+		if ( cyto_image == true)
+			offsets[o++][p] = -2;
+		offsets[o++][p] = -1;
+		offsets[o++][p] = 1;
+		if ( cyto_image == true)
+			offsets[o++][p] = 2;
+		p++;
+	}
+	
+	NeighborhoodIteratorType::RadiusType radius;
+	if ( cyto_image == true)
+		radius.Fill(2);
+	else
+		radius.Fill(1);	
+
+	boundaryPix.clear();
+	int numLabels = (int)LtoIMap.size();
+	boundaryPix.resize( numLabels );
+	for( int i = 0; i < boundaryPix.size(); i++)
+	{
+		boundaryPix[i] = 0;
+	}
+
+	NeighborhoodIteratorType it( radius, labelImage, labelImage->GetRequestedRegion() );
+	for ( it.GoToBegin(); !it.IsAtEnd(); ++it ) 
+	{
+		TLPixel v = it.GetCenterPixel();  // in the mask
+
+		if ( v <= 0 ) continue;
+
+		bool allSame = true;
+		for (unsigned int i=0; i<dim; ++i)
+		{
+			TLPixel p = it.GetPixel( offsets[i] );
+			
+			if ( v != p )
+			{
+				allSame = false;
+				boundaryPix[LtoIMap[v]] += 1;
+				break;
+			}
+		}
+	}
+}
+
+vtkSmartPointer<vtkTable> SomaExtractor::ComputeSomaFeatures(SegmentedImageType::Pointer inputImage)
+{
+	typedef itk::LabelGeometryImageFilter< SegmentedImageType> LabelGeometryImageFilterType;
+	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
+	labelGeometryImageFilter->SetInput( inputImage);
+
+	// These generate optional outputs.
+	labelGeometryImageFilter->CalculatePixelIndicesOn();
+	labelGeometryImageFilter->CalculateOrientedBoundingBoxOn();
+	labelGeometryImageFilter->CalculateOrientedLabelRegionsOn();
+
+	labelGeometryImageFilter->Update();
+
+	LtoIMap.clear();
+	LabelGeometryImageFilterType::LabelsType allLabels = labelGeometryImageFilter->GetLabels();
+	for (int i = 0; i < allLabels.size(); ++i)
+	{
+		TLPixel l = allLabels.at(i);
+		LtoIMap[l] = i;
+	}
+
+	SomaBoundaryScan(inputImage);
+
+	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt =  allLabels.begin();
+	std::cout << "Calculating geometry labels, number of labels: " << labelGeometryImageFilter->GetNumberOfLabels() << std::endl;
+
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+
+	for( int i = 0; i < N; i++)
+	{
+		vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName(SomaInfo[i].c_str());
+		table->AddColumn(column);
+	}
+ 
+	int id = 0;
+
+	/// remove the first labeled object which is the background
+	for( allLabelsIt++; allLabelsIt != allLabels.end(); allLabelsIt++ )
+    {
+		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue(vtkVariant(id++));
+		
+		LabelGeometryImageFilterType::LabelPointType point = labelGeometryImageFilter->GetCentroid(labelValue);
+		row->InsertNextValue(vtkVariant(point[0]));
+		row->InsertNextValue(vtkVariant(point[1]));
+		row->InsertNextValue(vtkVariant(point[2]));
+
+		unsigned int volume = labelGeometryImageFilter->GetVolume(labelValue);
+		row->InsertNextValue(vtkVariant(volume));
+		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetEccentricity(labelValue)));
+		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetElongation(labelValue)));
+		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetOrientation(labelValue)));
+		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetMajorAxisLength(labelValue)));
+		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetMinorAxisLength(labelValue)));
+
+		double ratio = (double)boundaryPix[LtoIMap[labelValue] ] / volume;
+		row->InsertNextValue(vtkVariant(ratio));
+		table->InsertNextRow(row);
+    }
+
+	return table;
 }
