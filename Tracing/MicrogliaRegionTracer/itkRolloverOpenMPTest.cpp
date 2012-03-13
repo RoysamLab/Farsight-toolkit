@@ -35,13 +35,14 @@ int main(int argc, char* argv[])
 
 		//Just so we have some visual output of incrementing the modified timer
 		if (reader->GetMTime() % 100000000 == 0)
-			std::cout << reader->GetMTime() << std::endl;
+			std::cout << "Modified time: " << reader->GetMTime() << std::endl;
 	}
 	std::cout << "Done incrementing the modified time" << std::endl;
 
 	//And now we execute across the rollover
+	bool error_happened = false;
 	#pragma omp parallel for
-	for (int scale = 200; scale < 500; scale += 1)
+	for (int scale = 2; scale < 50; scale += 1)
 	{
 		typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , FloatImageType> LoGFilterType;
 		LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
@@ -57,7 +58,10 @@ int main(int argc, char* argv[])
 		catch (itk::ExceptionObject &err)
 		{
 			std::cerr << "LoGFilter Exception: " << err << std::endl;
-			return EXIT_FAILURE;
+			error_happened = true;
 		}
 	}
+
+	if (error_happened)
+		return EXIT_FAILURE;
 }
