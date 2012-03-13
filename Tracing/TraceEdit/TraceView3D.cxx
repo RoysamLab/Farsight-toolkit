@@ -5544,9 +5544,9 @@ void View3D::SaveScreenShot()
 	if(savescreenshotDialog->getBaseline())
 	{
 		//resize render window to default baseline size
-		this->cursor3DDock->hide();
+		this->resize(1200, 1000);
 		this->QVTK->resize(600, 500);
-    this->update();
+		this->update();
 	}
 	#endif
 	if (!fullFileName.isEmpty())
@@ -6067,7 +6067,7 @@ int View3D::runTests()
   
   //resize QVTK to match dimensions of recorded screenshots
 
-  this->cursor3DDock->hide();
+  this->resize(1200, 1000);
   this->QVTK->resize(600, 500);
   this->update();
   
@@ -6105,9 +6105,9 @@ void View3D::recordTest()
 {
   //force render window to a specific size
   //this makes image comparison much easier
-	this->cursor3DDock->hide();
+	this->resize(1200, 1000);
 	this->QVTK->resize(600, 500);
-  this->update();
+	this->update();
 	#ifdef USE_QT_TESTING
     this->Tester->record();
 	#endif
