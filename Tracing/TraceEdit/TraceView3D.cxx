@@ -81,7 +81,7 @@ View3D::View3D(QWidget *parent)
 	this->projectFilesTableCreated = false;
 	this->SlicerBarCreated = false;
 	this->viewContour = true;
-	this->showGrid = true;
+	this->gridShown = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
 	this->Date.currentDate();
@@ -1390,18 +1390,23 @@ void View3D::CreateGUIObjects()
 
 	this->HeightSpaceBox = new QSpinBox(this->SettingsWidget);
 	this->HeightSpaceBox->setRange(1,100);
-	this->HeightSpaceBox->setValue(10);	
-	connect(this->HeightSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+	this->HeightSpaceBox->setValue(100);	
+	connect(this->HeightSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->WidthSpaceBox = new QSpinBox(this->SettingsWidget);
 	this->WidthSpaceBox->setRange(1,100);
-	this->WidthSpaceBox->setValue(10);
-	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+	this->WidthSpaceBox->setValue(100);
+	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
+
+	this->DepthSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->DepthSpaceBox->setRange(1,100);
+	this->DepthSpaceBox->setValue(50);
+	connect(this->DepthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->LineWidthBox = new QSpinBox(this->SettingsWidget);
 	this->LineWidthBox->setRange(1,100);
 	this->LineWidthBox->setValue(1);
-	connect(this->LineWidthBox, SIGNAL(valueChanged(int)), this, SLOT(AdjustGridlines(int)));
+	connect(this->LineWidthBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->GridRSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
 	this->GridRSlider->setRange(0,255);
@@ -1791,6 +1796,7 @@ void View3D::CreateLayout()
 	//GridlineLayout->addRow(tr("Orientation:"),this->GridOrientationBox);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
+	GridlineLayout->addRow(tr("Depth Spacing: "),this->DepthSpaceBox);
 	GridlineLayout->addRow(tr("Line Thickness: "),this->LineWidthBox);
 	GridlineLayout->addRow(tr("R: "),this->GridRSlider);
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
@@ -2117,6 +2123,10 @@ void View3D::CreateInteractorStyle()
 
 void View3D::chooseInteractorStyle(int iren)
 {
+	/*!
+	 * Mouse events: Select plain, trackball, rubber band zoom, or slicer interactor.
+	 */
+
 	if (iren== 1)
 	{
 		vtkCamera *cam = this->Renderer->GetActiveCamera();
@@ -2197,13 +2207,17 @@ void View3D::rotateImage(int axis)
 		this->QVTK->GetRenderWindow()->Render();
 	}
 
-	if (!showGrid)
+	if (gridShown)
 	{
 		AdjustGridlines(0);
 	}
 }
 void View3D::rotationOptions()
 {
+	/*!
+	 * Set the azimuth, elevation, and roll of the image.
+	 */
+
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
 	cam->SetFocalPoint(0,0,0);
 	cam->SetPosition(0,0,1);
@@ -2229,6 +2243,10 @@ void View3D::rotationOptions()
 }
 void View3D::SetProjectionMethod(int style)
 {
+	/*!
+	 * 
+	 */
+
 	if (renderMode == PROJECTION)
 	{
 		this->projectionStyle = style;
@@ -2407,6 +2425,10 @@ void View3D::removeImageActors()
 
 void View3D::setSlicerMode()
 {
+	/*!
+	 * 2D slicer mode.
+	 */
+
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
 		ClearRenderer(i);
@@ -2437,7 +2459,7 @@ void View3D::setSlicerMode()
 	SetProjection->setChecked(false);
 	SetRaycast->setChecked(false);
 
-	if (!showGrid)
+	if (gridShown)
 	{
 		AdjustGridlines(0);
 	}
@@ -2445,6 +2467,10 @@ void View3D::setSlicerMode()
 
 void View3D::setProjectionMode()
 {
+	/*!
+	 * 2D image mode.
+	 */
+
 	/*feature = new FeatureRelation;
 	feature->FeatureGraph();*/
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
@@ -2483,6 +2509,10 @@ void View3D::setProjectionMode()
 
 void View3D::setRaycastMode()
 {
+	/*!
+	 * 3D image mode.
+	 */
+
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{  
 		ClearRenderer(i);			
@@ -2524,6 +2554,10 @@ void View3D::setRaycastMode()
 
 void View3D::ClearRenderer(int i)
 {
+	/*!
+	 * Remove all images.
+	 */
+
 	if (this->SlicerBar->isVisible())
 		this->SlicerBar->hide();
 	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
@@ -2531,30 +2565,6 @@ void View3D::ClearRenderer(int i)
 	if (this->RaycastBar->isVisible())
 		this->RaycastBar->hide();
 	Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
-
-	//if (renderMode == SLICER)
-	//{
-	//	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
-	//	if (this->SlicerBar->isVisible())
-	//		this->SlicerBar->hide();
-	//	std::cout << "Removing slicer" << std::endl;
-	//}
-	//else if (renderMode == PROJECTION)
-	//{
-	//	Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
-	//	std::cout << "Removing projection" << std::endl;
-	//}
-	//else if (renderMode == RAYCAST)
-	//{
-	//	Renderer->RemoveVolume(ImageActors->GetRayCastVolume(i));
-	//	if (this->RaycastBar->isVisible())
-	//		this->RaycastBar->hide();
-	//	this->RaycastBar->toggleViewAction()->setDisabled(1);
-	//	std::cout << "Removing raycast" << std::endl;
-	//}
-	//else if (renderMode == SLICERRAYCAST) //Slicer with raycast
-	//{
-	//}
 }
 void View3D::setContourMode()
 {
@@ -2713,6 +2723,10 @@ void View3D::createSlicerSlider()
 }
 void View3D::setSlicerZValue(int value)
 {
+	/*!
+	 * Select slice to view.
+	 */
+
 	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	//{
 	//	if(this->ImageActors->is2D(i))
@@ -2819,13 +2833,16 @@ void View3D::setSlicerZValue(int value)
 		//cam->SetPosition(prevPosition);
 		this->QVTK->GetRenderWindow()->Render();
 	}
-	if (!showGrid)
+	if (gridShown)
 	{
-		AdjustGridlines(value);
+		AdjustGridlines(0);
 	}
 }
 void View3D::setSliceThickness(int sliceThickness)
 {
+	/*!
+	 *  Control slice thickness
+	 */
 	this->ImageActors->SetSliceThickness(sliceThickness - 1);
 }
 void View3D::setSliceWindowLevel(int value)
@@ -2835,6 +2852,9 @@ void View3D::setSliceWindowLevel(int value)
 }
 void View3D::ToggleColorByTrees()
 {
+	/*!
+	 *  On/off function for coloring trees
+	 */
 	bool colorByTrees = !this->tobj->GetColorByTrees();
 	//this->lineWidth = (float)this->LineWidthField->value();
 	this->tobj->SetColorByTrees(colorByTrees);
@@ -2849,10 +2869,14 @@ void View3D::ToggleColorByTrees()
 
 void View3D::ToggleGridlines() //2D gridlines
 {
-	//If gridlines don't exist, then create
+	/*!
+	 * On/off function for gridlines
+	 */
+
 	int num_lines = this->Gridlines->NumberOfLines();
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
+	int depth_spacing = this->DepthSpaceBox->value();
 	int line_width = this->LineWidthBox->value();
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
@@ -2860,7 +2884,7 @@ void View3D::ToggleGridlines() //2D gridlines
 	int line_opacity = GridOpacitySlider->value();
 
 
-	if (num_lines == 0)
+	if (num_lines == 0)//create gridlines if no gridlines exist
 	{
 		double sceneBounds[6];
 		this->Renderer->ComputeVisiblePropBounds(sceneBounds);
@@ -2869,21 +2893,22 @@ void View3D::ToggleGridlines() //2D gridlines
 		if (renderMode == SLICER)
 		{
 			grid_z_plane = sceneBounds[5]-this->SliceSlider->value();
-			Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
-		}
-		else if (this->projection_axis == 2)
-			Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
-			//Gridlines->createGrid3D(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
-		else if (this->projection_axis == 1)
-			Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		}//slicer mode
+		else if (renderMode == PROJECTION)
+		{
+			if (this->projection_axis == 2)
+					Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			else if (this->projection_axis == 1)
+				Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			else
+				Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		}//2D mode
 		else
-			Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
-		//num_lines = this->Gridlines->NumberOfLines();`	
-		//std::cout << "Number of lines: " << num_lines << std::endl;
+			Gridlines->createGrid3D(sceneBounds, height_spacing, width_spacing, depth_spacing, line_width, line_r, line_g, line_b, line_opacity);
 	}
 
-	//if (PROJECTION)
-	if (showGrid)
+	if (!gridShown)
 	{
 		int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
 		for (int i = 0; i < num_horizontal_lines; i++)
@@ -2895,10 +2920,15 @@ void View3D::ToggleGridlines() //2D gridlines
 		{
 			Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
 		}
-		GridAction->setChecked(showGrid);
+		int num_depth_lines = this->Gridlines->NumberOfDepthLines();
+		for (int i = 0; i < num_depth_lines; i++)
+		{
+			Renderer->AddActor(Gridlines->GetDepthGridlines(i));
+		}
+		gridShown = true;
+		GridAction->setChecked(gridShown);
 		GridlineSettings->setHidden(false);
 		//GridlineSettings->setEnabled(true);
-		showGrid = false;
 	}// turn on grid
 	else
 	{
@@ -2912,15 +2942,24 @@ void View3D::ToggleGridlines() //2D gridlines
 		{
 			Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
 		}
-		GridAction->setChecked(showGrid);
+		int num_depth_lines = this->Gridlines->NumberOfDepthLines();
+		for (int i = 0; i < num_depth_lines; i++)
+		{
+			Renderer->RemoveActor(Gridlines->GetDepthGridlines(i));
+		}
+		gridShown = false;
+		GridAction->setChecked(gridShown);
 		GridlineSettings->setHidden(true);
 		//GridlineSettings->setEnabled(false);
-		showGrid = true;
 	}// turn off grid
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::AdjustGridlines(int value)
 {
+	/*!
+	 * Control height spacing, width spacing, depth spacing, color, and opacity.
+	 */
+
 	//Remove actors
 	int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
 	for (int i = 0; i < num_horizontal_lines; i++)
@@ -2930,13 +2969,16 @@ void View3D::AdjustGridlines(int value)
 	for (int i = 0; i < num_vertical_lines; i++)
 		Renderer->RemoveActor(Gridlines->GetVerticalGridlines(i));
 
+	int num_depth_lines = this->Gridlines->NumberOfDepthLines();
+	for (int i = 0; i < num_depth_lines; i++)
+		Renderer->RemoveActor(Gridlines->GetDepthGridlines(i));
+
 	//Recreate grid
 	double sceneBounds[6];
 	this->Renderer->ComputeVisiblePropBounds(sceneBounds);
-	//double imageBounds[6];
-	//ImageActors->getImageBounds(imageBounds);
 	int height_spacing = this->HeightSpaceBox->value();
 	int width_spacing = this->WidthSpaceBox->value();
+	int depth_spacing = this->DepthSpaceBox->value();
 	int line_width = this->LineWidthBox->value();
 	int line_r = GridRSlider->value();
 	int line_g = GridGSlider->value();
@@ -2947,15 +2989,29 @@ void View3D::AdjustGridlines(int value)
 	if (renderMode == SLICER)
 	{
 		grid_z_plane = sceneBounds[5]-this->SliceSlider->value();
-		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 	}
-	else if (this->projection_axis == 2)
-		//Gridlines->createGrid3D(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity);
-		Gridlines->createGrid(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
-	else if (this->projection_axis == 1)
-		Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+	else if (renderMode == PROJECTION)
+	{
+		if (this->projection_axis == 2)
+		{
+			//Gridlines->createGrid2D(sceneBounds[0],sceneBounds[1],sceneBounds[2],sceneBounds[3],height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		}
+		else if (this->projection_axis == 1)
+		{
+			//Gridlines->createGrid2D(sceneBounds[0],sceneBounds[1],sceneBounds[4],sceneBounds[5],height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		}else
+		{
+			//Gridlines->createGrid2D(sceneBounds[2],sceneBounds[3],sceneBounds[4],sceneBounds[5],height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+			Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+		}
+	}//2D mode
 	else
-		Gridlines->createGridyz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+	{
+		Gridlines->createGrid3D(sceneBounds, height_spacing, width_spacing, depth_spacing, line_width, line_r, line_g, line_b, line_opacity);
+	}//3D mode
 
 	//Add actors
 	num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
@@ -2966,10 +3022,11 @@ void View3D::AdjustGridlines(int value)
 	for (int i = 0; i < num_vertical_lines; i++)
 		Renderer->AddActor(Gridlines->GetVerticalGridlines(i));
 
-	this->QVTK->GetRenderWindow()->Render();
+	num_depth_lines = this->Gridlines->NumberOfDepthLines();
+	for (int i = 0; i < num_depth_lines; i++)
+		Renderer->AddActor(Gridlines->GetDepthGridlines(i));
 
-	//num_lines = this->Gridlines->NumberOfLines();
-	//std::cout << "Number of lines: " << num_lines << std::endl;
+	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::CreateSphereActor()
 {
@@ -2994,6 +3051,10 @@ void View3D::CreateSphereActor()
 }
 void View3D::createSomaSliders()
 {
+	/*!
+	 * Control soma color, brightness, and opacity.
+	 */
+
 	this->SomaBar = new QToolBar("Soma Tools", this);
 	this->SomaBar->setAllowedAreas(Qt::BottomToolBarArea);
 	//this->SomaBar->setMovable(false);
@@ -3062,6 +3123,10 @@ void View3D::createSomaSliders()
 }
 void View3D::createRayCastSliders()
 {
+	/*!
+	 * Control image brightness and opacity.
+	 */
+
 	this->RaycastBar = new QToolBar("RayCast Tools", this);
 	this->RaycastBar->setAllowedAreas(Qt::BottomToolBarArea);
 	//this->RaycastBar->setMovable(false);
@@ -3276,6 +3341,10 @@ void View3D::ApplyNewSettings()
 	this->renderTraceBits = this->markTraceBits->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
+	if (gridShown)
+	{
+		this->AdjustGridlines(0);
+	}
 	//this->UpdateLineActor();
 	this->QVTK->GetRenderWindow()->Render();
 }

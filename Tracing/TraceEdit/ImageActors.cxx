@@ -259,6 +259,9 @@ int ImageRenderActors::getSomaBrightness()
 }
 void ImageRenderActors::setSomaOpacity(int value)
 {
+	/*!
+	 * @param value soma opacity argument.
+	 */
 	this->somaOpacity = (double) value;
 	this->syncSomaColorTransferFunction();
 }
@@ -266,17 +269,29 @@ int ImageRenderActors::getSomaOpacity()
 {
 	return (int) this->somaOpacity;
 }
-void ImageRenderActors::setSomaOpacityValue(double opacity)
+void ImageRenderActors::setSomaOpacityValue(double value)
 {
-	this->somaOpacityValue = opacity;
+	/*!
+	 * @param value opacity argument.
+	 */
+
+	this->somaOpacityValue = value;
 	this->syncSomaOpacityTransferFunction();
 }
 double ImageRenderActors::getSomaOpacityValue()
 {
+	/*!
+	 * @return Soma opacity.
+	 */
+
 	return this->somaOpacityValue;
 }
 void ImageRenderActors::setSomaColor(double value)
 {
+	/*!
+	 * Soma color.
+	 */
+
 	this->somaColorValue = value;
 	this->syncSomaColorTransferFunction();
 }

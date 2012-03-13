@@ -188,10 +188,8 @@ public:
 	int getSomaOpacity();
 	void setSomaOpacityMax(int value);//this is the threshold
 	int getSomaOpacityMax();
-	void setSomaOpacityValue(double opacity);
+	void setSomaOpacityValue(double value);
 	double getSomaOpacityValue();
-	void setSomaOpacityValueMax(double opacity);
-	double getSomaOpacityValueMax();
 
 	struct ColorType
 	{
