@@ -1,5 +1,7 @@
 #include "Node.h"
 
+#include <cstddef> // for NULL
+
 Node::Node(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z, itk::uint64_t id)
 {
 	this->x = x;
