@@ -983,7 +983,7 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 		delete [] subDataImg;
 	}
 	//relabel the cells
-	int numOfObjs = getRelabeledImage(segImagePtr, 8, 50, numRows, numColumns,numStacks, 1);		
+	int numOfObjs = getRelabeledImage(segImagePtr, 8, minSize, numRows, numColumns,numStacks, 1);		
     numOfObjs--;
 	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cout << "Creating Final Label Image" << std::endl;	
