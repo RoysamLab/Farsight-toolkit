@@ -23,6 +23,7 @@ SET( GUI_SRCS
 	GraphWindow.cpp
 	SelectiveClustering.cpp
 	QvtkTableView.cpp
+	SelectionUtilities.cpp
 	
 )
 
@@ -45,6 +46,7 @@ SET( GUI_HDRS
 	GraphWindow.h
 	SelectiveClustering.h
 	QvtkTableView.h
+	SelectionUtilities.h
 )
 
 SET( GUI_LIBS 

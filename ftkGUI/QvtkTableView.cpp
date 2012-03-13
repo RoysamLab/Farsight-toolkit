@@ -74,7 +74,7 @@ void QvtkTableView::slotQtSelectionChanged(const QItemSelection& vtkNotUsed(s1),
 	//std::cout << "QT Selection Changed\n";
 	vtkIdTypeArray * Selected = this->getSelectedObjects();
 
-	vtkSelection * TableRowSelection = this->ConvertIDsToVTKSelection(Selected);
+	vtkSelection * TableRowSelection = SelectionUtilities::ConvertIDsToVTKSelection(Selected);
 
 	//std::cout << "Annotation Link Update\n";
 	this->QTSelectionBool = true;
@@ -138,7 +138,7 @@ void QvtkTableView::SelectionCallbackFunction(vtkObject *caller, unsigned long e
 				}
 			}
 		}//end vertex list
-		TableRowSelection = QvtkView->ConvertIDsToVTKSelection(TableRowIDs);
+		TableRowSelection = SelectionUtilities::ConvertIDsToVTKSelection(TableRowIDs);
 	}//end vertices null
 
 	QvtkView->setCurrentVTKSelection(TableRowSelection);
@@ -166,21 +166,21 @@ vtkIdTypeArray * QvtkTableView::getSelectedObjects()
 	return ItemSelections;
 }
 
-vtkSelection * QvtkTableView::ConvertIDsToVTKSelection(vtkIdTypeArray *vtkIDs)
-{
-	/*!
-	* create a vtk selection from an id array
-	*/
-	vtkSmartPointer<vtkSelectionNode> selectNodeList = vtkSmartPointer<vtkSelectionNode>::New();
-	selectNodeList->SetSelectionList( vtkIDs );
-	selectNodeList->SetFieldType( vtkSelectionNode::VERTEX );
-	selectNodeList->SetContentType( vtkSelectionNode::INDICES );
-
-	vtkSelection * TableRowSelection = vtkSelection::New();
-	TableRowSelection->RemoveAllNodes();
-	TableRowSelection->AddNode(selectNodeList);
-	return TableRowSelection;
-}
+//vtkSelection * QvtkTableView::ConvertIDsToVTKSelection(vtkIdTypeArray *vtkIDs)
+//{
+//	/*!
+//	* create a vtk selection from an id array
+//	*/
+//	vtkSmartPointer<vtkSelectionNode> selectNodeList = vtkSmartPointer<vtkSelectionNode>::New();
+//	selectNodeList->SetSelectionList( vtkIDs );
+//	selectNodeList->SetFieldType( vtkSelectionNode::VERTEX );
+//	selectNodeList->SetContentType( vtkSelectionNode::INDICES );
+//
+//	vtkSelection * TableRowSelection = vtkSelection::New();
+//	TableRowSelection->RemoveAllNodes();
+//	TableRowSelection->AddNode(selectNodeList);
+//	return TableRowSelection;
+//}
 
 void QvtkTableView::setCurrentVTKSelection(vtkSelection * TableRowSelection)
 {
@@ -206,6 +206,9 @@ void QvtkTableView::setCurrentVTKSelection(vtkSelection * TableRowSelection)
 
 QvtkTableDialog::QvtkTableDialog()
 {
+	/*!
+	* Constructor to initalize 
+	*/
 	TableView = new QvtkTableView();
 	this->closed = false; 
 	this->setModal(false);
@@ -216,27 +219,42 @@ QvtkTableDialog::QvtkTableDialog()
 }
 QvtkTableDialog::~QvtkTableDialog()
 {
+	/*!
+	* Delete
+	*/
 }
 
 void QvtkTableDialog::setTitle(std::string title)
 {
+	/*!
+	* Sets Window Title
+	*/
 	this->setWindowTitle( QString(title.c_str()));
 }
 
 void QvtkTableDialog::UpdateView(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink)
 {
+	/*!
+	* Pass inputs into tableView and updates visibility
+	*/
 	this->TableView->SetInputLink(InputTable, InputAnnotationLink);
 	this->setVisible(true);
 }
 
 void QvtkTableDialog::close()
 {
+	/*!
+	* Program closed  
+	*/
 	this->setVisible(0);
 	this->TableView->~QvtkTableView();
 }
 
 void QvtkTableDialog::closeEvent(QCloseEvent *event)
 {
+	/*!
+	* User Closed 
+	*/
 	this->closed = true;
 	this->close();
 	event->accept();

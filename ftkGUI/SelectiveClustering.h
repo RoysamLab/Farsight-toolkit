@@ -73,6 +73,7 @@ limitations under the License.
 
 #include "ftkUtils.h"
 #include "vtkSmartPointer.h"
+#include "SelectionUtilities.h"
 class ClusterManager;
 
 class SelectiveClustering: public QObject
@@ -202,8 +203,6 @@ private:
 	SelectiveClustering * ClusterModel;
 	ObjectSelection * LegacyObjectSelection;
 
-	//Private Functions
-	std::set< vtkIdType > ObjectSelectionToIDSet();
 
 	//QT Gui Layouts
 	QVBoxLayout* MainLayout;

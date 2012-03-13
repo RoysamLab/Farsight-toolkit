@@ -695,7 +695,8 @@ void ClusterManager::SelectionToClusterModification()
 	/*! 
 	* Currently test of object Selection to Clusters
 	*/
-	std::set< vtkIdType > sel = this->ObjectSelectionToIDSet();
+	std::set<long int> curSel = this->LegacyObjectSelection->getSelections();
+	std::set< vtkIdType > sel = SelectionUtilities::ObjectSelectionToIDSet(curSel);
 	this->ClusterModel->AddCluster(sel);
 }
 
@@ -710,7 +711,9 @@ void ClusterManager::ClearClusters()
 void ClusterManager::RemoveSelectedClusters()
 {
 	/*!
-	* 
+	* Gets a IDArray of selected clusters 
+	* deletes Clusters fom the model
+	* Objects remain
 	*/
 	vtkIdTypeArray * SelectedClusters = this->GetClusterTableSelections();
 	this->ClusterModel->RemoveCluster(SelectedClusters);
@@ -851,23 +854,6 @@ void ClusterManager::ChangeInObjectSelection()
 	/*! 
 	* Signal Slot interface for objectSelection
 	*/
-}
-
-std::set< vtkIdType > ClusterManager::ObjectSelectionToIDSet()
-{
-	/*! 
-	* convert objectSelection into form selective
-	* clustering can use for operations
-	*/
-	std::set<long int> curSel = this->LegacyObjectSelection->getSelections();
-	std::set<long int>::iterator iter = curSel.begin();
-	std::set< vtkIdType > Selection;
-	for (; iter != curSel.end(); iter++)
-	{
-		vtkIdType id = (vtkIdType) (*iter);
-		Selection.insert(id);
-	}
-	return Selection;
 }
 
 void ClusterManager::RunOperatorOnSelectedClusters()

@@ -48,7 +48,7 @@
 #include <string>
 #include <map>
 
-
+#include "SelectionUtilities.h"
 
 class QvtkTableView : public QTableView
 {
@@ -61,7 +61,7 @@ public:
 	void SetInputLink(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
 
 	vtkIdTypeArray * getSelectedObjects();
-	vtkSelection * ConvertIDsToVTKSelection(vtkIdTypeArray * vtkIDs);
+	//vtkSelection * ConvertIDsToVTKSelection(vtkIdTypeArray * vtkIDs);
 	void setCurrentVTKSelection(vtkSelection * TableRowSelection);
 
 private slots:
