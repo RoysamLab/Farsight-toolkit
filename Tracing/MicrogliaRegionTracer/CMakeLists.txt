@@ -6,7 +6,7 @@ endif()
 
 INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
 
-SET(MicrogliaRegionTracer_HDRS 
+SET(MicrogliaRegionTracer_HDRS
 	MicrogliaRegionTracer.h
 	Cell.h
 	ROIGrabber.h
@@ -15,7 +15,7 @@ SET(MicrogliaRegionTracer_HDRS
 	Tree.h
 )
 
-SET(MicrogliaRegionTracer_SRCS 
+SET(MicrogliaRegionTracer_SRCS
 	MicrogliaRegionTracer.cpp
 	Cell.cpp
 	main.cpp
@@ -31,5 +31,5 @@ ADD_EXECUTABLE(itkRolloverOpenMPTest itkRolloverOpenMPTest.cpp)
 TARGET_LINK_LIBRARIES(MicrogliaRegionTracer fregl)
 TARGET_LINK_LIBRARIES(itkRolloverOpenMPTest ${ITK_LIBRARIES})
 
-ADD_TEST(itkRolloverOpenMPTest ${EXE_DIR}/Release/itkRolloverOpenMPTest.exe ${FARSIGHT_DATA_ROOT}/TraceData/C02.1344x1024x18.tif)
+ADD_TEST(itkRolloverOpenMPTest ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/itkRolloverOpenMPTest ${FARSIGHT_DATA_ROOT}/TraceData/C02.1344x1024x18.tif)
 INSTALL( TARGETS MicrogliaRegionTracer RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
