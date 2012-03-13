@@ -635,7 +635,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
-	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*//*(abs(L2)/sqrt(abs(L1*L))<0.5)*/((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 	{
 		return true;
 	}
