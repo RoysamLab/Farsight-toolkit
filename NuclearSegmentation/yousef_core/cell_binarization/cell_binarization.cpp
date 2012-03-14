@@ -908,139 +908,185 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 
 	//std::cerr << "Graph Memory Allocated" << std::endl;
+	int alpha_F_min = 5; // Noise in some tiles, it should be change
+	if( alpha_F>alpha_F_min)
+	{
 
-	//Here is the main loop.. 
-	//For each point, compute the terminal and neighbor edge weights
+		//Here is the main loop.. 
+		//For each point, compute the terminal and neighbor edge weights
 
-	//std::cout << imBlock[5] - imBlock[4] << " " << imBlock[3] - imBlock[2] << " " << imBlock[1] - imBlock[0] << std::endl;
-	for(size_t k=imBlock[4]; k<imBlock[5]; k++)
-	{		       
-		/*if (omp_get_thread_num() == 0)
-		std::cout << "k-loop iteration " << k << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
-		for(size_t j=imBlock[2]; j<imBlock[3]; j++)
-		{			
-			for(size_t i=imBlock[0]; i<imBlock[1]; i++)
-			{
-				size_t IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4]));
+		//std::cout << imBlock[5] - imBlock[4] << " " << imBlock[3] - imBlock[2] << " " << imBlock[1] - imBlock[0] << std::endl;
+		//std::cout<<	std::endl<<std::endl;
+		for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
+		{		       
+			/*if (omp_get_thread_num() == 0)
+			std::cout << "k-loop iteration " << k << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
+			for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
+			{			
+				for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
+				{
+					size_t IND = i - imBlock[0] + ((imBlock[1] - imBlock[0] + 1) * (j - imBlock[2])) + ((imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4]));
 
-				/*Get the terminal edges capacities and write them to a file
-				These capacities represent penalties of assigning each point to
-				either the fg or the bg. Now, I am using the distance of the point
-				to the fg and bg. Then a short distance between a point and a class (fg or bg)
-				means the penalty of the assignement is low and vice versa*/ 
-
-
-				//unsigned long int index = mxCalcSingleSubscript(prhs[0], nsubs, subs);
-				//intst = (mxGetPr(prhs[0]))[index];
-				// CHANGE BY ISAAC 4/14/08
-
-				//CHANGE BY ISAAC 4/17/08
-				//curr_node = (k*r*c)+(i*c)+j; 
-
-				size_t curr_node = (k*r*c)+(j*c)+i;
-
-				double intst = (int) IM[curr_node];	//Changed 5/9/08
+					/*Get the terminal edges capacities and write them to a file
+					These capacities represent penalties of assigning each point to
+					either the fg or the bg. Now, I am using the distance of the point
+					to the fg and bg. Then a short distance between a point and a class (fg or bg)
+					means the penalty of the assignement is low and vice versa*/ 
 
 
-				//Added by Yousef on jan 17, 2008
-				//check if this is a seed point
+					//unsigned long int index = mxCalcSingleSubscript(prhs[0], nsubs, subs);
+					//intst = (mxGetPr(prhs[0]))[index];
+					// CHANGE BY ISAAC 4/14/08
+
+					//CHANGE BY ISAAC 4/17/08
+					//curr_node = (k*r*c)+(i*c)+j; 
+
+					size_t curr_node = (k*r*c)+(j*c)+i;
+
+					double intst = (int) IM[curr_node];	//Changed 5/9/08
 
 
-				//std::cout << intst << std::endl;
-				double Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              	
-				if(Df>1000.0)
-					Df = 1000;
 
-				double Db = -log(B_H[(int)intst]);
-				if(Db>1000.0)
-					Db=1000;
+					//Added by Yousef on jan 17, 2008
+					//check if this is a seed point
 
-				g -> add_node();
-				g -> add_tweights(IND,   /* capacities */ Df,Db);
+
+					//std::cout << intst << std::endl;
+					double Df = -log(F_H[(int)intst]);  //it was multiplied by .5                              	
+					if(Df>1000.0)
+						Df = 1000;
+
+					double Db = -log(B_H[(int)intst]);
+					if(Db>1000.0)
+						Db=1000;
+
+					g -> add_node();
+					g -> add_tweights(IND,   /* capacities */ Df,Db);
+					//				std::cout<<Df<<" "<<Db<<",";
+					//			std::cout<<intst;
+					//
+					//				std::cout<<std::endl<<k<<" "<<j<<" "<<i;
+
+					// Just to test
+					//				Seg_out[IND] = ++Seg_out[IND];
+					//
+				}
 			}
+			//	std::cout<<std::endl;
 		}
+
+		//	std::cout <<std::endl<< "First Loop Complete"<<std::flush;
+
+		//	std::cout <<std::endl<< "First Loop Complete"<<std::flush;
+		sig = 50.0;
+		w=10.0;
+
+
+		//std::cout<<std::endl;
+
+		for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
+		{		
+			for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
+			{			
+				//#pragma omp parallel for ordered
+				for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
+				{
+					size_t IND = i - imBlock[0] + (imBlock[1] - imBlock[0] + 1) * (j - imBlock[2]) + ((imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4])); //needed for threading correctness
+
+					/*get the neighbor edges capacities and write them to a file.
+					Now, each edge capacity between two neighbors p and q represent
+					the penalty for discontinuety. Since I am using the difference in
+					the intensities, I should take the inverse so that very similar
+					objects should have a large discontinuety penalty between them*/
+
+					//if(i>=imBlock[1]-1 || j>=imBlock[3]-1 || k>=imBlock[5]-1)
+					//	continue;
+
+					//Try this: Just define 3 edges to the neigbors				
+					size_t curr_node = (k*r*c)+(j*c)+i;
+					double intst = (int) IM[curr_node];
+					size_t nbr_node;
+					double intst2;
+					//1.
+					if( i<imBlock[1])
+					{
+						nbr_node = (k*r*c)+(j*c)+(i+1);				
+
+						intst2 = (int) IM[nbr_node];
+						double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+						g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
+					}
+
+					//2.				
+					if( j<imBlock[3] )
+					{
+						nbr_node = (k*r*c)+((j+1)*c)+i;
+
+						intst2 = (int) IM[nbr_node];
+						double Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));														
+						g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]+1),    /* capacities */  Dn2, Dn2 );
+					}
+
+					//3.				
+					if( k<imBlock[5] )
+					{
+						nbr_node = ((k+1)*r*c)+(j*c)+i;
+
+						intst2 = (int) IM[nbr_node];
+						double Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));		
+						g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]+1)*(imBlock[3]-imBlock[2]+1),    /* capacities */  Dn3, Dn3 );
+					}
+
+
+					//				std::cout<<std::endl<<k<<" "<<j<<" "<<i;
+
+
+					//				Seg_out[IND] = ++Seg_out[IND];
+					//
+				}
+			}
+		}    
+
+		//	std::cout <<std::endl<< "Second Loop Complete";
+
+		//Compute the maximum flow:
+		g->maxflow();		//Alex DO NOT REMOVE
+
+
+		//	std::cout <<std::endl<< "Second22 Loop Complete";
+
+		//cout << imBlock[0] << " " << imBlock[1] << " " << imBlock[2] << " " << imBlock[3] << " " << imBlock[4] << " " << imBlock[5] << endl;
+		//
+		//
 	}
-
-	//std::cout << "First Loop Complete" << std::endl;
-
-	sig = 50.0;
-	w=10.0;
-
-
-	for(size_t k=imBlock[4]; k<imBlock[5]; k++)
-	{		
-		for(size_t j=imBlock[2]; j<imBlock[3]; j++)
-		{			
-			//#pragma omp parallel for ordered
-			for(size_t i=imBlock[0]; i<imBlock[1]; i++)
-			{
-				size_t IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
-
-				/*get the neighbor edges capacities and write them to a file.
-				Now, each edge capacity between two neighbors p and q represent
-				the penalty for discontinuety. Since I am using the difference in
-				the intensities, I should take the inverse so that very similar
-				objects should have a large discontinuety penalty between them*/
-
-				if(i>=imBlock[1]-1 || j>=imBlock[3]-1 || k>=imBlock[5]-1)
-					continue;
-
-				//Try this: Just define 3 edges to the neigbors				
-				size_t curr_node = (k*r*c)+(j*c)+i;
-				double intst = (int) IM[curr_node];
-
-				//1.
-				size_t nbr_node = (k*r*c)+(j*c)+(i+1);				
-
-				double intst2 = (int) IM[nbr_node];
-				double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-
-				//2.				
-				nbr_node = (k*r*c)+((j+1)*c)+i;
-
-				intst2 = (int) IM[nbr_node];
-				double Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));														
-
-				//3.				
-				nbr_node = ((k+1)*r*c)+(j*c)+i;
-
-				intst2 = (int) IM[nbr_node];
-				double Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
-
-
-				g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
-				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]),    /* capacities */  Dn2, Dn2 );
-				g -> add_edge( IND, IND+(imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2]),    /* capacities */  Dn3, Dn3 );
-			}
-		}
-	}    
-
-	//std::cout << "Second Loop Complete" << std::endl;
-
-	//Compute the maximum flow:
-	g->maxflow();		//Alex DO NOT REMOVE
-
-	//cout << imBlock[0] << " " << imBlock[1] << " " << imBlock[2] << " " << imBlock[3] << " " << imBlock[4] << " " << imBlock[5] << endl;
 
 	//#pragma omp parallel for
-	for(size_t k=imBlock[4]; k<imBlock[5]; k++)
+	for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
 	{		
-		for(size_t j=imBlock[2]; j<imBlock[3]; j++)
+		for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
 		{			
-			for(size_t i=imBlock[0]; i<imBlock[1]; i++)
+			for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
 			{
-				size_t IND = (i - imBlock[0] + (imBlock[1] - imBlock[0]) * (j - imBlock[2]) + (imBlock[1] - imBlock[0]) * (imBlock[3] - imBlock[2]) * (k - imBlock[4])); //needed for threading correctness
+				size_t IND = i - imBlock[0] + (imBlock[1] - imBlock[0] + 1) * (j - imBlock[2]) + (imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4]); //needed for threading correctness
 
-				if(g->what_segment(IND) == GraphType::SOURCE)
-					Seg_out[(k*r*c)+(j*c)+i]=0;
+				if( alpha_F>alpha_F_min)
+				{
+					if(g->what_segment(IND) == GraphType::SOURCE)
+						Seg_out[(k*r*c)+(j*c)+i]=0;
+					else
+						Seg_out[(k*r*c)+(j*c)+i]=255; //seems incorrect, if Seg_out is unsigned short* then max value should be 65535?
+					//Seg_out[(k*r*c)+(j*c)+i]=65535;
+				}
 				else
-					Seg_out[(k*r*c)+(j*c)+i]=255; //seems incorrect, if Seg_out is unsigned short* then max value should be 65535?
-				//Seg_out[(k*r*c)+(j*c)+i]=65535;
+				{
+					Seg_out[(k*r*c)+(j*c)+i]=0;
+					//					std::cout<<"aca";
+				}
 			}
 		}
 	}
 
-	//std::cout << "Third Loop Complete" << std::endl;
+	//	std::cout <<std::endl<< "Third Loop Complete";
 
 	delete g;
 }
