@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 {
-	unsigned long modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take	
+	unsigned long max_modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take	
 	
 	typedef itk::Image< unsigned char, 3> ImageType;
 	typedef itk::Image< float, 3> FloatImageType;
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 	image->DisconnectPipeline();
 
 	std::cout << "Starting to increment the modified timer" << std::endl;
-	while (reader->GetMTime() < modified_count - 10000)
+	while (reader->GetMTime() < max_modified_count - 10000)
 	{
 		reader->Modified();
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 		std::cout << LoGFilter->GetMTime() << std::endl;
 		LoGFilter->SetInput( image );
 		LoGFilter->SetNormalizeAcrossScale(true);
-		LoGFilter->SetSigma( scale );				//OpenMP only wants integral types so this is how we get float type
+		LoGFilter->SetSigma( scale );
 
 		try
 		{
