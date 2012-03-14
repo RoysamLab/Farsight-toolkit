@@ -34,7 +34,9 @@ limitations under the License.
 #include "vtkPointData.h"
 
 //Local includes:
+#ifndef USE_VTK6
 #include "vtkLSMReader.h"
+#endif
 
 //****************************************************************************************
 // FTKImage is a class the handles the storage of multi-dimensional images.
@@ -179,9 +181,11 @@ bool Image::LoadFile( std::string fName)
 {
 	DeleteData();
 
+#ifndef USE_VTK6
 	if( GetFileExtension(fName) == "lsm" )
 		return this->LoadLSMImage( fName );
 	else
+#endif
 	{
 		if(!this->LoadStandardImage( fName, false, false, false))
 			return false;
@@ -444,7 +448,7 @@ bool Image::SaveMhdFromOpenSlide(std::string out_filename){
 
 
 
-
+#ifndef USE_VTK6
 bool Image::LoadLSMImage( std::string fileName )
 { 
 	DeleteData();
@@ -529,6 +533,7 @@ bool Image::LoadLSMImage( std::string fileName )
 
 	return true;
 }
+#endif
 
 std::vector< unsigned short > Image::Size(void)
 {

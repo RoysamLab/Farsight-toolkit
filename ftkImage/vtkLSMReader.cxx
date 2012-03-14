@@ -903,7 +903,9 @@ int vtkLSMReader::RequestData(
   //printf("vtkLSMReader RequestData\n");
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
   //vtkImageData *data = vtkImageData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
-  vtkImageData *data = this->AllocateOutputData(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+  vtkImageData *data;
+  data = this->AllocateOutputData(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
    data->GetPointData()->GetScalars()->SetName("LSM Scalars");
     
     //data->SetExtent(outExtent);

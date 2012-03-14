@@ -167,7 +167,9 @@ private:
 
 	bool LoadStandardImage( std::string fileName, bool stacksAreForTime = false, bool appendChannels = false, bool readRGBasSingleChannel = true );
 	void SetDefaultColors(void);
+#ifndef USE_VTK6
 	bool LoadLSMImage( std::string fileName );
+#endif
 
 	vtkSmartPointer<vtkDataArray> GetVtkDataArray(int T, int CH, bool makeCopy, bool vtkManageMemory); //Returns vtkSmartPointer at this T and CH
 	int GetDataTypeVTK(DataType itk);
