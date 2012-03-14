@@ -559,8 +559,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float val = nit.GetPixel(13) ;
 
-		const float thresh1 = 0.005;   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = 0.0003;  // -0.1 percent of range
+		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
