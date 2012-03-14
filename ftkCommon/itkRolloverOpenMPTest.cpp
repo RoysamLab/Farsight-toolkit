@@ -3,12 +3,19 @@
 
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkImageFileReader.h"
+#include "itkMultiThreader.h"
 #include "omp.h"
+#include "ftkTimeStampOverflowSafeUpdate.h"
 
 int main(int argc, char* argv[])
 {
-	unsigned long max_modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take	
-	
+	// Since we are using OpenMP to run a filter in each thread, we do not
+	// want the individual filters to also spawn threads -- this will result
+	// in too many threads.
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );
+
+	unsigned long modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take
+
 	typedef itk::Image< unsigned char, 3> ImageType;
 	typedef itk::Image< float, 3> FloatImageType;
 
@@ -29,13 +36,13 @@ int main(int argc, char* argv[])
 	image->DisconnectPipeline();
 
 	std::cout << "Starting to increment the modified timer" << std::endl;
-	while (reader->GetMTime() < max_modified_count - 10000)
+	while (image->GetMTime() < modified_count - 10000)
 	{
-		reader->Modified();
+		image->Modified();
 
 		//Just so we have some visual output of incrementing the modified timer
-		if (reader->GetMTime() % 100000000 == 0)
-			std::cout << "Modified time: " << reader->GetMTime() << std::endl;
+		if (image->GetMTime() % 100000000 == 0)
+			std::cout << "Modified time: " << image->GetMTime() << std::endl;
 	}
 	std::cout << "Done incrementing the modified time" << std::endl;
 
@@ -46,22 +53,28 @@ int main(int argc, char* argv[])
 	{
 		typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , FloatImageType> LoGFilterType;
 		LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
-		std::cout << LoGFilter->GetMTime() << std::endl;
+		std::cout << "LoGFilter->GetMTime(): " << LoGFilter->GetMTime() << std::endl;
+		std::cout << "image->GetMTime(): " << image->GetMTime() << std::endl;
 		LoGFilter->SetInput( image );
 		LoGFilter->SetNormalizeAcrossScale(true);
 		LoGFilter->SetSigma( scale );
 
 		try
 		{
-			LoGFilter->Update();
+			//LoGFilter->Update();
+			ftk::TimeStampOverflowSafeUpdate( LoGFilter.GetPointer() );
 		}
 		catch (itk::ExceptionObject &err)
 		{
-			std::cerr << "LoGFilter Exception: " << err << std::endl;
+			std::cout << "LoGFilter Exception: " << err << std::endl;
+			std::cout << "Image Buffered: " << image->GetBufferedRegion() << std::endl;
+			std::cout << "LOG Buffered: " << LoGFilter->GetOutput()->GetBufferedRegion() << std::endl;
 			error_happened = true;
 		}
 	}
 
 	if (error_happened)
+		{
 		return EXIT_FAILURE;
+		}
 }

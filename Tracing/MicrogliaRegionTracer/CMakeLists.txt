@@ -26,10 +26,7 @@ SET(MicrogliaRegionTracer_SRCS
 )
 
 ADD_EXECUTABLE(MicrogliaRegionTracer main.cpp ${MicrogliaRegionTracer_HDRS} ${MicrogliaRegionTracer_SRCS})
-ADD_EXECUTABLE(itkRolloverOpenMPTest itkRolloverOpenMPTest.cpp)
 
 TARGET_LINK_LIBRARIES(MicrogliaRegionTracer fregl)
-TARGET_LINK_LIBRARIES(itkRolloverOpenMPTest ${ITK_LIBRARIES})
 
-ADD_TEST(itkRolloverOpenMPTest ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/itkRolloverOpenMPTest ${FARSIGHT_DATA_ROOT}/TraceData/C02.1344x1024x18.tif)
 INSTALL( TARGETS MicrogliaRegionTracer RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
