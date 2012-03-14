@@ -354,9 +354,6 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 
 	std::cout << "Computing SphericalBinInfo..." << std::endl;
 
-	//ArrayType3D temp(boost::extents[2*indexLength+1][2*indexLength+1][2*indexLength+1]);
-	//this->allParams.oriBin.BinIndex = temp; //boost::extents[2*indexLength+1][2*indexLength+1][2*indexLength+1];
-
 	int indexLength = this->allParams.oriBin.indexLength;
 	int angleCount = this->allParams.oriBin.angleCount;
 

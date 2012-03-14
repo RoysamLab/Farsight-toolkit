@@ -62,9 +62,6 @@
 #include "itkStatisticsImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
 
-//#include "boost/config.hpp"
-#include "boost/multi_array.hpp"
-
 #include "Common.h"
 
 /**
@@ -108,8 +105,6 @@ typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
 
-typedef boost::multi_array<int, 3> ArrayType3D;
-typedef ArrayType3D::index ArrayIndexType3D;
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
 typedef std::vector<VectorType2D> VectorType3D;
