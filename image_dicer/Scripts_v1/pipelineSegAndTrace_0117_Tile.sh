@@ -7,7 +7,7 @@
 ACTUAL_DIRECTORY=$(pwd)
 
 # The directory where the data is stored in the local machine (FAR-04, FAR-05)
-export DATA_FOLDER=0117_Tile
+export DATA_FOLDER=0117\_Tile
 export LOCAL_DATASET_PATH=/data/nicolas/data/$DATA_FOLDER			# ---> This directory has to exist
 export LOCAL_PARAMETERS_PATH=/data/nicolas/data/$DATA_FOLDER/Parameters		# ---> This directory has to exist
 export LOCAL_DATASET_PATH_EXE=/data/nicolas/data/$DATA_FOLDER/Exe
@@ -25,12 +25,7 @@ export REMOVE_MONTAGES=0 	# This flag is set in case we want the montages to be 
 export MOVE_RESULTS=3		# If 1 the results will be moved
 			# if 0 the results will be keep
 			# if 2 the results will be copied (keep and copy to FSDATA)
-# if 3 move everysingle file, exept the folder, which are copied
-
-
-
-# Curvelets PATH
-export CURVELETS_PATH=/data/nicolas/farsigt3_from05/bin/exe
+			# if 3 move everysingle file, exept the folder, which are copied
 
 if [ ! -d $LOCAL_DATASET_PATH_EXE ]; then
 	mkdir $LOCAL_DATASET_PATH_EXE
@@ -124,7 +119,7 @@ export GFP_LOCAL=${GFP_LOCAL_EXE%\.*}
 # ##############################################################################################################################
 # # # Curvelets GFP channel
 # ##############################################################################################################################
-cp $CURVELETS_PATH/curvelets $LOCAL_DATASET_PATH_EXE
+cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
 /usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log
 
 
