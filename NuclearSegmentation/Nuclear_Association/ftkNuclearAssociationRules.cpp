@@ -432,7 +432,7 @@ void NuclearAssociationRules::Compute(vtkSmartPointer<vtkTable> tbl)
 				//cout<<j+1;
 				int lbl = labelsList[j];
 				if(lbl == 0) continue;
-				cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
+				//cout<<"\rComputing Features For Association Rule "<<i+1<<": "<<j<<"/"<<numOfLabels-1;
 				assocMeasurementsList[i][j] = ComputeOneAssocMeasurement(inpImage, i, lbl);	
 //#pragma omp critical
 				//{
