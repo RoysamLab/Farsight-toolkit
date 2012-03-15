@@ -1155,7 +1155,7 @@ int main(int argc, char* argv[])
 		//#####################################################################################################################
 
 		std::vector< itk::Index<3> > centroid_list;
-		for(int r=1000; r<(int)somaCentroidsTable->GetNumberOfRows(); ++r)
+		for(int r=0; r<(int)somaCentroidsTable->GetNumberOfRows(); ++r)
 		{
 			int cx = somaCentroidsTable->GetValue(r, 0).ToInt();
 			int cy = somaCentroidsTable->GetValue(r, 1).ToInt();
