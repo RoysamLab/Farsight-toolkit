@@ -444,7 +444,7 @@ void NuclearAssociationRules::Compute(vtkSmartPointer<vtkTable> tbl)
 			//omp_set_nested(0);
 //#endif
 		}
-		std::cout<<"\tdone"<<std::endl;
+		//std::cout<<"\tdone"<<std::endl;
 	}	
 	
 	//Flag invalid objects
