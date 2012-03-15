@@ -8,8 +8,8 @@ ACTUAL_DIRECTORY=$(pwd)
 
 # The directory where the data is stored in the local machine (FAR-04, FAR-05)
 # export DATA_FOLDER=0117\_Tile
-export FARSIGHT_BIN=/data/nicolas/farsigth_update/bin
-export FARSIGHT_BIN_EXE=/data/nicolas/farsigth_update/bin/exe
+export FARSIGHT_BIN=/data/nicolas/farsight_updated/bin
+export FARSIGHT_BIN_EXE=/data/nicolas/farsight_updated/bin/exe
 
 export LOCAL_DATASET_PATH=/data/nicolas/data/$DATA_FOLDER					# ---> This directory has to exist
 export LOCAL_PARAMETERS_PATH=/data/nicolas/data/$DATA_FOLDER/Parameters		# ---> This directory has to exist
@@ -62,3 +62,7 @@ else
 # 	rm -rf $DATASET_PATH_RESULTS/*
 	cd $ACTUAL_DIRECTORY
 fi
+
+
+# automatically export EVERYTHING
+# set -a

@@ -1,12 +1,14 @@
 #!/bin/bash
+
 # This file is the batch script that will run the PIPELINE of DARPA datasets
 
 # dont forget this
 # chmod u+x ../../farsigt3_from05/src/image_dicer/*.sh
+# . Source to export back into the parent
 
-export DATA_FOLDER=0117\_Tile
-./runCreateFolders.sh
-./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
+export DATA_FOLDER=0117_Tile_mhd
+. ./runCreateFolders.sh
+. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
 # # ./pipelineSegAndTrace_0103.sh
 # # ./pipelineSegAndTrace_0113.sh #/far04
 # # ./pipelineSegAndTrace_0117.sh #/far05
