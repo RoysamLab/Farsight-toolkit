@@ -1232,11 +1232,15 @@ int main(int argc, char* argv[])
 				ssy_off << y - 200;
 			else 
 				ssy_off << 0;
-			if(z >= 100)
-				ssz_off << z - 100;
-			else 
+			if(size_gfp_montage[2] <= 200)
 				ssz_off << 0;
-
+			else
+			{	
+				if(z >= 100)
+					ssz_off << z - 100;
+				else 
+					ssz_off << 0;
+			}
 			//#pragma omp barrier
 
 			//########    CROP THE DESIRED DICE FROM THE GFP AND SOMA MONTAGES   ########
@@ -1322,14 +1326,14 @@ int main(int argc, char* argv[])
 			// 	size_gfp_montage2[0] = montage_gfp->GetLargestPossibleRegion().GetSize()[0];
 			// 	size_gfp_montage2[1] = montage_gfp->GetLargestPossibleRegion().GetSize()[1];
 			// 	size_gfp_montage2[2] = montage_gfp->GetLargestPossibleRegion().GetSize()[2];
-				size_test[0] = somaMontage->GetLargestPossibleRegion().GetSize()[0];
-				size_test[1] = somaMontage->GetLargestPossibleRegion().GetSize()[1];
-				size_test[2] = somaMontage->GetLargestPossibleRegion().GetSize()[2];
-				std::cout<<std::endl<<size_test[0]<<" "<<size_test[1]<<" "<<size_test[2];
-				std::cout<<std::endl<<size2[0]<<" "<<size2[1]<<" "<<size2[2];
-				std::cout<<std::endl<<size_gfp_montage[0]<<" "<<size_gfp_montage[1]<<" "<<size_gfp_montage[2];
+				//size_test[0] = somaMontage->GetLargestPossibleRegion().GetSize()[0];
+				//size_test[1] = somaMontage->GetLargestPossibleRegion().GetSize()[1];
+				//size_test[2] = somaMontage->GetLargestPossibleRegion().GetSize()[2];
+				//std::cout<<std::endl<<size_test[0]<<" "<<size_test[1]<<" "<<size_test[2];
+				//std::cout<<std::endl<<size2[0]<<" "<<size2[1]<<" "<<size2[2];
+				//std::cout<<std::endl<<size_gfp_montage[0]<<" "<<size_gfp_montage[1]<<" "<<size_gfp_montage[2];
 				
-				std::cout<<std::endl<<(x+200)<<" "<<size_gfp_montage[0]<<" "<<((x+200)<size_gfp_montage[0])<<" "<<(200+size_gfp_montage[0]-x-1);
+				//std::cout<<std::endl<<(x+200)<<" "<<size_gfp_montage[0]<<" "<<((x+200)<size_gfp_montage[0])<<" "<<(200+size_gfp_montage[0]-x-1);
 				
 // 				((x+200)<size_gfp_montage[0]) ? 400 : (200+size_gfp_montage[0]-x-1)
 				
