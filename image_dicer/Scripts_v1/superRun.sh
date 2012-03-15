@@ -4,7 +4,9 @@
 # dont forget this
 # chmod u+x ../../farsigt3_from05/src/image_dicer/*.sh
 
-./pipelineSegAndTrace_0102.sh
+export DATA_FOLDER=0117\_Tile
+./createFolders.sh
+./pipelineSegAndTrace.sh > $LOCAL_DATASET_PATH_LOG/superRun.log
 # # ./pipelineSegAndTrace_0103.sh
 # # ./pipelineSegAndTrace_0113.sh #/far04
 # # ./pipelineSegAndTrace_0117.sh #/far05
