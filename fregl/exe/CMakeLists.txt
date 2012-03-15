@@ -12,8 +12,13 @@ TARGET_LINK_LIBRARIES( fuse_image_stacks  fregl ${ITK_LIBRARIES} )
 #ADD_EXECUTABLE( separate_nuclei_by_class separate_nuclei_by_class.cxx)
 #TARGET_LINK_LIBRARIES( separate_nuclei_by_class maciejseg vul vnl)
 
+IF( FARSIGHT_VTK_6 )
+SET( LSM_TO_TIFF_EXEC  )
+ELSE( FARSIGHT_VTK_6 )
 ADD_EXECUTABLE( lsm_to_tiff lsm_to_tiff.cxx)
 TARGET_LINK_LIBRARIES( lsm_to_tiff ftkImage  ${ITK_LIBRARIES} )
+SET( LSM_TO_TIFF_EXEC lsm_to_tiff )
+ENDIF( FARSIGHT_VTK_6 )
 
 #ADD_EXECUTABLE( vessel_segmentation vessel_segmentation.cpp)
 
@@ -99,7 +104,7 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    TARGET_LINK_LIBRARIES( SubsampleVolume   ${ITK_LIBRARIES} )
 #ENDIF(BUILD_FREGL)
 
-INSTALL( TARGETS lsm_to_tiff register_pair register_joint mosaic_image_pair mosaic_images mosaic_roi
+INSTALL( TARGETS ${LSM_TO_TIFF_EXEC} register_pair register_joint mosaic_image_pair mosaic_images mosaic_roi 
 DESTINATION ${INSTALL_BIN_DIR} )
 
 #copy the gdbicp to the installation directory

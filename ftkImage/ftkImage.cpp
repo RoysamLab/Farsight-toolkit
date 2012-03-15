@@ -607,7 +607,11 @@ Image::VtkImagePtr Image::GetVtkPtr(int T, int CH, PtrMode mode)
 	}
 
 	VtkImagePtr imageData = VtkImagePtr::New();
+#ifdef USE_VTK6
+	imageData->SetScalarType( GetDataTypeVTK(m_Info.dataType), NULL );
+#else
 	imageData->SetScalarType( GetDataTypeVTK(m_Info.dataType) );
+#endif
 	imageData->GetPointData()->SetScalars( m_array );
 	imageData->SetDimensions(m_Info.numColumns, m_Info.numRows, m_Info.numZSlices);
 	imageData->SetSpacing(m_Info.spacing.at(0), m_Info.spacing.at(1), m_Info.spacing.at(2));
