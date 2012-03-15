@@ -131,15 +131,16 @@ cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
 # echo $GFP_LOCAL\_BS._CV.mhd
 # echo $Cy5_LOCAL\_BS.nrrd
 # echo $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml
-./$FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 0 > $LOCAL_DATASET_PATH_LOG/runSegmentation.log
+# ./$FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 0 > $LOCAL_DATASET_PATH_LOG/runSegmentation.log
+/usr/bin/time $ACTUAL_DIRECTORY/runSegmentation.sh > $LOCAL_DATASET_PATH_LOG/runSegmentation.log
  
  
 ##############################################################################################################################
 # Tracing
 ##############################################################################################################################
 # cd $FARSIGHT_BIN_EXE
-$FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 1 > $LOCAL_DATASET_PATH_LOG/runTracing.log
-
+# $FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 1 > $LOCAL_DATASET_PATH_LOG/runTracing.log
+/usr/bin/time $ACTUAL_DIRECTORY/runTracing.sh > $LOCAL_DATASET_PATH_LOG/runTracing.log
 
 ##############################################################################################################################
 # Copy results to far-01
