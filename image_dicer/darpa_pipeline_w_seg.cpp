@@ -203,9 +203,9 @@ int main(int argc, char* argv[])
 	
 	if( onlyTrace == 0 )
 	{
-		rawImageType_8bit::Pointer montage_nuc = readAndRescale_16to8(argv[1],1);
-		rawImageType_8bit::Pointer montage_gfp = readAndRescale_16to8(argv[2],2);
-		rawImageType_8bit::Pointer montage_cy5 = readAndRescale_16to8(argv[3],3);
+		rawImageType_8bit::Pointer montage_nuc = readAndRescale_16to8(argv[1]);
+		rawImageType_8bit::Pointer montage_gfp = readAndRescale_16to8(argv[2]);
+		rawImageType_8bit::Pointer montage_cy5 = readAndRescale_16to8(argv[3]);
 		
 		
 		
