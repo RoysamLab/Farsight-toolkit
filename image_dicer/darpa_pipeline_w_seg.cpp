@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 
 	omp_set_max_active_levels(2);
 
-	int num_threads = 1;
+	int num_threads = 80;
 	omp_set_num_threads(num_threads);
 
 
@@ -419,8 +419,8 @@ int main(int argc, char* argv[])
 				}
 
 			}
-			omp_set_nested(0);
-			omp_set_max_active_levels(1);
+			//omp_set_nested(0);
+			//omp_set_max_active_levels(1);
 			// 		myfile.close();
 
 			std::cout<<"Stitching all tiles in Row " << row << "...";
