@@ -595,6 +595,7 @@ int main(int argc, char* argv[])
 
 			}
 			omp_set_nested(0);
+			omp_set_max_active_levels(1);
 			// 		myfile.close();
 
 			std::cout<<"Stitching all tiles in Row " << row << "...";
@@ -844,6 +845,7 @@ int main(int argc, char* argv[])
 				RunEverything(region_rowBorder, montage_nuc, montage_gfp, montage_cy5, Label_RowBorders, (Table_RowBorders), &(Centroids_RowBorders[row-1]), argv[4], argv[5],row-1);
 
 			}
+			std::cout<<std::endl<<"\t\t Row "<<row<<" done with all"<<std::flush;
 
 		}
 
