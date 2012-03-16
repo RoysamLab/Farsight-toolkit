@@ -323,7 +323,7 @@ int main(int argc, char* argv[])
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
 		//itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // JUST TO TEST
 		//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-#pragma omp parallel for num_threads(8) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(10) schedule(dynamic, 1)
 		for(int row=0; row<num_rows; ++row)
 		{
 			omp_set_nested(1);
@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 			Centroids_TileBorders.resize(num_cols-1);
 
 			//##################	SEGMENTING EACH TILE IN A ROW    ###################
-#pragma omp parallel for num_threads(10) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(8) schedule(dynamic, 1)
 			for(unsigned int col=0; col<num_cols; ++col)
 			{
 
