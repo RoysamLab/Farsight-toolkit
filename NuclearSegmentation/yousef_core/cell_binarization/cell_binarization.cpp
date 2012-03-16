@@ -908,7 +908,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 
 	//std::cerr << "Graph Memory Allocated" << std::endl;
-	int alpha_F_min = 5; // Noise in some tiles, it should be change
+	int alpha_F_min = 8; // Noise in some tiles, it should be change
 	if( alpha_F>alpha_F_min)
 	{
 

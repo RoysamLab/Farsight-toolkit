@@ -129,6 +129,8 @@ void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 }
 void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 {
+	std::cout<<std::endl<<"RECENT CHANGES: Min object size was hard coded to 50, now the size is correctly read from the project definition, so make sure to include this parameter. The minimum number of objects in an image is hard coded to 3, this to avoid spurious sedd detection results in noise tiles";
+	
 	//try this for now
 	//runGradAnisDiffSmoothing();
 
@@ -150,8 +152,8 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 	
 	//***************************************************
 	// TEST CODE:
-	/*
-	typedef unsigned char PixelType;
+	
+	/*typedef unsigned char PixelType;
 	typedef itk::Image< PixelType,  3 >   InputImageType;
 	
 	InputImageType::Pointer im;
@@ -193,8 +195,8 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(im);
 	writer->SetFileName("input_test.tif");
-	writer->Update();
-	*/
+	writer->Update();*/
+	
 	//******
 	//*******
 	//**************
@@ -221,7 +223,7 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 
 	if(ok)
 	{
-		std::cout << "Entering getConnCompImage" << std::endl;
+		std::cout << "Entering getConnCompImage: HERE: min obj size: " <<minObjSize<< std::endl;
 		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
 		std::cout << "Entering getConnCompInfo3D" << std::endl;
 		getConnCompInfo3D();																			//Populate myConnComp
@@ -232,48 +234,48 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 		cerr << "Binarization Failed!!" << endl;
 	}
 	
-	/*typedef unsigned short PixelType;
-	typedef itk::Image< PixelType,  3 >   InputImageType;
+	/*typedef unsigned short PixelType2;
+	typedef itk::Image< PixelType2,  3 >   InputImageType2;
 	
-	InputImageType::Pointer im;
-	im = InputImageType::New();
-	InputImageType::PointType origin;
-    origin[0] = 0; 
-    origin[1] = 0;    
-	origin[2] = 0;    
-    im->SetOrigin( origin );
+	InputImageType2::Pointer im2;
+	im2 = InputImageType2::New();
+	InputImageType2::PointType origin2;
+    origin2[0] = 0; 
+    origin2[1] = 0;    
+	origin2[2] = 0;    
+    im2->SetOrigin( origin2 );
 	
-    InputImageType::IndexType start;
-    start[0] =   0;  // first index on X
-    start[1] =   0;  // first in dex on Y    
-	start[2] =   0;  // first index on Z    
-    InputImageType::SizeType  size;
-    size[0]  = numColumns;  // size along X
-    size[1]  = numRows;  // size along Y
-	size[2]  = numStacks;  // size along Z
+    InputImageType::IndexType start2;
+    start2[0] =   0;  // first index on X
+    start2[1] =   0;  // first in dex on Y    
+	start2[2] =   0;  // first index on Z    
+    InputImageType2::SizeType  size2;
+    size2[0]  = numColumns;  // size along X
+    size2[1]  = numRows;  // size along Y
+	size2[2]  = numStacks;  // size along Z
 	
-    InputImageType::RegionType region;
-    region.SetSize( size );
-    region.SetIndex( start );
+    InputImageType2::RegionType region2;
+    region2.SetSize( size2 );
+    region2.SetIndex( start2 );
     
-    im->SetRegions( region );
-    im->Allocate();
-    im->FillBuffer(0);
-	im->Update();
+    im2->SetRegions( region2 );
+    im2->Allocate();
+    im2->FillBuffer(0);
+	im2->Update();
 	
-	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
-	IteratorType iterator1(im,im->GetRequestedRegion());
+	typedef itk::ImageRegionIteratorWithIndex< InputImageType2 > IteratorType2;
+	IteratorType2 iterator12(im2,im2->GetRequestedRegion());
 	for(int i=0; i<numRows*numColumns*numStacks; i++)
 	{		
-		iterator1.Set(binImagePtr[i] * 5000);
-		++iterator1;	
+		iterator12.Set(binImagePtr[i] * 5000);
+		++iterator12;	
 	}
 	
-	typedef itk::ImageFileWriter< InputImageType > WriterType;
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetInput(im);
-	writer->SetFileName("binImage.tif");
-	writer->Update();
+	typedef itk::ImageFileWriter< InputImageType2 > WriterType2;
+	WriterType2::Pointer writer2 = WriterType2::New();
+	writer2->SetInput(im2);
+	writer2->SetFileName("binImage.tif");
+	writer2->Update();
 
 	std::cout << "Bin Image written to binImage.tif" << endl;*/
 }
@@ -652,7 +654,8 @@ void yousef_nucleus_seg::ExtractSeeds()
 			}
 		}
 	}
-	std::cout << id-1 << " seeds were detected"<<std::endl;
+	std::cout << id-1 << " HERE: seeds were detected"<<std::endl;
+
 }
 
 void yousef_nucleus_seg::outputSeeds(void)
@@ -770,22 +773,35 @@ int yousef_nucleus_seg::getConnCompImage(unsigned short *IM, int connectivity, i
 	
     //write the output of the labeling CC filter into our input image
 	std::cout << "Writing output of relabel coloring filter to input image" << std::endl;
-	int mx;
-	IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
-	for(size_t i=0; i<r*c*z; i++)
-	{			
-		
-		mx = iterator2.Get();	
-		if(mx == -1)
-			IM[i] = 0;
-		else
-			IM[i] = mx;
-		++iterator2;	
+	// At least 3 connected components in the image, otherwise for the noise tiles, the seed detection will end up detecting many seeds. This parame
+	int numObj = relabel->GetNumberOfObjects();
+	if( numObj > 2 )
+	{
+		int mx;
+		IteratorType iterator2(relabel->GetOutput(),relabel->GetOutput()->GetRequestedRegion());
+		for(size_t i=0; i<r*c*z; i++)
+		{			
+			
+			mx = iterator2.Get();	
+			if(mx == -1)
+				IM[i] = 0;
+			else
+				IM[i] = mx;
+			++iterator2;	
+		}
 	}
+	else
+	{
+		for( size_t i=0; i<r*c*z; ++i )
+		{
+			IM[i] = 0;
+		}
+	}
+			
 
 	//return the number of CCs
 	std::cout << "Returning number of connected components" << std::endl;
-	return relabel->GetNumberOfObjects();
+	return numObj;
 }
 
 //By Yousef: 5-21-2008
