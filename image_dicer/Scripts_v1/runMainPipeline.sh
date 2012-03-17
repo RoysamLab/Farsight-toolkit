@@ -12,7 +12,7 @@ cd $ACTUAL_DIRECTORY
 # ##############################################################################################################################
 # # Move Images
 # ##############################################################################################################################
-/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log 2>$1
+/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log 2>&1
 
 LOCAL_DAPI_MHD_EXT=$LOCAL_DATASET_PATH/*DAPIdsu.mhd
 for f in $LOCAL_DAPI_MHD_EXT
