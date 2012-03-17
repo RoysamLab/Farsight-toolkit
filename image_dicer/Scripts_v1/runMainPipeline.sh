@@ -12,7 +12,7 @@ cd $ACTUAL_DIRECTORY
 # ##############################################################################################################################
 # # Move Images
 # ##############################################################################################################################
-/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log
+#/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log
 
 LOCAL_DAPI_MHD_EXT=$LOCAL_DATASET_PATH/*DAPIdsu.mhd
 for f in $LOCAL_DAPI_MHD_EXT
@@ -46,14 +46,14 @@ export GFP_LOCAL=${GFP_LOCAL_EXE%\.*}
 # ##############################################################################################################################
 # # Run Background Substraction
 # ##############################################################################################################################
-/usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log
+#/usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log
 
 
 # ##############################################################################################################################
 # # Curvelets GFP channel
 # ##############################################################################################################################
 cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
-/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log
+#/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log
 
 
 # ##############################################################################################################################

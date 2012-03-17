@@ -296,8 +296,8 @@ int main(int argc, char* argv[])
 		//#####################################################################################################################
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
-		unsigned long long rowDivisor = 400;//861;
-		unsigned long long colDivisor = 400;//640;
+		unsigned long long rowDivisor = 900;//861;
+		unsigned long long colDivisor = 700;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
@@ -566,8 +566,8 @@ int main(int argc, char* argv[])
 
 			std::cout<<std::endl<<"asdfasdf1 ";
 
-			Table_Tiles.clear();
-			Label_TileBorders.clear();
+// 			Table_Tiles.clear();
+// 			Label_TileBorders.clear();
 
 			//#############################################################
 			// 		std::cout<<"done !!\n\n";
@@ -748,6 +748,7 @@ int main(int argc, char* argv[])
 		}
 
 		std::cout << "everything done\n";
+		// Not sure this is working correctly
 		Label_Rows.clear();
 		Label_RowBorders.clear();
 
@@ -1317,6 +1318,8 @@ LabelType::Pointer RunNuclearSegmentation(rawImageType::Pointer inpImg, const ch
 	}
 
 	delete NucleusSeg;
+	free(in_Image);
+	std::cout<<std::endl << "\t\t\t\t HERE2: Done SEG: ";
 
 	/*
 	// DELETING ALL LABELS WITH LESS THAN 8610 PIXELS OF VOLUME
