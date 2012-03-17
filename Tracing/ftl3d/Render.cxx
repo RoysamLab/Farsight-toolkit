@@ -246,7 +246,11 @@ int main(const int argc, char** argv)	{
 
 	VTK_CREATE(vtkOpenGLVolumeTextureMapper3D, volumeMapper);
 	volumeMapper->SetSampleDistance(0.75);
+#ifdef USE_VTK6
+	volumeMapper->SetInputConnection( vtkImporter->GetOutputPort() );
+#else
 	volumeMapper->SetInput(vtkImporter->GetOutput());
+#endif
 
 	VTK_CREATE(vtkVolume, volume);
     volume->SetMapper(volumeMapper);
@@ -293,7 +297,11 @@ int main(const int argc, char** argv)	{
 				vtkSphereSource *sphere = vtkSphereSource::New();
 				sphere->SetRadius(3);
 				vtkPolyDataMapper* sphereMap = vtkPolyDataMapper::New();
+#ifdef USE_VTK6
+				sphereMap->SetInputConnection( sphere->GetOutputPort() );
+#else
 				sphereMap->SetInput(sphere->GetOutput());
+#endif
 				vtkActor* sphereAct = vtkActor::New();
 				sphereAct->SetMapper(sphereMap);
 				sphereAct->GetProperty()->SetOpacity(1);
@@ -305,7 +313,11 @@ int main(const int argc, char** argv)	{
 		traces->SetPoints(points);
 		traces->SetLines(cells);
 		traces->GetPointData()->SetScalars(scalars);
+#ifdef USE_VTK6
+		traceMapper->SetInputData(traces);
+#else
 		traceMapper->SetInput(traces);
+#endif
 		traceActor->SetMapper(traceMapper);
 		traceActor->GetProperty()->SetPointSize(2.0);
 		traceActor->GetProperty()->SetLineWidth(2.0);
