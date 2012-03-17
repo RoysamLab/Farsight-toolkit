@@ -296,8 +296,8 @@ int main(int argc, char* argv[])
 		//#####################################################################################################################
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
-		unsigned long long rowDivisor = 900;//861;
-		unsigned long long colDivisor = 700;//640;
+		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/11);//400;//861;
+		unsigned long long colDivisor = ceil((double)size_nuc_montage[1]/9);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
