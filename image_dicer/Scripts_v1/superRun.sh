@@ -8,7 +8,7 @@
 
 export DATA_FOLDER=0103
 . ./runCreateFolders.sh
-. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
+. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log 2>&1
 #export DATA_FOLDER=0113
 #. ./runCreateFolders.sh
 #. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log

@@ -12,7 +12,7 @@ cd $ACTUAL_DIRECTORY
 # ##############################################################################################################################
 # # Move Images
 # ##############################################################################################################################
-/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log
+/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log 2>$1
 
 LOCAL_DAPI_MHD_EXT=$LOCAL_DATASET_PATH/*DAPIdsu.mhd
 for f in $LOCAL_DAPI_MHD_EXT
@@ -46,14 +46,14 @@ export GFP_LOCAL=${GFP_LOCAL_EXE%\.*}
 # ##############################################################################################################################
 # # Run Background Substraction
 # ##############################################################################################################################
-/usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log
+/usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log 2>&1
 
 
 # ##############################################################################################################################
 # # Curvelets GFP channel
 # ##############################################################################################################################
 cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
-/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log
+/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log 2>&1
 
 
 # ##############################################################################################################################
@@ -65,7 +65,7 @@ cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
 # echo $Cy5_LOCAL\_BS.nrrd
 # echo $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml
 # ./$FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 0 > $LOCAL_DATASET_PATH_LOG/runSegmentation.log
-/usr/bin/time $ACTUAL_DIRECTORY/runSegmentation.sh > $LOCAL_DATASET_PATH_LOG/runSegmentation.log
+/usr/bin/time $ACTUAL_DIRECTORY/runSegmentation.sh > $LOCAL_DATASET_PATH_LOG/runSegmentation.log #2>&1
  
  
 ##############################################################################################################################
@@ -73,7 +73,7 @@ cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
 ##############################################################################################################################
 # cd $FARSIGHT_BIN_EXE
 # $FARSIGHT_BIN_EXE/darpa_tracer_w_seg $DAPI_LOCAL\_BS.nrrd $GFP_LOCAL\_BS_CV.mhd $Cy5_LOCAL\_BS.nrrd $LOCAL_PARAMETERS_PATH/Seg_Params.ini $LOCAL_PARAMETERS_PATH/ProjectDefinition.xml 1 > $LOCAL_DATASET_PATH_LOG/runTracing.log
-/usr/bin/time $ACTUAL_DIRECTORY/runTracing.sh > $LOCAL_DATASET_PATH_LOG/runTracing.log
+/usr/bin/time $ACTUAL_DIRECTORY/runTracing.sh > $LOCAL_DATASET_PATH_LOG/runTracing.log 2>&1
 
 ##############################################################################################################################
 # # Copy results to far-01
