@@ -9,12 +9,12 @@
 export DATA_FOLDER=0103
 . ./runCreateFolders.sh
 . ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log 2>&1
-# export DATA_FOLDER=0113
-# . ./runCreateFolders.sh
-# . ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
-# export DATA_FOLDER=0117
-# . ./runCreateFolders.sh
-# . ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
+export DATA_FOLDER=0113
+. ./runCreateFolders.sh
+. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
+export DATA_FOLDER=0117
+. ./runCreateFolders.sh
+. ./runMainPipeline.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
 
 # # ./pipelineSegAndTrace_0103.sh
 # # ./pipelineSegAndTrace_0113.sh #/far04

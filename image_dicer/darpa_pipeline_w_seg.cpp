@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
 		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/20);//400;//861;
-		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/8);//400;//640;
+		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/16);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
@@ -420,22 +420,22 @@ int main(int argc, char* argv[])
 			// 		myfile.close();
 
 			std::cout<<"Stitching all tiles in Row " << row << "...";
-			#pragma omp critical
-			{
-				++dynamicItkThread;
-				if( dynamicItkThread == 20 )
-				{
-					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(4);
-				}
-				else if( dynamicItkThread >= 16 )
-				{
-					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(3);
-				}
-				else if( dynamicItkThread >= 13 )
-				{
-					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2);
-				}
-			}
+// 			#pragma omp critical
+// 			{
+// 				++dynamicItkThread;
+// 				if( dynamicItkThread == 20 )
+// 				{
+// 					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(4);
+// 				}
+// 				else if( dynamicItkThread >= 16 )
+// 				{
+// 					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(3);
+// 				}
+// 				else if( dynamicItkThread >= 13 )
+// 				{
+// 					itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2);
+// 				}
+// 			}
 
 			//##################	ALLOCATING MEMORY AND REGISTERING FOR A SEGMENTED ROW_BORDER	  ###################
 
@@ -1448,7 +1448,7 @@ vtkSmartPointer<vtkTable> ComputeFeaturesAndAssociations(rawImageType::Pointer n
 	nucSegRes = myProc->GetOutputImage();
 	table = myProc->GetTable();
 
-	projectDef.Write(fileName);	
+	//projectDef.Write(fileName);	
 	delete myProc;
 
 	return table;
