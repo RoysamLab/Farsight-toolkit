@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
 		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/21);//400;//861;
-		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/17);//400;//640;
+		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/9);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
@@ -323,7 +323,7 @@ int main(int argc, char* argv[])
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
 		//itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // JUST TO TEST
 		//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-#pragma omp parallel for num_threads(10) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(20) schedule(dynamic, 1)
 		for(int row=0; row<num_rows; ++row)
 		{
 			omp_set_nested(1);
@@ -350,10 +350,9 @@ int main(int argc, char* argv[])
 			Centroids_TileBorders.resize(num_cols-1);
 
 			//##################	SEGMENTING EACH TILE IN A ROW    ###################
-#pragma omp parallel for num_threads(8) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(4) schedule(dynamic, 1)
 			for(unsigned int col=0; col<num_cols; ++col)
 			{
-
 // 				int tid = omp_get_thread_num();
 				//stringstream out;
 				//out<<tid;
@@ -385,13 +384,9 @@ int main(int argc, char* argv[])
 				rawImageType::RegionType region_tile;
 				region_tile.SetSize(size_tile);
 				region_tile.SetIndex(start_tile);
-
 				
 				RunEverything(region_tile, montage_nuc, montage_gfp, montage_cy5, Label_Tiles, Table_Tiles, &(Centroids_Tiles[col]), argv[4], argv[5], col);
-				std::cout<<std::endl<<"\t\t\t\t ---->>>> Done with nucleus segmentation for Tile " << col << "_" << row << "\n";
-
-
-
+				
 				//##################	EXTRACT A TILE_BORDER AND START SEGMENTING	  ###################
 
 				if(col != 0)
@@ -412,11 +407,10 @@ int main(int argc, char* argv[])
 					region_tileBorder.SetSize(size_tileBorder);
 					region_tileBorder.SetIndex(start_tileBorder);
 
-
-
 					RunEverything(region_tileBorder, montage_nuc, montage_gfp, montage_cy5, Label_TileBorders, Table_TileBorders, &(Centroids_TileBorders[col-1]), argv[4], argv[5],col-1);
 
 				}
+				std::cout<<std::endl<<"\t\t\t\t ---->>>> Done with nucleus segmentation for Tile " << col << "_" << row << "\n";
 
 			}
 			//omp_set_nested(0);
@@ -576,11 +570,15 @@ int main(int argc, char* argv[])
 			Centroids_Rows[row] = GetLabelToCentroidMap(rowTable);
 
 			//##################	EXTRACT A ROW_BORDER AND START SEGMENTING	  ###################
-
+			
+// 		}
+		
+// 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(4);
+// #pragma omp parallel for num_threads(21) schedule(dynamic, 1)
+// 		for(int row=0; row<num_rows; ++row)
+// 		{
 			if(row != 0)
 			{
-
-				// 		std::cout<<"Extracting row border Y = " << row*rowDivisor << "\n";
 				rawImageType::IndexType start_rowBorder;
 				start_rowBorder[0] = 0;
 				start_rowBorder[1] = (row*rowDivisor) - (2*25);
@@ -596,10 +594,8 @@ int main(int argc, char* argv[])
 				region_rowBorder.SetIndex(start_rowBorder);
 
 				RunEverything(region_rowBorder, montage_nuc, montage_gfp, montage_cy5, Label_RowBorders, (Table_RowBorders), &(Centroids_RowBorders[row-1]), argv[4], argv[5],row-1);
-
 			}
 			std::cout<<std::endl<<"\t\t Row "<<row<<" done with all"<<std::flush;
-
 		}
 
 		std::cout<<"Stitching all rows ...";
