@@ -275,6 +275,7 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	objectType = "Nucleus";
 	inputs_set = false;
 	num_rois = 8;
+	assocMeasurementsList = NULL;
 }
 
 NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int numOfRules, LabImageType::Pointer lImage, TargImageType::Pointer iImage):ObjectAssociation(AssocFName, numOfRules){
@@ -286,13 +287,17 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 	objectType = "Nucleus";
 	inputs_set = true;
 	num_rois = 8;
+	assocMeasurementsList = NULL;
 }
 
 NuclearAssociationRules::~NuclearAssociationRules()
 {
-	for(int i=0; i<GetNumofAssocRules(); i++)
-		delete assocMeasurementsList[i];
-	delete []assocMeasurementsList;
+	if( assocMeasurementsList!= NULL )
+	{
+		for(int i=0; i<GetNumofAssocRules(); i++)
+			delete []assocMeasurementsList[i];
+		delete [] assocMeasurementsList;
+	}
 }
 
 /* This is the main function for computing associative features */
