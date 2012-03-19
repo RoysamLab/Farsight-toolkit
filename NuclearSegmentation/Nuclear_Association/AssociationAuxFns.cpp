@@ -186,6 +186,11 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		geomfilt1->SetCalculatePixelIndices( true );
 		geomfilt1->Update();
 		labelsList = geomfilt1->GetLabels();
+		if( labelsList.size() == 0 )
+		{
+			qfied_num.clear();
+			return qfied_num;
+		}
 		bool zp=false; USPixelType zero;
 		//Check if the background is also included
 		for( USPixelType i=0; i<labelsList.size(); ++i ) if( labelsList[i] == 0 ){ zp=true; zero = i; }
