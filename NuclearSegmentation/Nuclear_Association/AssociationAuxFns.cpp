@@ -186,7 +186,8 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		geomfilt1->SetCalculatePixelIndices( true );
 		geomfilt1->Update();
 		labelsList = geomfilt1->GetLabels();
-		if( labelsList.size() == 0 )
+		std::cout<<std::endl<<"The size is: "<<labelsList.size();
+		if( labelsList.size() == 1 )
 		{
 			qfied_num.clear();
 			return qfied_num;
@@ -414,6 +415,11 @@ omp_set_nested(0);
 #endif
 		number_of_rois = number_of_rois*2;
 		std::cout<<"Starting k-means\n";
+		if( labelsList.size() == 1 )
+		{
+			qfied_num.clear();
+			return qfied_num;
+		}
 		std::vector<double> quantified_numbers_cell_cpy(roi_list_size);
 		std::copy(quantified_numbers_cell.begin(), quantified_numbers_cell.end(), quantified_numbers_cell_cpy.begin() );
 		//Run k-means
