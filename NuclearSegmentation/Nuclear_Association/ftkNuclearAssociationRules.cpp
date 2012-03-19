@@ -158,6 +158,7 @@ vtkSmartPointer<vtkTable> AssociativeFeatureCalculator::Compute(void)
 		}
 		table->InsertNextRow(row);
 	}
+	delete assoc;
 	return table;
 }
 
@@ -289,6 +290,9 @@ NuclearAssociationRules::NuclearAssociationRules(std::string AssocFName, int num
 
 NuclearAssociationRules::~NuclearAssociationRules()
 {
+	for(int i=0; i<GetNumofAssocRules(); i++)
+		delete assocMeasurementsList[i];
+	delete []assocMeasurementsList;
 }
 
 /* This is the main function for computing associative features */
