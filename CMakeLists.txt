@@ -287,6 +287,7 @@ IF( NOT BUILD_EMBREX )
     SET(LIB_KPLS
       debug ${LIB_KPLS_DEBUG}
       optimized ${LIB_KPLS_RELEASE}
+      CACHE STRING "KPLS libraries"
     )
   ELSE()
     IF(APPLE)
