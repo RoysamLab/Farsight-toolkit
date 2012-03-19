@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 
 	omp_set_max_active_levels(2);
 
-	int num_threads = 80;
+	int num_threads = 1;
 	omp_set_num_threads(num_threads);
 
 
