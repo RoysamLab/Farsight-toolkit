@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
 		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/10);//400;//861;
-		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/8);//400;//640;
+		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/4);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
 
 		//ofstream myfile ("outPutFile.txt");
 		
-		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
+		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2);
 // 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // JUST TO 
 		//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
 #pragma omp parallel for num_threads(10) schedule(dynamic, 1)
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 			Centroids_TileBorders.resize(num_cols-1);
 
 			//##################	SEGMENTING EACH TILE IN A ROW    ###################
-#pragma omp parallel for num_threads(8) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(4) schedule(dynamic, 1)
 			for(unsigned int col=0; col<num_cols; ++col)
 			{
 				rawImageType::IndexType start_tile;
@@ -566,8 +566,8 @@ int main(int argc, char* argv[])
 			// 		std::cout << "stitchin the row table\n" ;
 			for(unsigned long long r=0; r<(unsigned long long)Table_Rows[n]->GetNumberOfRows(); ++r)
 			{
-				if((m != 0) && (Table_Rows[n]->GetValue(r,2).ToInt() < 25)) continue;
-				if((m != (Label_Tiles.size()-1)) && (Table_Rows[n]->GetValue(r,2).ToInt() >= (tile_size[0]-25))) continue;
+				if((n != 0) && (Table_Rows[n]->GetValue(r,2).ToInt() < 25)) continue;
+				if((n != (Label_Rows.size()-1)) && (Table_Rows[n]->GetValue(r,2).ToInt() >= (row_size[0]-25))) continue;
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 				for(unsigned long long c=0; c<(unsigned long long)Table_Rows[n]->GetNumberOfColumns(); ++c)
 				{
