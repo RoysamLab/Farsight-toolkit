@@ -53,7 +53,7 @@ export GFP_LOCAL=${GFP_LOCAL_EXE%\.*}
 # # Curvelets GFP channel
 # ##############################################################################################################################
 cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
-# /usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log 2>&1
+/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log 2>&1
 
 
 # ##############################################################################################################################
