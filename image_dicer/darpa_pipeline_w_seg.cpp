@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
 					itk::Size<3> tileBorder_size = myTileBorder->GetLargestPossibleRegion().GetSize();
 					unsigned long long tileBorder_slice_size = tileBorder_size[1] * tileBorder_size[0];
 					unsigned long long tileBorder_row_size = tileBorder_size[0];	
-					unsigned long long x_offset = (m*colDivisor) - (2*25);
+					unsigned long long x_offset_tb = (m*colDivisor) - (2*25);
 					for(unsigned long long z=0; z<tileBorder_size[2]; ++z)
 					{
 						for(unsigned long long y=0; y<tileBorder_size[1]; ++y)
@@ -320,9 +320,9 @@ int main(int argc, char* argv[])
 								unsigned long long lab_cen_x = Centroids_TileBorders[m-1][value][0];
 								if((lab_cen_x < 25) || (lab_cen_x >= (3*25))) 
 									continue;
-								rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
-								if((max_value + value) > current_max)
-									current_max = max_value + value;
+								rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset_tb + x)] = max_value + value;
+								//if((max_value + value) > current_max)
+								//	current_max = max_value + value;
 							}
 						}
 					}
@@ -331,19 +331,22 @@ int main(int argc, char* argv[])
 
 					for(int r=0; r<(int)Table_TileBorders[m-1]->GetNumberOfRows(); ++r)
 					{
+						if((Table_TileBorders[m-1]->GetValue(r,1).ToInt() < 25) || (Table_TileBorders[m-1]->GetValue(r,1).ToInt() >= (3*25)))
+							continue;
 						vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 						for(int c=0; c<(int)Table_TileBorders[m-1]->GetNumberOfColumns(); ++c)
 						{
 							if(c == 0)
-								model_data1->InsertNextValue(vtkVariant(Table_TileBorders[m-1]->GetValue(r,c).ToInt() + max_value));
+								model_data1->InsertNextValue(vtkVariant(Table_TileBorders[m-1]->GetValue(r,c).ToUnsignedShort() + max_value));
 							else if(c == 1)
-								model_data1->InsertNextValue(vtkVariant(Table_TileBorders[m-1]->GetValue(r,c).ToInt() + x_offset));
+								model_data1->InsertNextValue(vtkVariant(Table_TileBorders[m-1]->GetValue(r,c).ToInt() + x_offset_tb));
 							else
 								model_data1->InsertNextValue(Table_TileBorders[m-1]->GetValue(r,c));
 						}
 						rowTable->InsertNextRow(model_data1);
 					}
-					max_value = current_max;
+					//max_value = current_max;
+					max_value = rowTable->GetValue((int)rowTable->GetNumberOfRows()-1, 0).ToUnsignedShort();
 				}
 
 				//##################	STITCHING THE TILE INTO THE ROW	  ###################
@@ -353,7 +356,7 @@ int main(int argc, char* argv[])
 				itk::Size<3> tile_size = myTile->GetLargestPossibleRegion().GetSize();
 				unsigned long long tile_slice_size = tile_size[1] * tile_size[0];
 				unsigned long long tile_row_size = tile_size[0];	
-				unsigned long long x_offset = m*colDivisor;
+				unsigned long long x_offset_t = m*colDivisor;
 				for(unsigned long long z=0; z<tile_size[2]; ++z)
 				{
 					for(unsigned long long y=0; y<tile_size[1]; ++y)
@@ -365,9 +368,9 @@ int main(int argc, char* argv[])
 							unsigned long long lab_cen_x = Centroids_Tiles[m][value][0];
 							if((m != 0) && (lab_cen_x < 25)) continue;
 							if((m != (Label_Tiles.size()-1)) && (lab_cen_x >= (tile_size[0]-25))) continue;
-							rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset + x)] = max_value + value;
-							if((max_value + value) > current_max)
-								current_max = max_value + value;
+							rowSegArray[(row_slice_size*z) + (row_row_size*y) + (x_offset_t + x)] = max_value + value;
+							//if((max_value + value) > current_max)
+							//	current_max = max_value + value;
 						}
 					}
 				}
@@ -377,20 +380,22 @@ int main(int argc, char* argv[])
 
 				for(unsigned long long r=0; r<(unsigned long long)Table_Tiles[m]->GetNumberOfRows(); ++r)
 				{
+					if((m != 0) && (Table_Tiles[m]->GetValue(r,1).ToInt() < 25)) continue;
+					if((m != (Label_Tiles.size()-1)) && (Table_Tiles[m]->GetValue(r,1).ToInt() >= (tile_size[0]-25))) continue;
 					vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 					for(unsigned long long c=0; c<(unsigned long long)Table_Tiles[m]->GetNumberOfColumns(); ++c)
 					{
 						if(c == 0)
-							model_data1->InsertNextValue(vtkVariant(Table_Tiles[m]->GetValue(r,c).ToInt() + max_value));
+							model_data1->InsertNextValue(vtkVariant(Table_Tiles[m]->GetValue(r,c).ToUnsignedShort() + max_value));
 						else if(c == 1)
-							model_data1->InsertNextValue(vtkVariant(Table_Tiles[m]->GetValue(r,c).ToInt() + x_offset));
+							model_data1->InsertNextValue(vtkVariant(Table_Tiles[m]->GetValue(r,c).ToInt() + x_offset_t));
 						else
 							model_data1->InsertNextValue(Table_Tiles[m]->GetValue(r,c));
 					}
 					rowTable->InsertNextRow(model_data1);
 				}
-
-				max_value = current_max;
+				//max_value = current_max;
+				max_value = rowTable->GetValue((int)rowTable->GetNumberOfRows()-1, 0).ToUnsignedShort();
 			}
 
 			std::cout<<"Max Value in Row " << row << "..." << current_max;
@@ -485,7 +490,7 @@ int main(int argc, char* argv[])
 				itk::Size<3> rowBorder_size = myRowBorder->GetLargestPossibleRegion().GetSize();
 				unsigned long long rowBorder_slice_size = rowBorder_size[1] * rowBorder_size[0];
 				unsigned long long rowBorder_row_size = rowBorder_size[0];	
-				unsigned long long y_offset = (n*rowDivisor) - (2*25);
+				unsigned long long y_offset_rb = (n*rowDivisor) - (2*25);
 				for(unsigned long long z=0; z<rowBorder_size[2]; ++z)
 				{
 					for(unsigned long long y=0; y<rowBorder_size[1]; ++y)
@@ -496,9 +501,9 @@ int main(int argc, char* argv[])
 							if(value_1 == 0) continue;
 							unsigned long long lab_cen_y = Centroids_RowBorders[n-1][value_1][1];
 							if((lab_cen_y < 25) || (lab_cen_y >= (3*25))) continue;
-							montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
-							if((max_value_1 + value_1) > current_max_1)
-								current_max_1 = max_value_1 + value_1;
+							montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset_rb + y)) + x] = max_value_1 + value_1;
+							//if((max_value_1 + value_1) > current_max_1)
+							//	current_max_1 = max_value_1 + value_1;
 						}
 					}
 				}
@@ -509,20 +514,23 @@ int main(int argc, char* argv[])
 				// 			std::cout << "stitchin the row border table\n" ;
 				for(unsigned long long r=0; r<(unsigned long long)Table_RowBorders[n-1]->GetNumberOfRows(); ++r)
 				{
+					if((Table_RowBorders[n-1]->GetValue(r,2).ToInt() < 25) || (Table_RowBorders[n-1]->GetValue(r,2).ToInt() >= (3*25)))
+						continue;
 					vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 					for(unsigned long long c=0; c<(unsigned long long)Table_RowBorders[n-1]->GetNumberOfColumns(); ++c)
 					{
 						if(c == 0)
-							model_data1->InsertNextValue(vtkVariant(Table_RowBorders[n-1]->GetValue(r,c).ToInt() + max_value_1));
+							model_data1->InsertNextValue(vtkVariant(Table_RowBorders[n-1]->GetValue(r,c).ToUnsignedInt() + max_value_1));
 						else if(c == 2)
-							model_data1->InsertNextValue(vtkVariant(Table_RowBorders[n-1]->GetValue(r,c).ToInt() + y_offset));
+							model_data1->InsertNextValue(vtkVariant(Table_RowBorders[n-1]->GetValue(r,c).ToInt() + y_offset_rb));
 						else
 							model_data1->InsertNextValue(Table_RowBorders[n-1]->GetValue(r,c));
 					}
 					montageTable->InsertNextRow(model_data1);
 				}
 
-				max_value_1 = current_max_1;
+				//max_value_1 = current_max_1;
+				max_value_1 = montageTable->GetValue((int)montageTable->GetNumberOfRows()-1, 0).ToUnsignedInt();
 			}
 
 			//##################	STITCHING THE ROW INTO THE MONTAGE	  ###################
@@ -533,7 +541,7 @@ int main(int argc, char* argv[])
 			itk::Size<3> row_size = myRow->GetLargestPossibleRegion().GetSize();
 			unsigned long long row_slice_size_1 = row_size[1] * row_size[0];
 			unsigned long long row_row_size_1 = row_size[0];	
-			unsigned long long y_offset = n*rowDivisor;
+			unsigned long long y_offset_r = n*rowDivisor;
 			for(unsigned long long z=0; z<row_size[2]; ++z)
 			{
 				for(unsigned long long y=0; y<row_size[1]; ++y)
@@ -545,9 +553,9 @@ int main(int argc, char* argv[])
 						unsigned long long lab_cen_y = Centroids_Rows[n][value_1][1];
 						if((n != 0) && (lab_cen_y < 25)) continue;
 						if((n != (Label_Rows.size()-1)) && (lab_cen_y >= (row_size[0]-25))) continue;
-						montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset + y)) + x] = max_value_1 + value_1;
-						if((max_value_1 + value_1) > current_max_1)
-							current_max_1 = max_value_1 + value_1;
+						montageSegArray[(montage_slice_size*z) + (montage_row_size*(y_offset_r + y)) + x] = max_value_1 + value_1;
+						//if((max_value_1 + value_1) > current_max_1)
+						//	current_max_1 = max_value_1 + value_1;
 					}
 				}
 			}
@@ -558,20 +566,23 @@ int main(int argc, char* argv[])
 			// 		std::cout << "stitchin the row table\n" ;
 			for(unsigned long long r=0; r<(unsigned long long)Table_Rows[n]->GetNumberOfRows(); ++r)
 			{
+				if((m != 0) && (Table_Rows[n]->GetValue(r,2).ToInt() < 25)) continue;
+				if((m != (Label_Tiles.size()-1)) && (Table_Rows[n]->GetValue(r,2).ToInt() >= (tile_size[0]-25))) continue;
 				vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 				for(unsigned long long c=0; c<(unsigned long long)Table_Rows[n]->GetNumberOfColumns(); ++c)
 				{
 					if(c == 0)
-						model_data1->InsertNextValue(vtkVariant(Table_Rows[n]->GetValue(r,c).ToInt() + max_value_1));
+						model_data1->InsertNextValue(vtkVariant(Table_Rows[n]->GetValue(r,c).ToUnsignedInt() + max_value_1));
 					else if(c == 2)
-						model_data1->InsertNextValue(vtkVariant(Table_Rows[n]->GetValue(r,c).ToInt() + y_offset));
+						model_data1->InsertNextValue(vtkVariant(Table_Rows[n]->GetValue(r,c).ToInt() + y_offset_r));
 					else
 						model_data1->InsertNextValue(Table_Rows[n]->GetValue(r,c));
 				}
 				montageTable->InsertNextRow(model_data1);
 			}
 
-			max_value_1 = current_max_1;
+			//max_value_1 = current_max_1;
+			max_value_1 = montageTable->GetValue((int)montageTable->GetNumberOfRows()-1, 0).ToUnsignedInt();
 		}
 
 		std::cout << "everything done\n";
