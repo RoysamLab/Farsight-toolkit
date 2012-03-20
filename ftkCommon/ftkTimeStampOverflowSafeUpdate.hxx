@@ -7,24 +7,28 @@
 
 namespace ftk
 {
+	template< class TFilter >
+	bool TimeStampOverflowSafeUpdate( TFilter * filter, const unsigned int numberOfRetrys )
+	{
+		bool overflow_exception_happened = false;
 
-template< class TFilter >
-void TimeStampOverflowSafeUpdate( TFilter * filter, const unsigned int numberOfRetrys )
-{
-	try
-	  {
-	  filter->Update();
-	  }
-	catch( itk::ExceptionObject & e )
-	  {
-	  if( numberOfRetrys == 0 )
-	    {
-	    std::cerr << "Number of retries in TimeStampOverflowSafeUpdate exceeded.  Re-throwing exception." << std::endl;
-	    throw e;
-	    }
-	  TimeStampOverflowSafeUpdate( filter, numberOfRetrys - 1 );
-	  }
-}
+		try
+		{
+			filter->Update();
+		}
+		catch( itk::ExceptionObject & e )
+		{
+			if( numberOfRetrys == 0 )
+			{
+				std::cerr << "Number of retries in TimeStampOverflowSafeUpdate exceeded.  Re-throwing exception." << std::endl;
+				throw e;
+			}
+			TimeStampOverflowSafeUpdate( filter, numberOfRetrys - 1 );
+			overflow_exception_happened = true;
+		}
+
+		return overflow_exception_happened;
+	}
 
 } // end namespace ftk
 

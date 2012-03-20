@@ -25,14 +25,15 @@ namespace ftk
  *    Requested region is (at least partially) outside the largest possible
  *    region.
  *
- * As a workaround, this function will catch these exceptions are repeatedly try
- * to call Update() for a prescriped number of times so the filter has a chance
+ * As a workaround, this function will catch these exceptions and repeatedly try
+ * to call Update() for a prescribed number of times so the filter has a chance
  * to Update() with meaningful ModifiedTimes.  If this fails, the exception is
  * re-thrown.
- *
+ * 
+ * This function returns whether or not the overflow induced exception happened.
  */
 template< class TFilter >
-void TimeStampOverflowSafeUpdate( TFilter * filter, const unsigned int numberOfRetrys = 4 );
+bool TimeStampOverflowSafeUpdate( TFilter * filter, const unsigned int numberOfRetrys = 10 );
 
 } // end namespace ftk
 
