@@ -158,8 +158,10 @@ int main(int argc, char* argv[])
 		//#####################################################################################################################
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
-		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/10);//400;//861;
-		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/4);//400;//640;
+		int numThreadsRows = 10;
+		int numThreadsCols = 4;
+		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/numThreadsRows);//400;//861;
+		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/numThreadsCols);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
 		unsigned long long num_cols = (unsigned long long)ceil((double)size_nuc_montage[0]/(double)colDivisor);
 		std::cout << "Row: " << size_nuc_montage[1] << ", Col: " << size_nuc_montage[0]<<", Stack: " <<size_nuc_montage[2];
@@ -185,7 +187,7 @@ int main(int argc, char* argv[])
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2);
 // 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // JUST TO 
 		//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-#pragma omp parallel for num_threads(10) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(numThreadsRows) schedule(dynamic, 1)
 		for(int row=0; row<num_rows; ++row)
 		{
 #pragma omp critical
@@ -209,7 +211,7 @@ int main(int argc, char* argv[])
 			Centroids_TileBorders.resize(num_cols-1);
 
 			//##################	SEGMENTING EACH TILE IN A ROW    ###################
-#pragma omp parallel for num_threads(4) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(numThreadsCols) schedule(dynamic, 1)
 			for(unsigned int col=0; col<num_cols; ++col)
 			{
 				rawImageType::IndexType start_tile;
