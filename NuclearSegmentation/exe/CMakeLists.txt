@@ -14,14 +14,12 @@ ADD_EXECUTABLE(MBSeg StatModelSegMain.cpp)
 TARGET_LINK_LIBRARIES(MBSeg ModelSeg) 
 ENDIF(BUILD_MODEL_SEG)
 
-if(BUILD_TracingSystem)
-  ADD_LIBRARY( segment_soma SomaExtraction.cpp SomaExtraction.h)
-  TARGET_LINK_LIBRARY( segment_soma ftkCommon ${ITK_LIBRARIES} )
-  ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp)
-  TARGET_LINK_LIBRARIES( SomaExtraction  segment_soma )
-  INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
+ADD_LIBRARY( segment_soma SomaExtraction.cpp SomaExtraction.h)
+TARGET_LINK_LIBRARY( segment_soma ftkCommon ${ITK_LIBRARIES} )
+ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp)
+TARGET_LINK_LIBRARIES( SomaExtraction  segment_soma )
+INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
 
-endif()
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
