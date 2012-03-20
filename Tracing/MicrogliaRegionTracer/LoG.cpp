@@ -6,13 +6,6 @@ LoG::LoG()
 
 LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 {
-	//typedef itk::MedianImageFilter<ImageType, ImageType> MedianImageFilterType;
-	//MedianImageFilterType::InputSizeType radius;
-	//radius.Fill(3);
-
-	//MedianImageFilterType::Pointer medianFilter = MedianImageFilterType::New();
-	//medianFilter->SetInput(image);
-	//medianFilter->SetRadius(radius);
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
 	LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
@@ -23,7 +16,9 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 	try
 	{
 		std::cerr << "Modified Time: " << LoGFilter->GetMTime() << std::endl;
-		LoGFilter->Update();
+		ftk::TimeStampOverflowSafeUpdate( LoGFilter.GetPointer() );
+		//LoGFilter->Update();
+		
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -47,7 +42,8 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 
 	try
 	{
-		invertFilter->Update();
+		ftk::TimeStampOverflowSafeUpdate( invertFilter.GetPointer() );
+		//invertFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -70,7 +66,8 @@ void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
 	try
 	{
 		std::cout << "Writing LoG image" << std::endl;
-		writer->Update();
+		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );		
+		//writer->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -105,7 +102,7 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 
 	LoGImageType::SizeType size = cell->image->GetLargestPossibleRegion().GetSize();
 
-	//Make a new image to store the critical points	
+	//Make a new image to store the multiscale LoG image	
 	LoGImageType::Pointer multiscale_LoG_image = LoGImageType::New();
 	LoGImageType::IndexType start;
 	start.Fill(0);
@@ -142,6 +139,8 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 	std::ostringstream logimageFileNameStream;	
 
 	logimageFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_LoG.mhd";
+
+	multiscale_LoG_image->DisconnectPipeline();
 
 	//WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
 	return multiscale_LoG_image;

@@ -112,7 +112,8 @@ void Cell::GetMask(std::string soma_filename)
 
 	try
 	{
-		roi_filter->Update();
+		//roi_filter->Update();
+		ftk::TimeStampOverflowSafeUpdate(roi_filter.GetPointer());
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -133,20 +134,22 @@ void Cell::GetMask(std::string soma_filename)
 	mask_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_mask.TIF";	//X_Y_Z_masked.TIF
 
 	//Write the masked cell image
-	WriteImage(mask_filename_stream.str(), this->mask);
+	//WriteImage(mask_filename_stream.str(), this->mask);
 
 	//Get the label image from the binary image
-	typedef itk::BinaryImageToLabelMapFilter<MaskImageType> BinaryToLabelFilterType;
+	typedef itk::BinaryImageToLabelMapFilter< MaskImageType > BinaryToLabelFilterType;
 	BinaryToLabelFilterType::Pointer labelMapFilter = BinaryToLabelFilterType::New();
 	labelMapFilter->SetInput(this->mask);
 	
 	try
 	{
-		labelMapFilter->Update();
+		ftk::TimeStampOverflowSafeUpdate( labelMapFilter.GetPointer() );
+		//labelMapFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "labelMapFilter exception: " << err << std::endl;
+		std::cerr << labelMapFilter << std::endl;
 	}
 
 	BinaryToLabelFilterType::OutputImageType::Pointer label_map_image = labelMapFilter->GetOutput();
@@ -157,7 +160,8 @@ void Cell::GetMask(std::string soma_filename)
 	labelImageFilter->SetInput(label_map_image);
 	try
 	{
-		labelImageFilter->Update();
+		ftk::TimeStampOverflowSafeUpdate( labelImageFilter.GetPointer() );
+		//labelImageFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -176,7 +180,8 @@ void Cell::ComputeMaskedImage()
 	maskFilter->SetInput(this->image);
 	try
 	{
-		maskFilter->Update();
+		ftk::TimeStampOverflowSafeUpdate( maskFilter.GetPointer() );
+		//maskFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -191,7 +196,7 @@ void Cell::ComputeMaskedImage()
 	masked_cell_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_masked.TIF";	//X_Y_Z_masked.TIF
 
 	//Write the masked cell image
-	WriteImage(masked_cell_filename_stream.str(), this->masked_image);
+	//WriteImage(masked_cell_filename_stream.str(), this->masked_image);
 }
 
 void Cell::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image)
@@ -202,11 +207,13 @@ void Cell::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Point
 	writer->SetFileName(filename);
 	try
 	{
-		writer->Update();
+		//writer->Update();
+		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << writer << std::endl;
 	}
 }
 
@@ -218,11 +225,13 @@ void Cell::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Poin
 	writer->SetFileName(filename);
 	try
 	{
-		writer->Update();
+		//writer->Update();
+		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << writer << std::endl;
 	}
 }
 
@@ -234,10 +243,12 @@ void Cell::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer ima
 	writer->SetFileName(filename);
 	try
 	{
-		writer->Update();
+		//writer->Update();
+		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << writer << std::endl;
 	}
 }

@@ -22,6 +22,8 @@
 #include <fstream>
 #include <cstring>
 
+#include "ftkTimeStampOverflowSafeUpdate.h"
+
 
 class Cell
 {
@@ -67,9 +69,9 @@ public:
 	void ComputeMaskedImage();
 
 	//Writes various images
-	static void WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
-	static void WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
-	static void WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
+	void WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
+	void WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
+	void WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
 	
 
 public:

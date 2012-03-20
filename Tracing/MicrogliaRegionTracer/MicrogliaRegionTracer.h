@@ -63,12 +63,12 @@ public:
 	void		BuildTree(Cell* cell);
 	double**	BuildAdjacencyGraph(Cell* cell);
 	double		CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
-	Tree*		BuildMST1(Cell* cell, double** AdjGraph);
+	//Tree*		BuildMST1(Cell* cell, double** AdjGraph);
 	
-	void					TraceSkeletonImage(Cell* cell);
-	ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
-	void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
-	void					WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	//void					TraceSkeletonImage(Cell* cell);
+	//ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
+	//void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
+	//void					WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
 
 };
 

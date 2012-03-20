@@ -4,7 +4,10 @@
 
 int main(int argc, char* argv[])
 {
+	//Note to Matt: Last parameter doesn't matter since we aren't using the masking code
 	MicrogliaRegionTracer *MRT = new MicrogliaRegionTracer("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/", "8bitkt06045_w311GFPdsu.TIF", "E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+
+
 	
 	clock_t start_time = clock();
 
