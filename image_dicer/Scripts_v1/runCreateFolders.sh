@@ -18,7 +18,7 @@ export LOCAL_DATASET_PATH_LOG=/data/nicolas/data/$DATA_FOLDER/Log
 export LOCAL_DATASET_PATH_TRACE_SOMAS=/data/nicolas/data/$DATA_FOLDER/TracesAndSomas
 
 export GLOBAL_DATASET_PATH=/FSdata/data/$DATA_FOLDER						# ---> This directory has to exist
-export GLOBAL_DATASET_PATH_RESULTS=/FSdata/data/$DATA_FOLDER\_RESULTS
+export GLOBAL_DATASET_PATH_RESULTS=/FSdata/data/$DATA_FOLDER\_RESULTS_FAR05
 
 
 export REMOVE_MONTAGES=0 	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to run out of memory
