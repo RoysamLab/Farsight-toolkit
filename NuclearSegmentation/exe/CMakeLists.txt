@@ -16,8 +16,9 @@ ENDIF(BUILD_MODEL_SEG)
 
 if(BUILD_TracingSystem)
   ADD_LIBRARY( segment_soma SomaExtraction.cpp SomaExtraction.h)
+  TARGET_LINK_LIBRARY( segment_soma ftkCommon ${ITK_LIBRARIES} )
   ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp)
-  TARGET_LINK_LIBRARIES( SomaExtraction  ftkCommon segment_soma ${ITK_LIBRARIES} )
+  TARGET_LINK_LIBRARIES( SomaExtraction  segment_soma )
   INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
 
 endif()
