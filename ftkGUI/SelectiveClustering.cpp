@@ -30,10 +30,8 @@ SelectiveClustering::SelectiveClustering()
 	this->CreateClusterTableHeaders();
 
 	this->ClusterAnnotationLink = vtkSmartPointer<vtkAnnotationLink>::New();
-	this->ClusterVtkViewUpdater = vtkSmartPointer<vtkViewUpdater>::New();
 
 	this->ObjectAnnotationLink = vtkSmartPointer<vtkAnnotationLink>::New();
-	this->ObjectVtkViewUpdater = vtkSmartPointer<vtkViewUpdater>::New();
 }
 
 vtkIdType SelectiveClustering::AddCluster(std::set<vtkIdType> ClusterSelectionSet)
@@ -88,7 +86,8 @@ bool SelectiveClustering::RemoveCluster(vtkIdType key)
 	{
 		//found and removed
 		this->ClusterMap.erase(this->iter);
-		this->RemoveRowFromClusterTable(key);
+		SelectionUtilities::RemoveRowAndReMapTable(key, this->ClusterTable, this->ClusterTableIDMap);
+		//this->RemoveRowFromClusterTable(key);
 		emit ClusterChanged();
 		return true;
 	}
@@ -112,7 +111,8 @@ bool SelectiveClustering::RemoveCluster(vtkIdTypeArray *SelectedClusters)
 			//found and removed
 			//std::cout<< " removed ";
 			this->ClusterMap.erase(this->iter);
-			this->RemoveRowFromClusterTable(key);
+			SelectionUtilities::RemoveRowAndReMapTable(key, this->ClusterTable, this->ClusterTableIDMap);
+			//this->RemoveRowFromClusterTable(key);
 			removed = true;
 		}
 		//

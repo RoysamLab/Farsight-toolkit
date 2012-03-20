@@ -30,3 +30,21 @@ std::set< vtkIdType > SelectionUtilities::ObjectSelectionToIDSet(std::set<long i
 	}
 	return Selection;
 }
+
+void SelectionUtilities::RemoveRowAndReMapTable(vtkIdType key, vtkSmartPointer<vtkTable> modTable, std::map< vtkIdType, vtkIdType> TableIDMap)
+{
+	/*!
+	* remove a row from table
+	* rebuild map
+	*/
+	std::map< vtkIdType, vtkIdType>::iterator TableIDIter = TableIDMap.find(key);
+	if (TableIDIter != TableIDMap.end())
+	{
+		modTable->RemoveRow((*TableIDIter).second);
+	}
+	for (vtkIdType row = 0; row != modTable->GetNumberOfRows(); row++)
+	{
+		vtkIdType value = modTable->GetValue(row,0).ToTypeInt64();
+		TableIDMap[value] = row;
+	}
+}

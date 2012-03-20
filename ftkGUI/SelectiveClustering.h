@@ -54,7 +54,6 @@ limitations under the License.
 #include "vtkAnnotationLink.h"
 #include "vtkSelection.h"
 #include "vtkSelectionNode.h"
-#include "vtkViewUpdater.h"
 #include "vtkDataRepresentation.h"
 #include "vtkCallbackCommand.h"
 // PieChart
@@ -129,10 +128,8 @@ public:
 	std::set< vtkIdType > cluster_operator_XOR(vtkIdType key1,vtkIdType key2);
 	
 	vtkSmartPointer<vtkAnnotationLink> ClusterAnnotationLink;
-	vtkSmartPointer<vtkViewUpdater> ClusterVtkViewUpdater;
 	
 	vtkSmartPointer<vtkAnnotationLink> ObjectAnnotationLink;
-	vtkSmartPointer<vtkViewUpdater> ObjectVtkViewUpdater;
 
 	std::map< vtkIdType, vtkIdType> GetObjectTableIDMap();
 	std::map< vtkIdType, vtkIdType> GetClusterTableIDMap();

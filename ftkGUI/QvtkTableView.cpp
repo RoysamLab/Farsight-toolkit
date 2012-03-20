@@ -166,21 +166,6 @@ vtkIdTypeArray * QvtkTableView::getSelectedObjects()
 	return ItemSelections;
 }
 
-//vtkSelection * QvtkTableView::ConvertIDsToVTKSelection(vtkIdTypeArray *vtkIDs)
-//{
-//	/*!
-//	* create a vtk selection from an id array
-//	*/
-//	vtkSmartPointer<vtkSelectionNode> selectNodeList = vtkSmartPointer<vtkSelectionNode>::New();
-//	selectNodeList->SetSelectionList( vtkIDs );
-//	selectNodeList->SetFieldType( vtkSelectionNode::VERTEX );
-//	selectNodeList->SetContentType( vtkSelectionNode::INDICES );
-//
-//	vtkSelection * TableRowSelection = vtkSelection::New();
-//	TableRowSelection->RemoveAllNodes();
-//	TableRowSelection->AddNode(selectNodeList);
-//	return TableRowSelection;
-//}
 
 void QvtkTableView::setCurrentVTKSelection(vtkSelection * TableRowSelection)
 {
