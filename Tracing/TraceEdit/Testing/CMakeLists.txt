@@ -24,4 +24,11 @@ IF(QtTestingFound)
     ${TraceEdit_TEST_DIR}/test_automerge.xml
     ${TraceEdit_TEST_DIR}/baseline_automerge.png
   )
+  ADD_TEST(
+    TraceEdit-SelectTree
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/cnic_macaque_pyramidal.swc
+    ${TraceEdit_TEST_DIR}/test_select_tree.xml
+    ${TraceEdit_TEST_DIR}/baseline_select_tree.png
+  )
 ENDIF()

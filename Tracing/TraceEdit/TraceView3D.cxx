@@ -6062,14 +6062,13 @@ int View3D::runTests()
   this->Tester->SetBaselineImage(
     this->TestBaselineImageFileName.toStdString().c_str() );
 	
-  //playback the test recording
-  this->Tester->playTestFile( this->TestInputFile );
-  
   //resize QVTK to match dimensions of recorded screenshots
-
   this->resize(1200, 1000);
   this->QVTK->resize(600, 500);
   this->update();
+  
+  //playback the test recording
+  this->Tester->playTestFile( this->TestInputFile );
   
   //compare render window to screenshot of baseline  
   if(this->Tester->compareResults() == false)
