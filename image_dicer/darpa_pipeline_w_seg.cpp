@@ -14,6 +14,8 @@
 #include "itkImageDuplicator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
+#include "../NuclearSegmentation/exe/SomaExtraction.h"
+
 #include "vtkTable.h"
 #include "ftkUtils.h"
 #include "ftkImage.h"
@@ -159,7 +161,9 @@ int main(int argc, char* argv[])
 		//	NUCLEAR SEGMENT THE MONTAGE TILE BY TILE AND STITCH THE RESULT TILES TOGETHER
 		//#####################################################################################################################
 		int numThreadsRows = 10;
-		int numThreadsCols = 4;
+		int numThreadsRows_split = 10;
+		int numThreadsCols = 8;
+		int numThreadsCols_split = 4;
 		unsigned long long rowDivisor = ceil((double)size_nuc_montage[1]/numThreadsRows);//400;//861;
 		unsigned long long colDivisor = ceil((double)size_nuc_montage[0]/numThreadsCols);//400;//640;
 		unsigned long long num_rows = (unsigned long long)ceil((double)size_nuc_montage[1]/(double)rowDivisor);
@@ -187,7 +191,7 @@ int main(int argc, char* argv[])
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2);
 // 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // JUST TO 
 		//##################	SEGMENTING EACH ROW IN THE MONTAGE	  ###################
-#pragma omp parallel for num_threads(numThreadsRows) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(numThreadsRows_split) schedule(dynamic, 1)
 		for(int row=0; row<num_rows; ++row)
 		{
 #pragma omp critical
@@ -211,7 +215,7 @@ int main(int argc, char* argv[])
 			Centroids_TileBorders.resize(num_cols-1);
 
 			//##################	SEGMENTING EACH TILE IN A ROW    ###################
-#pragma omp parallel for num_threads(numThreadsCols) schedule(dynamic, 1)
+#pragma omp parallel for num_threads(numThreadsCols_split) schedule(dynamic, 1)
 			for(unsigned int col=0; col<num_cols; ++col)
 			{
 				rawImageType::IndexType start_tile;
@@ -437,7 +441,7 @@ int main(int argc, char* argv[])
 		num_threads = 80;
 		omp_set_num_threads(num_threads);
 		
-		std::cout<<"Stitching all rows ...";
+		std::cout<<"Stitching all rows ..."<<std::flush;
 
 		//##################	ALLOCATING MEMORY FOR THE SEGMENTED MONTAGE	  ###################
 
@@ -632,7 +636,7 @@ int main(int argc, char* argv[])
 		std::map<unsigned int, int> classMap;
 		for(int row=0; row<(int)montageTable->GetNumberOfRows(); ++row)
 		{
-			classMap[montageTable->GetValue(row,0).ToUnsignedShort()] = montageTable->GetValueByName(row, "prediction_active_mg").ToInt();
+			classMap[montageTable->GetValue(row,0).ToUnsignedInt()] = montageTable->GetValueByName(row, "prediction_active_mg").ToInt();
 		}
 
 		for(int i=0; i<im_size[2]; ++i)
@@ -898,12 +902,19 @@ int main(int argc, char* argv[])
 // 			}
 // 			of.close();
 
+// 			double stopingTime = 10;
+// 			double curScaling = 0.5;
+// 			double rmsThrehold = 0.02;
+// 			SomaExtractor *Somas = new SomaExtractor();
+// 			montageLabelType::Pointer  img_soma_yan = Somas->SegmentSoma(img_trace, soma_Table,stopingTime,curScaling,rmsThrehold);
+
 			//########    RUN TRACING    ########
 			MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 			MNT->LoadCurvImage_1(img_trace, 0);
 			MNT->ReadStartPoints_1(soma_Table, 0);
 			MNT->SetCostThreshold(700);
 			MNT->LoadSomaImage_1(img_soma);
+// 			MNT->LoadSomaImage_1(img_soma_yan);
 			MNT->RunTracing();
 
 			x = min(tileSizeX/2, x);
