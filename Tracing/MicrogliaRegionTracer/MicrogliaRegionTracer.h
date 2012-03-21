@@ -49,22 +49,22 @@ private:
 	std::string soma_filename;
 
 public:
-	MicrogliaRegionTracer(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename, std::string soma_filename);
-	~MicrogliaRegionTracer();
-	
-	void LoadCellPoints(std::string image_filename);
-	
+	MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename);
+	~MicrogliaRegionTracer() {};
+
+	void LoadCellPoints(const std::string & image_filename);
+
 	void Trace();
 
 	void	CalculateCandidatePixels(Cell* cell);
 	void	RidgeDetection(Cell* cell);
 	void	VesselnessDetection(Cell* cell);
-	
+
 	void		BuildTree(Cell* cell);
 	double**	BuildAdjacencyGraph(Cell* cell);
 	double		CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
 	//Tree*		BuildMST1(Cell* cell, double** AdjGraph);
-	
+
 	//void					TraceSkeletonImage(Cell* cell);
 	//ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
 	//void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
