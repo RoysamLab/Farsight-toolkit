@@ -34,33 +34,7 @@ class vtkPolyData;
 class vtkCellArray;
 class vtkFloatArray;
 
-typedef struct {
-	TraceBit* theBit;
-	TraceLine* theBitLine;
-	TraceLine* theAnitBitLine;
-	TraceLine* theAnitBitLineAdjusted;
-	double slope[3];
-	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
-	bool Front;
-} EndPointInfo;
 
-typedef struct {
-	TraceBit* arrayOBits[2];
-	double slope[3];
-	double intersect[3];
-	//The plane equation is ((slope[0]*x + slope[1]*y)/slope[3])*t def
-	bool Front;
-} adjPointLines;
-
-const int timeSize = 20; //this should be user en
-/* A Trace object is a list of root TraceLines*/
-struct equlli
-{
-	bool operator()(const unsigned long long int l1, const unsigned long long int l2) const
-	{
-		return l1 == l2;
-	}
-};
 //needed because gcc doesn't have a built-in method to hash unsigned long long ints
 struct hashulli
 {
@@ -102,10 +76,6 @@ public:
 	{
 		this->falseLineColor=set;
 	};
-	void leastSquaresThreeDependentVar(EndPointInfo* endPoint, std::vector<TraceBit*>*  ExtrapolationLines);
-	void Calculatebranches();
-	std::vector<EndPointInfo>* findingBranchingPoints();
-	std::vector<EndPointInfo>* findingBranchingPointintercepts(std::vector<EndPointInfo>* PossibleBranches);
 	void setLUT(int num);
 	double GetTraceLUT(TraceLine *line);
 	double GetNodeTypeLUT(unsigned char type);

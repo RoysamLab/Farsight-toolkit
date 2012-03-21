@@ -632,46 +632,6 @@ void View3D::LoadImageData()
 	}
 }
 
-void View3D::LoadCellTraceTable()
-{
-	QString fileName = QFileDialog::getOpenFileName(this, "Select table file to open", "", tr("TXT Files (*.txt)"));
-
-	if(fileName == "")
-		return;
-
-	vtkSmartPointer< vtkTable >cellTable = ftk::LoadTable(fileName.toStdString());
-	if(!cellTable) return;
-	
-	this->CellModel->setDataTable(cellTable);
-
-	if(this->FL_MeasurePlot)
-	{
-		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasurePlot->update();
-	}
-	else
-	{
-		this->FL_MeasurePlot = new PlotWindow();
-		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasurePlot->setWindowTitle("Computed Features for Cells");
-		this->FL_MeasurePlot->move(this->TraceEditSettings.value("FLMeasurePlot/pos",QPoint(32, 561)).toPoint());
-		this->FL_MeasurePlot->show();
-	}
-	if (this->FL_MeasureTable)
-	{
-		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasureTable->update();
-	}
-	else
-	{
-		this->FL_MeasureTable = new TableWindow();
-		this->FL_MeasureTable->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasureTable->setWindowTitle("Computed Features for Cells");
-		this->FL_MeasureTable->move(this->TraceEditSettings.value("FLMeasureTable/pos",QPoint(32, 561)).toPoint());
-		this->FL_MeasureTable->resize(this->TraceEditSettings.value("FLMeasureTable/size",QSize(600, 480)).toSize());
-		this->FL_MeasureTable->show();
-	}
-}
 
 void View3D::LoadSomaFile()
 {
@@ -1143,10 +1103,6 @@ void View3D::CreateGUIObjects()
 	this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
-
-	this->loadCellTraceTable = new QAction("Load Cell Trace Table", this->CentralWidget);
-	connect (this->loadCellTraceTable, SIGNAL(triggered()), this, SLOT(LoadCellTraceTable()));
-	this->loadCellTraceTable->setStatusTip("Load a Cell Trace Table");
 
 	this->CloseAllImage = new QAction("Remove Image Actors", this->CentralWidget);
 	connect (this->CloseAllImage, SIGNAL(triggered()), this, SLOT(removeImageActors()));
@@ -1629,7 +1585,6 @@ void View3D::CreateLayout()
 	this->fileMenu = this->menuBar()->addMenu(tr("&File"));
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
-	this->fileMenu->addAction(this->loadCellTraceTable);
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
@@ -2360,68 +2315,6 @@ void View3D::removeImageActors()
 	this->QVTK->GetRenderWindow()->Render();
 }
 
-//void View3D::raycastToSlicer()
-//{
-//	if (!this->viewIn2D)
-//	{
-//		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-//		{  
-//			if ((this->ImageActors->getRenderStatus(i))&&(this->ImageActors->isRayCast(i)))
-//			{
-//			  //this->Renderer->AddActor(this->ImageActors->CreateImageSlice(i));
-//			  this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
-//			  this->ImageActors->setIs2D(i, true);
-//			renderMode = PROJECTION;
-//			  this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-//			  this->ImageActors->setRenderStatus(i, false);
-//				/***************************************************************/
-//				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-//				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-//				this->projectFilesTable->setItem(i,3,Item2D);
-//				/***************************************************************/
-//			}
-//		}//end num images
-//		this->RacastBar->toggleViewAction()->setDisabled(1);
-//		if (this->RacastBar->isVisible())
-//		{
-//			this->RacastBar->hide();
-//		}
-//		//this->SlicerBar->show();
-//		//this->QVTK->GetRenderWindow()->Render();
-//		this->chooseInteractorStyle(1);
-//		this->viewIn2D = true;
-//	}//end if 3d to 2d
-//	else
-//	{
-//		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-//		{  
-//			if (this->ImageActors->is2D(i))
-//			{
-//				//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(i));
-//				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-//				this->ImageActors->setIs2D(i, false);
-//				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-//				this->ImageActors->setRenderStatus(i, true);
-//				/***************************************************************/
-//				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-//				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-//				QFont font;
-//				font.setBold(true);
-//				Item3D->setFont(font);
-//				this->projectFilesTable->setItem(i,3,Item3D);
-//				/***************************************************************/
-//			}
-//		}
-//		this->RacastBar->toggleViewAction()->setDisabled(0);
-//		if (this->SlicerBar->isVisible())
-//		{
-//			this->SlicerBar->hide();
-//		}
-//		this->RacastBar->show();
-//		this->chooseInteractorStyle(0);
-//		this->viewIn2D = false;
-//	}//end else 2d to 3d
-//}
 
 void View3D::setSlicerMode()
 {
@@ -3917,7 +3810,7 @@ void View3D::Rerender()
 
 void View3D::UpdateLineActor()
 {
-	std::cout <<"updating polydata\n";
+	//std::cout <<"updating polydata\n";
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	this->poly_line_data->Modified();
 	this->LineMapper->SetInput(this->poly_line_data);
@@ -3925,7 +3818,7 @@ void View3D::UpdateLineActor()
 	this->LineActor->GetProperty()->SetColor(0,1,0);
 	this->LineActor->GetProperty()->SetPointSize(2);
 	this->LineActor->GetProperty()->SetLineWidth(lineWidth);
-	std::cout <<" polydata updated\n";
+	//std::cout <<" polydata updated\n";
 }
 
 void View3D::UpdateBranchActor()
