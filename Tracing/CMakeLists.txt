@@ -71,5 +71,10 @@ IF( BUILD_MicrogliaRegionTracer )
   ADD_SUBDIRECTORY( MicrogliaRegionTracer )
 ENDIF()
 
+OPTION( BUILD_AstroTracer "Build Astrocyte Tracer" OFF )
+IF( BUILD_AstroTracer )
+  ADD_SUBDIRECTORY( AstroTracer )
+ENDIF()
+
 
 
