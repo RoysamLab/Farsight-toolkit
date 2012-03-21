@@ -39,7 +39,7 @@ void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned
 	//Median filter
 	std::cout << "Running Median Filter" << std::endl;
 	MedianFilterType::Pointer medfilt = MedianFilterType::New();
-	medfilt->SetNumberOfThreads(16);
+// 	medfilt->SetNumberOfThreads(16);
 	medfilt->SetInput(rescaler->GetOutput());
 	ImageType3D::SizeType rad = { {1, 1, 1} };
 	medfilt->SetRadius(rad);
