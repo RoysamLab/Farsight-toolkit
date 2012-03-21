@@ -396,7 +396,15 @@ void SampleEditor::showStatistics(void)
 	{
 		return;
 	}
-
+	if (this->flag == 1)
+	{
+		this->statisticsToolbar->statisticsDockWidget->close(); //QT not closing properly
+		delete this->statisticsToolbar->statisticsDockWidget;
+		this->statisticsToolbar->statisticsDockWidget = NULL;
+		//std::cout << "Statistics widget close" << std::endl;
+		this->flag = 0;
+		return;
+	}
 	this->statisticsDockWidget = new QDockWidget();
 	this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
 	
@@ -417,9 +425,21 @@ void SampleEditor::updateStatistics(void)
 
 	if (this->flag == 1)
 	{
-		std::cout<< "updattteeeee" << std::endl;
+		//std::cout<< "updattteeeee" << std::endl;
 		statisticsToolbar->statisticsDockWidget->close();
-		showStatistics();
+		delete this->statisticsToolbar->statisticsDockWidget;
+		this->statisticsToolbar->statisticsDockWidget = NULL;
+
+		this->statisticsDockWidget = new QDockWidget();
+		this->statisticsToolbar = new StatisticsToolbar(statisticsDockWidget);
+		
+		statisticsDockWidget->setWidget(statisticsToolbar->statisticsDockWidget);
+		statisticsDockWidget->setAllowedAreas(Qt::BottomDockWidgetArea);
+		addDockWidget(Qt::BottomDockWidgetArea, statisticsToolbar->statisticsDockWidget);
+
+		SampleEditor::statisticsToolbar->setTable(data, selection);
+
+		//showStatistics();
 	}
 }
 

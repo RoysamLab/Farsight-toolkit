@@ -260,6 +260,7 @@ int ImageRenderActors::getSomaBrightness()
 void ImageRenderActors::setSomaOpacity(int value)
 {
 	/*!
+	 * @author Audrey Cheong
 	 * @param value soma opacity argument.
 	 */
 	this->somaOpacity = (double) value;
@@ -272,6 +273,7 @@ int ImageRenderActors::getSomaOpacity()
 void ImageRenderActors::setSomaOpacityValue(double value)
 {
 	/*!
+	 * @author Audrey Cheong
 	 * @param value opacity argument.
 	 */
 
@@ -281,6 +283,7 @@ void ImageRenderActors::setSomaOpacityValue(double value)
 double ImageRenderActors::getSomaOpacityValue()
 {
 	/*!
+	 * @author Audrey Cheong
 	 * @return Soma opacity.
 	 */
 
@@ -289,6 +292,7 @@ double ImageRenderActors::getSomaOpacityValue()
 void ImageRenderActors::setSomaColor(double value)
 {
 	/*!
+	 * @author Audrey Cheong
 	 * Soma color.
 	 */
 
@@ -709,6 +713,10 @@ void ImageRenderActors::SetSliceNumber(int i, int num) // i is number of images,
 }
 vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int method, int projection_dim)
 {
+	/*!
+	 * @author Audrey Cheong
+	 */
+
 	//std::cout << "projection_dim: " << projection_dim << std::endl;
 	this->LoadedImages[i]->ProjectionActor = vtkSmartPointer<vtkImageActor>::New();
 	if (method == 2)
@@ -1069,5 +1077,8 @@ void ImageRenderActors::getImageBounds(double bounds[])
 //Xmin,Xmax,Ymin,Ymax,Zmin,Zmax
 double* ImageRenderActors::getSliceBounds()
 {
+	/*!
+	 * @author Audrey Cheong
+	 */
 	return sliceBounds;
 }

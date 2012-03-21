@@ -108,6 +108,8 @@ public:
 
 	double TipToSomaEucDisTotal, TipToSomaEucDisMin, TipToSomaEucDisMax;
 	double BranchPtToSomaEucDisTotal, BranchPtToSomaEucDisMin, BranchPtToSomaEucDisMax;
+	double totalTipX, totalTipY, totalTipZ;
+	double tipMagnitude, tipAzimuth, tipElevation;
 
 	double DeviceDistance;
 	double prediction, confidence;
@@ -119,5 +121,7 @@ private:
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
+
+	std::vector<TraceBit> tips;
 };
 #endif

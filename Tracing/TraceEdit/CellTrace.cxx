@@ -16,6 +16,7 @@ limitations under the License.
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "CellTrace.h"
+#include "SuperEllipsoid.h"
 
 static double DefaultValue[115] ={-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,0,0,0,0,100,0,0,100,0,0,
 0,0,1000,0,0,100,0,0,0,100,0,100,0,0,100,0,0,0,0,0,0,-PI,-PI,-PI,100,-PI,0,0,100,0,0,100,0,0,100,
@@ -33,7 +34,7 @@ CellTrace::CellTrace(std::vector<TraceLine*> Segments)
 	CellData = vtkSmartPointer<vtkVariantArray>::New();
 	this->setTraces(Segments);
 }
-void CellTrace::setTraces(std::vector<TraceLine*> Segments)
+void CellTrace::setTraces(std::vector<TraceLine*> Segments)//& Segments)
 {
 	this->segments = Segments;
 	unsigned int i = 0;
@@ -71,6 +72,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->minX = rootBit.x;
 	this->minY = rootBit.y;
 	this->minZ = rootBit.z;
+
+	tips.push_back(rootBit);
 
 	this->somaSurface = this->segments[0]->GetSurfaceArea();
 	this->somaVolume = this->segments[0]->GetVolume();
@@ -136,7 +139,11 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(lz, total, this->minZ, this->maxZ);
 			this->MaxMin(tempLevel, this->SumTerminalLevel, this->MinTerminalLevel, this->MaxTerminalLevel);
 			this->MaxMin(this->segments[i]->GetPathLength(), this->TerminalPathLength, this->TerminalPathLengthMin, this->TerminalPathLengthMax);
-			
+			this->totalTipX += (lx - this->somaX);
+			this->totalTipY += (ly - this->somaY);
+			this->totalTipZ += (lz - this->somaZ);
+
+			tips.push_back(leafBit);
 		}//end if leaf
 		else if(!this->segments[i]->isRoot())
 		{
@@ -165,18 +172,18 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetBifTorqueLocalTwoDaughter(), this->BifTorqueLocalTwoDaughter, this->BifTorqueLocalTwoDaughterMin, this->BifTorqueLocalTwoDaughterMax);
 			this->MaxMin(this->segments[i]->GetBifTorqueRemoteTwoDaughter(), this->BifTorqueRemoteTwoDaughter, this->BifTorqueRemoteTwoDaughterMin, this->BifTorqueRemoteTwoDaughterMax);
 			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTorqueLocal(), this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax);
-      if(this->segments[i]->isBranch())
-      {
-		this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
-		this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
-		this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax, this->TwoDaughterTorqueCount);
-		this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax, this->TwoDaughterTorqueCount);
-		if (this->segments[i]->GetTerminalDegree() > 2)
-		{
-			this->MaxMin(this->segments[i]->GetBifTorqueRemoteBig(), this->BifTorqueRemoteBig, this->BifTorqueRemoteBigMin, this->BifTorqueRemoteBigMax);
-			//make test if there is a small angle (maybe if getTorque = -1)
-			this->MaxMin(this->segments[i]->GetBifTorqueRemoteSmall(), this->BifTorqueRemoteSmall, this->BifTorqueRemoteSmallMin, this->BifTorqueRemoteSmallMax);
-		}
+			if(this->segments[i]->isBranch())
+			{
+			this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
+			this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
+			this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax, this->TwoDaughterTorqueCount);
+			this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax, this->TwoDaughterTorqueCount);
+			if (this->segments[i]->GetTerminalDegree() > 2)
+			{
+				this->MaxMin(this->segments[i]->GetBifTorqueRemoteBig(), this->BifTorqueRemoteBig, this->BifTorqueRemoteBigMin, this->BifTorqueRemoteBigMax);
+				//make test if there is a small angle (maybe if getTorque = -1)
+				this->MaxMin(this->segments[i]->GetBifTorqueRemoteSmall(), this->BifTorqueRemoteSmall, this->BifTorqueRemoteSmallMin, this->BifTorqueRemoteSmallMax);
+			}
 
         //this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
         //this->MaxMin(this->segments[i]->GetBranch2()->GetBifTorqueRemote(), this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax);
@@ -197,6 +204,14 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->skewnessY = (somaY - (minY + (maxY - minY)/2)); /// ((float)(maxY - minY)/2);
 	this->skewnessZ = (somaZ - (minZ + (maxZ - minZ)/2)); /// ((float)(maxZ - minZ)/2);
 	this->euclideanSkewness = sqrt(pow(skewnessX, 2) + pow(skewnessY, 2) + pow(skewnessZ, 2)) / sqrt(3.0);
+
+	if (tips.size() > 0) //do superellipsoid here
+	{
+		this->tipMagnitude = sqrt(pow(totalTipX,2)+pow(totalTipY,2)+pow(totalTipZ,2));
+		this->tipAzimuth = atan2(totalTipY,totalTipX)*180/PI;
+		double hypotenuse = sqrt(pow(totalTipX,2)+pow(totalTipY,2));
+		this->tipElevation = atan2(totalTipZ,hypotenuse)*180/PI;
+	}
 }
 void CellTrace::setFileName(std::string newFileName)
 {
@@ -443,6 +458,14 @@ void CellTrace::clearAll()
 	this->BranchPtToSomaEucDisMin = 1000;
 	this->BranchPtToSomaEucDisMax = 0;
 
+	this->totalTipX = 0;
+	this->totalTipY = 0;
+	this->totalTipZ = 0;
+
+	this->tipMagnitude = -1000;
+	this->tipAzimuth = -1000;
+	this->tipElevation = -1000;
+
 	this->DeviceDistance = 0;
 	this->prediction = -PI;
 	this->confidence = -PI;
@@ -513,8 +536,8 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->somaY);
 	CellData->InsertNextValue(this->somaZ);
 	CellData->InsertNextValue(this->somaRadii);
-	CellData->InsertNextValue(this->somaVolume);
 	CellData->InsertNextValue(this->somaSurface);
+	CellData->InsertNextValue(this->somaVolume);
 
 	CellData->InsertNextValue(this->skewnessX);
 	CellData->InsertNextValue(this->skewnessY);
@@ -523,9 +546,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 	CellData->InsertNextValue(this->NumSegments);
 	CellData->InsertNextValue(this->stems);
-	CellData->InsertNextValue(this->branchingStem);
+	//CellData->InsertNextValue(this->branchingStem);
 	CellData->InsertNextValue(this->branchPoints);
-	CellData->InsertNextValue(this->actualBifurcations);
+	//CellData->InsertNextValue(this->actualBifurcations);
 	CellData->InsertNextValue(this->terminalTips);
 	if (this->branchPoints == 0) 
 	{
@@ -705,12 +728,16 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	}
 	CellData->InsertNextValue(this->HillmanThreshMax);
 
-	CellData->InsertNextValue(this->TipToSomaEucDisMin);
-	CellData->InsertNextValue(this->TipToSomaEucDisTotal/this->terminalTips);
-	CellData->InsertNextValue(this->TipToSomaEucDisMax);
 	CellData->InsertNextValue(this->BranchPtToSomaEucDisMin);
 	CellData->InsertNextValue(this->BranchPtToSomaEucDisTotal/this->branchPoints);
 	CellData->InsertNextValue(this->BranchPtToSomaEucDisMax);
+	CellData->InsertNextValue(this->TipToSomaEucDisMin);
+	CellData->InsertNextValue(this->TipToSomaEucDisTotal/this->terminalTips);
+	CellData->InsertNextValue(this->TipToSomaEucDisMax);
+
+	CellData->InsertNextValue(this->tipMagnitude);
+	CellData->InsertNextValue(this->tipAzimuth);
+	CellData->InsertNextValue(this->tipElevation);
 
 	CellData->InsertNextValue(this->GetFileName().c_str());
 	/*CellData->InsertNextValue(this->prediction);

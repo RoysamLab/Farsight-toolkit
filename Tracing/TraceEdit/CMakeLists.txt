@@ -19,8 +19,10 @@ SET( TRACE_SRCS
   cellexport.h	    cellexport.cxx
   screenshot.h	    screenshot.cxx
   GridActors.h		GridActors.cxx
-  VolumeOfInterest.h VolumeOfInterest.cxx
+  VolumeOfInterest.h	VolumeOfInterest.cxx
   FeatureRelation.h	FeatureRelation.cxx
+  SuperEllipsoid.h	SuperEllipsoid.cxx
+  ConvexHull3D.h	ConvexHull3D.cxx
   
   ${GUI_MOC_SRCS} ) 
 

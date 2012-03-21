@@ -16,6 +16,10 @@
 #include "vtkProperty.h"
 #include "vtkSmartPointer.h"
 
+/**
+ * @author Audrey Cheong
+ */
+
 /*! Gridlines class */
 class GridlineActors
 {

@@ -67,8 +67,8 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Soma Y Pos");
 	this->headers.push_back("Soma Z Pos");
 	this->headers.push_back("Soma Radii");
-	this->headers.push_back("Soma Volume");
 	this->headers.push_back("Soma Surface Area");
+	this->headers.push_back("Soma Volume");
 
 	this->headers.push_back("Skewness X");
 	this->headers.push_back("Skewness Y");
@@ -77,126 +77,126 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Segments");
 	this->headers.push_back("Stems");
-	this->headers.push_back("Branching Stems");
+	//this->headers.push_back("Branching Stems");
 	this->headers.push_back("Branch Pt");
-	this->headers.push_back("Bifurcations");
+	//this->headers.push_back("Bifurcations");
 	this->headers.push_back("Leaf Nodes");
 
 	this->headers.push_back("Min Diameter");
-	this->headers.push_back("Average Diameter");
+	this->headers.push_back("Ave Diameter");
 	this->headers.push_back("Max Diameter");
 
 	this->headers.push_back("Min Diameter Power");
-	this->headers.push_back("Average Diameter Power");
+	this->headers.push_back("Ave Diameter Power");
 	this->headers.push_back("Max Diameter Power");
 
-	this->headers.push_back("Total Volume");
+	this->headers.push_back("Tot Volume");
 	this->headers.push_back("Min Segment Volume");
-	this->headers.push_back("Average Segment Volume");
+	this->headers.push_back("Ave Segment Volume");
 	this->headers.push_back("Max Segment Volume");
-	this->headers.push_back("Total Surface Area");
+	this->headers.push_back("Tot Surface Area");
 	this->headers.push_back("Min Segment Surface Area");
-	this->headers.push_back("Average Segment Surface Area");
+	this->headers.push_back("Ave Segment Surface Area");
 	this->headers.push_back("Max Segment Surface Area");
-	this->headers.push_back("Total Segment Section Area");
+	this->headers.push_back("Tot Segment Section Area");
 	this->headers.push_back("Min Segment Section Area");
-	this->headers.push_back("Average Segment Section Area");
+	this->headers.push_back("Ave Segment Section Area");
 	this->headers.push_back("Max Segment Section Area");
 
 	this->headers.push_back("Min Burk Taper");
-	this->headers.push_back("Average Burk Taper");
+	this->headers.push_back("Ave Burk Taper");
 	this->headers.push_back("Max Burk Taper");
 
 	this->headers.push_back("Min Hillman Taper");
-	this->headers.push_back("Average Hillman Taper");
+	this->headers.push_back("Ave Hillman Taper");
 	this->headers.push_back("Max Hillman Taper");
 
-	this->headers.push_back("Total Euclidean Length");
-	this->headers.push_back("Average Segment Euclidean Length");
-	this->headers.push_back("Total Path Length");
+	this->headers.push_back("Tot Euclidean Length");
+	this->headers.push_back("Ave Segment Euclidean Length");
+	this->headers.push_back("Tot Path Length");
 	this->headers.push_back("Min Segment Path Length");
-	this->headers.push_back("Average Segment Path Length");
+	this->headers.push_back("Ave Segment Path Length");
 	this->headers.push_back("Max Segment Path Length");
 
 	this->headers.push_back("Min Stem Distance");
-	this->headers.push_back("Average Stem Distance");
+	this->headers.push_back("Ave Stem Distance");
 	this->headers.push_back("Max Stem Distance");
 
 	this->headers.push_back("Min Contraction");
-	this->headers.push_back("Average Contraction");
+	this->headers.push_back("Ave Contraction");
 	this->headers.push_back("Max Contraction");
 
-	this->headers.push_back("Total Fragmentation");
+	this->headers.push_back("Tot Fragmentation");
 	this->headers.push_back("Min Fragmentation");
-	this->headers.push_back("Average Fragmentation");
+	this->headers.push_back("Ave Fragmentation");
 	this->headers.push_back("Max Fragmentation");
 
 	this->headers.push_back("Min Daughter Ratio");
-	this->headers.push_back("Average Daughter Ratio");
+	this->headers.push_back("Ave Daughter Ratio");
 	this->headers.push_back("Max Daughter Ratio");
 
 	this->headers.push_back("Min Parent Daughter Ratio");
-	this->headers.push_back("Average Parent Daughter Ratio");
+	this->headers.push_back("Ave Parent Daughter Ratio");
 	this->headers.push_back("Max Parent Daughter Ratio");
 
 	this->headers.push_back("Min Partition Asymmetry");
-	this->headers.push_back("Average Partition Asymmetry");
+	this->headers.push_back("Ave Partition Asymmetry");
 	this->headers.push_back("Max Partition Asymmetry");
 
 	this->headers.push_back("Min Rall Power");
-	this->headers.push_back("Average Rall Power");
+	this->headers.push_back("Ave Rall Power");
 	this->headers.push_back("Max Rall Power");
 
 	this->headers.push_back("Min Pk");
-	this->headers.push_back("Average Pk");
+	this->headers.push_back("Ave Pk");
 	this->headers.push_back("Max Pk");
 
 	this->headers.push_back("Min Pk Classic");
-	this->headers.push_back("Average Pk Classic");
+	this->headers.push_back("Ave Pk Classic");
 	this->headers.push_back("Max Pk Classic");
 
 	this->headers.push_back("Min Pk 2");
-	this->headers.push_back("Average Pk 2");
+	this->headers.push_back("Ave Pk 2");
 	this->headers.push_back("Max Pk 2");
 
 	this->headers.push_back("Min Azimuth");
-	this->headers.push_back("Average Azimuth");
+	this->headers.push_back("Ave Azimuth");
 	this->headers.push_back("Max Azimuth");
 	this->headers.push_back("Min Elevation");
-	this->headers.push_back("Average Elevation");
+	this->headers.push_back("Ave Elevation");
 	this->headers.push_back("Max Elevation");
 
-	this->headers.push_back("Average Local Bifurcation Amp");
+	this->headers.push_back("Ave Local Bifurcation Amp");
 	this->headers.push_back("Min Local Bifurcation Amp");
 	this->headers.push_back("Max Local Bifurcation Amp");
-	this->headers.push_back("Average Local Bifurcation Tilt Smaller");
+	this->headers.push_back("Ave Local Bifurcation Tilt Smaller");
 	this->headers.push_back("Min Local Bifurcation Tilt Smaller");
 	this->headers.push_back("Max Local Bifurcation Tilt Smaller");
-	this->headers.push_back("Average Local Bifurcation Tilt Larger");
+	this->headers.push_back("Ave Local Bifurcation Tilt Larger");
 	this->headers.push_back("Min Local Bifurcation Tilt Larger");
 	this->headers.push_back("Max Local Bifurcation Tilt Larger");
-	this->headers.push_back("Average Local Bifurcation Torque");
-	//this->headers.push_back("Average Local Bifurcation Torque Smaller");
+	this->headers.push_back("Ave Local Bifurcation Torque");
+	//this->headers.push_back("Ave Local Bifurcation Torque Smaller");
 	this->headers.push_back("Min Local Bifurcation Torque Smaller");
 	this->headers.push_back("Max Local Bifurcation Torque Smaller");
-	//this->headers.push_back("Average Local Bifurcation Torque Larger");
+	//this->headers.push_back("Ave Local Bifurcation Torque Larger");
 	this->headers.push_back("Min Local Bifurcation Torque Larger");
 	this->headers.push_back("Max Local Bifurcation Torque Larger");
 	
-	this->headers.push_back("Average Remote Bifurcation Amp");
+	this->headers.push_back("Ave Remote Bifurcation Amp");
 	this->headers.push_back("Min Remote Bifurcation Amp");
 	this->headers.push_back("Max Remote Bifurcation Amp");
-	this->headers.push_back("Average Remote Bifurcation Tilt Smaller");
+	this->headers.push_back("Ave Remote Bifurcation Tilt Smaller");
 	this->headers.push_back("Min Remote Bifurcation Tilt Smaller");
 	this->headers.push_back("Max Remote Bifurcation Tilt Smaller");
-	this->headers.push_back("Average Remote Bifurcation Tilt Larger");
+	this->headers.push_back("Ave Remote Bifurcation Tilt Larger");
 	this->headers.push_back("Min Remote Bifurcation Tilt Larger");
 	this->headers.push_back("Max Remote Bifurcation Tilt Larger");
-	this->headers.push_back("Average Remote Bifurcation Torque");
-	//this->headers.push_back("Average Remote Bifurcation Torque Smaller");
+	this->headers.push_back("Ave Remote Bifurcation Torque");
+	//this->headers.push_back("Ave Remote Bifurcation Torque Smaller");
 	this->headers.push_back("Min Remote Bifurcation Torque Smaller");
 	this->headers.push_back("Max Remote Bifurcation Torque Smaller");
-	//this->headers.push_back("Average Remote Bifurcation Torque Larger");
+	//this->headers.push_back("Ave Remote Bifurcation Torque Larger");
 	this->headers.push_back("Min Remote Bifurcation Torque Larger");
 	this->headers.push_back("Max Remote Bifurcation Torque Larger");
 
@@ -207,29 +207,34 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Max Leaf Level");
 	this->headers.push_back("Max Leaf Path Length");
 
-	this->headers.push_back("Total Terminal Compartments");
+	this->headers.push_back("Tot Terminal Compartments");
 	this->headers.push_back("Min Terminal Compartments");
-	this->headers.push_back("Average Terminal Compartments");
+	this->headers.push_back("Ave Terminal Compartments");
 	this->headers.push_back("Max Terminal Compartments");
 
 	this->headers.push_back("Diameter Threshold Min");
-	this->headers.push_back("Average Diameter Threshold");
+	this->headers.push_back("Ave Diameter Threshold");
 	this->headers.push_back("Diameter Threshold Max");
 	this->headers.push_back("Terminal Parent Diameter Min");
-	this->headers.push_back("Average Terminal Parent Diameter");
+	this->headers.push_back("Ave Terminal Parent Diameter");
 	this->headers.push_back("Terminal Parent Diameter Max");
 
 	this->headers.push_back("Min Terminal Hillman Thresh"); //extend for all branches
-	this->headers.push_back("Average Terminal Hillman Thresh");
+	this->headers.push_back("Ave Terminal Hillman Thresh");
 	this->headers.push_back("Max Terminal Hillman Thresh");
 
+	this->headers.push_back("Min Branch Pt to Soma Euclidean Distance");
+	this->headers.push_back("Ave Branch Pt to Soma Euclidean Distance");
+	this->headers.push_back("Max Branch Pt to Soma Euclidean Distance");
+
 	this->headers.push_back("Min Tip to Soma Euclidean Distance");
-	this->headers.push_back("Average Tip to Soma Euclidean Distance");
+	this->headers.push_back("Ave Tip to Soma Euclidean Distance");
 	this->headers.push_back("Max Tip to Soma Euclidean Distance");
 
-	this->headers.push_back("Min Branch Pt to Soma Euclidean Distance");
-	this->headers.push_back("Average Branch Pt to Soma Euclidean Distance");
-	this->headers.push_back("Max Branch Pt to Soma Euclidean Distance");
+	this->headers.push_back("Overall Magnitude of Tips");
+	this->headers.push_back("Overall Azimuth of Tips");
+	this->headers.push_back("Overall Elevation of Tips");
+
 
 	this->headers.push_back("Trace File");
 

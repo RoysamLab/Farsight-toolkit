@@ -218,7 +218,7 @@ void TraceLine::calculateVol()
 			this->HillmanTaper = 0;
 		}
 		this->length = dist;
-		this->radii = r / this->m_trace_bits.size(); //ave radii
+		this->radii = r / this->m_trace_bits.size(); //ave radii of segment
 		this->sectionArea = PI*pow((this->radii),2);
 		this->volume = this->sectionArea*this->length;
 		this->surfaceArea = 2*this->radii*PI*this->length;
@@ -1120,12 +1120,16 @@ double TraceLine::GetAzimuth()
 	{
 		if (this->m_trace_bits.size()>1)
 		{
-			TraceBit pre, cur;
-			TraceBitsType::iterator it = this->m_trace_bits.begin();
-			pre = *it;
-			it++;
-			cur = *it;
-			newAzimuthAngle = this->AzimuthAngle(pre,cur);
+			//TraceBit pre, cur;
+			//TraceBitsType::iterator it = this->m_trace_bits.begin();
+			//pre = *it;
+			//it++;
+			//cur = *it;
+			//newAzimuthAngle = this->AzimuthAngle(pre,cur);
+
+			TraceBit leadBit = this->m_trace_bits.front();
+			TraceBit endBit = this->m_trace_bits.back();
+			newAzimuthAngle = this->AzimuthAngle(leadBit,endBit);
 		}
 		return newAzimuthAngle;
 	}
@@ -1141,12 +1145,16 @@ double TraceLine::GetElevation()
 	{
 		if (this->m_trace_bits.size()>1)
 		{
-			TraceBit pre, cur;
-			TraceBitsType::iterator it = this->m_trace_bits.begin();
-			pre = *it;
-			it++;
-			cur = *it;
-			newElevationAngle = this->ElevationAngle(pre,cur);
+			//TraceBit pre, cur;
+			//TraceBitsType::iterator it = this->m_trace_bits.begin();
+			//pre = *it;
+			//it++;
+			//cur = *it;
+			//newElevationAngle = this->ElevationAngle(pre,cur);
+			
+			TraceBit leadBit = this->m_trace_bits.front();
+			TraceBit endBit = this->m_trace_bits.back();
+			newElevationAngle = this->ElevationAngle(leadBit,endBit);
 		}
 		return newElevationAngle;
 	}
