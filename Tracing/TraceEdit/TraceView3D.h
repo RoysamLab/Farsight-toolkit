@@ -305,6 +305,7 @@ protected slots:
 	void setRaycastSomaMode();
 	void clearSettings();
 	void recordTest();
+	void resizeForTesting();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -367,6 +368,7 @@ private:
   QAction *recordAction;
   QAction *playAction;
   QAction *clearAction;
+  QAction *resizeAction;
   #endif
 
 	//Qt widgets on the main window

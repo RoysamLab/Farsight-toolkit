@@ -1577,12 +1577,17 @@ void View3D::CreateGUIObjects()
   this->clearAction = new QAction("Clear QSettings", this->CentralWidget);
   this->clearAction->setStatusTip("Revert all QSettings to their default values");
   connect(this->clearAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
+  
+  this->resizeAction = new QAction("Resize Window", this->CentralWidget);
+  this->resizeAction->setStatusTip("Resize TraceEdit to match default testing screenshot size");
+  connect(this->resizeAction, SIGNAL(triggered()), this, SLOT(resizeForTesting()));
   #endif
 }
 
 void View3D::CreateLayout()
 {
 	this->fileMenu = this->menuBar()->addMenu(tr("&File"));
+	this->fileMenu->setObjectName(tr("fileMenu"));
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
@@ -1600,9 +1605,13 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->exitAction);
 
 	this->ShowToolBars = this->menuBar()->addMenu(tr("Tool Bars"));
+	this->ShowToolBars->setObjectName(tr("ShowToolBars"));
 	this->processingMenu = this->menuBar()->addMenu(tr("Processing"));
+	this->processingMenu->setObjectName(tr("processingMenu"));
 	this->DataViews = this->menuBar()->addMenu(tr("Visualization"));
+	this->DataViews->setObjectName(tr("DataViews"));
 	this->analysisViews = this->menuBar()->addMenu(tr("Analysis"));
+	this->analysisViews->setObjectName(tr("analysisViews"));
 
 	this->EditsToolBar = addToolBar(tr("Edit Toolbar"));
 	this->EditsToolBar->setToolTip("EditToolBar");
@@ -1857,10 +1866,12 @@ void View3D::CreateLayout()
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
+	renderer_sub_menu->setObjectName(tr("renderer_sub_menu"));
 	renderer_sub_menu->addAction(this->SetSlicer);
 	renderer_sub_menu->addAction(this->SetProjection);
 	renderer_sub_menu->addAction(this->SetRaycast);
 	soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
+	soma_sub_menu->setObjectName(tr("soma_sub_menu"));
 	soma_sub_menu->addAction(this->SetContour);
 	soma_sub_menu->addAction(this->SetSomaRaycast);
 	soma_sub_menu->setEnabled(false);
@@ -1871,6 +1882,7 @@ void View3D::CreateLayout()
 
 	this->menuBar()->addSeparator();
 	this->help = this->menuBar()->addMenu("Help");
+	this->help->setObjectName(tr("help"));
 	this->help->addAction(this->aboutAction);
 
 	//this->createSlicerSlider();
@@ -1878,9 +1890,11 @@ void View3D::CreateLayout()
   //Testing menu
   #ifdef USE_QT_TESTING
   this->testingMenu = this->menuBar()->addMenu("Testing");
+  this->testingMenu->setObjectName(tr("testingMenu"));
   this->testingMenu->addAction(this->recordAction);
   this->testingMenu->addAction(this->playAction);
   this->testingMenu->addAction(this->clearAction);
+  this->testingMenu->addAction(this->resizeAction);
   #endif
 
 	this->menuBar()->hide();
@@ -5437,9 +5451,7 @@ void View3D::SaveScreenShot()
 	if(savescreenshotDialog->getBaseline())
 	{
 		//resize render window to default baseline size
-		this->resize(1200, 1000);
-		this->QVTK->resize(600, 500);
-		this->update();
+		this->resizeForTesting();
 	}
 	#endif
 	if (!fullFileName.isEmpty())
@@ -5956,9 +5968,7 @@ int View3D::runTests()
     this->TestBaselineImageFileName.toStdString().c_str() );
 	
   //resize QVTK to match dimensions of recorded screenshots
-  this->resize(1200, 1000);
-  this->QVTK->resize(600, 500);
-  this->update();
+  this->resizeForTesting();
   
   //playback the test recording
   this->Tester->playTestFile( this->TestInputFile );
@@ -5997,10 +6007,16 @@ void View3D::recordTest()
 {
   //force render window to a specific size
   //this makes image comparison much easier
-	this->resize(1200, 1000);
-	this->QVTK->resize(600, 500);
-	this->update();
+	this->resizeForTesting();
 	#ifdef USE_QT_TESTING
     this->Tester->record();
 	#endif
 }
+
+void View3D::resizeForTesting()
+{
+  this->resize(1200, 1000);
+  this->QVTK->resize(600, 500);
+  this->update();
+}
+
