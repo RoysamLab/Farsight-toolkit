@@ -4,7 +4,7 @@ LoG::LoG()
 {
 }
 
-LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
+LoG::LoGImageType* LoG::RunLoG(ImageType::Pointer & image, float scale)
 {
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
@@ -38,7 +38,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 	typedef itk::ShiftScaleImageFilter<LoGImageType, LoGImageType> InvertFilterType;
 	InvertFilterType::Pointer invertFilter = InvertFilterType::New();
 	invertFilter->SetScale(-1.0 / std::numeric_limits<ImageType::PixelType>::max());
-	invertFilter->SetInput(LoGFilter->GetOutput());
+	invertFilter->SetInput(LoG_image);
 
 	try
 	{
@@ -54,10 +54,11 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer image, float scale)
 
 	inverted_LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 
-	return inverted_LoG_image;
+	inverted_LoG_image->Register();
+	return inverted_LoG_image.GetPointer();;
 }
 
-void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
+void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer & image)
 {
 	typedef itk::ImageFileWriter< LoGImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -75,7 +76,7 @@ void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer image)
 	}
 }
 
-LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
+LoG::LoGImageType * LoG::RunMultiScaleLoG(Cell* cell)
 {
 	std::vector<LoGImageType::Pointer> LoG_vector;
 
@@ -143,5 +144,6 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 	multiscale_LoG_image->DisconnectPipeline();
 
 	//WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
-	return multiscale_LoG_image;
+	multiscale_LoG_image->Register();
+	return multiscale_LoG_image.GetPointer();
 }

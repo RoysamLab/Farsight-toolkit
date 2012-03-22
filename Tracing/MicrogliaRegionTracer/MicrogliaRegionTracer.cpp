@@ -69,6 +69,20 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 
 void MicrogliaRegionTracer::Trace()
 {
+	// to be removed
+	std::cout << "Incrementing ModifiedTime for testing purposes." << std::endl;
+	itk::Image< char, 1 >::Pointer image = itk::Image< char, 1 >::New();
+	unsigned long modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take
+	while (image->GetMTime() < modified_count - 10000)
+	{
+		image->Modified();
+
+		//Just so we have some visual output of incrementing the modified timer
+		if (image->GetMTime() % 100000000 == 0)
+			std::cout << "Modified time: " << image->GetMTime() << std::endl;
+	}
+	std::cout << "Done incrementing the modified time" << std::endl;
+
 	//Trace cell by cell
 	#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
