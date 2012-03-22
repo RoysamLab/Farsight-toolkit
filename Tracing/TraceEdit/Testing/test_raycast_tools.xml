@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="ShowToolBars"/>
+    <event widget="1View3D0/1QMenuBar0/ShowToolBars" command="activate" arguments="RayCast Tools"/>
+    <event widget="1View3D0/1QMenuBar0/ShowToolBars" command="activate" arguments="RayCast Tools"/>
+    <event widget="1View3D0/1QToolBar2/1QComboBox0" command="set_string" arguments="Red"/>
+    <event widget="1View3D0/1QToolBar2/1QComboBox0" command="set_string" arguments="Green"/>
+    <event widget="1View3D0/1QToolBar2/1QComboBox0" command="set_string" arguments="Blue"/>
+    <event widget="1View3D0/1QToolBar2/1QComboBox0" command="set_string" arguments="Gray"/>
+    <event widget="1View3D0/1QToolBar2/1QComboBox0" command="set_string" arguments="RGB"/>
+    <event widget="1View3D0/1QToolBar2/1QSpinBox0" command="spin" arguments="down"/>
+    <event widget="1View3D0/1QToolBar2/1QSpinBox0" command="spin" arguments="up"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="87"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="106"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="151"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="202"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="206"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="207"/>
+    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="spin" arguments="down"/>
+    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="spin" arguments="up"/>
+    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="spin" arguments="up"/>
+    <event widget="1View3D0/1QToolBar2/1QSpinBox1" command="spin" arguments="down"/>
+    <event widget="1View3D0/1QToolBar2/1QSpinBox1" command="spin" arguments="up"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="120"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="112"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="86"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="79"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="Resize Window"/>
+</events>

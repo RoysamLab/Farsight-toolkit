@@ -31,4 +31,11 @@ IF(QtTestingFound)
     ${TraceEdit_TEST_DIR}/test_select_tree.xml
     ${TraceEdit_TEST_DIR}/baseline_select_tree.png
   )
+  ADD_TEST(
+    TraceEdit-RaycastTools
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    ${TraceEdit_TEST_DIR}/test_raycast_tools.xml
+    ${TraceEdit_TEST_DIR}/baseline_raycast_tools.png
+  )
 ENDIF()
