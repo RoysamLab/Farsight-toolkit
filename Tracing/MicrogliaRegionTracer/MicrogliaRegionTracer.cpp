@@ -5,7 +5,7 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 	this->soma_filename = soma_filename;
 
-	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Acquiring threads through OpenMP, so no need for ITK threads
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
 }
 
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)

@@ -2,6 +2,8 @@
 
 #include "time.h"
 
+#include "itkMultiThreader.h"
+
 int main(int argc, char* argv[])
 {
 	if( argc < 5 )
@@ -20,8 +22,8 @@ int main(int argc, char* argv[])
 		{
 		mask_image = argv[5];
 		}
-	MicrogliaRegionTracer *MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str() );
 
+	MicrogliaRegionTracer *MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str() );
 	
 	clock_t start_time = clock();
 
