@@ -78,6 +78,45 @@ void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned
 	//CurvImage->Delete();
 }
 
+
+void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
+{
+	ImageType3D::Pointer CurvImage = image;
+	
+	unsigned int padz = 0;
+	
+	//pad z slices
+	std::cout << "pad z slices" << std::endl;
+	itk::Size<3> isz = CurvImage->GetBufferedRegion().GetSize();
+	itk::Size<3> osz = isz;
+	osz[2] += 2*padz;
+	itk::Index<3> indx, ondx;
+	
+	PaddedCurvImage = ImageType3D::New();
+	PaddedCurvImage->SetRegions(osz);
+	PaddedCurvImage->Allocate();
+	PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
+	
+	for(ondx[2] = 0; ondx[2] < osz[2]; ++ondx[2]) 
+	{
+		indx[2] = (ondx[2] < padz) ? 0 : ondx[2] - padz;
+		indx[2] = (ondx[2] >= osz[2]-padz) ? isz[2]-1 : indx[2];
+		for(ondx[1] = 0; ondx[1] < osz[1]; ++ondx[1]) 
+		{
+			indx[1] = ondx[1];
+			for(ondx[0] = 0; ondx[0] < osz[0]; ++ondx[0]) 
+			{
+				indx[0] = ondx[0];
+				PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
+			}
+		}
+	}
+
+	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
+	size = PaddedCurvImage->GetBufferedRegion().GetSize();
+}
+
+
 ///////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad) 
 {
@@ -145,7 +184,7 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 			if (n[2] >= (unsigned int)osz[2])
 				n[2] = osz[2]-1;
 			StartPoints.push_back(n);
-			std::cout << " is read as " << n << std::endl;
+// 			std::cout << " is read as " << n << std::endl;
 		}
 		else
 			std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
@@ -164,7 +203,7 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 		float y = (float)somaCentroids.at(i)[1];
 		float z = (float)somaCentroids.at(i)[2];
 	
-		std::cout << x <<" "<< y <<" "<< z << std::endl;
+// 		std::cout << x <<" "<< y <<" "<< z << std::endl;
 		itk::Size<3> osz = size;  //original size padz
 		osz[2] = osz[2]-padz;
 		
@@ -181,7 +220,7 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 			if (n[2] >= (unsigned int)osz[2])
 				n[2] = osz[2]-1;
 			StartPoints.push_back(n);
-			std::cout << " is read as " << n << std::endl;
+// 			std::cout << " is read as " << n << std::endl;
 		}
 		else
 			std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
@@ -417,7 +456,8 @@ void MultipleNeuronTracer::FeatureMain(void)
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
-		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
+// 		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
+		GetFeature_2( sigmas[i], i );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
 	}
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
@@ -568,6 +608,413 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 			h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
 			h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
 			h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+			EigenValuesArrayType ev;
+			EigenVectorMatrixType em;
+			h.ComputeEigenAnalysis (ev, em);
+
+			unsigned int w;
+			if (IsPlate(ev, w)) 
+			{
+				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
+				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
+				{
+					NDXImage->SetPixel(ndx,value);
+					ctCnt++;			//CriTical Counter I guess
+				}
+			}
+		}
+		++it;
+		++nit;
+	}
+	std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
+}
+
+
+void MultipleNeuronTracer::setDiceSize( itk::Size<3> sizeDice )
+{
+	_sizeDice[0] = sizeDice[0];
+	_sizeDice[1] = sizeDice[1];
+	_sizeDice[2] = sizeDice[2];
+}
+
+void MultipleNeuronTracer::setDiceIndex( itk::Index<3> indxDice )
+{
+	_indxDice[0] = indxDice[0];
+	_indxDice[1] = indxDice[1];
+	_indxDice[2] = indxDice[2];
+	
+}
+
+void MultipleNeuronTracer::setLogScale( ImageType3D::Pointer inputImageLoG, int scale )
+{
+	if( scale == 0 )
+		logScale_1 = inputImageLoG;
+	else if( scale == 1 )
+		logScale_2 = inputImageLoG;
+	else if( scale == 2 )
+		logScale_3 = inputImageLoG;
+	else if( scale == 3 )
+		logScale_4 = inputImageLoG;
+	else if( scale == 4 )
+		logScale_5 = inputImageLoG;
+	else if( scale == 5 )
+		logScale_6 = inputImageLoG;
+	
+}
+
+
+void MultipleNeuronTracer::GetFeature_2( float sigma, int scale ) 
+{
+// // 	clock_t LoG_start_time = clock();
+// 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
+// 	GFilterType::Pointer gauss = GFilterType::New();
+// 	gauss->SetInput( PaddedCurvImage );
+// 	gauss->SetSigma( sigma );
+// 	gauss->SetNormalizeAcrossScale(false);
+// 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
+// 	gauss->GetOutput()->Update();
+// 	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+
+			ImageType3D::Pointer gauss_3 = ImageType3D::New();
+			ImageType3D::PointType originGaussLocal;
+			originGaussLocal[0] = 0; 
+			originGaussLocal[1] = 0;
+			originGaussLocal[2] = 0;
+			gauss_3->SetOrigin( originGaussLocal );
+			ImageType3D::IndexType startGaussLocal;
+			startGaussLocal[0] = 0;
+			startGaussLocal[1] = 0;
+			startGaussLocal[2] = 0;
+			ImageType3D::RegionType regionGaussLocal;
+			regionGaussLocal.SetSize ( _sizeDice  );
+			regionGaussLocal.SetIndex( startGaussLocal );
+			gauss_3->SetRegions( regionGaussLocal );
+			gauss_3->Allocate();
+			gauss_3->FillBuffer(0);
+// 			SetSpacing(logScale_1->GetSpacing());
+			gauss_3->Update();
+
+	
+	ImageType3D::RegionType region;
+	region.SetSize(_sizeDice);
+	region.SetIndex(_indxDice);
+	
+
+	
+	itk::ImageRegionIterator<ImageType3D> itGauss_3(gauss_3, gauss_3->GetLargestPossibleRegion());
+	int gauss_slice_size = _sizeDice[1] * _sizeDice[0];
+	ImageType3D::PixelType * gauss_3_Array = gauss_3->GetBufferPointer();
+	
+	itk::Index<3> local_origin = logScale_1->GetRequestedRegion().GetIndex();
+	#pragma omp critical
+	std::cout << std::endl << "Start of the Block : " << local_origin << std::endl;
+	itk::Index<3> local_offset;
+	local_offset[0] = _indxDice[0] - local_origin[0];
+	local_offset[1] = _indxDice[1] - local_origin[1];
+	local_offset[2] = _indxDice[2] - local_origin[2];
+	
+	itk::Size<3> block_size = logScale_1->GetRequestedRegion().GetSize();
+	#pragma omp critical
+	std::cout << std::endl << "Size of the Block : " << block_size << std::endl;
+	int block_slice_size = block_size[1] * block_size[0];
+	
+	ImageType3D::PixelType * logScale_Array;
+	if( scale == 0 )
+	{
+		logScale_Array = logScale_1->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_1, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	else if( scale == 1 )
+	{
+		logScale_Array = logScale_2->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_2, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	else if( scale == 2 )
+	{
+		logScale_Array = logScale_3->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_3, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	else if( scale == 3 )
+	{
+		logScale_Array = logScale_4->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_4, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	else if( scale == 4 )
+	{
+		logScale_Array = logScale_5->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_5, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	else if( scale == 5 )
+	{
+		logScale_Array = logScale_6->GetBufferPointer();
+		
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_6, region);
+// 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
+// 		{
+// 			itGauss_3.Set(itPreLoG.Get());
+// 		}
+	}
+	
+	for(int z=0; z<_sizeDice[2]; ++z)
+	{
+		for(int y=0; y<_sizeDice[1]; ++y)
+		{
+			for(int x=0; x<_sizeDice[0]; ++x)
+			{
+				gauss_3_Array[(z * gauss_slice_size) + (y * _sizeDice[0]) + (x)] = logScale_Array[((z+local_offset[2]) * block_slice_size) + ((y+local_offset[1]) * block_size[0]) + (x+local_offset[0])];
+			}
+		}
+	}
+	
+	ImageType3D::Pointer gauss_2 = gauss_3;
+
+// 	ImageType3D::Pointer gauss_2;
+// 	if( scale == 0 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_1);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+// 	else if( scale == 1 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_2);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+// 	else if( scale == 2 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_3);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+// 	else if( scale == 3 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_4);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+// 	else if( scale == 4 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_5);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+// 	else if( scale == 5 )
+// 	{
+// 		#pragma omp critical
+// 		{
+// 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
+// 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+// 		ROIfilter->SetRegionOfInterest(region);
+// 		ROIfilter->SetInput(logScale_6);
+// 		ROIfilter->Update();
+// 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 		duplicator->SetInputImage(ROIfilter->GetOutput());
+// 		duplicator->Update();
+// 		gauss_2 = duplicator->GetOutput();
+// 		}
+// 	}
+
+
+// #pragma omp critical
+// 	ROIfilter->Update();
+// 	typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
+// 	DuplicatorType::Pointer duplicator = DuplicatorType::New();
+// 	duplicator->SetInputImage(ROIfilter->GetOutput());
+// #pragma omp critical
+// 	duplicator->Update();
+// 	ImageType3D::Pointer gauss_2 = duplicator->GetOutput();
+	
+	
+
+	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
+	//rescaler->SetInput(gauss->GetOutput());;
+	//rescaler->SetOutputMaximum(255);
+	//rescaler->SetOutputMinimum(0);
+
+	//itk::CastImageFilter<ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter<ImageType3D, CharImageType3D>::New();
+	//caster->SetInput(rescaler->GetOutput());
+
+	//std::stringstream ss;
+	//ss << ceil(sigma);
+	//itk::ImageFileWriter<CharImageType3D>::Pointer writer = itk::ImageFileWriter<CharImageType3D>::New();
+	//writer->SetInput(caster->GetOutput());
+	//writer->SetFileName("C:\\Data\\Darpa\\TEST_FOR_PIPELINE\\23_2100_4200\\LOG_" + ss.str() + ".tif");
+	//writer->Update();
+
+	float tot = 0.0f, num = 0.0f;
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss_2, gauss_2->GetBufferedRegion());
+	float gamma = 1.6f;
+	float tnorm = vcl_pow(sigma,gamma);
+
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp)
+	{
+		float q = ittemp.Get()*tnorm;
+		ittemp.Set(-1.0f*q);
+		tot += q*q;
+		num ++;
+	}
+	//std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
+
+	// set the diagonal terms in neighborhood iterator
+	itk::Offset<3>
+		xp =  {{2 ,  0 ,   0}},
+		xn =  {{-2,  0,    0}},
+		yp =  {{0,   2,   0}},
+		yn =  {{0,  -2,    0}},
+		zp =  {{0,   0,    2}},
+		zn =  {{0,   0,   -2}};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss_2, gauss_2->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss_2, gauss_2->GetBufferedRegion());
+
+	unsigned int
+		xy1 =  17, //{ 1 ,   1 ,  0 },
+		xy2 =  9,  //{ -1,  -1 ,  0 },
+		xy3 =  15, //{ -1,   1 ,  0 },
+		xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+		yz1 =  25, //{ 0 ,   1 ,  1 },
+		yz2 =  1,  //{ 0 ,  -1 , -1 },
+		yz3 =  19, //{ 0 ,  -1 ,  1 },
+		yz4 =  7,  //{ 0 ,   1 , -1 },
+
+		xz1 =  23, //{ 1 ,   0 ,  1 },
+		xz2 =  3,  //{-1 ,   0 , -1 },
+		xz3 =  21, //{-1 ,   0 ,  1 },
+		xz4 =  5;  //{ 1 ,   0 , -1 };
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3;
+	sz[1] = sz[1] - 3; 
+	sz[2] = sz[2] - 3;
+
+	it.GoToBegin();
+	nit.GoToBegin();
+	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+
+	long win = long(sigma)/2;
+	if (win < 2) 
+	{
+		win = 2;
+	}
+	
+	long ctCnt = 0;
+	while(!nit.IsAtEnd()) 
+	{
+		itk::Index<3> ndx = it.GetIndex();
+		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
+			(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
+			(ndx[2] > (unsigned int)sz[2]) )
+		{
+			++it;
+			++nit;
+			continue;
+		}
+
+		float a1 = 0.0;
+		for (unsigned int i=0; i < 13; ++i)
+		{
+			a1 += vnl_math_max(nit.GetPixel(i), nit.GetPixel(26 - i));
+		}
+		
+		float val = nit.GetPixel(13) ;
+
+		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = 0.001;  // -0.1 percent of range
+
+		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		{
+			TensorType h;
+			h[0] = gauss_2->GetPixel( ndx + xp ) + gauss_2->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+			h[3] = gauss_2->GetPixel( ndx + yp ) + gauss_2->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+			h[5] = gauss_2->GetPixel( ndx + zp ) + gauss_2->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
 			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
 			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
 			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);

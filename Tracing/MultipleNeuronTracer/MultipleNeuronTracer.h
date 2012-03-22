@@ -47,6 +47,10 @@
 #include "vtkVariantArray.h"
 #include "vtkDoubleArray.h"
 
+
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkImageDuplicator.h"
+
 #include <queue>
 #include <algorithm>
 #include <string>
@@ -56,6 +60,8 @@
 #include <time.h>
 
 #define MAXVAL 100000.0f
+
+#include "omp.h"
 
 typedef float PixelType;
 
@@ -105,6 +111,8 @@ public:
 
 	void LoadCurvImage(std::string fname, unsigned int pad); 
 	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);
+	void LoadCurvImage_2(ImageType3D::Pointer &image);
+	
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
 	void SetCostThreshold(float thres){CostThreshold = thres;};
@@ -115,10 +123,18 @@ public:
 	void WriteSWCFile(std::string , unsigned int );
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
 	void GenerateTestImage(); 
+	
+	void setLogScale( ImageType3D::Pointer, int scale );
+	void setDiceSize( itk::Size<3> );
+	void setDiceIndex( itk::Index<3> );
 		
 protected:
 	void FeatureMain();
 	void GetFeature( float );
+	void GetFeature_2( float, int );
+
+	
+	
 	bool IsPlate(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
 	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
@@ -146,6 +162,15 @@ private:
 	long CurrentID;
 	std::vector<IndexType> StartPoints;
 	unsigned int padz;
+	
+	itk::Size<3> _sizeDice;
+	itk::Index<3> _indxDice;
+	ImageType3D::Pointer logScale_1; 
+	ImageType3D::Pointer logScale_2;
+	ImageType3D::Pointer logScale_3;
+	ImageType3D::Pointer logScale_4;
+	ImageType3D::Pointer logScale_5;
+	ImageType3D::Pointer logScale_6;
 
 };
 
