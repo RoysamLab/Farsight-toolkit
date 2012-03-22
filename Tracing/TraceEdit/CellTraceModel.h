@@ -53,6 +53,14 @@ limitations under the License.
 #include <ftkGUI/GraphWindow.h>
 #include "ftkGraphs/kNearestObjects.h"
 
+//selective clustering to replace object selection
+#include "SelectiveClustering.h"
+#include "QvtkTableView.h"
+#include "SelectionUtilities.h"
+
+// 
+#include <map>
+
 class QStandardItemModel;
 class QItemSelectionModel;
 class TraceLine;
@@ -86,7 +94,6 @@ public:
 	void createCellToCellGraph();
 	double average(std::vector< std::pair<unsigned int, double> > ID);
 	int AddNewFeatureHeader(std::string NewHeader);
-	static vtkSmartPointer<vtkTable> ConvertDefaultValueToNull(vtkSmartPointer<vtkTable> table);
 	void SyncModel();
 
 signals:
@@ -97,6 +104,10 @@ private:
 	std::vector<QString> AdditionalHeaders;
 	void SetupHeaders();
 	vtkSmartPointer<vtkTable> DataTable;
+
+	std::map< int ,CellTrace*> CellIDLookupMAP;
+	std::map< int ,CellTrace*>::iterator CellIDLookupIter;
+	
 	ObjectSelection * Selection;
 	//////////////////////////////////////////////
 	ObjectSelection * ColumnSelection;

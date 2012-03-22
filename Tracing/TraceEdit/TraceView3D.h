@@ -108,6 +108,10 @@ limitations under the License.
 #include "ImageActors.h"
 #include "MergeModel.h"
 
+#include "SelectiveClustering.h"
+#include "QvtkTableView.h"
+#include "SelectionUtilities.h"
+
 #include "cellexport.h"
 #include "FeatureRelation.h"
 #include "GridActors.h"

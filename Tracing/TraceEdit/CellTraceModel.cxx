@@ -25,6 +25,7 @@ CellTraceModel::CellTraceModel()
 	this->ColumnSelection = new ObjectSelection();
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
+	this->CellIDLookupMAP.clear();
 	this->AdditionalHeaders.clear();
 }
 CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
@@ -270,6 +271,7 @@ void CellTraceModel::SyncModel()
 		for (int i = 0; i < (int) this->Cells.size(); i ++)
 		{
 			this->DataTable->InsertNextRow(this->Cells[i]->DataRow());
+			this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
 	}
 	else
@@ -278,30 +280,11 @@ void CellTraceModel::SyncModel()
 		for (int i = 0; i < (int) this->Cells.size(); i ++)
 		{
 			this->DataTable->InsertNextRow(this->Cells[i]->GetExtendedDataRow(size));
+			this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
 	}
 }
 
-vtkSmartPointer<vtkTable> CellTraceModel::ConvertDefaultValueToNull(vtkSmartPointer<vtkTable> table)
-{	
-	vtkSmartPointer<vtkTable> convertedTable = vtkSmartPointer<vtkTable>::New();
-	convertedTable->Initialize();
-	vtkSmartPointer<vtkVariantArray> column = NULL;
-	for(int i=0; i < table->GetNumberOfColumns(); ++i)
-    {		
-		column = vtkSmartPointer<vtkVariantArray>::New();
-		column->SetName( table->GetColumnName(i));
-		convertedTable->AddColumn(column);
-    }
-
-	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)
-	{
-		vtkSmartPointer<vtkVariantArray> row = table->GetRow( i);
-		row = CellTrace::ConvertDefaultValueToNull(row);
-		convertedTable->InsertNextRow(row);
-	}
-	return convertedTable;
-}
 
 vtkSmartPointer<vtkTable> CellTraceModel::getDataTable()
 {
@@ -455,20 +438,25 @@ std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		int id = (int) *it;
-		bool found = false;
-		unsigned int j = 0;
-		while(!found&&(j<this->Cells.size()))
+		//int id = (int) *it;
+		//bool found = false;
+		//unsigned int j = 0;
+		//while(!found&&(j<this->Cells.size()))
+		//{
+		//	if (id == this->Cells.at(j)->rootID())
+		//	{
+		//		selectedCell.push_back(this->Cells.at(j));
+		//		found = true;
+		//	}else
+		//	{
+		//		j++;
+		//	}
+		//}//end while !found
+		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
+		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
 		{
-			if (id == this->Cells.at(j)->rootID())
-			{
-				selectedCell.push_back(this->Cells.at(j));
-				found = true;
-			}else
-			{
-				j++;
-			}
-		}//end while !found
+			selectedCell.push_back((*this->CellIDLookupIter).second);
+		}
 	}//end for selected
 	return selectedCell;
 }

@@ -747,37 +747,6 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	return CellData;
 }
 
-vtkSmartPointer<vtkVariantArray> CellTrace::ConvertDefaultValueToNull(vtkSmartPointer<vtkVariantArray> row)
-{
-	vtkSmartPointer<vtkVariantArray> newRow = vtkSmartPointer<vtkVariantArray>::New();
-	newRow->SetNumberOfValues( row->GetNumberOfValues());
-	for( vtkIdType i = 0; i < row->GetNumberOfValues(); i++)
-	{
-		vtkVariant var = row->GetValue( i);
-		if( i == row->GetNumberOfValues() - 2) // file name
-		{
-			newRow->SetValue( i, var);
-		}
-		else
-		{
-			double varDouble = var.ToDouble();
-			if( DefaultValue[i] == -1)
-			{
-				newRow->SetValue( i, var);
-			}
-			else if( varDouble == DefaultValue[i])
-			{
-				//newRow->SetValue( i, NULL);
-			}
-			else
-			{
-				newRow->SetValue( i, var);
-			}
-		}
-	}
-	return newRow;
-}
-
 vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(int CheckAddFeatures)
 {
 	this->DataRow();

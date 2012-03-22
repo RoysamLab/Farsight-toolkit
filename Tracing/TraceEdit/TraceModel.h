@@ -26,6 +26,11 @@ limitations under the License.
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
 #include <ftkGUI/ObjectSelection.h>
+
+#include "SelectiveClustering.h"
+#include "QvtkTableView.h"
+#include "SelectionUtilities.h"
+
 class QStandardItemModel;
 class QItemSelectionModel;
 class TraceLine;

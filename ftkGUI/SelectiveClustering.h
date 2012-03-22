@@ -158,6 +158,7 @@ private:
 
 	// Cluster Table 
 	vtkSmartPointer<vtkTable> ClusterTable;
+	//map is < OBJ ID, Table Row>
 	std::map< vtkIdType, vtkIdType> ClusterTableIDMap;
 	void CreateClusterTableHeaders();
 	void AddRowToClusterTable(vtkIdType Key, vtkVariant ClusterSize, vtkVariant ClusterName);
