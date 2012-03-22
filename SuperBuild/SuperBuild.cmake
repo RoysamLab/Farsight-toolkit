@@ -243,7 +243,7 @@ if(BUILD_FARSIGHT_TESTING)
   #download and build QtTesting framework
   ExternalProject_Add(QtTesting
     URL http://farsight-toolkit.org/support/QtTesting.tar.gz
-    URL_MD5 c23e2ad6c7ae3799ede02456eef780ee
+    URL_MD5 610e89c2c77e76c41cd5607dfe742638 
     CMAKE_GENERATOR ${gen}
     CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}
