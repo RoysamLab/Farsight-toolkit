@@ -573,7 +573,7 @@ void ImageRenderActors::syncOpacityTransferFunction()
 }
 void ImageRenderActors::CreateImageResliceMapper(int i)
 {
-	this->LoadedImages[i]->imageResliceMapper = vtkImageResliceMapper::New();
+	this->LoadedImages[i]->imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
 	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
 	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
 	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
@@ -584,7 +584,7 @@ void ImageRenderActors::CreateImageResliceMapper(int i)
 }
 void ImageRenderActors::CreateImageProperty(int i)
 {
-	this->LoadedImages[i]->imageProperty = vtkImageProperty::New();
+	this->LoadedImages[i]->imageProperty = vtkSmartPointer<vtkImageProperty>::New();
 	this->LoadedImages[i]->imageProperty->SetColorWindow(2000); //set range of brightness
 	this->LoadedImages[i]->imageProperty->SetColorLevel(this->sliceBrightness); //level of brightness within the range defined by colorwindow
 	this->LoadedImages[i]->imageProperty->SetInterpolationTypeToLinear();
@@ -646,7 +646,7 @@ void ImageRenderActors::SetSliceThickness(int numofslices)
 }
 void ImageRenderActors::SetSlicePlane(int slicePlane)
 {
-	vtkPlane * xyzPlane = vtkPlane::New();
+	vtkSmartPointer<vtkPlane> xyzPlane = vtkSmartPointer<vtkPlane>::New();
 	xyzPlane->SetOrigin(0,0,0);
 
 	switch (slicePlane) 
