@@ -599,7 +599,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float val = nit.GetPixel(13) ;
 
-		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
 		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
@@ -1006,7 +1006,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 		
 		float val = nit.GetPixel(13) ;
 
-		const float thresh1 = 0.03;   // 3% of maximum theshold from Lowe 2004
+		const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
 		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
@@ -1087,7 +1087,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		return true;
 	}
 	
-	return false;  /// right now this is turned off (Amit)
+	return true;  /// right now this is turned off (Amit)
 }
 
 
