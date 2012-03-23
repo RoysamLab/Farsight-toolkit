@@ -14,6 +14,9 @@
 #include "itkImageDuplicator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
+#include "../NuclearSegmentation/exe/SomaExtraction.h"
+
+
 #include "vtkTable.h"
 #include "ftkUtils.h"
 #include "ftkImage.h"
@@ -934,9 +937,13 @@ int main(int argc, char* argv[])
 			}
 
 
-// 			SomaExtractor *Somas = new SomaExtractor();
+			double stopingTime = 10;
+			double curScaling = 0.5;
+			double rmsThrehold = 0.02;
+			SomaExtractor *Somas = new SomaExtractor();
+			montageLabelType::Pointer  img_soma = Somas->SegmentSoma(img_trace, soma_Table,stopingTime,curScaling,rmsThrehold);
 	
-			montageLabelType::Pointer img_soma;// = Somas->SegmentSoma(img_trace, soma_Table,curScaling,stopingTime,rmsThrehold);
+// 			montageLabelType::Pointer img_soma;// = Somas->SegmentSoma(img_trace, soma_Table,curScaling,stopingTime,rmsThrehold);
 
 			//########    RUN TRACING    ########
 			MultipleNeuronTracer * MNT = new MultipleNeuronTracer();

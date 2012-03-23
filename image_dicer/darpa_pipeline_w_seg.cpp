@@ -1,5 +1,7 @@
 // make -j80;./exe/darpa_tracer_w_seg ../../data/0103/DAPI_montage.mhd ../../data/0103/GFP_montage.mhd ../../data/0103/Cy5_montage_BS.mhd ../../data/0103/Seg_Params.ini ../../data/0103/ProjectDefinition.xml
 // make -j80;((time ./exe/darpa_tracer_w_seg ../../data/0103/DAPI_montage.mhd ../../data/0103/GFP_montage.mhd ../../data/0103/Cy5_montage_BS.mhd ../../data/0103/Seg_Params.ini ../../data/0103/ProjectDefinition.xml) 2>&1) >> salida.log
+// set args ../../data/0120/montage_kt01445_w410DAPIdsu_BS.nrrd ../../data/0120/montage_kt01445_w311GFPdsu_BS_CV.mhd ../../data/0120/montage_kt01445_w113Cy5dsu_BS.nrrd ../../data/0120/Parameters/Seg_Params.ini ../../data/0120/Parameters/ProjectDefinition.xml
+
 
 #include "itkImageFileReader.h"
 #include "itkImage.h"
