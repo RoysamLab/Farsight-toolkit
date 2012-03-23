@@ -2242,17 +2242,20 @@ void Heatmap::addDragLineforSPD(double* worldPosition)
 
 void Heatmap::selectClustersforSPD(double* worldPosition)
 {
-	reselectedClusterSPD.clear();
-	std::set<long int> selectedClusterSPD;
-	long int index = 2*this->num_samples - 2;
-	while(1)
-	{	
-		if(worldPosition[0] > Processed_Coordinate_Data_Tree1[index][1])
-			selectedClusterSPD.insert(index--);
-		else
-			break;
+	if(!reselectedClusterSPD.empty())
+	{
+		reselectedClusterSPD.clear();
+		std::set<long int> selectedClusterSPD;
+		long int index = 2*this->num_samples - 2;
+		while(1)
+		{	
+			if(worldPosition[0] > Processed_Coordinate_Data_Tree1[index][1])
+				selectedClusterSPD.insert(index--);
+			else
+				break;
+		}
+		this->reselectClustersforSPD(selectedClusterSPD);
 	}
-	this->reselectClustersforSPD(selectedClusterSPD);
 }
 
 void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
