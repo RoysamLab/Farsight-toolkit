@@ -22,6 +22,7 @@ limitations under the License.
 
 =========================================================================*/
 #include "PointOperation.h"
+#include <map>
 
 Point3D::Point3D(void)
 {
@@ -30,12 +31,15 @@ Point3D::Point3D(void)
 	z = 0;
 }
 
-Point3D::Point3D(float X, float Y, float Z)
+Point3D::Point3D(float X, float Y, float Z, int TAG, int INDEX)
 {
 	x = X;
 	y = Y;
 	z = Z;
+	tag = TAG;
+	index = INDEX;
 }
+
 Point3D Point3D::operator = (Vector3D V)
 {
 	x = V.x;
@@ -66,6 +70,8 @@ Point3D Point3D::operator = (Point3D P)
 	x = P.x;
 	y = P.y;
 	z = P.z;
+	tag = P.tag;
+	index = P.index;
 	return *this;
 }
 
@@ -426,14 +432,15 @@ void	PointList3D::AddPt(Point3D P)
 }
 
 
-void	PointList3D::AddPt(float x,float y,float z)
+void PointList3D::AddPt(float x,float y,float z, int tag, int index)
 {
 	temp_pt.x = x;
 	temp_pt.y = y;
 	temp_pt.z = z;
+	temp_pt.tag = tag;
+	temp_pt.index = index;
 	Pt.push_back(temp_pt);
 	NP++;
-	
 }
 
 void    PointList3D::AddPtList(PointList3D pl)
@@ -988,4 +995,95 @@ for(int i = 0; i< GetSize(); i++)
 }
 myfile.close();
 }
+}
+
+// For point queue  tag : -1 removed, 0 initialized, >0 queue id;
+void PointList3D::BuildNeighbourList()
+{
+	int NQ = 0;
+	std::vector<int> size;
+	vnl_vector<unsigned char> mark(NP);
+	std::map<int,int> ptTagMap;
+	mark.fill(0);
+	for( int i = 0; i < NP; i++)
+	{
+		if( mark[i] == 0)
+		{
+			NQ++;
+			int tag = Pt[i].tag;
+			int count = 1;
+			mark[i] = 1;
+			ptTagMap.insert(std::pair<int,int>(tag, NQ));
+			for( int j = 0; j < NP; j++)
+			{
+				if( Pt[j].tag == tag && mark[j] == 0)
+				{
+					mark[j] = 1;
+					count++;
+				}
+			}
+			size.push_back(count);
+		}
+	}
+
+	std::cout<< "Queue Size: "<< NQ<<std::endl;
+	vnl_vector<int> Index( NQ);
+	int sum = 0;
+	for( int i = 0; i < NQ - 1; i++)
+	{
+		Index[i] = sum;
+		sum += size[i];
+	}
+	Index[NQ - 1] = sum;
+
+	std::vector<Point3D> TmpPt;
+	TmpPt.resize( NP);
+	for( int i = 0; i < NP; i++)
+	{
+		int tmpTag = Pt[i].tag;
+		int newTag = ptTagMap[tmpTag];
+		std::cout<< newTag<<"\t";
+		int ind = Index[ newTag - 1];
+		Pt[i].tag = newTag;
+		TmpPt[ ind] = Pt[i];
+		Index[ newTag - 1] += 1;
+	}
+	std::cout<<std::endl;
+
+	Pt = TmpPt;
+
+	std::ofstream ofs("SeedPointList.txt");
+	for( int i = 0; i < NP; i++)
+	{
+		ofs<< Pt[i].x<<"\t"<< Pt[i].y<<"\t"<< Pt[i].z<<"\t"<< Pt[i].tag<<"\t"<<Pt[i].index<<std::endl;
+	}
+	ofs.close();
+}
+
+void PointList3D::RemovePtTag( int tag)
+{
+	bool bRemoved = false;
+	for( int i = 0; i < NP; i++)
+	{
+		Point3D point = Pt[i];
+		if( Pt[i].tag == tag)
+		{
+			Pt[i].tag = -1;
+			bRemoved = true;
+		}
+	}
+}
+
+void PointList3D::GetFirstPointOfEachQueue( PointList3D &pointList)
+{
+	int tmpTag = -1;
+	for( int i = 0; i < NP; i++)
+	{
+		if( Pt[i].tag != -1 && Pt[i].tag != tmpTag)
+		{
+			pointList.AddPt(Pt[i]);
+			tmpTag = Pt[i].tag;
+			Pt[i].tag = -1;   // delete the point
+		}
+	}
 }

@@ -11,6 +11,7 @@
 #include <time.h>
 #include <vector>
 #include <map>
+#include "Tracing/TheTracingSystem/TracingCore/PointOperation.h"
 
 class SomaExtractor
 {
@@ -33,25 +34,57 @@ public:
 	~SomaExtractor();
 
 	void SetInputImage(char * fileName);
+	void SmoothByDiffusionImageFilter();
 	ProbImageType::Pointer GetFloatInputImage();
-	void ReadSeedpoints(char * fileName, std::vector< itk::Index<3> > &seedVec);
+	void ReadSeedpoints(char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
+
+	/// return labeled image for somas
+	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, int timethreshold, double curvatureScaling, double rmsThres);
+	
+	/// return unlabeled image for somas( with capacity to select seeds based on the volumes)
 	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, 
-											int timethreshold, double curvatureScaling, double rmsThres);
+											int timethreshold, double curvatureScaling, double rmsThres, int minObjSize, unsigned int volThres, bool bnucleusTable);
 	void writeSomaImage(char* writeFileName);
-	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
+	void writeImage(char* writeFileName, ProbImageType::Pointer image);
+	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage, PointList3D &seg_seeds, bool bTag = false);
+	vtkSmartPointer<vtkTable> ComputeSomaFeatures(vtkSmartPointer<vtkTable> table, SegmentedImageType::Pointer inputImage, PointList3D &seg_seeds);
+	vtkSmartPointer<vtkTable> GetSomaFeatureTable();
+	void WriteSomaSeedsIntoImage();
 
 protected:
-	void BuildLabelObjectMap(SegmentedImageType::Pointer labelImage);
-	void SomaBoundaryScan(SegmentedImageType::Pointer labelImage);
+	struct volumePoint
+	{
+		volumePoint( float X, float Y, float Z, unsigned int Vol)
+		{
+			x = X;
+			y = Y;
+			z = Z;
+			vol = Vol;
+		};
+		float x;
+		float y;
+		float z;
+		unsigned int vol;
+	};
+
+	void SomaBoundaryScan(SegmentedImageType::Pointer labelImage, std::map< TLPixel, int> &LtoIMap, std::vector< int> &boundaryPixSize);
+	SegmentedImageType::Pointer FastMarchingShapeDectectSoma(ProbImageType::Pointer inputImage, PointList3D &seg_seeds, 
+															int timeThreshold, double curvatureScaling, double rmsError);
+	void relabelBinaryImage(SegmentedImageType::Pointer binImage, PointList3D &seg_seeds, int minObjSize);
+	void BuildCentroidQueue(SegmentedImageType::Pointer image, PointList3D &seg_seeds);
+	void GetCentroids(PointList3D &pointList);
+	void GetSomaCentroids(unsigned int volumeThreshold, PointList3D &seg_seeds);
 
 private:
-	ProbImageType::Pointer binImage;
+	ProbImageType::Pointer inputImage;
 	SegmentedImageType::Pointer somaImage;
 	yousef_nucleus_seg *NucleusSeg;
+
 	vector<Seed> seeds;
-	int SM,SN,SZ;
-	std::vector< int> boundaryPix;	//boundary pixels for each label
-	std::map< TLPixel, int> LtoIMap;	
+	PointList3D *somaSeedQueue;
+	vtkSmartPointer<vtkTable> somaFeatureTable;
+	vector< vector< volumePoint> > volumeVec;
+	PointList3D somaCentroidsList;
 };
 
 #endif

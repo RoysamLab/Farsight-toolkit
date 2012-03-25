@@ -43,12 +43,14 @@ class PointList3D;
 class Point3D
 {
 public:
+	int index;
 	float x;
 	float y;
 	float z;
+	int tag;
 
 	Point3D(void);
-	Point3D(float X, float Y, float Z);
+	Point3D(float X, float Y, float Z, int TAG = 0, int INDEX = 0);
 	Point3D operator = (Vector3D V);
 	Point3D operator + (Vector3D V);
 	Point3D operator + (Point3D P);
@@ -100,8 +102,6 @@ class PointList3D
 {
 public:
 	//Point3D *Pt;
-	std::vector<Point3D> Pt;
-	int	NP;
 	PointList3D(void);
 	//PointList3D(int N);
 
@@ -114,7 +114,7 @@ public:
 	//void SetN(int N);
 
 	void AddPt(Point3D P);
-	void AddPt(float x, float y, float z);
+	void AddPt(float x, float y, float z, int tag = 0, int index = 0);
 	void AddPtList(PointList3D pl);
 
 	void AddTailPt(Point3D P);
@@ -131,6 +131,15 @@ public:
 	void SetPt(int i, Point3D P);
 	void Flip();
     std::vector<float> Flip_4D(std::vector<float> Ru);
+
+	/// initialize the queue
+	void BuildNeighbourList(); 
+
+	/// remove the point from queue
+	void RemovePtTag( int tag); 
+
+	/// get first point in each queue and get a new pointList
+	void GetFirstPointOfEachQueue( PointList3D &pointList);
 
 	float GetLength(void);
 	float GetPartLength(int id, int direct);
@@ -155,6 +164,8 @@ public:
 	float CubicNPSpline(float t, int n);
 	void Cast_Open_Snake(Point3D sp);
 
+	std::vector<Point3D> Pt;
+	int	NP;
 };
 
 bool IsEven(int n);
