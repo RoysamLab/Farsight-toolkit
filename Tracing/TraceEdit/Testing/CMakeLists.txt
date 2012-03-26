@@ -59,5 +59,17 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-RaycastTools PROPERTIES
     DEPENDS TraceEdit-ClearSettings
   )
+  
+  add_test(
+    TraceEdit-LoadTraceImageSoma
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${FARSIGHT_DATA_ROOT}/TraceData/
+    ${TraceEdit_TEST_DIR}/test_load_trace_image_soma.xml
+    ${TraceEdit_TEST_DIR}/baseline_load_trace_image_soma.png
+  )
+  set_tests_properties(TraceEdit-RaycastTools PROPERTIES
+    DEPENDS TraceEdit-ClearSettings
+  )
 
 endif()

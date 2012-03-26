@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Traces"/>
+    <event widget="Farsight-app" command="FilesOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop-trace.swc"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Image"/>
+    <event widget="Farsight-app" command="FileOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop.tif"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Somas"/>
+    <event widget="Farsight-app" command="FileOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop-somas.tif"/>
+    <event widget="1View3D0/1QMenuBar0/ShowToolBars" command="activate" arguments="RayCast Tools"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="52"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="54"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="242"/>
+    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="key" arguments="16777219"/>
+    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="set_double" arguments="0"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="151"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="148"/>
+    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="0"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="Resize Window"/>
+</events>

@@ -163,6 +163,14 @@ View3D::View3D(QWidget *parent)
         this->TestBaselineImageFileName = nextFile;
 	#endif
     }
+    else if (nextFile.endsWith("/") || nextFile.endsWith("\\"))
+    {
+      //set default directory to load input files from
+      this->TraceEditSettings.setValue("somaDir", nextFile);
+      this->TraceEditSettings.setValue("traceDir", nextFile);
+      this->TraceEditSettings.setValue("imageDir", nextFile);
+      this->TraceEditSettings.setValue("projectDir", nextFile);
+    }
 	}//end of arg 
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
