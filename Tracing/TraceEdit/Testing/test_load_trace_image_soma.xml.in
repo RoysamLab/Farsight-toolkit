@@ -2,11 +2,11 @@
 <events>
     <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
     <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Traces"/>
-    <event widget="Farsight-app" command="FilesOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop-trace.swc"/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-trace.swc"/>
     <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Image"/>
-    <event widget="Farsight-app" command="FileOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop.tif"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop.tif"/>
     <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Somas"/>
-    <event widget="Farsight-app" command="FileOpen" arguments="/projects/farsight/data/TraceData/C1-1unmixed-crop-somas.tif"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-somas.tif"/>
     <event widget="1View3D0/1QMenuBar0/ShowToolBars" command="activate" arguments="RayCast Tools"/>
     <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="52"/>
     <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="54"/>

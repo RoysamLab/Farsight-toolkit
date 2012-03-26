@@ -11,8 +11,10 @@ if(QtTestingFound)
 
   if(APPLE)
     set(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit.app/Contents/MacOS/TraceEdit) 
+    set(AppName "Farsight")
   else()
     set(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit)
+    set(AppName "TraceEdit")
   endif()
 
   set(TraceEdit_TEST_DIR ${TraceEdit_SOURCE_DIR}/Testing)
@@ -59,13 +61,18 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-RaycastTools PROPERTIES
     DEPENDS TraceEdit-ClearSettings
   )
+    
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_load_trace_image_soma.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_load_trace_image_soma.xml
+    @ONLY)
   
   add_test(
     TraceEdit-LoadTraceImageSoma
     ${TraceEdit_EXE}
     ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
     ${FARSIGHT_DATA_ROOT}/TraceData/
-    ${TraceEdit_TEST_DIR}/test_load_trace_image_soma.xml
+    ${CMAKE_CURRENT_BINARY_DIR}/test_load_trace_image_soma.xml
     ${TraceEdit_TEST_DIR}/baseline_load_trace_image_soma.png
   )
   set_tests_properties(TraceEdit-RaycastTools PROPERTIES
