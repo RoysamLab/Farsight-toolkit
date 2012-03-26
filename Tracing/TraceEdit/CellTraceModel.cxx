@@ -505,11 +505,11 @@ void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 }
 void CellTraceModel::createCellToCellGraph()
 {
-	std::map< unsigned int, std::vector<float> > centroidMap;
+	std::map< unsigned int, std::vector<double> > centroidMap;
 	for(unsigned int i = 0; i < this->Cells.size(); i++)
 	{
 		unsigned int id = this->Cells.at(i)->rootID();
-		std::vector<float> cellCoord;
+		std::vector<double> cellCoord;
 		cellCoord.push_back(this->Cells.at(i)->somaX);
 		cellCoord.push_back(this->Cells.at(i)->somaY);
 		cellCoord.push_back(this->Cells.at(i)->somaZ);
