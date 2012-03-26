@@ -5956,16 +5956,8 @@ int View3D::runTests()
     return -1;
     }
 
-  if( this->TestBaselineImageFileName == "" )
-    {
-    std::cout << "ERROR: TestBaselineImageFileName is empty" << std::endl;
-    return 1;
-    }
-
   //setup test utility
   this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );  
-  this->Tester->SetBaselineImage(
-    this->TestBaselineImageFileName.toStdString().c_str() );
 	
   //resize QVTK to match dimensions of recorded screenshots
   this->resizeForTesting();
@@ -5973,14 +5965,22 @@ int View3D::runTests()
   //playback the test recording
   this->Tester->playTestFile( this->TestInputFile );
   
-  //compare render window to screenshot of baseline  
-  if(this->Tester->compareResults() == false)
+  //if this is an image comparison test, compare render window to
+  //screenshot of baseline  
+  if( this->TestBaselineImageFileName != "" )
     {
-    std::cout << "ERROR: test failed" << std::endl;
-    return 1;
+    this->Tester->SetBaselineImage(
+      this->TestBaselineImageFileName.toStdString().c_str() );
+    if(this->Tester->compareResults() == false)
+      {
+      std::cout << "ERROR: test failed" << std::endl;
+      return 1;
+      }
+    else
+      {
+      std::cout << "test passed" << std::endl;
+      }
     }
-	
-  std::cout << "test passed" << std::endl;
   return 0;
   #endif
   return -1;
@@ -6001,6 +6001,9 @@ void View3D::clearSettings()
       "All QSettings have been reverted to their default values",
       QMessageBox::Ok, QMessageBox::Ok);
   }
+
+  //for testing
+  std::cout << "All QSettings have been reverted to their default values" << std::endl;
 }
 
 void View3D::recordTest()

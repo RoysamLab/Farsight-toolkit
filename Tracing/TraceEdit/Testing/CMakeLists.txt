@@ -1,41 +1,63 @@
-
 include_directories(${TraceEdit_SOURCE_DIR})
 
-ADD_EXECUTABLE(TraceEdit-StartStop TraceEditStartStop.cxx)
-TARGET_LINK_LIBRARIES(TraceEdit-StartStop Trace)
-ADD_TEST(TraceEdit-StartStop ${Farsight_BINARY_DIR}/exe/TraceEdit-StartStop)
-SET_TESTS_PROPERTIES(TraceEdit-StartStop PROPERTIES
+add_executable(TraceEdit-StartStop TraceEditStartStop.cxx)
+target_link_libraries(TraceEdit-StartStop Trace)
+add_test(TraceEdit-StartStop ${Farsight_BINARY_DIR}/exe/TraceEdit-StartStop)
+set_tests_properties(TraceEdit-StartStop PROPERTIES
   FAIL_REGULAR_EXPRESSION "vtkDebugLeaks has detected LEAKS!"
 )
 
-IF(QtTestingFound)
-  IF(APPLE)
-    SET(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit.app/Contents/MacOS/TraceEdit) 
-  ELSE()
-    SET(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit)
-  ENDIF()
+if(QtTestingFound)
 
-  SET(TraceEdit_TEST_DIR ${TraceEdit_SOURCE_DIR}/Testing)
+  if(APPLE)
+    set(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit.app/Contents/MacOS/TraceEdit) 
+  else()
+    set(TraceEdit_EXE ${Farsight_BINARY_DIR}/exe/TraceEdit)
+  endif()
 
-  ADD_TEST(
+  set(TraceEdit_TEST_DIR ${TraceEdit_SOURCE_DIR}/Testing)
+  
+  add_test(
+    TraceEdit-ClearSettings
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C5TracedPoints.swc
+    ${TraceEdit_TEST_DIR}/test_clearsettings.xml
+  )
+  set_tests_properties(TraceEdit-ClearSettings PROPERTIES
+    PASS_REGULAR_EXPRESSION "All QSettings have been reverted to their default values"
+  )
+
+  add_test(
     TraceEdit-AutoMerge
     ${TraceEdit_EXE}
     ${FARSIGHT_DATA_ROOT}/TraceData/C5TracedPoints.swc
     ${TraceEdit_TEST_DIR}/test_automerge.xml
     ${TraceEdit_TEST_DIR}/baseline_automerge.png
   )
-  ADD_TEST(
+  set_tests_properties(TraceEdit-AutoMerge PROPERTIES
+    DEPENDS TraceEdit-ClearSettings
+  )
+
+  add_test(
     TraceEdit-SelectTree
     ${TraceEdit_EXE}
     ${FARSIGHT_DATA_ROOT}/TraceData/cnic_macaque_pyramidal.swc
     ${TraceEdit_TEST_DIR}/test_select_tree.xml
     ${TraceEdit_TEST_DIR}/baseline_select_tree.png
   )
-  ADD_TEST(
+  set_tests_properties(TraceEdit-SelectTree PROPERTIES
+    DEPENDS TraceEdit-ClearSettings
+  )
+
+  add_test(
     TraceEdit-RaycastTools
     ${TraceEdit_EXE}
     ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
     ${TraceEdit_TEST_DIR}/test_raycast_tools.xml
     ${TraceEdit_TEST_DIR}/baseline_raycast_tools.png
   )
-ENDIF()
+  set_tests_properties(TraceEdit-RaycastTools PROPERTIES
+    DEPENDS TraceEdit-ClearSettings
+  )
+
+endif()
