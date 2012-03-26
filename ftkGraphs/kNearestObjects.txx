@@ -4,7 +4,7 @@
 #include "kNearestObjects.h"
 
 template <int num_dimensions>
-kNearestObjects<num_dimensions>::kNearestObjects(std::map< unsigned int, std::vector<float> > centroidMap)
+kNearestObjects<num_dimensions>::kNearestObjects(std::map< unsigned int, std::vector<double> > centroidMap)
 {
 	allIds = 0;
 	featureTable = NULL;
@@ -261,12 +261,6 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 				kNearestIds.erase(kNearestIds.begin()+k+1);
 		}
 	}
-
-	for(int i=0; i<kNearestIds.size(); ++i)
-	{
-		std::cout << kNearestIds[i].first << "_";
-	}
-	std::cout << "\n";
 
 	return kNearestIds;
 

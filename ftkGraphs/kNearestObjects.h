@@ -34,7 +34,7 @@ template <int num_dimensions>
 class kNearestObjects
 {
 public: 
-	typedef itk::Vector< float, num_dimensions > MeasurementVectorType;
+	typedef itk::Vector< double, num_dimensions > MeasurementVectorType;
 	typedef itk::Statistics::ListSample< MeasurementVectorType > SampleType;
 	typedef itk::Statistics::KdTreeGenerator< SampleType > TreeGeneratorType;
 	typedef itk::Statistics::KdTreeNode< MeasurementVectorType > KdTreeNodeType;
@@ -49,7 +49,7 @@ public:
 	graph_traits < NeighborGraph >::adjacency_iterator ai, ai_end;
 
 	//constructor
-	kNearestObjects(std::map< unsigned int, std::vector<float> > centroidMap);
+	kNearestObjects(std::map< unsigned int, std::vector<double> > centroidMap);
 	//destructor
 	~kNearestObjects() {}
 /* initialization functions */
@@ -76,8 +76,8 @@ private:
 	int allIds;
 	typename SampleType::Pointer sample;
 	typename TreeGeneratorType::Pointer treeGenerator;
-	std::map< unsigned int, std::vector<float> > centerMap;
-	std::map< unsigned int, std::vector<float> >::iterator It;
+	std::map< unsigned int, std::vector<double> > centerMap;
+	std::map< unsigned int, std::vector<double> >::iterator It;
 	std::map<int, MeasurementVectorType> idToCentroidMap;
 	typename std::map<int, MeasurementVectorType>::iterator IdIt;
 	typename TreeType::Pointer tree;
