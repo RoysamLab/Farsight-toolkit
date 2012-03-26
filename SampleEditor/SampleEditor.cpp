@@ -348,6 +348,7 @@ void SampleEditor::removeRows(void)
 	}
 	selection->clear();
 	table->update();
+	this->ClusterSelections->update();
 	plot->update();
 }
 

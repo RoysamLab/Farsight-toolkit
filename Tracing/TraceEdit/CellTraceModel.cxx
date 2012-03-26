@@ -25,7 +25,6 @@ CellTraceModel::CellTraceModel()
 	this->ColumnSelection = new ObjectSelection();
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
-	this->CellIDLookupMAP.clear();
 	this->AdditionalHeaders.clear();
 }
 CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
@@ -53,6 +52,7 @@ void CellTraceModel::setCells(std::vector<CellTrace*> Cells)
 {
 	this->Cells.clear();
 	this->Cells = Cells;
+	this->CellIDLookupMAP.clear();
 	this->SyncModel();
 }
 void CellTraceModel::SetupHeaders()

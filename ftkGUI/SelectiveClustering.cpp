@@ -288,14 +288,22 @@ bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTab
 	}
 	this->ObjectTable->Initialize();
 	this->ObjectTable = InputObjectTable;
-	this->NumberOfObjects = rows;
+	this->update();
+	return true;
+}
+
+void SelectiveClustering::update()
+{
+	this->NumberOfObjects = this->ObjectTable->GetNumberOfRows();
 	for ( vtkIdType currow = 0; currow <= this->NumberOfObjects; currow++ )
 	{
 		vtkIdType rowObjId = this->ObjectTable->GetValue( currow, 0 ).ToTypeInt64();
 		this->ObjectTableIDMap[ rowObjId ] = currow;
 	}
+	this->ClusterMap.clear();
+	this->CreateClusterTableHeaders();
+	this->ClusterTableIDMap.clear();
 	emit DataChanged();
-	return true;
 }
 
 vtkSmartPointer<vtkTable> SelectiveClustering::GetTableOfAllSelected()

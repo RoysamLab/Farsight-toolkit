@@ -120,6 +120,7 @@ public:
 
 	// Object Table Functions
 	bool SetObjectTable(vtkSmartPointer<vtkTable> InputObjectTable);
+	void update();
 	vtkSmartPointer<vtkTable> GetTableOfAllSelected();
 	vtkSmartPointer<vtkTable> GetTableOfSelectedFromCluster(vtkIdType key);
 	std::set< vtkIdType > cluster_operator_ADD(vtkIdType key1,vtkIdType key2);
