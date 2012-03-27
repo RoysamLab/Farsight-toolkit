@@ -2924,14 +2924,14 @@ void NucleusEditor::queryKNearest()
 	std::map<int, ftk::Object::Point> *	centerMap;
 	centerMap = segView->GetCenterMapPointer();
 	std::map<int, ftk::Object::Point>::iterator it;
-	std::map< unsigned int, std::vector<float> > centroidMap;
+	std::map< unsigned int, std::vector<double> > centroidMap;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		unsigned int id = (unsigned int)(*it).first;
-		std::vector<float> c;
-		c.push_back((float)(*it).second.x);
-		c.push_back((float)(*it).second.y);
-		c.push_back((float)(*it).second.z);
+		std::vector<double> c;
+		c.push_back((*it).second.x);
+		c.push_back((*it).second.y);
+		c.push_back((*it).second.z);
 		centroidMap[id] = c;				
 	}
 
@@ -3042,14 +3042,14 @@ void NucleusEditor::queryInRadius()
 	std::map<int, ftk::Object::Point> *	centerMap;
 	centerMap = segView->GetCenterMapPointer();
 	std::map<int, ftk::Object::Point>::iterator it;
-	std::map< unsigned int, std::vector<float> > centroidMap;
+	std::map< unsigned int, std::vector<double> > centroidMap;
 	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
 	{
 		unsigned int id = (unsigned int)(*it).first;
-		std::vector<float> c;
-		c.push_back((float)(*it).second.x);
-		c.push_back((float)(*it).second.y);
-		c.push_back((float)(*it).second.z);
+		std::vector<double> c;
+		c.push_back((*it).second.x);
+		c.push_back((*it).second.y);
+		c.push_back((*it).second.z);
 		centroidMap[id] = c;
 	}
 
