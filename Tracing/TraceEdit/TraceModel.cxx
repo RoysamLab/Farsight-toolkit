@@ -113,7 +113,7 @@ void TraceModel::SyncModel()
 	this->DataTable->Initialize();	
 	this->Selection->clear();
 	this->SetupHeaders();
-	
+	this->TraceIDLookupMAP.clear();
 	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
 		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
@@ -152,6 +152,7 @@ void TraceModel::SyncModel()
 			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
 		}
 		this->DataTable->InsertNextRow(DataRow);
+		this->TraceIDLookupMAP[this->TraceLines.at(i)->GetId()] = this->TraceLines.at(i);
 	}//end for traces.size  
 	//this->MapTracesToRows();
 }
@@ -221,20 +222,26 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 	//Search for traces
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
-		bool found = false; 
-		unsigned int j = 0;
-		while ((!found )&&(j < this->TraceLines.size()))
+		this->TraceIDLookupIter = this->TraceIDLookupMAP.find(IDList[i]);
+		if (this->TraceIDLookupIter != this->TraceIDLookupMAP.end())
 		{
-			if (this->TraceLines[j]->GetId()==IDList[i])
-			{
-				selectedTrace.push_back(this->TraceLines[j]);
-				found= true;
-			}
-			else
-			{
-				j++;
-			}
-		}//end search for trace
+			selectedTrace.push_back((*this->TraceIDLookupIter).second);
+		}
+
+		//bool found = false; 
+		//unsigned int j = 0;
+		//while ((!found )&&(j < this->TraceLines.size()))
+		//{
+		//	if (this->TraceLines[j]->GetId()==IDList[i])
+		//	{
+		//		selectedTrace.push_back(this->TraceLines[j]);
+		//		found= true;
+		//	}
+		//	else
+		//	{
+		//		j++;
+		//	}
+		//}//end search for trace
 	}//finished with id search
 	return selectedTrace;
 }
@@ -266,20 +273,25 @@ std::vector<TraceLine*> TraceModel::GetSelectedRoots()
 	}
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{
-		bool found = false; 
-		unsigned int j = 0;
-		while ((!found )&&(j < this->TraceLines.size()))
+		this->TraceIDLookupIter = this->TraceIDLookupMAP.find(IDList[i]);
+		if (this->TraceIDLookupIter != this->TraceIDLookupMAP.end())
 		{
-			if (this->TraceLines[j]->GetId()==IDList[i])
-			{
-				roots.push_back(this->TraceLines[j]);
-				found= true;
-			}
-			else
-			{
-				j++;
-			}
-		}//end search for trace
+			roots.push_back((*this->TraceIDLookupIter).second);
+		}
+		//bool found = false; 
+		//unsigned int j = 0;
+		//while ((!found )&&(j < this->TraceLines.size()))
+		//{
+		//	if (this->TraceLines[j]->GetId()==IDList[i])
+		//	{
+		//		roots.push_back(this->TraceLines[j]);
+		//		found= true;
+		//	}
+		//	else
+		//	{
+		//		j++;
+		//	}
+		//}//end search for trace
 	}//finished with id search
 	return roots;
 }

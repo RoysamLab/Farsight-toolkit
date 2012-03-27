@@ -265,6 +265,7 @@ void CellTraceModel::SyncModel()
 	int size = this->AdditionalHeaders.size();
 	this->DataTable->Initialize();	
 	this->Selection->clear();
+	this->CellIDLookupMAP.clear();
 	this->SetupHeaders();
 	if (size == 0)
 	{
@@ -409,25 +410,16 @@ std::set<long int> CellTraceModel::GetSelectedIDs()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		int id = (int) *it;
-		bool found = false;
-		unsigned int j = 0;
-		while(!found&&(j<this->Cells.size()))
+		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
+		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
 		{
-			if (id == this->Cells.at(j)->rootID())
+			nextIDs = ((*this->CellIDLookupIter).second)->TraceIDsInCell();
+			std::set<long>::iterator k;
+			for (k = nextIDs.begin(); k != nextIDs.end(); k++)
 			{
-				nextIDs = this->Cells.at(j)->TraceIDsInCell();
-				std::set<long>::iterator k;
-				for (k = nextIDs.begin(); k != nextIDs.end(); k++)
-				{
-					allSelectedIDs.insert(*k);
-				}
-				found = true;
-			}else
-			{
-				j++;
+				allSelectedIDs.insert(*k);
 			}
-		}//end while !found
+		}
 	}//end for selected
 	return allSelectedIDs;
 }
@@ -438,20 +430,6 @@ std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		//int id = (int) *it;
-		//bool found = false;
-		//unsigned int j = 0;
-		//while(!found&&(j<this->Cells.size()))
-		//{
-		//	if (id == this->Cells.at(j)->rootID())
-		//	{
-		//		selectedCell.push_back(this->Cells.at(j));
-		//		found = true;
-		//	}else
-		//	{
-		//		j++;
-		//	}
-		//}//end while !found
 		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
 		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
 		{

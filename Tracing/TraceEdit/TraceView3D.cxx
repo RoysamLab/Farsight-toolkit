@@ -4266,7 +4266,7 @@ void View3D::updateSelectionFromCell()
 	/*! 
 	* Links CellModel selection to TraceModel Selection
 	*/
-	//this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
+	this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
 	int limit = selectedCells.size();

@@ -31,6 +31,9 @@ limitations under the License.
 #include "QvtkTableView.h"
 #include "SelectionUtilities.h"
 
+// 
+#include <map>
+
 class QStandardItemModel;
 class QItemSelectionModel;
 class TraceLine;
@@ -86,5 +89,8 @@ private:
 	void SyncModel();	
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
+	
+	std::map<long int ,TraceLine*> TraceIDLookupMAP;
+	std::map<long int ,TraceLine*>::iterator TraceIDLookupIter;
 };
 #endif
