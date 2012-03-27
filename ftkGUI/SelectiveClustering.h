@@ -190,6 +190,7 @@ public slots:
 	void CloseClusterObjectTables();
 
 	void ChangeInClusters();
+	void ChangeInData();
 	
 
 	void ChangeInObjectSelection();

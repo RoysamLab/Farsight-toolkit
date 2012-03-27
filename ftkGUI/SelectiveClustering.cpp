@@ -686,6 +686,7 @@ void ClusterManager::setClusteringModel(SelectiveClustering * newClusterModel)
 	*/
 	this->ClusterModel = newClusterModel;
 	connect(this->ClusterModel, SIGNAL(ClusterChanged()), this, SLOT(ChangeInClusters()));
+	connect(this->ClusterModel, SIGNAL(DataChanged()), this, SLOT(ChangeInData()));
 }
 
 void ClusterManager::setObjectSelection(ObjectSelection *ObjSelection)
@@ -855,6 +856,27 @@ void ClusterManager::ChangeInClusters()
 	Operand1->addItems(ClusterList);
 	Operand2->addItems(ClusterList);
 
+}
+
+void ClusterManager::ChangeInData()
+{
+	/*! 
+	* updates views when sorce data changes
+	*/
+	int numClust = (int) this->ClusterModel->NumberOfClusters();
+	this->NumClusters->setNum(numClust);
+	this->NumObjects->setNum((int) this->ClusterModel->GetNumberOfObjects());
+	this->NumSelected->setNum((int) this->ClusterModel->GetNumberOfSelections());
+
+	this->QVTKClusterTableView->SetInputLink(this->ClusterModel->GetClusterTable(), this->ClusterModel->ClusterAnnotationLink);
+	if (this->ClusterFeatureDialog)
+	{
+		this->ClusterFeatureDialog->UpdateView(this->ClusterModel->ClusterFeatureTable(),  this->ClusterModel->ClusterAnnotationLink);
+	}
+	if (this->ClusterObjectTables.size() > 0)
+	{
+		this->CloseClusterObjectTables();
+	}
 }
 
 void ClusterManager::ChangeInObjectSelection()
