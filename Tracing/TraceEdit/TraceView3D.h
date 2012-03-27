@@ -379,6 +379,7 @@ private:
 	QAction *saveAction;
 	QAction *SaveComputedCellFeaturesTableAction;
 	QAction *saveSelectedAction;
+	QAction *saveProjectAction;
 	QAction *exitAction;
 	QAction *loadTraceAction;
 	QAction *loadTraceImage;

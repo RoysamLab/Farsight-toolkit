@@ -1102,6 +1102,10 @@ void View3D::CreateGUIObjects()
 	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
 	connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
+	
+	this->saveProjectAction = new QAction(tr("Save Project"), this->CentralWidget);
+	connect(this->saveProjectAction, SIGNAL(triggered()), this, SLOT(SaveProjectFile()));
+	this->saveProjectAction->setStatusTip("Save current project");
 
 	this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
 	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
@@ -1610,6 +1614,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
+	this->fileMenu->addAction(this->saveProjectAction);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->ScreenshotAction);
 	this->fileMenu->addAction(this->AutoCellExportAction);
@@ -5409,6 +5414,12 @@ void View3D::SaveProjectFile()
 		{
 			project->addFile(this->tempTraceFile.last().toStdString(), "Trace", 0,0,0);
 		}
+		for (unsigned int i = 0; i < this->TraceFiles.size(); i++)
+		{
+			std::string traceFile = this->TraceFiles.at(i).toStdString();
+			project->addFile(traceFile, "Trace", 0,0,0);
+		}//end adding traces
+
 		this->ProjectName = newProject;
 		project->writeProject((char*)newProject.toStdString().c_str());
 		this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
