@@ -48,7 +48,7 @@ if(QtTestingFound)
     ${TraceEdit_TEST_DIR}/baseline_select_tree.png
   )
   set_tests_properties(TraceEdit-SelectTree PROPERTIES
-    DEPENDS TraceEdit-ClearSettings
+    DEPENDS TraceEdit-AutoMerge
   )
 
   add_test(
@@ -59,7 +59,7 @@ if(QtTestingFound)
     ${TraceEdit_TEST_DIR}/baseline_raycast_tools.png
   )
   set_tests_properties(TraceEdit-RaycastTools PROPERTIES
-    DEPENDS TraceEdit-ClearSettings
+    DEPENDS TraceEdit-SelectTree
   )
     
   configure_file(
@@ -75,8 +75,19 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/test_load_trace_image_soma.xml
     ${TraceEdit_TEST_DIR}/baseline_load_trace_image_soma.png
   )
-  set_tests_properties(TraceEdit-RaycastTools PROPERTIES
-    DEPENDS TraceEdit-ClearSettings
+  set_tests_properties(TraceEdit-LoadTraceImageSoma PROPERTIES
+    DEPENDS TraceEdit-RaycastTools
+  )
+  
+  add_test(
+    TraceEdit-Reload
+    ${TraceEdit_EXE}
+    ${TraceEdit_TEST_DIR}/test_reload.xml
+    ${TraceEdit_TEST_DIR}/baseline_reload.png
+    reload
+  )
+  set_tests_properties(TraceEdit-Reload PROPERTIES
+    DEPENDS TraceEdit-LoadTraceImageSoma
   )
 
 endif()

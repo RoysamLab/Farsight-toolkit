@@ -171,6 +171,11 @@ View3D::View3D(QWidget *parent)
       this->TraceEditSettings.setValue("imageDir", nextFile);
       this->TraceEditSettings.setValue("projectDir", nextFile);
     }
+    else if (nextFile.endsWith("reload"))
+    {
+    this->ReloadState();
+    return;
+    }
 	}//end of arg 
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
