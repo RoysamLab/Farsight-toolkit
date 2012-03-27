@@ -33,6 +33,7 @@
 #include <ftkLabelImageToFeatures.h>
 #include <ftkImage.h>
 #include <ftkUtils.h>
+#include "itkImageFileWriter.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
 #include "ftkGUI/TrainingDialog.h"

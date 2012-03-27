@@ -895,7 +895,8 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	segImagePtr = new unsigned short[numRows*numColumns];
 	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
 
-	for( int n=0; n<numConnComp; n++ ){
+	for( int n=0; n<numConnComp; n++ )
+	{
 		std::cout<<"Processing Connected Component #"<<n+1<<"...";
 		//Now, get the subimages (the bounding box) for the current connected component
 		ind = 0;

@@ -82,6 +82,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	confidence_thresh = 0.5;
 	prediction_col_name = "prediction_active";
 	confidence_col_name = "confidence";
+	this->HeatmapWinforAL = NULL;
 
 #ifdef USE_TRACKING
 	mfcellTracker = NULL;
@@ -2292,6 +2293,13 @@ void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int>
 				return;
 			}
 		}
+		if(this->HeatmapWinforAL == NULL)
+		{
+			this->HeatmapWinforAL = new Heatmap();
+		}	
+		this->HeatmapWinforAL->setModels(mclr->Rearrange_Table(pawTable));
+        this->HeatmapWinforAL->reRunClus();
+        this->HeatmapWinforAL->showGraphforNe();
 
 		// Update the data & refresh the training model and refresh the Training Dialog 		
 		mclr->Update_Train_Data(query_labels);
@@ -2500,8 +2508,150 @@ void NucleusEditor::Start_Classification(bool create_model)
 	projectFiles.tableSaved = false;
 	activeRun = 1;		
 	this->updateViews();
+	this->HeatmapforActivelearning(table,mclr->numberOfClasses);
+}
+/****************************************************************
+function for heatmap of active learning result
+*****************************************************************/
+void NucleusEditor::HeatmapforActivelearning( vtkSmartPointer<vtkTable> table, int class_num)
+{
+	QMessageBox msgBox;
+	//msgBox.setText("The document has been modified.");
+	msgBox.setInformativeText("Do you want a heatmap for the active learning result ?");
+	msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+	msgBox.setDefaultButton(QMessageBox::Cancel);
+	int ret = msgBox.exec();
 
+	switch (ret) 
+	{
+		case QMessageBox::Ok:
+			this->ClusteringWithinLabels(table,class_num);
+			break;
+		case QMessageBox::Cancel:
+			//nothing is done 
+			break;
+		default:
+			// should never be reached
+			break;
+	}
+}
+void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int num_class)
+{
+	std::cout<<"table row number "<<table->GetNumberOfColumns()<<std::endl;
+	std::cout<<"table row number "<<table->GetNumberOfRows()<<std::endl;
+	int* order = new int[table->GetNumberOfRows()];
+	std::vector<std::vector<std::vector<double > > > treesdata;
 
+	vtkSmartPointer<vtkTable> rearrangedtable = vtkSmartPointer<vtkTable>::New();
+	rearrangedtable->Initialize();
+	for(int col=0; col<table->GetNumberOfColumns(); ++col)
+	{
+		vtkSmartPointer<vtkDoubleArray> columns = vtkSmartPointer<vtkDoubleArray>::New();
+		columns->SetName(table->GetColumnName(col));
+		rearrangedtable->AddColumn(columns);	
+	}
+
+	std::vector< vtkSmartPointer<vtkTable> > tables;
+	for(int i=0; i<=num_class; i++)
+	{
+		vtkSmartPointer<vtkTable> temptable = vtkSmartPointer<vtkTable>::New();
+		temptable->Initialize();
+		for(int col=0; col<table->GetNumberOfColumns(); ++col)
+		{
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(table->GetColumnName(col));
+			temptable->AddColumn(column);	
+		}
+		tables.push_back(temptable);
+	}
+	for(int i=0; i<table->GetNumberOfRows(); i++)
+	{	
+		std::cout<<table->GetColumnByName("prediction_active")->GetSize()<<std::endl;
+		vtkVariant cn = table->GetValueByName(i, "prediction_active" );
+		std::cout<<cn<<std::endl;
+		tables[cn.ToInt()]->InsertNextRow(table->GetRow(i));
+	}
+	for(int i=0; i<=num_class; i++)
+	{
+		for(int j=0; j<tables[i]->GetNumberOfRows(); j++)
+		{
+			rearrangedtable->InsertNextRow(tables[i]->GetRow(j));
+		}
+	}
+
+	int count = 0;// for counting of rows already in the order
+	int tablecount = 0;// for counting of tables already in the order
+	for(int i=0; i<=num_class; i++)
+	{
+		std::cout<<"Num_class: " << i <<" of "<< num_class <<std::endl;
+		if(tables[i]->GetNumberOfRows()==0)
+		{
+			std::cout<<"table is empty for this class..."<<i<<std::endl;
+			continue;
+		}
+		pWizard = new PatternAnalysisWizard( tables[i], PatternAnalysisWizard::_CLUS, "", "", this);
+		connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+		connect(pWizard, SIGNAL(enableModels()), this, SLOT(EnableModels()));
+		pWizard->setWindowTitle(QString::number(i));
+		pWizard->exec();
+		
+		if(pWizard->result())
+		{
+			std::cout<<"show heatmap";
+			vtkSmartPointer<vtkTable> featureTable;
+			featureTable = pWizard->getExtractedTable();
+
+			//Heatmap* HeatmapWin = new Heatmap();
+			//HeatmapWin->setModels(featureTable, this->selection);
+			//HeatmapWin->runClus();
+			//HeatmapWin->showGraph();
+			////////////////////////////////////////////////////////////////////////
+			double** datas;
+			datas = new double*[featureTable->GetNumberOfRows()];
+
+			for (int i = 0; i < featureTable->GetNumberOfRows(); i++)
+			{
+				datas[i] = new double[featureTable->GetNumberOfColumns() - 1 + 2 ];
+			}
+
+			for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
+			{		
+				for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
+				{
+					vtkVariant temp = featureTable->GetValue(i, j);
+					datas[i][j-1] = temp.ToDouble();
+				}
+			}
+
+			clusclus* cc = new clusclus(datas, (int)featureTable->GetNumberOfRows(), (int)featureTable->GetNumberOfColumns() - 1);
+			cc->RunClusClus();
+			for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
+			{
+				order[count++] = cc->optimalleaforder[i] + tablecount;
+			}
+			tablecount += featureTable->GetNumberOfRows();
+
+			std::vector<std::vector<double > > treedata;
+			for(int i = 0; i<featureTable->GetNumberOfRows() -1; i++)
+			{	
+				std::vector<double > temp;
+				for(int j = 0; j<4; j++)
+				{
+					temp.push_back (cc->treedata[i][j]);
+				}
+				treedata.push_back(temp);
+			}
+			treesdata.push_back(treedata);
+			delete datas;
+			///////////////////////////////////////////////////////////////////////
+		}	
+	}
+	Heatmap* HeatmapWin = new Heatmap();
+	HeatmapWin->setModels(rearrangedtable, this->selection);
+	HeatmapWin->setOrders(order);
+	HeatmapWin->setMultipleTreeData(treesdata);
+	HeatmapWin->creatDataForHeatmap(0.2);
+	HeatmapWin->showGraph();
 }
 std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector)
 {

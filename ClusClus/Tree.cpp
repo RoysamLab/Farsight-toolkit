@@ -42,6 +42,7 @@ void BiTree::constructTree()
 		std::vector<std::vector<double > > normalized;
 		this->normalize(datatobekmeans, normalized);
 		clustersToPoints = this->KmeansClustering(normalized,num_cluster);
+		//clustersToPoints = this->KmeansClustering(datatobekmeans,num_cluster);
 
 		std::vector<std::vector<double > > meanmatrix;
 		for(int i = 0; i < num_cluster; i++)

@@ -33,6 +33,7 @@ limitations under the License.
 #include "vnl/vnl_cost_function.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
 #include "vnl/algo/vnl_powell.h"
+#include <boost/math/special_functions.hpp>
 
 #include <QVTKWidget.h>
 

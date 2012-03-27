@@ -8,6 +8,8 @@ BiHeatmap::BiHeatmap(QWidget *parent)
 	this->dragLineFlag1 = false;
 	this->dragLineFlag2 = false;
 	this->removeActorflag = false;	
+	this->localselection = false;
+	this->num_selection_area = 0;
 }
 
 BiHeatmap::~BiHeatmap()
@@ -72,11 +74,55 @@ void BiHeatmap::normalize()
 				this->data[i][j] = this->data[i][j];	
 		}
 	}
+
+	//int numr = this->data.size();
+	//int numc = this->data[0].size();
+
+	//for(int j = 0; j < numc; j++)
+	//{
+	//	double mean = 0.0;
+	//	for(int i = 0; i < numr; i++)
+	//	{
+	//		mean += this->data[i][j];
+	//	}
+	//	mean /= numr;
+
+	//	double sum = 0.0;
+	//	for(int i = 0; i < numr; i++)
+	//	{
+	//		sum += ( this->data[i][j] - mean ) * ( this->data[i][j] - mean );
+	//	}
+	//	double std = sqrt(sum / numr);
+
+	//	for(int i = 0; i < numr; i++)
+	//	{
+	//		this->data[i][j]= ((this->data[i][j] - mean) / std);
+	//	}
+	//}
 }
 
 void BiHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	this->table = table;
+	for( int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		for( int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			 double var = this->table->GetValue(i, j).ToDouble();
+			 if( !boost::math::isnan(var))
+			 {}
+			 else
+			 {
+				 if(i>0)
+					 vtkVariant value = this->table->GetValue(i-1, j);
+				 else 
+					 vtkVariant value = this->table->GetValue(i+1, j);
+				 this->table->SetValue(i, j, 0);
+				 break;
+			 }
+		}
+	}
+
 	this->num_rows = this->table->GetNumberOfRows();
 	this->num_cols = this->table->GetNumberOfColumns() - 1;
 
@@ -137,6 +183,7 @@ void BiHeatmap::showHeatmap()
 		}
 	}
 
+	this->WriteFile("data_for_maping.txt");
 	this->plane->Update();
 	this->plane->GetOutput()->GetCellData()->SetScalars(cellData);
 
@@ -150,7 +197,7 @@ void BiHeatmap::showHeatmap()
 
 	//show scalar bar
 	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
-	scalarbarLut->SetTableRange (-1, 1);
+	scalarbarLut->SetTableRange (-6, 13);
 	scalarbarLut->SetNumberOfTableValues(COLOR_MAP_SIZE);
 	for(int index = 0; index<COLOR_MAP_SIZE;index++)
 	{
@@ -213,7 +260,7 @@ void BiHeatmap::SetInteractStyle()
 
 rgb BiHeatmap::GetRGBValue(double val)
 {
-	int index = 5 * (val+12) - 1;   
+	int index = 6 * (val+6.5) - 1;   
 	if( index >= COLOR_MAP_SIZE)
 	{
 		index = COLOR_MAP_SIZE - 1;
@@ -492,6 +539,28 @@ void BiHeatmap::GetSelecectedIDs()
 	std::cout<<"get selected"<<endl;
 	std::set<long int> selectedIDs2 = this->Selection2->getSelections();
 	std::set<long int> selectedIDs1 = this->Selection->getSelections();	
+
+	if(selectedIDs2.empty ()&& selectedIDs1.empty())
+	{
+		if(this->removeActorflag == true)
+		{
+			if(this->dragLineFlag1)
+				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor1);
+			if(this->dragLineFlag2)
+				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor2);
+
+			for(int i = 0; i < this->num_selection_area; i++)
+				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+			this->removeActorflag = false;
+			this->num_selection_area = 0;
+
+			if(this->dragLineFlag1)
+				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(dragLineActor1);
+			if(this->dragLineFlag2)
+				this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(dragLineActor2);
+		}
+		return;
+	}
 	std::set<long int>::iterator iter1 = selectedIDs1.begin();
 	std::set<long int>::iterator iter2 = selectedIDs2.begin();
 	vtkSmartPointer<vtkIdTypeArray> getcellids = vtkSmartPointer<vtkIdTypeArray>::New();
@@ -507,7 +576,10 @@ void BiHeatmap::GetSelecectedIDs()
 
 	int count1 = 0;
 	int count2 = 0;
-
+	//////////////////////////////////
+	int min1 = this->num_rows;
+	int max1 = 0;
+	//////////////////////////////
 	while(iter1 != selectedIDs1.end())
 	{
 		int index1 = *iter1;
@@ -515,14 +587,38 @@ void BiHeatmap::GetSelecectedIDs()
 		int id1 = rowMapFromOriginalToReorder.find(var)->second;
 		IDs1[count1++] = id1;
 		iter1++;
+		///////////////////////////////////////
+		if (id1 < min1)
+		{
+			min1 = id1;
+		}
+		if (id1 > max1)
+		{
+			max1 = id1;
+		}
+		////////////////////////////////
 	}
 
+	//////////////////////////////////
+	int min2 = this->num_cols;
+	int max2 = 0;
+	//////////////////////////////
 	while(iter2 != selectedIDs2.end())
 	{
 		int index2 = *iter2;
 		int id2 = columnMapFromOriginalToReorder.find(index2)->second;
 		IDs2[count2++] = id2;
 		iter2++;
+			///////////////////////////////////////
+		if (id2 < min2)
+		{
+			min2 = id2;
+		}
+		if (id2 > max2)
+		{
+			max2 = id2;
+		}
+		////////////////////////////////
 	}
 
 	if( num1 == 0 && num2 != 0)
@@ -531,6 +627,10 @@ void BiHeatmap::GetSelecectedIDs()
 		IDs1.resize(num1);
 		for( int i = 0; i < this->num_rows; i++)
 			IDs1[i] = i;
+		///////////////////
+		min1 = 0;
+		max1 = this->num_rows - 1;
+		/////////////////
 	}
 
 	if( num2 == 0 && num1 != 0)
@@ -539,6 +639,10 @@ void BiHeatmap::GetSelecectedIDs()
 		IDs2.resize(num2);
 		for( int i = 0; i < this->num_cols; i++)
 			IDs2[i] = i;
+		///////////////////
+		min2 = 0;
+		max2 = this->num_cols - 1;
+		/////////////////
 	}
 
 	for(int i = 0; i<num1; i++)
@@ -570,16 +674,94 @@ void BiHeatmap::GetSelecectedIDs()
 	selectedActor->GetProperty()->SetEdgeColor(0.6 ,0.19, 0.8);
 	selectedActor->GetProperty()->SetLineWidth(0.5);
 
+/////////////////////////////////////////////////////////////////////////////
+	double p1[3];
+	double p2[3];
+	double p3[3];
+	double p4[3];
+
+	p1[0] = -0.5 + min2 * (1.0/this->num_cols);
+	p1[1] = -0.5 + (max1 + 1) * (1.0/this->num_rows);
+	p1[2] = 0;
+
+	p2[0] = -0.5 + (max2 + 1) * (1.0/this->num_cols);
+	p2[1] = -0.5 + (max1 + 1) * (1.0/this->num_rows);
+	p2[2] = 0;
+
+	p3[0] = -0.5 + min2 * (1.0/this->num_cols);
+	p3[1] = -0.5 + min1 * (1.0/this->num_rows);
+	p3[2] = 0;
+
+	p4[0] = -0.5 + (max2 + 1) * (1.0/this->num_cols);
+	p4[1] = -0.5 + min1 * (1.0/this->num_rows);
+	p4[2] = 0;
+	vtkSmartPointer<vtkLineSource> lineSource1 = vtkSmartPointer<vtkLineSource>::New();
+	lineSource1->SetPoint1(p1);
+	lineSource1->SetPoint2(p2);
+	vtkSmartPointer<vtkPolyDataMapper> mapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper1->SetInputConnection(lineSource1->GetOutputPort());
+	vtkSmartPointer<vtkActor> actor1 = vtkSmartPointer<vtkActor>::New();
+	actor1->GetProperty()->SetColor(0.6,0.19,0.8); 
+	actor1->GetProperty()->SetLineWidth(3);
+	actor1->SetMapper(mapper1);
+
+	vtkSmartPointer<vtkLineSource> lineSource2 = vtkSmartPointer<vtkLineSource>::New();
+	lineSource2->SetPoint1(p2);
+	lineSource2->SetPoint2(p4);
+	vtkSmartPointer<vtkPolyDataMapper> mapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper2->SetInputConnection(lineSource2->GetOutputPort());
+	vtkSmartPointer<vtkActor> actor2 = vtkSmartPointer<vtkActor>::New();
+	actor2->GetProperty()->SetColor(0.6,0.19,0.8); 
+	actor2->GetProperty()->SetLineWidth(3);
+	actor2->SetMapper(mapper2);
+
+	vtkSmartPointer<vtkLineSource> lineSource3 = vtkSmartPointer<vtkLineSource>::New();
+	lineSource3->SetPoint1(p3);
+	lineSource3->SetPoint2(p4);
+	vtkSmartPointer<vtkPolyDataMapper> mapper3 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper3->SetInputConnection(lineSource3->GetOutputPort());
+	vtkSmartPointer<vtkActor> actor3 = vtkSmartPointer<vtkActor>::New();
+	actor3->GetProperty()->SetColor(0.6,0.19,0.8); 
+	actor3->GetProperty()->SetLineWidth(3);
+	actor3->SetMapper(mapper3);
+
+	vtkSmartPointer<vtkLineSource> lineSource4 = vtkSmartPointer<vtkLineSource>::New();
+	lineSource4->SetPoint1(p1);
+	lineSource4->SetPoint2(p3);
+	vtkSmartPointer<vtkPolyDataMapper> mapper4 = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper4->SetInputConnection(lineSource4->GetOutputPort());
+	vtkSmartPointer<vtkActor> actor4 = vtkSmartPointer<vtkActor>::New();
+	actor4->GetProperty()->SetColor(0.6,0.19,0.8); 
+	actor4->GetProperty()->SetLineWidth(3);
+	actor4->SetMapper(mapper4);
+////////////////////////////////////////////////////////////////////////
+
 	if(this->dragLineFlag1)
 		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor1);
 	if(this->dragLineFlag2)
 		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor(dragLineActor2);
 
 	if(this->removeActorflag == true)
-		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
-
-	this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+	{
+		for(int i = 0; i < this->num_selection_area; i++)
+			this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->RemoveActor (this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor());
+	}
+	
+	if(this->localselection == false)
+	{
+		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(selectedActor);
+		this->num_selection_area = 1;
+	}
+	else
+	{
+		this->view->GetRenderer()->AddActor(actor1);
+		this->view->GetRenderer()->AddActor(actor2);
+		this->view->GetRenderer()->AddActor(actor3);
+		this->view->GetRenderer()->AddActor(actor4);
+		this->num_selection_area = 4;
+	}
 	this->removeActorflag = true;
+	this->localselection = false;
 
 	if(this->dragLineFlag1)
 		this->view->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(dragLineActor1);
@@ -806,6 +988,7 @@ void BiHeatmap::setSelectIds(std::set<long int>& IDs)
 
 	if(IDs.size() > 0)
 	{
+		this->localselection = true;
 		for(it = IDs.begin(); it != IDs.end(); it++)
 		{
 			id = *it;
@@ -932,6 +1115,7 @@ void BiHeatmap::setselectedCellIds()
 	for(int j = c1; j <= c2; j++)	
 		selectedIDs2.insert(this->order2[j]);
 		
+	this->localselection = true;
 	this->Selection2->select(selectedIDs2);
 	this->Selection->select(selectedIDs1);
 }
@@ -1094,4 +1278,19 @@ void BiHeatmap::showFeatureNames()
 
 	this->view->GetRenderer()->AddActor(lactor);
 	this->view->GetRenderer()->AddActor(ractor);
+}
+
+void BiHeatmap::WriteFile(const char *filename1)
+{
+	FILE *fp1 = fopen(filename1,"w");
+	for(int i=0; i<this->num_rows; i++)
+	{
+		for(int j=0; j<this->num_cols; j++)
+		{
+			fprintf(fp1,"%f",this->data[i][j]);
+			fprintf(fp1,"\t");
+		}				
+		fprintf(fp1,"\n");
+	}
+	fclose(fp1);
 }

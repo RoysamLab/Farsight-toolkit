@@ -32,7 +32,6 @@
 
 namespace ftk
 {
-
 //Constructor
 ProjectProcessor::ProjectProcessor()
 {

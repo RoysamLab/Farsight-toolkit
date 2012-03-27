@@ -83,19 +83,8 @@ Heatmap::~Heatmap()
 
 void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
 {
-	this->num_samples = num_samples;
-	this->num_features = num_features;
-
 	this->rowMapFromOriginalToReorder.clear();
 	this->columnMapFromOriginalToReorder.clear();
-
-	this->mapdata = new double*[num_samples];
-	for(int i=0; i<num_samples; i++)
-	{
-		this->mapdata[i] = new double[num_features];
-		for(int j = 0 ; j<num_features; j++)
-			this->mapdata[i][j] = features[i][j];
-	}
 
 	this->Optimal_Leaf_Order1 = new int[num_samples] ;
 	for(int i=0; i<num_samples; i++)
@@ -111,7 +100,60 @@ void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* 
 		this->columnMapFromOriginalToReorder.insert( std::pair< int, int>(optimalleaforder2[i], i));
 	}
 }
+void Heatmap::setOrders(int* optimalleaforder1,int* optimalleaforder2)
+{
+	this->rowMapFromOriginalToReorder.clear();
+	this->columnMapFromOriginalToReorder.clear();
 
+	this->Optimal_Leaf_Order1 = new int[num_samples] ;
+	if(optimalleaforder1)
+	{	
+		for(int i=0; i<num_samples; i++)
+		{
+			this->Optimal_Leaf_Order1[i] = optimalleaforder1[i];
+			this->rowMapFromOriginalToReorder.insert( std::pair< int, int>(optimalleaforder1[i], i));
+		}
+	}
+	else
+	{
+		for(int i=0; i<num_samples; i++)
+		{
+			this->Optimal_Leaf_Order1[i] = i;
+			this->rowMapFromOriginalToReorder.insert( std::pair< int, int>(i, i));
+		}
+	}
+
+	this->Optimal_Leaf_Order2 = new int[num_features];
+	if(optimalleaforder2)
+	{	
+		for(int i=0; i<num_features; i++)
+		{
+			this->Optimal_Leaf_Order2[i] = optimalleaforder2[i];
+			this->columnMapFromOriginalToReorder.insert( std::pair< int, int>(optimalleaforder2[i], i));
+		}
+	}
+	else
+	{
+		for(int i=0; i<num_features; i++)
+		{
+			this->Optimal_Leaf_Order2[i] = i;
+			this->columnMapFromOriginalToReorder.insert( std::pair< int, int>(i, i));
+		}
+	}
+}
+
+void Heatmap::setMultipleTreeData(std::vector<std::vector<std::vector<double > > > treesdata)
+{
+	this->clusflag = true;
+	this->treesdata = treesdata;
+
+	this->tree_num = this->treesdata.size();
+
+	for(int i = 0; i < tree_num; i++)
+	{
+		this->treespoint.push_back (treesdata[i].size() + 1 );
+	}
+}
 void Heatmap::creatDataForHeatmap(double powCof)
 {
 	//double** mustd = new double*[2];
@@ -160,6 +202,10 @@ void Heatmap::creatDataForHeatmap(double powCof)
 	if( this->connect_Data_Tree1 != NULL)
 	{
 		this->createDataForDendogram1(powCof);
+	}
+	else if(!this->treesdata.empty())
+	{
+		this->createDataForMulDendogram1(powCof);
 	}
 	if( this->connect_Data_Tree2 != NULL)
 	{
@@ -254,6 +300,16 @@ void Heatmap::readmustd(double** mustd)
 void Heatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	this->table = table;
+	this->num_samples = table->GetNumberOfRows();
+	this->num_features = table->GetNumberOfColumns()-1;
+
+	this->mapdata = new double*[num_samples];
+	for(int i=0; i<num_samples; i++)
+	{
+		this->mapdata[i] = new double[num_features];
+		for(int j = 1 ; j<=num_features; j++)
+			this->mapdata[i][j-1] = table->GetValue(i,j).ToDouble();
+	}
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
 	if( this->table)
@@ -594,7 +650,12 @@ void Heatmap::showGraph()
 	try
 	{
 		if(this->clusflag == true)
-			this->showDendrogram1();
+		{
+			if(!this->treesdata.empty())
+				this->showMulDendrogram1();
+			else
+				this->showDendrogram1();
+		}
 		else
 		{
 			this->showDendrogram1();
@@ -735,6 +796,76 @@ void Heatmap::createDataForDendogram1(double powCof)
 	}
 }
 
+void Heatmap::createDataForMulDendogram1(double powCof)
+{
+	this->Processed_Coordinate_Data_Tree1.resize(2*(this->num_samples) - tree_num);
+	for(int i = 0; i < 2*(this->num_samples) - tree_num; i++)
+	{
+		this->Processed_Coordinate_Data_Tree1[i].resize(4);
+	}
+
+	for(int i = 0; i < num_samples; i++)
+	{
+		Processed_Coordinate_Data_Tree1[i][0] = i;
+		int k = rowMapFromOriginalToReorder.find(i)->second;
+		Processed_Coordinate_Data_Tree1[i][2] = (k + 0.5)/(double)this->num_samples - 0.5;
+		Processed_Coordinate_Data_Tree1[i][1] = -0.5;
+		Processed_Coordinate_Data_Tree1[i][3] = 0; 
+	}
+
+	for(int i = 0; i < tree_num; i++)
+	{
+		for(int j = 0; j<treespoint[i] -1; j++)
+		{
+			this->treesdata[i][j][2] = pow(this->treesdata[i][j][2], powCof);
+			this->treesdata[i][j][2] /= pow(this->treesdata[i][treespoint[i] -2][2], powCof);
+			this->treesdata[i][j][2] /= 2;
+		}
+		this->treesdata[i][treespoint[i] -2][2] = 0.5;
+	}
+
+	int count = num_samples;
+	int block_count = 0;
+	for(int i = 0; i<tree_num; i++)
+	{
+		for(int j = treespoint[i]; j<2*treespoint[i] -1; j++)
+		{
+			Processed_Coordinate_Data_Tree1[count][0] = count;
+			for(int k = 0; k < treespoint[i] -1 ; k++)
+			{
+				if(j == treesdata[i][k][3])
+				{
+					double temp1, temp2;
+					temp1 = treesdata[i][k][0];
+					temp2 = treesdata[i][k][1];
+					int id1;
+					int id2;
+					if(temp1<treespoint[i])
+					{
+						id1 = temp1 + block_count;
+					}
+					else
+					{
+						id1 = num_samples + block_count - i - treespoint[i] + temp1;
+					}
+
+					if(temp2<treespoint[i])
+					{
+						id2 = temp2 + block_count;
+					}
+					else
+					{
+						id2 = num_samples + block_count - i - treespoint[i] + temp2;
+					}
+					Processed_Coordinate_Data_Tree1[count][2] = (Processed_Coordinate_Data_Tree1[id1][2] + Processed_Coordinate_Data_Tree1[id2][2])/2;
+					Processed_Coordinate_Data_Tree1[count][1] = -treesdata[i][k][2] - 0.5;
+				}
+			}
+			Processed_Coordinate_Data_Tree1[count++][3] = 0;
+		}
+		block_count += treespoint[i];
+	}
+}
 void Heatmap::createDataForDendogram2()
 {
 	this->Processed_Coordinate_Data_Tree2.resize(this->num_features);
@@ -879,6 +1010,124 @@ void Heatmap::showDendrogram1()
 	this->view->GetRenderer()->AddActor(denactor1);
 }
 
+void Heatmap::showMulDendrogram1()
+{
+	double p1[3];
+	double p2[3];
+	double p3[3];
+	double p4[3];
+
+	int num_lines = (this->Processed_Coordinate_Data_Tree1.size() - this->num_samples)*3;
+	this->dencolors1->SetNumberOfComponents(3);
+	this->dencolors1->SetName("denColors1");
+	unsigned char color[3] = {0, 0, 0};
+	for(int i=0; i<num_lines;i++)
+		this->dencolors1->InsertNextTupleValue(color);
+
+	int count = 0;
+	int line_count = 0;
+	for(int i = 0;i < tree_num; i++)
+	{
+		for(int j = 0; j < treespoint[i] - 1; j++)
+		{
+			double temp1 = this->treesdata[i][j][0];
+			double temp2 = this->treesdata[i][j][1];
+
+			//for(int k=0; k < 2*treespoint[i] - 1; k++)
+			//{
+			//	int id;
+			//	if(i > 0)
+			//	{
+			//		id = k + count - treespoint[i];
+			//	}
+			//	else
+			//	{
+			//		id = k;
+			//	}
+			//	if(this->Processed_Coordinate_Data_Tree1[id][0]==temp1)
+			//	{
+			//		p1[0]=this->Processed_Coordinate_Data_Tree1[id][1];
+			//		p1[1]=this->Processed_Coordinate_Data_Tree1[id][2];
+			//		p1[2]=this->Processed_Coordinate_Data_Tree1[id][3];
+			//	}   
+			//	if(this->Processed_Coordinate_Data_Tree1[id][0]==temp2)
+			//	{
+			//		p2[0]=this->Processed_Coordinate_Data_Tree1[id][1];
+			//		p2[1]=this->Processed_Coordinate_Data_Tree1[id][2];
+			//		p2[2]=this->Processed_Coordinate_Data_Tree1[id][3];
+			//	}                             
+			//}
+			int id1;
+			int id2;
+			if(temp1 < treespoint[i])
+			{
+				id1 = count + temp1;
+			}
+			else
+			{
+				id1 = num_samples + count - i + temp1 - treespoint[i];
+			}
+
+			if(temp2 < treespoint[i])
+			{
+				id2 = count + temp2;
+			}
+			else
+			{
+				id2 = num_samples + count - i + temp2 - treespoint[i];
+			}
+			p1[0]=this->Processed_Coordinate_Data_Tree1[id1][1];
+			p1[1]=this->Processed_Coordinate_Data_Tree1[id1][2];
+			p1[2]=this->Processed_Coordinate_Data_Tree1[id1][3];
+			p2[0]=this->Processed_Coordinate_Data_Tree1[id2][1];
+			p2[1]=this->Processed_Coordinate_Data_Tree1[id2][2];
+			p2[2]=this->Processed_Coordinate_Data_Tree1[id2][3];
+
+			p3[0]=-treesdata[i][j][2] - 0.5;
+			p3[1]=p1[1];
+			p3[2]=p1[2];
+
+			p4[0]=-treesdata[i][j][2] - 0.5;
+			p4[1]=p2[1];
+			p4[2]=p2[2];
+
+			this->denpoints1->InsertNextPoint(p1);
+			this->denpoints1->InsertNextPoint(p2);
+			this->denpoints1->InsertNextPoint(p3);
+			this->denpoints1->InsertNextPoint(p4);
+
+			vtkSmartPointer<vtkLine> line0 = vtkSmartPointer<vtkLine>::New();
+			line0->GetPointIds()->SetId(0,0 + line_count);
+			line0->GetPointIds()->SetId(1,2 + line_count);
+			this->denlines1->InsertNextCell(line0);
+
+			vtkSmartPointer<vtkLine> line1 = vtkSmartPointer<vtkLine>::New();
+			line1->GetPointIds()->SetId(0,1 + line_count);
+			line1->GetPointIds()->SetId(1,3 + line_count);
+			this->denlines1->InsertNextCell(line1);
+
+			vtkSmartPointer<vtkLine> line2 = vtkSmartPointer<vtkLine>::New();
+			line2->GetPointIds()->SetId(0,2 + line_count);
+			line2->GetPointIds()->SetId(1,3 + line_count);
+			this->denlines1->InsertNextCell(line2);
+			line_count += 4;
+		}
+		count += treespoint[i];
+	}
+
+	this->denlinesPolyData1->SetPoints(denpoints1);
+	this->denlinesPolyData1->SetLines(denlines1);
+	this->denlinesPolyData1->GetCellData()->SetScalars(dencolors1);
+
+	
+	this->denmapper1->SetInput(denlinesPolyData1);
+	this->denmapper1->SetScalarRange(0, num_lines);
+
+	this->denactor1 = vtkSmartPointer<vtkActor>::New();
+	this->denactor1->SetMapper(denmapper1);
+	
+	this->view->GetRenderer()->AddActor(denactor1);
+}
 void Heatmap::showDendrogram2()
 {
 	double p1[3];
@@ -1222,7 +1471,8 @@ void Heatmap::drawPoints1()
 
 void Heatmap::drawPoints3()
 {
-	int max_table_values = 2*this->num_samples-1;
+	//int max_table_values = 2*this->num_samples-1;
+	int max_table_values = this->Processed_Coordinate_Data_Tree1.size();
 
 	this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
 	this->points = vtkSmartPointer<vtkPoints>::New();
@@ -1631,7 +1881,14 @@ void Heatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int ev
 		}
 		try
 		{
-			heatmapWin->SetdenSelectedIds1( IDs, true);
+			if(!heatmapWin->treesdata.empty())
+			{
+				heatmapWin->SetdenSelectedIdsMul( IDs);
+			}
+			else
+			{
+				heatmapWin->SetdenSelectedIds1( IDs, true);
+			}
 		}
 		catch(...)
 		{
@@ -1780,7 +2037,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 			for( it = IDs.begin(); it != IDs.end(); it++ )
 			{
 				id = *it;
-				//cout<<"id ====="<<id<<endl;
+	
 				if(id < 2*this->num_samples-1)
 				{
 					reselectIds1(selectedIDs1, id);
@@ -1877,6 +2134,61 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 	}
 }
 
+void Heatmap::SetdenSelectedIdsMul(std::set<long int>& IDs)
+{
+	std::set<long int> selectedIDs1;
+	std::set<long int> selectedIDs2;
+	std::set<long int>::iterator it;
+	long int id;
+
+	for(int i = 0; i<this->dencolors1->GetSize() ; i++)
+	{
+		this->dencolors1->SetValue(i, 0);
+	}
+	denlinesPolyData1->Modified();
+	denlinesPolyData1->Update();
+	denmapper1->Modified();
+	denmapper1->Update();
+	denactor1->Modified();
+
+	if( IDs.size() > 0)
+	{
+		for( it = IDs.begin(); it != IDs.end(); it++ )
+		{
+			id = *it;
+			reselectIdsMul(selectedIDs1, id);
+		}
+	}
+
+	if(selectedIDs1.size() > 0)	
+	{
+		for(int i = 0; i<this->num_features; i++)
+		{
+			selectedIDs2.insert(i);
+		}
+
+		denmapper1->ScalarVisibilityOn();
+		denlinesPolyData1->Modified();
+		denlinesPolyData1->Update();
+		denmapper1->Modified();
+		denmapper1->Update();
+		denactor1->Modified();
+		this->view->Render();
+		this->denResetflag1 = 1;
+		
+		cout<<"set select============="<<endl;
+		this->Selection2->select(selectedIDs2);
+		this->Selection->select(selectedIDs1);
+	}
+
+	else
+	{
+		this->Selection2->clear();
+		cout<<"set select============="<<endl;
+		this->Selection->clear();
+	}
+}
+
 void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 {
 	if(id < this->num_samples)
@@ -1899,6 +2211,69 @@ void Heatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 	}
 }
 
+void Heatmap::reselectIdsMul(std::set<long int>& selectedIDs, long int id)
+{
+	if(id < this->num_samples)
+	{
+		selectedIDs.insert( indMapFromIndToVertex[id]);
+	}
+	else
+	{
+		int count = 0;
+		for(int i = 0; i < tree_num; i++)
+		{
+			if(id < this->num_samples + count + this->treespoint[i] -1)
+			{
+				int realid = id - this->num_samples - count + this->treespoint[i];
+				this->reselectedwithintree(selectedIDs, realid, i);
+				break;
+			}
+			count += this->treespoint[i] -1;
+		}
+	}
+}
+
+void Heatmap::reselectedwithintree(std::set<long int>& selectedIDs, long int realid, int i)
+{
+	int count =0;
+	int count2 = 0;
+	for(int j = 0; j < i; j++)
+	{
+		count += this->treespoint[j];
+		count2 = count2 + this->treespoint[j] - 1;
+	}
+
+	if(realid < this->treespoint[i])
+	{
+		selectedIDs.insert( indMapFromIndToVertex[realid + count]);
+	}
+
+	else
+	{
+		int globalid = realid - this->treespoint[i] + count2;
+		this->dencolors1->SetValue(globalid*9, 153);
+		this->dencolors1->SetValue(globalid*9 + 1, 50);
+		this->dencolors1->SetValue(globalid*9 + 2, 204);
+		this->dencolors1->SetValue(globalid*9 + 3, 153);
+		this->dencolors1->SetValue(globalid*9 + 4, 50);
+		this->dencolors1->SetValue(globalid*9 + 5, 204);
+		this->dencolors1->SetValue(globalid*9 + 6, 153);
+		this->dencolors1->SetValue(globalid*9 + 7, 50);
+		this->dencolors1->SetValue(globalid*9 + 8, 204);
+
+		int realid1,realid2;
+		for(int k = 0; k < this->treespoint[i] - 1; k++)
+		{
+			if(this->treesdata[i][k][3] == realid)
+			{
+				realid1 = this->treesdata[i][k][0];
+				realid2 = this->treesdata[i][k][1];
+			}
+		}
+		this->reselectedwithintree(selectedIDs, realid1, i);
+		this->reselectedwithintree(selectedIDs, realid2, i);
+	}
+}
 void Heatmap::reselectSPDIds1(std::set<long int>& selectedIDs, long int id)
 {
 	if(id < this->num_samples)
@@ -2976,3 +3351,4 @@ void Heatmap::drawPointsforNe()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 
 }
+

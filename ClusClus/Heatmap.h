@@ -7,6 +7,7 @@
 #include <strstream>
 #include <string>
 #include <math.h>
+#include <boost/math/special_functions.hpp>
 
 #include <QVTKWidget.h>
 #include <QtGui/QAction>
@@ -98,6 +99,7 @@ public:
 	void showTree2();
 	void Initialize();
 	void showHeatmap();
+	void WriteFile(const char *filename1);
 	void setDataForTree1(Level_id levels1);
 	void setDataForTree2(Level_id levels2);
 	void setDataForHeatmap(std::vector<int > & order1,std::vector<int > & order2);
@@ -133,11 +135,14 @@ private:
 	int c2;
 	int    num_rows;
 	int    num_cols;
+	int	   num_selection_area;
 	bool   treedata1;
 	bool   treedata2;
 	bool   dragLineFlag1;
 	bool   dragLineFlag2;
 	bool   removeActorflag;
+	bool   localselection;
+	
 	
 	Level_id levels1;
 	Level_id levels2;

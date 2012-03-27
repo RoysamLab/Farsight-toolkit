@@ -98,7 +98,6 @@
 
 //VTK includes:
 #include "vtkQtTableView.h"
-
 //ITK Preprocessing includes:
 #include "ftkPreprocessDialog.h"
 #include "ftkPreprocess.h"
@@ -270,6 +269,8 @@ protected slots:
 	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector);
 	// Clus
 	void runClus();
+	void HeatmapforActivelearning(vtkSmartPointer<vtkTable>, int class_num);//for neuclei editing
+	void ClusteringWithinLabels( vtkSmartPointer<vtkTable>, int num_class );//for neuclei editing
 	
 	//******************************************************
 	//5D Views Menu
@@ -517,6 +518,7 @@ protected:
 	//Clustering
 	#ifdef	USE_Clusclus
 		Heatmap *HeatmapWin;
+		Heatmap *HeatmapWinforAL;
 		BiHeatmap *biheatmap;
 	#endif
 

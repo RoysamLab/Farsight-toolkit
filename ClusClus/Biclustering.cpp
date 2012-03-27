@@ -2,7 +2,7 @@
 
 Bicluster::Bicluster()
 {
-	this->num_iteration = 4;
+	this->num_iteration = 10;
 }
 
 Bicluster::~Bicluster()
@@ -31,7 +31,7 @@ void Bicluster::biclustering()
 		Data1 = this->transpose(Data1);
 		BiTree* tree1 = new BiTree();
 		tree1->setDataToTree(dataT,Data1);
-		tree1->setFirstIterationClusterNumber(15);
+		tree1->setFirstIterationClusterNumber(25);
 		if(i == this->num_iteration - 1)
 			tree1->setReorderFlag(true);
 		tree1->constructTree();
@@ -42,7 +42,7 @@ void Bicluster::biclustering()
 		Data2 = this->transpose(Data2);
 		BiTree* tree2 = new BiTree();
 		tree2->setDataToTree(data,Data2);
-		tree2->setFirstIterationClusterNumber(25);
+		tree2->setFirstIterationClusterNumber(15);
 		if(i == this->num_iteration - 1)
 			tree2->setReorderFlag(true);
 		tree2->constructTree();

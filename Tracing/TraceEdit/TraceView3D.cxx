@@ -5986,8 +5986,20 @@ void View3D::BiclusAnalysis()
 		std::vector<std::vector<double > > points;
 		points.resize(featureTable->GetNumberOfRows());
 		for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
+		{
 			for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
-				points[i].push_back(featureTable->GetValue(i,j).ToDouble());
+			{
+				double var = featureTable->GetValue(i, j).ToDouble();
+				if( !boost::math::isnan(var))
+				{}
+				else
+				{
+					var = 0;
+				}
+			points[i].push_back(var);
+			}
+		}
+			
 		Bicluster* bicluster = new Bicluster();
 		bicluster->setDataToBicluster(points);
 		bicluster->biclustering();

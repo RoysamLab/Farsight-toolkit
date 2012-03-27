@@ -98,6 +98,8 @@ public:
 	~Heatmap();
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
+	void setOrders(int* optimalleaforder1,int* optimalleaforder2 = NULL);
+	void setMultipleTreeData(std::vector<std::vector<std::vector<double > > > treesdata);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
@@ -116,6 +118,7 @@ public:
 	void SetSPDInteractStyle();
 	void showDendrogram1();
 	void showDendrogram2();	
+	void showMulDendrogram1();
 	void reRunClus();
 	void showGraphforNe();
 	void drawPointsforNe();
@@ -129,6 +132,7 @@ protected:
 
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);
+	void SetdenSelectedIdsMul(std::set<long int>& IDs);
 	void GetSelecectedIDs();
 	void GetSelecectedIDsForSPD();
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
@@ -150,10 +154,13 @@ private:
 	void setselectedCellIds();
 	void computeselectedcells();
 	void createDataForDendogram1(double powCof);
+	void createDataForMulDendogram1(double powCof);
 	void createDataForDendogram2(double powCof);
 	void createDataForDendogram2();
 	void reselectIds1(std::set<long int>& selectedIDs, long int id);
 	void reselectIds2(std::set<long int>& selectedIDs2, long int id);
+	void reselectIdsMul(std::set<long int>& selectedIDs, long int id);
+	void reselectedwithintree(std::set<long int>& selectedIDs, long int realid, int i);
 	void addDragLineforSPD(double* worldPosition);
 	void selectClustersforSPD(double* worldPosition);
 	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
@@ -170,6 +177,7 @@ public:
 	int*             Optimal_Leaf_Order1;
 	int*             Optimal_Leaf_Order2;
 	
+	vector<vector<vector<double > > > treesdata;
 	vector<vector<double > > Processed_Coordinate_Data_Tree1;
 	vector<vector<double > > Processed_Coordinate_Data_Tree2;	
 
@@ -227,6 +235,9 @@ private:
 	std::vector< std::vector<int> > indSPDMapFromIndToVertex;
 	std::vector<int> indMapFromIndToVertex;
 	std::vector<int> priority_order;
+
+	int tree_num;
+	vector<int > treespoint;
 
 	std::map<int, int> rowMapFromOriginalToReorder;
 	std::map<int, int> columnMapFromOriginalToReorder;
