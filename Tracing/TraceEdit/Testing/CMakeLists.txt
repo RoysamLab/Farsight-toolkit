@@ -66,7 +66,6 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_SOURCE_DIR}/test_load_trace_image_soma.xml.in
     ${CMAKE_CURRENT_BINARY_DIR}/test_load_trace_image_soma.xml
     @ONLY)
-  
   add_test(
     TraceEdit-LoadTraceImageSoma
     ${TraceEdit_EXE}
@@ -89,5 +88,33 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-Reload PROPERTIES
     DEPENDS TraceEdit-LoadTraceImageSoma
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_saveproject.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_saveproject.xml
+    @ONLY)
+  add_test(
+    TraceEdit-SaveProject
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_saveproject.xml
+    ${TraceEdit_TEST_DIR}/baseline_saveproject.png
+  )
+  set_tests_properties(TraceEdit-SaveProject PROPERTIES
+    DEPENDS TraceEdit-Reload
+    PASS_REGULAR_EXPRESSION "project saved to disk"
+  )
 
+  add_test(
+    TraceEdit-LoadProject
+    ${TraceEdit_EXE}
+    ${TraceEdit_TEST_DIR}/test_reload.xml
+    ${Farsight_BINARY_DIR}/Testing/Temporary/baseline_loadproject.png
+    ${Farsight_BINARY_DIR}/Testing/Temporary/project_test.xml
+  )
+  set_tests_properties(TraceEdit-LoadProject PROPERTIES
+    DEPENDS TraceEdit-SaveProject
+  )
+    
 endif()

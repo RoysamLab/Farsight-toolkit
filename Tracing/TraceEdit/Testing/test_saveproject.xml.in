@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="ScreenshotAction"/>
+    <event widget="1View3D0/1ScreenShotDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="@AppName@-app" command="DirOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary"/>
+    <event widget="1View3D0/1ScreenShotDialog0/1QComboBox0" command="set_string" arguments="@Farsight_BINARY_DIR@/Testing/Temporary"/>
+    <event widget="1View3D0/1ScreenShotDialog0/1QLineEdit0" command="set_string" arguments="baseline_loadproject"/>
+    <event widget="1View3D0/1ScreenShotDialog0/1QPushButton1" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="saveProjectAction"/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/project_test.xml"/>
+</events>

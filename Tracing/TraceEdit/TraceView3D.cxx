@@ -101,11 +101,13 @@ View3D::View3D(QWidget *parent)
 
 	this->Gridlines = new GridlineActors();
 	this->EditLogDisplay = new QTextEdit();
+	this->EditLogDisplay->setObjectName(tr("EditLogDisplay"));
 	this->EditLogDisplay->setReadOnly(true);
 	this->EditLogDisplay->setLineWrapMode(QTextEdit::NoWrap);
 	this->EditLogDisplay->append("Farsight Trace Editor Started at: \nDate: \t" + this->Date.currentDate().toString( "ddd MMMM d yy" ) );
 	this->EditLogDisplay->append("Time: \t" + this->Time.currentTime().toString( "h:m:s ap" ) );
 	this->InformationDisplays = new QDockWidget("Edit Log Information", this);
+	this->InformationDisplays->setObjectName(tr("InformationDisplays"));
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
 
@@ -137,6 +139,10 @@ View3D::View3D(QWidget *parent)
 	#ifdef USE_QT_TESTING
 	this->TestInputFile = nextFile;
 	#endif
+      }
+      else if(nextFile.contains("project_",Qt::CaseInsensitive))
+      {
+		  this->projectLoadedState = this->readProject(nextFile);
       }
       else
       {
@@ -1092,77 +1098,95 @@ void View3D::CreateGUIObjects()
 	//Set up the menu bar
 
 	this->saveAction = new QAction(tr("&Save as..."), this->CentralWidget);
+	this->saveAction->setObjectName(tr("saveAction"));
 	connect(this->saveAction, SIGNAL(triggered()), this, SLOT(SaveToFile()));
 	this->saveAction->setShortcut(QKeySequence::Save);
 	this->saveAction->setStatusTip("Save results to file");
 
 	this->SaveComputedCellFeaturesTableAction = new QAction(tr("&Save Computed Cell Features Table"), this->CentralWidget);
+	this->saveAction->setObjectName(tr("saveAction"));
 	connect(this->SaveComputedCellFeaturesTableAction, SIGNAL(triggered()), this, SLOT(SaveComputedCellFeaturesTable()));
 
 	this->saveSelectedAction = new QAction(tr("&Save Selected Trees"), this->CentralWidget);
+	this->saveSelectedAction->setObjectName(tr("saveSelectedAction"));
 	connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
 	
 	this->saveProjectAction = new QAction(tr("Save Project"), this->CentralWidget);
+	this->saveProjectAction->setObjectName(tr("saveProjectAction"));
 	connect(this->saveProjectAction, SIGNAL(triggered()), this, SLOT(SaveProjectFile()));
 	this->saveProjectAction->setStatusTip("Save current project");
 
 	this->exitAction = new QAction(tr("&Exit"), this->CentralWidget);
+	this->exitAction->setObjectName(tr("exitAction"));
 	connect(this->exitAction, SIGNAL(triggered()), this, SLOT(close()));
 	this->exitAction->setShortcut(QKeySequence::Close);
 	this->exitAction->setStatusTip("Exit the Trace Editor");
 
 	this->loadTraceAction = new QAction("Load Traces", this->CentralWidget);
+	this->loadTraceAction->setObjectName(tr("loadTraceAction"));
 	connect(this->loadTraceAction, SIGNAL(triggered()), this, SLOT(LoadTraces()));
 	this->loadTraceAction->setStatusTip("Load traces from .xml or .swc file");
 	this->loadTraceAction->setShortcut(QKeySequence::Open);
 
 	this->loadTraceImage = new QAction("Load Image", this->CentralWidget);
+	this->loadTraceImage->setObjectName(tr("loadTraceImage"));
 	connect (this->loadTraceImage, SIGNAL(triggered()), this, SLOT(LoadImageData()));
 	this->loadTraceImage->setStatusTip("Load an Image to RayCast Rendering");
 
 	this->CloseAllImage = new QAction("Remove Image Actors", this->CentralWidget);
+	this->CloseAllImage->setObjectName(tr("CloseAllImage"));
 	connect (this->CloseAllImage, SIGNAL(triggered()), this, SLOT(removeImageActors()));
 	this->CloseAllImage->setStatusTip("remove images from rendering");
 
 	this->loadSoma = new QAction("Load Somas", this->CentralWidget);
+	this->loadSoma->setObjectName(tr("loadSoma"));
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
 
 	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
+	this->ScreenshotAction->setObjectName(tr("ScreenshotAction"));
 	connect(this->ScreenshotAction, SIGNAL(triggered()), this, SLOT(SaveScreenShot()));
 
 	this->AutoCellExportAction = new QAction("Export Cells", this->CentralWidget);
+	this->AutoCellExportAction->setObjectName(tr("AutoCellExportAction"));
 	connect(this->AutoCellExportAction, SIGNAL(triggered()), this, SLOT(AutoCellExport()));
 
 	//Set up the buttons that the user will use to interact with this program. 
 	this->ListButton = new QAction("List", this->CentralWidget);
+	this->ListButton->setObjectName(tr("ListButton"));
 	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
 	this->ListButton->setStatusTip("List all selections");
 
 	this->ClearButton = new QAction("Clear", this->CentralWidget); 
+	this->ClearButton->setObjectName(tr("ClearButton"));
 	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(FastClearSelection()));
 	this->ClearButton->setStatusTip("Clear all selections");
 
 	this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
+	this->SelectTreeAction->setObjectName(tr("SelectTreeAction"));
 	connect(this->SelectTreeAction, SIGNAL(triggered()), this, SLOT(SelectTrees()));
 	this->SelectTreeAction->setStatusTip("Select the entire tree");
 
 	this->DeleteButton = new QAction("Delete", this->CentralWidget);
+	this->DeleteButton->setObjectName(tr("DeleteButton"));
 	connect(this->DeleteButton, SIGNAL(triggered()), this, SLOT(DeleteTraces()));
 	this->DeleteButton->setStatusTip("Delete all selected traces");
 	this->DeleteButton->setShortcut(QKeySequence(Qt::Key_D));
 
 	this->MergeButton = new QAction("Merge", this->CentralWidget);
+	this->MergeButton->setObjectName(tr("MergeButton"));
 	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
 	this->MergeButton->setStatusTip("Start Merge on selected traces");
 	this->MergeButton->setShortcut(QKeySequence(Qt::Key_M));
 
 	this->SplitButton = new QAction("Split", this->CentralWidget); 
+	this->SplitButton->setObjectName(tr("SplitButton"));
 	connect(this->SplitButton, SIGNAL(triggered()), this, SLOT(SplitTraces()));
 	this->SplitButton->setStatusTip("Split traces at point where selected");
 
 	this->FlipButton = new QAction("Flip", this->CentralWidget);
+	this->FlipButton->setObjectName(tr("FlipButton"));
 	connect(this->FlipButton, SIGNAL(triggered()), this, SLOT(FlipTraces()));
 	this->FlipButton->setStatusTip("Flip trace direction");
 
@@ -1171,23 +1195,27 @@ void View3D::CreateGUIObjects()
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");*/
 	//Branching tools
 	this->root = new QAction("Set Root", this->CentralWidget);
+	this->root->setObjectName(tr("root"));
 	connect(this->root, SIGNAL(triggered()), this, SLOT(SetRoots()));
 	this->root->setStatusTip("Solve Branch order by defining Root Trace Lines");
 	this->root->setShortcut(QKeySequence(Qt::Key_R));
 
 	this->BreakButton = new QAction("Break", this->CentralWidget);
+	this->BreakButton->setObjectName(tr("BreakButton"));
 	connect(this->BreakButton, SIGNAL(triggered()), this, SLOT( BreakBranch()));
 	this->BreakButton->setStatusTip("Breaks a branch off of the tree");
 	this->BreakButton->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_B));
 	this->BreakButton->setToolTip("Shift + B");
 
 	this->explodeTree = new QAction("Explode", this->CentralWidget);
+	this->explodeTree->setObjectName(tr("explodeTree"));
 	connect(this->explodeTree, SIGNAL(triggered()), this, SLOT( ExplodeTree()));
 	this->explodeTree->setStatusTip("Break tree into segments,aka Explode. Tree can be rebuilt using set root");
 	this->explodeTree->setShortcut(QKeySequence(Qt::Key_E));
 	this->explodeTree->setToolTip("E");
 
 	this->BranchButton = new QAction("Branch", this->CentralWidget);
+	this->BranchButton->setObjectName(tr("BranchButton"));
 	connect(this->BranchButton, SIGNAL(triggered()), this, SLOT(AddNewBranches()));
 	this->BranchButton->setStatusTip("Add branches to trunk");
 	this->BranchButton->setShortcut(QKeySequence(Qt::Key_B));
@@ -1197,6 +1225,7 @@ void View3D::CreateGUIObjects()
 	this->BranchesLabel->setText("0");
 	//intensity 
 	this->ImageIntensity = new QAction("Intensity", this->CentralWidget);
+	this->ImageIntensity->setObjectName(tr("ImageIntensity"));
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	
@@ -1204,31 +1233,38 @@ void View3D::CreateGUIObjects()
 	//connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
 	 
 	this->SetSlicer = new QAction("Set Slicer", this->CentralWidget);
+	this->SetSlicer->setObjectName(tr("SetSlicer"));
 	this->SetSlicer->setCheckable(true);
 	connect(this->SetSlicer, SIGNAL(triggered()), this, SLOT(setSlicerMode()));
 
 	this->SetProjection = new QAction("Set Projection", this->CentralWidget);
+	this->SetProjection->setObjectName(tr("SetProjection"));
 	this->SetProjection->setCheckable(true);
 	connect(this->SetProjection, SIGNAL(triggered()), this, SLOT(setProjectionMode()));
 
 	this->SetRaycast = new QAction("Set Raycast", this->CentralWidget);
+	this->SetRaycast->setObjectName(tr("SetRaycast"));
 	this->SetRaycast->setCheckable(true);
 	connect(this->SetRaycast, SIGNAL(triggered()), this, SLOT(setRaycastMode()));
 
 	this->SetContour = new QAction("Set Contour", this->CentralWidget);
+	this->SetContour->setObjectName(tr("SetContour"));
 	this->SetContour->setCheckable(true);
 	this->SetContour->setChecked(true);
 	connect(this->SetContour, SIGNAL(triggered()), this, SLOT(setContourMode()));
 
 	this->SetSomaRaycast = new QAction("Set Raycast", this->CentralWidget);
+	this->SetSomaRaycast->setObjectName(tr("SetSomaRaycast"));
 	this->SetSomaRaycast->setCheckable(true);
 	connect(this->SetSomaRaycast, SIGNAL(triggered()), this, SLOT(setRaycastSomaMode()));
 
 	this->ColorByTreesAction = new QAction("Color By Trees", this->CentralWidget);
+	this->ColorByTreesAction->setObjectName(tr("ColorByTreesAction"));
 	this->ColorByTreesAction->setCheckable(true);
 	connect(this->ColorByTreesAction, SIGNAL(triggered()), this, SLOT(ToggleColorByTrees()));
 
 	this->GridAction = new QAction("Grid Lines", this->CentralWidget);
+	this->GridAction->setObjectName(tr("GridAction"));
 	this->GridAction->setCheckable(true);
 	connect(this->GridAction, SIGNAL(triggered()), this, SLOT(ToggleGridlines()));
 
@@ -1243,66 +1279,83 @@ void View3D::CreateGUIObjects()
 	this->ArunVesselTracingButton->setDisabled(true);
 
 	this->updatePT3D = new QPushButton("Update Location", this->CentralWidget);
+	this->updatePT3D->setObjectName(tr("updatePT3D"));
 	connect(this->updatePT3D, SIGNAL(clicked()), this, SLOT(getPosPTin3D()));
 	this->updatePT3D->setShortcut(QKeySequence(Qt::Key_U));
 
 	this->setSoma = new QPushButton("Create Soma", this->CentralWidget);
+	this->setSoma->setObjectName(tr("setSoma"));
 	connect(this->setSoma, SIGNAL(clicked()), this, SLOT(setPTtoSoma()));
 
 	this->createNewBitButton = new QPushButton("Create New TraceBit", this->CentralWidget);
+	this->createNewBitButton->setObjectName(tr("createNewBitButton"));
 	connect(this->createNewBitButton, SIGNAL(clicked()), this, SLOT(createNewTraceBit()));
 	this->createNewBitButton->setShortcut(QKeySequence(Qt::Key_P));
 
 	this->createNewROIPointButton = new QPushButton("Create New ROI point", this->CentralWidget);
+	this->createNewROIPointButton->setObjectName(tr("createNewROIPointButton"));
 	connect(this->createNewROIPointButton, SIGNAL(clicked()), this, SLOT(AddROIPoint()));
 
 	this->ExtrudeROIButton = new QPushButton("Extrude ROI points", this->CentralWidget);
+	this->ExtrudeROIButton->setObjectName(tr("ExtrudeROIButton"));
 	connect(this->ExtrudeROIButton, SIGNAL(clicked()), this, SLOT(DrawROI()));
 
 	this->ReadBinaryVOIButton = new QPushButton("Read Binary VOI Image", this->CentralWidget);
+	this->ReadBinaryVOIButton->setObjectName(tr("ReadBinaryVOIButton"));
 	connect(this->ReadBinaryVOIButton, SIGNAL(clicked()), this, SLOT(ReadVOI()));
 
 	this->WriteVOIButton = new QPushButton("Write VOI Image", this->CentralWidget);
+	this->WriteVOIButton->setObjectName(tr("WriteVOIButton"));
 	connect(this->WriteVOIButton, SIGNAL(clicked()), this, SLOT(WriteVOI()));
 
 	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
+	this->CalculateDistanceToDeviceButton->setObjectName(tr("CalculateDistanceToDeviceButton"));
 	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
 
 	this->CalculateCellDistanceButton = new QPushButton("Calculate Cell to Cell Distance Graph", this->CentralWidget);
+	this->CalculateCellDistanceButton->setObjectName(tr("CalculateCellDistanceButton"));
 	connect(this->CalculateCellDistanceButton, SIGNAL(clicked()), this, SLOT(CalculateCellToCellDistanceGraph()));
 
 	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
+	this->LoadNucleiTable->setObjectName(tr("LoadNucleiTable"));
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
 
 	this->LoadSeedPointsAsGlyphs = new QAction("Load Seed Point Glyphs", this->CentralWidget);
+	this->LoadSeedPointsAsGlyphs->setObjectName(tr("LoadNucleiTable"));
 	connect(this->LoadSeedPointsAsGlyphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
 
 	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
+	this->AssociateCellToNucleiAction->setObjectName(tr("AssociateCellToNucleiAction"));
 	connect(this->AssociateCellToNucleiAction, SIGNAL(triggered()), this, SLOT(AssociateNeuronToNuclei()));
 	this->AssociateCellToNucleiAction->setDisabled(true);
 
 	this->ShowPointer = new QCheckBox("Use 3D Cursor", this->CentralWidget);
+	this->ShowPointer->setObjectName(tr("ShowPointer"));
 	this->ShowPointer->setStatusTip("Show Pointer Automatically?");
 	this->ShowPointer3DDefault = true;
 	this->ShowPointer->setChecked(this->ShowPointer3DDefault);
 	connect(this->ShowPointer, SIGNAL(stateChanged(int)), this, SLOT(setUsePointer(int)));
 
 	this->posX = new QDoubleSpinBox(this);
+	this->posX->setObjectName(tr("posX"));
 	this->posX->setValue(0);
 	this->posX->setRange(-60000, 60000);
 	connect(this->posX, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
 	this->posY = new QDoubleSpinBox(this);
+	this->posY->setObjectName(tr("posY"));
 	this->posY->setValue(0);
 	this->posY->setRange(-60000, 60000);
 	connect(this->posY, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 
 	this->posZ = new QDoubleSpinBox(this->CentralWidget);
+	this->posZ->setObjectName(tr("posZ"));
 	this->posZ->setValue(0);
 	this->posZ->setRange(-60000, 60000);
 	connect(this->posZ, SIGNAL(valueChanged(double)), this, SLOT(showPTin3D(double)));
 	//advanced render actions	
 	this->FocusAction = new QAction("Render Focus", this->CentralWidget); 
+	this->FocusAction->setObjectName(tr("FocusAction"));
 	connect(this->FocusAction, SIGNAL(triggered()), this, SLOT(focusOn()));
 
 	//Setup the settings editing window
@@ -1457,10 +1510,12 @@ void View3D::CreateGUIObjects()
 	connect(this->ProjectionAxisCombo, SIGNAL(activated(int)), this, SLOT(projectionAlongAxis(int)));*/
 	
 	this->aboutAction = new QAction("About", this->CentralWidget);
+	this->aboutAction->setObjectName(tr("aboutAction"));
 	this->aboutAction->setStatusTip("About Trace Edit");
 	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
 
 	this->ShowPlots = new QAction("Show Plots", this);
+	this->ShowPlots->setObjectName(tr("ShowPlots"));
 	this->ShowPlots->isCheckable();
 	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));	  
 	//Automation widget setup
@@ -1592,10 +1647,12 @@ void View3D::CreateGUIObjects()
   connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
   
   this->clearAction = new QAction("Clear QSettings", this->CentralWidget);
+  this->clearAction->setObjectName(tr("clearAction"));
   this->clearAction->setStatusTip("Revert all QSettings to their default values");
   connect(this->clearAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
   
   this->resizeAction = new QAction("Resize Window", this->CentralWidget);
+  this->resizeAction->setObjectName(tr("resizeAction"));
   this->resizeAction->setStatusTip("Resize TraceEdit to match default testing screenshot size");
   connect(this->resizeAction, SIGNAL(triggered()), this, SLOT(resizeForTesting()));
   #endif
@@ -5422,6 +5479,7 @@ void View3D::SaveProjectFile()
 
 		this->ProjectName = newProject;
 		project->writeProject((char*)newProject.toStdString().c_str());
+		std::cout << "project saved to disk" << std::endl;
 		this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
 		this->TraceEditSettings.sync();
 	}
