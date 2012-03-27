@@ -26,10 +26,10 @@ void DiffusionMap::Initialize(vtkSmartPointer< vtkTable > tbl, bool val)
 			}
 			idRowMap[featureTable->GetValue(row,0).ToInt()] = row;
 			rowIdMap[row] = featureTable->GetValue(row,0).ToInt();
-			std::vector<float> c;
-			c.push_back(featureTable->GetValue(row,1).ToFloat());
-			c.push_back(featureTable->GetValue(row,2).ToFloat());
-			c.push_back(featureTable->GetValue(row,3).ToFloat());
+			std::vector<double> c;
+			c.push_back(featureTable->GetValue(row,1).ToDouble());
+			c.push_back(featureTable->GetValue(row,2).ToDouble());
+			c.push_back(featureTable->GetValue(row,3).ToDouble());
 			centroidMap[featureTable->GetValue(row,0).ToInt()] = c;	
 		}
 	}
@@ -176,11 +176,11 @@ void DiffusionMap::ComputeDiffusionMap(void)
 
 vtkSmartPointer< vtkTable > DiffusionMap::GetKDiffusionNeighbors(std::vector<unsigned int> IDs, unsigned int k)
 {
-	std::map< unsigned int, std::vector<float> > eigenMap;
+	std::map< unsigned int, std::vector<double> > eigenMap;
 	for(int row=0; row<(int)EigVecs.rows(); ++row)
 	{
 		unsigned int id = (int)rowIdMap[row];		
-		std::vector<float> c;
+		std::vector<double> c;
 		for ( int i=0; i<10; ++i)
 		{		
 			c.push_back(EigVecs(row,i));	

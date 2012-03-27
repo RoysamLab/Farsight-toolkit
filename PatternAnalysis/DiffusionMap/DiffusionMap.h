@@ -43,7 +43,7 @@ private:
 	vnl_matrix<double> EigVecs;
 	bool multi_cell_struct;
 	std::map<int, int> rowIdMap, idRowMap; 
-	std::map< unsigned int, std::vector<float> > centroidMap;
+	std::map< unsigned int, std::vector<double> > centroidMap;
 
 };
 
