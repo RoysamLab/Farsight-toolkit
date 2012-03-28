@@ -64,7 +64,8 @@ bool use_NN) {
     // Set up caching stuff
     set_cache_buffer_count(6);
     use_file_caching = false;
-    cache_dir = ".";
+    QString cdir = QDir::tempPath();
+    cache_dir = cdir.toStdString();
 }
 
 //: Set the Region of Interest
