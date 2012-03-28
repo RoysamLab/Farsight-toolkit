@@ -73,9 +73,10 @@ std::vector<std::string> GetColumsWithString( std::string colName, vtkSmartPoint
 std::string GetStringInCaps( std::string in_srting );
 bool Load(std::string filename);
 vtkSmartPointer<vtkTable> CopyTable(vtkSmartPointer<vtkTable> featureTable );
+
+bool SaveTableSeriesActive(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage);
 double GetMean(std::vector<double> data);
 double GetStd(std::vector<double> data);
-
 
 //std::vector<ftk::AssociationRule> ReadAssociationRules(TiXmlElement * inputElement);
 
