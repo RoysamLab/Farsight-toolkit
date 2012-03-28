@@ -28,6 +28,9 @@ limitations under the License.
 #include <vnl/vnl_vector_fixed.h>
 #include <vector>
 #include <string>
+#include <QtGui>
+#include <QDir>
+#include <QString>
 
 #include "itkIndex.h"
 #include "itkSize.h"
