@@ -189,24 +189,6 @@ View3D::View3D(QWidget *parent)
 	}
 }
 
-View3D::View3D(TraceObject *Traces)
-{
-	this->QVTK = 0;
-	this->GapsPlotView = NULL;
-	this->TreePlot = NULL;
-	this->FTKTable = NULL;
-	this->FL_MeasurePlot = NULL;
-	this->FL_histo = NULL;
-	this->FL_MeasureTable = NULL;
-	this->GapsTableView = NULL;
-	CentroidsActor = NULL;
-	this->tobj = Traces;
-	//	this->Volume=0;
-	this->Initialize();
-	this->ShowTreeData();
-	this->statusBar()->showMessage(tr("Trace Editor Started"));
-}
-
 View3D::~View3D()
 {
 	if(this->QVTK)
