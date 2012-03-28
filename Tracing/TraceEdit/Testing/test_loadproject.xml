@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,30,13,/0:0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,30,13,/0:0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,41,13,/1:0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,41,13,/1:0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,38,10,/0:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,38,10,/0:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,36,12,/1:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,36,12,/1:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,39,18,/0:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,39,18,/0:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,31,17,/1:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,31,17,/1:2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,11,14,/0:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,11,14,/0:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,21,12,/1:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,21,12,/1:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,21,15,/0:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,21,15,/0:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mousePress" arguments="1,1,0,20,13,/1:3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableWidget0" command="mouseRelease" arguments="1,0,0,20,13,/1:3"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="Resize Window"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="Clear QSettings"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>

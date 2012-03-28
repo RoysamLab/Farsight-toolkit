@@ -109,7 +109,7 @@ if(QtTestingFound)
   add_test(
     TraceEdit-LoadProject
     ${TraceEdit_EXE}
-    ${TraceEdit_TEST_DIR}/test_reload.xml
+    ${TraceEdit_TEST_DIR}/test_loadproject.xml
     ${Farsight_BINARY_DIR}/Testing/Temporary/baseline_loadproject.png
     ${Farsight_BINARY_DIR}/Testing/Temporary/project_test.xml
   )
