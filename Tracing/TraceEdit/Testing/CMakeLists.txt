@@ -132,5 +132,16 @@ if(QtTestingFound)
     DEPENDS TraceEdit-LoadProject
     PASS_REGULAR_EXPRESSION "Starting Amit's Tracer"
   )
+  
+  add_test(
+    TraceEdit-Settings
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_settings.xml
+    ${TraceEdit_TEST_DIR}/baseline_settings.png
+  )
+  set_tests_properties(TraceEdit-Settings PROPERTIES
+    DEPENDS TraceEdit-Tracing
+  )
     
 endif()
