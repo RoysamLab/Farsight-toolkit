@@ -368,24 +368,46 @@ bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable>
 		return true;
 	else
 		return false;
-
-	//int counter = 0;
-
-	//while (parentElement)
-	//{
-	//	const char * parent = parentElement->Value();
-	//	if ( strcmp( parent, "file" ) == 0 )
-	//	{
-	//		SaveTable(std::string(reinterpret_cast<const char*>(parentElement->GetText())),table4DImage.at(counter) );
-	//	}
-	//	parentElement = parentElement->NextSiblingElement();
-	//	counter++;
-	//} // end while(parentElement)
-	////doc.close();
-	//return true;
-
-
 }
+
+
+
+
+bool SaveTableSeriesActive(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage)
+{
+
+	std::vector< vtkSmartPointer<vtkTable> > tableVector;
+	tableVector.clear();
+
+	TiXmlDocument doc;
+	if ( !doc.LoadFile( filename.c_str() ) )
+		return false;
+
+	TiXmlElement* rootElement = doc.FirstChildElement();
+	const char* docname = rootElement->Value();
+	if ( strcmp( docname, "Table" ) != 0 )
+		return false;
+
+	//Parents we know of: datafilename,resultfilename,object,parameter
+	TiXmlElement* parentElement = rootElement->FirstChildElement();
+
+	int counter = 0;
+
+	while (parentElement)
+	{
+		const char * parent = parentElement->Value();
+		if ( strcmp( parent, "file" ) == 0 )
+		{
+			SaveTable(std::string(reinterpret_cast<const char*>(parentElement->GetText())),table4DImage.at(counter) );
+		}
+		parentElement = parentElement->NextSiblingElement();
+		counter++;
+	} // end while(parentElement)
+	//doc.close();
+	return true;
+}
+
+
 
 
 vtkSmartPointer<vtkTable> AppendTables(vtkSmartPointer<vtkTable> table_initial,vtkSmartPointer<vtkTable> table_new )
