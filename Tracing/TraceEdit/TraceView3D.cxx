@@ -2175,6 +2175,10 @@ void View3D::chooseInteractorStyle(int iren)
 		vtkSmartPointer<vtkInteractorStyleImage> styleImage = vtkSmartPointer<vtkInteractorStyleImage>::New();
 		styleImage->SetInteractionModeToImage3D();
 		this->Interactor->SetInteractorStyle(styleImage);
+		if (!SlicerBarCreated)
+		{
+			this->createSlicerSlider();
+		}
 		this->SlicerBar->show();
 	}else
 	{
