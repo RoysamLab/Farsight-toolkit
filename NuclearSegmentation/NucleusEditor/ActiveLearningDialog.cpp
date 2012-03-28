@@ -25,7 +25,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	query_label.resize(snapshot.size());
 	buttongroup.resize(snapshot.size());
 
-	this->setWindowTitle(tr("ALAMO Window: Specify Class"));
+	this->setWindowTitle(tr("Active Learning Window: Specify Class"));
 	this->setModal(false);
 	//Master Layout
 	QGridLayout * layout = new QGridLayout;
