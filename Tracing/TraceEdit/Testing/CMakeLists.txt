@@ -116,5 +116,21 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-LoadProject PROPERTIES
     DEPENDS TraceEdit-SaveProject
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_tracing.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_tracing.xml
+    @ONLY)
+  add_test(
+    TraceEdit-Tracing
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    ${CMAKE_CURRENT_BINARY_DIR}/test_tracing.xml
+    ${TraceEdit_TEST_DIR}/baseline_tracing.png
+  )
+  set_tests_properties(TraceEdit-Tracing PROPERTIES
+    DEPENDS TraceEdit-LoadProject
+    PASS_REGULAR_EXPRESSION "Starting Amit's Tracer"
+  )
     
 endif()
