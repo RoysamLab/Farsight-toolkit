@@ -89,7 +89,7 @@ void MCLR::Initialize(vnl_matrix<double> data,double c,vnl_vector<double> classe
 	// Used in active label selection
 	stop_cond.set_size(2);
 	stop_cond[0] = 1e-5;
-	stop_cond[1] = 0.3;
+	stop_cond[1] = 0.2;
 	delta = 1e-9; // used for approximating |w| 
 
 	numberOfFeatures = x.rows();
@@ -171,14 +171,7 @@ vnl_matrix <double> MCLR::Normalize_Feature_Matrix(vnl_matrix<double> feats)
 vtkSmartPointer<vtkTable> MCLR::Rearrange_Table(vtkSmartPointer<vtkTable> pawTable)
 {
 
-
 	vnl_matrix<double> feats = tableToMatrix(pawTable,this->id_time_val);
-
-	//std::cout<< feats.get_row(208) <<std::endl;
-	//getchar();	
-	//for(int col = 0; (int)col < pawTable->GetNumberOfColumns(); ++col)
-	//	 std::cout<< pawTable->GetValue(208,col)<<"\t";
-	//getchar();
 
 	vnl_matrix<double> feats2 = Normalize_Feature_Matrix(tableToMatrix(pawTable, this->id_time_val));
 	feats2 = feats2.transpose();
@@ -207,14 +200,15 @@ vtkSmartPointer<vtkTable> MCLR::Rearrange_Table(vtkSmartPointer<vtkTable> pawTab
 	std::vector<int> priorityOrder = Get_Feature_Order();
 	counter = 0;	
 	
-	vnl_matrix<double> rearrangeFeats(feats.rows(),feats.cols());
+	vnl_matrix<double> rearrangeFeats(feats.rows(),priorityOrder.size());
 
-	for(int j = 0; j<rearrangeFeatsTemp.cols() ; ++j)
+	for(int j = 0; j<rearrangeFeats.cols() ; ++j)
 	{
 		rearrangeFeats.set_column(j,rearrangeFeatsTemp.get_column(priorityOrder[j]));
+		//std::cout<< priorityOrder[j] << std::endl;
 	}
 
-	
+	//std::cout<< " ESCAPE !!!!!!!!!! " <<std::endl;
 
 	vtkSmartPointer<vtkTable> tableRearrange = vtkSmartPointer<vtkTable>::New();
 	tableRearrange->Initialize();
@@ -703,18 +697,38 @@ std::vector<int> MCLR::Get_Top_Features()
 std::vector<int> MCLR::Get_Feature_Order()
 {	
 
-	//Need the indices of the top 5 features
-	// Remove Bias rows. hence m.w -1
-	std::vector<int> indices(m.w.rows()-1);
-
 	std::vector<std::pair<double, int> > val_idx; // value and index
+	vnl_vector<double> normW(m.w.rows()-1);
+	
 
-	// find the maximum in each row
+	// find the maximum in each row and get them into a vector
+	// This vector will be normalized in the next step.
+	// Features with weight > 0.1 will be considered for the reduced heatmap
 	// Remove Bias rows. hence i = 1
+	
+	double maxW = -1;
+
 	for(int i = 1; i< m.w.rows() ; ++i)
 	{
 		vnl_vector<double> temp_row = m.w.get_row(i);
-		val_idx.push_back(std::pair<double, int>(temp_row.max_value(),i-1));
+		normW(i-1) = fabs(temp_row.max_value());
+		if(normW(i-1)>maxW)
+			maxW = normW(i-1);
+	}
+
+	for(int i = 0; i< normW.size() ; ++i)
+	{
+		normW(i) = normW(i)/maxW;
+	}
+
+	//getchar();
+
+	for(int i = 0; i< normW.size() ; ++i)
+	{
+		if(normW(i)>0)
+		{
+			val_idx.push_back(std::pair<double, int>(normW(i),i));
+		}
 	}
 
 	// sorts by first element of the pair automatically
@@ -722,14 +736,20 @@ std::vector<int> MCLR::Get_Feature_Order()
 	std::vector<std::pair<double, int> >::const_iterator itr;
 	int counter = 0;
 
-
 	reverse(val_idx.begin(),val_idx.end());
 
-	for(itr = val_idx.begin(); itr != val_idx.begin()+indices.size(); ++itr)
-	{
-		indices[counter] = (*itr).second;
+	std::vector<int> indices;
+
+	//std::cout<<val_idx.size()<<std::endl;
+	
+
+	for(itr = val_idx.begin(); itr != val_idx.end(); ++itr)
+	{	
+		//std::cout<< (*itr).second <<std::endl;
+		indices.push_back((*itr).second);
 		counter++;
 	}
+	//std::cout<< " ----------------" <<std::endl;
 	return indices;
 }
 
@@ -909,7 +929,7 @@ int MCLR::Active_Query()
 	}
 
 	maxInfoVector.push_back(max_info);
-	//std::cout<<maxInfoVector.size() << "--" << max_info <<std::endl;
+	std::cout<<"Max Info-"  <<max_info << std::endl;
 
 	if(maxInfoVector.size()>1)
 		diff_info_3_it((maxInfoVector.size()-1)%3) =  maxInfoVector.at((maxInfoVector.size()-1)) - maxInfoVector.at((maxInfoVector.size()-2));
@@ -917,12 +937,14 @@ int MCLR::Active_Query()
 
 	info_3_it((maxInfoVector.size()-1)%3) = max_info;	
 
-	if (maxInfoVector.size()>=3) 
+	// Minimum 3 iterations - > maxInfoVector.size()=9 
+	//( assuming batch size =3)
+	if (maxInfoVector.size()>=9) 
 	{
 		int sum = 0;
 		for(int iter =0; iter < 3; iter++)
 		{
-			std::cout<<fabs(diff_info_3_it(iter))/fabs(info_3_it(iter)) << "--stopcond" <<std::endl;	
+			//std::cout<<fabs(diff_info_3_it(iter))/fabs(info_3_it(iter)) << "--stopcond" <<std::endl;	
 			if(fabs(diff_info_3_it(iter))/fabs(info_3_it(iter)) < stop_cond(1))
 			{
 				sum = sum + 1;	
@@ -1143,7 +1165,7 @@ std::vector<int> MCLR::Submodular_AL(int activeQuery,vnl_matrix<double> testData
 	
 		info_3_it((maxInfoVector.size()-1)%3) = max_info;	
 
-		std::cout<< max_info << std::endl;
+		std::cout<<"Max Info-"  <<max_info << std::endl;
 		submodularALQueries.push_back(rowIDs.at(activeQuery));
 	}
 	
