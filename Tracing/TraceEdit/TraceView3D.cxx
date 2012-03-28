@@ -84,6 +84,9 @@ View3D::View3D(QWidget *parent)
 	this->gridShown = false;
 	this->projectionStyle = 0;	//should be maximum projection
 	this->projection_axis = 2; // z projection
+	projection_base.roll = 0;
+	projection_base.azimuth = 0;
+	projection_base.elevation = 0;
 	this->Date.currentDate();
 	this->Time.currentTime();
 	this->ProjectName.clear();
@@ -1342,101 +1345,123 @@ void View3D::CreateGUIObjects()
 
 	//Setup the settings editing window
 	this->SettingsWidget = new QWidget(this);
+	this->SettingsWidget->setObjectName("SettingsWidget");
 	this->MaxGapField = new QSpinBox(this->SettingsWidget);
+	this->MaxGapField->setObjectName("MaxGapField");
 	this->MaxGapField->setRange(0,1000);
 	connect(this->MaxGapField, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->GapToleranceField = new QDoubleSpinBox(this->SettingsWidget);
+	this->GapToleranceField->setObjectName("GapToleranceField");
 	this->GapToleranceField->setRange(0,100);
 	this->GapToleranceField->setSingleStep(.1);
 	connect(this->GapToleranceField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
+	this->ColorValueField->setObjectName("ColorValueField");
 	this->ColorValueField->setRange(0,1);
 	this->ColorValueField->setSingleStep(.01);
 	connect(this->ColorValueField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->TipColor = new QDoubleSpinBox(this->SettingsWidget);
+	this->TipColor->setObjectName("TipColor");
 	this->TipColor->setRange(0,1);
 	this->TipColor->setSingleStep(.01);
 	this->TipColor->setValue(0.5);
 	connect(this->TipColor, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->LineWidthField = new QSpinBox(this->SettingsWidget);
+	this->LineWidthField->setObjectName("LineWidthField");
 	this->LineWidthField->setRange(1,5);
 	connect(this->LineWidthField, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->markTraceBits = new QCheckBox("Mark all traced Points",this->SettingsWidget);
+	this->markTraceBits->setObjectName("markTraceBits");
 	this->markTraceBits->setChecked(this->renderTraceBits);
 
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundRBox->setObjectName("BackgroundRBox");
 	this->BackgroundRBox->setRange(0,1);
 	this->BackgroundRBox->setSingleStep(.01);
 	connect(this->BackgroundRBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->BackgroundGBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundGBox->setObjectName("BackgroundGBox");
 	this->BackgroundGBox->setRange(0,1);
 	this->BackgroundGBox->setSingleStep(.01);
 	connect(this->BackgroundGBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->BackgroundBBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->BackgroundBBox->setObjectName("BackgroundBBox");
 	this->BackgroundBBox->setRange(0,1);
 	this->BackgroundBBox->setSingleStep(.01);
 	connect(this->BackgroundBBox, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
 	this->RollBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->RollBox->setObjectName("RollBox");
 	this->RollBox->setRange(-360,360);
 	this->RollBox->setSingleStep(1);
 
 	this->ElevationBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->ElevationBox->setObjectName("ElevationBox");
 	this->ElevationBox->setRange(-90,90);
 	this->ElevationBox->setSingleStep(1);
 
 	this->AzimuthBox = new QDoubleSpinBox(this->SettingsWidget);
+	this->AzimuthBox->setObjectName("AzimuthBox");
 	this->AzimuthBox->setRange(-360,360);
 	this->AzimuthBox->setSingleStep(1);
 
 	this->HeightSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->HeightSpaceBox->setObjectName("HeightSpaceBox");
 	this->HeightSpaceBox->setRange(1,100);
 	this->HeightSpaceBox->setValue(100);	
 	connect(this->HeightSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->WidthSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->WidthSpaceBox->setObjectName("WidthSpaceBox");
 	this->WidthSpaceBox->setRange(1,100);
 	this->WidthSpaceBox->setValue(100);
 	connect(this->WidthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->DepthSpaceBox = new QSpinBox(this->SettingsWidget);
+	this->DepthSpaceBox->setObjectName("DepthSpaceBox");
 	this->DepthSpaceBox->setRange(1,100);
 	this->DepthSpaceBox->setValue(50);
 	connect(this->DepthSpaceBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->LineWidthBox = new QSpinBox(this->SettingsWidget);
+	this->LineWidthBox->setObjectName("LineWidthBox");
 	this->LineWidthBox->setRange(1,100);
 	this->LineWidthBox->setValue(1);
 	connect(this->LineWidthBox, SIGNAL(valueChanged(int)), this, SLOT(activateSaveAllButton()));
 
 	this->GridRSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridRSlider->setObjectName("GridRSlider");
 	this->GridRSlider->setRange(0,255);
 	this->GridRSlider->setValue(255);
 	connect(this->GridRSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 	
 	this->GridGSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridGSlider->setObjectName("GridGSlider");
 	this->GridGSlider->setRange(0,255);
 	this->GridGSlider->setValue(255);
 	connect(this->GridGSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 	
 	this->GridBSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridBSlider->setObjectName("GridBSlider");
 	this->GridBSlider->setRange(0,255);
 	this->GridBSlider->setValue(255);
 	connect(this->GridBSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 
 	this->GridOpacitySlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
+	this->GridOpacitySlider->setObjectName("GridOpacitySlider");
 	this->GridOpacitySlider->setRange(0,100);
 	this->GridOpacitySlider->setValue(75);
 	connect(this->GridOpacitySlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
 
 	this->ApplySettingsButton = new QDialogButtonBox(QDialogButtonBox::SaveAll | QDialogButtonBox::Close);
+	this->ApplySettingsButton->setObjectName("ApplySettingsButton");
 	this->ApplySettingsButton->setEnabled(false);
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
@@ -1466,24 +1491,28 @@ void View3D::CreateGUIObjects()
 	QStringList HighlightStyles;
 	HighlightStyles << "Tree" << "Branch Order" << "Tips";
 	this->HighlightCombo = new QComboBox;
+	this->HighlightCombo->setObjectName("HighlightCombo");
 	this->HighlightCombo->addItems(HighlightStyles);
 	connect(this->HighlightCombo, SIGNAL(activated(int)), this, SLOT(setHighlightSettings(int)));
 
 	QStringList ZoomStyles;
 	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" << "Slicer";
 	this->StyleCombo = new QComboBox;
+	this->StyleCombo->setObjectName("StyleCombo");
 	this->StyleCombo->addItems(ZoomStyles);
 	connect(this->StyleCombo, SIGNAL(activated(int)), this, SLOT(chooseInteractorStyle(int)));
 
 	QStringList ProjectionStyles;
 	ProjectionStyles<< "Maximum" << "Mean" << "Minimum";
 	this->ProjectionCombo = new QComboBox;
+	this->ProjectionCombo->setObjectName("ProjectionCombo");
 	this->ProjectionCombo->addItems(ProjectionStyles);
 	connect(this->ProjectionCombo, SIGNAL(activated(int)), this, SLOT(SetProjectionMethod(int)));
 
 	QStringList AxisList;
 	AxisList<< "X-Y" << "X-Z" << "Y-Z";
 	this->RotateImageUpCombo = new QComboBox;
+	this->RotateImageUpCombo->setObjectName("RotateImageUpCombo");
 	this->RotateImageUpCombo->addItems(AxisList);
 	connect(this->RotateImageUpCombo, SIGNAL(activated(int)), this, SLOT(rotateImage(int)));
 
@@ -1757,9 +1786,12 @@ void View3D::CreateLayout()
 	//settings widget layout
 	//this->SettingsToolBox = new QToolBox(this);
 	QVBoxLayout * SettingsBox = new QVBoxLayout(this->SettingsWidget);
+	SettingsBox->setObjectName("SettingsBox");
 
 	selectionSettings = new QGroupBox("Selection Settings");
+	selectionSettings->setObjectName("selectionSettings");
 	QFormLayout *settingsLayout = new QFormLayout(selectionSettings);
+	settingsLayout->setObjectName("settingsLayout");
 	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
 	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
 	//settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
@@ -1770,10 +1802,12 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(selectionSettings);
 
 	displaySettings = new QGroupBox("Display Settings");
+	displaySettings->setObjectName("displaySettings");
 	displaySettings->setCheckable(true);
 	connect(displaySettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	//displaySettings->setMinimumHeight(25);
 	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
+	DisplayLayout->setObjectName("DisplayLayout");
 	DisplayLayout->addRow(tr("Highlight by:"),this->HighlightCombo);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
 	DisplayLayout->addRow(tr("Tip Color RGB 0 to 1:"),this->TipColor);
@@ -1787,9 +1821,11 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(displaySettings);
 
 	rotationSettings = new QGroupBox(tr("Rotation"));
+	rotationSettings->setObjectName("rotationSettings");
 	rotationSettings->setCheckable(true);
 	connect(rotationSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
+	RotateLayout->setObjectName("RotateLayout");
 	RotateLayout->addRow(tr("Roll: "),this->RollBox);
 	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
 	RotateLayout->addRow(tr("Azimuth: "),this->AzimuthBox);
@@ -1798,9 +1834,11 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(rotationSettings);
 
 	BackgroundSettings = new QGroupBox("Background RGB Color");
+	BackgroundSettings->setObjectName("BackgroundSettings");
 	BackgroundSettings->setCheckable(true);
 	connect(BackgroundSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
+	BackgroundLayout->setObjectName("BackgroundLayout");
 	BackgroundLayout->addRow(tr("Value Red: "), this->BackgroundRBox);
 	BackgroundLayout->addRow(tr("Value Blue: "),this->BackgroundGBox);
 	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
@@ -1808,11 +1846,13 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(BackgroundSettings);
 
 	GridlineSettings = new QGroupBox(tr("Grid"));
+	GridlineSettings->setObjectName("GridlineSettings");
 	//GridlineSettings->setEnabled(false);
 	GridlineSettings->setHidden(true);
 	GridlineSettings->setCheckable(true);
 	connect(GridlineSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
+	GridlineLayout->setObjectName("GridlineLayout");
 	//GridlineLayout->addRow(tr("2D/3D Axis:"),this->GridDimensionMode);
 	//GridlineLayout->addRow(tr("Orientation:"),this->GridOrientationBox);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
@@ -1835,6 +1875,7 @@ void View3D::CreateLayout()
 	//SettingsToolBox->addItem(this->SettingsWidget, "Editor Settings");
 
 	this->settingsDock = new QDockWidget("Editor Settings", this);
+	settingsDock->setObjectName("settingsDock");
 	this->settingsDock->setWidget(this->SettingsWidget);
 	//this->settingsDock->setWidget(SettingsToolBox);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
@@ -1842,17 +1883,23 @@ void View3D::CreateLayout()
 	this->settingsDock->hide();
 
 	showStatisticsAction = new QAction(tr("Show Statistics Toolbar"), this);
+	showStatisticsAction->setObjectName("showStatisticsAction");
 	connect(showStatisticsAction,SIGNAL(triggered()), this, SLOT(showStatistics()));
 	updateStatisticsAction = new QAction(tr("Update Statistics"), this);
+	updateStatisticsAction->setObjectName("updateStatisticsAction");
 	connect(updateStatisticsAction, SIGNAL(triggered()), this, SLOT(updateStatistics()));
 	//////////////////////
 	// Automation Dock	//
 	//////////////////////
 	this->AutomationDock = new QDockWidget("Automated Edits", this);
+	this->AutomationDock->setObjectName("AutomationDock");
 	QVBoxLayout * AutomationDockLayout = new QVBoxLayout(this->AutomationWidget);
+	AutomationDockLayout->setObjectName("AutomationDockLayout");
 
 	QGroupBox *SelectedErrorGroup = new QGroupBox("Select Error Type");
+	SelectedErrorGroup->setObjectName("SelectedErrorGroup");
 	QGridLayout * SelectedErrorLayout = new QGridLayout(SelectedErrorGroup);
+	SelectedErrorLayout->setObjectName("SelectedErrorLayout");
 	SelectedErrorLayout->addWidget( this->SmallLinesButton, 0, 0);
 	SelectedErrorLayout->addWidget( this->FalseSpinesButton, 0, 1);
 	SelectedErrorLayout->addWidget( this->FalseBridgesButton, 1, 0);
@@ -1860,27 +1907,35 @@ void View3D::CreateLayout()
 	AutomationDockLayout->addWidget(SelectedErrorGroup);
 
 	this->SmallLinesGroup = new QGroupBox("Detect Small Lines");
+	this->SmallLinesGroup->setObjectName("SmallLinesGroup");
 	this->SmallLinesGroup->setEnabled(0);
 	QFormLayout * SmallLineLayout = new QFormLayout(this->SmallLinesGroup);
+	SmallLineLayout->setObjectName("SmallLineLayout");
 	SmallLineLayout->addRow("Size", this->LineLengthField);
 	AutomationDockLayout->addWidget(this->SmallLinesGroup);
 
 	this->FakeSpinesGroup = new QGroupBox("Detect Fake Spines");
+	this->FakeSpinesGroup->setObjectName("FakeSpinesGroup");
 	this->FakeSpinesGroup->setEnabled(0);
 	QFormLayout * FakeSpinesLayout = new QFormLayout(this->FakeSpinesGroup);
+	FakeSpinesLayout->setObjectName("FakeSpinesLayout");
 	FakeSpinesLayout->addRow("Size", this->MaxSpineBit);
 	FakeSpinesLayout->addRow("Path Length", this->MaxSpinePathLength);
 	AutomationDockLayout->addWidget(this->FakeSpinesGroup);
 
 	this->FakeBridgeGroup = new QGroupBox("Detect Bridges");
+	this->FakeBridgeGroup->setObjectName("FakeBridgeGroup");
 	this->FakeBridgeGroup->setEnabled(0);
 	QFormLayout * FakeBridgesLayout = new QFormLayout(this->FakeBridgeGroup);
+	FakeBridgesLayout->setObjectName("FakeBridgesLayout");
 	FakeBridgesLayout->addRow("Size", this->MaxBridgeBits);
 	AutomationDockLayout->addWidget(this->FakeBridgeGroup);
 
 	this->HalfBridgeGroup = new QGroupBox("Detect Half Bridges");
+	this->HalfBridgeGroup->setObjectName("HalfBridgeGroup");
 	this->HalfBridgeGroup->setEnabled(0);
 	QFormLayout * HalfBridgesLayout = new QFormLayout(this->HalfBridgeGroup);
+	HalfBridgesLayout->setObjectName("HalfBridgesLayout");
 	HalfBridgesLayout->addRow("Size", this->MaxHalfBridgeBits);
 	HalfBridgesLayout->addRow("Distance From Parent", this->MinDistanceToParent);
 	AutomationDockLayout->addWidget(this->HalfBridgeGroup);
@@ -1888,7 +1943,9 @@ void View3D::CreateLayout()
 	
 	//Select border cells
 	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
+	BorderCellsCroppingGroup->setObjectName("BorderCellsCroppingGroup");
 	QFormLayout *BorderCellsCroppingLayout = new QFormLayout(BorderCellsCroppingGroup);
+	BorderCellsCroppingLayout->setObjectName("BorderCellsCroppingLayout");
 	BorderCellsCroppingLayout->addWidget(CropBorderCellsButton);
 	AutomationDockLayout->addWidget(BorderCellsCroppingGroup);
 	AutomationDockLayout->addStretch();
@@ -1958,6 +2015,7 @@ void View3D::CreateLayout()
 
 	/**************************************************************************/
 	this->projectFilesDock = new QDockWidget(tr("List of Image Files"), this);
+	this->projectFilesDock->setObjectName("projectFilesDock");
 	this->projectFilesDock->setWidget(this->projectFilesTable);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->projectFilesDock);
 	this->projectFilesDock->hide();
@@ -2258,8 +2316,6 @@ void View3D::rotationOptions()
 	double rollAngle = this->RollBox->value();
 	double elevationAngle = this->ElevationBox->value();
 	double azimuthAngle = this->AzimuthBox->value();
-
-	//std::cout << projection_base.roll + rollAngle << " " << projection_base.azimuth + azimuthAngle << " " << projection_base.elevation + elevationAngle << std::endl;
 
 	cam->Azimuth(projection_base.azimuth + azimuthAngle);
 	cam->Elevation(projection_base.elevation + elevationAngle);	
@@ -2647,16 +2703,19 @@ void View3D::createSlicerSlider()
 	//std::cout << "upper slice bound: " << upperBound << std::endl;
 
 	this->SlicerBar = new QToolBar("Slicer", this);
+	this->SlicerBar->setObjectName("SlicerBar");
 	this->SlicerBar->setAllowedAreas(Qt::RightToolBarArea | Qt::LeftToolBarArea);
 	this->addToolBar(Qt::RightToolBarArea, this->SlicerBar);
 
 	QLabel * SliceThicknessLabel = new QLabel("Slice Thickness",this);
 	this->SliceThicknessSpinBox = new QSpinBox(this);
+	this->SliceThicknessSpinBox->setObjectName("SliceThicknessSpinBox");
 	this->SliceThicknessSpinBox->setRange(1,upperBound);
 	this->SliceThicknessSpinBox->setValue(10);
 
 	QLabel * SliceWindowLevelLabel = new QLabel("Slice Brightness",this);
 	this->SliceBrightnessSlider = new QSlider(Qt::Vertical);
+	this->SliceBrightnessSlider->setObjectName("SliceBrightnessSlider");
 	this->SliceBrightnessSlider->setSingleStep(1);
 	this->SliceBrightnessSlider->setRange(0,1000);
 	this->SliceBrightnessSlider->setTickInterval(50);
@@ -2665,9 +2724,11 @@ void View3D::createSlicerSlider()
 
 	QLabel * SliceNumberLabel = new QLabel("Slice Number",this);
 	this->SliceSpinBox = new QSpinBox(this);
+	SliceSpinBox->setObjectName("SliceSpinBox");
 	this->SliceSpinBox->setRange(1,upperBound);
 
 	this->SliceSlider = new QSlider(Qt::Vertical);
+	this->SliceSlider->setObjectName("SliceSlider");
 	this->SliceSlider->setSingleStep(1);
 	this->SliceSlider->setRange(1,upperBound);
 	this->SliceSlider->setTickInterval(5);
@@ -3024,15 +3085,18 @@ void View3D::createSomaSliders()
 	 */
 
 	this->SomaBar = new QToolBar("Soma Tools", this);
+	this->SomaBar->setObjectName("SomaBar");
 	this->SomaBar->setAllowedAreas(Qt::BottomToolBarArea);
 	//this->SomaBar->setMovable(false);
 	this->addToolBar(Qt::BottomToolBarArea,this->SomaBar);
 	this->SomaBar->setToolTip("Soma settings");
 	this->addToolBarBreak(Qt::BottomToolBarArea);
 	this->SomaOpacitySpin = new QSpinBox(this);
+	this->SomaOpacitySpin->setObjectName("SomaOpacitySpin");
 	this->SomaOpacitySpin->setRange(0,250);
 
 	this->SomaOpacityValueSpin = new QDoubleSpinBox(this);
+	this->SomaOpacityValueSpin->setObjectName("SomaOpacityValueSpin");
 	this->SomaOpacityValueSpin->setRange(0,1);
 	this->SomaOpacityValueSpin->setSingleStep(.01);
 	this->ImageActors->setSomaOpacityValue(this->TraceEditSettings.value("RayCast/SomaOpacityValue", .1).toDouble() );
@@ -3040,6 +3104,7 @@ void View3D::createSomaSliders()
 	connect (this->SomaOpacityValueSpin, SIGNAL(valueChanged(double)), this, SLOT(SomaOpacityValueChanged(double)));
 
 	this->SomaOpacitySlider = new QSlider(Qt::Horizontal);
+	this->SomaOpacitySlider->setObjectName("SomaOpacitySlider");
 	this->SomaOpacitySlider->setRange(0,250);
 	this->SomaOpacitySlider->setSingleStep(1);
 	this->SomaOpacitySlider->setTickInterval(5);
@@ -3052,9 +3117,11 @@ void View3D::createSomaSliders()
 
 	//functions to control soma Brightness
 	this->SomaBrightnessSpin = new QSpinBox(this);
+	this->SomaBrightnessSpin->setObjectName("SomaBrightnessSpin");
 	this->SomaBrightnessSpin->setRange(0,250);
 
 	this->SomaBrightnessSlider = new QSlider(Qt::Horizontal);
+	this->SomaBrightnessSlider->setObjectName("SomaBrightnessSlider");
 	this->SomaBrightnessSlider->setRange(0,255);
 	this->SomaBrightnessSlider->setSingleStep(1);
 	this->SomaBrightnessSlider->setTickInterval(5);
@@ -3066,6 +3133,7 @@ void View3D::createSomaSliders()
 	connect (this->SomaBrightnessSpin, SIGNAL(valueChanged(int)), this , SLOT(SomaBrightnessChanged(int)));
 
 	this->SomaColorSpin = new QDoubleSpinBox;
+	this->SomaColorSpin->setObjectName("SomaColorSpin");
 	this->SomaColorSpin->setRange(0,1);
 	this->SomaColorSpin->setSingleStep(0.1);
 	this->SomaColorSpin->setValue(0.0);
@@ -3096,6 +3164,7 @@ void View3D::createRayCastSliders()
 	 */
 
 	this->RaycastBar = new QToolBar("RayCast Tools", this);
+	this->RaycastBar->setObjectName("RaycastBar");
 	this->RaycastBar->setAllowedAreas(Qt::BottomToolBarArea);
 	//this->RaycastBar->setMovable(false);
 	this->addToolBar(Qt::BottomToolBarArea,this->RaycastBar);
@@ -3103,9 +3172,11 @@ void View3D::createRayCastSliders()
 	this->addToolBarBreak(Qt::BottomToolBarArea);
 	//functions to control raycast opacity 
 	this->OpacitySpin = new QSpinBox(this);
+	this->OpacitySpin->setObjectName("OpacitySpin");
 	this->OpacitySpin->setRange(0,250);
 
 	this->OpacityValueSpin = new QDoubleSpinBox(this);
+	this->OpacityValueSpin->setObjectName("OpacityValueSpin");
 	this->OpacityValueSpin->setRange(0,1);
 	this->OpacityValueSpin->setSingleStep(.01);
 	this->ImageActors->setOpacityValue(this->TraceEditSettings.value("RayCast/OpacityValue", .1).toDouble() );
@@ -3113,6 +3184,7 @@ void View3D::createRayCastSliders()
 	connect (this->OpacityValueSpin, SIGNAL(valueChanged(double)), this, SLOT(RayCastOpacityValueChanged(double)));
 
 	this->OpacitySlider = new QSlider(Qt::Horizontal);
+	this->OpacitySlider->setObjectName("OpacitySlider");
 	this->OpacitySlider->setRange(0,250);
 	this->OpacitySlider->setSingleStep(1);
 	this->OpacitySlider->setTickInterval(5);
@@ -3125,9 +3197,11 @@ void View3D::createRayCastSliders()
 
 	//functions to control raycast Brightness
 	this->BrightnessSpin = new QSpinBox(this);
+	this->BrightnessSpin->setObjectName("BrightnessSpin");
 	this->BrightnessSpin->setRange(0,250);
 
 	this->BrightnessSlider = new QSlider(Qt::Horizontal);
+	this->BrightnessSlider->setObjectName("BrightnessSlider");
 	this->BrightnessSlider->setRange(0,255);
 	this->BrightnessSlider->setSingleStep(1);
 	this->BrightnessSlider->setTickInterval(5);
@@ -3141,6 +3215,7 @@ void View3D::createRayCastSliders()
 	QStringList ColorProfileList;
 	ColorProfileList << "RGB" << "Red" << "Green" << "Blue" << "Gray";
 	this->ColorProfileCombo = new QComboBox;
+	this->ColorProfileCombo->setObjectName("ColorProfileCombo");
 	this->ColorProfileCombo->addItems(ColorProfileList);
 	connect(this->ColorProfileCombo, SIGNAL(activated(int)), this, SLOT(RayCastColorValueChanged(int)));
 

@@ -8,13 +8,13 @@
     <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Somas"/>
     <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-somas.tif"/>
     <event widget="1View3D0/1QMenuBar0/ShowToolBars" command="activate" arguments="RayCast Tools"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="52"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="54"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider0" command="set_int" arguments="242"/>
-    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="key" arguments="16777219"/>
-    <event widget="1View3D0/1QToolBar2/1QDoubleSpinBox0" command="set_double" arguments="0"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="151"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="148"/>
-    <event widget="1View3D0/1QToolBar2/1QSlider1" command="set_int" arguments="0"/>
+    <event widget="1View3D0/RaycastBar/1QSlider0" command="set_int" arguments="52"/>
+    <event widget="1View3D0/RaycastBar/1QSlider0" command="set_int" arguments="54"/>
+    <event widget="1View3D0/RaycastBar/1QSlider0" command="set_int" arguments="242"/>
+    <event widget="1View3D0/RaycastBar/1QDoubleSpinBox0" command="key" arguments="16777219"/>
+    <event widget="1View3D0/RaycastBar/1QDoubleSpinBox0" command="set_double" arguments="0"/>
+    <event widget="1View3D0/RaycastBar/BrightnessSlider" command="set_int" arguments="151"/>
+    <event widget="1View3D0/RaycastBar/BrightnessSlider" command="set_int" arguments="148"/>
+    <event widget="1View3D0/RaycastBar/BrightnessSlider" command="set_int" arguments="0"/>
     <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="Resize Window"/>
 </events>
