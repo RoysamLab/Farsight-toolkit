@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <events>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Image"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/phant3D_11_img_label.tif"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="Load Somas"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-somas.tif"/>
     <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
     <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="ScreenshotAction"/>
     <event widget="1View3D0/1ScreenShotDialog0/1QPushButton0" command="activate" arguments=""/>
