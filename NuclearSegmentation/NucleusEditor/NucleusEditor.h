@@ -68,10 +68,10 @@
 #include "CellTrackerLib/MultiFrameCellTracker.h"
 #endif
 
-#ifdef USE_Clusclus
+//#ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
-#endif
+//#endif
 
 #ifdef USE_QT_TESTING
 #include "GUITester.h"

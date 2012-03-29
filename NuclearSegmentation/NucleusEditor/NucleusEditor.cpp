@@ -2974,7 +2974,7 @@ void NucleusEditor::loadModelFromFile( std::string file_name ){
 
 void NucleusEditor::runClus()
 {
-	#ifdef USE_Clusclus
+	//#ifdef USE_Clusclus
 	this->biheatmap = new BiHeatmap();
 	if( table->GetNumberOfRows() <= 0)
 	{
@@ -3024,7 +3024,7 @@ void NucleusEditor::runClus()
 			delete bicluster;
 		}
 	}
-	#endif
+	//#endif
 }
 //**********************************************************************
 // SLOT: Query K Nearest Neighbors

@@ -20,11 +20,6 @@ OPTION( BUILD_NUCLEI "Build Nuclear Segmentation" ON )
 OPTION( BUILD_VESSEL "Build Vessel Surface Segmentation" OFF )
 OPTION( BUILD_REGISTRATION "Build Image Registration (fregl)" OFF )
 OPTION( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
-IF(BUILD_SAMPLE_EDITOR)
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SampleEditor )
-  SET( BUILD_SPD ON CACHE BOOL "Build SPD" FORCE )
-  SET( BUILD_CLUSCLUS ON CACHE BOOL "Build CLUSCLUS" FORCE )
-ENDIF()
 #OPTION( BUILD_TISSUENETS "Build TissueNets" OFF )
 OPTION( BUILD_TRACKER "Build Cell Tracker" OFF )
 OPTION( USE_KPLS "Use KPLS module for classification" ON )
@@ -42,17 +37,10 @@ OPTION( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has 
 OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
-OPTION( BUILD_SPD "Build SPD" OFF)
-IF( BUILD_SPD )
-	ADD_DEFINITIONS( -DUSE_SPD )
-	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SPD )
-ENDIF()
 OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
-IF( BUILD_CLUSCLUS )
-  ADD_DEFINITIONS( -DUSE_Clusclus )
-  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ClusClus )
-ENDIF()
+
+
 OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
 OPTION( BUILD_FTKVOTING "Build Radial Voting" OFF)
 OPTION( BUILD_FTKNUCLEARSEGMENTATIONNIC "Build Nicolas Segmentation" OFF)
@@ -70,6 +58,44 @@ MARK_AS_ADVANCED(BUILD_ZERNIKE)
 MARK_AS_ADVANCED(BUILD_CURVELETS)
 
 INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
+
+
+#########################################################
+# Throw errors about dependencies of BUILD options
+#########################################################
+
+IF(BUILD_SAMPLE_EDITOR)
+  if (NOT BUILD_SPD)
+    MESSAGE(FATAL_ERROR "Sample Editor requires Sample Progression Discovery. Turn on BUILD_SPD")
+  endif()
+
+  if (NOT BUILD_CLUSCLUS)
+    MESSAGE(FATAL_ERROR "SampleEditor requires Clusclus. Turn on BUILD_Clusclus")
+  endif()
+ENDIF()
+
+if (BUILD_NUCLEI)
+  if (NOT BUILD_CLUSCLUS)
+    MESSAGE(FATAL_ERROR "NucleusEditor requires Clusclus. Turn on BUILD_Clusclus")
+  endif()
+endif()
+
+
+#########################################################
+# Define the compiler flags for the USE variables here
+#########################################################
+
+IF( BUILD_CLUSCLUS )
+  ADD_DEFINITIONS( -DUSE_Clusclus )
+  INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/ClusClus )
+ENDIF()
+
+OPTION( BUILD_SPD "Build SPD" OFF)
+IF( BUILD_SPD )
+	ADD_DEFINITIONS( -DUSE_SPD )
+	INCLUDE_DIRECTORIES( ${PROJECT_SOURCE_DIR}/SPD )
+ENDIF()
+
 
 #####################################################################################
 # CPACK SETUP FOR BUILDING INSTALLERS
@@ -303,7 +329,7 @@ ENDIF(USE_KPLS)
 ################################################################################
 ################################################################################
 # FARSIGHT ALSO HAS A NUMBER OF COMMON LIBRARIES THAT ARE INTERNAL TO
-# THE PROJECT:
+# THE PROJECT, WE INCLUDE THEM HERE:
 ################################################################################
 
 IF (BUILD_ZERNIKE)
@@ -343,8 +369,6 @@ IF(BUILD_VESSEL)
 	FIND_PACKAGE(GLUT)
   ENDIF( WIN32 )
 ENDIF(BUILD_VESSEL)
-
-
 
 IF(BUILD_MODEL_SEG)
   IF(WIN32)
