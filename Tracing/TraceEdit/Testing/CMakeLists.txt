@@ -207,5 +207,17 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-DeleteTraces PROPERTIES
     DEPENDS TraceEdit-RaycastSomas
   )
+  
+  add_test(
+    TraceEdit-AddNewBranches
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_add_new_branches.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-AddNewBranches PROPERTIES
+    DEPENDS TraceEdit-DeleteTraces
+    PASS_REGULAR_EXPRESSION "Branching complete"
+  )
     
 endif()

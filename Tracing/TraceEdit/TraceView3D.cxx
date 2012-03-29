@@ -4646,6 +4646,7 @@ void View3D::AddNewBranches()
 			this->statusBar()->showMessage(tr("Update Tree Plots"));
 			this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 			this->statusBar()->showMessage(tr("Branching complete"));
+			std::cout <<  "Branching complete" << std::endl;
 		}
 	}
 }
