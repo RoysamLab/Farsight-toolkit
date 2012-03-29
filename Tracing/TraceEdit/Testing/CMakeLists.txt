@@ -165,5 +165,21 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-MergeSelected PROPERTIES
     DEPENDS TraceEdit-Gridlines
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_exportcells.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_exportcells.xml
+    @ONLY)
+  add_test(
+    TraceEdit-ExportCells
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/cnic_macaque_pyramidal.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_exportcells.xml
+    ${TraceEdit_TEST_DIR}/baseline_select_tree.png
+  )
+  set_tests_properties(TraceEdit-ExportCells PROPERTIES
+    DEPENDS TraceEdit-Gridlines
+    PASS_REGULAR_EXPRESSION "file written"
+  )
     
 endif()
