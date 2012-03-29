@@ -10,12 +10,27 @@ GridlineActors::GridlineActors()
 	num_horizontal_lines = 0;
 	num_vertical_lines = 0;
 	num_depth_lines = 0;
+	GridlineActorVectorHorizontal = 0;
+	GridlineActorVectorVertical = 0;
+	GridlineActorVectorDepth = 0;
 }
 GridlineActors::~GridlineActors()
 {
 	/*!
 	 * Destructor
 	 */
+	if(GridlineActorVectorHorizontal != 0)
+	{
+		delete [] GridlineActorVectorHorizontal;
+	}
+	if(GridlineActorVectorVertical != 0)
+	{
+		delete [] GridlineActorVectorVertical;
+	}
+	if(GridlineActorVectorDepth != 0)
+	{
+		delete [] GridlineActorVectorDepth;
+	}
 }
 //void GridlineActors::createGrid2D(double left_bound, double right_bound, double bottom_bound, double top_bound,int height_spacing, int width_spacing, int line_width, int r, int g, int b, int opacity, int z_plane_value)
 //{
@@ -111,6 +126,10 @@ void GridlineActors::createGridxy(double bounds[],int height_spacing, int width_
 	//Manually create lines
 	/// horizontal lines
 	num_horizontal_lines = (bounds[3] - bounds[2]) / height_spacing + 1;
+	if(GridlineActorVectorHorizontal != 0)
+	{
+		delete [] GridlineActorVectorHorizontal;
+	}
 	GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
 	
 	unsigned int horizontal_line_index = 0;
@@ -141,6 +160,10 @@ void GridlineActors::createGridxy(double bounds[],int height_spacing, int width_
 
 	/// vertical lines
 	num_vertical_lines = (bounds[1] - bounds[0]) / width_spacing + 1;
+	if(GridlineActorVectorVertical != 0)
+	{
+		delete [] GridlineActorVectorVertical;
+	}
 	GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
 
 	unsigned int vertical_line_index = 0;
@@ -184,6 +207,10 @@ void GridlineActors::createGridxz(double bounds[],int height_spacing, int width_
 	//Manually create lines
 	/// horizontal lines
 	num_horizontal_lines = (bounds[5] - bounds[4]) / height_spacing + 1;
+	if(GridlineActorVectorHorizontal != 0)
+	{
+		delete [] GridlineActorVectorHorizontal;
+	}
 	GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
 	
 	unsigned int horizontal_line_index = 0;
@@ -239,6 +266,10 @@ void GridlineActors::createGridxz(double bounds[],int height_spacing, int width_
 
 	/// vertical lines
 	num_vertical_lines = (bounds[1] - bounds[0]) / width_spacing + 1;
+	if(GridlineActorVectorVertical != 0)
+	{
+		delete [] GridlineActorVectorVertical;
+	}
 	GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
 
 	unsigned int vertical_line_index = 0;
@@ -282,6 +313,10 @@ void GridlineActors::createGridyz(double bounds[],int height_spacing, int width_
 	//Manually create lines
 	/// horizontal lines
 	num_horizontal_lines = (bounds[5] - bounds[4]) / height_spacing + 1;
+	if(GridlineActorVectorHorizontal != 0)
+	{
+		delete [] GridlineActorVectorHorizontal;
+	}
 	GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
 	
 	unsigned int horizontal_line_index = 0;
@@ -312,6 +347,10 @@ void GridlineActors::createGridyz(double bounds[],int height_spacing, int width_
 
 	/// vertical lines
 	num_vertical_lines = (bounds[3] - bounds[2]) / width_spacing + 1;
+	if(GridlineActorVectorVertical != 0)
+	{
+		delete [] GridlineActorVectorVertical;
+	}
 	GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
 
 	unsigned int vertical_line_index = 0;
@@ -360,14 +399,26 @@ void GridlineActors::createGrid3D(double bounds[],int height_spacing, int width_
 
 	/// horizontal lines
 	num_horizontal_lines = temp_horizontal_lines*temp_depth_lines;
+	if(GridlineActorVectorHorizontal != 0)
+	{
+		delete [] GridlineActorVectorHorizontal;
+	}
 	GridlineActorVectorHorizontal = new vtkSmartPointer<vtkActor>[num_horizontal_lines];
 
 	/// vertical lines
 	num_vertical_lines = temp_vertical_lines*temp_depth_lines;
+	if(GridlineActorVectorVertical != 0)
+	{
+		delete [] GridlineActorVectorVertical;
+	}
 	GridlineActorVectorVertical = new vtkSmartPointer<vtkActor>[num_vertical_lines];
 
 	/// depth lines
 	num_depth_lines = temp_vertical_lines*temp_horizontal_lines;
+	if(GridlineActorVectorDepth != 0)
+	{
+		delete [] GridlineActorVectorDepth;
+	}
 	GridlineActorVectorDepth = new vtkSmartPointer<vtkActor>[num_depth_lines];
 
 	unsigned int horizontal_line_index = 0;
