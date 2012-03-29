@@ -143,5 +143,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-Settings PROPERTIES
     DEPENDS TraceEdit-Tracing
   )
+  
+  add_test(
+    TraceEdit-Gridlines
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_gridlines.xml
+    ${TraceEdit_TEST_DIR}/baseline_gridlines.png
+  )
+  set_tests_properties(TraceEdit-Gridlines PROPERTIES
+    DEPENDS TraceEdit-Settings
+  )
     
 endif()

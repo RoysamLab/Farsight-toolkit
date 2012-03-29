@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="DataViews"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews" command="activate" arguments="GridAction"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews" command="activate" arguments="Editor Settings"/>
+    <event widget="1View3D0/1QDockWidget0/qt_dockwidget_closebutton" command="activate" arguments=""/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/selectionSettings" command="mousePress" arguments="1,1,0,21,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/selectionSettings" command="mouseRelease" arguments="1,0,0,21,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/displaySettings" command="mousePress" arguments="1,1,0,21,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/displaySettings" command="mouseRelease" arguments="1,0,0,21,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/rotationSettings" command="mousePress" arguments="1,1,0,18,7"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/rotationSettings" command="mouseRelease" arguments="1,0,0,18,7"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/BackgroundSettings" command="mousePress" arguments="1,1,0,18,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/BackgroundSettings" command="mouseRelease" arguments="1,0,0,18,9"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/HeightSpaceBox" command="set_int" arguments="50"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/WidthSpaceBox" command="set_int" arguments="50"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/DepthSpaceBox" command="set_int" arguments="50"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/LineWidthBox" command="set_int" arguments="2"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridRSlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridRSlider" command="set_int" arguments="255"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridGSlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridGSlider" command="set_int" arguments="255"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridBSlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridBSlider" command="set_int" arguments="255"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridOpacitySlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/GridlineSettings/GridOpacitySlider" command="set_int" arguments="100"/>
+    <event widget="1View3D0/settingsDock/SettingsWidget/ApplySettingsButton/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="clearAction"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>
