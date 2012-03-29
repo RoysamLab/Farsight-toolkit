@@ -196,5 +196,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-RaycastSomas PROPERTIES
     DEPENDS TraceEdit-ExportCells
   )
+  
+  add_test(
+    TraceEdit-DeleteTraces
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/cnic_macaque_pyramidal.swc
+    ${TraceEdit_TEST_DIR}/test_delete_traces.xml
+    ${TraceEdit_TEST_DIR}/baseline_delete_traces.png
+  )
+  set_tests_properties(TraceEdit-DeleteTraces PROPERTIES
+    DEPENDS TraceEdit-RaycastSomas
+  )
     
 endif()

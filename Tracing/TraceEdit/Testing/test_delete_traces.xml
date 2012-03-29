@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mousePress" arguments="2,2,0,316,209"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="contextMenu" arguments=""/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mouseRelease" arguments="2,0,0,316,209"/>
+    <event widget="1View3D0/1QWidget0/SelectTreeAction" command="activate" arguments=""/>
+    <event widget="1View3D0/1QWidget0/DeleteButton" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="clearAction"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>
