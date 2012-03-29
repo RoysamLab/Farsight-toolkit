@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QWidget0/MergeButton" command="activate" arguments=""/>
+    <event widget="1QMessageBox0/qt_msgbox_buttonbox/1QPushButton1" command="activate" arguments=""/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,0,62,6,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,0,62,6,/0:0"/>
+    <event widget="1View3D0/1QWidget0/MergeButton" command="activate" arguments=""/>
+    <event widget="1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>

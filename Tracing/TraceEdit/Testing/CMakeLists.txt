@@ -154,5 +154,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-Gridlines PROPERTIES
     DEPENDS TraceEdit-Settings
   )
+  
+  add_test(
+    TraceEdit-MergeSelected
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C5TracedPoints.swc
+    ${TraceEdit_TEST_DIR}/test_mergeselected.xml
+    ${TraceEdit_TEST_DIR}/baseline_mergeselected.png
+  )
+  set_tests_properties(TraceEdit-MergeSelected PROPERTIES
+    DEPENDS TraceEdit-Gridlines
+  )
     
 endif()
