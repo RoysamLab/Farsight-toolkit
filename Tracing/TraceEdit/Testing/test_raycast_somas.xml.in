@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="loadSoma"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-somas.tif"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews/soma_sub_menu" command="activate" arguments="SetSomaRaycast"/>
+    <event widget="1View3D0/SomaBar/SomaColorSpin" command="set_double" arguments="0"/>
+    <event widget="1View3D0/SomaBar/SomaColorSpin" command="set_double" arguments="1"/>
+    <event widget="1View3D0/SomaBar/SomaOpacitySpin" command="set_int" arguments="0"/>
+    <event widget="1View3D0/SomaBar/SomaOpacitySlider" command="set_int" arguments="250"/>
+    <event widget="1View3D0/SomaBar/SomaOpacityValueSpin" command="key" arguments="0"/>
+    <event widget="1View3D0/SomaBar/SomaOpacityValueSpin" command="set_double" arguments="1"/>
+    <event widget="1View3D0/SomaBar/SomaBrightnessSlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/SomaBar/SomaBrightnessSlider" command="set_int" arguments="255"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="clearAction"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>

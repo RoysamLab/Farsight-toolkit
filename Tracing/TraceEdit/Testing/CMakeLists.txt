@@ -181,5 +181,20 @@ if(QtTestingFound)
     DEPENDS TraceEdit-Gridlines
     PASS_REGULAR_EXPRESSION "file written"
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_raycast_somas.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_raycast_somas.xml
+    @ONLY)
+  add_test(
+    TraceEdit-RaycastSomas
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_raycast_somas.xml
+    ${TraceEdit_TEST_DIR}/baseline_raycast_somas.png
+  )
+  set_tests_properties(TraceEdit-RaycastSomas PROPERTIES
+    DEPENDS TraceEdit-ExportCells
+  )
     
 endif()
