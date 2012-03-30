@@ -230,5 +230,20 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-CreateTraceBit PROPERTIES
     DEPENDS TraceEdit-AddNewBranches
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_show_seed_points.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_show_seed_points.xml
+    @ONLY)
+  add_test(
+    TraceEdit-ShowSeedPoints
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_show_seed_points.xml
+    ${TraceEdit_TEST_DIR}/baseline_show_seed_points.png
+  )
+  set_tests_properties(TraceEdit-ShowSeedPoints PROPERTIES
+    DEPENDS TraceEdit-AddNewBranches
+  )
     
 endif()
