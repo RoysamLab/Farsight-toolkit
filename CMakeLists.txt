@@ -38,7 +38,7 @@ OPTION( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 OPTION( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 OPTION( BUILD_DENDROGRAM "Dendrogram code" OFF)
 OPTION( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
-OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" OFF)
+OPTION( BUILD_CLUSCLUS "Build CLUSCLUS" ON)
 
 
 OPTION( BUILD_IMONTAGE "Build iMontage" OFF)
