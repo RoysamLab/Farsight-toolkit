@@ -19,7 +19,7 @@ SET( Dendo_MOC_REQD_HDRS
 QT4_WRAP_CPP( Dendo_MOC_REQD_HDRS Dendro_main.cpp Dendrogram.h)
 
 
-ADD_EXECUTABLE( Dendrogram Dendro_main.cpp ${EXE_TYPE}
+ADD_EXECUTABLE( Dendrogram Dendro_main.cpp
                
                 ${Dendo_SRCS}
 				${Dendo_HDRS}
