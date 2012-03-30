@@ -5327,12 +5327,10 @@ void View3D::MergeSelectedTraces()
 					QString::number(this->candidateGaps.size()) + " traces");
 				this->EditLogDisplay->append(this->dtext);
 				this->numMerged += (int)this->candidateGaps.size();
-				std::cout << "before merging: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 				for (j=0; j<this->candidateGaps.size();j++)
 				{
 					tobj->mergeTraces(this->candidateGaps[j]->endPT1,this->candidateGaps[j]->endPT2);
 				}
-				std::cout << "after merging: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 			}
 			else if(MergeInfo.clickedButton()==mergeNone)
 			{
@@ -5345,12 +5343,10 @@ void View3D::MergeSelectedTraces()
 			this->statusBar()->showMessage("nothing to merge");
 		}   //end else   
 	}
-	std::cout << "before last4: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 	this->ClearSelection();
 	this->statusBar()->showMessage(tr("Update Tree Plots"));
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(tr("Done With Merge"));
-	std::cout << "after last4: (" << this->QVTK->size().width() << ", " << this->QVTK->size().height() << ")" << std::endl;
 }
 /*  other trace modifiers */
 void View3D::SplitTraces()
