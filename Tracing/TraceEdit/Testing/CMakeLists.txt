@@ -256,5 +256,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-CellAnalysis PROPERTIES
     DEPENDS TraceEdit-ShowSeedPoints
   )
+  
+  add_test(
+    TraceEdit-RenderModes
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    ${TraceEdit_TEST_DIR}/test_render_modes.xml
+    ${TraceEdit_TEST_DIR}/baseline_render_modes.png
+  )
+  set_tests_properties(TraceEdit-RenderModes PROPERTIES
+    DEPENDS TraceEdit-CellAnalysis
+  )
     
 endif()

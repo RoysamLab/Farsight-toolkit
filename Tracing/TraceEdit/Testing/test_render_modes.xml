@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="analysisViews"/>
+    <event widget="1View3D0" command="mouseMove" arguments="1,0,0,281,-7"/>
+    <event widget="1View3D0" command="mouseRelease" arguments="1,0,0,281,-7"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="DataViews"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews/renderer_sub_menu" command="activate" arguments="SetProjection"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mousePress" arguments="1,1,0,507,486"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mouseMove" arguments="1,0,0,485,78"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mouseRelease" arguments="1,0,0,485,78"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mousePress" arguments="1,1,0,490,90"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mouseMove" arguments="1,0,0,503,471"/>
+    <event widget="1View3D0/1QWidget0/1QVTKWidget0" command="mouseRelease" arguments="1,0,0,503,471"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="DataViews"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews/renderer_sub_menu" command="activate" arguments="SetRaycast"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="DataViews"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews/renderer_sub_menu" command="activate" arguments="SetSlicer"/>
+    <event widget="1View3D0/1QWidget0/FocusAction" command="activate" arguments=""/>
+    <event widget="1View3D0/SlicerBar/SliceSlider" command="set_int" arguments="1"/>
+    <event widget="1View3D0/SlicerBar/SliceSlider" command="set_int" arguments="20"/>
+    <event widget="1View3D0/SlicerBar/SliceSlider" command="set_int" arguments="10"/>
+    <event widget="1View3D0/SlicerBar/SliceSpinBox" command="set_int" arguments="1"/>
+    <event widget="1View3D0/SlicerBar/SliceSpinBox" command="set_int" arguments="20"/>
+    <event widget="1View3D0/SlicerBar/SliceSpinBox" command="set_int" arguments="10"/>
+    <event widget="1View3D0/SlicerBar/SliceBrightnessSlider" command="set_int" arguments="1000"/>
+    <event widget="1View3D0/SlicerBar/SliceBrightnessSlider" command="set_int" arguments="0"/>
+    <event widget="1View3D0/SlicerBar/SliceBrightnessSlider" command="set_int" arguments="516"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="key" arguments="1"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="set_int" arguments="10"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="spin" arguments="down"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="spin" arguments="down"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="spin" arguments="up"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="spin" arguments="up"/>
+    <event widget="1View3D0/SlicerBar/SliceThicknessSpinBox" command="spin" arguments="up"/>
+    <event widget="1View3D0/1QWidget0/FocusAction" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="clearAction"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>
