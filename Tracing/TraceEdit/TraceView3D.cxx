@@ -1486,35 +1486,35 @@ void View3D::CreateGUIObjects()
 		<<"4 = apical dendrite" <<"5 = fork point" <<"6 = end point" <<"7 = custom";
 	this->typeCombo = new QComboBox;
 	this->typeCombo->addItems(types);
-	connect(this->typeCombo, SIGNAL(activated( int )), this, SLOT(SetTraceType(int )));
+	connect(this->typeCombo, SIGNAL(currentIndexChanged( int )), this, SLOT(SetTraceType(int )));
 
 	QStringList HighlightStyles;
 	HighlightStyles << "Tree" << "Branch Order" << "Tips";
 	this->HighlightCombo = new QComboBox;
 	this->HighlightCombo->setObjectName("HighlightCombo");
 	this->HighlightCombo->addItems(HighlightStyles);
-	connect(this->HighlightCombo, SIGNAL(activated(int)), this, SLOT(setHighlightSettings(int)));
+	connect(this->HighlightCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(setHighlightSettings(int)));
 
 	QStringList ZoomStyles;
 	ZoomStyles<< "Track Ball" << "Image" << "RubberBandZoom" << "Slicer";
 	this->StyleCombo = new QComboBox;
 	this->StyleCombo->setObjectName("StyleCombo");
 	this->StyleCombo->addItems(ZoomStyles);
-	connect(this->StyleCombo, SIGNAL(activated(int)), this, SLOT(chooseInteractorStyle(int)));
+	connect(this->StyleCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(chooseInteractorStyle(int)));
 
 	QStringList ProjectionStyles;
 	ProjectionStyles<< "Maximum" << "Mean" << "Minimum";
 	this->ProjectionCombo = new QComboBox;
 	this->ProjectionCombo->setObjectName("ProjectionCombo");
 	this->ProjectionCombo->addItems(ProjectionStyles);
-	connect(this->ProjectionCombo, SIGNAL(activated(int)), this, SLOT(SetProjectionMethod(int)));
+	connect(this->ProjectionCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(SetProjectionMethod(int)));
 
 	QStringList AxisList;
 	AxisList<< "X-Y" << "X-Z" << "Y-Z";
 	this->RotateImageUpCombo = new QComboBox;
 	this->RotateImageUpCombo->setObjectName("RotateImageUpCombo");
 	this->RotateImageUpCombo->addItems(AxisList);
-	connect(this->RotateImageUpCombo, SIGNAL(activated(int)), this, SLOT(rotateImage(int)));
+	connect(this->RotateImageUpCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(rotateImage(int)));
 
 	/*this->ProjectionAxisCombo = new QComboBox;
 	this->ProjectionAxisCombo->addItems(AxisList);
@@ -2035,7 +2035,7 @@ void View3D::openTracingDialog()
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
 	tracingLayout->addWidget(this->tracerCombo);
-	connect(this->tracerCombo, SIGNAL(activated(int)), this, SLOT(PickTracer(int)));
+	connect(this->tracerCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(PickTracer(int)));
 
 	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
 	QFormLayout *mntLayout = new QFormLayout();
@@ -3217,7 +3217,7 @@ void View3D::createRayCastSliders()
 	this->ColorProfileCombo = new QComboBox;
 	this->ColorProfileCombo->setObjectName("ColorProfileCombo");
 	this->ColorProfileCombo->addItems(ColorProfileList);
-	connect(this->ColorProfileCombo, SIGNAL(activated(int)), this, SLOT(RayCastColorValueChanged(int)));
+	connect(this->ColorProfileCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(RayCastColorValueChanged(int)));
 
 	//add the widgets to the bar
 	this->RaycastBar->addWidget(new QLabel("Color Profile"));
