@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="analysisViews"/>
+    <event widget="1View3D0/1QMenuBar0/analysisViews" command="activate" arguments="Cell Analysis"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,0,45,10,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,0,45,10,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,0,45,10,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,0,45,10,/0:0"/>
+    <event widget="1View3D0/1QWidget0/ClearButton" command="activate" arguments=""/>
+</events>

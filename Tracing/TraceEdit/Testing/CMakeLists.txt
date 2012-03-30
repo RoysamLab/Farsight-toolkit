@@ -243,7 +243,18 @@ if(QtTestingFound)
     ${TraceEdit_TEST_DIR}/baseline_show_seed_points.png
   )
   set_tests_properties(TraceEdit-ShowSeedPoints PROPERTIES
-    DEPENDS TraceEdit-AddNewBranches
+    DEPENDS TraceEdit-CreateTraceBit
+  )
+  
+  add_test(
+    TraceEdit-CellAnalysis
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_cell_analysis.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-CellAnalysis PROPERTIES
+    DEPENDS TraceEdit-ShowSeedPoints
   )
     
 endif()
