@@ -219,5 +219,16 @@ if(QtTestingFound)
     DEPENDS TraceEdit-DeleteTraces
     PASS_REGULAR_EXPRESSION "Branching complete"
   )
+  
+  add_test(
+    TraceEdit-CreateTraceBit
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_create_trace_bit.xml
+    ${TraceEdit_TEST_DIR}/baseline_create_trace_bit.png
+  )
+  set_tests_properties(TraceEdit-CreateTraceBit PROPERTIES
+    DEPENDS TraceEdit-AddNewBranches
+  )
     
 endif()
