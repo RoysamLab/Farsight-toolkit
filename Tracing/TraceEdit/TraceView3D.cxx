@@ -4037,8 +4037,13 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 			centroidsTable->GetValueByName(counter, "centroid_y").ToDouble(),
 			centroidsTable->GetValueByName(counter, "centroid_z").ToDouble()
 			);
-		double radii = 0.75  * centroidsTable->GetValueByName(counter, "volume").ToDouble()/ PI;
-		radii = pow( radii, (double) 1 / 3);
+		double radii = 5;
+		double volume = centroidsTable->GetValueByName(counter, "volume").ToDouble();
+		if(volume != 0)
+		{
+			radii = 0.75  * volume / PI;
+			radii = pow( radii, (double) 1 / 3);
+		}
 		sizeArray->SetTuple1(counter, radii);
 		colors->InsertTuple3(counter, 255, 0, 0);
 
