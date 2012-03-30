@@ -29,6 +29,7 @@
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkImageLinearIteratorWithIndex.h"
+#include "itkStatisticsImageFilter.h"
 
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkCastImageFilter.h"
