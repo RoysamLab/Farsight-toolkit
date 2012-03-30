@@ -1306,7 +1306,7 @@ void View3D::CreateGUIObjects()
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
 
 	this->LoadSeedPointsAsGlyphs = new QAction("Load Seed Point Glyphs", this->CentralWidget);
-	this->LoadSeedPointsAsGlyphs->setObjectName(tr("LoadNucleiTable"));
+	this->LoadSeedPointsAsGlyphs->setObjectName(tr("LoadSeedPointsAsGlyphs"));
 	connect(this->LoadSeedPointsAsGlyphs, SIGNAL(triggered()), this, SLOT(ShowSeedPoints()));
 
 	this->AssociateCellToNucleiAction = new QAction("Associate Nuclei To Cells", this->CentralWidget);
@@ -3794,6 +3794,7 @@ void View3D::ShowSeedPoints()
 		vtkSmartPointer<vtkTable> SeedTable = ftk::LoadXYZTable(fileName.toStdString());	
 		this->AddDebugPoints(SeedTable);
 		this->QVTK->GetRenderWindow()->Render();
+		std::cout << "seed points rendered" << std::endl;
 	}//
 }
 void View3D::CalculateCellToCellDistanceGraph()

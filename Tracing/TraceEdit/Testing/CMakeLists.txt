@@ -244,6 +244,7 @@ if(QtTestingFound)
   )
   set_tests_properties(TraceEdit-ShowSeedPoints PROPERTIES
     DEPENDS TraceEdit-CreateTraceBit
+    PASS_REGULAR_EXPRESSION "seed points rendered"
   )
   
   add_test(
