@@ -491,9 +491,6 @@ protected:
 	std::string confidence_col_name;
 	////////////////////////////////////////////////////////////////////////////////
 
-	//This does not belong here, but is a temporary fix:
-	void CreateDefaultAssociationRules();
-
 	//Processing toolbar and thread pointers:
 	bool abortProcessFlag;
 	bool continueProcessFlag;

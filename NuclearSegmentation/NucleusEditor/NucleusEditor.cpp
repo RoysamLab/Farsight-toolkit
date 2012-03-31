@@ -4169,35 +4169,6 @@ int NucleusEditor::requestChannel(ftk::Image::Pointer img)
 	return ch;
 }
 
-void NucleusEditor::CreateDefaultAssociationRules()
-{
-	//filename of the label image to use:
-	QString fname = QString::fromStdString(projectFiles.output);
-	QFileInfo inf(QDir(lastPath), QFileInfo(fname).baseName() + "_nuc.tif");
-	std::string label_name = inf.absoluteFilePath().toStdString();
-	//Create association rules:
-	//1. Pass the constructor the filename of the label image to use and the number of associations to compute:
-	ftk::NuclearAssociationRules * objAssoc = new ftk::NuclearAssociationRules(label_name, 1);
-	std::vector<std::string> targFileNames = myImg->GetFilenames();
-	std::string targFileName = targFileNames.at(projectDefinition.FindInputChannel("CYTOPLASM"));
-	//2. Create each association rule: name, filename of target image, outside distance, inside distance, whole object, type
-	objAssoc->AddAssociation("nuc_CK", targFileName, 0, 0, true, false, false, 0, 0, 3, "");
-	//filename of the output xml and save:
-	QFileInfo inf2(QDir(lastPath), QFileInfo(fname).baseName() + "_assoc.xml");
-	//3. Write to file:
-	objAssoc->WriteRulesToXML(inf2.absoluteFilePath().toStdString());
-	//4. put the output xml in the project definition:
-	//typedef struct { std::string name; std::string value; } StringParameter;
-	//ftk::ProjectDefinition::StringParameter tpm;	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
-	//tpm.value=inf2.absoluteFilePath().toStdString();	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
-	//projectDefinition.associationRules.push_back( tpm );	//ISAAC: THIS IS A HACK TO GET THE HISTOPATHOGLOGY PROJECT WORKING WILL FIX SOON SORRY -KEDAR
-
-	//Now create other rules:
-
-	//AND create other XML association definition files for other label images:
-
-}
-
 //******************************************************************************************
 //******************************************************************************************
 //******************************************************************************************
@@ -4403,7 +4374,6 @@ void NucleusEditor::process()
 			switch( pProc->NeedInput() )
 			{
 			case 3:			//Need something for association rules
-				this->CreateDefaultAssociationRules();
 				break;
 			}
 		}
