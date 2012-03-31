@@ -116,9 +116,9 @@ public:
 	
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
-	void SetCostThreshold(float thres){CostThreshold = thres;};
+	void SetCostThreshold(float thres){_CostThreshold = thres;};
 	void LoadSomaImage(std::string somaFileName);
-	void LoadSomaImage_1(LabelImageType3D::Pointer image){ SomaImage = image; };
+	void LoadSomaImage_1(LabelImageType3D::Pointer image){ _SomaImage = image; };
 	void RunTracing();
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
@@ -151,27 +151,27 @@ protected:
 	void BlackOut(itk::Index<3> &ndx );
 
 private:
-	std::vector<SWCNode*> SWCNodeContainer;
+	std::vector<SWCNode*> _SWCNodeContainer;
 	//CharImageType3D::Pointer SomaImage;
-	LabelImageType3D::Pointer SomaImage;
-	PixelType CostThreshold;
-	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
-	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage;   //Input Image, EK image, CT image
-	SWCImageType3D::Pointer SWCImage; //swc label image
-	itk::Size<3> size;
-	std::vector<OffsetType> off;
-	long CurrentID;
-	std::vector<IndexType> StartPoints;
-	unsigned int padz;
+	LabelImageType3D::Pointer _SomaImage;
+	PixelType _CostThreshold;
+	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > _PQ;
+	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage;   //Input Image, EK image, CT image
+	SWCImageType3D::Pointer _SWCImage; //swc label image
+	itk::Size<3> _size;
+	std::vector<OffsetType> _off;
+	long _CurrentID;
+	std::vector<IndexType> _StartPoints;
+	unsigned int _padz;
 	
 	itk::Size<3> _sizeDice;
 	itk::Index<3> _indxDice;
-	ImageType3D::Pointer logScale_1; 
-	ImageType3D::Pointer logScale_2;
-	ImageType3D::Pointer logScale_3;
-	ImageType3D::Pointer logScale_4;
-	ImageType3D::Pointer logScale_5;
-	ImageType3D::Pointer logScale_6;
+	ImageType3D::Pointer _logScale_1; 
+	ImageType3D::Pointer _logScale_2;
+	ImageType3D::Pointer _logScale_3;
+	ImageType3D::Pointer _logScale_4;
+	ImageType3D::Pointer _logScale_5;
+	ImageType3D::Pointer _logScale_6;
 
 };
 

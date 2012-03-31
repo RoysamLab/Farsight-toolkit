@@ -29,7 +29,7 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)  
 {
 	ImageType3D::Pointer CurvImage = image;
-	padz = pad;
+	_padz = pad;
 
 	RescalerType::Pointer rescaler = RescalerType::New();
 	rescaler->SetOutputMinimum(0.0);
@@ -50,31 +50,31 @@ void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned
 	std::cout << "pad z slices" << std::endl;
 	itk::Size<3> isz = CurvImage->GetBufferedRegion().GetSize();
 	itk::Size<3> osz = isz;
-	osz[2] += 2*padz;
+	osz[2] += 2*_padz;
 	itk::Index<3> indx, ondx;
 	
-	PaddedCurvImage = ImageType3D::New();
-	PaddedCurvImage->SetRegions(osz);
-	PaddedCurvImage->Allocate();
-	PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
+	_PaddedCurvImage = ImageType3D::New();
+	_PaddedCurvImage->SetRegions(osz);
+	_PaddedCurvImage->Allocate();
+	_PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
 	
 	for(ondx[2] = 0; ondx[2] < osz[2]; ++ondx[2]) 
 	{
-		indx[2] = (ondx[2] < padz) ? 0 : ondx[2] - padz;
-		indx[2] = (ondx[2] >= osz[2]-padz) ? isz[2]-1 : indx[2];
+		indx[2] = (ondx[2] < _padz) ? 0 : ondx[2] - _padz;
+		indx[2] = (ondx[2] >= osz[2]-_padz) ? isz[2]-1 : indx[2];
 		for(ondx[1] = 0; ondx[1] < osz[1]; ++ondx[1]) 
 		{
 			indx[1] = ondx[1];
 			for(ondx[0] = 0; ondx[0] < osz[0]; ++ondx[0]) 
 			{
 				indx[0] = ondx[0];
-				PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
+				_PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
 			}
 		}
 	}
 
-	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
-	size = PaddedCurvImage->GetBufferedRegion().GetSize();
+	std::cout << "Input file size (after zero padding) is " << _PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
+	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
 	//CurvImage->Delete();
 }
 
@@ -92,10 +92,10 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	osz[2] += 2*padz;
 	itk::Index<3> indx, ondx;
 	
-	PaddedCurvImage = ImageType3D::New();
-	PaddedCurvImage->SetRegions(osz);
-	PaddedCurvImage->Allocate();
-	PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
+	_PaddedCurvImage = ImageType3D::New();
+	_PaddedCurvImage->SetRegions(osz);
+	_PaddedCurvImage->Allocate();
+	_PaddedCurvImage->SetSpacing(CurvImage->GetSpacing());
 	
 	for(ondx[2] = 0; ondx[2] < osz[2]; ++ondx[2]) 
 	{
@@ -107,20 +107,20 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 			for(ondx[0] = 0; ondx[0] < osz[0]; ++ondx[0]) 
 			{
 				indx[0] = ondx[0];
-				PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
+				_PaddedCurvImage->SetPixel(ondx, CurvImage->GetPixel(indx));
 			}
 		}
 	}
 
-	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
-	size = PaddedCurvImage->GetBufferedRegion().GetSize();
+	std::cout << "Input file size (after zero padding) is " << _PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
+	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
 }
 
 
 ///////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad) 
 {
-	padz = pad;
+	_padz = pad;
 
 	std::string temp, num;
 	std::ifstream infile;
@@ -167,8 +167,8 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 		num = temp.substr(x1,x2-x1);
 		float z = atof(num.c_str());
 
-		itk::Size<3> osz = size;  //original size padz
-		osz[2] = osz[2]-padz;
+		itk::Size<3> osz = _size;  //original size padz
+		osz[2] = osz[2]-_padz;
 		std::cout <<" after conversion " << x <<" "<< y <<" "<< z << std::endl;
 
 		if ( (x>=0.0) && (y>=0.0) && (z>=0.0) )
@@ -183,7 +183,7 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 			n[2] = long(z + 0.5);
 			if (n[2] >= (unsigned int)osz[2])
 				n[2] = osz[2]-1;
-			StartPoints.push_back(n);
+			_StartPoints.push_back(n);
 // 			std::cout << " is read as " << n << std::endl;
 		}
 		else
@@ -194,7 +194,7 @@ void MultipleNeuronTracer::ReadStartPoints(std::string fname, unsigned int pad)
 
 void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad) 
 {
-	padz = pad;
+	_padz = pad;
 
 	std::cout << "Reading start points " << std::endl;
 	for(int i=0; i<(int)somaCentroids.size(); ++i)
@@ -204,8 +204,8 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 		float z = (float)somaCentroids.at(i)[2];
 	
 // 		std::cout << x <<" "<< y <<" "<< z << std::endl;
-		itk::Size<3> osz = size;  //original size padz
-		osz[2] = osz[2]-padz;
+		itk::Size<3> osz = _size;  //original size padz
+		osz[2] = osz[2]-_padz;
 		
 		if ( (x>=0.0) && (y>=0.0) && (z>=0.0) )
 		{
@@ -219,7 +219,7 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 			n[2] = long(z + 0.5);
 			if (n[2] >= (unsigned int)osz[2])
 				n[2] = osz[2]-1;
-			StartPoints.push_back(n);
+			_StartPoints.push_back(n);
 // 			std::cout << " is read as " << n << std::endl;
 		}
 		else
@@ -232,48 +232,48 @@ void MultipleNeuronTracer::RunTracing(void)
 {
 	FeatureMain();			//Nice function here that is easy to miss....
 
-	CurrentID = 1;
+	_CurrentID = 1;
 
 	//set up the connection image and swc image
-	ConnImage = ImageType3D::New();
-	ConnImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
-	ConnImage->Allocate();
-	ConnImage->FillBuffer(MAXVAL);	//MAXVAL is ... needs to be replaced with std::numeric_limit< float >::max()...
+	_ConnImage = ImageType3D::New();
+	_ConnImage->SetRegions(_PaddedCurvImage->GetBufferedRegion());
+	_ConnImage->Allocate();
+	_ConnImage->FillBuffer(MAXVAL);	//MAXVAL is ... needs to be replaced with std::numeric_limit< float >::max()...
 
-	SWCImage = SWCImageType3D::New(); //major memory
-	SWCImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
-	SWCImage->Allocate();
-	SWCImage->FillBuffer(NULL);
+	_SWCImage = SWCImageType3D::New(); //major memory
+	_SWCImage->SetRegions(_PaddedCurvImage->GetBufferedRegion());
+	_SWCImage->Allocate();
+	_SWCImage->FillBuffer(NULL);
 
 	// fill the SWCImage image with start points
 	std::vector<IndexType>::iterator startIt;
 	int tID = 1;
 	
 	clock_t fillSWCImage1_start_time = clock();
-	for (startIt = StartPoints.begin(); startIt != StartPoints.end(); ++startIt, ++tID)
+	for (startIt = _StartPoints.begin(); startIt != _StartPoints.end(); ++startIt, ++tID)
 	{
 		itk::Index<3> startIndex = (*startIt);
-		startIndex[2] += padz;													//Convert to padded image index
-		SWCNode* start_node = new SWCNode(CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode
-		SWCImage->SetPixel(startIndex,start_node);								//Adding all seed points to the SWCImage
-		ConnImage->SetPixel(startIndex,0.0f);									//Set the ConnectedImage to 0.0 at all the seed nodes (remember that the Connected image is all initialized with MAXVAL)... 
-		SWCNodeContainer.push_back(start_node);									//Fill the SWCNodeContainer with start points
+		startIndex[2] += _padz;													//Convert to padded image index
+		SWCNode* start_node = new SWCNode(_CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode
+		_SWCImage->SetPixel(startIndex,start_node);								//Adding all seed points to the SWCImage
+		_ConnImage->SetPixel(startIndex,0.0f);									//Set the ConnectedImage to 0.0 at all the seed nodes (remember that the Connected image is all initialized with MAXVAL)... 
+		_SWCNodeContainer.push_back(start_node);									//Fill the _SWCNodeContainer with start points
 		HeapNode *h = new HeapNode(start_node->ndx, 0.0);						//Heap nodes hold an (index, value) pair
-		PQ.push(h);																//Priority Queue contains the seed nodes now...
+		_PQ.push(h);																//Priority Queue contains the seed nodes now...
 	}
 	std::cout << "fillSWCImage1 took: " << (clock() - fillSWCImage1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t fillSWCImage2_start_time = clock();
 	
 	long eCounter = 0, TotalePoints;
-	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
+	itk::ImageRegionConstIterator<ImageType3D> Nit(_NDXImage, _NDXImage->GetBufferedRegion());
 	for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
 	{
 		if (Nit.Get() > 0)	//Vesselness value is greater than 0
 		{
 			itk::Index<3> endx = Nit.GetIndex();
 			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);	//id = 0, parent_id = -1, tree id = -1 * eCounter, index that this vesselness value is greater than 0
-			SWCImage->SetPixel(endx,s2);								//Adding all critical points where vesselness value is greater than 0 to the SWC image
+			_SWCImage->SetPixel(endx,s2);								//Adding all critical points where vesselness value is greater than 0 to the SWC image
 		}
 	}
 	std::cout << "fillSWCImage2 took: " << (clock() - fillSWCImage2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
@@ -284,19 +284,19 @@ void MultipleNeuronTracer::RunTracing(void)
 
 	//Generating some kind of offset neighborhood... this needs to be done with itkNeighborhoodIterator
 	itk::Offset<3> x1 = {{-1, 0 ,0}};
-	off.push_back( x1 );
+	_off.push_back( x1 );
 	x1[0] = 1;					// x1 = {{1, 0, 0}}
-	off.push_back( x1 );
+	_off.push_back( x1 );
 	x1[0] = 0; 
 	x1[1] = -1;					// x1 = {{0, -1, 0}}
-	off.push_back( x1 );
+	_off.push_back( x1 );
 	x1[1] = 1;					// x1 = {{0, 1, 0}}
-	off.push_back( x1 );
+	_off.push_back( x1 );
 	x1[1] = 0; 
 	x1[2] = -1;					// x1 = {{0, 0, -1}}
-	off.push_back( x1 );
+	_off.push_back( x1 );
 	x1[2] = 1;					// x1 = {{0, 0, 1}}
-	off.push_back( x1 );
+	_off.push_back( x1 );
 
 	std::vector<OffsetType>::iterator oit;
 	bool showMessage = false;
@@ -305,11 +305,11 @@ void MultipleNeuronTracer::RunTracing(void)
 	
 	clock_t PQ_popping_start_time = clock();
 	
-	while(!PQ.empty())	//For each seed node
+	while(!_PQ.empty())	//For each seed node
 	{
 		//Take the top HeapNode and remove it from the Priority Queue 
-		HeapNode *h = PQ.top();
-		PQ.pop();
+		HeapNode *h = _PQ.top();
+		_PQ.pop();
 
 		//Temporarily store the index and value of the node
 		itk::Index<3> ndx = h->ndx;
@@ -317,21 +317,21 @@ void MultipleNeuronTracer::RunTracing(void)
 		delete h;
 
 		//Don't do anything if the heapnode value is larger than the one in the connected image
-		if ( KeyValue > ConnImage->GetPixel(ndx) ) 
+		if ( KeyValue > _ConnImage->GetPixel(ndx) ) 
 			continue;
 		
 
-		if ((eCounter <= 0) || (KeyValue > CostThreshold)) 
+		if ((eCounter <= 0) || (KeyValue > _CostThreshold)) 
 		{
 			if (showMessage == true) 
 			{
-				std::cout << "NOTE: Exiting the search at cost " << CostThreshold << " However, " << (100*eCounter)/TotalePoints << "%% of the image is still not covered, change cost if necessary!!\r"<< std::endl;
+				std::cout << "NOTE: Exiting the search at cost " << _CostThreshold << " However, " << (100*eCounter)/TotalePoints << "%% of the image is still not covered, change cost if necessary!!\r"<< std::endl;
 				//std::cout << "Cleaning Heap size: " << PQ.size() << std::endl;
 				//std::cout<<"keyvalue = "<<KeyValue<<std::endl;
 				showMessage = false;
 			}
 			
-			SWCNode* t  = SWCImage->GetPixel(ndx);
+			SWCNode* t  = _SWCImage->GetPixel(ndx);
 			if ( t != NULL) 
 			{
 				if (t->TreeID < 0) 
@@ -342,7 +342,7 @@ void MultipleNeuronTracer::RunTracing(void)
 			continue;
 		}
 
-		SWCNode* s = SWCImage->GetPixel(ndx);
+		SWCNode* s = _SWCImage->GetPixel(ndx);
 		if (s != NULL) 
 		{
 			if (s->TreeID < 0) 
@@ -356,18 +356,18 @@ void MultipleNeuronTracer::RunTracing(void)
 					SWCNode* par = L;
 					for (cit = Chain.rbegin(); cit != Chain.rend(); ++cit) 
 					{
-						SWCNode* t = SWCImage->GetPixel(*cit);
+						SWCNode* t = _SWCImage->GetPixel(*cit);
 						if (t == NULL) 
 						{
-							float val = ConnImage->GetPixel(*cit) * costFactor;
-							ConnImage->SetPixel((*cit),val);
-							SWCNode* s = new SWCNode(CurrentID++, par, L->TreeID, (*cit));
-							SWCImage->SetPixel((*cit),s);
-							SWCNodeContainer.push_back(s);
+							float val = _ConnImage->GetPixel(*cit) * costFactor;
+							_ConnImage->SetPixel((*cit),val);
+							SWCNode* s = new SWCNode(_CurrentID++, par, L->TreeID, (*cit));
+							_SWCImage->SetPixel((*cit),s);
+							_SWCNodeContainer.push_back(s);
 							par->children.push_back(s);
 							par = s;
 							HeapNode *h = new HeapNode((*cit), val);
-							PQ.push(h);
+							_PQ.push(h);
 						}
 						else 
 						{
@@ -375,16 +375,16 @@ void MultipleNeuronTracer::RunTracing(void)
 							{
 								delete t;
 								eCounter--;
-								float val = ConnImage->GetPixel(*cit) * costFactor;
-								ConnImage->SetPixel((*cit),val);
-								SWCNode* s = new SWCNode(CurrentID++, par, L->TreeID, (*cit));
-								SWCImage->SetPixel((*cit),s);
-								SWCNodeContainer.push_back(s);
+								float val = _ConnImage->GetPixel(*cit) * costFactor;
+								_ConnImage->SetPixel((*cit),val);
+								SWCNode* s = new SWCNode(_CurrentID++, par, L->TreeID, (*cit));
+								_SWCImage->SetPixel((*cit),s);
+								_SWCNodeContainer.push_back(s);
 								par->children.push_back(s);
 								//std::cout<<"SWCImage Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining.\r";// << std::endl;
 								par = s;
 								HeapNode *h = new HeapNode((*cit), val);
-								PQ.push(h);
+								_PQ.push(h);
 							}
 						}
 					}
@@ -392,28 +392,28 @@ void MultipleNeuronTracer::RunTracing(void)
 			}
 		}
 
-		for (oit = off.begin(); oit < off.end(); ++oit) 
+		for (oit = _off.begin(); oit < _off.end(); ++oit) 
 		{
 			itk::Index<3> ndx2 = ndx + (*oit);
-			if ( (ndx2[0] < 2) || (ndx2[1] < 2) || (ndx2[2] < 2) || (ndx2[0] >= unsigned(size[0] - 2)) || (ndx2[1] >= unsigned(size[1] - 2)) || (ndx2[2] >= unsigned(size[2] - 2)) )  
+			if ( (ndx2[0] < 2) || (ndx2[1] < 2) || (ndx2[2] < 2) || (ndx2[0] >= unsigned(_size[0] - 2)) || (ndx2[1] >= unsigned(_size[1] - 2)) || (ndx2[2] >= unsigned(_size[2] - 2)) )  
 				continue;
 			
-			if (SWCImage->GetPixel(ndx2) != NULL) 
+			if (_SWCImage->GetPixel(ndx2) != NULL) 
 			{
-				if (SWCImage->GetPixel(ndx2)->TreeID > 0) 
+				if (_SWCImage->GetPixel(ndx2)->TreeID > 0) 
 				{
 					continue;			
 				}
 			}
-			PixelType P = 1/(PaddedCurvImage->GetPixel(ndx2) + 0.001f);  // consider taking inverse here
+			PixelType P = 1/(_PaddedCurvImage->GetPixel(ndx2) + 0.001f);  // consider taking inverse here
 			PixelType a1, a2, a3;
 			ScanNeighbors(a1,a2,a3, ndx2);
 			PixelType aa = Update( a1, a2, a3, P );
-			if ( ConnImage->GetPixel(ndx2) > aa )  
+			if ( _ConnImage->GetPixel(ndx2) > aa )  
 			{
-				ConnImage->SetPixel(ndx2, aa);
+				_ConnImage->SetPixel(ndx2, aa);
 				HeapNode *h = new HeapNode(ndx2, aa);
-				PQ.push(h);
+				_PQ.push(h);
 			}
 		}
 	}
@@ -447,21 +447,21 @@ void MultipleNeuronTracer::FeatureMain(void)
 {
 	time_t FeatureMain_start_time = clock();
 	std::cout << std::endl<< "Feature detection 3D" << std::endl;
-	NDXImage = ImageType3D::New();
-	NDXImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
-	NDXImage->Allocate();
-	NDXImage->FillBuffer(0.0f);
+	_NDXImage = ImageType3D::New();
+	_NDXImage->SetRegions(_PaddedCurvImage->GetBufferedRegion());
+	_NDXImage->Allocate();
+	_NDXImage->FillBuffer(0.0f);
 	
 	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
-// 		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
-		GetFeature_2( sigmas[i], i );			//I guess this is finding all the critical points and throwing their vesselness values into NDXImage
+// 		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
+		GetFeature_2( sigmas[i], i );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
 	}
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
-	//rescaler->SetInput(NDXImage);;
+	//rescaler->SetInput(_NDXImage);;
 	//rescaler->SetOutputMaximum(255);
 	//rescaler->SetOutputMinimum(0);
 
@@ -474,12 +474,12 @@ void MultipleNeuronTracer::FeatureMain(void)
 	//writer->Update();
 	
 	/*ImageType3D::Pointer temp = ImageType3D::New();
-	temp->SetRegions(PaddedCurvImage->GetBufferedRegion());
+	temp->SetRegions(_PaddedCurvImage->GetBufferedRegion());
 	temp->Allocate();
 
-	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
+	itk::ImageRegionConstIterator<ImageType3D> Nit(_NDXImage, _NDXImage->GetBufferedRegion());
 	itk::ImageRegionIterator<ImageType3D> tit(temp, temp->GetBufferedRegion());
-	itk::ImageRegionConstIterator<ImageType3D> Cit(PaddedCurvImage, PaddedCurvImage->GetBufferedRegion());
+	itk::ImageRegionConstIterator<ImageType3D> Cit(_PaddedCurvImage, _PaddedCurvImage->GetBufferedRegion());
 	for (Nit.GoToBegin(), Cit.GoToBegin(), tit.GoToBegin(); !Nit.IsAtEnd(); ++Nit, ++tit, ++Cit)
 	{
 		if (Nit.Get() > 0) 
@@ -494,7 +494,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	clock_t LoG_start_time = clock();
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
 	GFilterType::Pointer gauss = GFilterType::New();
-	gauss->SetInput( PaddedCurvImage );
+	gauss->SetInput( _PaddedCurvImage );
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
@@ -563,14 +563,14 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
 	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
 
-	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	itk::Size<3> sz = _PaddedCurvImage->GetBufferedRegion().GetSize();
 	sz[0] = sz[0] - 3;
 	sz[1] = sz[1] - 3; 
 	sz[2] = sz[2] - 3;
 
 	it.GoToBegin();
 	nit.GoToBegin();
-	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+	itk::Vector<float,3> sp = _PaddedCurvImage->GetSpacing();
 
 	long win = long(sigma)/2;
 	if (win < 2) 
@@ -601,7 +601,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 
 		typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
 		StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-		statisticsImageFilter->SetInput(PaddedCurvImage);
+		statisticsImageFilter->SetInput(_PaddedCurvImage);
 		statisticsImageFilter->Update();
 		double image_mean = statisticsImageFilter->GetMean();
 		double image_stddev = statisticsImageFilter->GetSigma();
@@ -631,7 +631,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
 				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
 				{
-					NDXImage->SetPixel(ndx,value);
+					_NDXImage->SetPixel(ndx,value);
 					ctCnt++;			//CriTical Counter I guess
 				}
 			}
@@ -661,17 +661,17 @@ void MultipleNeuronTracer::setDiceIndex( itk::Index<3> indxDice )
 void MultipleNeuronTracer::setLogScale( ImageType3D::Pointer inputImageLoG, int scale )
 {
 	if( scale == 0 )
-		logScale_1 = inputImageLoG;
+		_logScale_1 = inputImageLoG;
 	else if( scale == 1 )
-		logScale_2 = inputImageLoG;
+		_logScale_2 = inputImageLoG;
 	else if( scale == 2 )
-		logScale_3 = inputImageLoG;
+		_logScale_3 = inputImageLoG;
 	else if( scale == 3 )
-		logScale_4 = inputImageLoG;
+		_logScale_4 = inputImageLoG;
 	else if( scale == 4 )
-		logScale_5 = inputImageLoG;
+		_logScale_5 = inputImageLoG;
 	else if( scale == 5 )
-		logScale_6 = inputImageLoG;
+		_logScale_6 = inputImageLoG;
 	
 }
 
@@ -681,7 +681,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // // 	clock_t LoG_start_time = clock();
 // 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
 // 	GFilterType::Pointer gauss = GFilterType::New();
-// 	gauss->SetInput( PaddedCurvImage );
+// 	gauss->SetInput( _PaddedCurvImage );
 // 	gauss->SetSigma( sigma );
 // 	gauss->SetNormalizeAcrossScale(false);
 // 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
@@ -705,7 +705,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 			gauss_3->SetRegions( regionGaussLocal );
 			gauss_3->Allocate();
 			gauss_3->FillBuffer(0);
-// 			SetSpacing(logScale_1->GetSpacing());
+// 			SetSpacing(_logScale_1->GetSpacing());
 			gauss_3->Update();
 
 	
@@ -719,7 +719,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	int gauss_slice_size = _sizeDice[1] * _sizeDice[0];
 	ImageType3D::PixelType * gauss_3_Array = gauss_3->GetBufferPointer();
 	
-	itk::Index<3> local_origin = logScale_1->GetRequestedRegion().GetIndex();
+	itk::Index<3> local_origin = _logScale_1->GetRequestedRegion().GetIndex();
 	#pragma omp critical
 	std::cout << std::endl << "Start of the Block : " << local_origin << std::endl;
 	itk::Index<3> local_offset;
@@ -727,7 +727,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	local_offset[1] = _indxDice[1] - local_origin[1];
 	local_offset[2] = _indxDice[2] - local_origin[2];
 	
-	itk::Size<3> block_size = logScale_1->GetRequestedRegion().GetSize();
+	itk::Size<3> block_size = _logScale_1->GetRequestedRegion().GetSize();
 	#pragma omp critical
 	std::cout << std::endl << "Size of the Block : " << block_size << std::endl;
 	int block_slice_size = block_size[1] * block_size[0];
@@ -735,9 +735,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	ImageType3D::PixelType * logScale_Array;
 	if( scale == 0 )
 	{
-		logScale_Array = logScale_1->GetBufferPointer();
+		logScale_Array = _logScale_1->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_1, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_1, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -745,9 +745,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	}
 	else if( scale == 1 )
 	{
-		logScale_Array = logScale_2->GetBufferPointer();
+		logScale_Array = _logScale_2->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_2, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_2, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -755,9 +755,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	}
 	else if( scale == 2 )
 	{
-		logScale_Array = logScale_3->GetBufferPointer();
+		logScale_Array = _logScale_3->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_3, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_3, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -765,9 +765,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	}
 	else if( scale == 3 )
 	{
-		logScale_Array = logScale_4->GetBufferPointer();
+		logScale_Array = _logScale_4->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_4, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_4, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -775,9 +775,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	}
 	else if( scale == 4 )
 	{
-		logScale_Array = logScale_5->GetBufferPointer();
+		logScale_Array = _logScale_5->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_5, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_5, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -785,9 +785,9 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	}
 	else if( scale == 5 )
 	{
-		logScale_Array = logScale_6->GetBufferPointer();
+		logScale_Array = _logScale_6->GetBufferPointer();
 		
-// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(logScale_6, region);
+// 		itk::ImageRegionIterator<ImageType3D> itPreLoG(_logScale_6, region);
 // 		for(itPreLoG.GoToBegin(); !itPreLoG.IsAtEnd(); ++itPreLoG,++itGauss_3)
 // 		{
 // 			itGauss_3.Set(itPreLoG.Get());
@@ -815,7 +815,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_1);
+// 		ROIfilter->SetInput(_logScale_1);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -831,7 +831,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_2);
+// 		ROIfilter->SetInput(_logScale_2);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -847,7 +847,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_3);
+// 		ROIfilter->SetInput(_logScale_3);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -863,7 +863,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_4);
+// 		ROIfilter->SetInput(_logScale_4);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -879,7 +879,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_5);
+// 		ROIfilter->SetInput(_logScale_5);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -895,7 +895,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 		typedef itk::RegionOfInterestImageFilter< ImageType3D, ImageType3D > ROIFilterType;
 // 		ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 // 		ROIfilter->SetRegionOfInterest(region);
-// 		ROIfilter->SetInput(logScale_6);
+// 		ROIfilter->SetInput(_logScale_6);
 // 		ROIfilter->Update();
 // 		typedef itk::ImageDuplicator< ImageType3D > DuplicatorType;
 // 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
@@ -979,14 +979,14 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
 	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
 
-	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	itk::Size<3> sz = _PaddedCurvImage->GetBufferedRegion().GetSize();
 	sz[0] = sz[0] - 3;
 	sz[1] = sz[1] - 3; 
 	sz[2] = sz[2] - 3;
 
 	it.GoToBegin();
 	nit.GoToBegin();
-	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+	itk::Vector<float,3> sp = _PaddedCurvImage->GetSpacing();
 
 	long win = long(sigma)/2;
 	if (win < 2) 
@@ -1017,7 +1017,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 
 		typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
 		StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-		statisticsImageFilter->SetInput(PaddedCurvImage);
+		statisticsImageFilter->SetInput(_PaddedCurvImage);
 		statisticsImageFilter->Update();
 		double image_mean = statisticsImageFilter->GetMean();
 		double image_stddev = statisticsImageFilter->GetSigma();
@@ -1047,7 +1047,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
 				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
 				{
-					NDXImage->SetPixel(ndx,value);
+					_NDXImage->SetPixel(ndx,value);
 					ctCnt++;			//CriTical Counter I guess
 				}
 			}
@@ -1109,8 +1109,8 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 }
 
 
-//Searches in some specified window in NDXImage around ndx and see if something larger than value is present
-//If there is a value in the neighborhood larger than value then return false, else set the NDXImage at ndx to 0 and return true 
+//Searches in some specified window in _NDXImage around ndx and see if something larger than value is present
+//If there is a value in the neighborhood larger than value then return false, else set the _NDXImage at ndx to 0 and return true 
 bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
 {
 	itk::Index<3> n;
@@ -1127,10 +1127,10 @@ bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, 
 					continue;
 				}
 
-				float curval = NDXImage->GetPixel(n);
+				float curval = _NDXImage->GetPixel(n);
 				if (value > curval) 
 				{
-					NDXImage->SetPixel(n,0.0f);	//Why do we set this to 0.0? We overwrite with value later anyways...
+					_NDXImage->SetPixel(n,0.0f);	//Why do we set this to 0.0? We overwrite with value later anyways...
 				}
 				else if (value < curval) 
 				{
@@ -1160,7 +1160,7 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		dold[i] = 0.0f;
 	}
 	bool done = false;
-	if (SWCImage->GetPixel(ndx)->TreeID > 0) 
+	if (_SWCImage->GetPixel(ndx)->TreeID > 0) 
 	{
 		done = true;
 	}
@@ -1174,9 +1174,9 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		x = p; 
 		x[0]++;
 		n.CopyWithRound(x);
-		if (n[0] < (unsigned int)size[0])
+		if (n[0] < (unsigned int)_size[0])
 		{
-			d[0] = ConnImage->GetPixel(n);
+			d[0] = _ConnImage->GetPixel(n);
 		}
 		else
 		{
@@ -1188,7 +1188,7 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		n.CopyWithRound(x);
 		if (n[0] >= 0)    
 		{
-			d[0] -= ConnImage->GetPixel(n);   
+			d[0] -= _ConnImage->GetPixel(n);   
 		}
 		else 
 		{
@@ -1199,9 +1199,9 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		x = p; 
 		x[1]++;
 		n.CopyWithRound(x);
-		if (n[1] < (unsigned int)size[1]) 
+		if (n[1] < (unsigned int)_size[1]) 
 		{
-			d[1] = ConnImage->GetPixel(n);
+			d[1] = _ConnImage->GetPixel(n);
 		}
 		else
 		{
@@ -1213,7 +1213,7 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		n.CopyWithRound(x);
 		if (n[1] >= 0)
 		{
-			d[1] -= ConnImage->GetPixel(n);
+			d[1] -= _ConnImage->GetPixel(n);
 		}
 		else
 		{
@@ -1224,9 +1224,9 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		x = p; 
 		x[2]++;
 		n.CopyWithRound(x);
-		if (n[2] < (unsigned int)size[2]) 
+		if (n[2] < (unsigned int)_size[2]) 
 		{
-			d[2] = ConnImage->GetPixel(n); 
+			d[2] = _ConnImage->GetPixel(n); 
 		}
 		else
 		{
@@ -1238,7 +1238,7 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		n.CopyWithRound(x);
 		if (n[2] >= 0)
 		{
-			d[2] -= ConnImage->GetPixel(n);
+			d[2] -= _ConnImage->GetPixel(n);
 		}
 		else
 		{
@@ -1259,13 +1259,13 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 		n.CopyWithRound(p);
 		Chain.push_back(n);
 		//check termination
-		SWCNode *t = SWCImage->GetPixel(n);
+		SWCNode *t = _SWCImage->GetPixel(n);
 		if (t != NULL ) 
 		{
 			if (t->TreeID > 0) 
 			{
 				done = true;
-				Label = SWCImage->GetPixel(n);
+				Label = _SWCImage->GetPixel(n);
 				break;
 			}
 		}
@@ -1403,31 +1403,31 @@ void MultipleNeuronTracer::ScanNeighbors( PixelType &a1, PixelType &a2, PixelTyp
 	a1 = MAXVAL;
 	if(ndx[0] > 0)
 	{
-		a1 = ConnImage->GetPixel(ndx + off.at(0));
+		a1 = _ConnImage->GetPixel(ndx + _off.at(0));
 	}	
-	if (ndx[0] < (unsigned int)size[0]-1) 
+	if (ndx[0] < (unsigned int)_size[0]-1) 
 	{
-		a1 = vnl_math_min(ConnImage->GetPixel(ndx + off.at(1)), a1 );
+		a1 = vnl_math_min(_ConnImage->GetPixel(ndx + _off.at(1)), a1 );
 	}
 	
 	a2 = MAXVAL;
 	if(ndx[1] > 0)  
 	{
-		a2 = ConnImage->GetPixel(ndx + off.at(2));
+		a2 = _ConnImage->GetPixel(ndx + _off.at(2));
 	}
-	if (ndx[1] < (unsigned int)size[1]-1) 
+	if (ndx[1] < (unsigned int)_size[1]-1) 
 	{
-		a2 = vnl_math_min(ConnImage->GetPixel(ndx + off.at(3)), a2 );
+		a2 = vnl_math_min(_ConnImage->GetPixel(ndx + _off.at(3)), a2 );
 	}
 	
 	a3 = MAXVAL;
 	if(ndx[2] > 0)  
 	{
-		a3 = ConnImage->GetPixel(ndx + off.at(4));
+		a3 = _ConnImage->GetPixel(ndx + _off.at(4));
 	}
-	if (ndx[2] < (unsigned int)size[2]-1) 
+	if (ndx[2] < (unsigned int)_size[2]-1) 
 	{
-		a3 = vnl_math_min(ConnImage->GetPixel(ndx + off.at(5)), a3 );
+		a3 = vnl_math_min(_ConnImage->GetPixel(ndx + _off.at(5)), a3 );
 	}
 }
 
@@ -1483,9 +1483,9 @@ PixelType MultipleNeuronTracer::Update( PixelType a1,  PixelType a2,  PixelType 
 
 void MultipleNeuronTracer::Decimate() 
 {
-	//std::cout << "Decimating the tree of size: " << SWCNodeContainer.size() << std::endl;
+	//std::cout << "Decimating the tree of size: " << _SWCNodeContainer.size() << std::endl;
 	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		if((*sit)->children.size() >= 2) 
 		{
@@ -1508,7 +1508,7 @@ void MultipleNeuronTracer::Decimate()
 	}
 
 	//std::cout << "Tree labeled: 1" << std::endl;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsActive == false) 
 		{
@@ -1533,7 +1533,7 @@ void MultipleNeuronTracer::Decimate()
 	const float minOffshootLength = 6;
 	//std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsLeaf == true) 
 		{
@@ -1586,22 +1586,22 @@ void MultipleNeuronTracer::Decimate()
 	//std::cout << "Tree labeled: 3" << std::endl;
 
 	std::vector<SWCNode*> NewContainer;
-	NewContainer.reserve(SWCNodeContainer.size());
+	NewContainer.reserve(_SWCNodeContainer.size());
 
 	long newID = 1;
-	itk::Array<long> IDLookUp(SWCNodeContainer.size());
+	itk::Array<long> IDLookUp(_SWCNodeContainer.size());
 	IDLookUp.Fill(0);
 
-	for (unsigned int i=0; i < SWCNodeContainer.size(); ++i) 
+	for (unsigned int i=0; i < _SWCNodeContainer.size(); ++i) 
 	{
-		if (SWCNodeContainer[i]->IsActive == true) 
+		if (_SWCNodeContainer[i]->IsActive == true) 
 		{
 			IDLookUp[i] = newID++;		
 		}
 	}
 	//std::cout << "Lookup generated: " << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsActive == true) 
 		{
@@ -1662,12 +1662,12 @@ void MultipleNeuronTracer::Decimate()
 	}
 	//std::cout << "NewContainer created: " << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		delete (*sit);
 	}
 
-	SWCNodeContainer = NewContainer;
+	_SWCNodeContainer = NewContainer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1676,14 +1676,14 @@ void MultipleNeuronTracer::Interpolate(float sigma)
 	//std::cout << "Interpolating the tree: " << std::endl;
 	typedef itk::SmoothingRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
 	GFilterType::Pointer gauss = GFilterType::New();
-	gauss->SetInput( PaddedCurvImage );
+	gauss->SetInput( _PaddedCurvImage );
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
 
 	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		float w,x,y,z;
 		if (((*sit)->children.size() > 0) && ((*sit)->parent != NULL)) 
@@ -1729,7 +1729,7 @@ void MultipleNeuronTracer::LoadSomaImage(std::string somaFileName)
 	/*typedef itk::ImageFileReader<CharImageType3D> SomaReaderType;
 	SomaReaderType::Pointer somaReader = SomaReaderType::New();
 	somaReader->SetFileName(somaFileName);
-	SomaImage = somaReader->GetOutput();
+	_SomaImage = somaReader->GetOutput();
 	somaReader->Update();
 	*/
 
@@ -1738,7 +1738,7 @@ void MultipleNeuronTracer::LoadSomaImage(std::string somaFileName)
 	typedef itk::ImageFileReader<LabelImageType3D> SomaReaderType;
 	SomaReaderType::Pointer somaReader = SomaReaderType::New();
 	somaReader->SetFileName(somaFileName);
-	SomaImage = somaReader->GetOutput();
+	_SomaImage = somaReader->GetOutput();
 	somaReader->Update();
 }
 
@@ -1746,9 +1746,9 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 {
 	std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
 
-	unsigned int originalSize = SWCNodeContainer.size();
-	LabelArrayType somaArray = SomaImage->GetBufferPointer();
-	itk::Size<3> im_size = SomaImage->GetBufferedRegion().GetSize();
+	unsigned int originalSize = _SWCNodeContainer.size();
+	LabelArrayType somaArray = _SomaImage->GetBufferPointer();
+	itk::Size<3> im_size = _SomaImage->GetBufferedRegion().GetSize();
 	int slice_size = im_size[0] * im_size[1];
 	int row_size = im_size[0];
 
@@ -1756,7 +1756,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 	std::cout << "Finding the root nodes of each tree" << std::endl;
 	std::map<long, SWCNode*> treeIDToRootMap;
 	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit)
 	{
 		//assume that a node with no parent is a centroid
 		if( (*sit)->parent == NULL )
@@ -1765,7 +1765,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 	
-	if(treeIDToRootMap.size() != this->StartPoints.size()){
+	if(treeIDToRootMap.size() != this->_StartPoints.size()){
 		std::cout << "Centroids missing!!" << std::endl;
 		
 		/*std::ofstream cent_out_1("cent1.txt");
@@ -1780,10 +1780,10 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 	
 	itk::Index<3> dummy_index;
 	//Removing nodes
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end();)
 	{
 		//don't check nodes that are outside the extent of the soma image
-		if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
+		if ( !_SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
 		{
 			++sit;
 			continue;
@@ -1797,29 +1797,29 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 
 		//remove any other node that falls within a soma
-		/*if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		/*if ( _SomaImage->GetPixel( (*sit)->ndx ) != 0 )
 		{
 			delete (*sit);
-			sit = SWCNodeContainer.erase(sit);
+			sit = _SWCNodeContainer.erase(sit);
 		}*/
 		
 		// Removing nodes only lying in the foreground of the current soma
 		itk::Index<3> Node_0 = (*sit)->ndx;
 		itk::Index<3> Node_1 = treeIDToRootMap[(*sit)->TreeID]->ndx;
 		//if ( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] != 0 )
-		if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
+		if ( _SomaImage->GetPixel( (*sit)->ndx ) != 0 )
 		{
 			//if( somaArray[(slice_size * Node_0[2]) + (row_size * Node_0[1]) + Node_0[0]] == somaArray[(slice_size * Node_1[2]) + (row_size * Node_1[1]) + Node_1[0]])
-			if( SomaImage->GetPixel((*sit)->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
+			if( _SomaImage->GetPixel((*sit)->ndx) == _SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
 			{
-				for(int i = 0; i < this->StartPoints.size(); i++)
+				for(int i = 0; i < this->_StartPoints.size(); i++)
 				{
-					if((*sit)->ndx[0] == this->StartPoints[i][0] && (*sit)->ndx[1] == this->StartPoints[i][1] && (*sit)->ndx[2] == this->StartPoints[i][2])
+					if((*sit)->ndx[0] == this->_StartPoints[i][0] && (*sit)->ndx[1] == this->_StartPoints[i][1] && (*sit)->ndx[2] == this->_StartPoints[i][2])
 						std::cout << "Centroid " << (*sit)->ndx[0] << ", " << (*sit)->ndx[1] << ", " << (*sit)->ndx[2] << " deleted!! " <<std::endl;
 				}
 
 				delete (*sit);
-				sit = SWCNodeContainer.erase(sit);
+				sit = _SWCNodeContainer.erase(sit);
 				//std::cout << "Deleted node. " << std::endl;				
 			}	
 
@@ -1833,7 +1833,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 					++sit;
 					continue;
 				}					
-				if(SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(root->ndx))
+				if(_SomaImage->GetPixel(parent->ndx) == _SomaImage->GetPixel(root->ndx))
 				{
 					(*sit)->parent = root;
 					(*sit)->PID = root->ID;
@@ -1853,7 +1853,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		else
 		{
 			SWCNode *parent = (*sit)->parent;
-			if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
+			if ( !_SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
 			{
 				++sit;
 				continue;
@@ -1862,9 +1862,9 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 			itk::Index<3> Node_2 = parent->ndx;
 			//if( somaArray[(slice_size * Node_2[2]) + (row_size * Node_2[1]) + Node_2[0]] != 0)
 
-			if( SomaImage->GetPixel( parent->ndx ) != 0)
+			if( _SomaImage->GetPixel( parent->ndx ) != 0)
 			{					
-				if( SomaImage->GetPixel(parent->ndx) == SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
+				if( _SomaImage->GetPixel(parent->ndx) == _SomaImage->GetPixel(treeIDToRootMap[(*sit)->TreeID]->ndx) )
 				{
 					(*sit)->parent = treeIDToRootMap[(*sit)->TreeID];
 					(*sit)->PID = treeIDToRootMap[(*sit)->TreeID]->ID;
@@ -1874,7 +1874,7 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 
-	size_t newSize = SWCNodeContainer.size();
+	size_t newSize = _SWCNodeContainer.size();
 	std::cout << "Just removed " << originalSize - newSize
 		<< " nodes (" << originalSize << " to " << newSize << ")"
 		<< std::endl;
@@ -1885,11 +1885,11 @@ void MultipleNeuronTracer::RemoveIntraSomaNodes(void)
 void MultipleNeuronTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz) 
 {
 	// check number of start points to determine number of files to write, with new filename eachtime
-	std::cout << "Total " << SWCNodeContainer.size() << " nodes..." <<std::endl;
+	std::cout << "Total " << _SWCNodeContainer.size() << " nodes..." <<std::endl;
 	std::vector<SWCNode*>::iterator sit;
 	float SCALE = 1.0f;
 
-	for (unsigned int i = 0; i < StartPoints.size(); ++i) 
+	for (unsigned int i = 0; i < _StartPoints.size(); ++i) 
 	{
 		std::stringstream ss;
 		ss << "_" << i+1 << ".swc";
@@ -1904,7 +1904,7 @@ void MultipleNeuronTracer::WriteMultipleSWCFiles(std::string fname, unsigned int
 		std::map<long, long> NodeIDToSWCIDMap;
 		long ID = 1;
 		long rootID = 1;
-		for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+		for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 		{
 			if ((*sit)->TreeID == i+1) 
 				NodeIDToSWCIDMap[(*sit)->ID] = ID++;			
@@ -1912,7 +1912,7 @@ void MultipleNeuronTracer::WriteMultipleSWCFiles(std::string fname, unsigned int
 		std::cout << ID << " Nodes found  ";
 
 		//create the SWCImage file
-		for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+		for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 		{
 			if ((*sit)->TreeID == i+1) 
 			{
@@ -1945,7 +1945,7 @@ void MultipleNeuronTracer::WriteMultipleSWCFiles(std::string fname, unsigned int
 		std::cout << " file written. " << std::endl;
 	}
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 		delete (*sit);
 	
 	std::cout << " done! " << std::endl;
@@ -1977,9 +1977,9 @@ float MultipleNeuronTracer::getRadius(itk::Vector<float,3>& pos)
 					ndx.CopyWithRound(m);
 					itk::Vector<float,3> mm = pos - m;
 					float d = mm.GetNorm();
-					if (PaddedCurvImage->GetBufferedRegion().IsInside(ndx)) 
+					if (_PaddedCurvImage->GetBufferedRegion().IsInside(ndx)) 
 					{
-						float val = PaddedCurvImage->GetPixel(ndx);
+						float val = _PaddedCurvImage->GetPixel(ndx);
 						if (d < r) 
 						{
 							i1 += val;
@@ -2016,11 +2016,11 @@ float MultipleNeuronTracer::getRadius(itk::Vector<float,3>& pos)
 void MultipleNeuronTracer::WriteSWCFile(std::string fname, unsigned int padz) 
 {
 	std::vector<SWCNode*>::iterator sit;
-	std::cout << "Writing SWCImage file " << fname << " with " << SWCNodeContainer.size() << " nodes...";
+	std::cout << "Writing SWCImage file " << fname << " with " << _SWCNodeContainer.size() << " nodes...";
 	std::ofstream ofile(fname.c_str());
 	//ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
 	//ofile << "#author: AM" << std::endl;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		//get radius estimate for this node
 		float radius = getRadius((*sit)->pos);
@@ -2061,7 +2061,7 @@ vtkSmartPointer< vtkTable > MultipleNeuronTracer::GetSWCTable(unsigned int padz)
 	SWCTable->AddColumn(column);
 
 	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
 	{
 		//get radius estimate for this node
 		float radius = getRadius((*sit)->pos);
@@ -2083,13 +2083,13 @@ vtkSmartPointer< vtkTable > MultipleNeuronTracer::GetSWCTable(unsigned int padz)
 ///////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::GenerateTestImage(void) 
 {
-	PaddedCurvImage = ImageType3D::New();
-	size[0] = 20; 
-	size[1] = 20; 
-	size[2] = 20;
-	PaddedCurvImage->SetRegions(size);
-	PaddedCurvImage->Allocate();
-	PaddedCurvImage->FillBuffer(0.0);
+	_PaddedCurvImage = ImageType3D::New();
+	_size[0] = 20; 
+	_size[1] = 20; 
+	_size[2] = 20;
+	_PaddedCurvImage->SetRegions(_size);
+	_PaddedCurvImage->Allocate();
+	_PaddedCurvImage->FillBuffer(0.0);
 
 	itk::Vector<float,3> dir; 
 	dir.Fill(1.0f); 
@@ -2099,7 +2099,7 @@ void MultipleNeuronTracer::GenerateTestImage(void)
 	itk::Index<3> ndx;
 	ndx.CopyWithRound(pos);
 
-	PaddedCurvImage->SetPixel(ndx, 1.0f);
+	_PaddedCurvImage->SetPixel(ndx, 1.0f);
 
 	for (int i=0; i<15; i++) 
 	{
@@ -2112,10 +2112,10 @@ void MultipleNeuronTracer::GenerateTestImage(void)
 
 		pos += dir;
 		ndx.CopyWithRound(pos);
-		PaddedCurvImage->SetPixel(ndx,val);
+		_PaddedCurvImage->SetPixel(ndx,val);
 	}
 
-	WriteImage3D(std::string("GeneratedImage.mhd"), PaddedCurvImage);
+	WriteImage3D(std::string("GeneratedImage.mhd"), _PaddedCurvImage);
 }
 
 void MultipleNeuronTracer::WriteImage3D(std::string fname, MultipleNeuronTracer::ImageType3D::Pointer image)  
@@ -2138,16 +2138,16 @@ void MultipleNeuronTracer::BlackOut(itk::Index<3> &stndx)
 		{
 			for (long x = -5; x <=5 ; ++x) 
 			{
-				itk::Offset<3> off = { {x,y,z} };
-				itk::Index<3> n = stndx + off;
+				itk::Offset<3> _off = { {x,y,z} };
+				itk::Index<3> n = stndx + _off;
 				if ( (n[0] < 0) || (n[1] < 0) || (n[2] < 0) ||
-					(n[0] >= (unsigned int)size[0]) || (n[1] >= (unsigned int)size[1]) ||
-					(n[2] >= (unsigned int)size[2]) )  
+					(n[0] >= (unsigned int)_size[0]) || (n[1] >= (unsigned int)_size[1]) ||
+					(n[2] >= (unsigned int)_size[2]) )  
 				{
 						continue;
 				}
-				PaddedCurvImage->SetPixel(n,1.0f);
-				NDXImage->SetPixel(n,0);
+				_PaddedCurvImage->SetPixel(n,1.0f);
+				_NDXImage->SetPixel(n,0);
 			}
 		}
 	}
