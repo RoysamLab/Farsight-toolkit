@@ -28,6 +28,8 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 
 void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)  
 {
+	_flagPipeline = false; // By default pipeline off
+	_flagOutLog = false;
 	ImageType3D::Pointer CurvImage = image;
 	_padz = pad;
 
@@ -228,9 +230,19 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
+void MultipleNeuronTracer::runNDX(void)
+{
+	FeatureMain();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::RunTracing(void)
 {
-	FeatureMain();			//Nice function here that is easy to miss....
+	if( _flagPipeline == false )
+	{
+		std::cout<<std::endl<<"FALSE PIPELINE";
+		FeatureMain();			//Nice function here that is easy to miss....
+	}
 
 	_CurrentID = 1;
 
@@ -456,8 +468,14 @@ void MultipleNeuronTracer::FeatureMain(void)
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
-// 		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
-		GetFeature_2( sigmas[i], i );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
+		if( _flagOutLog == false )
+		{
+ 			GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
+		}
+		else
+		{
+			GetFeature_2( sigmas[i], i );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
+		}
 	}
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
@@ -499,7 +517,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	gauss->SetNormalizeAcrossScale(false);
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
-	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	std::cout << "325Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
 	//rescaler->SetInput(gauss->GetOutput());;
@@ -579,8 +597,10 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	}
 	
 	long ctCnt = 0;
+	int inrt = 0; // niclas testing
 	while(!nit.IsAtEnd()) 
 	{
+		std::cout<<inrt++<<"\n "<<std::flush;
 		itk::Index<3> ndx = it.GetIndex();
 		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
 			(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
@@ -599,17 +619,17 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float val = nit.GetPixel(13) ;
 
-		typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
-		StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-		statisticsImageFilter->SetInput(_PaddedCurvImage);
-		statisticsImageFilter->Update();
-		double image_mean = statisticsImageFilter->GetMean();
-		double image_stddev = statisticsImageFilter->GetSigma();
+		//typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
+		//StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+	//	statisticsImageFilter->SetInput(_PaddedCurvImage);
+	//	statisticsImageFilter->Update();
+	//	double image_mean = statisticsImageFilter->GetMean();
+	//	double image_stddev = statisticsImageFilter->GetSigma();
 
-		const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = image_mean/45;  // -0.1 percent of range
-		//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-		//const float thresh2 = 0.001;  // -0.1 percent of range
+	//	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
+	//	const float thresh2 = image_mean/45;  // -0.1 percent of range
+		const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
@@ -633,13 +653,14 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 				{
 					_NDXImage->SetPixel(ndx,value);
 					ctCnt++;			//CriTical Counter I guess
+					//std::cout<<ctCnt<<" ";
 				}
 			}
 		}
 		++it;
 		++nit;
 	}
-	std::cout <<"Number of CTs at this stage: " << ctCnt <<std::endl;
+	std::cout <<"asdfNumber of CTs at this stage: " << ctCnt <<std::endl<<std::flush;
 }
 
 

@@ -125,16 +125,19 @@ public:
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
 	void GenerateTestImage(); 
 	
+	//Additions after the pipeline
 	void setLogScale( ImageType3D::Pointer, int scale );
 	void setDiceSize( itk::Size<3> );
 	void setDiceIndex( itk::Index<3> );
+	void setFlagPipeline( bool flag ){_flagPipeline = flag;};
+	void setFlagOutLog( bool flag ){_flagOutLog = flag;};
+	void runNDX();
+	ImageType3D::Pointer getNDX(){return _NDXImage;};
+	void setNDX( ImageType3D::Pointer image){_NDXImage = image;};
 		
 protected:
 	void FeatureMain();
 	void GetFeature( float );
-	void GetFeature_2( float, int );
-
-	
 	
 	bool IsPlate(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
@@ -149,6 +152,8 @@ protected:
 	float getRadius(itk::Vector<float,3> & pos);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
+	
+	void GetFeature_2( float, int );
 
 private:
 	std::vector<SWCNode*> _SWCNodeContainer;
@@ -163,7 +168,8 @@ private:
 	long _CurrentID;
 	std::vector<IndexType> _StartPoints;
 	unsigned int _padz;
-	
+
+	//Additions after including in the pipeline
 	itk::Size<3> _sizeDice;
 	itk::Index<3> _indxDice;
 	ImageType3D::Pointer _logScale_1; 
@@ -172,6 +178,9 @@ private:
 	ImageType3D::Pointer _logScale_4;
 	ImageType3D::Pointer _logScale_5;
 	ImageType3D::Pointer _logScale_6;
+	
+	bool _flagPipeline;
+	bool _flagOutLog;
 
 };
 
