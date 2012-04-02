@@ -140,6 +140,7 @@ protected:
 	void GetFeature( float );
 	
 	bool IsPlate(const itk::FixedArray<float, 3> & , unsigned int & );
+	bool IsPlate_control(const itk::FixedArray<float, 3> &, unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
 	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
 	float GetCost(SWCNode* , itk::Index<3> &  );
