@@ -4587,6 +4587,7 @@ void View3D::SetRoots()
 		this->tobj->BranchPoints.clear();
 		this->ClearSelection();
 		this->statusBar()->showMessage(" set roots");
+		std::cout << "set roots" << std::endl;
 	}
 	//this->Rerender();
 }

@@ -295,5 +295,17 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-ShowPoints PROPERTIES
     DEPENDS TraceEdit-SaveToFile
   )
+  
+  add_test(
+    TraceEdit-SetRoots
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_set_roots.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-SetRoots PROPERTIES
+    DEPENDS TraceEdit-RenderModes
+    PASS_REGULAR_EXPRESSION "set roots"
+  )
     
 endif()
