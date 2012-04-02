@@ -35,7 +35,11 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#if defined __GNUC__ || defined __APPLE__
+#include <ext/hash_map>
+#else
 #include <hash_map>
+#endif
 
 class DataNetwork;
 struct DataNode;
