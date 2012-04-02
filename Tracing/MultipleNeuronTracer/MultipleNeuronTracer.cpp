@@ -646,6 +646,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 			h.ComputeEigenAnalysis (ev, em);
 
 			unsigned int w;
+// 			if (IsPlate_control(ev, w)) )			
 			if (IsPlate(ev, w)) 
 			{
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
@@ -1121,7 +1122,64 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
-	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*//*(abs(L2)/sqrt(abs(L1*L))<0.5)*/((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+// 	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*//*(abs(L2)/sqrt(abs(L1*L))<0.5)*/((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+		
+		
+// 		(abs(L2)/sqrt(abs(L1*L))<0.5)
+	if ( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )
+	{
+		return true;
+	}
+	
+	return false;  /// right now this is turned off (Amit)
+}
+
+
+bool MultipleNeuronTracer::IsPlate_control(const itk::FixedArray<float, 3> &ev, unsigned int &w)  
+{
+	float L1, L2, L;
+	if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
+	{
+		w = 0;
+		L = ev[0];
+		L1 = ev[1]; 
+		L2 = ev[2];
+		if (ev[1] > ev[2])
+		{
+			L1 = ev[2]; 
+			L2 = ev[1];		
+		}
+	}
+
+	else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
+	{
+		w = 1;
+		L = ev[1];
+		L1 = ev[0];
+		L2 = ev[2];
+		if (ev[0] > ev[2]) 
+		{
+			L1 = ev[2];
+			L2 = ev[0];		
+		}
+	}
+
+	else  
+	{
+		w = 2;
+		L = ev[2];
+		L1 = ev[0];
+		L2 = ev[1];
+		if (ev[0] > ev[1]) 
+		{
+			L1 = ev[1];
+			L2 = ev[0];		
+		}
+	}
+
+// 	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*//*(abs(L2)/sqrt(abs(L1*L))<0.5)*/((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+		
+	if ( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )
 	{
 		return true;
 	}
