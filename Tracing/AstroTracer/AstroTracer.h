@@ -25,6 +25,7 @@
 #include "itkCovariantVector.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkVector.h"
 
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
@@ -72,7 +73,6 @@ public:
 	
 	HeapNode(itk::Index<3> , PixelType);
 	HeapNode();
-
 	bool operator==(const HeapNode&);
 };
 
@@ -88,8 +88,7 @@ public:
 class RootPointFeatureVector{
 
 public:
-	HeapNode node;
-	
+	HeapNode node;	
 	unsigned short int ID;
 	double radius;
 	double ballness;
@@ -114,6 +113,57 @@ public:
 	double confidenceMeasure;
 
 	CandidateRootPoint();
+};
+
+class IntrinsicFeatureVector{
+
+public:
+
+	HeapNode centroid;
+	//HeapNode weightedCentroid;
+	unsigned short int ID;
+	int volume;
+	int boundingBoxVolume;
+	int integratedIntensity;
+	double meanIntensity;
+	double varianceIntensity;
+	double eccentricity;
+	double elongation;
+	double meanSurfaceGradient;
+	double radiusVariation;
+	double shapeMeasure; // Ratio of surface voxels to total voxels
+	double energy;
+	double entropy;
+	double inverseDiffMoment;
+	double inertia;
+	double clusterShade;
+	double clusterProminence;
+	
+	IntrinsicFeatureVector();
+
+};
+
+class AssociativeFeatureVector{
+
+public:
+
+	double minRootDist;
+	double maxRootDist;
+	double meanRootDist;
+	double varRootDist;
+	double nRoots;
+
+	AssociativeFeatureVector();
+
+};
+
+class NucleiObject{
+
+public:
+	IntrinsicFeatureVector intrinsicFeatures;
+	AssociativeFeatureVector associativeFeatures;
+
+	NucleiObject();
 };
 
 class AstroTracer
@@ -168,6 +218,7 @@ public:
 	void ReadRootPointsExternal(std::string);
 	void ReadNucleiFeaturesExternal(std::string);
 	void ComputeFeaturesFromCandidateRoots(void);
+	void WriteNucleiFeatures(std::string);
 		
 protected:
 	void FeatureMain();
@@ -210,6 +261,7 @@ private:
 	std::vector<HeapNode> AllLoGPointsVector;
 	
 	std::vector<CandidateRootPoint> CandidateRootPoints;
+	std::vector<NucleiObject> NucleiObjects;
 };
 
 ///////////////////////////////////////////////////////////////

@@ -2454,17 +2454,38 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		DanielssonDistanceMapImageFilterType::Pointer DianielssonFilter = DanielssonDistanceMapImageFilterType::New();
 
 		DianielssonFilter->SetInput(sub_volume_nuclei);
+		DianielssonFilter->SetInputIsBinary(false);
+		//DianielssonFilter->GetDistanceMap()->Update();
 		DianielssonFilter->GetOutput()->Update();
 
 		LabelImageType3D::Pointer sub_volume_distance = DianielssonFilter->GetOutput();
 		//std::cout << "After Danielsson"<<std::endl;
+
+		if(i == 50){
+			
+			std::cout << "Writing distance maps to disk. " << std::endl;
+			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
+			distance_map_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\distance_map_sub.tif");
+			distance_map_writer->SetInput(sub_volume_distance);
+			distance_map_writer->Update();
+
+			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer3 = itk::ImageFileWriter< LabelImageType3D >::New();
+			distance_map_writer3->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\voronoi_map_sub.tif");
+			distance_map_writer3->SetInput(DianielssonFilter->GetVoronoiMap());
+			distance_map_writer3->Update();
+
+			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer2 = itk::ImageFileWriter< LabelImageType3D >::New();
+			distance_map_writer2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\vol_sub.tif");
+			distance_map_writer2->SetInput(sub_volume_nuclei);
+			distance_map_writer2->Update();
+		}
 		
 		//itk::Index<3> lndx = current_idx-starting_index;
 
-		ImageType3D::IndexType ldx;
-		ldx[0] = double_scale/2;
-		ldx[1] = double_scale/2;
-		ldx[2] = double_scale/2; // PADZ???
+		LabelImageType3D::IndexType ldx;
+		ldx[0] = starting_index_nuclei[0] + double_scale/2; //double_scale/2;
+		ldx[1] = starting_index_nuclei[1] + double_scale/2; //double_scale/2;
+		ldx[2] = starting_index_nuclei[2] + double_scale/2; //double_scale/2; // PADZ???
 
 		double nucleus_distance = sub_volume_distance->GetPixel(ldx);
 		//std::cout << "After nucleus_distance"<<std::endl;
@@ -2473,7 +2494,6 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		if(nucleus_distance > nucDistThresh)
 			continue;
 		
-
 		if(feature_vector.good()){
 
 			if(IDImage->GetPixel(current_idx) == 0){
@@ -2957,6 +2977,8 @@ void AstroTracer::UseActiveLearningRootsModel(std::string model_path){
 }
 
 HeapNode::HeapNode(){
+
+
 }
 
 RootPointFeatureVector::RootPointFeatureVector(){
@@ -2987,7 +3009,7 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 		while(rootPoints.good()){
 
 			line_number++;
-			std::cout << line_number << std::endl;
+			//std::cout << line_number << std::endl;
 
 			if(!std::getline(rootPoints, line))
 				break;
@@ -3031,7 +3053,8 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 			else 
 				root_point.isRootPoint = false;
 
-			this->CandidateRootPoints.push_back(root_point);
+			if(root_point.isRootPoint)
+				this->CandidateRootPoints.push_back(root_point);
 			
 			str_vec.clear();
 		}
@@ -3049,41 +3072,278 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 	std::cout << "Root points file read. " << this->CandidateRootPoints.size() << std::endl;
 }
 
+IntrinsicFeatureVector::IntrinsicFeatureVector(){
+}
+
+AssociativeFeatureVector::AssociativeFeatureVector(){
+
+	this->minRootDist = -1;
+	this->maxRootDist = -1;
+	this->meanRootDist = -1;
+	this->varRootDist = -1;
+	this->nRoots = 0;
+}
+
+NucleiObject::NucleiObject(){
+
+	IntrinsicFeatureVector();
+	AssociativeFeatureVector();
+}
+
+
 void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName){
+
+	std::ifstream nucleiPoints;
+	nucleiPoints.open(nucleiFeaturesFileName.c_str(), std::ios::in); 
+	std::cout << "Reading nuclei features file. " << std::endl;
+	
+	std::vector<std::string> str_vec;
+	std::string line, str1;
+	if(nucleiPoints.is_open()){
+		
+		unsigned short line_number = 0;
+		NucleiObject nuclei_object;
+
+		while(nucleiPoints.good()){
+
+			line_number++;
+			//std::cout << line_number << std::endl;
+
+			if(!std::getline(nucleiPoints, line))
+				break;
+
+			//Ignore the first line since it is all text
+			if(line_number == 1)
+				continue;
+			
+			std::istringstream str_stream(line); 
+			while(str_stream.good()){
+				
+				if(!getline(str_stream, str1, '\t'))
+					break;
+				
+				// Crazy "nan" is replaced by -1
+				//if(strcmp(str1.c_str(), "nan") == 0)
+				//	str1 = "-1";
+
+				str_vec.push_back(str1);
+			}
+
+			nuclei_object.intrinsicFeatures.ID = atof(str_vec[0].c_str());
+
+			itk::Index<3> idx;
+			idx[0] = atof(str_vec[1].c_str());
+			idx[1] = atof(str_vec[2].c_str());
+			idx[2] = atof(str_vec[3].c_str());
+			nuclei_object.intrinsicFeatures.centroid = HeapNode(idx, 0);
+
+			nuclei_object.intrinsicFeatures.volume = atof(str_vec[4].c_str());
+			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
+			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[6].c_str());
+			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[7].c_str());
+			nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
+
+			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[11].c_str());
+			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[15].c_str());
+			nuclei_object.intrinsicFeatures.meanSurfaceGradient = atof(str_vec[16].c_str());
+			nuclei_object.intrinsicFeatures.radiusVariation = atof(str_vec[22].c_str());
+			nuclei_object.intrinsicFeatures.shapeMeasure = atof(str_vec[24].c_str());
+			
+			nuclei_object.intrinsicFeatures.energy = atof(str_vec[26].c_str());
+			nuclei_object.intrinsicFeatures.entropy = atof(str_vec[27].c_str());
+			nuclei_object.intrinsicFeatures.inverseDiffMoment = atof(str_vec[28].c_str());
+			nuclei_object.intrinsicFeatures.inertia = atof(str_vec[29].c_str());
+			nuclei_object.intrinsicFeatures.clusterShade = atof(str_vec[30].c_str());
+			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[31].c_str());
+
+			this->NucleiObjects.push_back(nuclei_object);
+
+			str_vec.clear();
+		}
+		nucleiPoints.close();
+	}
+	else{
+		std::cout << " Could not open nuclei features file. Exiting now. " << std::endl;
+		return;
+	}
+
+	if(this->NucleiObjects.empty()){
+		std::cout << " Empty nuclei features file. Quitting. " << std::endl;
+		return;
+	}
+	std::cout << "Nuclei features file read. " << this->NucleiObjects.size() << std::endl;
 }
 
 void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
-	int NPS=100;///NPS will be replaced by this->NucleusPoints.size() from your Nucleus structure
-	double NPdist;//NPdist will be replaced by NucleusPoints[i].featureVector.distance from your Nucleus structure
+	// Derive this from: nuclei_object.intrinsicFeatures.boundingBoxVolume
+	float double_scale_nuclei = 20;
 
+	LabelImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	LabelImageType3D::SizeType sub_volume_size_nuclei;
+	LabelImageType3D::RegionType sub_volume_region_nuclei;
+	LabelImageType3D::Pointer sub_volume_nuclei;
 
-	//Calculate once Danielsson distance generated by somaImage
-	typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
-	DanielssonDistanceMapImageFilterType::Pointer DanielssonFilter = DanielssonDistanceMapImageFilterType::New();
+	/*std::cout << "Writing distance maps to disk. " << std::endl;
+	itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
+	distance_map_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\distance_map.tif");
+	distance_map_writer->SetInput(nucleus_distance);
+	distance_map_writer->Update();
 
-	DanielssonFilter->SetInput(this->SomaImage);
-	DanielssonFilter->GetOutput()->Update();
+	itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer3 = itk::ImageFileWriter< LabelImageType3D >::New();
+	distance_map_writer3->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\voronoi_map.tif");
+	distance_map_writer3->SetInput(voronoi_map);
+	distance_map_writer3->Update();*/
 
-	LabelImageType3D::Pointer nucleus_distance = DanielssonFilter->GetOutput();
 
 	//Loop over nuclei
-	for(int i = 0; i < NPS; i++)//see the comment above for NPS
-	{
+	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+
+		LabelImageType3D::IndexType current_idx;
+		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
+		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
+		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
+		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
+
+		ImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
+
+		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
+		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
+
+		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+			(end_index_nuclei[2] > (unsigned int)sz[2]) )
+			continue;
+
+		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
+
+		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
+		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
+
+		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
+		sub_volume_filter_nuclei->SetInput(this->SomaImage);
+		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
+		sub_volume_filter_nuclei->Update();
+		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+		//std::cout << "After subvolume_filter_nuclei"<<std::endl;
+
+
+		//Calculate once Danielsson distance generated by somaImage
+		typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
+		DanielssonDistanceMapImageFilterType::Pointer DanielssonFilter = DanielssonDistanceMapImageFilterType::New();
+
+		DanielssonFilter->SetInput(sub_volume_nuclei);
+		//DanielssonFilter->GetOutput()->Update();
+		DanielssonFilter->GetDistanceMap()->Update();
+
+		LabelImageType3D::Pointer distance_map = DanielssonFilter->GetDistanceMap();
+		//LabelImageType3D::Pointer voronoi_map = DanielssonFilter->GetVoronoiMap();
+
+		// If need be..
+		//typedef DanielssonDistanceMapImageFilterType::VectorImageType VectorImageType;
+		//VectorImageType::Pointer vector_distance_map = DanielssonFilter->GetVectorDistanceMap();
+		
 		double cur_distance;
-		double min_distance=1000.0;
-		for(int j = 0; j < this->CandidateRootPoints.size(); j++)
-		{
-			if (CandidateRootPoints[j].isRootPoint)
-			{
-				cur_distance = nucleus_distance->GetPixel(CandidateRootPoints[j].featureVector.node.ndx);
-				if (cur_distance<min_distance)
-					min_distance=cur_distance;
+		double min_distance = 1000.0;
+		double max_distance = 0.0; 
+		double mean_distance = 0.0;
+		double variance_distance = 0.0;
+		double acc_distance = 0.0;
+		int n_roots = 0;
+		//typedef itk::Vector<double, 1> VectorType;
+		//VectorType distance_vec;
+		
+		std::vector<double> distance_array;
+		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
 
+			if(CandidateRootPoints[j].isRootPoint){
+
+				LabelImageType3D::IndexType current_root_idx;
+				current_root_idx[0] = this->CandidateRootPoints[j].featureVector.node.ndx[0];
+				current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
+				current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
+
+				if(current_root_idx[0] < starting_index_nuclei[0] || current_root_idx[1] < starting_index_nuclei[1] || current_root_idx[2] < starting_index_nuclei[2] ||
+					current_root_idx[0] > end_index_nuclei[0] || current_root_idx[1] > end_index_nuclei[1] || current_root_idx[2] > end_index_nuclei[2])
+					continue;
+				
+				LabelImageType3D::IndexType relative_root_idx;
+				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
+				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
+				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
+
+				cur_distance = distance_map->GetPixel(relative_root_idx);
+				if(cur_distance < min_distance)
+					min_distance = cur_distance;
+				if(cur_distance > max_distance)
+					max_distance = cur_distance;
+
+				distance_array.push_back(cur_distance);
+				acc_distance = acc_distance + cur_distance;
+				n_roots++;
 			}
+		}	
+
+		//std::cout << n_roots << std::endl;
+
+		//if(!distance_array.empty()){
+		if(n_roots != 0){
+
+			mean_distance = acc_distance / n_roots;
+			for(int k = 0; k < distance_array.size(); k++){
+				variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
+			}
+			
+			variance_distance = variance_distance / n_roots;
+
+			this->NucleiObjects[i].associativeFeatures.minRootDist = min_distance; 
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = max_distance;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = mean_distance;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = variance_distance;
+			this->NucleiObjects[i].associativeFeatures.nRoots = n_roots;
 		}
-		NPdist=min_distance;//see the comment above for NPdist
-
+		else{
+			// These features do not exist when no root points are found in the neighborhood
+			this->NucleiObjects[i].associativeFeatures.minRootDist = -1; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = -1; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = -1; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = -1; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
+		}
+		distance_array.clear();
 	}
+}
 
+void AstroTracer::WriteNucleiFeatures(std::string outputFname){
+	
+	std::ofstream nuclei_feature_vector;
+	nuclei_feature_vector.open(outputFname.c_str(), std::ios::out);
+	//std::cout << "After feature_vector.open"<<std::endl;
+	
+	unsigned short IDIndex = 0;//ID index
+	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
+	nuclei_feature_vector << "var_int" << '\t' << "eccentricity" << '\t' << "elongation" << '\t' << "mean_surf_gradient" << '\t' << "radius_variation" << '\t'; 
+	nuclei_feature_vector << "shape_measure" << '\t' << "energy" << '\t' << "entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
+	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t';
+    nuclei_feature_vector << "var_root_dist" << '\t' << "n_roots";
+	nuclei_feature_vector << std::endl;
+
+	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+
+		NucleiObject nuc = this->NucleiObjects[i];
+		
+		//if(nuc.associativeFeatures.nRoots != 0){
+			nuclei_feature_vector << nuc.intrinsicFeatures.ID << '\t' << nuc.intrinsicFeatures.centroid.ndx[0] << '\t' << nuc.intrinsicFeatures.centroid.ndx[1] << '\t' << nuc.intrinsicFeatures.centroid.ndx[2] << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.volume << '\t' << nuc.intrinsicFeatures.integratedIntensity << '\t' << nuc.intrinsicFeatures.meanIntensity << '\t' << nuc.intrinsicFeatures.varianceIntensity << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.eccentricity << '\t' << nuc.intrinsicFeatures.elongation << '\t' << nuc.intrinsicFeatures.meanSurfaceGradient << '\t' << nuc.intrinsicFeatures.radiusVariation << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.shapeMeasure << '\t' << nuc.intrinsicFeatures.energy << '\t' << nuc.intrinsicFeatures.entropy << '\t' << nuc.intrinsicFeatures.inverseDiffMoment << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.inertia << '\t' << nuc.intrinsicFeatures.clusterShade << '\t' << nuc.intrinsicFeatures.clusterProminence << '\t' << nuc.associativeFeatures.minRootDist << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.maxRootDist << '\t' << nuc.associativeFeatures.meanRootDist << '\t' << nuc.associativeFeatures.varRootDist << '\t' << nuc.associativeFeatures.nRoots;
+			nuclei_feature_vector << std::endl;
+		//}
+	}
+	nuclei_feature_vector.close();
+	std::cout << " Done with nuclei feature vector file." << std::endl;
 }

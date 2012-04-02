@@ -13,14 +13,15 @@ int main(int argc, char* argv[])
 
 	argc = 5;
 
-	bool justComputeFeatures = false; //false;
-	bool startWithCandidateRoots = true;
+	bool justComputeRootFeatures = true; //false;
+	bool startWithCandidateRoots = false;
 
 	std::string tracePointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\trace_points.txt";
 	std::string featureVectorFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector.txt";
 	std::string IDImageFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\IDImage.tif";
 	std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector_with_classes_backup.txt";
-	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_backup.txt";
+	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_1.txt";
+	std::string nucleiFeaturesAppendedFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_appended_1.txt";
 	
 	if (argc < 5)
 	{
@@ -51,9 +52,9 @@ int main(int argc, char* argv[])
 	AT->LoadSomaImage(std::string(argv[4]));
 	std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	if(justComputeFeatures){
+	if(justComputeRootFeatures){
 		
-		clock_t RunTracing_start_time = clock();
+	//	clock_t RunTracing_start_time = clock();
 
 		AT->SetScaleRange(2, 5); //(4, 5)
 
@@ -72,14 +73,13 @@ int main(int argc, char* argv[])
 		AT->ReadRootPointsExternal(rootPointsFileName);
 		AT->ReadNucleiFeaturesExternal(nucleiFeaturesFileName);
 		AT->ComputeFeaturesFromCandidateRoots();
-		
+		AT->WriteNucleiFeatures(nucleiFeaturesAppendedFileName);
 	}
 		
 
 	//MNT->WriteMultipleSWCFiles(SWCFilename, 1);
 
-	std::cout << "Total time to tracing is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << std::endl;
-	
+	//std::cout << "Total time to tracing is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	return 0;
 
