@@ -612,7 +612,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	int inrt = 0; // niclas testing
 	while(!nit.IsAtEnd()) 
 	{
-		std::cout<<inrt++<<"\n "<<std::flush;
+// 		std::cout<<inrt++<<"\n "<<std::flush;
 		itk::Index<3> ndx = it.GetIndex();
 		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
 			(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
