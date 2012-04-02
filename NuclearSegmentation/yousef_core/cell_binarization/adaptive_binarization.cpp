@@ -151,7 +151,7 @@ binaryImageType::Pointer Adaptive_Binarization(inputImageType::Pointer _inputIma
 
 			int banderaHistoGlobal = 0;
 			int banderaShowGlobalHistogram = 0;
-			int bandera3Poisson = 3; // 2 3 distribution, 2 2 distributions
+			int bandera3Poisson = 2; // 2 3 distribution, 2 2 distributions
 
 			inputPixelType _maxValueInputPixelType = std::numeric_limits<inputPixelType>::max();
 			unsigned char _maxValueBinaryPixelType = std::numeric_limits<unsigned char>::max();
