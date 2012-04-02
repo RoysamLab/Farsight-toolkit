@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="saveAction"/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/tmp.swc"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="saveAction"/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/tmp.vtk"/>
+</events>

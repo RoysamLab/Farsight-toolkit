@@ -268,5 +268,20 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-RenderModes PROPERTIES
     DEPENDS TraceEdit-CellAnalysis
   )
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_save_to_file.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_save_to_file.xml
+    @ONLY)
+  add_test(
+    TraceEdit-SaveToFile
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_save_to_file.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-SaveToFile PROPERTIES
+    DEPENDS TraceEdit-RenderModes
+    PASS_REGULAR_EXPRESSION "File saved as"
+  )
     
 endif()
