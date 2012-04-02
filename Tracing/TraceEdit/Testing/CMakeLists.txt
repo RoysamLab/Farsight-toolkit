@@ -307,5 +307,17 @@ if(QtTestingFound)
     DEPENDS TraceEdit-RenderModes
     PASS_REGULAR_EXPRESSION "set roots"
   )
+
+  add_test(
+    TraceEdit-ListSelections
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_list_selections.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-ListSelections PROPERTIES
+    DEPENDS TraceEdit-SetRoots
+    PASS_REGULAR_EXPRESSION "65 lines are selected"
+  )
     
 endif()

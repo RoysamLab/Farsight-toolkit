@@ -4247,6 +4247,7 @@ void View3D::ListSelections()
 	else
 	{
 		listText += QString::number(IDs.size()) + " lines are selected\n";
+		std::cout << QString::number(IDs.size()).toStdString() << " lines are selected" << std::endl;
 		selectedText += QString(IDs[0]->statHeaders().c_str()) + "\n";
 		for (unsigned int i = 0; i < IDs.size(); i++)
 		{
