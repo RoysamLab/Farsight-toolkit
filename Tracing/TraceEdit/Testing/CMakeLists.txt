@@ -319,5 +319,16 @@ if(QtTestingFound)
     DEPENDS TraceEdit-SetRoots
     PASS_REGULAR_EXPRESSION "65 lines are selected"
   )
+  
+  add_test(
+    TraceEdit-RemoveImageActors
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    ${TraceEdit_TEST_DIR}/test_remove_image_actors.xml
+    ${TraceEdit_TEST_DIR}/baseline_delete_traces.png
+  )
+  set_tests_properties(TraceEdit-RemoveImageActors PROPERTIES
+    DEPENDS TraceEdit-SetRoots
+  )
     
 endif()

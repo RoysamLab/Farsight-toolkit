@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1View3D0/1QMenuBar0/fileMenu" command="activate" arguments="CloseAllImage"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+</events>
