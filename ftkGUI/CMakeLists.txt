@@ -8,7 +8,8 @@ SET( GUI_SRCS
     	PlotWindow.cpp
     	ScatterView.cpp
     	TableWindow.cpp	
-    	HistoWindow.cpp
+		FTKRenderWindow.cpp
+		HistoWindow.cpp
     	ImageBrowser5D.cpp
     	PatternAnalysisWizard.cpp
     	GenericALDialog.cpp
@@ -31,7 +32,8 @@ SET( GUI_HDRS
     	PlotWindow.h
     	ScatterView.h
     	TableWindow.h
-    	HistoWindow.h
+		FTKRenderWindow.h
+	   	HistoWindow.h
     	ImageBrowser5D.h
     	PatternAnalysisWizard.h
     	GenericALDialog.h
