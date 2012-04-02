@@ -88,6 +88,7 @@
 #include "ftkGUI/PatternAnalysisWizard.h"
 #include "ftkGUI/TableWindow.h"
 #include "ftkGUI/PlotWindow.h"
+#include "ftkGUI/FTKRenderWindow.h"
 #include "ftkGUI/ImageBrowser5D.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/LabelImageViewQT.h"
@@ -188,6 +189,7 @@ protected slots:
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
+	void CreateNewRenderWindow();
 	void CreateNewNucRAG();
 	void CreateNewCellRAG();
 	void updateViews();
@@ -302,6 +304,7 @@ protected:
 	std::vector<PlotWindow *> pltWin;
 	std::vector<TableWindow *> tblWin;
 	std::vector<HistoWindow *> hisWin;
+	std::vector<FTKRenderWindow *> renWin;
 	PatternAnalysisWizard *pWizard;
 
 	QMenu *fileMenu;
@@ -347,6 +350,7 @@ protected:
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
+	QAction *newRenderAction;
 	QMenu *ragMenu;
 	QAction *nucRagAction;
 	QAction *cellRagAction;

@@ -66,6 +66,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	tblWin.clear();
 	pltWin.clear();
+	renWin.clear();
 	//	hisWin.clear();
 	pWizard=NULL;
 
@@ -395,6 +396,11 @@ void NucleusEditor::createMenus()
 	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
 	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
 	viewMenu->addAction(newHistoAction);
+
+	newRenderAction = new QAction(tr("New Render Window"),this);
+	newRenderAction->setStatusTip(tr("Open a new Render Window"));
+	connect(newRenderAction,SIGNAL(triggered()),this,SLOT(CreateNewRenderWindow()));
+	viewMenu->addAction(newRenderAction);
 
 	//ragMenu = viewMenu->addMenu(tr("New Region Adjacency Graph"));
 
@@ -3356,6 +3362,16 @@ void NucleusEditor::viewClosing(QWidget * view)
 			return;
 		}
 	}
+
+	std::vector<FTKRenderWindow *>::iterator rend_it;
+	for ( rend_it = renWin.begin(); rend_it < renWin.end(); rend_it++ )
+	{
+		if( *rend_it == view )
+		{
+			renWin.erase(rend_it);
+			return;
+		}
+	}
 }
 
 void NucleusEditor::closeViews()
@@ -3365,6 +3381,9 @@ void NucleusEditor::closeViews()
 
 	for(int p=0; p<(int)pltWin.size(); ++p)
 		pltWin.at(p)->close();
+
+	for(int p=0; p<(int)hisWin.size(); ++p)
+		hisWin.at(p)->close();
 
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->close();
@@ -3402,6 +3421,8 @@ void NucleusEditor::updateViews()
 	for(int p=0; p<(int)hisWin.size(); ++p)
 		hisWin.at(p)->update();
 
+	for(int p=0; p<(int)renWin.size(); ++p)
+		renWin.at(p)->update();
 
 }
 
@@ -3448,6 +3469,20 @@ void NucleusEditor::CreateNewHistoWindow(void)
 	connect(hisWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
 	hisWin.back()->setModels(table,selection);
 	hisWin.back()->show();
+}
+
+
+//*******************************************************************************
+// Create new Render Window
+//*******************************************************************************
+void NucleusEditor::CreateNewRenderWindow(void)
+{
+	if(!table) return;
+
+	renWin.push_back(new FTKRenderWindow());
+	connect(renWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
+	renWin.back()->setModels(table,selection);
+	renWin.back()->show();
 }
 
 //******************************************************************************
