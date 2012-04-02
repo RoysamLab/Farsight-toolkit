@@ -224,6 +224,7 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 	if(NucleusSeg) delete NucleusSeg;
 	NucleusSeg = new yousef_nucleus_seg();
 
+	int adap_bin;
 	if(myParameters.size() == 0)
 	{
 		NucleusSeg->readParametersFromFile("");		//Will use automatic parameter detection	
@@ -233,10 +234,24 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 		int params[12];
 		ConvertParameters(params);
 		NucleusSeg->setParams(params); //Will use the parameters that have been set and defauls for the rest
+		adap_bin = params[1];
 	}
 
 	NucleusSeg->setDataImage( dptr, numColumns, numRows, numStacks, dataFilename.c_str() );
-	NucleusSeg->runBinarization();
+	if(adap_bin == 1)
+	{
+		itk::Image<unsigned char, 3>::Pointer binImage = Adaptive_Binarization(dataImage->GetItkPtr<unsigned char>(0,channelNumber));
+		itk::Image<unsigned char, 3>::PixelType *binArray = binImage->GetBufferPointer();
+		unsigned long long imgArrayLength = numStacks*numRows*numColumns;
+		unsigned short *binPtr = new unsigned short[imgArrayLength];
+		for(unsigned long long i=0; i<imgArrayLength; ++i)
+		{
+			binPtr[i] = binArray[i];
+		}
+		NucleusSeg->setBinImage(binPtr);
+	}
+	else
+		NucleusSeg->runBinarization();
 	lastRunStep = 1;
 
 	//Get the output
