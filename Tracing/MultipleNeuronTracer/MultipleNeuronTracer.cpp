@@ -596,6 +596,18 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		win = 2;
 	}
 	
+	typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
+	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+	statisticsImageFilter->SetInput(_PaddedCurvImage);
+	statisticsImageFilter->Update();
+	double image_mean = statisticsImageFilter->GetMean();
+	double image_stddev = statisticsImageFilter->GetSigma();
+
+	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = image_mean/45;  // -0.1 percent of range
+	//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
+	//const float thresh2 = 0.001;  // -0.1 percent of range
+
 	long ctCnt = 0;
 	int inrt = 0; // niclas testing
 	while(!nit.IsAtEnd()) 
@@ -618,18 +630,6 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		}
 		
 		float val = nit.GetPixel(13) ;
-
-		//typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
-		//StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-	//	statisticsImageFilter->SetInput(_PaddedCurvImage);
-	//	statisticsImageFilter->Update();
-	//	double image_mean = statisticsImageFilter->GetMean();
-	//	double image_stddev = statisticsImageFilter->GetSigma();
-
-	//	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
-	//	const float thresh2 = image_mean/45;  // -0.1 percent of range
-		const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
@@ -1014,6 +1014,18 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	{
 		win = 2;
 	}
+
+	typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
+	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+	statisticsImageFilter->SetInput(_PaddedCurvImage);
+	statisticsImageFilter->Update();
+	double image_mean = statisticsImageFilter->GetMean();
+	double image_stddev = statisticsImageFilter->GetSigma();
+
+	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = image_mean/45;  // -0.1 percent of range
+	//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
+	//const float thresh2 = 0.001;  // -0.1 percent of range
 	
 	long ctCnt = 0;
 	while(!nit.IsAtEnd()) 
@@ -1035,18 +1047,6 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 		}
 		
 		float val = nit.GetPixel(13) ;
-
-		typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
-		StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-		statisticsImageFilter->SetInput(_PaddedCurvImage);
-		statisticsImageFilter->Update();
-		double image_mean = statisticsImageFilter->GetMean();
-		double image_stddev = statisticsImageFilter->GetSigma();
-
-		const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = image_mean/45;  // -0.1 percent of range
-		//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-		//const float thresh2 = 0.001;  // -0.1 percent of range
 
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
