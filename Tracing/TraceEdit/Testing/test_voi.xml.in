@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QDockWidget0/1QWidget0/1QGroupBox1/ReadBinaryVOIButton" command="activate" arguments=""/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop-somas.tif"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+    <event widget="1View3D0/1QDockWidget0/1QWidget0/1QGroupBox1/WriteVOIButton" command="activate" arguments=""/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/voi.tif"/>
+</events>

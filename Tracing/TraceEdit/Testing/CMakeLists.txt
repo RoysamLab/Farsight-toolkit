@@ -341,5 +341,20 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-BreakBranch PROPERTIES
     DEPENDS TraceEdit-RemoveImageActors
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_voi.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_voi.xml
+    @ONLY)
+  add_test(
+    TraceEdit-VOI
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${CMAKE_CURRENT_BINARY_DIR}/test_voi.xml
+    ${TraceEdit_TEST_DIR}/baseline_voi.png
+  )
+  set_tests_properties(TraceEdit-VOI PROPERTIES
+    DEPENDS TraceEdit-BreakBranch
+  )
     
 endif()
