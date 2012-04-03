@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
 		std::cout<< seedVector.size()<<std::endl;
 
-		image = Somas->EnhanceContrast(image, atof(argv[4]), atof(argv[5]));
+		//image = Somas->EnhanceContrast(image, seedVector[0][2], atof(argv[4]), atof(argv[5]));
 
 		clock_t SomaExtraction_start_time = clock();
 		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, seedVector, atof(argv[4]), atof(argv[5]), atoi(argv[6]), atof(argv[7]), atof(argv[8]), atoi(argv[9]));
@@ -120,18 +120,23 @@ void MakeDices(const char * montagefileName, const char * seedfileName, const ch
 		seedIndex[0] = diceWidth / 2;
 		seedIndex[1] = diceWidth / 2;
 		seedsForDice.push_back(seedIndex);
-		std::cout<< "Segment "<< i<<std::endl;
 
 		float Origion[3] = {0,0,0};
 		diceImage->SetOrigin(Origion);
 
 		SomaExtractor::SegmentedImageType::Pointer segImage= somaExtractor->SegmentSoma(diceImage, seedsForDice, alfa, 
 							beta, timethreshold, curvatureScaling, rmsThres, minObjSize);
+		//double threshold = 0;
+		//ImageType::Pointer segImage = Somas->EnhanceContrast(diceImage, seedIndex[2], alfa, beta, threshold);
 
-		std::ostringstream oss;
-		oss<< "Dice_Seg_"<< i<<".tif";
-		std::string str = oss.str();
-		somaExtractor->writeImage(str.c_str(), segImage);
+#pragma omp critical
+		std::cout<< "segment "<< i<<"\t"<<seedsForDice.size()<<std::endl;
+		//std::cout<< "Threshold "<< i<<"\t"<<threshold<<std::endl;
+
+		//std::ostringstream oss;
+		//oss<< "Dice_Segment_"<< i<<".tif";
+		//std::string str = oss.str();
+		//somaExtractor->writeImage(str.c_str(), segImage);
 		delete somaExtractor;
 	}
 	delete Somas;

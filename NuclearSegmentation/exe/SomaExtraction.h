@@ -33,6 +33,7 @@ public:
 	typedef unsigned int TLPixel;
 	typedef itk::Image< unsigned char, Dim > OutputImageType;
 	typedef itk::Image< float, Dim > ProbImageType;
+	typedef itk::Image< float, Dim - 1 > ProbImageSliceType;
 	typedef itk::Image< TLPixel, Dim > SegmentedImageType;
 
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
@@ -50,7 +51,8 @@ public:
 	typedef itk::ShapeDetectionLevelSetImageFilter< ProbImageType, ProbImageType> ShapeDetectionFilterType;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, SegmentedImageType> BinaryThresholdingFilterType;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, ProbImageType> BinaryProbThresholdingFilterType;
-	typedef itk::HuangThresholdImageFilter< ProbImageType, ProbImageType> HuangThresholdFilter;
+	typedef itk::ExtractImageFilter< ProbImageType, ProbImageSliceType > ExtractFilterType;
+	typedef itk::HuangThresholdImageFilter< ProbImageSliceType, ProbImageSliceType> HuangThresholdFilter;
 	typedef itk::SigmoidImageFilter <ProbImageType, ProbImageType> SigmoidImageFilterType;
 
 	//: constructor
@@ -62,7 +64,7 @@ public:
 	void SetInputImage( ProbImageType::Pointer probImage);
 	ProbImageType::Pointer GetFloatInputImage();
 	void ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
-	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta);
+	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold);
 	/// return labeled image for somas
 	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int minObjSize);
 	

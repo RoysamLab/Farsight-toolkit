@@ -151,50 +151,57 @@ void SomaExtractor::writeCentroids(const char* writeFileName, std::vector< itk::
 	ofs.close();
 }
 
-SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta)
+SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold)
 {
-	//ProbImageType::IndexType start;
-	//start[0] = 0;
-	//start[1] = 0;
-	//start[2] = centroid[2];
+	ProbImageType::IndexType start;
+	start[0] = 0;
+	start[1] = 0;
+	start[2] = sliceNum;
 	//std::cout<< "Slide: "<<start[2]<<std::endl;
-	//ProbImageType::SizeType size;
-	//size[0] = inputImage->GetLargestPossibleRegion().GetSize()[0];
-	//size[1] = inputImage->GetLargestPossibleRegion().GetSize()[1];
-	//size[2] = 1;
-	//ProbImageType::RegionType desiredRegion;
-	//desiredRegion.SetSize(size);
-	//desiredRegion.SetIndex(start);
+	ProbImageType::SizeType size;
+	size[0] = inputImage->GetLargestPossibleRegion().GetSize()[0];
+	size[1] = inputImage->GetLargestPossibleRegion().GetSize()[1];
+	size[2] = 0;
+	ProbImageType::RegionType desiredRegion;
+	desiredRegion.SetSize(size);
+	desiredRegion.SetIndex(start);
 
-	//RegionOfInterestFilter::Pointer regionFilter = RegionOfInterestFilter::New();
-	//regionFilter->SetInput(inputImage);
-	//regionFilter->SetRegionOfInterest(desiredRegion);
+	ExtractFilterType::Pointer extractFilter = ExtractFilterType::New();
+	extractFilter->SetInput(inputImage);
+	extractFilter->SetExtractionRegion(desiredRegion);
+#if ITK_VERSION_MAJOR >= 4
+	extractFilter->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+	extractFilter->Update();
+	ProbImageSliceType::Pointer slice = extractFilter->GetOutput();
+	//std::cout<< "Slice Done... "<< std::endl;
 
-	//HuangThresholdFilter::Pointer huangThresholdFilter = HuangThresholdFilter::New();
-	//huangThresholdFilter->SetInput(regionFilter->GetOutput());
-	//huangThresholdFilter->SetNumberOfHistogramBins( 256);
-	//huangThresholdFilter->Update();
-	//double threshold = huangThresholdFilter->GetThreshold();
+	HuangThresholdFilter::Pointer huangThresholdFilter = HuangThresholdFilter::New();
+	huangThresholdFilter->SetInput(slice);
+	huangThresholdFilter->SetNumberOfHistogramBins( 256);
+	huangThresholdFilter->Update();
+	threshold = huangThresholdFilter->GetThreshold();
 
 	//std::cout<< "HuangThreshold: "<< threshold<<std::endl;
-	//BinaryProbThresholdingFilterType::Pointer thresholder = BinaryProbThresholdingFilterType::New();
-	//thresholder->SetInput(inputImage);
-	//thresholder->SetUpperThreshold(threshold);                                                           
-	//thresholder->SetOutsideValue( 255);
-	//thresholder->SetInsideValue( 0);
-	//thresholder->Update();
-	//ProbImageType::Pointer probImage = thresholder->GetOutput();
+
+	BinaryProbThresholdingFilterType::Pointer thresholder = BinaryProbThresholdingFilterType::New();
+	thresholder->SetInput(inputImage);
+	thresholder->SetUpperThreshold(threshold);                                                           
+	thresholder->SetOutsideValue( 255);
+	thresholder->SetInsideValue( 0);
+	thresholder->Update();
+	ProbImageType::Pointer probImage = thresholder->GetOutput();
+	//this->writeImage("ThresholdImage.tif", probImage);
+	//SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
+	//sigmoidFilter->SetInput(inputImage);
+	//sigmoidFilter->SetOutputMinimum(0);
+	//sigmoidFilter->SetOutputMaximum(255);
+	//sigmoidFilter->SetAlpha(alfa);
+	//sigmoidFilter->SetBeta(beta);
+	//sigmoidFilter->Update();
+	//ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
 	
-	SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
-	sigmoidFilter->SetInput(inputImage);
-	sigmoidFilter->SetOutputMinimum(0);
-	sigmoidFilter->SetOutputMaximum(255);
-	sigmoidFilter->SetAlpha(alfa);
-	sigmoidFilter->SetBeta(beta);
-	sigmoidFilter->Update();
-	ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
-	
-	return floatImage;
+	return probImage;
 }
 
 SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
@@ -220,7 +227,6 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
     NodeContainer::Pointer seeds = NodeContainer::New();
     seeds->Initialize();
 
-	std::cout<< somaCentroids.size()<<std::endl;
 	for( int i = 0; i< somaCentroids.size(); i++ )
 	{
 		ProbImageType::IndexType  seedPosition;
