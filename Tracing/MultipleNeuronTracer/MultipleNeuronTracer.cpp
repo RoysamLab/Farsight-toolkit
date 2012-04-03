@@ -83,6 +83,8 @@ void MultipleNeuronTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned
 
 void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 {
+	_flagPipeline = false; // By default pipeline off
+	_flagOutLog = false;
 	ImageType3D::Pointer CurvImage = image;
 	
 	unsigned int padz = 0;
@@ -537,6 +539,8 @@ void MultipleNeuronTracer::FeatureMain(void)
 
 void MultipleNeuronTracer::GetFeature( float sigma ) 
 {
+	std::cout<<std::endl<<"Get Feature 1";
+	
 	clock_t LoG_start_time = clock();
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
 	GFilterType::Pointer gauss = GFilterType::New();
@@ -624,17 +628,17 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		win = 2;
 	}
 	
-	typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
-	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
-	statisticsImageFilter->SetInput(_PaddedCurvImage);
-	statisticsImageFilter->Update();
-	double image_mean = statisticsImageFilter->GetMean();
-	double image_stddev = statisticsImageFilter->GetSigma();
-
-	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
-	const float thresh2 = image_mean/45;  // -0.1 percent of range
-	//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-	//const float thresh2 = 0.001;  // -0.1 percent of range
+// 	typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
+// 	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+// 	statisticsImageFilter->SetInput(_PaddedCurvImage);
+// 	statisticsImageFilter->Update();
+// 	double image_mean = statisticsImageFilter->GetMean();
+// 	double image_stddev = statisticsImageFilter->GetSigma();
+// 
+// 	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
+// 	const float thresh2 = image_mean/45;  // -0.1 percent of range
+	const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = 0.001;  // -0.1 percent of range
 
 	long ctCnt = 0;
 	int inrt = 0; // niclas testing
@@ -737,6 +741,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 // 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 // 	gauss->GetOutput()->Update();
 // 	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	std::cout<<std::endl<<"Get Feature 2";
 
 
 			ImageType3D::Pointer gauss_3 = ImageType3D::New();
@@ -770,7 +775,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	ImageType3D::PixelType * gauss_3_Array = gauss_3->GetBufferPointer();
 	
 	itk::Index<3> local_origin = _logScale_1->GetRequestedRegion().GetIndex();
-	#pragma omp critical
+// 	#pragma omp critical
 	std::cout << std::endl << "Start of the Block : " << local_origin << std::endl;
 	itk::Index<3> local_offset;
 	local_offset[0] = _indxDice[0] - local_origin[0];
@@ -778,7 +783,7 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 	local_offset[2] = _indxDice[2] - local_origin[2];
 	
 	itk::Size<3> block_size = _logScale_1->GetRequestedRegion().GetSize();
-	#pragma omp critical
+// 	#pragma omp critical
 	std::cout << std::endl << "Size of the Block : " << block_size << std::endl;
 	int block_slice_size = block_size[1] * block_size[0];
 	
@@ -1053,8 +1058,8 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 
 	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
 	const float thresh2 = image_mean/45;  // -0.1 percent of range
-	//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-	//const float thresh2 = 0.001;  // -0.1 percent of range
+// 	const float thresh1 = 0.00025;   // 3% of maximum theshold from Lowe 2004
+// 	const float thresh2 = 0.0001;  // -0.1 percent of range
 	
 	long ctCnt = 0;
 	while(!nit.IsAtEnd()) 
@@ -1155,7 +1160,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		return true;
 	}
 	
-	return false;  /// right now this is turned off (Amit)
+	return true;  /// right now this is turned off (Amit)
 }
 
 
