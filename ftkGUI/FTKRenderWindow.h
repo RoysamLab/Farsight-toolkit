@@ -25,6 +25,12 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkPolyData.h>
+#include <vtkSphereSource.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+
+#include "vnl/vnl_vector.h"
 
 #include "ObjectSelection.h"
 
@@ -35,11 +41,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
-#if defined __GNUC__ || defined __APPLE__
-#include <ext/hash_map>
-#else
 #include <hash_map>
-#endif
 
 class DataNetwork;
 struct DataNode;
@@ -122,6 +124,8 @@ private slots:
 private:
 	void setupColorCodeMenu();
 	void updateFeatureMenu();
+	void updateRenderView(void);
+	r_g_b GetRGBValue(double val);
 	//void BuildNetwork();
 
 	QMenu *featureMenu;
@@ -134,7 +138,7 @@ private:
 	int selectedFeature;
 	int selectedColorCode;
 	std::map< int, std::string > classColorMap;
-	std::map< std::string, std::vector< int > > discreteColorMap;
+	std::map< std::string, std::vector< double > > discreteColorMap;
 
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;		

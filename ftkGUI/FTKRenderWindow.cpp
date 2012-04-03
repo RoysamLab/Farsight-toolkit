@@ -52,6 +52,7 @@ void FTKRenderWindow::setModels(vtkSmartPointer<vtkTable> tbl, ObjectSelection *
 	else
 		selection = sels;
 	updateFeatureMenu();
+	//updateRenderView();
 }
 
 void FTKRenderWindow::update()
@@ -71,8 +72,12 @@ void FTKRenderWindow::closeEvent(QCloseEvent *event)
 void FTKRenderWindow::selectFeature(QAction *action)
 {
 	//! Sets the feature for the color coding of the objects
-	selectedFeature = action->toolTip().toInt();
-	action->setChecked(true);
+	if(action->toolTip().toInt() != selectedFeature)
+	{
+		selectedFeature = action->toolTip().toInt();
+		action->setChecked(true);
+		updateRenderView();
+	}
 }
 
 void FTKRenderWindow::selectColorCode(QAction *action)
@@ -87,6 +92,14 @@ void FTKRenderWindow::selectColorCode(QAction *action)
 	}
 	else if(selectedColorCode == 2)
 	{
+		std::string current_column = table->GetColumnName(selectedFeature+3);
+		if(current_column.find("prediction") == std::string::npos )
+		{
+			selectedColorCode = previous_code;
+			std::cout << "Discrete color coding is only for classification results \n";
+			return;
+		}
+
 		int max_class = 0;
 		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
 		{
@@ -95,7 +108,7 @@ void FTKRenderWindow::selectColorCode(QAction *action)
 		}
 
 		QVector<QString> colors;
-		std::map< std::string, std::vector< int > >::iterator it;
+		std::map< std::string, std::vector< double > >::iterator it;
 		for(it=discreteColorMap.begin() ; it != discreteColorMap.end(); it++)
 		{
 			colors.push_back(QString::fromStdString((*it).first));
@@ -114,11 +127,83 @@ void FTKRenderWindow::selectColorCode(QAction *action)
 		}
 		delete dialog;
 	}	
+
+	if(selectedColorCode != previous_code)
+		updateRenderView();
 }
 
-//void FTKRenderWindow::updateRenderView(void)
-//{
-//}
+void FTKRenderWindow::updateRenderView(void)
+{
+	vnl_vector<double> feat_col((int)table->GetNumberOfRows());
+
+	if(selectedColorCode == 1)
+	{
+		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		{
+			feat_col[row] = table->GetValue(row, selectedFeature+3).ToDouble();
+		}	
+		double min = feat_col.min_value();
+		double max = feat_col.max_value();
+		//std::cout << min << "_" << max << "\n";
+		for(int i=0; i<feat_col.size(); ++i)
+		{
+			feat_col[i] = (((feat_col[i] - min)/(max - min))-0.5)*(-2);
+		}
+		//std::cout << feat_col.min_value() << "_" << feat_col.max_value() << "\n";
+	}
+
+	if(selectedColorCode == 2)
+	{
+		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		{
+			feat_col[row] = table->GetValue(row, selectedFeature+3).ToDouble();
+		}		
+	}
+
+
+	for(int row=0; row<(int)table->GetNumberOfRows(); row++)
+	{
+		//std::cout << "myCentroid : " << row <<"\r";
+		vtkSmartPointer<vtkSphereSource> centroidSphere =  vtkSmartPointer<vtkSphereSource>::New();
+		centroidSphere->SetRadius(20);	
+		vtkSmartPointer<vtkPolyDataMapper> centroidMapper =  vtkSmartPointer<vtkPolyDataMapper>::New();
+		centroidMapper->SetInputConnection(centroidSphere->GetOutputPort()); 
+		vtkSmartPointer<vtkActor> centroidactor = vtkSmartPointer<vtkActor>::New();
+		centroidactor->SetMapper(centroidMapper);
+		centroidactor->GetProperty()->SetOpacity(1);
+		r_g_b rgbscalar = GetRGBValue(feat_col[row]);
+		centroidactor->GetProperty()->SetColor(rgbscalar.r, rgbscalar.g, rgbscalar.b);
+		centroidactor->SetPosition(table->GetValue(row, 1).ToDouble(),table->GetValue(row, 2).ToDouble(),table->GetValue(row, 3).ToDouble());
+		Renderer->AddActor(centroidactor);
+	}
+	
+	QVTK->GetRenderWindow()->Render();
+	Interactor->Start();
+	
+}
+
+r_g_b FTKRenderWindow::GetRGBValue(double val)
+{
+	if(selectedColorCode == 1)
+	{
+		int index = 64 * (val+1) - 1;   // when val = 1; index should be the max index
+		if( index >= NUM_COLORS)
+		{
+			index = NUM_COLORS - 1;
+		}
+		else if( index < 0)
+		{
+			index = 0;
+		}
+		return REN_COLOR_MAP[index];
+	}
+
+	else
+	{
+		std::vector<double> disc_color = discreteColorMap[classColorMap[(int)val]];
+		return r_g_b(disc_color[0], disc_color[1], disc_color[2]);
+	}
+}
 
 void FTKRenderWindow::updateFeatureMenu(void)
 {
@@ -142,6 +227,7 @@ void FTKRenderWindow::updateFeatureMenu(void)
 			featureAct->setChecked(true);
 
 	}
+	updateRenderView();
 }
 
 void FTKRenderWindow::setupColorCodeMenu(void)
@@ -171,26 +257,26 @@ void FTKRenderWindow::setupColorCodeMenu(void)
 
 void FTKRenderWindow::createDiscreteColorMap(void)
 {
-	std::vector< int > color;
-	color.push_back(255); color.push_back(0); color.push_back(0);
+	std::vector< double > color;
+	color.push_back(1.0); color.push_back(0.0); color.push_back(0.0);
 	discreteColorMap["Red"] = color;
-	color[0] = 0; color[1] = 255; color[2] = 0;
+	color[0] = 0.0; color[1] = 1.0; color[2] = 0.0;
 	discreteColorMap["Green"] = color;
-	color[0] = 0; color[1] = 0; color[2] = 255;
+	color[0] = 0.0; color[1] = 0.0; color[2] = 1.0;
 	discreteColorMap["Blue"] = color;
-	color[0] = 0; color[1] = 255; color[2] = 255;
+	color[0] = 0.0; color[1] = 1.0; color[2] = 1.0;
 	discreteColorMap["Cyan"] = color;
-	color[0] = 255; color[1] = 165; color[2] = 0;
+	color[0] = 1.0; color[1] = 0.6471; color[2] = 0.0;
 	discreteColorMap["Orange"] = color;
-	color[0] = 238; color[1] = 130; color[2] = 238;
+	color[0] = 0.9333; color[1] = 0.5098; color[2] = 0.9333;
 	discreteColorMap["Violet"] = color;
-	color[0] = 255; color[1] = 255; color[2] = 0;
+	color[0] = 1.0; color[1] = 1.0; color[2] = 0.0;
 	discreteColorMap["Yellow"] = color;
-	color[0] = 0; color[1] = 100; color[2] = 0;
+	color[0] = 0.0; color[1] = 0.3922; color[2] = 0.0;
 	discreteColorMap["Dark Green"] = color;
-	color[0] = 65; color[1] = 105; color[2] = 205;
+	color[0] = 0.2549; color[1] = 0.4118; color[2] = 0.8039;
 	discreteColorMap["Royal Blue"] = color;
-	color[0] = 190; color[1] = 190; color[2] = 190;
+	color[0] = 0.7451; color[1] = 0.7451; color[2] = 0.7451;
 	discreteColorMap["Gray"] = color;
 }
 
