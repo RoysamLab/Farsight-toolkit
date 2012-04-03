@@ -45,6 +45,11 @@
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkStatisticsImageFilter.h"
 #include "itkDanielssonDistanceMapImageFilter.h"
+#include "itkExtractImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkApproximateSignedDistanceMapImageFilter.h"
+
 #include "vnl/vnl_math.h"
 
 #include <queue>
@@ -185,7 +190,7 @@ public:
 	typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType;
 	typedef itk::RegionOfInterestImageFilter<LabelImageType3D, LabelImageType3D> VolumeOfInterestFilterType_nuclei;
 	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
-
+	typedef itk::SignedMaurerDistanceMapImageFilter<CharImageType3D, ImageType3D> SignedMaurerDistanceMapImageFilterType;
 
 	//Constructor
 	AstroTracer();

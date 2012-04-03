@@ -2157,7 +2157,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 
 	for(int i = 0; i < points_list.size(); i++){
 
-		std::cout << " LoG point index: " << IDIndex << std::endl;
+		//std::cout << " LoG point index: " << IDIndex << std::endl;
 
 		//get radius estimate for this node
 		itk::Vector<float, 3> pos;
@@ -2420,10 +2420,10 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		////////////////// Code for nearest nuiclei /////////////////////////
 		float double_scale_nuclei = 20;
 
-		LabelImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
-		LabelImageType3D::SizeType sub_volume_size_nuclei;
-		LabelImageType3D::RegionType sub_volume_region_nuclei;
-		LabelImageType3D::Pointer sub_volume_nuclei;
+		CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+		CharImageType3D::SizeType sub_volume_size_nuclei;
+		CharImageType3D::RegionType sub_volume_region_nuclei;
+		CharImageType3D::Pointer sub_volume_nuclei;
 
 		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
 		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
@@ -2442,15 +2442,35 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
-		
-		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
-		sub_volume_filter_nuclei->SetInput(this->SomaImage);
+
+		typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
+		ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+		threshold_filter->SetLowerThreshold(1);
+		threshold_filter->SetInsideValue(255);
+		threshold_filter->SetOutsideValue(0);
+		threshold_filter->SetInput(this->SomaImage);
+		threshold_filter->Update();
+
+
+		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
+		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
+		sub_volume_filter_nuclei->SetInput(threshold_filter->GetOutput());
 		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
 		sub_volume_filter_nuclei->Update();
 		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
-		//std::cout << "After subvolume_filter_nuclei"<<std::endl;
 
-		typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
+		
+		/*typedef itk::ExtractImageFilter<LabelImageType3D, CharImageType3D>  ExtractSubVolumeFilterType_nuclei;
+		ExtractSubVolumeFilterType_nuclei::Pointer sub_volume_filter_nuclei = ExtractSubVolumeFilterType_nuclei::New();
+		sub_volume_filter_nuclei->SetExtractionRegion(sub_volume_region_nuclei);
+		sub_volume_filter_nuclei->SetInput(this->SomaImage);
+		sub_volume_filter_nuclei->SetDirectionCollapseToIdentity();
+		sub_volume_filter_nuclei->Update();
+		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();*/
+
+		
+		// DO NOT USE DANIELSSON FILTER. IT HAS BUGS. SEE: http://www.itk.org/Bug/view.php?id=10757
+		/*typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
 		DanielssonDistanceMapImageFilterType::Pointer DianielssonFilter = DanielssonDistanceMapImageFilterType::New();
 
 		DianielssonFilter->SetInput(sub_volume_nuclei);
@@ -2458,41 +2478,75 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		//DianielssonFilter->GetDistanceMap()->Update();
 		DianielssonFilter->GetOutput()->Update();
 
-		LabelImageType3D::Pointer sub_volume_distance = DianielssonFilter->GetOutput();
-		//std::cout << "After Danielsson"<<std::endl;
+		LabelImageType3D::Pointer sub_volume_distance = DianielssonFilter->GetOutput();*/
 
-		if(i == 50){
+		
+		SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+		MaurerFilter->SetInput(sub_volume_nuclei);
+		MaurerFilter->SetSquaredDistance(false);
+		MaurerFilter->SetUseImageSpacing(false);
+		MaurerFilter->SetInsideIsPositive(false);
+		MaurerFilter->Update();
+		
+		ImageType3D::Pointer sub_volume_distance = MaurerFilter->GetOutput();
+		
+		
+		/*typedef itk::ApproximateSignedDistanceMapImageFilter<CharImageType3D, ImageType3D> ApproxSignedDistanceMapImageFilterType;
+		ApproxSignedDistanceMapImageFilterType::Pointer ApproxDistFilter = ApproxSignedDistanceMapImageFilterType::New();
+		ApproxDistFilter->SetInput(sub_volume_nuclei);
+		ApproxDistFilter->SetInsideValue(255);
+		ApproxDistFilter->SetOutsideValue(0);
+		ApproxDistFilter->Update();
+
+		ImageType3D::Pointer sub_volume_distance = ApproxDistFilter->GetOutput();*/
+
+
+		// for testing...
+		/*if(i == 200){
 			
+			RescalerType::Pointer rescaler = RescalerType::New();
+			rescaler->SetInput(sub_volume_distance);
+			rescaler->SetOutputMaximum(255);
+			rescaler->SetOutputMinimum(0);
+			rescaler->Update();
+			itk::CastImageFilter<ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
+			caster->SetInput(rescaler->GetOutput());
+
 			std::cout << "Writing distance maps to disk. " << std::endl;
-			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
+			itk::ImageFileWriter< CharImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< CharImageType3D >::New();
 			distance_map_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\distance_map_sub.tif");
-			distance_map_writer->SetInput(sub_volume_distance);
+			distance_map_writer->SetInput(caster->GetOutput());
 			distance_map_writer->Update();
 
-			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer3 = itk::ImageFileWriter< LabelImageType3D >::New();
-			distance_map_writer3->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\voronoi_map_sub.tif");
-			distance_map_writer3->SetInput(DianielssonFilter->GetVoronoiMap());
-			distance_map_writer3->Update();
-
-			itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer2 = itk::ImageFileWriter< LabelImageType3D >::New();
+			itk::ImageFileWriter<CharImageType3D>::Pointer distance_map_writer2 = itk::ImageFileWriter<CharImageType3D>::New();
 			distance_map_writer2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\vol_sub.tif");
 			distance_map_writer2->SetInput(sub_volume_nuclei);
 			distance_map_writer2->Update();
-		}
+
+			LabelImageType3D::SizeType sub_size = sub_volume_nuclei->GetLargestPossibleRegion().GetSize();
+			LabelImageType3D::SizeType sub_size1 = sub_volume_nuclei->GetBufferedRegion().GetSize();
+			
+			std::cout << sub_size[0] << ", " << sub_size[1] << ", " << sub_size[2] << std::endl;
+			std::cout << sub_size1[0] << ", " << sub_size1[1] << ", " << sub_size1[2] << std::endl;
+			std::cout << current_idx[0] << ", " << current_idx[1] << ", " << current_idx[2] << std::endl;
+			std::cout << sub_volume_nuclei->GetOrigin() << std::endl;	
+		}*/
 		
 		//itk::Index<3> lndx = current_idx-starting_index;
 
 		LabelImageType3D::IndexType ldx;
-		ldx[0] = starting_index_nuclei[0] + double_scale/2; //double_scale/2;
-		ldx[1] = starting_index_nuclei[1] + double_scale/2; //double_scale/2;
-		ldx[2] = starting_index_nuclei[2] + double_scale/2; //double_scale/2; // PADZ???
+		ldx[0] = double_scale_nuclei; //current_idx[0]; 
+		ldx[1] = double_scale_nuclei; //current_idx[1]; 
+		ldx[2] = double_scale_nuclei; //current_idx[2]; 
 
 		double nucleus_distance = sub_volume_distance->GetPixel(ldx);
-		//std::cout << "After nucleus_distance"<<std::endl;
+		
+		std::cout << i << ": " << nucleus_distance << std::endl;
 
-		double nucDistThresh = 100;
+
+		/*double nucDistThresh = 100;
 		if(nucleus_distance > nucDistThresh)
-			continue;
+			continue;*/
 		
 		if(feature_vector.good()){
 
@@ -3177,7 +3231,7 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 	// Derive this from: nuclei_object.intrinsicFeatures.boundingBoxVolume
-	float double_scale_nuclei = 20;
+	float double_scale_nuclei = 100;
 
 	LabelImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
 	LabelImageType3D::SizeType sub_volume_size_nuclei;
@@ -3222,29 +3276,33 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
 
-		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
-		sub_volume_filter_nuclei->SetInput(this->SomaImage);
+		typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
+		ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+		threshold_filter->SetLowerThreshold(1);
+		threshold_filter->SetInsideValue(255);
+		threshold_filter->SetOutsideValue(0);
+		threshold_filter->SetInput(this->SomaImage);
+		threshold_filter->Update();
+
+
+		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
+		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
+		sub_volume_filter_nuclei->SetInput(threshold_filter->GetOutput());
 		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
 		sub_volume_filter_nuclei->Update();
 		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
-		//std::cout << "After subvolume_filter_nuclei"<<std::endl;
 
 
-		//Calculate once Danielsson distance generated by somaImage
-		typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
-		DanielssonDistanceMapImageFilterType::Pointer DanielssonFilter = DanielssonDistanceMapImageFilterType::New();
-
-		DanielssonFilter->SetInput(sub_volume_nuclei);
-		//DanielssonFilter->GetOutput()->Update();
-		DanielssonFilter->GetDistanceMap()->Update();
-
-		LabelImageType3D::Pointer distance_map = DanielssonFilter->GetDistanceMap();
-		//LabelImageType3D::Pointer voronoi_map = DanielssonFilter->GetVoronoiMap();
-
-		// If need be..
-		//typedef DanielssonDistanceMapImageFilterType::VectorImageType VectorImageType;
-		//VectorImageType::Pointer vector_distance_map = DanielssonFilter->GetVectorDistanceMap();
+		SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+		MaurerFilter->SetInput(sub_volume_nuclei);
+		MaurerFilter->SetSquaredDistance(false);
+		MaurerFilter->SetUseImageSpacing(false);
+		MaurerFilter->SetInsideIsPositive(false);
+		MaurerFilter->Update();
 		
+		ImageType3D::Pointer distance_map = MaurerFilter->GetOutput();
+		
+				
 		double cur_distance;
 		double min_distance = 1000.0;
 		double max_distance = 0.0; 
@@ -3252,9 +3310,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		double variance_distance = 0.0;
 		double acc_distance = 0.0;
 		int n_roots = 0;
-		//typedef itk::Vector<double, 1> VectorType;
-		//VectorType distance_vec;
-		
+				
 		std::vector<double> distance_array;
 		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
 
@@ -3269,7 +3325,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 					current_root_idx[0] > end_index_nuclei[0] || current_root_idx[1] > end_index_nuclei[1] || current_root_idx[2] > end_index_nuclei[2])
 					continue;
 				
-				LabelImageType3D::IndexType relative_root_idx;
+				ImageType3D::IndexType relative_root_idx;
 				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
 				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
 				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
