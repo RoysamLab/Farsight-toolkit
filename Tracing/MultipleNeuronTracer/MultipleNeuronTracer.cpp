@@ -296,12 +296,12 @@ void MultipleNeuronTracer::RunTracing(void)
 		//Make a unsigned char image to print out the critical points image
 		typedef itk::Image< unsigned char, 3 > CriticalPointsImageType;
 		CriticalPointsImageType::Pointer critical_point_image = CriticalPointsImageType::New();
-		critical_point_image->SetRegions(SWCImage->GetLargestPossibleRegion());
+		critical_point_image->SetRegions(_SWCImage->GetLargestPossibleRegion());
 		critical_point_image->Allocate();
 		critical_point_image->FillBuffer(0);
 		
 		//Iterate through SWCImage and setting critical points to 255 in critical_point_image
-		itk::ImageRegionConstIterator< SWCImageType3D > SWCImage_iter(SWCImage, SWCImage->GetLargestPossibleRegion());
+		itk::ImageRegionConstIterator< SWCImageType3D > SWCImage_iter(_SWCImage, _SWCImage->GetLargestPossibleRegion());
 		SWCImage_iter.GoToBegin();
 
 		while (!SWCImage_iter.IsAtEnd())
