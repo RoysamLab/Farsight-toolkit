@@ -27,10 +27,10 @@ MAKECOMMAND:STRING=${CMPLR_PATH} ${FPROJ_PATH} /build Debug /project ALL_BUILD
 CMAKE_CXX_FLAGS:STRING=${PRLL_STR_CXX}
 CMAKE_C_FLAGS:STRING=${PRLL_STR_C}
 BUILD_SHARED_LIBS:BOOL=OFF
-ITK_DIR:PATH=C:/dashboard/bin/itkv4.0a09
-VTK_DIR:PATH=C:/dashboard/bin/vtk-5.6.1
-VXL_DIR:PATH=C:/dashboard/bin/vxl-1.14.0
-Boost_INCLUDE_DIR:PATH=C:/dashboard/src/boost_1_47_0
+ITK_DIR:PATH=C:/dashboard/bin/itk-4.1.0
+VTK_DIR:PATH=C:/dashboard/bin/vtk-5.10.0.rc1
+VXL_DIR:PATH=C:/dashboard/bin/vxl-3.apr.12
+Boost_INCLUDE_DIR:PATH=C:/dashboard/src/boost_1_49_0
 QT_QMAKE_EXECUTABLE:FILEPATH=C:/Qt/4.7.2/bin/qmake.exe
 ")
 
