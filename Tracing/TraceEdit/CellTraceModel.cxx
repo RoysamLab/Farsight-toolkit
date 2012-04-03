@@ -23,6 +23,13 @@ CellTraceModel::CellTraceModel()
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
 	this->ColumnSelection = new ObjectSelection();
+	
+	this->CellClusterSelection = new SelectiveClustering();
+	this->CellClusterManager = new ClusterManager();
+	this->CellClusterManager->setClusteringModel(this->CellClusterSelection );
+	this->CellClusterManager->setObjectSelection(this->Selection);
+	this->CellClusterManager->setManagerTitle("Cell Cluster Manager");
+
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
 	this->AdditionalHeaders.clear();
@@ -284,6 +291,8 @@ void CellTraceModel::SyncModel()
 			this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
 	}
+	this->CellClusterSelection->SetObjectTable(this->DataTable);
+	this->CellClusterManager->setVisible(true);
 }
 
 

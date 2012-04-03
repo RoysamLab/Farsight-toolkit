@@ -109,6 +109,9 @@ private:
 	std::map< int ,CellTrace*>::iterator CellIDLookupIter;
 	
 	ObjectSelection * Selection;
+	SelectiveClustering * CellClusterSelection;
+	ClusterManager * CellClusterManager;
+
 	//////////////////////////////////////////////
 	ObjectSelection * ColumnSelection;
 	////////////////////////////////////////////

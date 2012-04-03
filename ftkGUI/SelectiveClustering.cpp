@@ -287,7 +287,7 @@ bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTab
 		return false;
 	}
 	this->ObjectTable->Initialize();
-	this->ObjectTable = InputObjectTable;
+	this->ObjectTable->DeepCopy( InputObjectTable);
 	this->update();
 	return true;
 }
@@ -677,6 +677,11 @@ ClusterManager::ClusterManager()
 	this->setLayout(this->MainLayout);
 	this->setWindowTitle(tr("Cluster Manager"));
 	AnnotationLinkSetUp = false;
+}
+
+void ClusterManager::setManagerTitle(std::string newTitle)
+{
+	this->setWindowTitle(newTitle.c_str());
 }
 
 void ClusterManager::setClusteringModel(SelectiveClustering * newClusterModel)

@@ -23,6 +23,12 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 {  
 	this->DataTable = vtkSmartPointer<vtkTable>::New();
 	this->Selection = new ObjectSelection();
+	this->TraceClusterSelection = new SelectiveClustering();
+	this->TraceClusterManager = new ClusterManager();
+	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
+	this->TraceClusterManager->setObjectSelection(this->Selection);
+	this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
+
 //standard headers	
 	this->stdHeaders();
 	if (FeatureHeaders.size() >=1)
@@ -40,6 +46,10 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 {	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
+	this->TraceClusterSelection = new SelectiveClustering();
+	this->TraceClusterManager = new ClusterManager();
+	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
+	this->TraceClusterManager->setObjectSelection(this->Selection);
 //standard headers	
 	this->stdHeaders();
 	this->NumFeatures = (int)this->headers.size();
@@ -48,7 +58,8 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 
 TraceModel::~TraceModel()
 {
-  delete this->Selection;
+	this->TraceClusterManager->CloseClusterObjectTables();
+	delete this->Selection;
 }
 
 void TraceModel::stdHeaders()
@@ -155,6 +166,8 @@ void TraceModel::SyncModel()
 		this->TraceIDLookupMAP[this->TraceLines.at(i)->GetId()] = this->TraceLines.at(i);
 	}//end for traces.size  
 	//this->MapTracesToRows();
+	this->TraceClusterSelection->SetObjectTable(this->DataTable);
+	this->TraceClusterManager->setVisible(true);
 }
 vtkSmartPointer<vtkTable> TraceModel::getDataTable()
 {
@@ -227,21 +240,6 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 		{
 			selectedTrace.push_back((*this->TraceIDLookupIter).second);
 		}
-
-		//bool found = false; 
-		//unsigned int j = 0;
-		//while ((!found )&&(j < this->TraceLines.size()))
-		//{
-		//	if (this->TraceLines[j]->GetId()==IDList[i])
-		//	{
-		//		selectedTrace.push_back(this->TraceLines[j]);
-		//		found= true;
-		//	}
-		//	else
-		//	{
-		//		j++;
-		//	}
-		//}//end search for trace
 	}//finished with id search
 	return selectedTrace;
 }
@@ -278,20 +276,6 @@ std::vector<TraceLine*> TraceModel::GetSelectedRoots()
 		{
 			roots.push_back((*this->TraceIDLookupIter).second);
 		}
-		//bool found = false; 
-		//unsigned int j = 0;
-		//while ((!found )&&(j < this->TraceLines.size()))
-		//{
-		//	if (this->TraceLines[j]->GetId()==IDList[i])
-		//	{
-		//		roots.push_back(this->TraceLines[j]);
-		//		found= true;
-		//	}
-		//	else
-		//	{
-		//		j++;
-		//	}
-		//}//end search for trace
 	}//finished with id search
 	return roots;
 }

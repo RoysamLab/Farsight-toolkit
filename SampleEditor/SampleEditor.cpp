@@ -235,8 +235,8 @@ void SampleEditor::loadFile()
 
 	plot->setModels(data,selection);
 	plot->show();
-	this->histo->setModels(data, selection);
-	this->histo->show();
+	/*this->histo->setModels(data, selection);
+	this->histo->show();*/
 	//std::cout << "I reached here inside the sample editor"<<std::endl;
 	//this->graph->setModels(data, selection, selection2);
 	//this->dendro1->setModels(data,selection);

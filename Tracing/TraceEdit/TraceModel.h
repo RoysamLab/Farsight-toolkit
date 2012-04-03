@@ -89,6 +89,8 @@ private:
 	void SyncModel();	
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
+	SelectiveClustering * TraceClusterSelection;
+	ClusterManager * TraceClusterManager;
 	
 	std::map<long int ,TraceLine*> TraceIDLookupMAP;
 	std::map<long int ,TraceLine*>::iterator TraceIDLookupIter;

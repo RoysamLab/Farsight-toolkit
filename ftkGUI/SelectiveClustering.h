@@ -174,6 +174,7 @@ class ClusterManager : public QDialog
 	Q_OBJECT
 public:
 	ClusterManager();
+	void setManagerTitle(std::string newTitle);
 	void setClusteringModel(SelectiveClustering * newClusterModel);
 	void setObjectSelection(ObjectSelection * ObjSelection);
 	vtkSmartPointer<vtkIdType> TableID;
