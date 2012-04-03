@@ -290,6 +290,34 @@ void MultipleNeuronTracer::RunTracing(void)
 	}
 	std::cout << "fillSWCImage2 took: " << (clock() - fillSWCImage2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
+	bool print_out_critical_point_image = false;
+	if (print_out_critical_point_image)
+	{
+		//Make a unsigned char image to print out the critical points image
+		typedef itk::Image< unsigned char, 3 > CriticalPointsImageType;
+		CriticalPointsImageType::Pointer critical_point_image = CriticalPointsImageType::New();
+		critical_point_image->SetRegions(SWCImage->GetLargestPossibleRegion());
+		critical_point_image->Allocate();
+		critical_point_image->FillBuffer(0);
+		
+		//Iterate through SWCImage and setting critical points to 255 in critical_point_image
+		itk::ImageRegionConstIterator< SWCImageType3D > SWCImage_iter(SWCImage, SWCImage->GetLargestPossibleRegion());
+		SWCImage_iter.GoToBegin();
+
+		while (!SWCImage_iter.IsAtEnd())
+		{
+			SWCNode* critical_point_node = SWCImage_iter.Get();	
+			critical_point_image->SetPixel(critical_point_node->ndx, 255);
+			++SWCImage_iter;
+		}
+
+		typedef itk::ImageFileWriter< CriticalPointsImageType > CriticalPointsWriterType;
+		CriticalPointsWriterType::Pointer crit_pts_writer = CriticalPointsWriterType::New();
+		crit_pts_writer->SetInput(critical_point_image);
+		crit_pts_writer->SetFileName("critical_point_image.mhd");
+		crit_pts_writer->Update();
+	}
+
 	TotalePoints = eCounter;
 	std::cout<<"eCounter = "<<eCounter<<std::endl;	//eCounter is just number of nodes that are critical points (but not seed points)
 	//std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
