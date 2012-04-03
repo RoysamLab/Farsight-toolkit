@@ -3481,8 +3481,9 @@ void NucleusEditor::CreateNewRenderWindow(void)
 
 	renWin.push_back(new FTKRenderWindow());
 	connect(renWin.back(), SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
-	renWin.back()->setModels(table,selection);
 	renWin.back()->show();
+	renWin.back()->setModels(table,selection);
+	//renWin.back()->show();
 }
 
 //******************************************************************************
