@@ -330,5 +330,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-RemoveImageActors PROPERTIES
     DEPENDS TraceEdit-SetRoots
   )
+  
+  add_test(
+    TraceEdit-BreakBranch
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_break_branch.xml
+    ${TraceEdit_TEST_DIR}/baseline_break_branch.png
+  )
+  set_tests_properties(TraceEdit-BreakBranch PROPERTIES
+    DEPENDS TraceEdit-RemoveImageActors
+  )
     
 endif()
