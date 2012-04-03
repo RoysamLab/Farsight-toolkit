@@ -3104,13 +3104,13 @@ void NucleusEditor::queryKNearest()
 	ss1 << k;
 	if(Class_dest == 0)
 	{
-		full_string = "D(k=" + ss1.str() + ",class=all)" ;
+		full_string = "D_k=" + ss1.str() + "_class=all_" ;
 	}
 	else
 	{
 		std::stringstream ss2;
 		ss2 << Class_dest;
-		full_string = "D(k=" + ss1.str() + ",class=" + ss2.str() + ")";
+		full_string = "D_k=" + ss1.str() + "_class=" + ss2.str() + "_";
 	}
 	table->RemoveColumnByName(full_string.c_str());
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -3222,13 +3222,13 @@ void NucleusEditor::queryInRadius()
 	ss1 << radius;
 	if(Class_dest == 0)
 	{
-		full_string = "D(rad=" + ss1.str() + ",class=all)";
+		full_string = "D_rad=" + ss1.str() + "_class=all_";
 	}
 	else
 	{
 		std::stringstream ss2;
 		ss2 << Class_dest;
-		full_string = "D(rad=" + ss1.str() + ",class=" + ss2.str() + ")";
+		full_string = "D_rad=" + ss1.str() + "_class=" + ss2.str() + "_";
 	}
 	table->RemoveColumnByName(full_string.c_str());
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
@@ -3242,12 +3242,12 @@ void NucleusEditor::queryInRadius()
 	for(int i=0; i < (int)radNeighborIDs.size(); ++i)
 	{
 		int Id = radNeighborIDs.at(i).at(0).first;
-		double avg_dist = average(radNeighborIDs.at(i));
+		//double avg_dist = average(radNeighborIDs.at(i));
 		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
 		{
 			if(table->GetValue(row,0).ToInt() == Id)
 			{
-				table->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+				table->SetValueByName(row, full_string.c_str(), vtkVariant(radNeighborIDs[i].size()-1));
 				break;
 			}
 		}
