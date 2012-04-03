@@ -1160,7 +1160,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		return true;
 	}
 	
-	return true;  /// right now this is turned off (Amit)
+	return false;  /// right now this is turned off (Amit)
 }
 
 
