@@ -147,7 +147,7 @@ void FTKRenderWindow::updateRenderView(void)
 		//std::cout << min << "_" << max << "\n";
 		for(int i=0; i<feat_col.size(); ++i)
 		{
-			feat_col[i] = (((feat_col[i] - min)/(max - min))-0.5)*(-2);
+			feat_col[i] = (((feat_col[i] - min)/(max - min))-0.5)*(2);
 		}
 		//std::cout << feat_col.min_value() << "_" << feat_col.max_value() << "\n";
 	}
@@ -178,7 +178,7 @@ void FTKRenderWindow::updateRenderView(void)
 	}
 	
 	QVTK->GetRenderWindow()->Render();
-	Interactor->Start();
+	//Interactor->Start();
 	
 }
 
