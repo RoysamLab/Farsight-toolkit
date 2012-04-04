@@ -54,6 +54,8 @@ CellTraceModel::~CellTraceModel()
     delete this->graphVisualize;
     this->graphVisualize = NULL;
     }
+  delete this->CellClusterManager;
+  delete this->CellClusterSelection;
 }
 void CellTraceModel::setCells(std::vector<CellTrace*> Cells)
 {

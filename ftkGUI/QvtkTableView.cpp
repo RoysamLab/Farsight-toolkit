@@ -23,6 +23,8 @@ QvtkTableView::QvtkTableView()
 
 	this->QTSelectionBool = false;
 
+	this->AnnotationLink = 0;
+
 	QObject::connect(this->TableView->selectionModel(), 
 		SIGNAL(selectionChanged(const QItemSelection&,const QItemSelection&)),
 		this, 
@@ -40,9 +42,13 @@ QvtkTableView::QvtkTableView()
 QvtkTableView::~QvtkTableView()
 {
 	//
-	this->AnnotationLink->RemoveAllInputs();
-	this->AnnotationLink->RemoveAllObservers();
+	if(this->AnnotationLink)
+	{
+		this->AnnotationLink->RemoveAllInputs();
+		this->AnnotationLink->RemoveAllObservers();
+	}
 	this->TableView->~QTableView();
+	delete this->TableAdapter;
 }
 void QvtkTableView::SetInputLink(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink)
 {
@@ -72,7 +78,7 @@ void QvtkTableView::slotQtSelectionChanged(const QItemSelection& vtkNotUsed(s1),
 	* Update the QT selections 
 	*/
 	//std::cout << "QT Selection Changed\n";
-	vtkIdTypeArray * Selected = this->getSelectedObjects();
+	vtkSmartPointer<vtkIdTypeArray> Selected = this->getSelectedObjects();
 
 	vtkSelection * TableRowSelection = SelectionUtilities::ConvertIDsToVTKSelection(Selected);
 
@@ -95,8 +101,8 @@ void QvtkTableView::SelectionCallbackFunction(vtkObject *caller, unsigned long e
 	}
 	vtkAnnotationLink * annotationLink = static_cast<vtkAnnotationLink*>(caller);
 	vtkSelection * selection = annotationLink->GetCurrentSelection();
-	vtkSelection * TableRowSelection = vtkSelection::New();
-	vtkIdTypeArray * TableRowIDs = vtkIdTypeArray::New();
+	vtkSmartPointer<vtkSelection> TableRowSelection = vtkSmartPointer<vtkSelection>::New();
+	vtkSmartPointer<vtkIdTypeArray> TableRowIDs = vtkSmartPointer<vtkIdTypeArray>::New();
 	vtkSelectionNode* vertices = NULL;
 
 	if( selection->GetNode(0))
@@ -144,13 +150,13 @@ void QvtkTableView::SelectionCallbackFunction(vtkObject *caller, unsigned long e
 	QvtkView->setCurrentVTKSelection(TableRowSelection);
 }
 
-vtkIdTypeArray * QvtkTableView::getSelectedObjects()
+vtkSmartPointer<vtkIdTypeArray> QvtkTableView::getSelectedObjects()
 {
 	/*!
 	* returns the array of selected pedigree ids
 	*/
 	
-	vtkIdTypeArray* ItemSelections = vtkIdTypeArray::New();
+	vtkSmartPointer<vtkIdTypeArray> ItemSelections = vtkSmartPointer<vtkIdTypeArray>::New();
 	ItemSelections->Initialize();
 	ItemSelections->SetNumberOfComponents(1);
 

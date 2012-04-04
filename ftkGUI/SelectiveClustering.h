@@ -82,12 +82,13 @@ class SelectiveClustering: public QObject
 public:
 
 	SelectiveClustering();
+	~SelectiveClustering();
 
 	// Add and remove clusters
 	vtkIdType AddCluster(std::set<vtkIdType> ClusterSelectionSet);
 	bool AddCluster(vtkIdType key, std::set<vtkIdType> ClusterSelectionSet);
 	bool RemoveCluster(vtkIdType key);
-	bool RemoveCluster(vtkIdTypeArray * SelectedClusters);
+	bool RemoveCluster(vtkSmartPointer<vtkIdTypeArray> SelectedClusters);
 	void ClearClusters();
 	bool ValidKey(vtkIdType key);
 	
@@ -174,6 +175,7 @@ class ClusterManager : public QDialog
 	Q_OBJECT
 public:
 	ClusterManager();
+	~ClusterManager();
 	void setManagerTitle(std::string newTitle);
 	void setClusteringModel(SelectiveClustering * newClusterModel);
 	void setObjectSelection(ObjectSelection * ObjSelection);
@@ -216,7 +218,7 @@ private:
 	QvtkTableDialog * ClusterFeatureDialog;
 	std::vector<QvtkTableDialog *> ClusterObjectTables;
 	
-	vtkIdTypeArray * GetClusterTableSelections();
+	vtkSmartPointer<vtkIdTypeArray> GetClusterTableSelections();
 
 	QLabel * NumClusters;
 	QLabel * NumObjects;

@@ -60,6 +60,8 @@ TraceModel::~TraceModel()
 {
 	this->TraceClusterManager->CloseClusterObjectTables();
 	delete this->Selection;
+	delete this->TraceClusterManager;
+	delete this->TraceClusterSelection;
 }
 
 void TraceModel::stdHeaders()

@@ -60,7 +60,7 @@ public:
 
 	void SetInputLink(vtkSmartPointer<vtkTable> InputTable, vtkSmartPointer<vtkAnnotationLink> InputAnnotationLink);
 
-	vtkIdTypeArray * getSelectedObjects();
+	vtkSmartPointer<vtkIdTypeArray> getSelectedObjects();
 	void setCurrentVTKSelection(vtkSelection * TableRowSelection);
 
 private slots:
