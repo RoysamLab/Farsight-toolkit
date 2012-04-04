@@ -1,36 +1,34 @@
-SET( FTKFEATURES_SRCS
+if(BUILD_ZERNIKE)
+  if(MSVC)
+    add_definitions( -DZERNIKE )
+  endif(MSVC)
+  include_directories( ${Farsight_SOURCE_DIR}/Zernike )
+endif(BUILD_ZERNIKE)
+
+set( FTKFEATURES_SRCS
   ftkLabelImageToFeatures.cpp
   ftkIntrinsicFeatures.cpp
-  ftkObject.cpp 
+  ftkObject.cpp
   ftkObjectAssociation.cpp
-)
+  )
 
-SET( FTKFEATURES_HDRS
+set( FTKFEATURES_HDRS
   ftkLabelImageToFeatures.h
   ftkLabelImageToFeatures.txx
   ftkIntrinsicFeatures.h
   ftkObject.h
   ftkObjectAssociation.h
-	
-)
+  )
 
 
-ADD_LIBRARY( ftkFeatures
-            ${FTKFEATURES_SRCS}
-            ${FTKFEATURES_HDRS}
-)
-
-
-
-ADD_SUBDIRECTORY(Qhull)
-
-
-TARGET_LINK_LIBRARIES( ftkFeatures TinyXML ftkImage
+add_library( ftkFeatures
+  ${FTKFEATURES_SRCS}
+  ${FTKFEATURES_HDRS}
+  )
+add_subdirectory(Qhull)
+target_link_libraries( ftkFeatures TinyXML ftkImage
                        vtksys vtkCommon vtkFiltering vtkIO
                        ${ITK_LIBRARIES} QHULL)
-                       
-IF (BUILD_ZERNIKE)
-    TARGET_LINK_LIBRARIES( ftkFeatures zernike)
-ENDIF (BUILD_ZERNIKE)
-                      
-
+if( BUILD_ZERNIKE )
+  target_link_libraries( ftkFeatures zernike )
+endif()

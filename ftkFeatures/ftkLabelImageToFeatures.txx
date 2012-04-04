@@ -1212,7 +1212,7 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::RunZernikeFilter()
 {
-	#ifdef _ZERNIKE
+	#ifdef ZERNIKE
 	{
 		typedef zernike::ImageType zernikeImageType;
 		typedef itk::ImageRegionIterator< zernikeImageType> zerIteratorType;

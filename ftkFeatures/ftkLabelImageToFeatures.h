@@ -45,7 +45,7 @@ limitations under the License.
 
 #include "ftkFeatures/Qhull/libqhull.h"
 #include "ftkFeatures/Qhull/user.h"
-#include "ftkFeatures/Qhull/stat.h" 
+#include "ftkFeatures/Qhull/stat.h"
 #include "ftkFeatures/Qhull/io.h"
 #include "ftkFeatures/Qhull/merge.h"
 #include "ftkFeatures/Qhull/geom.h"
@@ -60,7 +60,7 @@ limitations under the License.
 #include "ftkObject.h"
 #include "ftkImage/ftkImage.h"
 
-#ifdef _ZERNIKE
+#ifdef ZERNIKE
 #include "Zernike/zernike.h"
 #endif
 
