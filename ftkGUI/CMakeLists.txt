@@ -7,9 +7,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 SET( GUI_SRCS
     	PlotWindow.cpp
     	ScatterView.cpp
-    	TableWindow.cpp	
-		FTKRenderWindow.cpp
-		HistoWindow.cpp
+    	TableWindow.cpp
+	FTKRenderWindow.cpp
+	HistoWindow.cpp
     	ImageBrowser5D.cpp
     	PatternAnalysisWizard.cpp
     	GenericALDialog.cpp
@@ -25,15 +25,14 @@ SET( GUI_SRCS
 	SelectiveClustering.cpp
 	QvtkTableView.cpp
 	SelectionUtilities.cpp
-	
 )
 
 SET( GUI_HDRS
     	PlotWindow.h
     	ScatterView.h
     	TableWindow.h
-		FTKRenderWindow.h
-	   	HistoWindow.h
+	FTKRenderWindow.h
+	HistoWindow.h
     	ImageBrowser5D.h
     	PatternAnalysisWizard.h
     	GenericALDialog.h
@@ -51,7 +50,7 @@ SET( GUI_HDRS
 	SelectionUtilities.h
 )
 
-SET( GUI_LIBS 
+SET( GUI_LIBS
   ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM
   vtkVolumeRendering vtkHybrid vtkCharts vnl)
 
@@ -88,5 +87,9 @@ QT4_WRAP_CPP( GUI_MOC_SRCS ${GUI_HDRS} )
 # library.
 ADD_LIBRARY( ftkGUI STATIC
   ${GUI_SRCS} ${GUI_MOC_SRCS} ${GUI_HDRS} ${GUI_UI_HDRS} ${GUI_RC_SRCS} )
+# For linking into shared libraries.
+IF( CMAKE_COMPILER_IS_GNUCC )
+  SET_TARGET_PROPERTIES( ftkGUI PROPERTIES COMPILE_FLAGS -fPIC )
+ENDIF()
 
 TARGET_LINK_LIBRARIES( ftkGUI ${GUI_LIBS} )
