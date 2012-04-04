@@ -8,4 +8,6 @@ SET( FTKGRAPH_HDRS
   kNearestObjects.h
 )
 
+ADD_LIBRARY(ftkGraphs ${FTKGRAPH_SRCS} ${FTKGRAPH_HDRS})
+
 TARGET_LINK_LIBRARIES( ftkGraphs vtkCommon vtkInfovis vtkViews vtkRendering vtkFiltering vtkGraphics   ftkGUI ftkCommon ftkFeatures     ${ITK_LIBRARIES} )
