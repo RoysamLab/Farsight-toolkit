@@ -246,6 +246,7 @@ View3D::~View3D()
 	delete this->tobj;
 	delete this->ImageActors;
 	delete this->Gridlines;
+	delete this->VOIType;
 }
 /*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
