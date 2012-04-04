@@ -158,9 +158,6 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 // Specify folder to save swc file
 void SaveCellExportDialog::swcBrowse()
 {
-	//std::cout << curdirectoryswc.toStdString() << std::endl;
-	//std::cout << curdirectoryjpg.toStdString() << std::endl;
-
 	curdirectoryswc = QFileDialog::getExistingDirectory(this, tr("Choose Directory for SWC files"), 
 															QFileInfo(curdirectoryswc).dir().canonicalPath());
 	if (!curdirectoryswc.isEmpty()) 

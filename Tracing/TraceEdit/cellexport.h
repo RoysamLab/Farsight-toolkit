@@ -6,6 +6,9 @@
 #include <QtGui>
 #include <QApplication>
 
+/**
+ * @author Audrey Cheong
+ */
 class SaveCellExportDialog : public QDialog
 {
 	Q_OBJECT

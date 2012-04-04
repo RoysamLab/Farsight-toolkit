@@ -9,7 +9,6 @@
 /**
  * @author Audrey Cheong
  */
-
 class ScreenShotDialog : public QDialog
 {
 	Q_OBJECT

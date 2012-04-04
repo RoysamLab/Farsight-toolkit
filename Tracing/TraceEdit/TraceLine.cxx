@@ -13,8 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
-#include <iostream>
-#include <math.h>
 #include <vtksys/hash_map.hxx>
 #include "tinyxml/tinyxml.h"
 
@@ -23,7 +21,6 @@ limitations under the License.
 
 #define MY_ENCODING "ISO-8859-1"
 
-#include "TraceBit.h"
 #include "TraceLine.h"
 
 ///////////////////////////////////////////////////////////////////////////////

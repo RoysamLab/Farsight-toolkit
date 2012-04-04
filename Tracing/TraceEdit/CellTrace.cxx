@@ -16,7 +16,6 @@ limitations under the License.
 #include "TraceBit.h"
 #include "TraceLine.h"
 #include "CellTrace.h"
-#include "SuperEllipsoid.h"
 
 static double DefaultValue[115] ={-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,0,0,0,0,100,0,0,100,0,0,
 0,0,1000,0,0,100,0,0,0,100,0,100,0,0,100,0,0,0,0,0,0,-PI,-PI,-PI,100,-PI,0,0,100,0,0,100,0,0,100,
@@ -34,7 +33,7 @@ CellTrace::CellTrace(std::vector<TraceLine*> Segments)
 	CellData = vtkSmartPointer<vtkVariantArray>::New();
 	this->setTraces(Segments);
 }
-void CellTrace::setTraces(std::vector<TraceLine*> Segments)//& Segments)
+void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 {
 	this->segments = Segments;
 	unsigned int i = 0;
@@ -211,6 +210,17 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)//& Segments)
 		this->tipAzimuth = atan2(totalTipY,totalTipX)*180/PI;
 		double hypotenuse = sqrt(pow(totalTipX,2)+pow(totalTipY,2));
 		this->tipElevation = atan2(totalTipZ,hypotenuse)*180/PI;
+
+		//time_t begin_time = time(NULL);
+
+		//ConvexHull3D * convex_hull = new ConvexHull3D();
+		//this->bounding_tips_indices = convex_hull->getBoundaryPoints( tips );
+		//get centroid of convex hull?
+
+		//GetPolyData(Segments[0]);
+
+		//time_t end_time = time(NULL);
+		//std::cout << "Elapsed time: " << difftime(end_time,begin_time) << std::endl;
 	}
 }
 void CellTrace::setFileName(std::string newFileName)
@@ -550,6 +560,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->branchPoints);
 	//CellData->InsertNextValue(this->actualBifurcations);
 	CellData->InsertNextValue(this->terminalTips);
+	if (this->NumSegments == 0)
+	{
+		this->NumSegments = 1;
+	}
 	if (this->branchPoints == 0) 
 	{
 		this->branchPoints = 1;
@@ -699,6 +713,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTorqueRemoteBigMin);
 	CellData->InsertNextValue(this->BifTorqueRemoteBigMax);
 
+	if (this->terminalTips == 0)
+	{
+		this->terminalTips = 1;
+	}
 	CellData->InsertNextValue(this->MinTerminalLevel);
 	CellData->InsertNextValue(this->TerminalPathLengthMin);
 	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level

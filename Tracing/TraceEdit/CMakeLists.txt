@@ -4,25 +4,26 @@ PROJECT(TraceEdit)
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
   
 SET( TRACE_SRCS
-  TraceBit.h        TraceBit.cxx
-  TraceLine.h       TraceLine.cxx
-  TraceGap.h        TraceGap.cxx
-  TraceObject.h     TraceObject.cxx
-  TraceModel.h      TraceModel.cxx
-  MergeModel.h      MergeModel.cxx
-  branchPT.h        BranchPT.cxx
-  ImageActors.h     ImageActors.cxx
-  CellTrace.h       CellTrace.cxx
-  CellTraceModel.h  CellTraceModel.cxx
-  vtkPlotEdges.h    vtkPlotEdges.cxx 
-  TraceView3D.h     TraceView3D.cxx 
-  cellexport.h	    cellexport.cxx
-  screenshot.h	    screenshot.cxx
+  TraceBit.h		TraceBit.cxx
+  TraceLine.h		TraceLine.cxx
+  TraceGap.h		TraceGap.cxx
+  TraceObject.h		TraceObject.cxx
+  TraceModel.h		TraceModel.cxx
+  MergeModel.h		MergeModel.cxx
+  branchPT.h		BranchPT.cxx
+  ImageActors.h		ImageActors.cxx
+  CellTrace.h		CellTrace.cxx
+  CellTraceModel.h	CellTraceModel.cxx
+  vtkPlotEdges.h	vtkPlotEdges.cxx 
+  TraceView3D.h		TraceView3D.cxx 
+  cellexport.h		cellexport.cxx
+  screenshot.h		screenshot.cxx
   GridActors.h		GridActors.cxx
   VolumeOfInterest.h	VolumeOfInterest.cxx
   FeatureRelation.h	FeatureRelation.cxx
   SuperEllipsoid.h	SuperEllipsoid.cxx
   ConvexHull3D.h	ConvexHull3D.cxx
+  Face.h	    	Face.cxx
   
   ${GUI_MOC_SRCS} ) 
 

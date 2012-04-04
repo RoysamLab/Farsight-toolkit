@@ -14,14 +14,15 @@ limitations under the License.
 =========================================================================*/
 #ifndef __CELLTRACE_H
 #define __CELLTRACE_H
-#include <vector>
-#include <set>
 #include "vtkSmartPointer.h"
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+#include <vector>
+#include <set>
 #include <sstream>
 #include <math.h>
+#include "SuperEllipsoid.h"
 class TraceBit;
 class TraceLine;
 class CellTrace
@@ -122,5 +123,6 @@ private:
 	//TraceBit rootBit;
 
 	std::vector<TraceBit> tips;
+	std::vector<int> bounding_tips_indices;
 };
 #endif

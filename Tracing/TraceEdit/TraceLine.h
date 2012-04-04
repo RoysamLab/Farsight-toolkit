@@ -18,6 +18,7 @@ limitations under the License.
 
 #define PI 3.14159265
 
+#include <iostream>
 #include <list>
 #include <cmath>
 #include <vector>
@@ -27,7 +28,7 @@ limitations under the License.
 #include "vtkVariant.h"
 #include "vtkImageData.h"
 
-class TraceBit;
+#include "TraceBit.h"
 
 /**
  * A TraceLine is a sequence of TraceBits that has pointers to two other
