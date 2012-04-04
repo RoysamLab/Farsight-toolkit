@@ -2541,7 +2541,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 
 		double nucleus_distance = sub_volume_distance->GetPixel(ldx);
 		
-		std::cout << i << ": " << nucleus_distance << std::endl;
+		std::cout << "Root: " << i << "Nuc_dist: " << nucleus_distance << std::endl;
 
 
 		/*double nucDistThresh = 100;
@@ -3233,10 +3233,10 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	// Derive this from: nuclei_object.intrinsicFeatures.boundingBoxVolume
 	float double_scale_nuclei = 100;
 
-	LabelImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
-	LabelImageType3D::SizeType sub_volume_size_nuclei;
-	LabelImageType3D::RegionType sub_volume_region_nuclei;
-	LabelImageType3D::Pointer sub_volume_nuclei;
+	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	CharImageType3D::SizeType sub_volume_size_nuclei;
+	CharImageType3D::RegionType sub_volume_region_nuclei;
+	CharImageType3D::Pointer sub_volume_nuclei;
 
 	/*std::cout << "Writing distance maps to disk. " << std::endl;
 	itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
@@ -3253,7 +3253,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	//Loop over nuclei
 	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
 
-		LabelImageType3D::IndexType current_idx;
+		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
 		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
