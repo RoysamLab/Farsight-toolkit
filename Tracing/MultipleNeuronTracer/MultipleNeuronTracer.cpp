@@ -628,17 +628,17 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		win = 2;
 	}
 	
- 	typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
- 	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
- 	statisticsImageFilter->SetInput(_PaddedCurvImage);
- 	statisticsImageFilter->Update();
- 	double image_mean = statisticsImageFilter->GetMean();
- 	double image_stddev = statisticsImageFilter->GetSigma();
+ 	//typedef itk::StatisticsImageFilter< ImageType3D > StatisticsImageFilterType;
+ 	//StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+ 	//statisticsImageFilter->SetInput(_PaddedCurvImage);
+ 	//statisticsImageFilter->Update();
+ 	//double image_mean = statisticsImageFilter->GetMean();
+ 	//double image_stddev = statisticsImageFilter->GetSigma();
  
- 	const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
- 	const float thresh2 = image_mean/45;  // -0.1 percent of range
-	//const float thresh1 = 0.0025;   // 3% of maximum theshold from Lowe 2004
-	//const float thresh2 = 0.001;  // -0.1 percent of range
+ 	//const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
+ 	//const float thresh2 = image_mean/45;  // -0.1 percent of range
+	const float thresh1 = 0.005;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = 0.0003;  // -0.1 percent of range
 
 	long ctCnt = 0;
 	int inrt = 0; // niclas testing
@@ -1155,7 +1155,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
- 	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+ 	if (abs(L2)/sqrt(abs(L1*L))<0.8) //*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 	{
 		return true;
 	}
@@ -1638,7 +1638,7 @@ void MultipleNeuronTracer::Decimate()
 		}
 	}
 
-	const float minOffshootLength = 6;
+	const float minOffshootLength = 10;
 	//std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
 	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
