@@ -378,5 +378,17 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-ShowStatistics PROPERTIES
     DEPENDS TraceEdit-VOI
   )
+  
+  add_test(
+    TraceEdit-CellToCellGraph
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/9cells.swc
+    ${TraceEdit_TEST_DIR}/test_cell_to_cell_graph.xml
+    ${TraceEdit_TEST_DIR}/baseline_9cells.png
+  )
+  set_tests_properties(TraceEdit-CellToCellGraph PROPERTIES
+    DEPENDS TraceEdit-ShowStatistics
+    PASS_REGULAR_EXPRESSION "Successfully rendered"
+  )
     
 endif()
