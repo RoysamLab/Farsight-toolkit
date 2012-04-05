@@ -5,6 +5,8 @@ Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z)
 	this->cell_x = cell_x;
 	this->cell_y = cell_y;
 	this->cell_z = cell_z;
+
+	this->next_available_ID = 1;
 }
 
 itk::uint64_t Cell::getX() const
@@ -83,7 +85,7 @@ void Cell::GetMask(std::string soma_filename)
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(soma_filename);
 	
-	//PURPOSELY COMMENTED OUT SO YOU DO NOT TRY TO WRITE THIS CODE, THIS KILLS PERFORMANCE BECAUSE IT ATTEMPTS TO READ THE ENTIRE IMAGE FOR EACH CELL INSTEAD OF THE ROI
+	//PURPOSELY COMMENTED OUT SO YOU DO NOT TRY TO WRITE THIS CODE, THIS KILLS PERFORMANCE BECAUSE IT ATTEMPTS TO READ THE ENTIRE IMAGE FOR EACH CELL INSTEAD OF JUST THE ROI
 	//try
 	//{
 	//	reader->Update();
@@ -97,9 +99,9 @@ void Cell::GetMask(std::string soma_filename)
 	ROIFilterType::Pointer roi_filter = ROIFilterType::New();
 	
 	ImageType::IndexType start;
-	start[0] = roi_origin[0];
-	start[1] = roi_origin[1];
-	start[2] = roi_origin[2];
+	start[0] = this->roi_origin[0];
+	start[1] = this->roi_origin[1];
+	start[2] = this->roi_origin[2];
 
 	ImageType::SizeType size = this->roi_size;
 	
@@ -149,6 +151,8 @@ void Cell::GetMask(std::string soma_filename)
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "labelMapFilter exception: " << err << std::endl;
+		std::cerr << "Mask image: " << this->mask << std::endl;
+		std::cerr << this->mask << std::endl;
 		std::cerr << labelMapFilter << std::endl;
 	}
 
@@ -180,8 +184,8 @@ void Cell::ComputeMaskedImage()
 	maskFilter->SetInput(this->image);
 	try
 	{
-		ftk::TimeStampOverflowSafeUpdate( maskFilter.GetPointer() );
-		//maskFilter->Update();
+		//ftk::TimeStampOverflowSafeUpdate( maskFilter.GetPointer() );
+		maskFilter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{

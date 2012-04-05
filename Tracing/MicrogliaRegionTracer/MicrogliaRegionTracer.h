@@ -14,6 +14,7 @@
 #include "itkIntTypes.h"
 #include "itkImageDuplicator.h"
 #include "itkShiftScaleImageFilter.h"
+#include "itkBSplineScatteredDataPointSetToImageFilter.h"
 
 #include <cstring>
 #include <vector>
@@ -27,6 +28,11 @@
 #include "Tree.h"
 #include "time.h"
 
+#include "itkVector.h"
+#include "itkPointSet.h"
+#include "itkBSplineScatteredDataPointSetToImageFilter.h"
+#include "itkBSplineControlPointImageFunction.h"
+
 #ifdef _OPENMP
 	#include "omp.h"
 #endif
@@ -36,12 +42,14 @@ class MicrogliaRegionTracer
 private:
 	typedef Cell::ImageType						ImageType;
 	typedef Cell::LoGImageType					LoGImageType;
-	//typedef Cell::HessianImageType				HessianImageType;
-	//typedef Cell::HessianTensorType				HessianTensorType;
+	//typedef Cell::HessianImageType			HessianImageType;
+	//typedef Cell::HessianTensorType			HessianTensorType;
 	typedef Cell::VesselnessImageType			VesselnessImageType;
 	typedef Cell::DistanceImageType				DistanceImageType;
 	typedef itk::Image< float, 3 >				VoronoiImageType;
 	typedef itk::Image< unsigned char, 3 >		MaskedImageType;
+
+	typedef itk::PolyLineParametricPath< 3 >	PathType;
 
 private:
 	std::vector<Cell*> cells;
@@ -54,7 +62,7 @@ public:
 
 	void LoadCellPoints(const std::string & image_filename);
 
-	void Trace();
+	void	Trace();
 
 	void	CalculateCandidatePixels(Cell* cell);
 	void	RidgeDetection(Cell* cell);
@@ -63,12 +71,16 @@ public:
 	void		BuildTree(Cell* cell);
 	double**	BuildAdjacencyGraph(Cell* cell);
 	double		CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);
-	//Tree*		BuildMST1(Cell* cell, double** AdjGraph);
+	Tree*		BuildMST1(Cell* cell, double** AdjGraph);
 
-	//void					TraceSkeletonImage(Cell* cell);
-	//ImageType::IndexType	FindNearestCriticalPointToCentroid(Cell* cell);
-	//void					WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
-	//void					WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	void		SmoothTree(Cell* cell, Tree* tree);
+	void		SmoothSegments(Cell* cell, Tree* tree, Node* start_node);
+	void		SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path );
+
+	void		WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
+	void		WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	
+	
 
 };
 

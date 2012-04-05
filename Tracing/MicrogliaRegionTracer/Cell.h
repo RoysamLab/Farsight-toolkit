@@ -85,6 +85,8 @@ public:
 	MaskImageType::Pointer			mask;
 	LabelImageType::Pointer			soma_label_image;
 
+	itk::int64_t next_available_ID;
+
 private:
 	itk::uint64_t cell_x;
 	itk::uint64_t cell_y;
@@ -95,6 +97,8 @@ private:
 
 	ImageType::SizeType cell_requested_size;
 	ImageType::IndexType shift_index;
+
+	
 };
 
 #endif

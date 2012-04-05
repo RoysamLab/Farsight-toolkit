@@ -21,6 +21,8 @@ public:
 	std::vector<Node*> GetMemberNodes();
 
 	Node* getRoot();
+
+	bool RemoveNode(Node* node);
 };
 
 #endif

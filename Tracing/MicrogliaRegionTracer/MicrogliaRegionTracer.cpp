@@ -5,7 +5,7 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 	this->soma_filename = soma_filename;
 
-	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Acquiring threads through OpenMP, so no need for ITK threads
 }
 
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
@@ -34,8 +34,9 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 		ImageType::IndexType shift_index;
 		ImageType::Pointer temp_cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
 
-		//Need to do this to make the MaskImageFilter work since it expects similar origins
+		//Set the origin of the image to be {0, 0, 0}
 		ImageType::PointType origin = temp_cell_image->GetOrigin();
+		cell->SetOrigin(origin);
 		origin[0] = 0;
 		origin[1] = 0;
 		origin[2] = 0;
@@ -69,20 +70,6 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 
 void MicrogliaRegionTracer::Trace()
 {
-	// to be removed
-	std::cout << "Incrementing ModifiedTime for testing purposes." << std::endl;
-	itk::Image< char, 1 >::Pointer image = itk::Image< char, 1 >::New();
-	unsigned long modified_count = std::numeric_limits< unsigned long >::max();	//Maximum value that an unsigned long can take
-	while (image->GetMTime() < modified_count - 10000)
-	{
-		image->Modified();
-
-		//Just so we have some visual output of incrementing the modified timer
-		if (image->GetMTime() % 100000000 == 0)
-			std::cout << "Modified time: " << image->GetMTime() << std::endl;
-	}
-	std::cout << "Done incrementing the modified time" << std::endl;
-
 	//Trace cell by cell
 	#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
@@ -208,7 +195,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "multiscale_hessian_filter exception: " << &err << std::endl;
+		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
 	}
 
 	cell->vesselness_image = multiscale_hessian_filter->GetOutput();
@@ -222,31 +209,32 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 
 void MicrogliaRegionTracer::BuildTree(Cell* cell)
 {
-	//Seed point should be added in Ridge Detection
-	//ImageType::IndexType cell_index;
-	//cell_index[0] = cell->getRequestedSize()[0]/2 + cell->getShiftIndex()[0];
-	//cell_index[1] = cell->getRequestedSize()[1]/2 + cell->getShiftIndex()[1];
-	//cell_index[2] = cell->getRequestedSize()[2]/2 + cell->getShiftIndex()[2];
-
-	//cell->critical_points_queue.push_front(cell_index);	//Add the centroid to the critical points
-
 	std::cout << "Building Adjacency Graph" << std::endl;
 	double** AdjGraph = BuildAdjacencyGraph(cell);
 
-	/*Tree* tree = BuildMST1(cell, AdjGraph);
+	Tree* tree = BuildMST1(cell, AdjGraph);
 
 	std::ostringstream swc_filename_stream, swc_filename_stream_local;
 	swc_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree.swc";
 	swc_filename_stream_local << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local.swc";
 
 
-	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());*/
+	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
+
+	SmoothTree(cell, tree);
+
+	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
+	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
+	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
+
+
+	WriteTreeToSWCFile(tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
 	delete[] AdjGraph;
 
-	//delete tree;
+	delete tree;
 }
 
 double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
@@ -256,7 +244,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
 	//#pragma omp parallel for
-	for (itk::int64_t k = 0; k < cell->critical_points_queue.size(); k++)
+	for (itk::int64_t k = 0; k < (itk::int64_t)cell->critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
 		for (itk::uint64_t l = 0; l < cell->critical_points_queue.size(); l++)
@@ -293,7 +281,7 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 	//	else if (cell->soma_label_image->GetPixel(node2) != 0)											//We are trying to connect to a pixel in another soma, so we give it infinite weight
 	//		return std::numeric_limits< double >::max();	
 	//}
-	typedef itk::PolyLineParametricPath< 3 > PathType;
+
 	PathType::Pointer path = PathType::New();
 	path->Initialize();
 
@@ -321,136 +309,322 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 	}
 	
 	if (num_blank_pixels >= 5)
-		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gasp
+		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gaps
 	else
 		return mag_trace_vector;
 }
 
-//Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
-//{	
-//	Tree* tree = new Tree();
-//	ImageType::IndexType root_index = cell->critical_points_queue.front();
-//	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
-//
-//	//Root node should have infinite weights to connect to
-//	for (int m = 0; m < cell->critical_points_queue.size(); m++)
-//		AdjGraph[m][0] = std::numeric_limits<double>::max();
-//
-//	//Prim's algorithm
-//	//for each node but the last, find its child
-//	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
-//	{
-//		//std::cout << "Calculating nearest neighbor for point " << l << std::endl;
-//		itk::uint64_t minimum_node_index_from_id = 0;
-//		itk::uint64_t minimum_node_index_to_id = 0;
-//		double minimum_node_distance = std::numeric_limits<double>::max();
-//		Node* minimum_parent_node = NULL;
-//		
-//		//For each connected point
-//		std::vector<Node*> member_nodes = tree->GetMemberNodes();
-//		std::vector<Node*>::iterator member_nodes_iter;
-//		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
-//		{
-//			Node* node = *member_nodes_iter;
-//
-//			//Search through all the nodes and find the minimum distance
-//			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
-//			{
-//				itk::uint64_t node_index_from_id = node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
-//				
-//				if (AdjGraph[node_index_from_id][k] < minimum_node_distance) //from l (connected point) to k (unconnected point) if the current distance is less than the minimum distance
-//				{
-//					minimum_parent_node = node;
-//					minimum_node_index_from_id = node_index_from_id;			
-//					minimum_node_index_to_id = k;
-//					minimum_node_distance = AdjGraph[minimum_node_index_from_id][minimum_node_index_to_id];
-//				}
-//			}	
-//		}
-//
-//		if (minimum_node_distance >= std::numeric_limits< double >::max() / 2)
-//			break;	//Minimum distance way too far
-//		
-//		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_node_index_from_id][0] << " " << cell->critical_points_queue[minimum_node_index_from_id][1] << " " << cell->critical_points_queue[minimum_node_index_from_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
-//		ImageType::IndexType cell_origin;
-//		cell_origin[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
-//		cell_origin[1] = cell->critical_points_queue[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
-//		cell_origin[2] = cell->critical_points_queue[minimum_node_index_to_id][2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
-//		
-//		ImageType::IndexType cell_origin_local;
-//		cell_origin_local[0] = cell->critical_points_queue[minimum_node_index_to_id][0];
-//		cell_origin_local[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
-//		cell_origin_local[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
-//
-//		
-//		for (int m = 0; m < cell->critical_points_queue.size(); m++)
-//			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
-//		AdjGraph[minimum_node_index_to_id][minimum_node_index_from_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
-//
-//		//Connect the unconnected point
-//		Node* new_connected_node = new Node(cell_origin_local[0], cell_origin_local[1], cell_origin_local[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
-//		new_connected_node->SetParent(minimum_parent_node);
-//		tree->AddNode(new_connected_node, minimum_parent_node);
-//	}
-//
-//	return tree;
-//}
+Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
+{	
+	Tree* tree = new Tree();
+	ImageType::IndexType root_index = cell->critical_points_queue.front();
+	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
 
-//void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local)
-//{
-//	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
-//	std::ofstream traceFile, traceFile_local;
-//	
-//	std::cout << "Opening " << filename << std::endl;
-//	traceFile.open(filename.c_str());
-//	std::cout << "Opening " << filename_local << std::endl;
-//	traceFile_local.open(filename_local.c_str());
-//	
-//	Node* root = tree->getRoot();
-//
-//	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
-//	WriteLinkToParent(root, tree_depth, cell, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
-//
-//	traceFile.close();
-//	traceFile_local.close();	
-//}
+	//Root node should have infinite weights to connect to
+	for (int m = 0; m < cell->critical_points_queue.size(); m++)
+		AdjGraph[m][0] = std::numeric_limits<double>::max();
 
-////This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
-////CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively or increase stack size if this is the case...
-//void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local)
-//{
-//	//Calculate some node indices
-//	ImageType::IndexType node_index, node_index_local;
-//	node_index_local[0] = node->x;
-//	node_index_local[1] = node->y;
-//	node_index_local[2] = node->z;
-//	node_index[0] = node_index_local[0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
-//	node_index[1] = node_index_local[1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
-//	node_index[2] = node_index_local[2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
-//
-//	itk::int64_t parent_node_id;
-//	if (node->GetParent() == NULL) 
-//		parent_node_id = -1; //This node has no parent, so this is the root node, so parent ID is -1
-//	else
-//		parent_node_id = node->GetParent()->getID();
-//
-//	std::vector< Node* > children = node->GetChildren();
-//	if (tree_depth == 1 && children.size() == 0)
-//		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
-//
-//	//Write out the SWC lines
-//	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
-//	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
-//	
-//	if (children.size() == 0) 
-//		return;														//BASE CASE: No children, so don't visit them
-//
-//	std::vector< Node* >::iterator children_iter;
-//	for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
-//	{
-//		Node* child_node = *children_iter;
-//		WriteLinkToParent(child_node, tree_depth+1, cell, traceFile, traceFile_local);
-//	}
-//
-//	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
-//}
+	//Prim's algorithm
+	//for each node but the last, find its child
+	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
+	{
+		//std::cout << "Calculating nearest neighbor for point " << l << std::endl;
+		itk::uint64_t minimum_node_index_from_id = 0;
+		itk::uint64_t minimum_node_index_to_id = 0;
+		double minimum_node_distance = std::numeric_limits<double>::max();
+		Node* minimum_parent_node = NULL;
+		
+		//For each connected point
+		std::vector<Node*> member_nodes = tree->GetMemberNodes();
+		std::vector<Node*>::iterator member_nodes_iter;
+		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
+		{
+			Node* node = *member_nodes_iter;
+
+			//Search through all the nodes and find the minimum distance
+			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
+			{
+				itk::uint64_t node_index_from_id = node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
+				
+				if (AdjGraph[node_index_from_id][k] < minimum_node_distance) //from l (connected point) to k (unconnected point) if the current distance is less than the minimum distance
+				{
+					minimum_parent_node = node;
+					minimum_node_index_from_id = node_index_from_id;			
+					minimum_node_index_to_id = k;
+					minimum_node_distance = AdjGraph[minimum_node_index_from_id][minimum_node_index_to_id];
+				}
+			}	
+		}
+
+		if (minimum_node_distance >= std::numeric_limits< double >::max() / 2)
+			break;	//Minimum distance way too far
+		
+		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_node_index_from_id][0] << " " << cell->critical_points_queue[minimum_node_index_from_id][1] << " " << cell->critical_points_queue[minimum_node_index_from_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
+		ImageType::IndexType cell_origin;
+		cell_origin[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
+		cell_origin[1] = cell->critical_points_queue[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
+		cell_origin[2] = cell->critical_points_queue[minimum_node_index_to_id][2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
+		
+		ImageType::IndexType cell_origin_local;
+		cell_origin_local[0] = cell->critical_points_queue[minimum_node_index_to_id][0];
+		cell_origin_local[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
+		cell_origin_local[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
+
+		
+		for (int m = 0; m < cell->critical_points_queue.size(); m++)
+			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
+		AdjGraph[minimum_node_index_to_id][minimum_node_index_from_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
+
+		//Connect the unconnected point
+		Node* new_connected_node = new Node(cell_origin_local[0], cell_origin_local[1], cell_origin_local[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
+		new_connected_node->SetParent(minimum_parent_node);
+		minimum_parent_node->AddChild(new_connected_node);
+		tree->AddNode(new_connected_node, minimum_parent_node);
+	}
+
+	//Update next available ID
+	cell->next_available_ID = cell->critical_points_queue.size() + 1;	//We used up IDs [1, critical_pts_queue.size()], so here we start at critical_points_queue.size + 1
+
+	return tree;
+}
+
+void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local)
+{
+	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
+	std::ofstream traceFile, traceFile_local;
+	
+	std::cout << "Opening " << filename << std::endl;
+	traceFile.open(filename.c_str());
+	std::cout << "Opening " << filename_local << std::endl;
+	traceFile_local.open(filename_local.c_str());
+	
+	Node* root = tree->getRoot();
+
+	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
+	WriteLinkToParent(root, tree_depth, cell, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
+
+	traceFile.close();
+	traceFile_local.close();	
+}
+
+//This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
+//CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively or increase stack size if this is the case...
+void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local)
+{
+	//Calculate some node indices
+	ImageType::IndexType node_index, node_index_local;
+	node_index_local[0] = node->x;
+	node_index_local[1] = node->y;
+	node_index_local[2] = node->z;
+	node_index[0] = node_index_local[0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
+	node_index[1] = node_index_local[1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
+	node_index[2] = node_index_local[2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
+
+	itk::int64_t parent_node_id;
+	if (node->GetParent() == NULL) 
+		parent_node_id = -1; //This node has no parent, so this is the root node, so parent ID is -1
+	else
+		parent_node_id = node->GetParent()->getID();
+
+	std::vector< Node* > children = node->GetChildren();
+	
+	if (tree_depth == 1 && children.size() == 0)
+		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
+
+	//Write out the SWC lines
+	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
+	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
+	
+	if (children.size() == 0) 
+		return;														//BASE CASE: No children, so don't visit them
+
+	std::vector< Node* >::iterator children_iter;
+	for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
+	{
+		Node* child_node = *children_iter;
+		WriteLinkToParent(child_node, tree_depth+1, cell, traceFile, traceFile_local);
+	}
+
+	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
+}
+
+
+void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
+{
+	SmoothSegments(cell, tree, tree->getRoot());
+}
+
+void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node)
+{
+	std::vector< Node* > start_node_children = start_node->GetChildren();
+	if (start_node_children.size() == 0)
+		return;	//start_node has no children so it is a leaf node so there is no segment
+
+	ImageType::IndexType start_node_index;
+	start_node_index[0] = start_node->x;
+	start_node_index[1] = start_node->y;
+	start_node_index[2] = start_node->z;
+
+
+	//Smooth all the paths that is connected to this start_node
+	std::vector< Node* >::iterator start_node_children_iter;
+	for (start_node_children_iter = start_node_children.begin(); start_node_children_iter != start_node_children.end(); ++start_node_children_iter)
+	{
+		//Make a new path for each possible segment from this start_node
+		PathType::Pointer path = PathType::New();
+		path->Initialize();
+		path->AddVertex(start_node_index);
+
+		Node* start_node_child = *start_node_children_iter;	//Keep position of start_node_child so we can determine along which branch to smooth later
+		Node* child_node = start_node_child;
+		std::vector< Node* > child_node_children = start_node_child->GetChildren();
+		
+		std::cout << "Visiting path: " << start_node->getID() << " ";
+		//Keep going down the segment until we hit a branch point or the leaf node
+		while (child_node_children.size() < 2 && child_node_children.size() != 0)
+		{
+			std::cout << child_node->getID() << " ";
+			ImageType::IndexType child_node_index;
+			child_node_index[0] = child_node->x;
+			child_node_index[1] = child_node->y;
+			child_node_index[2] = child_node->z;
+			path->AddVertex(child_node_index);
+
+			//Remove the child_node from the tree
+			tree->RemoveNode(child_node);
+
+			//Updating variables to point to the next node along the segment
+			child_node = child_node_children.front();
+			child_node_children = child_node->GetChildren();
+		}
+				
+		//If we got here, it means that we have at least 2 children or no children, so we should add ourselves to the end of the path, smooth it, and call SmoothSegments at the end node
+		Node* end_node = child_node;
+		ImageType::IndexType end_node_index;
+		end_node_index[0] = end_node->x;
+		end_node_index[1] = end_node->y;
+		end_node_index[2] = end_node->z;
+		path->AddVertex(end_node_index);
+		std::cout << end_node->getID() << std::endl;
+
+		//Break the links at each node between the start node, start node child and the end node
+		start_node->RemoveChild(start_node_child);
+		Node* current_node = start_node_child;
+		while (current_node != end_node)
+		{
+			assert(current_node->GetChildren().size() > 0);			//Can't break the child off of a leaf node, this means we are not checking for the right end node
+			assert(current_node->GetChildren().size() < 2);			//We are breaking a link incorrectly if it has 2+ children
+			
+			Node* next_node = current_node->GetChildren().front();
+			current_node->RemoveChild(next_node);
+			current_node = next_node;							//Update current node to point to the next node
+		}
+
+		SmoothPath(cell, tree, start_node, end_node, path);
+
+		SmoothSegments(cell, tree, end_node);							//Call SmoothSegments on the next segment
+	}
+}
+
+void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
+{
+	//Sample the path
+	const unsigned int ParametricDimension = 1;
+	const unsigned int DataDimension = 3;
+
+	typedef itk::Vector< double, DataDimension> VectorType;
+	typedef itk::Image< VectorType, ParametricDimension > BSplineImageType;
+
+	typedef itk::PointSet< VectorType, ParametricDimension > PointSetType;
+	PointSetType::Pointer pointSet = PointSetType::New();
+
+	
+
+	typedef	itk::PathConstIterator< ImageType, PathType > PathIteratorType;
+	PathIteratorType path_iter(cell->image, path);
+
+	path_iter.GoToBegin();
+	while (!path_iter.IsAtEnd())
+	{
+		PointSetType::PointType point;
+		itk::Index<3> index = path_iter.GetIndex();
+		
+		VectorType vector;
+		vector[0] = index[0];
+		vector[1] = index[1];
+		vector[2] = index[2];
+		
+		point[0] = path_iter.GetPathPosition();
+
+
+		unsigned long i = pointSet->GetNumberOfPoints();	//i is the size of the point set and incidentally the index of the next available point slot
+
+		//std::cout << i << " " << point[0] << " " << vector << std::endl;
+
+
+		pointSet->SetPoint(i, point);
+		pointSet->SetPointData(i, vector);
+
+		++path_iter;
+	}
+
+	double path_end_position = path_iter.GetPathPosition();
+	std::cout << path_end_position << std::endl;
+
+
+	//Instantiate the itk::BSplineScatteredDataPointSetToImageFilter
+	typedef itk::BSplineScatteredDataPointSetToImageFilter< PointSetType, BSplineImageType > BSplineFilterType;
+	BSplineFilterType::Pointer bspline_filter = BSplineFilterType::New();
+	
+	bspline_filter->SetInput(pointSet);
+	bspline_filter->SetSplineOrder( 1 );
+	BSplineFilterType::ArrayType ncps;
+	ncps.Fill( 2 );
+	bspline_filter->SetNumberOfControlPoints( ncps );
+	//bspline_filter->SetNumberOfLevels( 5 );
+	bspline_filter->SetSpacing(1.0);
+	itk::Size<1> size;
+	size[0] = 10.0;
+	bspline_filter->SetSize(size);
+
+	try
+	{
+		bspline_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "itkBSplineScatteredDataPointSetToImageFilter exception: " << err << std::endl;
+		return;
+	}
+
+	typedef itk::BSplineControlPointImageFunction< BSplineImageType > BSplineEvaluationFunctionType;
+	BSplineEvaluationFunctionType::Pointer bspline_eval_function = BSplineEvaluationFunctionType::New();
+	bspline_eval_function->SetSplineOrder(bspline_filter->GetSplineOrder());
+	bspline_eval_function->SetOrigin(bspline_filter->GetOrigin());
+	bspline_eval_function->SetSpacing(bspline_filter->GetSpacing());
+	bspline_eval_function->SetSize(bspline_filter->GetSize());
+	bspline_eval_function->SetInputImage(bspline_filter->GetPhiLattice());
+	
+	Node* current_node = start_node;
+	for (double i = 0; i < 1; i+=0.1)
+	{
+		VectorType vector;
+		vector = bspline_eval_function->Evaluate(i);
+
+		Node* new_node = new Node(vector[0], vector[1], vector[2], cell->next_available_ID );
+		
+		std::cout << vector[0] << " " << vector[1] << " " << vector[2] << std::endl;
+
+		//Update next available ID
+		++(cell->next_available_ID);
+
+		//Connect this new node to the current_node
+		current_node->AddChild(new_node);
+		new_node->SetParent(current_node);
+		tree->AddNode(new_node, current_node);
+
+		current_node = new_node;
+	}
+	current_node->AddChild(end_node);
+	end_node->SetParent(current_node);
+}

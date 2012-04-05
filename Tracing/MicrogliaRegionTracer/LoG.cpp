@@ -15,7 +15,7 @@ LoG::LoGImageType* LoG::RunLoG(ImageType::Pointer & image, float scale)
 
 	try
 	{
-		std::cerr << "Modified Time: " << LoGFilter->GetMTime() << std::endl;
+		//std::cerr << "Modified Time: " << LoGFilter->GetMTime() << std::endl;
 		ftk::TimeStampOverflowSafeUpdate( LoGFilter.GetPointer() );
 		//LoGFilter->Update();
 		
