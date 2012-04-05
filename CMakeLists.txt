@@ -383,24 +383,12 @@ if(USE_TRACKING)
   add_subdirectory( CellTrackerLib )
 endif(USE_TRACKING)
 
-if(WIN32)
-    if( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
-        include_directories( ${CMAKE_SOURCE_DIR}/pthreads/win32/ )
-        link_directories( ${CMAKE_SOURCE_DIR}/pthreads/win32/ )
-        set( PTHREAD_LIBRARIES pthreadVC2)
-    ELSE ( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
-        include_directories( ${CMAKE_SOURCE_DIR}/pthreads/win64/ )
-        link_directories( ${CMAKE_SOURCE_DIR}/pthreads/win64/ )
-        set( PTHREAD_LIBRARIES pthreadVC2_x64)
-    endif( ${CMAKE_SIZEOF_VOID_P} EQUAL "4")
-endif(WIN32)
-
 ####################################################################################
 ####################################################################################
-# NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE optionS SELECTED ABOVE:
+# NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
 ####################################################################################
-#Note IF A USER WANTS TO ADD AN EXECUTABLE TO AN installER, ALL optionS
-#USED TO BUILD SAID EXECUTABLE HAVE TO BE TURNED ON 
+#Note IF A USER WANTS TO ADD AN EXECUTABLE TO AN INSTALLER, ALL OPTIONS
+#USED TO BUILD SAID EXECUTABLE HAVE TO BE TURNED ON
 if(BUILD_TRACING)
   include_directories( ${PROJECT_SOURCE_DIR}/Tracing )
   add_subdirectory(Tracing)
