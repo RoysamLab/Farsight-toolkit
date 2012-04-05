@@ -367,5 +367,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-SetTracetype PROPERTIES
     DEPENDS TraceEdit-VOI
   )
+  
+  add_test(
+    TraceEdit-ShowStatistics
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_show_statistics.xml
+    ${TraceEdit_TEST_DIR}/baseline_add_new_branches.png
+  )
+  set_tests_properties(TraceEdit-ShowStatistics PROPERTIES
+    DEPENDS TraceEdit-VOI
+  )
     
 endif()

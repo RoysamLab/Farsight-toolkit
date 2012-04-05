@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="analysisViews"/>
+    <event widget="1View3D0/1QMenuBar0/analysisViews" command="activate" arguments="showStatisticsAction"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mousePress" arguments="1,1,0,0,0,0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mouseRelease" arguments="1,0,0,0,0,0"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mousePress" arguments="1,1,0,0,0,1"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mouseRelease" arguments="1,0,0,0,0,1"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mousePress" arguments="1,1,0,0,0,2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mouseRelease" arguments="1,0,0,0,0,2"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mousePress" arguments="1,1,0,0,0,3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mouseRelease" arguments="1,0,0,0,0,3"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mousePress" arguments="1,1,0,0,0,4"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0/1QHeaderView0" command="mouseRelease" arguments="1,0,0,0,0,4"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0" command="mousePress" arguments="1,1,0,49,14,/0:4"/>
+    <event widget="1View3D0/1QDockWidget1/1QTableView0" command="mouseRelease" arguments="1,0,0,49,14,/0:4"/>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+</events>
