@@ -3650,13 +3650,17 @@ void View3D::ReadVOI()
 //QDialogue to read tiff or mhd image here
 	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", traceDir, 
-		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd );; VTP ( *vtp ) " ));
+		tr(" OBJ VTP ( *.obj *.vtp ) ;; Image File ( *.tiff *.tif *.pic *.PIC *.mhd ) " ));
 
 	if(!somaFiles.isEmpty())
 	{
 		if (somaFiles.endsWith(".vtp"))
 		{
 			this->VOIType->ReadVTPVOI(somaFiles.toStdString());
+		}
+		else if ( somaFiles.endsWith(".obj"))
+		{
+			this->VOIType->ReadOBJVOI(somaFiles.toStdString());
 		}
 		else
 		{

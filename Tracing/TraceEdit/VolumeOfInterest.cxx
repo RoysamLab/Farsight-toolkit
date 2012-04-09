@@ -163,6 +163,14 @@ void VolumeOfInterest::ReadVTPVOI(std::string filename)
 	reader->Update();
 	this->VOIPolyData.push_back( reader->GetOutput());
 }
+void VolumeOfInterest::ReadOBJVOI(std::string filename)
+{
+	// Read volume data from VTK's .vtp file
+	vtkSmartPointer<vtkOBJReader> reader = vtkSmartPointer<vtkOBJReader>::New();
+	reader->SetFileName(filename.c_str());
+	reader->Update();
+	this->VOIPolyData.push_back( reader->GetOutput());
+}
 void VolumeOfInterest::WriteVTPVOI(std::string filename)
 {  
 	vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();

@@ -30,6 +30,7 @@
 
 #include "vtkXMLPolyDataReader.h"
 #include "vtkXMLPolyDataWriter.h"
+#include <vtkOBJReader.h>
 
 //FTK Includes
 #include "CellTrace.h"
@@ -51,6 +52,7 @@ public:
 	float* CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable> tbl);
 	void ReadBinaryVOI(std::string filename);
 	void ReadVTPVOI(std::string filename);
+	void ReadOBJVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
 private:
 	std::vector< double * > ROIPoints;
