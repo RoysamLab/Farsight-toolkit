@@ -51,6 +51,7 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
+	this->statisticsDockWidget = NULL;
 #ifdef USE_SPD
 	this->SPDWin = NULL;
 #endif
@@ -229,6 +230,10 @@ View3D::~View3D()
   if(this->TreeModel)
   {
     delete this->TreeModel;
+  }
+  if(this->statisticsDockWidget)
+  {
+    delete this->statisticsDockWidget;
   }
 #ifdef USE_SPD
   	if(this->SPDWin)
