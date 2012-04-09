@@ -378,5 +378,21 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-ShowStatistics PROPERTIES
     DEPENDS TraceEdit-VOI
   )
+  
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_vtk_traces.xml.in
+    ${CMAKE_CURRENT_BINARY_DIR}/test_vtk_traces.xml
+    @ONLY)
+  add_test(
+    TraceEdit-VTKTraces
+    ${TraceEdit_EXE}
+    ${CMAKE_CURRENT_BINARY_DIR}/test_vtk_traces.xml
+    ${FARSIGHT_DATA_ROOT}/TraceData/trach11a.vtk
+    ${TraceEdit_TEST_DIR}/baseline_vtk_traces.png
+  )
+  set_tests_properties(TraceEdit-VTKTraces PROPERTIES
+    DEPENDS TraceEdit-ShowStatistics
+    PASS_REGULAR_EXPRESSION "trach11a.vtk"
+  )
     
 endif()

@@ -442,7 +442,7 @@ void View3D::OkToBoot()
 		}
 		this->cursor3DDock->show();
 		//this->Rerender();
-		if (this->tobj->BranchPoints.size() >1)
+		if (this->tobj->BranchPoints.size() >1 && this->TestInputFile == "")
 		{
 			QMessageBox::critical(this,"Branching Incomplete" ,
 				"You have traces without defined roots. \nPlease Use the 'Set Root' command",
