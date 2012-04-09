@@ -224,7 +224,7 @@ bool NuclearSegmentation::Binarize(bool getResultImg)
 	if(NucleusSeg) delete NucleusSeg;
 	NucleusSeg = new yousef_nucleus_seg();
 
-	int adap_bin;
+	int adap_bin = 0;
 	if(myParameters.size() == 0)
 	{
 		NucleusSeg->readParametersFromFile("");		//Will use automatic parameter detection	

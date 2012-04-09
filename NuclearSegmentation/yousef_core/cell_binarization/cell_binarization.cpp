@@ -186,12 +186,12 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		{				
 			for (int k = 0; k < num_blocks_Z; k++)
 			{
-				subImgBlockArray[i][j][k][0] = j * num_pixels_per_block_C - 1;
-				subImgBlockArray[i][j][k][1] = (j + 1) * num_pixels_per_block_C;
-				subImgBlockArray[i][j][k][2] = i * num_pixels_per_block_R - 1;
-				subImgBlockArray[i][j][k][3] = (i + 1) * num_pixels_per_block_R;
-				subImgBlockArray[i][j][k][4] = k * num_pixels_per_block_Z - 1;
-				subImgBlockArray[i][j][k][5] = (k + 1) * num_pixels_per_block_Z;
+				subImgBlockArray[i][j][k][0] = j * (long long)num_pixels_per_block_C - 1;
+				subImgBlockArray[i][j][k][1] = (j + 1) * (long long)num_pixels_per_block_C;
+				subImgBlockArray[i][j][k][2] = i * (long long)num_pixels_per_block_R - 1;
+				subImgBlockArray[i][j][k][3] = (i + 1) * (long long)num_pixels_per_block_R;
+				subImgBlockArray[i][j][k][4] = k * (long long)num_pixels_per_block_Z - 1;
+				subImgBlockArray[i][j][k][5] = (k + 1) * (long long)num_pixels_per_block_Z;
 
 				//bounds checking
 				if (subImgBlockArray[i][j][k][1] >= C)
