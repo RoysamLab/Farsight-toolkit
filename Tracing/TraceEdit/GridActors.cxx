@@ -237,31 +237,6 @@ void GridlineActors::createGridxz(double bounds[],int height_spacing, int width_
 		//Add the GridlineActor to the renderer
 		GridlineActor->SetMapper(mapper);
 		GridlineActor->SetPickable(0);
-
-		for (double increment = bounds[2]; increment < bounds[3]; increment+=height_spacing, horizontal_line_index++)
-		{	
-			// Create two points, P0 and P1
-			double p0[3] = {bounds[0], increment, z_plane_value};
-			double p1[3] = {bounds[1], increment, z_plane_value};
-
-			vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
-			lineSource->SetPoint1(p0);
-			lineSource->SetPoint2(p1);
-			lineSource->Update();
-
-			// Visualize
-			vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-			mapper->SetInputConnection(lineSource->GetOutputPort());
-			//Create GridlineActor
-			vtkSmartPointer<vtkActor> GridlineActor = vtkSmartPointer<vtkActor>::New();
-			GridlineActor->SetProperty(lineproperty);
-			//Store it to the GridlineActorVector
-			GridlineActorVectorHorizontal[horizontal_line_index] = GridlineActor;
-			
-			//Add the GridlineActor to the renderer
-			GridlineActor->SetMapper(mapper);
-			GridlineActor->SetPickable(0);
-		}
 	}
 
 	/// vertical lines
