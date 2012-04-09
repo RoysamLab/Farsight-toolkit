@@ -628,11 +628,6 @@ ImageSlicePointerType ImageRenderActors::GetImageSlice(int i)
 	if (!LoadedImages[i]->sliceCreated)
 	{
 		CreateImageSlice(i);
-		//std::cout << "Slice is created." << std::endl;
-	}
-	else
-	{
-		//std::cout << "Slice is already created." << std::endl;
 	}
 	return this->LoadedImages[i]->imageSlice;
 }

@@ -330,7 +330,7 @@ void TraceLine::calculateBifFeatures()
 	double planeAngleremote1 = -1;
 	double planeAngleremote2 = -1;
 
-	if (!Daughter1->isLeaf())
+	if (!Daughter1->isLeaf() && Daughter1->GetBranchPointer()->size() == 2) //Check if Daughter1 is not trifurcation
 	{
 		TraceLine* GrandDaughter1of1 = Daughter1->GetBranch1();
 		TraceLine* GrandDaughter2of1 = Daughter1->GetBranch2();
@@ -343,7 +343,7 @@ void TraceLine::calculateBifFeatures()
 		planeAnglelocal1 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter1PlaneLocal_ptr);
 		planeAngleremote1 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter1PlaneRemote_ptr);
 	}
-	if (!Daughter2->isLeaf())
+	if (!Daughter2->isLeaf() && Daughter2->GetBranchPointer()->size() == 2)
 	{
 		TraceLine* GrandDaughter1of2 = Daughter2->GetBranch1();
 		TraceLine* GrandDaughter2of2 = Daughter2->GetBranch2();

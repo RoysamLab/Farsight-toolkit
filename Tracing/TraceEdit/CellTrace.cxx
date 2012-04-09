@@ -175,6 +175,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			{
 			this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
 			this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
+			//count number of torque angles (local and remote torques should have the same number of angles)
 			this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax, this->TwoDaughterTorqueCount);
 			this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax, this->TwoDaughterTorqueCount);
 			if (this->segments[i]->GetTerminalDegree() > 2)
