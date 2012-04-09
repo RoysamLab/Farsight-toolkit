@@ -442,7 +442,13 @@ void View3D::OkToBoot()
 		}
 		this->cursor3DDock->show();
 		//this->Rerender();
-		if (this->tobj->BranchPoints.size() >1 && this->TestInputFile == "")
+		bool unsolvedBranches = (this->tobj->BranchPoints.size() >1);
+
+		#ifdef USE_QT_TESTING
+		unsolvedBranches = (this->tobj->BranchPoints.size() >1 && this->TestInputFile == "");
+		#endif
+
+		if (unsolvedBranches)
 		{
 			QMessageBox::critical(this,"Branching Incomplete" ,
 				"You have traces without defined roots. \nPlease Use the 'Set Root' command",
@@ -4397,7 +4403,7 @@ void View3D::updateSelectionFromCell()
 	/*! 
 	* Links CellModel selection to TraceModel Selection
 	*/
-	this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
+	//this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
 	int limit = selectedCells.size();
@@ -4455,7 +4461,13 @@ void View3D::DeleteTraces()
 	*/
 	SelectedTraceIDs.clear();
 	statusBar()->showMessage(tr("Deleting"));
-	std::vector<TraceLine*> traceList = TreeModel->GetSelectedTraces();
+	std::vector<TraceLine*> traceList;
+	traceList = this->CellModel->GetSelectedTraces(); 
+	if (traceList.size() == 0)
+	{
+		//check if to select from tree model
+		traceList = TreeModel->GetSelectedTraces();
+	}
 	if (traceList.size() >=1)
 	{
 		EditLogDisplay->append(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));

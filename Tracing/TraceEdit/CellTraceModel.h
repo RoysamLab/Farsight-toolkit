@@ -86,6 +86,7 @@ public:
 	std::set<long int> GetSelectedIDs();
 	std::set<long int> GetSelectedContinuousIDs();
 	std::vector<CellTrace*> GetSelectedCells();
+	std::vector<TraceLine*> GetSelectedTraces();
 	unsigned int getCellCount();
 	CellTrace * GetCellAt( int i);
 	CellTrace * GetCellAtNoSelection( int i);

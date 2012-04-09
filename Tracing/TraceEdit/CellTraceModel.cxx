@@ -434,6 +434,29 @@ std::set<long int> CellTraceModel::GetSelectedIDs()
 	}//end for selected
 	return allSelectedIDs;
 }
+
+std::vector<TraceLine*> CellTraceModel::GetSelectedTraces()
+{
+	/*!
+	*
+	*/
+	std::vector<TraceLine*> TracesReturned, tempset;
+	TracesReturned.clear();
+	tempset.clear();
+	std::set<long> selected = this->Selection->getSelections();
+	std::set<long>::iterator it;
+	for (it = selected.begin(); it != selected.end(); ++it)
+	{
+		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
+		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
+		{
+			tempset = ((*this->CellIDLookupIter).second)->getSegments();
+			TracesReturned.insert(TracesReturned.end(), tempset.begin(), tempset.end());
+		}
+	}//end for selected
+	return TracesReturned;
+}
+
 std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 {
 	std::vector<CellTrace*> selectedCell;
