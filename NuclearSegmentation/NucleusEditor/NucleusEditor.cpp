@@ -3338,6 +3338,7 @@ void NucleusEditor::viewClosing(QWidget * view)
 	{
 		if( *table_it == view )
 		{
+			delete *table_it;
 			tblWin.erase(table_it);
 			return;
 		}
@@ -3348,6 +3349,7 @@ void NucleusEditor::viewClosing(QWidget * view)
 	{
 		if( *plot_it == view )
 		{
+			delete *plot_it;
 			pltWin.erase(plot_it);
 			return;
 		}
@@ -3358,6 +3360,7 @@ void NucleusEditor::viewClosing(QWidget * view)
 	{
 		if( *hist_it == view )
 		{
+			delete *hist_it;
 			hisWin.erase(hist_it);
 			return;
 		}
@@ -3368,6 +3371,7 @@ void NucleusEditor::viewClosing(QWidget * view)
 	{
 		if( *rend_it == view )
 		{
+			delete *rend_it;
 			renWin.erase(rend_it);
 			return;
 		}
