@@ -394,5 +394,38 @@ if(QtTestingFound)
     DEPENDS TraceEdit-ShowStatistics
     PASS_REGULAR_EXPRESSION "trach11a.vtk"
   )
+  
+  add_test(
+    TraceEdit-Gridlines-XY
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_grid_xy.xml
+    ${TraceEdit_TEST_DIR}/baseline_grid_xy.png
+  )
+  set_tests_properties(TraceEdit-Gridlines-XY PROPERTIES
+    DEPENDS TraceEdit-VTKTraces
+  )
+  
+  add_test(
+    TraceEdit-Gridlines-XZ
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_grid_xz.xml
+    ${TraceEdit_TEST_DIR}/baseline_grid_xz.png
+  )
+  set_tests_properties(TraceEdit-Gridlines-XZ PROPERTIES
+    DEPENDS TraceEdit-Gridlines-XY
+  )
+
+  add_test(
+    TraceEdit-Gridlines-YZ
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop-trace.swc
+    ${TraceEdit_TEST_DIR}/test_grid_yz.xml
+    ${TraceEdit_TEST_DIR}/baseline_grid_yz.png
+  )
+  set_tests_properties(TraceEdit-Gridlines-YZ PROPERTIES
+    DEPENDS TraceEdit-Gridlines-XZ
+  )
     
 endif()
