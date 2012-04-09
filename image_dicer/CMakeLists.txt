@@ -1,6 +1,7 @@
 project(image_dicer)
 
 include_directories(${Farsight_SOURCE_DIR}/Tracing/TraceEdit)
+include_directories(${Farsight_SOURCE_DIR}/NuclearSegmentation)
 
 set(image_dicer_HDRS 
   )

@@ -6,6 +6,8 @@ SET( NESQLITE_HDRS
 	NESqliteFactory.h
 )
 
+INCLUDE_DIRECTORIES( ${Farsight_SOURCE_DIR}/SQLite )
+
 ADD_LIBRARY( NESQLITE
              ${NESQLITE_SRCS} 
              ${NESQLITE_HDRS} 

@@ -8,6 +8,7 @@
 
 INCLUDE_DIRECTORIES( ${VXL_RPL_INCLUDE_DIR} )
 INCLUDE_DIRECTORIES( ${VXL_MUL_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 SET( fregl_sources
 	fregl_reg_record.h          	fregl_reg_record.cxx
