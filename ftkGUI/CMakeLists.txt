@@ -1,9 +1,3 @@
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/GUITesterHelper.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/GUITesterHelper.h
-  @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 SET( GUI_SRCS
     	PlotWindow.cpp
     	ScatterView.cpp
@@ -55,6 +49,18 @@ SET( GUI_LIBS
   vtkVolumeRendering vtkHybrid vtkCharts vnl)
 
 IF(QtTestingFound)
+  CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/GUITesterHelper.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/GUITesterHelper.h
+  @ONLY)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+  
+  # normally this directory is created automatically by CTest, but we do it
+  # manually here for the sake of nightly superbuilds
+  IF(NOT EXISTS ${CMAKE_BINARY_DIR}/Testing/Temporary)
+    FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/Temporary)
+  ENDIF()
+  
   LIST( APPEND GUI_SRCS GUITester.cpp )
   LIST( APPEND GUI_HDRS GUITester.h )
   LIST( APPEND GUI_LIBS QtTesting )
