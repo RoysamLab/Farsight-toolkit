@@ -427,5 +427,16 @@ if(QtTestingFound)
   set_tests_properties(TraceEdit-Gridlines-YZ PROPERTIES
     DEPENDS TraceEdit-Gridlines-XZ
   )
+  
+  add_test(
+    TraceEdit-ColorByTrees
+    ${TraceEdit_EXE}
+    ${FARSIGHT_DATA_ROOT}/TraceData/9cells.swc
+    ${TraceEdit_TEST_DIR}/test_color_by_trees.xml
+    ${TraceEdit_TEST_DIR}/baseline_color_by_trees.png
+  )
+  set_tests_properties(TraceEdit-ColorByTrees PROPERTIES
+    DEPENDS TraceEdit-Gridlines-YZ
+  )
     
 endif()

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1View3D0/1QMenuBar0" command="activate" arguments="DataViews"/>
+    <event widget="1View3D0/1QMenuBar0/DataViews" command="activate" arguments="ColorByTreesAction"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="resizeAction"/>
+    <event widget="1View3D0/1QMenuBar0/testingMenu" command="activate" arguments="clearAction"/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1View3D0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>
