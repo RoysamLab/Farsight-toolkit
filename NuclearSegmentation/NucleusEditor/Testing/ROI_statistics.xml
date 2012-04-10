@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu/roiMenu" command="activate" arguments="drawROIAction"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,138,106"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,138,106"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,106,97"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,106,97"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,112,82"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,112,82"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,136,86"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,136,86"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,139,109"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,139,109"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="roiStatsAction"/>
+</events>

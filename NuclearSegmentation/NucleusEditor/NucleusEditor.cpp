@@ -160,21 +160,25 @@ void NucleusEditor::createStatusBar()
 void NucleusEditor::createProcessToolBar()
 {
 	processToolbar = this->addToolBar(tr("Process"));
+	processToolbar->setObjectName("processToolbar");
 	processToolbar->setVisible(false);
 
 	processAbort = new QAction(QIcon(":/icons/abort.png"), tr("ABORT"), this);
+	processAbort->setObjectName("processAbort");
 	processAbort->setToolTip(tr("Abort Processing"));
 	processAbort->setEnabled(true);
 	connect(processAbort, SIGNAL(triggered()), this, SLOT(abortProcess()));
 	processToolbar->addAction(processAbort);
 
 	processContinue = new QAction(QIcon(":/icons/go.png"), tr("GO"), this);
+	processAbort->setObjectName("processAbort");
 	processContinue->setToolTip(tr("Continue Processing"));
 	processContinue->setEnabled(false);
 	connect(processContinue, SIGNAL(triggered()),this, SLOT(continueProcess()));
 	processToolbar->addAction(processContinue);
 
 	processProgress = new QProgressBar();
+	processProgress->setObjectName("processProgress");
 	processProgress->setRange(0,0);
 	processProgress->setTextVisible(false);
 	processToolbar->addWidget(processProgress);
@@ -216,14 +220,17 @@ void NucleusEditor::createMenus()
 {
 	//FIRST HANDLE FILE MENU
 	fileMenu = menuBar()->addMenu(tr("&File"));
+	fileMenu->setObjectName("fileMenu");
 
 	loadProjectAction = new QAction(tr("Load Project..."), this);
+	loadProjectAction->setObjectName("loadProjectAction");
 	loadProjectAction->setStatusTip(tr("Load ftk project"));
 	loadProjectAction->setShortcut(tr("Ctrl+L"));
 	connect(loadProjectAction, SIGNAL(triggered()), this, SLOT(loadProject()));
 	fileMenu->addAction(loadProjectAction);
 
 	loadImageAction = new QAction(tr("Load Image..."), this);
+	loadImageAction->setObjectName("loadImageAction");
 	loadImageAction->setStatusTip(tr("Load an image into the 5D image browser"));
 	loadImageAction->setShortcut(tr("Ctrl+O"));
 	connect(loadImageAction, SIGNAL(triggered()), this, SLOT(askLoadImage()));
@@ -231,20 +238,24 @@ void NucleusEditor::createMenus()
 
 	//Amin
 	load5DImageAction = new QAction(tr("Load 5D Images"), this);
+	load5DImageAction->setObjectName("load5DImageAction");
 	connect(load5DImageAction, SIGNAL(triggered()), this, SLOT(askload5DImage()));
 	fileMenu->addAction(load5DImageAction);
 
 	load5DLabelImageAction = new QAction(tr("Load 5D Labels"), this);
+	load5DLabelImageAction->setObjectName("load5DLabelImageAction");
 	connect(load5DLabelImageAction, SIGNAL(triggered()), this, SLOT(askload5DLabelImage()));
 	fileMenu->addAction(load5DLabelImageAction);
 
 
 	loadLabelAction = new QAction(tr("Load Result..."), this);
+	loadLabelAction->setObjectName("loadLabelAction");
 	loadLabelAction->setStatusTip(tr("Load a result image into the image browser"));
 	connect(loadLabelAction,SIGNAL(triggered()), this, SLOT(askLoadResult()));
 	fileMenu->addAction(loadLabelAction);
 
 	loadTableAction = new QAction(tr("Load Table..."), this);
+	loadTableAction->setObjectName("loadTableAction");
 	loadTableAction->setStatusTip(tr("Load data table from text file"));
 	connect(loadTableAction, SIGNAL(triggered()), this, SLOT(askLoadTable()));
 	fileMenu->addAction(loadTableAction);
@@ -252,6 +263,7 @@ void NucleusEditor::createMenus()
 	fileMenu->addSeparator();
 
 	processProjectAction = new QAction(tr("Process Image..."), this);
+	processProjectAction->setObjectName("processProjectAction");
 	processProjectAction->setStatusTip(tr("Choose project definition file to use in processing the current image"));
 	connect(processProjectAction, SIGNAL(triggered()), this, SLOT(processProject()));
 	fileMenu->addAction(processProjectAction);
@@ -259,36 +271,43 @@ void NucleusEditor::createMenus()
 	fileMenu->addSeparator();
 
 	saveProjectAction = new QAction(tr("Save Project..."), this);
+	saveProjectAction->setObjectName("saveProjectAction");
 	saveProjectAction->setStatusTip(tr("Save the active project files..."));
 	saveProjectAction->setShortcut(tr("Ctrl+S"));
 	connect(saveProjectAction, SIGNAL(triggered()), this, SLOT(saveProject()));
 	fileMenu->addAction(saveProjectAction);
 
 	saveSomaImageAction = new QAction(tr("Save Soma Image..."), this);
+	saveSomaImageAction->setObjectName("saveSomaImageAction");
 	connect(saveSomaImageAction, SIGNAL(triggered()), this, SLOT(saveSomaImage()));
 	fileMenu->addAction(saveSomaImageAction);
 
 	saveImageAction = new QAction(tr("Save Image..."), this);
+	saveImageAction->setObjectName("saveImageAction");
 	saveImageAction->setStatusTip(tr("Save image currently displayed"));
 	connect(saveImageAction, SIGNAL(triggered()), this, SLOT(askSaveImage()));
 	fileMenu->addAction(saveImageAction);
 
 	saveLabelAction = new QAction(tr("Save Result..."), this);
+	saveLabelAction->setObjectName("saveLabelAction");
 	saveLabelAction->setStatusTip(tr("Save a segmentation result image"));
 	connect(saveLabelAction, SIGNAL(triggered()), this, SLOT(askSaveResult()));
 	fileMenu->addAction(saveLabelAction);
 
 	saveTableAction = new QAction(tr("Save Table..."), this);
+	saveTableAction->setObjectName("saveTableAction");
 	saveTableAction->setStatusTip(tr("Save the features table"));
 	connect(saveTableAction, SIGNAL(triggered()), this, SLOT(askSaveTable()));
 	fileMenu->addAction(saveTableAction);
 
 	saveDisplayAction = new QAction(tr("Save Display Image..."), this);
+	saveDisplayAction->setObjectName("saveDisplayAction");
 	saveDisplayAction->setStatusTip(tr("Save displayed image to file"));
 	connect(saveDisplayAction, SIGNAL(triggered()), this, SLOT(saveDisplayImageToFile()));
 	fileMenu->addAction(saveDisplayAction);
 
 	saveCompositeAction = new QAction(tr("Save Composite Image..."), this);
+	saveCompositeAction->setObjectName("saveCompositeAction");
 	saveCompositeAction->setStatusTip(tr("Save displayed composite image to file"));
 	connect(saveCompositeAction, SIGNAL(triggered()), this, SLOT(saveCompositeImageToFile()));
 	fileMenu->addAction(saveCompositeAction);
@@ -296,6 +315,7 @@ void NucleusEditor::createMenus()
 	fileMenu->addSeparator();
 
 	exitAction = new QAction(tr("Exit"), this);
+	exitAction->setObjectName("exitAction");
 	exitAction->setShortcut(tr("Ctrl+Q"));
 	exitAction->setStatusTip(tr("Exit the application"));
 	connect(exitAction, SIGNAL(triggered()), this, SLOT(close()));
@@ -303,14 +323,17 @@ void NucleusEditor::createMenus()
 
 	//VIEW MENU
 	viewMenu = menuBar()->addMenu(tr("&View"));
+	viewMenu->setObjectName("viewMenu");
 
 	setPreferencesAction = new QAction(tr("Preferences..."), this);
+	setPreferencesAction->setObjectName("setPreferencesAction");
 	connect(setPreferencesAction, SIGNAL(triggered()), this, SLOT(setPreferences()));
 	viewMenu->addAction(setPreferencesAction);
 
 	viewMenu->addSeparator();
 
 	showCrosshairsAction = new QAction(tr("Show Selection Crosshairs"), this);
+	showCrosshairsAction->setObjectName("showCrosshairsAction");
 	showCrosshairsAction->setCheckable(true);
 	showCrosshairsAction->setChecked( segView->GetCrosshairsVisible() );
 	showCrosshairsAction->setStatusTip(tr("Show Crosshairs at selected object"));
@@ -318,6 +341,7 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showCrosshairsAction);
 
 	showBoundsAction = new QAction(tr("Show &Boundaries"), this);
+	showBoundsAction->setObjectName("showBoundsAction");
 	showBoundsAction->setCheckable(true);
 	showBoundsAction->setChecked( segView->GetBoundsVisible() );
 	showBoundsAction->setStatusTip(tr("Draw boundaries using a label image"));
@@ -326,6 +350,7 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showBoundsAction);
 
 	showIDsAction = new QAction(tr("Show Object IDs"), this);
+	showIDsAction->setObjectName("showIDsAction");
 	showIDsAction->setCheckable(true);
 	showIDsAction->setChecked( segView->GetIDsVisible() );
 	showIDsAction->setStatusTip(tr("Show IDs of objects"));
@@ -334,6 +359,7 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showIDsAction);
 
 	showCentroidsAction = new QAction(tr("Show Object Centroids"), this);
+	showCentroidsAction->setObjectName("showCentroidsAction");
 	showCentroidsAction->setCheckable(true);
 	showCentroidsAction->setChecked( segView->GetCentroidsVisible() );
 	showCentroidsAction->setStatusTip(tr("Show Centroids of objects"));
@@ -342,8 +368,10 @@ void NucleusEditor::createMenus()
 	viewMenu->addAction(showCentroidsAction);
 
 	adjacencyMenu = viewMenu->addMenu(tr("Show Adjacency"));
+	adjacencyMenu->setObjectName("adjacencyMenu");
 
 	showNucAdjAction = new QAction(tr("Nuclear"), this);
+	showNucAdjAction->setObjectName("showNucAdjAction");
 	showNucAdjAction->setCheckable(true);
 	showNucAdjAction->setChecked( segView->GetNucAdjVisible() );
 	showNucAdjAction->setStatusTip(tr("Show adjacency of nuclei"));
@@ -352,6 +380,7 @@ void NucleusEditor::createMenus()
 	adjacencyMenu->addAction(showNucAdjAction);
 
 	showCellAdjAction = new QAction(tr("Cellular"), this);
+	showCellAdjAction->setObjectName("showCellAdjAction");
 	showCellAdjAction->setCheckable(true);
 	showCellAdjAction->setChecked( segView->GetCellAdjVisible() );
 	showCellAdjAction->setStatusTip(tr("Show adjacency of cells"));
@@ -360,45 +389,54 @@ void NucleusEditor::createMenus()
 	adjacencyMenu->addAction(showCellAdjAction);
 
 	zoomMenu = viewMenu->addMenu(tr("Zoom"));
+	zoomMenu->setObjectName("zoomMenu");
 
 	zoomInAction = new QAction(tr("Zoom In"), this);
+	zoomInAction->setObjectName("zoomInAction");
 	zoomInAction->setStatusTip(tr("Zoom In On The Displayed Image"));
 	zoomInAction->setShortcut(tr("="));
 	connect(zoomInAction, SIGNAL(triggered()), segView, SLOT(zoomIn()));
 	zoomMenu->addAction(zoomInAction);
 
 	zoomOutAction  = new QAction(tr("Zoom Out"), this);
+	zoomOutAction->setObjectName("zoomOutAction");
 	zoomOutAction->setStatusTip(tr("Zoom Out of The Displayed Image"));
 	zoomOutAction->setShortcut(tr("-"));
 	connect(zoomOutAction, SIGNAL(triggered()), segView, SLOT(zoomOut()));
 	zoomMenu->addAction(zoomOutAction);
 
 	displayChannelMenu = viewMenu->addMenu(tr("Display Channel"));
+	displayChannelMenu->setObjectName("displayChannelMenu");
 	connect(displayChannelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayChannelsMenu()));
 
 #ifdef USE_OPENSLIDE
 	displayLevelMenu = viewMenu->addMenu(tr("Display Slide Level"));
+	displayLevelMenu->setObjectName("displayLevelMenu");
 	connect(displayLevelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayLevelsMenu()));
 #endif
 
 	viewMenu->addSeparator();
 
 	newTableAction = new QAction(tr("New Table"), this);
+	newTableAction->setObjectName("newTableAction");
 	newTableAction->setStatusTip(tr("Open a new table window"));
 	connect(newTableAction, SIGNAL(triggered()), this, SLOT(CreateNewTableWindow()));
 	viewMenu->addAction(newTableAction);
 
 	newScatterAction = new QAction(tr("New Scatterplot"), this);
+	newScatterAction->setObjectName("newScatterAction");
 	newScatterAction->setStatusTip(tr("Open a new Scatterplot Window"));
 	connect(newScatterAction,SIGNAL(triggered()),this,SLOT(CreateNewPlotWindow()));
 	viewMenu->addAction(newScatterAction);
 
 	newHistoAction = new QAction(tr("New Histogram"),this);
+	newHistoAction->setObjectName("newHistoAction");
 	newHistoAction->setStatusTip(tr("Open a new Histogram Window"));
 	connect(newHistoAction,SIGNAL(triggered()),this,SLOT(CreateNewHistoWindow()));
 	viewMenu->addAction(newHistoAction);
 
 	newRenderAction = new QAction(tr("New Render Window"),this);
+	newRenderAction->setObjectName("newRenderAction");
 	newRenderAction->setStatusTip(tr("Open a new Render Window"));
 	connect(newRenderAction,SIGNAL(triggered()),this,SLOT(CreateNewRenderWindow()));
 	viewMenu->addAction(newRenderAction);
@@ -414,79 +452,99 @@ void NucleusEditor::createMenus()
 	//ragMenu->addAction(cellRagAction);
 
 	imageIntensityAction = new QAction(tr("Adjust Image Intensity"), this);
+	imageIntensityAction->setObjectName("imageIntensityAction");
 	imageIntensityAction->setStatusTip(tr("Allows modification of image intensity"));
 	connect(imageIntensityAction, SIGNAL(triggered()), segView, SLOT(AdjustImageIntensity()));
 	viewMenu->addAction(imageIntensityAction);
 
 	//TOOL MENU
 	toolMenu = menuBar()->addMenu(tr("Tools"));
+	toolMenu->setObjectName("toolMenu");
 
 	getCentroidAction = new QAction(tr("Get Object Centroids"), this);
+	getCentroidAction->setObjectName("getCentroidAction");
 	connect(getCentroidAction, SIGNAL(triggered()), this, SLOT(getCentroids()));
 	toolMenu->addAction(getCentroidAction);
 
 	roiMenu = toolMenu->addMenu(tr("Region Of Interest"));
+	roiMenu->setObjectName("roiMenu");
 
 	drawROIAction = new QAction(tr("Draw ROI"), this);
+	drawROIAction->setObjectName("drawROIAction");
 	connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
 	roiMenu->addAction(drawROIAction);
 
 	clearROIAction = new QAction(tr("Clear ROI"), this);
+	clearROIAction->setObjectName("clearROIAction");
 	connect(clearROIAction, SIGNAL(triggered()), this, SLOT(clearROI()));
 	roiMenu->addAction(clearROIAction);
 
 	saveROIAction = new QAction(tr("Save ROI Mask..."), this);
+	saveROIAction->setObjectName("saveROIAction");
 	connect(saveROIAction, SIGNAL(triggered()), this, SLOT(saveROI()));
 	roiMenu->addAction(saveROIAction);
 
 	loadROIAction = new QAction(tr("Load ROI Mask..."), this);
+	loadROIAction->setObjectName("loadROIAction");
 	connect(loadROIAction, SIGNAL(triggered()), this, SLOT(loadROI()));
 	roiMenu->addAction(loadROIAction);
 
 	roiStatsAction = new QAction(tr("Compute ROI Statistics"), this);
+	roiStatsAction->setObjectName("roiStatsAction");
 	connect(roiStatsAction, SIGNAL(triggered()), this, SLOT(roiStatistics()));
 	toolMenu->addAction(roiStatsAction);
 
 	preprocessAction = new QAction(tr("Preprocess Image..."), this);
+	preprocessAction->setObjectName("preprocessAction");
 	connect(preprocessAction, SIGNAL(triggered()), this, SLOT(preprocessImage()));
 	toolMenu->addAction(preprocessAction);
 
 	unmixChannelsAction = new QAction(tr("Unmix Channels..."), this);
+	unmixChannelsAction->setObjectName("unmixChannelsAction");
 	connect(unmixChannelsAction, SIGNAL(triggered()), this, SLOT(unmixChannels()));
 	toolMenu->addAction(unmixChannelsAction);
 
 	segmentNucleiAction = new QAction(tr("Segment Nuclei..."), this);
+	segmentNucleiAction->setObjectName("segmentNucleiAction");
 	connect(segmentNucleiAction, SIGNAL(triggered()), this, SLOT(segmentNuclei()));
 	toolMenu->addAction(segmentNucleiAction);
 
 	editNucleiAction = new QAction(tr("Edit Nuclei"), this);
+	editNucleiAction->setObjectName("editNucleiAction");
 	connect(editNucleiAction, SIGNAL(triggered()), this, SLOT(startEditing()));
 	toolMenu->addAction(editNucleiAction);
 
 	svmAction = new QAction(tr("Detect Outliers"), this);
+	svmAction->setObjectName("svmAction");
 	connect(svmAction, SIGNAL(triggered()), this, SLOT(startSVM()));
 	toolMenu->addAction(svmAction);
 
 	databaseAction = new QAction(tr("Update Database"), this);
+	databaseAction->setObjectName("databaseAction");
 	connect(databaseAction, SIGNAL(triggered()), this, SLOT(updateDatabase()));
 	toolMenu->addAction(databaseAction);
 
 
 	activeMenu   = toolMenu->addMenu(tr("Active Learning"));
+	activeMenu->setObjectName("activeMenu");
 
 	activeAction = new QAction(tr("Start Active Learning"), this);
+	activeAction->setObjectName("activeAction");
 	connect(activeAction, SIGNAL(triggered()), this, SLOT(startActiveLearningwithFeat()));
 	activeMenu->addAction(activeAction);
 
 	saveActiveResultsAction = new QAction(tr("Save Active Learning Results (Only for Multiple Images)"), this);
+	saveActiveResultsAction->setObjectName("saveActiveResultsAction");
 	connect(saveActiveResultsAction, SIGNAL(triggered()), this, SLOT(SaveActiveLearningResults()));
 	activeMenu->addAction(saveActiveResultsAction);
 
 	saveActiveLearningModelAction = new QAction(tr("Save Active Learning Model"), this);
+	saveActiveLearningModelAction->setObjectName("saveActiveLearningModelAction");
 	connect(saveActiveLearningModelAction, SIGNAL(triggered()), this, SLOT(SaveActiveLearningModel()));
 	activeMenu->addAction(saveActiveLearningModelAction);
 
 	classifyFromActiveLearningModelAction = new QAction(tr("Load Active Learning Model"), this);
+	classifyFromActiveLearningModelAction->setObjectName("classifyFromActiveLearningModelAction");
 	connect(classifyFromActiveLearningModelAction, SIGNAL(triggered()), this, SLOT(classifyFromActiveLearningModel()));
 	activeMenu->addAction(classifyFromActiveLearningModelAction);
 
@@ -496,30 +554,37 @@ void NucleusEditor::createMenus()
 
 
 	classifyMenu = toolMenu->addMenu(tr("Classifier"));
+	classifyMenu->setObjectName("classifyMenu");
 
 	trainAction = new QAction(tr("Train"), this);
+	trainAction->setObjectName("trainAction");
 	connect(trainAction, SIGNAL(triggered()), this, SLOT(startTraining()));
 	classifyMenu->addAction(trainAction);
 
 	kplsAction = new QAction(tr("Classify"), this);
+	kplsAction->setObjectName("kplsAction");
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
 
 	runClusAction = new QAction(tr("Clustering Heatmap"), this);
+	runClusAction->setObjectName("runClusAction");
 	connect(runClusAction, SIGNAL(triggered()), this, SLOT(runClus()));
 	toolMenu->addAction(runClusAction);
 
 
 	//EDITING MENU
 	editMenu = menuBar()->addMenu(tr("&Editing"));
+	editMenu->setObjectName("editMenu");
 
 	clearSelectAction = new QAction(tr("Clear Selections"), this);
+	clearSelectAction->setObjectName("clearSelectAction");
 	clearSelectAction->setStatusTip(tr("Clear Current Object Selections"));
 	clearSelectAction->setShortcut(tr("Ctrl+C"));
 	connect(clearSelectAction, SIGNAL(triggered()), this, SLOT(clearSelections()));
 	editMenu->addAction(clearSelectAction);
 
 	visitAction = new QAction(tr("Mark as Visited"), this);
+	visitAction->setObjectName("visitAction");
 	visitAction->setStatusTip(tr("Mark Selected Objects as Visited"));
 	visitAction->setShortcut(tr("Ctrl+V"));
 	connect(visitAction, SIGNAL(triggered()), this, SLOT(markVisited()));
@@ -528,11 +593,13 @@ void NucleusEditor::createMenus()
 	editMenu->addSeparator();
 
 	classAction = new QAction(tr("Change Class"), this);
+	classAction->setObjectName("classAction");
 	classAction->setStatusTip(tr("Modify the class designation for the selected objects"));
 	connect(classAction, SIGNAL(triggered()), this, SLOT(changeClass()));
 	editMenu->addAction(classAction);
 
 	addAction = new QAction(tr("Add Object"), this);
+	addAction->setObjectName("addAction");
 	addAction->setStatusTip(tr("Draw a Box to add a new object"));
 	addAction->setShortcut(tr("Ctrl+A"));
 	connect(addAction, SIGNAL(triggered()), segView, SLOT(GetBox()));
@@ -540,24 +607,28 @@ void NucleusEditor::createMenus()
 	editMenu->addAction(addAction);
 
 	mergeAction = new QAction(tr("Merge Objects"), this);
+	mergeAction->setObjectName("mergeAction");
 	mergeAction->setStatusTip(tr("Merge Objects"));
 	mergeAction->setShortcut(tr("Ctrl+M"));
 	connect(mergeAction, SIGNAL(triggered()), this, SLOT(mergeCells()));
 	editMenu->addAction(mergeAction);
 
 	deleteAction = new QAction(tr("Delete Objects"), this);
+	deleteAction->setObjectName("deleteAction");
 	deleteAction->setStatusTip(tr("Deletes the selected objects"));
 	deleteAction->setShortcut(tr("Ctrl+D"));
 	connect(deleteAction,SIGNAL(triggered()),this,SLOT(deleteCells()));
 	editMenu->addAction(deleteAction);
 
 	fillAction = new QAction(tr("Fill Objects"), this);
+	fillAction->setObjectName("fillAction");
 	fillAction->setStatusTip(tr("Fill holes in the selected objects"));
 	fillAction->setShortcut(tr("Ctrl+F"));
 	connect(fillAction,SIGNAL(triggered()),this,SLOT(fillCells()));	
 	editMenu->addAction(fillAction);
 
 	splitZAction = new QAction(tr("Split Objects At Z"), this);
+	splitZAction->setObjectName("splitZAction");
 	splitZAction->setStatusTip(tr("Split selected objects along the current Z slice"));
 	splitZAction->setShortcut(tr("Ctrl+T"));
 	connect(splitZAction, SIGNAL(triggered()), this, SLOT(splitCellAlongZ()));
@@ -565,6 +636,7 @@ void NucleusEditor::createMenus()
 
 
 	splitAction = new QAction(tr("Split Objects X-Y"), this);
+	splitAction->setObjectName("splitAction");
 	splitAction->setStatusTip(tr("Split objects by choosing two seed points"));
 	splitAction->setShortcut(tr("Ctrl+P"));
 	splitAction->setCheckable(true);
@@ -574,6 +646,7 @@ void NucleusEditor::createMenus()
 	editMenu->addAction(splitAction);
 
 	batchSplitAction = new QAction(tr("Batch Split Objects "), this);
+	batchSplitAction->setObjectName("batchSplitAction");
 	batchSplitAction->setStatusTip(tr("Batch Split objects by selecting the objects"));
 	batchSplitAction->setShortcut(tr("Ctrl+Shift+P"));
 	connect(batchSplitAction, SIGNAL(triggered()), this, SLOT(batchSplitCells()));
@@ -582,6 +655,7 @@ void NucleusEditor::createMenus()
 	editMenu->addSeparator();
 
 	exclusionAction = new QAction(tr("Apply Exclusion Margin..."), this);
+	exclusionAction->setObjectName("exclusionAction");
 	exclusionAction->setStatusTip(tr("Set parameters for exclusion margin"));
 	connect(exclusionAction, SIGNAL(triggered()), this, SLOT(applyExclusionMargin()));
 	editMenu->addAction(exclusionAction);
@@ -589,35 +663,44 @@ void NucleusEditor::createMenus()
 
 	// MODELS MENU
 	modelsMenu = menuBar()->addMenu(tr("&Models"));
+	modelsMenu->setObjectName("modelsMenu");
 
 	createTrainingAction = new QAction(tr("Create Training Model..."), this);
+	createTrainingAction->setObjectName("createTrainingAction");
 	connect(createTrainingAction, SIGNAL(triggered()), this, SLOT(createTrainer()));
 	modelsMenu->addAction(createTrainingAction);
 
 	appendTrainingAction = new QAction(tr("Append Training Model..."), this);
+	appendTrainingAction->setObjectName("appendTrainingAction");
 	connect(appendTrainingAction, SIGNAL(triggered()), this, SLOT(appendTrainer()));
 	modelsMenu->addAction(appendTrainingAction);
 
 	//QUERIES MENU
 	queriesMenu = menuBar()->addMenu(tr("Queries"));
+	queriesMenu->setObjectName("queriesMenu");
 
 	kNearestNeighborsAction = new QAction(tr("Query K Nearest Neighbors..."), this);
+	kNearestNeighborsAction->setObjectName("kNearestNeighborsAction");
 	connect(kNearestNeighborsAction, SIGNAL(triggered()), this, SLOT(queryKNearest()));
 	queriesMenu->addAction(kNearestNeighborsAction);
 
 	inRadiusNeighborsAction = new QAction(tr("Query Neighbors Within Radius..."), this);
+	inRadiusNeighborsAction->setObjectName("inRadiusNeighborsAction");
 	connect(inRadiusNeighborsAction, SIGNAL(triggered()), this, SLOT(queryInRadius()));
 	queriesMenu->addAction(inRadiusNeighborsAction);
 
 	computeDiffusionMapAction = new QAction(tr("Compute Diffusion Map..."), this);
+	computeDiffusionMapAction->setObjectName("computeDiffusionMapAction");
 	connect(computeDiffusionMapAction, SIGNAL(triggered()), this, SLOT(computeDistanceMap()));
 	queriesMenu->addAction(computeDiffusionMapAction);
 
 	kNearestDiffusionAction = new QAction(tr("Query K Nearest Diffusion Neighbors..."), this);
+	kNearestDiffusionAction->setObjectName("kNearestDiffusionAction");
 	connect(kNearestDiffusionAction, SIGNAL(triggered()), this, SLOT(queryKDiffusion()));
 	queriesMenu->addAction(kNearestDiffusionAction);
 
 	queryViewsOffAction = new QAction(tr("Set Query Views Off"), this);
+	queryViewsOffAction->setObjectName("queryViewsOffAction");
 	queryViewsOffAction->setShortcut(tr("Shift+O"));
 	connect(queryViewsOffAction, SIGNAL(triggered()), this, SLOT(queryViewsOff()));
 	queriesMenu->addAction(queryViewsOffAction);
@@ -625,12 +708,15 @@ void NucleusEditor::createMenus()
 #ifdef USE_TRACKING
 	//5-D MENU
 	fiveDMenu = menuBar()->addMenu(tr("5D"));
+	fiveDMenu->setObjectName("fiveDMenu");
 
 	trackingAction = new QAction(tr("Tracking..."),this);
+	trackingAction->setObjectName("trackingAction");
 	connect(trackingAction, SIGNAL(triggered()), this, SLOT(startTracking()));
 	fiveDMenu->addAction(trackingAction);
 
 	kymoViewAction = new QAction(tr("Kymograph..."),this);
+	kymoViewAction->setObjectName("kymoViewAction");
 	connect(kymoViewAction, SIGNAL(triggered()), this, SLOT(displayKymoGraph()));
 	fiveDMenu->addAction(kymoViewAction);
 #endif
@@ -638,13 +724,16 @@ void NucleusEditor::createMenus()
   #ifdef USE_QT_TESTING
   //Testing menu & actions
 	testingMenu = menuBar()->addMenu(tr("Testing"));
+  testingMenu->setObjectName("testingMenu");
 
   this->recordAction = new QAction("Record Test", this);
+  this->recordAction->setObjectName("recordAction");
   this->recordAction->setStatusTip("Record a test to a .xml file");
   connect(this->recordAction, SIGNAL(triggered()), this->Tester, SLOT(record()));
   testingMenu->addAction(this->recordAction);
 
   this->playAction = new QAction("Play Test", this);
+  this->playAction->setObjectName("playAction");
   this->playAction->setStatusTip("Run a previously recorded test");
   connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
   testingMenu->addAction(this->playAction);
@@ -652,7 +741,9 @@ void NucleusEditor::createMenus()
 
 	//HELP MENU
 	helpMenu = menuBar()->addMenu(tr("Help"));
+	helpMenu->setObjectName("helpMenu");
 	aboutAction = new QAction(tr("About"),this);
+	aboutAction->setObjectName("aboutAction");
 	aboutAction->setStatusTip(tr("About the application"));
 	connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
 	helpMenu->addAction(aboutAction);
@@ -5267,33 +5358,34 @@ int NucleusEditor::runTest()
     return -1;
   }
 
-  if( this->TestBaselineImageFileName == "" )
-  {
-    std::cout << "ERROR: TestBaselineImageFileName is empty" << std::endl;
-    return 1;
-  }
-
   //setup test utility
   this->Tester->SetBaselineImage(
     this->TestBaselineImageFileName.toStdString().c_str() );
 
   //playback the test recording
   this->Tester->playTestFile( this->TestInputFile );
-
-  //write our QImage to disk so the testing framework can read it back in
-  QString tmpFile = TEST_OUTPUT_DIR;
-  tmpFile += "/";
-  tmpFile += "nucleus_test_output.png";
-	segView->SaveDisplayImageToFile(tmpFile);
-
-  //compare displayed image to baseline, then print & return the results of
-  //this test
-  if(this->Tester->compareResults(tmpFile) == false)
+  
+  //if this is an image comparison test
+  if( this->TestBaselineImageFileName != "" )
   {
-    std::cout << "ERROR: test failed" << std::endl;
-    return 1;
+    //write our QImage to disk so the testing framework can read it back in
+    QString tmpFile = TEST_OUTPUT_DIR;
+    tmpFile += "/";
+    tmpFile += "nucleus_test_output.png";
+    segView->SaveDisplayImageToFile(tmpFile);
+
+    //compare displayed image to baseline, then print & return the results of
+    //this test
+    if(this->Tester->compareResults(tmpFile) == false)
+    {
+      std::cout << "ERROR: test failed" << std::endl;
+      return 1;
+    }
+    else
+    {
+      std::cout << "test passed" << std::endl;
+    }
   }
-  std::cout << "test passed" << std::endl;
   return 0;
 
   #endif
