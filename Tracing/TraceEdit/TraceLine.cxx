@@ -325,6 +325,11 @@ void TraceLine::calculateBifFeatures()
 	double* Daughter1PlaneRemote_ptr;
 	double* Daughter2PlaneLocal_ptr;
 	double* Daughter2PlaneRemote_ptr;
+	
+	/*
+	vector<double> planeAnglelocal (2,-1); //two doubles with value -1
+	vector<double> planeAngleremote[2] = -1;
+	*/
 	double planeAnglelocal1 = -1;
 	double planeAnglelocal2 = -1;
 	double planeAngleremote1 = -1;
@@ -357,6 +362,15 @@ void TraceLine::calculateBifFeatures()
 		planeAngleremote2 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter2PlaneRemote_ptr);
 	}
 
+	if (planeAnglelocal1 != planeAnglelocal1) //quickfix for invalid numbers
+		planeAnglelocal1 = -1;
+	if (planeAnglelocal2 != planeAnglelocal2)
+		planeAnglelocal2 = -1;
+	if (planeAngleremote1 != planeAngleremote1)
+		planeAngleremote1 = -1;
+	if (planeAngleremote2 != planeAngleremote2)
+		planeAngleremote2 = -1;
+
 	if (planeAnglelocal1 >= planeAnglelocal2)
 	{
 		this->setBifTorqueLocalBig(planeAnglelocal1);
@@ -367,14 +381,15 @@ void TraceLine::calculateBifFeatures()
 		this->setBifTorqueLocalBig(planeAnglelocal2);
 		this->setBifTorqueLocalSmall(planeAnglelocal1);
 	}
-	if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+
+	if (planeAnglelocal1 != -1 || planeAnglelocal2 != -1)	//if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
 	{
-		if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
+		if (planeAnglelocal1 != -1 && planeAnglelocal2 != -1) //(!Daughter1->isLeaf() && !Daughter2->isLeaf())
 		{
 			this->setBifTorqueLocal((planeAnglelocal1+planeAnglelocal2)/2);
 			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1+planeAnglelocal2);
 		}
-		else if (!Daughter1->isLeaf())
+		else if (planeAnglelocal1 != -1) //(!Daughter1->isLeaf())
 		{
 			this->setBifTorqueLocal(planeAnglelocal1);
 			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1);
@@ -397,14 +412,14 @@ void TraceLine::calculateBifFeatures()
 		this->setBifTorqueRemoteSmall(planeAngleremote1);
 	}
 	
-	if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+	if (planeAngleremote1 != -1 || planeAngleremote2 != -1) //if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
 	{
-		if (!Daughter1->isLeaf() && !Daughter2->isLeaf())
+		if (planeAngleremote1 != -1 && planeAngleremote2 != -1) //(!Daughter1->isLeaf() && !Daughter2->isLeaf())
 		{
 			this->setBifTorqueRemote((planeAngleremote1+planeAngleremote2)/2);
 			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1+planeAngleremote2);
 		}
-		else if (!Daughter1->isLeaf())
+		else if (planeAngleremote1 != -1) //(!Daughter1->isLeaf())
 		{
 			this->setBifTorqueRemote(planeAngleremote1);
 			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1);
