@@ -112,6 +112,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 NucleusEditor::~NucleusEditor()
 {
+	this->closeViews();
 	if(selection) delete selection;
 	if(nucSeg) delete nucSeg;
 	if(pProc) delete pProc;
