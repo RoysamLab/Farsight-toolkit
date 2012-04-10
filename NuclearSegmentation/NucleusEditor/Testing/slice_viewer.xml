@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSpinBox0" command="spin" arguments="up"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSpinBox0" command="spin" arguments="down"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSpinBox0" command="set_int" arguments="21"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="1"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="8"/>
+</events>

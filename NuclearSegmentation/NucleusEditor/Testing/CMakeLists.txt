@@ -29,5 +29,16 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-ROIStatistics PROPERTIES
     PASS_REGULAR_EXPRESSION "variance: 152.21"
   )
+  
+  add_test(
+    NucleusEditor-SliceViewer
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${NucleusEditor_TEST_DIR}/slice_viewer.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/slice_viewer_baseline.png
+  )
 endif()
 
