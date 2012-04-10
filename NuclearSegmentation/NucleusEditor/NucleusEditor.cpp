@@ -1185,7 +1185,7 @@ bool NucleusEditor::askSaveResult()
 	{
 		lastPath = QFileInfo(filename).absolutePath() + QDir::separator();
 		projectFiles.path = lastPath.toStdString();
-		projectFiles.input = QFileInfo(filename).fileName().toStdString();
+		projectFiles.output = QFileInfo(filename).fileName().toStdString();
 	}
 
 	return this->saveResult();
