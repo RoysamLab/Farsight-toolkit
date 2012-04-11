@@ -97,5 +97,22 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SegmentNuclei
   )
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/show_object_IDs.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/show_object_IDs.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-ShowObjectIDs
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/show_object_IDs.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/show_object_IDs_baseline.png
+  )
+  set_tests_properties(NucleusEditor-ShowObjectIDs PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+  )
+
 endif()
 
