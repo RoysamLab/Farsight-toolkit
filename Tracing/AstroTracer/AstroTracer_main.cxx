@@ -7,20 +7,21 @@ int main(int argc, char* argv[])
 	
     argv[1] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\CroppedAstroTRITC.tif"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\R2080_6wk_Crop_sigma_0.030000_CV.tif";
 	argv[2] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\roots_cropped.txt"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\11111111.tif";
-	argv[4] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\CroppedAstroLABEL.tif"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\SegParams.ini";
+	argv[4] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\labels_2_label_nuc.tif"; 
+		//CroppedAstroLABEL.tif //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\SegParams.ini";
 	
 	argv[3] = "400"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\ParameterFile.ini";
 
 	argc = 5;
 
-	bool justComputeRootFeatures = true; //false;
-	bool startWithCandidateRoots = false;
+	bool justComputeRootFeatures = false; //false;
+	bool startWithCandidateRoots = true;
 
 	std::string tracePointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\trace_points.txt";
 	std::string featureVectorFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector.txt";
 	std::string IDImageFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\IDImage.tif";
 	std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector_with_classes_backup.txt";
-	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_1.txt";
+	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_4.txt";
 	std::string nucleiFeaturesAppendedFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_appended_1.txt";
 	
 	if (argc < 5)

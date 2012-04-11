@@ -3098,8 +3098,8 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 			root_point.featureVector.maxIntensity = atof(str_vec[10].c_str());
 			root_point.featureVector.minIntensity = atof(str_vec[11].c_str());
 			root_point.featureVector.nucleusDistance = atof(str_vec[12].c_str());
-			root_point.classValue = atof(str_vec[13].c_str());
-			root_point.confidenceMeasure = atof(str_vec[14].c_str());
+			root_point.classValue = atof(str_vec[14].c_str());
+			root_point.confidenceMeasure = atof(str_vec[15].c_str());
 
 			// ONLY TWO CLASSES OF ROOT POINTS ARE CONSIDERED
 			if(root_point.classValue == 1)
@@ -3131,10 +3131,10 @@ IntrinsicFeatureVector::IntrinsicFeatureVector(){
 
 AssociativeFeatureVector::AssociativeFeatureVector(){
 
-	this->minRootDist = -1;
-	this->maxRootDist = -1;
-	this->meanRootDist = -1;
-	this->varRootDist = -1;
+	this->minRootDist = 100000;
+	this->maxRootDist = 100000;
+	this->meanRootDist = 100000;
+	this->varRootDist = 100000;
 	this->nRoots = 0;
 }
 
@@ -3231,7 +3231,8 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 	// Derive this from: nuclei_object.intrinsicFeatures.boundingBoxVolume
-	float double_scale_nuclei = 100;
+	//float double_scale_nuclei = 25;
+	
 
 	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
 	CharImageType3D::SizeType sub_volume_size_nuclei;
@@ -3248,11 +3249,30 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	distance_map_writer3->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\voronoi_map.tif");
 	distance_map_writer3->SetInput(voronoi_map);
 	distance_map_writer3->Update();*/
-
+	
+	
+	typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetLowerThreshold(1);
+	threshold_filter->SetInsideValue(255);
+	threshold_filter->SetOutsideValue(0);
+	threshold_filter->SetInput(this->SomaImage);
+	threshold_filter->Update();
+	
+	/*itk::ImageFileWriter< CharImageType3D >::Pointer nuclei_writer = itk::ImageFileWriter<CharImageType3D>::New();
+	nuclei_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\Binary_nuclei.tif");
+	nuclei_writer->SetInput(threshold_filter->GetOutput());
+	nuclei_writer->Update();*/
+	
+	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 
 	//Loop over nuclei
 	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
 
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+
+		
 		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
@@ -3261,28 +3281,24 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
 		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
 
-		ImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
+		LabelImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
 
 		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
 		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
+
+	    //std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
 
 		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
 			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
 			(end_index_nuclei[2] > (unsigned int)sz[2]) )
 			continue;
 
+		std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
 		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
 
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
-
-		typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
-		ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
-		threshold_filter->SetLowerThreshold(1);
-		threshold_filter->SetInsideValue(255);
-		threshold_filter->SetOutsideValue(0);
-		threshold_filter->SetInput(this->SomaImage);
-		threshold_filter->Update();
 
 
 		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
@@ -3305,14 +3321,19 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 				
 		double cur_distance;
 		double min_distance = 1000.0;
-		double max_distance = 0.0; 
+		double max_distance = -1000.0; 
 		double mean_distance = 0.0;
 		double variance_distance = 0.0;
 		double acc_distance = 0.0;
 		int n_roots = 0;
-				
+		
+		//std::cout << std::endl;
+
 		std::vector<double> distance_array;
 		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
+
+			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+			
 
 			if(CandidateRootPoints[j].isRootPoint){
 
@@ -3321,16 +3342,41 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 				current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
 				current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
 
-				if(current_root_idx[0] < starting_index_nuclei[0] || current_root_idx[1] < starting_index_nuclei[1] || current_root_idx[2] < starting_index_nuclei[2] ||
-					current_root_idx[0] > end_index_nuclei[0] || current_root_idx[1] > end_index_nuclei[1] || current_root_idx[2] > end_index_nuclei[2])
+				//if(i > 880)
+				//	std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+				
+				int offset = 2; //1;
+				if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
+					current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
 					continue;
+
+
+				//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+				
 				
 				ImageType3D::IndexType relative_root_idx;
 				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
 				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
 				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
 
+				//std::cout << relative_root_idx[0] << ", " << relative_root_idx[1] << ", " << relative_root_idx[2] << std::endl;
+				
 				cur_distance = distance_map->GetPixel(relative_root_idx);
+				
+				if(cur_distance < 0.00000000000001 && cur_distance > 0.0)
+					cur_distance = 0.0;
+
+				if(cur_distance > -0.00000000000001 && cur_distance < 0.0)
+					cur_distance = 0.0;
+				
+				if(cur_distance < -1000.0)
+					cur_distance = -1000.0;
+				
+				if(cur_distance > 1000.0)
+					cur_distance = 1000.0;
+				
+				//std::cout << cur_distance << std::endl;
+
 				if(cur_distance < min_distance)
 					min_distance = cur_distance;
 				if(cur_distance > max_distance)
@@ -3342,33 +3388,37 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 			}
 		}	
 
-		//std::cout << n_roots << std::endl;
+		//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
-		//if(!distance_array.empty()){
-		if(n_roots != 0){
+		if(!distance_array.empty()){
+
+			//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
 			mean_distance = acc_distance / n_roots;
-			for(int k = 0; k < distance_array.size(); k++){
+			for(int k = 0; k < distance_array.size(); k++)
 				variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
-			}
-			
+		
 			variance_distance = variance_distance / n_roots;
+
+			//std::cout << "mean: " << mean_distance << " variance: " << variance_distance << " n_roots: " << n_roots << std::endl;
 
 			this->NucleiObjects[i].associativeFeatures.minRootDist = min_distance; 
 			this->NucleiObjects[i].associativeFeatures.maxRootDist = max_distance;
 			this->NucleiObjects[i].associativeFeatures.meanRootDist = mean_distance;
 			this->NucleiObjects[i].associativeFeatures.varRootDist = variance_distance;
 			this->NucleiObjects[i].associativeFeatures.nRoots = n_roots;
+
+			//distance_array.clear();
 		}
 		else{
 			// These features do not exist when no root points are found in the neighborhood
-			this->NucleiObjects[i].associativeFeatures.minRootDist = -1; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.maxRootDist = -1; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.meanRootDist = -1; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.varRootDist = -1; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.minRootDist = 100000; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000; //double_scale_nuclei;
 			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
 		}
-		distance_array.clear();
+		//distance_array.clear();
 	}
 }
 
