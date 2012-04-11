@@ -1203,15 +1203,17 @@ bool NucleusEditor::saveResult()
 	QString fullbase = QFileInfo(fullname).completeBaseName();
 	QString ext = QFileInfo(fullname).suffix();
 
-	bool ok;
+	bool ok = false;
 	if(labImg->GetImageInfo()->numTSlices == 1)
 	{
 		if(ext == "xml")
 			ok = ftk::SaveXMLImage(fullname.toStdString(), labImg);
-		else{
-			ok = labImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
+		else
+		{
+			QString fullExt = "." + ext;
+			fullname.remove(fullExt);
+			ok = labImg->SaveChannelAs(0, fullname.toStdString(), ext.toStdString());
 		}
-		ok = labImg->SaveChannelAs(0, projectFiles.output,"tif");
 	}
 	else
 	{
@@ -1234,7 +1236,10 @@ bool NucleusEditor::saveResult()
 		}
 	}
 	if(ok)
-		printf("done saving\n");
+		std::cout << "done saving" << std::endl;
+	else
+		std::cout << "saving failed" << std::endl;
+  
 	projectFiles.outputSaved = ok;
 	return ok;
 }
