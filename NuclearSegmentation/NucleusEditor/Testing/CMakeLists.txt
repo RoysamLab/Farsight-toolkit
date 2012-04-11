@@ -45,5 +45,23 @@ if(QtTestingFound)
     --baseline
     ${NucleusEditor_TEST_DIR}/slice_viewer_baseline.png
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/merge_segments.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/merge_segments.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-MergeSegments
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/merge_segments.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/merge_segments_baseline.png
+  )
+  set_tests_properties(NucleusEditor-MergeSegments PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+  )
+
 endif()
 
