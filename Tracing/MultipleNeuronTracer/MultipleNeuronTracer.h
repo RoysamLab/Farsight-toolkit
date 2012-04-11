@@ -59,10 +59,37 @@
 #include <map>
 #include <vector>
 #include <time.h>
+#include <iostream>
+#include <sstream>
 
 #define MAXVAL 100000.0f
 
 #include "omp.h"
+
+
+template <typename T>
+int writeImage2(typename T::Pointer im, const char* filename)
+{
+	printf("Writing %s ... \n",filename);
+	typedef typename itk::ImageFileWriter<T> WriterType;
+
+	typename WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(filename);
+	writer->SetInput(im);
+	try
+	{
+		writer->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+		return EXIT_FAILURE;
+	}
+	std::cout<<" done";
+	return EXIT_SUCCESS;
+}
+
 
 typedef float PixelType;
 
@@ -112,7 +139,7 @@ public:
 
 	void LoadCurvImage(std::string fname, unsigned int pad); 
 	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);
-	void LoadCurvImage_2(ImageType3D::Pointer &image);
+	void LoadCurvImage_2(ImageType3D::Pointer &image, unsigned int uu, std::string gfpFileNameNoExt);
 	
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
