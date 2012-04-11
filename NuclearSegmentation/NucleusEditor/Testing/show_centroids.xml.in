@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="viewMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu" command="activate" arguments="showCrosshairsAction"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,108,92"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,108,92"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="viewMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu" command="activate" arguments="showCrosshairsAction"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu" command="activate" arguments="showBoundsAction"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu" command="activate" arguments="showBoundsAction"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu" command="activate" arguments="showCentroidsAction"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="4"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="testingMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/testingMenu" command="activate" arguments="clearSettingsAction"/>
+    <event widget="1NucleusEditor0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>

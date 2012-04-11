@@ -79,6 +79,23 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-DeleteSegments PROPERTIES
     DEPENDS NucleusEditor-SegmentNuclei
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/show_centroids.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/show_centroids.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-ShowCentroids
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/show_centroids.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/show_centroids_baseline.png
+  )
+  set_tests_properties(NucleusEditor-ShowCentroids PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+  )
 
 endif()
 
