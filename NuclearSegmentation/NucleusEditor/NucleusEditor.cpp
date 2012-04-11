@@ -3673,6 +3673,12 @@ void NucleusEditor::toggleIDs(void)
 		segView->SetIDsVisible(true);
 	else
 		segView->SetIDsVisible(false);
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "toggleIDs" << std::endl;
+	}
+	#endif
 }
 
 void NucleusEditor::toggleCentroids(void)

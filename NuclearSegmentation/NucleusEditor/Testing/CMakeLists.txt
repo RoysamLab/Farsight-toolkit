@@ -107,11 +107,10 @@ if(QtTestingFound)
     ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
     --test
     ${CMAKE_CURRENT_BINARY_DIR}/show_object_IDs.xml
-    --baseline
-    ${NucleusEditor_TEST_DIR}/show_object_IDs_baseline.png
   )
   set_tests_properties(NucleusEditor-ShowObjectIDs PROPERTIES
     DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "toggleIDs"
   )
 
 endif()
