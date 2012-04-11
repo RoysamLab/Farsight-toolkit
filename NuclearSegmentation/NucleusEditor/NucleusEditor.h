@@ -282,6 +282,10 @@ protected slots:
 #endif
 	void about(void);
 	void menusEnabled(bool val);
+	
+	//******************************************************
+	//Testing Menu
+	void clearSettings();
 
 signals:
 
@@ -439,6 +443,7 @@ protected:
   QMenu *testingMenu;
   QAction *recordAction;
   QAction *playAction;
+  QAction *clearSettingsAction;
   #endif
 
 	//*********************************************************************
@@ -528,6 +533,8 @@ protected:
 	std::vector<std::string> imageNames;
 
 	std::vector<std::pair<int,int> > ground_truth;
+
+	bool saveSettingsOnExit;
 
   #ifdef USE_QT_TESTING
   //testing support

@@ -64,6 +64,7 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	showNucAdj = false;
 	showCellAdj = false;
 	enableDoubleClicks = true;
+	saveSettingsOnExit = false;
 }
 
 void LabelImageViewQT::setupUI(void)
@@ -162,7 +163,10 @@ void LabelImageViewQT::readSettings()
 //Destructor:
 LabelImageViewQT::~LabelImageViewQT()
 {
-	writeSettings();
+	if(saveSettingsOnExit)
+	{
+		writeSettings();
+	}
 }
 
 void LabelImageViewQT::writeSettings()
@@ -175,6 +179,13 @@ void LabelImageViewQT::writeSettings()
 	settings.setValue("showCentroids", showCentroids);
 	//settings.setValue("showROI", showROI);
 	settings.endGroup();
+}
+
+void LabelImageViewQT::clearSettings()
+{
+	QSettings settings;
+	settings.clear();
+	saveSettingsOnExit = false;
 }
 
 void LabelImageViewQT::SetColorsToDefaults(void)

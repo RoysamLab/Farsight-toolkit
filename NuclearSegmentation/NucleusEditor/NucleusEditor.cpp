@@ -93,6 +93,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	trainName = 0;
 	predictName = 0;
 	activeRun = 0;
+	saveSettingsOnExit = true;
 
 	this->resize(800,800);
 
@@ -143,6 +144,21 @@ void NucleusEditor::writeSettings()
 	settings.setValue("colorForBounds", colorItemsMap["Object Boundaries"]);
 	settings.setValue("colorForIDs", colorItemsMap["Object IDs"]);
 	settings.setValue("colorForROI", colorItemsMap["ROI Boundary"]);
+}
+
+void NucleusEditor::clearSettings()
+{
+	int reply = QMessageBox::question(this, tr("Clear settings"),
+		"This action will delete all custom Nucleus Editor settings, reverting them back\nto their default values.  Are you sure you'd like to do this?",
+		QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+
+	if (reply == QMessageBox::Yes)
+	{
+		QSettings settings;
+		settings.clear();
+		segView->clearSettings();
+		saveSettingsOnExit = false;
+	}
 }
 
 //******************************************************************************
@@ -737,6 +753,12 @@ void NucleusEditor::createMenus()
   this->playAction->setStatusTip("Run a previously recorded test");
   connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
   testingMenu->addAction(this->playAction);
+
+  this->clearSettingsAction = new QAction("Clear Settings", this);
+  this->clearSettingsAction->setObjectName("clearSettingsAction");
+  this->clearSettingsAction->setStatusTip("Revert settings back to default values");
+  connect(this->clearSettingsAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
+  testingMenu->addAction(this->clearSettingsAction);
   #endif
 
 	//HELP MENU

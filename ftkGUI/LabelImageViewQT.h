@@ -128,6 +128,7 @@ public:
 	int GetCurrentTimeVal(void);
 	void SetCurrentTimeVal(double time);
 
+	void clearSettings();
 		
 public slots:
 	void SaveDisplayImageToFile(QString fileName);
@@ -277,6 +278,7 @@ protected:
 	bool showNucAdj;
 	bool showCellAdj;
 	bool enableDoubleClicks;
+	bool saveSettingsOnExit;
 
 	//For collecting two points:
 	bool pointsMode;
