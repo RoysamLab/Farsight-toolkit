@@ -162,27 +162,17 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetPk_2(), this->Pk_2, this->Pk_2Min, this->Pk_2Max);
 			this->MaxMin(this->segments[i]->GetPk_classic(), this->Pk_classic, this->Pk_classicMin, this->Pk_classicMax);
 			this->MaxMin(this->segments[i]->GetBifAmplLocal(), this->BifAmplLocal, this->BifAmplLocalMin, this->BifAmplLocalMax);
-			this->MaxMin(this->segments[i]->GetBifAmpRemote(), this->BifAmpRemote, this->BifAmpRemoteMin, this->BifAmpRemoteMax);
+			this->MaxMin(this->segments[i]->GetBifAmplRemote(), this->BifAmplRemote, this->BifAmplRemoteMin, this->BifAmplRemoteMax);
+			this->MaxMin(this->segments[i]->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax,this->BifTiltLocalCount);
 			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
-			this->MaxMin(this->segments[i]->GetBifTiltLocalSmall(), this->BifTiltLocalSmall, this->BifTiltLocalSmallMin, this->BifTiltLocalSmallMax);
-			this->MaxMin(this->segments[i]->GetBifTiltLocalBig(), this->BifTiltLocalBig, this->BifTiltLocalBigMin, this->BifTiltLocalBigMax);
-			this->MaxMin(this->segments[i]->GetBifTiltLocalTwoDaughter(), this->BifTiltLocalTwoDaughter, this->BifTiltLocalTwoDaughterMin, this->BifTiltLocalTwoDaughterMax);
-			this->MaxMin(this->segments[i]->GetBifTiltRemoteTwoDaughter(), this->BifTiltRemoteTwoDaughter, this->BifTiltRemoteTwoDaughterMin, this->BifTiltRemoteTwoDaughterMax);
-			this->MaxMin(this->segments[i]->GetBifTorqueLocalTwoDaughter(), this->BifTorqueLocalTwoDaughter, this->BifTorqueLocalTwoDaughterMin, this->BifTorqueLocalTwoDaughterMax);
-			this->MaxMin(this->segments[i]->GetBifTorqueRemoteTwoDaughter(), this->BifTorqueRemoteTwoDaughter, this->BifTorqueRemoteTwoDaughterMin, this->BifTorqueRemoteTwoDaughterMax);
-			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTorqueLocal(), this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax);
+			///this->MaxMin(this->segments[i]->GetBranch1()->GetBifTorqueLocal(), this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax);
 			if(this->segments[i]->isBranch())
 			{
-			this->MaxMin(this->segments[i]->GetBifTiltRemoteSmall(), this->BifTiltRemoteSmall, this->BifTiltRemoteSmallMin, this->BifTiltRemoteSmallMax);
-			this->MaxMin(this->segments[i]->GetBifTiltRemoteBig(), this->BifTiltRemoteBig, this->BifTiltRemoteBigMin, this->BifTiltRemoteBigMax);
-			//count number of torque angles (local and remote torques should have the same number of angles)
-			this->MaxMin(this->segments[i]->GetBifTorqueLocalSmall(), this->BifTorqueLocalSmall, this->BifTorqueLocalSmallMin, this->BifTorqueLocalSmallMax, this->TwoDaughterTorqueCount);
-			this->MaxMin(this->segments[i]->GetBifTorqueLocalBig(), this->BifTorqueLocalBig, this->BifTorqueLocalBigMin, this->BifTorqueLocalBigMax, this->TwoDaughterTorqueCount);
+				this->MaxMin(this->segments[i]->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax,this->BifTiltRemoteCount);
+				this->MaxMin(this->segments[i]->GetBifTorqueLocal(),this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax, this->BifTorqueLocalCount);
 			if (this->segments[i]->GetTerminalDegree() > 2)
 			{
-				this->MaxMin(this->segments[i]->GetBifTorqueRemoteBig(), this->BifTorqueRemoteBig, this->BifTorqueRemoteBigMin, this->BifTorqueRemoteBigMax);
-				//make test if there is a small angle (maybe if getTorque = -1)
-				this->MaxMin(this->segments[i]->GetBifTorqueRemoteSmall(), this->BifTorqueRemoteSmall, this->BifTorqueRemoteSmallMin, this->BifTorqueRemoteSmallMax);
+				this->MaxMin(this->segments[i]->GetBifTorqueRemote(),this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax, this->BifTorqueRemoteCount);
 			}
 
         //this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
@@ -412,46 +402,28 @@ void CellTrace::clearAll()
 	this->BifAmplLocalMin = 180;
 	this->BifAmplLocalMax = 0;
 
-	this->BifAmpRemote = 0;
-	this->BifAmpRemoteMin = 180;
-	this->BifAmpRemoteMax = 0;
+	this->BifAmplRemote = 0;
+	this->BifAmplRemoteMin = 180;
+	this->BifAmplRemoteMax = 0;
 
-	this->BifTiltLocalSmall = 0;
-	this->BifTiltLocalSmallMin = 180;
-	this->BifTiltLocalSmallMax = 0;
-	this->BifTiltLocalBig = 0;
-	this->BifTiltLocalBigMin = 180;
-	this->BifTiltLocalBigMax = 0;
+	this->BifTiltLocal = 0;
+	this->BifTiltLocalMin = 180;
+	this->BifTiltLocalMax = 0;
+	this->BifTiltLocalCount = 0;
 
-	this->BifTiltRemoteSmall = 0;
-	this->BifTiltRemoteSmallMin = 180;
-	this->BifTiltRemoteSmallMax = 0;
-	this->BifTiltRemoteBig = 0;
-	this->BifTiltRemoteBigMin = 180;
-	this->BifTiltRemoteBigMax = 0;
+	this->BifTiltRemote = 0;
+	this->BifTiltRemoteMin = 180;
+	this->BifTiltRemoteMax = 0;
+	this->BifTiltRemoteCount = 0;
 
-	this->BifTiltLocalTwoDaughter = 0;
-	this->BifTiltRemoteTwoDaughter = 0;
-
-	this->BifTorqueLocalSmall = 0;
-	this->BifTorqueLocalSmallMin = 180;
-	this->BifTorqueLocalSmallMax = 0;
-	this->BifTorqueLocalBig = 0;
-	this->BifTorqueLocalBigMin = 180;
-	this->BifTorqueLocalBigMax = 0;
-
-	this->BifTorqueRemoteSmall = 0;
-	this->BifTorqueRemoteSmallMin = 180;
-	this->BifTorqueRemoteSmallMax = 0;
-	this->BifTorqueRemoteBig = 0;
-	this->BifTorqueRemoteBigMin = 180;
-	this->BifTorqueRemoteBigMax = 0;
-
-	this->BifTorqueLocalTwoDaughter = 0;
-	this->BifTorqueRemoteTwoDaughter = 0;
-	this->BifTorqueLocalTwoDaughterMax = 0;
-	this->BifTorqueRemoteTwoDaughterMax = 0;
-	this->TwoDaughterTorqueCount = 0;
+	this->BifTorqueLocal = 0;
+	this->BifTorqueLocalMin = 180;
+	this->BifTorqueLocalMax = 0;
+	this->BifTorqueLocalCount = 0;
+	this->BifTorqueRemote = 0;
+	this->BifTorqueRemoteMin = 180;
+	this->BifTorqueRemoteMax = 0;
+	this->BifTorqueRemoteCount = 0;
 
 	this->Azimuth = 0;
 	this->AzimuthMin = 180;
@@ -531,6 +503,25 @@ void CellTrace::MaxMin(int NewValue, int &total, int &Min, int &Max)
 		if (NewValue < Min)
 		{
 			Min = NewValue;
+		}
+	}
+}
+void CellTrace::MaxMin(std::vector<double> NewValue, double &total, double &Min, double &Max, int &Count)
+{
+	for (int i = 0; i < NewValue.size(); i++)
+	{
+		if (NewValue[i] != -1)
+		{
+			total += NewValue[i];
+			if (NewValue[i] > Max)
+			{
+				Max = NewValue[i];
+			}
+			if (NewValue[i] < Min)
+			{
+				Min = NewValue[i];
+			}
+			Count++;
 		}
 	}
 }
@@ -675,44 +666,33 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(AveElevation);
 	CellData->InsertNextValue(this->ElevationMax);
 
+	if (this->BifTorqueLocalCount == 0)
+	{
+		this->BifTorqueLocalCount = 1;
+	}
+	if (this->BifTorqueRemoteCount == 0)
+	{
+		this->BifTorqueRemoteCount = 1;
+	}
 	CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
 	CellData->InsertNextValue(this->BifAmplLocalMin);
 	CellData->InsertNextValue(this->BifAmplLocalMax);
-	CellData->InsertNextValue(this->BifTiltLocalSmall/ this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltLocalSmallMin);
-	CellData->InsertNextValue(this->BifTiltLocalSmallMax);
-	CellData->InsertNextValue(this->BifTiltLocalBig/ this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltLocalBigMin);
-	CellData->InsertNextValue(this->BifTiltLocalBigMax);
+	CellData->InsertNextValue(this->BifTiltLocal / this->actualBifurcations);
+	CellData->InsertNextValue(this->BifTiltLocalMin);
+	CellData->InsertNextValue(this->BifTiltLocalMax);
+	CellData->InsertNextValue(this->BifTorqueLocal/ this->BifTorqueLocalCount);
+	CellData->InsertNextValue(this->BifTorqueLocalMin);
+	CellData->InsertNextValue(this->BifTorqueLocalMax);
 
-	if (this->TwoDaughterTorqueCount == 0)
-	{
-		this->TwoDaughterTorqueCount = 1;
-	}
-	CellData->InsertNextValue(this->BifTorqueLocalTwoDaughter/ this->TwoDaughterTorqueCount);
-	//CellData->InsertNextValue(this->BifTorqueLocalSmall/ (this->branchPoints-2));
-	CellData->InsertNextValue(this->BifTorqueLocalSmallMin);
-	CellData->InsertNextValue(this->BifTorqueLocalSmallMax);
-	//CellData->InsertNextValue(this->BifTorqueLocalBig/ (this->branchPoints-2));
-	CellData->InsertNextValue(this->BifTorqueLocalBigMin);
-	CellData->InsertNextValue(this->BifTorqueLocalBigMax);
-
-	CellData->InsertNextValue(this->BifAmpRemote / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifAmpRemoteMin);
-	CellData->InsertNextValue(this->BifAmpRemoteMax);
-	CellData->InsertNextValue(this->BifTiltRemoteSmall / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltRemoteSmallMin);
-	CellData->InsertNextValue(this->BifTiltRemoteSmallMax);
-	CellData->InsertNextValue(this->BifTiltRemoteBig / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltRemoteBigMin);
-	CellData->InsertNextValue(this->BifTiltRemoteBigMax);
-	CellData->InsertNextValue(this->BifTorqueRemoteTwoDaughter/ this->TwoDaughterTorqueCount);
-	//CellData->InsertNextValue(this->BifTorqueRemoteSmall / (this->branchPoints-2));
-	CellData->InsertNextValue(this->BifTorqueRemoteSmallMin);
-	CellData->InsertNextValue(this->BifTorqueRemoteSmallMax);
-	//CellData->InsertNextValue(this->BifTorqueRemoteBig / (this->branchPoints-2));
-	CellData->InsertNextValue(this->BifTorqueRemoteBigMin);
-	CellData->InsertNextValue(this->BifTorqueRemoteBigMax);
+	CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
+	CellData->InsertNextValue(this->BifAmplRemoteMin);
+	CellData->InsertNextValue(this->BifAmplRemoteMax);
+	CellData->InsertNextValue(this->BifTiltRemote / this->actualBifurcations);
+	CellData->InsertNextValue(this->BifTiltRemoteMin);
+	CellData->InsertNextValue(this->BifTiltRemoteMax);
+	CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
+	CellData->InsertNextValue(this->BifTorqueRemoteMin);
+	CellData->InsertNextValue(this->BifTorqueRemoteMax);
 
 	if (this->terminalTips == 0)
 	{

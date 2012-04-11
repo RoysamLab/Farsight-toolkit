@@ -52,27 +52,22 @@ TraceLine::TraceLine()
 	this->Pk_classic = 0;
 
 	this->BifAmplLocal = -1;
-	this->BifAmpRemote = -1;
+	this->BifAmplRemote = -1;
+	this->BifTiltLocalAvg = -1;
+	this->BifTiltRemoteAvg = -1;
+	this->BifTorqueLocalAvg = -1;
+	this->BifTorqueRemoteAvg = -1;
 
-	this->BifTiltLocal = -1;
-	this->BifTiltRemote = -1;
-	//there are 4 tilts per segment (need to add two more)
-	this->BifTiltLocalBig = -1;
-	this->BifTiltLocalSmall = -1;
-	this->BifTiltRemoteBig = -1;
-	this->BifTiltRemoteSmall = -1;
+	this->BifTiltLocal.push_back(-1);
+	this->BifTiltLocal.push_back(-1);
+	this->BifTiltRemote.push_back(-1);
+	this->BifTiltRemote.push_back(-1);
 
 	this->BifTorqueLocal = -1;
-	this->BifTorqueRemote = -1;
-	this->BifTorqueLocalBig = -1;
-	this->BifTorqueLocalSmall = -1;
-	this->BifTorqueRemoteBig = -1;
-	this->BifTorqueRemoteSmall = -1;
-
-	this->BifTiltLocalTwoDaughter = -1;
-	this->BifTiltRemoteTwoDaughter = -1;
-	this->BifTorqueLocalTwoDaughter = -1;
-	this->BifTorqueRemoteTwoDaughter = -1;
+	this->planeAngleLocal.push_back(-1);
+	this->planeAngleLocal.push_back(-1);
+	this->planeAngleRemote.push_back(-1);
+	this->planeAngleRemote.push_back(-1);
 
 	this->CellFeatures.clear();
 //for Dist to device calculations
@@ -280,39 +275,22 @@ void TraceLine::calculateBifFeatures()
 	}
 
 	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
-	this->BifAmpRemote = this->Angle(D1B, BranchBit, D2B);
+	this->BifAmplRemote = this->Angle(D1B, BranchBit, D2B);
 
 	//Identify bigger vs smaller daughter angle
-	double angle1 = this->Angle(previousBit, BranchBit, D1F);
-	double angle2 = this->Angle(previousBit, BranchBit, D2F);
-	if (angle1 >= angle2)
-	{
-		this->setBifTiltLocalBig(angle1);
-		this->setBifTiltLocalSmall(angle2);
-	}
-	else
-	{
-		this->setBifTiltLocalBig(angle2);
-		this->setBifTiltLocalSmall(angle1);
-	}
+	double tiltAngle1 = this->Angle(previousBit, BranchBit, D1F);
+	double tiltAngle2 = this->Angle(previousBit, BranchBit, D2F);
+	this->setBifTiltLocalAvg((tiltAngle1+tiltAngle2)/2);
 
-	this->setBifTiltLocal((angle1+angle2)/2); //average
+	this->BifTiltLocal[0] = tiltAngle1;
+	this->BifTiltLocal[1] = tiltAngle2;
 
-	angle1 = this->Angle(previousBit, BranchBit, D1B);
-	angle2 = this->Angle(previousBit, BranchBit, D2B);
-	if (angle1 >= angle2)
-	{
-		this->setBifTiltRemoteBig(angle1);
-		this->setBifTiltRemoteSmall(angle2);
-	}
-	else
-	{
-		this->setBifTiltRemoteBig(angle2);
-		this->setBifTiltRemoteSmall(angle1);
-	}
+	tiltAngle1 = this->Angle(previousBit, BranchBit, D1B);
+	tiltAngle2 = this->Angle(previousBit, BranchBit, D2B);
+	this->setBifTiltRemoteAvg((tiltAngle1+tiltAngle2)/2);
 
-	this->setBifTiltRemote((angle1+angle2)/2);
-
+	this->BifTiltRemote[0] = tiltAngle1;
+	this->BifTiltRemote[1] = tiltAngle2;
 	//Daughter1->setBifTiltLocal( this->Angle(previousBit, BranchBit, D1F));
 	//Daughter2->setBifTiltLocal( this->Angle(previousBit, BranchBit, D2F));
 
@@ -326,10 +304,6 @@ void TraceLine::calculateBifFeatures()
 	double* Daughter2PlaneLocal_ptr;
 	double* Daughter2PlaneRemote_ptr;
 	
-	/*
-	vector<double> planeAnglelocal (2,-1); //two doubles with value -1
-	vector<double> planeAngleremote[2] = -1;
-	*/
 	double planeAnglelocal1 = -1;
 	double planeAnglelocal2 = -1;
 	double planeAngleremote1 = -1;
@@ -371,65 +345,38 @@ void TraceLine::calculateBifFeatures()
 	if (planeAngleremote2 != planeAngleremote2)
 		planeAngleremote2 = -1;
 
-	if (planeAnglelocal1 >= planeAnglelocal2)
-	{
-		this->setBifTorqueLocalBig(planeAnglelocal1);
-		this->setBifTorqueLocalSmall(planeAnglelocal2);
-	}
-	else
-	{
-		this->setBifTorqueLocalBig(planeAnglelocal2);
-		this->setBifTorqueLocalSmall(planeAnglelocal1);
-	}
-
-	if (planeAnglelocal1 != -1 || planeAnglelocal2 != -1)	//if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
-	{
-		if (planeAnglelocal1 != -1 && planeAnglelocal2 != -1) //(!Daughter1->isLeaf() && !Daughter2->isLeaf())
-		{
-			this->setBifTorqueLocal((planeAnglelocal1+planeAnglelocal2)/2);
-			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1+planeAnglelocal2);
-		}
-		else if (planeAnglelocal1 != -1) //(!Daughter1->isLeaf())
-		{
-			this->setBifTorqueLocal(planeAnglelocal1);
-			this->setBifTorqueLocalTwoDaughter(planeAnglelocal1);
-		}
-		else
-		{
-			this->setBifTorqueLocal(planeAnglelocal2);
-			this->setBifTorqueLocalTwoDaughter(planeAnglelocal2);
-		}
-	}
-
-	if (planeAngleremote1 >= planeAngleremote2)
-	{
-		this->setBifTorqueRemoteBig(planeAngleremote1);
-		this->setBifTorqueRemoteSmall(planeAngleremote2);
-	}
-	else
-	{
-		this->setBifTorqueRemoteBig(planeAngleremote2);
-		this->setBifTorqueRemoteSmall(planeAngleremote1);
-	}
+	planeAngleLocal[0] = planeAnglelocal1;
+	planeAngleLocal[1] = planeAnglelocal2;
+	planeAngleRemote[0] = planeAngleremote1;
+	planeAngleRemote[1] = planeAngleremote2;
 	
-	if (planeAngleremote1 != -1 || planeAngleremote2 != -1) //if (!Daughter1->isLeaf() || !Daughter2->isLeaf())
+	if (planeAnglelocal1 != -1 || planeAnglelocal2 != -1)
 	{
-		if (planeAngleremote1 != -1 && planeAngleremote2 != -1) //(!Daughter1->isLeaf() && !Daughter2->isLeaf())
+		if (planeAnglelocal1 != -1 && planeAnglelocal2 != -1)
 		{
-			this->setBifTorqueRemote((planeAngleremote1+planeAngleremote2)/2);
-			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1+planeAngleremote2);
+			this->setBifTorqueLocalAvg((planeAnglelocal1+planeAnglelocal2)/2);
 		}
-		else if (planeAngleremote1 != -1) //(!Daughter1->isLeaf())
+		else if (planeAnglelocal1 != -1)
 		{
-			this->setBifTorqueRemote(planeAngleremote1);
-			this->setBifTorqueRemoteTwoDaughter(planeAngleremote1);
+			this->setBifTorqueLocalAvg(planeAnglelocal1);
 		}
 		else
-		{
-			this->setBifTorqueRemote(planeAngleremote2);
-			this->setBifTorqueRemoteTwoDaughter(planeAngleremote2);
-		}
+			this->setBifTorqueLocalAvg(planeAnglelocal2);
 	}
+	if (planeAngleremote1 != -1 || planeAngleremote2 != -1)
+	{
+		if (planeAngleremote1 != -1 && planeAngleremote2 != -1)
+		{
+			this->setBifTorqueRemoteAvg((planeAngleremote1+planeAngleremote2)/2);
+		}
+		else if (planeAngleremote1 != -1)
+		{
+			this->setBifTorqueRemoteAvg(planeAngleremote1);
+		}
+		else
+			this->setBifTorqueRemoteAvg(planeAngleremote2);
+	}
+
 }
 void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 {

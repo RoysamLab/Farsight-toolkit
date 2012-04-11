@@ -73,41 +73,39 @@ public:
 	double GetPk_2() {return Pk_2;}
 	double GetPk_classic() {return Pk_classic;}
 	double GetBifAmplLocal() {return BifAmplLocal;}
-	double GetBifAmpRemote() {return BifAmpRemote;}
-	void setBifTiltLocal(double NewBifTiltLocal) {BifTiltLocal = NewBifTiltLocal;}
-	double GetBifTiltLocal() {return BifTiltLocal;}
-	void setBifTiltRemote(double NewBifTiltRemote) {BifTiltRemote = NewBifTiltRemote;}
-	double GetBifTiltRemote() {return BifTiltRemote;}
-	void setBifTorqueLocal(double NewBifTorqueLocal) {BifTorqueLocal = NewBifTorqueLocal;}
-	double GetBifTorqueLocal() {return BifTorqueLocal;}
-	void setBifTorqueRemote(double NewBifTorqueRemote) {BifTorqueRemote = NewBifTorqueRemote;}
-	double GetBifTorqueRemote() {return BifTorqueRemote;}
-	
-	double GetBifTiltLocalBig() {return BifTiltLocalBig;}
-	void setBifTiltLocalBig(double NewBifTiltLocal)			{BifTiltLocalBig = NewBifTiltLocal;}
-	double GetBifTiltLocalSmall() {return BifTiltLocalSmall;}
-	void setBifTiltLocalSmall(double NewBifTiltLocal)		{BifTiltLocalSmall = NewBifTiltLocal;}
-	double GetBifTiltRemoteBig() {return BifTiltRemoteBig;}
-	void setBifTiltRemoteBig(double NewBifTiltRemote)		{BifTiltRemoteBig = NewBifTiltRemote;}
-	double GetBifTiltRemoteSmall() {return BifTiltRemoteSmall;}
-	void setBifTiltRemoteSmall(double NewBifTiltRemote)		{BifTiltRemoteSmall = NewBifTiltRemote;}
-	double GetBifTorqueLocalBig() {return BifTorqueLocalBig;}
-	void setBifTorqueLocalBig(double NewBifTorqueLocal)		{BifTorqueLocalBig = NewBifTorqueLocal;}
-	double GetBifTorqueLocalSmall() {return BifTorqueLocalSmall;}
-	void setBifTorqueLocalSmall(double NewBifTorqueLocal)	{BifTorqueLocalSmall = NewBifTorqueLocal;}
-	double GetBifTorqueRemoteBig() {return BifTorqueRemoteBig;}
-	void setBifTorqueRemoteBig(double NewBifTorqueRemote)	{BifTorqueRemoteBig = NewBifTorqueRemote;}
-	double GetBifTorqueRemoteSmall() {return BifTorqueRemoteSmall;}
-	void setBifTorqueRemoteSmall(double NewBifTorqueRemote) {BifTorqueRemoteSmall = NewBifTorqueRemote;}
+	double GetBifAmplRemote() {return BifAmplRemote;}
+	void setBifTiltLocal(std::vector<double> NewBifTiltLocal) {BifTiltLocal = NewBifTiltLocal;}
+	std::vector<double> GetBifTiltLocal() {return BifTiltLocal;}
+	void setBifTiltRemote(std::vector<double> NewBifTiltRemote) {BifTiltRemote = NewBifTiltRemote;}
+	std::vector<double> GetBifTiltRemote() {return BifTiltRemote;}
+	void setBifTiltLocalAvg(double NewBifTiltLocal) {BifTiltLocalAvg = NewBifTiltLocal;}
+	double GetBifTiltLocalAvg() {return BifTiltLocalAvg;}
+	void setBifTiltRemoteAvg(double NewBifTiltRemote) {BifTiltRemoteAvg = NewBifTiltRemote;}
+	double GetBifTiltRemoteAvg() {return BifTiltRemoteAvg;}
+	//void setBifTorqueLocal(double NewBifTorqueLocal) {BifTorqueLocal = NewBifTorqueLocal;}
+	//double GetBifTorqueLocal() {return BifTorqueLocal;}
+	//void setBifTorqueRemote(double NewBifTorqueRemote) {BifTorqueRemote = NewBifTorqueRemote;}
+	//double GetBifTorqueRemote() {return BifTorqueRemote;}
 
-	void setBifTiltLocalTwoDaughter(double NewBifTiltLocalTwo)	 {BifTiltLocalTwoDaughter = NewBifTiltLocalTwo;}
-	double GetBifTiltLocalTwoDaughter() {return BifTiltLocalTwoDaughter;}
-	void setBifTiltRemoteTwoDaughter(double NewBifTiltRemoteTwo) {BifTiltRemoteTwoDaughter = NewBifTiltRemoteTwo;}
-	double GetBifTiltRemoteTwoDaughter() {return BifTiltRemoteTwoDaughter;}
-	void setBifTorqueLocalTwoDaughter(double NewBifTorqueLocalTwo)	{BifTorqueLocalTwoDaughter = NewBifTorqueLocalTwo;}
-	double GetBifTorqueLocalTwoDaughter() {return BifTorqueLocalTwoDaughter;}
-	void setBifTorqueRemoteTwoDaughter(double NewBifTorqueRemoteTwo){BifTorqueRemoteTwoDaughter = NewBifTorqueRemoteTwo;}
-	double GetBifTorqueRemoteTwoDaughter() {return BifTorqueRemoteTwoDaughter;}
+	void setBifTorqueLocal(std::vector<double> NewBifTorqueLocal) {planeAngleLocal = NewBifTorqueLocal;}
+	std::vector<double> GetBifTorqueLocal() {return planeAngleLocal;}
+	void setBifTorqueRemote(std::vector<double> NewBifTorqueRemote) {planeAngleRemote = NewBifTorqueRemote;}
+	std::vector<double> GetBifTorqueRemote() {return planeAngleRemote;}
+	
+	void setBifTorqueLocalAvg(double NewBifTorqueLocal) {BifTorqueLocalAvg = NewBifTorqueLocal;}
+	double GetBifTorqueLocalAvg() {return BifTorqueLocalAvg;}
+	void setBifTorqueRemoteAvg(double NewBifTorqueRemote) {BifTorqueRemoteAvg = NewBifTorqueRemote;}
+	double GetBifTorqueRemoteAvg() {return BifTorqueRemoteAvg;}
+
+	//double GetBifTiltLocalBig() {return BifTiltLocalBig;}
+	//void setBifTiltLocalBig(double NewBifTiltLocal)			{BifTiltLocalBig = NewBifTiltLocal;}
+	//double GetBifTiltLocalSmall() {return BifTiltLocalSmall;}
+	//void setBifTiltLocalSmall(double NewBifTiltLocal)		{BifTiltLocalSmall = NewBifTiltLocal;}
+	//double GetBifTiltRemoteBig() {return BifTiltRemoteBig;}
+	//void setBifTiltRemoteBig(double NewBifTiltRemote)		{BifTiltRemoteBig = NewBifTiltRemote;}
+	//double GetBifTiltRemoteSmall() {return BifTiltRemoteSmall;}
+	//void setBifTiltRemoteSmall(double NewBifTiltRemote)		{BifTiltRemoteSmall = NewBifTiltRemote;}
+	//double GetBifTorqueLocalBig() {return BifTorqueLocalBig;}
 
 	double GetDistanceToROI() {return DistanceToROI;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
@@ -216,10 +214,13 @@ private:
 	double PlaneAngle(double* plane1, double* plane2);
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
-	double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
-	double BifTiltLocalTwoDaughter, BifTiltRemoteTwoDaughter, BifTorqueLocalTwoDaughter, BifTorqueRemoteTwoDaughter;
-	double BifTiltLocalBig, BifTiltLocalSmall,  BifTiltRemoteBig, BifTiltRemoteSmall;
-	double BifTorqueLocalBig, BifTorqueLocalSmall,  BifTorqueRemoteBig, BifTorqueRemoteSmall;
+	double BifAmplLocal, BifAmplRemote, BifTorqueLocal, BifTorqueRemote;
+	std::vector<double> BifTiltLocal, BifTiltRemote;
+	std::vector<double> planeAngleLocal, planeAngleRemote;
+	double BifTiltLocalAvg, BifTiltRemoteAvg, BifTorqueLocalAvg, BifTorqueRemoteAvg;
+	//double BifTiltLocalTwoDaughter, BifTiltRemoteTwoDaughter, BifTorqueLocalTwoDaughter, BifTorqueRemoteTwoDaughter;
+	//double BifTiltLocalBig, BifTiltLocalSmall,  BifTiltRemoteBig, BifTiltRemoteSmall;
+	//double BifTorqueLocalBig, BifTorqueLocalSmall,  BifTorqueRemoteBig, BifTorqueRemoteSmall;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	double BifToSomaEucDistance;

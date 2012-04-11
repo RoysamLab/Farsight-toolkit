@@ -151,11 +151,11 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplLocal());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmpRemote());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocal());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltRemote());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueLocal());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueRemote());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplRemote());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocalAvg());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltRemoteAvg());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueLocalAvg());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTorqueRemoteAvg());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetAzimuth());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetElevation());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetTerminalDegree());

@@ -53,6 +53,7 @@ private:
 	void MaxMin(double NewValue, double &total, double &Min, double &Max, int &Count);
 	void MaxMin(float NewValue, float &total, float &Min, float &Max);
 	void MaxMin(int NewValue, int &total, int &Min, int &Max);
+	void MaxMin(std::vector<double> NewValue, double &total, double &Min, double &Max, int &Count);
 	std::vector<TraceLine*>  segments;
 	int terminalBifCount;
 	//int TerminalTriCount, notTerminalTriCount;
@@ -85,23 +86,13 @@ public:
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
 
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
-	//double BifAmplLocal, BifAmpRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
-	double BifAmplLocal, BifAmpRemote, BifTiltLocalBig, BifTiltRemoteBig, BifTorqueLocalBig, BifTorqueRemoteBig;
-	double BifTiltLocalSmall, BifTiltRemoteSmall, BifTorqueLocalSmall, BifTorqueRemoteSmall;
+	double BifAmplLocal, BifAmplRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
+	double BifAmplLocalMin, BifAmplRemoteMin, BifTiltLocalMin, BifTiltRemoteMin, BifTorqueLocalMin, BifTorqueRemoteMin;
+	double BifAmplLocalMax, BifAmplRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;
+	int BifTiltLocalCount, BifTiltRemoteCount, BifTorqueLocalCount, BifTorqueRemoteCount;
 
 	double daughterRatioMin, parentDaughterRatioMin, partitionAsymmetryMin, rallPowerMin, PkMin, Pk_2Min, Pk_classicMin;
-	double BifAmplLocalMin, BifAmpRemoteMin, BifTiltLocalBigMin, BifTiltRemoteBigMin, BifTorqueLocalBigMin, BifTorqueRemoteBigMin;
-	double BifTiltLocalSmallMin, BifTiltRemoteSmallMin, BifTorqueLocalSmallMin, BifTorqueRemoteSmallMin;
-
 	double daughterRatioMax, parentDaughterRatioMax, partitionAsymmetryMax, rallPowerMax, PkMax, Pk_2Max, Pk_classicMax;
-	//double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;
-	double BifAmplLocalMax, BifAmpRemoteMax, BifTiltLocalBigMax, BifTiltRemoteBigMax, BifTorqueLocalBigMax, BifTorqueRemoteBigMax;
-	double BifTiltLocalSmallMax, BifTiltRemoteSmallMax, BifTorqueLocalSmallMax, BifTorqueRemoteSmallMax;
-	double BifTiltLocalTwoDaughter, BifTiltLocalTwoDaughterMax, BifTiltLocalTwoDaughterMin;
-	double BifTorqueLocalTwoDaughter, BifTorqueLocalTwoDaughterMax, BifTorqueLocalTwoDaughterMin;
-	double BifTiltRemoteTwoDaughter, BifTiltRemoteTwoDaughterMax, BifTiltRemoteTwoDaughterMin;
-	double BifTorqueRemoteTwoDaughter, BifTorqueRemoteTwoDaughterMax, BifTorqueRemoteTwoDaughterMin;
-	int TwoDaughterTorqueCount;
 
 	double Azimuth, AzimuthMin, AzimuthMax;
 	double Elevation, ElevationMin, ElevationMax;
@@ -116,7 +107,7 @@ public:
 	
 private:
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
-	//double BifAmplLocalAverage, BifAmpRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
+	//double BifAmplLocalAverage, BifAmplRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
 	vtkSmartPointer<vtkVariantArray> CellData;
 	std::string FileName;
 	std::set<long int> IDs;
