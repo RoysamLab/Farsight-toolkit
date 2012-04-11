@@ -1,9 +1,11 @@
+set( CTEST_SITE "farsight-win_7_64" )
+set( CTEST_BUILD_NAME "vs9-64-dbg-static" )
 SET(CTEST_SOURCE_NAME "src/farsight")
 SET(CTEST_BINARY_NAME "bin/farsight-static")
 SET(CTEST_DASHBOARD_ROOT "C:/dashboard")
 SET(CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET(CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
-
+set(farsight_data_directory "C:/dashboard/src/farsight-data")
 SET (CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)
 
 SET(CTEST_COMMAND
@@ -59,3 +61,11 @@ QT_QMAKE_EXECUTABLE:FILEPATH=C:/Qt/4.8.1/bin/qmake.exe
 ")
 
 SET(CTEST_CVS_COMMAND "C:/Program Files/TortoiseSVN/bin/TortoiseProc.exe")
+file( WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CTEST_INITIAL_CACHE}" )
+ctest_start( Nightly )
+ctest_update( SOURCE "${CTEST_SOURCE_DIRECTORY}" )
+ctest_configure( SOURCE "${CTEST_SOURCE_DIRECTORY}" )
+ctest_build( BUILD "${CTEST_BINARY_DIRECTORY}" )
+ctest_test( BUILD "${CTEST_BINARY_DIRECTORY}" )
+ctest_submit()
+
