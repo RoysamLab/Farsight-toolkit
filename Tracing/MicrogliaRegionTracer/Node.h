@@ -14,14 +14,14 @@ private:
 	itk::uint64_t id;
 
 public:
-	itk::uint64_t x;
-	itk::uint64_t y;
-	itk::uint64_t z;
+	double x;
+	double y;
+	double z;
 
 	
 
 public:
-	Node(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z, itk::uint64_t id);
+	Node(double x, double y, double z, itk::uint64_t id);
 
 	//Adds the child
 	//Note: This does not make the child update its reference to the parent

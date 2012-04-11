@@ -14,7 +14,9 @@
 #include "itkIntTypes.h"
 #include "itkImageDuplicator.h"
 #include "itkShiftScaleImageFilter.h"
-#include "itkBSplineScatteredDataPointSetToImageFilter.h"
+#include "itkGeodesicActiveContourLevelSetImageFilter.h"
+#include "itkMaximumEntropyThresholdImageFilter.h"
+
 
 #include <cstring>
 #include <vector>

@@ -204,7 +204,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	std::ostringstream vesselnessFileNameStream;
 
 	vesselnessFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
-	//cell->(vesselnessFileNameLocalStream.str(), cell->vesselness_image);
+	cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
 }
 
 void MicrogliaRegionTracer::BuildTree(Cell* cell)
@@ -412,7 +412,7 @@ void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::stri
 void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local)
 {
 	//Calculate some node indices
-	ImageType::IndexType node_index, node_index_local;
+	ImageType::PointType node_index, node_index_local;
 	node_index_local[0] = node->x;
 	node_index_local[1] = node->y;
 	node_index_local[2] = node->z;
@@ -528,103 +528,86 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 
 void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
-	//Sample the path
-	const unsigned int ParametricDimension = 1;
-	const unsigned int DataDimension = 3;
-
-	typedef itk::Vector< double, DataDimension> VectorType;
-	typedef itk::Image< VectorType, ParametricDimension > BSplineImageType;
-
-	typedef itk::PointSet< VectorType, ParametricDimension > PointSetType;
-	PointSetType::Pointer pointSet = PointSetType::New();
-
-	
-
-	typedef	itk::PathConstIterator< ImageType, PathType > PathIteratorType;
-	PathIteratorType path_iter(cell->image, path);
-
-	path_iter.GoToBegin();
-	while (!path_iter.IsAtEnd())
-	{
-		PointSetType::PointType point;
-		itk::Index<3> index = path_iter.GetIndex();
-		
-		VectorType vector;
-		vector[0] = index[0];
-		vector[1] = index[1];
-		vector[2] = index[2];
-		
-		point[0] = path_iter.GetPathPosition();
-
-
-		unsigned long i = pointSet->GetNumberOfPoints();	//i is the size of the point set and incidentally the index of the next available point slot
-
-		//std::cout << i << " " << point[0] << " " << vector << std::endl;
-
-
-		pointSet->SetPoint(i, point);
-		pointSet->SetPointData(i, vector);
-
-		++path_iter;
-	}
-
-	double path_end_position = path_iter.GetPathPosition();
-	std::cout << path_end_position << std::endl;
-
-
-	//Instantiate the itk::BSplineScatteredDataPointSetToImageFilter
-	typedef itk::BSplineScatteredDataPointSetToImageFilter< PointSetType, BSplineImageType > BSplineFilterType;
-	BSplineFilterType::Pointer bspline_filter = BSplineFilterType::New();
-	
-	bspline_filter->SetInput(pointSet);
-	bspline_filter->SetSplineOrder( 1 );
-	BSplineFilterType::ArrayType ncps;
-	ncps.Fill( 2 );
-	bspline_filter->SetNumberOfControlPoints( ncps );
-	//bspline_filter->SetNumberOfLevels( 5 );
-	bspline_filter->SetSpacing(1.0);
-	itk::Size<1> size;
-	size[0] = 10.0;
-	bspline_filter->SetSize(size);
+	//Rescale the vesselness image
+	typedef itk::RescaleIntensityImageFilter< VesselnessImageType > RescaleIntensityFilterType;
+	RescaleIntensityFilterType::Pointer rescale_filter = RescaleIntensityFilterType::New();
+	rescale_filter->SetOutputMinimum(0.0);
+	rescale_filter->SetOutputMaximum(1.0);
 
 	try
 	{
-		bspline_filter->Update();
+		rescale_filter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "itkBSplineScatteredDataPointSetToImageFilter exception: " << err << std::endl;
+		std::cout << "rescale_filter exception: " << err << std::endl;
 		return;
 	}
-
-	typedef itk::BSplineControlPointImageFunction< BSplineImageType > BSplineEvaluationFunctionType;
-	BSplineEvaluationFunctionType::Pointer bspline_eval_function = BSplineEvaluationFunctionType::New();
-	bspline_eval_function->SetSplineOrder(bspline_filter->GetSplineOrder());
-	bspline_eval_function->SetOrigin(bspline_filter->GetOrigin());
-	bspline_eval_function->SetSpacing(bspline_filter->GetSpacing());
-	bspline_eval_function->SetSize(bspline_filter->GetSize());
-	bspline_eval_function->SetInputImage(bspline_filter->GetPhiLattice());
 	
-	Node* current_node = start_node;
-	for (double i = 0; i < 1; i+=0.1)
+	VesselnessImageType::Pointer rescaled_vesselness_image = rescale_filter->GetOutput();
+
+	//Threshold the vesselness image
+	typedef itk::MaximumEntropyThresholdImageFilter< VesselnessImageType, MaskedImageType > ThresholdFilterType;
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetInput(rescaled_vesselness_image);
+	try
 	{
-		VectorType vector;
-		vector = bspline_eval_function->Evaluate(i);
-
-		Node* new_node = new Node(vector[0], vector[1], vector[2], cell->next_available_ID );
-		
-		std::cout << vector[0] << " " << vector[1] << " " << vector[2] << std::endl;
-
-		//Update next available ID
-		++(cell->next_available_ID);
-
-		//Connect this new node to the current_node
-		current_node->AddChild(new_node);
-		new_node->SetParent(current_node);
-		tree->AddNode(new_node, current_node);
-
-		current_node = new_node;
+		threshold_filter->Update();
 	}
-	current_node->AddChild(end_node);
-	end_node->SetParent(current_node);
+	catch (itk::ExceptionObject &err)
+	{
+		std::cout << "threshold_filter exception: " << err << std::endl;
+		return;
+	}
+	
+	//
+
+
+	//Make the GeodesicActiveContourLevelSetImageFilter
+	//typedef itk::GeodesicActiveContourLevelSetImageFilter< VesselnessImageType, 
+
+
+
+
+	//typedef	itk::PathConstIterator< ImageType, PathType > PathIteratorType;
+	//PathIteratorType path_iter(cell->image, path);
+
+	//path_iter.GoToBegin();
+	//while (!path_iter.IsAtEnd())
+	//{
+	//	PointSetType::PointType point;
+	//	itk::Index<3> index = path_iter.GetIndex();
+	//	
+	//	VectorType vector;
+	//	vector[0] = index[0];
+	//	vector[1] = index[1];
+	//	vector[2] = index[2];
+
+	//	unsigned long i = pointSet->GetNumberOfPoints();	//i is the size of the point set and incidentally the index of the next available point slot
+
+	//	point[0] = i;
+
+	//	std::cout << i << " " << point[0] << " " << vector << std::endl;
+
+
+	//	pointSet->SetPoint(i, point);
+	//	pointSet->SetPointData(i, vector);
+
+	//	++path_iter;
+	//}
+
+	//double path_end_position = path_iter.GetPathPosition();
+	//std::cout << path_end_position << std::endl;
+	/*ImageType::IndexType start_node_index;
+	start_node_index[0] = start_node->x;
+	start_node_index[1] = start_node->y;
+	start_node_index[2] = start_node->z;
+
+	pointSet->SetPoint(0, 0.0);
+	pointSet->SetPointData(0, start_node_index);*/
+
+	//ImageType::IndexType last_node_index = start_node_index;
+	
+	
+
 }

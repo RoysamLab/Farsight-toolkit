@@ -2,7 +2,7 @@
 
 #include <cstddef> // for NULL
 
-Node::Node(itk::uint64_t x, itk::uint64_t y, itk::uint64_t z, itk::uint64_t id)
+Node::Node(double x, double y, double z, itk::uint64_t id)
 {
 	this->x = x;
 	this->y = y;
