@@ -1,19 +1,24 @@
 if(QtTestingFound)
   if(APPLE)
-    SET(NucleusEditor_EXE ${Farsight_BINARY_DIR}/exe/NucleusEditor.app/Contents/MacOS/NucleusEditor)
+    set(NucleusEditor_EXE ${Farsight_BINARY_DIR}/exe/NucleusEditor.app/Contents/MacOS/NucleusEditor)
+    set(AppName "Farsight")
   else()
     set(NucleusEditor_EXE ${Farsight_BINARY_DIR}/exe/NucleusEditor)
+    set(AppName "NucleusEditor")
   endif()
 
   set(NucleusEditor_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/segment_nuclei.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
+                 @ONLY)
   add_test(
     NucleusEditor-SegmentNuclei
     ${NucleusEditor_EXE}
     --image
     ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
     --test
-    ${NucleusEditor_TEST_DIR}/segment_nuclei.xml
+    ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
     --baseline
     ${NucleusEditor_TEST_DIR}/segment_nuclei_baseline.png
   )

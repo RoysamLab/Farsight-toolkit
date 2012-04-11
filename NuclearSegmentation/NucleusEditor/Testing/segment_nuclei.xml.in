@@ -6,4 +6,7 @@
     <event widget="1NucleusEditor0" command="pause" arguments="60000" />
     <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,107,95"/>
     <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,107,95"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="saveLabelAction"/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
 </events>
