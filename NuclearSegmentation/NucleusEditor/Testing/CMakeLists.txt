@@ -62,6 +62,23 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-MergeSegments PROPERTIES
     DEPENDS NucleusEditor-SegmentNuclei
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/delete_segments.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/delete_segments.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-DeleteSegments
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/delete_segments.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/delete_segments_baseline.png
+  )
+  set_tests_properties(NucleusEditor-DeleteSegments PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+  )
 
 endif()
 
