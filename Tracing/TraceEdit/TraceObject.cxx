@@ -109,10 +109,10 @@ TraceObject::~TraceObject()
 	*/
   
   //delete vector of cells
-  for(std::vector<CellTrace*>::const_iterator it = this->Cells.begin();
+  for(std::map< int ,CellTrace*>::iterator it = this->Cells.begin();
       it != this->Cells.end(); ++it)
   {
-    delete *it;
+	  this->Cells.erase(it);
   } 
   this->Cells.clear();
 }
@@ -203,25 +203,50 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 	std::vector<TraceLine*> allTLines;
 
   //clear vector of cells
-  for(std::vector<CellTrace*>::const_iterator it = this->Cells.begin();
+	/*for(std::map< int ,CellTrace*>::iterator it = this->Cells.begin();
       it != this->Cells.end(); ++it)
   {
     delete *it;
-  } 
-  this->Cells.clear();
+  } */
+  //this->Cells.clear();
 
 	int limit_for_loop = this->trace_lines.size();
 	#pragma omp parallel for
 	for (int i = 0; i < limit_for_loop; ++i)
 	{
+		TraceLine * current = this->trace_lines[i];
+		int rootID = current->GetId();
 		std::vector<TraceLine*> segments;
-		this->LinearTraceLinesRecursive(segments, this->trace_lines[i]);
+		std::map< int ,CellTrace*>::iterator it = this->Cells.find(rootID);
+		if (current->modified)
+		{
+			this->LinearTraceLinesRecursive(segments, current);
+		}
 		if (segments.size() >0)
 		{
-			CellTrace* NextCell = new CellTrace(segments);
+			if (it == this->Cells.end())
+			{
+				CellTrace* NextCell = new CellTrace(segments);
+				#pragma omp critical
+				{
+					this->Cells[rootID] = NextCell;
+					allTLines.insert(allTLines.end(), segments.begin() ,segments.end());
+				}
+			}
+			else
+			{
+				#pragma omp critical
+				{
+					(*it).second->setTraces(segments);
+					allTLines.insert(allTLines.end(), segments.begin() ,segments.end());
+				}
+			}
+		}//end segment size 
+		else
+		{
+			segments = (*it).second->getSegments();
 			#pragma omp critical
 			{
-				this->Cells.push_back(NextCell);
 				allTLines.insert(allTLines.end(), segments.begin() ,segments.end());
 			}
 		}
@@ -231,6 +256,7 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, TraceLine *tline)
 {
 	int terminalDegree = 0;
+	tline->modified = false;
 	tline->calculateVol();	//this call should go somewhere else in the pipeline
 	if (tline->GetParentID() == -1)
 	{//if no parent this thile is the root
@@ -258,6 +284,57 @@ int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tra
 	tline->setTerminalDegree(terminalDegree);
 	return terminalDegree;
 }
+
+void TraceObject::addTrace(TraceLine* traceToAdd)
+{
+	/*!
+	* 
+	*/
+	traceToAdd->modified = true;
+	this->trace_lines.push_back(traceToAdd);
+}
+
+bool TraceObject::removeTrace(TraceLine* traceToRemove)
+{
+	/*!
+	* 
+	*/
+	bool removed = false;
+
+	std::map< int ,CellTrace*>::iterator it = this->Cells.find(traceToRemove->GetId());
+	if (it != this->Cells.end())
+	{
+		this->Cells.erase(it);
+	}
+
+	std::vector<TraceLine*>::iterator iter = this->trace_lines.begin();
+	std::vector<TraceLine*>::iterator iterend = this->trace_lines.end();
+	while((iter != iterend)&& !removed)
+	{
+		if(*iter== traceToRemove)
+		{
+			this->trace_lines.erase(iter);
+			removed = true;
+			break;
+		}
+		++iter;
+	}
+
+	return removed;
+}
+
+void TraceObject::markRootAsModified(int RootID)
+{
+	/*!
+	* 
+	*/
+	TraceLine * Root = this->findTraceByID(RootID);
+	if (Root)
+	{
+		Root->modified = true;
+	}
+}
+
 void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
 {
 	std::vector<TraceLine*> allLines = this->GetTraceLines();
@@ -1397,8 +1474,8 @@ void TraceObject::splitTrace(int selectedCellId)
 		{
 			TraceBit temp;
 			temp = *(selectedLine->GetTraceBitIteratorBegin());
-			debug_points.push_back(temp);
-			printf("Pushed to debug points\n");
+			//debug_points.push_back(temp);
+			//printf("Pushed to debug points\n");
 		}
 		else
 		{
@@ -2396,7 +2473,7 @@ void TraceObject::ExtendTraceTo(TraceLine *tline, double pt[])
 	TraceBit NewTBit = this->CreateBitAtCoord(pt);
 	tline->ExtendTrace(NewTBit);
 }
-std::vector<CellTrace*> TraceObject::CalculateCellFeatures()
+std::map< int ,CellTrace*> TraceObject::CalculateCellFeatures()
 {
 	return this->Cells;
 }

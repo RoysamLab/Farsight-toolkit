@@ -71,9 +71,9 @@ class CellTraceModel : public QObject
 
 public:
 	CellTraceModel();
-	CellTraceModel(std::vector<CellTrace*> Cells);
+	CellTraceModel(std::map< int ,CellTrace*> Cells);
 	~CellTraceModel();
-	void setCells(std::vector<CellTrace*> Cells);
+	void setCells(std::map< int ,CellTrace*> Cells);
 	vtkSmartPointer<vtkTable> getDataTable();
 	void setDataTable(vtkSmartPointer<vtkTable> table);
 	vtkSmartPointer<vtkTable> getCellBoundsTable();
@@ -101,13 +101,13 @@ public:
 signals:
 	void selectionChanged(void);
 private:
-	std::vector<CellTrace*> Cells;
+	std::map< int ,CellTrace*> Cells;
 	std::vector<QString> headers;
 	std::vector<QString> AdditionalHeaders;
 	void SetupHeaders();
 	vtkSmartPointer<vtkTable> DataTable;
 
-	std::map< int ,CellTrace*> CellIDLookupMAP;
+	//std::map< int ,CellTrace*> CellIDLookupMAP;
 	std::map< int ,CellTrace*>::iterator CellIDLookupIter;
 	
 	ObjectSelection * Selection;

@@ -80,7 +80,7 @@ public:
 	double GetTraceLUT(TraceLine *line);
 	double GetNodeTypeLUT(unsigned char type);
 	double GetTreeLUT(int whichTree);
-	std::vector<CellTrace*> CalculateCellFeatures();
+	std::map< int ,CellTrace*> CalculateCellFeatures();
 	//  I/O functions
 	bool ReadFromSWCFile(char * filename);
 	bool ReadFromRPIXMLFile(char * filename);
@@ -93,6 +93,11 @@ public:
 	void WriteToVTKFile(const char * filename);
 	void SetBranchPoints(std::vector<branchPT*> Branches);
 	void SetTraceOffset(double ntx, double nty, double ntz);
+
+	void addTrace(TraceLine* traceToAdd);
+	bool removeTrace(TraceLine* traceToRemove);
+	void markRootAsModified(int RootID);
+
 	void ImageIntensity(vtkSmartPointer<vtkImageData> imageData);
 	//  operators
 	int getNewLineId();
@@ -147,7 +152,7 @@ public:
 
 	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
 	vtksys::hash_map< unsigned int, unsigned long long int > hashc;
-	std::vector<TraceBit> debug_points;// ADDED BY ARUN ON 22nd August 2010 for debugging
+	//std::vector<TraceBit> debug_points;// ADDED BY ARUN ON 22nd August 2010 for debugging
 	//the following functions are used by "color by trees" mode
 	void SetColorByTrees(bool b) { this->ColorByTrees = b; }
 	bool GetColorByTrees() { return this->ColorByTrees; }
@@ -158,7 +163,7 @@ public:
 
 private:
 	std::vector<TraceLine*> trace_lines;
-	std::vector<CellTrace*> Cells;
+	std::map< int ,CellTrace*> Cells;
 	vtkSmartPointer<vtkPolyData> PolyTraces;
 	double smallLineColor, mergeLineColor, falseLineColor;  
 	double tx,ty,tz;

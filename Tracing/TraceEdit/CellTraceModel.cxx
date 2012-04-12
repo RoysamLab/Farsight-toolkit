@@ -34,7 +34,7 @@ CellTraceModel::CellTraceModel()
 	this->graphVisualize = new GraphWindow();
 	this->AdditionalHeaders.clear();
 }
-CellTraceModel::CellTraceModel(std::vector<CellTrace*> Cells)
+CellTraceModel::CellTraceModel(std::map< int ,CellTrace*> Cells)
 {	
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
@@ -57,11 +57,11 @@ CellTraceModel::~CellTraceModel()
   delete this->CellClusterManager;
   delete this->CellClusterSelection;
 }
-void CellTraceModel::setCells(std::vector<CellTrace*> Cells)
+void CellTraceModel::setCells(std::map< int ,CellTrace*> Cells)
 {
 	this->Cells.clear();
 	this->Cells = Cells;
-	this->CellIDLookupMAP.clear();
+	//this->CellIDLookupMAP.clear();
 	this->SyncModel();
 }
 void CellTraceModel::SetupHeaders()
@@ -260,23 +260,19 @@ void CellTraceModel::SyncModel()
 	int size = this->AdditionalHeaders.size();
 	this->DataTable->Initialize();	
 	this->Selection->clear();
-	this->CellIDLookupMAP.clear();
+	//this->CellIDLookupMAP.clear();
 	this->SetupHeaders();
-	if (size == 0)
+	for (CellIDLookupIter = this->Cells.begin();  CellIDLookupIter != this->Cells.end(); CellIDLookupIter ++)
 	{
-		for (int i = 0; i < (int) this->Cells.size(); i ++)
+		if (size == 0)
 		{
-			this->DataTable->InsertNextRow(this->Cells[i]->DataRow());
-			this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
+			this->DataTable->InsertNextRow((*CellIDLookupIter).second->DataRow());
+			//this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
-	}
-	else
-	{
-		//std::cout << "Size of extended features " << size << std::endl;
-		for (int i = 0; i < (int) this->Cells.size(); i ++)
+		else
 		{
-			this->DataTable->InsertNextRow(this->Cells[i]->GetExtendedDataRow(size));
-			this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
+			this->DataTable->InsertNextRow((*CellIDLookupIter).second->GetExtendedDataRow(size));
+			//this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
 	}
 	this->CellClusterSelection->SetObjectTable(this->DataTable);
@@ -370,7 +366,7 @@ std::vector<CellTrace*> CellTraceModel::getCells(std::vector<long> IDs)
 	std::vector<long>::iterator IDs_iterator;
 	
 	for (IDs_iterator = IDs.begin(); IDs_iterator != IDs.end(); IDs_iterator++)
-		cells.push_back(Cells.at(*IDs_iterator));
+		cells.push_back(Cells[*IDs_iterator]);
 	
 	return cells;
 }
@@ -387,7 +383,7 @@ std::set<long int> CellTraceModel::GetSelectedContinuousIDs()
 		long int j = 0;
 		while(!found && ( j < this->Cells.size()))
 		{
-			if (id == this->Cells.at(j)->rootID())
+			if (id == this->Cells[j]->rootID())
 			{
 				ids.insert(j);
 				found = true;
@@ -407,8 +403,8 @@ std::set<long int> CellTraceModel::GetSelectedIDs()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
-		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
+		this->CellIDLookupIter = this->Cells.find((int) *it);
+		if (this->CellIDLookupIter != this->Cells.end())
 		{
 			nextIDs = ((*this->CellIDLookupIter).second)->TraceIDsInCell();
 			std::set<long>::iterator k;
@@ -433,8 +429,8 @@ std::vector<TraceLine*> CellTraceModel::GetSelectedTraces()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
-		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
+		this->CellIDLookupIter = this->Cells.find((int) *it);
+		if (this->CellIDLookupIter != this->Cells.end())
 		{
 			tempset = ((*this->CellIDLookupIter).second)->getSegments();
 			TracesReturned.insert(TracesReturned.end(), tempset.begin(), tempset.end());
@@ -450,8 +446,8 @@ std::vector<CellTrace*> CellTraceModel::GetSelectedCells()
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
-		this->CellIDLookupIter = this->CellIDLookupMAP.find((int) *it);
-		if (this->CellIDLookupIter != this->CellIDLookupMAP.end())
+		this->CellIDLookupIter = this->Cells.find((int) *it);
+		if (this->CellIDLookupIter != this->Cells.end())
 		{
 			selectedCell.push_back((*this->CellIDLookupIter).second);
 		}
@@ -467,11 +463,11 @@ CellTrace * CellTraceModel::GetCellAt( int i)
 	CellTrace* currentCell;
 	if (i < this->Cells.size())
 	{
-		currentCell = this->Cells.at(i);
+		currentCell = this->Cells[i];
 	}
 	else
 	{
-		currentCell = this->Cells.back();
+		currentCell = (*this->Cells.end()).second;
 	}
 	this->Selection->select(currentCell->rootID());
 	return currentCell;
@@ -481,11 +477,11 @@ CellTrace * CellTraceModel::GetCellAtNoSelection( int i)
 	CellTrace* currentCell;
 	if (i < this->Cells.size())
 	{
-		currentCell = this->Cells.at(i);
+		currentCell = this->Cells[i];
 	}
 	else
 	{
-		currentCell = this->Cells.back();
+		currentCell = (*this->Cells.end()).second;
 	}
 	//this->Selection->select(currentCell->rootID());
 	return currentCell;
@@ -496,7 +492,7 @@ void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 	outputTxt.open(fileName, fstream::out);
 	for (int i = 0; i < this->Cells.size(); i++)
 	{
-		outputTxt << this->Cells.at(i)->BasicFeatureString() << "\n";
+		outputTxt << this->Cells[i]->BasicFeatureString() << "\n";
 	}
 	outputTxt.close();
 	std::cout << "file written\n";
@@ -506,11 +502,11 @@ void CellTraceModel::createCellToCellGraph()
 	std::map< unsigned int, std::vector<double> > centroidMap;
 	for(unsigned int i = 0; i < this->Cells.size(); i++)
 	{
-		unsigned int id = this->Cells.at(i)->rootID();
+		unsigned int id = this->Cells[i]->rootID();
 		std::vector<double> cellCoord;
-		cellCoord.push_back(this->Cells.at(i)->somaX);
-		cellCoord.push_back(this->Cells.at(i)->somaY);
-		cellCoord.push_back(this->Cells.at(i)->somaZ);
+		cellCoord.push_back(this->Cells[i]->somaX);
+		cellCoord.push_back(this->Cells[i]->somaY);
+		cellCoord.push_back(this->Cells[i]->somaZ);
 		centroidMap[id] = cellCoord;
 	}//end for cell size
 	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);

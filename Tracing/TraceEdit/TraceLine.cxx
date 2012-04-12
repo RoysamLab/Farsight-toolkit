@@ -77,6 +77,7 @@ TraceLine::TraceLine()
 	this->ROICoord_Z = 0;
 
 	this->actualBifurcation = false;
+	modified = true;
 
 	//// classification results
 	//this->prediction = -1;
@@ -569,6 +570,7 @@ bool TraceLine::removeLeadingBit()
 		if(Leading > (dist/ (this->m_trace_bits.size() -1)))
 		{
 			this->m_trace_bits.pop_front();
+			modified = true;
 			return true;
 		}//end dist
 		return false;
@@ -698,6 +700,7 @@ double TraceLine::getTraceColor()
   this->m_markers = t.m_markers;
   this->m_type = t.m_type;
   this->m_parent = NULL;
+  modified = true;
   for(unsigned int counter=0; counter< t.m_branches.size(); counter++)
   {
     TraceLine *temp = new TraceLine();

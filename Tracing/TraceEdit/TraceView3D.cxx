@@ -3954,7 +3954,7 @@ void View3D::Rerender()
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
 	if(this->FL_MeasurePlot || this->FL_MeasureTable)
 	{
-		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		std::map< int ,CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 		this->CellModel->setCells(NewCells);
 		if(this->FL_MeasurePlot)
 		{
@@ -4558,26 +4558,29 @@ void View3D::DeleteTrace(TraceLine *tline)
 	std::vector<TraceLine*>* siblings;
 	if(tline->GetParent()!=NULL)
 	{
+		this->tobj->markRootAsModified(tline->GetRootID());
 		if(this->tobj->BreakOffBranch(tline, false))
 		{
 			return;		//returns if sibling merged to parent
 		}
 		siblings = tline->GetParent()->GetBranchPointer();
+		std::vector<TraceLine*>::iterator iter = siblings->begin();
+		std::vector<TraceLine*>::iterator iterend = siblings->end();
+		while(iter != iterend)
+		{
+			if(*iter== tline)
+			{
+				siblings->erase(iter);
+				break;
+			}
+			++iter;
+		}
 	}
 	else
 	{
-		siblings = this->tobj->GetTraceLinesPointer();
-	}
-	std::vector<TraceLine*>::iterator iter = siblings->begin();
-	std::vector<TraceLine*>::iterator iterend = siblings->end();
-	while(iter != iterend)
-	{
-		if(*iter== tline)
-		{
-			siblings->erase(iter);
-			break;
-		}
-		++iter;
+		//new del method to be used
+		this->tobj->removeTrace(tline);
+		//siblings = this->tobj->GetTraceLinesPointer();
 	}
 	tline->SetParent(NULL);
 }
@@ -4850,7 +4853,7 @@ void View3D::ShowMergeStats()
 void View3D::ShowCellAnalysis()
 {
 	//this->HideCellAnalysis();
-	std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+	std::map< int ,CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 	if (NewCells.size() > 0)
 	{
 		this->CellModel->setCells(NewCells);
@@ -5780,7 +5783,7 @@ void View3D::CropBorderCells()
 
 	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can select them!
 	{
-		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		std::map< int ,CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 		if (NewCells.size() > 0)
 		{
 			this->CellModel->setCells(NewCells);
@@ -5957,7 +5960,7 @@ void View3D::SaveComputedCellFeaturesTable()
 {
 	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can write them!
 	{
-		std::vector<CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
+		std::map< int ,CellTrace*> NewCells = this->tobj->CalculateCellFeatures();
 		if (NewCells.size() > 0)
 		{
 			this->CellModel->setCells(NewCells);

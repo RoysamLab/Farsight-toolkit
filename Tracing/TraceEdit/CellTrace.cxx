@@ -213,6 +213,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 		//time_t end_time = time(NULL);
 		//std::cout << "Elapsed time: " << difftime(end_time,begin_time) << std::endl;
 	}
+	this->modified = true;
 }
 void CellTrace::setFileName(std::string newFileName)
 {
@@ -452,6 +453,8 @@ void CellTrace::clearAll()
 	this->DeviceDistance = 0;
 	this->prediction = -PI;
 	this->confidence = -PI;
+
+	this->modified = false;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
@@ -527,144 +530,146 @@ void CellTrace::MaxMin(std::vector<double> NewValue, double &total, double &Min,
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 {
-	CellData->Reset();
-	CellData->InsertNextValue(this->segments[0]->GetId());
-
-	CellData->InsertNextValue(this->maxX - this->minX);//Width
-	CellData->InsertNextValue(this->maxY - this->minY);//Length
-	CellData->InsertNextValue(this->maxZ - this->minZ);//Height
-	
-	CellData->InsertNextValue(this->somaX);
-	CellData->InsertNextValue(this->somaY);
-	CellData->InsertNextValue(this->somaZ);
-	CellData->InsertNextValue(this->somaRadii);
-	CellData->InsertNextValue(this->somaSurface);
-	CellData->InsertNextValue(this->somaVolume);
-
-	CellData->InsertNextValue(this->skewnessX);
-	CellData->InsertNextValue(this->skewnessY);
-	CellData->InsertNextValue(this->skewnessZ);
-	CellData->InsertNextValue(this->euclideanSkewness);
-
-	CellData->InsertNextValue(this->NumSegments);
-	CellData->InsertNextValue(this->stems);
-	//CellData->InsertNextValue(this->branchingStem);
-	CellData->InsertNextValue(this->branchPoints);
-	//CellData->InsertNextValue(this->actualBifurcations);
-	CellData->InsertNextValue(this->terminalTips);
-	if (this->NumSegments == 0)
+	if (this->modified)
 	{
-		this->NumSegments = 1;
-	}
-	if (this->branchPoints == 0) 
-	{
-		this->branchPoints = 1;
-	}//protect from divide by zero
-	if (this->actualBifurcations == 0)
-	{
-		this->actualBifurcations = 1;
-	}
+		CellData->Reset();
+		CellData->InsertNextValue(this->segments[0]->GetId());
 
-	CellData->InsertNextValue(this->DiameterMin);
-	CellData->InsertNextValue(this->DiameterTotal / this->NumSegments);
-	CellData->InsertNextValue(this->DiameterMax);
+		CellData->InsertNextValue(this->maxX - this->minX);//Width
+		CellData->InsertNextValue(this->maxY - this->minY);//Length
+		CellData->InsertNextValue(this->maxZ - this->minZ);//Height
+		
+		CellData->InsertNextValue(this->somaX);
+		CellData->InsertNextValue(this->somaY);
+		CellData->InsertNextValue(this->somaZ);
+		CellData->InsertNextValue(this->somaRadii);
+		CellData->InsertNextValue(this->somaSurface);
+		CellData->InsertNextValue(this->somaVolume);
 
-	CellData->InsertNextValue(this->DiameterPowerMin);
-	CellData->InsertNextValue(this->DiameterPowerTotal / this->NumSegments);
-	CellData->InsertNextValue(this->DiameterPowerMax);
+		CellData->InsertNextValue(this->skewnessX);
+		CellData->InsertNextValue(this->skewnessY);
+		CellData->InsertNextValue(this->skewnessZ);
+		CellData->InsertNextValue(this->euclideanSkewness);
 
-	CellData->InsertNextValue(this->TotalVolume);
-	CellData->InsertNextValue(this->SegmentVolumeMin);
-	CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
-	CellData->InsertNextValue(this->SegmentVolumeMax);
-	CellData->InsertNextValue(this->surfaceAreaTotal);
-	CellData->InsertNextValue(this->SurfaceAreaMin);
-	CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
-	CellData->InsertNextValue(this->SurfaceAreaMax);
-	CellData->InsertNextValue(this->sectionAreaTotal);
-	CellData->InsertNextValue(this->SectionAreaMin);
-	CellData->InsertNextValue(this->sectionAreaTotal/this->NumSegments);
-	CellData->InsertNextValue(this->SectionAreaMax);
+		CellData->InsertNextValue(this->NumSegments);
+		CellData->InsertNextValue(this->stems);
+		//CellData->InsertNextValue(this->branchingStem);
+		CellData->InsertNextValue(this->branchPoints);
+		//CellData->InsertNextValue(this->actualBifurcations);
+		CellData->InsertNextValue(this->terminalTips);
+		if (this->NumSegments == 0)
+		{
+			this->NumSegments = 1;
+		}
+		if (this->branchPoints == 0) 
+		{
+			this->branchPoints = 1;
+		}//protect from divide by zero
+		if (this->actualBifurcations == 0)
+		{
+			this->actualBifurcations = 1;
+		}
 
-	//CellData->InsertNextValue(this->BurkTaperTotal);
-	CellData->InsertNextValue(this->BurkTaperMin);
-	CellData->InsertNextValue(this->BurkTaperTotal / this->NumSegments);
-	CellData->InsertNextValue(this->BurkTaperMax);
+		CellData->InsertNextValue(this->DiameterMin);
+		CellData->InsertNextValue(this->DiameterTotal / this->NumSegments);
+		CellData->InsertNextValue(this->DiameterMax);
 
-	//CellData->InsertNextValue(this->HillmanTaperTotal);
-	CellData->InsertNextValue(this->HillmanTaperMin);
-	CellData->InsertNextValue(this->HillmanTaperTotal / this->NumSegments);
-	CellData->InsertNextValue(this->BurkTaperMax);
+		CellData->InsertNextValue(this->DiameterPowerMin);
+		CellData->InsertNextValue(this->DiameterPowerTotal / this->NumSegments);
+		CellData->InsertNextValue(this->DiameterPowerMax);
 
-	CellData->InsertNextValue(this->TotalEuclideanPath);
-	CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length
-	CellData->InsertNextValue(this->PathLengthTotal);
-	CellData->InsertNextValue(this->PathLengthMin);
-	CellData->InsertNextValue(this->PathLengthTotal/this->NumSegments);//average segment length
-	CellData->InsertNextValue(this->PathLengthMax);
+		CellData->InsertNextValue(this->TotalVolume);
+		CellData->InsertNextValue(this->SegmentVolumeMin);
+		CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
+		CellData->InsertNextValue(this->SegmentVolumeMax);
+		CellData->InsertNextValue(this->surfaceAreaTotal);
+		CellData->InsertNextValue(this->SurfaceAreaMin);
+		CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
+		CellData->InsertNextValue(this->SurfaceAreaMax);
+		CellData->InsertNextValue(this->sectionAreaTotal);
+		CellData->InsertNextValue(this->SectionAreaMin);
+		CellData->InsertNextValue(this->sectionAreaTotal/this->NumSegments);
+		CellData->InsertNextValue(this->SectionAreaMax);
 
-	CellData->InsertNextValue(this->MinStemDistance);
-	CellData->InsertNextValue(this->EstimatedSomaRadius);
-	CellData->InsertNextValue(this->MaxStemDistance);
+		//CellData->InsertNextValue(this->BurkTaperTotal);
+		CellData->InsertNextValue(this->BurkTaperMin);
+		CellData->InsertNextValue(this->BurkTaperTotal / this->NumSegments);
+		CellData->InsertNextValue(this->BurkTaperMax);
 
-	CellData->InsertNextValue(this->ContractionMin);
-	double aveContraction = this->ContractionTotal / this->NumSegments;
-	if (aveContraction != aveContraction)
-	{
-		CellData->InsertNextValue(-PI);
-	}
-	else
-	{
-		CellData->InsertNextValue(aveContraction);
-	}
-	CellData->InsertNextValue(this->ContractionMax);
+		//CellData->InsertNextValue(this->HillmanTaperTotal);
+		CellData->InsertNextValue(this->HillmanTaperMin);
+		CellData->InsertNextValue(this->HillmanTaperTotal / this->NumSegments);
+		CellData->InsertNextValue(this->BurkTaperMax);
 
-	CellData->InsertNextValue(this->FragmentationTotal);
-	CellData->InsertNextValue(this->FragmentationMin);
-	CellData->InsertNextValue(this->FragmentationTotal / this->actualBifurcations);
-	CellData->InsertNextValue(this->FragmentationMax);
+		CellData->InsertNextValue(this->TotalEuclideanPath);
+		CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length
+		CellData->InsertNextValue(this->PathLengthTotal);
+		CellData->InsertNextValue(this->PathLengthMin);
+		CellData->InsertNextValue(this->PathLengthTotal/this->NumSegments);//average segment length
+		CellData->InsertNextValue(this->PathLengthMax);
 
-	CellData->InsertNextValue(this->daughterRatioMin);
-	CellData->InsertNextValue(this->daughterRatio / this->actualBifurcations);
-	CellData->InsertNextValue(this->daughterRatioMax);
+		CellData->InsertNextValue(this->MinStemDistance);
+		CellData->InsertNextValue(this->EstimatedSomaRadius);
+		CellData->InsertNextValue(this->MaxStemDistance);
 
-	CellData->InsertNextValue(this->parentDaughterRatioMin);
-	CellData->InsertNextValue(this->parentDaughterRatio/ this->actualBifurcations);
-	CellData->InsertNextValue(this->parentDaughterRatioMax);
+		CellData->InsertNextValue(this->ContractionMin);
+		double aveContraction = this->ContractionTotal / this->NumSegments;
+		if (aveContraction != aveContraction)
+		{
+			CellData->InsertNextValue(-PI);
+		}
+		else
+		{
+			CellData->InsertNextValue(aveContraction);
+		}
+		CellData->InsertNextValue(this->ContractionMax);
 
-	CellData->InsertNextValue(this->partitionAsymmetryMin);
-	CellData->InsertNextValue(this->partitionAsymmetry / this->actualBifurcations);
-	CellData->InsertNextValue(this->partitionAsymmetryMax);
+		CellData->InsertNextValue(this->FragmentationTotal);
+		CellData->InsertNextValue(this->FragmentationMin);
+		CellData->InsertNextValue(this->FragmentationTotal / this->actualBifurcations);
+		CellData->InsertNextValue(this->FragmentationMax);
 
-	CellData->InsertNextValue(this->rallPowerMin);
-	CellData->InsertNextValue(this->rallPower / this->actualBifurcations);
-	CellData->InsertNextValue(this->rallPowerMax);
+		CellData->InsertNextValue(this->daughterRatioMin);
+		CellData->InsertNextValue(this->daughterRatio / this->actualBifurcations);
+		CellData->InsertNextValue(this->daughterRatioMax);
 
-	CellData->InsertNextValue(this->PkMin);
-	CellData->InsertNextValue(this->Pk / this->actualBifurcations);
-	CellData->InsertNextValue(this->PkMax);
+		CellData->InsertNextValue(this->parentDaughterRatioMin);
+		CellData->InsertNextValue(this->parentDaughterRatio/ this->actualBifurcations);
+		CellData->InsertNextValue(this->parentDaughterRatioMax);
 
-	CellData->InsertNextValue(this->Pk_classicMin);
-	CellData->InsertNextValue(this->Pk_classic / this->actualBifurcations);
-	CellData->InsertNextValue(this->Pk_classicMax);
+		CellData->InsertNextValue(this->partitionAsymmetryMin);
+		CellData->InsertNextValue(this->partitionAsymmetry / this->actualBifurcations);
+		CellData->InsertNextValue(this->partitionAsymmetryMax);
 
-	CellData->InsertNextValue(this->Pk_2Min);
-	CellData->InsertNextValue(this->Pk_2 / this->actualBifurcations);
-	CellData->InsertNextValue(this->Pk_2Max);
+		CellData->InsertNextValue(this->rallPowerMin);
+		CellData->InsertNextValue(this->rallPower / this->actualBifurcations);
+		CellData->InsertNextValue(this->rallPowerMax);
 
-	double AveAzimuth = -PI;
-	double AveElevation = -PI;
-	if (this->stems !=0)
-	{
-		AveAzimuth = this->Azimuth / this->stems;
-		AveElevation = this->Elevation / this->stems;
-	}
-	CellData->InsertNextValue(this->AzimuthMin);
-	CellData->InsertNextValue(AveAzimuth);
-	CellData->InsertNextValue(this->AzimuthMax);
-	CellData->InsertNextValue(this->ElevationMin);
-	CellData->InsertNextValue(AveElevation);
-	CellData->InsertNextValue(this->ElevationMax);
+		CellData->InsertNextValue(this->PkMin);
+		CellData->InsertNextValue(this->Pk / this->actualBifurcations);
+		CellData->InsertNextValue(this->PkMax);
+
+		CellData->InsertNextValue(this->Pk_classicMin);
+		CellData->InsertNextValue(this->Pk_classic / this->actualBifurcations);
+		CellData->InsertNextValue(this->Pk_classicMax);
+
+		CellData->InsertNextValue(this->Pk_2Min);
+		CellData->InsertNextValue(this->Pk_2 / this->actualBifurcations);
+		CellData->InsertNextValue(this->Pk_2Max);
+
+		double AveAzimuth = -PI;
+		double AveElevation = -PI;
+		if (this->stems !=0)
+		{
+			AveAzimuth = this->Azimuth / this->stems;
+			AveElevation = this->Elevation / this->stems;
+		}
+		CellData->InsertNextValue(this->AzimuthMin);
+		CellData->InsertNextValue(AveAzimuth);
+		CellData->InsertNextValue(this->AzimuthMax);
+		CellData->InsertNextValue(this->ElevationMin);
+		CellData->InsertNextValue(AveElevation);
+		CellData->InsertNextValue(this->ElevationMax);
 
 	if (this->BifTorqueLocalCount == 0)
 	{
@@ -694,55 +699,57 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	CellData->InsertNextValue(this->BifTorqueRemoteMin);
 	CellData->InsertNextValue(this->BifTorqueRemoteMax);
 
-	if (this->terminalTips == 0)
-	{
-		this->terminalTips = 1;
+		if (this->terminalTips == 0)
+		{
+			this->terminalTips = 1;
+		}
+		CellData->InsertNextValue(this->MinTerminalLevel);
+		CellData->InsertNextValue(this->TerminalPathLengthMin);
+		CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
+		CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
+		CellData->InsertNextValue(this->MaxTerminalLevel);
+		CellData->InsertNextValue(this->TerminalPathLengthMax);
+
+		CellData->InsertNextValue(this->TerminalSegmentTotal);
+		CellData->InsertNextValue(this->TerminalSegmentMin);
+		CellData->InsertNextValue(this->TerminalSegmentTotal / this->terminalTips); //average
+		CellData->InsertNextValue(this->TerminalSegmentMax);
+
+		CellData->InsertNextValue(this->DiamThresholdMin);
+		CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
+		CellData->InsertNextValue(this->DiamThresholdMax);
+		CellData->InsertNextValue(this->LastParentDiamMin);
+		CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
+		CellData->InsertNextValue(this->LastParentDiamMax);
+
+		CellData->InsertNextValue(this->HillmanThreshMin); 
+		if (this->terminalBifCount != 0)
+		{
+			CellData->InsertNextValue(this->HillmanThreshTotal/ this->terminalBifCount);
+		}else
+		{
+			CellData->InsertNextValue(-PI);
+		}
+		CellData->InsertNextValue(this->HillmanThreshMax);
+
+		CellData->InsertNextValue(this->BranchPtToSomaEucDisMin);
+		CellData->InsertNextValue(this->BranchPtToSomaEucDisTotal/this->branchPoints);
+		CellData->InsertNextValue(this->BranchPtToSomaEucDisMax);
+		CellData->InsertNextValue(this->TipToSomaEucDisMin);
+		CellData->InsertNextValue(this->TipToSomaEucDisTotal/this->terminalTips);
+		CellData->InsertNextValue(this->TipToSomaEucDisMax);
+
+		CellData->InsertNextValue(this->tipMagnitude);
+		CellData->InsertNextValue(this->tipAzimuth);
+		CellData->InsertNextValue(this->tipElevation);
+
+		CellData->InsertNextValue(this->GetFileName().c_str());
+		/*CellData->InsertNextValue(this->prediction);
+		CellData->InsertNextValue(this->confidence);*/
+		CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
+		//std::cout << this->FileName << std::endl;
+		this->modified = false;
 	}
-	CellData->InsertNextValue(this->MinTerminalLevel);
-	CellData->InsertNextValue(this->TerminalPathLengthMin);
-	CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
-	CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
-	CellData->InsertNextValue(this->MaxTerminalLevel);
-	CellData->InsertNextValue(this->TerminalPathLengthMax);
-
-	CellData->InsertNextValue(this->TerminalSegmentTotal);
-	CellData->InsertNextValue(this->TerminalSegmentMin);
-	CellData->InsertNextValue(this->TerminalSegmentTotal / this->terminalTips); //average
-	CellData->InsertNextValue(this->TerminalSegmentMax);
-
-	CellData->InsertNextValue(this->DiamThresholdMin);
-	CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
-	CellData->InsertNextValue(this->DiamThresholdMax);
-	CellData->InsertNextValue(this->LastParentDiamMin);
-	CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
-	CellData->InsertNextValue(this->LastParentDiamMax);
-
-	CellData->InsertNextValue(this->HillmanThreshMin); 
-	if (this->terminalBifCount != 0)
-	{
-		CellData->InsertNextValue(this->HillmanThreshTotal/ this->terminalBifCount);
-	}else
-	{
-		CellData->InsertNextValue(-PI);
-	}
-	CellData->InsertNextValue(this->HillmanThreshMax);
-
-	CellData->InsertNextValue(this->BranchPtToSomaEucDisMin);
-	CellData->InsertNextValue(this->BranchPtToSomaEucDisTotal/this->branchPoints);
-	CellData->InsertNextValue(this->BranchPtToSomaEucDisMax);
-	CellData->InsertNextValue(this->TipToSomaEucDisMin);
-	CellData->InsertNextValue(this->TipToSomaEucDisTotal/this->terminalTips);
-	CellData->InsertNextValue(this->TipToSomaEucDisMax);
-
-	CellData->InsertNextValue(this->tipMagnitude);
-	CellData->InsertNextValue(this->tipAzimuth);
-	CellData->InsertNextValue(this->tipElevation);
-
-	CellData->InsertNextValue(this->GetFileName().c_str());
-	/*CellData->InsertNextValue(this->prediction);
-	CellData->InsertNextValue(this->confidence);*/
-	CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
-	//std::cout << this->FileName << std::endl;
 	return CellData;
 }
 

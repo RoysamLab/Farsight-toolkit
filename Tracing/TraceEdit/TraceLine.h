@@ -41,6 +41,7 @@ public:
 	TraceLine();
 	TraceLine(const TraceLine &t);
   ~TraceLine();
+	bool modified;
 	TraceLine *GetParent();
 	unsigned int GetParentID();
 	void SetParent(TraceLine* p);
