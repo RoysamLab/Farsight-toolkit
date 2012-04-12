@@ -282,3 +282,8 @@ std::vector<TraceLine*> TraceModel::GetSelectedRoots()
 	return roots;
 }
 
+void TraceModel::CloseClusterManager()
+{
+	this->TraceClusterManager->close();
+}
+

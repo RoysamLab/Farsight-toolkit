@@ -576,3 +576,9 @@ int CellTraceModel::AddNewFeatureHeader(std::string NewHeader)
 	this->AdditionalHeaders.push_back(QnewHeader);
 	return -1;
 }
+
+void CellTraceModel::CloseClusterManager()
+{
+	this->CellClusterManager->close();
+}
+

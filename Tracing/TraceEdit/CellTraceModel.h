@@ -96,6 +96,7 @@ public:
 	double average(std::vector< std::pair<unsigned int, double> > ID);
 	int AddNewFeatureHeader(std::string NewHeader);
 	void SyncModel();
+	void CloseClusterManager();
 
 signals:
 	void selectionChanged(void);

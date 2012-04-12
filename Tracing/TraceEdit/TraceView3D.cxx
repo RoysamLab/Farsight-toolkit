@@ -5740,6 +5740,8 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->CloseTreePlots();
 	this->HideCellAnalysis();
 	this->TraceEditSettings.sync();
+	this->TreeModel->CloseClusterManager();
+	this->CellModel->CloseClusterManager();
 	if(this->GapsPlotView)
 	{
 		this->GapsPlotView->close();

@@ -68,6 +68,7 @@ public:
 	void SetSelectionByIDs(std::vector<int> IDs);
 	vtkSmartPointer<vtkTable> getDataTable();
 	ObjectSelection * GetObjectSelection();
+	void CloseClusterManager();
 	double scaleFactor;
 
 
