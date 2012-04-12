@@ -381,7 +381,7 @@ bool TraceObject::ReadFromFeatureTracksFileForKymograph(char *filename,int type_
 		{
 			curr_track = track;
 			TraceLine* tline = new TraceLine();
-			trace_lines.push_back(tline);
+			addTrace(tline);
 			tline->SetId(curr_id++);
 			tline->SetType(1+type_offset);
 			curr_line = tline;
@@ -519,7 +519,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 		}
 		else
 		{
-			trace_lines.push_back(tline);
+			addTrace(tline);
 		}
 		bitElement = lineElement->FirstChildElement("TraceBit");
 		if(!bitElement)
@@ -1554,7 +1554,7 @@ void TraceObject::splitTrace(int selectedCellId)
 		selectedLine->GetBranchPointer()->clear();
 	}
 
-	this->trace_lines.push_back(newLine);
+	this->addTrace(newLine);
 
 
 
@@ -2295,6 +2295,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 	std::vector<TraceLine*>* siblings = branch->GetParent()->GetBranchPointer();
 	if(siblings->size()==2)
 	{
+		markRootAsModified(branch->GetRootID());
 		// its not a branch point anymore
 		TraceLine *tother1;
 		if(branch==(*siblings)[0])
@@ -2318,7 +2319,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		}
 		else
 		{
-			this->trace_lines.push_back(tother1);
+			this->addTrace(tother1);
 			std::cout<< "failed to merge parent/child\n";
 		}
 
@@ -2327,7 +2328,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		{//wont keep anything too small to work on
 			//if 
 			branch->removeLeadingBit();
-			this->trace_lines.push_back(branch);
+			this->addTrace(branch);
 		}//end branch->GetSize()>3  
 		else 
 		{
@@ -2337,7 +2338,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 				for (unsigned int k = 0; k < children.size(); k++)
 				{
 					children[k]->SetParent(NULL);
-					this->trace_lines.push_back(children[k]);
+					this->addTrace(children[k]);
 				}
 			}
 			delete branch;
@@ -2354,7 +2355,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		{//wont keep anything too small to work on
 			//if 
 			branch->removeLeadingBit();
-			this->trace_lines.push_back(branch);
+			this->addTrace(branch);
 		}//end branch->GetSize()>3	  
 		else 
 		{
@@ -2364,7 +2365,7 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 				for (unsigned int k = 0; k < children.size(); k++)
 				{
 					children[k]->SetParent(NULL);
-					this->trace_lines.push_back(children[k]);
+					this->addTrace(children[k]);
 				}
 			}
 			delete branch;
@@ -2400,7 +2401,7 @@ void TraceObject::explode(TraceLine *parent)
 		for (unsigned int i = 0; i< connected.size(); i++)
 		{
 			connected.at(i)->SetParent(NULL);
-			this->trace_lines.push_back(connected.at(i));
+			this->addTrace(connected.at(i));
 			newPT->AddConnection(connected.at(i));
 			if (!connected.at(i)->isLeaf())
 			{
@@ -2411,6 +2412,7 @@ void TraceObject::explode(TraceLine *parent)
 		if (parent->GetBranchPointer()->size() >0)
 		{
 			parent->GetBranchPointer()->clear();
+			parent->modified = true;
 		}
 	}
 	this->GetTraceLines();
@@ -2465,12 +2467,13 @@ TraceLine* TraceObject::CreateTraceFromBit(TraceBit firstBit)
 	myNewTrace->SetId(newId);
 	myNewTrace->AddTraceBit(firstBit);
 	myNewTrace->SetType(0);	//undefined type
-	this->trace_lines.push_back(myNewTrace);
+	this->addTrace(myNewTrace);
 	return myNewTrace;
 }
 void TraceObject::ExtendTraceTo(TraceLine *tline, double pt[])
 {
 	TraceBit NewTBit = this->CreateBitAtCoord(pt);
+	markRootAsModified(tline->GetRootID());
 	tline->ExtendTrace(NewTBit);
 }
 std::map< int ,CellTrace*> TraceObject::CalculateCellFeatures()
