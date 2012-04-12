@@ -20,6 +20,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 #include "../NuclearSegmentation/exe/SomaExtraction.h"
+#include "../NuclearSegmentation/Nuclear_Association/VolumeOfInterest.h"
 
 #include "vtkTable.h"
 #include "ftkUtils.h"
@@ -853,6 +854,27 @@ int main(int argc, char* argv[])
 			}
 		}
 		ftk::SaveTable(temp + "_soma_table.txt", montageTable);
+		ftk::SaveTable(temp + "_soma_centroids_table.txt", somaCentroidsTable);
+	}
+
+	if( onlyTrace == 3 )
+	{
+		somaCentroidsTable = ftk::LoadTable(temp + "_soma_centroids_table.txt");
+		std::string object_file = argv[8];
+		VolumeOfInterest * VOIType = new VolumeOfInterest();
+		VOIType->ReadVTPVOI(object_file);
+		float* distances_to_cobject = VOIType->CalculateCentroidDistanceToVOI(tbl);
+
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( "Dist_to_Object" );
+		column->SetNumberOfValues(somaCentroidsTable->GetNumberOfRows());
+		somaCentroidsTable->AddColumn(column);
+
+		for(int row=0; row<(int)somaCentroidsTable->GetNumberOfRows(); ++row)
+		{
+			somaCentroidsTable->SetValueByName(row, "Dist_to_Object", vtkVariant(distances_to_cobject[row]));
+		}
+
 		ftk::SaveTable(temp + "_soma_centroids_table.txt", somaCentroidsTable);
 	}
 
