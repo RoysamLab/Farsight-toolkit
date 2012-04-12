@@ -22,18 +22,15 @@ limitations under the License.
 #include "vtkImageToStructuredPoints.h"
 #include "vtkImageActor.h"
 #include "vtkLODActor.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "itkMaximumProjectionImageFilter.h"
 #include "itkMinimumProjectionImageFilter.h"
 #include "itkMeanProjectionImageFilter.h"
-#ifdef USE_GPUREN
-#include <vtkOpenGLGPUVolumeRayCastMapper.h>
-#endif
 #include "vtkPiecewiseFunction.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
 #include "vtkSmartPointer.h"
+#include "vtkSmartVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 
@@ -111,16 +108,13 @@ struct imageFileHandle
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
 	vtkSmartPointer<vtkActor> ContourActor;
 //Raycast pointers
-	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
-	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkVolumeProperty>    volumeProperty;
+	vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper;
 //image slicer
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
 	vtkSmartPointer<vtkImageResliceMapper> imageResliceMapper;
 	vtkSmartPointer<vtkImageSlice> imageSlice;
 	vtkSmartPointer<vtkImageProperty> imageProperty;
-#ifdef USE_GPUREN
-	vtkSmartPointer<vtkOpenGLGPUVolumeRayCastMapper> volumeMapperGPU;
-#endif
 	vtkSmartPointer<vtkVolume> volume;
 	vtkSmartPointer<vtkVolume> somaVolume;
 };
@@ -144,8 +138,7 @@ public:
 	void SetSlicePlane(int slicePlane);
 	vtkSmartPointer<vtkImageActor> createProjection(int i, int method, int projection_dim);
 	vtkSmartPointer<vtkImageActor> GetProjectionImage(int i);
-	void RaycastVolumeMapperGPU(int i);
-	void TextureVolumeMapper(int i);
+	void CreateVolumeMapper(int i);
 	vtkSmartPointer<vtkVolume> RayCastVolume(int i);
 	vtkSmartPointer<vtkVolume> GetRayCastVolume(int i);
 	bool getRenderStatus(int i);

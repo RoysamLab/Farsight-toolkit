@@ -63,7 +63,6 @@ limitations under the License.
 #include "vtkLODActor.h"
 #include "vtkObjectFactory.h"
 #include "vtkOBJReader.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "vtkOrientationMarkerWidget.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkPlaybackRepresentation.h"
