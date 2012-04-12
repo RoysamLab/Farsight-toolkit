@@ -123,6 +123,22 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "About FARSIGHT"
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exit.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/exit.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-Exit
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/exit.xml
+  )
+  set_tests_properties(NucleusEditor-Exit PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "closing NucleusEditor"
+  )
 
 endif()
 

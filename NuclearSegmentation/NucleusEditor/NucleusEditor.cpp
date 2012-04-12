@@ -896,6 +896,12 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 				widget->close();
 		}
 	}
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "closing NucleusEditor" << std::endl;
+	}
+  #endif
 	//Then close myself
 	this->writeSettings();
 	event->accept();

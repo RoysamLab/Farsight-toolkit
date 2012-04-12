@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="Tools"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="segmentNucleiAction"/>
+    <event widget="1NucleusEditor0/1ParamsFileDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0" command="pause" arguments="60000" />
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="exitAction"/>
+    <event widget="1NucleusEditor0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton1" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton1" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/nucleus_table.txt"/>
+    <event widget="1NucleusEditor0/1QMessageBox0/qt_msgbox_buttonbox/1QPushButton0" command="activate" arguments=""/>
+</events>
