@@ -140,5 +140,19 @@ if(QtTestingFound)
 		PASS_REGULAR_EXPRESSION "closing NucleusEditor"
   )
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/detect_outliers.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/detect_outliers.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-DetectOutliers
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/detect_outliers.xml
+  )
+  set_tests_properties(NucleusEditor-DetectOutliers PROPERTIES
+    DEPENDS NucleusEditor-Exit
+		PASS_REGULAR_EXPRESSION "optimization finished, #iter = 0"
+  )
+
 endif()
 

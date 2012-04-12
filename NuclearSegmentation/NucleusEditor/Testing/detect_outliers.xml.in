@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@FARSIGHT_DATA_ROOT@/TraceData/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadTableAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/nucleus_table.txt"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="svmAction"/>
+    <event widget="1NucleusEditor0/1PatternAnalysisWizard0/1QWidget0/1QPushButton0" command="activate" arguments=""/>
+</events>
