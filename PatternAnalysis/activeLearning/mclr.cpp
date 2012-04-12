@@ -7,7 +7,7 @@
 MCLR::MCLR()
 {
 	current_label = -1; // keeps a track of the current label
-	confidence_threshold = 0.7;
+	confidence_threshold = 0.5;
 	model k;
 }
 
@@ -188,14 +188,29 @@ vtkSmartPointer<vtkTable> MCLR::Rearrange_Table(vtkSmartPointer<vtkTable> pawTab
 		{
 			vnl_vector<double> curr_col = currprob.get_column(j);
 
-			if(curr_col.arg_max() == i ) 
+			if(curr_col.arg_max() == i && curr_col.max_value() > confidence_threshold) 
 			{	
 				rearrangeFeatsTemp.set_row(counter,feats.get_row(j));			
 				counter++;
 			}
 		}
 	}
-	
+
+	//// Class 0 examples at the end 
+	//for(int i = 0; i<numberOfClasses ; ++i)
+	//{
+	//	for(int j = 0; j<feats.rows() ; ++j)
+	//	{
+	//		vnl_vector<double> curr_col = currprob.get_column(j);
+
+	//		if(curr_col.max_value() <= confidence_threshold) 
+	//		{	
+	//			rearrangeFeatsTemp.set_row(counter,feats.get_row(j));			
+	//			counter++;
+	//		}
+	//	}
+	//}
+
 	
 	std::vector<int> priorityOrder = Get_Feature_Order();
 	counter = 0;	

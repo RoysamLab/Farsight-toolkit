@@ -195,6 +195,12 @@ void SampleEditor::createMenus()
 	connect(heatmapAction, SIGNAL(triggered()), this, SLOT(showheatmap()));
 	ClusClusMenu->addAction(heatmapAction);
 
+	SpectralClusteringMenu = editMenu->addMenu(tr("&SpectralClusering"));
+	SpectralClusteringAction = new QAction(tr("Spectralclu"), this);
+	SpectralClusteringAction->setStatusTip(tr("Spectralclu"));
+	connect(SpectralClusteringAction, SIGNAL(triggered()), this, SLOT(SpectralCluserting()));
+	SpectralClusteringMenu->addAction(SpectralClusteringAction);
+
 	BiclusMenu = editMenu->addMenu(tr("&Biclus"));
 	biclusHeatmapAction = new QAction(tr("BiclusHeatmap"), this);
 	biclusHeatmapAction->setStatusTip(tr("BiclusHeatmap"));
@@ -885,6 +891,32 @@ void SampleEditor::biclusheatmap()
 	this->biheatmap->showTree2();
 
 	delete bicluster;
+}
+
+void SampleEditor::SpectralCluserting()
+{
+	std::cout<<" Spectral Clustering Analysis!"<<std::endl;
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+	vtkSmartPointer<vtkTable> featureTable;
+	featureTable = this->data;
+	featureTable->RemoveColumnByName("Trace File");		
+	featureTable->RemoveColumnByName("Soma X Pos");
+	featureTable->RemoveColumnByName("Soma Y Pos");
+	featureTable->RemoveColumnByName("Soma Z Pos");
+	featureTable->RemoveColumnByName("Distance to Device");
+
+	LocalGeometryRef* lgf= new LocalGeometryRef();
+	lgf->Initialize(featureTable);
+	std::cout<<" Computing similarity matrix !"<<std::endl;
+	lgf->ComputeSimilarityMatrix();
+	std::cout<<" Computing probability matrix !"<<std::endl;
+	lgf->ComputeProbabilityMatrix();
+	std::cout<<" SVDing !"<<std::endl;
+	lgf->SVD(10);
+	std::cout<<" Complete !"<<std::endl;
 }
 void SampleEditor::CreateClusterSelection()
 {

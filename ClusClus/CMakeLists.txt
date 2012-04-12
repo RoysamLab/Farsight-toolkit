@@ -22,7 +22,8 @@ SET( ClusClus_SRCS
 	HeatmapWindow.cpp
 	HeatmapWindowForNewSelection.cpp
 	Heatmap.cpp
-	ProgressionHeatmapWindow.cpp)
+	ProgressionHeatmapWindow.cpp
+	LocalGeometryRef.cpp)
 
 SET( ClusClus_HDRS 
 	Kmeans.h
@@ -35,7 +36,8 @@ SET( ClusClus_HDRS
 	HeatmapWindow.h
 	HeatmapWindowForNewSelection.h
 	Heatmap.h
-	ProgressionHeatmapWindow.h)
+	ProgressionHeatmapWindow.h
+	LocalGeometryRef.h)
 	
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})

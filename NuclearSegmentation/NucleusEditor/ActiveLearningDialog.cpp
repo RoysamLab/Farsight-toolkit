@@ -80,7 +80,7 @@ ActiveLearningDialog::ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmar
 	}
 
 	//QLabel *channelLabel = new QLabel("Please ensure all the relevant channels which might affect classification are ON ", this);	
-	this->resize(600,600);
+	this->resize(300,300);
 }
 
 

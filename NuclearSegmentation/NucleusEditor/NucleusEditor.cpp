@@ -2659,6 +2659,8 @@ void NucleusEditor::HeatmapforActivelearning( vtkSmartPointer<vtkTable> table, i
 	msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
 	msgBox.setDefaultButton(QMessageBox::Cancel);
 	int ret = msgBox.exec();
+	
+	std::cout<<"Here!!!!!"<<std::endl;
 
 	switch (ret) 
 	{
@@ -2689,6 +2691,8 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 		rearrangedtable->AddColumn(columns);	
 	}
 
+	std::cout<<"Here!!!!!"<<std::endl;
+
 	std::vector< vtkSmartPointer<vtkTable> > tables;
 	for(int i=0; i<=num_class; i++)
 	{
@@ -2702,6 +2706,9 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 		}
 		tables.push_back(temptable);
 	}
+
+	std::cout<<"Here!!!!!"<<std::endl;
+
 	for(int i=0; i<table->GetNumberOfRows(); i++)
 	{	
 		std::cout<<table->GetColumnByName("prediction_active")->GetSize()<<std::endl;
@@ -2716,6 +2723,8 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 			rearrangedtable->InsertNextRow(tables[i]->GetRow(j));
 		}
 	}
+	
+	std::cout<<"Here!!!!!"<<std::endl;
 
 	int count = 0;// for counting of rows already in the order
 	int tablecount = 0;// for counting of tables already in the order
@@ -2761,6 +2770,8 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 				}
 			}
 
+			std::cout<<"ClusClus!!!!!"<<std::endl;
+
 			clusclus* cc = new clusclus(datas, (int)featureTable->GetNumberOfRows(), (int)featureTable->GetNumberOfColumns() - 1);
 			cc->RunClusClus();
 			for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
@@ -2784,11 +2795,19 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 			///////////////////////////////////////////////////////////////////////
 		}	
 	}
+	
+	std::cout<<"Finsihed Clusclus!!!!!"<<std::endl;
+
 	Heatmap* HeatmapWin = new Heatmap();
+	std::cout<<"1"<<std::endl;
 	HeatmapWin->setModels(rearrangedtable, this->selection);
+	std::cout<<"2"<<std::endl;
 	HeatmapWin->setOrders(order);
+	std::cout<<"3"<<std::endl;
 	HeatmapWin->setMultipleTreeData(treesdata);
+	std::cout<<"4"<<std::endl;
 	HeatmapWin->creatDataForHeatmap(0.2);
+	std::cout<<"5"<<std::endl;
 	HeatmapWin->showGraph();
 }
 std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector)

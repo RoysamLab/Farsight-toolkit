@@ -53,6 +53,7 @@ limitations under the License.
 #include "ClusClus/Dendrogram.h"
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
+#include "ClusClus/LocalGeometryRef.h"
 #include "ClusClus/ProgressionHeatmapWindow.h"
 //#include "SPD/spdmainwindow.h"
 #include "SPD/spdtestwindowForNewSelection.h"
@@ -91,6 +92,7 @@ private slots:
 	void featuredendrogram();
 	void showheatmap();
 	void biclusheatmap();
+	void SpectralCluserting();
 
 	void CreateClusterSelection();
 	void DumpClusterSelections();
@@ -124,6 +126,9 @@ private:
 
 	QMenu *BiclusMenu;
 	QAction *biclusHeatmapAction;
+
+	QMenu *SpectralClusteringMenu;
+	QAction *SpectralClusteringAction;
 
 	QAction *CreateCluster;
 	QAction *DisplayClusterSelections;

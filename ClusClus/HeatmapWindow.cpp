@@ -81,6 +81,9 @@ Heatmap::~Heatmap()
 	delete this->connect_Data_Tree2;
 }
 
+void Heatmap::Initialize()
+{
+}
 void Heatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
 {
 	this->rowMapFromOriginalToReorder.clear();
@@ -620,7 +623,7 @@ void Heatmap::showGraph()
 	this->actor = vtkSmartPointer<vtkActor>::New();
 	this->actor->SetMapper(mapper);
 
-	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	this->scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
 	scalarbarLut->SetTableRange (-1, 1);
 	scalarbarLut->SetNumberOfTableValues(COLOR_MAP_SIZE);
 	for(int index = 0; index<COLOR_MAP_SIZE;index++)
@@ -630,7 +633,7 @@ void Heatmap::showGraph()
 	}
 	scalarbarLut->Build();
 
-	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	this->scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
 	scalarBar->SetLookupTable(scalarbarLut);
 	scalarBar->SetTitle("Color Map");
 	scalarBar->SetNumberOfLabels(10);

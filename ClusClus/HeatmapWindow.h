@@ -96,6 +96,7 @@ class Heatmap : public QMainWindow
 public:
 	Heatmap(QWidget * parent = 0);
 	~Heatmap();
+	void Initialize();
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void setOrders(int* optimalleaforder1,int* optimalleaforder2 = NULL);
@@ -228,8 +229,8 @@ private:
 	vtkSmartPointer<vtkLineSource> dragLineSource;
 	vtkSmartPointer<vtkPolyDataMapper> dragLineMapper;
 	vtkSmartPointer<vtkActor> dragLineActor;
-
-
+	vtkSmartPointer<vtkScalarBarActor> scalarBar;
+	vtkSmartPointer<vtkLookupTable> scalarbarLut;
 
 	std::map<int, int> indMapFromVertexToInd;
 	std::vector< std::vector<int> > indSPDMapFromIndToVertex;
