@@ -48,6 +48,7 @@ View3D::View3D(QWidget *parent)
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
 	this->TreeModel = NULL;
+	this->CellModel = NULL;
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
@@ -5743,8 +5744,14 @@ void View3D::closeEvent(QCloseEvent *event)
 	this->CloseTreePlots();
 	this->HideCellAnalysis();
 	this->TraceEditSettings.sync();
-	this->TreeModel->CloseClusterManager();
-	this->CellModel->CloseClusterManager();
+	if(this->TreeModel)
+	{
+		this->TreeModel->CloseClusterManager();
+	}
+	if(this->CellModel)
+	{
+		this->CellModel->CloseClusterManager();
+	}
 	if(this->GapsPlotView)
 	{
 		this->GapsPlotView->close();
