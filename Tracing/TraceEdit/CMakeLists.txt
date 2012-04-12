@@ -24,8 +24,8 @@ set( TRACE_SRCS
   SuperEllipsoid.h	SuperEllipsoid.cxx
   ConvexHull3D.h	ConvexHull3D.cxx
   Face.h	    	Face.cxx
-  
-  ${GUI_MOC_SRCS} ) 
+  ${GUI_MOC_SRCS}
+  ) 
 
 set( TRACE_LIBS
     tiff

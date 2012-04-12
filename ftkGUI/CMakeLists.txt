@@ -20,6 +20,9 @@ SET( GUI_SRCS
 	QvtkTableView.cpp
 	SelectionUtilities.cpp
 )
+SET( NONQT_GUI_SRCS
+	ProcessObjectProgressUpdater.cpp
+)
 
 SET( GUI_HDRS
     	PlotWindow.h
@@ -42,6 +45,9 @@ SET( GUI_HDRS
 	SelectiveClustering.h
 	QvtkTableView.h
 	SelectionUtilities.h
+)
+SET( NONQT_GUI_HDRS
+	ProcessObjectProgressUpdater.h
 )
 
 SET( GUI_LIBS
@@ -89,7 +95,14 @@ QT4_WRAP_CPP( GUI_MOC_SRCS ${GUI_HDRS} )
 # This must be built static because libKPLS is only available as a static
 # library.
 ADD_LIBRARY( ftkGUI STATIC
-  ${GUI_SRCS} ${GUI_MOC_SRCS} ${GUI_HDRS} ${GUI_UI_HDRS} ${GUI_RC_SRCS} )
+  ${GUI_SRCS}
+  ${GUI_MOC_SRCS}
+  ${GUI_HDRS}
+  ${GUI_UI_HDRS}
+  ${GUI_RC_SRCS}
+  ${NONQT_GUI_SRCS}
+  ${NONQT_GUI_HDRS}
+  )
 # For linking into shared libraries.
 IF( CMAKE_COMPILER_IS_GNUCC )
   SET_TARGET_PROPERTIES( ftkGUI PROPERTIES COMPILE_FLAGS -fPIC )

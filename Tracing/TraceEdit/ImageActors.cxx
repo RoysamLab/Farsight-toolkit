@@ -45,6 +45,9 @@ ImageRenderActors::ImageRenderActors()
 	{
 		this->TotalImageSize.push_back(0);
 	}
+
+        this->progressBar = NULL;
+        this->progressTextWidget = NULL;
 }
 
 ImageRenderActors::~ImageRenderActors()
@@ -87,6 +90,16 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetNumberOfThreads(16);
 	newImage->reader->SetFileName( ImageSource );
+        newImage->processObjectProgressUpdater = ProcessObjectProgressUpdater::New();
+        if( this->progressBar && this->progressTextWidget )
+		{
+		newImage->processObjectProgressUpdater->SetProgressBar( this->progressBar );
+		newImage->processObjectProgressUpdater->SetTextWidget( this->progressTextWidget );
+		newImage->processObjectProgressUpdater->SetDescription( "Loading image..." );
+		newImage->reader->AddObserver( itk::StartEvent(), newImage->processObjectProgressUpdater );
+		newImage->reader->AddObserver( itk::ProgressEvent(), newImage->processObjectProgressUpdater );
+		newImage->reader->AddObserver( itk::EndEvent(), newImage->processObjectProgressUpdater );
+		}
 	newImage->x = x;
 	newImage->y = y;
 	newImage->z = z;
@@ -111,7 +124,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
-
+        
 	this->setImageBounds(bounds);
 	this->LoadedImages.push_back(newImage);
 	return (int) (this->LoadedImages.size() -1);
@@ -1044,4 +1057,12 @@ double* ImageRenderActors::getSliceBounds()
 	 * @author Audrey Cheong
 	 */
 	return sliceBounds;
+}
+void ImageRenderActors::setProgressBar( QProgressBar * pb )
+{
+  this->progressBar = pb;
+}
+void ImageRenderActors::setProgressTextWidget( QLabel * ptw )
+{
+  this->progressTextWidget = ptw;
 }

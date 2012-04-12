@@ -55,6 +55,7 @@ limitations under the License.
 //#include <set>
 //#include <QtGui>
 
+#include "ProcessObjectProgressUpdater.h"
 
 const unsigned int Dimension = 3;
 
@@ -117,6 +118,8 @@ struct imageFileHandle
 	vtkSmartPointer<vtkImageProperty> imageProperty;
 	vtkSmartPointer<vtkVolume> volume;
 	vtkSmartPointer<vtkVolume> somaVolume;
+
+        ProcessObjectProgressUpdater::Pointer processObjectProgressUpdater;
 };
 class  ImageRenderActors
 {
@@ -183,6 +186,8 @@ public:
 	int getSomaOpacityMax();
 	void setSomaOpacityValue(double value);
 	double getSomaOpacityValue();
+        void setProgressBar( QProgressBar * progressBar );
+        void setProgressTextWidget( QLabel * progressTextWidget );
 
 	struct ColorType
 	{
@@ -208,6 +213,8 @@ private:
 	int colorValue, sliceBrightness;
 	int minXBound, maxXBound, minYBound, maxYBound, minZBound, maxZBound;
 	double sliceBounds[6];
+        QProgressBar * progressBar;
+        QLabel * progressTextWidget;
 
 };
 #endif

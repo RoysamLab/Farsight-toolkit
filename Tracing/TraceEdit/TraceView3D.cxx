@@ -1982,6 +1982,10 @@ void View3D::CreateLayout()
 	statusBar->addPermanentWidget(this->DeleteLabel,0);
         this->ProgressBar = new QProgressBar(this);
         statusBar->addWidget(this->ProgressBar);
+        this->ProgressDescription = new QLabel("", this);
+        statusBar->addWidget(this->ProgressDescription);
+        this->ImageActors->setProgressBar( this->ProgressBar );
+        this->ImageActors->setProgressTextWidget( this->ProgressDescription );
 
 	this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
 	this->analysisViews->addAction(this->ShowPlots);

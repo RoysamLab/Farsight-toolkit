@@ -324,6 +324,7 @@ private:
 	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock, *vesselSegDock;
 	QTextEdit * EditLogDisplay;
 	QProgressBar * ProgressBar;
+        QLabel *       ProgressDescription;
 	
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile, NucleiFile;
