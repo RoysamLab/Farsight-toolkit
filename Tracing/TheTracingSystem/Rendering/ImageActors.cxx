@@ -27,7 +27,6 @@ ImageRenderActors::ImageRenderActors()
 	this->opacity1Value = .1;
 	this->opacity2 = 255;
 	this->opacity2Value = 1;
-	this->RaycastSampleDist = 1;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->syncOpacityTransfetFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
@@ -53,11 +52,6 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag)
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
-	#ifdef USE_GPUREN
-	{
-		newImage->volumeMapperGPU = 0;
-	}
-	#endif
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
@@ -107,11 +101,6 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
-	#ifdef USE_GPUREN
-	{
-		newImage->volumeMapperGPU = 0;
-	}
-#endif
 	newImage->volumeProperty = 0;
 	newImage->reader = ReaderType::New();
 	newImage->reader->SetFileName( ImageSource );
@@ -209,28 +198,17 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
 	this->LoadedImages[i]->volume = vtkSmartPointer<vtkVolume>::New();
-#ifdef USE_GPUREN
-	{
-		this->LoadedImages[i]->volumeMapperGPU = vtkSmartPointer<vtkGPUVolumeRayCastMapper>::New();
-		this->LoadedImages[i]->volumeMapperGPU->SetInput(this->LoadedImages[i]->ImageData);
-		this->LoadedImages[i]->volumeMapperGPU->SetSampleDistance((float)this->RaycastSampleDist);
-		this->LoadedImages[i]->volumeMapperGPU->SetBlendModeToComposite();
-		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapperGPU);
-	}
-#else
-	{
-		this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D>::New();
-		this->LoadedImages[i]->volumeMapper->SetSampleDistance((float)this->RaycastSampleDist);
-		this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
-		this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
-	}
-#endif
+        this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
+        this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+        this->LoadedImages[i]->volumeMapper->SetBlendModeToComposite();
+        this->LoadedImages[i]->volume->SetMapper(this->LoadedImages[i]->volumeMapper);
 	this->LoadedImages[i]->volume->SetProperty(this->LoadedImages[i]->volumeProperty);
 	this->LoadedImages[i]->volume->SetPosition(this->LoadedImages[i]->x, 
-		this->LoadedImages[i]->y,this->LoadedImages[i]->z);
+	this->LoadedImages[i]->y,this->LoadedImages[i]->z);
 	this->LoadedImages[i]->volume->SetPickable(0);
 	return this->LoadedImages[i]->volume;
 }
+
 vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
 {
 	if (i == -1)
@@ -239,6 +217,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::GetRayCastVolume(int i)
 	}
 	return this->LoadedImages[i]->volume;
 }
+
 bool ImageRenderActors::getRenderStatus(int i)
 {
 	if (i == -1)

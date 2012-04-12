@@ -34,7 +34,6 @@ ImageRenderActors::ImageRenderActors()
 	this->somaColorValue = 0;
 	this->somaBrightness = 150;
 	this->sliceBrightness = 500;
-	this->RaycastSampleDist = .2;
 	this->opacityTransferFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->opacityTransferFunctionSoma = vtkSmartPointer<vtkPiecewiseFunction>::New();
 	this->syncOpacityTransferFunction();

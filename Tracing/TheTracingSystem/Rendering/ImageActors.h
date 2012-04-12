@@ -59,13 +59,9 @@ limitations under the License.
 #include "vtkImageToStructuredPoints.h"
 #include "vtkImageActor.h"
 #include "vtkLODActor.h"
-#include "vtkOpenGLVolumeTextureMapper3D.h"
 #include "itkMaximumProjectionImageFilter.h"
 #include "itkMinimumProjectionImageFilter.h"
 #include "itkMeanProjectionImageFilter.h"
-#ifdef USE_GPUREN
-#include <vtkGPUVolumeRayCastMapper.h>
-#endif
 #include "vtkPiecewiseFunction.h"
 #include "vtkPolyLine.h"
 #include "vtkPolygon.h"
@@ -73,6 +69,7 @@ limitations under the License.
 #include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
 #include "vtkSmartPointer.h"
+#include "vtkSmartVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 
@@ -236,13 +233,10 @@ struct imageFileHandle
 	vtkSmartPointer<vtkActor> ContourActor;
 //Raycast pointers
 	vtkSmartPointer<vtkVolumeProperty> volumeProperty;
-	vtkSmartPointer<vtkOpenGLVolumeTextureMapper3D> volumeMapper;
+	vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper;
 //image slicer
 	ImageActorPointerType sliceActor;
 	vtkSmartPointer<vtkImageActor> ProjectionActor;
-#ifdef USE_GPUREN
-	vtkSmartPointer<vtkGPUVolumeRayCastMapper> volumeMapperGPU;
-#endif
 	vtkSmartPointer<vtkVolume> volume;
 };
 
@@ -294,14 +288,13 @@ public:
 	void setOpacityValueMax(double opacity);
 	double getOpacityValueMax();
 private:
-	bool useGPURendering;
 	void syncColorTransfetFunction();
 	void syncOpacityTransfetFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
 	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
-	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, RaycastSampleDist;
+	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value;
 	double brightness;
 };
 #endif

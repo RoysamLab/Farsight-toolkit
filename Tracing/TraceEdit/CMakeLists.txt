@@ -58,11 +58,6 @@ if(QtTestingFound)
   add_definitions(-DUSE_QT_TESTING)
 endif()
 
-option( USE_GPUREN "Use GPU for Rendering" OFF )
-if(USE_GPUREN)
-  add_definitions(-DUSE_GPUREN)
-endif(USE_GPUREN)
-
 add_library( Trace STATIC ${TRACE_SRCS} )
 target_link_libraries( Trace ${TRACE_LIBS} )
 

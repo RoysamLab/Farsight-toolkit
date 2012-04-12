@@ -191,7 +191,6 @@ public:
 		double blue;
 	};
 private:
-	bool useGPURendering;
 	void syncColorTransferFunction();
 	void syncOpacityTransferFunction();
 	void syncSomaColorTransferFunction();
@@ -203,7 +202,7 @@ private:
 	std::vector<imageFileHandle*> LoadedImages;
 	std::vector<std::string> ImageList;
 	std::vector<double> TotalImageSize;
-	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, brightness, RaycastSampleDist;
+	double r,g,b, opacity1, opacity2, opacity1Value, opacity2Value, brightness;
 	double somaColorValue, somaBrightness;
 	double somaOpacity, somaOpacityValue;
 	int colorValue, sliceBrightness;
