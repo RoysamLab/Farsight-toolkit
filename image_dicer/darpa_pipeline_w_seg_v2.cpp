@@ -2,6 +2,8 @@
 // make -j80;((time ./exe/darpa_tracer_w_seg ../../data/0103/DAPI_montage.mhd ../../data/0103/GFP_montage.mhd ../../data/0103/Cy5_montage_BS.mhd ../../data/0103/Seg_Params.ini ../../data/0103/ProjectDefinition.xml) 2>&1) >> salida.log
 // set args ../../data/0120/montage_kt01445_w410DAPIdsu_BS.nrrd ../../data/0120/montage_kt01445_w311GFPdsu_BS_CV.mhd ../../data/0120/montage_kt01445_w113Cy5dsu_BS.nrrd ../../data/0120/Parameters/Seg_Params.ini ../../data/0120/Parameters/ProjectDefinition.xml
 
+// scp * nrey@farsight-05.ee.uh.edu:/data/nicolas/farsight_updated/bin/exe/
+
 
 #include "itkImageFileReader.h"
 #include "itkImage.h"
@@ -305,10 +307,10 @@ int main(int argc, char* argv[])
 		int numThreadsCols_split;
 		if( flagSmall == 0 )
 		{
-			numThreadsRows = 10;
+			numThreadsRows = 20;
 			numThreadsRows_split = 10; //10
 			numThreadsCols = 8;
-			numThreadsCols_split = 4; //4
+			numThreadsCols_split = 8; //4
 		}
 		else
 		{
@@ -1104,23 +1106,36 @@ int main(int argc, char* argv[])
 			#pragma omp parallel for num_threads(8)
 			for (unsigned int i = 0; i < 8; ++i)
 			{
-				if( i<6 )
-				{
-					stringstream out;
-					out<<i;
-					string s = out.str();
-					std::string tempFileName_3 = gfpFileNameNoExt + "_LOG_" + s + ".mhd";
-					
-					LoGDesiredRegion[i] = readImageRegion< gfpImageType >( tempFileName_3.c_str(), desiredRegionBigTileLOG );
-				}
+			//	if( i<6 )
+			//	{
+			//		stringstream out;
+			//		out<<i;
+			//		string s = out.str();
+			//		std::string tempFileName_3 = gfpFileNameNoExt + "_LOG_" + s + ".mhd";
+			//		
+			//		LoGDesiredRegion[i] = readImageRegion< gfpImageType >( tempFileName_3.c_str(), desiredRegionBigTileLOG );
+			//	}
 				
 				if( i==6)
 				{
 					std::string tempFileName_42 = gfpFileNameNoExt + "_PREP_MNT.mhd";
-// 					std::string tempFileName_42 = gfpFileNameNoExt + ".mhd";
 					img_traceDesiredRegion = readImageRegion< gfpImageType >( tempFileName_42.c_str(), desiredRegionBigTileLOG );
-// 					std::string tempFileName_44 = filePath + "/BigTile_" + srr + "_GFP.mhd";
-// 					writeImage< gfpImageType >(img_traceDesiredRegion,tempFileName_44.c_str());
+					
+					std::string tempFileName_46 = gfpFileNameNoExt + ".mhd";
+					rawImageType_16bit::Pointer img_traceDesiredRegion_tif = readImageRegion< rawImageType_16bit >( tempFileName_46.c_str(), desiredRegionBigTileLOG );
+					
+					RescaleFilterType::Pointer rescaleFilter_bigt = RescaleFilterType::New();
+					rescaleFilter_bigt->SetOutputMinimum(0);
+					rescaleFilter_bigt->SetOutputMaximum(std::numeric_limits<unsigned char>::max());
+					rescaleFilter_bigt->SetInput(img_traceDesiredRegion_tif);
+					rescaleFilter_bigt->Update();
+					
+					std::string tempFileName_47 = filePath + "/BigTile_" + srr + "_GFP.tif";
+					writeImage< rawImageType_8bit >(rescaleFilter_bigt->GetOutput(),tempFileName_47.c_str());
+					
+					
+
+					
 				}
 // 			
 				if( i ==7 )
@@ -1141,7 +1156,7 @@ int main(int argc, char* argv[])
 			}
 
 		
-		#pragma omp parallel for num_threads(50) schedule(dynamic, 1)
+		#pragma omp parallel for num_threads(70) schedule(dynamic, 1)
 			for( unsigned long long a=0; a<centroid_list.size(); ++a )
 			{
 				int x, y, z;
@@ -1366,12 +1381,12 @@ int main(int argc, char* argv[])
 // 				//########    RUN TRACING    ########
 				MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 				
-				MNT->setLogScale(LoGDesiredRegion[0],0);
-				MNT->setLogScale(LoGDesiredRegion[1],1);
-				MNT->setLogScale(LoGDesiredRegion[2],2);
-				MNT->setLogScale(LoGDesiredRegion[3],3);
-				MNT->setLogScale(LoGDesiredRegion[4],4);
-				MNT->setLogScale(LoGDesiredRegion[5],5);
+			//	MNT->setLogScale(LoGDesiredRegion[0],0);
+			//	MNT->setLogScale(LoGDesiredRegion[1],1);
+			//	MNT->setLogScale(LoGDesiredRegion[2],2);
+			//	MNT->setLogScale(LoGDesiredRegion[3],3);
+			//	MNT->setLogScale(LoGDesiredRegion[4],4);
+			//	MNT->setLogScale(LoGDesiredRegion[5],5);
 				
 // 				MNT->setNDXImage(NDXImage);
 				
@@ -1386,7 +1401,7 @@ int main(int argc, char* argv[])
 				MNT->SetCostThreshold(1000);
 				MNT->LoadSomaImage_1(img_soma);
 // 	// 			MNT->LoadSomaImage_1(img_soma_yan);
-				bool flagLog = true;
+				bool flagLog = false;
 				MNT->setFlagOutLog(flagLog);
 				MNT->RunTracing();
 // 
