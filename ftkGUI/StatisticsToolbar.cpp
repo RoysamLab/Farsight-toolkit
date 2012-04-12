@@ -25,7 +25,7 @@ StatisticsToolbar::StatisticsToolbar(QWidget *parent)
 	this->StatisticsTable = new QTableView();
 	this->StatisticsModel = new QStandardItemModel(this);
 	this->StatisticsSelectionModel = new QItemSelectionModel(this->StatisticsModel, this);	
-    this->statisticsDockWidget = new QDockWidget(tr("Statistics Toolbar"));
+	this->statisticsDockWidget = new QDockWidget(tr("Statistics Toolbar"));
 	this->Selection = new ObjectSelection();
 	std::vector<int> selectedRowNumbers;
 	

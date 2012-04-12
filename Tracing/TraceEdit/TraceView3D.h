@@ -324,6 +324,7 @@ private:
 	QSettings TraceEditSettings;
 	QDockWidget * InformationDisplays, *BootDock, * settingsDock, *cursor3DDock, *AutomationDock, *projectFilesDock, *vesselSegDock;
 	QTextEdit * EditLogDisplay;
+	QProgressBar * ProgressBar;
 	
 	QString UserName, LabName, ProjectName;
 	QStringList TraceFiles, Image, SomaFile, tempTraceFile, NucleiFile;
@@ -356,7 +357,7 @@ private:
 	QDoubleSpinBox *posX, *posY, *posZ;
     //VTK render window embedded in a Qt widget
 	QVTKWidget *QVTK;	
-    QWidget *CentralWidget;
+	QWidget *CentralWidget;
 	QMenu *fileMenu;
 	QMenu *ShowToolBars;
 	QMenu *processingMenu;

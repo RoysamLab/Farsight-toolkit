@@ -31,6 +31,7 @@ v7: new GUI and file control
 
 #include "TraceView3D.h"
 #include <QFrame>
+#include <QProgressBar>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -1972,12 +1973,15 @@ void View3D::CreateLayout()
 	// Status Bar //
 	////////////////
 
-	this->statusBar()->addPermanentWidget(new QLabel("Statistics: Split: ", this));
-	this->statusBar()->addPermanentWidget(this->SplitLabel,0);
-	this->statusBar()->addPermanentWidget(new QLabel(" Merged: ", this));
-	this->statusBar()->addPermanentWidget(this->MergeLabel,0);
-	this->statusBar()->addPermanentWidget(new QLabel(" Deleted: ", this));
-	this->statusBar()->addPermanentWidget(this->DeleteLabel,0);
+        QStatusBar * statusBar = this->statusBar();
+	statusBar->addPermanentWidget(new QLabel("Statistics: Split: ", this));
+	statusBar->addPermanentWidget(this->SplitLabel,0);
+	statusBar->addPermanentWidget(new QLabel(" Merged: ", this));
+	statusBar->addPermanentWidget(this->MergeLabel,0);
+	statusBar->addPermanentWidget(new QLabel(" Deleted: ", this));
+	statusBar->addPermanentWidget(this->DeleteLabel,0);
+        this->ProgressBar = new QProgressBar(this);
+        statusBar->addWidget(this->ProgressBar);
 
 	this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
 	this->analysisViews->addAction(this->ShowPlots);
@@ -6217,4 +6221,3 @@ void View3D::resizeForTesting()
   this->QVTK->resize(600, 500);
   this->update();
 }
-
