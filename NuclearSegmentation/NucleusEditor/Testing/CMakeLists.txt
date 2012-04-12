@@ -153,6 +153,25 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-Exit
 		PASS_REGULAR_EXPRESSION "optimization finished, #iter = 0"
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/save_project.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/save_project.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-SaveProject
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/save_project.xml
+  )
+  set_tests_properties(NucleusEditor-SaveProject PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "done saving"
+  )
+  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-DeleteSegments)
+  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-DeleteOutliers)
+  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-MergeSegments)
+  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowCentroids)
+  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowObjectIDs)
 
 endif()
 
