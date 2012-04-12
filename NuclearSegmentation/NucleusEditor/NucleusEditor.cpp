@@ -827,6 +827,12 @@ void NucleusEditor::about()
 	text += tr("<a><u>http://www.farsight-toolkit.org</a></u>");
 
 	QMessageBox::about(this, tr("About FARSIGHT"), text);
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "About FARSIGHT" << std::endl;
+	}
+	#endif
 }
 
 //******************************************************************************

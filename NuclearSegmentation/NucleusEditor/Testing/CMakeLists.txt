@@ -113,5 +113,16 @@ if(QtTestingFound)
 		PASS_REGULAR_EXPRESSION "toggleIDs"
   )
 
+  add_test(
+    NucleusEditor-About
+    ${NucleusEditor_EXE}
+    --test
+    ${NucleusEditor_TEST_DIR}/about.xml
+  )
+  set_tests_properties(NucleusEditor-About PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "About FARSIGHT"
+  )
+
 endif()
 
