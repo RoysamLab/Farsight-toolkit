@@ -60,6 +60,7 @@
 #include "ftkProjectFiles.h"
 #include "ActiveLearningDialog.h"
 #include "GalleryDialog.h"
+#include "ALforNucEditor.h"
 
 #ifdef USE_TRACKING
 #include "KymoGraphView.h" 
@@ -263,12 +264,8 @@ protected slots:
 	void startActiveLearningwithFeat();
 	void SaveActiveLearningResults(void);
 	void SaveActiveLearningModel();
-	void StartTraining(vtkSmartPointer<vtkTable> pTable);
-	void ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > query_labels);
-	//void CreateActiveLearningModel(MCLR* mclr_alm,  vtkSmartPointer<vtkTable> pWizard_table);
+	void ExtractClassificationResult();
 	void classifyFromActiveLearningModel();
-	void Start_Classification(bool create_model = false);
-	std::vector< vtkSmartPointer<vtkTable> > Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector);
 	// Clus
 	void runClus();
 	void HeatmapforActivelearning(vtkSmartPointer<vtkTable>, int class_num);//for neuclei editing
@@ -481,23 +478,11 @@ protected:
 	///////////////////////////////////////////////////////////////////////////////
 	// Active Learning Variables
 	///////////////////////////////////////////////////////////////////////////////
+	ALforNucEd *AL;
 	unsigned int activeRun;
-	MCLR *mclr;
-	ActiveLearningDialog *dialog;
-	bool from_model;
-	std::vector< std::pair<int,int> > id_time;	
-	std::vector<int> active_queries;
-	std::vector<QImage> snapshots;
+	bool classify_from_model;
 	vtkSmartPointer<vtkTable> featureTable;
-	vnl_matrix<double> act_learn_matrix;
-	double confidence_thresh;
-	std::string classification_name;
-	double sample_number;
-	vnl_vector<double> std_dev_vec;
-	vnl_vector<double> mean_vec; 
-	std::vector< std::pair< std::string, vnl_vector<double> > >active_model;
-	std::string prediction_col_name;
-	std::string confidence_col_name;
+	std::vector< std::pair< std::string, vnl_vector<double> > > active_model;
 	////////////////////////////////////////////////////////////////////////////////
 
 	//Processing toolbar and thread pointers:
@@ -564,25 +549,6 @@ private:
 	QPushButton *okButton;
 };
 
-class ClassName_Confidence_Dialog : public QDialog
-{
-	Q_OBJECT
-public:
-	ClassName_Confidence_Dialog(QWidget *parent = 0);
-	std::string getClassName();
-	double getConfThresh();
-
-private:
-	QLabel *classNameLabel;
-	QLineEdit *class_name;
-	QHBoxLayout *classNameLayout;
-	QLabel *confidenceLabel;
-	QLineEdit *conf_thresh;
-	QHBoxLayout *confLayout;
-	QPushButton *okButton;
-	QHBoxLayout *bLayout;
-	QVBoxLayout *layout;
-};
 
 class Split_Params_Dialog : public QDialog
 {

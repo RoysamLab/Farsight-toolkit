@@ -37,9 +37,11 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	chSignalMapper = NULL;
 
 	segView = new LabelImageViewQT(&colorItemsMap);
+	AL = new ALforNucEd();
 	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
 	connect(segView, SIGNAL(autoMerge()), this, SLOT(mergeCells()));
 	connect(segView, SIGNAL(emitTimeChanged()), this, SLOT(update5DTable()));
+	connect(AL, SIGNAL(Classification_Done()), this, SLOT(ExtractClassificationResult()));
 	selection = new ObjectSelection();
 	connect(selection, SIGNAL(MultiChanged()), this, SLOT(updateMultiLabels()));
 	this->setCentralWidget(segView);
@@ -80,10 +82,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
-	confidence_thresh = 0.5;
-	prediction_col_name = "prediction_active";
-	confidence_col_name = "confidence";
-	this->HeatmapWinforAL = NULL;
+	this->HeatmapWin = NULL;
 
 #ifdef USE_TRACKING
 	mfcellTracker = NULL;
@@ -2296,219 +2295,25 @@ void NucleusEditor::updateDatabase()
 
 void NucleusEditor::startActiveLearningwithFeat()
 {	
-
-	id_time.clear();
-	from_model = false;
+	classify_from_model = false;
+	std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
+	vtkSmartPointer<vtkTable> featureTable;
 	if(myImg->GetImageInfo()->numTSlices==1)
+	{
+		VectorOfTables.push_back(table);	
 		featureTable = table;
-	else
-	{
-		featureTable = nucSeg->megaTable;
-		segView->SetCurrentTimeVal(0);
-	}
-
-	if(!featureTable) return;
-
-
-	//Default confidence threshold is 50 % 
-	ClassName_Confidence_Dialog *dialog = new ClassName_Confidence_Dialog(this);
-	if( dialog->exec() )
-	{
-		classification_name = dialog->getClassName();
-		confidence_thresh = dialog->getConfThresh();		
 	}
 	else
-		return;
-	delete dialog;
-
-
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
 	{
-		nucSeg->AddTimeToMegaTable();
+		VectorOfTables = nucSeg->table4DImage;	
 		featureTable = nucSeg->megaTable;
 	}
+	AL->SetTablesToClassify(VectorOfTables);
+	AL->SetTableForTraining(featureTable);
+	AL->SetLabelView(segView);
+	AL->RunALClassification(classify_from_model);
 
-	TrainingDialog *d = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
-	connect(d, SIGNAL(changedTable()), this, SLOT(updateViews()));
-	d->exec();
-
-
-	//Clear the Gallery 
-	//gallery.clear();	
-
-	// Remove the training examples from the list of ids.
-	//Get the list of ids
-	for(int i=0;i<featureTable->GetNumberOfRows(); ++i)
-	{
-		if(featureTable->GetValueByName(i,"train_default1").ToDouble()==-1) 
-		{
-			std::pair<double,double> temp_pair;
-			temp_pair.first = featureTable->GetValue(i,0).ToDouble();
-			if(myImg->GetImageInfo()->numTSlices == 1)
-				temp_pair.second = 0;
-			else
-				temp_pair.second = featureTable->GetValueByName(i,"time").ToDouble();
-			id_time.push_back(temp_pair);
-		}
-	}
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		featureTable->RemoveColumnByName("time");
-
-	// If the user did not hit cancel 
-	if(d->result())
-	{
-		pWizard = new PatternAnalysisWizard( featureTable, PatternAnalysisWizard::_ACTIVE,"","", this);
-		connect(pWizard, SIGNAL(start_training(vtkSmartPointer<vtkTable>)), this, SLOT(StartTraining(vtkSmartPointer<vtkTable>)));
-		pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-		pWizard->show();
-	}
-}
-
-void NucleusEditor::StartTraining(vtkSmartPointer<vtkTable> pTable)
-{
-	//pawTable does not have the id column  nor the train_default column
-	pawTable = pTable;
-	
-	//// Delete the prediction column if it exists
-	prediction_names = ftk::GetColumsWithString( "prediction_active" , pawTable);
-	if(prediction_names.size()>0)
-		pawTable->RemoveColumnByName("prediction_active");
-
-	vnl_vector<double> class_list(pawTable->GetNumberOfRows()); 
-
-	for(int row = 0; (int)row < pawTable->GetNumberOfRows(); ++row)  
-	{
-		class_list.put(row,vtkVariant(featureTable->GetValueByName(row,"train_default1")).ToDouble());
-	}
-
-	mclr = new MCLR();
-	double sparsity = 1;
-	double max_info = -1e9;
-
-	// Normalize the feature matrix
-	vnl_matrix<double> Feats = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(pawTable, id_time));
-	mclr->Initialize(Feats,sparsity,class_list,"",pawTable);
-	mclr->Get_Training_Model();
-
-	// Get the active query based on information gain
-	int active_query = mclr->Active_Query();
-
-	std::cout<< "Active Query # 1 is " << active_query <<std::endl;
-
-	//active_queries = mclr->ALAMO(active_query);		
-	active_queries = mclr->Submodular_AL(active_query,mclr->testData);
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		segView->SetCurrentTimeVal(mclr->id_time_val.at(active_query).second);
-
-	std::vector<std::pair<int,int> > dummy_vector;
-	dummy_vector.clear();
-	ALDialogPopUP(true, dummy_vector);
-
-}
-
-void NucleusEditor::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > query_labels)
-{
-	bool user_stop_dialog_flag = false;
-	int atleast_one_chosen = 0;
-
-	if(!first_pop)		
-	{
-		for(int i=0; i<active_queries.size(); ++i)
-		{
-			atleast_one_chosen = atleast_one_chosen + query_labels[i].second;
-			if(query_labels[i].second == -1)
-			{	
-				QMessageBox::critical(this, tr("Oops"), tr("Please select a class for all the cells"));
-				this->show();
-				dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->numberOfClasses, active_queries, mclr->top_features);	
-				connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
-				connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
-				dialog->show();
-				i=0;		
-				return;
-			}
-		}
-		if(this->HeatmapWinforAL == NULL)
-		{
-			this->HeatmapWinforAL = new Heatmap();
-		}	
-		this->HeatmapWinforAL->setModels(mclr->Rearrange_Table(pawTable));
-        this->HeatmapWinforAL->reRunClus();
-        this->HeatmapWinforAL->showGraphforNe();
-
-		// Update the data & refresh the training model and refresh the Training Dialog 		
-		mclr->Update_Train_Data(query_labels);
-
-		// Update the gallery
-		if(mclr->stop_training && atleast_one_chosen!=0)
-		{
-			QMessageBox msgBox;
-			msgBox.setText("I understand the classification problem.");
-			msgBox.setInformativeText("Do you want to stop training and classify ? ");
-			msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-			msgBox.setDefaultButton(QMessageBox::Ok);
-			int ret = msgBox.exec();
-
-			switch (ret) 
-			{
-			case QMessageBox::Ok:
-				// Save was clicked
-				user_stop_dialog_flag = true;
-				break;
-			case QMessageBox::Cancel:
-				mclr->stop_training = false;
-				break;
-			default:
-				// should never be reached
-				break;
-			}
-		} 
-
-		if(user_stop_dialog_flag)
-		{
-			Start_Classification(true);
-			return;
-		}
-
-		mclr->Get_Training_Model();
-		int active_query = mclr->Active_Query();
-		//active_queries = mclr->ALAMO(active_query);
-		active_queries = mclr->Submodular_AL(active_query,mclr->testData);
-
-	}// END if(!first_pop)		
-
-	
-	snapshots.resize(active_queries.size());
-	// Collect all the snapshots
-	for(int i=0;i<active_queries.size(); ++i)
-		//for(int i=0;i<1; ++i)
-	{	
-		if(myImg->GetImageInfo()->numTSlices > 1)
-			segView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
-		snapshots[i] =(segView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
-	}
-	
-	
-	//mclr->test_table is the pawTable obtained above
-	dialog =  new ActiveLearningDialog(snapshots, mclr->test_table, mclr->numberOfClasses, active_queries, mclr->top_features);
-	connect(dialog, SIGNAL(retrain(bool, std::vector<std::pair<int,int> >)), this, SLOT(ALDialogPopUP(bool, std::vector<std::pair<int,int> >)));
-	connect(dialog, SIGNAL(start_classification(bool)), this, SLOT(Start_Classification(bool)));
-	dialog->show();
-	
-	#ifdef	USE_Clusclus
-	//this->HeatmapWin = new Heatmap();
-	//this->HeatmapWin->setModels(pawTable, this->selection);
-	//this->HeatmapWin->setPriority(mclr->Get_Feature_Order());
-	//this->HeatmapWin->runClus();
-	//this->HeatmapWin->showGraph();
-	#endif
-
-}
-	
-	
+}	
 
 
 void NucleusEditor::SaveActiveLearningModel()
@@ -2549,105 +2354,46 @@ void NucleusEditor::SaveActiveLearningModel()
 
 void NucleusEditor::classifyFromActiveLearningModel()
 {
-	from_model = true;
-	//open pattern analysis wizard	
-	vtkSmartPointer<vtkTable> featureTable;
-	if(myImg->GetImageInfo()->numTSlices==1)
-		featureTable = table;
-	else
-		featureTable = nucSeg->megaTable;
-
-	if(!featureTable) return;
-
-	if(pWizard)
-	{
-		delete pWizard;
-	}
-
-	QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", lastPath,
-		tr("TXT Files (*.txt)"));
-	if(fileName == "")
-		return;
-	lastPath = QFileInfo(fileName).absolutePath();
-	
-	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(fileName.toStdString());
-
-	// to generate the Active Learning Matrix
-	act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
-	for(int row = 2; row<(int)active_model_table->GetNumberOfRows(); ++row)
-	{
-		for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
-		{
-			act_learn_matrix.put(col, row-2, active_model_table->GetValue(row,col).ToDouble());
-		}
-	}
-
-	//to generate the std_deviation and the mean vectors
-	std_dev_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
-	mean_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
-	for(int col=1; col<(int)active_model_table->GetNumberOfColumns(); ++col)
-	{
-		std_dev_vec.put(col-1, active_model_table->GetValue(0,col).ToDouble());
-		mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
-	}
-
-	active_model_table->RemoveRow(0);
-	active_model_table->RemoveRow(0);
-	active_model_table->RemoveColumn(0);
-
-	ClassName_Confidence_Dialog *dialog = new ClassName_Confidence_Dialog(this);
-	if( dialog->exec() )
-	{
-		classification_name = dialog->getClassName();
-		confidence_thresh = dialog->getConfThresh();		
-	}
-	else
-		return;
-	delete dialog;
-
-	pWizard = new PatternAnalysisWizard( featureTable, active_model_table, "", PatternAnalysisWizard::_ACTIVEMODEL,"","", this);
-	pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
-	pWizard->exec();
-
-	if(pWizard->result())
-	{	
-		// Extracted Table containing features of trained model 
-		pawTable = pWizard->getExtractedTable();
-
-		mclr = new MCLR();
-		// Number of features and classes needed in "add_bias" fuction of MCLR
-		mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
-		mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
-		Start_Classification();		
-	}
-}
-
-void NucleusEditor::Start_Classification(bool create_model)
-{
-	if(create_model)
-	{
-		active_model = mclr->CreateActiveLearningModel(pawTable);
-	}
-
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		saveActiveResultsAction->setEnabled(true);
-
+	classify_from_model = true;
 	std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
 	if(myImg->GetImageInfo()->numTSlices==1)
 	{
-		VectorOfTables.push_back(table);
-		table = Perform_Classification(VectorOfTables).at(0);
+		VectorOfTables.push_back(table);		
 	}
 	else
 	{
-		VectorOfTables = nucSeg->table4DImage;
-		nucSeg->table4DImage = Perform_Classification(VectorOfTables);
+		VectorOfTables = nucSeg->table4DImage;			
 	}
+	AL->SetTablesToClassify(VectorOfTables);	
+	AL->SetLabelView(segView);
+	AL->RunALClassification(classify_from_model);
+}
+
+
+void NucleusEditor::ExtractClassificationResult()
+{
+	if(myImg->GetImageInfo()->numTSlices==1)
+	{
+		table = AL->GetClassificationResult()[0];
+	}
+	else
+	{		
+		nucSeg->table4DImage = AL->GetClassificationResult();
+	}
+
+	if(!classify_from_model)
+	{
+		active_model = AL->GetALModel();
+	}
+
+	prediction_names = ftk::GetColumsWithString( "prediction_active" , table);
+	selection->clear();	
 	projectFiles.tableSaved = false;
 	activeRun = 1;		
 	this->updateViews();
-	this->HeatmapforActivelearning(table,mclr->numberOfClasses);
 }
+
+
 /****************************************************************
 function for heatmap of active learning result
 *****************************************************************/
@@ -2659,8 +2405,6 @@ void NucleusEditor::HeatmapforActivelearning( vtkSmartPointer<vtkTable> table, i
 	msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
 	msgBox.setDefaultButton(QMessageBox::Cancel);
 	int ret = msgBox.exec();
-	
-	std::cout<<"Here!!!!!"<<std::endl;
 
 	switch (ret) 
 	{
@@ -2691,8 +2435,6 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 		rearrangedtable->AddColumn(columns);	
 	}
 
-	std::cout<<"Here!!!!!"<<std::endl;
-
 	std::vector< vtkSmartPointer<vtkTable> > tables;
 	for(int i=0; i<=num_class; i++)
 	{
@@ -2706,9 +2448,6 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 		}
 		tables.push_back(temptable);
 	}
-
-	std::cout<<"Here!!!!!"<<std::endl;
-
 	for(int i=0; i<table->GetNumberOfRows(); i++)
 	{	
 		std::cout<<table->GetColumnByName("prediction_active")->GetSize()<<std::endl;
@@ -2723,8 +2462,6 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 			rearrangedtable->InsertNextRow(tables[i]->GetRow(j));
 		}
 	}
-	
-	std::cout<<"Here!!!!!"<<std::endl;
 
 	int count = 0;// for counting of rows already in the order
 	int tablecount = 0;// for counting of tables already in the order
@@ -2770,8 +2507,6 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 				}
 			}
 
-			std::cout<<"ClusClus!!!!!"<<std::endl;
-
 			clusclus* cc = new clusclus(datas, (int)featureTable->GetNumberOfRows(), (int)featureTable->GetNumberOfColumns() - 1);
 			cc->RunClusClus();
 			for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
@@ -2795,113 +2530,14 @@ void NucleusEditor::ClusteringWithinLabels( vtkSmartPointer<vtkTable> table, int
 			///////////////////////////////////////////////////////////////////////
 		}	
 	}
-	
-	std::cout<<"Finsihed Clusclus!!!!!"<<std::endl;
-
 	Heatmap* HeatmapWin = new Heatmap();
-	std::cout<<"1"<<std::endl;
 	HeatmapWin->setModels(rearrangedtable, this->selection);
-	std::cout<<"2"<<std::endl;
 	HeatmapWin->setOrders(order);
-	std::cout<<"3"<<std::endl;
 	HeatmapWin->setMultipleTreeData(treesdata);
-	std::cout<<"4"<<std::endl;
 	HeatmapWin->creatDataForHeatmap(0.2);
-	std::cout<<"5"<<std::endl;
 	HeatmapWin->showGraph();
 }
-std::vector< vtkSmartPointer<vtkTable> > NucleusEditor::Perform_Classification(std::vector< vtkSmartPointer<vtkTable> > table_vector)
-{
-	for(int i=0; i<table_vector.size() ; ++i)
-	{	
-		//test_table contains individual tables 
-		vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
-		test_table->Initialize();
 
-		test_table->SetNumberOfRows(table_vector.at(i)->GetNumberOfRows());
-		for(int col=0; col<pawTable->GetNumberOfColumns(); ++col)
-		{
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(pawTable->GetColumnName(col));
-			test_table->AddColumn(column);	
-		}
-		for(int row = 0; row < (int)table_vector.at(i)->GetNumberOfRows(); ++row)
-		{		
-			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-			for(int c =0;c<(int)test_table->GetNumberOfColumns();++c)
-				model_data1->InsertNextValue(table_vector.at(i)->GetValueByName(row,test_table->GetColumnName(c)));
-			test_table->InsertNextRow(model_data1);
-		}	
-
-		////// Final Data  to classify after the active training
-		vnl_matrix<double> data_classify;
-		if(from_model)
-		{
-			data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
-		}
-		else
-		{
-			data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix(test_table, mclr->id_time_val));
-		}
-		data_classify = data_classify.transpose();
-
-		vnl_matrix<double> currprob;
-		if(from_model)
-		{
-			currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
-		}
-		else
-		{
-			currprob = mclr->Test_Current_Model(data_classify);
-		}
-
-		if(classification_name != "")
-		{
-			prediction_col_name = "prediction_active_" + classification_name;
-			confidence_col_name = "confidence_" + classification_name;
-		}
-
-		//// Add the Prediction Column 
-		std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name.c_str() , table_vector.at(i) );
-		if(prediction_column_names.size() == 0)
-		{
-			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-			column->SetName(prediction_col_name.c_str());
-			column->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
-			table_vector.at(i)->AddColumn(column);
-		}
-
-		// Add the confidence column
-		std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name.c_str() , table_vector.at(i) );
-		if(confidence_column_names.size() == 0)
-		{
-			vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
-			column_confidence->SetName(confidence_col_name.c_str());
-			column_confidence->SetNumberOfValues( table_vector.at(i)->GetNumberOfRows() );
-			table_vector.at(i)->AddColumn(column_confidence);
-		}
-
-		for(int row = 0; (int)row < table_vector.at(i)->GetNumberOfRows(); ++row)  
-		{
-			vnl_vector<double> curr_col = currprob.get_column(row);
-			table_vector.at(i)->SetValueByName(row,confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
-			if(curr_col(curr_col.arg_max()) > confidence_thresh) 
-			{
-				table_vector.at(i)->SetValueByName(row,prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
-			}
-			else
-			{
-				table_vector.at(i)->SetValueByName(row,prediction_col_name.c_str(), vtkVariant(0));
-			}
-		}
-		prediction_names = ftk::GetColumsWithString( prediction_col_name.c_str() , table_vector.at(i) );
-		selection->clear();			
-	}
-
-	// Total number of classes
-	//table_vector.at(0)->
-	return table_vector;
-}
 
 
 
@@ -4725,68 +4361,6 @@ void ParamsFileDialog::ParamBrowse(QString comboSelection)
 	fileCombo->setItemText(0,newfilename);
 }
 
-//***************************************************************************
-//***********************************************************************************
-//***********************************************************************************
-// A dialog to get the confidence threshold and classification name:
-//***********************************************************************************
-
-
-ClassName_Confidence_Dialog::ClassName_Confidence_Dialog(QWidget *parent)
-: QDialog(parent)
-{
-	classNameLabel = new QLabel("Enter Classification Name : ");
-	class_name = new QLineEdit();
-	class_name->setMinimumWidth(30);
-	class_name->setFocusPolicy(Qt::StrongFocus);
-	classNameLayout = new QHBoxLayout;
-	classNameLayout->addWidget(classNameLabel);
-	classNameLayout->addWidget(class_name);
-	
-	confidenceLabel = new QLabel("Specify Confidence Threshold %: ");
-	conf_thresh = new QLineEdit();
-	conf_thresh->setMinimumWidth(30);
-	conf_thresh->setFocusPolicy(Qt::StrongFocus);
-	confLayout = new QHBoxLayout;
-	confLayout->addWidget(confidenceLabel);
-	confLayout->addWidget(conf_thresh);
-	
-	okButton = new QPushButton(tr("OK"),this);
-	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-	bLayout = new QHBoxLayout;
-	bLayout->addStretch(20);
-	bLayout->addWidget(okButton);
-
-	layout = new QVBoxLayout;
-	layout->addLayout(classNameLayout);
-	layout->addLayout(confLayout);
-	layout->addLayout(bLayout);
-	this->setLayout(layout);
-	this->setWindowTitle(tr("Confidence Threshold"));
-
-	Qt::WindowFlags flags = this->windowFlags();
-	flags &= ~Qt::WindowContextHelpButtonHint;
-	this->setWindowFlags(flags);
-}
-
-std::string ClassName_Confidence_Dialog::getClassName()
-{
-	std::string className;
-	QString input = class_name->displayText();
-	className = input.toStdString();
-	return className;
-}
-
-double ClassName_Confidence_Dialog::getConfThresh()
-{
-	double CT = 0.5;
-	QString input = conf_thresh->displayText();
-	if(input != "")
-	{
-		CT = input.toDouble()/100;
-	}
-	return CT;
-}
 
 
 //***************************************************************************
