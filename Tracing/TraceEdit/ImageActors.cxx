@@ -96,6 +96,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 		newImage->processObjectProgressUpdater->SetProgressBar( this->progressBar );
 		newImage->processObjectProgressUpdater->SetTextWidget( this->progressTextWidget );
 		newImage->processObjectProgressUpdater->SetDescription( "Loading image..." );
+		newImage->processObjectProgressUpdater->SetDisplayProgressBarText( false );
 		newImage->reader->AddObserver( itk::StartEvent(), newImage->processObjectProgressUpdater );
 		newImage->reader->AddObserver( itk::ProgressEvent(), newImage->processObjectProgressUpdater );
 		newImage->reader->AddObserver( itk::EndEvent(), newImage->processObjectProgressUpdater );

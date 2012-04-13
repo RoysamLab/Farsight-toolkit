@@ -8,7 +8,8 @@
 ProcessObjectProgressUpdater::
 ProcessObjectProgressUpdater():
   m_ProgressBar( NULL ),
-  m_TextWidget( NULL )
+  m_TextWidget( NULL ),
+  m_DisplayProgressBarText( true )
 {
 }
 
@@ -54,6 +55,20 @@ SetDescription( const std::string & description )
 	this->m_Description = description;
 }
 
+bool
+ProcessObjectProgressUpdater::
+GetDisplayProgressBarText() const
+{
+	return this->m_DisplayProgressBarText;
+}
+
+void
+ProcessObjectProgressUpdater::
+SetDisplayProgressBarText( bool display )
+{
+	this->m_DisplayProgressBarText = display;
+}
+
 void
 ProcessObjectProgressUpdater::
 Execute( itk::Object * caller, const itk::EventObject & event )
@@ -81,7 +96,7 @@ Execute( const itk::Object * caller, const itk::EventObject & event )
 		this->m_ProgressBar->setRange( 0, itk::NumericTraits< int >::max() );
 		this->m_LastProgress = 0.0f;
 		this->m_ProgressBar->setValue( 0 );
-		this->m_ProgressBar->setTextVisible( true );
+		this->m_ProgressBar->setTextVisible( this->m_DisplayProgressBarText );
 		QApplication::processEvents();
 		}
 	else if( itk::ProgressEvent().CheckEvent( &event ) )

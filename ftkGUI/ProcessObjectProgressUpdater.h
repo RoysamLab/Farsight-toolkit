@@ -31,6 +31,12 @@ public:
 	std::string GetDescription() const;
 	void SetDescription( const std::string & description );
 	
+	/** Set/Get whether we should display the percent completion text in
+	 * the progress bar.  Default to true.  May want to set this to false if
+	 * no itk::ProgressEvents will be emitted. */
+	void SetDisplayProgressBarText( bool display );
+	bool GetDisplayProgressBarText() const;
+	
 	void Execute( itk::Object * caller, const itk::EventObject & event );
 	void Execute( const itk::Object * caller, const itk::EventObject & event );
 
@@ -41,6 +47,7 @@ private:
 	QLabel *       m_TextWidget;
 	std::string    m_Description;
 	float          m_LastProgress;
+	bool           m_DisplayProgressBarText;
 };
 
 #endif
