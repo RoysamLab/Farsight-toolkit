@@ -69,6 +69,7 @@ void ALforNucEd::RunALClassification(bool val)
 		if(d->result())
 		{
 			pWizard = new PatternAnalysisWizard( trainingTable, PatternAnalysisWizard::_ACTIVE,"","", this);
+			pWizard->setObjectName("pWizard");
 			connect(pWizard, SIGNAL(start_training(vtkSmartPointer<vtkTable>)), this, SLOT(Start_Training(vtkSmartPointer<vtkTable>)));
 			pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
 			pWizard->show();

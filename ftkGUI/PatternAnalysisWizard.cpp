@@ -27,14 +27,22 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	this->m_module = mod;
 
 	optionGroup = new QButtonGroup;
+	optionGroup->setObjectName("optionGroup");
 	initOptionGroup();
 
 	featureGroup = new QButtonGroup;
+	featureGroup->setObjectName("featureGroup");
 	initFeatureGroup();
-
-	this->setPage(Page_Start, new StartPage(optionGroup));
-	this->setPage(Page_Features, new FeaturesPage(featureGroup));
+	StartPage *startPage = new StartPage(optionGroup);
+	startPage->setObjectName("startPage");
+	this->setPage(Page_Start, startPage);
+	FeaturesPage *featuresPage = new FeaturesPage(featureGroup);
+	featuresPage->setObjectName("featuresPage");
+	this->setPage(Page_Features, featuresPage);
 	//this->setPage(Page_Execute, new ExecutePage();
+
+	this->button(QWizard::FinishButton)->setObjectName("doneButton");
+	this->button(QWizard::FinishButton)->parent()->setObjectName("wizardWidget");
 
 	this->setStartId(Page_Features);
 	this->setModal(false);
@@ -65,13 +73,19 @@ PatternAnalysisWizard::PatternAnalysisWizard(
 	this->m_module = mod;
 
 	optionGroup = new QButtonGroup;
+	optionGroup->setObjectName("optionGroup");
 	initOptionGroup();
 
 	featureGroup = new QButtonGroup;
+	featureGroup->setObjectName("featureGroup");
 	disabledFeatureGroup();
 
-	this->setPage(Page_Start, new StartPage(optionGroup));
-	this->setPage(Page_Features, new FeaturesPage(featureGroup,1));
+	StartPage *startPage = new StartPage(optionGroup);
+	startPage->setObjectName("startPage");
+	this->setPage(Page_Start, startPage);
+	FeaturesPage *featuresPage = new FeaturesPage(featureGroup,1);
+	featuresPage->setObjectName("featuresPage");
+	this->setPage(Page_Features, featuresPage);
 	//this->setPage(Page_Execute, new ExecutePage();
 
 	this->setStartId(Page_Features);
@@ -107,6 +121,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 			if(zernike_added == false)
 			{
 				QCheckBox * check = new QCheckBox("zernike moments");
+				check->setObjectName("zernikeMoments");
 				check->setChecked(true);
 				featureGroup->addButton(check, 0);
 				zernike_added = true;
@@ -114,6 +129,7 @@ void PatternAnalysisWizard::initFeatureGroup(void)
 			continue;
 		}
 		QCheckBox * check = new QCheckBox(QString(name));
+		check->setObjectName(QString(name));
 		check->setChecked(true);
 		featureGroup->addButton(check, c);
 	}
@@ -134,6 +150,7 @@ void PatternAnalysisWizard::disabledFeatureGroup(void)
 			if(zernike_added == false)
 			{
 				QCheckBox * check = new QCheckBox("zernike moments");
+				check->setObjectName("zernikeMoments");
 				check->setCheckable(false);  
 				featureGroup->addButton(check);
 				zernike_added = true;
@@ -141,6 +158,7 @@ void PatternAnalysisWizard::disabledFeatureGroup(void)
 			continue;
 		}
 		QCheckBox * check = new QCheckBox(QString(mod_name));
+		check->setObjectName(mod_name);
 		check->setCheckable(false);  
 		featureGroup->addButton(check);		
 	}	
@@ -150,12 +168,19 @@ void PatternAnalysisWizard::initOptionGroup(void)
 {
 	optionGroup->setExclusive(true);
 	QRadioButton *outlierButton = new QRadioButton(tr("Detect Outliers (using SVM)"));
+	outlierButton->setObjectName("outlierButton");
 	QRadioButton *classifyButton = new QRadioButton(tr("Classify (using KPLS)"));
+	classifyButton->setObjectName("classifyButton");
 	QRadioButton *createTrainButton = new QRadioButton(tr("Create Training Model... (using SEGMODEL)"));
+	createTrainButton->setObjectName("createTrainButton");
 	QRadioButton *appendTrainButton = new QRadioButton(tr("Append Training Model... (using APPENDMODEL)"));
+	appendTrainButton->setObjectName("appendTrainButton");
 	QRadioButton *activeButton = new QRadioButton(tr("Choose Features for Active Learning..."));
+	activeButton->setObjectName("activeButton");
 	QRadioButton *activeModelButton = new QRadioButton(tr("Extract Table From Active Model..."));
+	activeModelButton->setObjectName("activeModelButton");
 	QRadioButton *clusButton = new QRadioButton(tr("Select Features for Clustering..."));
+	clusButton->setObjectName("clusButton");
 
 	optionGroup->addButton(outlierButton, 0);
 	optionGroup->addButton(classifyButton, 1);
@@ -323,12 +348,15 @@ QGroupBox * FeaturesPage::initFeatureBox(QButtonGroup *fGroup)
 	featureGroup = fGroup;
 
 	QGroupBox *groupBox = new QGroupBox(tr("Features"));
+	groupBox->setObjectName("Features");
 	QVBoxLayout *featureLayout = new QVBoxLayout;
 
 	QHBoxLayout *selLayout = new QHBoxLayout;
 	QLabel *selLabel = new QLabel(tr("Select:"));
 	QPushButton *allButton = new QPushButton(tr("All"));
+	allButton->setObjectName("allButton");
 	QPushButton *nonButton = new QPushButton(tr("None"));
+	nonButton->setObjectName("nonButton");
 	connect(allButton, SIGNAL(clicked()), this, SLOT(selectAll()));
 	connect(nonButton, SIGNAL(clicked()), this, SLOT(selectNone()));
 	selLayout->addWidget(selLabel);
@@ -338,6 +366,7 @@ QGroupBox * FeaturesPage::initFeatureBox(QButtonGroup *fGroup)
 	featureLayout->addLayout(selLayout);
 
 	QWidget *groupWidget = new QWidget;
+	groupWidget->setObjectName("groupWidget");
 	QVBoxLayout *vLayout = new QVBoxLayout;
 
 	QList<QAbstractButton *> buttons = featureGroup->buttons();
@@ -348,6 +377,7 @@ QGroupBox * FeaturesPage::initFeatureBox(QButtonGroup *fGroup)
 	groupWidget->setLayout(vLayout);
 
 	QScrollArea *scrollArea = new QScrollArea;
+	scrollArea->setObjectName("scrollArea");
 	scrollArea->setWidget(groupWidget);
 	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	featureLayout->addWidget(scrollArea);
