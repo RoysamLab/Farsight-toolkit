@@ -109,6 +109,11 @@ TraceObject::~TraceObject()
 	*/
   
   //delete vector of cells
+	for(std::map< int ,CellTrace*>::iterator it = this->Cells.begin();
+      it != this->Cells.end(); ++it)
+  {
+    delete (*it).second;
+  }
   this->Cells.erase( this->Cells.begin(), this->Cells.end() );
   this->Cells.clear();
 }
