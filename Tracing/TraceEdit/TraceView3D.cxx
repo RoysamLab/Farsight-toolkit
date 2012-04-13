@@ -3944,7 +3944,7 @@ void View3D::Rerender()
 		std::vector<TraceBit> vec = this->tobj->CollectTraceBits();
 		this->AddPointsAsPoints(vec);
 		this->UpdateBranchActor();
-		this->Renderer->AddActor(this->BranchActor); 
+		this->Renderer->AddActor(this->BranchActor);
 	}
 	else
 	{
