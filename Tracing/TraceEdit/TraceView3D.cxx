@@ -1392,6 +1392,7 @@ void View3D::CreateGUIObjects()
 	this->markTraceBits = new QCheckBox("Mark all traced Points",this->SettingsWidget);
 	this->markTraceBits->setObjectName("markTraceBits");
 	this->markTraceBits->setChecked(this->renderTraceBits);
+	connect(this->markTraceBits, SIGNAL(clicked()), this, SLOT(activateSaveAllButton()));
 
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setObjectName("BackgroundRBox");
@@ -3411,6 +3412,7 @@ void View3D::ApplyNewSettings()
 	}
 	//this->UpdateLineActor();
 	this->QVTK->GetRenderWindow()->Render();
+	this->Rerender();
 }
 
 void View3D::HideSettingsWindow()
@@ -3943,6 +3945,11 @@ void View3D::Rerender()
 		this->AddPointsAsPoints(vec);
 		this->UpdateBranchActor();
 		this->Renderer->AddActor(this->BranchActor); 
+	}
+	else
+	{
+		this->Renderer->RemoveActor(this->BranchActor);
+		this->Renderer->RemoveActor(this->PointsActor);
 	}
 
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
