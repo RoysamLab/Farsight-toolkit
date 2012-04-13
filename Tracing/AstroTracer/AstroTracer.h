@@ -221,6 +221,7 @@ public:
 
 	void UseActiveLearningRootsModel(std::string);
 	void ReadRootPointsExternal(std::string);
+	void GetCentroidsForTracing (std::string,std::string);
 	void ReadNucleiFeaturesExternal(std::string);
 	void ComputeFeaturesFromCandidateRoots(void);
 	void WriteNucleiFeatures(std::string);

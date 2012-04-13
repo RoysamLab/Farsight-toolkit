@@ -498,7 +498,7 @@ void AstroTracer::FeatureMain(void)
 	caster->SetInput(rescaler->GetOutput());
 
 	itk::ImageFileWriter< CharImageType3D >::Pointer seedsWriter = itk::ImageFileWriter< CharImageType3D >::New();
-	seedsWriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\Seed_Points.tif");
+	seedsWriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\Seed_Points.tif");
 	seedsWriter->SetInput(caster->GetOutput());
 	seedsWriter->Update();
 	
@@ -507,7 +507,7 @@ void AstroTracer::FeatureMain(void)
 	caster2->SetInput(rescaler2->GetOutput());/////
 
 	itk::ImageFileWriter< CharImageType3D >::Pointer seedsWriter2 = itk::ImageFileWriter< CharImageType3D >::New();//////
-	seedsWriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoGScale_Points.tif");/////
+	seedsWriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoGScale_Points.tif");/////
 	seedsWriter2->SetInput(caster2->GetOutput());////
 	seedsWriter2->Update();/////
 	
@@ -554,17 +554,17 @@ void AstroTracer::GetFeature( float sigma , int scale_index){
 	itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter = itk::ImageFileWriter< CharImageType3D >::New();
 
 	/*if(scale_index == 1)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_2.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_2.tif");
 	else if(scale_index == 2)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_2_8284.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_2_8284.tif");
 	else if(scale_index == 3)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_4.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_4.tif");
 	else if(scale_index == 4)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_5_6569.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_5_6569.tif");
 	else if(scale_index == 5)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_8.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_8.tif");
 	else
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_11_31.tif");
+		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_11_31.tif");
 
 	LoGwriter->SetInput(caster->GetOutput());
 	LoGwriter->Update();*/
@@ -735,17 +735,17 @@ void AstroTracer::GetFeature( float sigma , int scale_index){
 		itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
 
 		if(scale_index == 1)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_2.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_2.tif");
 		else if(scale_index == 2)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_2_8284.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_2_8284.tif");
 		else if(scale_index == 3)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_4.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_4.tif");
 		else if(scale_index == 4)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_5_6569.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_5_6569.tif");
 		else if(scale_index == 5)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_8.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_8.tif");
 		else
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\LoG_Points_11_31.tif");
+			LoGwriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_Points_11_31.tif");
 
 		LoGwriter2->SetInput(caster2->GetOutput());
 		LoGwriter2->Update();*/
@@ -2514,12 +2514,12 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 
 			std::cout << "Writing distance maps to disk. " << std::endl;
 			itk::ImageFileWriter< CharImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< CharImageType3D >::New();
-			distance_map_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\distance_map_sub.tif");
+			distance_map_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\distance_map_sub.tif");
 			distance_map_writer->SetInput(caster->GetOutput());
 			distance_map_writer->Update();
 
 			itk::ImageFileWriter<CharImageType3D>::Pointer distance_map_writer2 = itk::ImageFileWriter<CharImageType3D>::New();
-			distance_map_writer2->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\vol_sub.tif");
+			distance_map_writer2->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\vol_sub.tif");
 			distance_map_writer2->SetInput(sub_volume_nuclei);
 			distance_map_writer2->Update();
 
@@ -3126,6 +3126,259 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 	std::cout << "Root points file read. " << this->CandidateRootPoints.size() << std::endl;
 }
 
+void AstroTracer::GetCentroidsForTracing(std::string rootPointsFileName,std::string outputFname)
+{
+	int centroid_count=0;
+	//Reading root points of class 1 and store them to points_list
+	std::vector<HeapNode> points_list;
+	std::ifstream rootPoints;
+	rootPoints.open(rootPointsFileName.c_str(), std::ios::in); 
+	std::cout << "Reading root points file to get centroids for tracing. " << std::endl;
+	
+	std::vector<std::string> str_vec;
+	std::string line, str1;
+	if(rootPoints.is_open())
+	{  //reading root points loop (and also select the ones closest to labeled regions)
+		
+		unsigned short line_number = 0;
+		CandidateRootPoint root_point;
+
+		while(rootPoints.good())
+		{
+
+			line_number++;
+			//std::cout << line_number << std::endl;
+
+			if(!std::getline(rootPoints, line))
+				break;
+
+			//Ignore the first line since it is all text
+			if(line_number == 1)
+				continue;
+			
+			std::istringstream str_stream(line); 
+			while(str_stream.good())
+			{
+				
+				if(!getline(str_stream, str1, '\t'))
+					break;
+
+				str_vec.push_back(str1);
+			}
+
+			root_point.featureVector.ID = atof(str_vec[0].c_str());
+
+			itk::Index<3> idx;
+			idx[0] = atof(str_vec[1].c_str());
+			idx[1] = atof(str_vec[2].c_str());
+			idx[2] = atof(str_vec[3].c_str());
+			root_point.featureVector.node = HeapNode(idx, 0);
+
+			root_point.classValue = atof(str_vec[14].c_str());
+
+
+			//root_point.featureVector.radius = atof(str_vec[4].c_str());
+			//root_point.featureVector.ballness = atof(str_vec[5].c_str());
+			//root_point.featureVector.plateness = atof(str_vec[6].c_str());
+			//root_point.featureVector.intensity = atof(str_vec[7].c_str());
+			//root_point.featureVector.meanIntensity = atof(str_vec[8].c_str());
+			//root_point.featureVector.varianceIntensity = atof(str_vec[9].c_str());
+			//root_point.featureVector.maxIntensity = atof(str_vec[10].c_str());
+			//root_point.featureVector.minIntensity = atof(str_vec[11].c_str());
+			//root_point.featureVector.nucleusDistance = atof(str_vec[12].c_str());
+			//root_point.confidenceMeasure = atof(str_vec[15].c_str());
+
+			// ONLY TWO CLASSES OF ROOT POINTS ARE CONSIDERED
+			if(root_point.classValue == 1)
+			{
+				root_point.isRootPoint = true;
+			}
+			else 
+				root_point.isRootPoint = false;
+
+
+			if(root_point.isRootPoint)
+				points_list.push_back(HeapNode(idx, 0));///////////////
+			
+			str_vec.clear();
+		}//end of while (points==good)
+
+		rootPoints.close();
+	}//end of if rootPoints is open
+	
+	else
+	{
+		std::cout << " Could not open root points file. Exiting now. " << std::endl;
+		return;
+	}
+
+	if(points_list.empty())
+	{
+		std::cout << " Empty points list. Quitting. " << std::endl;
+		return;
+	}
+	//End of reading root points of class 1 and store them to points_list
+
+
+	//Creating centroids.txt file with class 1 roots which are closest to a nucleus 
+
+	std::ofstream centroid_points;
+	centroid_points.open(outputFname.c_str(), std::ios::out);
+
+	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	CharImageType3D::SizeType sub_volume_size_nuclei;
+	CharImageType3D::RegionType sub_volume_region_nuclei;
+	CharImageType3D::Pointer sub_volume_nuclei;
+	
+	typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetLowerThreshold(1);
+	threshold_filter->SetInsideValue(255);
+	threshold_filter->SetOutsideValue(0);
+	threshold_filter->SetInput(this->SomaImage);
+	threshold_filter->Update();
+	
+	std::cout << "Root points size: " << points_list.size() << std::endl;
+
+	//Loop over nuclei
+	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+		
+		CharImageType3D::IndexType current_idx;
+		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
+		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
+		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
+		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
+
+		LabelImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
+
+		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+			(end_index_nuclei[2] > (unsigned int)sz[2]) )
+			continue;
+
+		std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
+
+		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
+		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
+
+
+		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
+		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
+		sub_volume_filter_nuclei->SetInput(threshold_filter->GetOutput());
+		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
+		sub_volume_filter_nuclei->Update();
+		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+
+
+		SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+		MaurerFilter->SetInput(sub_volume_nuclei);
+		MaurerFilter->SetSquaredDistance(false);
+		MaurerFilter->SetUseImageSpacing(false);
+		MaurerFilter->SetInsideIsPositive(false);
+		MaurerFilter->Update();
+		
+		ImageType3D::Pointer distance_map = MaurerFilter->GetOutput();
+				
+		double cur_distance;
+		double min_distance = 1000.0;
+		//double max_distance = -1000.0; 
+		//double mean_distance = 0.0;
+		//double variance_distance = 0.0;
+		//double acc_distance = 0.0;
+		//int n_roots = 0;
+		
+		std::vector<double> distance_array;
+
+
+		LabelImageType3D::IndexType min_root_idx;
+		min_root_idx[0] = points_list[0].ndx[0];
+		min_root_idx[1] = points_list[0].ndx[1];
+		min_root_idx[2] = points_list[0].ndx[2] - padz;
+
+		for(SIZE_T j = 0; j < points_list.size(); j++){
+
+			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+			
+
+			//if(points_list[j].isRootPoint){   //No check needed here since the check has already been done before by selecting class 1 points
+
+				LabelImageType3D::IndexType current_root_idx;
+
+				current_root_idx[0] = points_list[j].ndx[0];
+				current_root_idx[1] = points_list[j].ndx[1];
+				current_root_idx[2] = points_list[j].ndx[2] - padz;
+
+				int offset = 2; //1;
+				if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
+					current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
+					continue;
+				
+				ImageType3D::IndexType relative_root_idx;
+				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
+				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
+				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
+
+				cur_distance = distance_map->GetPixel(relative_root_idx);
+				
+				if(cur_distance < 0.00000000000001 && cur_distance > 0.0)
+					cur_distance = 0.0;
+
+				if(cur_distance > -0.00000000000001 && cur_distance < 0.0)
+					cur_distance = 0.0;
+				
+				if(cur_distance < -1000.0)
+					cur_distance = -1000.0;
+				
+				if(cur_distance > 1000.0)
+					cur_distance = 1000.0;
+				
+				//std::cout << cur_distance << std::endl;
+
+				if(cur_distance < min_distance)
+				{
+					min_distance = cur_distance;
+					min_root_idx[0] = current_root_idx[0];
+					min_root_idx[1] = current_root_idx[1];
+					min_root_idx[2] = current_root_idx[2] - padz;
+				}
+
+				distance_array.push_back(cur_distance);
+
+		}// End of loop over candidate roots	
+
+		//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
+
+		if(!distance_array.empty())
+		{
+
+			if(centroid_points.good())
+			{
+	
+				centroid_points << (float)(min_root_idx[0]) << '\t' << (float)(min_root_idx[1]) << '\t' << (float)(min_root_idx[2]) << std::endl;
+				centroid_count++;
+			}
+
+		}
+
+		//distance_array.clear();
+
+	}//end of loop over nuclei
+
+	centroid_points.close();
+	//End of creating centroids.txt file
+
+	std::cout << "***Points List Size: " << points_list.size() << std::endl;
+	std::cout << "***Centroids List Size: " << centroid_count << std::endl;
+
+}
+
 IntrinsicFeatureVector::IntrinsicFeatureVector(){
 }
 
@@ -3241,12 +3494,12 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 	/*std::cout << "Writing distance maps to disk. " << std::endl;
 	itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
-	distance_map_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\distance_map.tif");
+	distance_map_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\distance_map.tif");
 	distance_map_writer->SetInput(nucleus_distance);
 	distance_map_writer->Update();
 
 	itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer3 = itk::ImageFileWriter< LabelImageType3D >::New();
-	distance_map_writer3->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\voronoi_map.tif");
+	distance_map_writer3->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\voronoi_map.tif");
 	distance_map_writer3->SetInput(voronoi_map);
 	distance_map_writer3->Update();*/
 	
@@ -3260,7 +3513,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	threshold_filter->Update();
 	
 	/*itk::ImageFileWriter< CharImageType3D >::Pointer nuclei_writer = itk::ImageFileWriter<CharImageType3D>::New();
-	nuclei_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\Binary_nuclei.tif");
+	nuclei_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\Binary_nuclei.tif");
 	nuclei_writer->SetInput(threshold_filter->GetOutput());
 	nuclei_writer->Update();*/
 	
@@ -3417,9 +3670,12 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000; //double_scale_nuclei;
 			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000; //double_scale_nuclei;
 			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
-		}
+
+		}//loop over candidate roots
+
 		//distance_array.clear();
-	}
+
+	}//end of loop over nuclei
 }
 
 void AstroTracer::WriteNucleiFeatures(std::string outputFname){

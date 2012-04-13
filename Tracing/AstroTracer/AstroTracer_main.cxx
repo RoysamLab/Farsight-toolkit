@@ -5,9 +5,9 @@ int main(int argc, char* argv[])
 //int main(void)
 {	
 	
-    argv[1] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\CroppedAstroTRITC.tif"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\R2080_6wk_Crop_sigma_0.030000_CV.tif";
-	argv[2] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\roots_cropped.txt"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\11111111.tif";
-	argv[4] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\labels_2_label_nuc.tif"; 
+    argv[1] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\CroppedAstroTRITC.tif"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\R2080_6wk_Crop_sigma_0.030000_CV.tif";
+	argv[2] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\roots_cropped.txt"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\11111111.tif";
+	argv[4] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\labels_2_label_nuc_edited_somas_0.tif"; 
 		//CroppedAstroLABEL.tif //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\SegParams.ini";
 	
 	argv[3] = "400"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\ParameterFile.ini";
@@ -15,14 +15,16 @@ int main(int argc, char* argv[])
 	argc = 5;
 
 	bool justComputeRootFeatures = false; //false;
-	bool startWithCandidateRoots = true;
+	bool startWithCandidateRoots = false;//true;
+	bool doTracing=true;
 
-	std::string tracePointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\trace_points.txt";
-	std::string featureVectorFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector.txt";
-	std::string IDImageFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\IDImage.tif";
-	std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector_with_classes_backup.txt";
-	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_4.txt";
-	std::string nucleiFeaturesAppendedFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_appended_1.txt";
+	std::string tracePointsFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\trace_points.txt";
+	std::string featureVectorFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\feature_vector.txt";
+	std::string IDImageFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\IDImage.tif";
+	std::string rootPointsFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\feature_vector_with_classes_backup.txt";
+	std::string nucleiFeaturesFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\nucleus_features_intrinsic_4.txt";
+	std::string nucleiFeaturesAppendedFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\nucleus_features_appended_1.txt";
+	std::string centroidsForTracingFileName="C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\centroids.txt";
 	
 	if (argc < 5)
 	{
@@ -77,6 +79,25 @@ int main(int argc, char* argv[])
 		AT->WriteNucleiFeatures(nucleiFeaturesAppendedFileName);
 	}
 		
+
+	if (doTracing) {
+
+		AT->ReadNucleiFeaturesExternal(nucleiFeaturesFileName);
+		AT->GetCentroidsForTracing(rootPointsFileName,centroidsForTracingFileName);
+		std::cout<<"GetCentroidsForTracing finished!"<<std::endl;
+
+		//clock_t ReadStartPoints_start_time = clock();
+		//AT->ReadStartPoints(std::string("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\centroids.txt"), 1);
+		//std::cout << "ReadStartPoints took: " << (clock() - ReadStartPoints_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+
+		//clock_t RunTracing_start_time = clock();
+		//AT->RunTracing();
+		//std::cout << "RunTracing took: " << (clock() - RunTracing_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+		//AT->WriteSWCFile(SWCFilename, 1);
+
+	}
 
 	//MNT->WriteMultipleSWCFiles(SWCFilename, 1);
 
