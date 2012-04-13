@@ -173,5 +173,20 @@ if(QtTestingFound)
   set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowCentroids)
   set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowObjectIDs)
 
+
+  add_test(
+    NucleusEditor-StartActiveLearning
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${NucleusEditor_TEST_DIR}/start_active_learning.xml
+  )
+  set_tests_properties(NucleusEditor-StartActiveLearning PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "Max Info-0.0357334"
+  )
+
+
 endif()
 

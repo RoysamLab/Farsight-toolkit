@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="segmentNucleiAction"/>
+    <event widget="1NucleusEditor0/1ParamsFileDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0" command="pause" arguments="60000" />
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,0,42,5,/4:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,0,42,5,/4:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="6,16777248,33554432,,0,1"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="7,16777248,0,,0,1"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="6,16777248,33554432,,0,1"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,33554432,50,2,/78:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,33554432,50,2,/78:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="7,16777248,0,,0,1"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/editMenu" command="activate" arguments="deleteAction"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu/activeMenu" command="activate" arguments="activeAction"/>
+    <event widget="0ALforNucEd0/1ClassNameConfidenceDialog0/1QLineEdit0" command="set_string" arguments="test"/>
+    <event widget="0ALforNucEd0/1ClassNameConfidenceDialog0/1QLineEdit1" command="set_string" arguments="0"/>
+    <event widget="0ALforNucEd0/1ClassNameConfidenceDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="0ALforNucEd0/1TrainingDialog0/1QLineEdit0" command="set_string" arguments="1"/>
+    <event widget="0ALforNucEd0/1TrainingDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="0ALforNucEd0/1TrainingDialog0/1QLineEdit1" command="set_string" arguments="3"/>
+    <event widget="0ALforNucEd0/1TrainingDialog0/1QPushButton5" command="activate" arguments=""/>
+    <event widget="0ALforNucEd0/pWizard/wizardWidget/doneButton" command="activate" arguments=""/>
+    <event widget="1ActiveLearningDialog0/1QRadioButton2" command="set_boolean" arguments="true"/>
+    <event widget="1ActiveLearningDialog0/1QPushButton0" command="activate" arguments=""/>
+</events>
