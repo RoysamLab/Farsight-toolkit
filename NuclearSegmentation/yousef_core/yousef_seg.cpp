@@ -1187,7 +1187,7 @@ void yousef_nucleus_seg::runAlphaExpansion3D()
 	}		
 
 	//relabel the cells
-	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 6, 25, numRows, numColumns,numStacks, 1);			
+	int numOfObjs = /*getConnCompImage*/getRelabeledImage(segImagePtr, 6, minObjSize, numRows, numColumns,numStacks, 1);			
 	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cout << "Creating Final Label Image" << std::endl;		
 }
