@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadProjectAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/test_save_project.xml"/>
+    <event widget="1NucleusEditor0/1ProjectFilenamesDialog0/1QPushButton2" command="activate" arguments=""/>
+</events>

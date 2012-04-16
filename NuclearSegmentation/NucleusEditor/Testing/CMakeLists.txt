@@ -173,6 +173,20 @@ if(QtTestingFound)
   set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowCentroids)
   set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowObjectIDs)
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/load_project.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/load_project.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-LoadProject
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/load_project.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/load_project_baseline.png
+  )
+  set_tests_properties(NucleusEditor-LoadProject PROPERTIES
+    DEPENDS NucleusEditor-SaveProject
+  )
 
   add_test(
     NucleusEditor-StartActiveLearning
