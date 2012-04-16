@@ -116,7 +116,7 @@ NucleusEditor::~NucleusEditor()
 	if(selection) delete selection;
 	if(nucSeg) delete nucSeg;
 	if(pProc) delete pProc;
-
+	delete AL;
 }
 
 //******************************************************************************

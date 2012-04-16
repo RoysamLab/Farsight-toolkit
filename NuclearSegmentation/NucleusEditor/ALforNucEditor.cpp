@@ -7,10 +7,19 @@ ALforNucEd::ALforNucEd()
 	prediction_col_name = "prediction_active";
 	confidence_col_name = "confidence";
 	HeatmapWin = NULL;
+	mclr = NULL;
 }
 
 ALforNucEd::~ALforNucEd()
 {
+	if(this->HeatmapWin)
+	{
+		delete this->HeatmapWin;
+	}
+	if(mclr)
+	{
+		delete mclr;
+	}	
 }
 
 void ALforNucEd::RunALClassification(bool val)
@@ -134,6 +143,10 @@ void ALforNucEd::RunALClassification(bool val)
 			// Extracted Table containing features of trained model 
 			pawTable = pWizard->getExtractedTable();
 
+			if(mclr)
+			{
+				delete mclr;
+			}
 			mclr = new MCLR();
 			// Number of features and classes needed in "add_bias" fuction of MCLR
 			mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
@@ -162,6 +175,10 @@ void ALforNucEd::Start_Training(vtkSmartPointer<vtkTable> pTable)
 		class_list.put(row,vtkVariant(trainingTable->GetValueByName(row,"train_default1")).ToDouble());
 	}
 
+	if(mclr)
+	{
+		delete mclr;
+	}
 	mclr = new MCLR();
 	double sparsity = 1;
 	double max_info = -1e9;
