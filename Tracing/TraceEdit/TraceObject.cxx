@@ -305,6 +305,7 @@ bool TraceObject::removeTrace(TraceLine* traceToRemove)
 	std::map< int ,CellTrace*>::iterator it = this->Cells.find(traceToRemove->GetId());
 	if (it != this->Cells.end())
 	{
+		delete (*it).second;
 		this->Cells.erase(it);
 	}
 
