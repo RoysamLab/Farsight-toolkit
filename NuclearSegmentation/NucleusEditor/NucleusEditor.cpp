@@ -1080,8 +1080,19 @@ bool NucleusEditor::saveProject()
 	//{
 	//	this->saveImage();
 	//}
+
+  QString fullPathToInput =
+    QString(projectFiles.path.c_str());
+  fullPathToInput += QString(projectFiles.input.c_str());
+	QFileInfo inputInfo(fullPathToInput);
+	if(!inputInfo.exists())
+	{
+		projectFiles.inputSaved = false;
+	}
+
 	if(projectFiles.input != "" && !projectFiles.inputSaved && projectFiles.type != "multi" )
 	{
+    std::cout << "DEBUG: so I should go here now, right?" << std::endl;
 		this->saveImage();
 	}
 	else
@@ -1160,7 +1171,6 @@ bool NucleusEditor::saveImage()
 		return false;
 
 	QString fullname = QString::fromStdString( projectFiles.GetFullInput() );
-	QString fullbase = QFileInfo(fullname).completeBaseName();
 	QString ext = QFileInfo(fullname).suffix();
 
 	bool ok;
@@ -1169,7 +1179,11 @@ bool NucleusEditor::saveImage()
 		if(ext == "xml")
 			ok = ftk::SaveXMLImage(fullname.toStdString(), myImg);
 		else
-			ok = myImg->SaveChannelAs(0, fullbase.toStdString(), ext.toStdString());
+		{
+			QString fullExt = "." + ext;
+			fullname.remove(fullExt);
+			ok = myImg->SaveChannelAs(0, fullname.toStdString(), ext.toStdString());
+		}
 	}
 	else
 	{
@@ -1233,7 +1247,6 @@ bool NucleusEditor::saveResult()
 		return false;
 
 	QString fullname = QString::fromStdString( projectFiles.GetFullOutput() );
-	QString fullbase = QFileInfo(fullname).completeBaseName();
 	QString ext = QFileInfo(fullname).suffix();
 
 	bool ok = false;
