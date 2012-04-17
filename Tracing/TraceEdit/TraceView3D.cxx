@@ -3764,12 +3764,13 @@ void View3D::AssociateNeuronToNuclei()
 		{
 			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter));
 		}
-		for (unsigned int i = 0; i < cellCount; i++)
+		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 		{
 			// search for nucli thats within radii of soma 
 			double distance =0, somaRadii = 0;//,  x1, y1, z1; 
 			double somaPoint[3];
-			CellTrace* currCell = this->CellModel->GetCellAtNoSelection( i);
+			CellTrace* currCell = (*cellCount).second;
 			currCell->getSomaCoord(somaPoint);
 			somaRadii = currCell->somaRadii;
 			bool found = false;
@@ -5028,7 +5029,7 @@ void View3D::StartActiveLearning()
 						break;
 					}
 				}
-				CellTrace* currCell = this->CellModel->GetCellAt(zoomID);
+				CellTrace* currCell = this->CellModel->GetCell(zoomID);
 				this->FocusOnCell(currCell);
 									
 				ALDialog =  new GenericALDialog(mclr->test_table, this->mclr->no_of_classes, active_query, this->mclr->top_features);
@@ -5126,7 +5127,7 @@ void View3D::StartActiveLearning()
 			for(unsigned int row = 0; (int)row < this->CellModel->getDataTable()->GetNumberOfRows(); ++row)  
 			{
 				vnl_vector<double> curr_col = currprob.get_column(row);
-				CellTrace* currCell = this->CellModel->GetCellAtNoSelection(row);
+				CellTrace* currCell = this->CellModel->GetCellNoSelection(row);
 				//myDataTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 				{
@@ -5689,7 +5690,7 @@ void View3D::AutoCellExport()
 				{
 					break;
 				}
-				CellTrace* currCell = this->CellModel->GetCellAt( i);
+				CellTrace* currCell = this->CellModel->GetCell( i);
 				QString cellName = QString(currCell->GetFileName().c_str());
 
 				std::vector<TraceLine*> roots;

@@ -88,8 +88,10 @@ public:
 	std::vector<CellTrace*> GetSelectedCells();
 	std::vector<TraceLine*> GetSelectedTraces();
 	unsigned int getCellCount();
-	CellTrace * GetCellAt( int i);
-	CellTrace * GetCellAtNoSelection( int i);
+	CellTrace * GetCell( int i);
+	CellTrace * GetCellNoSelection( int i);
+	std::map< int ,CellTrace*>::iterator GetCelliterator();
+	std::map< int ,CellTrace*>::iterator GetCelliteratorEnd();
 	void WriteCellCoordsToFile(const char* fileName);
 	std::vector<CellTrace*> getCells(std::vector<long> IDs);
 	void createCellToCellGraph();

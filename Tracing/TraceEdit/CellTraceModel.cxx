@@ -319,9 +319,11 @@ vtkSmartPointer<vtkTable> CellTraceModel::getCellBoundsTable()
 		column->SetName( BoundsHeaders.at(i).toStdString().c_str() );
 		CellBoundsTable->AddColumn(column);
     }
-	for (int j = 0; j < (int) this->Cells.size(); j ++)
+	this->CellIDLookupIter = this->Cells.begin();
+	for(; CellIDLookupIter != this->Cells.end(); CellIDLookupIter++)
 	{
-		CellBoundsTable->InsertNextRow(this->Cells[j]->BoundsRow());
+		CellTrace* current = (*CellIDLookupIter).second;
+		CellBoundsTable->InsertNextRow(current->BoundsRow());
 	}
 	return CellBoundsTable;
 }
@@ -458,41 +460,60 @@ unsigned int CellTraceModel::getCellCount()
 {
 	return (unsigned int) this->Cells.size();
 }
-CellTrace * CellTraceModel::GetCellAt( int i)
+CellTrace * CellTraceModel::GetCell( int i)
 {
 	CellTrace* currentCell;
-	if (i < this->Cells.size())
+	CellIDLookupIter = this->Cells.find(i);
+	if (CellIDLookupIter != this->Cells.end())
 	{
-		currentCell = this->Cells[i];
+		currentCell = (*CellIDLookupIter).second;
 	}
 	else
 	{
-		currentCell = (*this->Cells.end()).second;
+		currentCell = (*this->Cells.rbegin()).second;
 	}
 	this->Selection->select(currentCell->rootID());
 	return currentCell;
 }
-CellTrace * CellTraceModel::GetCellAtNoSelection( int i)
+CellTrace * CellTraceModel::GetCellNoSelection( int i)
 {
 	CellTrace* currentCell;
-	if (i < this->Cells.size())
+	CellIDLookupIter = this->Cells.find(i);
+	if (CellIDLookupIter != this->Cells.end())
 	{
-		currentCell = this->Cells[i];
+		currentCell = (*CellIDLookupIter).second;
 	}
 	else
 	{
-		currentCell = (*this->Cells.end()).second;
+		currentCell = (*this->Cells.rbegin()).second;
 	}
-	//this->Selection->select(currentCell->rootID());
 	return currentCell;
 }
+
+std::map< int ,CellTrace*>::iterator CellTraceModel::GetCelliterator()
+{
+	/*!
+	*
+	*/
+	return this->Cells.begin();
+}
+std::map< int ,CellTrace*>::iterator CellTraceModel::GetCelliteratorEnd()
+{
+	/*!
+	*
+	*/
+	return this->Cells.end();
+}
+
 void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 {
 	fstream outputTxt;
 	outputTxt.open(fileName, fstream::out);
-	for (int i = 0; i < this->Cells.size(); i++)
+	this->CellIDLookupIter = this->Cells.begin();
+	for(; CellIDLookupIter != this->Cells.end(); CellIDLookupIter++)
 	{
-		outputTxt << this->Cells[i]->BasicFeatureString() << "\n";
+		CellTrace* current = (*CellIDLookupIter).second;
+		outputTxt << current->BasicFeatureString() << "\n";
 	}
 	outputTxt.close();
 	std::cout << "file written\n";
@@ -500,13 +521,15 @@ void CellTraceModel::WriteCellCoordsToFile(const char *fileName)
 void CellTraceModel::createCellToCellGraph()
 {
 	std::map< unsigned int, std::vector<double> > centroidMap;
-	for(unsigned int i = 0; i < this->Cells.size(); i++)
+	this->CellIDLookupIter = this->Cells.begin();
+	for(; CellIDLookupIter != this->Cells.end(); CellIDLookupIter++)
 	{
-		unsigned int id = this->Cells[i]->rootID();
+		CellTrace* current = (*CellIDLookupIter).second;
+		unsigned int id = current->rootID();
 		std::vector<double> cellCoord;
-		cellCoord.push_back(this->Cells[i]->somaX);
-		cellCoord.push_back(this->Cells[i]->somaY);
-		cellCoord.push_back(this->Cells[i]->somaZ);
+		cellCoord.push_back(current->somaX);
+		cellCoord.push_back(current->somaY);
+		cellCoord.push_back(current->somaZ);
 		centroidMap[id] = cellCoord;
 	}//end for cell size
 	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);

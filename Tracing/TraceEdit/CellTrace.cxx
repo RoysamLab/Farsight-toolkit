@@ -255,16 +255,19 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 	this->segments[0]->SetDistanceToROICoord_X(Coord_X);
 	this->segments[0]->SetDistanceToROICoord_Y(Coord_Y);
 	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
+	this->modified = true;
 }
 void CellTrace::SetClassifcation(int predicCol, double prediction, int confCol,double confidence)
 {
 	//this->segments[0]->SetClassification(prediction, confidence);
 	this->segments[0]->editCellFeature(prediction, predicCol);
 	this->segments[0]->editCellFeature(confidence, confCol);
+	this->modified = true;
 }
 void CellTrace::addNewFeature(vtkVariant nextFeature)
 {
 	this->segments[0]->addCellFeature(nextFeature);
+	this->modified = true;
 }
 void CellTrace::clearAll()
 {

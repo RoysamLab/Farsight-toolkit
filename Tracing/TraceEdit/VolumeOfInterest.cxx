@@ -76,12 +76,12 @@ void VolumeOfInterest::CalculateCellDistanceToVOI(CellTraceModel *CellModel)
 	cellLocator->SetDataSet(this->VOIPolyData.back());
 	cellLocator->BuildLocator();
 
-	unsigned int cellCount= CellModel->getCellCount();
-	for (unsigned int i = 0; i < cellCount; i++)
+	std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
+	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 	{
 		//double testPoint[3] = {500, 600, 50};
 		double somaPoint[3];
-		CellTrace* currCell = CellModel->GetCellAtNoSelection( i);
+		CellTrace* currCell = (*cellCount).second;
 		currCell->getSomaCoord(somaPoint);
 		//Find the closest points to TestPoint
 		double closestPoint[3];//the coordinates of the closest point will be returned here
