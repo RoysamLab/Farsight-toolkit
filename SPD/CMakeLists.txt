@@ -13,7 +13,7 @@ SET( Libraries
     mbl
     ${QT_LIBRARIES})
 
-QT4_WRAP_CPP( GUI_MOC_SRCS spdtestwindow.h spdtestwindowForNewSelection.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS spdtestwindow.h spdtestwindowForNewSelection.h HeatmapWindowForNewSelection.h ProgressionHeatmapWindow.h)
 
 SET(SPD_SRCS
 	SPDAnalysisModel.h
@@ -24,7 +24,11 @@ SET(SPD_SRCS
 	spdtestwindow.h
 	spdtestwindow.cpp
 	spdtestwindowForNewSelection.h
-	spdtestwindowForNewSelection.cpp)
+	spdtestwindowForNewSelection.cpp
+	HeatmapWindowForNewSelection.h
+	HeatmapWindowForNewSelection.cpp
+	ProgressionHeatmapWindow.h
+	ProgressionHeatmapWindow.cpp)
 
 IF ( NOT BUILD_CLUSCLUS )
 	MESSAGE( SEND_ERROR "Must turn on BUILD_CLUSCLUS" )

@@ -11,7 +11,7 @@
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
-#include "ClusClus/ProgressionHeatmapWindow.h"
+#include "ProgressionHeatmapWindow.h"
 #include "ClusClus/HeatmapWindow.h"
 
 class SPDMainWindow : public QWidget

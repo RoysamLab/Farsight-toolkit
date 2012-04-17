@@ -601,3 +601,7 @@ void CellTraceModel::CloseClusterManager()
 	this->CellClusterManager->close();
 }
 
+SelectiveClustering *CellTraceModel::GetCellSelectiveClustering()
+{
+	return CellClusterSelection;
+}

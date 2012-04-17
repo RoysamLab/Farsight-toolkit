@@ -93,8 +93,8 @@ limitations under the License.
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #ifdef USE_SPD
-#include "SPD/spdmainwindow.h"
-#include "SPD/spdtestwindow.h"
+//#include "SPD/spdmainwindow.h"
+#include "SPD/spdtestwindowForNewSelection.h"
 #endif
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
@@ -464,7 +464,7 @@ private:
 	StatisticsToolbar * statisticsToolbar;
 #ifdef USE_SPD
 	//SPDMainWindow *SPDWin;
-	SPDtestWindow *SPDWin;
+	SPDWindowForNewSelection *SPDWin;
 #endif
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;

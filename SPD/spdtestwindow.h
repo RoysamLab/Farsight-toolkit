@@ -7,13 +7,14 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QDoubleSpinBox>
+#include <QSpinBox>
 #include <QCheckBox>
 #include "SPDAnalysisModel.h"
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/PlotWindow.h"
-#include "ClusClus/ProgressionHeatmapWindow.h"
-#include "ClusClus/HeatmapWindow.h"
+#include "ProgressionHeatmapWindow.h"
+#include "HeatmapWindow.h"
 
 class SPDtestWindow : public QWidget
 {
@@ -88,6 +89,8 @@ private:
 	QPushButton *psmHisButton;
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
+	QLabel *maxVetexIdLabel;  // max id to seperate the data
+	QSpinBox *maxVetexIdEdit; // max id
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device

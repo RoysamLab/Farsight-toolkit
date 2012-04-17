@@ -151,6 +151,47 @@ void SomaExtractor::writeCentroids(const char* writeFileName, std::vector< itk::
 	ofs.close();
 }
 
+SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(double alfa, double beta)
+{
+	ProbImageType::Pointer image;
+
+	std::cout<< "Sharpen the images..."<<std::endl;
+	typedef itk::LaplacianSharpeningImageFilter<ProbImageType, ProbImageType >  LaplacianSharpeningImageFilterType;
+	LaplacianSharpeningImageFilterType::Pointer laplacianSharpeningImageFilter = LaplacianSharpeningImageFilterType::New();
+	laplacianSharpeningImageFilter->SetInput( inputImage);
+
+	//std::cout<< "Smoothing the image with edges preserved."<<std::endl;
+	//typedef itk::CurvatureAnisotropicDiffusionImageFilter<ProbImageType, ProbImageType > SmoothFilter;
+	//SmoothFilter::Pointer smooth = SmoothFilter::New();
+	//smooth->SetInput(inputImage);
+	//smooth->SetNumberOfIterations(3);
+	//smooth->SetTimeStep(0.0625);
+	//smooth->SetConductanceParameter(3);
+	//smooth->Update();
+
+	std::cout<< "Gradient Image."<<std::endl;
+	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ProbImageType, ProbImageType > GradientFilterType;
+	GradientFilterType::Pointer gradientMagnitude = GradientFilterType::New();
+	gradientMagnitude->SetSigma(2);
+	gradientMagnitude->SetInput(laplacianSharpeningImageFilter->GetOutput());
+	gradientMagnitude->Update();
+	image = gradientMagnitude->GetOutput();
+
+	SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
+	sigmoidFilter->SetInput(image);
+	sigmoidFilter->SetOutputMinimum(0);
+	sigmoidFilter->SetOutputMaximum(255);
+	sigmoidFilter->SetAlpha(alfa);
+	sigmoidFilter->SetBeta(beta);
+	sigmoidFilter->Update();
+	ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
+
+	this->writeImage("GradientImage.tif", floatImage);
+
+	return image;
+}
+
+/// Huang Auto Thresholding
 SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold)
 {
 	ProbImageType::IndexType start;
@@ -204,10 +245,22 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 	return probImage;
 }
 
-SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
-													   double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int minObjSize)
+/// Adaptive histogram
+SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius)
 {
-	/// rescaled image as speed image
+	AdaptiveHistogramEqualizationImageFilterType::Pointer adaptiveHistogramEqualizationImageFilter = AdaptiveHistogramEqualizationImageFilterType::New();
+	adaptiveHistogramEqualizationImageFilter->SetInput(inputImage);
+	adaptiveHistogramEqualizationImageFilter->SetRadius(radius);
+	adaptiveHistogramEqualizationImageFilter->SetAlpha(alfa);
+	adaptiveHistogramEqualizationImageFilter->SetBeta(beta);
+	adaptiveHistogramEqualizationImageFilter->Update();
+	ProbImageType::Pointer imagePt = adaptiveHistogramEqualizationImageFilter->GetOutput();
+	return imagePt;
+}
+
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
+											double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int holeSize, int minObjSize)
+{
 	//std::cout << "RescaleIntensity"<<endl;
     SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
 	sigmoidFilter->SetInput(input);
@@ -215,13 +268,6 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	sigmoidFilter->SetOutputMaximum(1);
 	sigmoidFilter->SetAlpha(alfa);
 	sigmoidFilter->SetBeta(beta);
-	sigmoidFilter->Update();
-	ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
-
-	/// generate distance map of the seeds using Fastmarching method
-	//std::cout<< "Generating Distance Map..." <<endl;
-
-	//clock_t SomaExtraction_start_time = clock();
 	
 	FastMarchingFilterType::Pointer fastMarching = FastMarchingFilterType::New();
     NodeContainer::Pointer seeds = NodeContainer::New();
@@ -245,10 +291,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
     fastMarching->SetStoppingValue(  timethreshold);
 	fastMarching->SetSpeedConstant( 1.0 );
 	fastMarching->Update();
-	//std::cout<< "Total time for Distance Map is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
-	/// Shape Detection
-	//SomaExtraction_start_time = clock();
 	//std::cout<< "Shape Detection..." <<std::endl;
 	
 	ShapeDetectionFilterType::Pointer shapeDetection = ShapeDetectionFilterType::New();
@@ -262,10 +305,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	shapeDetection->SetFeatureImage( sigmoidFilter->GetOutput());
 	shapeDetection->Update();
 	//std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
-	//std::cout << "RMS change: " << shapeDetection->GetRMSChange() << std::endl;
-	//std::cout<< "Total time for Shape Detection is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
-	/// Get binarized image by thresholding
 	//std::cout<< "Thresholding..."<<endl;
 	
     BinaryThresholdingFilterType::Pointer thresholder = BinaryThresholdingFilterType::New();
@@ -275,9 +315,22 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	thresholder->SetInsideValue(255);
 	thresholder->SetInput( shapeDetection->GetOutput());
 
+	/// morphological closing
+	KernelType ball;
+	KernelType::SizeType ballSize;
+	ballSize[0] = holeSize;
+	ballSize[1] = holeSize;
+	ballSize[2] = 1;
+	ball.SetRadius(ballSize);
+	ball.CreateStructuringElement();
+	CloseFilterType::Pointer closeFilter = CloseFilterType::New();
+	closeFilter->SetInput( thresholder->GetOutput());
+	closeFilter->SetKernel( ball );
+	closeFilter->SetForegroundValue( 255);
+
 	/// Label image
 	LabelFilterType::Pointer label = LabelFilterType::New();
-	label->SetInput(thresholder->GetOutput());
+	label->SetInput(closeFilter->GetOutput());
 
 	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
 	relabel->SetInput( label->GetOutput());

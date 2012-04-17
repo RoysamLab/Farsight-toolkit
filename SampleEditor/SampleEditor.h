@@ -54,7 +54,7 @@ limitations under the License.
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
 #include "ClusClus/LocalGeometryRef.h"
-#include "ClusClus/ProgressionHeatmapWindow.h"
+#include "SPD/ProgressionHeatmapWindow.h"
 //#include "SPD/spdmainwindow.h"
 #include "SPD/spdtestwindowForNewSelection.h"
 #include <vector>

@@ -95,6 +95,7 @@ public:
 	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	double GetCorMatSelectedPercentage(double thres);
 	void GetCombinedDataTable(vtkSmartPointer<vtkTable> table);
+	void SetMaxVertexID(int verId);
 	void GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec);
 	void GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold);
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);

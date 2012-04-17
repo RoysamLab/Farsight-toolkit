@@ -2538,6 +2538,11 @@ double SPDAnalysisModel::GetCorMatSelectedPercentage(double thres)
 	return per;
 }
 
+void SPDAnalysisModel::SetMaxVertexID(int verId)
+{
+	maxVertexId = verId;
+}
+
 void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec)
 {
 	for( int i = 0; i < clusIndex.size(); i++)

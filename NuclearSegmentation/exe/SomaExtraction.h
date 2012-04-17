@@ -23,6 +23,10 @@
 #include "itkRegionOfInterestImageFilter.h"
 #include <itkSigmoidImageFilter.h>
 #include <itkExtractImageFilter.h>
+#include "itkVotingBinaryHoleFillingImageFilter.h"
+#include "itkAdaptiveHistogramEqualizationImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
+#include <itkBinaryMorphologicalClosingImageFilter.h>
 
 class SomaExtractor
 {
@@ -51,10 +55,13 @@ public:
 	typedef itk::ShapeDetectionLevelSetImageFilter< ProbImageType, ProbImageType> ShapeDetectionFilterType;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, SegmentedImageType> BinaryThresholdingFilterType;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, ProbImageType> BinaryProbThresholdingFilterType;
-	typedef itk::ExtractImageFilter< ProbImageType, ProbImageSliceType > ExtractFilterType;
+	typedef itk::ExtractImageFilter< ProbImageType, ProbImageSliceType> ExtractFilterType;
 	typedef itk::HuangThresholdImageFilter< ProbImageSliceType, ProbImageSliceType> HuangThresholdFilter;
-	typedef itk::SigmoidImageFilter <ProbImageType, ProbImageType> SigmoidImageFilterType;
-
+	typedef itk::SigmoidImageFilter < ProbImageType, ProbImageType> SigmoidImageFilterType;
+	typedef itk::VotingBinaryHoleFillingImageFilter< SegmentedImageType, SegmentedImageType> HoleFillingFilterType;
+	typedef  itk::AdaptiveHistogramEqualizationImageFilter< ProbImageType> AdaptiveHistogramEqualizationImageFilterType;
+	typedef itk::BinaryBallStructuringElement< SegmentedImageType::PixelType, Dim> KernelType;
+	typedef itk::BinaryMorphologicalClosingImageFilter< SegmentedImageType, SegmentedImageType, KernelType > CloseFilterType;
 	//: constructor
 	SomaExtractor();
  	//: destructor
@@ -64,9 +71,12 @@ public:
 	void SetInputImage( ProbImageType::Pointer probImage);
 	ProbImageType::Pointer GetFloatInputImage();
 	void ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
+	ProbImageType::Pointer GetEdgePotentialMap(double alfa, double beta);
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold);
+	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius);
 	/// return labeled image for somas
-	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int minObjSize);
+	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, double alfa, double beta, 
+								int timethreshold, double curvatureScaling, double rmsThres, int holeSize, int minObjSize);
 	
 	void writeImage(const char* writeFileName, SegmentedImageType::Pointer image);
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image);

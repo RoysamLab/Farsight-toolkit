@@ -79,6 +79,12 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
 	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
 	psdModuleSelectBox = new QLineEdit;
+	maxVetexIdLabel = new QLabel(tr("Id to seperate:"));
+	maxVetexIdEdit = new QSpinBox();
+	maxVetexIdEdit->setSingleStep(100);
+	maxVetexIdEdit->setRange(0,10000);
+	maxVetexIdEdit->setValue(4500);
+	
     psdtButton = new QPushButton(tr("View Progression"));
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
 	heatmapButton = new QPushButton(tr("Heatmap"));
@@ -119,7 +125,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 12; row++)
+    for ( int row = 1; row <= 13; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -163,10 +169,12 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psdtLable, 10, 0);
 	mainLayout->addWidget(distanceThres, 10, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 11, 2);
+	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
+	mainLayout->addWidget(psdtButton, 12, 2);
 
-	mainLayout->addWidget(heatmapLabel, 12, 0);
-	mainLayout->addWidget(heatmapButton, 12, 2);
+	mainLayout->addWidget(heatmapLabel, 13, 0);
+	mainLayout->addWidget(heatmapButton, 13, 2);
 
     setLayout(mainLayout);
 
@@ -624,6 +632,9 @@ void SPDtestWindow::regenerateProgressionTree()
 		std::vector< double> colorVec;
 		std::vector< double> percentVec;
 		SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
+
+		int maxId = this->maxVetexIdEdit->value();
+		SPDModel->SetMaxVertexID(maxId);
 		SPDModel->GetPercentage(sampleIndex, colorVec);
 		SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
 

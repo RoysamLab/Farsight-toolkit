@@ -79,6 +79,12 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
 
 	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
 	psdModuleSelectBox = new QLineEdit;
+	maxVetexIdLabel = new QLabel(tr("Id to seperate:"));
+	maxVetexIdEdit = new QSpinBox();
+	maxVetexIdEdit->setSingleStep(100);
+	maxVetexIdEdit->setRange(0,10000);
+	maxVetexIdEdit->setValue(4500);
+
     psdtButton = new QPushButton(tr("View Progression"));
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
 	heatmapButton = new QPushButton(tr("Heatmap"));
@@ -119,7 +125,7 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 12; row++)
+    for ( int row = 1; row <= 13; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -163,10 +169,12 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
 	mainLayout->addWidget(psdtLable, 10, 0);
 	mainLayout->addWidget(distanceThres, 10, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(psdtButton, 11, 2);
+	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
+	mainLayout->addWidget(psdtButton, 12, 2);
 
-	//mainLayout->addWidget(heatmapLabel, 12, 0);
-	//mainLayout->addWidget(heatmapButton, 12, 2);
+	mainLayout->addWidget(heatmapLabel, 13, 0);
+	mainLayout->addWidget(heatmapButton, 13, 2);
 
     setLayout(mainLayout);
 
@@ -669,12 +677,39 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 	std::vector<int> index; 
 	vnl_vector<double> distance;
 	SPDModel->ConvertTableToMatrix(averageClusterTable, clusAverageMat, index, distance);
+
+	std::vector< std::vector< long int> > sampleIndex;
+	std::vector< double> colorVec;
+	std::vector< double> percentVec;
+	std::vector< int> sizeVec;
+
+	std::set< vtkIdType > clusIds = ClusterSelections->GetClusterIDs();
+	std::set< vtkIdType >::iterator iter;
+
+	for( iter = clusIds.begin(); iter != clusIds.end(); iter++)
+	{
+		std::set< vtkIdType > ids = ClusterSelections->SelectionFromCluster( *iter);
+		std::set< vtkIdType >::iterator idIter;
+		std::vector<long int> vecIds;
+		for( idIter = ids.begin(); idIter != ids.end(); idIter++)
+		{
+			vecIds.push_back((long int)*idIter);
+		}
+		sampleIndex.push_back(vecIds);
+		sizeVec.push_back(vecIds.size());
+	}
+
+	int maxId = this->maxVetexIdEdit->value();
+	SPDModel->SetMaxVertexID(maxId);
+	SPDModel->GetPercentage(sampleIndex, colorVec);
+	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, distanceThres->value());
+
 	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
 	this->graph->setModels(averageClusterTable, ClusterSelections);
 
 	std::vector<std::string> headers;
 	SPDModel->GetTableHeaders( headers);
-	this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2]);
+	this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sizeVec, &colorVec, &percentVec);
 
 	try
 	{

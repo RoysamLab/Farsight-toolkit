@@ -20,9 +20,7 @@ SET( ClusClus_SRCS
 	clusgap.cpp
 	clusclusMainwindow.cpp
 	HeatmapWindow.cpp
-	HeatmapWindowForNewSelection.cpp
 	Heatmap.cpp
-	ProgressionHeatmapWindow.cpp
 	LocalGeometryRef.cpp)
 
 SET( ClusClus_HDRS 
@@ -34,14 +32,12 @@ SET( ClusClus_HDRS
 	clusgap.h
 	clusclusMainwindow.h
 	HeatmapWindow.h
-	HeatmapWindowForNewSelection.h
 	Heatmap.h
-	ProgressionHeatmapWindow.h
 	LocalGeometryRef.h)
 	
 LINK_DIRECTORIES ( ${Boost_LIBRARY_DIRS})
 INCLUDE_DIRECTORIES ( ${Boost_INCLUDE_DIRS})
-QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h ProgressionHeatmapWindow.h Heatmap.h HeatmapWindowForNewSelection.h)  
+QT4_WRAP_CPP( ClusClus_MOC_REQD_HDRS HeatmapWindow.h Dendrogram.h clusclusMainwindow.h Heatmap.h)  
 
 ADD_LIBRARY( ClusClus_lib ${ClusClus_SRCS} ${ClusClus_HDRS} ${ClusClus_MOC_REQD_HDRS} )
 

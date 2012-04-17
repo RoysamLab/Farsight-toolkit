@@ -13,8 +13,8 @@
 #include "ftkGUI/GraphWindowForNewSelection.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/PlotWindow.h"
-#include "ClusClus/ProgressionHeatmapWindow.h"
-#include "ClusClus/HeatmapWindowForNewSelection.h"
+#include "ProgressionHeatmapWindow.h"
+#include "HeatmapWindowForNewSelection.h"
 #include "ftkGUI/SelectiveClustering.h"
 
 class SPDWindowForNewSelection : public QWidget
@@ -90,6 +90,8 @@ private:
 	QPushButton *psmHisButton;
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
+	QLabel *maxVetexIdLabel;  // max id to seperate the data
+	QSpinBox *maxVetexIdEdit; // max id
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device

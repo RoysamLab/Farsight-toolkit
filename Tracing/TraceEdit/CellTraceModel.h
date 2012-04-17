@@ -99,6 +99,7 @@ public:
 	int AddNewFeatureHeader(std::string NewHeader);
 	void SyncModel();
 	void CloseClusterManager();
+	SelectiveClustering *GetCellSelectiveClustering();
 
 signals:
 	void selectionChanged(void);
