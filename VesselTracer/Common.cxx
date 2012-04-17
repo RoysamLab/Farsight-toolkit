@@ -418,7 +418,11 @@ void RenderImage3D(RenderImageType3D::Pointer data_ptr){
 	//vtkSmartPointer<vtkSmartVolumeMapper> volume_mapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
 
 	//volume_mapper->SetVolumeRayCastFunction(composite_function);
-	volume_mapper->SetInput(vtk_image);
+	#if VTK_MAJOR_VERSION <= 5
+		volume_mapper->SetInput(vtk_image);
+	#else
+		volume_mapper->SetInputData(vtk_image);
+	#endif
 	volume_mapper->SetBlendModeToComposite();
 	//volume_mapper->SetBlendModeToMaximumIntensity();
 	//volume_mapper->SetScalarMode(1);

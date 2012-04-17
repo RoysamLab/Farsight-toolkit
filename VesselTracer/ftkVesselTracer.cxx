@@ -310,11 +310,11 @@ void ftkVesselTracer::RenderMaximumProjectionImage(void){
 	vtkSmartPointer<vtkImageViewer2> image_viewer = vtkSmartPointer<vtkImageViewer2>::New();
 	vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
-#ifdef USE_VTK6
-	image_viewer->SetInputData(itk_to_vtk_connector->GetOutput()); 
-#else
-	image_viewer->SetInput(itk_to_vtk_connector->GetOutput());
-#endif
+	#if VTK_MAJOR_VERSION <= 5
+		image_viewer->SetInput(itk_to_vtk_connector->GetOutput());
+	#else
+		image_viewer->SetInputData(itk_to_vtk_connector->GetOutput()); 
+	#endif
 	image_viewer->SetupInteractor(render_window_interactor);
 	image_viewer->Render();
 	image_viewer->GetRenderer()->ResetCamera();
@@ -2405,7 +2405,11 @@ void ftkVesselTracer::VisualizeAffinityGraph(void){
 	
 	vtkSmartPointer<vtkFixedPointVolumeRayCastMapper> volume_mapper = vtkSmartPointer<vtkFixedPointVolumeRayCastMapper>::New();
 	
-	volume_mapper->SetInput(vtk_image);
+	#if VTK_MAJOR_VERSION <= 5
+		volume_mapper->SetInput(vtk_image);
+	#else
+		volume_mapper->SetInputData(vtk_image);
+	#endif
 	volume_mapper->SetBlendModeToComposite();
 	
 	vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
@@ -2451,7 +2455,11 @@ void ftkVesselTracer::VisualizeAffinityGraph(void){
 	//poly_data->GetCellData()->SetScalars(colors);
 	
 	vtkSmartPointer<vtkPolyDataMapper> poly_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	poly_mapper->SetInput(poly_data);
+	#if VTK_MAJOR_VERSION <= 5
+		poly_mapper->SetInput(poly_data);
+	#else
+		poly_mapper->SetInputData(poly_data);
+	#endif
 
 	vtkSmartPointer<vtkActor> poly_actor = vtkSmartPointer<vtkActor>::New();
 	poly_actor->SetMapper(poly_mapper);
@@ -2510,7 +2518,11 @@ void ftkVesselTracer::VisualizeMinimumSpanningForest(void){
 	
 	vtkSmartPointer<vtkFixedPointVolumeRayCastMapper> volume_mapper = vtkSmartPointer<vtkFixedPointVolumeRayCastMapper>::New();
 	
-	volume_mapper->SetInput(vtk_image);
+	#if VTK_MAJOR_VERSION <= 5
+		volume_mapper->SetInput(vtk_image);
+	#else
+		volume_mapper->SetInputData(vtk_image);
+	#endif
 	volume_mapper->SetBlendModeToComposite();
 	
 	vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
