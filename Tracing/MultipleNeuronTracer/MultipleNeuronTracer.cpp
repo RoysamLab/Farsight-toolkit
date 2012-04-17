@@ -637,8 +637,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
  
  	//const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
  	//const float thresh2 = image_mean/45;  // -0.1 percent of range
-	const float thresh1 = 0.005;   // 3% of maximum theshold from Lowe 2004
-	const float thresh2 = 0.0003;  // -0.1 percent of range
+	const float thresh1 = intensity_threshold;// 0.01;//0.005;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = contrast_threshold;//0.003;//0.0003;  // -0.1 percent of range
 
 	long ctCnt = 0;
 	int inrt = 0; // niclas testing
@@ -678,8 +678,14 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 			h.ComputeEigenAnalysis (ev, em);
 
 			unsigned int w;
-// 			if (IsPlate_control(ev, w)) )			
-			if (IsPlate(ev, w)) 
+
+			bool IsPlateCheck;
+			if (device)
+				IsPlateCheck=(IsPlate(ev, w));
+			else
+				IsPlateCheck=(IsPlate_control(ev, w));
+
+			if (IsPlateCheck) 
 			{
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
 				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
@@ -1058,8 +1064,8 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 
 	//const float thresh1 = image_mean - (image_stddev/3);   // 3% of maximum theshold from Lowe 2004
 	//const float thresh2 = image_mean/45;  // -0.1 percent of range
- 	const float thresh1 = 0.005;   // 3% of maximum theshold from Lowe 2004
- 	const float thresh2 = 0.0003;  // -0.1 percent of range
+	const float thresh1 = intensity_threshold;// 0.01;//0.005;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = contrast_threshold;//0.003;//0.0003;  // -0.1 percent of range
 	
 	long ctCnt = 0;
 	while(!nit.IsAtEnd()) 
@@ -1097,7 +1103,14 @@ void MultipleNeuronTracer::GetFeature_2( float sigma, int scale )
 			h.ComputeEigenAnalysis (ev, em);
 
 			unsigned int w;
-			if (IsPlate(ev, w)) 
+
+			bool IsPlateCheck;
+			if (device)
+				IsPlateCheck=(IsPlate(ev, w));
+			else
+				IsPlateCheck=(IsPlate_control(ev, w));
+
+			if (IsPlateCheck) 
 			{
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
 				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
@@ -1155,7 +1168,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 		}
 	}
 
- 	if (std::abs(L2)/std::sqrt(std::abs(L1*L))<0.8) //*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+	if (std::abs(L2)/std::sqrt(std::abs(L1*L))<debris_threshold) //*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*/(abs(L2)/sqrt(abs(L1*L))<0.5)//((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 	{
 		return true;
 	}
@@ -1638,7 +1651,7 @@ void MultipleNeuronTracer::Decimate()
 		}
 	}
 
-	const float minOffshootLength = 10;
+	const float minOffshootLength = offshoot;//10;
 	//std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
 	for (sit = _SWCNodeContainer.begin(); sit != _SWCNodeContainer.end(); ++sit) 
@@ -2259,6 +2272,20 @@ void MultipleNeuronTracer::BlackOut(itk::Index<3> &stndx)
 			}
 		}
 	}
+}
+
+int MultipleNeuronTracer::optionsCreate(const char* optfile, std::map<std::string,std::string>& options)
+{
+	options.clear();
+	ifstream fin(optfile); assert(fin.good());
+	std::string name;  fin>>name;
+	while(fin.good()) {
+		char cont[100];	 fin.getline(cont, 99);
+		options[name] = std::string(cont);
+		fin>>name;
+	}
+	fin.close();
+	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////

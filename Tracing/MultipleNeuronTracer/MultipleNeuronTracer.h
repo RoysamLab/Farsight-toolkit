@@ -19,6 +19,7 @@
 #ifndef _MULTIPLE_NEURON_TRACER_H_
 #define _MULTIPLE_NEURON_TRACER_H_
 
+#include <stdlib.h>
 #include "itkTimeProbe.h"
 #include "itkImage.h"
 #include "itkArray.h"
@@ -124,7 +125,10 @@ public:
 	void WriteSWCFile(std::string , unsigned int );
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
 	void GenerateTestImage(); 
-	
+
+	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
+
+
 	//Additions after the pipeline
 	void setLogScale( ImageType3D::Pointer, int scale );
 	void setDiceSize( itk::Size<3> );
@@ -134,6 +138,15 @@ public:
 	void runNDX();
 	ImageType3D::Pointer getNDX(){return _NDXImage;};
 	void setNDX( ImageType3D::Pointer image){_NDXImage = image;};
+
+	//Parameters read from txt file
+	float intensity_threshold;
+	float contrast_threshold;
+	int cost_threshold;
+	float debris_threshold;
+	int offshoot;
+	int device;
+
 		
 protected:
 	void FeatureMain();
@@ -153,7 +166,7 @@ protected:
 	float getRadius(itk::Vector<float,3> & pos);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
-	
+
 	void GetFeature_2( float, int );
 
 private:
