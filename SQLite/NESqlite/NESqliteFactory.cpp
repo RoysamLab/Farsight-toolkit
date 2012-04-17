@@ -258,6 +258,17 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	 3) We will insert a dummy record for 1st row with IMG_ID = 1 when we ship the database
 	*/
 
+	// make sure the table exists
+	std::string createTableQuery = "CREATE TABLE IF NOT EXISTS ";
+	createTableQuery += MasterTableName;
+	createTableQuery += " (IMG_ID INTEGER, CELL_ID INTEGER,";
+	createTableQuery += " IMG_NAME TEXT, IMG_LOCATION TEXT)";
+	exeStatus = sqlite3_get_table(dbConn, createTableQuery.c_str(), &result, &nrow, &ncol, &zErr);
+	if( exeStatus != SQLITE_OK )
+	{
+		std::cerr<<"Problem creating SQLite table: "<<sqlite3_errmsg(dbConn)<<std::endl;
+	}
+
 	//strcat( CheckforUpdateQuery, "Select * from" );
 	CheckforUpdateQuery1 = "PRAGMA table_info(" + MasterTableName1 + ");";
 	CheckforUpdateQuery = new char[CheckforUpdateQuery1.length() + 1];
@@ -269,7 +280,7 @@ void GenericSearch(sqlite3 *db,const char * sql)
 		std::cerr<<"Farsight Sql Error :Incorrect Sql Query: "<<sqlite3_errmsg(dbConn)<<std::endl;
 
 	int ind = 7;
-	std::cout<<"The column headers in the seleted table on the database are:\n";
+	std::cout<<"The column headers in the selected table on the database are:\n";
 	for( int i=0; i<nrow; ++i ){
 		std::string colname;
 		colname = result[ind+i*6];
@@ -323,7 +334,9 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	        which hold image name and autogenerted IMG_ID*/
 	//Check if image already exists in the list
 	std::string check_str;
-	check_str = "SELECT * FROM IMAGE WHERE IMG_LOCATION='";
+	check_str = "SELECT * FROM ";
+	check_str += project_name;
+	check_str += " WHERE IMG_LOCATION='";
 	char *check_str_cstr = new char [check_str.size()+strlen(path)+1];
 	strcpy (check_str_cstr, check_str.c_str());
 	strcat( check_str_cstr, path );
@@ -332,7 +345,9 @@ void GenericSearch(sqlite3 *db,const char * sql)
 	if( qnrow ){
 		img_id = atoi( result[qnrow*qncol] );
 		check_str.clear();
-		check_str = "DELETE FROM IMAGE_TEST WHERE IMG_ID="+ftk::NumToString(img_id);
+		check_str = "DELETE FROM ";
+		check_str += project_name;
+		check_str += " WHERE IMG_ID="+ftk::NumToString(img_id);
 		sqlite3_prepare(db, check_str.c_str(), check_str.size(), &ppStmt, &tail);
 		exeStatus = sqlite3_step(ppStmt);
 		if( exeStatus != SQLITE_OK && exeStatus != SQLITE_DONE ){
@@ -340,11 +355,27 @@ void GenericSearch(sqlite3 *db,const char * sql)
 			return -1;
 		}
 	}
-	else{
-		queryStr = "insert into IMAGE (IMG_NAME, IMG_LOCATION)"
-			       "values (:IMG_NAME, :IMG_LOCATION)";
+	else
+	{
+		std::string img_id_query;
+		img_id_query = "SELECT MAX(IMG_ID) FROM ";
+		img_id_query += project_name;
+		exeStatus = sqlite3_get_table(db, img_id_query.c_str(), &result, &qnrow, &qncol, &zErr);
+		if( qnrow > 1)
+		{
+			img_id = atoi( result[qnrow*qncol] );
+			++img_id;
+		}
+		else
+		{
+			img_id = 1;
+		}
+		queryStr = "insert into ";
+		queryStr += project_name;
+		queryStr += " (IMG_ID, IMG_NAME, IMG_LOCATION) values (:IMG_ID, :IMG_NAME, :IMG_LOCATION)";
 		//Location variable not decided
 		sqlite3_prepare(db, queryStr.c_str(), queryStr.size(), &ppStmt, &tail);
+		sqlite3_bind_double( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_ID"), img_id);
 		sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_NAME"),Img_name,strlen(Img_name),SQLITE_TRANSIENT );
 		sqlite3_bind_text( ppStmt,sqlite3_bind_parameter_index(ppStmt,":IMG_LOCATION"),path,strlen(path),SQLITE_TRANSIENT );
 		exeStatus = sqlite3_step(ppStmt);
@@ -358,7 +389,6 @@ void GenericSearch(sqlite3 *db,const char * sql)
 			std::cerr<<"Sqlite3_prepare error:"<<sqlite3_errmsg(db)<<std::endl;
 			return -1;
 		}
-		img_id = atoi( result[qnrow*qncol] );
 	}
 
 
