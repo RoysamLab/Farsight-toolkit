@@ -47,6 +47,11 @@ SET( mdlGUI_SRCS
 
 ADD_EXECUTABLE( mdlGUI ${EXE_TYPE} ${mdlGUI_SRCS} )
 TARGET_LINK_LIBRARIES( mdlGUI 
-  ${QT_LIBRARIES} vtkCommon vtkIO vtkRendering
-  vtkVolumeRendering QVTK mdlIntegratedSkeleton mdlMST TinyXML ftkPreprocess ftkGUI
-)
+  ${QT_LIBRARIES}
+  ${VTK_LIBRARIES}
+  mdlIntegratedSkeleton
+  mdlMST
+  TinyXML
+  ftkPreprocess
+  ftkGUI
+  )

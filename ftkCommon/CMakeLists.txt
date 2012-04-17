@@ -52,7 +52,7 @@ endif (BUILD_CUDA)
 
 
 TARGET_LINK_LIBRARIES( ftkCommon TinyXML ftkImage QHULL
-                       vtksys vtkCommon vtkFiltering vtkIO
+                       ${VTK_LIBRARIES}
                        ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE( block main.cpp )

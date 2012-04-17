@@ -43,7 +43,11 @@ TARGET_LINK_LIBRARIES(anisodiff    trackingHelpers     ${ITK_LIBRARIES} )
 INSTALL(TARGETS anisodiff RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 
 ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
-TARGET_LINK_LIBRARIES(render_tracks     trackingHelpers vtkVolumeRendering vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid     ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(render_tracks 
+  trackingHelpers
+  ${VTK_LIBRARIES}
+  ${ITK_LIBRARIES}
+  )
 INSTALL(TARGETS render_tracks RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 
 #ADD_EXECUTABLE(tracklog tracklog.cpp helpers.h)

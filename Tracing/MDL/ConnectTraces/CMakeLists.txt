@@ -23,7 +23,10 @@ SET(SRCS
   main.cxx)
 
 ADD_EXECUTABLE(connectTraces ${SRCS})
-TARGET_LINK_LIBRARIES(connectTraces vtkCommon vtkIO vtkGraphics vtkInfovis       ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(connectTraces
+  ${VTK_LIBRARIES}
+  ${ITK_LIBRARIES}
+  )
 
 #ADD_EXECUTABLE(test test.cxx vtkPlotEdges.cxx)
 #TARGET_LINK_LIBRARIES(test vtkCommon vtkIO vtkGraphics)

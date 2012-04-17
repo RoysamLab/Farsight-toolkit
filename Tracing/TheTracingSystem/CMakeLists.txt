@@ -10,14 +10,7 @@ SET( TracingSysLibraries
     ${ITK_LIBRARIES}
     rtvl
     rgtl
-    vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
+    ${VTK_LIBRARIES}
     QVTK
 )
 

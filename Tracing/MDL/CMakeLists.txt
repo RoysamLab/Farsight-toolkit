@@ -51,8 +51,9 @@ SET(MDLWizard_SRCS
   ${Wizard_MOC_SRCS} ${Wizard_HDRS} ${Wizard_RCC_SRCS}
 )
 ADD_EXECUTABLE(MDLWizard ${EXE_TYPE} ${MDLWizard_SRCS})
-TARGET_LINK_LIBRARIES(MDLWizard ${QT_LIBRARIES} vtkCommon vtkIO vtkRendering
-                      vtkVolumeRendering QVTK
+TARGET_LINK_LIBRARIES(MDLWizard
+  ${QT_LIBRARIES}
+  ${VTK_LIBRARIES}
 )
 
 SET(CPACK_PACKAGE_EXECUTABLES "MDLWizard;MDL Wizard")

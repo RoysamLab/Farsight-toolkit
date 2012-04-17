@@ -167,7 +167,7 @@ private:
 
 	bool LoadStandardImage( std::string fileName, bool stacksAreForTime = false, bool appendChannels = false, bool readRGBasSingleChannel = true );
 	void SetDefaultColors(void);
-#ifndef USE_VTK6
+#if VTK_MAJOR_VERSION <= 5
 	bool LoadLSMImage( std::string fileName );
 #endif
 

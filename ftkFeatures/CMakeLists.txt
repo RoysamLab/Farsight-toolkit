@@ -26,9 +26,12 @@ add_library( ftkFeatures
   ${FTKFEATURES_HDRS}
   )
 add_subdirectory(Qhull)
-target_link_libraries( ftkFeatures TinyXML ftkImage
-                       vtksys vtkCommon vtkFiltering vtkIO
-                       ${ITK_LIBRARIES} QHULL)
+target_link_libraries( ftkFeatures
+  TinyXML ftkImage
+  ${VTK_LIBRARIES}
+  ${ITK_LIBRARIES}
+  QHULL
+  )
 if( BUILD_ZERNIKE )
   target_link_libraries( ftkFeatures zernike )
 endif()

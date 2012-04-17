@@ -34,7 +34,7 @@ limitations under the License.
 #include "vtkPointData.h"
 
 //Local includes:
-#ifndef USE_VTK6
+#if VTK_MAJOR_VERSION <= 5
 #include "vtkLSMReader.h"
 #endif
 
@@ -181,7 +181,7 @@ bool Image::LoadFile( std::string fName)
 {
 	DeleteData();
 
-#ifndef USE_VTK6
+#if VTK_MAJOR_VERSION <= 5
 	if( GetFileExtension(fName) == "lsm" )
 		return this->LoadLSMImage( fName );
 	else
@@ -448,7 +448,7 @@ bool Image::SaveMhdFromOpenSlide(std::string out_filename){
 
 
 
-#ifndef USE_VTK6
+#if VTK_MAJOR_VERSION <= 5
 bool Image::LoadLSMImage( std::string fileName )
 { 
 	DeleteData();
@@ -607,10 +607,10 @@ Image::VtkImagePtr Image::GetVtkPtr(int T, int CH, PtrMode mode)
 	}
 
 	VtkImagePtr imageData = VtkImagePtr::New();
-#ifdef USE_VTK6
-	imageData->SetScalarType( GetDataTypeVTK(m_Info.dataType), NULL );
-#else
+#if VTK_MAJOR_VERSION <= 5
 	imageData->SetScalarType( GetDataTypeVTK(m_Info.dataType) );
+#else
+	imageData->SetScalarType( GetDataTypeVTK(m_Info.dataType), NULL );
 #endif
 	imageData->GetPointData()->SetScalars( m_array );
 	imageData->SetDimensions(m_Info.numColumns, m_Info.numRows, m_Info.numZSlices);

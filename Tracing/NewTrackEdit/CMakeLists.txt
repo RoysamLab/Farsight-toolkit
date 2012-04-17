@@ -11,16 +11,7 @@ PROJECT( TrackingEditor )
 
 SET(Libraries
     ${ITK_LIBRARIES}
-    vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
-    QVTK
-    QVTKWidgetPlugin
+    ${VTK_LIBRARIES}
 )
 
 QT4_WRAP_CPP( GUI_MOC_SRCS TrackingDataModel.h)#TrackingEventHandler.h TrackSelection.h TrackingModel.h TrackingVolumeView.h TrackingKymoView.h)

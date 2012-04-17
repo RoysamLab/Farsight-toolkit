@@ -5,9 +5,7 @@ INCLUDE_DIRECTORIES(${VXL_MUL_INCLUDE_DIR})
 
 SET( Libraries
     ${VXL_LIBRARIES}
-    vtkCommon
-    vtksys
-    vtkFiltering
+    ${VTK_LIBRARIES}
     vcl
     vnl
     mbl

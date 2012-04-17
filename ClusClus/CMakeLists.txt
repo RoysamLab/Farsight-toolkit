@@ -2,11 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(ClusClus)
 
 SET( Libraries
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
-    vtkViews
+    ${VTK_LIBRARIES}
     vcl
     vnl
     ${QT_LIBRARIES})

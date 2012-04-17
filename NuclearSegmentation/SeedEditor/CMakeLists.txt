@@ -17,14 +17,7 @@ set(qtproject_SRCS
 #Define (additional) ITK and VTK libraries that are needed for vtkTraceViewer to be built
 SET( Libraries
     ${ITK_LIBRARIES}
-    vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
+    ${VTK_LIBRARIES}
     QVTK
     QVTKWidgetPlugin
    # TinyXML/home/raghav/macecutter

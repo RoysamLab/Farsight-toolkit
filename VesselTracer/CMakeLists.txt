@@ -11,5 +11,8 @@ SET(ftkVesselTracer_headers
 	)	
 
 ADD_EXECUTABLE ( ftkVesselTracer ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
-TARGET_LINK_LIBRARIES( ftkVesselTracer vtkRendering vtkIO 
-vtkCommon  vtksys vtkFiltering  vtkVolumeRendering vtkWidgets ItkVtkGlue ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES( ftkVesselTracer
+	${VTK_LIBRARIES}
+	ItkVtkGlue
+       	${ITK_LIBRARIES}
+	)

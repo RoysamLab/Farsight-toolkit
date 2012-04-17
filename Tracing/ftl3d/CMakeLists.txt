@@ -38,13 +38,7 @@ TARGET_LINK_LIBRARIES( RenderTraces
                        ${Libraries}
                        ${ITK_LIBRARIES}
                        tiff
-                       vtkRendering
-                       vtkIO 
-                       vtkCommon
-                       vtksys
-                       vtkFiltering
-                       vtkVolumeRendering 
-                       vtkWidgets 
+		       ${VTK_LIBRARIES}
 )
 
 INSTALL( TARGETS RenderTraces DESTINATION ${INSTALL_BIN_DIR} )

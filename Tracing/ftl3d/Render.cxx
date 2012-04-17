@@ -246,10 +246,10 @@ int main(const int argc, char** argv)	{
 
 	VTK_CREATE(vtkOpenGLVolumeTextureMapper3D, volumeMapper);
 	volumeMapper->SetSampleDistance(0.75);
-#ifdef USE_VTK6
-	volumeMapper->SetInputConnection( vtkImporter->GetOutputPort() );
-#else
+#if VTK_MAJOR_VERSION <= 5
 	volumeMapper->SetInput(vtkImporter->GetOutput());
+#else
+	volumeMapper->SetInputConnection( vtkImporter->GetOutputPort() );
 #endif
 
 	VTK_CREATE(vtkVolume, volume);
@@ -297,10 +297,10 @@ int main(const int argc, char** argv)	{
 				vtkSphereSource *sphere = vtkSphereSource::New();
 				sphere->SetRadius(3);
 				vtkPolyDataMapper* sphereMap = vtkPolyDataMapper::New();
-#ifdef USE_VTK6
-				sphereMap->SetInputConnection( sphere->GetOutputPort() );
-#else
+#if VTK_MAJOR_VERSION <= 5
 				sphereMap->SetInput(sphere->GetOutput());
+#else
+				sphereMap->SetInputConnection( sphere->GetOutputPort() );
 #endif
 				vtkActor* sphereAct = vtkActor::New();
 				sphereAct->SetMapper(sphereMap);
@@ -313,10 +313,10 @@ int main(const int argc, char** argv)	{
 		traces->SetPoints(points);
 		traces->SetLines(cells);
 		traces->GetPointData()->SetScalars(scalars);
-#ifdef USE_VTK6
-		traceMapper->SetInputData(traces);
-#else
+#if VTK_MAJOR_VERSION <= 5
 		traceMapper->SetInput(traces);
+#else
+		traceMapper->SetInputData(traces);
 #endif
 		traceActor->SetMapper(traceMapper);
 		traceActor->GetProperty()->SetPointSize(2.0);

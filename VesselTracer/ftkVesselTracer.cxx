@@ -660,7 +660,11 @@ void ftkVesselTracer::VisualizeNodesWithData3D(std::vector<Node> node_vec, bool 
 	
 	vtkSmartPointer<vtkFixedPointVolumeRayCastMapper> volume_mapper = vtkSmartPointer<vtkFixedPointVolumeRayCastMapper>::New();
 	
-	volume_mapper->SetInput(vtk_image);
+	#if VTK_MAJOR_VERSION <= 5
+		volume_mapper->SetInput(vtk_image);
+	#else
+		volume_mapper->SetInputData(vtk_image);
+	#endif
 	volume_mapper->SetBlendModeToComposite();
 	
 	vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
@@ -2568,7 +2572,11 @@ void ftkVesselTracer::VisualizeMinimumSpanningForest(void){
 	//poly_data->GetCellData()->SetScalars(colors);
 	
 	vtkSmartPointer<vtkPolyDataMapper> poly_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	poly_mapper->SetInput(poly_data);
+	#if VTK_MAJOR_VERSION <= 5
+		poly_mapper->SetInput(poly_data);
+	#else
+		poly_mapper->SetInputData(poly_data);
+	#endif
 
 	vtkSmartPointer<vtkActor> poly_actor = vtkSmartPointer<vtkActor>::New();
 	poly_actor->SetMapper(poly_mapper);

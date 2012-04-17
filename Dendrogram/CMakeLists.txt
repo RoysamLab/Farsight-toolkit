@@ -29,19 +29,12 @@ ADD_EXECUTABLE( Dendrogram Dendro_main.cpp
                 
 ADD_LIBRARY( Dendrogram_lib ${Dendo_SRCS} ${Dendo_HDRS} ${Dendo_MOC_REQD_HDRS})
 
-TARGET_LINK_LIBRARIES( Dendrogram vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
-	vtkViews
-	${QT_LIBRARIES}
-	ftkGUI
+TARGET_LINK_LIBRARIES( Dendrogram
+  ${VTK_LIBRARIES}
+  ${QT_LIBRARIES}
+  ftkGUI
   )
   
-  TARGET_LINK_LIBRARIES( Dendrogram_lib ${QT_LIBRARIES} )
+TARGET_LINK_LIBRARIES( Dendrogram_lib ${QT_LIBRARIES} )
 
 # and finally this will run moc:

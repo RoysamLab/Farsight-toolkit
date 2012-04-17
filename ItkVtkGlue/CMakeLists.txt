@@ -24,4 +24,7 @@ set(ItkVtkGlue_SRCS
   QuickView.cxx
 )
 add_library(ItkVtkGlue ${ItkVtkGlue_SRCS})
-target_link_libraries(ItkVtkGlue ${ITK_LIBRARIES} vtkIO vtkHybrid)
+target_link_libraries(ItkVtkGlue
+  ${ITK_LIBRARIES}
+  ${VTK_LIBRARIES}
+  )

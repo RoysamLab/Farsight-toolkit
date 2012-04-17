@@ -30,15 +30,7 @@ set( TRACE_SRCS
 set( TRACE_LIBS
     tiff
     ${ITK_LIBRARIES}
-    vtkRendering
-    vtkIO
-    vtkHybrid
-    vtkWidgets
-    vtkCommon
-    vtksys
-    vtkFiltering
-    vtkVolumeRendering
-    QVTK
+    ${VTK_LIBRARIES}
     ftkGUI
     ftkCommon
     ftkGraphs
