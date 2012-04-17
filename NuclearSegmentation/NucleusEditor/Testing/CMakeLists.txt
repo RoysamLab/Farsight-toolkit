@@ -188,6 +188,20 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SaveProject
   )
 
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/update_database.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/update_database.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-UpdateDatabase
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/update_database.xml
+  )
+  set_tests_properties(NucleusEditor-UpdateDatabase PROPERTIES
+    DEPENDS NucleusEditor-SaveProject
+		PASS_REGULAR_EXPRESSION "The image ID on the database is: 1"
+  )
+
   add_test(
     NucleusEditor-StartActiveLearning
     ${NucleusEditor_EXE}
@@ -200,6 +214,7 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "Max Info-0.0357334"
   )
+
 
 
 endif()
