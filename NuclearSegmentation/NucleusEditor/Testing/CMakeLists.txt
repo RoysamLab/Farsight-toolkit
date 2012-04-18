@@ -214,6 +214,19 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "Max Info-0.0357334"
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unmix_channels.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/unmix_channels.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-UnmixChannels
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/unmix_channels.xml
+  )
+  set_tests_properties(NucleusEditor-UnmixChannels PROPERTIES
+		PASS_REGULAR_EXPRESSION "done with unmixing"
+  )
 
 
 

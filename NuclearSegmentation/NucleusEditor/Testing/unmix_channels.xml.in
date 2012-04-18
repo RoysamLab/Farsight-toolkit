@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="load5DImageAction"/>
+    <event widget="1NucleusEditor0/1QInputDialog0/1QInputDialogSpinBox0" command="set_int" arguments="5"/>
+    <event widget="1NucleusEditor0/1QInputDialog0/1QDialogButtonBox0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/BioArt_5_channel_test_images/1G_Nuclei_crop1.tif"/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/BioArt_5_channel_test_images/1G_GFAP_crop1.tif"/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/BioArt_5_channel_test_images/1G_Neuro_crop1.tif"/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/BioArt_5_channel_test_images/1G_Iba1_crop1.tif"/>
+    <event widget="@AppName@-app" command="FilesOpen" arguments="@FARSIGHT_DATA_ROOT@/BioArt_5_channel_test_images/1G_EBA_crop1.tif"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="41"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="viewMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel0"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel0"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel1"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel1"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel2"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel2"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel3"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel3"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel4"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/viewMenu/displayChannelMenu" command="activate" arguments="channel4"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="unmixChannelsAction"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="30"/>
+</events>

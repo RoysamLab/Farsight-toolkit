@@ -1772,6 +1772,7 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	//ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
 
 	load5DLabelImageAction->setEnabled(true);
+	DisplayChannelsMenu();
 }
 
 
@@ -3416,6 +3417,7 @@ void NucleusEditor::DisplayChannelsMenu()
 	for(int i=0; i<(int)channel_names.size(); ++i)
 	{
 		QAction * action = new QAction( tr(channel_names.at(i).c_str()), this );
+		action->setObjectName(tr(channel_names.at(i).c_str()));
 		action->setCheckable(true);
 		action->setChecked( channel_status.at(i) );
 		action->setStatusTip( tr("Turn on/off this channel") );
