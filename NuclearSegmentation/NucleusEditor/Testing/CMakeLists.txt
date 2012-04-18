@@ -227,6 +227,19 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-UnmixChannels PROPERTIES
 		PASS_REGULAR_EXPRESSION "done with unmixing"
   )
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/clustering_heatmap.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/clustering_heatmap.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-ClusteringHeatmap
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/clustering_heatmap.xml
+  )
+  set_tests_properties(NucleusEditor-ClusteringHeatmap PROPERTIES
+		PASS_REGULAR_EXPRESSION "get selected"
+  )
 
 
 

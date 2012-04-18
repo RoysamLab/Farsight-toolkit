@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadTableAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/nucleus_table.txt"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu" command="activate" arguments="runClusAction"/>
+    <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/doneButton" command="activate" arguments=""/>
+    <event widget="1QVTKWidget0" command="mousePress" arguments="1,1,0,434,166"/>
+    <event widget="1QVTKWidget0" command="mouseMove" arguments="1,0,0,160,438"/>
+    <event widget="1QVTKWidget0" command="mouseRelease" arguments="1,0,0,160,438"/>
+    <event widget="1QVTKWidget0" command="mousePress" arguments="1,1,0,327,106"/>
+    <event widget="1QVTKWidget0" command="mouseRelease" arguments="1,0,0,327,106"/>
+    <event widget="1QVTKWidget0" command="mousePress" arguments="1,1,0,107,178"/>
+    <event widget="1QVTKWidget0" command="mouseRelease" arguments="1,0,0,107,178"/>
+</events>
