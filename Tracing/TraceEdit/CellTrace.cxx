@@ -556,9 +556,9 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 		CellData->InsertNextValue(this->NumSegments);
 		CellData->InsertNextValue(this->stems);
-		//CellData->InsertNextValue(this->branchingStem);
+		CellData->InsertNextValue(this->branchingStem);
 		CellData->InsertNextValue(this->branchPoints);
-		//CellData->InsertNextValue(this->actualBifurcations);
+		CellData->InsertNextValue(this->actualBifurcations);
 		CellData->InsertNextValue(this->terminalTips);
 		if (this->NumSegments == 0)
 		{

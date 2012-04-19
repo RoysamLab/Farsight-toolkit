@@ -87,9 +87,9 @@ void CellTraceModel::SetupHeaders()
 
 	this->headers.push_back("Segments");
 	this->headers.push_back("Stems");
-	//this->headers.push_back("Branching Stems");
+	this->headers.push_back("Branching Stems");
 	this->headers.push_back("Branch Pt");
-	//this->headers.push_back("Bifurcations");
+	this->headers.push_back("Bifurcations");
 	this->headers.push_back("Leaf Nodes");
 
 	this->headers.push_back("Min Diameter");
