@@ -1462,7 +1462,12 @@ void NucleusEditor::loadProject()
 		this->loadAdjTables( QString::fromStdString(projectFiles.GetFullAdjTables()) );
 	}
 
-	//	std::cout<<"Time elapsed is: "<<(((double)clock() - startTimer) / CLOCKS_PER_SEC)<<" seconds"<<std::endl;
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "project loaded" << std::endl;
+	}
+	#endif
 	this->startEditing();
 }
 
