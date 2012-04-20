@@ -3952,6 +3952,12 @@ void NucleusEditor::fillCells(void)
 
 	selection->clear();
 	this->updateViews();
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "cells filled" << std::endl;
+	}
+	#endif
 }
 
 void NucleusEditor::applyExclusionMargin(void)

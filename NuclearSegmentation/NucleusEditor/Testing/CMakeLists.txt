@@ -240,6 +240,19 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-ClusteringHeatmap PROPERTIES
 		PASS_REGULAR_EXPRESSION "get selected"
     TIMEOUT 1800) #30 minutes
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fill_cells.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/fill_cells.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-FillCells
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/fill_cells.xml
+  )
+  set_tests_properties(NucleusEditor-FillCells PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "cells filled")
 
 
 
