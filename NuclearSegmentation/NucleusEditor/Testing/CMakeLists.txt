@@ -254,7 +254,18 @@ if(QtTestingFound)
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "cells filled")
 
-
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/split_cell.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/split_cell.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-SplitCell
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/split_cell.xml
+  )
+  set_tests_properties(NucleusEditor-SplitCell PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "cell split")
 
 endif()
 

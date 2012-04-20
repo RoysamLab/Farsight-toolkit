@@ -3893,6 +3893,12 @@ void NucleusEditor::splitCell(int x1, int y1, int z1, int x2, int y2, int z2)
 		log_entry += ", ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
+    #ifdef USE_QT_TESTING
+    if(this->TestInputFile != "")
+    {
+      std::cout << "cell split" << std::endl;
+    }
+    #endif
 	}
 
 	if(splitAction->isChecked())
