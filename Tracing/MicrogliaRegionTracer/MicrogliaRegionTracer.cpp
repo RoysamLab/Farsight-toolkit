@@ -6,6 +6,7 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->soma_filename = soma_filename;
 
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Acquiring threads through OpenMP, so no need for ITK threads
+	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
 
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
@@ -71,7 +72,7 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 void MicrogliaRegionTracer::Trace()
 {
 	//Trace cell by cell
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
 	{
 		Cell* cell = cells[k];
@@ -93,11 +94,52 @@ void MicrogliaRegionTracer::Trace()
 
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 {
-	std::cout << "Ridge Detection" << std::endl;
-	RidgeDetection(cell);
+	
+	CreateIsometricImage(cell);
 	
 	std::cout << "VesselnessDetection" << std::endl;
 	VesselnessDetection(cell);
+
+	std::cout << "Ridge Detection" << std::endl;
+	RidgeDetection(cell);
+}
+
+void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
+{
+	ImageType::SizeType inputSize = cell->image->GetLargestPossibleRegion().GetSize();
+	ImageType::SizeType outputSize = inputSize;
+	outputSize[2] = outputSize[2] * 1/aspect_ratio;
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = aspect_ratio;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(cell->image);
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		return;
+	}
+
+	cell->isometric_image = resample_filter->GetOutput();
+	cell->isometric_image->DisconnectPipeline();
+	cell->WriteImage("isometric_image.mhd", cell->isometric_image);
+
+	
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	cell->isometric_image->SetSpacing(spacing);
 }
 
 void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
@@ -112,7 +154,37 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	//Calculate the LoG on multiple scales and store into an image
 	LoG *log_obj = new LoG();
 	std::cout << "Calculating Multiscale LoG" << std::endl;
-	cell->multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
+	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
+
+	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = 1/aspect_ratio;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(resampled_multiscale_LoG_image);
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		return;
+	}
+
+	cell->multiscale_LoG_image = resample_filter->GetOutput();
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	cell->multiscale_LoG_image->SetSpacing(spacing);
+
 
 	//Make a new image to store the critical points	
 	ImageType::SizeType size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
@@ -136,7 +208,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 		LoGImageType::PixelType center_pixel_intensity = LoG_neighbor_iter.GetPixel(center_pixel_offset_index);
 		
-		if (center_pixel_intensity >= 0.03)	//Must have greater than 3% response from LoG to even be considered for local maximum (so we dont choose points that are part of noise)
+		if (center_pixel_intensity >= 0.01)	//Must have greater than 1.0% response from LoG to even be considered for local maximum (so we dont choose points that are part of noise)
 		{	
 			bool local_maximum = true;
 			
@@ -165,7 +237,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 	std::ostringstream criticalpointsFileNameStream;
 	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
-	//cell->WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
+	cell->WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
 }
 
 void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
@@ -181,10 +253,10 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
 
 	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
-	multiscale_hessian_filter->SetInput(cell->image);
+	multiscale_hessian_filter->SetInput(cell->isometric_image);
 	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
-	multiscale_hessian_filter->SetSigmaMinimum(2.0);
-	multiscale_hessian_filter->SetSigmaMaximum(6.0);
+	multiscale_hessian_filter->SetSigmaMinimum(1.0);
+	multiscale_hessian_filter->SetSigmaMaximum(10.0);
 	multiscale_hessian_filter->SetNumberOfSigmaSteps(10);
 	multiscale_hessian_filter->SetNonNegativeHessianBasedMeasure(true);
 	multiscale_hessian_filter->SetHessianToMeasureFilter(vesselness_filter);
@@ -198,8 +270,38 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
 	}
 
-	cell->vesselness_image = multiscale_hessian_filter->GetOutput();
+	cell->WriteImage("Resampled_vesselness.mhd", multiscale_hessian_filter->GetOutput());
+
+	//Unsample the image
+	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = 1/aspect_ratio;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(multiscale_hessian_filter->GetOutput());
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		return;
+	}
+
+	cell->vesselness_image = resample_filter->GetOutput();
 	cell->vesselness_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	cell->vesselness_image->SetSpacing(spacing);
 	
 	std::ostringstream vesselnessFileNameStream;
 
@@ -243,7 +345,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (itk::int64_t k = 0; k < (itk::int64_t)cell->critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
@@ -308,7 +410,7 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 		++path_length;
 	}
 	
-	if (num_blank_pixels >= 5)
+	if (num_blank_pixels >= 3)
 		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gaps
 	else
 		return mag_trace_vector;
@@ -432,8 +534,8 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
 
 	//Write out the SWC lines
-	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
-	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
+	traceFile		<< node->getID() << " 4 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
+	traceFile_local << node->getID() << " 4 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
 	
 	if (children.size() == 0) 
 		return;														//BASE CASE: No children, so don't visit them
@@ -451,10 +553,11 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 
 void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
+	CreateSpeedImage(cell);
 	SmoothSegments(cell, tree, tree->getRoot());
 }
 
-void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node)
+void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node) //Smooth AND Prune
 {
 	std::vector< Node* > start_node_children = start_node->GetChildren();
 	if (start_node_children.size() == 0)
@@ -470,6 +573,8 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 	std::vector< Node* >::iterator start_node_children_iter;
 	for (start_node_children_iter = start_node_children.begin(); start_node_children_iter != start_node_children.end(); ++start_node_children_iter)
 	{
+		double segment_length = 0.0;
+		
 		//Make a new path for each possible segment from this start_node
 		PathType::Pointer path = PathType::New();
 		path->Initialize();
@@ -478,22 +583,25 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 		Node* start_node_child = *start_node_children_iter;	//Keep position of start_node_child so we can determine along which branch to smooth later
 		Node* child_node = start_node_child;
 		std::vector< Node* > child_node_children = start_node_child->GetChildren();
-		
-		std::cout << "Visiting path: " << start_node->getID() << " ";
+		ImageType::IndexType last_node_index = start_node_index;
+
+		std::cout << "Visiting path: " << start_node->getID() << " [" << start_node->x << ", " << start_node->y << ", " << start_node->z << "] ";
 		//Keep going down the segment until we hit a branch point or the leaf node
 		while (child_node_children.size() < 2 && child_node_children.size() != 0)
 		{
-			std::cout << child_node->getID() << " ";
+			std::cout << child_node->getID() << " [" << child_node->x << ", " << child_node->y << ", " << child_node->z << "] ";
 			ImageType::IndexType child_node_index;
 			child_node_index[0] = child_node->x;
 			child_node_index[1] = child_node->y;
 			child_node_index[2] = child_node->z;
 			path->AddVertex(child_node_index);
+			segment_length += CalculateEuclideanDistance(last_node_index, child_node_index);
 
 			//Remove the child_node from the tree
 			tree->RemoveNode(child_node);
 
 			//Updating variables to point to the next node along the segment
+			last_node_index = child_node_index;
 			child_node = child_node_children.front();
 			child_node_children = child_node->GetChildren();
 		}
@@ -505,7 +613,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 		end_node_index[1] = end_node->y;
 		end_node_index[2] = end_node->z;
 		path->AddVertex(end_node_index);
-		std::cout << end_node->getID() << std::endl;
+		std::cout << end_node->getID() << " [" << end_node->x << ", " << end_node->y << ", " << end_node->z << "] " << std::endl;
 
 		//Break the links at each node between the start node, start node child and the end node
 		start_node->RemoveChild(start_node_child);
@@ -519,6 +627,11 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 			current_node->RemoveChild(next_node);
 			current_node = next_node;							//Update current node to point to the next node
 		}
+		
+		//If we have no children, then prune
+		if (child_node_children.size() == 0 && segment_length < 5.0)
+			continue;
+		
 
 		SmoothPath(cell, tree, start_node, end_node, path);
 
@@ -528,11 +641,112 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 
 void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
-	//Rescale the vesselness image
-	typedef itk::RescaleIntensityImageFilter< VesselnessImageType > RescaleIntensityFilterType;
+
+	//Extract path from speed image (the cubed distance map)
+	// Create interpolator
+	typedef itk::SpeedFunctionToPathFilter< DistanceImageType, PathType > PathFilterType;
+	typedef PathFilterType::CostFunctionType::CoordRepType CoordRepType;
+	typedef itk::LinearInterpolateImageFunction<DistanceImageType, CoordRepType> InterpolatorType;
+	InterpolatorType::Pointer interp = InterpolatorType::New();
+
+	// Create cost function
+	PathFilterType::CostFunctionType::Pointer cost = PathFilterType::CostFunctionType::New();
+	cost->SetInterpolator( interp );
+
+	// Create optimizer
+	typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
+	OptimizerType::Pointer optimizer = OptimizerType::New();
+	optimizer->SetNumberOfIterations( 1000000 );
+	optimizer->SetMaximumStepLength( 0.01 );
+	optimizer->SetMinimumStepLength( 0.01 );
+	optimizer->SetRelaxationFactor( 0.00 );
+
+	// Create path filter
+	PathFilterType::Pointer pathFilter = PathFilterType::New();
+	pathFilter->SetInput( cell->speed_image );
+	pathFilter->SetCostFunction( cost );
+	pathFilter->SetOptimizer( optimizer );
+	pathFilter->SetTerminationValue( 0.0 );
+
+	// Add path information
+	PathFilterType::PathInfo info;
+	PathFilterType::PointType start;
+	start[0] = start_node->x; start[1] = start_node->y; start[2] = start_node->z;
+	
+	//std::cout << "Setting smoothing start index to: " << start << std::endl;
+	
+
+	const PathType::VertexListType *vertex_list = path->GetVertexList();
+
+	for (unsigned int i = 1; i < vertex_list->Size() - 1; ++i)
+	{
+		PathType::ContinuousIndexType vertex = vertex_list->GetElement(i);
+		//std::cout << "Adding smoothing waypoint index to: " << vertex << std::endl;
+		//info.AddWayPoint(vertex);
+	}
+
+	PathFilterType::PointType end;
+	end[0] = end_node->x; end[1] = end_node->y; end[2] = end_node->z;
+	//std::cout << "Adding smoothing endpoint index to: " << end << std::endl;
+		
+	info.SetStartPoint( end );
+	info.SetEndPoint( start );
+	
+	pathFilter->AddPathInfo( info );
+	try
+	{
+		pathFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "pathFilter exception: " << err << std::endl;
+		return;
+	}
+
+	//Convert path output back to tree format
+	PathType::Pointer speed_path = pathFilter->GetOutput();
+	if ( speed_path->GetVertexList()->Size() == 0 )
+	{
+		std::cerr << "WARNING: Path contains no points!" << std::endl;
+		start_node->AddChild(end_node);
+		end_node->SetParent(start_node);
+		return;
+	}
+
+	const PathType::VertexListType *smoothed_vertex_list = speed_path->GetVertexList();
+
+	Node* current_node = start_node;
+	for (unsigned int i = 0; i < smoothed_vertex_list->Size(); ++i)
+	{
+		PathType::ContinuousIndexType path_index = smoothed_vertex_list->GetElement(i);
+		
+		Node* new_node = new Node(path_index[0], path_index[1], path_index[2], cell->next_available_ID );
+
+		//std::cout << "Adding smoothed path index: " << path_index << std::endl;
+		
+		//Update next available ID
+		++(cell->next_available_ID);
+
+		//Connect this new node to the current_node
+		current_node->AddChild(new_node);
+		new_node->SetParent(current_node);
+		tree->AddNode(new_node, current_node);
+
+		current_node = new_node;
+	}
+	//std::cout << "Connecting last index: " << end_node->x << " " << end_node->y << " " << end_node->z << std::endl;
+	current_node->AddChild(end_node);
+	end_node->SetParent(current_node);
+}
+
+void MicrogliaRegionTracer::CreateSpeedImage(Cell* cell)
+{
+	//Normalize vesselness image
+	typedef itk::RescaleIntensityImageFilter< DistanceImageType > RescaleIntensityFilterType;
 	RescaleIntensityFilterType::Pointer rescale_filter = RescaleIntensityFilterType::New();
 	rescale_filter->SetOutputMinimum(0.0);
 	rescale_filter->SetOutputMaximum(1.0);
+	rescale_filter->SetInput(cell->vesselness_image);
 
 	try
 	{
@@ -540,74 +754,42 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cout << "rescale_filter exception: " << err << std::endl;
+		std::cerr << "rescale_filter exception: " << err << std::endl;
 		return;
 	}
-	
-	VesselnessImageType::Pointer rescaled_vesselness_image = rescale_filter->GetOutput();
 
-	//Threshold the vesselness image
-	typedef itk::MaximumEntropyThresholdImageFilter< VesselnessImageType, MaskedImageType > ThresholdFilterType;
-	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
-	threshold_filter->SetInput(rescaled_vesselness_image);
+	//cell->speed_image = rescale_filter->GetOutput();
+
+	//Raise normalized vesselness_image to third power
+	typedef itk::PowImageFilter< DistanceImageType > PowImageFilterType;
+	PowImageFilterType::Pointer pow_image_filter = PowImageFilterType::New();
+	pow_image_filter->SetInput1(rescale_filter->GetOutput());
+	pow_image_filter->SetConstant2( 0.33 );
+
 	try
 	{
-		threshold_filter->Update();
+		pow_image_filter->Update();
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cout << "threshold_filter exception: " << err << std::endl;
+		std::cerr << "pow_image_filter exception: " << err << std::endl;
 		return;
 	}
-	
-	//
+
+	cell->WriteImage("pow_image.mhd", pow_image_filter->GetOutput()); 
+
+	cell->speed_image = pow_image_filter->GetOutput();
 
 
-	//Make the GeodesicActiveContourLevelSetImageFilter
-	//typedef itk::GeodesicActiveContourLevelSetImageFilter< VesselnessImageType, 
+	cell->WriteImage("speed_image.mhd", cell->speed_image);
+}
 
+double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2)
+{
+	ImageType::IndexType trace_vector;
+	trace_vector[0] = node2[0] - node1[0];
+	trace_vector[1] = node2[1] - node1[1];
+	trace_vector[2] = node2[2] - node1[2];
 
-
-
-	//typedef	itk::PathConstIterator< ImageType, PathType > PathIteratorType;
-	//PathIteratorType path_iter(cell->image, path);
-
-	//path_iter.GoToBegin();
-	//while (!path_iter.IsAtEnd())
-	//{
-	//	PointSetType::PointType point;
-	//	itk::Index<3> index = path_iter.GetIndex();
-	//	
-	//	VectorType vector;
-	//	vector[0] = index[0];
-	//	vector[1] = index[1];
-	//	vector[2] = index[2];
-
-	//	unsigned long i = pointSet->GetNumberOfPoints();	//i is the size of the point set and incidentally the index of the next available point slot
-
-	//	point[0] = i;
-
-	//	std::cout << i << " " << point[0] << " " << vector << std::endl;
-
-
-	//	pointSet->SetPoint(i, point);
-	//	pointSet->SetPointData(i, vector);
-
-	//	++path_iter;
-	//}
-
-	//double path_end_position = path_iter.GetPathPosition();
-	//std::cout << path_end_position << std::endl;
-	/*ImageType::IndexType start_node_index;
-	start_node_index[0] = start_node->x;
-	start_node_index[1] = start_node->y;
-	start_node_index[2] = start_node->z;
-
-	pointSet->SetPoint(0, 0.0);
-	pointSet->SetPointData(0, start_node_index);*/
-
-	//ImageType::IndexType last_node_index = start_node_index;
-	
-	
-
+	return sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
 }

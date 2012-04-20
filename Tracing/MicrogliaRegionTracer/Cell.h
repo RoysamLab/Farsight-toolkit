@@ -84,6 +84,8 @@ public:
 	ImageType::Pointer				masked_image;
 	MaskImageType::Pointer			mask;
 	LabelImageType::Pointer			soma_label_image;
+	DistanceImageType::Pointer		speed_image;
+	ImageType::Pointer				isometric_image;
 
 	itk::int64_t next_available_ID;
 

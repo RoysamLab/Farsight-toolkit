@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
 	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
 	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/1262_1723_169_seedPoint.txt");
 	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
 
 	//MRT->LoadCellPoints( argv[4] );
 
