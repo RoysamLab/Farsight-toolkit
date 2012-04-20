@@ -266,6 +266,19 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-SplitCell PROPERTIES
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "cell split")
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exclude_margins.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/exclude_margins.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-ExcludeMargins
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/exclude_margins.xml
+  )
+  set_tests_properties(NucleusEditor-ExcludeMargins PROPERTIES
+    DEPENDS NucleusEditor-SegmentNuclei
+		PASS_REGULAR_EXPRESSION "margins excluded")
 
 endif()
 

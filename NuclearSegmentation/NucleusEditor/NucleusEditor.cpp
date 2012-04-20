@@ -4005,6 +4005,12 @@ void NucleusEditor::applyExclusionMargin(void)
 		log_entry += ftk::NumToString(z1)+ " " + ftk::NumToString(z2)+ " , ";
 		log_entry += ftk::TimeStamp();
 		ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
+		#ifdef USE_QT_TESTING
+		if(this->TestInputFile != "")
+		{
+			std::cout << "margins excluded" << std::endl;
+		}
+	#endif
 	}
 }
 
