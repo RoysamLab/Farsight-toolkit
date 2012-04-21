@@ -1404,7 +1404,8 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 		//painter->setBrush(Qt::green);
 		
 		ftk::Object::Point point = (*it).second;
-		if ( (currentZ == point.z) )
+		//if ( (currentZ == point.z) )
+		if ( (int)labelImg->GetPixel(0, 0, currentZ, int(point.y), int(point.x)) == id  )
 		{
 			if(classMap4.size() > 3){
 				myColor4 = centroidColorTable.at( (cls4-1)%numColors );
@@ -1423,7 +1424,37 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 				painter->setBrush(myColor1);
 			}
 			//painter->drawRect(point.x - 2, point.y - 2, 5, 5);
-			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
+			//painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
+			if(cls1 == 1)
+			{
+				myColor1 = Qt::yellow;
+				painter->setBrush(myColor1);
+				painter->drawEllipse(point.x - 4, point.y - 4, 9, 9);
+				
+			}
+			if(cls1 == 2)
+			{
+				myColor1 = Qt::magenta;
+				painter->setBrush(myColor1);
+				painter->drawRect(point.x - 4, point.y - 4, 9, 9);
+				
+			}
+			if(cls1 == 3)
+			{
+				myColor1 = Qt::cyan;
+				painter->setBrush(myColor1);
+				painter->drawEllipse(point.x - 4, point.y - 4, 9, 9);
+				
+			}
+			if(cls1 == 4)
+			{
+				myColor1 = Qt::green;
+				painter->setBrush(myColor1);
+				painter->drawRect(point.x - 4, point.y - 4, 9, 9);
+				
+			}
+
+
 		}
 	}
 	
