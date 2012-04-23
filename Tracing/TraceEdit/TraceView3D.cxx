@@ -6184,6 +6184,7 @@ int View3D::runTests()
     {
     this->Tester->SetBaselineImage(
       this->TestBaselineImageFileName.toStdString().c_str() );
+      this->Renderer->GetActiveCamera()->PrintSelf(std::cout, vtkIndent());
     if(this->Tester->compareResults() == false)
       {
       std::cout << "ERROR: test failed" << std::endl;
