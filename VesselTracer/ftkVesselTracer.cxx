@@ -21,7 +21,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->allParams.oriBin.initByDefaultValues();
 		this->SphericalBinPreprocess();
 
-		// 3D renering of original and preprocessed data
+		// 3D rendering of original and preprocessed data
 		Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);		
 		//Common::RenderImage3D(this->originalDataForRendering);
@@ -249,7 +249,7 @@ void ftkVesselTracer::ComputeIntensityProjectionImages(void){
 
 	max_intensity_projector->Update();
 
-	this->maximumProjectionImage = max_intensity_projector->GetOutput();
+	maximumProjectionImage = max_intensity_projector->GetOutput();
 
 	MinProjectionFilterType::Pointer min_intensity_projector = MinProjectionFilterType::New();
 	min_intensity_projector->SetInput(this->inputDataForRendering);
