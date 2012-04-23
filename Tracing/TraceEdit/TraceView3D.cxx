@@ -3737,7 +3737,7 @@ void View3D::CalculateDistanceToDevice()
 }
 void View3D::readNucleiTable()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr("project( *.xml)"));
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr("project ( *.xml *.txt )"));
 	if (!fileName.isEmpty())
 	{
 		if (fileName.endsWith("xml"))
@@ -4426,19 +4426,20 @@ void View3D::updateSelectionFromCell()
 	*/
 	//this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
 	this->poly_line_data = this->tobj->GetVTKPolyData();
-	std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
-	int limit = selectedCells.size();
-	for (int i = 0; i < limit; i++)
+	std::vector<TraceLine*> Selections = this->CellModel->GetSelectedTraces();
+	//std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
+	//int limit = selectedCells.size();
+	//for (int i = 0; i < limit; i++)
+	//{
+	//	//
+	//	std::vector<TraceLine*> Selections = selectedCells[i]->getSegments();
+	//	
+	//	
+	//}
+	for (unsigned int j = 0; j < Selections.size(); j++)
 	{
-		//
-		std::vector<TraceLine*> Selections = selectedCells[i]->getSegments();
-		
-		for (unsigned int j = 0; j < Selections.size(); j++)
-		{
-			this->HighlightSelected(Selections[j],this->SelectColor);
-		}
+		this->HighlightSelected(Selections[j],this->SelectColor);
 	}
-
 	if( CentroidsActor)  // color the nucleus
 	{
 		
@@ -4469,9 +4470,9 @@ void View3D::updateSelectionFromCell()
 	}
 
 	this->poly_line_data->Modified();
-	this->QVTK->GetRenderWindow()->Render();
+	this->QVTK->GetRenderWindow()->Render();/*
 	this->statusBar()->showMessage(tr("Selected\t")
-		+ QString::number(limit) +tr("\tCells"));
+		+ QString::number(limit) +tr("\tCells"));*/
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()
