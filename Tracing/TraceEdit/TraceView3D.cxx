@@ -6232,7 +6232,7 @@ void View3D::recordTest()
 
 void View3D::resizeForTesting()
 {
-  this->resize(1200, 1000);
+  this->resize(1000, 900);
   this->QVTK->resize(600, 500);
   this->update();
 }

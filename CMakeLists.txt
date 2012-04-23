@@ -241,6 +241,7 @@ find_path(FARSIGHT_DATA_ROOT FarsightData.readme
 # Testing stuff
 ###########################################################################
 enable_testing()
+include(CTest)
 if(BUILD_TESTING)
   configure_file(${Farsight_SOURCE_DIR}/CMake/CTestCustom.ctest.in
     ${Farsight_BINARY_DIR}/CMake/CTestCustom.ctest @ONLY)
