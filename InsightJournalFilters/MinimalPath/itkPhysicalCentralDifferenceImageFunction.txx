@@ -57,7 +57,7 @@ namespace itk
 		OutputType derivative;
 		derivative.Fill( 0.0 );
 
-		typename const	TInputImage::RegionType image_region = Superclass::m_Image->GetBufferedRegion();
+		const	typename TInputImage::RegionType image_region = Superclass::m_Image->GetBufferedRegion();
 		ContinuousIndexType index_of_point;
 
 		for(unsigned int dim=0; dim<TInputImage::ImageDimension; dim++)
