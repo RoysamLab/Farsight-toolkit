@@ -261,7 +261,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
 											double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int holeSize, int minObjSize)
 {
-	//std::cout << "RescaleIntensity"<<endl;
+	std::cout << "RescaleIntensity"<<endl;
     SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
 	sigmoidFilter->SetInput(input);
 	sigmoidFilter->SetOutputMinimum(0);
@@ -292,7 +292,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	fastMarching->SetSpeedConstant( 1.0 );
 	fastMarching->Update();
 
-	//std::cout<< "Shape Detection..." <<std::endl;
+	std::cout<< "Shape Detection..." <<std::endl;
 	
 	ShapeDetectionFilterType::Pointer shapeDetection = ShapeDetectionFilterType::New();
 	
@@ -304,9 +304,9 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	shapeDetection->SetInput( fastMarching->GetOutput());
 	shapeDetection->SetFeatureImage( sigmoidFilter->GetOutput());
 	shapeDetection->Update();
-	//std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
+	std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
 
-	//std::cout<< "Thresholding..."<<endl;
+	std::cout<< "Thresholding..."<<endl;
 	
     BinaryThresholdingFilterType::Pointer thresholder = BinaryThresholdingFilterType::New();
 	thresholder->SetLowerThreshold( -10000);

@@ -3754,13 +3754,14 @@ void View3D::readNucleiTable()
 }
 void View3D::AssociateNeuronToNuclei()
 {
+	vtkIdType nStartColumnOfNucleusTable = 1;  // skip the ids and coordinates in the nucleus table
 	unsigned int cellCount= this->CellModel->getCellCount();
 	vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();
 	if ((cellCount >= 1)&&(nucleiRowCount > 0))
 	{
 		vtkIdType nucleiColSize = this->nucleiTable->GetNumberOfColumns();
 		vtkIdType nucleiRowSize = this->nucleiTable->GetNumberOfRows();
-		for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+		for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 		{
 			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter));
 		}
@@ -3787,7 +3788,7 @@ void View3D::AssociateNeuronToNuclei()
 				distance = sqrt(x +y +z);
 				if (distance < somaRadii)
 				{
-					for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+					for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 					{
 						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
 						currCell->addNewFeature(colData);
@@ -3800,7 +3801,7 @@ void View3D::AssociateNeuronToNuclei()
 			}//end nuclei match search
 			if (!found)
 			{
-				for (vtkIdType nucleiColIter = 0; nucleiColIter< nucleiColSize; nucleiColIter++)
+				for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 				{
 					/*const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
 					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));*/
@@ -6037,6 +6038,13 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
+		featureTable->RemoveColumnByName("Soma Volume");
+		featureTable->RemoveColumnByName("Soma Surface Area");
+		featureTable->RemoveColumnByName("Soma Radii");
+
+		featureTable->RemoveColumnByName("centroid_x");
+		featureTable->RemoveColumnByName("centroid_y");
+		featureTable->RemoveColumnByName("centroid_z");
 
 		this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}

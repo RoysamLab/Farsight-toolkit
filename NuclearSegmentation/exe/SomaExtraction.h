@@ -1,7 +1,6 @@
 #ifndef _SOMA_EXTRACTION_H
 #define _SOMA_EXTRACTION_H
 
-#include "yousef_core/yousef_seg.h"
 #include <itkImage.h>
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -59,7 +58,7 @@ public:
 	typedef itk::HuangThresholdImageFilter< ProbImageSliceType, ProbImageSliceType> HuangThresholdFilter;
 	typedef itk::SigmoidImageFilter < ProbImageType, ProbImageType> SigmoidImageFilterType;
 	typedef itk::VotingBinaryHoleFillingImageFilter< SegmentedImageType, SegmentedImageType> HoleFillingFilterType;
-	typedef  itk::AdaptiveHistogramEqualizationImageFilter< ProbImageType> AdaptiveHistogramEqualizationImageFilterType;
+	typedef itk::AdaptiveHistogramEqualizationImageFilter< ProbImageType> AdaptiveHistogramEqualizationImageFilterType;
 	typedef itk::BinaryBallStructuringElement< SegmentedImageType::PixelType, Dim> KernelType;
 	typedef itk::BinaryMorphologicalClosingImageFilter< SegmentedImageType, SegmentedImageType, KernelType > CloseFilterType;
 	//: constructor

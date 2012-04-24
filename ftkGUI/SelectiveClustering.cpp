@@ -259,6 +259,22 @@ std::set< vtkIdType > SelectiveClustering::SelectionFromCluster(vtkIdType key)
 	return (*iter).second;
 }
 
+std::vector< long int> SelectiveClustering::SelectionIDsFromCluster(vtkIdType key)
+{
+	this->iter = this->ClusterMap.find(key);
+	std::set< vtkIdType > clusterSet = (*iter).second;
+	std::vector< long int> ids;
+	std::set< vtkIdType >::iterator iter;
+	for( iter = clusterSet.begin(); iter != clusterSet.end(); iter++)
+	{
+		if(ObjectTableIDMap.find( *iter) != ObjectTableIDMap.end())
+		{
+			ids.push_back((long int)ObjectTableIDMap.find( *iter)->second);
+		}
+	}
+	return ids;
+}
+
 std::set< vtkIdType > SelectiveClustering::GetAllSelections()
 {
 	/*! 
@@ -299,7 +315,7 @@ bool SelectiveClustering::SetObjectTable(vtkSmartPointer<vtkTable>InputObjectTab
 void SelectiveClustering::update()
 {
 	this->NumberOfObjects = this->ObjectTable->GetNumberOfRows();
-	for ( vtkIdType currow = 0; currow <= this->NumberOfObjects; currow++ )
+	for ( vtkIdType currow = 0; currow < this->NumberOfObjects; currow++ )
 	{
 		vtkIdType rowObjId = this->ObjectTable->GetValue( currow, 0 ).ToTypeInt64();
 		this->ObjectTableIDMap[ rowObjId ] = currow;

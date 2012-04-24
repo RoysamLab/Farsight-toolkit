@@ -70,6 +70,18 @@ void yousef_nucleus_seg::setParams(int *params)
 	minObjSize	= *params;
 }
 
+void yousef_nucleus_seg::setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio)
+{
+	shift = highsensitivity;
+	scaleMin = sMin;
+	scaleMax = sMax;
+	regionXY = rXY;
+	regionZ = rZ;
+	useDistMap = usedistMap;
+	sampling_ratio_XY_to_Z = samplingRatio;
+}
+
+
 void yousef_nucleus_seg::setDataImage( unsigned char *imgPtr,  int x, int y, int z, const char *filename )
 {
 	numStacks = z;

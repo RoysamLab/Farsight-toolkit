@@ -101,9 +101,8 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, 
-		SelectiveClustering * clusterSelection = NULL, ObjectSelection * sels2 = NULL);
-	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, SelectiveClustering * clusterSelection = NULL);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, SelectiveClustering * clusterSelection = NULL);
 	void runClusclus();
 	void runClus();
 	inline void setPriority(std::vector<int> order){ priority_order = order; };

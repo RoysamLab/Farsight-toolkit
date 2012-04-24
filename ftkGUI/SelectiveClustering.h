@@ -111,6 +111,8 @@ public:
 	vtkSmartPointer<vtkTable> ClusterFeatureTable();
 
 	std::set< vtkIdType > SelectionFromCluster(vtkIdType key);
+	std::vector< long int> SelectionIDsFromCluster(vtkIdType key);
+
 	std::set< vtkIdType > GetAllSelections();
 	void CopySelectedIntoTable( std::set< vtkIdType > selectedIDs, 
 		vtkSmartPointer<vtkTable> selectedTable);

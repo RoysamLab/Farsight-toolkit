@@ -249,7 +249,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 	//	long int var = table->GetValue( i, 0).ToLong();
 	//	this->indMapFromIndToVertex.push_back( var);
 	//}
-
+	
 	if(bContrast)
 	{
 		std::cout<< "Constrast table:"<<table->GetNumberOfRows()<<"\t"<< table->GetNumberOfColumns()<<endl;
@@ -280,7 +280,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 		std::cout<< "Data table:"<<table->GetNumberOfRows()<<"\t"<< table->GetNumberOfColumns()<<endl;
 		this->DataTable = table;
 		this->indMapFromIndToVertex.clear();
-		ConvertTableToMatrix( table, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
+		ConvertTableToMatrix( this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
 		maxVertexId = 0;
 		for( int i = this->indMapFromIndToVertex.size() - 1; i >= 0; i--)
 		{
@@ -321,8 +321,30 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 
 void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance)
 {
-	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 2);
 	distance.set_size( table->GetNumberOfRows());
+	vtkVariantArray *distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("Distance to Device"));
+	vtkDoubleArray *distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("Distance to Device"));
+
+	if( distanceArray)
+	{
+		for( int i = 0; i < distanceArray->GetNumberOfValues(); i++)
+		{
+			distance[i] = distanceArray->GetValue(i).ToDouble();
+		}
+	}
+
+	if( distanceDoubleArray)
+	{
+		for( int i = 0; i < distanceArray->GetNumberOfValues(); i++)
+		{
+			distance[i] = distanceDoubleArray->GetValue(i);
+		}
+	}
+
+	table->RemoveColumnByName("Distance to Device");
+	ftk::SaveTable("", table);
+	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 1);
+	
 	for( int i = 0; i < table->GetNumberOfRows(); i++)
 	{
 		int colIndex = 0;
@@ -331,10 +353,6 @@ void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl
 			if( j == 0 )
 			{
 				index.push_back( table->GetValue(i, j).ToInt());
-			}
-			else if( j == table->GetNumberOfColumns() - 1)
-			{
-				distance[ i] = table->GetValue(i, j).ToDouble();
 			}
 			else
 			{
@@ -354,7 +372,7 @@ void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl
 
 void SPDAnalysisModel::ConvertMatrixToTable(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, vnl_vector<double> &distance)
 {
-	for(int i = 0; i < DataTable->GetNumberOfColumns() - 1; i++)
+	for(int i = 0; i < DataTable->GetNumberOfColumns(); i++)
 	{		
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( DataTable->GetColumn(i)->GetName());
@@ -2545,6 +2563,7 @@ void SPDAnalysisModel::SetMaxVertexID(int verId)
 
 void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec)
 {
+	colorVec.clear();
 	for( int i = 0; i < clusIndex.size(); i++)
 	{
 		int count = 0;
@@ -2561,6 +2580,7 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 
 void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
 {
+	disPer.clear();
 	if( DistanceToDevice.sum() > 1)
 	{
 		for( int i = 0; i < clusIndex.size(); i++)

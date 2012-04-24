@@ -2334,7 +2334,7 @@ void HeatmapForNewSelection::reselectIdsforSPD(std::set<long int>& idsforSPD, lo
 	}
 }
 
-void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder,  std::map< int, int> *indexCluster, SelectiveClustering * clusterSelection, ObjectSelection * sels2)
+void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, std::vector< int> selOrder, std::vector< int> unselOrder,  std::map< int, int> *indexCluster, SelectiveClustering * clusterSelection)
 {
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
@@ -2351,16 +2351,6 @@ void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, Ob
 			indSPDMapFromIndToVertex[ pair.second].push_back( pair.first);
 		}
 	}
-
-	if(!sels)
-		this->Selection = new ObjectSelection();
-	else
-		this->Selection = sels;
-
-	if(!sels2)
-		this->Selection2 = new ObjectSelection();
-	else
-		this->Selection2 = sels2;
 
 	if(!clusterSelection)
 	{
@@ -2380,7 +2370,7 @@ void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, Ob
 	this->runClusforSPD(selOrder, unselOrder);
 }
 
-void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster, ObjectSelection * sels2)
+void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster, SelectiveClustering * clusterSelection)
 {
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
@@ -2398,15 +2388,14 @@ void HeatmapForNewSelection::setModelsforSPD(vtkSmartPointer<vtkTable> table, Ob
 		}
 	}
 
-	if(!sels)
-		this->Selection = new ObjectSelection();
+	if(!clusterSelection)
+	{
+		ClusterSelections = new SelectiveClustering();
+	}
 	else
-		this->Selection = sels;
-
-	if(!sels2)
-		this->Selection2 = new ObjectSelection();
-	else
-		this->Selection2 = sels2;
+	{
+		ClusterSelections = clusterSelection;
+	}
 
 	selectedFeatureIDs.clear();
 	for( int i = 0; i < selOrder.size(); i++)

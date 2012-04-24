@@ -115,9 +115,12 @@ private:
 	ObjectSelection *selection2; 
 	SelectiveClustering * ClusterSelections;
 
+	std::vector< double> sampleVec;
+	std::vector< double> percentVec;
 	std::vector< unsigned int> selFeatureID;
 	std::vector< int> selOrder;
 	std::vector< int> unselOrder;
+
 
 };
 

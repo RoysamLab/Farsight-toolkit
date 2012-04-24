@@ -38,6 +38,8 @@ option( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
 option( BUILD_DENDROGRAM "Dendrogram code" OFF)
 option( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 option( BUILD_CLUSCLUS "Build CLUSCLUS" ON)
+option( BUILD_SPD "Build SPD" ON)
+option( BUILD_MicrogliaMoviePipeline "Build MicrogliaMoviePipeline" OFF)
 
 
 option( BUILD_IMONTAGE "Build iMontage" OFF)
@@ -82,6 +84,14 @@ if( BUILD_NUCLEI )
   endif()
 endif()
 
+if(BUILD_MicrogliaMoviePipeline)
+	if( NOT BUILD_NUCLEI)
+		message(FATAL_ERROR "MicrogliaMoviePipeline requires NucleiSegmentation. Turn on BUILD_NUCLEI")
+	endif()
+	if( NOT BUILD_MultipleNeuronTracer)
+		message(FATAL_ERROR "MicrogliaMoviePipeline requires Tracing. Turn on BUILD_TRACING")
+	endif()
+endif()
 
 #########################################################
 # Define the compiler flags for the USE variables here
@@ -488,6 +498,10 @@ endif(BUILD_image_dicer)
 if(BUILD_CURVELETS)
   add_subdirectory( Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
 endif(BUILD_CURVELETS)
+
+if(BUILD_MicrogliaMoviePipeline)
+  add_subdirectory(MicrogliaMoviePipeline)
+endif(BUILD_MicrogliaMoviePipeline)
 
 #####################################################################################
 # SOME install RULES

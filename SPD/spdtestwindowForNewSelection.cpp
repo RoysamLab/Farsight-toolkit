@@ -503,7 +503,7 @@ void SPDWindowForNewSelection::viewProgression()
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
-	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap, ClusterSelections);
+	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selOrder, unselOrder, &indexMap, ClusterSelections);
 	this->HeatmapWin->showGraphforSPD( selOrder.size(), unselOrder.size());
 
 
@@ -638,10 +638,10 @@ bool SPDWindowForNewSelection::IsExist(std::vector< unsigned int> vec, unsigned 
 //		
 //		vnl_matrix<double> clusAverageMat;
 //		std::vector<int> modSize;
-//		std::vector< double> colorVec;
+//		std::vector< double> sampleVec;
 //		std::vector< double> percentVec;
 //		SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
-//		SPDModel->GetPercentage(sampleIndex, colorVec);
+//		SPDModel->GetPercentage(sampleIndex, sampleVec);
 //		SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
 //
 //		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
@@ -656,7 +656,7 @@ bool SPDWindowForNewSelection::IsExist(std::vector< unsigned int> vec, unsigned 
 //
 //		std::vector<std::string> headers;
 //		SPDModel->GetTableHeaders( headers);
-//		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &colorVec, &percentVec);
+//		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sampleVec, &percentVec);
 //		try
 //		{
 //			this->graph->ShowGraphWindow();
@@ -679,8 +679,6 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 	SPDModel->ConvertTableToMatrix(averageClusterTable, clusAverageMat, index, distance);
 
 	std::vector< std::vector< long int> > sampleIndex;
-	std::vector< double> colorVec;
-	std::vector< double> percentVec;
 	std::vector< int> sizeVec;
 
 	std::set< vtkIdType > clusIds = ClusterSelections->GetClusterIDs();
@@ -701,7 +699,7 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 
 	int maxId = this->maxVetexIdEdit->value();
 	SPDModel->SetMaxVertexID(maxId);
-	SPDModel->GetPercentage(sampleIndex, colorVec);
+	SPDModel->GetPercentage(sampleIndex, sampleVec);
 	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, distanceThres->value());
 
 	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
@@ -709,7 +707,7 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 
 	std::vector<std::string> headers;
 	SPDModel->GetTableHeaders( headers);
-	this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sizeVec, &colorVec, &percentVec);
+	this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sizeVec, &sampleVec, &percentVec);
 
 	try
 	{
@@ -723,15 +721,15 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 
 void SPDWindowForNewSelection::ReColorProgressionTree(int nfeature)
 {
-	if( this->graph)
-	{
-		std::vector< std::vector< long int> > clusIndex;
-		vnl_vector<double> featureValue;
-		std::string featureName;
-		selection->GetClusterIndex( clusIndex);
-		SPDModel->GetClusterFeatureValue(clusIndex, nfeature, featureValue, featureName);
-		this->graph->ColorTreeAccordingToFeatures(featureValue, featureName.c_str());
-	}
+	//if( this->graph)
+	//{
+	//	std::vector< std::vector< long int> > clusIndex;
+	//	vnl_vector<double> featureValue;
+	//	std::string featureName;
+	//	selection->GetClusterIndex( clusIndex);
+	//	SPDModel->GetClusterFeatureValue(clusIndex, nfeature, featureValue, featureName);
+	//	this->graph->ColorTreeAccordingToFeatures(featureValue, featureName.c_str());
+	//}
 }
 
 void SPDWindowForNewSelection::updateSelMod()   // possible bugs
@@ -794,21 +792,20 @@ void SPDWindowForNewSelection::showProgressionHeatmap()
 		return;
 	}
 
-	std::vector< std::vector< long int> > sampleIndex;
-	selection->GetSampleIndex( sampleIndex);
 	std::vector< std::vector< long int> > clusIndex;
-	selection->GetClusterIndex( clusIndex);
 	std::vector< int> clusterOrder;
+	std::set< vtkIdType > clusIds = ClusterSelections->GetClusterIDs();
+	std::set< vtkIdType >::iterator iter = clusIds.begin();
+	for(; iter != clusIds.end(); iter++)
+	{
+		std::vector< long int> ids = ClusterSelections->SelectionIDsFromCluster(*iter);
+		clusIndex.push_back(ids);
+	}
+
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
 
 	// module feature and percentage plot
-	std::vector< double> percentageOfSamples;
-	std::vector< double> percentageOfNearDeviceSamples;
-	std::string distanceThres = this->distanceThres->text().toStdString();
-	SPDModel->GetPercentage(sampleIndex, percentageOfSamples);
-	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentageOfNearDeviceSamples, atof(distanceThres.c_str()));
-
-	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, percentageOfSamples, percentageOfNearDeviceSamples, selOrder, unselOrder);
+	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, sampleVec, percentVec, selOrder, unselOrder);
 	if( plot)
 	{
 		delete plot;
@@ -822,7 +819,7 @@ void SPDWindowForNewSelection::showProgressionHeatmap()
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
-	this->progressionHeatmap->setModelsforSPD( tableAfterCellCluster, selection, clusterOrder, selOrder, unselOrder, &indexMap);
+	this->progressionHeatmap->setModelsforSPD( tableAfterCellCluster, clusterOrder, selOrder, unselOrder, &indexMap, ClusterSelections);
 	this->progressionHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
 }
 
