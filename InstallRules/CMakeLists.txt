@@ -31,5 +31,7 @@ configure_file(
   @ONLY
 )
 
-install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")
+if(NOT WIN32)
+  install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")
+endif()
 
