@@ -6243,4 +6243,5 @@ void View3D::resizeForTesting()
   this->resize(1000, 900);
   this->QVTK->resize(600, 500);
   this->update();
+  this->Renderer->ResetCamera();
 }
