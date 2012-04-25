@@ -29,39 +29,50 @@ endif(COMMAND CMAKE_POLICY)
 # Fixup the .app bundles in the install tree:
 #
 include(BundleUtilities)
-
+  
 set(TraceEdit_plugins "")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qgif_plugin@")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qico_plugin@")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qjpeg_plugin@")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qmng_plugin@")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qsvg_plugin@")
-list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app/Contents/plugins/imageformats/@qtiff_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qgif_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qico_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qjpeg_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qmng_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qsvg_plugin@")
+list(APPEND TraceEdit_plugins "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@TraceEdit_plugins_dir@/@qtiff_plugin@")
 
-fixup_bundle(
-  "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app"
-  "${TraceEdit_plugins}"
-  "@BUNDLE_LIB_DIRS@"
-  )
-
-fixup_bundle(
-  "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/NucleusEditor.app"
-  ""
-  "@BUNDLE_LIB_DIRS@"
-  )
-
-if(@BUILD_TracingSystem@)
+if(@APPLE@)
   fixup_bundle(
-    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TracingSystem.app"
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TraceEdit.app"
+    "${TraceEdit_plugins}"
+    "@BUNDLE_LIB_DIRS@"
+    )
+
+  fixup_bundle(
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/NucleusEditor.app"
     ""
     "@BUNDLE_LIB_DIRS@"
     )
-endif()
 
-if(@BUILD_IMAGE_MANAGER@)
+  if(@BUILD_TracingSystem@)
+    fixup_bundle(
+      "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/TracingSystem.app"
+      ""
+      "@BUNDLE_LIB_DIRS@"
+      )
+  endif()
+
+  if(@BUILD_IMAGE_MANAGER@)
+    fixup_bundle(
+      "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/ImageManager.app"
+      ""
+      "@BUNDLE_LIB_DIRS@"
+      )
+  endif()
+
+else()
+
   fixup_bundle(
-    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@FARSIGHT_BUNDLE_LOCATION@/ImageManager.app"
-    ""
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/TraceEdit@suffix@"
+    "${TraceEdit_plugins}"
     "@BUNDLE_LIB_DIRS@"
     )
+
 endif()

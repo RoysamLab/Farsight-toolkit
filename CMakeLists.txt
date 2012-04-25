@@ -173,6 +173,10 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${EXE_DIR} )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR} )
 
+# the add_farsight_executable function allows us to make redistributable
+# executables on Linux
+include(CMake/AddFarsightExecutable.cmake)
+
 ################################################################################
 # FARSIGHT DEPENDS UPON A NUMBER OF OUTSIDE LIBRARIES
 # THESE ARE ITK, VTK, VXL, QT, and CUDA

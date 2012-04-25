@@ -53,12 +53,17 @@ endif()
 add_library( Trace STATIC ${TRACE_SRCS} )
 target_link_libraries( Trace ${TRACE_LIBS} )
 
-add_executable(${PROJECT_NAME} ${EXE_TYPE} vtkTraceViewerDriver.cxx )
-target_link_libraries( ${PROJECT_NAME} Trace)
-
 if(BUILD_TESTING)
   add_subdirectory(Testing)
 endif(BUILD_TESTING)
+
+if(APPLE)
+  set(install_dir ${FARSIGHT_BUNDLE_LOCATION})
+else()
+  set(install_dir bin)
+endif()
+
+add_farsight_executable(TraceEdit vtkTraceViewerDriver.cxx "" Trace ${install_dir})
 
 if(APPLE)
   install(TARGETS ${PROJECT_NAME} DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
@@ -66,8 +71,8 @@ if(APPLE)
   set(resources_path ${FARSIGHT_BUNDLE_LOCATION}/${PROJECT_NAME}.app/Contents/Resources)
 else(APPLE)
   install(TARGETS ${PROJECT_NAME} DESTINATION bin )
-  set(plugin_path "${CMAKE_INSTALL_PREFIX}/bin")
-  set(resources_path "${CMAKE_INSTALL_PREFIX}/bin")
+  set(plugin_path bin/plugins/imageformats)
+  set(resources_path bin)
 endif(APPLE)
 
 #install qt.conf & Qt plugins loaded by TraceEdit at runtime
