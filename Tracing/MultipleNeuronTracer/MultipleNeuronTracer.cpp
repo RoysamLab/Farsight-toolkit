@@ -13,6 +13,59 @@ MultipleNeuronTracer::~MultipleNeuronTracer()
 {
 }
 
+void MultipleNeuronTracer::LoadParameters(const char* parametersFileName,int _argc)
+{
+	std::map<std::string, std::string> opts;  
+	if(_argc == 5)
+		this->optionsCreate(parametersFileName, opts);
+	
+	std::map<std::string,std::string>::iterator mi;
+
+	mi = opts.find("-intensity_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+	}
+	else
+	{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
+
+	mi = opts.find("-contrast_threshold");
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
+	else
+	{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+
+	mi = opts.find("-cost_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->cost_threshold; }
+	else
+	{ this->cost_threshold = 700; printf("Chose cost_threshold = 700 as default\n");}
+
+	mi = opts.find("-debris_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->debris_threshold; }
+	else
+	{ this->debris_threshold = 0.8; printf("Chose debris_threshold = 0.8 as default\n"); }
+
+	mi = opts.find("-offshoot"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->offshoot; }
+	else
+	{ this->offshoot = 10; printf("Chose offshoot = 10 as default\n"); }
+
+	mi = opts.find("-device"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->device; }
+	else
+	{ this->device = 1; printf("Chose device = 0 as default\n"); }
+
+	std::cout<<"intensity_threshold="<<this->intensity_threshold<<std::endl;
+	std::cout<<"contrast_threshold="<<this->contrast_threshold<<std::endl;
+	std::cout<<"cost_threshold="<<this->cost_threshold<<std::endl;
+	std::cout<<"debris_threshold="<<this->debris_threshold<<std::endl;
+	std::cout<<"offshoot="<<this->offshoot<<std::endl;
+	std::cout<<"device="<<this->device<<std::endl;
+
+}
 void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad) 
 {
 	std::cout << "Reading input file "<< fname << std::endl;
@@ -1466,7 +1519,6 @@ float MultipleNeuronTracer::GetCost(SWCNode* s, itk::Index<3>& endx )
 	return cost;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
 float MultipleNeuronTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx ) 
 {
 	itk::Index<3> base = endx, ndx = s->ndx;
@@ -1518,7 +1570,6 @@ float MultipleNeuronTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx )
 	return cost;
 }
 
-///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::ScanNeighbors( PixelType &a1, PixelType &a2, PixelType &a3, itk::Index<3> &ndx) 
 {
 	a1 = MAXVAL;
