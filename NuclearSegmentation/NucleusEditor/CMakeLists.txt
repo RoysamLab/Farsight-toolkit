@@ -122,13 +122,13 @@ QT4_WRAP_UI( NucleusEditor_UI_HDRS ${NucleusEditor_UIS} )
 # and finally this will run moc:
 QT4_WRAP_CPP( NucleusEditor_MOC_SRCS ${NucleusEditor_MOC_REQD_HDRS} )
 
-ADD_EXECUTABLE( NucleusEditor ${EXE_TYPE}
-                main.cpp
-                ${NucleusEditor_SRCS}
-                ${NucleusEditor_HDRS} 
-                ${NucleusEditor_MOC_SRCS} 
-                ${NucleusEditor_UI_HDRS}
-                ${NucleusEditor_RC_SRCS} )
+SET (NUCLEUSEDITOR_SOURCES 
+	main.cpp
+	${NucleusEditor_SRCS}
+	${NucleusEditor_HDRS} 
+	${NucleusEditor_MOC_SRCS} 
+	${NucleusEditor_UI_HDRS}
+	${NucleusEditor_RC_SRCS} )
 
 
 SET (NUCLEUSEDITOR_LIBRARIES
@@ -151,11 +151,14 @@ SET (NUCLEUSEDITOR_LIBRARIES
 	diffusion_map
 	${CLUSCLUS_LIBRARIES}
 	)
+
 IF (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} CellTrackerLib)
+	LIST(APPEND NUCLEUSEDITOR_LIBRARIES CellTrackerLib)
 ELSE (USE_TRACKING)
-	TARGET_LINK_LIBRARIES( NucleusEditor ${NUCLEUSEDITOR_LIBRARIES} ftkImage)
+	LIST(APPEND NUCLEUSEDITOR_LIBRARIES ftkImage)
 ENDIF (USE_TRACKING)
+
+add_farsight_executable(NucleusEditor "${NUCLEUSEDITOR_SOURCES}" "${NUCLEUSEDITOR_LIBRARIES}")
 
 ADD_LIBRARY( Project_Processor STATIC ftkProjectProcessor.cpp ftkProjectProcessor.h ftkProjectDefinition.cpp ftkProjectDefinition.h)
 TARGET_LINK_LIBRARIES( Project_Processor ${QT_LIBRARIES}  ftkGraphs ftkGUI ftkImage ftkCommon ftkFeatures NuclearSegmentation CytoplasmSegmentation PixelLevelAnalysis NESQLITE sqlite3 MCLR diffusion_map)

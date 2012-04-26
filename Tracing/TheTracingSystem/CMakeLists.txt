@@ -59,35 +59,17 @@ SET(TracingCore
 
 ADD_LIBRARY( TraceCoreLibrary ${TracingCore})
 
-ADD_EXECUTABLE(TracingSystem ${EXE_TYPE} 
-      main.cpp 
-      SlidersGroup.cpp
-      ParametersGroup.cpp
-      dialogs.cpp 
-      dialogs_montage.cpp
-      dialogs_scatter.cpp
-      TracingGUI.cpp
-      TracingView.cpp  
-      ObjectSelection.cpp
-      OpenSnakeTracer.cpp
-      ScatterView.cpp
-
-      Rendering/ImageActors.h
-      Rendering/ImageActors.cxx
-      Rendering/itkImageToVTKImageFilter.h
-      Rendering/itkImageToVTKImageFilter.txx
- 
-      ${GUI_MOC_SRCS}
-      ${GUI_RC_SRCS})
+SET(TracingSystem_SOURCES
+  main.cpp SlidersGroup.cpp ParametersGroup.cpp dialogs.cpp dialogs_montage.cpp
+  dialogs_scatter.cpp TracingGUI.cpp TracingView.cpp  ObjectSelection.cpp
+  OpenSnakeTracer.cpp ScatterView.cpp
+  Rendering/ImageActors.h Rendering/ImageActors.cxx
+  Rendering/itkImageToVTKImageFilter.h Rendering/itkImageToVTKImageFilter.txx
+  ${GUI_MOC_SRCS} ${GUI_RC_SRCS})
 
 
-TARGET_LINK_LIBRARIES(TracingSystem ${QT_LIBRARIES} TraceCoreLibrary ftkCommon ${TracingSysLibraries} TinyXML)
- 
-#MAKE A GUI EXECUTABLE, NOT A CONSOLE APPLICATION
-#SET_TARGET_PROPERTIES( TracingSystem PROPERTIES WIN32_EXECUTABLE 1)
-if(APPLE)
-   install(TARGETS TracingSystem DESTINATION ${FARSIGHT_BUNDLE_LOCATION})
-else(APPLE)
-   install(TARGETS TracingSystem DESTINATION bin )
-endif(APPLE)
+SET(TracingSystem_LIBRARIES
+  ${QT_LIBRARIES} TraceCoreLibrary ftkCommon ${TracingSysLibraries} TinyXML)
+
+add_farsight_executable(TracingSystem "${TracingSystem_SOURCES}" "${TracingSystem_LIBRARIES}")
 
