@@ -1,5 +1,6 @@
 #list of directories where CMake can search for dependent libs
 set(BUNDLE_LIB_DIRS
+  ${QT_LIBRARY_DIR}
   ${LIB_DIR}
   ${VXL_DIR}/lib
 )
@@ -31,7 +32,4 @@ configure_file(
   @ONLY
 )
 
-if(NOT WIN32)
-  install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")
-endif()
-
+install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/CompleteBundles.cmake")

@@ -511,14 +511,6 @@ endif(BUILD_MicrogliaMoviePipeline)
 # SOME install RULES
 ######################################################################################
 
-#Qt libraries
-if(WIN32)
-  install(FILES ${QT_LIBRARY_DIR}/QtCore4.dll ${QT_LIBRARY_DIR}/QtGui4.dll DESTINATION bin)
-endif(WIN32)
-#if(APPLE)
-#  install(DIRECTORY ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QTSQL_LIBRARY_RELEASE} ${QT_QTNETWORK_LIBRARY_RELEASE} DESTINATION bin)
-#endif(APPLE)
-
 #python scripts
 if(APPLE)
   install(DIRECTORY python/
