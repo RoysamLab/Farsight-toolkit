@@ -103,34 +103,17 @@ void QvtkTableView::SelectionCallbackFunction(vtkObject *caller, unsigned long e
 	vtkSelection * selection = annotationLink->GetCurrentSelection();
 	vtkSmartPointer<vtkSelection> TableRowSelection = vtkSmartPointer<vtkSelection>::New();
 	vtkSmartPointer<vtkIdTypeArray> TableRowIDs = vtkSmartPointer<vtkIdTypeArray>::New();
-	vtkSelectionNode* vertices = NULL;
-
-	if( selection->GetNode(0))
-	{
-		if( selection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
-		{
-			vertices = selection->GetNode(0);
-		}
-	}
-
-	if( selection->GetNode(1))
-	{
-		if( selection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
-		{
-			vertices = selection->GetNode(1);
-		}
-	}
 	std::map< vtkIdType, vtkIdType>::iterator  idIter;
+	vtkIdTypeArray* vertexList = SelectionUtilities::ConvertVTKSelectionToIDArray(selection);
 
-	if( vertices != NULL)
+	if( vertexList != NULL)
 	{
-		vtkIdTypeArray* vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
 		vtkIdType numTuples = vertexList->GetNumberOfTuples();
 
 		vtkSmartPointer<vtkIdTypeArray> ConvertedVertexList = vtkSmartPointer<vtkIdTypeArray>::New();
 		ConvertedVertexList->SetNumberOfComponents(1);
 
-		if( vertexList != NULL && numTuples > 0)
+		if( numTuples > 0)
 		{
 			//std::cout<< "number of selections: " << numTuples << "\n";
 			for( vtkIdType i = 0; i < numTuples; i++)

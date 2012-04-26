@@ -39,6 +39,8 @@ namespace SelectionUtilities
 {
 	vtkSelection * ConvertIDsToVTKSelection(vtkIdTypeArray * vtkIDs);
 
+	vtkIdTypeArray * ConvertVTKSelectionToIDArray(vtkSelection * inputSelection);
+
 	std::set< vtkIdType > ObjectSelectionToIDSet(std::set<long int> curSel);
 
 	void RemoveRowAndReMapTable(vtkIdType key, vtkSmartPointer<vtkTable> modTable, 

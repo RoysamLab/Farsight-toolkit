@@ -14,6 +14,35 @@ vtkSelection * SelectionUtilities::ConvertIDsToVTKSelection(vtkIdTypeArray * vtk
 	TableRowSelection->AddNode(selectNodeList);
 	return TableRowSelection;
 }
+vtkIdTypeArray * SelectionUtilities::ConvertVTKSelectionToIDArray(vtkSelection * inputSelection)
+{
+	/*!
+	* Convert a vtk selection into vtk id array
+	*/
+	vtkSelectionNode* vertices = NULL;
+	vtkIdTypeArray* vertexList;
+	if( inputSelection->GetNode(0))
+	{
+		if( inputSelection->GetNode(0)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = inputSelection->GetNode(0);
+		}
+	}
+
+	if( inputSelection->GetNode(1))
+	{
+		if( inputSelection->GetNode(1)->GetFieldType() == vtkSelectionNode::VERTEX)
+		{
+			vertices = inputSelection->GetNode(1);
+		}
+	}
+
+	if( vertices != NULL)
+	{
+		vertexList = vtkIdTypeArray::SafeDownCast(vertices->GetSelectionList());
+	}
+	return vertexList;
+}
 
 std::set< vtkIdType > SelectionUtilities::ObjectSelectionToIDSet(std::set<long int> curSel)
 {	
