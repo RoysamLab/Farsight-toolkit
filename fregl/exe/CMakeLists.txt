@@ -129,6 +129,10 @@ ELSE (WIN32)
     ${PROJECT_SOURCE_DIR}/fregl/exe/gdbicp_unix
     ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp
     COPYONLY)
-  INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp DESTINATION ${INSTALL_BIN_DIR} )
+  # This executable was built against shared libraries.  Install fails on Linux
+  # because fixup_bundle can't find these libraries.
+  IF(NOT UNIX)
+    INSTALL( PROGRAMS ${PROJECT_BINARY_DIR}/fregl/exe/gdbicp DESTINATION ${INSTALL_BIN_DIR} )
+  ENDIF()
 ENDIF (WIN32) 
 
