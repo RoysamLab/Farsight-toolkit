@@ -15,15 +15,16 @@ export LOCAL_DATASET_PATH=/data/nicolas/data/$DATA_FOLDER					# ---> This direct
 export LOCAL_PARAMETERS_PATH=/data/nicolas/data/$DATA_FOLDER/Parameters		# ---> This directory has to exist
 export LOCAL_DATASET_PATH_EXE=/data/nicolas/data/$DATA_FOLDER/Exe
 export LOCAL_DATASET_PATH_LOG=/data/nicolas/data/$DATA_FOLDER/Log
+export LOCAL_DATASET_PATH_TEMP=/data/nicolas/data/$DATA_FOLDER/temp
 export LOCAL_DATASET_PATH_TRACE_SOMAS=/data/nicolas/data/$DATA_FOLDER/TracesAndSomas
 export LOCAL_DATASET_PATH_TRACE_SOMASDDIVIDED=/data/nicolas/data/$DATA_FOLDER/TracesAndSomasDivided
 
 export GLOBAL_DATASET_PATH=/FSdata/data/$DATA_FOLDER						# ---> This directory has to exist
-export GLOBAL_DATASET_PATH_RESULTS=/FSdata/data/$DATA_FOLDER\_RESULTS_FAR04
+export GLOBAL_DATASET_PATH_RESULTS=/FSdata/data/$DATA_FOLDER\_RESULTS_FAR04_v3
 
 
 export REMOVE_MONTAGES=0 	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to run out of memory
-export MOVE_RESULTS=5		# If 1 the results will be moved
+export MOVE_RESULTS=2		# If 1 the results will be moved
 			# if 0 the results will be keep
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
@@ -70,6 +71,15 @@ if [ ! -d $LOCAL_DATASET_PATH_LOG ]; then
 else
 	echo L1n: The content of the path $LOCAL_DATASET_PATH_LOG will be erased
 	cd $LOCAL_DATASET_PATH_LOG
+# 	rm -rf $DATASET_PATH_RESULTS/*
+	cd $ACTUAL_DIRECTORY
+fi
+
+if [ ! -d $LOCAL_DATASET_PATH_TEMP ]; then
+	mkdir $LOCAL_DATASET_PATH_TEMP
+else
+	echo L1n: The content of the path $LOCAL_DATASET_PATH_TEMP will be erased
+	cd $LOCAL_DATASET_PATH_TEMP
 # 	rm -rf $DATASET_PATH_RESULTS/*
 	cd $ACTUAL_DIRECTORY
 fi

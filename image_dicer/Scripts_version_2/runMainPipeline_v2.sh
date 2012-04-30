@@ -23,7 +23,7 @@ cd $ACTUAL_DIRECTORY
 # ##############################################################################################################################
 # # Move Images
 # ##############################################################################################################################
-# /usr/bin/time $ACTUAL_DIRECTORY/runMoveImages_v2.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log 2>&1
+/usr/bin/time $ACTUAL_DIRECTORY/runMoveImages_v2.sh > $LOCAL_DATASET_PATH_LOG/runMoveImages.log 2>&1
 
 LOCAL_DAPI_MHD_EXT=$LOCAL_DATASET_PATH/*DAPIdsu.mhd
 for f in $LOCAL_DAPI_MHD_EXT
@@ -57,28 +57,34 @@ export GFP_LOCAL=${GFP_LOCAL_EXE%\.*}
 # ##############################################################################################################################
 # # Run Background Substraction
 # ##############################################################################################################################
-# /usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction_v2.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log 2>&1
-# mv $DAPI_LOCAL'.mhd' $DAPI_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
-# mv $GFP_LOCAL'.mhd' $GFP_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
+/usr/bin/time $ACTUAL_DIRECTORY/runBackgroundsubstraction_v2.sh > $LOCAL_DATASET_PATH_LOG/runBackgroundsubstraction.log 2>&1
+mv $DAPI_LOCAL'.mhd' $DAPI_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
+mv $GFP_LOCAL'.mhd' $GFP_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
 # # mv $Cy5_LOCAL'.mhd' $Cy5_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
 # # mv $TRITC_LOCAL'.mhd' $TRITC_LOCAL'.raw' $GLOBAL_DATASET_PATH_RESULTS #&
 
 # ##############################################################################################################################
 # # Curvelets GFP channel
 # ##############################################################################################################################
-# cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
-# /usr/bin/time $ACTUAL_DIRECTORY/runCurvelets_v2.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log 2>&1
-# mv $GFP_LOCAL'_BS.nrrd' $GLOBAL_DATASET_PATH_RESULTS #&
+cp $FARSIGHT_BIN_EXE/curvelets $LOCAL_DATASET_PATH_EXE
+/usr/bin/time $ACTUAL_DIRECTORY/runCurvelets_v2.sh > $LOCAL_DATASET_PATH_LOG/runCurvelets.log 2>&1
+mv $GFP_LOCAL'_BS.nrrd' $GLOBAL_DATASET_PATH_RESULTS #&
 
 
 # ##############################################################################################################################
 # # Segmentation, features computation, soma extraction
 # ##############################################################################################################################
-# /usr/bin/time $ACTUAL_DIRECTORY/runSegmentation_v2.sh > $LOCAL_DATASET_PATH_LOG/runSegmentation.log 2>&1
-# mv $DAPI_LOCAL\_BS.nrrd $GLOBAL_DATASET_PATH_RESULTS #&
-# mv $GFP_LOCAL\_BS_CV_label.mhd $GFP_LOCAL\_BS_CV_label.raw 	$GLOBAL_DATASET_PATH_RESULTS #&
+/usr/bin/time $ACTUAL_DIRECTORY/runSegmentation_v2.sh > $LOCAL_DATASET_PATH_LOG/runSegmentation.log 2>&1
+mv $DAPI_LOCAL\_BS.nrrd $GLOBAL_DATASET_PATH_RESULTS #&
+mv $GFP_LOCAL\_BS_CV_label.mhd $GFP_LOCAL\_BS_CV_label.raw 	$GLOBAL_DATASET_PATH_RESULTS #&
 # # mv $Cy5_LOCAL\_BS.nrrd $GLOBAL_DATASET_PATH_RESULTS #&
 # # mv $TRITC_LOCAL\_BS.nrrd $GLOBAL_DATASET_PATH_RESULTS #&
+
+if [ -d $LOCAL_DATASET_PATH_TEMP ]; then
+	cd $LOCAL_DATASET_PATH_TEMP
+	rm -rf *
+	cd $ACTUAL_DIRECTORY
+fi
  
  
 ##############################################################################################################################
