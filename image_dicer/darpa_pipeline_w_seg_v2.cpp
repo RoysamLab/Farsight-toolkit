@@ -200,8 +200,8 @@ int main(int argc, char* argv[])
 	std::cout << std::endl << "SEGMENTATIO";
 	std::cout << std::endl << "SEGMENTATIO";
 	
-	int nic;
-	std::cin >> nic;
+// 	int nic;
+// 	std::cin >> nic;
 // 	std::cout<<std::endl<<"Num_threads: "<<itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
 // 	std::cout<<std::endl<<"Num_threads: "<<itk::MultiThreader::GetGlobalMaximumNumberOfThreads();
 // 	
@@ -217,18 +217,41 @@ int main(int argc, char* argv[])
 // 	
 // 	std::cout<<std::endl<<"Num_threads: "<<itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
 // 	std::cout<<std::endl<<"Num_threads: "<<itk::MultiThreader::GetGlobalMaximumNumberOfThreads();
+	int onlyTrace = atoi(argv[6]);
+	
+	std::cout << std::endl << "OnlyTrace ";
+	std::cout << std::endl << "OnlyTrace " << onlyTrace << std::flush;
 	
 // 	bool flagSmall;
+	int traceSameTime = 1;
 	int flagSmall = atoi(argv[7]);
-	if( flagSmall == 0 )
+	if( onlyTrace == 0 || onlyTrace == 4)
 	{
-		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
-		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+		if( flagSmall == 0 )
+		{
+			itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+			itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+		}
+		else
+		{
+			itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // This one can not be changed (REVIEW THIS)
+			itk::MultiThreader::SetGlobalMaximumNumberOfThreads(80); // This one can chenga
+		}
 	}
-	else
+	else if ( onlyTrace == 2 )
 	{
-		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(80); // This one can not be changed
-		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(80); // This one can chenga
+		if( flagSmall == 0 )
+		{
+			itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+			itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+			traceSameTime = 80;
+		}
+		else
+		{
+			itk::MultiThreader::SetGlobalDefaultNumberOfThreads(2); // This one can not be changed
+			itk::MultiThreader::SetGlobalMaximumNumberOfThreads(2); // This one can chenga
+			traceSameTime = 40;
+		}
 	}
 	
 	int num_threads = 1;
@@ -269,9 +292,7 @@ int main(int argc, char* argv[])
 	
 	vtkSmartPointer<vtkTable> somaCentroidsTable = NULL;
 
-	int onlyTrace = atoi(argv[6]);
-	
-	std::cout << std::endl << "OnlyTrace " << onlyTrace;
+
 	
 	int segSteps;
 	if( flagSmall == 0 )
@@ -1023,11 +1044,33 @@ int main(int argc, char* argv[])
 	if( onlyTrace == 2 )
 		
 	{
-		std::cout<<std::endl<<"TRACE_TOTAL";
+		std::cout<<std::endl<<"TRACE_TOTAL"<<std::flush;
+		
+
 		
 		// to change 
 		itk::Size<3> size_gfp_montage;
 		size_gfp_montage = readSizeFromFile(argv[2]);
+		
+		// Imge of debri points
+		rawImageType_8bit::Pointer debriMontage = rawImageType_8bit::New();
+		rawImageType_8bit::IndexType start4;
+		start4[0] =   0;  // first index on X
+		start4[1] =   0;  // first index on Y    
+		start4[2] =   0;  // first index on Z  
+		rawImageType_8bit::PointType origin4;
+		origin4[0] = 0; 
+		origin4[1] = 0;    
+		origin4[2] = 0;    
+		debriMontage->SetOrigin( origin4 );
+		rawImageType_8bit::RegionType region4;
+		region4.SetSize( size_gfp_montage );
+		region4.SetIndex( start4 );
+		debriMontage->SetRegions( region4 );
+		debriMontage->Allocate();
+		debriMontage->FillBuffer(0);
+		debriMontage->Update();
+		
 		
 		//#####################################################################################################################
 		//	MULTIPLE NEURON TACER
@@ -1068,8 +1111,8 @@ int main(int argc, char* argv[])
 		omp_set_num_threads(num_threads);
 
 		int counterCentro = 0;
-		int tileSizeX = 500;
-		int tileSizeY = 500;
+		int tileSizeX = 400;
+		int tileSizeY = 400;
 		int tileSizeZ = size_gfp_montage[2];
 		
 		/////////////////////////////////////////////////////////////////////////////////////////////
@@ -1227,11 +1270,11 @@ int main(int argc, char* argv[])
 					std::string tempFileName_46 = gfpFileNameNoExt + ".mhd";
 					rawImageType_16bit::Pointer img_traceDesiredRegion_tif = readImageRegion< rawImageType_16bit >( tempFileName_46.c_str(), desiredRegionBigTileLOG );
 					
-					RescaleFilterType::Pointer rescaleFilter_bigt = RescaleFilterType::New();
-					rescaleFilter_bigt->SetOutputMinimum(0);
-					rescaleFilter_bigt->SetOutputMaximum(std::numeric_limits<unsigned char>::max());
-					rescaleFilter_bigt->SetInput(img_traceDesiredRegion_tif);
-					rescaleFilter_bigt->Update();
+// 					RescaleFilterType::Pointer rescaleFilter_bigt = RescaleFilterType::New();
+// 					rescaleFilter_bigt->SetOutputMinimum(0);
+// 					rescaleFilter_bigt->SetOutputMaximum(std::numeric_limits<unsigned char>::max());
+// 					rescaleFilter_bigt->SetInput(img_traceDesiredRegion_tif);
+// 					rescaleFilter_bigt->Update();
 					
 // 					std::string tempFileName_47 = filePath + "/BigTile_" + srr + "_GFP.mhd";
 // 					writeImage< rawImageType_8bit >(rescaleFilter_bigt->GetOutput(),tempFileName_47.c_str());
@@ -1244,7 +1287,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		
-		#pragma omp parallel for num_threads(80) schedule(dynamic, 1)
+		#pragma omp parallel for num_threads(traceSameTime) schedule(dynamic, 1)
 			for( unsigned long long a=0; a<centroid_list.size(); ++a )
 			{
 				int x, y, z;
@@ -1467,6 +1510,40 @@ int main(int argc, char* argv[])
 				{
 					outfileDivided << "\t<File\tFileName=\"Trace_BigTile_" << srr << "_" << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "_ANT.swc\"\tType=\"Trace\"\ttX=\"" << ssx_offBig.str() << "\"\ttY=\"" << ssy_offBig.str() << "\"\ttZ=\"" << ssz_offBig.str() << "\"/>\n";
 				}
+				
+				// Debri Points
+				rawImageType_8bit::Pointer localDebriImage = MNT->getNDX2();
+				
+				
+				rawImageType_8bit::PixelType * debriMontageArray = debriMontage->GetBufferPointer();
+				itk::Size<3> debriMontageSize = debriMontage->GetLargestPossibleRegion().GetSize();
+				unsigned long long debriMontageImageSize_xy = debriMontageSize[1] * debriMontageSize[0];
+
+				rawImageType_8bit::PixelType * localDebriImageArray = localDebriImage->GetBufferPointer();
+				itk::Size<3> localDebriImageSize = localDebriImage->GetLargestPossibleRegion().GetSize();
+				unsigned long long localDebriImageSize_xy = localDebriImageSize[1] * localDebriImageSize[0];
+				
+				
+				for(unsigned long long z=0; z<localDebriImageSize[2]; ++z)
+				{
+					for(unsigned long long y=0; y<localDebriImageSize[1]; ++y)
+					{
+						for(unsigned long long x=0; x<localDebriImageSize[0]; ++x)
+						{
+							unsigned long long localDebriPixel = (localDebriImageSize_xy*z) + (localDebriImageSize[0]*y) + x;
+							if( localDebriImageArray[localDebriPixel] > 0 )
+							{
+								unsigned long long debriMontagePixel = (debriMontageImageSize_xy*z) + (debriMontageSize[0]*y) + x;
+								debriMontageArray[debriMontagePixel] = 255;
+								
+							}
+						}
+					}
+				}
+				
+// 				vtkSmartPointer< vtkTable > swcTable = MNT->GetSWCTable(0);
+				
+				
 				delete MNT;
 			}
 			outfileDivided << "\n</Source>";
@@ -1474,6 +1551,9 @@ int main(int argc, char* argv[])
 		}
 		outfile << "\n</Source>";
 		outfile.close();
+		
+		std::string tempFileName_49a = gfpFileNameNoExt + "_DebriPoints.mhd";
+		writeImage< rawImageType_8bit >(debriMontage,tempFileName_49a.c_str());
 	}
 	return 0;
 }
