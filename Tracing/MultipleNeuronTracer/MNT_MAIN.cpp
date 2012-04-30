@@ -15,8 +15,16 @@ int main(int argc, char* argv[])
 		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <SomaImageFile> [options file]" << std::endl;
 		return -1;
 	}
+
 	std::cout<<"argc="<<argc<<std::endl;
 	MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
+
+	//Setting _indxDice to zero, when MNT is executed as standalone
+	itk::Index<3> zero_index;
+	zero_index[0]=0;
+	zero_index[1]=0;
+	zero_index[2]=0;
+	MNT->setDiceIndex(zero_index);
 
 	clock_t LoadParameters_start_time = clock();
 	MNT->LoadParameters(argv[4], argc);

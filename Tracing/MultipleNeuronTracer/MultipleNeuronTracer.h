@@ -68,6 +68,7 @@
 typedef float PixelType;
 
 class SWCNode;
+class DebrisNode;
 class HeapNode;
 class Comparison;
 //class MultipleNeuronTracer;
@@ -125,6 +126,7 @@ public:
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
+	vtkSmartPointer< vtkTable > GetDebrisTable(unsigned int);
 	void GenerateTestImage(); 
 
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
@@ -138,6 +140,7 @@ public:
 	void setFlagOutLog( bool flag ){_flagOutLog = flag;};
 	void runNDX();
 	ImageType3D::Pointer getNDX(){return _NDXImage;};
+	CharImageType3D::Pointer getNDX2(){return _NDXImage2;};
 	void setNDX( ImageType3D::Pointer image){_NDXImage = image;};
 
 	//Parameters read from txt file
@@ -155,7 +158,9 @@ protected:
 	
 	bool IsPlate(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool IsPlate_control(const itk::FixedArray<float, 3> &, unsigned int & );
+	bool IsDebris(const itk::FixedArray<float, 3> & , unsigned int &, float val );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
+	bool RegisterIndexDebris(const float, itk::Index<3> &, itk::Size<3> &, long);
 	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
 	float GetCost(SWCNode* , itk::Index<3> &  );
 	float GetCostLocal(SWCNode* , itk::Index<3> & );
@@ -172,11 +177,13 @@ protected:
 
 private:
 	std::vector<SWCNode*> _SWCNodeContainer;
+	std::vector<DebrisNode*> _DebrisNodeContainer;
 	//CharImageType3D::Pointer SomaImage;
 	LabelImageType3D::Pointer _SomaImage;
 	PixelType _CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > _PQ;
 	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage;   //Input Image, EK image, CT image
+	CharImageType3D::Pointer _NDXImage2;
 	SWCImageType3D::Pointer _SWCImage; //swc label image
 	itk::Size<3> _size;
 	std::vector<OffsetType> _off;
@@ -218,6 +225,16 @@ public:
 	//static bool IsIndexSame(itk::Index<3>, itk::Index<3>);
 
 };
+
+class DebrisNode 
+{
+public:
+	itk::Index<3> ndx;
+
+	DebrisNode(itk::Index<3> dndx); 
+
+};
+
 
 ///////////////////////////////////////////////////////////
 

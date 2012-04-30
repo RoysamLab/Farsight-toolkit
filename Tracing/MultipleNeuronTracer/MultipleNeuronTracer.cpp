@@ -414,9 +414,9 @@ void MultipleNeuronTracer::RunTracing(void)
 		//Don't do anything if the heapnode value is larger than the one in the connected image
 		if ( KeyValue > _ConnImage->GetPixel(ndx) ) 
 			continue;
-		
 
-		if ((eCounter <= 0) || (KeyValue > _CostThreshold)) 
+
+		if ((eCounter <= 0) || (KeyValue > _CostThreshold) ) 
 		{
 			if (showMessage == true) 
 			{
@@ -447,8 +447,10 @@ void MultipleNeuronTracer::RunTracing(void)
 				if ( L  != NULL ) 
 				{
 					float costFactor = GetCostLocal( L , ndx);
+
 					std::vector<IndexType>::reverse_iterator cit;
 					SWCNode* par = L;
+
 					for (cit = Chain.rbegin(); cit != Chain.rend(); ++cit) 
 					{
 						SWCNode* t = _SWCImage->GetPixel(*cit);
@@ -546,6 +548,12 @@ void MultipleNeuronTracer::FeatureMain(void)
 	_NDXImage->SetRegions(_PaddedCurvImage->GetBufferedRegion());
 	_NDXImage->Allocate();
 	_NDXImage->FillBuffer(0.0f);
+
+	_NDXImage2 = CharImageType3D::New();///////////////////
+	_NDXImage2->SetRegions(_PaddedCurvImage->GetBufferedRegion());//////////////////////
+	_NDXImage2->Allocate();/////////////////////////
+	_NDXImage2->FillBuffer(0.0f);///////////////////////////
+
 	
 	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
 	for (unsigned int i = 0; i < 6; ++i)
@@ -588,10 +596,28 @@ void MultipleNeuronTracer::FeatureMain(void)
 			tit.Set(1.0);		
 		}
 	}*/
+
+	//RescalerType::Pointer rescaler2 = RescalerType::New();////
+	//rescaler2->SetInput( _NDXImage2 );/////
+	//rescaler2->SetOutputMaximum( 255 );//////
+	//rescaler2->SetOutputMinimum( 0 );/////
+	//rescaler2->Update();/////
+
+	//itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();///////
+	//caster2->SetInput(rescaler2->GetOutput());/////
+
+	//itk::ImageFileWriter< CharImageType3D >::Pointer seedsWriter2 = itk::ImageFileWriter< CharImageType3D >::New();//////
+	//seedsWriter2->SetFileName("C:\\Users\\msavelon\\Desktop\\crop0131\\Debris_Points.tif");/////
+	//seedsWriter2->SetInput(caster2->GetOutput());////
+	//seedsWriter2->Update();/////
+
 }
 
 void MultipleNeuronTracer::GetFeature( float sigma ) 
 {
+	//std::ofstream out_seeds;////////////
+	//out_seeds.open("C:\\Users\\msavelon\\Desktop\\crop0131\\seeds.txt", std::ios::app);//////////////////
+
 	std::cout<<std::endl<<"Get Feature 1";
 	
 	clock_t LoG_start_time = clock();
@@ -748,11 +774,37 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 					//std::cout<<ctCnt<<" ";
 				}
 			}
+
+			if (IsDebris(ev, w, val))
+			{
+				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);//////
+				//if (IsDebris(ev, w, val))
+				if (RegisterIndexDebris(value, ndx, sz, win)) 
+				{
+					_NDXImage2->SetPixel(ndx,255);
+
+					//if(out_seeds.good()){
+					//	out_seeds << ndx[0] << " " << ndx[1] << " " << ndx[2] << " " << std::endl;}
+
+					itk::Index<3> global_index;
+					global_index[0]=ndx[0]+_indxDice[0];
+					global_index[1]=ndx[1]+_indxDice[1];
+					global_index[2]=ndx[2]+_indxDice[2];
+
+					DebrisNode *db = new DebrisNode(global_index);//storing GLOBAL INDEX // same as ndx when executing as standalone
+					_DebrisNodeContainer.push_back(db);
+
+				}
+
+			}
+
+
 		}
 		++it;
 		++nit;
 	}
 	std::cout <<"asdfNumber of CTs at this stage: " << ctCnt <<std::endl<<std::flush;
+	//out_seeds.close();
 }
 
 
@@ -1225,7 +1277,7 @@ bool MultipleNeuronTracer::IsPlate(const itk::FixedArray<float, 3> &ev, unsigned
 	{
 		return true;
 	}
-	
+
 	return false;  /// right now this is turned off (Amit)
 }
 
@@ -1274,7 +1326,7 @@ bool MultipleNeuronTracer::IsPlate_control(const itk::FixedArray<float, 3> &ev, 
 
 // 	if /*( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )*//*(abs(L2)/sqrt(abs(L1*L))<0.5)*/((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
 		
-	if ( (abs(L2)/sqrt(abs(L1*L))<0.25) && (abs(L)+abs(L1)+abs(L2)>0.05) )
+	if ( (std::abs(L2)/std::sqrt(std::abs(L1*L))<0.25) && (std::abs(L)+std::abs(L1)+std::abs(L2)>0.05) )
 	{
 		return true;
 	}
@@ -1285,6 +1337,57 @@ bool MultipleNeuronTracer::IsPlate_control(const itk::FixedArray<float, 3> &ev, 
 
 //Searches in some specified window in _NDXImage around ndx and see if something larger than value is present
 //If there is a value in the neighborhood larger than value then return false, else set the _NDXImage at ndx to 0 and return true 
+bool MultipleNeuronTracer::IsDebris(const itk::FixedArray<float, 3> &ev, unsigned int &w, float val)  
+{
+	float L1, L2, L;
+	if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
+	{
+		w = 0;
+		L = ev[0];
+		L1 = ev[1]; 
+		L2 = ev[2];
+		if (ev[1] > ev[2])
+		{
+			L1 = ev[2]; 
+			L2 = ev[1];		
+		}
+	}
+
+	else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
+	{
+		w = 1;
+		L = ev[1];
+		L1 = ev[0];
+		L2 = ev[2];
+		if (ev[0] > ev[2]) 
+		{
+			L1 = ev[2];
+			L2 = ev[0];		
+		}
+	}
+
+	else  
+	{
+		w = 2;
+		L = ev[2];
+		L1 = ev[0];
+		L2 = ev[1];
+		if (ev[0] > ev[1]) 
+		{
+			L1 = ev[1];
+			L2 = ev[0];		
+		}
+	}
+
+	if (( std::abs(L-L1)/std::abs(L2)<0.7 )&& (std::abs(L)+std::abs(L1)+std::abs(L2)>0.005) && (val>0.09) ) // 
+	{
+		return true;
+	}
+	
+	return false;//true;  /// right now this is turned off (Amit)
+}
+
+
 bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
 {
 	itk::Index<3> n;
@@ -1320,6 +1423,43 @@ bool MultipleNeuronTracer::RegisterIndex(const float value, itk::Index<3> &ndx, 
 	
 	return true;
 }
+
+bool MultipleNeuronTracer::RegisterIndexDebris(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
+{
+	itk::Index<3> n;
+	bool higherPresent = false;
+	for (n[0] = ndx[0]-h; n[0] <= ndx[0]+h; ++n[0]) 
+	{
+		for (n[1] = ndx[1]-h; n[1] <= ndx[1]+h; ++n[1]) 
+		{
+			for (n[2] = ndx[2]-h; n[2] <= ndx[2]+h; ++n[2]) 
+			{
+				if ( (n[0] < 2) || (n[1] < 2) || (n[2] < 2) || (n[0] > (unsigned int)sz[0]) ||
+					(n[1] > (unsigned int)sz[1]) || (n[2] > (unsigned int)sz[2]) )
+				{
+					continue;
+				}
+
+				float curval = (float)(_NDXImage2->GetPixel(n));
+				if (value > curval) 
+				{
+					_NDXImage2->SetPixel(n,0);	//Why do we set this to 0.0? We overwrite with value later anyways...
+				}
+				else if (value < curval) 
+				{
+					higherPresent = true;				
+				}
+			}
+		}
+	}
+	if (higherPresent == true) 
+	{
+		return false;	
+	}
+	
+	return true;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1569,6 +1709,8 @@ float MultipleNeuronTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx )
 
 	return cost;
 }
+
+
 
 void MultipleNeuronTracer::ScanNeighbors( PixelType &a1, PixelType &a2, PixelType &a3, itk::Index<3> &ndx) 
 {
@@ -2253,6 +2395,38 @@ vtkSmartPointer< vtkTable > MultipleNeuronTracer::GetSWCTable(unsigned int padz)
 }
 
 ///////////////////////////////////////////////////////////////////////
+vtkSmartPointer< vtkTable > MultipleNeuronTracer::GetDebrisTable(unsigned int padz) 
+{
+	vtkSmartPointer< vtkTable > DebrisTable = vtkSmartPointer< vtkTable >::New();
+	DebrisTable->Initialize();
+
+	vtkSmartPointer< vtkDoubleArray > column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("A");
+	DebrisTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("B");
+	DebrisTable->AddColumn(column);
+	column = vtkSmartPointer< vtkDoubleArray >::New();
+	column->SetName("C");
+	DebrisTable->AddColumn(column);
+
+
+	std::vector<DebrisNode*>::iterator dit;
+	for (dit = _DebrisNodeContainer.begin(); dit != _DebrisNodeContainer.end(); ++dit) 
+	{
+		vtkSmartPointer< vtkVariantArray > row = vtkSmartPointer< vtkVariantArray >::New();
+		row->InsertNextValue(vtkVariant((*dit)->ndx[0]));
+		row->InsertNextValue(vtkVariant((*dit)->ndx[1]));
+		row->InsertNextValue(vtkVariant((*dit)->ndx[2]));
+
+		DebrisTable->InsertNextRow(row);
+		delete (*dit);
+	}
+
+	return DebrisTable;	
+}
+
+
 void MultipleNeuronTracer::GenerateTestImage(void) 
 {
 	_PaddedCurvImage = ImageType3D::New();
@@ -2385,6 +2559,11 @@ HeapNode::HeapNode(itk::Index<3> n1, PixelType d)
 {
 	ndx = n1;
 	KeyValue = d;
+}
+
+DebrisNode::DebrisNode(itk::Index<3> dndx)
+{
+	this->ndx=dndx;
 }
 
 
