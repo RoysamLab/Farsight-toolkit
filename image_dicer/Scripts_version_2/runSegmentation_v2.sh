@@ -25,7 +25,7 @@ for f in $GFP_LOCAL\_BS_CV_soma_montage.mhd
 do
 	export GFP_LOCAL_BS_CV_soma_montage_EXE=$f
 done
-export GFP_LOCAL_BS_CV_soma_montage=${GFP_LOCAL_BS_CV_soma_montage_EXEs%\.*}
+export GFP_LOCAL_BS_CV_soma_montage=${GFP_LOCAL_BS_CV_soma_montage_EXE%\.*}
 /data/research/Fiji.app/fiji-linux64 --headless -macro $LOCAL_PARAMETERS_PATH/fijiMacro_maxProj.ijm $GFP_LOCAL_BS_CV_soma_montage -batch
 
 # LOCAL_GFP_MHD_EXT=$LOCAL_DATASET_PATH/*GFPdsu.mhd

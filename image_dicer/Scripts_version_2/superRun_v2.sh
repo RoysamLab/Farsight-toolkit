@@ -38,12 +38,12 @@
 # . ./runCreateFolders_v2.sh
 # . ./runMainPipeline_v2.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log # 2>&1
 
-export DATA_FOLDER=0323_cropb
+(export DATA_FOLDER=0323_cropb
 . ./runCreateFolders_v2.sh
-. ./runMainPipeline_v2.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
-export DATA_FOLDER=0410_crop
+. ./runMainPipeline_v2.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log )&
+(export DATA_FOLDER=0410_crop
 . ./runCreateFolders_v2.sh
-. ./runMainPipeline_v2.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log
+. ./runMainPipeline_v2.sh > $LOCAL_DATASET_PATH_LOG/runMainPipeline.log)
 
 # export DATA_FOLDER=0405 #0117_Tile_mhd #0128 #0117_Tile_mhd #0323_crop #0131_crop #0128_tinycrop
 # . ./runCreateFolders_v2.sh
