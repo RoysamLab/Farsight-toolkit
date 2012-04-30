@@ -3,6 +3,7 @@ set(BUNDLE_LIB_DIRS
   ${QT_LIBRARY_DIR}
   ${LIB_DIR}
   ${VXL_DIR}/lib
+  ${OPENMP_LIB_DIR}
 )
 
 #plugins loaded by TraceEdit at runtime

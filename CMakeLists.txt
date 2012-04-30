@@ -529,6 +529,26 @@ if(FARSIGHT_DATA_ROOT)
 endif(FARSIGHT_DATA_ROOT)
 
 include(InstallRequiredSystemLibraries)
+
+#find the OPENMP library directory for MSVC
+if(MSVC60)
+  set(MSVC_ver "60")
+elseif(MSVC70)
+  set(MSVC_ver "70")
+elseif(MSVC71)
+  set(MSVC_ver "71")
+elseif(MSVC80)
+  set(MSVC_ver "80")
+elseif(MSVC90)
+  set(MSVC_ver "90")
+elseif(MSVC10)
+  set(MSVC_ver "10")
+endif()
+if(MSVC_ver)
+  set(MSVC_REDIST_DIR "${MSVC${MSVC_ver}_REDIST_DIR}")
+  set(OPENMP_LIB_DIR "${MSVC_REDIST_DIR}/${CMAKE_MSVC_ARCH}/Microsoft.VC${MSVC_ver}.OPENMP")
+endif()
+
 # IMPORTANT:
 # Keep this chunk of code here at the very bottom of the main
 # CMakeLists.txt file so that the install rules that install the
@@ -536,9 +556,6 @@ include(InstallRequiredSystemLibraries)
 # script steps are run.
 add_subdirectory(InstallRules)
 
-
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D GLUT_BUILDING_LIB")
 endif(MSVC)
-
-#message(STATUS "module path: ${CMAKE_MODULE_PATH} ${CMAKE_ROOT}")
