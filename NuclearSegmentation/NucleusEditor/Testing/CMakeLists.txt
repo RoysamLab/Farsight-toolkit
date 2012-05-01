@@ -13,21 +13,6 @@ if(QtTestingFound)
 
   set(NucleusEditor_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/segment_nuclei.xml.in
-                 ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
-                 @ONLY)
-  add_test(
-    NucleusEditor-SegmentNuclei
-    ${NucleusEditor_EXE}
-    --image
-    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
-    --test
-    ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
-  )
-  set_tests_properties(NucleusEditor-SegmentNuclei PROPERTIES
-    PASS_REGULAR_EXPRESSION "Cell Binarized.. with 11 connected components"
-  )
-
   add_test(
     NucleusEditor-ROIStatistics
     ${NucleusEditor_EXE}
@@ -50,7 +35,26 @@ if(QtTestingFound)
     --baseline
     ${NucleusEditor_TEST_DIR}/slice_viewer_baseline.png
   )
+  set_tests_properties(NucleusEditor-SliceViewer PROPERTIES
+    DEPENDS NucleusEditor-ROIStatistics
+  )
   
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/segment_nuclei.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-SegmentNuclei
+    ${NucleusEditor_EXE}
+    --image
+    ${FARSIGHT_DATA_ROOT}/TraceData/C1-1unmixed-crop.tif
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/segment_nuclei.xml
+  )
+  set_tests_properties(NucleusEditor-SegmentNuclei PROPERTIES
+    PASS_REGULAR_EXPRESSION "Cell Binarized.. with 11 connected components"
+    DEPENDS NucleusEditor-SliceViewer
+  )
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/merge_segments.xml.in
                  ${CMAKE_CURRENT_BINARY_DIR}/merge_segments.xml
                  @ONLY)
@@ -82,7 +86,7 @@ if(QtTestingFound)
     ${NucleusEditor_TEST_DIR}/delete_segments_baseline.png
   )
   set_tests_properties(NucleusEditor-DeleteSegments PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-MergeSegments
   )
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/show_centroids.xml.in
@@ -99,7 +103,7 @@ if(QtTestingFound)
     ${NucleusEditor_TEST_DIR}/show_centroids_baseline.png
   )
   set_tests_properties(NucleusEditor-ShowCentroids PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-DeleteSegments
   )
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/show_object_IDs.xml.in
@@ -114,7 +118,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/show_object_IDs.xml
   )
   set_tests_properties(NucleusEditor-ShowObjectIDs PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-ShowCentroids
 		PASS_REGULAR_EXPRESSION "toggleIDs"
   )
 
@@ -125,7 +129,7 @@ if(QtTestingFound)
     ${NucleusEditor_TEST_DIR}/about.xml
   )
   set_tests_properties(NucleusEditor-About PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-ShowObjectIDs
 		PASS_REGULAR_EXPRESSION "About FARSIGHT"
   )
   
@@ -141,7 +145,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/exit.xml
   )
   set_tests_properties(NucleusEditor-Exit PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-About
 		PASS_REGULAR_EXPRESSION "closing NucleusEditor"
   )
 
@@ -169,14 +173,9 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/save_project.xml
   )
   set_tests_properties(NucleusEditor-SaveProject PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-DetectOutliers
 		PASS_REGULAR_EXPRESSION "done saving"
   )
-  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-DeleteSegments)
-  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-DeleteOutliers)
-  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-MergeSegments)
-  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowCentroids)
-  set_property(TEST NucleusEditor-SaveProject APPEND PROPERTY DEPENDS NucleusEditor-ShowObjectIDs)
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/load_project.xml.in
                  ${CMAKE_CURRENT_BINARY_DIR}/load_project.xml
@@ -202,7 +201,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/update_database.xml
   )
   set_tests_properties(NucleusEditor-UpdateDatabase PROPERTIES
-    DEPENDS NucleusEditor-SaveProject
+    DEPENDS NucleusEditor-LoadProject
 		PASS_REGULAR_EXPRESSION "The image ID on the database is: 1"
   )
 
@@ -215,7 +214,7 @@ if(QtTestingFound)
     ${NucleusEditor_TEST_DIR}/start_active_learning.xml
   )
   set_tests_properties(NucleusEditor-StartActiveLearning PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-UpdateDatabase
 		PASS_REGULAR_EXPRESSION "Max Info-0.0357334"
     TIMEOUT 1800) #30 minutes
   
@@ -229,6 +228,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/unmix_channels.xml
   )
   set_tests_properties(NucleusEditor-UnmixChannels PROPERTIES
+    DEPENDS NucleusEditor-StartActiveLearning
 		PASS_REGULAR_EXPRESSION "done with unmixing"
     TIMEOUT 1800) #30 minutes
   
@@ -242,6 +242,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/clustering_heatmap.xml
   )
   set_tests_properties(NucleusEditor-ClusteringHeatmap PROPERTIES
+    DEPENDS NucleusEditor-UnmixChannels
 		PASS_REGULAR_EXPRESSION "get selected"
     TIMEOUT 1800) #30 minutes
   
@@ -255,7 +256,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/fill_cells.xml
   )
   set_tests_properties(NucleusEditor-FillCells PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-ClusteringHeatmap
 		PASS_REGULAR_EXPRESSION "cells filled")
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/split_cell.xml.in
@@ -268,7 +269,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/split_cell.xml
   )
   set_tests_properties(NucleusEditor-SplitCell PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-FillCells
 		PASS_REGULAR_EXPRESSION "cell split")
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exclude_margins.xml.in
@@ -281,7 +282,7 @@ if(QtTestingFound)
     ${CMAKE_CURRENT_BINARY_DIR}/exclude_margins.xml
   )
   set_tests_properties(NucleusEditor-ExcludeMargins PROPERTIES
-    DEPENDS NucleusEditor-SegmentNuclei
+    DEPENDS NucleusEditor-SplitCell
 		PASS_REGULAR_EXPRESSION "margins excluded")
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/classify.xml.in
@@ -296,7 +297,7 @@ if(QtTestingFound)
     ${NucleusEditor_TEST_DIR}/classify_baseline.png
   )
   set_tests_properties(NucleusEditor-Classify PROPERTIES
-    DEPENDS NucleusEditor-SaveProject)
+    DEPENDS NucleusEditor-ExcludeMargins)
 
 endif()
 
