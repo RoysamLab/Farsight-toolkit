@@ -347,6 +347,17 @@ if(USE_KPLS)
     endif()
     find_library(LIB_KPLS NAMES libKPLS HINTS "${KPLS_LIB_DIR}")
   endif(WIN32)
+  if(MSVC10)
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_vs10.h
+      ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
+      COPYONLY)
+  else()
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_default.h
+      ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
+      COPYONLY)
+  endif()
 endif(USE_KPLS)
 
 if(BUILD_ZERNIKE)
