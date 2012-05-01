@@ -79,6 +79,7 @@ private:
 	QListWidget *listWidget;
 
 	QLabel *emdLabel;
+	QLabel *progressionOverDistance;
 	QCheckBox *bcheckBox;   // progression overall or over distance to device
 	QPushButton *emdButton;
 	QDoubleSpinBox *emdThresBox;
@@ -115,6 +116,8 @@ private:
 	std::vector< unsigned int> selFeatureID;
 	std::vector< int> selOrder;
 	std::vector< int> unselOrder;
+	vtkSmartPointer<vtkTable> tableAfterCellCluster;
+	std::map< int, int> indexMap;
 };
 
 #endif // SPDTESTWINDOW_H

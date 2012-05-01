@@ -64,6 +64,7 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
 	cellClusterButton = new QPushButton(tr("Cell Cluster"));
 	
 	emdLabel = new QLabel(tr("Matching modules based on coherence:"));
+	progressionOverDistance = new QLabel(tr("Progression over distance to device:"));
 	bcheckBox = new QCheckBox();
 	emdButton = new QPushButton(tr("Match"));
 
@@ -125,7 +126,7 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 13; row++)
+    for ( int row = 1; row <= 14; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -155,26 +156,28 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
     mainLayout->addWidget(clusterMergeLabel, 6, 0);
     mainLayout->addWidget(clusterMergeBox, 6, 1);
 	
-	mainLayout->addWidget(emdLabel, 7, 0);
-	mainLayout->addWidget(emdButton, 7, 2);
+	mainLayout->addWidget(progressionOverDistance, 7, 0);
+	mainLayout->addWidget(bcheckBox, 7, 1);
 
-	mainLayout->addWidget(psmLable, 8, 0);
-	mainLayout->addWidget(emdThresBox, 8, 1);
-	mainLayout->addWidget(bcheckBox, 8, 2);
+	mainLayout->addWidget(emdLabel, 8, 0);
+	mainLayout->addWidget(emdButton, 8, 2);
 
-	mainLayout->addWidget(psmPerLable, 9, 0);
-	mainLayout->addWidget(emdPercentageBox, 9, 1);
-	mainLayout->addWidget(psmButton, 9, 2);
+	mainLayout->addWidget(psmLable, 9, 0);
+	mainLayout->addWidget(emdThresBox, 9, 1);
 
-	mainLayout->addWidget(psdtLable, 10, 0);
-	mainLayout->addWidget(distanceThres, 10, 1);
-	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
-	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
-	mainLayout->addWidget(psdtButton, 12, 2);
+	mainLayout->addWidget(psmPerLable, 10, 0);
+	mainLayout->addWidget(emdPercentageBox, 10, 1);
+	mainLayout->addWidget(psmButton, 10, 2);
 
-	mainLayout->addWidget(heatmapLabel, 13, 0);
-	mainLayout->addWidget(heatmapButton, 13, 2);
+	mainLayout->addWidget(psdtLable, 11, 0);
+	mainLayout->addWidget(distanceThres, 11, 1);
+	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
+	mainLayout->addWidget(maxVetexIdLabel, 13, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 13, 1);
+	mainLayout->addWidget(psdtButton, 13, 2);
+
+	mainLayout->addWidget(heatmapLabel, 14, 0);
+	mainLayout->addWidget(heatmapButton, 14, 2);
 
     setLayout(mainLayout);
 
@@ -426,7 +429,7 @@ void SPDWindowForNewSelection::showPSM()
 	if( SPDModel->GetProgressionType())
 	{
 		std::vector< unsigned int> moduleIDs;
-		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
 
 		QString str;
 		int i = 0;

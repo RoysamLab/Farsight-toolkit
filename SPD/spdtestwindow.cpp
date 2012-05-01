@@ -9,6 +9,8 @@
 #include <assert.h>
 #include "ClusClus/clusclus.h"
 
+#define MSTSPD 0
+
 using std::ifstream;
 using std::endl;
 
@@ -64,6 +66,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	cellClusterButton = new QPushButton(tr("Cell Cluster"));
 	
 	emdLabel = new QLabel(tr("Matching modules based on coherence:"));
+	progressionOverDistance = new QLabel(tr("Progression over distance to device:"));
 	bcheckBox = new QCheckBox();
 	emdButton = new QPushButton(tr("Match"));
 
@@ -125,7 +128,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-    for ( int row = 1; row <= 13; row++)
+     for ( int row = 1; row <= 14; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -146,7 +149,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
 	mainLayout->addWidget(sampleCoherenceLabel, 4, 0);
     mainLayout->addWidget(sampleCoherenceBox, 4, 1);
-	mainLayout->addWidget(cellClusterButton, 4, 2);
+	//mainLayout->addWidget(cellClusterButton, 4, 2);
 
 	mainLayout->addWidget(clusterCoherenceLabel, 5, 0);
     mainLayout->addWidget(clusterCoherenceBox, 5, 1);
@@ -155,26 +158,29 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     mainLayout->addWidget(clusterMergeLabel, 6, 0);
     mainLayout->addWidget(clusterMergeBox, 6, 1);
 	
-	mainLayout->addWidget(emdLabel, 7, 0);
-	mainLayout->addWidget(emdButton, 7, 2);
+	mainLayout->addWidget(progressionOverDistance, 7, 0);
+	mainLayout->addWidget(bcheckBox, 7, 1);
 
-	mainLayout->addWidget(psmLable, 8, 0);
-	mainLayout->addWidget(emdThresBox, 8, 1);
-	mainLayout->addWidget(bcheckBox, 8, 2);
+	mainLayout->addWidget(emdLabel, 8, 0);
+	mainLayout->addWidget(emdButton, 8, 2);
 
-	mainLayout->addWidget(psmPerLable, 9, 0);
-	mainLayout->addWidget(emdPercentageBox, 9, 1);
-	mainLayout->addWidget(psmButton, 9, 2);
+	mainLayout->addWidget(psmLable, 9, 0);
+	mainLayout->addWidget(emdThresBox, 9, 1);
 
-	mainLayout->addWidget(psdtLable, 10, 0);
-	mainLayout->addWidget(distanceThres, 10, 1);
-	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
-	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
-	mainLayout->addWidget(psdtButton, 12, 2);
+	mainLayout->addWidget(psmPerLable, 10, 0);
+	mainLayout->addWidget(emdPercentageBox, 10, 1);
+	mainLayout->addWidget(psmButton, 10, 2);
 
-	mainLayout->addWidget(heatmapLabel, 13, 0);
-	mainLayout->addWidget(heatmapButton, 13, 2);
+	mainLayout->addWidget(psdtLable, 11, 0);
+	mainLayout->addWidget(distanceThres, 11, 1);
+	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
+	mainLayout->addWidget(maxVetexIdLabel, 13, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 13, 1);
+	mainLayout->addWidget(psdtButton, 13, 2);
+
+	mainLayout->addWidget(heatmapLabel, 14, 0);
+	mainLayout->addWidget(heatmapButton, 14, 2);
+
 
     setLayout(mainLayout);
 
@@ -347,7 +353,13 @@ void SPDtestWindow::emdFunction()
 {
 	try
 	{
+#if MSTSPD
+		this->SPDModel->GenerateMST();
+		this->SPDModel->GenerateDistanceMST();
+		this->SPDModel->RunEMDAnalysis();
+#else
 		this->SPDModel->ModuleCoherenceMatchAnalysis();
+#endif
 		psmButton->setEnabled(TRUE);
 		psdtButton->setEnabled(FALSE);
 		heatmapButton->setEnabled(FALSE);
@@ -365,7 +377,11 @@ void SPDtestWindow::editThreshold()
 	double per = 0;
 	if( thres >= 0 && thres <= 1)
 	{
+#if MSTSPD
+		per = this->SPDModel->GetEMDSelectedPercentage( thres);
+#else
 		per = this->SPDModel->GetCorMatSelectedPercentage( thres);
+#endif
 	}
 	emdPercentageBox->setText(QString::number(per));
 }
@@ -413,11 +429,15 @@ void SPDtestWindow::showPSM()
 
 	clusclus *clus1 = new clusclus();
 	clusclus *clus2 = new clusclus();
-
+	std::vector< unsigned int> moduleIDs;
 	if( SPDModel->GetProgressionType())
 	{
-		std::vector< unsigned int> moduleIDs;
+#if MSTSPD
 		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+#else
+
+		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+#endif
 
 		QString str;
 		int i = 0;
@@ -434,7 +454,12 @@ void SPDtestWindow::showPSM()
 	}
 	else
 	{
-		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()));
+#if MSTSPD
+		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+#else
+
+		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+#endif
 		optimalleaforder.set_size(clus1->num_samples);
 		for( int i = 0; i < clus1->num_samples; i++)
 		{
@@ -465,6 +490,7 @@ void SPDtestWindow::viewProgression()
 		delete this->HeatmapWin;
 	}
 	this->HeatmapWin = new Heatmap(this);
+
 
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	std::vector< unsigned int> selModuleID;
@@ -756,7 +782,7 @@ void SPDtestWindow::showProgressionHeatmap()
 		delete plot;
 	}
 	plot = new PlotWindow(this);
-	plot->setModels(tableForAverModulePlot);
+	plot->setModels(tableForAverModulePlot, selection);
 	plot->show();
 
 	// progression heatmap

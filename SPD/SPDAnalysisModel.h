@@ -155,6 +155,8 @@ private:
 	int maxVertexId;
 	std::map< int, int> indMapFromVertexToClus;
 	vnl_vector<double> DistanceToDevice;
+	vnl_vector<double> UNDistanceToDevice;
+
 	double disCor;
 	vnl_matrix<double> DataMatrix;			// normalized data feature for analysis
 	vnl_matrix<double> DataMatrixAfterCellCluster;
@@ -210,7 +212,7 @@ private:
 	std::vector< int> clusterOrder;
 
 	// for spdtestwindow
-	vnl_matrix<double> CorMatrix;
 	vnl_matrix<double> ModuleCompareCorMatrix;
+	vnl_vector<double> DistanceCorVector;
 };
 #endif

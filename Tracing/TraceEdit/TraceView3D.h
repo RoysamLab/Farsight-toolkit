@@ -93,8 +93,8 @@ limitations under the License.
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #ifdef USE_SPD
-//#include "SPD/spdmainwindow.h"
-#include "SPD/spdtestwindowForNewSelection.h"
+#include "SPD/spdtestwindow.h"
+//#include "SPD/spdtestwindowForNewSelection.h"
 #endif
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
@@ -174,6 +174,7 @@ public:
 	vtkSmartPointer<vtkRenderer> Renderer;
 	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
+	void AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable);
 
 public slots:
 	void choosetoRender(int row, int col);
@@ -260,12 +261,15 @@ public slots:
 	void DrawROI();
 	void ReadVOI();
 	void WriteVOI();
+	void ToggleVOI();
 	void CalculateDistanceToDevice();
 
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
 	void AssociateNeuronToNuclei();
 	void ShowSeedPoints();
+
+	void readDebrisTable();
 
 	void focusOn();
 	void setRenderFocus(double renderBounds[], int size);
@@ -425,12 +429,15 @@ private:
 	QPushButton *ExtrudeROIButton;
 	QPushButton *ReadBinaryVOIButton;
 	QPushButton *WriteVOIButton;
+	QPushButton *ToggleBinaryVOIButton;
 	QPushButton *CalculateDistanceToDeviceButton;
 	QPushButton *CalculateCellDistanceButton;
 
 	QAction *LoadNucleiTable;
 	QAction *AssociateCellToNucleiAction;
 	QAction *LoadSeedPointsAsGlyphs;
+
+	QAction *LoadDebrisTable;
 
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
@@ -464,8 +471,8 @@ private:
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
 #ifdef USE_SPD
-	//SPDMainWindow *SPDWin;
-	SPDWindowForNewSelection *SPDWin;
+	SPDtestWindow *SPDWin;
+	//SPDWindowForNewSelection *SPDWin;
 #endif
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
@@ -607,7 +614,7 @@ private:
 	vtkSmartPointer<vtkActor> ROIactor;
 
 	VolumeOfInterest * VOIType;
-
+	bool bshowDevice;
 	/*! \enum RenderModeEnum
 	* \brief Sets default the rendering style
 	* Slicer shows a 2d slice at a time

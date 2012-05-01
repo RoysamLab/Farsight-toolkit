@@ -344,6 +344,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	vertextList.set_size( table->GetNumberOfRows(), 3);
 	edgeWeights.set_size( table->GetNumberOfRows());
 
+	double minPer = colorVector.min_value();
+	double maxDisper = distanceVec.max_value();
+
 	for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
 	{
 		int vertexID = graph->AddVertex();
@@ -358,26 +361,43 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 			vertexIDarrays->InsertNextValue( this->indMapFromClusIndToVertex[i].size());   // which should be the cluster index
 			int per = colorVector[i] * 100 + 0.5;
 			int disper = distanceVec[i] * 100 + 0.5;
-			if( per > 100)
-			{
-				per = 100;
-			}
-			if( disper > 100)
-			{
-				disper = 100;
-			}
-			QString strPercent = QString::number(per);
+			QString strPercent;
+			QString strDisPercent;
 
-			if( disper > 0 && disper <= 100)
+			if(  minPer < 1 - 1e-5)
 			{
-				QString disPercent = QString::number(disper);
-				strPercent = "(" + strPercent + "%," + disPercent + "%)";
+				if( per > 100)
+				{
+					per = 100;
+				}
+				strPercent= QString::number(per);
 			}
-			else
+
+			if( maxDisper > 1e-5)
 			{
-				strPercent = "(" + strPercent + "%)";
+				if( disper > 100)
+				{
+					disper = 100;
+				}
+				strDisPercent = QString::number(disper);
 			}
-		
+
+			if( strPercent.length() > 0 )
+			{
+				if( strDisPercent.length() > 0)
+				{
+					strPercent = "(" + strPercent + "%," + strDisPercent + "%)";
+				}
+				else
+				{
+					strPercent = "(" + strPercent + "%)";
+				}
+			}
+			else if( strDisPercent.length() > 0)
+			{
+				strPercent = "( ," + strDisPercent + "%)";
+			}
+			
 			QString str = QString::number(this->indMapFromClusIndToVertex[i].size()) + strPercent;
 			vertexLabel->InsertNextValue(str.toUtf8().constData());
 		}

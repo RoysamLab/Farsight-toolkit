@@ -35,7 +35,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	biheatmap = new BiHeatmap(this);
 	progressionheatmap = new ProgressionHeatmap(this);
 	//spdWin = new SPDMainWindow();
-	spdTestWin = new SPDWindowForNewSelection();
+	spdTestWin = new SPDtestWindow();
 	this->cc1 = NULL;
 	this->cc2 = NULL;
 
@@ -498,7 +498,7 @@ void SampleEditor::SPDTestAnalysis()
 	}
 	else
 	{
-		spdTestWin->setModels( this->data, selection, ClusterSelections);
+		spdTestWin->setModels( this->data, selection);
 	}
 
 	spdTestWin->show();

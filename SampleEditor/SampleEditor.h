@@ -56,7 +56,7 @@ limitations under the License.
 #include "ClusClus/LocalGeometryRef.h"
 #include "SPD/ProgressionHeatmapWindow.h"
 //#include "SPD/spdmainwindow.h"
-#include "SPD/spdtestwindowForNewSelection.h"
+#include "SPD/spdtestwindow.h"
 #include <vector>
 #include <string>
 
@@ -145,7 +145,7 @@ private:
 	ProgressionHeatmap *progressionheatmap;
 
 	//SPDMainWindow *spdWin;
-	SPDWindowForNewSelection *spdTestWin;
+	SPDtestWindow *spdTestWin;
 	SPDAnalysisModel *SPDModel;
 	int flag;
 

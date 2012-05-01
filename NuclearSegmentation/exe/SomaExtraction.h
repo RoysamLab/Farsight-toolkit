@@ -67,6 +67,7 @@ public:
 	virtual ~SomaExtractor();
 
 	void SetInputImage(const char * fileName);
+	OutputImageType::Pointer Read8BitImage(const char * fileName);
 	void SetInputImage( ProbImageType::Pointer probImage);
 	ProbImageType::Pointer GetFloatInputImage();
 	void ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
@@ -82,6 +83,8 @@ public:
 	void writeCentroids(const char* writeFileName, std::vector< itk::Index<3> > &seedVec);
 	
 	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
+
+	void AssociateDebris(OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, std::vector< itk::Index<3> > &debrisSeeds);
 
 protected:
 	void SomaBoundaryScan(SegmentedImageType::Pointer labelImage, std::map< TLPixel, int> &LtoIMap, std::vector< int> &boundaryPixSize);

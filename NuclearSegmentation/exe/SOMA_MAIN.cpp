@@ -10,12 +10,24 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 
 int main(int argc, char* argv[])
 {	
-	if( argc != 5 && argc != 6 && argc != 12)
+	if( argc != 4 && argc != 5 && argc != 6 && argc != 12)
 	{
 		std::cout<<"MakeDices: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
 		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <SomaCentroids.txt> <SomaImage.tif> <alfa 1> <beta 30> <Time Threshold (typically near 10)> <Curvature Scaling (typically 0.5)>\
 					<RMS Error (typically 0.02)> <Min Object Size (typically 1500)> <Nucleus Table:1; Centroids table:0>\n";
 		return 0;
+	}
+
+	if( argc == 4)
+	{
+		SomaExtractor *Somas = new SomaExtractor();
+		SomaExtractor::OutputImageType::Pointer inputImage = Somas->Read8BitImage(argv[1]);
+		std::vector< itk::Index<3> > somaSeeds;
+		std::vector< itk::Index<3> > debrisSeeds;
+		Somas->ReadSeedpoints( argv[2], somaSeeds, 0);
+		Somas->ReadSeedpoints( argv[3], debrisSeeds, 0);
+		Somas->AssociateDebris(inputImage, somaSeeds, debrisSeeds);
+		delete Somas;
 	}
 
 	if( argc == 6)

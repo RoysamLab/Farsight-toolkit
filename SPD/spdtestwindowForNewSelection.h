@@ -80,6 +80,7 @@ private:
 	QListWidget *listWidget;
 
 	QLabel *emdLabel;
+	QLabel *progressionOverDistance;
 	QCheckBox *bcheckBox;   // progression overall or over distance to device
 	QPushButton *emdButton;
 	QDoubleSpinBox *emdThresBox;

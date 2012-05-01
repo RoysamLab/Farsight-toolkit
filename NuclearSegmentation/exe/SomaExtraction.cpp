@@ -52,6 +52,15 @@ void SomaExtractor::SetInputImage(const char * fileName)
 	inputImage = caster->GetOutput();
 }
 
+SomaExtractor::OutputImageType::Pointer SomaExtractor::Read8BitImage(const char * fileName)
+{
+	ReaderType::Pointer reader = ReaderType::New();
+	reader->SetFileName(fileName);	
+	reader->Update();
+	OutputImageType::Pointer imagePtr = reader->GetOutput();
+	return imagePtr;
+}
+
 void SomaExtractor::SetInputImage( ProbImageType::Pointer probImage)
 {
 	inputImage = probImage;
@@ -100,6 +109,8 @@ void SomaExtractor::ReadSeedpoints(const char * fileName, std::vector< itk::Inde
 		}
 	}
 }
+
+
 
 void SomaExtractor::writeImage(const char* writeFileName, SegmentedImageType::Pointer image)
 {
@@ -257,6 +268,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 	ProbImageType::Pointer imagePt = adaptiveHistogramEqualizationImageFilter->GetOutput();
 	return imagePt;
 }
+
 
 SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
 											double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int holeSize, int minObjSize)
@@ -496,4 +508,61 @@ vtkSmartPointer<vtkTable> SomaExtractor::ComputeSomaFeatures(SegmentedImageType:
     }
 
 	return table;
+}
+
+void SomaExtractor::AssociateDebris(OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, std::vector< itk::Index<3> > &debrisSeeds)
+{
+	std::vector< int> debrisIntensity;
+	debrisIntensity.resize( somaCentroids.size());
+	for( int i = 0; i < debrisIntensity.size(); i++)
+	{
+		debrisIntensity[i] = 0;
+	}
+
+	for( int i = 0; i < debrisSeeds.size(); i++)
+	{
+		int x = debrisSeeds[i][0];
+		int y = debrisSeeds[i][1];
+		int z = debrisSeeds[i][2];
+		double minDistance = 10e5;
+		int tag = 0;
+		for( int j = 0; j < somaCentroids.size(); j++)
+		{
+			double distance = sqrt( pow( (double)somaCentroids[j][0] - x, 2) + pow( (double)somaCentroids[j][1] - y, 2) + pow( (double)somaCentroids[j][2] - z, 2));
+			if( distance < minDistance)
+			{
+				minDistance = distance;
+				tag = j;
+			}
+		}
+		debrisIntensity[tag] += (int)inputImage->GetPixel( debrisSeeds[i]);
+	}
+	
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+	vtkSmartPointer<vtkDoubleArray> column1 = vtkSmartPointer<vtkDoubleArray>::New();
+	column1->SetName("centroid_x");
+	table->AddColumn(column1);
+
+	vtkSmartPointer<vtkDoubleArray> column2 = vtkSmartPointer<vtkDoubleArray>::New();
+	column2->SetName("centroid_y");
+	table->AddColumn(column2);
+
+	vtkSmartPointer<vtkDoubleArray> column3 = vtkSmartPointer<vtkDoubleArray>::New();
+	column3->SetName("centroid_z");
+	table->AddColumn(column3);
+
+	vtkSmartPointer<vtkDoubleArray> column4 = vtkSmartPointer<vtkDoubleArray>::New();
+	column4->SetName("debris_intensity");
+	table->AddColumn(column4);
+
+	for( int i = 0; i < debrisIntensity.size(); i++)
+	{
+		vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
+		row->InsertNextValue( vtkVariant( somaCentroids[i][0]));
+		row->InsertNextValue( vtkVariant( somaCentroids[i][1]));
+		row->InsertNextValue( vtkVariant( somaCentroids[i][2]));
+		row->InsertNextValue( vtkVariant( debrisIntensity[i]));
+		table->InsertNextRow(row);
+	}
+	ftk::SaveTable( "DebrisTable.txt", table);
 }

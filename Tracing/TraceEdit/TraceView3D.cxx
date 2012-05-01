@@ -53,6 +53,7 @@ View3D::View3D(QWidget *parent)
 	this->savescreenshotDialog = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
+	this->bshowDevice = false;
 	this->statisticsDockWidget = NULL;
 #ifdef USE_SPD
 	this->SPDWin = NULL;
@@ -1307,6 +1308,10 @@ void View3D::CreateGUIObjects()
 	this->WriteVOIButton->setObjectName(tr("WriteVOIButton"));
 	connect(this->WriteVOIButton, SIGNAL(clicked()), this, SLOT(WriteVOI()));
 
+	this->ToggleBinaryVOIButton = new QPushButton("Toggle Binary VOI Image", this->CentralWidget);
+	this->ToggleBinaryVOIButton->setObjectName(tr("ToggleBinaryVOIButton"));
+	connect(this->ToggleBinaryVOIButton, SIGNAL(clicked()), this, SLOT(ToggleVOI()));
+
 	this->CalculateDistanceToDeviceButton = new QPushButton("Calculate Distance To Device", this->CentralWidget);
 	this->CalculateDistanceToDeviceButton->setObjectName(tr("CalculateDistanceToDeviceButton"));
 	connect(this->CalculateDistanceToDeviceButton, SIGNAL(clicked()), this, SLOT(CalculateDistanceToDevice()));
@@ -1318,6 +1323,10 @@ void View3D::CreateGUIObjects()
 	this->LoadNucleiTable = new QAction("Load Nuclei Table", this->CentralWidget);
 	this->LoadNucleiTable->setObjectName(tr("LoadNucleiTable"));
 	connect(this->LoadNucleiTable, SIGNAL(triggered()), this, SLOT(readNucleiTable()));
+
+	this->LoadDebrisTable = new QAction("Load Debris Table", this->CentralWidget);
+	this->LoadDebrisTable->setObjectName(tr("LoadDebrisTable"));
+	connect(this->LoadDebrisTable, SIGNAL(triggered()), this, SLOT(readDebrisTable()));
 
 	this->LoadSeedPointsAsGlyphs = new QAction("Load Seed Point Glyphs", this->CentralWidget);
 	this->LoadSeedPointsAsGlyphs->setObjectName(tr("LoadSeedPointsAsGlyphs"));
@@ -1696,6 +1705,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadSoma);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
+	this->fileMenu->addAction(this->LoadDebrisTable);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
 	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
@@ -1758,6 +1768,8 @@ void View3D::CreateLayout()
 	CursorROILayout->addWidget(this->ExtrudeROIButton);
 	CursorROILayout->addWidget(this->ReadBinaryVOIButton);
 	CursorROILayout->addWidget(this->WriteVOIButton);
+	CursorROILayout->addWidget(this->ToggleBinaryVOIButton);
+	this->ToggleBinaryVOIButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
 	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
 	this->CalculateDistanceToDeviceButton->setEnabled(false);
@@ -3681,12 +3693,15 @@ void View3D::ReadVOI()
 		{
 			this->VOIType->ReadBinaryVOI(somaFiles.toStdString());
 		}	
-		this->Renderer->AddActor(this->VOIType->GetActor());
+		
+		this->ROIactor = this->VOIType->GetActor();
+		this->Renderer->AddActor( this->ROIactor);
 		
 		this->QVTK->GetRenderWindow()->Render();
 		this->createNewROIPointButton->setEnabled(false);
 		this->ExtrudeROIButton->setEnabled(false);
 		this->CalculateDistanceToDeviceButton->setEnabled(true);
+		this->ToggleBinaryVOIButton->setEnabled(true);
 	}
 }
 
@@ -3700,6 +3715,25 @@ void  View3D::WriteVOI()
 		this->VOIType->WriteVTPVOI(somaFiles.toStdString());
 	}
 }
+
+void  View3D::ToggleVOI()
+{
+	if( this->ROIactor != NULL)
+	{
+		if( bshowDevice == false)
+		{
+			this->Renderer->RemoveActor( this->ROIactor);
+		}
+		else
+		{
+			this->Renderer->AddActor( this->ROIactor);
+		}
+		bshowDevice = !bshowDevice;
+		
+		this->QVTK->GetRenderWindow()->Render();
+	}
+}
+
 /////////////////////////////////
 void View3D::CalculateDistanceToDevice()
 {	
@@ -3819,6 +3853,73 @@ void View3D::AssociateNeuronToNuclei()
 		this->QVTK->GetRenderWindow()->Render();
 	}// end of matching soma to nuclei
 }
+
+void View3D::readDebrisTable()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, "Open Debris Table", "",tr("project ( *.xml *.txt )"));
+	
+	if (!fileName.isEmpty())
+	{
+		vtkSmartPointer<vtkTable> debrisTable = ftk::LoadTable(fileName.toStdString());
+		AssociateDebrisToNuclei( debrisTable);
+	}
+}
+
+void View3D::AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable)
+{
+	unsigned int cellCount= this->CellModel->getCellCount();
+	vtkIdType rowCount = debrisTable->GetNumberOfRows();
+	std::cout<< "Cell number: "<< cellCount<<std::endl;
+	std::cout<< "Debris Table row number: "<< rowCount<<std::endl;
+	vtkIdType coln = 3;
+	if ((cellCount >= 1)&&(rowCount >= cellCount))
+	{
+		vtkIdType colSize = debrisTable->GetNumberOfColumns();
+		vtkIdType rowSize = debrisTable->GetNumberOfRows();
+
+		this->CellModel->AddNewFeatureHeader(debrisTable->GetColumnName(coln));
+
+		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+		{
+			// search for nucli thats within radii of soma 
+			double distance =0, somaRadii = 0;//,  x1, y1, z1; 
+			double somaPoint[3];
+			CellTrace* currCell = (*cellCount).second;
+			currCell->getSomaCoord(somaPoint);
+			somaRadii = currCell->somaRadii;
+			bool found = false;
+			vtkIdType nucleiRowIter = 0;
+			while (!found && (nucleiRowIter < rowSize))
+			{
+				double x, y, z, x2, y2, z2;
+				x2 = debrisTable->GetValueByName(nucleiRowIter,"centroid_x").ToDouble();
+				y2 = debrisTable->GetValueByName(nucleiRowIter,"centroid_y").ToDouble();
+				z2 = debrisTable->GetValueByName(nucleiRowIter,"centroid_z").ToDouble();
+				x = pow((somaPoint[0] - x2),2);
+				y = pow((somaPoint[1] - y2),2);
+				z = pow((somaPoint[2] - z2),2);
+				distance = sqrt(x +y +z);
+				if (distance < somaRadii)
+				{
+					vtkVariant colData = debrisTable->GetValue(nucleiRowIter, coln);
+					currCell->addNewFeature(colData);
+					found = true;
+					debrisTable->RemoveRow(nucleiRowIter);
+				}
+				nucleiRowIter++;
+			}//end debris match search
+			if (!found)
+			{
+				currCell->addNewFeature(vtkVariant(-PI));
+			}
+		}//end of debris row		
+		this->ShowCellAnalysis();
+		this->AddDebugPoints(this->CellModel->getDataTable());
+		this->QVTK->GetRenderWindow()->Render();
+	}// end of matching debris to nuclei
+}
+
 void View3D::ShowSeedPoints()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open Seed File", "",tr(".txt(*.txt)"));
@@ -6026,7 +6127,7 @@ void View3D::SaveComputedCellFeaturesTable()
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
-	this->SPDWin = new SPDWindowForNewSelection();
+	this->SPDWin = new SPDtestWindow();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		//this->SPDWin->setModels();
@@ -6050,7 +6151,7 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("centroid_y");
 		featureTable->RemoveColumnByName("centroid_z");
 
-		this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
+		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());
 	}
 	this->SPDWin->show();
 #endif

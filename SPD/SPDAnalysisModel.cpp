@@ -281,6 +281,8 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 		this->DataTable = table;
 		this->indMapFromIndToVertex.clear();
 		ConvertTableToMatrix( this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
+		UNDistanceToDevice = DistanceToDevice;
+
 		maxVertexId = 0;
 		for( int i = this->indMapFromIndToVertex.size() - 1; i >= 0; i--)
 		{
@@ -293,6 +295,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 		UNMatrixAfterCellCluster = this->DataMatrix;
 		double disMean = DistanceToDevice.mean();
 		disCor = (DistanceToDevice - disMean).two_norm();
+		std::cout<< "Distance cor: "<<disCor<<endl;
 
 		this->CellClusterIndex.set_size(this->DataMatrix.rows());
 		for( int i = 0; i < CellCluster.size(); i++)
@@ -322,8 +325,22 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance)
 {
 	distance.set_size( table->GetNumberOfRows());
+	for( int i = 0; i < distance.size(); i++)
+	{
+		distance[i] = 0;
+	}
+
 	vtkVariantArray *distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("Distance to Device"));
+	if( distanceArray == NULL)
+	{
+		distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("Distance_to_Device"));
+	}
+
 	vtkDoubleArray *distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("Distance to Device"));
+	if( distanceDoubleArray == NULL)
+	{
+		distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("Distance_to_Device"));
+	}
 
 	if( distanceArray)
 	{
@@ -332,17 +349,17 @@ void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl
 			distance[i] = distanceArray->GetValue(i).ToDouble();
 		}
 	}
-
-	if( distanceDoubleArray)
+	else if( distanceDoubleArray)
 	{
-		for( int i = 0; i < distanceArray->GetNumberOfValues(); i++)
+		for( int i = 0; i < distanceDoubleArray->GetNumberOfTuples(); i++)
 		{
 			distance[i] = distanceDoubleArray->GetValue(i);
 		}
 	}
 
 	table->RemoveColumnByName("Distance to Device");
-	ftk::SaveTable("", table);
+	table->RemoveColumnByName("Distance_to_Device");
+
 	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 1);
 	
 	for( int i = 0; i < table->GetNumberOfRows(); i++)
@@ -1381,7 +1398,7 @@ void SPDAnalysisModel::GenerateMST()
 		omp_init_lock(&lock2);
 	#endif
 
-	#pragma omp parallel for num_threads(NUM_THREAD)
+	#pragma omp parallel for
 	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
 		std::cout<<"Building MST for module " << i<<endl;
@@ -1579,7 +1596,7 @@ void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, std::vect
 
 void SPDAnalysisModel::GenerateDistanceMST()
 {
-	if(disCor == 0)
+	if(disCor <= 10)
 	{
 		return;
 	}
@@ -1883,7 +1900,7 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		omp_init_lock(&lock);
 	#endif
 
-	#pragma omp parallel for num_threads(NUM_THREAD)
+	#pragma omp parallel for
 	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
 		vnl_vector<double> distance;
@@ -1903,76 +1920,29 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		omp_destroy_lock(&lock);
 	#endif
 
-	//QString filenameEMD = this->filename + "emd.txt";
-	//std::ofstream histOfs(filenameEMD.toStdString().c_str(), std::ofstream::out);
-	//histOfs.precision(4);
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
 	this->EMDMatrix.fill(0);
 	this->DistanceEMDVector.set_size( this->ClusterIndex.max_value() + 1);
 	this->DistanceEMDVector.fill(0);
 
-	//#pragma omp parallel for num_threads(NUM_THREAD)
+	//#pragma omp parallel for
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist;
 		Hist( moduleDistance[i], NUM_BIN, hist_interval, moduleHist);
 
-		//histOfs << "Module "<< i + 1 <<endl;
-		
-		// test the distance of the modules
-		//for( int s = 0; s < moduleDistance[i].size(); s = s + 10)
-		//{
-		//	for( int t = 0; t < 10; t++)
-		//	{
-		//		if( s + t < moduleDistance[i].size())
-		//		{
-		//			histOfs << moduleDistance[i][s + t]<<"\t";
-		//		}
-		//	}
-		//	histOfs<<endl;		
-		//}
-		//histOfs <<endl;
-		//histOfs << moduleHistPer<< endl<<endl;
 		for( int j = 0; j < moduleDistance.size(); j++)
 		{	
 			std::cout<< "matching module " << i<< " with MST " << j<<endl;
-			//histOfs << "MST "<< j + 1 <<endl;
 
 			vnl_vector<double> mstDistance; 
 			GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
 			vnl_vector<unsigned int> mstHist;
 			Hist( mstDistance, hist_interval, mstHist); 
 
-			//test the distance of the MSTs
-			//for( int s = 0; s < mstDistance.size(); s = s + 10)
-			//{
-			//	for( int t = 0; t < 10; t++)
-			//	{
-			//		if( s + t < mstDistance.size())
-			//		{
-			//			histOfs << mstDistance[s + t]<<"\t";
-			//		}
-			//	}
-			//	histOfs<<endl;		
-			//}
-			//histOfs << setiosflags(ios::fixed) << mstHistPer<< endl<<endl;
-
 			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
 			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
-
-			/*histOfs << "flows:"<<endl;
-			vnl_matrix<double> tranMatrix = flowMatrix.transpose();
-			histOfs << setiosflags(ios::fixed) << tranMatrix <<endl <<endl;
-			
-			histOfs << "sums:" <<endl;
-			vnl_vector<double> sumvector( tranMatrix.cols());
-			for( int i = 0; i < tranMatrix.cols(); i++)
-			{
-				sumvector[i] = tranMatrix.get_column(i).sum();
-			}
-
-			histOfs << setiosflags(ios::fixed) << sumvector <<endl<<endl;*/
 		}
 
 		/// matching with distance to device
@@ -1987,7 +1957,6 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			this->DistanceEMDVector[ i] = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
 		}
 	}
-	//histOfs << setiosflags(ios::fixed) << this->EMDMatrix <<endl <<endl;
 
 	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
@@ -2004,9 +1973,6 @@ void SPDAnalysisModel::RunEMDAnalysis()
 			this->DistanceEMDVector[ i] = this->DistanceEMDVector[ i] / max;
 		}
 	}
-
-	//histOfs << setiosflags(ios::fixed) << this->EMDMatrix << endl;
-	//histOfs.close();
 	std::cout<< "EMD matrix has been built successfully"<<endl;
 }
 
@@ -2396,15 +2362,26 @@ void SPDAnalysisModel::ModuleCoherenceMatchAnalysis()
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
 	ofSimatrix.precision(4);
 	
-	CorMatrix.set_size(size, size);
-	CorMatrix.fill(0);
 	ModuleCompareCorMatrix.set_size(size, size);
 	ModuleCompareCorMatrix.fill(0);
+	DistanceCorVector.set_size(size);
+	DistanceCorVector.fill(0);
 
 	ofSimatrix<< mat<<endl<<endl;
 
 	for( int i = 0; i < featureClusterIndex.size(); i++)
 	{
+		if( disCor > 0)
+		{
+			vnl_matrix< double> module(this->MatrixAfterCellCluster.rows(), featureClusterIndex[i].size());
+			GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, i, module);
+			module.normalize_columns();
+			vnl_vector< double> disVec = DistanceToDevice.normalize();
+			vnl_vector< double> discorvec = disVec * module;
+			DistanceCorVector[i] = discorvec.mean();
+			ofSimatrix << "module "<< i<< "\t"<< DistanceCorVector[i]<<endl;
+		}
+		
 		for( int j = 0; j < featureClusterIndex.size(); j++)
 		{
 			if( i != j)
@@ -2412,15 +2389,15 @@ void SPDAnalysisModel::ModuleCoherenceMatchAnalysis()
 				ofSimatrix << "module "<<i<<"\t"<<j<<endl;
 				vnl_vector< double> veci = mat.get_column(i);
 				vnl_vector< double> vecj = mat.get_column(j);
-
 				int ijsize = featureClusterIndex[i].size() + featureClusterIndex[j].size();
-				vnl_vector< double> mean = (veci * featureClusterIndex[i].size() + vecj * featureClusterIndex[j].size()) / ijsize;
-				mean = mean.normalize();
-				vnl_matrix< double> newmodule(this->MatrixAfterCellCluster.rows(), ijsize);
-				GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, j, newmodule);
-				newmodule.normalize_columns();
-				vnl_vector< double> corvec = mean * newmodule;
-				CorMatrix(i,j) = corvec.mean();
+
+				//vnl_vector< double> mean = (veci * featureClusterIndex[i].size() + vecj * featureClusterIndex[j].size()) / ijsize;
+				//mean = mean.normalize();
+				//vnl_matrix< double> newmodule(this->MatrixAfterCellCluster.rows(), ijsize);
+				//GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, j, newmodule);
+				//newmodule.normalize_columns();
+				//vnl_vector< double> corvec = mean * newmodule;
+				//CorMatrix(i,j) = corvec.mean();
 				//CorMatrix(j,i) = CorMatrix(i,j);
 
 				///// calculate negative cormatrix, inverse vector j
@@ -2435,10 +2412,10 @@ void SPDAnalysisModel::ModuleCoherenceMatchAnalysis()
 				//ModuleCompareCorMatrix(j,i) = ModuleCompareCorMatrix(i,j);
 				veci = veci.normalize();
 				ijsize = featureClusterIndex[j].size();
-				newmodule.set_size(this->MatrixAfterCellCluster.rows(), ijsize);
+				vnl_matrix< double> newmodule(this->MatrixAfterCellCluster.rows(), ijsize);
 				GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, j, j, newmodule);  // module j is inversed
 				newmodule.normalize_columns();
-				corvec = veci * newmodule;
+				vnl_vector< double> corvec = veci * newmodule;
 				ofSimatrix << corvec<<endl;
 				ModuleCompareCorMatrix(i,j) = corvec.mean();
 			}
@@ -2471,24 +2448,33 @@ void SPDAnalysisModel::GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, 
 	QString filenameSM = this->filename + "similarity_cor_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
 	ofSimatrix.precision(4);
-	ofSimatrix <<"CorMatrix:"<<endl;
-	ofSimatrix << this->CorMatrix<<endl<<endl;
-	ofSimatrix <<"Module Compare CorMatrix:"<<endl;
-	ofSimatrix << this->ModuleCompareCorMatrix<<endl<<endl;
-	this->heatmapMatrix.set_size( this->CorMatrix.rows(), this->CorMatrix.cols());
+	//ofSimatrix <<"CorMatrix:"<<endl;
+	//ofSimatrix << this->CorMatrix<<endl<<endl;
+	//ofSimatrix <<"Module Compare CorMatrix:"<<endl;
+	//ofSimatrix << this->ModuleCompareCorMatrix<<endl<<endl;
+	this->heatmapMatrix.set_size( this->ModuleCompareCorMatrix.rows(), this->ModuleCompareCorMatrix.cols());
 	this->heatmapMatrix.fill(0);
 	std::vector< unsigned int> simModIndex;
 
 	if( bProgression)
 	{
+		ofSimatrix<< "Progression over distance"<<endl;
+		for(unsigned int i = 0; i < DistanceCorVector.size(); i++)
+		{
+			if( abs(DistanceCorVector[i]) >= threshold)
+			{
+				disModIndex->push_back(i);
+				ofSimatrix<< i<< "\t"<< DistanceCorVector[i]<<endl;
+			}
+		}
 	}
 	else
 	{
 		ofSimatrix<< "Overal Progression"<<endl;
-		for( unsigned int i = 0; i < this->CorMatrix.cols(); i++)
+		for( unsigned int i = 0; i < this->ModuleCompareCorMatrix.cols(); i++)
 		{
 			ofSimatrix << "matching with module " <<i<<endl;
-			for( unsigned int j = 0; j < this->CorMatrix.rows(); j++)
+			for( unsigned int j = 0; j < this->ModuleCompareCorMatrix.rows(); j++)
 			{
 				if( abs(this->ModuleCompareCorMatrix( i, j)) >= threshold)     // find the modules that support common mst
 				{
@@ -2513,7 +2499,7 @@ void SPDAnalysisModel::GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, 
 			simModIndex.clear();
 		}
 
-		c1->Initialize( heatmapMatrix.data_array(), this->CorMatrix.rows(), this->CorMatrix.cols());
+		c1->Initialize( heatmapMatrix.data_array(), this->ModuleCompareCorMatrix.rows(), this->ModuleCompareCorMatrix.cols());
 		c1->RunClusClus();
 		c1->Transpose();
 
@@ -2544,14 +2530,14 @@ double SPDAnalysisModel::GetCorMatSelectedPercentage(double thres)
 	}
 	else
 	{
-		//for( unsigned int i = 0; i < this->DistanceEMDVector.size(); i++)
-		//{
-		//	if( this->DistanceEMDVector[i] >= thres)     // find the modules that support common mst
-		//	{
-		//		count++;
-		//	}
-		//}
-		//per = (double) count / this->DistanceEMDVector.size();
+		for( unsigned int i = 0; i < this->DistanceCorVector.size(); i++)
+		{
+			if( this->DistanceCorVector[i] >= thres)     // find the modules that support common mst
+			{
+				count++;
+			}
+		}
+		per = (double) count / this->DistanceCorVector.size();
 	}
 	return per;
 }
@@ -2581,7 +2567,7 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
 {
 	disPer.clear();
-	if( DistanceToDevice.sum() > 1)
+	if( disCor > 1)
 	{
 		for( int i = 0; i < clusIndex.size(); i++)
 		{
@@ -2594,7 +2580,7 @@ void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< lon
 				{
 					count++;
 					std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
-					if( iter != indMapFromVertexToClus.end() && DistanceToDevice[iter->second] <= disThreshold)
+					if( iter != indMapFromVertexToClus.end() && UNDistanceToDevice[iter->second] <= disThreshold)
 					{
 						distanceCount++;
 					}
@@ -2607,7 +2593,7 @@ void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< lon
 	{
 		for( int i = 0; i < clusIndex.size(); i++)
 		{
-			disPer.push_back( -1);
+			disPer.push_back( 0);
 		}
 	}
 }
@@ -2635,29 +2621,29 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
 {
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	vnl_matrix<double> averFeatureModule( clusIndex.size(), UNMatrixAfterCellCluster.cols());
-	for( int i = 0; i < clusIndex.size(); i++)
-	{
-		vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
-		tmp.fill(0);
-		for( int j = 0; j < clusIndex[i].size(); j++)
-		{
-			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusIndex[i][j]);
-			tmp += row;
-		}
-		tmp /= clusIndex[i].size();
-		averFeatureModule.set_row(i, tmp);
-	}
+	//vnl_matrix<double> averFeatureModule( clusIndex.size(), UNMatrixAfterCellCluster.cols());
+	//for( int i = 0; i < clusIndex.size(); i++)
+	//{
+	//	vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
+	//	tmp.fill(0);
+	//	for( int j = 0; j < clusIndex[i].size(); j++)
+	//	{
+	//		vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusIndex[i][j]);
+	//		tmp += row;
+	//	}
+	//	tmp /= clusIndex[i].size();
+	//	averFeatureModule.set_row(i, tmp);
+	//}
 
-	std::ofstream ofs("averFeatureModule.txt");
-	ofs<< averFeatureModule<<endl;
-	vnl_vector<long int> order( TreeOrder.size());
-	for( int i = 0; i < TreeOrder.size(); i++)
-	{
-		order[ TreeOrder[i]] = i;
-	}
-	ofs<< order<<endl;
-	ofs.close();
+	//std::ofstream ofs("averFeatureModule.txt");
+	//ofs<< averFeatureModule<<endl;
+	//vnl_vector<long int> order( TreeOrder.size());
+	//for( int i = 0; i < TreeOrder.size(); i++)
+	//{
+	//	order[ TreeOrder[i]] = i;
+	//}
+	//ofs<< order<<endl;
+	//ofs.close();
 
 	vtkSmartPointer<vtkVariantArray> column;
 	column = vtkSmartPointer<vtkVariantArray>::New();
@@ -2670,7 +2656,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 	column->SetName( "Device Sample Percentage");
 	table->AddColumn(column);
 	column = vtkSmartPointer<vtkVariantArray>::New();
-	column->SetName( "Near Device Sample Percentage");
+	column->SetName( "Distance To Device");
 	table->AddColumn(column);
 	
 	for(int i = 0; i < selFeatureOrder.size(); i++)
@@ -2686,24 +2672,31 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 		table->AddColumn(column);
 	}
 
-	for( int i = 0; i < clusIndex.size(); i++)
+	int count = 0;
+	for( int i = 0; i < TreeOrder.size(); i++)
 	{
-		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-		DataRow->InsertNextValue( i);
-		DataRow->InsertNextValue( order[i]);
-		DataRow->InsertNextValue( percentageOfSamples[i]);
-		DataRow->InsertNextValue( percentageOfNearDeviceSamples[i]);
-
-		for( int j = 0; j < selFeatureOrder.size(); j++)
+		long int n = TreeOrder[i];
+		for( int j = 0; j < clusIndex[n].size(); j++)
 		{
-			DataRow->InsertNextValue( averFeatureModule(i, selFeatureOrder[j]));
-		}
-		for( int j = 0; j < unselFeatureOrder.size(); j++)
-		{
-			DataRow->InsertNextValue( averFeatureModule(i, unselFeatureOrder[j]));
-		}
+			int id = clusIndex[n][j];
+			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+			DataRow->InsertNextValue( indMapFromIndToVertex[id]);
+			DataRow->InsertNextValue( count);
+			DataRow->InsertNextValue( percentageOfSamples[i]);
+			DataRow->InsertNextValue( UNDistanceToDevice[id]);
 
-		table->InsertNextRow(DataRow);
+			for( int k = 0; k < selFeatureOrder.size(); k++)
+			{
+				DataRow->InsertNextValue( UNMatrixAfterCellCluster(id, selFeatureOrder[k]));
+			}
+			for( int k = 0; k < unselFeatureOrder.size(); k++)
+			{
+				DataRow->InsertNextValue( UNMatrixAfterCellCluster(id, unselFeatureOrder[k]));
+			}
+
+			table->InsertNextRow(DataRow);
+			count++;
+		}
 	}
 	return table;
 }
