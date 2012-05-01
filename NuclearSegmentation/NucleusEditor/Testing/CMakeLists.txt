@@ -283,6 +283,20 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-ExcludeMargins PROPERTIES
     DEPENDS NucleusEditor-SegmentNuclei
 		PASS_REGULAR_EXPRESSION "margins excluded")
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/classify.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/classify.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-Classify
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/classify.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/classify_baseline.png
+  )
+  set_tests_properties(NucleusEditor-Classify PROPERTIES
+    DEPENDS NucleusEditor-SaveProject)
 
 endif()
 

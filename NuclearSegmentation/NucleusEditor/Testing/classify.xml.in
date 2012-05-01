@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadTableAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/nucleus_table.txt"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu/classifyMenu" command="activate" arguments="trainAction"/>
+    <event widget="1NucleusEditor0/1TrainingDialog0/1QLineEdit1" command="set_string" arguments="1,2,3,4"/>
+    <event widget="1NucleusEditor0/1TrainingDialog0/1QPushButton0" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1TrainingDialog0/1QLineEdit2" command="set_string" arguments="5,7,8,10"/>
+    <event widget="1NucleusEditor0/1TrainingDialog0/1QPushButton5" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/toolMenu/classifyMenu" command="activate" arguments="kplsAction"/>
+    <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/1QFrame0/featuresPage/Features/nonButton" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/1QFrame0/featuresPage/Features/scrollArea/qt_scrollarea_viewport/groupWidget/volume" command="set_boolean" arguments="true"/>
+    <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/doneButton" command="activate" arguments=""/>
+</events>
