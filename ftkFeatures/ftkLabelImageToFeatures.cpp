@@ -163,7 +163,8 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	{
 		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
 	}
-	labFilter->SetLevel( needLevel() );
+	//labFilter->SetLevel( needLevel() );
+	labFilter->SetLevel( 3 );
 	if( needHistogram() )
 		labFilter->ComputeHistogramOn();
 	if( needTextures() )
@@ -217,6 +218,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 				ss2 << ((i%2)+(2*j));
 				column->SetName( ("Zern_"+ss1.str()+"_"+ss2.str()).c_str() );
 				table->AddColumn(column);
+				std::cout<<"computing zernike"<<std::endl;
 			}
 		}
 	}
@@ -357,7 +359,7 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 	}
 	else
 	{
-		labFilter->SetLevel(1);
+		labFilter->SetLevel(3);
 		labFilter->ComputeHistogramOff();
 		labFilter->ComputeTexturesOff();
 	}

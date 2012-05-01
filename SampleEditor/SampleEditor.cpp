@@ -882,6 +882,7 @@ void SampleEditor::biclusheatmap()
 	bicluster->biclustering();
 	bicluster->WriteFile("order1.txt", "order2.txt");
 
+	std::cout<<"begin render heatmap...."<<std::endl;
 	this->biheatmap->setModels(featureTable, selection);
 	this->biheatmap->setDataForHeatmap(bicluster->order1, bicluster->order2);
 	this->biheatmap->setDataForTree1(bicluster->levels1);
@@ -889,17 +890,18 @@ void SampleEditor::biclusheatmap()
 	this->biheatmap->showHeatmap();
 	this->biheatmap->showTree1();
 	this->biheatmap->showTree2();
+	std::cout<<"Done render heatmap...."<<std::endl;
 
 	delete bicluster;
 }
 
 void SampleEditor::SpectralCluserting()
 {
-	std::cout<<" Spectral Clustering Analysis!"<<std::endl;
 	if( this->data->GetNumberOfRows() <= 0)
 	{
 		return;
 	}
+
 	vtkSmartPointer<vtkTable> featureTable;
 	featureTable = this->data;
 	featureTable->RemoveColumnByName("Trace File");		
@@ -908,15 +910,29 @@ void SampleEditor::SpectralCluserting()
 	featureTable->RemoveColumnByName("Soma Z Pos");
 	featureTable->RemoveColumnByName("Distance to Device");
 
-	LocalGeometryRef* lgf= new LocalGeometryRef();
-	lgf->Initialize(featureTable);
-	std::cout<<" Computing similarity matrix !"<<std::endl;
-	lgf->ComputeSimilarityMatrix();
-	std::cout<<" Computing probability matrix !"<<std::endl;
-	lgf->ComputeProbabilityMatrix();
-	std::cout<<" SVDing !"<<std::endl;
-	lgf->SVD(10);
-	std::cout<<" Complete !"<<std::endl;
+	std::vector<std::vector<double > > points;
+	points.resize(this->data->GetNumberOfRows());
+	for(int i = 0; i < this->data->GetNumberOfRows(); i++)
+		for(int j = 1; j < this->data->GetNumberOfColumns(); j++)
+			points[i].push_back(featureTable->GetValue(i,j).ToDouble());
+	Bicluster* bicluster = new Bicluster();
+	bicluster->setDataToBicluster(points);
+	std::cout<<"begin bi-spectral clustering...."<<std::endl;
+	bicluster->bispectralclustering();
+	std::cout<<"Done bi-spectral clustering...."<<std::endl;
+	bicluster->WriteFile("order1.txt", "order2.txt");
+
+	std::cout<<"begin render heatmap...."<<std::endl;
+	this->biheatmap->setModels(featureTable, selection);
+	this->biheatmap->setDataForHeatmap(bicluster->order1, bicluster->order2);
+	this->biheatmap->setDataForTree1(bicluster->levels1);
+	this->biheatmap->setDataForTree2(bicluster->levels2);
+	this->biheatmap->showHeatmap();
+	this->biheatmap->showTree1();
+	this->biheatmap->showTree2();
+	std::cout<<"Done render heatmap...."<<std::endl;
+
+	delete bicluster;
 }
 void SampleEditor::CreateClusterSelection()
 {

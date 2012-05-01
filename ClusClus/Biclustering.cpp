@@ -2,7 +2,7 @@
 
 Bicluster::Bicluster()
 {
-	this->num_iteration = 10;
+	this->num_iteration = 9;
 }
 
 Bicluster::~Bicluster()
@@ -21,6 +21,81 @@ void Bicluster::setDataToBicluster(std::vector<std::vector<double > > & data)
 	this->num_cols = data[0].size();
 }
 
+void Bicluster::bispectralclustering()
+{
+	int iteration = 3;
+	this->Data1 = data;
+	std::vector<std::vector<double > > dataT;
+	dataT = this->transpose(data);
+
+	for(int i = 0; i < iteration; i++)
+	{
+		//compute local geometry reference
+		LocalGeometryRef* lgr1 = new LocalGeometryRef();
+		lgr1->Initialize(this->Data1);
+		lgr1->ComputeSimilarityMatrix();
+		lgr1->ComputeProbabilityMatrix();
+		lgr1->SVD(20);
+		this->Data1 = lgr1->GetEigenVectors(true);
+		delete lgr1;
+
+		//compute tree structure
+		BiTree* tree1 = new BiTree();
+		tree1->setDataToTree(Data1,Data1);
+		tree1->setFirstIterationClusterNumber(10);
+		if(i == iteration - 1)
+			tree1->setReorderFlag(true);
+		tree1->constructTree();
+		this->levels1 = tree1->getLevels();
+		delete tree1;
+		
+		//get order after clustering
+		this->reOrder(this->levels1, 1);
+		int num1 = this->qorder1.size();
+		for(int i = 0; i<num1; i++)
+		{
+			int temp = this->qorder1.front();
+			this->order1.push_back(temp);
+			this->qorder1.pop();
+		}
+
+		//reorganize data for the other direction
+		this->Data2 = reorganize(data, order1);
+
+		//compute local geometry reference for the other direction
+		LocalGeometryRef* lgr2 = new LocalGeometryRef();
+		lgr2->Initialize(this->Data2);
+		lgr2->ComputeSimilarityMatrix();
+		lgr2->ComputeProbabilityMatrix();
+		lgr2->SVD(10);
+		this->Data2 = lgr2->GetEigenVectors(true);
+		delete lgr2;
+
+		//compute tree structure
+		BiTree* tree2 = new BiTree();
+		tree2->setDataToTree(Data2,Data2);
+		tree2->setFirstIterationClusterNumber(10);
+		if(i == iteration - 1)
+			tree2->setReorderFlag(true);
+		tree2->constructTree();
+		this->levels2 = tree2->getLevels();
+		delete tree2;
+
+		//get order after clustering		
+		this->reOrder(this->levels2, 2);
+		int num2 = this->qorder2.size();
+		for(int i = 0; i < num2; i++)
+		{
+			int temp = this->qorder2.front();
+			this->order2.push_back(temp);
+			this->qorder2.pop();
+		}
+
+		//reorganize data for the other direction
+		this->Data1 = reorganize(dataT, order2);
+	}
+}
+
 void Bicluster::biclustering()
 {
 	this->Data1 = data;
@@ -31,7 +106,7 @@ void Bicluster::biclustering()
 		Data1 = this->transpose(Data1);
 		BiTree* tree1 = new BiTree();
 		tree1->setDataToTree(dataT,Data1);
-		tree1->setFirstIterationClusterNumber(25);
+		tree1->setFirstIterationClusterNumber(15);
 		if(i == this->num_iteration - 1)
 			tree1->setReorderFlag(true);
 		tree1->constructTree();
@@ -42,7 +117,7 @@ void Bicluster::biclustering()
 		Data2 = this->transpose(Data2);
 		BiTree* tree2 = new BiTree();
 		tree2->setDataToTree(data,Data2);
-		tree2->setFirstIterationClusterNumber(15);
+		tree2->setFirstIterationClusterNumber(20);
 		if(i == this->num_iteration - 1)
 			tree2->setReorderFlag(true);
 		tree2->constructTree();
@@ -125,6 +200,29 @@ void Bicluster::reOrder(Level_id levels, int flag)
 	}
 }
 
+std::vector<std::vector<double > > Bicluster::reorganize(std::vector<std::vector<double > > datatoreorganize, std::vector<int > order)
+{
+	//reorder data
+	std::vector<std::vector<double > > redata;
+	for(int row = 0; row < datatoreorganize.size(); row++)
+	{
+		redata.push_back(datatoreorganize[order[row]]);
+	}
+
+	//transpose
+	std::vector<std::vector<double > > trandata;
+	for(int col = 0; col < datatoreorganize[0].size(); col++)
+	{
+		std::vector<double > temp;
+		for(int row = 0; row < datatoreorganize.size(); row++)
+		{
+			temp.push_back(redata[row][col]);
+		}
+		trandata.push_back(temp);
+	}
+	return trandata;
+}
+
 void Bicluster::WriteFile(const char *filename1, const char *filename2)
 {
 	FILE *fp1 = fopen(filename1,"w");
@@ -137,3 +235,4 @@ void Bicluster::WriteFile(const char *filename1, const char *filename2)
 		fprintf(fp2,"%d\t",this->order2[i]);			
 	fclose(fp2);
 }
+

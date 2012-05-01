@@ -38,6 +38,7 @@ public:
 	void Initialize(vnl_matrix<double> data);
 	void Normalize();
 	void Initialize(vtkSmartPointer< vtkTable > table);
+	void Initialize(std::vector<std::vector<double > > data);
 	void ComputeSimilarityMatrix(char dis = 'G', int k = 10);
 	void ComputeProbabilityMatrix();
 	void SVD(int num_eigen);
@@ -45,6 +46,7 @@ public:
 	vnl_matrix<double> GetProbabilityMatrix();
 	vnl_vector<double> GetEigenValues();
 	vnl_matrix<double> GetEigenVectors();
+	std::vector<std::vector<double > > GetEigenVectors(bool type);
 
 private:
 	int num_row;

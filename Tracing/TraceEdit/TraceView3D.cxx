@@ -1608,11 +1608,14 @@ void View3D::CreateGUIObjects()
 	this->SPDAnalysisAction = new QAction("SPD Analysis", this->CentralWidget);
 	connect (this->SPDAnalysisAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
-	this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
-	connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
+	//this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
+	//connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 
 	this->BiClusAction= new QAction("BiClus Analysis", this->CentralWidget);
 	connect (this->BiClusAction, SIGNAL(triggered()), this, SLOT(BiclusAnalysis()));
+
+	//this->SpectralClusteringAction= new QAction("SpectralbiClus Analysis", this->CentralWidget);
+	//connect (this->SpectralClusteringAction, SIGNAL(triggered()), this, SLOT(SpectralCluserting()));
 
 #ifndef USE_SPD
 	//this->SPDAction->setDisabled(true);
@@ -1999,6 +2002,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->SPDAnalysisAction);
 	this->analysisViews->addAction(this->ClusclusAction);
 	this->analysisViews->addAction(this->BiClusAction);
+	this->analysisViews->addAction(this->SpectralClusteringAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -6145,6 +6149,47 @@ void View3D::BiclusAnalysis()
 #endif
 }
 
+void View3D::SpectralCluserting()
+{
+	
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	{
+		return;
+	}
+
+	vtkSmartPointer<vtkTable> featureTable;
+	featureTable = this->CellModel->getDataTable();
+	featureTable->RemoveColumnByName("Trace File");		
+	featureTable->RemoveColumnByName("Soma X Pos");
+	featureTable->RemoveColumnByName("Soma Y Pos");
+	featureTable->RemoveColumnByName("Soma Z Pos");
+	featureTable->RemoveColumnByName("Distance to Device");
+
+	std::vector<std::vector<double > > points;
+	points.resize(featureTable->GetNumberOfRows());
+	for(int i = 0; i < featureTable->GetNumberOfRows(); i++)
+		for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
+			points[i].push_back(featureTable->GetValue(i,j).ToDouble());
+	Bicluster* bicluster = new Bicluster();
+	bicluster->setDataToBicluster(points);
+	std::cout<<"begin bi-spectral clustering...."<<std::endl;
+	bicluster->bispectralclustering();
+	std::cout<<"Done bi-spectral clustering...."<<std::endl;
+	bicluster->WriteFile("order1.txt", "order2.txt");
+
+	std::cout<<"begin render heatmap...."<<std::endl;
+	this->Biheatmap = new BiHeatmap ();
+	this->Biheatmap->setModels(featureTable, this->CellModel->GetObjectSelection());
+	this->Biheatmap->setDataForHeatmap(bicluster->order1, bicluster->order2);
+	this->Biheatmap->setDataForTree1(bicluster->levels1);
+	this->Biheatmap->setDataForTree2(bicluster->levels2);
+	this->Biheatmap->showHeatmap();
+	this->Biheatmap->showTree1();
+	this->Biheatmap->showTree2();
+	std::cout<<"Done render heatmap...."<<std::endl;
+
+	delete bicluster;
+}
 void View3D::selectedFeaturesClustering()
 {
 #ifdef USE_Clusclus

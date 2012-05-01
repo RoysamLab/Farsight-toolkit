@@ -274,7 +274,7 @@ public slots:
 	void SPDAnalysis();
 	void ClusclusAnalysis();
 	void BiclusAnalysis();
-	/////////////////////////////////////////////////////////////
+	void SpectralCluserting();
 	void selectedFeaturesClustering();
 
 //these are for bootloadfile
@@ -443,6 +443,7 @@ private:
 	QAction *SPDAnalysisAction;
 	QAction *ClusclusAction;
 	QAction *BiClusAction;
+	QAction *SpectralClusteringAction;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/

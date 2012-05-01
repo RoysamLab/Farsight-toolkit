@@ -3,6 +3,7 @@
 
 #include <queue>
 #include "Tree.h"
+#include "LocalGeometryRef.h"
 
 class Bicluster
 {
@@ -11,6 +12,9 @@ public:
 	~Bicluster();
 	void setDataToBicluster(std::vector<std::vector<double > > & data);
 	void biclustering();
+	void bispectralclustering();
+	std::vector<std::vector<double > > reorganize(std::vector<std::vector<double > > datatoreorganize, std::vector<int > order);
+
 	void WriteFile(const char *filename1, const char *filename2);
 
 	std::vector<int > order1;

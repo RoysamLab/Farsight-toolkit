@@ -25,7 +25,7 @@ void LocalGeometryRef::Initialize(vnl_matrix<double> data)
 void LocalGeometryRef::Initialize(vtkSmartPointer< vtkTable > table)
 {
 	this->num_row = table->GetNumberOfRows();
-	this->num_col = table->GetNumberOfColumns();
+	this->num_col = table->GetNumberOfColumns() - 1;
 	this->data_matrix.set_size(this->num_row, this->num_col);
 
 	for(int row = 0; row < this->num_row; row++)
@@ -40,6 +40,29 @@ void LocalGeometryRef::Initialize(vtkSmartPointer< vtkTable > table)
 			else
 			{
 				this->data_matrix(row, col - 1) = 0;
+			}	
+		}
+	}
+}
+
+void LocalGeometryRef::Initialize(std::vector<std::vector<double > > data)
+{
+	this->num_row = data.size();
+	this->num_col = data[0].size();
+	this->data_matrix.set_size(this->num_row, this->num_col);
+
+	for(int row = 0; row < this->num_row; row++)
+	{
+		for(int col = 0; col < this->num_col; col++)
+		{
+			double var = data[row][col];
+			if( !boost::math::isnan(var))
+			{
+				this->data_matrix(row, col) = var;
+			}
+			else
+			{
+				this->data_matrix(row, col) = 0;
 			}	
 		}
 	}
@@ -101,7 +124,7 @@ double LocalGeometryRef::ComputeSimilarity(vnl_vector<double> dt1, vnl_vector<do
 	switch(dis)
 	{
 	case 'G':
-		return exp( -((dt1-dt2).squared_magnitude()) / (2*pow((double)2/*sigma*/, 2)) );
+		return exp( -((dt1-dt2).squared_magnitude()) / (2*pow((double)1.25, 2)) );
 		break;
 	case 'E':
 		break;
@@ -144,7 +167,22 @@ void LocalGeometryRef::ComputeProbabilityMatrix()
 	{
 		for(int col=0; col<this->num_row; col++)
 		{
-			this->probability_matrix(row,col) = this->similarity_matrix(row,col)/D(row, row);
+			if( fabs(D(row, row)) < 1.0E-6 )
+			{
+				this->probability_matrix(row,col) = this->similarity_matrix(row,col)/1;
+			}
+			else
+			{
+				this->probability_matrix(row,col) = this->similarity_matrix(row,col)/D(row, row);
+			}
+		}
+	}
+
+	for(int row=0; row <this->num_row; row++)
+	{
+		if( fabs(D(row, row)) < 1.0E-6 )
+		{
+			D(row, row) = 0.0005;
 		}
 	}
 
@@ -275,4 +313,23 @@ vnl_vector<double> LocalGeometryRef::GetEigenValues()
 vnl_matrix<double> LocalGeometryRef::GetEigenVectors()
 {
 	return this->eigVecs;
+}
+
+std::vector<std::vector<double > > LocalGeometryRef::GetEigenVectors(bool type)
+{
+	if(type == true)
+	{
+		std::vector<std::vector<double > > eigenvectors;
+		for(int row = 0 ; row < this->eigVecs.rows(); row++)
+		{
+			std::vector<double > temp;
+			for(int col = 0 ; col < this->eigVecs.columns(); col++)
+			{
+				temp.push_back(this->eigVecs(row, col));
+			}
+			eigenvectors.push_back(temp);
+		}
+
+		return eigenvectors;	
+	}
 }
