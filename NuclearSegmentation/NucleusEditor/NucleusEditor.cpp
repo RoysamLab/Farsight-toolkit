@@ -2945,6 +2945,13 @@ void NucleusEditor::queryKNearest()
 	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 	segView->SetKNeighborTable(kNeighborTable);
 	segView->SetKNeighborsVisibleOn(k_mutual);		
+
+	#ifdef USE_QT_TESTING
+	std::cout << kNeighborTable->GetNumberOfRows() << " neighbors potentially connected" << std::endl;
+	#endif
+
+	delete KNObj;
+	KNObj = NULL;
 }
 
 double NucleusEditor::average(std::vector< std::pair<unsigned int, double> > ID)
