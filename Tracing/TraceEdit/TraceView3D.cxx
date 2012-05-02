@@ -2012,9 +2012,9 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 	//this->analysisViews->addAction(this->SPDAction);
 	this->analysisViews->addAction(this->SPDAnalysisAction);
-	this->analysisViews->addAction(this->ClusclusAction);
+	//this->analysisViews->addAction(this->ClusclusAction);
 	this->analysisViews->addAction(this->BiClusAction);
-	this->analysisViews->addAction(this->SpectralClusteringAction);
+	//this->analysisViews->addAction(this->SpectralClusteringAction);
 
 	//this->ShowToolBars->addSeparator();
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
