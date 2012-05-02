@@ -312,6 +312,19 @@ if(QtTestingFound)
   )
   set_tests_properties(NucleusEditor-ChangeClass PROPERTIES
     DEPENDS NucleusEditor-Classify)
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/KNN.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/KNN.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-KNN
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/KNN.xml
+  )
+  set_tests_properties(NucleusEditor-KNN PROPERTIES
+    PASS_REGULAR_EXPRESSION "5 neighbors potentially connected"
+    DEPENDS NucleusEditor-Classify)
 
 endif()
 
