@@ -157,6 +157,7 @@ public slots:
 	void zoomOut(){ zoom( ZoomOutFactor ); };
 	void getSnapshots();
 	QImage getSnapshotforID(int id);
+	QImage getSnapshotforID_1(int id);
 
 
 

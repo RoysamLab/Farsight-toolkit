@@ -497,6 +497,31 @@ QImage LabelImageViewQT::getSnapshotforID(int id)
 	return snapshot;
 }
 
+QImage LabelImageViewQT::getSnapshotforID_1(int id)
+{	
+	QImage snapshot;
+	//if(!centerMap) return snapshot;
+	this->showCrosshairs = true;
+	selection->select(id);
+
+	const ftk::Image::Info *info;
+	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image	
+	
+	int h = (*info).numRows;
+	int w = (*info).numColumns;
+	
+	boundsImage = QImage(w, h, QImage::Format_ARGB32_Premultiplied);	
+	boundsImage.fill(qRgba(0,0,0,0));
+
+	QPainter painter(&boundsImage);
+	this->drawSelectionCrosshairs(&painter);
+	this->repaint();
+
+	ftk::Object::Point center = (*centerMap)[id];
+	snapshot = displayImage.copy(center.x-10, center.y-10,20,20).scaledToHeight(70);
+	return snapshot;
+}
+
 
 
 void LabelImageViewQT::SaveDisplayImageToFile(QString fileName)
