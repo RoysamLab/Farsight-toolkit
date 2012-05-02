@@ -6135,6 +6135,11 @@ void View3D::SPDAnalysis()
 		//mes.setText("Please compute cell features first!");
 		//mes.exec();
 	}
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 5)
+	{
+		std::cout<<"This analysis is for dataset larger than 5 "<<std::endl;
+		return;
+	}
 	else
 	{
 		vtkSmartPointer<vtkTable> featureTable;
@@ -6204,6 +6209,11 @@ void View3D::BiclusAnalysis()
 		mes.setText("Please compute cell features first!");
 		mes.exec();
 	}
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 5)
+	{
+		std::cout<<"This analysis is for dataset larger than 5 "<<std::endl;
+		return;
+	}
 	else
 	{
 
@@ -6255,6 +6265,13 @@ void View3D::SpectralCluserting()
 	
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
+		QMessageBox mes;
+		mes.setText("Please compute cell features first!");
+		mes.exec();
+	}
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 5)
+	{
+		std::cout<<"This analysis is for dataset larger than 5 "<<std::endl;
 		return;
 	}
 
