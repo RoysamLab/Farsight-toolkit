@@ -905,11 +905,11 @@ void BiHeatmap::SelectionCallbackFunctionRightButtonDown(vtkObject* caller, long
 	}
 	else if(worldPosition[0]<-0.5 && worldPosition[1]<0.5)
 	{
-		heatmap->addDragLine1(worldPosition);
+		//heatmap->addDragLine1(worldPosition);
 	}	
 	else if(worldPosition[0]>-0.5 && worldPosition[1]>0.5)
 	{
-		heatmap->addDragLine2(worldPosition);
+		//heatmap->addDragLine2(worldPosition);
 	}
 }
 
