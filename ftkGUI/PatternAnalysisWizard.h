@@ -46,7 +46,9 @@ limitations under the License.
 #include <float.h>
 
 #include <PatternAnalysis/libsvm/svm.h>
+#ifdef USE_KPLS
 #include <PatternAnalysis/embrex/kpls.h>
+#endif
 
 
 class PatternAnalysisWizard : public QWizard
