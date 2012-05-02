@@ -298,6 +298,20 @@ if(QtTestingFound)
   )
   set_tests_properties(NucleusEditor-Classify PROPERTIES
     DEPENDS NucleusEditor-ExcludeMargins)
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/change_class.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/change_class.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-ChangeClass
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/change_class.xml
+    --baseline
+    ${NucleusEditor_TEST_DIR}/change_class_baseline.png
+  )
+  set_tests_properties(NucleusEditor-ChangeClass PROPERTIES
+    DEPENDS NucleusEditor-Classify)
 
 endif()
 

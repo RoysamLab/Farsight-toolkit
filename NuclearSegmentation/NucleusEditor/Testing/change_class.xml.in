@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadTableAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/classified_table.txt"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,0,22,4,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,0,22,4,/0:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="6,16777248,33554432,,0,1"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,33554432,22,8,/1:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,33554432,22,8,/1:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mousePress" arguments="1,1,33554432,21,8,/2:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="mouseRelease" arguments="1,0,33554432,21,8,/2:0"/>
+    <event widget="1TableWindow0/1QTableView0" command="keyEvent" arguments="7,16777248,0,,0,1"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="toolMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/editMenu" command="activate" arguments="classAction"/>
+    <event widget="1NucleusEditor0/1ChangeClassDialog0/1QComboBox1" command="set_string" arguments="2"/>
+    <event widget="1NucleusEditor0/1ChangeClassDialog0/1QPushButton0" command="activate" arguments=""/>
+</events>
