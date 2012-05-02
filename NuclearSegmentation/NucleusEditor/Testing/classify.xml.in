@@ -19,4 +19,7 @@
     <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/1QFrame0/featuresPage/Features/nonButton" command="activate" arguments=""/>
     <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/1QFrame0/featuresPage/Features/scrollArea/qt_scrollarea_viewport/groupWidget/volume" command="set_boolean" arguments="true"/>
     <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/doneButton" command="activate" arguments=""/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="saveTableAction"/>
+    <event widget="Farsight-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/classified_table.txt"/>
 </events>
