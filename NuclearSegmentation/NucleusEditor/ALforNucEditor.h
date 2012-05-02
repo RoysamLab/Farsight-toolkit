@@ -52,12 +52,12 @@ class ALforNucEd : public QWidget
 	Q_OBJECT;
 
 public:
-	ALforNucEd();
+	ALforNucEd( bool val=false );
 	~ALforNucEd();
 
 	inline void SetTablesToClassify(std::vector< vtkSmartPointer< vtkTable > > tbls){ classificationTables = tbls; };
 	inline void SetTableForTraining(vtkSmartPointer< vtkTable > tbl){ trainingTable = tbl; };
-	inline void SetLabelView(LabelImageViewQT *view){ labelView = view; };
+	void SetLabelView(LabelImageViewQT *view);
 	void RunALClassification(bool from_model);
 	inline std::vector< vtkSmartPointer< vtkTable > > GetClassificationResult(){ return classificationTables; };
 	inline std::vector< std::pair< std::string, vnl_vector<double> > > GetALModel(){ return activeModel; };
@@ -77,6 +77,7 @@ private:
 	vtkSmartPointer< vtkTable > trainingTable;
 	LabelImageViewQT *labelView;
 	PatternAnalysisWizard *pWizard;
+	bool pixel_class;
 
 	#ifdef	USE_Clusclus
 		Heatmap *HeatmapWin;		

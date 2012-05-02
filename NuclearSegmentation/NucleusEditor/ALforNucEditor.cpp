@@ -1,8 +1,9 @@
 
 #include "ALforNucEditor.h"
 
-ALforNucEd::ALforNucEd()
+ALforNucEd::ALforNucEd(bool val)
 {	
+	pixel_class = val;
 	confidence_thresh = 0.5;
 	prediction_col_name = "prediction_active";
 	confidence_col_name = "confidence";
@@ -20,6 +21,26 @@ ALforNucEd::~ALforNucEd()
 	{
 		delete mclr;
 	}	
+}
+
+void ALforNucEd::SetLabelView(LabelImageViewQT *view)
+{
+	labelView = view;
+	if(pixel_class)
+	{
+		std::map<int, ftk::Object::Point> * pixelLocationMap;
+		for(int row=0; row<(int)trainingTable->GetNumberOfRows(); ++row)
+		{
+			int id = trainingTable->GetValue(row,0).ToInt();
+			ftk::Object::Point centroid;
+			centroid.x = trainingTable->GetValue(row,1).ToInt();
+			centroid.y = trainingTable->GetValue(row,2).ToInt();
+			centroid.z = 0;
+			(*pixelLocationMap)[id] = centroid;
+		}
+		labelView->SetCenterMapPointer(pixelLocationMap);
+	}
+
 }
 
 void ALforNucEd::RunALClassification(bool val)
@@ -284,7 +305,11 @@ void ALforNucEd::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > 
 	{	
 		if(classificationTables.size() > 1)
 			labelView->SetCurrentTimeVal(mclr->id_time_val.at(active_queries[i]).second);
-		snapshots[i] =(labelView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
+		if(!pixel_class)
+			snapshots[i] =(labelView->getSnapshotforID(mclr->id_time_val.at(active_queries[i]).first));	
+		else
+			snapshots[i] = labelView->getSnapshotforID_1(mclr->id_time_val.at(active_queries[i]).first);
+
 	}
 	
 	
