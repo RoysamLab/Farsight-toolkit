@@ -21,5 +21,5 @@
     <event widget="1NucleusEditor0/1PatternAnalysisWizard0/wizardWidget/doneButton" command="activate" arguments=""/>
     <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
     <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="saveTableAction"/>
-    <event widget="Farsight-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/classified_table.txt"/>
+    <event widget="@AppName@-app" command="FileSave" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/classified_table.txt"/>
 </events>
