@@ -273,6 +273,34 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, 
 											double alfa, double beta, int timethreshold, double curvatureScaling, double rmsThres, int holeSize, int minObjSize)
 {
+	//typedef itk::NearestNeighborInterpolateImageFunction< ProbImageType, float>  InterpolatorType;
+	//InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
+	//I_Interpolator->SetInputImage(input);
+
+	int SM = input->GetLargestPossibleRegion().GetSize()[0];
+    int SN = input->GetLargestPossibleRegion().GetSize()[1];
+    int SZ = input->GetLargestPossibleRegion().GetSize()[2];
+	std::cout<<SM<<"\t"<<SN<<"\t"<<SZ<<std::endl;
+
+	////move the seed points along z axis
+ //   for( int i = 0; i < somaCentroids.size(); i++ )
+	//{
+	//	SegmentedImageType::IndexType index;
+	//	SegmentedImageType::IndexType index1;
+	//	index[0] = index1[0] = somaCentroids[i][0];
+	//	index[1] = index1[1] = somaCentroids[i][1];
+	//	index[2] = somaCentroids[i][2];
+	//	for( int j = 0; j < SZ; j++ )
+	//	{
+	//		index1[2] = j;
+	//		if( I_Interpolator->EvaluateAtIndex(index1) > I_Interpolator->EvaluateAtIndex(index) )
+	//		{
+	//			somaCentroids[i][2] = j;
+	//			index[2] = j;
+	//		}
+	//	}
+	//}
+
 	std::cout << "RescaleIntensity"<<endl;
     SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
 	sigmoidFilter->SetInput(input);
@@ -285,6 +313,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
     NodeContainer::Pointer seeds = NodeContainer::New();
     seeds->Initialize();
 
+	std::cout<< "Seed Size"<< somaCentroids.size()<<std::endl;
 	for( int i = 0; i< somaCentroids.size(); i++ )
 	{
 		ProbImageType::IndexType  seedPosition;

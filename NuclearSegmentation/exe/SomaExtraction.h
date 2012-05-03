@@ -36,7 +36,7 @@ public:
 	typedef unsigned int TLPixel;
 	typedef itk::Image< unsigned char, Dim > OutputImageType;
 	typedef itk::Image< float, Dim > ProbImageType;
-	typedef itk::Image< float, Dim - 1 > ProbImageSliceType;
+	typedef itk::Image< float, Dim > ProbImageSliceType;
 	typedef itk::Image< TLPixel, Dim > SegmentedImageType;
 
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;

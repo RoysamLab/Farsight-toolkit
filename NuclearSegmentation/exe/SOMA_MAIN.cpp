@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	{
 		std::cout<<"MakeDices: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
 		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <SomaCentroids.txt> <SomaImage.tif> <alfa 1> <beta 30> <Time Threshold (typically near 10)> <Curvature Scaling (typically 0.5)>\
-					<RMS Error (typically 0.02)> <Min Object Size (typically 1500)> <Nucleus Table:1; Centroids table:0>\n";
+					<RMS Error (typically 0.02)> <Hole Size (typically 10)> <Min Object Size (typically 1500)> <Nucleus Table:1; Centroids table:0>\n";
 		return 0;
 	}
 

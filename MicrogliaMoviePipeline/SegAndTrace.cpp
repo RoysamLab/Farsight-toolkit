@@ -46,6 +46,7 @@ void MicrogliaMovieSegTracer::StartSegTracing(const char* filename, const char* 
 
 		CasterTypeCharToFloat::Pointer cast2float = CasterTypeCharToFloat::New();
 		cast2float->SetInput( inputImage);
+		cast2float->Update();
 
 		std::cout<<seedVec.size()<< "Segment Somas..."<<std::endl;
 		LabelImageType::Pointer segImage = SegmentSoma( cast2float->GetOutput(), seedVec);
