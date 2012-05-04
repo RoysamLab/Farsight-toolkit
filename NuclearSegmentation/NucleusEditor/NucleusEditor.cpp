@@ -3959,6 +3959,9 @@ void NucleusEditor::splitCellAlongZ(void)
 			log_entry += ", ";
 			log_entry += ftk::TimeStamp();
 			ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
+			#ifdef USE_QT_TESTING
+			std::cout << "split along Z" << std::endl;
+			#endif
 		}
 	}
 	this->updateViews();

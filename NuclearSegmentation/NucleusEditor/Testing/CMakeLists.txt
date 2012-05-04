@@ -336,6 +336,19 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-QueryRadius PROPERTIES
     PASS_REGULAR_EXPRESSION "3 neighbors in radius"
     DEPENDS NucleusEditor-KNN)
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/split_along_z.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/split_along_z.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-SplitAlongZ
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/split_along_z.xml
+  )
+  set_tests_properties(NucleusEditor-SplitAlongZ PROPERTIES
+    PASS_REGULAR_EXPRESSION "split along Z"
+    DEPENDS NucleusEditor-QueryRadius)
 
 endif()
 

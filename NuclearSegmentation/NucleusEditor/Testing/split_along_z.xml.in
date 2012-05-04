@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QSlider0" command="set_int" arguments="11"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mousePress" arguments="1,1,0,101,98"/>
+    <event widget="1NucleusEditor0/1LabelImageViewQT0/1QScrollArea0/qt_scrollarea_viewport/1QLabel0" command="mouseRelease" arguments="1,0,0,101,98"/>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="editMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/editMenu" command="activate" arguments="splitZAction"/>
+</events>
