@@ -6262,7 +6262,7 @@ void View3D::BiclusAnalysis()
 
 void View3D::SpectralCluserting()
 {
-	
+#ifdef USE_Clusclus
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		QMessageBox mes;
@@ -6307,7 +6307,11 @@ void View3D::SpectralCluserting()
 	std::cout<<"Done render heatmap...."<<std::endl;
 
 	delete bicluster;
+#else
+	std::cout << "TraceEdit was compiled with USE_Clusclus = OFF" << std::endl;
+#endif
 }
+
 void View3D::selectedFeaturesClustering()
 {
 #ifdef USE_Clusclus
