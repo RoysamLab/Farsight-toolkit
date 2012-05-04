@@ -160,7 +160,7 @@ void SaveCellExportDialog::swcBrowse()
 {
 	curdirectoryswc = QFileDialog::getExistingDirectory(this, tr("Choose Directory for SWC files"), 
 															QFileInfo(curdirectoryswc).dir().canonicalPath());
-	if (!curdirectoryswc.isEmpty()) 
+	if (!curdirectoryswc.isEmpty())
 	{
 		if (swcdirectoryComboBox->findText(curdirectoryswc) == -1)
 		{

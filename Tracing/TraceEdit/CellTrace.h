@@ -65,7 +65,7 @@ public:
 	int NumSegments, stems, branchPoints, terminalTips, actualBifurcations, branchingStem;
 	int MinTerminalLevel, MaxTerminalLevel, SumTerminalLevel;
 
-	int FragmentationTotal, FragmentationMin, FragmentationMax;
+	int    FragmentationTotal, FragmentationMin, FragmentationMax;
 	double BurkTaperTotal, BurkTaperMin, BurkTaperMax;
 	double HillmanTaperTotal, HillmanTaperMin, HillmanTaperMax;
 	double HillmanThreshTotal, HillmanThreshMin, HillmanThreshMax;
@@ -78,10 +78,10 @@ public:
 	double TotalVolume, SegmentVolumeMin, SegmentVolumeMax;
 	double TotalEuclideanPath, MinEuclideanPath, MaxEuclideanPath;
 	double TerminalPathLength, TerminalPathLengthMax, TerminalPathLengthMin;
-	int TerminalSegmentTotal, TerminalSegmentMax, TerminalSegmentMin;
-	float somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ, skewnessX, skewnessY, skewnessZ, euclideanSkewness; 
+	int	   TerminalSegmentTotal, TerminalSegmentMax, TerminalSegmentMin;
+	float  somaX, somaY, somaZ, maxX, maxY, maxZ, minX, minY, minZ, skewnessX, skewnessY, skewnessZ, euclideanSkewness; 
 
-	float sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
+	float  sectionAreaTotal, SectionAreaMin, SectionAreaMax, surfaceAreaTotal, SurfaceAreaMax, SurfaceAreaMin;
 	double somaVolume, somaSurface, somaRadii, DiamThresholdTotal, DiamThresholdMin, DiamThresholdMax;
 	double MinStemDistance, MaxStemDistance, TotalStemDistance, EstimatedSomaRadius;
 
@@ -91,7 +91,7 @@ public:
 	double BifAmplLocal, BifAmplRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
 	double BifAmplLocalMin, BifAmplRemoteMin, BifTiltLocalMin, BifTiltRemoteMin, BifTorqueLocalMin, BifTorqueRemoteMin;
 	double BifAmplLocalMax, BifAmplRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;
-	int BifTiltLocalCount, BifTiltRemoteCount, BifTorqueLocalCount, BifTorqueRemoteCount;
+	int    BifTiltLocalCount, BifTiltRemoteCount, BifTorqueLocalCount, BifTorqueRemoteCount;
 
 	double daughterRatioMin, parentDaughterRatioMin, partitionAsymmetryMin, rallPowerMin, PkMin, Pk_2Min, Pk_classicMin;
 	double daughterRatioMax, parentDaughterRatioMax, partitionAsymmetryMax, rallPowerMax, PkMax, Pk_2Max, Pk_classicMax;

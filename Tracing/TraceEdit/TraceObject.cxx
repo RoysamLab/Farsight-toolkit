@@ -1330,6 +1330,72 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 	//printf("leaving recursive call\n");
 }
 
+void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkPoints> line_points, vtkSmartPointer<vtkCellArray> line_cells)
+{
+	TraceLine::TraceBitsType tbits;
+	TraceLine::TraceBitsType::iterator iter=tline->GetTraceBitIteratorBegin();
+	double point[3];
+	unsigned int return_id;
+	unsigned int cell_id;
+	unsigned int old_id;
+
+	std::vector<unsigned int>* cell_id_array=tline->GetMarkers();
+	cell_id_array->clear();
+
+	point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
+	return_id = line_points->InsertNextPoint(point);
+	//hashp[return_id]=(unsigned long long int)tline;
+	iter->marker = return_id;
+
+	//if(this->ColorByTrees)
+	//{
+	//	point_scalars->InsertNextTuple1(tline->getTraceColor());
+	//}
+	//else
+	//{
+	//	point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
+	//}
+
+	//To add a line between parent line's last point and the first point in the current line
+	if(tline->GetParent() != NULL)
+	{
+		//printf("I should not have a parent at all! why did I come here?\n");
+		if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
+		{
+			cell_id = line_cells->InsertNextCell(2);
+			cell_id_array->push_back(cell_id);
+			//hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
+			line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
+			line_cells->InsertCellPoint(return_id);
+		}
+	}
+	// Rest of the lines for the current tline 
+	iter++;
+	while(iter!=tline->GetTraceBitIteratorEnd())
+	{
+		//printf("in loop %d\n",++pc);
+		old_id = return_id;
+		point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
+		return_id = line_points->InsertNextPoint(point);
+		//hashp[return_id]=(unsigned long long int)tline;
+		iter->marker = return_id;
+
+		//point_scalars->InsertNextTuple1(tline->getTraceColor());
+		cell_id = line_cells->InsertNextCell(2);
+		cell_id_array->push_back(cell_id);
+		//hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
+		line_cells->InsertCellPoint(old_id);
+		line_cells->InsertCellPoint(return_id);
+		++iter;
+	}
+	// Recursive calls to the branches if they exist 
+	for(unsigned int counter=0; counter<tline->GetBranchPointer()->size(); counter++)
+	{
+		//printf("I should be having children too! what am I doing here?\n");
+		CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],line_points,line_cells);
+	}
+}
+
 void TraceObject::CollectTraceBitsRecursive(std::vector<TraceBit> &vec,TraceLine *l)
 {
 	TraceLine::TraceBitsType *p = l->GetTraceBitsPointer();
@@ -1380,6 +1446,56 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 
 }
 
+vtkSmartPointer<vtkActor> TraceObject::GetDelaunayActor( TraceLine * root )
+{
+	vtkSmartPointer<vtkPoints> line_points = vtkSmartPointer<vtkPoints>::New();
+	line_points->SetDataTypeToDouble();
+	vtkSmartPointer<vtkCellArray> line_cells = vtkSmartPointer<vtkCellArray>::New();
+
+	vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+	//polydata for a tree
+	CreatePolyDataRecursive(root,line_points,line_cells);
+
+	polydata->SetPoints(line_points);
+	polydata->SetLines(line_cells);
+	
+	//vtkUnstructuredGrid * profile = vtkUnstructuredGrid::New();
+	//profile->SetPoints(line_points);
+
+	// Generate a tetrahedral mesh from the input points. By
+	// default, the generated volume is the convex hull of the points.
+	vtkSmartPointer<vtkDelaunay3D> delaunay3D = vtkSmartPointer<vtkDelaunay3D>::New();
+	delaunay3D->SetInput(polydata);
+	delaunay3D->Update();
+
+	vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+	surfaceFilter->SetInputConnection(delaunay3D->GetOutputPort());
+	surfaceFilter->Update();
+
+	vtkSmartPointer<vtkDataSetMapper> delaunayMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+	delaunayMapper->SetInputConnection(surfaceFilter->GetOutputPort());
+
+	vtkSmartPointer<vtkActor> delaunayActor = vtkSmartPointer<vtkActor>::New();
+	delaunayActor->SetMapper(delaunayMapper);
+	delaunayActor->GetProperty()->SetColor(1,0,0);
+
+	//// Generate a mesh from the input points. If Alpha is non-zero, then
+	//// tetrahedra, triangles, edges and vertices that lie within the
+	//// alpha radius are output.
+	//vtkSmartPointer<vtkDelaunay3D> delaunay3DAlpha = vtkSmartPointer<vtkDelaunay3D>::New();
+	//delaunay3DAlpha->SetInput(polydata);
+	//delaunay3DAlpha->SetAlpha(0.1);
+
+	//vtkSmartPointer<vtkDataSetMapper> delaunayAlphaMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+	//delaunayAlphaMapper->SetInputConnection(delaunay3DAlpha->GetOutputPort());
+
+	//vtkSmartPointer<vtkActor> delaunayAlphaActor = vtkSmartPointer<vtkActor>::New();
+	//delaunayAlphaActor->SetMapper(delaunayAlphaMapper);
+	//delaunayAlphaActor->GetProperty()->SetColor(1,0,0);
+
+	//Render?
+	return delaunayActor;
+}
 
 std::vector<int> TraceObject::GetTreeIDs(TraceLine * root)
 {

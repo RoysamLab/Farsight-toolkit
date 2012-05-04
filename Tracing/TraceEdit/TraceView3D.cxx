@@ -1403,6 +1403,11 @@ void View3D::CreateGUIObjects()
 	this->markTraceBits->setChecked(this->renderTraceBits);
 	connect(this->markTraceBits, SIGNAL(clicked()), this, SLOT(activateSaveAllButton()));
 
+	this->convexHull = new QCheckBox("Convex Hull",this->SettingsWidget);
+	this->convexHull->setObjectName("convexHull");
+	this->convexHull->setChecked(this->renderConvexHull);
+	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(ShowDelaunay3D()));
+
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setObjectName("BackgroundRBox");
 	this->BackgroundRBox->setRange(0,1);
@@ -1847,6 +1852,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Projection plane: "),this->RotateImageUpCombo);
 	//DisplayLayout->addRow(tr("2D Projection: "),this->ProjectionAxisCombo);
 	DisplayLayout->addRow(this->markTraceBits);
+	DisplayLayout->addRow(this->convexHull);
 	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
 	SettingsBox->addWidget(displaySettings);
 
@@ -3387,6 +3393,7 @@ void View3D::ShowSettingsWindow()
 	this->BackgroundGBox->setValue(this->backColorG);
 	this->BackgroundBBox->setValue(this->backColorB);
 	this->markTraceBits->setChecked(this->renderTraceBits);
+	this->convexHull->setChecked(this->renderConvexHull);
 	this->SettingsWidget->show();
 }
 
@@ -3420,13 +3427,14 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
 	this->renderTraceBits = this->markTraceBits->isChecked();
+	this->renderConvexHull = this->convexHull->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
 	if (gridShown)
 	{
 		this->AdjustGridlines(0);
 	}
-	//this->UpdateLineActor();
+	//this->UpdateLineActor(); //What does this do?
 	this->QVTK->GetRenderWindow()->Render();
 	this->Rerender();
 }
@@ -4400,6 +4408,14 @@ void View3D::ListSelections()
 	selectionInfo->setText(listText);
 	selectionInfo->setDetailedText(selectedText);
 	selectionInfo->show();
+}
+void View3D::ShowDelaunay3D()
+{
+	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
+	for (unsigned int i = 0; i < Selections.size(); i++)
+	{
+		this->Renderer->AddActor(this->tobj->GetDelaunayActor(Selections[i]));
+	}
 }
 void View3D::ShowTreeData()   /// modified to table with null
 {

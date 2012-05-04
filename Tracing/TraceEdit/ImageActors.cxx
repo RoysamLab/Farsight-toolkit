@@ -320,7 +320,7 @@ void ImageRenderActors::syncSomaOpacityTransferFunction()
 	{
 		if (this->LoadedImages[i]->tag.compare("Soma")==0)
 		{		
-			if(this->LoadedImages[i]->volume)
+			if(this->LoadedImages[i]->volume != 0)
 			{
 				this->LoadedImages[i]->volumeProperty->SetScalarOpacity(opacityTransferFunctionSoma);
 				this->LoadedImages[i]->volume->Update();

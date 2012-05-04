@@ -19,9 +19,20 @@ limitations under the License.
 #include <set>
 #include <map>
 #include <vtksys/hash_map.hxx> /* Platform independent hashmap */
+#include "vtkActor.h"
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
 #include "vtkIdTypeArray.h"
+
+#include "vtkCellArray.h"
+#include "vtkProperty.h"
+#include "vtkDataSetMapper.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkMath.h"
+#include "vtkDelaunay3D.h"
+#include "vtkUnstructuredGrid.h"
+#include "vtkDataSetSurfaceFilter.h"
 
 class TraceBit;
 class TraceLine;
@@ -103,11 +114,12 @@ public:
 	int getNewLineId();
 	int GetMaximumBitId();
 	void splitTrace(int selectedCellId);
-	void ReverseSegment(TraceLine*);
-	void RemoveTraceLine(TraceLine*);
+	void ReverseSegment(TraceLine* tline);
+	void RemoveTraceLine(TraceLine* tline);
 	void FixPointMarkers(TraceLine* tline);
 	void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
-	void CreatePolyDataRecursive(TraceLine* , vtkSmartPointer<vtkFloatArray> , vtkSmartPointer<vtkPoints> ,vtkSmartPointer<vtkCellArray>);
+	void CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells);
+	void CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells);
 	void FindMinLines(int smallSize);
 	void FindFalseSpines(int maxBit, int maxLength);
 	void FindFalseBridges(int maxBit);
@@ -129,6 +141,7 @@ public:
 	//  public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
+	vtkSmartPointer<vtkActor> GetDelaunayActor( TraceLine * root );
 	void Print(std::ostream &c);
 
 	TraceLine* findTraceByID(int id);

@@ -194,6 +194,7 @@ public slots:
 	void SaveToFile();
 	void SaveProjectFile();
 	void SaveSelected();
+	void ShowDelaunay3D();
 	void ShowTreeData();
 	void ShowCellAnalysis();
 	void ShowSettingsWindow();
@@ -482,6 +483,7 @@ private:
 #endif
 
 	bool renderTraceBits;
+	bool renderConvexHull;
 	bool projectLoadedState;
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
@@ -492,7 +494,7 @@ private:
 	QDoubleSpinBox *ColorValueField;
 	QDoubleSpinBox *TipColor;
 	QSpinBox *LineWidthField;
-	QCheckBox * markTraceBits;
+	QCheckBox * markTraceBits, * convexHull;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;
