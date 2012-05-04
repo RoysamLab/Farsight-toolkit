@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<events>
+    <event widget="1NucleusEditor0/1QMenuBar0" command="activate" arguments="fileMenu"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadImageAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/C1-1unmixed-crop.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadLabelAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/results.tif"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/fileMenu" command="activate" arguments="loadTableAction"/>
+    <event widget="@AppName@-app" command="FileOpen" arguments="@Farsight_BINARY_DIR@/Testing/Temporary/classified_table.txt"/>
+    <event widget="1NucleusEditor0/1QMenuBar0/queriesMenu" command="activate" arguments="inRadiusNeighborsAction"/>
+    <event widget="1NucleusEditor0/1QueryDialog0/1QLineEdit0" command="set_string" arguments="1"/>
+    <event widget="1NucleusEditor0/1QueryDialog0/1QLineEdit1" command="set_string" arguments="25"/>
+    <event widget="1NucleusEditor0/1QueryDialog0/1QPushButton0" command="activate" arguments=""/>
+</events>

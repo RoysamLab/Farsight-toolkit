@@ -3071,6 +3071,11 @@ void NucleusEditor::queryInRadius()
 	segView->SetRadNeighborTable(radNeighborTable);
 	segView->SetRadNeighborsVisibleOn();
 
+	#ifdef USE_QT_TESTING
+	std::cout << radNeighborTable->GetNumberOfRows() << " neighbors in radius" << std::endl;
+	#endif
+	delete KNObj;
+
 }
 
 
