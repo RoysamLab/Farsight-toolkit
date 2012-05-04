@@ -3216,6 +3216,12 @@ void NucleusEditor::updateViews()
 		showCentroidsAction->setChecked(true);
 		segView->SetCentroidsVisible(true);
 		kplsRun = 0;
+		#ifdef USE_QT_TESTING
+		if(this->TestInputFile != "")
+		{
+			std::cout << "KPLS classification complete" << std::endl;
+		}
+		#endif
 	}
 
 	//Show colored seeds after Active Learning Classification has finished
@@ -3645,6 +3651,13 @@ void NucleusEditor::changeClass(void)
 	}
 
 	this->updateViews();
+    
+	#ifdef USE_QT_TESTING
+	if(this->TestInputFile != "")
+	{
+		std::cout << "class changed for " << ids.size() << " objects." << std::endl;
+	}
+	#endif
 
 	//Change the class of these objects:
 	//if(ok)

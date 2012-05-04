@@ -293,11 +293,10 @@ if(QtTestingFound)
     ${NucleusEditor_EXE}
     --test
     ${CMAKE_CURRENT_BINARY_DIR}/classify.xml
-    --baseline
-    ${NucleusEditor_TEST_DIR}/classify_baseline.png
   )
   set_tests_properties(NucleusEditor-Classify PROPERTIES
-    DEPENDS NucleusEditor-ExcludeMargins)
+    DEPENDS NucleusEditor-ExcludeMargins
+    PASS_REGULAR_EXPRESSION "KPLS classification complete")
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/change_class.xml.in
                  ${CMAKE_CURRENT_BINARY_DIR}/change_class.xml
@@ -307,11 +306,10 @@ if(QtTestingFound)
     ${NucleusEditor_EXE}
     --test
     ${CMAKE_CURRENT_BINARY_DIR}/change_class.xml
-    --baseline
-    ${NucleusEditor_TEST_DIR}/change_class_baseline.png
   )
   set_tests_properties(NucleusEditor-ChangeClass PROPERTIES
-    DEPENDS NucleusEditor-Classify)
+    DEPENDS NucleusEditor-Classify
+    PASS_REGULAR_EXPRESSION "class changed for 3 objects.")
   
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/KNN.xml.in
                  ${CMAKE_CURRENT_BINARY_DIR}/KNN.xml
