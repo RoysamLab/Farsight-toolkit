@@ -349,6 +349,19 @@ if(QtTestingFound)
   set_tests_properties(NucleusEditor-SplitAlongZ PROPERTIES
     PASS_REGULAR_EXPRESSION "split along Z"
     DEPENDS NucleusEditor-QueryRadius)
+  
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/batch_split.xml.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/batch_split.xml
+                 @ONLY)
+  add_test(
+    NucleusEditor-BatchSplit
+    ${NucleusEditor_EXE}
+    --test
+    ${CMAKE_CURRENT_BINARY_DIR}/batch_split.xml
+  )
+  set_tests_properties(NucleusEditor-BatchSplit PROPERTIES
+    PASS_REGULAR_EXPRESSION "batch split"
+    DEPENDS NucleusEditor-SplitAlongZ)
 
 endif()
 

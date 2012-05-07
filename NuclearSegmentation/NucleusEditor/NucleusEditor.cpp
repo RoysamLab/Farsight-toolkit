@@ -1092,7 +1092,6 @@ bool NucleusEditor::saveProject()
 
 	if(projectFiles.input != "" && !projectFiles.inputSaved && projectFiles.type != "multi" )
 	{
-    std::cout << "DEBUG: so I should go here now, right?" << std::endl;
 		this->saveImage();
 	}
 	else
@@ -3865,9 +3864,10 @@ void NucleusEditor::batchSplitCells(void)
 			log_entry += ftk::TimeStamp();
 			ftk::AppendTextFile(projectFiles.GetFullLog(), log_entry);
 		}
+		#ifdef USE_QT_TESTING
+		std::cout << "batch split" << std::endl;
+		#endif
 	}
-	
-
 }
 
 
