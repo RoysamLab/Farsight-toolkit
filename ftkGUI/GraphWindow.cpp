@@ -966,7 +966,7 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 		{
 			this->lookupTable->SetTableValue(i, selectColor[0], selectColor[1], selectColor[2]); // color the vertices
 		}
-		else
+		else if ( featureColorVector.size() > 0)
 		{
 			int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
 			if( k >= COLOR_MAP2_SIZE)
@@ -974,6 +974,10 @@ void GraphWindow::UpdataLookupTable( std::set<long int>& IDs)
 				k = COLOR_MAP2_SIZE - 1;
 			}
 			this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); // color the vertices- blue
+		}
+		else
+		{
+			this->lookupTable->SetTableValue(i,0,0,1);
 		}
 	}
 
