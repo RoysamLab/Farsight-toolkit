@@ -60,13 +60,14 @@ bool VolumeOfInterest::ExtrudeVOI()
 	this->VOIPolyData.push_back( extrude->GetOutput());
 	return true;
 }
-vtkSmartPointer<vtkActor> VolumeOfInterest::GetActor()
+vtkSmartPointer<vtkQuadricLODActor> VolumeOfInterest::GetActor()
 {
 	vtkSmartPointer<vtkPolyDataMapper> VOImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	VOImapper->SetInput(this->VOIPolyData.back());
-	vtkSmartPointer<vtkActor> VOIactor = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkQuadricLODActor> VOIactor = vtkSmartPointer<vtkQuadricLODActor>::New();
 	//VOIactor->GetProperty()->SetRepresentationToSurface();
 	VOIactor->SetMapper(VOImapper);
+	VOIactor->GetProperty()->SetInterpolationToFlat();
 	return VOIactor;
 }
 

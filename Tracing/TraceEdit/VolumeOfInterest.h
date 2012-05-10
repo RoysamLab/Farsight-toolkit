@@ -6,6 +6,7 @@
 #include <string>
 
 #include "vtkActor.h"
+#include "vtkQuadricLODActor.h"
 #include "vtkSmartPointer.h"
 
 #include "vtkCellArray.h"
@@ -47,7 +48,7 @@ public:
 	VolumeOfInterest();
 	int AddVOIPoint(double* newPT);
 	bool ExtrudeVOI();
-	vtkSmartPointer<vtkActor> GetActor();
+	vtkSmartPointer<vtkQuadricLODActor> GetActor();
 	void CalculateCellDistanceToVOI(CellTraceModel *CellModel);
 	float* CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable> tbl);
 	void ReadBinaryVOI(std::string filename);
