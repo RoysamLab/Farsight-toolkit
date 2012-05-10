@@ -558,6 +558,8 @@ endif()
 if(MSVC_ver)
   set(MSVC_REDIST_DIR "${MSVC${MSVC_ver}_REDIST_DIR}")
   set(OPENMP_LIB_DIR "${MSVC_REDIST_DIR}/${CMAKE_MSVC_ARCH}/Microsoft.VC${MSVC_ver}.OPENMP")
+  set(OPENMP_MANIFEST "${OPENMP_LIB_DIR}/Microsoft.VC${MSVC_ver}.OpenMP.manifest")
+  install(FILES ${OPENMP_MANIFEST} DESTINATION ${INSTALL_BIN_DIR})
 endif()
 
 # IMPORTANT:
