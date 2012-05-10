@@ -3240,6 +3240,27 @@ void AstroTracer::GetCentroidsForTracing(std::string rootPointsFileName,std::str
 	
 	std::cout << "Root points size: " << points_list.size() << std::endl;
 
+
+	LabelImageType3D::RegionType id_reg;
+	LabelImageType3D::IndexType id_st;
+	LabelImageType3D::SizeType id_sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	RefinedRootImage = LabelImageType3D::New();
+	RefinedRootImage->SetRegions(id_reg);
+	RefinedRootImage->Allocate();
+	RefinedRootImage->SetSpacing(PaddedCurvImage->GetSpacing());
+
+	RefinedRootImage->FillBuffer(0);
+
+
+
 	//Loop over nuclei
 	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
 
@@ -3363,6 +3384,8 @@ void AstroTracer::GetCentroidsForTracing(std::string rootPointsFileName,std::str
 	
 				centroid_points << (float)(min_root_idx[0]) << '\t' << (float)(min_root_idx[1]) << '\t' << (float)(min_root_idx[2]) << std::endl;
 				centroid_count++;
+
+				this->RefinedRootImage->SetPixel(min_root_idx, 255);
 			}
 
 		}
@@ -3373,6 +3396,11 @@ void AstroTracer::GetCentroidsForTracing(std::string rootPointsFileName,std::str
 
 	centroid_points.close();
 	//End of creating centroids.txt file
+
+	itk::ImageFileWriter< LabelImageType3D >::Pointer refined_root_writer = itk::ImageFileWriter< LabelImageType3D >::New();
+	refined_root_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\refined_roots.tif");
+	refined_root_writer->SetInput(this->RefinedRootImage);
+	refined_root_writer->Update();
 
 	std::cout << "***Points List Size: " << points_list.size() << std::endl;
 	std::cout << "***Centroids List Size: " << centroid_count << std::endl;

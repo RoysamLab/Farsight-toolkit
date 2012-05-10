@@ -252,6 +252,7 @@ private:
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
 	LabelImageType3D::Pointer IDImage;	
+	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
 	itk::Size<3> size;
 	std::vector<OffsetType> off;
