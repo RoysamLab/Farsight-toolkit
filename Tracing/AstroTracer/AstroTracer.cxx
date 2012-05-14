@@ -3196,27 +3196,6 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	
 	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 
-
-	LabelImageType3D::RegionType id_reg;
-	LabelImageType3D::IndexType id_st;
-	LabelImageType3D::SizeType id_sz = PaddedCurvImage->GetBufferedRegion().GetSize();
-
-	id_st[0] = 0;
-	id_st[1] = 0;
-	id_st[2] = 0;
-	
-	id_reg.SetSize(id_sz);
-	id_reg.SetIndex(id_st);
-	
-	RefinedRootImage = LabelImageType3D::New();
-	RefinedRootImage->SetRegions(id_reg);
-	RefinedRootImage->Allocate();
-	RefinedRootImage->SetSpacing(PaddedCurvImage->GetSpacing());
-
-	RefinedRootImage->FillBuffer(0);
-
-
-
 	//Loop over nuclei
 	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
 
