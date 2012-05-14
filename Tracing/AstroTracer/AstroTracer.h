@@ -145,7 +145,6 @@ public:
 	double clusterProminence;
 	
 	IntrinsicFeatureVector();
-
 };
 
 class AssociativeFeatureVector{
@@ -167,6 +166,10 @@ class NucleiObject{
 public:
 	IntrinsicFeatureVector intrinsicFeatures;
 	AssociativeFeatureVector associativeFeatures;
+	
+	// 1: Astrpcytes	2: Microglia	3:Neurons	4: Endotheliels
+	int classValue; 
+	double confidenceMeasure;
 
 	NucleiObject();
 };
@@ -221,10 +224,11 @@ public:
 
 	void UseActiveLearningRootsModel(std::string);
 	void ReadRootPointsExternal(std::string);
-	void GetCentroidsForTracing (std::string,std::string);
+	void GetCentroidsForTracing(std::string, std::string);
 	void ReadNucleiFeaturesExternal(std::string);
 	void ComputeFeaturesFromCandidateRoots(void);
 	void WriteNucleiFeatures(std::string);
+	void ReadFinalNucleiTable(std::string);
 		
 protected:
 	void FeatureMain();
@@ -251,7 +255,7 @@ private:
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
-	LabelImageType3D::Pointer IDImage;	
+	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
 	itk::Size<3> size;
@@ -269,6 +273,10 @@ private:
 	
 	std::vector<CandidateRootPoint> CandidateRootPoints;
 	std::vector<NucleiObject> NucleiObjects;
+
+	std::vector<HeapNode> CentroidListForTracing;
+	std::vector<double> CentroidScales;
+	std::vector<HeapNode> DensityFilteredCentroidListForTracing;
 };
 
 ///////////////////////////////////////////////////////////////

@@ -1,30 +1,45 @@
 #include "AstroTracer.h"
 #include "time.h"
+#include <conio.h>
 
 int main(int argc, char* argv[])
 //int main(void)
 {	
 	
-    argv[1] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\CroppedAstroTRITC.tif"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\R2080_6wk_Crop_sigma_0.030000_CV.tif";
-	argv[2] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\roots_cropped.txt"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\11111111.tif";
-	argv[4] = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\labels_2_label_nuc_edited_somas_0.tif"; 
-		//CroppedAstroLABEL.tif //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\SegParams.ini";
+    argv[1] = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\kt11780_w212TRITCdsu_pre.tif"; 
+	//argv[1] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\CroppedAstroTRITC.tif"; 
+
+	argv[2] = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\roots_cropped.txt"; 
 	
-	argv[3] = "400"; //"C:\\ROYSAMLAB\\FARSIGHT\\BINARY\\exe\\Debug\\ParameterFile.ini";
+	//argv[4] = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\label_nuc_1.tif"; 			
+	argv[4] = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\class_1_labels_somas_0.tif"; 
+
+	//argv[4] = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\FourClassExp\\class_1_soma_somas_0.tif";
+
+	argv[3] = "400";
 
 	argc = 5;
 
 	bool justComputeRootFeatures = false; //false;
 	bool startWithCandidateRoots = false;//true;
-	bool doTracing=true;
+	bool doTracing = true;
 
-	std::string tracePointsFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\trace_points.txt";
-	std::string featureVectorFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\feature_vector.txt";
-	std::string IDImageFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\IDImage.tif";
-	std::string rootPointsFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\feature_vector_with_classes_backup.txt";
-	std::string nucleiFeaturesFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\nucleus_features_intrinsic_4.txt";
-	std::string nucleiFeaturesAppendedFileName = "C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\nucleus_features_appended_1.txt";
-	std::string centroidsForTracingFileName="C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\centroids.txt";
+	// Output of part 1
+	std::string featureVectorFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\feature_vector.txt";
+	std::string IDImageFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\rootsImage.tif";
+
+
+	std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\Part1_result.txt";
+	//std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\feature_vector_with_classes_backup.txt";
+
+	std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\table_nuc_1.txt";
+	//std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\Cropped_Experiment\\nucleus_features_intrinsic_4.txt";
+
+	std::string nucleiFeaturesAppendedFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\table_nuc_1_appended.txt";
+
+	std::string finalNucleiTableFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\table_final.txt";
+	std::string finalIDImageFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\finalRootsImage.tif";
+	std::string centroidsForTracingFileName="C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\centroids.txt";
 	
 	if (argc < 5)
 	{
@@ -42,10 +57,11 @@ int main(int argc, char* argv[])
 	clock_t LoadCurvImage_start_time = clock();
 	AT->LoadCurvImage(std::string(argv[1]), 0);////
 	std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
-
-	clock_t ReadStartPoints_start_time = clock();
+	
+	// USE THIS FOR READING THE REAL ROOT POINTSI IN PART3
+	/*clock_t ReadStartPoints_start_time = clock();
 	AT->ReadStartPoints(std::string(argv[2]), 1);
-	std::cout << "ReadStartPoints took: " << (clock() - ReadStartPoints_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	std::cout << "ReadStartPoints took: " << (clock() - ReadStartPoints_start_time)/(float) CLOCKS_PER_SEC << std::endl;*/
 
 	clock_t SetCostThreshold_start_time = clock();
 	AT->SetCostThreshold(atof(argv[3]));
@@ -59,7 +75,7 @@ int main(int argc, char* argv[])
 		
 	//	clock_t RunTracing_start_time = clock();
 
-		AT->SetScaleRange(2, 5); //(4, 5)
+		AT->SetScaleRange(2, 2); //(2, 5)
 
 		//MNT->RunTracing();
 		AT->CallFeatureMainExternal();
@@ -81,10 +97,13 @@ int main(int argc, char* argv[])
 		
 
 	if (doTracing) {
+		
+		AT->ReadRootPointsExternal(rootPointsFileName);
+		AT->ReadFinalNucleiTable(finalNucleiTableFileName);
 
-		AT->ReadNucleiFeaturesExternal(nucleiFeaturesFileName);
-		AT->GetCentroidsForTracing(rootPointsFileName,centroidsForTracingFileName);
-		std::cout<<"GetCentroidsForTracing finished!"<<std::endl;
+		AT->GetCentroidsForTracing(centroidsForTracingFileName, finalIDImageFileName);
+		
+		std::cout << "GetCentroidsForTracing finished!" << std::endl; 
 
 		//clock_t ReadStartPoints_start_time = clock();
 		//AT->ReadStartPoints(std::string("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\centroids.txt"), 1);
@@ -102,6 +121,8 @@ int main(int argc, char* argv[])
 	//MNT->WriteMultipleSWCFiles(SWCFilename, 1);
 
 	//std::cout << "Total time to tracing is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	
+	getch();
 
 	return 0;
 
