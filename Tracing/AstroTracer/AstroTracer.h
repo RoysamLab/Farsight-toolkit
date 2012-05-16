@@ -200,6 +200,7 @@ public:
 	//Destructor
 	~AstroTracer();
 
+	void LoadParameters(const char* parametersFileName);
 
 	void LoadCurvImage(std::string fname, unsigned int pad); 
 	void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
@@ -229,15 +230,26 @@ public:
 	void ComputeFeaturesFromCandidateRoots(void);
 	void WriteNucleiFeatures(std::string);
 	void ReadFinalNucleiTable(std::string);
+
+	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
+
+	//external parameters
+	float intensity_threshold;
+	float contrast_threshold;
+	int cost_threshold;
+	int offshoot;
 		
 protected:
+	void FeatureMainExternal();
 	void FeatureMain();
-	void GetFeature(float sigma, int scale_index); //void GetFeature( float );
+	void GetFeatureExternal(float sigma, int scale_index); //void GetFeature( float );
+	void GetFeature(float sigma); //void GetFeature( float );
 	bool IsSeed(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
 	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
 	float GetCost(SWCNode* , itk::Index<3> &  );
 	float GetCostLocal(SWCNode* , itk::Index<3> & );
+	float GetCostLocalLabel(SWCNode* , itk::Index<3> & );
 	void ScanNeighbors( PixelType & a1,PixelType & a2,PixelType & a3, itk::Index<3> &);
 	PixelType Update( PixelType a1,  PixelType a2,  PixelType a3,   PixelType P ) ;
 	void Decimate();

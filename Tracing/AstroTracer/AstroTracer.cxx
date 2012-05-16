@@ -12,6 +12,46 @@ AstroTracer::AstroTracer()
 }
 
 
+void AstroTracer::LoadParameters(const char* parametersFileName)
+{
+	std::map<std::string, std::string> opts;  
+	this->optionsCreate(parametersFileName, opts);
+	
+	std::map<std::string,std::string>::iterator mi;
+
+	mi = opts.find("-intensity_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+	}
+	else
+	{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
+
+	mi = opts.find("-contrast_threshold");
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
+	else
+	{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+
+	mi = opts.find("-cost_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->cost_threshold; }
+	else
+	{ this->cost_threshold = 700; printf("Chose cost_threshold = 700 as default\n");}
+
+
+	mi = opts.find("-offshoot"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->offshoot; }
+	else
+	{ this->offshoot = 10; printf("Chose offshoot = 10 as default\n"); }
+
+
+	std::cout<<"intensity_threshold="<<this->intensity_threshold<<std::endl;
+	std::cout<<"contrast_threshold="<<this->contrast_threshold<<std::endl;
+	std::cout<<"cost_threshold="<<this->cost_threshold<<std::endl;
+	std::cout<<"offshoot="<<this->offshoot<<std::endl;
+
+}
 void AstroTracer::LoadCurvImage(std::string fname, unsigned int pad) 
 {
 	std::cout << "Reading input file "<< fname << std::endl;
@@ -38,7 +78,7 @@ void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)
 	//Median filter
 	std::cout << "Running Median Filter" << std::endl;
 	MedianFilterType::Pointer medfilt = MedianFilterType::New();
-	medfilt->SetNumberOfThreads(16);
+// 	medfilt->SetNumberOfThreads(16);
 	medfilt->SetInput(rescaler->GetOutput());
 	ImageType3D::SizeType rad = { {1, 1, 1} };
 	medfilt->SetRadius(rad);
@@ -59,7 +99,7 @@ void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)
 	
 	for(ondx[2] = 0; ondx[2] < osz[2]; ++ondx[2]) 
 	{
-		indx[2] = (ondx[2] < padz) ? 0 : ondx[2] - padz;
+		indx[2] = (ondx[2] <padz) ? 0 : ondx[2] - padz;
 		indx[2] = (ondx[2] >= osz[2]-padz) ? isz[2]-1 : indx[2];
 		for(ondx[1] = 0; ondx[1] < osz[1]; ++ondx[1]) 
 		{
@@ -77,7 +117,6 @@ void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)
 	//CurvImage->Delete();
 }
 
-///////////////////////////////////////////////////////////////////////
 void AstroTracer::ReadStartPoints(std::string fname, unsigned int pad) 
 {
 	padz = pad;
@@ -144,7 +183,7 @@ void AstroTracer::ReadStartPoints(std::string fname, unsigned int pad)
 			if (n[2] >= (unsigned int)osz[2])
 				n[2] = osz[2]-1;
 			StartPoints.push_back(n);
-			std::cout << " is read as " << n << std::endl;
+// 			std::cout << " is read as " << n << std::endl;
 		}
 		else
 			std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
@@ -187,10 +226,9 @@ void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, 
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////////////
 void AstroTracer::RunTracing(void)
 {
-	FeatureMain();
+	FeatureMain();			//Nice function here that is easy to miss....
 
 	CurrentID = 1;
 
@@ -198,7 +236,7 @@ void AstroTracer::RunTracing(void)
 	ConnImage = ImageType3D::New();
 	ConnImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
 	ConnImage->Allocate();
-	ConnImage->FillBuffer(MAXVAL);
+	ConnImage->FillBuffer(MAXVAL);	//MAXVAL is ... needs to be replaced with std::numeric_limit< float >::max()...
 
 	SWCImage = SWCImageType3D::New(); //major memory
 	SWCImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
@@ -212,35 +250,38 @@ void AstroTracer::RunTracing(void)
 	clock_t fillSWCImage1_start_time = clock();
 	for (startIt = StartPoints.begin(); startIt != StartPoints.end(); ++startIt, ++tID)
 	{
-		itk::Index<3> stndx = (*startIt);
-		stndx[2] += padz;
-		SWCNode* s1 = new SWCNode(CurrentID++, -1, tID, stndx);
-		SWCImage->SetPixel(stndx,s1);
-		ConnImage->SetPixel(stndx,0.0f);
-		SWCNodeContainer.push_back(s1);
-		HeapNode *h = new HeapNode(s1->ndx, 0.0);
-		PQ.push(h);
+		itk::Index<3> startIndex = (*startIt);
+		startIndex[2] += padz;													//Convert to padded image index
+		SWCNode* start_node = new SWCNode(CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode
+		SWCImage->SetPixel(startIndex,start_node);								//Adding all seed points to the SWCImage
+		ConnImage->SetPixel(startIndex,0.0f);									//Set the ConnectedImage to 0.0 at all the seed nodes (remember that the Connected image is all initialized with MAXVAL)... 
+		SWCNodeContainer.push_back(start_node);									//Fill the _SWCNodeContainer with start points
+		HeapNode *h = new HeapNode(start_node->ndx, 0.0);						//Heap nodes hold an (index, value) pair
+		PQ.push(h);																//Priority Queue contains the seed nodes now...
 	}
 	std::cout << "fillSWCImage1 took: " << (clock() - fillSWCImage1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t fillSWCImage2_start_time = clock();
+	
 	long eCounter = 0, TotalePoints;
 	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
 	for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
 	{
-		if (Nit.Get() > 0) 
+		if (Nit.Get() > 0)	//Vesselness value is greater than 0
 		{
 			itk::Index<3> endx = Nit.GetIndex();
-			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);
-			SWCImage->SetPixel(endx,s2);
+			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);	//id = 0, parent_id = -1, tree id = -1 * eCounter, index that this vesselness value is greater than 0
+			SWCImage->SetPixel(endx,s2);								//Adding all critical points where vesselness value is greater than 0 to the SWC image
 		}
 	}
 	std::cout << "fillSWCImage2 took: " << (clock() - fillSWCImage2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
+
 	TotalePoints = eCounter;
-	std::cout<<"eCounter = "<<eCounter<<std::endl;
+	std::cout<<"eCounter = "<<eCounter<<std::endl;	//eCounter is just number of nodes that are critical points (but not seed points)
 	//std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
 
+	//Generating some kind of offset neighborhood... this needs to be done with itkNeighborhoodIterator
 	itk::Offset<3> x1 = {{-1, 0 ,0}};
 	off.push_back( x1 );
 	x1[0] = 1;					// x1 = {{1, 0, 0}}
@@ -262,20 +303,24 @@ void AstroTracer::RunTracing(void)
 	float KeyValue;
 	
 	clock_t PQ_popping_start_time = clock();
-	
-	while(!PQ.empty())  
+
+	while(!PQ.empty())	//For each seed node
 	{
+		//Take the top HeapNode and remove it from the Priority Queue 
 		HeapNode *h = PQ.top();
 		PQ.pop();
+
+		//Temporarily store the index and value of the node
 		itk::Index<3> ndx = h->ndx;
 		KeyValue = h->KeyValue;
 		delete h;
 
-
+		//Don't do anything if the heapnode value is larger than the one in the connected image
 		if ( KeyValue > ConnImage->GetPixel(ndx) ) 
 			continue;
-		
-		if ((eCounter <= 0) || (KeyValue > CostThreshold)) 
+
+
+		if ((eCounter <= 0) || (KeyValue > CostThreshold) ) 
 		{
 			if (showMessage == true) 
 			{
@@ -284,6 +329,7 @@ void AstroTracer::RunTracing(void)
 				//std::cout<<"keyvalue = "<<KeyValue<<std::endl;
 				showMessage = false;
 			}
+			
 			SWCNode* t  = SWCImage->GetPixel(ndx);
 			if ( t != NULL) 
 			{
@@ -301,12 +347,16 @@ void AstroTracer::RunTracing(void)
 			if (s->TreeID < 0) 
 			{
 				std::vector<IndexType> Chain;
+				
 				SWCNode* L = TBack(ndx, Chain);
+
 				if ( L  != NULL ) 
 				{
 					float costFactor = GetCostLocal( L , ndx);
+
 					std::vector<IndexType>::reverse_iterator cit;
 					SWCNode* par = L;
+
 					for (cit = Chain.rbegin(); cit != Chain.rend(); ++cit) 
 					{
 						SWCNode* t = SWCImage->GetPixel(*cit);
@@ -348,7 +398,7 @@ void AstroTracer::RunTracing(void)
 		for (oit = off.begin(); oit < off.end(); ++oit) 
 		{
 			itk::Index<3> ndx2 = ndx + (*oit);
-			if ( (ndx2[0] < 0) || (ndx2[1] < 0) || (ndx2[2] < 0) || (ndx2[0] >= unsigned(size[0])) || (ndx2[1] >= unsigned(size[1])) || (ndx2[2] >= unsigned(size[2])) )  
+			if ( (ndx2[0] < 2) || (ndx2[1] < 2) || (ndx2[2] < 2) || (ndx2[0] >= unsigned(size[0] - 2)) || (ndx2[1] >= unsigned(size[1] - 2)) || (ndx2[2] >= unsigned(size[2] - 2)) )  
 				continue;
 			
 			if (SWCImage->GetPixel(ndx2) != NULL) 
@@ -370,6 +420,8 @@ void AstroTracer::RunTracing(void)
 			}
 		}
 	}
+	
+	
 	std::cout << "PQ popping took: " << (clock() - PQ_popping_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 	
 	clock_t Interpolate1_start_time = clock();
@@ -384,9 +436,9 @@ void AstroTracer::RunTracing(void)
 	Interpolate(2.0);	
 	std::cout << "Interpolate2 took: " << (clock() - Interpolate2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	//clock_t RemoveIntraSomaNodes_start_time = clock();
-	//RemoveIntraSomaNodes();
-	//std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	clock_t RemoveIntraSomaNodes_start_time = clock();
+	RemoveIntraSomaNodes();
+	std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 }
 
@@ -408,7 +460,7 @@ void AstroTracer::SetScaleRange(int start_scale, int end_scale){
 //	INTERNAL FUNCTIONS
 //////////////////////////////////////////////////////////////////////////////////////
 
-void AstroTracer::FeatureMain(void)
+void AstroTracer::FeatureMainExternal(void)
 {
 	time_t FeatureMain_start_time = clock();
 	std::cout << std::endl<< "Feature detection 3D" << std::endl;
@@ -477,7 +529,7 @@ void AstroTracer::FeatureMain(void)
 	
 	for(int i = 0; i < sigma_vec.size(); i++){
 		std::cout << "Analysis at " << sigma_vec[i] << std::endl;
-		GetFeature(sigma_vec[i], i+1);
+		GetFeatureExternal(sigma_vec[i], i+1);
 	}
 	
 	std::cout << "Done with GetFeature. " << std::endl;
@@ -529,12 +581,31 @@ void AstroTracer::FeatureMain(void)
 		}
 	}*/
 }
+void AstroTracer::FeatureMain(void)
+{
+	time_t FeatureMain_start_time = clock();
+	std::cout << std::endl<< "Feature detection 3D" << std::endl;
+	NDXImage = ImageType3D::New();
+	NDXImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
+	NDXImage->Allocate();
+	NDXImage->FillBuffer(0.0f);
+
+	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		std::cout << "Analysis at " << sigmas[i] << std::endl;
+		GetFeature( sigmas[i] );			//I guess this is finding all the critical points and throwing their vesselness values into _NDXImage
+
+	}
+
+}
+
 bool HeapNode::operator ==(const HeapNode& h2){
 
 	return this->ndx[0] == h2.ndx[0] && this->ndx[1] == h2.ndx[1] && this->ndx[2] == h2.ndx[2];
 }
 
-void AstroTracer::GetFeature( float sigma , int scale_index){
+void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 
 	clock_t LoG_start_time = clock();
 	LoGFilterType::Pointer gauss = LoGFilterType::New();
@@ -770,6 +841,141 @@ void AstroTracer::GetFeature( float sigma , int scale_index){
 	}
 }
 
+void AstroTracer::GetFeature( float sigma ) 
+{
+	std::cout<<std::endl<<"Get Feature 1";
+	
+	clock_t LoG_start_time = clock();
+	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
+	GFilterType::Pointer gauss = GFilterType::New();
+	gauss->SetInput( PaddedCurvImage );
+	gauss->SetSigma( sigma );
+	gauss->SetNormalizeAcrossScale(false);
+	gauss->GetOutput()->Update();
+	std::cout << "325Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	float tot = 0.0f, num = 0.0f;
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	float gamma = 1.6f;
+	float tnorm = vcl_pow(sigma,gamma);
+
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp)
+	{
+		float q = ittemp.Get()*tnorm;
+		ittemp.Set(-1.0f*q);
+		tot += q*q;
+		num ++;
+	}
+	itk::Offset<3>
+		xp =  {{2 ,  0 ,   0}},
+		xn =  {{-2,  0,    0}},
+		yp =  {{0,   2,   0}},
+		yn =  {{0,  -2,    0}},
+		zp =  {{0,   0,    2}},
+		zn =  {{0,   0,   -2}};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+
+	unsigned int
+		xy1 =  17, //{ 1 ,   1 ,  0 },
+		xy2 =  9,  //{ -1,  -1 ,  0 },
+		xy3 =  15, //{ -1,   1 ,  0 },
+		xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+		yz1 =  25, //{ 0 ,   1 ,  1 },
+		yz2 =  1,  //{ 0 ,  -1 , -1 },
+		yz3 =  19, //{ 0 ,  -1 ,  1 },
+		yz4 =  7,  //{ 0 ,   1 , -1 },
+
+		xz1 =  23, //{ 1 ,   0 ,  1 },
+		xz2 =  3,  //{-1 ,   0 , -1 },
+		xz3 =  21, //{-1 ,   0 ,  1 },
+		xz4 =  5;  //{ 1 ,   0 , -1 };
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3;
+	sz[1] = sz[1] - 3; 
+	sz[2] = sz[2] - 3;
+
+	it.GoToBegin();
+	nit.GoToBegin();
+	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+
+	long win = long(sigma)/2;
+	if (win < 2) 
+	{
+		win = 2;
+	}
+	
+	const float thresh1 = intensity_threshold;// 0.01;//0.005;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = contrast_threshold;//0.003;//0.0003;  // -0.1 percent of range
+
+	long ctCnt = 0;
+	int inrt = 0; // niclas testing
+	while(!nit.IsAtEnd()) 
+	{
+// 		std::cout<<inrt++<<"\n "<<std::flush;
+		itk::Index<3> ndx = it.GetIndex();
+		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
+			(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
+			(ndx[2] > (unsigned int)sz[2]) )
+		{
+			++it;
+			++nit;
+			continue;
+		}
+
+		float a1 = 0.0;
+		for (unsigned int i=0; i < 13; ++i)
+		{
+			a1 += vnl_math_max(nit.GetPixel(i), nit.GetPixel(26 - i));
+		}
+		
+		float val = nit.GetPixel(13) ;
+
+		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		{
+			TensorType h;
+			h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+			h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+			h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+			EigenValuesArrayType ev;
+			EigenVectorMatrixType em;
+			h.ComputeEigenAnalysis (ev, em);
+
+			unsigned int w;
+
+			if (IsSeed(ev, w)) 
+			{
+				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]);
+				if (RegisterIndex(value, ndx, sz, win))	//RegisterIndex returns true if this value is the highest in the neighborhood, otherwise it will return false
+				{
+					NDXImage->SetPixel(ndx,value);
+					ctCnt++;			//CriTical Counter I guess
+					//std::cout<<ctCnt<<" ";
+				}
+			}
+
+
+		}
+		++it;
+		++nit;
+	}
+	std::cout <<"asdfNumber of CTs at this stage: " << ctCnt <<std::endl<<std::flush;
+	//out_seeds.close();
+}
+
+
 bool AstroTracer::IsSeed(const itk::FixedArray<float, 3> &ev, unsigned int &w)  
 {
 	float L1, L2, L;
@@ -816,14 +1022,14 @@ bool AstroTracer::IsSeed(const itk::FixedArray<float, 3> &ev, unsigned int &w)
 	float lambda1 = L2;
 	
 
-	float ballness = abs(L2) / sqrt(abs(L1 * L)); //<2
-		
-	if ( ballness > 0.1  && (abs(L) + abs(L1) + abs(L2) > 0.1)) //0.05)) //( abs(L-L1)/abs(L2)>0.6 ) //( (abs(L2)/sqrt(abs(L1*L))<0.5) || ( abs(L-L1)/abs(L2)>0.4) )  //( (abs(L)/sqrt(abs(L2*L1))>1.05) || (abs(L1)/sqrt(abs(L2*L))<0.95) ) //(abs(L1)/sqrt(abs(L2*L))<0.9) //((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
-	{
-		return true;
-	}
+	//float ballness = abs(L2) / sqrt(abs(L1 * L)); //<2
+	//	
+	//if ( ballness > 0.1  && (abs(L) + abs(L1) + abs(L2) > 0.05)) //( abs(L-L1)/abs(L2)>0.6 ) //( (abs(L2)/sqrt(abs(L1*L))<0.5) || ( abs(L-L1)/abs(L2)>0.4) )  //( (abs(L)/sqrt(abs(L2*L1))>1.05) || (abs(L1)/sqrt(abs(L2*L))<0.95) ) //(abs(L1)/sqrt(abs(L2*L))<0.9) //((L - L2) > (L2 - L1) && (L - L2) > vnl_math_abs(L)) 
+	//{
+	//	return true;
+	//}
 	
-	return false; //false; //true;  /// right now this is turned off (Amit)
+	return true;  /// right now this is turned off (Amit)
 }
 
 bool AstroTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size<3>& sz, long h = 2) 
@@ -864,9 +1070,9 @@ bool AstroTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-
 SWCNode* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)  
 {
+	
 	SWCNode* Label = NULL;
 	itk::Index<3> n;
 	itk::Vector<float,3> p, x, d, dold;
@@ -994,7 +1200,24 @@ SWCNode* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)
 			break;
 		}
 	}
-	return Label;
+	//
+
+	float costFactorLabel = 0.0;
+	
+	if (Chain.size()!=0 )
+		costFactorLabel = GetCostLocalLabel( Label , ndx);
+
+	if (costFactorLabel>=10.0)
+		{	
+			Chain.clear();
+			done=true;
+			return NULL;}
+	else 
+		return Label;
+	//
+
+
+	//return Label;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1111,6 +1334,66 @@ float AstroTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx )
 	}
 
 	return cost;
+}
+
+float AstroTracer::GetCostLocalLabel(SWCNode* s, itk::Index<3>& endx ) //this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
+{
+	itk::Index<3> base = endx, ndx = s->ndx;
+	float cost = 0.0f, count = 0.01f, local_count=0.01f;
+	itk::Vector<float,3> d1, d2;
+	d2.Filled(0.0);
+
+	d1[0] = float(ndx[0] - base[0]); //  leaf-current
+	d1[1] = float(ndx[1] - base[1]);
+	d1[2] = float(ndx[2] - base[2]);
+	d1.Normalize();
+
+	base = ndx;
+
+	float local_abrupt=0.0;//flag for marking if there is an abrupt directional change as we cross the chain towards close ancestors
+
+	while (count < 500.0f) //500 (5)
+	{
+		float d = (ndx[0] - base[0])*(ndx[0] - base[0]) + (ndx[1] - base[1])*(ndx[1] - base[1]) + (ndx[2] - base[2])*(ndx[2] - base[2]) ;
+		if ( vcl_sqrt(d) > 6.0f) //6.0 (0)
+		{
+			d2[0] = float(ndx[0] - base[0]); //  ancestor-leaf
+			d2[1] = float(ndx[1] - base[1]);
+			d2[2] = float(ndx[2] - base[2]);
+			d2.Normalize();
+
+			PixelType w = dot_product(d1.Get_vnl_vector(),d2.Get_vnl_vector());
+
+			if ( w <= 0.4f) //0.0 (0.2)
+			{
+				cost = 1.0f; //1.0 (10.0)
+				local_abrupt=1.0;
+			}
+			else if (( w > 0.4f) && (w <= 0.98f))//0.0 && 0.98  (0.2-0.98)
+			{
+				cost = 1.0 - w;//-
+			}
+			else 
+			{
+				cost = 0.0f;//0
+			}
+			break;
+		}
+		count++;
+		s = s->parent;
+		if (s == NULL) 
+		{
+			break;
+		}
+		ndx = s->ndx;
+	}
+
+	if (local_abrupt==1.0)
+		cost=10.0;
+
+	return cost;
+
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1246,7 +1529,7 @@ void AstroTracer::Decimate()
 		}
 	}
 
-	const float minOffshootLength = 6;
+	const float minOffshootLength = offshoot;
 	//std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
 	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
@@ -1819,6 +2102,21 @@ void AstroTracer::BlackOut(itk::Index<3> &stndx)
 	}
 }
 
+int AstroTracer::optionsCreate(const char* optfile, std::map<std::string,std::string>& options)
+{
+	options.clear();
+	
+	std::ifstream fin(optfile); assert(fin.good());
+	std::string name;  fin>>name;
+	while(fin.good()) {
+		char cont[100];	 fin.getline(cont, 99);
+		options[name] = std::string(cont);
+		fin>>name;
+	}
+	fin.close();
+	return 0;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1868,7 +2166,7 @@ HeapNode::HeapNode(itk::Index<3> n1, PixelType d)
 }
 
 void AstroTracer::CallFeatureMainExternal(void){
-	this->FeatureMain();
+	this->FeatureMainExternal();
 }
 
 //////////////////////////////////////////////////////////////////////
