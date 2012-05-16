@@ -141,7 +141,6 @@ public:
 	//  public data
 	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
-	vtkSmartPointer<vtkActor> GetDelaunayActor( TraceLine * root );
 	void Print(std::ostream &c);
 
 	TraceLine* findTraceByID(int id);

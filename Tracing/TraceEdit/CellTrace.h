@@ -18,6 +18,16 @@ limitations under the License.
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
+//Convex hull
+#include "vtkActor.h"
+#include "vtkProperty.h"
+#include "vtkDataSetMapper.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkMath.h"
+#include "vtkDelaunay3D.h"
+#include "vtkDataSetSurfaceFilter.h"
+
 #include <vector>
 #include <set>
 #include <sstream>
@@ -46,6 +56,7 @@ public:
 	void SetClassifcation(int predicCol, double prediction, int confCol,double confidence);
 	void addNewFeature(vtkVariant nextFeature);
 	std::vector<TraceLine *> getSegments();
+	vtkSmartPointer<vtkActor> GetDelaunayActor();
 
 	bool modified; //check if data needs to update
 
@@ -114,6 +125,9 @@ private:
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
+	//delaunay
+	vtkSmartPointer<vtkActor> delaunayActor;
+	bool delaunayCreated;
 
 	std::vector<TraceBit> tips;
 	std::vector<int> bounding_tips_indices;

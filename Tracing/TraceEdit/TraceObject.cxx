@@ -1446,57 +1446,6 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 
 }
 
-vtkSmartPointer<vtkActor> TraceObject::GetDelaunayActor( TraceLine * root )
-{
-	vtkSmartPointer<vtkPoints> line_points = vtkSmartPointer<vtkPoints>::New();
-	line_points->SetDataTypeToDouble();
-	vtkSmartPointer<vtkCellArray> line_cells = vtkSmartPointer<vtkCellArray>::New();
-
-	vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
-	//polydata for a tree
-	CreatePolyDataRecursive(root,line_points,line_cells);
-
-	polydata->SetPoints(line_points);
-	polydata->SetLines(line_cells);
-	
-	//vtkUnstructuredGrid * profile = vtkUnstructuredGrid::New();
-	//profile->SetPoints(line_points);
-
-	// Generate a tetrahedral mesh from the input points. By
-	// default, the generated volume is the convex hull of the points.
-	vtkSmartPointer<vtkDelaunay3D> delaunay3D = vtkSmartPointer<vtkDelaunay3D>::New();
-	delaunay3D->SetInput(polydata);
-	delaunay3D->Update();
-
-	vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-	surfaceFilter->SetInputConnection(delaunay3D->GetOutputPort());
-	surfaceFilter->Update();
-
-	vtkSmartPointer<vtkDataSetMapper> delaunayMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	delaunayMapper->SetInputConnection(surfaceFilter->GetOutputPort());
-
-	vtkSmartPointer<vtkActor> delaunayActor = vtkSmartPointer<vtkActor>::New();
-	delaunayActor->SetMapper(delaunayMapper);
-	delaunayActor->GetProperty()->SetColor(1,0,0);
-
-	//// Generate a mesh from the input points. If Alpha is non-zero, then
-	//// tetrahedra, triangles, edges and vertices that lie within the
-	//// alpha radius are output.
-	//vtkSmartPointer<vtkDelaunay3D> delaunay3DAlpha = vtkSmartPointer<vtkDelaunay3D>::New();
-	//delaunay3DAlpha->SetInput(polydata);
-	//delaunay3DAlpha->SetAlpha(0.1);
-
-	//vtkSmartPointer<vtkDataSetMapper> delaunayAlphaMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	//delaunayAlphaMapper->SetInputConnection(delaunay3DAlpha->GetOutputPort());
-
-	//vtkSmartPointer<vtkActor> delaunayAlphaActor = vtkSmartPointer<vtkActor>::New();
-	//delaunayAlphaActor->SetMapper(delaunayAlphaMapper);
-	//delaunayAlphaActor->GetProperty()->SetColor(1,0,0);
-
-	//Render?
-	return delaunayActor;
-}
-
 std::vector<int> TraceObject::GetTreeIDs(TraceLine * root)
 {
 	std::vector<int> ids;

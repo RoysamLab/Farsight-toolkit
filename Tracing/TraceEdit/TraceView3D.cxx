@@ -4411,10 +4411,20 @@ void View3D::ListSelections()
 }
 void View3D::ShowDelaunay3D()
 {
-	std::vector<TraceLine*> Selections = this->TreeModel->GetSelectedTraces();
-	for (unsigned int i = 0; i < Selections.size(); i++)
+	if (this->convexHull->isChecked())
 	{
-		this->Renderer->AddActor(this->tobj->GetDelaunayActor(Selections[i]));
+		delaunayCellsSelected = this->CellModel->GetSelectedCells(); //in progress - Audrey
+		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		{
+			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
+		}
+	}
+	else
+	{
+		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		{
+			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
+		}
 	}
 }
 void View3D::ShowTreeData()   /// modified to table with null

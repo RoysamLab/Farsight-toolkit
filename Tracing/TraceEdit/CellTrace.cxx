@@ -458,6 +458,7 @@ void CellTrace::clearAll()
 	this->confidence = -PI;
 
 	this->modified = false;
+	this->delaunayCreated = false;
 }
 void CellTrace::MaxMin(double NewValue, double &total, double &Min, double &Max)
 {
@@ -820,4 +821,54 @@ TraceLine * CellTrace::getRootTrace()
 std::vector<TraceLine *> CellTrace::getSegments()
 {
 	return this->segments;
+}
+
+vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
+{
+	if(!delaunayCreated)
+	{
+		vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+
+		vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
+		for(unsigned int counter=0; counter<tips.size(); counter++)
+		{
+			points->InsertNextPoint(tips[counter].x,tips[counter].y,tips[counter].z);
+		}
+
+		polydata->SetPoints(points);
+
+		// Generate a tetrahedral mesh from the input points. By
+		// default, the generated volume is the convex hull of the points.
+		vtkSmartPointer<vtkDelaunay3D> delaunay3D = vtkSmartPointer<vtkDelaunay3D>::New();
+		delaunay3D->SetInput(polydata);
+		delaunay3D->Update();
+
+		vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+		surfaceFilter->SetInputConnection(delaunay3D->GetOutputPort());
+		surfaceFilter->Update();
+
+		vtkSmartPointer<vtkDataSetMapper> delaunayMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+		delaunayMapper->SetInputConnection(surfaceFilter->GetOutputPort());
+
+		delaunayActor = vtkSmartPointer<vtkActor>::New();
+		delaunayActor->SetMapper(delaunayMapper);
+		delaunayActor->GetProperty()->SetColor(1,0,0);
+
+		//// Generate a mesh from the input points. If Alpha is non-zero, then
+		//// tetrahedra, triangles, edges and vertices that lie within the
+		//// alpha radius are output.
+		//vtkSmartPointer<vtkDelaunay3D> delaunay3DAlpha = vtkSmartPointer<vtkDelaunay3D>::New();
+		//delaunay3DAlpha->SetInput(polydata);
+		//delaunay3DAlpha->SetAlpha(0.1);
+
+		//vtkSmartPointer<vtkDataSetMapper> delaunayAlphaMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+		//delaunayAlphaMapper->SetInputConnection(delaunay3DAlpha->GetOutputPort());
+
+		//vtkSmartPointer<vtkActor> delaunayAlphaActor = vtkSmartPointer<vtkActor>::New();
+		//delaunayAlphaActor->SetMapper(delaunayAlphaMapper);
+		//delaunayAlphaActor->GetProperty()->SetColor(1,0,0);
+		delaunayCreated = true;
+	}
+
+	return delaunayActor;
 }

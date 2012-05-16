@@ -606,6 +606,9 @@ private:
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox, * DepthSpaceBox, * LineWidthBox;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
+//!Delaunay triangulation - 3D convex hull using terminal tips
+	//bool delaunayFlag;
+	std::vector<CellTrace*> delaunayCellsSelected;
 
 //!Feature Graph
 	FeatureRelation * feature;
