@@ -156,6 +156,7 @@ public:
 	unsigned int GetId();
 	int GetSize();
 	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData);
+	void setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData);
 	void Print(std::ostream &c,int indent);
 
 	std::vector<unsigned int> * GetMarkers();

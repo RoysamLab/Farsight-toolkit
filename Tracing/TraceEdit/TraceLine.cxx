@@ -395,6 +395,10 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 	}
 	//should have ended
 }
+void TraceLine::setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData)
+{
+
+}
 double TraceLine::GetEuclideanLength()
 {
 	if (this->m_trace_bits.size() <2)

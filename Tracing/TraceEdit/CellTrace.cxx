@@ -841,8 +841,10 @@ vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
 		// default, the generated volume is the convex hull of the points.
 		vtkSmartPointer<vtkDelaunay3D> delaunay3D = vtkSmartPointer<vtkDelaunay3D>::New();
 		delaunay3D->SetInput(polydata);
+		delaunay3D->SetTolerance(0.01);
 		delaunay3D->Update();
 
+		//Surface filter is used to get the surfaces outside of the volume
 		vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
 		surfaceFilter->SetInputConnection(delaunay3D->GetOutputPort());
 		surfaceFilter->Update();
