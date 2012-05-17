@@ -39,11 +39,11 @@ int main(int argc, char* argv[])
 	//MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 
 	clock_t LoadCurvImage_start_time = clock();
-	MNT->LoadCurvImage(std::string(argv[1]), 1);
+	MNT->LoadCurvImage(std::string(argv[1]), 1);//
 	std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t ReadStartPoints_start_time = clock();
-	MNT->ReadStartPoints(std::string(argv[2]), 1);
+	MNT->ReadStartPoints(std::string(argv[2]), 1);//
 	std::cout << "ReadStartPoints took: " << (clock() - ReadStartPoints_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t SetCostThreshold_start_time = clock();

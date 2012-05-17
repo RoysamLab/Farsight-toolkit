@@ -284,6 +284,91 @@ void MultipleNeuronTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCe
 	}
 }
 
+///////////////////////////////////////////////////////////////////////
+void MultipleNeuronTracer::ReadStartPoints_2(std::string fname, unsigned int pad,float startx,float starty,float startz, float widthx,float widthy,float widthz)
+{
+
+	_padz = pad;
+
+	std::string temp, num;
+	std::ifstream infile;
+	infile.open(fname.c_str());
+	if(!infile.good())
+	  {
+	  std::cout << "Error reading seed points" << std::endl;
+	  exit(1);
+	  }
+	size_t x1, x2;
+	//std::cout << "Reading start points " << std::endl;
+	std::cout << " Start x" << startx << std::endl;
+	std::cout << " Start y" << starty << std::endl;
+	std::cout << " Start Z" << startz << std::endl;
+	std::cout << " width x" << widthx << std::endl;
+	std::cout << " width y" << widthy << std::endl;
+	std::cout << " width Z" << widthz << std::endl;
+	while(!infile.eof()) 
+	{
+		std::getline(infile,temp);
+		if (temp.length() < 1)
+			continue;
+		
+		//std::cout<<temp; // Prints our STRING.
+		x1 = temp.find_first_of("0123456789.");
+		x2 = temp.find_first_not_of("0123456789.",x1);
+		if ((x2 - x1) > 10)
+			continue;
+		
+		num = temp.substr(x1,x2-x1);
+		float x = atof(num.c_str());
+
+		x1 = temp.find_first_of("0123456789.",x2+1);
+		x2 = temp.find_first_not_of("0123456789.",x1);
+		if ((x2 - x1) > 10)
+			continue;
+		
+		num = temp.substr(x1,x2-x1);
+		float y = atof(num.c_str());
+
+		x1 = temp.find_first_of("0123456789.",x2+1);
+		x2 = temp.find_first_not_of("0123456789.",x1);
+		if (x2 > temp.length())
+			x2 = temp.length();
+		
+		if ((x2 - x1) > 10)
+			continue;
+		
+		num = temp.substr(x1,x2-x1);
+		float z = atof(num.c_str());
+
+		itk::Size<3> osz = _size;  //original size padz
+		osz[2] = osz[2]-_padz;
+		//std::cout <<" after conversion " << x <<" "<< y <<" "<< z << std::endl;
+
+		if ( (x>=0.0) && (y>=0.0) && (z>=0.0) ){
+		/*	if( (x>=startx && x<=(startx+widthx)) &&
+				(y>=starty && x<=(starty+widthy)) &&
+				(z>=startz && x<=(startz+widthz))
+				)*/
+				{
+					itk::Index<3> n;
+					n[0] = long(x + 0.5); 
+					if (n[0] >= (unsigned int)osz[0]) 
+						n[0] = osz[0]-1;
+					n[1] = long(y + 0.5);
+					if (n[1] >= (unsigned int)osz[1])
+						n[1] = osz[1]-1;
+					n[2] = long(z + 0.5);
+					if (n[2] >= (unsigned int)osz[2])
+						n[2] = osz[2]-1;
+					_StartPoints.push_back(n);
+					std::cout << " is read as " << n << std::endl;
+				}
+		}
+		else
+			std::cout << " is discarded (Recommended format XXX YYY ZZZ , Try removing decimal points, add leading zeros in the input text file)" << std::endl;
+	}
+	infile.close();
+}
 ///////////////////////////////////////////////////////////////////////////////////
 void MultipleNeuronTracer::runNDX(void)
 {
@@ -399,7 +484,7 @@ void MultipleNeuronTracer::RunTracing(void)
 	float KeyValue;
 	
 	clock_t PQ_popping_start_time = clock();
-	
+
 	while(!_PQ.empty())	//For each seed node
 	{
 		//Take the top HeapNode and remove it from the Priority Queue 
@@ -443,7 +528,9 @@ void MultipleNeuronTracer::RunTracing(void)
 			if (s->TreeID < 0) 
 			{
 				std::vector<IndexType> Chain;
+				
 				SWCNode* L = TBack(ndx, Chain);
+
 				if ( L  != NULL ) 
 				{
 					float costFactor = GetCostLocal( L , ndx);
@@ -597,13 +684,14 @@ void MultipleNeuronTracer::FeatureMain(void)
 		}
 	}*/
 
-	//RescalerType::Pointer rescaler2 = RescalerType::New();////
+	////saving debris points in Debris_Points.tif
+	//CharRescalerType::Pointer rescaler2 = CharRescalerType::New();////
 	//rescaler2->SetInput( _NDXImage2 );/////
 	//rescaler2->SetOutputMaximum( 255 );//////
 	//rescaler2->SetOutputMinimum( 0 );/////
 	//rescaler2->Update();/////
 
-	//itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();///////
+	//itk::CastImageFilter< CharImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< CharImageType3D, CharImageType3D>::New();///////
 	//caster2->SetInput(rescaler2->GetOutput());/////
 
 	//itk::ImageFileWriter< CharImageType3D >::Pointer seedsWriter2 = itk::ImageFileWriter< CharImageType3D >::New();//////
@@ -1379,7 +1467,7 @@ bool MultipleNeuronTracer::IsDebris(const itk::FixedArray<float, 3> &ev, unsigne
 		}
 	}
 
-	if (( std::abs(L-L1)/std::abs(L2)<0.7 )&& (std::abs(L)+std::abs(L1)+std::abs(L2)>0.005) && (val>0.09) ) // 
+	if (( std::abs(L-L1)/std::abs(L2)<0.7 )&& (std::abs(L)+std::abs(L1)+std::abs(L2)>0.002) && (val>0.006) ) // 0.7 0.005 0.09
 	{
 		return true;
 	}
@@ -1465,6 +1553,7 @@ bool MultipleNeuronTracer::RegisterIndexDebris(const float value, itk::Index<3> 
 
 SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)  
 {
+	
 	SWCNode* Label = NULL;
 	itk::Index<3> n;
 	itk::Vector<float,3> p, x, d, dold;
@@ -1592,7 +1681,24 @@ SWCNode* MultipleNeuronTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>&
 			break;
 		}
 	}
-	return Label;
+	//
+
+	float costFactorLabel = 0.0;
+	
+	if (Chain.size()!=0 )
+		costFactorLabel = GetCostLocalLabel( Label , ndx);
+
+	if (costFactorLabel>=10.0)
+		{	
+			Chain.clear();
+			done=true;
+			return NULL;}
+	else 
+		return Label;
+	//
+
+
+	//return Label;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1711,6 +1817,66 @@ float MultipleNeuronTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx )
 }
 
 
+
+float MultipleNeuronTracer::GetCostLocalLabel(SWCNode* s, itk::Index<3>& endx ) //this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
+{
+	itk::Index<3> base = endx, ndx = s->ndx;
+	float cost = 0.0f, count = 0.01f, local_count=0.01f;
+	itk::Vector<float,3> d1, d2;
+	d2.Filled(0.0);
+
+	d1[0] = float(ndx[0] - base[0]); //  leaf-current
+	d1[1] = float(ndx[1] - base[1]);
+	d1[2] = float(ndx[2] - base[2]);
+	d1.Normalize();
+
+	base = ndx;
+
+	float local_abrupt=0.0;//flag for marking if there is an abrupt directional change as we cross the chain towards close ancestors
+
+	while (count < 500.0f) //500 (5)
+	{
+		float d = (ndx[0] - base[0])*(ndx[0] - base[0]) + (ndx[1] - base[1])*(ndx[1] - base[1]) + (ndx[2] - base[2])*(ndx[2] - base[2]) ;
+		if ( vcl_sqrt(d) > 6.0f) //6.0 (0)
+		{
+			d2[0] = float(ndx[0] - base[0]); //  ancestor-leaf
+			d2[1] = float(ndx[1] - base[1]);
+			d2[2] = float(ndx[2] - base[2]);
+			d2.Normalize();
+
+			PixelType w = dot_product(d1.Get_vnl_vector(),d2.Get_vnl_vector());
+
+			if ( w <= 0.4f) //0.0 (0.2)
+			{
+				cost = 1.0f; //1.0 (10.0)
+				local_abrupt=1.0;
+			}
+			else if (( w > 0.4f) && (w <= 0.98f))//0.0 && 0.98  (0.2-0.98)
+			{
+				cost = 1.0 - w;//-
+			}
+			else 
+			{
+				cost = 0.0f;//0
+			}
+			break;
+		}
+		count++;
+		s = s->parent;
+		if (s == NULL) 
+		{
+			break;
+		}
+		ndx = s->ndx;
+	}
+
+	if (local_abrupt==1.0)
+		cost=10.0;
+
+	return cost;
+
+
+}
 
 void MultipleNeuronTracer::ScanNeighbors( PixelType &a1, PixelType &a2, PixelType &a3, itk::Index<3> &ndx) 
 {

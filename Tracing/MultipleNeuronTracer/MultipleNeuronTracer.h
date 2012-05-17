@@ -102,6 +102,7 @@ public:
 	typedef itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D> RescalerType;
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	typedef itk::Image< unsigned char, 3 > CharImageType3D;
+	typedef itk::RescaleIntensityImageFilter<CharImageType3D, CharImageType3D> CharRescalerType;
 	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
 	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
@@ -119,6 +120,7 @@ public:
 	
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
+	void ReadStartPoints_2(std::string fname, unsigned int pad,float startx,float starty,float startz, float widthx,float widthy,float widthz); //
 	void SetCostThreshold(float thres){_CostThreshold = thres;};
 	void LoadSomaImage(std::string somaFileName);
 	void LoadSomaImage_1(LabelImageType3D::Pointer image){ _SomaImage = image; };
@@ -164,6 +166,7 @@ protected:
 	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
 	float GetCost(SWCNode* , itk::Index<3> &  );
 	float GetCostLocal(SWCNode* , itk::Index<3> & );
+	float GetCostLocalLabel(SWCNode* , itk::Index<3> & );
 	void ScanNeighbors( PixelType & a1,PixelType & a2,PixelType & a3, itk::Index<3> &);
 	PixelType Update( PixelType a1,  PixelType a2,  PixelType a3,   PixelType P ) ;
 	void Decimate();
