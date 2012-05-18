@@ -22,6 +22,7 @@ limitations under the License.
 #include <list>
 #include <cmath>
 #include <vector>
+#include <map>
 #include <set>
 #include <sstream>
 #include "vtkSmartPointer.h"
@@ -155,7 +156,7 @@ public:
 	void SetId(unsigned int lid);
 	unsigned int GetId();
 	int GetSize();
-	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData);
+	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, std::string ImageName);
 	void setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData);
 	void Print(std::ostream &c,int indent);
 
@@ -164,6 +165,8 @@ public:
 
 	std::vector<double> Features; 
 	//this loads in with rpi.xml files
+	vtkVariant GetTraceFeature(std::string FeatureName);
+	void SetTraceFeature(std::string FeatureName,vtkVariant FeatureValue);
 
 	std::vector<vtkVariant> GetCellFeatures()
 	{
@@ -242,6 +245,7 @@ private:
 	TraceBitsType m_trace_bits;
 
 	std::vector<vtkVariant> CellFeatures;
+	std::map<std::string ,vtkVariant> TraceFeatures;
 };
 
 #endif

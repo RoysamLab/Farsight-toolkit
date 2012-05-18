@@ -1017,6 +1017,19 @@ void View3D::SetImgInt()
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
+		this->TreeModel->AddFeatureHeader("Image_Intensity");
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
+		this->QVTK->GetRenderWindow()->Render();
+		if (this->FTKTable)
+		{
+			this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+			this->FTKTable->update();
+		}
+		if (this->TreePlot)
+		{
+			this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+			this->TreePlot->update();
+		}
 	}
 }
 

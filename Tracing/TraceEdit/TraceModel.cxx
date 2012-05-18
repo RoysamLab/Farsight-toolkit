@@ -31,13 +31,15 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 
 //standard headers	
 	this->stdHeaders();
-	if (FeatureHeaders.size() >=1)
+	this->additionalFeatureHeaders.clear();
+	//RPI xml currently unused
+	/*if (FeatureHeaders.size() >=1)
 	{
 		for (int i = 0; i< (int)FeatureHeaders.size(); i++)
 		{
 			this->headers.push_back(FeatureHeaders[i].c_str());
 		}
-	}
+	}*/
 	this->NumFeatures = (int)this->headers.size();
 	this->SetupHeaders();
 	this->SetTraces(trace_lines);
@@ -51,6 +53,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
 	this->TraceClusterManager->setObjectSelection(this->Selection);
 //standard headers	
+	this->additionalFeatureHeaders.clear();
 	this->stdHeaders();
 	this->NumFeatures = (int)this->headers.size();
 	this->SetTraces(trace_lines);
@@ -96,6 +99,16 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Terminal Degree");
 	this->headers.push_back("Is Leaf");
 }
+
+void TraceModel::AddFeatureHeader(std::string NewFeatureHeader)
+{
+	/*!
+	*
+	*/
+	this->additionalFeatureHeaders.push_back(NewFeatureHeader);
+	this->headers.push_back(QString(NewFeatureHeader.c_str()));
+}
+
 void TraceModel::SetTraces(std::vector<TraceLine*> trace_lines)
 {
 	this->TraceLines.clear();
@@ -160,9 +173,17 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetElevation());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetTerminalDegree());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
-		for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
+		/*for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
 			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
+		}*/
+		if (this->additionalFeatureHeaders.size() > 0)
+		{
+			for (int j = 0; j < (int)this->additionalFeatureHeaders.size();j++)
+			{
+				vtkVariant tempFeature = this->TraceLines.at(i)->GetTraceFeature(this->additionalFeatureHeaders[j]);
+				DataRow->InsertNextValue(tempFeature);
+			}
 		}
 		this->DataTable->InsertNextRow(DataRow);
 		this->TraceIDLookupMAP[this->TraceLines.at(i)->GetId()] = this->TraceLines.at(i);

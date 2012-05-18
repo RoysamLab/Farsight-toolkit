@@ -58,6 +58,7 @@ public:
 	{
 		return this->TraceLines;
 	};
+	void AddFeatureHeader(std::string NewFeatureHeader);
 	std::vector<TraceLine*>GetSelectedTraces();
 	std::vector<int> GetSelectedIDs();
 	std::vector<TraceLine*> GetSelectedRoots();
@@ -93,6 +94,7 @@ private:
 	SelectiveClustering * TraceClusterSelection;
 	ClusterManager * TraceClusterManager;
 	
+	std::vector<std::string> additionalFeatureHeaders;
 	std::map<long int ,TraceLine*> TraceIDLookupMAP;
 	std::map<long int ,TraceLine*>::iterator TraceIDLookupIter;
 };

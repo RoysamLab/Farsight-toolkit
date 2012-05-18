@@ -77,6 +77,7 @@ TraceLine::TraceLine()
 	this->ROICoord_Z = 0;
 
 	this->actualBifurcation = false;
+	this->TraceFeatures.clear();
 	modified = true;
 
 	//// classification results
@@ -379,10 +380,11 @@ void TraceLine::calculateBifFeatures()
 	}
 
 }
-void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
+void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, std::string ImageName)
 {
 	TraceBit curBit;
 	TraceBitsType::iterator it = this->m_trace_bits.begin();
+	double totalIntensity = 0; 
 	for (; it != this->m_trace_bits.end(); it++)
 	{
 		int lx = 0, ly = 0, lz = 0; 
@@ -391,8 +393,12 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData)
 		ly = (int) floor(curBit.y + 0.5);
 		lz = (int) floor(curBit.z + 0.5);
 		(*it).I = imageData->GetScalarComponentAsDouble(lx,ly,lz,0);
-		std::cout<< "\nid:\t"<< (*it).id << "\tI:\t" << (*it).I;
+		totalIntensity += (*it).I;
+		//std::cout<< "\nid:\t"<< (*it).id << "\tI:\t" << (*it).I; //for checking data
 	}
+	vtkVariant aveIntensity = vtkVariant(totalIntensity/this->m_trace_bits.size());
+	this->modified = true;
+	this->SetTraceFeature(ImageName, aveIntensity);
 	//should have ended
 }
 void TraceLine::setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData)
@@ -731,6 +737,42 @@ void TraceLine::Getstats()
   printf("Endt bit x: %4.2f y: %4.2f z: %4.2f \n", XB, YB, ZB); 
 }
 
+
+vtkVariant TraceLine::GetTraceFeature(std::string FeatureName)
+{
+	/*!
+	* return -pi if feature not computed
+	* segment level features
+	*/
+	std::map<std::string ,vtkVariant>::iterator find = this->TraceFeatures.find(FeatureName);
+	if (find != this->TraceFeatures.end())
+	{
+		return (*find).second;
+	}
+	else
+	{
+		vtkVariant value = -PI;
+		return value;
+	}
+}
+
+void TraceLine::SetTraceFeature(std::string FeatureName,vtkVariant FeatureValue)
+{
+	/*!
+	* Set or update segment level features 
+	* creates if not computed
+	*/
+	std::map<std::string ,vtkVariant>::iterator find = this->TraceFeatures.find(FeatureName);
+	if (find != this->TraceFeatures.end())
+	{
+		(*find).second = FeatureValue;
+	}
+	else
+	{
+		this->TraceFeatures[FeatureName] = FeatureValue;
+	}
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 double TraceLine::Euclidean(TraceBit bit1, TraceBit bit2)
