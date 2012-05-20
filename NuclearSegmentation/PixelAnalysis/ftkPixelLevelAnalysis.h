@@ -57,7 +57,7 @@ class PixelLevelAnalysis{
 		}
 		~PixelLevelAnalysis() { }
 
-		void SetInputs( std::string ROIImageName, std::string TargetImageName, std::string output_filenames, int radius );
+		void SetInputs( std::string ROIImageName, std::string TargetImageName, std::string output_filenames, int radius, int mode );
 		bool RunAnalysis1();
 		bool RunAnalysis2();
 		bool RunAnalysis3();
@@ -73,6 +73,7 @@ class PixelLevelAnalysis{
 		void WriteInitialOutputs();
 		void WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr);
 		int pixel_distance;
+		int pixelMode;
 };
 
 }

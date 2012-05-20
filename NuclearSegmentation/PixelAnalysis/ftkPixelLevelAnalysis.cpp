@@ -30,8 +30,9 @@
 
 #include "ftkPixelLevelAnalysis.h"
 
-void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string TargetImageNames, std::string output_filenames, int radius ){
+void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string TargetImageNames, std::string output_filenames, int radius, int mode ){
 
+	pixelMode = mode;
 	OutputFilename = output_filenames;
 
 	pixel_distance = radius;
@@ -118,8 +119,14 @@ bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 	unsigned short thresh_roi, thresh_target;
 	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
 	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
-	thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
-	thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	if( pixelMode == 1 ){
+		thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
+		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	}
+	if( pixelMode == 4 ){
+		thresh_roi    = returnthresh( ROIImagePtr,    2, 2 );
+		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
+	}
 
 	//Create an image with the atoms set as bright pixels
 	UShortImageType::Pointer roi_bin    = UShortImageType::New();
@@ -228,7 +235,10 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 
 	this->WriteInitialOutputs();
 	unsigned short thresh_target;
-	thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	if( pixelMode == 2 )
+		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	if( pixelMode == 5 )
+		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
 
 	typedef itk::BinaryBallStructuringElement<  unsigned short int, 3 >	StructuringElementType;
 	typedef itk::BinaryDilateImageFilter	 < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
@@ -337,8 +347,14 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	unsigned short thresh_roi, thresh_target;
 	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
 	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
-	thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
-	thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	if( pixelMode == 3 ){
+		thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
+		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
+	}
+	if( pixelMode == 6 ){
+		thresh_roi    = returnthresh( ROIImagePtr,    2, 2 );
+		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
+	}
 
 	//Create an image with the atoms set as bright pixels
 	UShortImageType::Pointer roi_bin    = UShortImageType::New();
