@@ -3,6 +3,9 @@ set(BUNDLE_LIB_DIRS
   ${QT_LIBRARY_DIR}
   ${LIB_DIR}
   ${VXL_DIR}/lib
+  ${ITK_DIR}/lib
+  ${VTK_DIR}/bin
+  ${QtTesting_LIBRARY_DIR}
   ${OPENMP_LIB_DIR}
 )
 
