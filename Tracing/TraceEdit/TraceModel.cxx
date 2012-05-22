@@ -71,6 +71,7 @@ void TraceModel::stdHeaders()
 {
 	this->headers.push_back("ID");
 	this->headers.push_back("# of Bits");
+	this->headers.push_back("Num Children");
 	this->headers.push_back("Path Length");
 	this->headers.push_back("Euclidean Length");
 	this->headers.push_back("Trace Density");
@@ -87,7 +88,6 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Level");
 	this->headers.push_back("D To Parent");
 	this->headers.push_back("Path To Root");
-	this->headers.push_back("Num Children");
 	this->headers.push_back("Bif amp Local");
 	this->headers.push_back("Bif amp Remote");
 	this->headers.push_back("Bif tilt Local");
@@ -146,6 +146,7 @@ void TraceModel::SyncModel()
 		
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetEuclideanLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBitDensity());
@@ -162,7 +163,6 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplLocal());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplRemote());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocalAvg());

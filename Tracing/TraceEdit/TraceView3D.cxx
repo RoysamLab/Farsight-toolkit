@@ -4439,6 +4439,7 @@ void View3D::ShowDelaunay3D()
 			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
 		}
 	}
+	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::ShowTreeData()   /// modified to table with null

@@ -1,37 +1,53 @@
 #ifndef CONVEXHULL3D_H
 #define CONVEXHULL3D_H
 
-#include <algorithm>
-#include <cstddef>
-#include <math.h>
-#include <vector>
-#include "Face.h"
+#define PI 3.14159265
+#include <cmath>
+
 #include "TraceBit.h"
 
-// copied by Audrey Cheong
+#include "vtkSmartPointer.h"
+#include "vtkActor.h"
+#include "vtkCellArray.h"
+#include "vtkDataSetMapper.h"
+#include "vtkDataSetSurfaceFilter.h"
+#include "vtkDelaunay3D.h"
+#include "vtkIdList.h"
+#include "vtkMath.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkProperty.h"
+#include "vtkTetra.h"
+#include "vtkTriangle.h"
+#include "vtkUnstructuredGrid.h"
 
-/**
-* @author Nicolas Barradeau
-* http://en.nicoptere.net
-*/
+// by Audrey Cheong
+
 class ConvexHull3D
 {
 public:
-	//inline face function? auto by C++
 	ConvexHull3D();
 
 	/**
 	 * performs a convexhull in 3D
 	 * @param	points the Vector3D cloud
-	 * @return a series of indices to create the faces of the hull
+	 * @return 
 	 */
-	std::vector<int> getBoundaryPoints(std::vector<TraceBit> &points);
+	void setPoints(std::vector<TraceBit> &points);
+	void setReferencePt(double point[3]); //default is (0,0,0)
+	bool calculate();
+	vtkSmartPointer<vtkActor> getActor();
+	//double[] getCellCentroid();
+	//double getArea();
+	//double getVolume();
 	//static TraceBit getCentroid(std::vector<TraceBit> &points, int index, Face * face);
-	void removeDuplicates(std::vector<int> &vec);
 
 private:
-	std::vector<Face*> validFaces;
-	std::vector<Face*> visibleFaces;
-	std::vector<Face*> tempFaces;
+	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;
+	double refPt[3];
+	double cellCentroid[3];
+	vtkSmartPointer<vtkActor> delaunayActor;
+	vtkSmartPointer<vtkDelaunay3D> delaunay3D;
+	vtkPolyData * surfacePolyData;
 };
 #endif

@@ -84,10 +84,6 @@ public:
 	double GetBifTiltLocalAvg() {return BifTiltLocalAvg;}
 	void setBifTiltRemoteAvg(double NewBifTiltRemote) {BifTiltRemoteAvg = NewBifTiltRemote;}
 	double GetBifTiltRemoteAvg() {return BifTiltRemoteAvg;}
-	//void setBifTorqueLocal(double NewBifTorqueLocal) {BifTorqueLocal = NewBifTorqueLocal;}
-	//double GetBifTorqueLocal() {return BifTorqueLocal;}
-	//void setBifTorqueRemote(double NewBifTorqueRemote) {BifTorqueRemote = NewBifTorqueRemote;}
-	//double GetBifTorqueRemote() {return BifTorqueRemote;}
 
 	void setBifTorqueLocal(std::vector<double> NewBifTorqueLocal) {planeAngleLocal = NewBifTorqueLocal;}
 	std::vector<double> GetBifTorqueLocal() {return planeAngleLocal;}
@@ -98,16 +94,6 @@ public:
 	double GetBifTorqueLocalAvg() {return BifTorqueLocalAvg;}
 	void setBifTorqueRemoteAvg(double NewBifTorqueRemote) {BifTorqueRemoteAvg = NewBifTorqueRemote;}
 	double GetBifTorqueRemoteAvg() {return BifTorqueRemoteAvg;}
-
-	//double GetBifTiltLocalBig() {return BifTiltLocalBig;}
-	//void setBifTiltLocalBig(double NewBifTiltLocal)			{BifTiltLocalBig = NewBifTiltLocal;}
-	//double GetBifTiltLocalSmall() {return BifTiltLocalSmall;}
-	//void setBifTiltLocalSmall(double NewBifTiltLocal)		{BifTiltLocalSmall = NewBifTiltLocal;}
-	//double GetBifTiltRemoteBig() {return BifTiltRemoteBig;}
-	//void setBifTiltRemoteBig(double NewBifTiltRemote)		{BifTiltRemoteBig = NewBifTiltRemote;}
-	//double GetBifTiltRemoteSmall() {return BifTiltRemoteSmall;}
-	//void setBifTiltRemoteSmall(double NewBifTiltRemote)		{BifTiltRemoteSmall = NewBifTiltRemote;}
-	//double GetBifTorqueLocalBig() {return BifTorqueLocalBig;}
 
 	double GetDistanceToROI() {return DistanceToROI;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
@@ -223,9 +209,6 @@ private:
 	std::vector<double> BifTiltLocal, BifTiltRemote;
 	std::vector<double> planeAngleLocal, planeAngleRemote;
 	double BifTiltLocalAvg, BifTiltRemoteAvg, BifTorqueLocalAvg, BifTorqueRemoteAvg;
-	//double BifTiltLocalTwoDaughter, BifTiltRemoteTwoDaughter, BifTorqueLocalTwoDaughter, BifTorqueRemoteTwoDaughter;
-	//double BifTiltLocalBig, BifTiltLocalSmall,  BifTiltRemoteBig, BifTiltRemoteSmall;
-	//double BifTorqueLocalBig, BifTorqueLocalSmall,  BifTorqueRemoteBig, BifTorqueRemoteSmall;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	double BifToSomaEucDistance;

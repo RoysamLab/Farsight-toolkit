@@ -23,7 +23,6 @@ set( TRACE_SRCS
   FeatureRelation.h	FeatureRelation.cxx
   SuperEllipsoid.h	SuperEllipsoid.cxx
   ConvexHull3D.h	ConvexHull3D.cxx
-  Face.h	    	Face.cxx
   ${GUI_MOC_SRCS}
   ) 
 

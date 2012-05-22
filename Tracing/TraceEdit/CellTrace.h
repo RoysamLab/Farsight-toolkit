@@ -18,21 +18,14 @@ limitations under the License.
 #include "vtkDoubleArray.h"
 #include "vtkAbstractArray.h"
 #include "vtkVariantArray.h"
-//Convex hull
 #include "vtkActor.h"
-#include "vtkProperty.h"
-#include "vtkDataSetMapper.h"
-#include "vtkPoints.h"
-#include "vtkPolyData.h"
-#include "vtkMath.h"
-#include "vtkDelaunay3D.h"
-#include "vtkDataSetSurfaceFilter.h"
 
 #include <vector>
 #include <set>
 #include <sstream>
 #include <math.h>
 #include "SuperEllipsoid.h"
+#include "ConvexHull3D.h"
 class TraceBit;
 class TraceLine;
 class CellTrace
@@ -120,16 +113,15 @@ public:
 	
 private:
 	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
-	//double BifAmplLocalAverage, BifAmplRemoteAverage, BifTiltLocalAverage, BifTiltRemoteAverage;
 	vtkSmartPointer<vtkVariantArray> CellData;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
 	//delaunay
-	vtkSmartPointer<vtkActor> delaunayActor;
 	bool delaunayCreated;
+	vtkSmartPointer<vtkActor> delaunayActor;
 
 	std::vector<TraceBit> tips;
-	std::vector<int> bounding_tips_indices;
+	//std::vector<int> bounding_tips_indices;
 };
 #endif

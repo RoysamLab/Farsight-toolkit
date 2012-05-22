@@ -403,7 +403,23 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, 
 }
 void TraceLine::setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData)
 {
-
+	//TraceBit curBit;
+	//TraceBitsType::iterator it = this->m_trace_bits.begin();
+	//double totalIntensity = 0; 
+	//for (; it != this->m_trace_bits.end(); it++)
+	//{
+	//	int lx = 0, ly = 0, lz = 0; 
+	//	curBit = *it;
+	//	lx = (int) floor(curBit.x + 0.5);
+	//	ly = (int) floor(curBit.y + 0.5);
+	//	lz = (int) floor(curBit.z + 0.5);
+	//	(*it).I = imageData->GetScalarComponentAsDouble(lx,ly,lz,0);
+	//	totalIntensity += (*it).I;
+	//	//std::cout<< "\nid:\t"<< (*it).id << "\tI:\t" << (*it).I; //for checking data
+	//}
+	//vtkVariant aveIntensity = vtkVariant(totalIntensity/this->m_trace_bits.size());
+	//this->modified = true;
+	//this->SetTraceFeature(ImageName, aveIntensity);
 }
 double TraceLine::GetEuclideanLength()
 {
