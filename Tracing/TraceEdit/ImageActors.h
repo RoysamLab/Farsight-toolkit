@@ -188,6 +188,7 @@ public:
 	double getSomaOpacityValue();
         void setProgressBar( QProgressBar * progressBar );
         void setProgressTextWidget( QLabel * progressTextWidget );
+	ImageType::Pointer getImageFileData(std::string sourceName, std::string  tag);
 
 	struct ColorType
 	{

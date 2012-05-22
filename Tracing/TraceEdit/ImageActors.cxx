@@ -1067,3 +1067,15 @@ void ImageRenderActors::setProgressTextWidget( QLabel * ptw )
 {
   this->progressTextWidget = ptw;
 }
+
+ImageType::Pointer ImageRenderActors::getImageFileData(std::string sourceName,std::string tag){
+
+	int ii;
+	imageFileHandle *newImage;
+	for(int i =0; i < this->LoadedImages.size(); i++)
+	{
+		if(sourceName == LoadedImages[i]->filename && tag == LoadedImages[i]->tag )
+			return LoadedImages[i]->reader->GetOutput();
+	}
+
+}
