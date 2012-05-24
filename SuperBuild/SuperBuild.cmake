@@ -70,7 +70,7 @@ endif()
 #
 ExternalProject_Add(VXL
   SVN_REPOSITORY "https://vxl.svn.sourceforge.net/svnroot/vxl/trunk"
-  SVN_REVISION -r "34090"
+  SVN_REVISION -r "34816"
   SVN_TRUST_CERT 1
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
