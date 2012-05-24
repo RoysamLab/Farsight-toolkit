@@ -32,6 +32,8 @@ v7: new GUI and file control
 #include "TraceView3D.h"
 #include <QFrame>
 #include <QProgressBar>
+#include <float.h>
+#include <boost/math/special_functions/fpclassify.hpp> // isnan
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -6273,10 +6275,13 @@ void View3D::BiclusAnalysis()
 			for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
 			{
 				double var = featureTable->GetValue(i, j).ToDouble();
-				if( !boost::math::isnan(var))
-				{}
-				else
-				{
+#ifdef _MSC_VER
+				const bool isnan = _isnan(var);
+#else
+				const bool isnan = boost::math::isnan(var);
+#endif
+				if( isnan )
+				{				
 					var = 0;
 				}
 			points[i].push_back(var);
