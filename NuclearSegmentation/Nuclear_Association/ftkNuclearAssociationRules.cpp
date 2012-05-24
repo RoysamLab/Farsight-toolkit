@@ -203,6 +203,7 @@ void AssociativeFeatureCalculator::Update(vtkSmartPointer<vtkTable> table)
 			table->SetValueByName(row,(fPrefix+assoc->GetAssociationRules().at(f).GetRuleName()).c_str(), vtkVariant(vals[f][i]));
 		}
 	}
+	delete assoc;
 }
 
 //Update the features in this table whose names match (sets doFeat)
@@ -256,6 +257,7 @@ void AssociativeFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 			table->SetValueByName(row,(fPrefix+assoc->GetAssociationRules().at(f).GetRuleName()).c_str(), vtkVariant(vals[f][i]));
 		}
 	}
+	delete assoc;
 }
 
 //****************************************************************************************************************************
