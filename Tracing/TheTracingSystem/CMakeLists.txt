@@ -57,7 +57,7 @@ SET(TracingCore
     TracingCore/Montage/Register.cpp
     )
 
-ADD_LIBRARY( TraceCoreLibrary ${TracingCore})
+ADD_LIBRARY( TraceCoreLibrary ${TracingCore} )
 
 SET(TracingSystem_SOURCES
   main.cpp

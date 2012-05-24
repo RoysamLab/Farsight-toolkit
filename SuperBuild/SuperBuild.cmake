@@ -168,8 +168,8 @@ endif()
 # ITK
 #
 ExternalProject_Add(ITK
-  URL http://farsight-toolkit.org/support/ITK-Source-Feb-16-2012.tar.gz
-  URL_MD5 6e58495fdce4f29f68bf8cd40bb06d08
+  URL http://farsight-toolkit.org/support/InsightToolkit-4.1.0-226-g4efb9b4.tar.gz
+  URL_MD5 794b7d7e057cc20d91afb6dde417b291
   DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
   SOURCE_DIR ${ITK_SOURCE_DIR}
   BINARY_DIR ${ITK_BINARY_DIR}
