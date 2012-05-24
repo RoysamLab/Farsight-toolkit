@@ -366,7 +366,6 @@ endif(BUILD_ZERNIKE)
 
 set( common_libraries
   VesselTracer
-  ItkVtkGlue
   ftkImage
   ColorSegmentation
   ftkCommon

@@ -60,16 +60,24 @@ SET(TracingCore
 ADD_LIBRARY( TraceCoreLibrary ${TracingCore})
 
 SET(TracingSystem_SOURCES
-  main.cpp SlidersGroup.cpp ParametersGroup.cpp dialogs.cpp dialogs_montage.cpp
-  dialogs_scatter.cpp TracingGUI.cpp TracingView.cpp  ObjectSelection.cpp
-  OpenSnakeTracer.cpp ScatterView.cpp
-  Rendering/ImageActors.h Rendering/ImageActors.cxx
-  Rendering/itkImageToVTKImageFilter.h Rendering/itkImageToVTKImageFilter.txx
-  ${GUI_MOC_SRCS} ${GUI_RC_SRCS})
-
+  main.cpp
+  SlidersGroup.cpp
+  ParametersGroup.cpp
+  dialogs.cpp
+  dialogs_montage.cpp
+  dialogs_scatter.cpp
+  TracingGUI.cpp
+  TracingView.cpp
+  ObjectSelection.cpp
+  OpenSnakeTracer.cpp
+  ScatterView.cpp
+  Rendering/ImageActors.h
+  Rendering/ImageActors.cxx
+  ${GUI_MOC_SRCS}
+  ${GUI_RC_SRCS}
+  )
 
 SET(TracingSystem_LIBRARIES
   ${QT_LIBRARIES} TraceCoreLibrary ftkCommon ${TracingSysLibraries} TinyXML)
 
 add_farsight_executable(TracingSystem "${TracingSystem_SOURCES}" "${TracingSystem_LIBRARIES}")
-

@@ -183,11 +183,14 @@ ExternalProject_Add(ITK
     -DITK_USE_REVIEW:BOOL=ON
     -DITK_USE_SYSTEM_VXL:BOOL=ON
     -DVXL_DIR:FILEPATH=${base}/Build/VXL
+    -DModule_ITKVtkGlue:BOOL=ON
+    -DVTK_DIR:FILEPATH=${base}/Build/VTK
     ${mac_args}
     ${ITK_EXTRA_SUPERBUILD_CMAKE_ARGS}
   INSTALL_COMMAND ""
   DEPENDS
     "VXL"
+    "VTK"
 )
 
 #check if we can build vessel
