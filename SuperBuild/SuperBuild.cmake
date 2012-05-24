@@ -122,9 +122,20 @@ endif()
 ############################################################################
 # VTK
 #
+
+set(VTK_PATCH_COMMAND "")
+if(APPLE)
+  set(VTK_PATCH_COMMAND
+    "patch"
+    "${base}/Source/VTK/GUISupport/Qt/Chart/vtkQtBarChart.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vtkQtBarChart.apple.patch"
+  )
+endif()
+message(STATUS "check: ${VTK_PATCH_COMMAND}")
 ExternalProject_Add(VTK
   URL http://www.vtk.org/files/release/5.10/vtk-5.10.0.tar.gz
   URL_MD5 a0363f78910f466ba8f1bd5ab5437cb9
+  PATCH_COMMAND ${VTK_PATCH_COMMAND}
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/VTK
