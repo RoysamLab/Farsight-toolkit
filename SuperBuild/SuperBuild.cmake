@@ -123,8 +123,8 @@ endif()
 # VTK
 #
 ExternalProject_Add(VTK
-  URL http://farsight-toolkit.org/support/VTK-Source-Aug-23-2011.tar.gz
-  URL_MD5 05ff74f0c562084ffcfe6cf203355eb7 
+  URL http://www.vtk.org/files/release/5.10/vtk-5.10.0.tar.gz
+  URL_MD5 a0363f78910f466ba8f1bd5ab5437cb9
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/VTK
@@ -133,13 +133,13 @@ ExternalProject_Add(VTK
     -DBUILD_EXAMPLES:BOOL=OFF
     -DBUILD_SHARED_LIBS:BOOL=${shared}
     -DBUILD_TESTING:BOOL=${testing}
-    -DDESIRED_QT_VERSION:STRING=4
     -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     -DVTK_USE_GUISUPPORT:BOOL=ON
     -DVTK_USE_QT:BOOL=ON
     -DVTK_USE_QTCHARTS:BOOL=ON
-    -DVTK_USE_RPATH:BOOL=ON
+    -DCMAKE_SKIP_RPATH:BOOL=OFF
     -DVTK_QT_USE_WEBKIT:BOOL=OFF
+    -DVTK_USE_BOOST:BOOL=ON
     -DBoost_INCLUDE_DIR:FILEPATH=${boost}
     ${mac_args}
     ${VTK_EXTRA_SUPERBUILD_CMAKE_ARGS}
