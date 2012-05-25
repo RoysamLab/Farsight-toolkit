@@ -114,7 +114,7 @@ endif()
 ######################################################################################
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 4)
-set(CPACK_PACKAGE_VERSION_PATCH 4)
+set(CPACK_PACKAGE_VERSION_PATCH 5)
 set(CPACK_PACKAGE_VENDOR "Bio-Image Analytics Laboratory")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${Farsight_SOURCE_DIR}/farsight-description.txt")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A toolkit of image analysis methods")
