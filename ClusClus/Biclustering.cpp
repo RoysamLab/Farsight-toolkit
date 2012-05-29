@@ -51,8 +51,8 @@ void Bicluster::bispectralclustering()
 		
 		//get order after clustering
 		this->reOrder(this->levels1, 1);
-		int num1 = this->qorder1.size();
-		for(int i = 0; i<num1; i++)
+		const int num1 = this->qorder1.size();
+		for(int jj = 0; jj < num1; ++jj)
 		{
 			int temp = this->qorder1.front();
 			this->order1.push_back(temp);
@@ -83,8 +83,8 @@ void Bicluster::bispectralclustering()
 
 		//get order after clustering		
 		this->reOrder(this->levels2, 2);
-		int num2 = this->qorder2.size();
-		for(int i = 0; i < num2; i++)
+		const int num2 = this->qorder2.size();
+		for(int jj = 0; jj < num2; ++jj)
 		{
 			int temp = this->qorder2.front();
 			this->order2.push_back(temp);
