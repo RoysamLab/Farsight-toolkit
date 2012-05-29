@@ -4551,7 +4551,7 @@ void View3D::FastClearSelection()
 	{
 		this->CellModel->GetObjectSelection()->clear();
 	}
-	else
+	if (this->TreePlot || this->FTKTable)
 	{
 		this->TreeModel->GetObjectSelection()->clear();
 	}
@@ -6170,7 +6170,8 @@ void View3D::SaveComputedCellFeaturesTable()
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
-	this->SPDWin = new SPDtestWindow();
+	//this->SPDWin = new SPDtestWindow();
+	this->SPDWin = new SPDWindowForNewSelection();
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		//this->SPDWin->setModels();
@@ -6199,7 +6200,8 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("centroid_y");
 		featureTable->RemoveColumnByName("centroid_z");
 
-		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());
+		//this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());		
+		this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}
 	this->SPDWin->show();
 #endif
