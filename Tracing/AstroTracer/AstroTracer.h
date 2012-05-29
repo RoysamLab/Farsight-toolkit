@@ -49,6 +49,10 @@
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkApproximateSignedDistanceMapImageFilter.h"
+#include "itkHessianToObjectnessMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "itkMinimumMaximumImageCalculator.h"
 
 #include "vnl/vnl_math.h"
 
@@ -60,6 +64,8 @@
 #include <vector>
 #include <time.h>
 #include <sstream>
+#include <numeric>
+#include <math.h>
 
 #define MAXVAL 100000.0f
 
@@ -96,8 +102,10 @@ public:
 	HeapNode node;	
 	unsigned short int ID;
 	double radius;
+	float sphere_likelihood;
 	double ballness;
 	double plateness;
+	double vesselness;
 	PixelType intensity;
 	PixelType meanIntensity;
 	PixelType varianceIntensity;
@@ -150,6 +158,16 @@ public:
 class AssociativeFeatureVector{
 
 public:
+
+	double astro_total;
+	double astro_avg;
+	double astro_surr;
+	double micro_total;
+	double micro_avg;
+	double micro_surr;
+	double neuro_total;
+	double neuro_avg;
+	double neuro_surr;
 
 	double minRootDist;
 	double maxRootDist;
@@ -230,6 +248,7 @@ public:
 	void ComputeFeaturesFromCandidateRoots(void);
 	void WriteNucleiFeatures(std::string);
 	void ReadFinalNucleiTable(std::string);
+	void ComputeObjectnessImage(void);
 
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
@@ -256,8 +275,11 @@ protected:
 	void Interpolate(PixelType);
 	void RemoveIntraSomaNodes();	
 	float getRadius(itk::Vector<float,3> & pos);
+	float getRadiusAndLikelihood(itk::Vector<float,3> & pos, float& likelihood);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
+	float GetCostLocal2(SWCNode*, itk::Index<3>&);
+	bool IsBall(const itk::FixedArray<float, 3>&, unsigned int&, double&);
 
 private:
 	std::vector<SWCNode*> SWCNodeContainer;
@@ -283,7 +305,7 @@ private:
 	std::vector<std::vector<HeapNode> > LoGPointsVector;
 	std::vector<HeapNode> AllLoGPointsVector;
 	
-	std::vector<CandidateRootPoint> CandidateRootPoints;
+	std::vector<CandidateRootPoint> CandidateRootPoints, AllRootPoints;
 	std::vector<NucleiObject> NucleiObjects;
 
 	std::vector<HeapNode> CentroidListForTracing;
