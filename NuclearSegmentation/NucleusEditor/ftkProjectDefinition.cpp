@@ -428,6 +428,7 @@ std::vector<ftk::PixelAnalysisDefinitions> ProjectDefinition::ReadPixelLevelRule
 			pixRule.mode = atoi(parameterElement->Attribute("Mode"));
 			pixRule.outputFilename = parameterElement->Attribute("OutputFilename");
 			pixRule.radius = atoi(parameterElement->Attribute("Radius"));
+			pixRule.erodeRadius = atoi(parameterElement->Attribute("ErodeRadius"));
 		}
 		returnVector.push_back(pixRule);
 		parameterElement = parameterElement->NextSiblingElement();
@@ -723,6 +724,7 @@ TiXmlElement * ProjectDefinition::GetPixelLevelParameterElement( ftk::PixelAnaly
 	returnElement->SetAttribute("Mode", ftk::NumToString(PixParameter.mode).c_str());
 	returnElement->SetAttribute("OutputFilename", PixParameter.outputFilename.c_str());
 	returnElement->SetAttribute("Radius", ftk::NumToString(PixParameter.radius).c_str());
+	returnElement->SetAttribute("ErodeRadius", ftk::NumToString(PixParameter.erodeRadius).c_str());
 	return returnElement;
 }
 //***************************************************************************************

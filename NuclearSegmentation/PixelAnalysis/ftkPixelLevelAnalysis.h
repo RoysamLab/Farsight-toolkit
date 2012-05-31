@@ -42,8 +42,11 @@
 #include "itkImageRegionConstIterator.h"
 #include "itkBinaryDilateImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
+#include "itkBinaryErodeImageFilter.h"
 #include "itkOtsuThresholdImageFilter.h"
+#include "itkConnectedComponentImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkLabelStatisticsImageFilter.h"
 
 namespace ftk
 {
@@ -57,7 +60,8 @@ class PixelLevelAnalysis{
 		}
 		~PixelLevelAnalysis() { }
 
-		void SetInputs( std::string ROIImageName, std::string TargetImageName, std::string output_filenames, int radius, int mode );
+		void SetInputs( std::string ROIImageName, std::string TargetImageName,
+			std::string output_filenames, int radius, int mode, int erode_radius );
 		bool RunAnalysis1();
 		bool RunAnalysis2();
 		bool RunAnalysis3();
@@ -74,6 +78,7 @@ class PixelLevelAnalysis{
 		void WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr);
 		int pixel_distance;
 		int pixelMode;
+		int erodeRadius;
 };
 
 }

@@ -30,8 +30,9 @@
 
 #include "ftkPixelLevelAnalysis.h"
 
-void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string TargetImageNames, std::string output_filenames, int radius, int mode ){
+void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string TargetImageNames, std::string output_filenames, int radius, int mode, int erode_radius ){
 
+	erodeRadius = erode_radius;
 	pixelMode = mode;
 	OutputFilename = output_filenames;
 
@@ -123,7 +124,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 		thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
 		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
 	}
-	if( pixelMode == 4 ){
+	if( pixelMode == 5 ){
 		thresh_roi    = returnthresh( ROIImagePtr,    2, 2 );
 		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
 	}
@@ -237,7 +238,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 	unsigned short thresh_target;
 	if( pixelMode == 2 )
 		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
-	if( pixelMode == 5 )
+	if( pixelMode == 6 )
 		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
 
 	typedef itk::BinaryBallStructuringElement<  unsigned short int, 3 >	StructuringElementType;
@@ -347,11 +348,11 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	unsigned short thresh_roi, thresh_target;
 	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
 	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
-	if( pixelMode == 3 ){
+	if( (pixelMode == 3)||(pixelMode == 4)){
 		thresh_roi    = returnthresh( ROIImagePtr,    1, 1 );
 		thresh_target = returnthresh( TargetImagePtr, 1, 1 );
 	}
-	if( pixelMode == 6 ){
+	if( (pixelMode == 7)||(pixelMode == 8)){
 		thresh_roi    = returnthresh( ROIImagePtr,    2, 2 );
 		thresh_target = returnthresh( TargetImagePtr, 2, 2 );
 	}
@@ -433,6 +434,123 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 			++independent_target_count;
 	}
 
+	if( (pixelMode == 4)||(pixelMode == 8) ){
+		//In this mode we erode by erodeRadius and then if the connected component still exists then
+		//it is a mature vessel else it is noise/non-specific CD34 staining
+		typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
+		typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
+		typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
+		typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+
+		LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
+		initialLabelsFilter->SetInput( roi_bin );
+		initialLabelsFilter->FullyConnectedOff();
+
+		StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
+		initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
+		initialLabelsStats->UseHistogramsOff();
+
+		StructuringElementType shellElement;
+		shellElement.SetRadius( erodeRadius ); //radius shell
+		shellElement.CreateStructuringElement();
+		ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
+		erodeFilter->SetKernel( shellElement );
+		erodeFilter->SetErodeValue( uns_max );
+		erodeFilter->SetInput( roi_bin );
+		std::cout<<"Computing labels and eroding binary.\n";
+
+		try{
+			initialLabelsStats->Update();
+			erodeFilter->Update();
+		}
+		catch( itk::ExceptionObject & excep ){
+			std::cerr << "ITK exception caught: " << excep << std::endl;
+			return false;
+		}
+
+		//Get rid of regions that are thinner than a specific pixel radius by erosion
+		std::vector< UShortImageType::PixelType > deleteLabels;
+		for( UShortImageType::PixelType LabelIndex=1; LabelIndex<initialLabelsStats->GetNumberOfObjects(); ++LabelIndex ){
+			if( initialLabelsStats->GetCount( LabelIndex ) <= 5 ){
+				deleteLabels.push_back( LabelIndex );
+				continue;
+			}
+			StatisticsFilterType::BoundingBoxType BoundBox;
+			BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
+			UShortImageType::IndexType Start;
+			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+			UShortImageType::SizeType Size;
+			Size[0] = BoundBox[1]-BoundBox[0]+1;
+			Size[1] = BoundBox[3]-BoundBox[2]+1;
+			Size[2] = BoundBox[5]-BoundBox[4]+1;
+			UShortImageType::RegionType CroppedRegion;
+			CroppedRegion.SetSize ( Size  );
+			CroppedRegion.SetIndex( Start );
+
+			ConstIteratorType pixBufRoiErodeBin( erodeFilter->GetOutput(), CroppedRegion );
+			ConstIteratorType pixBufInitLabels ( initialLabelsFilter->GetOutput(), CroppedRegion );
+			
+			pixBufInitLabels.GoToBegin();
+			for( pixBufRoiErodeBin.GoToBegin(); !pixBufRoiErodeBin.IsAtEnd(); ++pixBufRoiErodeBin, ++pixBufInitLabels )
+				if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
+					break;
+
+			if( !pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
+		}
+		for( UShortImageType::PixelType LabelIndex=0; LabelIndex<deleteLabels.size(); ++LabelIndex ){
+			StatisticsFilterType::BoundingBoxType BoundBox;
+			BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
+			UShortImageType::IndexType Start;
+			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+			UShortImageType::SizeType Size;
+			Size[0] = BoundBox[1]-BoundBox[0]+1;
+			Size[1] = BoundBox[3]-BoundBox[2]+1;
+			Size[2] = BoundBox[5]-BoundBox[4]+1;
+			UShortImageType::RegionType CroppedRegion;
+			CroppedRegion.SetSize ( Size  );
+			CroppedRegion.SetIndex( Start );
+
+			IteratorType pixBufBin( roi_bin, CroppedRegion );
+			ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
+
+			pixBufInitLabels.GoToBegin();
+			for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
+				if( pixBufInitLabels.Get()==LabelIndex )
+					pixBufBin.Set(0);
+		}
+		typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
+		DilateFilterType::Pointer shell_image_filter = DilateFilterType::New();
+		StructuringElementType shell_individual;
+		shell_individual.SetRadius( pixel_distance ); //radius shell
+		shell_individual.CreateStructuringElement();
+		shell_image_filter->SetKernel( shell_individual );
+		shell_image_filter->SetDilateValue( uns_max );
+		shell_image_filter->SetInput( roi_bin );
+		UShortImageType::Pointer roi_bin2 = UShortImageType::New();
+
+		try{
+			shell_image_filter->Update();
+		}
+		catch( itk::ExceptionObject & excep ){
+			std::cerr << "ITK exception caught: " << excep << std::endl;
+			return false;
+		}
+		roi_bin2 = shell_image_filter->GetOutput();
+
+		ConstIteratorType pixBufRoiEroded  ( roi_bin,    roi_bin->GetLargestPossibleRegion()    );
+		ConstIteratorType pixBufRoiDial    ( roi_bin2,   roi_bin2->GetLargestPossibleRegion()   );
+		ConstIteratorType pixBufTargOrigBin( target_bin, target_bin->GetLargestPossibleRegion() );
+
+		pixBufRoiEroded.GoToBegin(); pixBufRoiDial.GoToBegin(); pixBufTargOrigBin.GoToBegin();
+		roi_count = 0; target_count = 0;
+		for( ; !pixBufRoiEroded.IsAtEnd(); ++pixBufRoiEroded, ++pixBufRoiDial, ++pixBufTargOrigBin ){
+			if( pixBufRoiDial.Get() ){
+				if( pixBufTargOrigBin.Get() ) ++target_count;
+				if( pixBufRoiEroded.Get() ) ++roi_count;
+			}
+		}
+	}
+
 	std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
 	output_txt_file	<< std::endl;
 	long double percentage_of_pixels;
@@ -457,6 +575,5 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 
 	return true;
 }
-
 
 #endif
