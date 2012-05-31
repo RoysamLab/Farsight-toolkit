@@ -444,9 +444,11 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 
 		LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
 		initialLabelsFilter->SetInput( roi_bin );
+
 		initialLabelsFilter->FullyConnectedOff();
 
 		StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
+		initialLabelsStats->SetLabelInput(initialLabelsFilter->GetOutput());
 		initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
 		initialLabelsStats->UseHistogramsOff();
 
