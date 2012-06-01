@@ -461,9 +461,15 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 		erodeFilter->SetInput( roi_bin );
 		std::cout<<"Computing labels and eroding binary.\n";
 
+		typedef itk::ImageFileWriter< UShortImageType > WriterType;
+                WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName( "bin_info.tif" );
+		writer->SetInput( erodeFilter->GetOutput() );//RescaleIntIO1--finalO/P
+
 		try{
 			initialLabelsStats->Update();
 			erodeFilter->Update();
+			writer->Update();
 		}
 		catch( itk::ExceptionObject & excep ){
 			std::cerr << "ITK exception caught: " << excep << std::endl;
@@ -497,11 +503,11 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 				if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
 					break;
 
-			if( !pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
+			if( pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
 		}
-		for( UShortImageType::PixelType LabelIndex=0; LabelIndex<deleteLabels.size(); ++LabelIndex ){
+		for( UShortImageType::PixelType i=0; i<deleteLabels.size(); ++i ){
 			StatisticsFilterType::BoundingBoxType BoundBox;
-			BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
+			BoundBox = initialLabelsStats->GetBoundingBox( deleteLabels.at(i) );
 			UShortImageType::IndexType Start;
 			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
 			UShortImageType::SizeType Size;
@@ -517,7 +523,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 
 			pixBufInitLabels.GoToBegin();
 			for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
-				if( pixBufInitLabels.Get()==LabelIndex )
+				if( pixBufInitLabels.Get()==deleteLabels.at(i) )
 					pixBufBin.Set(0);
 		}
 		typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
@@ -530,8 +536,13 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 		shell_image_filter->SetInput( roi_bin );
 		UShortImageType::Pointer roi_bin2 = UShortImageType::New();
 
+		WriterType::Pointer writer1 = WriterType::New();
+		writer1->SetFileName( "bin_info1.tif" );
+		writer1->SetInput( shell_image_filter->GetOutput() );
+
 		try{
 			shell_image_filter->Update();
+			writer1->Update();
 		}
 		catch( itk::ExceptionObject & excep ){
 			std::cerr << "ITK exception caught: " << excep << std::endl;
