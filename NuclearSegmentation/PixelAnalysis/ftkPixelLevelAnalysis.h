@@ -76,6 +76,8 @@ class PixelLevelAnalysis{
 		UShortImageType::Pointer TargetImagePtr;
 		void WriteInitialOutputs();
 		void WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr);
+		void CleanUpSaltNPepperNThinStructs( UShortImageType::Pointer InputImage );
+		unsigned short uns_zero, uns_max;
 		int pixel_distance;
 		int pixelMode;
 		int erodeRadius;

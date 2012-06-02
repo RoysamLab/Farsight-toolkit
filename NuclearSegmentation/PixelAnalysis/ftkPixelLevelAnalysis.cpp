@@ -176,9 +176,6 @@ bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
-	unsigned short uns_zero, uns_max;
-	uns_zero = 0;
-	uns_max  = itk::NumericTraits<unsigned short>::max();
 	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
 			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im ){
 		if( pix_buf_roi_im.Get() >= thresh_roi ){
@@ -221,10 +218,6 @@ bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 }
 
 bool ftk::PixelLevelAnalysis::RunAnalysis2(){
-	unsigned short uns_zero, uns_max;
-	uns_zero = 0;
-	uns_max  = itk::NumericTraits<unsigned short>::max();
-
 	typedef itk::OtsuThresholdImageFilter	 < UShortImageType, UShortImageType > OtsuThresholdFilterType;
 	OtsuThresholdFilterType::Pointer otsufilter = OtsuThresholdFilterType::New();
 	otsufilter->SetInput( ROIImagePtr );
@@ -404,9 +397,6 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
-	unsigned short uns_zero, uns_max;
-	uns_zero = 0;
-	uns_max  = itk::NumericTraits<unsigned short>::max();
 	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
 			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im ){
 		if( pix_buf_roi_im.Get() >= thresh_roi ){
@@ -437,6 +427,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	if( (pixelMode == 4)||(pixelMode == 8) ){
 		this->CleanUpSaltNPepperNThinStructs( roi_bin );
 		this->CleanUpSaltNPepperNThinStructs( target_bin );
+		typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
 		typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
 		DilateFilterType::Pointer shell_image_filter = DilateFilterType::New();
 		StructuringElementType shell_individual;
@@ -467,7 +458,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 				if( pixBufTargOrigBin.Get() ) ++target_count;
 				if( pixBufRoiEroded.Get() ) ++roi_count;
 			} else {
-				if( pixBufTargOrigBin.Get() ) ++independent_target_count
+				if( pixBufTargOrigBin.Get() ) ++independent_target_count;
 			}
 		}
 	}
@@ -498,90 +489,92 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 }
 
 void ftk::PixelLevelAnalysis::CleanUpSaltNPepperNThinStructs( UShortImageType::Pointer InputImage ){
-		//In this mode we erode by erodeRadius and then if the connected component still exists then
-		//it is a mature vessel else it is noise/non-specific CD34 staining
-		typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
-		typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
-		typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
-		typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+	//In this mode we erode by erodeRadius and then if the connected component still exists then
+	//it is a mature vessel else it is noise/non-specific CD34 staining
+	typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
+	typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
+	typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
+	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
 
-		LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
-		initialLabelsFilter->SetInput( InputImage );
-		initialLabelsFilter->FullyConnectedOff();
+	LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
+	initialLabelsFilter->SetInput( InputImage );
+	initialLabelsFilter->FullyConnectedOff();
 
-		StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
-		initialLabelsStats->SetLabelInput(initialLabelsFilter->GetOutput());
-		initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
-		initialLabelsStats->UseHistogramsOff();
+	StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
+	initialLabelsStats->SetLabelInput(initialLabelsFilter->GetOutput());
+	initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
+	initialLabelsStats->UseHistogramsOff();
 
-		StructuringElementType shellElement;
-		shellElement.SetRadius( erodeRadius ); //radius shell
-		shellElement.CreateStructuringElement();
-		ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
-		erodeFilter->SetKernel( shellElement );
-		erodeFilter->SetErodeValue( uns_max );
-		erodeFilter->SetInput( InputImage );
-		std::cout<<"Computing labels and eroding binary.\n";
+	StructuringElementType shellElement;
+	shellElement.SetRadius( erodeRadius ); //radius shell
+	shellElement.CreateStructuringElement();
+	ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
+	erodeFilter->SetKernel( shellElement );
+	erodeFilter->SetErodeValue( uns_max );
+	erodeFilter->SetInput( InputImage );
+	std::cout<<"Computing labels and eroding binary.\n";
 
-		try{
-			initialLabelsStats->Update();
-			erodeFilter->Update();
+	try{
+		initialLabelsStats->Update();
+		erodeFilter->Update();
+	}
+	catch( itk::ExceptionObject & excep ){
+		std::cerr << "ITK exception caught: " << excep << std::endl;
+		return;
+	}
+
+	//Get rid of regions that are thinner than a specific pixel radius by erosion
+	std::vector< UShortImageType::PixelType > deleteLabels;
+	for( UShortImageType::PixelType LabelIndex=1; LabelIndex<initialLabelsStats->GetNumberOfObjects(); ++LabelIndex ){
+		if( initialLabelsStats->GetCount( LabelIndex ) <= 5 ){
+			deleteLabels.push_back( LabelIndex );
+			continue;
 		}
-		catch( itk::ExceptionObject & excep ){
-			std::cerr << "ITK exception caught: " << excep << std::endl;
-			return false;
-		}
+		StatisticsFilterType::BoundingBoxType BoundBox;
+		BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
+		UShortImageType::IndexType Start;
+		Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+		UShortImageType::SizeType Size;
+		Size[0] = BoundBox[1]-BoundBox[0]+1;
+		Size[1] = BoundBox[3]-BoundBox[2]+1;
+		Size[2] = BoundBox[5]-BoundBox[4]+1;
+		UShortImageType::RegionType CroppedRegion;
+		CroppedRegion.SetSize ( Size  );
+		CroppedRegion.SetIndex( Start );
 
-		//Get rid of regions that are thinner than a specific pixel radius by erosion
-		std::vector< UShortImageType::PixelType > deleteLabels;
-		for( UShortImageType::PixelType LabelIndex=1; LabelIndex<initialLabelsStats->GetNumberOfObjects(); ++LabelIndex ){
-			if( initialLabelsStats->GetCount( LabelIndex ) <= 5 ){
-				deleteLabels.push_back( LabelIndex );
-				continue;
-			}
-			StatisticsFilterType::BoundingBoxType BoundBox;
-			BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
-			UShortImageType::IndexType Start;
-			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
-			UShortImageType::SizeType Size;
-			Size[0] = BoundBox[1]-BoundBox[0]+1;
-			Size[1] = BoundBox[3]-BoundBox[2]+1;
-			Size[2] = BoundBox[5]-BoundBox[4]+1;
-			UShortImageType::RegionType CroppedRegion;
-			CroppedRegion.SetSize ( Size  );
-			CroppedRegion.SetIndex( Start );
+		ConstIteratorType pixBufRoiErodeBin( erodeFilter->GetOutput(), CroppedRegion );
+		ConstIteratorType pixBufInitLabels ( initialLabelsFilter->GetOutput(), CroppedRegion );
+		
+		pixBufInitLabels.GoToBegin();
+		for( pixBufRoiErodeBin.GoToBegin(); !pixBufRoiErodeBin.IsAtEnd(); ++pixBufRoiErodeBin, ++pixBufInitLabels )
+			if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
+				break;
 
-			ConstIteratorType pixBufRoiErodeBin( erodeFilter->GetOutput(), CroppedRegion );
-			ConstIteratorType pixBufInitLabels ( initialLabelsFilter->GetOutput(), CroppedRegion );
-			
-			pixBufInitLabels.GoToBegin();
-			for( pixBufRoiErodeBin.GoToBegin(); !pixBufRoiErodeBin.IsAtEnd(); ++pixBufRoiErodeBin, ++pixBufInitLabels )
-				if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
-					break;
+		if( pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
+	}
+	for( UShortImageType::PixelType i=0; i<deleteLabels.size(); ++i ){
+		StatisticsFilterType::BoundingBoxType BoundBox;
+		BoundBox = initialLabelsStats->GetBoundingBox( deleteLabels.at(i) );
+		UShortImageType::IndexType Start;
+		Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+		UShortImageType::SizeType Size;
+		Size[0] = BoundBox[1]-BoundBox[0]+1;
+		Size[1] = BoundBox[3]-BoundBox[2]+1;
+		Size[2] = BoundBox[5]-BoundBox[4]+1;
+		UShortImageType::RegionType CroppedRegion;
+		CroppedRegion.SetSize ( Size  );
+		CroppedRegion.SetIndex( Start );
 
-			if( pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
-		}
-		for( UShortImageType::PixelType i=0; i<deleteLabels.size(); ++i ){
-			StatisticsFilterType::BoundingBoxType BoundBox;
-			BoundBox = initialLabelsStats->GetBoundingBox( deleteLabels.at(i) );
-			UShortImageType::IndexType Start;
-			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
-			UShortImageType::SizeType Size;
-			Size[0] = BoundBox[1]-BoundBox[0]+1;
-			Size[1] = BoundBox[3]-BoundBox[2]+1;
-			Size[2] = BoundBox[5]-BoundBox[4]+1;
-			UShortImageType::RegionType CroppedRegion;
-			CroppedRegion.SetSize ( Size  );
-			CroppedRegion.SetIndex( Start );
+		IteratorType pixBufBin( InputImage, CroppedRegion );
+		ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
 
-			IteratorType pixBufBin( InputImage, CroppedRegion );
-			ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
-
-			pixBufInitLabels.GoToBegin();
-			for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
-				if( pixBufInitLabels.Get()==deleteLabels.at(i) )
-					pixBufBin.Set(0);
-		}
+		pixBufInitLabels.GoToBegin();
+		for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
+			if( pixBufInitLabels.Get()==deleteLabels.at(i) )
+				pixBufBin.Set(0);
+	}
 }
 
 #endif
