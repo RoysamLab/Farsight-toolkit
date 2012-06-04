@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
 	
 	int step_no = atoi(argv[3]);
 	
-	if(step_no < 1 || step_no > 2){
+	if(step_no < 0 || step_no > 2){
 		std::cout << "Incorrect parameter: step_no. " << std::endl;
 		return -1;
 	}
@@ -73,6 +73,17 @@ int main(int argc, char* argv[]){
 	clock_t LoadSomaImage_start_time = clock();
 	AT->LoadSomaImage(std::string(argv[2]));
 	std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+
+	
+	// step 0 is for testing whatever you want
+	if(step_no == 0){
+
+		//ObjectnessMeasures obj_measures;
+		//AT->ComputeObjectnessImage(obj_measures);
+		AT->OptimizeCoverage();	
+
+		std::cout << std::endl << "Done with step 0. " << std::endl;
+	}
 
 	
 	if(step_no == 1){

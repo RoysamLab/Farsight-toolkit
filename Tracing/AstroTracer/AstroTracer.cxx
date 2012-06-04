@@ -516,8 +516,274 @@ void AstroTracer::FeatureMainExternal(void)
 	}
 	
 	std::cout << "Done with GetFeature. " << std::endl;
-	
 }
+
+void AstroTracer::OptimizeCoverage(void){
+
+	std::cout << std::endl<< "Optimizing feature coverage for the image." << std::endl;
+	
+	// Optimizing coverage at single scale	
+	float sigma = 5.6569f;
+	float sigma_min = sigma;
+	float sigma_max = sigma;
+	int sigma_intervals = 1;
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(this->PaddedCurvImage);
+	stats_filter->Update();
+	double img_max_val = stats_filter->GetMaximum();
+	double img_mean_val = stats_filter->GetMean();
+
+	/*ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1);
+	obj_measures.alpha = 0.5*img_max_val;
+	obj_measures.beta = 0.5*img_max_val;
+	obj_measures.gamma = 0.25*img_max_val;
+
+	//std::cout << "Max image value: " << img_max_val << " Mean img value: " << img_mean_val << std::endl;
+
+	//this->ComputeObjectnessImage(obj_measures);
+
+	StatisticsFilterType::Pointer stats_filter2 = StatisticsFilterType::New();
+	stats_filter2->SetInput(this->ObjectnessImage);
+	stats_filter2->Update();
+	double max_objectness = stats_filter2->GetMaximum();
+
+	MultiplyImageFilter::Pointer img_multiplier = MultiplyImageFilter::New();
+	img_multiplier->SetInput(this->ObjectnessImage);
+	img_multiplier->SetConstant2(1.0/(max_objectness));
+	img_multiplier->Update();
+
+	ImageType3D::Pointer normalized_obj_img = img_multiplier->GetOutput();
+
+	StatisticsFilterType::Pointer stats_filter3 = StatisticsFilterType::New();
+	stats_filter3->SetInput(normalized_obj_img);
+	stats_filter3->Update();
+	double mean_objectness = stats_filter3->GetMean();
+	*/
+
+	//std::cout << "Max objectness value: " << max_objectness << std::endl << "Mean objectness value: " << mean_objectness << std::endl;
+
+	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+	ImageWriterType::Pointer image_writer = ImageWriterType::New();
+	image_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage.mhd");
+	image_writer->SetInput(this->ObjectnessImage);
+	image_writer->Update();
+	*/
+
+
+	LoGFilterType::Pointer gauss = LoGFilterType::New();
+	gauss->SetInput( PaddedCurvImage );
+	gauss->SetSigma( sigma );
+	gauss->SetNormalizeAcrossScale(false);
+	gauss->GetOutput()->Update();
+	
+	float tot = 0.0f, num = 0.0f;
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	float gamma = 1.6f;
+	float tnorm = vcl_pow(sigma,gamma);
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp){
+		float q = ittemp.Get()*tnorm;
+		ittemp.Set(-1.0f*q);
+		tot += q*q;
+		num ++;
+	}
+	//std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
+
+	
+	// set the diagonal terms in neighborhood iterator
+	itk::Offset<3>
+		xp =  {{2 ,  0 ,   0}},
+		xn =  {{-2,  0,    0}},
+		yp =  {{0,   2,   0}},
+		yn =  {{0,  -2,    0}},
+		zp =  {{0,   0,    2}},
+		zn =  {{0,   0,   -2}};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+
+	unsigned int
+		xy1 =  17, //{ 1 ,   1 ,  0 },
+		xy2 =  9,  //{ -1,  -1 ,  0 },
+		xy3 =  15, //{ -1,   1 ,  0 },
+		xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+		yz1 =  25, //{ 0 ,   1 ,  1 },
+		yz2 =  1,  //{ 0 ,  -1 , -1 },
+		yz3 =  19, //{ 0 ,  -1 ,  1 },
+		yz4 =  7,  //{ 0 ,   1 , -1 },
+
+		xz1 =  23, //{ 1 ,   0 ,  1 },
+		xz2 =  3,  //{-1 ,   0 , -1 },
+		xz3 =  21, //{-1 ,   0 ,  1 },
+		xz4 =  5;  //{ 1 ,   0 , -1 };
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3;
+	sz[1] = sz[1] - 3; 
+	sz[2] = sz[2] - 3;
+
+	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+
+
+	// This parameter will affect the density og LoG points detected at each scale.
+	float win_scale = 2;
+
+	long win = long(sigma)/2;
+	//long win = win_scale * long(sigma);
+	if (win <2) 
+		win = 2;
+	
+	int opt_iter = 0, max_opt_iter = 10;
+	float max_coverage = 0.002;
+	float min_coverage = 0.001;
+	float thresh1 = 0.01; //0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
+	float thresh2 = 0.0001; //0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+
+
+	while(opt_iter < max_opt_iter){
+		
+		NDXImage = ImageType3D::New();
+		NDXImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
+		NDXImage->Allocate();
+		NDXImage->FillBuffer(0.0f);
+
+		it.GoToBegin();
+		nit.GoToBegin();
+		
+		long ctCnt = 0;
+		long rejectCtCnt = 0;
+
+		float total_fg_objectness = 0.0;
+		float total_fg_intensity = 0.0;
+		float total_fg_obj_int = 0.0;
+		
+		while(!nit.IsAtEnd()){
+
+			itk::Index<3> ndx = it.GetIndex();
+			if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
+				(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
+				(ndx[2] > (unsigned int)sz[2]) ){
+				++it;
+				++nit;
+				continue;
+			}
+
+			float a1 = 0.0;
+			for (unsigned int i=0; i < 13; ++i)
+				a1 += vnl_math_max(nit.GetPixel(i), nit.GetPixel(26 - i));
+					
+			float val = nit.GetPixel(13);
+			
+			if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 )){
+
+				TensorType h;
+				h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+				h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+				h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+				h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+				h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+				h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+				EigenValuesArrayType ev;
+				EigenVectorMatrixType em;
+				h.ComputeEigenAnalysis (ev, em);
+
+				
+				unsigned int w;
+				if (IsSeed(ev, w)){
+
+					float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]); // How is this score derived?
+					if (RegisterIndex(value, ndx, sz, win)){
+						
+
+						NDXImage->SetPixel(ndx, value);
+						ctCnt++;
+
+			
+						//total_fg_objectness += normalized_obj_img->GetPixel(ndx); //this->ObjectnessImage->GetPixel(ndx);
+						total_fg_intensity += this->PaddedCurvImage->GetPixel(ndx);
+						//total_fg_obj_int += this->ObjectnessImage->GetPixel(ndx) * this->PaddedCurvImage->GetPixel(ndx);
+						//total_fg_obj_int += normalized_obj_img->GetPixel(ndx) * this->PaddedCurvImage->GetPixel(ndx);
+					}	
+					else
+						rejectCtCnt++;
+				}
+			}
+			++it;
+			++nit;
+		}
+
+		double Mi_coverage = (double)ctCnt / img_mean_val;
+		//double Mi_coverage2 = (double)ctCnt / mean_objectness;
+		//double Mi_coverage3 = (double)ctCnt / (img_mean_val * mean_objectness);
+		
+		ImageType3D::SizeType im_size = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+		//double total_objectness = mean_objectness * (im_size[0]*im_size[1]*im_size[2]);
+		double total_intensity = img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+
+		//double Mi_coverage4 = total_fg_objectness / total_objectness;
+		double Mi_coverage5 = total_fg_intensity / total_intensity;
+		
+		std::cout << std::endl;
+		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
+		std::cout << "Number of CTs at this stage: " << ctCnt <<std::endl;
+		
+		//std::cout << "Total foreground objectness: " << total_fg_objectness << std::endl;
+		//std::cout << "Total foreground intensity: " << total_fg_intensity << std::endl;
+		//std::cout << "Total foreground obj*intensity: " << total_fg_obj_int << std::endl;
+		//std::cout << "Mi_coverage: " << Mi_coverage << std::endl;
+		//std::cout << "Mi_coverage2: " << Mi_coverage2 << std::endl;
+		//std::cout << "Mi_coverage3: " << Mi_coverage3 << std::endl;
+		//std::cout << "Mi_coverage4: " << Mi_coverage4 << std::endl;
+		std::cout << "Iter: " << opt_iter << " Mi_coverage5: " << Mi_coverage5 << " Intensity threshold: " << thresh1 << ", Contrast threshold: " << thresh2 << std::endl;
+
+		opt_iter++;
+
+		if(Mi_coverage5 > max_coverage){
+			thresh1 += 0.02;
+			thresh2 += 0.0004;
+		}
+		else if(Mi_coverage5 < min_coverage){
+			thresh1 -= 0.02;
+			thresh2 -= 0.0004;
+		}
+		else
+			break;		
+	}
+
+	// Setting thresholds based on the optimized coverage
+	this->intensity_threshold = thresh1;
+	this->contrast_threshold = thresh2;
+
+	if(opt_iter == max_opt_iter)
+		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
+	else
+		std::cout << "Done with optimizing coverage. " <<  std::endl;
+
+	
+	// Code for writing out separate files for each LoG scale
+	/*RescalerType::Pointer rescaler2 = RescalerType::New();
+	rescaler2->SetInput(NDXImage);
+	rescaler2->SetOutputMaximum( 255 );
+	rescaler2->SetOutputMinimum( 0 );
+	rescaler2->Update();
+	itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
+	caster2->SetInput(rescaler2->GetOutput());
+
+	itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
+
+	LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\LoG_Points_1.tif");	
+	LoGwriter2->SetInput(caster2->GetOutput());
+	LoGwriter2->Update();
+	*/		
+}
+
 void AstroTracer::FeatureMain(void)
 {
 	time_t FeatureMain_start_time = clock();
@@ -552,34 +818,6 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
 
-	RescalerType::Pointer rescaler = RescalerType::New();
-	rescaler->SetInput(gauss->GetOutput() );
-	rescaler->SetOutputMaximum( 255 );
-	rescaler->SetOutputMinimum( 0 );
-	rescaler->Update();
-	itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
-	caster->SetInput(rescaler->GetOutput());
-
-	itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter = itk::ImageFileWriter< CharImageType3D >::New();
-
-	/*if(scale_index == 1)
-		LoGwriter->SetFileName("C:\\Prathamesh\\Astrocytes\\TestingExp\\LoG_2.tif");
-		
-	else if(scale_index == 2)
-		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_2_8284.tif");
-	else if(scale_index == 3)
-		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_4.tif");
-	else if(scale_index == 4)
-		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_5_6569.tif");
-	else if(scale_index == 5)
-		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_8.tif");
-	else
-		LoGwriter->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\LoG_11_31.tif");
-	
-	LoGwriter->SetInput(caster->GetOutput());
-	LoGwriter->Update();
-	*/
-	
 	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	float tot = 0.0f, num = 0.0f;
@@ -2287,9 +2525,337 @@ void AstroTracer::CallFeatureMainExternal(void){
 	this->FeatureMainExternal();
 }
 
-void AstroTracer::ComputeObjectnessImage(void){
+void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 
+	//float sigma_min = 2.0f; //0.5f;
+	//float sigma_max = 10.0f; //4.0f;
+	//int sigma_steps = 5;
+
+	//float alpha = 0.5, beta = 0.5, gamma = 0.25; //5.0;
+
+	//int obj_dim = objectness_type; //1; //0: Blobness, 1: Vesselness, 2: Plateness
+
+	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
+	multi_scale_Hessian->SetInput(this->PaddedCurvImage);
+	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
+	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
+
+	ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	objectness_filter->SetScaleObjectnessMeasure(false);
+	objectness_filter->SetBrightObject(true);
+	objectness_filter->SetAlpha(obj_measures.alpha);
+	objectness_filter->SetBeta(obj_measures.beta);
+	objectness_filter->SetGamma(obj_measures.gamma);
+	objectness_filter->SetObjectDimension(obj_measures.objectness_type);
+
+	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
+
+	multi_scale_Hessian->Update();
 	
+	this->ObjectnessImage = multi_scale_Hessian->GetOutput();
+
+	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+	ImageWriterType::Pointer image_writer = ImageWriterType::New();
+
+	image_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage.mhd");
+	image_writer->SetInput(multi_scale_Hessian->GetOutput());
+	image_writer->Update();
+
+	ImageWriterType::Pointer image_writer2 = ImageWriterType::New();
+	image_writer2->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage_scales.mhd");
+	image_writer2->SetInput(multi_scale_Hessian->GetScalesOutput());
+	image_writer2->Update();*/
+}
+
+void AstroTracer::ComputeFTKObjectnessImage(){
+
+	float sigma = 5.6569f;
+	
+	// Code for FTK objectness
+	LoGFilterType::Pointer gauss = LoGFilterType::New();
+	gauss->SetInput( PaddedCurvImage );
+	gauss->SetSigma( sigma );
+	gauss->SetNormalizeAcrossScale(false);
+	gauss->GetOutput()->Update();
+
+	float tot = 0.0f, num = 0.0f;
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	float gamma = 1.6f;
+	float tnorm = vcl_pow(sigma,gamma);
+
+	// Replace by ITK filters, will be faster
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp){
+		float q = ittemp.Get()*tnorm;
+		ittemp.Set(-1.0f*q);
+		tot += q*q;
+		num ++;
+	}
+	//std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
+
+	// set the diagonal terms in neighborhood iterator
+	itk::Offset<3>
+		xp =  {{2 ,  0 ,   0}},
+		xn =  {{-2,  0,    0}},
+		yp =  {{0,   2,   0}},
+		yn =  {{0,  -2,    0}},
+		zp =  {{0,   0,    2}},
+		zn =  {{0,   0,   -2}};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+
+	unsigned int
+		xy1 =  17, //{ 1 ,   1 ,  0 },
+		xy2 =  9,  //{ -1,  -1 ,  0 },
+		xy3 =  15, //{ -1,   1 ,  0 },
+		xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+		yz1 =  25, //{ 0 ,   1 ,  1 },
+		yz2 =  1,  //{ 0 ,  -1 , -1 },
+		yz3 =  19, //{ 0 ,  -1 ,  1 },
+		yz4 =  7,  //{ 0 ,   1 , -1 },
+
+		xz1 =  23, //{ 1 ,   0 ,  1 },
+		xz2 =  3,  //{-1 ,   0 , -1 },
+		xz3 =  21, //{-1 ,   0 ,  1 },
+		xz4 =  5;  //{ 1 ,   0 , -1 };
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3;
+	sz[1] = sz[1] - 3; 
+	sz[2] = sz[2] - 3;
+
+	it.GoToBegin();
+	nit.GoToBegin();
+	itk::Vector<float,3> sp = PaddedCurvImage->GetSpacing();
+
+
+	// This parameter will affect the density og LoG points detected at each scale.
+	float win_scale = 2;
+
+	long win = long(sigma)/2;
+	//long win = win_scale * long(sigma);
+	if (win <2) 
+		win = 2;
+		
+	const float thresh1 = 0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = 0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+	
+	
+	//Loop over image with the neighborhood for computing objectness
+	float alpha = 0.5, beta = 0.5, gamma1 = 0.0025;
+
+	MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
+	min_max_calculator->SetImage(this->PaddedCurvImage);
+	min_max_calculator->ComputeMaximum();
+	double img_max_val = min_max_calculator->GetMaximum();
+
+	ImageType3D::RegionType id_reg;
+	ImageType3D::IndexType id_st;
+	ImageType3D::SizeType id_sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->ObjectnessImage = ImageType3D::New();
+	this->ObjectnessImage->SetRegions(id_reg);
+	this->ObjectnessImage->Allocate();
+	this->ObjectnessImage->SetSpacing(PaddedCurvImage->GetSpacing());
+
+	this->ObjectnessImage->FillBuffer(0);
+	
+	
+	while(!nit.IsAtEnd()) 
+	{
+		itk::Index<3> ndx = it.GetIndex();
+		if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
+			(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
+			(ndx[2] > (unsigned int)sz[2]) ){
+			++it;
+			++nit;
+			continue;
+		}
+		
+		TensorType h;
+		h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+		h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+		h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+		h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+		h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+		h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+		EigenValuesArrayType ev;
+		EigenVectorMatrixType em;
+		h.ComputeEigenAnalysis (ev, em);
+
+		ObjectnessMeasures obj_measures(alpha * img_max_val, beta * img_max_val, gamma1 * img_max_val);
+		
+		this->GetHessianBasedObjectnessMeasures(ev, obj_measures);
+		
+		this->ObjectnessImage->SetPixel(ndx, obj_measures.vesselness);
+		
+		++it;
+		++nit;
+	}
+}
+
+ObjectnessMeasures::ObjectnessMeasures(){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.25;
+	
+	this->sigma_min = 0.5;
+	this->sigma_max = 2.0;
+	this->sigma_intervals = 1;
+	this->objectness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+ObjectnessMeasures::ObjectnessMeasures(float alpha, float beta, float gamma){
+
+	this->alpha = alpha;
+	this->beta = beta;
+	this->gamma = gamma;
+
+	this->sigma_min = 0.5;
+	this->sigma_max = 2.0;
+	this->sigma_intervals = 1;
+	this->objectness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+ObjectnessMeasures::ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.25;
+
+	this->sigma_min = sigma_min;
+	this->sigma_max = sigma_max;
+	this->sigma_intervals = sigma_intervals;
+	this->objectness_type = obj_type;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+void AstroTracer::GetHessianBasedObjectnessMeasures(itk::FixedArray<double, 3>& ev, ObjectnessMeasures& obj_measures){
+
+	bool zeroness = false;
+	int lowest_idx = 0;
+	itk::FixedArray<double, 3> ev_original;
+
+	ev_original[0] = ev[0];
+	ev_original[1] = ev[1];
+	ev_original[2] = ev[2];
+
+	ev[0] = std::abs(ev[0]);
+	ev[1] = std::abs(ev[1]);
+	ev[2] = std::abs(ev[2]);
+
+	float L1, L2, L;
+	if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
+	{
+		L = ev[0];
+		L1 = ev[1]; 
+		L2 = ev[2];
+		if (ev[1] > ev[2])
+		{
+			L1 = ev[2]; 
+			L2 = ev[1];
+
+			lowest_idx = 2;
+		}
+		else
+			lowest_idx = 1;
+	}
+	else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
+	{
+		L = ev[1];
+		L1 = ev[0];
+		L2 = ev[2];
+		if (ev[0] > ev[2]) 
+		{
+			L1 = ev[2];
+			L2 = ev[0];	
+
+			lowest_idx = 2;
+		}
+		else
+			lowest_idx = 0;
+	}
+	else  
+	{
+		L = ev[2];
+		L1 = ev[0];
+		L2 = ev[1];
+		if (ev[0] > ev[1]) 
+		{
+			L1 = ev[1];
+			L2 = ev[0];		
+
+			lowest_idx = 1;
+		}
+		else
+			lowest_idx = 0;
+	}
+
+	// What is the sequence of the sorted list: L1 < L2 < L
+
+	if(lowest_idx == 0){
+		if(ev_original[1] > 0 || ev_original[2] > 0)
+			zeroness = true;
+	}
+	if(lowest_idx == 1){
+		if(ev_original[0] > 0 || ev_original[2] > 0)
+			zeroness = true;
+	}
+	if(lowest_idx == 2){
+		if(ev_original[0] > 0 || ev_original[1] > 0)
+			zeroness = true;
+	}
+	
+	if(zeroness){
+		obj_measures.ballness = 0.0;
+		obj_measures.plateness = 0.0;
+		obj_measures.vesselness = 0.0;
+		obj_measures.noiseness = 0.0;
+	}
+	else{
+
+		//float alpha = 0.5 * img_max_val; 
+		//float beta = 0.5 * img_max_val;
+		//float gamma = 0.0025 * img_max_val;
+
+		obj_measures.ballness = L1 / sqrt(L2 * L);
+		obj_measures.plateness = L2 / L;
+		obj_measures.noiseness = std::sqrt(std::pow(L1, 2) + std::pow(L2, 2) + std::pow(L, 2));
+
+		obj_measures.vesselness = (1 - std::exp(-1 * std::pow(obj_measures.plateness, 2) / (2.0 * std::pow(obj_measures.alpha, 2)))) 
+			* std::exp(-1 * std::pow(obj_measures.ballness, 2) / (2.0 * std::pow(obj_measures.beta, 2)))
+			* (1 - std::exp(-1 * std::pow(obj_measures.noiseness, 2) / (2.0 * std::pow(obj_measures.gamma, 2))));
+	}
 }
 
 void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFname, unsigned int padz, const std::string points_source = "SWC"){
@@ -2837,420 +3403,24 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 }
 
 
-void AstroTracer::ComputeAstroFeaturesForGivenPoints(std::string outputFname, std::string tracePointsFname, unsigned int padz){
-	
-	if(!this->PopulateLoGImages()){
-		std::cout << "LoG image vector is empty. Quitting. " << std::endl;
-		return;
-	}
-
-	///////////////////////////////////////////////////////
-	std::ifstream tracePoints;
-	tracePoints.open(tracePointsFname.c_str(), std::ios::in); 
-	std::cout << "Reading trace points file. " << std::endl;
-	
-	std::vector<HeapNode> tracePointsVector;
-	//itk::Vector<float, 3> tracePointsVector;
-	std::vector<std::string> str_vec;
-	std::string line, str1;
-	if(tracePoints.is_open()){
-		while(tracePoints.good()){
-			if(!std::getline(tracePoints, line))
-				break;
-			
-			std::istringstream str_stream(line); 
-			while(str_stream.good()){
-				
-				if(!getline(str_stream, str1, '\t'))
-					break;
-
-				str_vec.push_back(str1);
-			}
-
-			itk::Index<3> idx;
-			idx[0] = atof(str_vec[0].c_str());
-			idx[1] = atof(str_vec[1].c_str());
-			idx[2] = atof(str_vec[2].c_str());
-
-			tracePointsVector.push_back(HeapNode(idx, 0));
-			str_vec.clear();
-		}
-		tracePoints.close();
-	}
-	else{
-		std::cout << " Could not open trace points. Exiting now. " << std::endl;
-		return;
-	}
-
-	if(tracePointsVector.empty()){
-		std::cout << " Empty trace points file. Quitting. " << std::endl;
-		return;
-	}
-	///////////////////////////////////////////////////////
-	std::cout << "Trace points file read. " << std::endl;
-
-
-	//Preparing IDImage
-	ImageType3D::RegionType id_reg;
-	ImageType3D::IndexType id_st;
-	ImageType3D::SizeType id_sz = PaddedCurvImage->GetBufferedRegion().GetSize();
-
-	id_st[0] = 0;
-	id_st[1] = 0;
-	id_st[2] = 0;
-	
-	id_reg.SetSize(id_sz);
-	id_reg.SetIndex(id_st);
-	
-	this->IDImage = LabelImageType3D::New();
-	IDImage->SetRegions(id_reg);
-	IDImage->Allocate();
-	IDImage->SetSpacing(PaddedCurvImage->GetSpacing());
-
-	IDImage->FillBuffer(0);
-
-	//std::vector<SWCNode*>::iterator sit;
-	//std::cout << "Writing SWCImage file " << fname << " with " << SWCNodeContainer.size() << " nodes...";
-	
-	std::ofstream feature_vector;////////////
-	feature_vector.open(outputFname.c_str(), std::ios::app);//////////////////
-	//std::cout << "After feature_vector.open"<<std::endl;
-
-	//for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
-
-	feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "ball vec size" << '\t' << "radius" << '\t';
-	for(int j = 0; j < 6; j++)//6=number of scales=hard coded
-		feature_vector << "ball" << j <<  '\t';
-	for(int j = 0; j < 6; j++)//6=number of scales=hard coded
-		feature_vector << "plate" << j << '\t';	
-	
-	feature_vector << "int" << '\t' << "mean int" << '\t' << "var int" << '\t' << "max int" << '\t' << "min int" << '\t' << "nucl dist" << '\t' ;
-	feature_vector << std::endl;
-
-	for(int i = 0; i < tracePointsVector.size(); i++){
-
-		std::cout << " LoG point index: " << i << std::endl;
-
-		//std::cout << "tracePointsVecto:"<<tracePointsVector[i].ndx[0]<<" "<<tracePointsVector[i].ndx[1]<<" "<<tracePointsVector[i].ndx[2]<<" "<<std::endl;
-
-		//get radius estimate for this node
-		itk::Vector<float, 3> pos;
-		pos[0] = tracePointsVector[i].ndx[0];
-		pos[1] = tracePointsVector[i].ndx[1];
-		pos[2] = tracePointsVector[i].ndx[2];
-
-		float radius = getRadius(pos);
-		
-
-		////////////////////// Code for eigen values based features ////////////////////////////
-
-		std::vector<float> ballness_vector;
-		std::vector<float> plateness_vector;
-
-		ImageType3D::IndexType current_idx;
-		current_idx[0] = pos[0];
-		current_idx[1] = pos[1];
-		current_idx[2] = pos[2]-padz; // PADZ???
-		//std::cout << "After current_ide set, LoG_vector_size="<< this->LoG_Vector.size() << std::endl;
-		//std::cout << "Current Indices:"<<current_idx[0]<<" "<<current_idx[1]<<" "<<current_idx[2]<<" "<<std::endl;
-		
-		for(int sc = 0; sc < this->LoG_Vector.size(); sc++){
-
-			std::cout << " Computing ballness and plateness at: " << sc << std::endl;
-
-			// set the diagonal terms in neighborhood iterator
-			itk::Offset<3>
-				xp =  {{2 ,  0 ,   0}},
-				xn =  {{-2,  0,    0}},
-				yp =  {{0,   2,   0}},
-				yn =  {{0,  -2,    0}},
-				zp =  {{0,   0,    2}},
-				zn =  {{0,   0,   -2}};
-
-			itk::Size<3> rad = {{1,1,1}};
-			itk::NeighborhoodIterator<ImageType3D> nit(rad , LoG_Vector[sc], LoG_Vector[sc]->GetBufferedRegion());
-			
-			nit.SetLocation(current_idx);
-			
-
-			//itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
-
-			unsigned int
-				xy1 =  17, //{ 1 ,   1 ,  0 },
-				xy2 =  9,  //{ -1,  -1 ,  0 },
-				xy3 =  15, //{ -1,   1 ,  0 },
-				xy4 =  11, //{ 1 ,  -1 ,  0 },
-
-				yz1 =  25, //{ 0 ,   1 ,  1 },
-				yz2 =  1,  //{ 0 ,  -1 , -1 },
-				yz3 =  19, //{ 0 ,  -1 ,  1 },
-				yz4 =  7,  //{ 0 ,   1 , -1 },
-
-				xz1 =  23, //{ 1 ,   0 ,  1 },
-				xz2 =  3,  //{-1 ,   0 , -1 },
-				xz3 =  21, //{-1 ,   0 ,  1 },
-				xz4 =  5;  //{ 1 ,   0 , -1 };
-
-			typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
-			typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
-			typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
-
-			TensorType h;
-			h[0] = LoG_Vector[sc]->GetPixel( current_idx + xp ) + LoG_Vector[sc]->GetPixel( current_idx + xn ) - 2*nit.GetPixel( 13 );
-			h[3] = LoG_Vector[sc]->GetPixel( current_idx + yp ) + LoG_Vector[sc]->GetPixel( current_idx + yn ) - 2*nit.GetPixel( 13 );
-			h[5] = LoG_Vector[sc]->GetPixel( current_idx + zp ) + LoG_Vector[sc]->GetPixel( current_idx + zn ) - 2*nit.GetPixel( 13 );
-			h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
-			h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
-			h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
-
-			EigenValuesArrayType ev;
-			EigenVectorMatrixType em;
-			h.ComputeEigenAnalysis (ev, em);
-			//std::cout << "After eigen analysis.open"<<std::endl;
-
-			// Amit-style sorting
-			float L1, L2, L;
-			if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
-			{
-				L = ev[0];
-				L1 = ev[1]; 
-				L2 = ev[2];
-				if (ev[1] > ev[2])
-				{
-					L1 = ev[2]; 
-					L2 = ev[1];		
-				}
-			}
-			else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
-			{
-				L = ev[1];
-				L1 = ev[0];
-				L2 = ev[2];
-				if (ev[0] > ev[2]) 
-				{
-					L1 = ev[2];
-					L2 = ev[0];		
-				}
-			}
-			else  
-			{
-				L = ev[2];
-				L1 = ev[0];
-				L2 = ev[1];
-				if (ev[0] > ev[1]) 
-				{
-					L1 = ev[1];
-					L2 = ev[0];		
-				}
-			}
-
-			ballness_vector.push_back(abs(L2)/sqrt(abs(L1*L)));
-			plateness_vector.push_back(abs(L2)/(abs(L1)));
-			//std::cout << "After pushback in ballness/plateness"<<std::endl;
-
-	
-		}
-
-		/////////////////////// Code for intensity based features ///////////////////////////////
-
-		float double_scale = 2 * radius; 
-		
-		//StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
-		ImageType3D::IndexType starting_index, end_index;
-		ImageType3D::SizeType sub_volume_size;
-		ImageType3D::RegionType sub_volume_region;
-		ImageType3D::Pointer sub_volume;
-
-		starting_index[0] = current_idx[0] - double_scale; starting_index[1] = current_idx[1] - double_scale; starting_index[2] = current_idx[2] - double_scale;
-		end_index[0] = current_idx[0] + double_scale; end_index[1] = current_idx[1] + double_scale; end_index[2] = current_idx[2] + double_scale;
-
-		itk::Size<3> sz = PaddedCurvImage->GetBufferedRegion().GetSize();
-		
-		//std::cout << "Intensity: Starting Indices:"<<starting_index[0]<<" "<<starting_index[1]<<" "<<starting_index[2]<<" "<<std::endl;
-		//std::cout << "Intensity: End Indices:"<<end_index[0]<<" "<<end_index[1]<<" "<<end_index[2]<<" "<<std::endl;
-		//std::cout << "Intensity: Size:"<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<std::endl;
-
-		if ( (starting_index[0] < 0) || (starting_index[1] < 0) || (starting_index[2] < 0) ||
-			(end_index[0] > (unsigned int)sz[0]) || (end_index[1] > (unsigned int)sz[1]) ||
-			(end_index[2] > (unsigned int)sz[2]) )
-		continue;
-
-		sub_volume_size[0] = 2 * double_scale; sub_volume_size[1] = 2 * double_scale; sub_volume_size[2] = 2 * double_scale;
-		
-		sub_volume_region.SetIndex(starting_index);
-		sub_volume_region.SetSize(sub_volume_size);
-		
-		VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
-		sub_volume_filter->SetInput(this->PaddedCurvImage);
-		sub_volume_filter->SetRegionOfInterest(sub_volume_region);
-		sub_volume_filter->Update();
-		sub_volume = sub_volume_filter->GetOutput();
-		//std::cout << "After subvolume_filter"<<std::endl;
-
-		StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
-		stats_filter->SetInput(sub_volume);
-		stats_filter->Update();
-
-		double intensity = this->PaddedCurvImage->GetPixel(current_idx);
-		double mean_intensity = stats_filter->GetMean();
-		double var_intensity = stats_filter->GetVariance();
-		double max_intensity = stats_filter->GetMaximum();
-		double min_intensity = stats_filter->GetMinimum();
-		//std::cout << "After statistics"<<std::endl;
-
-
-		////////////////// Code for nearest nuiclei /////////////////////////
-		float double_scale_nuclei = 20;
-
-		LabelImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
-		LabelImageType3D::SizeType sub_volume_size_nuclei;
-		LabelImageType3D::RegionType sub_volume_region_nuclei;
-		LabelImageType3D::Pointer sub_volume_nuclei;
-
-		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
-		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
-
-		sz = PaddedCurvImage->GetBufferedRegion().GetSize();
-
-		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
-		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
-
-		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
-			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
-			(end_index_nuclei[2] > (unsigned int)sz[2]) )
-			continue;
-
-		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
-		
-		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
-		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
-		
-		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
-		sub_volume_filter_nuclei->SetInput(this->SomaImage);
-		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
-		sub_volume_filter_nuclei->Update();
-		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
-		//std::cout << "After subvolume_filter_nuclei"<<std::endl;
-
-		typedef itk::DanielssonDistanceMapImageFilter< LabelImageType3D, LabelImageType3D > DanielssonDistanceMapImageFilterType;
-		DanielssonDistanceMapImageFilterType::Pointer DianielssonFilter = DanielssonDistanceMapImageFilterType::New();
-
-		DianielssonFilter->SetInput(sub_volume_nuclei);
-		DianielssonFilter->GetOutput()->Update();
-
-		LabelImageType3D::Pointer sub_volume_distance = DianielssonFilter->GetOutput();
-		//std::cout << "After Danielsson"<<std::endl;
-		
-		//itk::Index<3> lndx = current_idx-starting_index;
-
-		ImageType3D::IndexType ldx;
-		ldx[0] = double_scale/2;
-		ldx[1] = double_scale/2;
-		ldx[2] = double_scale/2; // PADZ???
-
-		double nucleus_distance = sub_volume_distance->GetPixel(ldx);
-		//std::cout << "After nucleus_distance"<<std::endl;
-		
-
-		IDImage->SetPixel(current_idx, i+1);
-
-		if(feature_vector.good())
-		{
-			feature_vector << i+1 << '\t' << pos[0] << '\t' << pos[1] << '\t' << pos[2]-padz << '\t' << ballness_vector.size() << '\t' << radius << '\t';
-
-			for(int i = 0; i < ballness_vector.size(); i++)
-				feature_vector << ballness_vector[i] << '\t';
-			for(int i = 0; i < plateness_vector.size(); i++)
-				feature_vector << plateness_vector[i] << '\t';	
-			
-			feature_vector << intensity << '\t' << mean_intensity << '\t' << var_intensity << '\t' << max_intensity << '\t' << min_intensity << '\t' << nucleus_distance << '\t' ;
-			feature_vector << std::endl;
-		}
-
-		ballness_vector.clear();
-		plateness_vector.clear();
-	
-	}
-
-	feature_vector.close();/////////////
-	std::cout << " Done with feature vector file." << std::endl;
-
-
-	//itk::CastImageFilter< ImageType3D, LabelImageType3D>::Pointer caster = itk::CastImageFilter< ImageType3D,  LabelImageType3D>::New();///////
-	//caster->SetInput(IDImage);
-
-
-	itk::ImageFileWriter< LabelImageType3D >::Pointer IDImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
-	IDImageWriter->SetFileName("IDImage.tif");
-	IDImageWriter->SetInput(IDImage);
-	try{
-		IDImageWriter->Update();
-	}
-	catch(itk::ExceptionObject e){
-		std::cout << e << std::endl;
-		//return EXIT_FAILURE;
-	}
-	std::cout << " Done with IDImage writing." << std::endl;
-
-}
-
-bool AstroTracer::PopulateLoGImages(void){
+bool AstroTracer::PopulateLoGImages(std::vector<float> sigma_vec){
 
 	std::cout << std::endl<< "Computing LoG images" << std::endl;
-	NDXImage = ImageType3D::New();
-	NDXImage->SetRegions(PaddedCurvImage->GetBufferedRegion());
-	NDXImage->Allocate();
-	NDXImage->FillBuffer(0.0f);
 
-	NDXImage2 = ImageType3D::New();///////////////////
-	NDXImage2->SetRegions(PaddedCurvImage->GetBufferedRegion());//////////////////////
-	NDXImage2->Allocate();/////////////////////////
-	NDXImage2->FillBuffer(0.0f);///////////////////////////
+	//float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };
+	//for (unsigned int i = 0; i < 6; ++i)//////////
+	for(int i = 0; i < sigma_vec.size(); i++){
 
-
-	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };
-	for (unsigned int i = 0; i < 6; ++i)//////////
-	{
-		std::cout << "Analysis at " << sigmas[i] << std::endl;
-		//GetFeature( sigmas[i] , i+1);
-
-		float sigma = sigmas[i];
-		int scale_index = i+1;
-
+		std::cout << "Analysis at " << sigma_vec[i] << std::endl;
 		
+		float sigma = sigma_vec[i];
+			
 		LoGFilterType::Pointer gauss = LoGFilterType::New();
-		gauss->SetInput( PaddedCurvImage );
-		gauss->SetSigma( sigma );
+		gauss->SetInput(PaddedCurvImage);
+		gauss->SetSigma(sigma);
 		gauss->SetNormalizeAcrossScale(false);
 		gauss->GetOutput()->Update();
 
-		RescalerType::Pointer rescaler = RescalerType::New();
-		rescaler->SetInput(gauss->GetOutput() );
-		rescaler->SetOutputMaximum( 255 );
-		rescaler->SetOutputMinimum( 0 );
-		rescaler->Update();
-
-		itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
-		caster->SetInput(rescaler->GetOutput());
-
-		itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter = itk::ImageFileWriter< CharImageType3D >::New();
-
-		/*if(scale_index == 1)
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_2.tif");
-		else if(scale_index == 2)
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_2_8284.tif");
-		else if(scale_index == 3)
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_4.tif");
-		else if(scale_index == 4)
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_5_6569.tif");
-		else if(scale_index == 5)
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_8.tif");
-		else
-			LoGwriter->SetFileName("C:\\Punctuate\\LoG_11_31.tif");
-
-		LoGwriter->SetInput(caster->GetOutput());
-		LoGwriter->Update();*/
-		
 		std::cout << "Laplacian of Gaussian at " << sigma << std::endl;
 
 		float tot = 0.0f, num = 0.0f;

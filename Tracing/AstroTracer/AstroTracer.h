@@ -53,6 +53,8 @@
 #include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
+#include "itkMultiplyImageFilter.h"
+
 
 #include "vnl/vnl_math.h"
 
@@ -192,6 +194,28 @@ public:
 	NucleiObject();
 };
 
+class ObjectnessMeasures{
+	
+public:
+	float alpha;
+	float beta;
+	float gamma;
+
+	float sigma_min;
+	float sigma_max;
+	int sigma_intervals;
+	int objectness_type; //0: Blobness, 1: Vesselness, 2: Plateness
+	
+	float noiseness;
+	float ballness;
+	float plateness;
+	float vesselness;
+
+	ObjectnessMeasures();
+	ObjectnessMeasures(float alpha, float beta, float gamma);
+	ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type);
+};
+
 class AstroTracer
 {
 public:
@@ -212,6 +236,10 @@ public:
 	typedef itk::RegionOfInterestImageFilter<LabelImageType3D, LabelImageType3D> VolumeOfInterestFilterType_nuclei;
 	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
 	typedef itk::SignedMaurerDistanceMapImageFilter<CharImageType3D, ImageType3D> SignedMaurerDistanceMapImageFilterType;
+	typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
+	typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
+	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
 
 	//Constructor
 	AstroTracer();
@@ -234,8 +262,7 @@ public:
 	void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
 
 	void ComputeAstroFeatures(std::string, std::string, unsigned int, const std::string);
-	void ComputeAstroFeaturesForGivenPoints(std::string, std::string, unsigned int);
-	bool PopulateLoGImages(void);
+	bool PopulateLoGImages(std::vector<float> sigma_vec);
 	void CallFeatureMainExternal();
 
 	void SetNScales(int);
@@ -248,7 +275,9 @@ public:
 	void ComputeFeaturesFromCandidateRoots(void);
 	void WriteNucleiFeatures(std::string);
 	void ReadFinalNucleiTable(std::string);
-	void ComputeObjectnessImage(void);
+	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
+	void ComputeFTKObjectnessImage(void);
+	void OptimizeCoverage(void);
 
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
@@ -280,6 +309,7 @@ protected:
 	void BlackOut(itk::Index<3> &ndx );
 	float GetCostLocal2(SWCNode*, itk::Index<3>&);
 	bool IsBall(const itk::FixedArray<float, 3>&, unsigned int&, double&);
+	void GetHessianBasedObjectnessMeasures(itk::FixedArray<double, 3>&, ObjectnessMeasures&);
 
 private:
 	std::vector<SWCNode*> SWCNodeContainer;
@@ -289,6 +319,7 @@ private:
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
+	ImageType3D::Pointer ObjectnessImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
