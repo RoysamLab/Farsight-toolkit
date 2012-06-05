@@ -81,6 +81,7 @@ class PixelLevelAnalysis{
 		int pixel_distance;
 		int pixelMode;
 		int erodeRadius;
+		unsigned short uns_zero, uns_max;
 };
 
 }

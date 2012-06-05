@@ -52,7 +52,6 @@ void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string 
 	ROIReader   ->Update();
 	TargetReader->Update();
 
-	unsigned short uns_zero, uns_max;
 	uns_zero = 0;
 	uns_max  = itk::NumericTraits<unsigned short>::max();
 /*
@@ -82,10 +81,6 @@ void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string 
 
 	ROIImageName    = ROIImageNames;
 	TargetImageName = TargetImageNames;
-}
-
-
-void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
 
 	std::string::size_type idx1 =    ROIImageName.find_last_of( '.' );
 	std::string::size_type idx2 = TargetImageName.find_last_of( '.' );
@@ -95,7 +90,10 @@ void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
 	}
 	ROIBinImageName    = ROIImageName.substr(0,idx1)    + "_bin.tif";
 	TargetBinImageName = TargetImageName.substr(0,idx2) + "_bin.tif";
+}
 
+
+void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
 	std::ofstream output_txt_file( OutputFilename.c_str() , ios::app );
 	output_txt_file	<< std::endl;
 
@@ -176,6 +174,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis1(){
 	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
+
 	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
 			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im ){
 		if( pix_buf_roi_im.Get() >= thresh_roi ){
@@ -244,8 +243,8 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 	shell_image_filter->SetDilateValue( uns_max );
 	shell_image_filter->SetInput( roi_bin1 );
 	shell_image_filter->Update();
-	UShortImageType::Pointer roi_bin_dial = UShortImageType::New();
-	roi_bin_dial = shell_image_filter->GetOutput();
+	UShortImageType::Pointer roi_bin2 = UShortImageType::New();
+	roi_bin2 = shell_image_filter->GetOutput();
 
 	//Create an image with the atoms set as bright pixels
 	UShortImageType::Pointer roi_bin    = UShortImageType::New();
@@ -292,7 +291,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 	IteratorType	  pix_buf_roi_bin( roi_bin,        roi_bin->GetRequestedRegion() );
 	IteratorType	  pix_buf_tar_bin( target_bin,     target_bin->GetRequestedRegion() );
 	ConstIteratorType pix_buf_roi_im1( roi_bin1,       roi_bin1->GetRequestedRegion() );
-	ConstIteratorType pix_buf_roi_im2( roi_bin_dial,       roi_bin_dial->GetRequestedRegion() );
+	ConstIteratorType pix_buf_roi_im2( roi_bin2,       roi_bin2->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im1.GoToBegin(); pix_buf_roi_im2.GoToBegin(); pix_buf_tar_im.GoToBegin();
 	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im1.IsAtEnd() || pix_buf_roi_im2.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
@@ -337,7 +336,6 @@ bool ftk::PixelLevelAnalysis::RunAnalysis2(){
 }
 
 bool ftk::PixelLevelAnalysis::RunAnalysis3(){
-	this->WriteInitialOutputs();
 	unsigned short thresh_roi, thresh_target;
 	//this->WriteOutputImage( ROIBinImageName,    ROIImagePtr   );
 	//this->WriteOutputImage( TargetBinImageName, TargetImagePtr);
@@ -397,6 +395,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
+
 	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
 			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im ){
 		if( pix_buf_roi_im.Get() >= thresh_roi ){
@@ -425,9 +424,97 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	}
 
 	if( (pixelMode == 4)||(pixelMode == 8) ){
-		this->CleanUpSaltNPepperNThinStructs( roi_bin );
-		this->CleanUpSaltNPepperNThinStructs( target_bin );
+		//In this mode we erode by erodeRadius and then if the connected component still exists then
+		//it is a mature vessel else it is noise/non-specific CD34 staining
 		typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
+		typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
+		typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
+		typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+
+		LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
+		initialLabelsFilter->SetInput( roi_bin );
+
+		initialLabelsFilter->FullyConnectedOff();
+
+		StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
+		initialLabelsStats->SetLabelInput(initialLabelsFilter->GetOutput());
+		initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
+		initialLabelsStats->UseHistogramsOff();
+
+		StructuringElementType shellElement;
+		shellElement.SetRadius( erodeRadius ); //radius shell
+		shellElement.CreateStructuringElement();
+		ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
+		erodeFilter->SetKernel( shellElement );
+		erodeFilter->SetErodeValue( uns_max );
+		erodeFilter->SetInput( roi_bin );
+		std::cout<<"Computing labels and eroding binary.\n";
+
+		typedef itk::ImageFileWriter< UShortImageType > WriterType;
+                WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName( "bin_info.tif" );
+		writer->SetInput( erodeFilter->GetOutput() );//RescaleIntIO1--finalO/P
+
+		try{
+			initialLabelsStats->Update();
+			erodeFilter->Update();
+			writer->Update();
+		}
+		catch( itk::ExceptionObject & excep ){
+			std::cerr << "ITK exception caught: " << excep << std::endl;
+			return false;
+		}
+
+		//Get rid of regions that are thinner than a specific pixel radius by erosion
+		std::vector< UShortImageType::PixelType > deleteLabels;
+		for( UShortImageType::PixelType LabelIndex=1; LabelIndex<initialLabelsStats->GetNumberOfObjects(); ++LabelIndex ){
+			if( initialLabelsStats->GetCount( LabelIndex ) <= 5 ){
+				deleteLabels.push_back( LabelIndex );
+				continue;
+			}
+			StatisticsFilterType::BoundingBoxType BoundBox;
+			BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
+			UShortImageType::IndexType Start;
+			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+			UShortImageType::SizeType Size;
+			Size[0] = BoundBox[1]-BoundBox[0]+1;
+			Size[1] = BoundBox[3]-BoundBox[2]+1;
+			Size[2] = BoundBox[5]-BoundBox[4]+1;
+			UShortImageType::RegionType CroppedRegion;
+			CroppedRegion.SetSize ( Size  );
+			CroppedRegion.SetIndex( Start );
+
+			ConstIteratorType pixBufRoiErodeBin( erodeFilter->GetOutput(), CroppedRegion );
+			ConstIteratorType pixBufInitLabels ( initialLabelsFilter->GetOutput(), CroppedRegion );
+			
+			pixBufInitLabels.GoToBegin();
+			for( pixBufRoiErodeBin.GoToBegin(); !pixBufRoiErodeBin.IsAtEnd(); ++pixBufRoiErodeBin, ++pixBufInitLabels )
+				if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
+					break;
+
+			if( pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
+		}
+		for( UShortImageType::PixelType i=0; i<deleteLabels.size(); ++i ){
+			StatisticsFilterType::BoundingBoxType BoundBox;
+			BoundBox = initialLabelsStats->GetBoundingBox( deleteLabels.at(i) );
+			UShortImageType::IndexType Start;
+			Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
+			UShortImageType::SizeType Size;
+			Size[0] = BoundBox[1]-BoundBox[0]+1;
+			Size[1] = BoundBox[3]-BoundBox[2]+1;
+			Size[2] = BoundBox[5]-BoundBox[4]+1;
+			UShortImageType::RegionType CroppedRegion;
+			CroppedRegion.SetSize ( Size  );
+			CroppedRegion.SetIndex( Start );
+
+			IteratorType pixBufBin( roi_bin, CroppedRegion );
+			ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
+
+			pixBufInitLabels.GoToBegin();
+			for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
+				if( pixBufInitLabels.Get()==deleteLabels.at(i) )
+					pixBufBin.Set(0);
+		}
 		typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
 		DilateFilterType::Pointer shell_image_filter = DilateFilterType::New();
 		StructuringElementType shell_individual;
@@ -436,145 +523,87 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 		shell_image_filter->SetKernel( shell_individual );
 		shell_image_filter->SetDilateValue( uns_max );
 		shell_image_filter->SetInput( roi_bin );
-		UShortImageType::Pointer roi_bin_dial = UShortImageType::New();
+		UShortImageType::Pointer roi_bin2 = UShortImageType::New();
+
+		WriterType::Pointer writer1 = WriterType::New();
+		writer1->SetFileName( "bin_info1.tif" );
+		writer1->SetInput( shell_image_filter->GetOutput() );
 
 		try{
 			shell_image_filter->Update();
+			writer1->Update();
 		}
 		catch( itk::ExceptionObject & excep ){
 			std::cerr << "ITK exception caught: " << excep << std::endl;
 			return false;
 		}
-		roi_bin_dial = shell_image_filter->GetOutput();
+		roi_bin2 = shell_image_filter->GetOutput();
 
 		ConstIteratorType pixBufRoiEroded  ( roi_bin,    roi_bin->GetLargestPossibleRegion()    );
-		ConstIteratorType pixBufRoiDial    ( roi_bin_dial,   roi_bin_dial->GetLargestPossibleRegion()   );
+		ConstIteratorType pixBufRoiDial    ( roi_bin2,   roi_bin2->GetLargestPossibleRegion()   );
 		ConstIteratorType pixBufTargOrigBin( target_bin, target_bin->GetLargestPossibleRegion() );
 
 		pixBufRoiEroded.GoToBegin(); pixBufRoiDial.GoToBegin(); pixBufTargOrigBin.GoToBegin();
-		roi_count = 0; target_count = 0; independent_target_count = 0;
+		roi_count = 0; target_count = 0;
 		for( ; !pixBufRoiEroded.IsAtEnd(); ++pixBufRoiEroded, ++pixBufRoiDial, ++pixBufTargOrigBin ){
 			if( pixBufRoiDial.Get() ){
 				if( pixBufTargOrigBin.Get() ) ++target_count;
 				if( pixBufRoiEroded.Get() ) ++roi_count;
-			} else {
-				if( pixBufTargOrigBin.Get() ) ++independent_target_count;
 			}
 		}
 	}
 
-	std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
-	output_txt_file	<< std::endl;
-	long double percentage_of_pixels;
-	output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
-	percentage_of_pixels = 100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
-	output_txt_file	<< setprecision (5);
-	output_txt_file	<< percentage_of_pixels << std::endl;
+	std::string csvString = "csv";
+	size_t found;
+	found=OutputFilename.find(csvString );
 
-	output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
-	percentage_of_pixels = 100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
-	output_txt_file	<< setprecision (5);
-	output_txt_file	<< percentage_of_pixels << std::endl;
+	if (found!=string::npos){
+		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
+		output_txt_file	<< ftk::GetFilePath( ROIBinImageName ) << ",";
+		//output_txt_file	<< std::endl;
+		long double percentage_of_pixels;
+		//output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
+		percentage_of_pixels = roi_count;//100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";//std::endl;
 
-	output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
-	percentage_of_pixels = 100.0 * (long double)target_count / (long double)roi_count;
-	output_txt_file	<< setprecision (5);
-	output_txt_file	<< percentage_of_pixels << std::endl;
-	output_txt_file.close();
+		//output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
+		percentage_of_pixels = independent_target_count;//100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";//std::endl;
+
+		//output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
+		percentage_of_pixels = target_count;//100.0 * (long double)target_count / (long double)roi_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+		output_txt_file.close();
+	}
+	else{
+		this->WriteInitialOutputs();
+		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
+		output_txt_file	<< std::endl;
+		long double percentage_of_pixels;
+		output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
+		percentage_of_pixels = 100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+
+		output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
+		percentage_of_pixels = 100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+
+		output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
+		percentage_of_pixels = 100.0 * (long double)target_count / (long double)roi_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+		output_txt_file.close();
+	}
 
 	WriteOutputImage(ROIBinImageName, roi_bin);
 	WriteOutputImage(TargetBinImageName, target_bin);
 
 	return true;
-}
-
-void ftk::PixelLevelAnalysis::CleanUpSaltNPepperNThinStructs( UShortImageType::Pointer InputImage ){
-	//In this mode we erode by erodeRadius and then if the connected component still exists then
-	//it is a mature vessel else it is noise/non-specific CD34 staining
-	typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
-	typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
-	typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
-	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
-	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
-	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
-
-	LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
-	initialLabelsFilter->SetInput( InputImage );
-	initialLabelsFilter->FullyConnectedOff();
-
-	StatisticsFilterType::Pointer initialLabelsStats = StatisticsFilterType::New();
-	initialLabelsStats->SetLabelInput(initialLabelsFilter->GetOutput());
-	initialLabelsStats->SetInput(initialLabelsFilter->GetOutput());
-	initialLabelsStats->UseHistogramsOff();
-
-	StructuringElementType shellElement;
-	shellElement.SetRadius( erodeRadius ); //radius shell
-	shellElement.CreateStructuringElement();
-	ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
-	erodeFilter->SetKernel( shellElement );
-	erodeFilter->SetErodeValue( uns_max );
-	erodeFilter->SetInput( InputImage );
-	std::cout<<"Computing labels and eroding binary.\n";
-
-	try{
-		initialLabelsStats->Update();
-		erodeFilter->Update();
-	}
-	catch( itk::ExceptionObject & excep ){
-		std::cerr << "ITK exception caught: " << excep << std::endl;
-		return;
-	}
-
-	//Get rid of regions that are thinner than a specific pixel radius by erosion
-	std::vector< UShortImageType::PixelType > deleteLabels;
-	for( UShortImageType::PixelType LabelIndex=1; LabelIndex<initialLabelsStats->GetNumberOfObjects(); ++LabelIndex ){
-		if( initialLabelsStats->GetCount( LabelIndex ) <= 5 ){
-			deleteLabels.push_back( LabelIndex );
-			continue;
-		}
-		StatisticsFilterType::BoundingBoxType BoundBox;
-		BoundBox = initialLabelsStats->GetBoundingBox( LabelIndex );
-		UShortImageType::IndexType Start;
-		Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
-		UShortImageType::SizeType Size;
-		Size[0] = BoundBox[1]-BoundBox[0]+1;
-		Size[1] = BoundBox[3]-BoundBox[2]+1;
-		Size[2] = BoundBox[5]-BoundBox[4]+1;
-		UShortImageType::RegionType CroppedRegion;
-		CroppedRegion.SetSize ( Size  );
-		CroppedRegion.SetIndex( Start );
-
-		ConstIteratorType pixBufRoiErodeBin( erodeFilter->GetOutput(), CroppedRegion );
-		ConstIteratorType pixBufInitLabels ( initialLabelsFilter->GetOutput(), CroppedRegion );
-		
-		pixBufInitLabels.GoToBegin();
-		for( pixBufRoiErodeBin.GoToBegin(); !pixBufRoiErodeBin.IsAtEnd(); ++pixBufRoiErodeBin, ++pixBufInitLabels )
-			if( pixBufInitLabels.Get()==LabelIndex && pixBufRoiErodeBin.Get()==uns_max )
-				break;
-
-		if( pixBufRoiErodeBin.IsAtEnd() ) deleteLabels.push_back( LabelIndex );
-	}
-	for( UShortImageType::PixelType i=0; i<deleteLabels.size(); ++i ){
-		StatisticsFilterType::BoundingBoxType BoundBox;
-		BoundBox = initialLabelsStats->GetBoundingBox( deleteLabels.at(i) );
-		UShortImageType::IndexType Start;
-		Start[0] = BoundBox[0]; Start[1] = BoundBox[2]; Start[2] = BoundBox[4];
-		UShortImageType::SizeType Size;
-		Size[0] = BoundBox[1]-BoundBox[0]+1;
-		Size[1] = BoundBox[3]-BoundBox[2]+1;
-		Size[2] = BoundBox[5]-BoundBox[4]+1;
-		UShortImageType::RegionType CroppedRegion;
-		CroppedRegion.SetSize ( Size  );
-		CroppedRegion.SetIndex( Start );
-
-		IteratorType pixBufBin( InputImage, CroppedRegion );
-		ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
-
-		pixBufInitLabels.GoToBegin();
-		for( pixBufBin.GoToBegin(); !pixBufBin.IsAtEnd(); ++pixBufBin, ++pixBufInitLabels )
-			if( pixBufInitLabels.Get()==deleteLabels.at(i) )
-				pixBufBin.Set(0);
-	}
 }
 
 #endif
