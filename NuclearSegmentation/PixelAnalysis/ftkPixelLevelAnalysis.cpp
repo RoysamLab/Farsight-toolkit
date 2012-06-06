@@ -557,7 +557,8 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	size_t found;
 	found=OutputFilename.find(csvString );
 
-	if (found!=string::npos){
+	if (found!=std::string::npos){
+		std::cout<<"Here1\n";
 		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
 		output_txt_file	<< ftk::GetFilePath( ROIBinImageName ) << ",";
 		//output_txt_file	<< std::endl;
