@@ -38,12 +38,15 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 	fvar.timeMean = parameters.at(6).second; 
 	fvar.overlapVariance = parameters.at(7).second;
 	fvar.overlapMean = parameters.at(8).second;
-	fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
+	//fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
 	fvar.MS_prior = parameters.at(10).second; 
 	fvar.AD_prior = parameters.at(11).second; 
 	fvar.T_prior = parameters.at(12).second; 
 	fvar.boundDistMean = parameters.at(13).second; 
 	fvar.boundDistVariance = parameters.at(14).second; 
+	std::cout<<"Merge/Split Prior:"<<fvar.MS_prior<<"\n";
+
+
 }
 void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders)
 {
@@ -62,7 +65,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 {	
 
 	ftk::Image::PtrMode readmode;
-	readmode = static_cast<ftk::Image::PtrMode>(0);
+	readmode = static_cast<ftk::Image::PtrMode>(2);
 	ftk::Image::PtrMode writemode;
 	writemode = static_cast<ftk::Image::PtrMode>(1);
 	ftk::Image::Pointer tmpImage = ftk::Image::New();
@@ -107,27 +110,29 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 	char *filename_number = new char [numbersfile.size()+1];
 	strcpy(filename_number,numbersfile.c_str());
 
-	Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
+	//Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
 	fvar.time_last = num_t-1;
 		for(int t =0; t<num_t; t++)
 		{
 
 			tempimage = rawimage->GetItkPtr<helpers::InputPixelType>(t,channel_to_track,readmode);	// channels FIXME
 			tempsegmented = labelimage->GetItkPtr<helpers::LabelPixelType>(t,0,readmode);	
+//			tempsegmented = labelimage->GetItkPtr<short int>(t,0,readmode);	
+			//itk::ImageIOBase::IOComponentType mytype = tempsegmented->getc
 
-			Color2DImageType::Pointer cimp = getColor2DImage(tempsegmented,2);
+//			Color2DImageType::Pointer cimp = getColor2DImage(tempsegmented,2);
 			std::vector<FeatureType> f;
 			std::vector<helpers::LabelImageType::Pointer> li;
 			std::vector<helpers::InputImageType::Pointer> ri;
 			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
 			for(int counter=0; counter < f.size(); counter++)
 			{
-				LabelImageType::Pointer tmpli = extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented);
+				//LabelImageType::Pointer tmpli = extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented);
 				//if(tmpli->GetLargestPossibleRegion().GetSize()[2]==1)
 				//	continue;
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
-				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
+//				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
 				f[counter].ScalarFeatures[FeatureType::CONVEXITY] = 0.0;
 				if(f[counter].ScalarFeatures[FeatureType::VOLUME]<5)
 				{
@@ -136,17 +141,17 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 				}
 			}
 		
-			input.push_back(cimp);
+//			input.push_back(cimp);
 			locfvector.push_back(f);
 			loclimages.push_back(li);
 			locrimages.push_back(ri);
 		}
 
-		helpers::ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
+//		helpers::ColorImageType::Pointer colin = getColorImageFromColor2DImages(input);
 
 		std::string debugfolder = debugfiledirectory;
 		std::string debugstring = debugfolder +"\\"+ debugprefix + "_input.tif";
-		writeImage<helpers::ColorImageType>(colin,debugstring.c_str());
+//		writeImage<helpers::ColorImageType>(colin,debugstring.c_str());
 
 		helpers::InputImageType::SizeType imsize = tempimage->GetLargestPossibleRegion().GetSize();
 		fvar.BoundingBox[0] = 0;
@@ -156,33 +161,36 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		fvar.BoundingBox[3] = imsize[1]-1;
 		fvar.BoundingBox[5] = imsize[2]-1;
 
-
+		for(int count =0;count<locfvector.size();++count)
+		{
+			std::cout<<locfvector[count].size()<<std::endl;
+		}
 	    this->setData(locfvector,loclimages,locrimages);
 		this->dataset_id = dataset_id;
-		helpers::ColorImageType::Pointer debugcol1 = helpers::ColorImageType::New();
-		helpers::ColorImageType::Pointer debugcol2 = helpers::ColorImageType::New();
-		helpers::ColorImageType::Pointer debugcol3 = helpers::ColorImageType::New();
-		helpers::ColorImageType::SizeType colsize;
-		helpers::ColorImageType::RegionType colregion;
-		helpers::ColorImageType::IndexType colindex;
-		colindex.Fill(0);
-		colsize[0] = imsize[0]*1;
-		colsize[1] = imsize[1]*1;
-		colsize[2] = num_t;
-		colregion.SetIndex(colindex);
-		colregion.SetSize(colsize);
-		debugcol1->SetRegions(colregion);
-		debugcol1->Allocate();
-		debugcol2->SetRegions(colregion);
-		debugcol2->Allocate();
-		debugcol3->SetRegions(colregion);
-		debugcol3->Allocate();
-		helpers::ColorImageType::PixelType colorpixel;
-		colorpixel[0] = 0; colorpixel[1] = 0; colorpixel[2] = 0;
-		debugcol1->FillBuffer(colorpixel);
-		debugcol2->FillBuffer(colorpixel);
-		debugcol3->FillBuffer(colorpixel);
-		this->set_debug_images(debugcol1,debugcol2,debugcol3);
+		//helpers::ColorImageType::Pointer debugcol1 = helpers::ColorImageType::New();
+		//helpers::ColorImageType::Pointer debugcol2 = helpers::ColorImageType::New();
+		//helpers::ColorImageType::Pointer debugcol3 = helpers::ColorImageType::New();
+		//helpers::ColorImageType::SizeType colsize;
+		//helpers::ColorImageType::RegionType colregion;
+		//helpers::ColorImageType::IndexType colindex;
+		//colindex.Fill(0);
+		//colsize[0] = imsize[0]*1;
+		//colsize[1] = imsize[1]*1;
+		//colsize[2] = num_t;
+		//colregion.SetIndex(colindex);
+		//colregion.SetSize(colsize);
+		//debugcol1->SetRegions(colregion);
+		//debugcol1->Allocate();
+		//debugcol2->SetRegions(colregion);
+		//debugcol2->Allocate();
+		//debugcol3->SetRegions(colregion);
+		//debugcol3->Allocate();
+		//helpers::ColorImageType::PixelType colorpixel;
+		//colorpixel[0] = 0; colorpixel[1] = 0; colorpixel[2] = 0;
+		//debugcol1->FillBuffer(colorpixel);
+		//debugcol2->FillBuffer(colorpixel);
+		//debugcol3->FillBuffer(colorpixel);
+		//this->set_debug_images(debugcol1,debugcol2,debugcol3);
 		this->run();
 
 		printf("Rerunning with computed variances\n");
@@ -197,7 +205,7 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		//checkfile +=   "check.txt";
 		//FILE *fp4 = fopen(checkfile.c_str(),"w");
 
-		 typedef itk::LabelStatisticsImageFilter< helpers::LabelImageType, helpers::LabelImageType> LabelStatisticsImageFilterType;
+		 //typedef itk::LabelStatisticsImageFilter< helpers::LabelImageType, helpers::LabelImageType> LabelStatisticsImageFilterType;
 		
 		std::vector<helpers::LabelImageType::Pointer> ItkTrackImagePtr;
 		for(int t = 0; t< num_t; t++)
@@ -206,31 +214,31 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			
 
 			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
-			LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
-			labelStatisticsImageFilter->SetLabelInput(track);
-			labelStatisticsImageFilter->SetInput(track);
-			labelStatisticsImageFilter->Update();
+			//LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
+			//labelStatisticsImageFilter->SetLabelInput(track);
+			//labelStatisticsImageFilter->SetInput(track);
+			//labelStatisticsImageFilter->Update();
 		//	fprintf(fp4,"%d\t%d\n",t,(int)labelStatisticsImageFilter->GetNumberOfLabels());
 
 
-			std::map<int, std::vector<int> > my_map = this->ComputeEntropyUtilitiesAtTime(t);
-			VertexUtilities.push_back(my_map);
+			//std::map<int, std::vector<int> > my_map = this->ComputeEntropyUtilitiesAtTime(t);
+			//VertexUtilities.push_back(my_map);
 			ItkTrackImagePtr.push_back(track);
-			Color2DImageType::Pointer cimp = getColor2DImage(track,2);
-			std::vector<FeatureType> f;
-			getFeatureVectorsFarsight(track,tempimage,f,t,c);
+			//Color2DImageType::Pointer cimp = getColor2DImage(track,2);
+			//std::vector<FeatureType> f;
+			//getFeatureVectorsFarsight(track,tempimage,f,t,c);
 			printf("About to begin annotate loop\n");
-			for(int counter=0; counter< f.size(); counter++)
-			{
-				std::vector<FeatureType> conncomp = get_all_connected_components(track,f[counter]);
-				for(int counter1 = 0; counter1 < conncomp.size(); counter1++)
-				{
-					annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
-				}
-			}
+			//for(int counter=0; counter< f.size(); counter++)
+			//{
+			//	std::vector<FeatureType> conncomp = get_all_connected_components(track,f[counter]);
+			//	for(int counter1 = 0; counter1 < conncomp.size(); counter1++)
+			//	{
+			//		annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
+			//	}
+			//}
 			//PAUSE;
 			printf("Finished annotate loop\n");
-			output.push_back(cimp);
+			//output.push_back(cimp);
 			//printf("About to call writeImage\n");
 			//writeImage<helpers::LabelImageType>(track,outputfilenames[t].c_str());
 		}
@@ -366,8 +374,9 @@ void MultiFrameCellTracker::summarize_tracking(ftk::Image::Pointer rawImg)
 	//
 	// printf("I am crashing here3\n");
 	//AnalyzeDCContact(segmented,tfs,2,num_t,spac);
-
-	//PrintTrackFeatures(tfs);
+   std::vector< std::vector <std::string> >  tmp = rawImg->GetTimeChannelFilenames();
+   std::string path = ftk::GetFilePath(tmp[0][0]);
+	PrintTrackFeatures(tfs,path);
  //  }
   this->changeDataHierarchy(tfs);
   
@@ -1001,8 +1010,12 @@ int MultiFrameCellTracker::add_normal_edges(int tmin, int tmax)
 	int nec = 0;
 	float epsilon = 50;
 	int tried1 =0,tried2 = 0 ;
+	printf("in add_normal_edges.\n");
+	printf("in fvector[tmax].size(): %d.\n",fvector[tmax].size());
+
 	for(int counter=0; counter < fvector[tmax].size(); counter++)
 	{
+		printf("in loop of add_normal_edges.\n");
 		// for every vertex, find the correspondences in the previous frames
 		TGraph::vertex_descriptor v = rmap[tmax][counter];
 		if(TGraph::null_vertex() != v) // do we have a non-null vertex? then ...
@@ -1040,7 +1053,7 @@ int MultiFrameCellTracker::add_normal_edges(int tmin, int tmax)
 
 							g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter]);
 							//g[e].utility = compute_normal_utility(fvector[t][counter1],fvector[tmax][counter], counter1, counter);
-
+							printf("added normal edge.\n");
 							if(g[e].utility < 0)
 							{
 								printf("utility < 0 = %d\n", g[e].utility);
@@ -2127,12 +2140,12 @@ void MultiFrameCellTracker::draw_line_for_edge(int num, TGraph::edge_descriptor 
 			//printf("col1 col2 %d %d %d %d %d %d\n",col1[0],col1[1],col1[2],col2[0],col2[1],col2[2]);
 			//printf("color1 color2 %d %d %d %d %d %d\n",color1[0],color1[1],color1[2],color2[0],color2[1],color2[2]);
 			//PAUSE;
-			if(num == 1)
-				drawLine(debugimage1,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
-			else if(num==2)
-				drawLine(debugimage2,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
-			else
-				drawLine(debugimage3,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
+			////if(num == 1)
+			////	drawLine(debugimage1,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
+			////else if(num==2)
+			////	drawLine(debugimage2,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
+			////else
+			////	drawLine(debugimage3,color1,color2,f1.Centroid[0]+shift,f1.Centroid[1],f1.time,f2.Centroid[0]+shift,f2.Centroid[1],f1.time);
 			//drawLine(debugimage,col2,f1.Centroid[0]+shift,f1.Centroid[1],f2.time,f2.Centroid[0]+shift,f2.Centroid[1],f2.time);
 		}
 		else
@@ -2175,12 +2188,12 @@ void MultiFrameCellTracker::draw_line_for_edge(int num, TGraph::edge_descriptor 
 					{
 						//printf("-\n");
 						helpers::ColorImageType::IndexType index; index[0] = cox; index[1] = coy; index[2] = coz;
-						if(num==1)
-							debugimage1->SetPixel(index,pixel);
-						else if(num==2)
-							debugimage2->SetPixel(index,pixel);
-						else
-							debugimage3->SetPixel(index,pixel);
+						////if(num==1)
+						////	debugimage1->SetPixel(index,pixel);
+						////else if(num==2)
+						////	debugimage2->SetPixel(index,pixel);
+						////else
+						////	debugimage3->SetPixel(index,pixel);
 					}
 		}
 	}
@@ -2311,6 +2324,7 @@ void MultiFrameCellTracker::solve_higher_order()
 		
 		printf("lredges.size() = %d\n", lredges.size());	// print number of second order edges
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
+		scanf("%*d");
 		varc = lredges.size();
 		IloNumVarArray x(env,varc,0,1,ILOBOOL);
 		IloNumArray numarr(env,varc);
@@ -4274,7 +4288,7 @@ void MultiFrameCellTracker::run()
 			tie(v_temp,v_end) = vertices(g);
 		}
 		
-		//printf(" I removed %d vertices\n", vertex_removed_count);
+		printf(" I removed %d vertices\n", vertex_removed_count);
 		if(vertex_removed_count==0)
 			break;
 

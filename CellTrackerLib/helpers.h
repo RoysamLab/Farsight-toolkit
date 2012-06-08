@@ -72,7 +72,8 @@ namespace helpers{
 
 typedef unsigned char InputPixelType;
 typedef unsigned char OutputPixelType;
-typedef short int LabelPixelType;
+//typedef short int LabelPixelType;
+typedef unsigned short LabelPixelType;
 
 typedef itk::Vector<unsigned char, 3> VectorPixelType;
 typedef itk::Image<VectorPixelType, 3> ColorImageType;
@@ -80,8 +81,8 @@ typedef itk::Image<VectorPixelType, 2> Color2DImageType;
 
 typedef itk::Image<InputPixelType,3> InputImageType;
 typedef itk::Image<OutputPixelType,3> OutputImageType;
-typedef itk::Image<short int,3> LabelImageType;
-typedef itk::Image<short int,2> Label2DImageType;
+typedef itk::Image<LabelPixelType,3> LabelImageType;
+typedef itk::Image<LabelPixelType,2> Label2DImageType;
 typedef itk::Image<float,3> FloatImageType;
 
 
@@ -231,7 +232,7 @@ InputImageType::Pointer getMaxImage(InputImageType::Pointer,InputImageType::Poin
 std::vector<float> traverseCenterline(itk::ImageRegionIteratorWithIndex<InputImageType> iter,InputImageType::Pointer im,char neighbors[26][3],int n);
 void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
 void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs);
-void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs);
+void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs, std::string path);
 
 void AnalyzeVesselCenterlines(InputImageType::Pointer cline, std::vector<ftk::TrackFeatures> &tfs, float spacing[3]);
 FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer dir_image[3],FloatImageType::IndexType index,InputImageType::Pointer vesselim);

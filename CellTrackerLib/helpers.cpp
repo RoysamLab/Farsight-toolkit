@@ -420,7 +420,8 @@ OutputImageType::Pointer getScaledFromBool(BoolImageType::Pointer im)
 InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 {
 	printf("Removing small connected components ...");
-	typedef itk::Image<short int,3> LabelImageType;
+//	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::Image<LabelPixelType,3> LabelImageType;
 	typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 
@@ -468,7 +469,8 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 {
 	printf("getLargeLabels called with input n = %d\n",n);
 	printf("Removing small connected components ...\n");
-	typedef itk::Image<short int,3> LabelImageType;
+//	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::Image<LabelPixelType,3> LabelImageType;
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 	typedef itk::ScalarConnectedComponentImageFilter<LabelImageType,LabelImageType> ConnectedFilterType;
 
@@ -587,43 +589,47 @@ double features_diff(FeatureType &f1, FeatureType &f2,bool overlap)
 void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<ftk::IntrinsicFeatures> & feature_vector, int time, int tag)
 {
 	//printf("Started feature calculation\n");
-	if(im->GetLargestPossibleRegion().GetSize()[2]==1)
-	{
-		//convert it to a 2D Image
-		LabelImageType::SizeType linsize = im->GetLargestPossibleRegion().GetSize();
-		Label2DImageType::Pointer l2d = Label2DImageType::New();
-		Label2DImageType::SizeType l2dsize; l2dsize[0] = linsize[0]; l2dsize[1] = linsize[1];
-		Label2DImageType::IndexType l2dindex; l2dindex.Fill(0);
-		Label2DImageType::RegionType l2dregion; l2dregion.SetSize(l2dsize); l2dregion.SetIndex(l2dindex);
-		l2d->SetRegions(l2dregion);
-		l2d->Allocate();
-		memcpy(im->GetBufferPointer(),l2d->GetBufferPointer(),sizeof(LabelImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+	//if(im->GetLargestPossibleRegion().GetSize()[2]==1)
+	//{
+	//	//convert it to a 2D Image
+	//	LabelImageType::SizeType linsize = im->GetLargestPossibleRegion().GetSize();
+	//	Label2DImageType::Pointer l2d = Label2DImageType::New();
+	//	Label2DImageType::SizeType l2dsize; l2dsize[0] = linsize[0]; l2dsize[1] = linsize[1];
+	//	Label2DImageType::IndexType l2dindex; l2dindex.Fill(0);
+	//	Label2DImageType::RegionType l2dregion; l2dregion.SetSize(l2dsize); l2dregion.SetIndex(l2dindex);
+	//	l2d->SetRegions(l2dregion);
+	//	l2d->Allocate();
+	//	memcpy(im->GetBufferPointer(),l2d->GetBufferPointer(),sizeof(LabelImageType::PixelType)*l2dsize[0]*l2dsize[1]);
 
-		Input2DImageType::Pointer i2d = Input2DImageType::New();
-		i2d->SetRegions(l2dregion);
-		i2d->Allocate();
-		memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(InputImageType::PixelType)*l2dsize[0]*l2dsize[1]);
-	
-		typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
-		FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
-		fc2d->SetImageInputs(i2d,l2d);
-		fc2d->SetLevel(3);
-		//fc2d->ComputeTexturesOn();
-		//fc2d->ComputeHistogramOn();		Amin comment
-		fc2d->Update();
-		std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
-		for(unsigned int counter=0; counter<labels.size();counter++)
-		{
-			if(labels[counter]==0)
-				continue;
-			 feature_vector.push_back(*(fc2d->GetFeatures(labels[counter])));
-			 feature_vector.back().num=labels[counter];
-			 feature_vector.back().tag = tag;
-			 feature_vector.back().time = time;
-		}
-		
-	}
-	else
+	//	Input2DImageType::Pointer i2d = Input2DImageType::New();
+	//	i2d->SetRegions(l2dregion);
+	//	i2d->Allocate();
+	//	memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(InputImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+	//
+	//	typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
+	//	FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
+	//	fc2d->SetImageInputs(i2d,l2d);
+
+	//	fc2d->SetLevel(3);
+	//	//fc2d->ComputeTexturesOn();
+	//	//fc2d->ComputeHistogramOn();		Amin comment
+	//	fc2d->Update();
+	//	std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
+	//	printf("label size:%d\n",labels.size());
+	//	for(unsigned int counter=0; counter<labels.size();counter++)
+	//	{
+	//		printf("label:%d\n",labels[counter]);
+	//		if(labels[counter]==0)
+	//			continue;
+	//		 feature_vector.push_back(*(fc2d->GetFeatures(labels[counter])));
+	//		 feature_vector.back().num=labels[counter];
+	//		 feature_vector.back().tag = tag;
+	//		 feature_vector.back().time = time;
+	//		 printf("added:%d\n",feature_vector.back().num);
+	//	}
+	//	
+	//}
+	//else
 	{
 		typedef ftk::LabelImageToFeatures<InputImageType::PixelType,LabelImageType::PixelType,3> FeatureCalculatorType;
 		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
@@ -637,6 +643,7 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 		{
 			if(labels[counter]==0)
 				continue;
+			//printf("label:%d\n",labels[counter]);
 			feature_vector.push_back(*(fc->GetFeatures(labels[counter])));
 			feature_vector.back().num = labels[counter];
 			feature_vector.back().tag = tag;
@@ -861,7 +868,8 @@ InputImageType::Pointer getImageFromNPTS(char *filename_npts,int imagesize[])
 void getClassified(DistanceImageType::Pointer dist, InputImageType::Pointer micro, InputImageType::Pointer &p1, InputImageType::Pointer &p2)
 {
 
-	typedef itk::Image<short int,3> LabelImageType;
+//	typedef itk::Image<short int,3> LabelImageType;
+	typedef itk::Image<LabelPixelType,3> LabelImageType;
 	typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
 	typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
 
@@ -900,7 +908,8 @@ void getClassified(DistanceImageType::Pointer dist, InputImageType::Pointer micr
 
 	IteratorType iter1(p1,p1->GetLargestPossibleRegion()),iter2(p2,p2->GetLargestPossibleRegion());
 
-	std::vector<short int> distance;
+//	std::vector<short int> distance;
+	std::vector<LabelPixelType> distance;
 	for(int counter=0; counter<num_objects; counter++)
 		distance.push_back(1000);
 	printf("About to compute distances\n");
@@ -1503,12 +1512,6 @@ FloatImageType::IndexType searchNearestVesselDirection(FloatImageType::Pointer d
 
 void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 {
-
-
-	////FILE *fp7 = fopen("C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\tracks.txt","w");
-	//FILE *fp = fopen("C:\\Lab\\ArunFiles\\Data\\Peixoto\\TSeries-09012011-A-009\\Unzipped\\Data\\data3d\\bg_sub_smoothed_channels\\TrackFeatures.txt","w");
-	//fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\n");
-
 	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++) // looping over labels (tracks)
 	{
 		printf("Beginning to read track no: %d/%d\n",tcounter+1, (int)tfs.size());
@@ -1518,20 +1521,6 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 			printf("Ignored a tiny track of size %d track.size()\n",(int)tfs[tcounter].intrinsic_features.size());
 			continue;
 		}
-
-		std::stringstream ss;
-		ss<<tcounter+1;
-		std::string filename;
-		//filename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\sub_tracks_"+ss.str()+".txt";
-		//FILE *fp = fopen(filename.c_str(),"w");
-
-		//filename = "C:\\Lab\\ArunFiles\\Data\\Tracking\\features\\track_points_"+ss.str()+".txt";
-		//FILE *fp2 = fopen(filename.c_str(),"w");
-
-		//fprintf(fp2,"id\ttime\t");
-		//for(int i = 0; i<= FeatureType::SHAPE;++i)
-		//	fprintf(fp2,(FeatureType::Info[i].name+"\t").c_str() );
-		//fprintf(fp2,"center_x\tcenter_y\tcenter_z\tbbox_x0\tbbox_x1\tbbox_y0\tbbox_y1\tbbox_z0\tbbox_z1\n");
 
 
 		printf("I'm working on a track of size %d\n",(int)tfs[tcounter].intrinsic_features.size());
@@ -1545,24 +1534,6 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 			ftk::TrackPointFeatures tpf;
 			Vec3f dir;
 			Vec3f dirnext;
-
-			//fprintf(fp2,"%d\t%d\t",t.intrinsic_features[counter].num,t.intrinsic_features[counter].time);
-			//for(int i = 0; i<= FeatureType::SHAPE;++i)
-			//	fprintf(fp2,"%f\t",t.intrinsic_features[counter].ScalarFeatures[i]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[0]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[1]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].Centroid[2]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[0]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[1]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[2]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[3]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[4]);
-			//fprintf(fp2,"%f\t",t.intrinsic_features[counter].BoundingBox[5]);
-			//fprintf(fp2,"\n");
-
-
-
-
 			if(counter>0)
 			{
 
@@ -1582,28 +1553,12 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 				for (int i = 0; i<tpf.M; ++i)
 					tpf.scalars[i]=0;
 			}
-
-			
-			//fprintf(fp,"%d\t%d\t",t.intrinsic_features[counter].num,t.intrinsic_features[counter].time);
-			//fprintf(fp,"%f\t",tpf.scalars[TPF::DEVIATION]);
-			//for (int i = tpf.DISTANCE; i<=tpf.INTENSITY_RATIO_CHANGE; ++i)
-			//	fprintf(fp,"%f\t",tpf.scalars[i]);
-			//for (int i = tpf.DISPLACEMENT_VEC_X; i<=tpf.DISPLACEMENT_VEC_Z; ++i)
-			//	fprintf(fp,"%f\t",tpf.scalars[i]);			
-
-			//fprintf(fp,"\n");
-
-
 			if(counter +1 > t.tfeatures.size())
 				t.tfeatures.push_back(tpf);
 			else
 				t.tfeatures[counter] = tpf;
 
 		}
-
-		//fclose(fp);
-		//fclose(fp2);
-		//printf("finished calculating first for loop of point features\n");
 		
 		float avg_speed = 0;
 		float pathlength = 0;
@@ -1635,20 +1590,14 @@ void AnalyzeTimeFeatures(std::vector<ftk::TrackFeatures> &tfs, float spacing[3])
 		t.scalars[TF::TOTAL_DISTANCE] = total_distance;
 		//t.scalars[TF::TOTAL_DISTANCE] = total_distance/(float)(t.tfeatures.size()-1);
 		tfs[tcounter] = t;
-
-		// print track features:
-		//fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",t.intrinsic_features[0].num,\
-		//		t.scalars[TF::AVG_SPEED],t.scalars[TF::MAX_SPEED],t.scalars[TF::MIN_SPEED], t.scalars[TF::DISPLACEMENT_VEC_X],t.scalars[TF::DISPLACEMENT_VEC_Y],t.scalars[TF::DISPLACEMENT_VEC_Z],t.scalars[TF::PATHLENGTH],\
-		//		1/t.scalars[TF::TOTAL_DISTANCE],1/t.scalars[TF::CONFINEMENT_RATIO],1/t.scalars[TF::CONTACT_TO_2]);
-		
 	}
-	//fclose(fp);
-	
 }
-void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs)
+void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs,std::string path)
 {
-	FILE *fp = fopen("C:\\Lab\\Data\\Antonio\\peixoto20-12-2007H\\Stacks\\ProcessedChannel2\\TrackFeatures.txt","w");
-	fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\t T_DC_Contact\n");
+
+	std::string filename = path+"\\TrackFeatures.txt";
+	FILE *fp = fopen(filename.c_str(),"w");
+	fprintf(fp,"ID\t avg_speed\t max_speed\t min_speed\t displacement_vec_x\t displacement_vec_y\t displacement_vec_z\t pathlength\t total_distance\t confinement_ratio\n");
 
 	for(unsigned int tcounter=0; tcounter < tfs.size(); tcounter++) // looping over labels (tracks)
 	{
@@ -1665,10 +1614,10 @@ void PrintTrackFeatures(std::vector<ftk::TrackFeatures> &tfs)
 		typedef ftk::TrackFeatures TF;
 		typedef ftk::IntrinsicFeatures FeatureType;
 
-		fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",\
+		fprintf(fp,"%d\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\t %0.3f\n",\
 				t.intrinsic_features[0].num,\
 				t.scalars[TF::AVG_SPEED],t.scalars[TF::MAX_SPEED],t.scalars[TF::MIN_SPEED], t.scalars[TF::DISPLACEMENT_VEC_X],t.scalars[TF::DISPLACEMENT_VEC_Y],t.scalars[TF::DISPLACEMENT_VEC_Z],t.scalars[TF::PATHLENGTH],\
-				1/t.scalars[TF::TOTAL_DISTANCE],1/t.scalars[TF::CONFINEMENT_RATIO],t.scalars[TF::CONTACT_TO_2]);
+				t.scalars[TF::TOTAL_DISTANCE],t.scalars[TF::CONFINEMENT_RATIO]);
 		
 	}
 	fclose(fp);
@@ -1930,8 +1879,8 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 	float ratio_threshold = 1.7;
 	LabelImageType::SizeType bound = segmented[0][0]->GetLargestPossibleRegion().GetSize();
 
-			typedef ftk::TrackPointFeatures TPF;
-		typedef ftk::TrackFeatures TF;
+	typedef ftk::TrackPointFeatures TPF;
+	typedef ftk::TrackFeatures TF;
 	std::vector<int> distances(10000);
 	//std::vector<float> spacing(3);
 	//spacing[0] = spacing[1] = 0.357;
@@ -1972,7 +1921,7 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 				lend[2] = MAX(MIN(z+wsize*factor, bound[2]-1),0);
 
 
-				lsize[0] = lend[0] - lindex[0] + 1;
+				lsize[0] = lend[0] - lindex[0] + 1;				// 40x40 window centered at the centroid of the cell
 				lsize[1] = lend[1] - lindex[1] + 1;
 				lsize[2] = lend[2] - lindex[2] + 1;
 
@@ -1980,13 +1929,13 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 				lregion.SetIndex(lindex);
 
 				//lregion.Print(std::cout);
-				typedef itk::ImageRegionIteratorWithIndex<LabelImageType> LIWI;
+				typedef itk::ImageRegionIteratorWithIndex<LabelImageType> LIWI; //Label Image Window Iterator 
 				LIWI liter(segmented[t][c-1], lregion);
 				int count = 0;
 				for(liter.GoToBegin(); !liter.IsAtEnd();++liter)
 				{
 					if(liter.Get()>0)
-						count++;
+						count++;									// sum up the dendritic cell pixels					
 				}
 				if(count>1000)
 				{
@@ -1998,16 +1947,16 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 							LabelImageType::IndexType tindex = liter.GetIndex();
 							distances.push_back(sqrt(float(x-tindex[0])*(x-tindex[0])*spacing[0]*spacing[0]+(y - tindex[1])*(y-tindex[1])*spacing[1]*spacing[1]+(z-tindex[2])*(z-tindex[2])*spacing[2]*spacing[2]));
 						}
-					}
+					}	// finshied computing the distances of the DCs to the centers of the TCs
 					sort(distances.begin(),distances.end());
 					float sum = 0;
 					int num_num = distances.size()*0.05;
-					for(int counter = 0; counter< num_num; counter++)
+					for(int counter = 0; counter< num_num; counter++)	// take only the 5% closest DC pixels and averge them up.
 					{
 						sum = sum + distances[counter];
 					}
 					sum /= num_num;
-					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeatureType::VOLUME]*spacing[0]*spacing[1]*spacing[2]*3.0/8.0/acos(double(0))),1/3.0f);
+					radius = pow(static_cast<float>(tfs[tc].intrinsic_features[tp].ScalarFeatures[FeatureType::VOLUME]*spacing[0]*spacing[1]*spacing[2]*3.0/8.0/acos(double(0))),1/3.0f); // approximate the radius of the cell
 					printf("Sum = %0.2f radius = %0.2f ratio = %0.3f\n",sum,radius,sum/radius);
 					if(sum/radius<= ratio_threshold)
 					{
