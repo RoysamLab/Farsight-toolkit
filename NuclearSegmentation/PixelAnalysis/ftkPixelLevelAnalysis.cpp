@@ -558,23 +558,21 @@ bool ftk::PixelLevelAnalysis::RunAnalysis3(){
 	found=OutputFilename.find(csvString );
 
 	if (found!=std::string::npos){
-		std::cout<<"Here1\n";
 		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
 		output_txt_file	<< ftk::GetFilePath( ROIBinImageName ) << ",";
-		//output_txt_file	<< std::endl;
 		long double percentage_of_pixels;
-		//output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
-		percentage_of_pixels = roi_count;//100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		percentage_of_pixels = (long double)size1[0] * (long double)size1[1] * (long double)size1[2];
 		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << ",";//std::endl;
-
-		//output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
-		percentage_of_pixels = independent_target_count;//100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< percentage_of_pixels << ",";
+		percentage_of_pixels = roi_count;
 		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << ",";//std::endl;
+		output_txt_file	<< percentage_of_pixels << ",";
 
-		//output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
-		percentage_of_pixels = target_count;//100.0 * (long double)target_count / (long double)roi_count;
+		percentage_of_pixels = independent_target_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";
+
+		percentage_of_pixels = target_count;
 		output_txt_file	<< setprecision (5);
 		output_txt_file	<< percentage_of_pixels << std::endl;
 		output_txt_file.close();
