@@ -57,11 +57,6 @@ Image::Image()
 	path.clear();
 	filenames.clear();
 	imageDataPtrs.clear();
-#ifdef USE_OPENSLIDE
-	OpenSlideManaged = false;
-	OpenSlideNumLevels = -1;
-	OpenSlideCurrentLevel = -1;
-#endif
 }
 
 //Destructor

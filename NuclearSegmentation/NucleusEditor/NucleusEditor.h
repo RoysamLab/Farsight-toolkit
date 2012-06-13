@@ -182,11 +182,6 @@ protected slots:
 	void toggleCellAdjacency();
 	void toggleChannel(int chNum );
 	void DisplayChannelsMenu();
-#ifdef USE_OPENSLIDE
-	void DisplayLevelsMenu();
-	void toggleLevel(int levNum);
-	void toggleSaveSlide(int levNum);
-#endif
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -340,12 +335,6 @@ protected:
 	QAction *zoomInAction;
 	QAction *zoomOutAction;
 	QMenu *displayChannelMenu;
-#ifdef USE_OPENSLIDE
-	QMenu *displayLevelMenu;
-	QVector<QAction *> displayLevelAction;
-	QSignalMapper *levSignalMapper;
-	QSignalMapper *levSignalMapper1;
-#endif
 	QSignalMapper *chSignalMapper;
 	QVector<QAction *> displayChannelAction;
 	QAction *newTableAction;

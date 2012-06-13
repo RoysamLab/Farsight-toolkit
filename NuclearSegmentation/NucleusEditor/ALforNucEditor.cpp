@@ -247,15 +247,15 @@ void ALforNucEd::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > 
 			}
 		}
 
+#ifndef _WIN32
 		if(this->HeatmapWin == NULL)
 		{
 			this->HeatmapWin = new Heatmap();
 		}	
-
 		this->HeatmapWin->setModels(mclr->Rearrange_Table(pawTable));
-        this->HeatmapWin->reRunClus();
-        this->HeatmapWin->showGraphforNe();
-
+		this->HeatmapWin->reRunClus();
+		this->HeatmapWin->showGraphforNe();
+#endif
 		// Update the data & refresh the training model and refresh the Training alDialog 		
 		mclr->Update_Train_Data(query_labels);
 

@@ -37,15 +37,6 @@ limitations under the License.
 #include "vtkSmartPointer.h"
 #include "vtkDataArray.h"
 
-//OpenSlide include
-#ifdef USE_OPENSLIDE
-extern "C"
-{
-#include <openslide.h>
-}
-#endif
-
-
 //Std includes:
 #include <string>
 
@@ -132,12 +123,6 @@ public:
 	} Info;
 
 	const Info * GetImageInfo(void) { return &(this->m_Info); };	//Returns a pointer to constant data (these values cannot be changed from outside
-
-#ifdef USE_OPENSLIDE
-	bool OpenSlideManaged;
-	int OpenSlideNumLevels;
-	int OpenSlideCurrentLevel;
-#endif
 
 protected:
 

@@ -23,7 +23,6 @@ option( BUILD_SAMPLE_EDITOR "Build Sample Editor" OFF )
 #option( BUILD_TISSUENETS "Build TissueNets" OFF )
 option( BUILD_TRACKER "Build Cell Tracker" OFF )
 option( USE_KPLS "Use KPLS module for classification" ON )
-option( USE_OPENSLIDE "Use openslide libraries for reading images" OFF )
 option( WRAP_PYTHON "Wrap Farsight in Python" OFF )
 option( BUILD_UNMIXING "Build Unmixing module" OFF )
 option( BUILD_OPENMP "Build with OpenMP support (Note that only VS2008 Pro and VS2008 Team System supports OpenMP)" OFF)
@@ -218,23 +217,6 @@ endif(QT4_FOUND)
 find_package(Boost)
 link_directories( ${Boost_LIBRARY_DIRS})
 include_directories ( ${Boost_INCLUDE_DIRS})
-
-# Find OpenSlide
-if(USE_OPENSLIDE)
-  find_package(OpenSlide)
-  if(OPENSLIDE_FOUND)
-    add_definitions(-DUSE_OPENSLIDE)
-    link_directories( ${OPENSLIDE_BINARY_DIR} )
-    include_directories( ${OPENSLIDE_INCLUDE_DIR} )
-  else(OPENSLIDE_FOUND)
-    message(FATAL_ERROR "OpenSlide not found. Please set the
-    directories to OPENSLIDE_LIBRARY and OPENSLIDE_INCLUDE_DIR or
-    turn off USE_OPENSLIDE")
-  endif(OPENSLIDE_FOUND)
-else(USE_OPENSLIDE)
-  set(OPENSLIDE_LIBRARY )
-  set(OPENSLIDE_INCLUDE_DIR )
-endif(USE_OPENSLIDE)
 
 #####################################################################################
 # Optionally find Farsight's data directory, used for testing and installers

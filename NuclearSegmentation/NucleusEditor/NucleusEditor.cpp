@@ -424,12 +424,6 @@ void NucleusEditor::createMenus()
 	displayChannelMenu->setObjectName("displayChannelMenu");
 	connect(displayChannelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayChannelsMenu()));
 
-#ifdef USE_OPENSLIDE
-	displayLevelMenu = viewMenu->addMenu(tr("Display Slide Level"));
-	displayLevelMenu->setObjectName("displayLevelMenu");
-	connect(displayLevelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayLevelsMenu()));
-#endif
-
 	viewMenu->addSeparator();
 
 	newTableAction = new QAction(tr("New Table"), this);
@@ -3450,62 +3444,6 @@ void NucleusEditor::DisplayChannelsMenu()
 	}
 	connect(chSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleChannel(int)));
 }
-
-#ifdef USE_OPENSLIDE
-void NucleusEditor::DisplayLevelsMenu(){
-	if( !myImg || !myImg->OpenSlideManaged ){
-		displayLevelMenu->clear();
-		displayLevelAction.clear();
-		return;
-	}
-
-	int NumLevels = myImg->OpenSlideNumLevels;
-	int SlideCurrentLevel = myImg->OpenSlideCurrentLevel;
-
-	//remove all existing actions;
-	for(int i=0; i<(int)displayLevelAction.size(); ++i){
-		delete displayLevelAction.at(i);
-	}
-	displayLevelMenu->clear();
-	displayLevelAction.clear();
-
-	if(levSignalMapper)
-		delete levSignalMapper;
-	levSignalMapper = new QSignalMapper(this);
-	for(int i=1; i<=NumLevels; ++i){
-		stringstream ss;
-		ss << i;
-		QAction *action = new QAction(tr(ss.str().c_str()),this);
-		action->setCheckable(true);
-		if( i==(SlideCurrentLevel+1) )
-			action->setChecked( true );
-		else
-			action->setChecked( false );
-		action->setStatusTip( tr("Goto this layer") );
-		connect(action, SIGNAL(triggered()), levSignalMapper, SLOT(map()));
-		levSignalMapper->setMapping( action, (i-1) );
-		displayLevelMenu->addAction(action);
-	}
-
-	std::string add_menu = "Save MHD";
-	QAction *action = new QAction(tr(add_menu.c_str()),this);
-	action->setStatusTip( tr("Save Slide in MHD format") );
-	connect(action, SIGNAL(triggered()), levSignalMapper1, SLOT(map()));
-	levSignalMapper1->setMapping( action, (0) );
-	displayLevelMenu->addAction(action);
-
-	connect(levSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleLevel(int)));
-	connect(levSignalMapper1, SIGNAL(mapped(int)), this, SLOT(toggletoggleSaveSlide(int)));
-}
-
-void NucleusEditor::toggleLevel(int levNum){
-
-}
-
-void NucleusEditor::toggleSaveSlide(int levNum){
-
-}
-#endif
 
 void NucleusEditor::toggleChannel( int chNum )
 {

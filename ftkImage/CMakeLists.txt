@@ -28,8 +28,7 @@ ADD_LIBRARY( ftkImage
 
 TARGET_LINK_LIBRARIES( ftkImage 
   ${VTK_LIBRARIES}
-  ${ITK_LIBRARIES}
-  ${OPENSLIDE_LIBRARY} )
+  ${ITK_LIBRARIES} )
 
 #INSTALL( TARGETS ftkImage DESTINATION . )
                            
