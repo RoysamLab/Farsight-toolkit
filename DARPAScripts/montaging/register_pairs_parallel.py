@@ -31,6 +31,7 @@ def register(argv):
         print 'Arguments: image_dir pair_list'
         sys.exit(1)
 
+    image_dir = argv[0]
     f=open(argv[1],'r');
     f_o = open(argv[1]+'.failed_pairs','w')
     f_xforms = open('xxx_123.txt','w')
@@ -61,7 +62,7 @@ def register(argv):
         from_image_list.append(from_image)
         to_image_list.append(to_image)
         
-        subprocess_command_list.append(regp+' '+image_dir + from_image+' ' + image_dir +to_image +' -remove_2d')
+        subprocess_command_list.append(regp+' '+image_dir + from_image+' ' + image_dir +to_image +' -remove_2d'+' -gdbicp '+image_dir)
 	 #subprocess_command_list.append(regp)
     
     #make "debug" directory to store the console output of each subprocess
@@ -73,7 +74,7 @@ def register(argv):
     threads_launched = 0
     for subprocess_command in subprocess_command_list:
         #while loop to check active processes to see if we can launch more threads
-        while threads_launched >= multiprocessing.cpu_count():
+        while threads_launched >= max(1,multiprocessing.cpu_count()*1/2): # at least one thread, but no more than 3/4 of the machine
         #while threads_launched >= 16:
             threads_launched = 0
             still_launched_subp_list = []
@@ -149,6 +150,10 @@ def register(argv):
     print("DONE")
     #os.system('rm xxx_123.txt')    #not cross platform!!
 
+    return numPairs,names
+    
+
+def mosaic(argv,numPairs,names):
     # perform montaging using the first image as the anchor
     print("\nSTART...")
     cmd_executed = False;
@@ -190,5 +195,6 @@ if __name__ == '__main__':
     image_dir = sys.argv[1]
     numPairs = 1
     start_time = time.clock()
-    register(sys.argv[1:])
+    numPairs,names = register(sys.argv[1:])
+    mosaic(sys.argv[1:],numPairs,names)
     print 'Registration and Montaging took: ' + str(time.clock() - start_time) + ' seconds'
