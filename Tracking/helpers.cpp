@@ -434,7 +434,8 @@ InputImageType::Pointer getLargeComponents(InputImageType::Pointer im, int n)
 	rfilter->InPlaceOn();
 
 	rfilter->Update();
-	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	RelabelFilterType::ObjectSizeInPixelsContainerType sizes = rfilter->GetSizeOfObjectsInPixels();
+//	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = -1;
 	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{
@@ -494,7 +495,8 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 	rfilter->InPlaceOn();
 
 	rfilter->Update();
-	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	RelabelFilterType::ObjectSizeInPixelsContainerType sizes = rfilter->GetSizeOfObjectsInPixels();
+	//std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
 	int threshsize = sizes.size()+1;// just to be safe
 	for(unsigned int counter=0; counter<sizes.size(); counter++)
 	{
@@ -509,6 +511,7 @@ LabelImageType::Pointer getLargeLabels(LabelImageType::Pointer im, int n)
 	for(iter.GoToBegin();!iter.IsAtEnd();++iter)
 	{
 		if(iter.Get()>threshsize)
+	//	if(iter.Get()<threshsize)
 			iter.Set(0);
 	}
 	
@@ -657,11 +660,14 @@ InputImageType::Pointer getDilated(InputImageType::Pointer im, int n)
 	size[0]=n;
 	size[1]=n;
 	size[2]=n/3;//FIXME
+	std::cout<<"z size:"<<n/3<<"\n";
 	selement.SetRadius(size);
 	selement.CreateStructuringElement();
 	DilateFilterType::Pointer dfilter = DilateFilterType::New();
 	dfilter->SetKernel(selement);
+	printf("Kernel set\n");
 	dfilter->SetInput(im);
+	printf("Input set\n");
 	dfilter->Update();
 	printf(" Done.\n");
 	return dfilter->GetOutput();
@@ -714,7 +720,7 @@ DistanceMapFilterType::Pointer getDistanceMap(InputImageType::Pointer im)
 
 LabelImageType::Pointer getLabelled(InputImageType::Pointer im_input,int threshold, int min_component_size, int morph_opening_depth)
 {
-	InputImageType::Pointer threshVessel = getThresholded(im_input,threshold);
+	InputImageType::Pointer threshVessel = getThresholded(im_input,threshold); // threshold the image
 	threshVessel = getDilated(threshVessel,morph_opening_depth);
 	threshVessel = getEroded(threshVessel,morph_opening_depth);
 	threshVessel = getLargeComponents(threshVessel,min_component_size);
@@ -732,6 +738,89 @@ LabelImageType::Pointer getLabelled(InputImageType::Pointer im_input,int thresho
 
 	rfilter->Update();
 	return rfilter->GetOutput();
+}
+LabelImageType::Pointer GetThreshSegmentation(InputImageType::Pointer InImage,int inten_threshold,int open_depth)
+{
+	//InputImageType::Pointer ProcImage = getThresholded(InImage,inten_threshold); // threshold the image
+	printf("Performing binary thresholding ...");
+	ThresholdFilterType::Pointer tfilt = ThresholdFilterType::New();
+	tfilt->SetInput(InImage);
+	tfilt->SetInsideValue(255);
+	tfilt->SetOutsideValue(0);
+	tfilt->SetLowerThreshold(inten_threshold);
+	tfilt->SetUpperThreshold(255);
+	tfilt->Update();
+	printf(" Done.\n");
+	InputImageType::Pointer ProcImage = tfilt->GetOutput();
+
+	ProcImage = getDilated(ProcImage,open_depth);
+	ProcImage = getEroded(ProcImage,open_depth);
+//	ThresholdedImage = getLargeComponents(ThresholdedImage,min_component_size);
+
+
+
+	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	cfilter->SetFullyConnected(1);
+	cfilter->SetInput(ProcImage);
+	cfilter->Update();
+
+	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	rfilter->SetInput(cfilter->GetOutput());
+	rfilter->InPlaceOn();
+	rfilter->Update();
+	return rfilter->GetOutput();
+}
+LabelImageType::Pointer GetLargestLabel(LabelImageType::Pointer LabImage)
+{
+	printf("Removing all small connected components ...");
+	//typedef itk::Image<short int,3> LabelImageType;
+	//typedef itk::ConnectedComponentImageFilter<InputImageType,LabelImageType> ConnectedFilterType;
+	//typedef itk::RelabelComponentImageFilter<LabelImageType,LabelImageType> RelabelFilterType;
+
+	//ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	//cfilter->SetFullyConnected(1);
+	//cfilter->SetInput(LabImage);
+	//cfilter->Update();
+
+	//RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	//rfilter->SetInput(cfilter->GetOutput());
+	//rfilter->InPlaceOn();
+
+	//rfilter->Update();
+	//RelabelFilterType::ObjectSizeInPixelsContainerType sizes = rfilter->GetSizeOfObjectsInPixels();
+//	std::vector<long unsigned int> sizes = rfilter->GetSizeOfObjectsInPixels();
+	//int max_size = -1;
+	//for(unsigned int counter=0; counter<sizes.size(); counter++)
+	//{
+
+
+	int threshsize = 1;
+	//int threshsize = -1;
+	//for(unsigned int counter=0; counter<sizes.size(); counter++)
+	//{
+	//	if(sizes[counter] < (unsigned int)n)
+	//	{
+	//		threshsize = counter;
+	//		break;
+	//	}
+	//}
+
+	typedef itk::BinaryThresholdImageFilter<LabelImageType,LabelImageType> BinFilterType;
+	BinFilterType::Pointer bfilter = BinFilterType::New();
+
+//	bfilter->SetInput(rfilter->GetOutput());
+	bfilter->SetInput(LabImage);
+	bfilter->SetInsideValue(255);
+	bfilter->SetOutsideValue(0);
+	bfilter->SetLowerThreshold(1);
+	if(threshsize>1)
+		bfilter->SetUpperThreshold(threshsize-1);
+	else
+		bfilter->SetUpperThreshold(1);
+	bfilter->Update();
+	printf(" Done.\n");
+
+	return bfilter->GetOutput();
 }
 
 InputImageType::Pointer getLabelToBinary(LabelImageType::Pointer l)
@@ -1836,26 +1925,20 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 	float ratio_threshold = 1.7;
 	LabelImageType::SizeType bound = segmented[0][0]->GetLargestPossibleRegion().GetSize();
 
-			typedef ftk::TrackPointFeatures TPF;
-		typedef ftk::TrackFeatures TF;
+	typedef ftk::TrackPointFeatures TPF;
+	typedef ftk::TrackFeatures TF;
 	std::vector<int> distances(10000);
-	//std::vector<float> spacing(3);
-	//spacing[0] = spacing[1] = 0.357;
-	//spacing[2] = 2.0;
-	for(unsigned int tc=0; tc < tfs.size(); tc++)
+
+	for(unsigned int tc=0; tc < tfs.size(); tc++)		// looping over tracks
 	{
-	//	printf("running for track :%d\n",tc);
-		// for this track = counter find dc contact feature
-		while(tfs[tc].tfeatures.size() < tfs[tc].intrinsic_features.size())
+		while(tfs[tc].tfeatures.size() < tfs[tc].intrinsic_features.size())  // fill the tracks with trackpoint features if they're missing
 		{
 			TPF temptpf;
 			tfs[tc].tfeatures.push_back(temptpf);
 		}
-		for(unsigned int tp = 0; tp < tfs[tc].intrinsic_features.size(); tp++)
+		for(unsigned int tp = 0; tp < tfs[tc].intrinsic_features.size(); tp++) // loop over each point in the track
 		{
-		//	printf("running for trackpoint : %d/%d\n",tc,tp);
-			int t = tfs[tc].intrinsic_features[tp].time;
-			
+			int t = tfs[tc].intrinsic_features[tp].time;			
 			int x,y,z;
 			x = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[0]);//*spacing[0]);
 			y = static_cast<int>(tfs[tc].intrinsic_features[tp].Centroid[1]);//*spacing[1]);
@@ -1869,9 +1952,9 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 				LabelImageType::IndexType lend;
 				LabelImageType::RegionType lregion;
 
-				lindex[0] = MAX(MIN(x-wsize*factor, bound[0]-1),0);
+				lindex[0] = MAX(MIN(x-wsize*factor, bound[0]-1),0); // get the index of the around the centroid of the cell boundary
 				lindex[1] = MAX(MIN(y-wsize*factor, bound[1]-1),0);
-				lindex[2] = MAX(MIN(z-wsize*factor, bound[2]-1),0);
+				lindex[2] = MAX(MIN(z-wsize*factor, bound[2]-1),0); 
 
 				lend[0] = MAX(MIN(x+wsize*factor, bound[0]-1),0);
 				lend[1] = MAX(MIN(y+wsize*factor, bound[1]-1),0);
@@ -1947,8 +2030,6 @@ void AnalyzeDCContact(LabelImageType::Pointer segmented[][4], std::vector<ftk::T
 		{
 			tfs[tc].scalars[TF::CONTACT_TO_2] += tfs[tc].tfeatures[tp].scalars[TPF::HAS_CONTACT_TO_2];
 		}
-		
-		
 	//	printf("Finished adding dc contact numbers\n");
 		tfs[tc].scalars[TF::CONTACT_TO_2] /=tfs[tc].intrinsic_features.size();
 	}
@@ -2565,28 +2646,55 @@ LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
 }
 
 
+void AnalyzeCAFeatures(OutputImageType::Pointer LabNucImage,OutputImageType::Pointer LabCAImage,vtkSmartPointer<vtkTable> table)
+{
+	
+  //typedef  itk::SignedDanielssonDistanceMapImageFilter< OutputImageType, FloatImageType  > DistanceMapImageFilterType;
+  typedef  itk::SignedMaurerDistanceMapImageFilter< OutputImageType, FloatImageType  > DistanceMapImageFilterType;
+  DistanceMapImageFilterType::Pointer dismapFilter = DistanceMapImageFilterType::New();
+  dismapFilter->SetInput(LabCAImage);
+  dismapFilter->Update();
+ 
+  //typedef  itk::ImageFileWriter< FloatImageType  > WriterType1;
+  //WriterType1::Pointer writer = WriterType1::New();
+  //writer->SetFileName("C:\\Lab\\AminFiles\\Debug\\ThomazsTests\\DistanceMap.nrrd");
+  //writer->SetInput(dismapFilter->GetOutput());
+  //writer->Update();
+  	std::cout<<"number of columns before:"<<table->GetNumberOfColumns()<<std::endl;
 
-//LabelImageType::Pointer removeHoles(LabelImageType::Pointer im,int size)
-//{
-//	LabelImageType::Pointer out = LabelImageType::New();
-//	out->SetRegions(im,im->GetLargestPossibleRegion());
-//	out->Allocate();
-//
-//	LabelIteratorType iter1(im,im->GetLargestPossibleRegion());
-//	LabelIteratorType iter2(out,out->GetLargestPossibleRegion());
-//
-//	for(iter1.GoToBegin(),iter2.GoToBegin();!iter1.IsAtEnd(); ++iter1,++iter2)
-//	{
-//		if(iter1.Get()==0)
-//			iter2.Set(255);
-//	}
-//
-//	out = getLargeLabels(out,size);
-//	iter2 = LabelIteratorType(out,out->GetLargestPossibleRegion());
-//	for(iter1.GoToBegin(),iter2.GoToBegin();!iter1.IsAtEnd();++iter1,++iter2)
-//	{
-//		
-//		iter2.Set(
-//	}
-//}
+  	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetNumberOfValues(table->GetNumberOfRows());
+	column->SetName( "Dist_To_CA" );
+	table->AddColumn(column);
+
+	//std::cout<<"number of rows:"<<table->GetNumberOfRows()<<std::endl;
+ 	std::cout<<"number of columns after:"<<table->GetNumberOfColumns()<<std::endl;
+
+    //table->Dump ( 3 );
+	FloatImageType::Pointer DistanceMap = dismapFilter->GetOutput();
+	typedef itk::ImageRegionConstIteratorWithIndex<FloatImageType> ConstFloatIteratorWithIndex;
+	ConstFloatIteratorWithIndex DistMapIter = ConstFloatIteratorWithIndex(DistanceMap,DistanceMap->GetLargestPossibleRegion());
+	FloatImageType::IndexType index;
+
+	for (vtkIdType r = 0; r < table->GetNumberOfRows(); ++r)
+	{
+		
+		//std::cout<<table->GetValueByName(r,"centroid_x")<<"\t"<<table->GetValueByName(r,"centroid_y")<<"\t"<<table->GetValueByName(r,"centroid_z")<<std::endl;
+		index[0] = table->GetValueByName(r,"centroid_x").ToFloat();
+		index[1] = table->GetValueByName(r,"centroid_y").ToFloat();
+		index[2] = table->GetValueByName(r,"centroid_z").ToFloat();
+		DistMapIter.SetIndex(index);
+		table->SetValueByName(r,"Dist_To_CA",DistMapIter.Get());
+	//	std::cout<<table->GetValueByName(r,"centroid_x")<<std::endl;
+
+	}
+
+}
+void AnalyzeNucDensity(OutputImageType::Pointer LabNucImage,int xyradius, int zradius,vtkSmartPointer<vtkTable> table)
+{
+
+
+
+}
+
 }

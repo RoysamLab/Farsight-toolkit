@@ -620,11 +620,11 @@ int main(int argc1, char**argv1)//int argc, char **argv)
 		//int c=1;
 	for(int t = 0; t< num_t ; t++)
 	{
-		images[t][c-1]=readImage<InputImageType>(argv[pc++]);
+		images[t][c-1]=readImage<InputImageType>(argv[pc++]);	// load the images
 	}
   for(int t = 0; t< num_t; t++)
   {
-		segmented[t][c-1] = readImage<LabelImageType>(argv[pc++]);
+		segmented[t][c-1] = readImage<LabelImageType>(argv[pc++]); // load the results
 	}
  
   bool compute_dc_contact = false;

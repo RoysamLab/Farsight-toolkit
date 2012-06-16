@@ -35,6 +35,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <limits>
 #include <iterator> 
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_hungarian_algorithm.h>
@@ -45,6 +46,11 @@
 #include "ftkIntrinsicFeatures.h"
 #include "ftkTrackFeatures.h"
 #include "itkBinaryThinningImageFilter3D.h"
+
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkApproximateSignedDistanceMapImageFilter.h"
+#include <itkSignedMaurerDistanceMapImageFilter.h>
+#include <itkSignedDanielssonDistanceMapImageFilter.h>
 
 //int npes,rank;
 #define PRINTF(...) PRINTF1(__VA_ARGS__,1)
@@ -243,5 +249,11 @@ std::vector<FeaturesType> get_all_connected_components(LabelImageType::Pointer,F
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeaturesType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeaturesType> &fvecout);
 void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeaturesType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeaturesType &fout);
 LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
+LabelImageType::Pointer GetThreshSegmentation(InputImageType::Pointer InImage,int inten_threshold,int open_depth);
+LabelImageType::Pointer GetLargestLabel(LabelImageType::Pointer LabImage);
+void AnalyzeCAFeatures(OutputImageType::Pointer LabNucImage,OutputImageType::Pointer LabCAImage,vtkSmartPointer<vtkTable> table); 
+void AnalyzeNucDensity(OutputImageType::Pointer LabNucImage,int xyradius, int zradius,vtkSmartPointer<vtkTable> table);
+
+
 }
 #endif

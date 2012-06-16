@@ -91,12 +91,12 @@ int main(int argc, char**argv)
 
 		FloatImageType::Pointer imf = filter->GetOutput();
 		typedef itk::ImageRegionIterator<FloatImageType> IRI;
-		IRI iter(imf,imf->GetLargestPossibleRegion());
-		for(iter.GoToBegin();!iter.IsAtEnd(); ++iter)
+		IRI imageIterator(imf,imf->GetLargestPossibleRegion());
+		for(imageIterator.GoToBegin();!imageIterator.IsAtEnd(); ++imageIterator)
 		{
 			float value = iter.Get();
 			value = ((value < 0)?0:((value>255)?255:value));
-			iter.Set(value);
+			imageIterator.Set(value);
 		}
 
 		ReverseCastFilter::Pointer rfilter = ReverseCastFilter::New();

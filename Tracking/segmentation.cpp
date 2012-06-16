@@ -616,151 +616,152 @@ void assignmentsuboptimal1(double *assignment, double *cost, double *distMatrixI
 #define USE_VNL_HUNGARIAN 
 vcl_vector<unsigned int> getTimeAssociations(std::vector<FeaturesType> &a,std::vector<FeaturesType> &b)
 {
-
-#define DEBUG_RANK -1
-	int rows =0;
-	int cols =0;
-	rows = a.size();
-	cols = b.size();
-	printf("Rows = %d Cols = %d\n",rows,cols);
-	double overlap;
-#ifdef USE_VNL_HUNGARIAN
-	vnl_matrix<double> mat(rows,cols);
-	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
-	//int pa =0; 
-	//int pb =0;
-	for(int cr = 0; cr<rows; cr++)
-	{
-
-		bool enforce_overlap = false;
-		for(int cc=0; cc<cols; cc++)
-		{
-			overlap = features_box_overlap(a[cr],b[cc]);
-			if(overlap>1) // volume of overlap > 1
-			{
-				enforce_overlap = true;
-				break;
-			}
-		}
-		/*	if(rank==DEBUG_RANK)
-		{
-		if(enforce_overlap)
-		printf("%d/%d: I did enforce overlap for %d\n",rank,npes,cr);
-		else
-		printf("%d/%d: I did not enforce overlap for %d\n",rank,npes,cr);
-		}*/
-		for(int cc =0; cc<cols; cc++)
-		{
-			mat(cr,cc) = features_diff(a[cr],b[cc],enforce_overlap);
-		}
-	}
-	printf("About to call vnl_hungarian_algorithm\n");
-	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm<double>(mat);
-	printf("Returned from vnl_hungarian_algorithm\n");
-	for(unsigned int counter=0; counter< ret.size(); counter++)
-	{
-		if(mxIsFinite(ret[counter]))
-		{
-			if(!mxIsFinite(mat(counter,ret[counter])))
-			{
-				ret[counter] = static_cast<unsigned int>(-1);
-			}
-		}
-	}
-	printf("Returning from getTimeAssociations\n");
-	return ret;
-#else
-	double * assignment  = (double*) malloc(rows*sizeof(double));
-	double * cost = (double*) malloc(sizeof(double));
-	double * distMatrixIn = (double*) malloc(rows *cols*sizeof(double));
-
-	if(assignment == NULL)
-		printf("Couldn't allocate memory assignment\n");
-
-	if(distMatrixIn == NULL)
-		printf("Couldn't allocate memory for distMatrixIn\n");
-
-	if(cost == NULL)
-		printf("Couldn't allocate memory for cost\n");
-
-	printf("%d/%d About to assign datamatrix values\n",rank,npes);
-	int pa =0; 
-	int pb =0;
-	for(int cr = 0; cr<rows; cr++)
-	{
-
-		//if(rank==0)
-		//{
-		//	printf("0/124: bbox %d %d %d %d %d %d \n",a[cr].bbox.sx,a[cr].bbox.sy,a[cr].bbox.sz,a[cr].bbox.ex,a[cr].bbox.ey,a[cr].bbox.ez);
-		//}
-		bool enforce_overlap = false;
-		for(int cc=0; cc<cols; cc++)
-		{
-			overlap = features_box_overlap(a[cr],b[cc]);
-			if(overlap>1) // volume of overlap > 1
-			{
-				enforce_overlap = true;
-				break;
-			}
-		}
-		//if(rank==DEBUG_RANK)
-		{
-			if(enforce_overlap)
-				printf("%d/%d: I did enforce overlap for %d\n",rank,npes,cr);
-			else
-				printf("%d/%d: I did not enforce overlap for %d\n",rank,npes,cr);
-		}
-		for(int cc =0; cc<cols; cc++)
-		{
-			distMatrixIn[cr+rows*cc] = features_diff(a[cr],b[cc],enforce_overlap);
-			//if(rank==DEBUG_RANK)
-			{
-				//	if(cr==0)
-				{
-					printf("distmatrix[%d,%d]=%0.3lf\n",cr,cc,distMatrixIn[cr+rows*cc]);
-				}
-			}
-		}
-
-	}
-	printf("%d/%d About to call assignmentsuboptimal1\n",rank,npes);
-	assignmentsuboptimal1(assignment,cost,distMatrixIn,rows,cols);
-	printf("%d/%d Exited assignmentsuboptimal1\n",rank,npes);
-	vcl_vector<unsigned int> vec(rows);
-	int assigned_count=0;
-	//	if(rank==DEBUG_RANK)
-	//	{
-	//		for(int counter=0; counter< rows; counter++)
-	//		{
-	//			printf("%d/%d assignment[%d] = %0.3lf\n",rank,npes,counter,assignment[counter]);
-	//		}
-	//	}
-	printf("%d/%d About to start assigning vec values\n",rank,npes);
-	for(int cr = 0; cr<rows; cr++)
-	{
-		if(assignment[cr]>-0.1)
-		{
-			vec[cr]=static_cast<unsigned int>(assignment[cr]+0.5);
-			//			if(rank==DEBUG_RANK)
-			//				printf("%d/%d : assigned_nums[%d] = %d\n",rank,npes,cr,vec[cr]);
-			assigned_count++;
-		}
-		else
-		{
-			vec[cr]=static_cast<unsigned int>(-1);
-		}
-	}
-	//	if(rank==DEBUG_RANK)
-	//	{
-	//		printf("%d/%d: assigned_count = %d\n",rank,npes,assigned_count);
-	//	}
-	//free(assignment); FIXME : was giving glibc corruption errors;
-	//free(cost);
-	//free(distMatrixIn);
-	return vec;
-
-#endif
-
+//
+//#define DEBUG_RANK -1
+//	int rows =0;
+//	int cols =0;
+//	rows = a.size();
+//	cols = b.size();
+//	printf("Rows = %d Cols = %d\n",rows,cols);
+//	double overlap;
+//#ifdef USE_VNL_HUNGARIAN
+//	vnl_matrix<double> mat(rows,cols);
+//	printf("Allocated Rows = %d Cols = %d\n",mat.rows(),mat.cols());
+//	//int pa =0; 
+//	//int pb =0;
+//	for(int cr = 0; cr<rows; cr++)
+//	{
+//
+//		bool enforce_overlap = false;
+//		for(int cc=0; cc<cols; cc++)
+//		{
+//			overlap = features_box_overlap(a[cr],b[cc]);
+//			if(overlap>1) // volume of overlap > 1
+//			{
+//				enforce_overlap = true;
+//				break;
+//			}
+//		}
+//		/*	if(rank==DEBUG_RANK)
+//		{
+//		if(enforce_overlap)
+//		printf("%d/%d: I did enforce overlap for %d\n",rank,npes,cr);
+//		else
+//		printf("%d/%d: I did not enforce overlap for %d\n",rank,npes,cr);
+//		}*/
+//		for(int cc =0; cc<cols; cc++)
+//		{
+//			mat(cr,cc) = features_diff(a[cr],b[cc],enforce_overlap);
+//		}
+//	}
+//	printf("About to call vnl_hungarian_algorithm\n");
+//	vcl_vector<unsigned int> ret = vnl_hungarian_algorithm<double>(mat);
+//	printf("Returned from vnl_hungarian_algorithm\n");
+//	for(unsigned int counter=0; counter< ret.size(); counter++)
+//	{
+//		if(mxIsFinite(ret[counter]))
+//		{
+//			if(!mxIsFinite(mat(counter,ret[counter])))
+//			{
+//				ret[counter] = static_cast<unsigned int>(-1);
+//			}
+//		}
+//	}
+//	printf("Returning from getTimeAssociations\n");
+//	return ret;
+//#else
+//	double * assignment  = (double*) malloc(rows*sizeof(double));
+//	double * cost = (double*) malloc(sizeof(double));
+//	double * distMatrixIn = (double*) malloc(rows *cols*sizeof(double));
+//
+//	if(assignment == NULL)
+//		printf("Couldn't allocate memory assignment\n");
+//
+//	if(distMatrixIn == NULL)
+//		printf("Couldn't allocate memory for distMatrixIn\n");
+//
+//	if(cost == NULL)
+//		printf("Couldn't allocate memory for cost\n");
+//
+//	printf("%d/%d About to assign datamatrix values\n",rank,npes);
+//	int pa =0; 
+//	int pb =0;
+//	for(int cr = 0; cr<rows; cr++)
+//	{
+//
+//		//if(rank==0)
+//		//{
+//		//	printf("0/124: bbox %d %d %d %d %d %d \n",a[cr].bbox.sx,a[cr].bbox.sy,a[cr].bbox.sz,a[cr].bbox.ex,a[cr].bbox.ey,a[cr].bbox.ez);
+//		//}
+//		bool enforce_overlap = false;
+//		for(int cc=0; cc<cols; cc++)
+//		{
+//			overlap = features_box_overlap(a[cr],b[cc]);
+//			if(overlap>1) // volume of overlap > 1
+//			{
+//				enforce_overlap = true;
+//				break;
+//			}
+//		}
+//		//if(rank==DEBUG_RANK)
+//		{
+//			if(enforce_overlap)
+//				printf("%d/%d: I did enforce overlap for %d\n",rank,npes,cr);
+//			else
+//				printf("%d/%d: I did not enforce overlap for %d\n",rank,npes,cr);
+//		}
+//		for(int cc =0; cc<cols; cc++)
+//		{
+//			distMatrixIn[cr+rows*cc] = features_diff(a[cr],b[cc],enforce_overlap);
+//			//if(rank==DEBUG_RANK)
+//			{
+//				//	if(cr==0)
+//				{
+//					printf("distmatrix[%d,%d]=%0.3lf\n",cr,cc,distMatrixIn[cr+rows*cc]);
+//				}
+//			}
+//		}
+//
+//	}
+//	printf("%d/%d About to call assignmentsuboptimal1\n",rank,npes);
+//	assignmentsuboptimal1(assignment,cost,distMatrixIn,rows,cols);
+//	printf("%d/%d Exited assignmentsuboptimal1\n",rank,npes);
+//	vcl_vector<unsigned int> vec(rows);
+//	int assigned_count=0;
+//	//	if(rank==DEBUG_RANK)
+//	//	{
+//	//		for(int counter=0; counter< rows; counter++)
+//	//		{
+//	//			printf("%d/%d assignment[%d] = %0.3lf\n",rank,npes,counter,assignment[counter]);
+//	//		}
+//	//	}
+//	printf("%d/%d About to start assigning vec values\n",rank,npes);
+//	for(int cr = 0; cr<rows; cr++)
+//	{
+//		if(assignment[cr]>-0.1)
+//		{
+//			vec[cr]=static_cast<unsigned int>(assignment[cr]+0.5);
+//			//			if(rank==DEBUG_RANK)
+//			//				printf("%d/%d : assigned_nums[%d] = %d\n",rank,npes,cr,vec[cr]);
+//			assigned_count++;
+//		}
+//		else
+//		{
+//			vec[cr]=static_cast<unsigned int>(-1);
+//		}
+//	}
+//	//	if(rank==DEBUG_RANK)
+//	//	{
+//	//		printf("%d/%d: assigned_count = %d\n",rank,npes,assigned_count);
+//	//	}
+//	//free(assignment); FIXME : was giving glibc corruption errors;
+//	//free(cost);
+//	//free(distMatrixIn);
+//	return vec;
+//
+//#endif
+	vcl_vector<unsigned int> dummy;
+	return dummy;
 }
 
 void getArrayFromStdVector(std::vector<FeaturesType> &f, FeaturesType	*&farray)
@@ -860,6 +861,7 @@ int main(int argc, char **argv)
 		//printf("%s\n",s);
 		params[i] = atoi(s1);
 		s1 = strtok (NULL,",");
+		printf("param %d is %d\n",i,params[i]);
 			
 		//printf("params[%d][0]:%d\n",i,params[i][0]);
 		i++;
@@ -912,7 +914,7 @@ int main(int argc, char **argv)
 
   if(!file_exists(argv[4]))
     {
-    im =  readImage<InputImageType>(argv[1]);
+	   im =  readImage<InputImageType>(argv[1]);
 
 
     std::list<Seed> seed_list;
@@ -929,7 +931,20 @@ int main(int argc, char **argv)
         default: printf("Unrecognized segmentation type\n");
                  return 0;
       }
-          writeImage<LabelImageType>(labeled,argv[4]);
+	////	labeled = getLabelled(im,params[0],params[1],params[2]);
+	//	im = getLargeComponents(im,params[1]);
+	//	ConnectedFilterType::Pointer cfilter = ConnectedFilterType::New();
+	//	cfilter->SetFullyConnected(1);
+	//	cfilter->SetInput(im);
+	//	cfilter->Update();
+
+	//	RelabelFilterType::Pointer rfilter = RelabelFilterType::New();
+	//	rfilter->SetInput(cfilter->GetOutput());
+	//	rfilter->InPlaceOn();
+
+	//	rfilter->Update();
+	//	labeled = rfilter->GetOutput();
+        writeImage<LabelImageType>(labeled,argv[4]);
 
     }
   //	fclose(fp);
