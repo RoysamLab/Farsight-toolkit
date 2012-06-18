@@ -94,7 +94,7 @@ int main(int argc, char**argv)
 		IRI imageIterator(imf,imf->GetLargestPossibleRegion());
 		for(imageIterator.GoToBegin();!imageIterator.IsAtEnd(); ++imageIterator)
 		{
-			float value = iter.Get();
+			float value = imageIterator.Get();
 			value = ((value < 0)?0:((value>255)?255:value));
 			imageIterator.Set(value);
 		}
