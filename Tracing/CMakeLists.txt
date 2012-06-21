@@ -75,3 +75,7 @@ option( BUILD_AstroTracer "Build Astrocyte Tracer" OFF )
 if( BUILD_AstroTracer )
   add_subdirectory( AstroTracer )
 endif()
+
+option( BUILD_SuperEllipsoidTracer "Build SuperEllipsoid Tracer" OFF )
+  add_Subdirectory( SuperEllipsoidTracer )
+endif()
