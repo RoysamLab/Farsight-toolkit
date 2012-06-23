@@ -1020,7 +1020,7 @@ void View3D::SetImgInt()
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
-		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(-1));
+		//this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(-1));
 		this->TreeModel->AddFeatureHeader("Image_Intensity");
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 		this->QVTK->GetRenderWindow()->Render();
@@ -1048,7 +1048,7 @@ void View3D::TraceBitImageIntensityWeighted(int ImgID)
 {
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! weighted image intensity values at each Trace Bit of trace line
-		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
+		//this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
 	}
 }
 
