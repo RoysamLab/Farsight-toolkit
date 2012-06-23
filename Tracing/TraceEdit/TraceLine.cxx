@@ -276,6 +276,19 @@ void TraceLine::calculateBifFeatures()
 		this->partitionAsymmetry = 1;
 	}
 
+	double daughter1pathLength = this->GetBranch1()->GetPathLength();
+	double daughter2pathLength = this->GetBranch2()->GetPathLength();
+	if (daughter1pathLength <= daughter2pathLength)
+	{
+		if (daughter2pathLength != 0)
+			this->daughterLengthRatio = daughter1pathLength/daughter2pathLength;
+	}
+	else
+	{
+		if (daughter1pathLength != 0)
+			this->daughterLengthRatio = daughter2pathLength/daughter1pathLength;
+	}
+
 	this->BifAmplLocal = this->Angle(D1F, BranchBit, D2F);
 	this->BifAmplRemote = this->Angle(D1B, BranchBit, D2B);
 
@@ -401,24 +414,217 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, 
 	this->SetTraceFeature(ImageName, aveIntensity);
 	//should have ended
 }
-void TraceLine::setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData)
+void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, std::string ImageName)
 {
-	//TraceBit curBit;
-	//TraceBitsType::iterator it = this->m_trace_bits.begin();
-	//double totalIntensity = 0; 
-	//for (; it != this->m_trace_bits.end(); it++)
+	if (this->m_trace_bits.size()>1)
+	{
+		TraceBit curBit;
+		TraceBitsType::iterator it = this->m_trace_bits.begin();
+		double totalIntensity = 0; 
+		for (; it != this->m_trace_bits.end(); it++)
+		{
+			int lx = 0, ly = 0, lz = 0; 
+			curBit = *it;
+			lx = (int) floor(curBit.x + 0.5);
+			ly = (int) floor(curBit.y + 0.5);
+			lz = (int) floor(curBit.z + 0.5);
+			int radius = (int) floor(curBit.r + 0.5);
+
+			//ImageType::Pointer circleImage = circleKernel(radius,azimuth,elevation);
+
+			ImageType::SizeType size;
+			int boxSide = radius*2+1;
+			size[0] = boxSide;
+			size[1] = boxSide;
+			size[2] = boxSide;
+
+			//std::cout << "Image size: " << size[0] << " " <<size[1] << " " << size[2] <<std::endl;
+
+			//fix for out of bounds value
+			ImageType::IndexType start_index;
+			start_index[0] = lx-radius;
+			start_index[1] = ly-radius;
+			start_index[2] = lz-radius;
+
+			//std::cout << "Start index: " << start_index[0] << " " <<start_index[1] << " " << start_index[2] <<std::endl;
+
+			ImageType::RegionType volume_region;
+			volume_region.SetSize( size );
+			volume_region.SetIndex( start_index );
+
+			VolumeOfInterestFilterType::Pointer volumeOfInterestFilter = VolumeOfInterestFilterType::New();
+			volumeOfInterestFilter->SetInput( input_image );
+			volumeOfInterestFilter->SetRegionOfInterest( volume_region );
+			volumeOfInterestFilter->Update();
+
+			ImageType::Pointer crop_input_image = volumeOfInterestFilter->GetOutput();
+
+			ImageType::Pointer mask = ImageType::New();
+
+			//int maskCount;
+			StructuredObject * sphereMask = new StructuredObject();
+			sphereMask->sphereKernel(crop_input_image, mask, radius);
+			
+			MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+			maskFilter->SetInput(crop_input_image);
+			maskFilter->SetMaskImage(mask);
+
+			//mask->Print(std::cout);
+
+			ImageType::Pointer crop_output_image = maskFilter->GetOutput();
+			//round-about way of trying to iterate through image since iterator does not know the size
+			//evaluates from 0 to 0
+			start_index[0] = 0;
+			start_index[1] = 0;
+			start_index[2] = 0;
+			volume_region.SetIndex( start_index );
+			volumeOfInterestFilter->SetInput( crop_output_image );
+			volumeOfInterestFilter->SetRegionOfInterest( volume_region );
+			volumeOfInterestFilter->Update();
+			ImageType::Pointer output_image = volumeOfInterestFilter->GetOutput();
+			//ImageType::RegionType region = crop_output_image->GetLargestPossibleRegion();
+			
+			//ImageType::IndexType regionIndex;
+			//regionIndex[0] = 0;
+			//regionIndex[1] = 0;
+			//regionIndex[2] = 0;
+			//region.SetIndex(regionIndex);
+
+
+
+			//Validate accuracy
+			WriterType::Pointer writer1 = WriterType::New();
+			writer1->SetFileName( "Input.tif" );
+			writer1->SetInput( crop_input_image );
+
+			WriterType::Pointer writer2 = WriterType::New();
+			writer2->SetFileName( "Output.tif" );
+			writer2->SetInput( output_image );
+			
+			try
+			{
+				writer1->Update();
+				writer2->Update();
+			}
+			catch( itk::ExceptionObject & excp )
+			{
+				std::cerr << excp << std::endl;
+			}
+
+			double kernelTotalIntensity = 0;
+			ConstIteratorType imageIterator( output_image,output_image->GetRequestedRegion() );
+			imageIterator.GoToBegin();
+			while( !imageIterator.IsAtEnd() ) //imageIterator not working?
+			{
+				// Get value of current pixel
+				unsigned char pixel_value = imageIterator.Get();
+				kernelTotalIntensity += (int) pixel_value;
+				std::cout << "Kernel intensity: " << kernelTotalIntensity << std::endl;
+				++imageIterator;
+			}//end imageIterator
+			//if (kernelTotalIntensity != 0)
+			//	std::cout << "Total sphere intensity: " << kernelTotalIntensity << std::endl;
+			//totalIntensity += kernelTotalIntensity/maskCount;
+		}
+	}
+
+	//if (this->m_trace_bits.size()>1)
 	//{
-	//	int lx = 0, ly = 0, lz = 0; 
-	//	curBit = *it;
-	//	lx = (int) floor(curBit.x + 0.5);
-	//	ly = (int) floor(curBit.y + 0.5);
-	//	lz = (int) floor(curBit.z + 0.5);
-	//	(*it).I = imageData->GetScalarComponentAsDouble(lx,ly,lz,0);
-	//	totalIntensity += (*it).I;
-	//	//std::cout<< "\nid:\t"<< (*it).id << "\tI:\t" << (*it).I; //for checking data
+	//	TraceBit curBit, nextBit;
+	//	double totalIntensity;
+	//	TraceBitsType::iterator iter = this->m_trace_bits.begin();
+	//	while (iter != this->m_trace_bits.end()) // test one
+	//	{
+	//		curBit = *iter;
+	//		nextBit = *(iter++);
+
+	//		double radius1 = curBit.r;
+	//		double radius2 = nextBit.r;
+	//		double larger_radius = -1;
+	//		if (radius1 >= radius2)
+	//			larger_radius = radius1;
+	//		else
+	//			larger_radius = radius2;
+
+	//		//vector
+	//		double distance[3], vector[3];
+	//		distance[0] = nextBit.x - curBit.x;
+	//		distance[1] = nextBit.y - curBit.y;
+	//		distance[2] = nextBit.z - curBit.z;
+	//		double azimuth = AzimuthAngle(curBit,nextBit);
+	//		double elevation = ElevationAngle(curBit,nextBit);
+	//		double magnitude = sqrt(pow(distance[0],2)+pow(distance[1],2)+pow(distance[2],2));
+	//		for (int i = 0; i<3; i++)
+	//		{
+	//			vector[i] = distance[i]/magnitude;
+	//		}
+
+	//		//ImageType::Pointer circleImage = circleKernel(radius,azimuth,elevation);
+
+	//		double hypothenuse = sqrt( pow((magnitude/2),2) + pow(larger_radius,2) );
+
+	//		ImageType::SizeType size;
+	//		int boxSide = (int) ceil(hypothenuse*2.0);
+	//		size[0] = boxSide;
+	//		size[1] = boxSide;
+	//		size[2] = boxSide;
+	//		//double center[3];
+	//		//center[0] = boxSide/2;
+	//		//center[1] = boxSide/2;
+	//		//center[2] = boxSide/2;
+
+	//		ImageType::IndexType start_index;
+	//		if (curBit.x < nextBit.x)
+	//			start_index[0] = (int) floor(curBit.x-(hypothenuse-fabs(distance[0]))/2);
+	//		else
+	//			start_index[0] = (int) floor(nextBit.x-(hypothenuse-fabs(distance[0]))/2);
+	//		if (curBit.y < nextBit.y)
+	//			start_index[1] = (int) floor(curBit.y-(hypothenuse-fabs(distance[1]))/2);
+	//		else
+	//			start_index[1] = (int) floor(nextBit.y-(hypothenuse-fabs(distance[1]))/2);
+	//		if (curBit.z < nextBit.z)
+	//			start_index[2] = (int) floor(curBit.z-(hypothenuse-fabs(distance[2]))/2);
+	//		else
+	//			start_index[2] = (int) floor(nextBit.z-(hypothenuse-fabs(distance[2]))/2);
+
+	//		ImageType::RegionType volume_region;
+	//		volume_region.SetSize( size );
+	//		volume_region.SetIndex( start_index );
+
+	//		VolumeOfInterestFilterType::Pointer volumeOfInterestFilter = VolumeOfInterestFilterType::New();
+	//		volumeOfInterestFilter->SetInput( input_image );
+	//		volumeOfInterestFilter->SetRegionOfInterest( volume_region );
+	//		volumeOfInterestFilter->Update();
+
+	//		ImageType::Pointer crop_input_image = volumeOfInterestFilter->GetOutput();
+
+	//		ImageType::Pointer mask = ImageType::New();
+
+	//		int maskCount;
+	//		StructuredObject * taperedCylinder = new StructuredObject();
+	//		taperedCylinder->CreateTaperedCylinderMask(crop_input_image, mask, maskCount, radius1, radius2, distance);
+	//		
+	//		MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+	//		maskFilter->SetInput(crop_input_image);
+	//		maskFilter->SetMaskImage(mask);
+
+	//		mask->Print(std::cout);
+
+	//		ImageType::Pointer crop_output_image = maskFilter->GetOutput();
+	//		
+	//		double kernelTotalIntensity = 0;
+	//		itk::ImageRegionIterator< ImageType > imageIterator(crop_output_image,volume_region);
+	//		imageIterator.GoToBegin();
+	//		while(!imageIterator.IsAtEnd())
+	//		{
+	//			kernelTotalIntensity += imageIterator.Get();
+	//			imageIterator++;
+	//		}//end imageIterator
+	//		totalIntensity += kernelTotalIntensity/maskCount;
+	//	}
 	//}
 	//vtkVariant aveIntensity = vtkVariant(totalIntensity/this->m_trace_bits.size());
-	//this->modified = true;
+	////this->modified = true;
 	//this->SetTraceFeature(ImageName, aveIntensity);
 }
 double TraceLine::GetEuclideanLength()
@@ -719,7 +925,7 @@ double TraceLine::getTraceColor()
 };
 
 ///////////////////////////////////////////////////////////////////////////////
- TraceLine::TraceLine(const TraceLine &t)
+TraceLine::TraceLine(const TraceLine &t)
 {
   this->traceColor = t.traceColor;
   this->m_id = t.m_id;

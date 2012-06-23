@@ -30,10 +30,8 @@ public:
 
 	/**
 	 * performs a convexhull in 3D
-	 * @param	points the Vector3D cloud
-	 * @return 
 	 */
-	void setPoints(std::vector<TraceBit> &points);
+	void setPoints(std::vector<TraceBit> &pts);
 	void setReferencePt(double point[3]); //default is (0,0,0)
 	bool calculate();
 	vtkSmartPointer<vtkActor> getActor();

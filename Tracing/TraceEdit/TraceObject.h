@@ -110,6 +110,7 @@ public:
 	void markRootAsModified(int RootID);
 
 	void ImageIntensity(vtkSmartPointer<vtkImageData> imageData);
+	void ImageWeightedIntensity(ImageType::Pointer intensityImage);
 	//  operators
 	int getNewLineId();
 	int GetMaximumBitId();

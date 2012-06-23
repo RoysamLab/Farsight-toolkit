@@ -92,6 +92,7 @@ public:
 	double TotalLastParentDiam, LastParentDiamMin, LastParentDiamMax;
 
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
+	double daughterLengthRatio, daughterLengthRatioMin, daughterLengthRatioMax;
 	double BifAmplLocal, BifAmplRemote, BifTiltLocal, BifTiltRemote, BifTorqueLocal, BifTorqueRemote;
 	double BifAmplLocalMin, BifAmplRemoteMin, BifTiltLocalMin, BifTiltRemoteMin, BifTorqueLocalMin, BifTorqueRemoteMin;
 	double BifAmplLocalMax, BifAmplRemoteMax, BifTiltLocalMax, BifTiltRemoteMax, BifTorqueLocalMax, BifTorqueRemoteMax;

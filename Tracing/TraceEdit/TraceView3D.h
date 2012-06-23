@@ -167,6 +167,7 @@ public:
 	void CalculateGaps();
 	void FlipTree(TraceLine* thisLine);
 	void TraceBitImageIntensity(int ImgID);
+	void TraceBitImageIntensityWeighted(int ImgID);
 	void CloseTreePlots();
 
 	bool readProject(QString projectFile);
@@ -204,6 +205,8 @@ public slots:
 	void ApplyNewSettings();
 	void AutomaticEdits();
 	void ShowAutomatedEdits();
+
+	void IntensityFeature();
 
 	//tracing gui slots
 	void PickTracer(int choice);
@@ -643,5 +646,6 @@ private:
   #endif
   bool SaveSettingsOnExit;
 
+	std::string imageFileName;
 };
 #endif

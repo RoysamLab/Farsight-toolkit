@@ -83,6 +83,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->ContourFilter = 0;
 	newImage->ContourMapper = 0;
 	newImage->ImageData = 0;
+	newImage->itkImageData = 0;
 	//newImage->opacityTransferFunction = 0;
 	newImage->volume = 0;
 	newImage->volumeMapper = 0;
@@ -120,6 +121,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->Rescale->SetInput( newImage->reader->GetOutput() );
 	newImage->connector = ConnectorType::New();
 	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
+	newImage->itkImageData = newImage->reader->GetOutput();
 	newImage->ImageData = newImage->connector->GetOutput();
 	newImage->ImageData->Update();
 	newImage->ImageData->GetBounds(bounds);
@@ -427,6 +429,14 @@ vtkSmartPointer<vtkImageData> ImageRenderActors::GetImageData(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	return this->LoadedImages[i]->ImageData;
+}
+ImageType::Pointer ImageRenderActors::GetitkImageData(int i)
+{
+	if (i == -1)
+	{
+		i = int (this->LoadedImages.size() - 1);
+	}
+	return this->LoadedImages[i]->itkImageData;
 }
 std::vector<double> ImageRenderActors::getColorValues()
 {

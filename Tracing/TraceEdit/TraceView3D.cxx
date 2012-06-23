@@ -620,6 +620,7 @@ void View3D::LoadTraces()
 void View3D::LoadImageData()
 {
 	QString newImage = this->getImageFile();
+	this->imageFileName = newImage.toStdString();
 	if (!newImage.isEmpty())
 	{
 		this->statusBar()->showMessage("Loading Image file" + newImage);
@@ -1019,6 +1020,7 @@ void View3D::SetImgInt()
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
+		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(-1));
 		this->TreeModel->AddFeatureHeader("Image_Intensity");
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 		this->QVTK->GetRenderWindow()->Render();
@@ -1040,6 +1042,13 @@ void View3D::TraceBitImageIntensity(int ImgID)
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! image intensity values at each Trace Bit of trace line
 		this->tobj->ImageIntensity(this->ImageActors->GetImageData(ImgID));
+	}
+}
+void View3D::TraceBitImageIntensityWeighted(int ImgID)
+{
+	if (this->ImageActors->NumberOfImages()>=1)
+	{	//! weighted image intensity values at each Trace Bit of trace line
+		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
 	}
 }
 
@@ -1593,7 +1602,7 @@ void View3D::CreateGUIObjects()
 	//this->RotateRight90Button = new QPushButton(tr("Roll +90"), this->SettingsWidget);
 	//connect(this->RotateRight90Button, SIGNAL(clicked()), this, SLOT(rotateImageRight90()));
 
-	this->updateRotationButton = new QPushButton(tr("Update"),this->SettingsWidget);
+	this->updateRotationButton = new QPushButton(tr("Set Rotation"),this->SettingsWidget);
 	connect(this->updateRotationButton, SIGNAL(clicked()), this, SLOT(rotationOptions()));
 
 	this->MaxSpineBit = new QDoubleSpinBox(this->AutomationWidget);
@@ -2190,7 +2199,7 @@ void View3D::adjustEditorSettingsSize(bool changesize) // Replace with QToolBar
 		rotationSettings->setMaximumHeight(15);
 
 	if (displaySettings->isChecked())
-		displaySettings->setMaximumHeight(200);
+		displaySettings->setMaximumHeight(225);
 	else
 		displaySettings->setMaximumHeight(15);
 
@@ -4424,26 +4433,6 @@ void View3D::ListSelections()
 	selectionInfo->setDetailedText(selectedText);
 	selectionInfo->show();
 }
-void View3D::ShowDelaunay3D()
-{
-	if (this->convexHull->isChecked())
-	{
-		delaunayCellsSelected = this->CellModel->GetSelectedCells(); //in progress - Audrey
-		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
-		{
-			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
-		}
-	}
-	else
-	{
-		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
-		{
-			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
-		}
-	}
-	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
-	this->QVTK->GetRenderWindow()->Render();
-}
 void View3D::ShowTreeData()   /// modified to table with null
 {
 	this->CloseTreePlots();
@@ -4622,6 +4611,35 @@ void View3D::updateSelectionFromCell()
 	this->QVTK->GetRenderWindow()->Render();/*
 	this->statusBar()->showMessage(tr("Selected\t")
 		+ QString::number(limit) +tr("\tCells"));*/
+}
+void View3D::ShowDelaunay3D()
+{
+	if (this->convexHull->isChecked())
+	{
+		delaunayCellsSelected = this->CellModel->GetSelectedCells(); //in progress - Audrey
+		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		{
+			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
+		}
+	}
+	else
+	{
+		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		{
+			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
+		}
+	}
+	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
+	this->QVTK->GetRenderWindow()->Render();
+	//TraceBitImageIntensityWeighted(-1); //in progress - Audrey
+}
+void View3D::IntensityFeature()
+{
+	ImageType::Pointer intensityImage = ImageType::New();
+	intensityImage = this->ImageActors->getImageFileData(this->imageFileName,"Image");
+	this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
+	//this->tobj->ImageWeightedIntensity( intensityImage );
+	
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()

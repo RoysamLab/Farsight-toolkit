@@ -30,6 +30,21 @@ limitations under the License.
 #include "vtkImageData.h"
 
 #include "TraceBit.h"
+//#include "ImageActors.h"
+#include "StructuredObject.h"
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkMaskImageFilter.h"
+#include "itkImageRegionIterator.h"
+//#include "itkAffineTransform.h"
+//#include "itkEuler3DTransform.h"
+//#include "itkFixedCenterOfRotationAffineTransform.h"
+//#include "itkImageFileReader.h"
+//#include "itkNeighborhoodIterator.h"
+#include "itkImageRegionIterator.h"
+
+typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
+typedef itk::MaskImageFilter< ImageType, ImageType > MaskFilterType;
+typedef itk::RegionOfInterestImageFilter< ImageType, ImageType > VolumeOfInterestFilterType;
 
 /**
  * A TraceLine is a sequence of TraceBits that has pointers to two other
@@ -69,6 +84,7 @@ public:
 	double GetdaughterRatio() {return daughterRatio;}
 	double GetparentDaughterRatio() {return parentDaughterRatio;}
 	void SetParentDaughterRatio(double Ratio){parentDaughterRatio = Ratio;}
+	double GetdaughterLengthRatio() {return daughterLengthRatio;}
 	double GetpartitionAsymmetry() {return partitionAsymmetry;}
 	double GetRallPower() {return rallPower;}
 	double GetPk() {return Pk;}
@@ -143,7 +159,8 @@ public:
 	unsigned int GetId();
 	int GetSize();
 	void setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, std::string ImageName);
-	void setTraceBitWeightedIntensities(vtkSmartPointer<vtkImageData> imageData);
+	void setTraceBitWeightedIntensities(ImageType::Pointer input_image, std::string ImageName);
+
 	void Print(std::ostream &c,int indent);
 
 	std::vector<unsigned int> * GetMarkers();
@@ -212,6 +229,7 @@ private:
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	double BifToSomaEucDistance;
+	double daughterLengthRatio;
 	bool actualBifurcation;
 	//cell level features 
 	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z;

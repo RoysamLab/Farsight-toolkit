@@ -12,14 +12,18 @@ ConvexHull3D::ConvexHull3D()
 	cellCentroid[2] = -1;
 }
 
-void ConvexHull3D::setPoints(std::vector<TraceBit> &tips)
+void ConvexHull3D::setPoints(std::vector<TraceBit> &pts)
 {
+	/*!
+	 * @author Audrey Cheong
+	 * @param pts data points
+	 */
 	vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
 
 	vtkSmartPointer<vtkPoints> inputPoints = vtkSmartPointer<vtkPoints>::New();
-	for(unsigned int counter=0; counter<tips.size(); counter++)
+	for(unsigned int counter=0; counter<pts.size(); counter++)
 	{
-		inputPoints->InsertNextPoint(tips[counter].x,tips[counter].y,tips[counter].z);
+		inputPoints->InsertNextPoint(pts[counter].x,pts[counter].y,pts[counter].z);
 	}
 
 	polydata->SetPoints(inputPoints);
@@ -52,6 +56,10 @@ void ConvexHull3D::setPoints(std::vector<TraceBit> &tips)
 
 void ConvexHull3D::setReferencePt(double point[3])
 {
+	/*!
+	 * @author Audrey Cheong
+	 * @param pts the reference point (e.g. soma center)
+	 */
 	this->refPt[0] = point[0];
 	this->refPt[1] = point[1];
 	this->refPt[2] = point[2];
@@ -60,6 +68,11 @@ void ConvexHull3D::setReferencePt(double point[3])
 
 bool ConvexHull3D::calculate()
 {
+	/*!
+	 * Calculate area, volume, centroid, etc.
+	 * @author Audrey Cheong
+	 * @return check whether calculations is successful
+	 */
 	//area calculation
 	vtkSmartPointer<vtkPoints> boundaryPoints = this->surfacePolyData->GetPoints();
 	vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
@@ -166,6 +179,10 @@ bool ConvexHull3D::calculate()
 
 vtkSmartPointer<vtkActor> ConvexHull3D::getActor()
 {
+	/*!
+	 * @author Audrey Cheong
+	 * @return convex hull(vtkActor)
+	 */
 	return delaunayActor;
 }
 

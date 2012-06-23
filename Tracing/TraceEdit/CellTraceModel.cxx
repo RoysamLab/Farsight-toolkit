@@ -149,6 +149,10 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Ave Parent Daughter Ratio");
 	this->headers.push_back("Max Parent Daughter Ratio");
 
+	this->headers.push_back("Min Daughter Length Ratio");
+	this->headers.push_back("Ave Daughter Length Ratio");
+	this->headers.push_back("Max Daughter Length Ratio");
+
 	this->headers.push_back("Min Partition Asymmetry");
 	this->headers.push_back("Ave Partition Asymmetry");
 	this->headers.push_back("Max Partition Asymmetry");

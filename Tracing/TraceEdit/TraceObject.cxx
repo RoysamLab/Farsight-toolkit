@@ -345,6 +345,14 @@ void TraceObject::ImageIntensity(vtkSmartPointer<vtkImageData> imageData)
 		allLines[i]->setTraceBitIntensities(imageData, "Image_Intensity");
 	}//end of set
 }
+void TraceObject::ImageWeightedIntensity(ImageType::Pointer intensityImage)
+{
+	std::vector<TraceLine*> allLines = this->GetTraceLines();
+	for (unsigned int i = 0; i < allLines.size(); i++)
+	{
+		allLines[i]->setTraceBitWeightedIntensities(intensityImage, "Image_Weighted_Intensity");
+	}//end of set
+}
 /*I/O Functions */
 void TraceObject::SetTraceOffset(double ntx, double nty, double ntz)
 {

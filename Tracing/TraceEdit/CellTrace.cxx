@@ -157,6 +157,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetpartitionAsymmetry(), this->partitionAsymmetry, this->partitionAsymmetryMin, this->partitionAsymmetryMax);
 			this->MaxMin(this->segments[i]->GetdaughterRatio(), this->daughterRatio, this->daughterRatioMin, this->daughterRatioMax);
 			this->MaxMin(this->segments[i]->GetparentDaughterRatio(), this->parentDaughterRatio, this->parentDaughterRatioMin, this->parentDaughterRatioMax);
+			this->MaxMin(this->segments[i]->GetdaughterLengthRatio(), this->daughterLengthRatio, this->daughterLengthRatioMin, this->daughterLengthRatioMax);
 			this->MaxMin(this->segments[i]->GetRallPower(), this->rallPower, this->rallPowerMin, this->rallPowerMax);
 			this->MaxMin(this->segments[i]->GetPk(), this->Pk, this->PkMin, this->PkMax);
 			this->MaxMin(this->segments[i]->GetPk_2(), this->Pk_2, this->Pk_2Min, this->Pk_2Max);
@@ -381,6 +382,10 @@ void CellTrace::clearAll()
 	this->parentDaughterRatio = 0;
 	this->parentDaughterRatioMin = 100;
 	this->parentDaughterRatioMax = 0;
+
+	this->daughterLengthRatio = 0;
+	this->daughterLengthRatioMin = 100;
+	this->daughterLengthRatioMax = 0;
 
 	this->partitionAsymmetry = 0;
 	this->partitionAsymmetryMin = 100;
@@ -640,6 +645,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->parentDaughterRatioMin);
 		CellData->InsertNextValue(this->parentDaughterRatio/ this->actualBifurcations);
 		CellData->InsertNextValue(this->parentDaughterRatioMax);
+
+		CellData->InsertNextValue(this->daughterLengthRatioMin);
+		CellData->InsertNextValue(this->daughterLengthRatio/ this->actualBifurcations);
+		CellData->InsertNextValue(this->daughterLengthRatioMax);
 
 		CellData->InsertNextValue(this->partitionAsymmetryMin);
 		CellData->InsertNextValue(this->partitionAsymmetry / this->actualBifurcations);

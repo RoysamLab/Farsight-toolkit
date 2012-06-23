@@ -37,7 +37,7 @@ limitations under the License.
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
-#include "itkExtractImageFilter.h"
+//#include "itkExtractImageFilter.h"
 #include "vtkImagePlaneWidget.h"
 #include "vtkImageReslice.h"
 #include "itkPermuteAxesImageFilter.h"
@@ -95,6 +95,7 @@ struct imageFileHandle
 	bool ren2d;
 	bool sliceCreated;
 	vtkSmartPointer<vtkImageData> ImageData;
+	ImageType::Pointer itkImageData;
 	ReaderType::Pointer reader;
 	ConnectorType::Pointer connector;
 	ConnectorType::Pointer projectionConnector;
@@ -161,6 +162,7 @@ public:
 	std::vector<int> MinCurrentMaxSlices(int i);
 	void SetSliceNumber(int i, int num);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);
+	ImageType::Pointer GetitkImageData(int i);
 	std::vector<double> getColorValues();
 	void setColorValues(double r, double g, double b);
 	void setColorValues(int i, double value);
