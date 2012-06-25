@@ -77,5 +77,6 @@ if( BUILD_AstroTracer )
 endif()
 
 option( BUILD_SuperEllipsoidTracer "Build SuperEllipsoid Tracer" OFF )
-  add_Subdirectory( SuperEllipsoidTracer )
+if( BUILD_SuperEllipsoidTracer )
+  add_subdirectory( SuperEllipsoidTracer )
 endif()
