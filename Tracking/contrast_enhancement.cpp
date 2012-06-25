@@ -64,9 +64,9 @@ int main(int argc, char**argv)
 {
 
 
-	if(!file_exists(argv[3]))
-	{
-		typedef unsigned short InPixType;
+	//if(!file_exists(argv[3]))
+	//{
+		typedef unsigned char InPixType;
 	    typedef itk::Image<InPixType ,3> InImageType;
 		InImageType::Pointer imdata = readImage<InImageType>(argv[1]);
 
@@ -74,6 +74,7 @@ int main(int argc, char**argv)
 		InPixType max_intens;
 		sscanf(argv[2],"%u,%u",&min_intens,&max_intens);
 		printf("min_intens %u max_intens %u\n",min_intens,max_intens);
+		scanf("%*d",&min_intens);
 
 		// set up the threshold ratio:
 		InPixType old_range = max_intens-min_intens;
@@ -99,7 +100,7 @@ int main(int argc, char**argv)
 		}
 
 		writeImage<InImageType>(imdata,argv[3]);
-	}
+	//}
 
 	return 0;
 }
