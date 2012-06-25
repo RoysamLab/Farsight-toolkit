@@ -63,7 +63,7 @@ SET ( Trace3D_headers
       TraceContainer3D.h
  )      
 
-ADD_LIBRARY ( TinyXML ${XML_sources})
+#ADD_LIBRARY ( TinyXML ${XML_sources})
 
 ADD_EXECUTABLE ( Trace3D ${Trace3D_sources} ${Trace3D_headers}  TraceMain.cxx )
 #TARGET_LINK_LIBRARIES( Trace3D ITKCommon ITKIO ITKNumerics TinyXML)
@@ -78,3 +78,8 @@ TARGET_LINK_LIBRARIES( ConvertToSWC TinyXML ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE ( TraceOverlay TraceOverlay.cxx TraceNode.h )
 TARGET_LINK_LIBRARIES( TraceOverlay TinyXML ${ITK_LIBRARIES})
+
+
+ADD_EXECUTABLE( Trace3D_package ${Trace3D_sources} ${Trace3D_headers} TraceMain.cxx Render.cxx ConvertToSWC.cxx TraceOverlay.cxx TraceNode.h )
+TARGET_LINK_LIBRARIES( Trace3D_package ${ITK_LIBRARIES} TinyXML vtkRendering vtkIO vtkCommon  vtksys vtkFiltering  vtkVolumeRendering vtkWidgets )
+install(TARGETS Trace3D_package DESTINATION ${INSTALL_BIN_DIR} )
