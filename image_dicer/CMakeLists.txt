@@ -3,26 +3,50 @@ project(image_dicer)
 include_directories(${Farsight_SOURCE_DIR}/Tracing/TraceEdit)
 include_directories(${Farsight_SOURCE_DIR}/NuclearSegmentation)
 
-set(image_dicer_HDRS 
-  )
+# set(image_dicer_HDRS 
+#   )
+# 
+# set(image_dicer_SRCS 
+# 	main.cpp
+# 	)
 
-set(image_dicer_SRCS 
-  main.cpp
-  )
+SET(MAINDARPA_HDRS
+	ftkMainDarpa.h
+	ftkMainDarpa.hxx
+	ftkMainDarpaTemplates.h
+	ftkMainDarpaDeclaration.h
 
-# ADD_EXECUTABLE(image_dicer main.cpp ${image_dicer_HDRS} ${image_dicer_SRCS})
-# TARGET_LINK_LIBRARIES(image_dicer vul ${ITK_LIBRARIES} Yousef_Nucleus_Seg )
-# INSTALL( TARGETS image_dicer RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
+	ftkMainDarpaSegment.h
 
-# ADD_EXECUTABLE(darpa_tracer darpa_pipeline.cpp ${image_dicer_HDRS})
-# TARGET_LINK_LIBRARIES(darpa_tracer vul ${ITK_LIBRARIES} Yousef_Nucleus_Seg MultipleNeuronTracerLib segment_soma)
+	ftkMainDarpaTrace.h
+	ftkMainDarpaTrace.hxx
+)
+
+SET(MAINDARPA_SRCS
+	main.cpp
+	ftkMainDarpa.cpp
+
+	ftkMainDarpaSegment.cpp
+
+	ftkMainDarpaTrace.cpp
+)
+
 
 if(BUILD_OPENMP AND BUILD_CLUSCLUS AND BUILD_NUCLEI AND BUILD_TracingSystem)
-  add_executable(darpa_tracer_w_seg_v2 darpa_pipeline_w_seg_v2.cpp )
-  target_link_libraries(darpa_tracer_w_seg_v2 vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
 
-  add_executable(darpa_tracer_w_seg darpa_pipeline_w_seg.cpp )
-  target_link_libraries(darpa_tracer_w_seg vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
+# 	add_executable(darpa_tracer_w_seg_v2 darpa_pipeline_w_seg_v2.cpp )
+# 	target_link_libraries(darpa_tracer_w_seg_v2 vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
+# 
+# 	add_executable(darpa_tracer_w_seg_v5 darpa_pipeline_w_seg_v5.cpp )
+# 	target_link_libraries(darpa_tracer_w_seg_v5 vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
+
+	ADD_LIBRARY(LIBftkMainDarpa ${MAINDARPA_HDRS} ${MAINDARPA_SRCS})
+
+	add_executable(	ftkMainDarpa main.cpp )
+	target_link_libraries( ftkMainDarpa LIBftkMainDarpa vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
+
+# 	add_executable(darpa_tracer_w_seg darpa_pipeline_w_seg.cpp )
+# 	target_link_libraries(darpa_tracer_w_seg vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
 else()
   message(WARNING "BUILD_image_dicer is ON, but
 

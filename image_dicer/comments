@@ -1,0 +1,15 @@
+far -04
+
+	const float thresh1 = 0.00025;   // 3% of maximum theshold from Lowe 2004
+	const float thresh2 = 0.0001;  // -0.1 percent of range
+
+
+far-05
+
+addaptive threshold
+
+
+
+- remove cy4 from segmentation
+- read images in parallel in the segmentation
+- 
