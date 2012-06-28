@@ -442,9 +442,9 @@ void AstroTracer::RunTracing(void)
 	Interpolate(2.0);	
 	std::cout << "Interpolate2 took: " << (clock() - Interpolate2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	clock_t RemoveIntraSomaNodes_start_time = clock();
-	RemoveIntraSomaNodes();
-	std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	//clock_t RemoveIntraSomaNodes_start_time = clock();
+	//RemoveIntraSomaNodes();
+	//std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 }
 
@@ -518,7 +518,7 @@ void AstroTracer::FeatureMainExternal(void)
 	std::cout << "Done with GetFeature. " << std::endl;
 }
 
-void AstroTracer::OptimizeCoverage(void){
+void AstroTracer::OptimizeCoverage(std::string coverageFileName){
 
 	std::cout << std::endl<< "Optimizing feature coverage for the image." << std::endl;
 	
@@ -528,20 +528,23 @@ void AstroTracer::OptimizeCoverage(void){
 	float sigma_max = sigma;
 	int sigma_intervals = 1;
 
+	double intensity_weight = 0.2; //0.1; //0.4; //0.2;
+	double objectness_weight = 1.0 - intensity_weight;
+
 	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
 	stats_filter->SetInput(this->PaddedCurvImage);
 	stats_filter->Update();
 	double img_max_val = stats_filter->GetMaximum();
-	double img_mean_val = stats_filter->GetMean();
+	
 
-	/*ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1);
-	obj_measures.alpha = 0.5*img_max_val;
-	obj_measures.beta = 0.5*img_max_val;
-	obj_measures.gamma = 0.25*img_max_val;
+	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0);
+	obj_measures.alpha = 0.5; //0.5*img_max_val;
+	obj_measures.beta = 0.5; //0.5*img_max_val;
+	obj_measures.gamma = 0.25; //0.25*img_max_val;
 
 	//std::cout << "Max image value: " << img_max_val << " Mean img value: " << img_mean_val << std::endl;
 
-	//this->ComputeObjectnessImage(obj_measures);
+	this->ComputeObjectnessImage(obj_measures);
 
 	StatisticsFilterType::Pointer stats_filter2 = StatisticsFilterType::New();
 	stats_filter2->SetInput(this->ObjectnessImage);
@@ -553,22 +556,60 @@ void AstroTracer::OptimizeCoverage(void){
 	img_multiplier->SetConstant2(1.0/(max_objectness));
 	img_multiplier->Update();
 
+	MultiplyImageFilter::Pointer img_multiplier2 = MultiplyImageFilter::New();
+	img_multiplier2->SetInput(this->PaddedCurvImage);
+	img_multiplier2->SetConstant2(1.0/(img_max_val));
+	img_multiplier2->Update();
+
+	ImageType3D::Pointer normalized_img = img_multiplier2->GetOutput();
+
 	ImageType3D::Pointer normalized_obj_img = img_multiplier->GetOutput();
 
 	StatisticsFilterType::Pointer stats_filter3 = StatisticsFilterType::New();
 	stats_filter3->SetInput(normalized_obj_img);
 	stats_filter3->Update();
 	double mean_objectness = stats_filter3->GetMean();
-	*/
+	double std_objectness = stats_filter3->GetVariance();
 
-	//std::cout << "Max objectness value: " << max_objectness << std::endl << "Mean objectness value: " << mean_objectness << std::endl;
+	StatisticsFilterType::Pointer stats_filter4 = StatisticsFilterType::New();
+	stats_filter4->SetInput(normalized_img);
+	stats_filter4->Update();
+	double img_mean_val = stats_filter4->GetMean();
+	double img_std_val = stats_filter4->GetVariance();
+	
+
+	MultiplyImageFilter::Pointer img_multiplier3 = MultiplyImageFilter::New();
+	img_multiplier3->SetInput1(normalized_img);
+	img_multiplier3->SetInput2(normalized_obj_img);
+	img_multiplier3->Update();
+	ImageType3D::Pointer int_obj_prod_img = img_multiplier3->GetOutput();
+
+	MultiplyImageFilter::Pointer img_multiplier4 = MultiplyImageFilter::New();
+	img_multiplier4->SetInput(normalized_img);
+	img_multiplier4->SetConstant2(intensity_weight);
+	img_multiplier4->Update();
+	MultiplyImageFilter::Pointer img_multiplier5 = MultiplyImageFilter::New();
+	img_multiplier5->SetInput(normalized_obj_img);
+	img_multiplier5->SetConstant2(objectness_weight);
+	img_multiplier5->Update();
+	AddImageFilter::Pointer img_adder = AddImageFilter::New();
+	img_adder->SetInput1(img_multiplier4->GetOutput());
+	img_adder->SetInput2(img_multiplier5->GetOutput());
+	img_adder->Update();
+	ImageType3D::Pointer int_obj_sum_img = img_adder->GetOutput();
+	
+	StatisticsFilterType::Pointer stats_filter5 = StatisticsFilterType::New();
+	stats_filter5->SetInput(int_obj_sum_img);
+	stats_filter5->Update();
+	double added_img_mean_val = stats_filter5->GetMean();
+	
 
 	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
 	ImageWriterType::Pointer image_writer = ImageWriterType::New();
 	image_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage.mhd");
 	image_writer->SetInput(this->ObjectnessImage);
-	image_writer->Update();
-	*/
+	image_writer->Update();*/
+	
 
 
 	LoGFilterType::Pointer gauss = LoGFilterType::New();
@@ -639,13 +680,28 @@ void AstroTracer::OptimizeCoverage(void){
 	if (win <2) 
 		win = 2;
 	
-	int opt_iter = 0, max_opt_iter = 10;
-	float max_coverage = 0.002;
-	float min_coverage = 0.001;
-	float thresh1 = 0.01; //0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
-	float thresh2 = 0.0001; //0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+	int opt_iter = 0, max_opt_iter = 10; //20;
+	float max_coverage = 0.002; //0.01; //0.0;
+	float min_coverage = 0.001; // 0.0;
+	float coverage_upper_limit = max_coverage + (0.2*max_coverage); //(0.05*max_coverage);
+	float coverage_lower_limit = min_coverage - (0.2*min_coverage); //(0.05*min_coverage);
 
+	float thresh1_step_size = 0.02;
+	float thresh2_step_size = 0.0004;
 
+	float thresh1 = 0.01; //0.03; //0.01; //0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
+	float thresh2 = 0.0001; //0.0005; //0.0001; //0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+
+	double Mi_coverage4 = 0.0;
+	double Mi_coverage5 = 0.0;
+	double Mi_coverage6 = 0.0;
+
+	std::string internalOptimFileName = coverageFileName;
+	internalOptimFileName.erase(internalOptimFileName.length()-4, internalOptimFileName.length());
+	internalOptimFileName.append("_internal.txt");
+	std::ofstream optim_internal_file;
+	optim_internal_file.open(internalOptimFileName.c_str(), std::ios::out);
+			
 	while(opt_iter < max_opt_iter){
 		
 		NDXImage = ImageType3D::New();
@@ -662,6 +718,7 @@ void AstroTracer::OptimizeCoverage(void){
 		float total_fg_objectness = 0.0;
 		float total_fg_intensity = 0.0;
 		float total_fg_obj_int = 0.0;
+		float total_fg_wt_obj_int = 0.0;
 		
 		while(!nit.IsAtEnd()){
 
@@ -706,10 +763,12 @@ void AstroTracer::OptimizeCoverage(void){
 						ctCnt++;
 
 			
-						//total_fg_objectness += normalized_obj_img->GetPixel(ndx); //this->ObjectnessImage->GetPixel(ndx);
-						total_fg_intensity += this->PaddedCurvImage->GetPixel(ndx);
+						total_fg_objectness += normalized_obj_img->GetPixel(ndx); //this->ObjectnessImage->GetPixel(ndx);
+						total_fg_intensity += normalized_img->GetPixel(ndx);  //this->PaddedCurvImage->GetPixel(ndx);
 						//total_fg_obj_int += this->ObjectnessImage->GetPixel(ndx) * this->PaddedCurvImage->GetPixel(ndx);
-						//total_fg_obj_int += normalized_obj_img->GetPixel(ndx) * this->PaddedCurvImage->GetPixel(ndx);
+						total_fg_obj_int += normalized_obj_img->GetPixel(ndx) * this->PaddedCurvImage->GetPixel(ndx);
+						total_fg_wt_obj_int += int_obj_sum_img->GetPixel(ndx);
+
 					}	
 					else
 						rejectCtCnt++;
@@ -720,15 +779,18 @@ void AstroTracer::OptimizeCoverage(void){
 		}
 
 		double Mi_coverage = (double)ctCnt / img_mean_val;
-		//double Mi_coverage2 = (double)ctCnt / mean_objectness;
-		//double Mi_coverage3 = (double)ctCnt / (img_mean_val * mean_objectness);
+		double Mi_coverage2 = (double)ctCnt / mean_objectness;
+		double Mi_coverage3 = (double)ctCnt / (img_mean_val * mean_objectness);
 		
 		ImageType3D::SizeType im_size = this->PaddedCurvImage->GetBufferedRegion().GetSize();
-		//double total_objectness = mean_objectness * (im_size[0]*im_size[1]*im_size[2]);
+		double total_objectness = mean_objectness * (im_size[0]*im_size[1]*im_size[2]);
 		double total_intensity = img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+		double total_int_obj_sum = added_img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+	
 
-		//double Mi_coverage4 = total_fg_objectness / total_objectness;
-		double Mi_coverage5 = total_fg_intensity / total_intensity;
+		Mi_coverage4 = total_fg_objectness / total_objectness;
+		Mi_coverage5 = total_fg_intensity / total_intensity;
+		Mi_coverage6 = total_fg_wt_obj_int / total_int_obj_sum;
 		
 		std::cout << std::endl;
 		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
@@ -741,34 +803,77 @@ void AstroTracer::OptimizeCoverage(void){
 		//std::cout << "Mi_coverage2: " << Mi_coverage2 << std::endl;
 		//std::cout << "Mi_coverage3: " << Mi_coverage3 << std::endl;
 		//std::cout << "Mi_coverage4: " << Mi_coverage4 << std::endl;
-		std::cout << "Iter: " << opt_iter << " Mi_coverage5: " << Mi_coverage5 << " Intensity threshold: " << thresh1 << ", Contrast threshold: " << thresh2 << std::endl;
+		//std::cout << "Mi_coverage5: " << Mi_coverage5 << std::endl;
+		//std::cout << "Mi_coverage6: " << Mi_coverage6 << std::endl;
+
+		std::cout << "Iter: " << opt_iter << " Mi_coverage6: " << Mi_coverage6 << " Intensity threshold: " << thresh1 << ", Contrast threshold: " << thresh2 << std::endl;
+
+		if(optim_internal_file.good())
+			optim_internal_file << Mi_coverage6 << '\t' << thresh1 << '\t' << thresh2 << '\t' << ctCnt << std::endl;
+		else
+			std::cout << "Error writing coverage internal file. " << std::endl;
 
 		opt_iter++;
+		
 
-		if(Mi_coverage5 > max_coverage){
-			thresh1 += 0.02;
-			thresh2 += 0.0004;
+		if(Mi_coverage6 > coverage_upper_limit){
+			thresh1 += thresh1_step_size;
+			thresh2 += thresh2_step_size;
 		}
-		else if(Mi_coverage5 < min_coverage){
-			thresh1 -= 0.02;
-			thresh2 -= 0.0004;
+		else if(Mi_coverage6 < coverage_upper_limit && Mi_coverage6 > max_coverage){
+			thresh1 += thresh1_step_size / 5.0;
+			thresh2 += thresh2_step_size / 5.0;
+		}
+		else if(Mi_coverage6 < coverage_lower_limit){
+
+			if(thresh1 <= 0.01){
+				thresh1 -= thresh1_step_size / 5.0;
+				thresh2 -= thresh2_step_size / 5.0;
+			}
+			else if(thresh1 <= 0.0){
+				thresh1 = 0.0;
+				thresh2 = 0.0;
+				break;
+			}
+			else{
+				thresh1 -= thresh1_step_size;
+				thresh2 -= thresh2_step_size;
+			}
 		}
 		else
 			break;		
 	}
 
+	optim_internal_file.close();
+
 	// Setting thresholds based on the optimized coverage
 	this->intensity_threshold = thresh1;
 	this->contrast_threshold = thresh2;
 
+	// Printing the results
 	if(opt_iter == max_opt_iter)
+		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
+	else if(thresh1 = 0.0)
 		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
 	else
 		std::cout << "Done with optimizing coverage. " <<  std::endl;
 
+	std::ofstream coverage_file;
+	coverage_file.open(coverageFileName.c_str(), std::ios::out);
+	if(coverage_file.good()){
+		coverage_file << Mi_coverage6 << std::endl << this->intensity_threshold << std::endl << this->contrast_threshold << std::endl;
+		coverage_file << img_mean_val << std::endl << img_std_val << std::endl << mean_objectness << std::endl << std_objectness << std::endl;
+
+		coverage_file.close();
+	}
+	else
+		std::cout << "Error writing coverage file. " << std::endl;
+
+	std::string LoGPointsFileName = coverageFileName;
+	LoGPointsFileName.erase(LoGPointsFileName.length()-4, LoGPointsFileName.length());
+	LoGPointsFileName.append("_optimum_LOG_points.tif");
 	
-	// Code for writing out separate files for each LoG scale
-	/*RescalerType::Pointer rescaler2 = RescalerType::New();
+	RescalerType::Pointer rescaler2 = RescalerType::New();
 	rescaler2->SetInput(NDXImage);
 	rescaler2->SetOutputMaximum( 255 );
 	rescaler2->SetOutputMinimum( 0 );
@@ -778,10 +883,9 @@ void AstroTracer::OptimizeCoverage(void){
 
 	itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
 
-	LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\LoG_Points_1.tif");	
+	LoGwriter2->SetFileName(LoGPointsFileName.c_str());	
 	LoGwriter2->SetInput(caster2->GetOutput());
-	LoGwriter2->Update();
-	*/		
+	LoGwriter2->Update();			
 }
 
 void AstroTracer::FeatureMain(void)
@@ -920,8 +1024,8 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 		float val = nit.GetPixel(13);
 
 
-		const float thresh1 = 0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
-		const float thresh2 = 0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+		const float thresh1 = this->intensity_threshold; //0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
+		const float thresh2 = this->contrast_threshold;  //0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
 		
 		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
 		{
@@ -940,7 +1044,8 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 			unsigned int w;
 			if (IsSeed(ev, w)) 
 			{
-				// What is RegisterIndex used for?
+				// What is RegisterIndex used for? For keeping the strongest ridge point across scales
+				// value corresponds to strength of being a ridge point?
 				float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]); // How is this score derived?
 				if (RegisterIndex(value, ndx, sz, win)) 
 				{
@@ -994,7 +1099,7 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 	
 	
 		// Code for writing out separate files for each LoG scale
-		RescalerType::Pointer rescaler2 = RescalerType::New();
+		/*RescalerType::Pointer rescaler2 = RescalerType::New();
 		rescaler2->SetInput(LoGCurrentScaleImage);
 		rescaler2->SetOutputMaximum( 255 );
 		rescaler2->SetOutputMinimum( 0 );
@@ -1005,7 +1110,7 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 		itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
 
 		if(scale_index == 1)
-			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\LoG_Points_1.tif");	
+			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\ShearletExp\\Control\\LoG_Points_1.tif");	
 		else if(scale_index == 2)
 			LoGwriter2->SetFileName("C:\\Prathamesh\\Astrocytes\\DeviceExp\\Testing\\LoG_Points_2.tif");
 		else if(scale_index == 3)
@@ -1020,7 +1125,7 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 
 		LoGwriter2->SetInput(caster2->GetOutput());
 		LoGwriter2->Update();
-
+		*/	
 	}
 }
 
@@ -2541,14 +2646,16 @@ void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
 	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
-	ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	ObjectnessFilterType* objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	
 	objectness_filter->SetScaleObjectnessMeasure(false);
 	objectness_filter->SetBrightObject(true);
 	objectness_filter->SetAlpha(obj_measures.alpha);
 	objectness_filter->SetBeta(obj_measures.beta);
 	objectness_filter->SetGamma(obj_measures.gamma);
 	objectness_filter->SetObjectDimension(obj_measures.objectness_type);
-
+	
 	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
 
 	multi_scale_Hessian->Update();
@@ -3524,8 +3631,8 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 			root_point.featureVector.nucleusDistance = atof(str_vec[14].c_str());
 			
 			// Be careful with the last two. These change depending on how the file was saved from nuc_editor.
-			root_point.classValue = atof(str_vec[15].c_str());
-			root_point.confidenceMeasure = atof(str_vec[16].c_str());
+			root_point.classValue = atof(str_vec[16].c_str());
+			root_point.confidenceMeasure = atof(str_vec[17].c_str());
 
 			// ONLY TWO CLASSES OF ROOT POINTS ARE CONSIDERED
 			if(root_point.classValue == 1)
@@ -3592,8 +3699,11 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	threshold_filter->SetOutsideValue(0);
 	threshold_filter->SetInput(this->SomaImage);
 	threshold_filter->Update();
+
+	LabelImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
 	
 	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
+	//std::cout << "Nuclei points size: " << this->NucleiObjects.size() << std::endl;
 
 	//Loop over nuclei
 	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
@@ -3602,8 +3712,11 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		if(this->NucleiObjects[i].classValue != 1)
 			continue;
 
+		//std::cout << "Ye!! Asto nuclei found!! " << std::endl;
+
 		// ROI proportional to nuclei scale, assuming spherical nuclei.
 		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+		double_scale_nuclei = 2.0 * double_scale_nuclei; 
 		
 		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
@@ -3613,16 +3726,36 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
 		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
 
-		LabelImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
+		
+		//std::cout << starting_index_nuclei[0] << ", " << starting_index_nuclei[1] << ", " << starting_index_nuclei[2] << std::endl;
 
-		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
-			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
-			(end_index_nuclei[2] > (unsigned int)sz[2]) )
-			continue;
+		if(starting_index_nuclei[0] < 0)
+			starting_index_nuclei[0] = 0;
+		if(starting_index_nuclei[1] < 0)
+			starting_index_nuclei[1] = 0;
+		if(starting_index_nuclei[2] < 0)
+			starting_index_nuclei[2] = 0;
+		if(end_index_nuclei[0] > sz[0])
+			end_index_nuclei[0] = sz[0];
+		if(end_index_nuclei[1] > sz[1])
+			end_index_nuclei[1] = sz[1];
+		if(end_index_nuclei[2] > sz[2])
+			end_index_nuclei[2] = sz[2];
+
+		//if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+		//	(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+		//	(end_index_nuclei[2] > (unsigned int)sz[2]) )
+		//	continue;
+
+
 
 		std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
 
-		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
+		//sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
+		sub_volume_size_nuclei[0] = end_index_nuclei[0] - starting_index_nuclei[0];
+		sub_volume_size_nuclei[1] = end_index_nuclei[1] - starting_index_nuclei[1];
+		sub_volume_size_nuclei[2] = end_index_nuclei[2] - starting_index_nuclei[2];
+		
 
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
@@ -3645,7 +3778,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		
 		ImageType3D::Pointer distance_map = MaurerFilter->GetOutput();
 				
-		double cur_distance;
+		double cur_distance = 0.0;
 		double min_distance = 1000.0;
 		//double max_distance = -1000.0; 
 		//double mean_distance = 0.0;
@@ -3717,7 +3850,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 
 		if(!distance_idx_map.empty()){
 
-			// Keep the root point with highest scale
+			// Among the neighboring root points, keep the root point with highest scale 
 			this->CentroidListForTracing.push_back(distance_idx_map.rbegin()->second);
 			this->CentroidScales.push_back(distance_idx_map.rbegin()->first);
 
@@ -3743,14 +3876,18 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 				this->CentroidListForTracing.push_back(HeapNode(min_root_idx, 0));
 			}*/
 		}
+		//else{
+			// If the map is empty, it means that the astro nuclei did not have any root points in the neighborhood.
+			// In this case, just take the max intensity point in the neighborhood of this nuclei as a root point?
+		//}
 
 		
 	}//end of loop over nuclei
 
-
+	std::cout << "Before density filtering: " << this->CentroidListForTracing.size() << std::endl;
 	
 	// Filter the centroids based on density
-	int centroid_nhood = 50; //50; 
+	double centroid_nhood = 30.0; //25; //50; 
 	std::vector<bool> neighbor_flags(this->CentroidListForTracing.size(), false);
 	
 	for(int i = 0; i < this->CentroidListForTracing.size(); i++){
@@ -3769,10 +3906,13 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 			if(j == i)
 				continue;
 
-			itk::Index<3> neighbor_idx = this->CentroidListForTracing[j].ndx;
-
-			if(std::abs((int)(cur_idx[0] - neighbor_idx[0])) > centroid_nhood || std::abs((int)(cur_idx[1] - neighbor_idx[1])) > centroid_nhood || 
-				std::abs((int)(cur_idx[2] - neighbor_idx[2])) > centroid_nhood)
+			itk::Index<3> neighbor_idx = this->CentroidListForTracing[j].ndx; 
+			
+			// Please use Eucleidien distance
+			//if(std::abs((int)(cur_idx[0] - neighbor_idx[0])) > centroid_nhood || std::abs((int)(cur_idx[1] - neighbor_idx[1])) > centroid_nhood || 
+			//	std::abs((int)(cur_idx[2] - neighbor_idx[2])) > centroid_nhood)
+			//	continue;
+			if(std::sqrt(std::pow((double)(cur_idx[0] - neighbor_idx[0]), 2) + std::pow((double)(cur_idx[1] - neighbor_idx[1]), 2) + std::pow((double)(cur_idx[2] - neighbor_idx[2]), 2)) > centroid_nhood)
 				continue;
 			
 			neighbor_flags[j] = true;
@@ -3824,6 +3964,8 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 
 		//Replace neighboring root points with the highest scale point
 		this->DensityFilteredCentroidListForTracing.push_back(neighbor_point_map.rbegin()->second);
+
+		//neighbor_point_map.clear();
 	}
 
 	if(centroid_points.good()){
@@ -3853,8 +3995,8 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	}
 
 	
-	std::cout << "***Points List Size: " << this->CandidateRootPoints.size() << std::endl;
-	std::cout << "***Centroids List Size: " << centroid_count << std::endl;
+	std::cout << "Points list size: " << this->CandidateRootPoints.size() << std::endl;
+	std::cout << "Centroids list size: " << centroid_count << std::endl;
 
 
 	itk::ImageFileWriter< LabelImageType3D >::Pointer IDImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
@@ -3867,11 +4009,28 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		std::cout << e << std::endl;
 		//return EXIT_FAILURE;
 	}
-	std::cout << " Done with FinalRootImage writing." << std::endl;
+	std::cout << "Done with FinalRootImage writing. " << std::endl;
 
 	centroid_points.close();
 	//End of creating centroids.txt file
+}
 
+void AstroTracer::ReadStartPointsInternal(){
+
+	if(this->DensityFilteredCentroidListForTracing.empty()){
+		std::cout << "Internal start points list is empty. " << std::endl;
+		return;
+	}
+
+	//if(!this->StartPoints.empty())
+	//	this->StartPoints.clear();
+	
+
+	for(int i = 0; i < this->DensityFilteredCentroidListForTracing.size(); i++)
+		this->StartPoints.push_back(this->DensityFilteredCentroidListForTracing[i].ndx);
+	
+	std::cout << "Start points loaded internally: " << this->StartPoints.size();
+	
 }
 
 IntrinsicFeatureVector::IntrinsicFeatureVector(){
@@ -4270,26 +4429,28 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 
 			nuclei_object.intrinsicFeatures.volume = atof(str_vec[4].c_str());
 			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
-			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[6].c_str());
-			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[7].c_str());
-			nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
-
-			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[11].c_str());
-			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[15].c_str());
-			nuclei_object.intrinsicFeatures.meanSurfaceGradient = atof(str_vec[16].c_str());
-			nuclei_object.intrinsicFeatures.radiusVariation = atof(str_vec[22].c_str());
-			nuclei_object.intrinsicFeatures.shapeMeasure = atof(str_vec[24].c_str());
 			
-			nuclei_object.intrinsicFeatures.energy = atof(str_vec[26].c_str());
-			nuclei_object.intrinsicFeatures.entropy = atof(str_vec[27].c_str());
-			nuclei_object.intrinsicFeatures.inverseDiffMoment = atof(str_vec[28].c_str());
-			nuclei_object.intrinsicFeatures.inertia = atof(str_vec[29].c_str());
-			nuclei_object.intrinsicFeatures.clusterShade = atof(str_vec[30].c_str());
-			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[31].c_str());
+			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[6].c_str());
+			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[7].c_str());
 
+			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[8].c_str());
+			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[9].c_str());
+			nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume; //atof(str_vec[9].c_str());
 
-			nuclei_object.classValue = atof(str_vec[47].c_str());
-			nuclei_object.confidenceMeasure = atof(str_vec[48].c_str());
+			nuclei_object.intrinsicFeatures.meanSurfaceGradient = atof(str_vec[10].c_str());
+			nuclei_object.intrinsicFeatures.radiusVariation = atof(str_vec[11].c_str());
+			nuclei_object.intrinsicFeatures.shapeMeasure = atof(str_vec[12].c_str());
+			
+			nuclei_object.intrinsicFeatures.energy = atof(str_vec[13].c_str());
+			nuclei_object.intrinsicFeatures.entropy = atof(str_vec[14].c_str());
+			nuclei_object.intrinsicFeatures.inverseDiffMoment = atof(str_vec[15].c_str());
+			nuclei_object.intrinsicFeatures.inertia = atof(str_vec[16].c_str());
+			nuclei_object.intrinsicFeatures.clusterShade = atof(str_vec[17].c_str());
+			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[18].c_str());
+
+			
+			nuclei_object.classValue = atof(str_vec[34].c_str());
+			nuclei_object.confidenceMeasure = atof(str_vec[35].c_str());
 
 
 			this->NucleiObjects.push_back(nuclei_object);

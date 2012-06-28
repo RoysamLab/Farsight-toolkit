@@ -54,6 +54,8 @@
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
 #include "itkMultiplyImageFilter.h"
+#include "itkAddImageFilter.h"
+#include "itkPowImageFilter.h"
 
 
 #include "vnl/vnl_math.h"
@@ -240,6 +242,8 @@ public:
 	typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
+	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;
+	typedef itk::PowImageFilter<ImageType3D> PowImageFilter;
 
 	//Constructor
 	AstroTracer();
@@ -277,7 +281,8 @@ public:
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
 	void ComputeFTKObjectnessImage(void);
-	void OptimizeCoverage(void);
+	void OptimizeCoverage(std::string);
+	void ReadStartPointsInternal(void);
 
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
