@@ -89,13 +89,14 @@ int main(int argc, char* argv[]){
 
 		//ObjectnessMeasures obj_measures;
 		//AT->ComputeObjectnessImage(obj_measures);
-		AT->OptimizeCoverage(coverageFileName);	
+		AT->OptimizeCoverage(coverageFileName, true);	
 
 		std::cout << std::endl << "Done with step 0. " << std::endl;
 	}
 
 	if(step_no == 1){
 
+		//bool inPipeline = false;
 		AT->LoadParameters(argv[4]);	
 		AT->SetScaleRange(4, 4); //(2, 5); //(2, 2)
 		AT->CallFeatureMainExternal();

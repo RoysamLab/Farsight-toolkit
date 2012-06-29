@@ -9,6 +9,7 @@
 
 AstroTracer::AstroTracer()
 {
+	this->isCoverageOptimized = false;
 }
 
 
@@ -20,17 +21,21 @@ void AstroTracer::LoadParameters(const char* parametersFileName)
 	std::map<std::string,std::string>::iterator mi;
 
 	mi = opts.find("-intensity_threshold"); 
-	if(mi!=opts.end())
-	{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+	if(!this->isCoverageOptimized){
+		if(mi!=opts.end())
+		{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+		}
+		else
+		{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
 	}
-	else
-	{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
 
 	mi = opts.find("-contrast_threshold");
-	if(mi!=opts.end())
-	{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
-	else
-	{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+	if(!this->isCoverageOptimized){
+		if(mi!=opts.end())
+		{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
+		else
+		{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+	}
 
 	mi = opts.find("-cost_threshold"); 
 	if(mi!=opts.end())
@@ -476,10 +481,10 @@ void AstroTracer::FeatureMainExternal(void)
 	NDXImage->Allocate();
 	NDXImage->FillBuffer(0.0f);
 
-	NDXImage2 = ImageType3D::New();///////////////////
-	NDXImage2->SetRegions(PaddedCurvImage->GetBufferedRegion());//////////////////////
-	NDXImage2->Allocate();/////////////////////////
-	NDXImage2->FillBuffer(0.0f);///////////////////////////
+	//NDXImage2 = ImageType3D::New();///////////////////
+	//NDXImage2->SetRegions(PaddedCurvImage->GetBufferedRegion());//////////////////////
+	//NDXImage2->Allocate();/////////////////////////
+	//NDXImage2->FillBuffer(0.0f);///////////////////////////
 		
 	this->LoGScaleImage = ImageType3D::New();
 	this->LoGScaleImage->SetRegions(this->PaddedCurvImage->GetBufferedRegion());
@@ -518,10 +523,11 @@ void AstroTracer::FeatureMainExternal(void)
 	std::cout << "Done with GetFeature. " << std::endl;
 }
 
-void AstroTracer::OptimizeCoverage(std::string coverageFileName){
+
+void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResult){
 
 	std::cout << std::endl<< "Optimizing feature coverage for the image." << std::endl;
-	
+
 	// Optimizing coverage at single scale	
 	float sigma = 5.6569f;
 	float sigma_min = sigma;
@@ -610,8 +616,6 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName){
 	image_writer->SetInput(this->ObjectnessImage);
 	image_writer->Update();*/
 	
-
-
 	LoGFilterType::Pointer gauss = LoGFilterType::New();
 	gauss->SetInput( PaddedCurvImage );
 	gauss->SetSigma( sigma );
@@ -696,11 +700,15 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName){
 	double Mi_coverage5 = 0.0;
 	double Mi_coverage6 = 0.0;
 
-	std::string internalOptimFileName = coverageFileName;
-	internalOptimFileName.erase(internalOptimFileName.length()-4, internalOptimFileName.length());
-	internalOptimFileName.append("_internal.txt");
+
 	std::ofstream optim_internal_file;
-	optim_internal_file.open(internalOptimFileName.c_str(), std::ios::out);
+	
+	if(writeResult){
+		std::string internalOptimFileName = coverageFileName;
+		internalOptimFileName.erase(internalOptimFileName.length()-4, internalOptimFileName.length());
+		internalOptimFileName.append("_internal.txt");
+		optim_internal_file.open(internalOptimFileName.c_str(), std::ios::out);
+	}
 			
 	while(opt_iter < max_opt_iter){
 		
@@ -808,10 +816,12 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName){
 
 		std::cout << "Iter: " << opt_iter << " Mi_coverage6: " << Mi_coverage6 << " Intensity threshold: " << thresh1 << ", Contrast threshold: " << thresh2 << std::endl;
 
-		if(optim_internal_file.good())
-			optim_internal_file << Mi_coverage6 << '\t' << thresh1 << '\t' << thresh2 << '\t' << ctCnt << std::endl;
-		else
-			std::cout << "Error writing coverage internal file. " << std::endl;
+		if(writeResult){
+			if(optim_internal_file.good())
+				optim_internal_file << Mi_coverage6 << '\t' << thresh1 << '\t' << thresh2 << '\t' << ctCnt << std::endl;
+			else
+				std::cout << "Error writing coverage internal file. " << std::endl;
+		}
 
 		opt_iter++;
 		
@@ -844,48 +854,60 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName){
 			break;		
 	}
 
-	optim_internal_file.close();
+	if(writeResult)
+		optim_internal_file.close();
 
 	// Setting thresholds based on the optimized coverage
 	this->intensity_threshold = thresh1;
 	this->contrast_threshold = thresh2;
 
 	// Printing the results
-	if(opt_iter == max_opt_iter)
+	if(opt_iter == max_opt_iter){
 		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
-	else if(thresh1 = 0.0)
-		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
-	else
-		std::cout << "Done with optimizing coverage. " <<  std::endl;
-
-	std::ofstream coverage_file;
-	coverage_file.open(coverageFileName.c_str(), std::ios::out);
-	if(coverage_file.good()){
-		coverage_file << Mi_coverage6 << std::endl << this->intensity_threshold << std::endl << this->contrast_threshold << std::endl;
-		coverage_file << img_mean_val << std::endl << img_std_val << std::endl << mean_objectness << std::endl << std_objectness << std::endl;
-
-		coverage_file.close();
+		this->isCoverageOptimized = false;
 	}
-	else
-		std::cout << "Error writing coverage file. " << std::endl;
+	else if(thresh1 = 0.0){
+		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
+		this->isCoverageOptimized = false;
+	}
+	else{
+		std::cout << "Done with optimizing coverage. " <<  std::endl;
+		this->isCoverageOptimized = true;
+	}
 
-	std::string LoGPointsFileName = coverageFileName;
-	LoGPointsFileName.erase(LoGPointsFileName.length()-4, LoGPointsFileName.length());
-	LoGPointsFileName.append("_optimum_LOG_points.tif");
 	
-	RescalerType::Pointer rescaler2 = RescalerType::New();
-	rescaler2->SetInput(NDXImage);
-	rescaler2->SetOutputMaximum( 255 );
-	rescaler2->SetOutputMinimum( 0 );
-	rescaler2->Update();
-	itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
-	caster2->SetInput(rescaler2->GetOutput());
+	if(writeResult){
 
-	itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
+		std::ofstream coverage_file;
+		coverage_file.open(coverageFileName.c_str(), std::ios::out);
+		if(coverage_file.good()){
+			coverage_file << Mi_coverage6 << std::endl << this->intensity_threshold << std::endl << this->contrast_threshold << std::endl;
+			coverage_file << img_mean_val << std::endl << img_std_val << std::endl << mean_objectness << std::endl << std_objectness << std::endl;
 
-	LoGwriter2->SetFileName(LoGPointsFileName.c_str());	
-	LoGwriter2->SetInput(caster2->GetOutput());
-	LoGwriter2->Update();			
+			coverage_file.close();
+		}
+		else
+			std::cout << "Error writing coverage file. " << std::endl;
+		
+
+		std::string LoGPointsFileName = coverageFileName;
+		LoGPointsFileName.erase(LoGPointsFileName.length()-4, LoGPointsFileName.length());
+		LoGPointsFileName.append("_optimum_LOG_points.tif");
+		
+		RescalerType::Pointer rescaler2 = RescalerType::New();
+		rescaler2->SetInput(NDXImage);
+		rescaler2->SetOutputMaximum( 255 );
+		rescaler2->SetOutputMinimum( 0 );
+		rescaler2->Update();
+		itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
+		caster2->SetInput(rescaler2->GetOutput());
+
+		itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
+
+		LoGwriter2->SetFileName(LoGPointsFileName.c_str());	
+		LoGwriter2->SetInput(caster2->GetOutput());
+		LoGwriter2->Update();			
+	}
 }
 
 void AstroTracer::FeatureMain(void)
@@ -2429,9 +2451,9 @@ float AstroTracer::getRadiusAndLikelihood(itk::Vector<float,3> &pos, float& like
 					ndx.CopyWithRound(m);
 					itk::Vector<float,3> mm = pos - m;
 					float d = mm.GetNorm();
-					if (PaddedCurvImage->GetBufferedRegion().IsInside(ndx)) 
+					if (this->PaddedCurvImage->GetBufferedRegion().IsInside(ndx)) 
 					{
-						float val = PaddedCurvImage->GetPixel(ndx);
+						float val = this->PaddedCurvImage->GetPixel(ndx);
 						if (d < r) 
 						{
 							i1 += val;
@@ -2647,7 +2669,7 @@ void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
 	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
-	ObjectnessFilterType* objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
 	
 	objectness_filter->SetScaleObjectnessMeasure(false);
 	objectness_filter->SetBrightObject(true);
@@ -3054,7 +3076,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		float likelihood = 0.0;
 		float radius = getRadiusAndLikelihood(pos, likelihood);
 
-		double radiusThresh = 2;
+		double radiusThresh = 2.0;
 		if(radius < radiusThresh)
 			continue;
 
@@ -3092,6 +3114,8 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
 
+	
+
 		typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
 		ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
 		threshold_filter->SetLowerThreshold(1);
@@ -3100,13 +3124,13 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		threshold_filter->SetInput(this->SomaImage);
 		threshold_filter->Update();
 
-
 		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
 		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
 		sub_volume_filter_nuclei->SetInput(threshold_filter->GetOutput());
 		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
 		sub_volume_filter_nuclei->Update();
 		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+		
 
 		
 		/*typedef itk::ExtractImageFilter<LabelImageType3D, CharImageType3D>  ExtractSubVolumeFilterType_nuclei;
@@ -3138,8 +3162,9 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		MaurerFilter->Update();
 		
 		ImageType3D::Pointer sub_volume_distance = MaurerFilter->GetOutput();
-		
-		
+
+	
+	
 		/*typedef itk::ApproximateSignedDistanceMapImageFilter<CharImageType3D, ImageType3D> ApproxSignedDistanceMapImageFilterType;
 		ApproxSignedDistanceMapImageFilterType::Pointer ApproxDistFilter = ApproxSignedDistanceMapImageFilterType::New();
 		ApproxDistFilter->SetInput(sub_volume_nuclei);
@@ -3191,7 +3216,6 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		double nucleus_distance = sub_volume_distance->GetPixel(ldx);
 		
 		//std::cout << "Root: " << i << " Nuc_dist: " << nucleus_distance << std::endl;
-
 
 		double nucDistThresh = 100*double_scale_nuclei;
 		if(nucleus_distance > nucDistThresh)
@@ -3507,6 +3531,481 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		//return EXIT_FAILURE;
 	}
 	std::cout << "Done with RootsImage writing." << std::endl;
+}
+
+void AstroTracer::Set_DistanceMapImage(AstroTracer::ImageType3D::Pointer distance_map_image){
+	this->SomaDistanceMapImage = distance_map_image;
+}
+
+void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::string IDFname, unsigned int padz, ImageType3D::RegionType regionLocal_inside, std::vector<vtkSmartPointer<vtkTable> >& features_table_vec, LabelImageType3D::Pointer& out_image, const bool writeResult){
+	
+	//Prepare a list of points at which to compute the features
+	std::vector<HeapNode> points_list;
+	
+	std::cout << "Computing features around LOG points. " << this->LoGPointsVector.size() << std::endl;
+	if(this->AllLoGPointsVector.empty()){
+		std::cout << "NO LOG POINTS FOUND. RETURNING. " << std::endl;
+		return;
+	}
+	if(this->SomaDistanceMapImage.IsNull()){
+		std::cout << "Distance map image is NULL. Returning. " << std::endl;
+		return;
+	}
+
+	for(int i = 0; i < this->AllLoGPointsVector.size(); i++){
+		if(regionLocal_inside.IsInside(this->AllLoGPointsVector[i].ndx))
+			points_list.push_back(this->AllLoGPointsVector[i]);
+	}
+	
+	std::cout << "Computing features around N points. " << points_list.size() << std::endl;
+
+	//Preparing IDImage
+	LabelImageType3D::RegionType id_reg;
+	LabelImageType3D::IndexType id_st;
+	LabelImageType3D::SizeType id_sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	IDImage = LabelImageType3D::New();
+	IDImage->SetRegions(id_reg);
+	IDImage->Allocate();
+	IDImage->SetSpacing(PaddedCurvImage->GetSpacing());
+	IDImage->FillBuffer(0);
+
+	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
+	MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
+	min_max_calculator->SetImage(this->PaddedCurvImage);
+	min_max_calculator->ComputeMaximum();
+	double img_max_val = min_max_calculator->GetMaximum();
+
+	std::vector<double> radius_vec;
+	std::vector<double> int_vec, mean_int_vec, var_int_vec, min_int_vec, max_int_vec;
+	unsigned short IDIndex = 0;//ID index
+	itk::Size<3> sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	std::ofstream feature_vector;
+	if(writeResult){
+			
+		feature_vector.open(outputFname.c_str(), std::ios::out);
+		//std::cout << "After feature_vector.open"<<std::endl;
+	
+		feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "radius" << '\t' << "sph_likelihood" << '\t' << "ball" << '\t' << "plate" << '\t';
+		feature_vector << "vessel" << '\t' << "int" << '\t' << "m_int" << '\t' << "v_int" << '\t' << "mx_int" << '\t' << "mn_int" << '\t' << "nucl_dist" << '\t';
+		feature_vector << std::endl;
+	}
+
+	std::vector<std::string> col_names;
+	col_names.push_back("ID");
+	col_names.push_back("x");
+	col_names.push_back("y");
+	col_names.push_back("z");
+	col_names.push_back("radius");
+	col_names.push_back("sph_likelihood");
+	col_names.push_back("ball");
+	col_names.push_back("plate");
+	col_names.push_back("vessel");
+	col_names.push_back("int");
+	col_names.push_back("m_int");
+	col_names.push_back("v_int");
+	col_names.push_back("mx_int");
+	col_names.push_back("mn_int");
+	col_names.push_back("nucl_dist");
+	
+	//Creating vtkTable for the feature vectors
+
+	vtkSmartPointer<vtkTable> features_table = vtkSmartPointer<vtkTable>::New();
+	features_table->Initialize();
+
+	for(int i = 0; i < col_names.size(); i++){
+
+		vtkSmartPointer<vtkDoubleArray> table_col = vtkSmartPointer<vtkDoubleArray>::New();		
+		table_col->SetName(col_names[i].c_str()); 
+		
+		features_table->AddColumn(table_col);
+	}
+
+	for(int i = 0; i < points_list.size(); i++){
+
+		//std::cout << " LoG point index: " << IDIndex << std::endl;
+
+		//get radius estimate for this node
+		itk::Vector<float, 3> pos;
+		pos[0] = points_list[i].ndx[0];
+		pos[1] = points_list[i].ndx[1];
+		pos[2] = points_list[i].ndx[2];
+
+		float likelihood = 0.0;
+		float radius = getRadiusAndLikelihood(pos, likelihood);
+
+		double radiusThresh = 2.0;
+		if(radius < radiusThresh)
+			continue;
+
+		// current_idx has to be local to the current tile (PaddedCurvImage)
+		ImageType3D::IndexType current_idx;
+		current_idx[0] = pos[0];
+		current_idx[1] = pos[1];
+		current_idx[2] = pos[2]-padz; // PADZ???
+		//std::cout << "After current_ide set, LoG_vector_size="<< this->LoG_Vector.size() << std::endl;
+		//std::cout << "Current Indices:"<<current_idx[0]<<" "<<current_idx[1]<<" "<<current_idx[2]<<" "<<std::endl;
+
+
+		////////////////// Code for nearest nuiclei /////////////////////////
+		float double_scale_nuclei = 20;
+
+		//Read the distance map value at current_idx (local to rhe PaddedCurvImage) here
+		
+		double nucleus_distance = 0.0;
+		//nucleus_distance = this->SomaDistanceMapImage->GetPixel(convert current_idx to global index);
+		
+		//std::cout << "Root: " << i << " Nuc_dist: " << nucleus_distance << std::endl;
+
+		double nucDistThresh = 10.0 * double_scale_nuclei;
+		if(nucleus_distance > nucDistThresh)
+			continue;
+
+
+		////////////////////// Code for eigen values based features ////////////////////////////
+
+		float ballness, plateness, vesselness, noiseness;
+	
+		PixelType scale_index = this->LoGScaleImage->GetPixel(current_idx);
+		ImageType3D::Pointer LoG_sc_image = this->LoG_Vector[scale_index];
+
+		itk::Offset<3>
+				xp =  {{2 ,  0 ,   0}},
+				xn =  {{-2,  0,    0}},
+				yp =  {{0,   2,   0}},
+				yn =  {{0,  -2,    0}},
+				zp =  {{0,   0,    2}},
+				zn =  {{0,   0,   -2}};
+
+		itk::Size<3> rad = {{1,1,1}};
+		itk::NeighborhoodIterator<ImageType3D> nit(rad , LoG_sc_image, LoG_sc_image->GetBufferedRegion());
+		
+		nit.SetLocation(current_idx);
+		//std::cout << "After nit definition"<<std::endl;
+
+		//itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+
+		unsigned int
+			xy1 =  17, //{ 1 ,   1 ,  0 },
+			xy2 =  9,  //{ -1,  -1 ,  0 },
+			xy3 =  15, //{ -1,   1 ,  0 },
+			xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+			yz1 =  25, //{ 0 ,   1 ,  1 },
+			yz2 =  1,  //{ 0 ,  -1 , -1 },
+			yz3 =  19, //{ 0 ,  -1 ,  1 },
+			yz4 =  7,  //{ 0 ,   1 , -1 },
+
+			xz1 =  23, //{ 1 ,   0 ,  1 },
+			xz2 =  3,  //{-1 ,   0 , -1 },
+			xz3 =  21, //{-1 ,   0 ,  1 },
+			xz4 =  5;  //{ 1 ,   0 , -1 };
+
+		typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+		typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+		typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+		TensorType h;
+		h[0] = LoG_sc_image->GetPixel( current_idx + xp ) + LoG_sc_image->GetPixel( current_idx + xn ) - 2*nit.GetPixel( 13 );
+		h[3] = LoG_sc_image->GetPixel( current_idx + yp ) + LoG_sc_image->GetPixel( current_idx + yn ) - 2*nit.GetPixel( 13 );
+		h[5] = LoG_sc_image->GetPixel( current_idx + zp ) + LoG_sc_image->GetPixel( current_idx + zn ) - 2*nit.GetPixel( 13 );
+		h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+		h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+		h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+		EigenValuesArrayType ev, ev_original;
+		EigenVectorMatrixType em;
+		h.ComputeEigenAnalysis (ev, em);
+		float trace = h.GetTrace();
+
+		//std::cout << "After eigen analysis.open"<<std::endl;
+
+		// Amit-style sorting
+		
+		bool zeroness = false;
+		int lowest_idx = 0;
+		
+		ev_original[0] = ev[0];
+		ev_original[1] = ev[1];
+		ev_original[2] = ev[2];
+
+		ev[0] = std::abs(ev[0]);
+		ev[1] = std::abs(ev[1]);
+		ev[2] = std::abs(ev[2]);
+
+		float L1, L2, L;
+		if ( (ev[0] > ev[1]) && (ev[0] > ev[2]) ) 
+		{
+			L = ev[0];
+			L1 = ev[1]; 
+			L2 = ev[2];
+			if (ev[1] > ev[2])
+			{
+				L1 = ev[2]; 
+				L2 = ev[1];
+
+				lowest_idx = 2;
+			}
+			else
+				lowest_idx = 1;
+		}
+		else if( (ev[1] > ev[0]) && (ev[1] > ev[2]) ) 
+		{
+			L = ev[1];
+			L1 = ev[0];
+			L2 = ev[2];
+			if (ev[0] > ev[2]) 
+			{
+				L1 = ev[2];
+				L2 = ev[0];	
+
+				lowest_idx = 2;
+			}
+			else
+				lowest_idx = 0;
+		}
+		else  
+		{
+			L = ev[2];
+			L1 = ev[0];
+			L2 = ev[1];
+			if (ev[0] > ev[1]) 
+			{
+				L1 = ev[1];
+				L2 = ev[0];		
+
+				lowest_idx = 1;
+			}
+			else
+				lowest_idx = 0;
+		}
+
+		// What is the sequence of the sorted list: L1 < L2 < L
+
+		if(lowest_idx == 0){
+			if(ev_original[1] > 0 || ev_original[2] > 0)
+				zeroness = true;
+		}
+		if(lowest_idx == 1){
+			if(ev_original[0] > 0 || ev_original[2] > 0)
+				zeroness = true;
+		}
+		if(lowest_idx == 2){
+			if(ev_original[0] > 0 || ev_original[1] > 0)
+				zeroness = true;
+		}
+		
+		if(zeroness){
+			ballness = 0.0;
+			plateness = 0.0;
+			vesselness = 0.0;
+		}
+		else{
+
+			float alpha = 0.5 * img_max_val; 
+			float beta = 0.5 * img_max_val;
+			float gamma = 0.0025 * img_max_val;
+
+			ballness = L1 / sqrt(L2 * L);
+			plateness = L2 / L;
+			noiseness = std::sqrt(std::pow(L1, 2) + std::pow(L2, 2) + std::pow(L, 2));
+
+			vesselness = (1.0 - std::exp(-1 * std::pow(plateness, 2) / (2.0 * std::pow(alpha, 2)))) 
+				* std::exp(-1.0 * std::pow(ballness, 2) / (2.0 * std::pow(beta, 2)))
+				* (1.0 - std::exp(-1.0 * std::pow(noiseness, 2) / (2.0 * std::pow(gamma, 2))));
+		}
+		
+
+		/////////////////////// Code for intensity based features ///////////////////////////////
+
+		float double_scale = 2.0 * radius; 
+		
+		//StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+		ImageType3D::IndexType starting_index, end_index;
+		ImageType3D::SizeType sub_volume_size;
+		ImageType3D::RegionType sub_volume_region;
+		ImageType3D::Pointer sub_volume;
+
+		starting_index[0] = current_idx[0] - double_scale; starting_index[1] = current_idx[1] - double_scale; starting_index[2] = current_idx[2] - double_scale;
+		end_index[0] = current_idx[0] + double_scale; end_index[1] = current_idx[1] + double_scale; end_index[2] = current_idx[2] + double_scale;
+
+		
+		//std::cout << "Intensity: Starting Indices:"<<starting_index[0]<<" "<<starting_index[1]<<" "<<starting_index[2]<<" "<<std::endl;
+		//std::cout << "Intensity: End Indices:"<<end_index[0]<<" "<<end_index[1]<<" "<<end_index[2]<<" "<<std::endl;
+		//std::cout << "Intensity: Size:"<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<std::endl;
+
+		if ( (starting_index[0] < 0) || (starting_index[1] < 0) || (starting_index[2] < 0) ||
+			(end_index[0] > (unsigned int)sz[0]) || (end_index[1] > (unsigned int)sz[1]) ||
+			(end_index[2] > (unsigned int)sz[2]) )
+		continue;
+
+		sub_volume_size[0] = 2 * double_scale; sub_volume_size[1] = 2 * double_scale; sub_volume_size[2] = 2 * double_scale;
+		
+		sub_volume_region.SetIndex(starting_index);
+		sub_volume_region.SetSize(sub_volume_size);
+		
+		VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
+		sub_volume_filter->SetInput(this->PaddedCurvImage);
+		sub_volume_filter->SetRegionOfInterest(sub_volume_region);
+		sub_volume_filter->Update();
+		sub_volume = sub_volume_filter->GetOutput();
+		//std::cout << "After subvolume_filter"<<std::endl;
+
+		StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+		stats_filter->SetInput(sub_volume);
+		stats_filter->Update();
+
+		double intensity = this->PaddedCurvImage->GetPixel(current_idx);
+		double mean_intensity = stats_filter->GetMean();
+		double var_intensity = stats_filter->GetVariance();
+		double max_intensity = stats_filter->GetMaximum();
+		double min_intensity = stats_filter->GetMinimum();
+		//std::cout << "After statistics"<<std::endl;
+
+		
+		//if(feature_vector.good()){
+
+			if(IDImage->GetPixel(current_idx) == 0){
+
+				//std::cout << "Root: " << i << std::endl; //<< " Ballness: " << ballness << " Plateness: " << plateness << " Vesselness: " << vesselness << std::endl;
+
+				IDImage->SetPixel(current_idx, IDIndex+1);
+
+				//feature_vector << (IDIndex+1) << '\t' << pos[0] << '\t' << pos[1] << '\t' << pos[2]-padz << '\t' << radius << '\t' << ballness << '\t' << plateness << '\t';	
+				//feature_vector << intensity << '\t' << mean_intensity << '\t' << var_intensity << '\t' << max_intensity << '\t' << min_intensity << '\t' << nucleus_distance << '\t' ;
+				//feature_vector << std::endl;
+
+				radius_vec.push_back(radius);
+				int_vec.push_back(intensity);
+				min_int_vec.push_back(min_intensity);
+				max_int_vec.push_back(max_intensity);
+				mean_int_vec.push_back(mean_intensity);
+				var_int_vec.push_back(var_intensity);
+
+
+				CandidateRootPoint a_root;
+				a_root.featureVector.node = HeapNode(points_list[i]);
+				a_root.featureVector.ID = IDIndex;
+				a_root.featureVector.ballness = ballness;
+				a_root.featureVector.plateness = plateness;
+				a_root.featureVector.intensity = intensity;
+				a_root.featureVector.maxIntensity = max_intensity;
+				a_root.featureVector.minIntensity = min_intensity;
+				a_root.featureVector.meanIntensity = mean_intensity;
+				a_root.featureVector.varianceIntensity = var_intensity;
+				a_root.featureVector.radius = radius;
+				a_root.featureVector.sphere_likelihood = likelihood;
+				a_root.featureVector.nucleusDistance = nucleus_distance;
+				a_root.featureVector.vesselness = vesselness;
+
+				this->AllRootPoints.push_back(a_root);
+
+				IDIndex++;			
+			}
+		//}
+	}
+
+	// Normalizing the features
+	double r_min, r_max, int_min, int_max, mean_min, mean_max, var_min, var_max, min_min, min_max, max_min, max_max;
+
+	r_min = *std::min_element(radius_vec.begin(), radius_vec.end());
+	r_max = *std::max_element(radius_vec.begin(), radius_vec.end());
+	int_min = *std::min_element(int_vec.begin(), int_vec.end());
+	int_max = *std::max_element(int_vec.begin(), int_vec.end());
+	mean_min = *std::min_element(mean_int_vec.begin(), mean_int_vec.end());
+	mean_max = *std::max_element(mean_int_vec.begin(), mean_int_vec.end());
+	var_min = *std::min_element(var_int_vec.begin(), var_int_vec.end());
+	var_max = *std::max_element(var_int_vec.begin(), var_int_vec.end());
+	min_min = *std::min_element(min_int_vec.begin(), min_int_vec.end());
+	min_max = *std::max_element(min_int_vec.begin(), min_int_vec.end());
+	max_min = *std::min_element(max_int_vec.begin(), max_int_vec.end());
+	max_max = *std::max_element(max_int_vec.begin(), max_int_vec.end());
+
+
+	std::cout << "Writing root feature vector file. " << std::endl;
+
+	//if(feature_vector.good()){
+	if(true){
+	
+		for(int i = 0; i < this->AllRootPoints.size(); i++){
+			
+			radius_vec[i] = (radius_vec[i] - r_min) / (r_max - r_min);
+			int_vec[i] = (int_vec[i] - int_min) / (int_max - int_min);
+			min_int_vec[i] = (min_int_vec[i] - min_min) / (min_max - min_min);
+			max_int_vec[i] = (max_int_vec[i] - max_min) / (max_max - max_min);
+			mean_int_vec[i] = (mean_int_vec[i] - mean_min) / (mean_max - mean_min);
+			var_int_vec[i] = (var_int_vec[i] - var_min) / (var_max - var_min);
+
+			this->AllRootPoints[i].featureVector.radius = radius_vec[i];
+			this->AllRootPoints[i].featureVector.intensity = int_vec[i];
+			this->AllRootPoints[i].featureVector.minIntensity = min_int_vec[i];
+			this->AllRootPoints[i].featureVector.maxIntensity = max_int_vec[i];
+			this->AllRootPoints[i].featureVector.meanIntensity = mean_int_vec[i];
+			this->AllRootPoints[i].featureVector.varianceIntensity = var_int_vec[i];
+
+			//std::cout << "Root: " << i << std::endl;
+			
+			if(writeResult){
+				if(feature_vector.good()){
+					feature_vector << (i+1) << '\t' << this->AllRootPoints[i].featureVector.node.ndx[0] << '\t' << this->AllRootPoints[i].featureVector.node.ndx[1] << '\t' << this->AllRootPoints[i].featureVector.node.ndx[2]-padz << '\t' ;
+					feature_vector << this->AllRootPoints[i].featureVector.radius << '\t'  << this->AllRootPoints[i].featureVector.sphere_likelihood << '\t' << this->AllRootPoints[i].featureVector.ballness << '\t' << this->AllRootPoints[i].featureVector.plateness << '\t';	
+					feature_vector << this->AllRootPoints[i].featureVector.vesselness << '\t' << this->AllRootPoints[i].featureVector.intensity << '\t' << this->AllRootPoints[i].featureVector.meanIntensity << '\t' << this->AllRootPoints[i].featureVector.varianceIntensity << '\t';
+					feature_vector << this->AllRootPoints[i].featureVector.maxIntensity << '\t' << this->AllRootPoints[i].featureVector.minIntensity << '\t' << this->AllRootPoints[i].featureVector.nucleusDistance << '\t';
+					feature_vector << std::endl;
+				}
+			}
+
+
+			vtkSmartPointer<vtkVariantArray> table_row = vtkSmartPointer<vtkVariantArray>::New();
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[0]);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[1]);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[2] -  padz);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.radius);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.sphere_likelihood);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.ballness);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.plateness);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.vesselness);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.intensity);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.meanIntensity);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.varianceIntensity);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.maxIntensity);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.minIntensity);
+			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.nucleusDistance);
+
+			features_table->InsertNextRow(table_row);
+		}
+	}
+
+	features_table_vec.push_back(features_table);
+
+	if(writeResult)
+		feature_vector.close();
+
+	std::cout << "Done with feature vector file. " << std::endl;
+	
+	out_image = IDImage; 
+		
+	if(writeResult){
+		itk::ImageFileWriter< LabelImageType3D >::Pointer IDImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
+		IDImageWriter->SetFileName(IDFname.c_str());
+		IDImageWriter->SetInput(IDImage);
+		try{
+			IDImageWriter->Update();
+		}
+		catch(itk::ExceptionObject e){
+			std::cout << e << std::endl;
+			//return EXIT_FAILURE;
+		}
+	}
+	std::cout << "Done with RootsImage writing." << std::endl;	
 }
 
 

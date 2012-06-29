@@ -57,6 +57,12 @@
 #include "itkAddImageFilter.h"
 #include "itkPowImageFilter.h"
 
+#include "vtkTable.h"
+#include "vtkVariant.h"
+#include "vtkVariantArray.h"
+#include "vtkDoubleArray.h"
+#include "vtkSmartPointer.h"
+
 
 #include "vnl/vnl_math.h"
 
@@ -266,6 +272,7 @@ public:
 	void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
 
 	void ComputeAstroFeatures(std::string, std::string, unsigned int, const std::string);
+	void ComputeAstroFeaturesPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, LabelImageType3D::Pointer&, const bool);
 	bool PopulateLoGImages(std::vector<float> sigma_vec);
 	void CallFeatureMainExternal();
 
@@ -281,11 +288,13 @@ public:
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
 	void ComputeFTKObjectnessImage(void);
-	void OptimizeCoverage(std::string);
+	void OptimizeCoverage(std::string, bool);
 	void ReadStartPointsInternal(void);
-
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
+	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
+
+	
 	//external parameters
 	float intensity_threshold;
 	float contrast_threshold;
@@ -315,6 +324,7 @@ protected:
 	float GetCostLocal2(SWCNode*, itk::Index<3>&);
 	bool IsBall(const itk::FixedArray<float, 3>&, unsigned int&, double&);
 	void GetHessianBasedObjectnessMeasures(itk::FixedArray<double, 3>&, ObjectnessMeasures&);
+	
 
 private:
 	std::vector<SWCNode*> SWCNodeContainer;
@@ -325,6 +335,7 @@ private:
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
 	ImageType3D::Pointer ObjectnessImage;
+	ImageType3D::Pointer SomaDistanceMapImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
@@ -336,6 +347,7 @@ private:
 
 	int nScales;
 	int startScale, endScale; // Perform LoG at these scales only
+	bool isCoverageOptimized;
 
 	std::vector<ImageType3D::Pointer> LoG_Vector;
 	std::vector<std::vector<HeapNode> > LoGPointsVector;
