@@ -81,6 +81,9 @@ public:
 	void ComputeTimeFeaturesTable(void);
 	std::vector<ftk::TrackFeatures> GetTimeFeatures(void){return tfs;};
 
+	void set_parameters_from_cmd(FeatureVariances feat_var){this->fvar = feat_var;};
+	void set_inputs_from_cmd(std::vector< InputImageType::Pointer > inp_im, std::vector< LabelImageType::Pointer > lab_img);
+	std::vector< LabelImageType::Pointer > get_ouput_to_cmd(){return this->output_images_;};
 private:
 		struct TrackVertex{
 		bool special;
@@ -244,6 +247,7 @@ private:
 	TGraph g; 
 	VVF fvector; 
 	VVL limages;
+	std::vector< LabelImageType::Pointer > output_images_;
 	VVR rimages;
 	VVV rmap;
 	VVM m_cand;

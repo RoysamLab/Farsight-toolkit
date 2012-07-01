@@ -48,6 +48,7 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 
 
 }
+
 void MultiFrameCellTracker::settrackresultFolders(std::vector<std::pair<std::string,std::string> > folders)
 {
 
@@ -270,6 +271,108 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 
 
 		
+}
+void MultiFrameCellTracker::set_inputs_from_cmd(std::vector< InputImageType::Pointer > inp_im, std::vector< LabelImageType::Pointer > lab_img)
+{	
+
+	ftk::Image::PtrMode readmode;
+	readmode = static_cast<ftk::Image::PtrMode>(2);
+	ftk::Image::PtrMode writemode;
+	writemode = static_cast<ftk::Image::PtrMode>(1);
+	ftk::Image::Pointer tmpImage = ftk::Image::New();
+	resultImages = ftk::Image::New();
+//	channel_to_track = 0; // Fix Me.
+
+
+
+	int num_t = inp_im.size();
+
+
+	int c=1;
+
+	//Now track the cells alone and compute associations
+
+	std::vector<std::vector<FeatureType> > locfvector;
+
+	helpers::LabelImageType::Pointer labeled;
+	bool fexists = true;
+
+	std::string dataset_id = "movie8ova";
+	printf("datasetid = %s\n",dataset_id.c_str());
+
+	MultiFrameCellTracker::VVL loclimages;
+	MultiFrameCellTracker::VVR locrimages;
+	helpers::LabelImageType::Pointer tempsegmented;
+	helpers::InputImageType::Pointer tempimage;
+	std::vector<Color2DImageType::Pointer> input,output;
+
+	char *filename_number = new char [numbersfile.size()+1];
+	strcpy(filename_number,numbersfile.c_str());
+
+	fvar.time_last = num_t-1;
+		for(int t =0; t<num_t; t++)
+		{
+
+			tempimage = inp_im[t];	
+			tempsegmented = lab_img[t];	
+
+			std::vector<FeatureType> f;
+			std::vector<helpers::LabelImageType::Pointer> li;
+			std::vector<helpers::InputImageType::Pointer> ri;
+			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
+			for(int counter=0; counter < f.size(); counter++)
+			{
+				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
+				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
+				f[counter].ScalarFeatures[FeatureType::CONVEXITY] = 0.0;
+				if(f[counter].ScalarFeatures[FeatureType::VOLUME]<5)
+				{
+					printf("A cell has a volume of %f\n",f[counter].ScalarFeatures[FeatureType::VOLUME]);
+					printFeatures(f[counter]);
+				}
+			}
+			locfvector.push_back(f);
+			loclimages.push_back(li);
+			locrimages.push_back(ri);
+		}
+
+
+		std::string debugfolder = debugfiledirectory;
+		std::string debugstring = debugfolder +"\\"+ debugprefix + "_input.tif";
+
+		helpers::InputImageType::SizeType imsize = tempimage->GetLargestPossibleRegion().GetSize();
+		fvar.BoundingBox[0] = 0;
+		fvar.BoundingBox[2] = 0;
+		fvar.BoundingBox[4] = 0;
+		fvar.BoundingBox[1] = imsize[0]-1;
+		fvar.BoundingBox[3] = imsize[1]-1;
+		fvar.BoundingBox[5] = imsize[2]-1;
+
+		for(int count =0;count<locfvector.size();++count)
+		{
+			std::cout<<locfvector[count].size()<<std::endl;
+		}
+	    this->setData(locfvector,loclimages,locrimages);
+		this->dataset_id = dataset_id;
+
+		this->run();
+
+		printf("Rerunning with computed variances\n");
+		FeatureVariances fvarnew(this->get_computed_variances());
+		fvarnew.MS_prior = 0.4;
+		fvarnew.AD_prior = 0.01;
+		fvarnew.T_prior = 1;
+		fvarnew.timeVariance = 1;
+		fvarnew.overlapVariance = 1;
+	 
+		
+		for(int t = 0; t< num_t; t++)
+		{
+			printf("In final loop t = %d\n",t);
+			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
+			output_images_.push_back(track);
+		}
+	
 }
 void MultiFrameCellTracker::convertItkImagesToftkImages(ftk::Image::Pointer labelImage,ftk::Image::Pointer dataImage,std::vector<helpers::LabelImageType::Pointer> &trackImages)
 {
@@ -2324,7 +2427,7 @@ void MultiFrameCellTracker::solve_higher_order()
 		
 		printf("lredges.size() = %d\n", lredges.size());	// print number of second order edges
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
-		scanf("%*d");
+		//scanf("%*d");
 		varc = lredges.size();
 		IloNumVarArray x(env,varc,0,1,ILOBOOL);
 		IloNumArray numarr(env,varc);
@@ -4197,7 +4300,7 @@ void MultiFrameCellTracker::run()
 
 //	print_debug_info();			//Amin: not needed besides causes crashes.
 	solve_higher_order();
-	print_stats();
+	//print_stats();
 
 	std::string newxgmloutput = entropyfiledirectory + "\\ch4_new.xgmml";
 	char *newxgmloutput_char = new char [newxgmloutput.size()+1];
