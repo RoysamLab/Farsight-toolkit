@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <omp.h>
+
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -23,6 +25,10 @@
 #include "itkDivideImageFilter.h"
 #include "itkImageDuplicator.h"
 #include "itkStatisticsImageFilter.h"
+#include "itkCastImageFilter.h"
+#include "itkSubtractImageFilter.h"
+#include "itkMultiplyImageFilter.h"
+#include "itkSquareImageFilter.h"
 
 #include "vtkSmartPointer.h"
 #include "vtkImageData.h"
@@ -59,6 +65,10 @@ typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
 typedef itk::ImageDuplicator<ImageType3D> DuplicatorType;
+typedef itk::CastImageFilter<RenderImageType3D, ImageType3D> CastFilterType;
+typedef itk::SubtractImageFilter<ImageType3D> SubtractImageFilter;
+typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
+typedef itk::SquareImageFilter<ImageType3D, ImageType3D> SquareImageFilter;
 
 namespace Common{
 	
@@ -96,7 +106,19 @@ namespace Common{
 	 * Calculate the gradient vector field and write the result in mhd files.
 	 * (sigma for smoothing, path for writing files, data pointer)
 	 */
-	void GVFDiffusion(float&, const std::string&, ImageType3D::Pointer&);
+	void GVFDiffusion(float&, int&, const std::string&, ImageType3D::Pointer&);
+
+	/**
+	 * Calculate the gradient vector field and write the result in mhd files.
+	 * (sigma for smoothing, N_iter data pointer, gx ptr, gy ptr, gz ptr)
+	 */
+	void GVFDiffusion(float&, int&, ImageType3D::Pointer&, ImageType3D::Pointer&, ImageType3D::Pointer&, ImageType3D::Pointer&);
+
+	/**
+	 * Calculate the gradient vector field and write the result in mhd files.
+	 * (sigma for smoothing, path for writing files, data pointer)
+	 */
+	void GVFDiffusionFaster(float&, int&, const std::string&, ImageType3D::Pointer&);
 	
 	/** Clip the given data using the epsilon value.
 	 * (epsilon, float data)
@@ -117,6 +139,11 @@ namespace Common{
 	 * (ITK image ptr, ITK image ptr for rendering)
 	 */
 	void RescaleDataForRendering(ImageType3D::Pointer, RenderImageType3D::Pointer&);
+
+	/** Cast data from unsigned char to float
+	 * (ITK image ptr uchar, ITK image ptr float)
+	 */
+	void CastImageUCharToFloat(RenderImageType3D::Pointer, ImageType3D::Pointer&);
 	
 	/** Normalize data using its max value, return tge maax value.
 	 * (input data, data to normalize)

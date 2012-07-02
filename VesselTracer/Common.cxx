@@ -207,12 +207,12 @@ void MedianFilter(const int radius, ImageType3D::Pointer& data_ptr){
 	std::cout << "Input file size: "<< data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageType3D::Pointer& data_ptr){
+void GVFDiffusion(float& smoothing_sigma, int& N_iter, const std::string& write_path, ImageType3D::Pointer& data_ptr){
 	
 	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
 	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
 	smoothing_filter->SetInput(data_ptr);
-	smoothing_filter->SetSigma(2.0f);
+	smoothing_filter->SetSigma(smoothing_sigma);
 	smoothing_filter->Update();
 
 	ImageType3D::Pointer smoothing_output = smoothing_filter->GetOutput();
@@ -265,12 +265,12 @@ void GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageTy
 
 	itk::Size<3> data_size = smoothing_output->GetBufferedRegion().GetSize();
     
-    // How is this kernel derived? and what is it meant for?
+    // Looks like a Laplacian?
 	const double filter[27] = {	0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206,  \
 									0.0339, 0.0560, 0.0339,  0.0560, 0.0923, 0.0560,  0.0339, 0.0560, 0.0339,  \
 	                                0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206   \
 								};
-	int N_iter = 30;
+	//int N_iter = 30;
 	for (int iter = 0; iter < N_iter; ++iter) {
 
 		double update = 0.0;
@@ -337,8 +337,307 @@ void GVFDiffusion(float& smoothing_sigma, const std::string& write_path, ImageTy
 	WriteImage3D(output_file, gy);
 	output_file = write_path + "_gz.mhd";
 	WriteImage3D(output_file, gz);
-	output_file = write_path + ".mhd";
+	
+	//output_file = write_path + ".tif";
+	//WriteImage3D(output_file, data_ptr);
+}
+
+void Common::GVFDiffusionFaster(float& smoothing_sigma, int& N_iter, const std::string& write_path, ImageType3D::Pointer& data_ptr){
+	
+	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
+	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
+	smoothing_filter->SetInput(data_ptr);
+	smoothing_filter->SetSigma(smoothing_sigma);
+	smoothing_filter->Update();
+
+	ImageType3D::Pointer smoothing_output = smoothing_filter->GetOutput();
+	smoothing_output->Update();
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(smoothing_output);
+	stats_filter->Update();
+	float max = stats_filter->GetMaximum();
+	float min = stats_filter->GetMinimum();
+	
+	SubtractImageFilter::Pointer img_subtacter = SubtractImageFilter::New();
+	img_subtacter->SetInput(smoothing_output);
+	img_subtacter->SetConstant2(min);
+	
+	MultiplyImageFilter::Pointer img_multiplier = MultiplyImageFilter::New();
+	img_multiplier->SetInput(img_subtacter->GetOutput());
+	img_multiplier->SetConstant2(1.0/(max - min));
+
+	SquareImageFilter::Pointer img_squarer = SquareImageFilter::New();
+	img_squarer->SetInput(img_multiplier->GetOutput());
+	img_squarer->Update();
+
+	ImageType3D::Pointer smoothing_output1 = img_squarer->GetOutput();
+
+	
+	/*itk::ImageRegionIterator<ImageType3D> iter_data(smoothing_output, smoothing_output->GetBufferedRegion());
+
+	// Calculate min and max of the dataset
+	float max = -1000.0f, min = 1000.0f;
+    for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		max = vnl_math_max(max, iter_data.Get());
+		min = vnl_math_min(min, iter_data.Get());
+	}
+	std::cout << "max : " << max << " min : " << min << std::endl;
+
+	for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		float d = iter_data.Get();
+		d = (d - min)/(max - min);
+		d = vcl_pow(d, 2.0f);
+		iter_data.Set(d);
+	}*/
+
+	//initialize gx, gy, gz
+	ImageType3D::Pointer gx = ImageType3D::New();	gx->SetRegions(data_ptr->GetBufferedRegion());	gx->Allocate();
+	ImageType3D::Pointer gy = ImageType3D::New();	gy->SetRegions(data_ptr->GetBufferedRegion());	gy->Allocate();
+	ImageType3D::Pointer gz = ImageType3D::New();	gz->SetRegions(data_ptr->GetBufferedRegion());	gz->Allocate();
+	ImageType3D::Pointer g1x = ImageType3D::New();	g1x->SetRegions(data_ptr->GetBufferedRegion());	g1x->Allocate();
+	ImageType3D::Pointer g1y = ImageType3D::New();	g1y->SetRegions(data_ptr->GetBufferedRegion());	g1y->Allocate();
+	ImageType3D::Pointer g1z = ImageType3D::New();	g1z->SetRegions(data_ptr->GetBufferedRegion());	g1z->Allocate();
+    
+    // These are for the derivatives in x, y, and z directions?
+	itk::Size<3> rad = {{1,1,1}};
+	itk::ImageRegionIterator<ImageType3D> x_iter(gx, gx->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> y_iter(gy, gy->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> z_iter(gz, gz->GetBufferedRegion());
+
+    // Calculating the derivative image?
+	itk::NeighborhoodIterator<ImageType3D> iter_nhood(rad , smoothing_output1, smoothing_output1->GetBufferedRegion());
+	
+	const double EPS = 0.001;
+	for (iter_nhood.GoToBegin(), x_iter.GoToBegin(), y_iter.GoToBegin(), z_iter.GoToBegin(); !iter_nhood.IsAtEnd(); ++iter_nhood, ++x_iter, ++y_iter, ++z_iter)	{
+		float dx = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(0) - iter_nhood.GetPrevious(0)));
+		float dy = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(1) - iter_nhood.GetPrevious(1)));
+		float dz = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(2) - iter_nhood.GetPrevious(2)));
+
+		x_iter.Set(dx);
+		y_iter.Set(dy);
+		z_iter.Set(dz);
+	}
+
+	itk::Size<3> data_size = smoothing_output1->GetBufferedRegion().GetSize();
+    
+    // Looks like a Laplacian?
+	const double filter[27] = {	0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206,  \
+									0.0339, 0.0560, 0.0339,  0.0560, 0.0923, 0.0560,  0.0339, 0.0560, 0.0339,  \
+	                                0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206   \
+								};
+	//int N_iter = 30;
+	for (int iter = 0; iter < N_iter; ++iter) {
+
+		double update = 0.0;
+		for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+
+					itk::Index<3> ndx = {i,j,k};
+
+					double dx = double(gx->GetPixel(ndx)), dy = double(gy->GetPixel(ndx)), dz = double(gz->GetPixel(ndx));
+					double g = (dx*dx) + (dy*dy) + (dz*dz) + EPS; 
+
+                    // Application of the above filter
+					double d1x = 0.0f, d1y = 0.0f, d1z = 0.0f;
+					int f = 0;
+					for (long kk = k-1; kk <= k+1 ; ++kk) {
+						for (long jj = j-1; jj <= j+1 ; ++jj) {
+							for (long ii = i-1; ii <= i+1 ; ++ii) {
+								itk::Index<3> ndx1 = {ii,jj,kk};
+								d1x += double(gx->GetPixel(ndx1))*filter[f];
+								d1y += double(gy->GetPixel(ndx1))*filter[f];
+								d1z += double(gz->GetPixel(ndx1))*filter[f];
+								++f;
+							}
+						}
+					}
+
+					double g1 = (d1x*d1x) + (d1y*d1y) + (d1z*d1z) + EPS;
+
+					if (g1 > g )  {
+						g1x->SetPixel(ndx, float(d1x));
+						g1y->SetPixel(ndx, float(d1y));
+						g1z->SetPixel(ndx, float(d1z));
+						update += (g1 - g);
+					}
+					else {
+						g1x->SetPixel(ndx, float(dx));
+						g1y->SetPixel(ndx, float(dy));
+						g1z->SetPixel(ndx, float(dz));
+						g1 = g;
+					}
+				}
+			}
+		}
+
+		std::cout << "Iter # " << iter << " Update :" << update << std::endl;
+
+		DuplicatorType::Pointer img_dupx = DuplicatorType::New();
+		img_dupx->SetInputImage(g1x);
+		img_dupx->Update();
+		
+		DuplicatorType::Pointer img_dupy = DuplicatorType::New();
+		img_dupy->SetInputImage(g1y);
+		img_dupy->Update();
+
+		DuplicatorType::Pointer img_dupz = DuplicatorType::New();
+		img_dupz->SetInputImage(g1z);
+		img_dupz->Update();
+
+		gx = img_dupx->GetOutput();
+		gy = img_dupy->GetOutput();
+		gz = img_dupz->GetOutput();
+
+		/*for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+					itk::Index<3> ndx = {i,j,k};
+						gx->SetPixel(ndx, g1x->GetPixel(ndx));
+						gy->SetPixel(ndx, g1y->GetPixel(ndx));
+						gz->SetPixel(ndx, g1z->GetPixel(ndx));
+				}
+			}
+		}*/
+	}
+
+    // Write the gradient images and the vol image to disk
+	std::string output_file;
+	output_file = write_path + "_gx.mhd";
+	WriteImage3D(output_file, gx);
+	output_file = write_path + "_gy.mhd";
+	WriteImage3D(output_file, gy);
+	output_file = write_path + "_gz.mhd";
+	WriteImage3D(output_file, gz);
+	
+	output_file = write_path + "_pre.mhd";
 	WriteImage3D(output_file, data_ptr);
+}
+
+void Common::GVFDiffusion(float& smoothing_sigma, int& N_iter, ImageType3D::Pointer& data_ptr, ImageType3D::Pointer& gx, ImageType3D::Pointer& gy, ImageType3D::Pointer& gz){
+
+	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
+	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
+	smoothing_filter->SetInput(data_ptr);
+	smoothing_filter->SetSigma(smoothing_sigma);
+	smoothing_filter->Update();
+
+	ImageType3D::Pointer smoothing_output = smoothing_filter->GetOutput();
+	smoothing_output->Update();
+
+	itk::ImageRegionIterator<ImageType3D> iter_data(smoothing_output, smoothing_output->GetBufferedRegion());
+
+	// Calculate min and max of the dataset
+	float max = -1000.0f, min = 1000.0f;
+    for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		max = vnl_math_max(max, iter_data.Get());
+		min = vnl_math_min(min, iter_data.Get());
+	}
+	std::cout << "max : " << max << " min : " << min << std::endl;
+
+	for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		float d = iter_data.Get();
+		d = (d - min)/(max - min);
+		d = vcl_pow(d, 2.0f);
+		iter_data.Set(d);
+	}
+
+	//initialize gx, gy, gz
+	gx = ImageType3D::New();	gx->SetRegions(data_ptr->GetBufferedRegion());	gx->Allocate();
+	gy = ImageType3D::New();	gy->SetRegions(data_ptr->GetBufferedRegion());	gy->Allocate();
+	gz = ImageType3D::New();	gz->SetRegions(data_ptr->GetBufferedRegion());	gz->Allocate();
+	ImageType3D::Pointer g1x = ImageType3D::New();	g1x->SetRegions(data_ptr->GetBufferedRegion());	g1x->Allocate();
+	ImageType3D::Pointer g1y = ImageType3D::New();	g1y->SetRegions(data_ptr->GetBufferedRegion());	g1y->Allocate();
+	ImageType3D::Pointer g1z = ImageType3D::New();	g1z->SetRegions(data_ptr->GetBufferedRegion());	g1z->Allocate();
+    
+    // These are for the derivatives in x, y, and z directions?
+	itk::Size<3> rad = {{1,1,1}};
+	itk::ImageRegionIterator<ImageType3D> x_iter(gx, gx->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> y_iter(gy, gy->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> z_iter(gz, gz->GetBufferedRegion());
+
+    // Calculating the derivative image?
+	itk::NeighborhoodIterator<ImageType3D> iter_nhood(rad , smoothing_output, smoothing_output->GetBufferedRegion());
+	
+	const double EPS = 0.001;
+	for (iter_nhood.GoToBegin(), x_iter.GoToBegin(), y_iter.GoToBegin(), z_iter.GoToBegin(); !iter_nhood.IsAtEnd(); ++iter_nhood, ++x_iter, ++y_iter, ++z_iter)	{
+		float dx = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(0) - iter_nhood.GetPrevious(0)));
+		float dy = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(1) - iter_nhood.GetPrevious(1)));
+		float dz = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(2) - iter_nhood.GetPrevious(2)));
+
+		x_iter.Set(dx);
+		y_iter.Set(dy);
+		z_iter.Set(dz);
+	}
+
+	itk::Size<3> data_size = smoothing_output->GetBufferedRegion().GetSize();
+    
+    // How is this kernel derived? and what is it meant for?
+	const double filter[27] = {	0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206,  \
+									0.0339, 0.0560, 0.0339,  0.0560, 0.0923, 0.0560,  0.0339, 0.0560, 0.0339,  \
+	                                0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206   \
+								};
+	//int N_iter = 30;
+	for (int iter = 0; iter < N_iter; ++iter) {
+
+		double update = 0.0;
+		for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+
+					itk::Index<3> ndx = {i,j,k};
+
+					double dx = double(gx->GetPixel(ndx)), dy = double(gy->GetPixel(ndx)), dz = double(gz->GetPixel(ndx));
+					double g = (dx*dx) + (dy*dy) + (dz*dz) + EPS; 
+
+                    // Application of the above filter
+					double d1x = 0.0f, d1y = 0.0f, d1z = 0.0f;
+					int f = 0;
+					for (long kk = k-1; kk <= k+1 ; ++kk) {
+						for (long jj = j-1; jj <= j+1 ; ++jj) {
+							for (long ii = i-1; ii <= i+1 ; ++ii) {
+								itk::Index<3> ndx1 = {ii,jj,kk};
+								d1x += double(gx->GetPixel(ndx1))*filter[f];
+								d1y += double(gy->GetPixel(ndx1))*filter[f];
+								d1z += double(gz->GetPixel(ndx1))*filter[f];
+								++f;
+							}
+						}
+					}
+
+					double g1 = (d1x*d1x) + (d1y*d1y) + (d1z*d1z) + EPS;
+
+					if (g1 > g )  {
+						g1x->SetPixel(ndx, float(d1x));
+						g1y->SetPixel(ndx, float(d1y));
+						g1z->SetPixel(ndx, float(d1z));
+						update += (g1 - g);
+					}
+					else {
+						g1x->SetPixel(ndx, float(dx));
+						g1y->SetPixel(ndx, float(dy));
+						g1z->SetPixel(ndx, float(dz));
+						g1 = g;
+					}
+				}
+			}
+		}
+
+		std::cout << "Iter # " << iter << " Update :" << update << std::endl;
+		
+		#pragma omp parallel for
+		for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+					itk::Index<3> ndx = {i,j,k};
+						gx->SetPixel(ndx, g1x->GetPixel(ndx));
+						gy->SetPixel(ndx, g1y->GetPixel(ndx));
+						gz->SetPixel(ndx, g1z->GetPixel(ndx));
+				}
+			}
+		}
+	}
 }
 
 float inline EpsilonClip(double EPS, float x){
@@ -458,6 +757,15 @@ void RescaleDataForRendering(ImageType3D::Pointer data, RenderImageType3D::Point
 	data_to_render = rescaler->GetOutput();
 }
 
+void CastImageUCharToFloat(RenderImageType3D::Pointer uchar_ptr, ImageType3D::Pointer& float_ptr){
+	
+	CastFilterType::Pointer cast_filter = CastFilterType::New();
+	cast_filter->SetInput(uchar_ptr);
+	cast_filter->Update();
+
+	float_ptr = cast_filter->GetOutput();
+}
+
 PixelType NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& normalizedInputData){
 
 	// This filter gives wierd values at output !! Try the LabelStatisticsImageFilter
@@ -491,12 +799,30 @@ PixelType NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& no
 		ImageType3D::Pointer divisor_image = image_duplicator2->GetOutput();
 		divisor_image->FillBuffer(volumeMax);
 
+		/*ImageType3D::Pointer img = ImageType3D::New();
+		ImageType3D::IndexType start_idx; 
+		start_idx[0] = 0; start_idx[1] = 0; start_idx[2] = 0;
+		ImageType3D::SizeType size;
+		size = inputData->getLargestPossibleRegion().GetSize();
+		ImageType3D::RegionType region;
+		region.SetSize(size); region.SetIndex(start);
+
+		img->SetRegions(region);
+		img->Allocate();*/
+
 		DivideImageFilterType::Pointer divide_image_filter = DivideImageFilterType::New();
 		divide_image_filter->SetInput1(inputData);
-		divide_image_filter->SetInput1(divisor_image);
+		divide_image_filter->SetInput2(divisor_image);
 		divide_image_filter->Update();
 
 		normalizedInputData = divide_image_filter->GetOutput();
+
+
+		MinMaxCalculatorType::Pointer min_max_calculator2 = MinMaxCalculatorType::New();
+		min_max_calculator2->SetImage(normalizedInputData);
+		min_max_calculator2->Compute();
+
+		PixelType volumeMax2 = min_max_calculator2->GetMaximum();
 
 		/*typedef itk::Functor::Mult<ImageType3D::PixelType> MultiplicationFunctorType;
 		typedef itk::UnaryFunctorImageFilter<ImageType3D, ImageType3D, MultiplicationFunctorType> MultiplicationUnaryFunctorFilterType;

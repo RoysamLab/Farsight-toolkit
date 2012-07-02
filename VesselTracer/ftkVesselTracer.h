@@ -61,6 +61,7 @@
 #include "itkDivideImageFilter.h"
 #include "itkStatisticsImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
+#include "itkImageFileWriter.h"
 
 #include "Common.h"
 
@@ -104,6 +105,7 @@ typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInter
 typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
+typedef itk::ImageFileWriter<RenderImageType3D> ImageWriter;
 
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
@@ -132,7 +134,7 @@ struct PreprocessingParameters{
 	int anisDiffusionNIter;
 	int anisDiffusionConductance;
 	double smoothingSigma;
-
+	int iterNGVF;
 	void initByDefaultValues(void);
 };
 
@@ -254,6 +256,9 @@ struct Node{
 	double likelihood;
 	bool isValid;
 	double nHoodScale;
+
+	static const int DEFALUT_SCALE = 4.0;
+	static const int MIN_LIKELIHOOD = 0;
 	
 	// The surrounding (and inclusive) region of a node which contributes to the energy functional. 
 	// This region is like a band around the sphere's circumference.
@@ -311,6 +316,8 @@ struct Node{
 	void NormalizeNode(double);
 	void InvertNodeDir(void);
 	static double DotProduct(Node, Node);
+	void InitDefaultParamsBeforeOptimization(void);
+	void InitDefaultParamsBeforeODFRecursion(void);
 };
 
 class compareNodes{
@@ -433,7 +440,7 @@ public:
 
 	/* Visualise affinity graph
 	 */
-	void VisualizeAffinityGraph(void);
+	void VisualizeAffinityGraph(bool render_with_data);
 
 	/* Compute MST using Boost/VTK
 	 * NOT IMPLEMENTED YET
@@ -452,7 +459,7 @@ public:
 
 	/* Visualize Minimum spanning forest
 	 */
-	void VisualizeMinimumSpanningForest(void);
+	void VisualizeMinimumSpanningForest(bool render_with_data);
 
 	/* Find a element in the list upto the given index
 	 */
@@ -462,10 +469,24 @@ public:
 	 */
 	void PrintForest(void);
 
+	/* Fit sphere at a single node
+	 * (Node object)	
+	 */
+	void FitSphereAtNode(Node&);
+
+	/* Fit sphere at a single node
+	 * (Node object, image_ptr, gx ptr, gy, ptr, gz ptr)	
+	 */
+	void FitSphereAtNode(Node&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
+
+	void InitNodeDetectionParamsDefault(void);
+
 private:
 
 	AllParameters allParams;
 	GlobalStatisticsInput globalStatsInput;
+
+	std::string data_folder_path;
 			
 	ImageType3D::Pointer originalData;
 	ImageType3D::Pointer inputData;
@@ -473,11 +494,12 @@ private:
 	ImageType3D::Pointer gx;
 	ImageType3D::Pointer gy;
 	ImageType3D::Pointer gz;
-	
+
 	RenderImageType3D::Pointer originalDataForRendering;
 	RenderImageType3D::Pointer inputDataForRendering;
 	RenderImageType3D::Pointer maximumProjectionImage;
 	RenderImageType3D::Pointer minimumProjectionImage;
+	RenderImageType3D::Pointer primaryNodesImage, secondaryNodesImage;
 	
 	std::vector<Node> initialSeeds;
 	std::vector<Node> primaryNodes;
@@ -489,15 +511,15 @@ private:
 	std::vector<AffinityEdge> loops;
 	std::vector<Tree> forest;
 
-	/* Fit sphere at a single node
-	 * (Node object)	
-	 */
-	void FitSphereAtNode(Node&);
-
 	/* Update the node appearance 
 	 * (Node object)
 	 */
 	void UpdateAppearanceVectorized(Node&);
+
+	/* Update the node appearance 
+	 * (Node object, image ptr, gx ptr, gy ptr, gz ptr)
+	 */
+	void UpdateAppearanceVectorized(Node&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
 
 	/* Update the node model
 	 * (Node object, iteration number)

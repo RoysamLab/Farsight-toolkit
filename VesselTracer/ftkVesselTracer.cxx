@@ -12,24 +12,29 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->PreprocessData(input_data_path, tiff_data_ptr); // ask user	
 	}
 
+	this->data_folder_path = input_data_path;
+	this->data_folder_path.erase(this->data_folder_path.length()-4, this->data_folder_path.length());
+	
 	// Load preprocessed data
 	this->LoadPreprocessedData(input_data_path);
 
-	if(start_with_mst == false){
+	if(!start_with_mst){
 
 		// Computing spheical bins. This could be a part of preprocessing - need to write the output structure in a file.
 		this->allParams.oriBin.initByDefaultValues();
 		this->SphericalBinPreprocess();
 
 		// 3D rendering of original and preprocessed data
-		Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
+		//Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);		
+		//std::cout << "Done with preparing data for rendering. " << std::endl; 
 		//Common::RenderImage3D(this->originalDataForRendering);
 		//Common::RenderImage3D(this->inputDataForRendering);
 		
 
 		// MIP computation
-		this->ComputeIntensityProjectionImages();
+		//this->ComputeIntensityProjectionImages();
+		//std::cout << "Done with preparing data for rendering. " << std::endl; 
 		//this->RenderMaximumProjectionImage();	
 
 		// Primary and secondary node detection
@@ -39,11 +44,11 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 
 		// MST and post processing
 		this->allParams.graphAndMSTParams.initByDefaultValues();
-		this->CreateMinimumSpanningForest();
+		//this->CreateMinimumSpanningForest();
 	}
 	else{
 
-		Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
+		//Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
 		
 		// Reading secondary nodes from file for now
@@ -64,6 +69,7 @@ void PreprocessingParameters::initByDefaultValues(void){
 	this->anisDiffusionNIter = 10;
 	this->anisDiffusionConductance = 30;
 	this->smoothingSigma = 2.0f;
+	this->iterNGVF = 30; //30; //10;
 }
 
 void SphericalBinInfo::initByDefaultValues(void){
@@ -78,7 +84,7 @@ void SphericalBinInfo::initByDefaultValues(void){
 
 void NodeDetectionParameters::initByDefaultValues(void){
 	
-	this->gridSpacing = 30; //10; //20; //30; //10; //15; //20; //15;
+	this->gridSpacing = 20; //30; //20; //30; //10; //15; //20; //15;
 	this->iterNPrimaryNode = 100;
 
 	this->increaseLikelihoodThreshold = 0.001;
@@ -91,28 +97,28 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->iterNMonitorParamChange = 5;
 	this->currentMonitoredIter = 0;
 
-	this->dtX = 5000; //50000; 
-	this->dtY = 5000; //50000; 
-	this->dtZ = 5000; //50000;
-	this->dtScale = 1000; //10000;
+	this->dtX = 5000.0; //50000; 
+	this->dtY = 5000.0; //50000; 
+	this->dtZ = 5000.0; //50000;
+	this->dtScale = 1000.0; //10000;
 	this->dirX = 0; this->dirY = 0; this->dirZ = 0;
 	this->dirScale = 0;
-	this->chX = std::vector<double>(this->iterNMonitorParamChange, 0); 
-	this->chY = std::vector<double>(this->iterNMonitorParamChange, 0); 
-	this->chZ = std::vector<double>(this->iterNMonitorParamChange, 0);
-	this->chScale = std::vector<double>(this->iterNMonitorParamChange, 0);
+	this->chX = std::vector<double>(this->iterNMonitorParamChange, 0.0); 
+	this->chY = std::vector<double>(this->iterNMonitorParamChange, 0.0); 
+	this->chZ = std::vector<double>(this->iterNMonitorParamChange, 0.0);
+	this->chScale = std::vector<double>(this->iterNMonitorParamChange, 0.0);
 	
 	this->maxVesselWidth = 20;
-	this->minVesselWidth = 2;
+	this->minVesselWidth = 2; //1;
 	this->likelihoodThresholdPrimary = 0.01; //0.005;
 	this->distanceThresholdPrimary = 1.2;
 
-	this->traceQualityThreshold = 4.0;
+	this->traceQualityThreshold = 4.0; //5.0; // IMP PARAM
 	this->maxQueueIter = 20000;
-	this->distanceThresholdSecondary = 1.0;
-	this->maxBranchAngle = 60; // in degrees
-	this->branchingThreshold = 0.05;
-	this->secondaryParamRateReduction = 1000;
+	this->distanceThresholdSecondary = 1.0; //0.5; // IMP PARAM
+	this->maxBranchAngle = 60.0; //60.0; // in degrees // IMP PARAM
+	this->branchingThreshold = 0.1;
+	this->secondaryParamRateReduction = 1000.0;
 	this->dtXSecondary = this->dtX / this->secondaryParamRateReduction;
 	this->dtYSecondary = this->dtY / this->secondaryParamRateReduction;
 	this->dtZSecondary = this->dtZ / this->secondaryParamRateReduction;
@@ -126,10 +132,10 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->secondaryReversePositionRate = 0.8;
 	this->secondaryReverseScaleRate = 0.9;
 	this->maxTraceCost = 10.0;
-	this->infTraceQuality = 100;
+	this->infTraceQuality = 100.0;
 	this->maxQueueSize = 10000;
-	this->traceLengthCost = 0.5; //1.0; //0.5; //1.0; //0.5; //0.0;
-	this->primaryNodeSearchRadFactor = 0.75;
+	this->traceLengthCost = 0.5; //0.5; //1.0; //0.5; //1.0; //0.5; //0.0; // IMP PARAM
+	this->primaryNodeSearchRadFactor = 0.75; //1.0; //0.5; // IMP PARAM
 }
 
 void GraphAndMSTPartameters::initByDefaultValues(void){
@@ -160,22 +166,29 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 	try{
 		Common::ReadImage3D(file_path, data_ptr);
 
-		Common::WriteImage3D(write_file_path + std::string(append_str), data_ptr);
+		//Common::WriteImage3D(write_file_path + std::string(append_str), data_ptr);
 	}
 	catch(itk::ExceptionObject& e){
 		std::cout << e << std::endl;
 		return EXIT_FAILURE;
 	}
 
+	std::cout << "Done with reading input image. " << std::endl;
+
 	//PARAMS: Make available outside function
 	int median_radius = this->allParams.preProcessingParams.medianFilterRadius;
 	int anis_diffusion_N_iter = this->allParams.preProcessingParams.anisDiffusionNIter;
 	int anis_diffusion_conductance = this->allParams.preProcessingParams.anisDiffusionConductance;
 	float smoothing_sigma = this->allParams.preProcessingParams.smoothingSigma;
-
+	int GVF_N_iter = this->allParams.preProcessingParams.iterNGVF;
+	
 	Common::MedianFilter(median_radius, data_ptr);
+	std::cout << "Done with median filtering. " << std::endl;
+
 	Common::CurvatureAnisotropicDiffusion(anis_diffusion_N_iter, anis_diffusion_conductance, data_ptr);
-	append_str = "_preprocessed.tif";
+	std::cout << "Done with anisotropic diffusion. " << std::endl;
+
+	append_str = "_pre.tif";
 
 	try{
 		Common::WriteTIFFImage3D(write_file_path + std::string(append_str), data_ptr);
@@ -185,12 +198,11 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 		return EXIT_FAILURE;
 	}
 
-	Common::GVFDiffusion(smoothing_sigma, write_file_path, data_ptr);	
-
-	// Compute oriBin and save to file?
+	Common::GVFDiffusionFaster(smoothing_sigma, GVF_N_iter, write_file_path, data_ptr);	
+	std::cout << "Done with GVF diffusion. " << std::endl;
 
 	timer.Stop();
-	std::cout << "The processing took " << timer.GetMeanTime() << " seconds. " << std::endl;
+	std::cout << "The pre-processing took " << timer.GetMeanTime() << " seconds. " << std::endl;
 
 	return EXIT_SUCCESS;
 }
@@ -198,8 +210,8 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	
 	data_path = data_path.substr(0, data_path.find_last_of('.')); // get rid of the extension
-	std::string append_ext = ".mhd";
-	std::string append_original = "_original.mhd";
+	std::string append_ext = "_pre.mhd";
+	std::string append_original = ".mhd";
 	std::string append_gx = "_gx.mhd";
 	std::string append_gy = "_gy.mhd";
 	std::string append_gz = "_gz.mhd";
@@ -207,7 +219,7 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	try{
 		Common::ReadImage3D(data_path + std::string(append_ext), this->inputData); //input data is preprocessed data
 
-		Common::ReadImage3D(data_path + std::string(append_original), this->originalData);	
+		//Common::ReadImage3D(data_path + std::string(append_original), this->originalData);	
 		Common::ReadImage3D(data_path + std::string(append_gx), this->gx);
 		Common::ReadImage3D(data_path + std::string(append_gy), this->gy);
 		Common::ReadImage3D(data_path + std::string(append_gz), this->gz);
@@ -238,7 +250,9 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	test_index[0] = 123; test_index[1] = 6; test_index[2] = 23;
 	test_index1[0] = 6; test_index1[1] = 123; test_index1[2] = 23;
 	PixelType test_pixel = this->inputData->GetPixel(test_index);
-	PixelType test_pixel1 = this->inputData->GetPixel(test_index1);*/
+	PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
+	std::cout << test_pixel << ", " << test_pixel1 << std::endl;
+	*/
 		
 }
 
@@ -436,7 +450,9 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 				
 				//this->allParams.oriBin.binIndexVec[i1+indexLength+1][i2+indexLength+1][i3+indexLength+1] = max_d_position;
 				
-				this->allParams.oriBin.binIndexVec[i3+indexLength][i2+indexLength][i1+indexLength] = max_d_position;
+				//this->allParams.oriBin.binIndexVec[i3+indexLength][i2+indexLength][i1+indexLength] = max_d_position;
+				this->allParams.oriBin.binIndexVec[i3+indexLength][i1+indexLength][i2+indexLength] = max_d_position;
+				
 
 				//this->allParams.oriBin.binIndexVec[i1+indexLength][i2+indexLength][i3+indexLength] = max_d_position;
 				
@@ -451,6 +467,7 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	std::vector<std::vector<double> > bin_centers(3, std::vector<double>(x.size(), 0));
 	//bin_centers[0] = x;
 	//bin_centers[1] = y;
+	
 	bin_centers[0] = y;
 	bin_centers[1] = x;
 	
@@ -526,8 +543,8 @@ void ftkVesselTracer::ComputeSeeds(void){
 	
 	std::cout << "Computing initial seed points..." << std::endl;
 
-	//ImageType3D::SizeType size = this->normalizedInputData->GetBufferedRegion().GetSize();
-	ImageType3D::SizeType size = this->normalizedInputData->GetLargestPossibleRegion().GetSize();
+	ImageType3D::SizeType size = this->normalizedInputData->GetBufferedRegion().GetSize();
+	//ImageType3D::SizeType size = this->normalizedInputData->GetLargestPossibleRegion().GetSize();
 
 	int grid_spacing = this->allParams.nodeDetectionParams.gridSpacing;
 
@@ -608,7 +625,7 @@ void ftkVesselTracer::ComputeSeeds(void){
 		}
 	}
 	
-	std::cout << "Seed points computed." << std::endl;
+	std::cout << "Seed points computed: " << this->initialSeeds.size() << std::endl;
 
 	//visualizing the seed nodes
 	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
@@ -797,15 +814,19 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 
 	std::cout << "Processing the seeds based on the model fits, likelihood and distance... " << std::endl;
 
+	//Testing a node
+	//this->initialSeeds.clear();
+	//Node ps_node(213, 16, 44, 100);
+	//this->initialSeeds.push_back(ps_node);
+
 	//seeds before fitting
 	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
 
 	std::vector<Node> filteredPrimaryNodes;
 	filteredPrimaryNodes.resize(this->initialSeeds.size());
 
-	#pragma omp parallel for
-	for(int i = 0; i < 50; i++){
-	//for(int i = 0; i < this->initialSeeds.size(); i++){
+	//#pragma omp parallel for 
+	for(int i = 0; i < this->initialSeeds.size(); i++){
 		this->FitSphereAtNode(this->initialSeeds[i]);
 		//std::cout << i << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << " Last iter: " << this->initialSeeds[i].exitIter << std::endl; 
 		
@@ -819,20 +840,67 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	}
 
 	for(int i = 0; i < filteredPrimaryNodes.size(); i++){
-		if(filteredPrimaryNodes[i].likelihood > 0)
+		if(filteredPrimaryNodes[i].likelihood > 0.0)
 			this->primaryNodes.push_back(filteredPrimaryNodes[i]);
 	}
 
+
+	//for testing
+	/*for(int i = 0; i < this->primaryNodes.size(); i++){
+		std::cout << this->primaryNodes[i].x << ", " << this->primaryNodes[i].y << ", " << this->primaryNodes[i].z << ", ";
+		std::cout << this->primaryNodes[i].likelihood << ", " << this->primaryNodes[i].scale << ", " << this->primaryNodes[i].meanForegroundIntensity << ", ";
+		std::cout << this->primaryNodes[i].meanBackgroundIntensity << std::endl;
+	}*/
+
 	//visualize the fitted models and the filtered nodes
-	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
 	//this->VisualizeNodesWithData3D(this->primaryNodes, false);
+
+	std::cout << "Primary nodes before hit test: " << this->primaryNodes.size() << std::endl;
 
 	this->SortAndFilterPrimaryNodes();
 	
 	//final primary nodes
 	this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
+
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->primaryNodesImage = RenderImageType3D::New();
+	this->primaryNodesImage->SetRegions(id_reg);
+	this->primaryNodesImage->Allocate();
+	this->primaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->primaryNodesImage->FillBuffer(0);
+
+	itk::Index<3> idx;
+	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++){
+		
+		idx[0] = this->primaryNodesAfterHitTest[i].x;
+		idx[1] = this->primaryNodesAfterHitTest[i].y;
+		idx[2] = this->primaryNodesAfterHitTest[i].z;
+
+		this->primaryNodesImage->SetPixel(idx, 255);
+	}
+	
+	std::string primary_nodes_file_name = this->data_folder_path;
+	primary_nodes_file_name.append("_PrimaryNodes.tif");
+
+	ImageWriter::Pointer primary_nodes_writer = ImageWriter::New();	
+	primary_nodes_writer->SetFileName(primary_nodes_file_name);	
+	primary_nodes_writer->SetInput(this->primaryNodesImage);
+	primary_nodes_writer->Update();
+
 	std::cout << "Seed processing completed for primary nodes. " << std::endl;
+	std::cout << "Number of primary nodes after hit test: " << this->primaryNodesAfterHitTest.size() << std::endl;
 	
 	// Testing the model fitting for specific seeds
 	//std::vector<Node> testing_seeds(this->initialSeeds.begin()+500, this->initialSeeds.begin()+510);
@@ -859,19 +927,18 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed){
 	PixelType test_pixel2 = this->normalizedInputData->GetPixel(test_index);
 	*/
 	
-	// SET USING FUNCTION CALLS
-	seed.scale = 4;
-	seed.nHoodScale = 2 * seed.scale;
-	seed.likelihood = 0;
+	seed.InitDefaultParamsBeforeOptimization();
 	
 	// Very important step!! 
+	//#pragma omp critical
 	this->allParams.nodeDetectionParams.initByDefaultValues();
 
 	int node_iter = this->allParams.nodeDetectionParams.iterNPrimaryNode;
 
 	for(int i = 0; i < node_iter; i++){
 
-		//std::cout << " Scale: " << seed.scale << " Position: " << seed.x << ", " << seed.y << ", " << seed.z << "  Likelihood: " << seed.likelihood << std::endl;
+		//testing
+		//std::cout << seed.meanForegroundIntensity << ", " << seed.meanBackgroundIntensity << ", " << seed.likelihood << std::endl;
 			
 		this->UpdateAppearanceVectorized(seed);
 		
@@ -883,6 +950,50 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed){
 		if(this->ExitModelFitting(seed, i) == true)
 			break;
 	}
+
+}
+
+void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
+
+	//testing on a pseudo node
+	// Same pixel apparently has different values in ITK and Matlab!!
+	/*seed.x = 21;
+	seed.y = 17;
+	seed.z = 16;
+	ImageType3D::IndexType test_index;
+	test_index[0] = seed.x; test_index[1] = seed.y; test_index[2] = seed.z;
+	PixelType test_pixel = this->inputData->GetPixel(test_index);
+	PixelType test_pixel2 = this->normalizedInputData->GetPixel(test_index);
+	*/
+	
+	seed.InitDefaultParamsBeforeOptimization();
+		
+	// Very important step!! 
+	this->allParams.nodeDetectionParams.initByDefaultValues();
+
+	int node_iter = this->allParams.nodeDetectionParams.iterNPrimaryNode;
+
+	for(int i = 0; i < node_iter; i++){
+
+		//std::cout << " Scale: " << seed.scale << " Position: " << seed.x << ", " << seed.y << ", " << seed.z << "  Likelihood: " << seed.likelihood << std::endl;
+			
+		this->UpdateAppearanceVectorized(seed, data_ptr, gx, gy, gz);
+		
+		if(seed.isValid == false)
+			break; 
+
+		this->UpdateModel(seed, i);
+
+		if(this->ExitModelFitting(seed, i) == true)
+			break;
+	}
+}
+
+void Node::InitDefaultParamsBeforeOptimization(){
+	
+	this->scale = (double)Node::DEFALUT_SCALE;
+	this->nHoodScale = 2 * this->scale;
+	this->likelihood = (double)Node::MIN_LIKELIHOOD;
 }
 
 void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& secondary_node, std::vector<double> dir_vec){
@@ -951,13 +1062,18 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	ImageType3D::SizeType size = this->normalizedInputData->GetLargestPossibleRegion().GetSize();
 
 	//if(this->normalizedInputData->GetBufferedRegion().IsInside(seed_index) == false)
-	if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(seed_index) == false)
-	//if((seed.x > 0) && (seed.x < size[0]) && (seed.y > 0) && (seed.y < size[1]) && (seed.z > 0) && (seed.z < size[2]))
+	//if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(seed_index) == false){
+	if((seed.x < 0) || (seed.x > size[0]) || (seed.y < 0) || (seed.y > size[1]) || (seed.z < 0) || (seed.z > size[2])){
 		seed.isValid = false;
+		return;
+	}
 	
 	ImageType3D::IndexType nhood_start_index, nhood_end_index;
 	ImageType3D::SizeType nhood_size;
 	ImageType3D::RegionType sub_vol;
+
+	// VIS!
+	seed.nHoodScale = 2.0 * seed.scale;
 	
 	nhood_start_index[0] = floor(seed.x - seed.nHoodScale + 0.5); 
 	nhood_start_index[1] = floor(seed.y - seed.nHoodScale + 0.5); 
@@ -966,7 +1082,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	nhood_end_index[1] = floor(seed.y + seed.nHoodScale + 0.5);
 	nhood_end_index[2] = floor(seed.z + seed.nHoodScale + 0.5);
 
-	nhood_size[0] = 2*seed.nHoodScale; nhood_size[1] = 2*seed.nHoodScale; nhood_size[2] = 2*seed.nHoodScale;
+	nhood_size[0] = 2.0*seed.nHoodScale; nhood_size[1] = 2.0*seed.nHoodScale; nhood_size[2] = 2.0*seed.nHoodScale;
 	
 	/*VolumeOfInterestFilterType::Pointer sub_vol_filter = VolumeOfInterestFilterType::New();
 	sub_vol_filter->SetInput(this->normalizedInputData);
@@ -979,18 +1095,18 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	seed.bandArea = 0;
 	seed.foregroundArea = 0;
 	seed.backgroundArea = 0;
-	seed.meanForegroundIntensity = 0;
-	seed.meanBackgroundIntensity = 0;
+	seed.meanForegroundIntensity = 0.0;
+	seed.meanBackgroundIntensity = 0.0;
 	seed.xNormalizedInBand.clear();
 	seed.yNormalizedInBand.clear();
 	seed.zNormalizedInBand.clear();
 	seed.intensityInBand.clear();
 	seed.gxInBand.clear();
 	seed.gyInBand.clear();
-	seed.gzInBand.clear();
+	seed.gzInBand.clear(); 
 
 	ImageType3D::IndexType current_index;
-	PixelType x_normalized = 0, y_normalized = 0, z_normalized = 0, radial_dist = 0;
+	PixelType x_normalized = 0.0, y_normalized = 0.0, z_normalized = 0.0, radial_dist = 0.0;
 	bool is_inside_volume = true, is_outside_volume = false, is_on_foreground = true, is_on_background = false, contributes_to_energy = true, energy_band_outside_volume = false;
 	int in_volume_count = 0, out_volume_count = 0;
 	std::vector<double> foreground_values, background_values;
@@ -1003,8 +1119,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 				current_index[0] = i; current_index[1] = j; current_index[2] = k; 
 				
 				//if(this->normalizedInputData->GetBufferedRegion().IsInside(current_index) == true){
-				if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
-				//if((i > 0) && (i < size[0]) && (j > 0) && (j < size[1]) && (k > 0) && (k < size[2])){
+				//if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
+				if((i > 0) && (i < size[0]) && (j > 0) && (j < size[1]) && (k > 0) && (k < size[2])){
 					is_inside_volume = true;
 					in_volume_count++;
 				}
@@ -1013,12 +1129,12 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 					out_volume_count++;
 				}
 								
-				x_normalized = (i - seed.x)/seed.scale;
-				y_normalized = (j - seed.y)/seed.scale;
-				z_normalized = (k - seed.z)/seed.scale;
+				x_normalized = ((double)i - seed.x)/seed.scale;
+				y_normalized = ((double)j - seed.y)/seed.scale;
+				z_normalized = ((double)k - seed.z)/seed.scale;
 				radial_dist = std::sqrt((x_normalized*x_normalized) + (y_normalized*y_normalized) + (z_normalized*z_normalized));
 
-				if((radial_dist <= 1.0) && (is_inside_volume == true))
+				if((radial_dist - 1.0 <= 0.00001) && (is_inside_volume == true))
 				//if(((radial_dist < 1.0) || (std::abs(radial_dist - 1.0) < 0.000001)) && (is_inside_volume == true))
 					is_on_foreground = true;
 				else
@@ -1029,12 +1145,12 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 				else
 					is_on_background = false;
 
-				if((abs(radial_dist - 1) < seed.bandNhood) && (is_inside_volume == true))		
+				if(((double)abs(radial_dist - 1.0) < seed.bandNhood) && (is_inside_volume == true))		
 					contributes_to_energy = true;
 				else
 					contributes_to_energy = false;
 
-				if((abs(radial_dist - 1) < seed.bandNhood) && (is_inside_volume == false))		
+				if(((double)abs(radial_dist - 1.0) < seed.bandNhood) && (is_inside_volume == false))		
 					energy_band_outside_volume = true;
 				else
 					energy_band_outside_volume = false;
@@ -1090,6 +1206,200 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 			// Calculate the median
 			std::sort(foreground_values.begin(), foreground_values.end());
 
+			seed.meanForegroundIntensity = *(foreground_values.begin() + (foreground_values.size()/2));
+		}
+		else
+			seed.meanForegroundIntensity = 0.0;
+
+		if(background_values.size() != 0){
+			std::sort(background_values.begin(), background_values.end());
+			seed.meanBackgroundIntensity = *(background_values.begin() + (background_values.size()/2));
+		}
+		else
+			seed.meanBackgroundIntensity = 0.0;
+	}
+	else{
+
+		// Calculate the mean
+		seed.meanForegroundIntensity = seed.meanForegroundIntensity / (float)seed.foregroundArea;
+		seed.meanBackgroundIntensity = seed.meanBackgroundIntensity / (float)seed.backgroundArea;
+	}
+
+	seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
+
+	//testing
+	//std::cout << seed.foregroundArea << ", " << seed.backgroundArea << ", ";
+	//std::cout << seed.meanForegroundIntensity << ", " << seed.meanBackgroundIntensity << ", " << seed.likelihood << std::endl;
+
+	// If likelood is less than 0.001, do what? According to the thesis, the subvolume should be discarded. But here, the likelihood value is
+	// increased if it is less then 0.001
+	/*double mean_of_means = 0.0;
+	if(seed.isSecondary == true && seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
+		
+		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
+		seed.meanForegroundIntensity = mean_of_means + this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		if(seed.meanBackgroundIntensity < 0)
+			seed.meanBackgroundIntensity = 0;
+		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
+	}*/
+	
+	// Set seed as invalid if majority of its neighbourhood lies outside the data limits
+	if(in_volume_count < out_volume_count)
+		seed.isValid = false;
+	else
+		seed.isValid = true;	
+}
+
+void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
+		
+	ImageType3D::IndexType seed_index;
+	seed_index[0] = seed.x; seed_index[1] = seed.y; seed_index[2] = seed.z;
+	ImageType3D::SizeType size = data_ptr->GetLargestPossibleRegion().GetSize();
+
+	//if(data_ptr->GetBufferedRegion().IsInside(seed_index) == false)
+	if(data_ptr->GetLargestPossibleRegion().IsInside(seed_index) == false)
+	//if((seed.x > 0) && (seed.x < size[0]) && (seed.y > 0) && (seed.y < size[1]) && (seed.z > 0) && (seed.z < size[2]))
+		seed.isValid = false;
+	
+	ImageType3D::IndexType nhood_start_index, nhood_end_index;
+	ImageType3D::SizeType nhood_size;
+	ImageType3D::RegionType sub_vol;
+
+	// VIS!
+	seed.nHoodScale = 2.0 * seed.scale;
+	
+	nhood_start_index[0] = floor(seed.x - seed.nHoodScale + 0.5); 
+	nhood_start_index[1] = floor(seed.y - seed.nHoodScale + 0.5); 
+	nhood_start_index[2] = floor(seed.z - seed.nHoodScale + 0.5);
+	nhood_end_index[0] = floor(seed.x + seed.nHoodScale + 0.5);
+	nhood_end_index[1] = floor(seed.y + seed.nHoodScale + 0.5);
+	nhood_end_index[2] = floor(seed.z + seed.nHoodScale + 0.5);
+
+	nhood_size[0] = 2*seed.nHoodScale; nhood_size[1] = 2*seed.nHoodScale; nhood_size[2] = 2*seed.nHoodScale;
+	
+	/*VolumeOfInterestFilterType::Pointer sub_vol_filter = VolumeOfInterestFilterType::New();
+	sub_vol_filter->SetInput(data_ptr);
+	sub_vol.SetIndex(nhood_start_index);
+	sub_vol.SetSize(nhood_size);
+	sub_vol_filter->SetRegionOfInterest(sub_vol);
+	sub_vol_filter->Update();
+	*/
+	
+	seed.bandArea = 0;
+	seed.foregroundArea = 0;
+	seed.backgroundArea = 0;
+	seed.meanForegroundIntensity = 0;
+	seed.meanBackgroundIntensity = 0;
+	seed.xNormalizedInBand.clear();
+	seed.yNormalizedInBand.clear();
+	seed.zNormalizedInBand.clear();
+	seed.intensityInBand.clear();
+	seed.gxInBand.clear();
+	seed.gyInBand.clear();
+	seed.gzInBand.clear();
+
+	ImageType3D::IndexType current_index;
+	PixelType x_normalized = 0, y_normalized = 0, z_normalized = 0, radial_dist = 0;
+	bool is_inside_volume = true, is_outside_volume = false, is_on_foreground = true, is_on_background = false, contributes_to_energy = true, energy_band_outside_volume = false;
+	int in_volume_count = 0, out_volume_count = 0;
+	std::vector<double> foreground_values, background_values;
+	
+	for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
+		for(int i = nhood_start_index[0]; i <= nhood_end_index[0]; i++){
+			for(int j = nhood_start_index[1]; j <= nhood_end_index[1]; j++){
+			//for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
+				
+				current_index[0] = i; current_index[1] = j; current_index[2] = k; 
+				
+				//if(data_ptr->GetBufferedRegion().IsInside(current_index) == true){
+				if(data_ptr->GetLargestPossibleRegion().IsInside(current_index) == true){
+				//if((i > 0) && (i < size[0]) && (j > 0) && (j < size[1]) && (k > 0) && (k < size[2])){
+					is_inside_volume = true;
+					in_volume_count++;
+				}
+				else{
+					is_inside_volume = false;
+					out_volume_count++;
+				}
+								
+				x_normalized = (i - seed.x)/seed.scale;
+				y_normalized = (j - seed.y)/seed.scale;
+				z_normalized = (k - seed.z)/seed.scale;
+				radial_dist = std::sqrt((x_normalized*x_normalized) + (y_normalized*y_normalized) + (z_normalized*z_normalized));
+
+				if((radial_dist <= 1.0) && (is_inside_volume == true))
+				//if(((radial_dist < 1.0) || (std::abs(radial_dist - 1.0) < 0.000001)) && (is_inside_volume == true))
+					is_on_foreground = true;
+				else
+					is_on_foreground = false;
+
+				if((is_on_foreground == false) && (is_inside_volume == true))
+					is_on_background = true;
+				else
+					is_on_background = false;
+
+				if((abs(radial_dist - 1) < seed.bandNhood) && (is_inside_volume == true))		
+					contributes_to_energy = true;
+				else
+					contributes_to_energy = false;
+
+				if((abs(radial_dist - 1) < seed.bandNhood) && (is_inside_volume == false))		
+					energy_band_outside_volume = true;
+				else
+					energy_band_outside_volume = false;
+
+				if(contributes_to_energy == true){
+					seed.xNormalizedInBand.push_back(x_normalized/radial_dist);
+					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
+					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
+					seed.intensityInBand.push_back(data_ptr->GetPixel(current_index));
+					seed.gxInBand.push_back(gx->GetPixel(current_index));
+					seed.gyInBand.push_back(gy->GetPixel(current_index));
+					seed.gzInBand.push_back(gz->GetPixel(current_index));
+
+					seed.bandArea++;
+				}
+
+				if(energy_band_outside_volume == true){
+					seed.xNormalizedInBand.push_back(x_normalized/radial_dist);
+					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
+					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
+					seed.intensityInBand.push_back(0);
+					seed.gxInBand.push_back(0);
+					seed.gyInBand.push_back(0);
+					seed.gzInBand.push_back(0);
+					
+					seed.bandArea++;
+				}
+				
+				if(is_on_foreground == true){
+
+					//std::cout << "Position: " << i << ", " << j << ", " << k << " Value: " << data_ptr->GetPixel(current_index) << std::endl;
+					
+					foreground_values.push_back(data_ptr->GetPixel(current_index));
+					
+					seed.meanForegroundIntensity = seed.meanForegroundIntensity + data_ptr->GetPixel(current_index);
+					seed.foregroundArea++;
+				}
+				if(is_on_background == true){
+
+					background_values.push_back(data_ptr->GetPixel(current_index));
+
+					seed.meanBackgroundIntensity = seed.meanBackgroundIntensity + data_ptr->GetPixel(current_index);
+					seed.backgroundArea++;
+				}
+
+			} 
+		}
+	}
+
+	if(seed.isSecondary == true){
+		
+		if(foreground_values.size() != 0){
+			// Calculate the median
+			std::sort(foreground_values.begin(), foreground_values.end());
+
 			seed.meanForegroundIntensity = *(foreground_values.begin() + foreground_values.size() / 2);
 		}
 		else
@@ -1114,7 +1424,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	// If likelood is less than 0.001, do what? According to the thesis, the subvolume should be discarded. But here, the likelihood value is
 	// increased if it is less then 0.001
 	/*double mean_of_means = 0.0;
-	if(seed.isSecondary == true && seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
+	if(seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
 		
 		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
 		seed.meanForegroundIntensity = mean_of_means + this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
@@ -1167,10 +1477,13 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	
 	double dx = 0, dy = 0, dz = 0;
 	for(int i = 0; i < seed.bandArea; i++){
-		dx = dx + (seed.xNormalizedInBand[i] * del_energy[i]/seed.bandArea);
-		dy = dy + (seed.yNormalizedInBand[i] * del_energy[i]/seed.bandArea);
-		dz = dz + (seed.zNormalizedInBand[i] * del_energy[i]/seed.bandArea);
+		dx = dx + (seed.xNormalizedInBand[i] * del_energy[i]);
+		dy = dy + (seed.yNormalizedInBand[i] * del_energy[i]);
+		dz = dz + (seed.zNormalizedInBand[i] * del_energy[i]);
 	}
+	dx = dx / (double)seed.bandArea;
+	dy = dy / (double)seed.bandArea;
+	dz = dz / (double)seed.bandArea;
 	
 	dscale = dscale * this->allParams.nodeDetectionParams.dtScale;
 	dx = dx * this->allParams.nodeDetectionParams.dtX;
@@ -1187,16 +1500,16 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	seed.y = seed.y - dy;
 	seed.z = seed.z - dz;
 
-	if(seed.scale > this->allParams.nodeDetectionParams.maxVesselWidth)
+	if(seed.scale > (double)this->allParams.nodeDetectionParams.maxVesselWidth)
 		seed.scale = this->allParams.nodeDetectionParams.maxVesselWidth;
-	if(seed.scale < this->allParams.nodeDetectionParams.minVesselWidth)
+	if(seed.scale < (double)this->allParams.nodeDetectionParams.minVesselWidth)
 		seed.scale = this->allParams.nodeDetectionParams.minVesselWidth;
 
-	if(this->GetSign(dx) != this->GetSign(this->allParams.nodeDetectionParams.dirX))
+	if(this->GetSign(dx) != this->GetSign((double)this->allParams.nodeDetectionParams.dirX))
 		this->allParams.nodeDetectionParams.dtX = this->allParams.nodeDetectionParams.dtX * this->allParams.nodeDetectionParams.primaryReversePositionRate;
-	if(this->GetSign(dy) != this->GetSign(this->allParams.nodeDetectionParams.dirY))
+	if(this->GetSign(dy) != this->GetSign((double)this->allParams.nodeDetectionParams.dirY))
 		this->allParams.nodeDetectionParams.dtY = this->allParams.nodeDetectionParams.dtY * this->allParams.nodeDetectionParams.primaryReversePositionRate;
-	if(this->GetSign(dz) != this->GetSign(this->allParams.nodeDetectionParams.dirZ))
+	if(this->GetSign(dz) != this->GetSign((double)this->allParams.nodeDetectionParams.dirZ))
 		this->allParams.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZ * this->allParams.nodeDetectionParams.primaryReversePositionRate;
 
 	this->allParams.nodeDetectionParams.dirX = this->GetSign(dx);
@@ -1208,7 +1521,7 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	this->allParams.nodeDetectionParams.chZ[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
 
 	
-	if((dscale * this->allParams.nodeDetectionParams.dirScale) <= 0)
+	if((dscale * (double)this->allParams.nodeDetectionParams.dirScale) <= 0.0)
 		this->allParams.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScale * this->allParams.nodeDetectionParams.primaryReverseScaleRate;
 
 	this->allParams.nodeDetectionParams.dirScale = this->GetSign(dscale);
@@ -1245,16 +1558,19 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	}
 
 	double acc_energy = std::accumulate(del_energy.begin(), del_energy.end(), 0.0);
-	double dscale = acc_energy / seed.bandArea;
+	double dscale = acc_energy / (double)seed.bandArea;
 
 	//std::cout << " Energy: " << acc_energy << std::endl;
 	
 	double dx = 0, dy = 0, dz = 0, dc = 0;
 	for(int i = 0; i < seed.bandArea; i++){
-		dx = dx + (seed.xNormalizedInBand[i] * del_energy[i]/seed.bandArea);
-		dy = dy + (seed.yNormalizedInBand[i] * del_energy[i]/seed.bandArea);
-		dz = dz + (seed.zNormalizedInBand[i] * del_energy[i]/seed.bandArea);
+		dx = dx + (seed.xNormalizedInBand[i] * del_energy[i]);
+		dy = dy + (seed.yNormalizedInBand[i] * del_energy[i]);
+		dz = dz + (seed.zNormalizedInBand[i] * del_energy[i]);
 	}
+	dx = dx / (double)seed.bandArea;
+	dy = dy / (double)seed.bandArea;
+	dz = dz / (double)seed.bandArea;
 	
 	dscale = dscale * this->allParams.nodeDetectionParams.dtScale;
 	dx = dx * this->allParams.nodeDetectionParams.dtX;
@@ -1273,9 +1589,9 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	seed.y = seed.y - dy + dc*anchor_node.dirY[0];
 	seed.z = seed.z - dz + dc*anchor_node.dirZ[0];
 
-	if(seed.scale > this->allParams.nodeDetectionParams.maxVesselWidth)
+	if(seed.scale > (double)this->allParams.nodeDetectionParams.maxVesselWidth)
 		seed.scale = this->allParams.nodeDetectionParams.maxVesselWidth;
-	if(seed.scale < this->allParams.nodeDetectionParams.minVesselWidth)
+	if(seed.scale < (double)this->allParams.nodeDetectionParams.minVesselWidth)
 		seed.scale = this->allParams.nodeDetectionParams.minVesselWidth;
 
 	std::vector<double> ch_dir(3, 0), ch_dir_normalized(3, 0);
@@ -1310,7 +1626,7 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	this->allParams.nodeDetectionParams.chZ[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
 
 	
-	if((dscale * this->allParams.nodeDetectionParams.dirScale) <= 0)
+	if((dscale * (double)this->allParams.nodeDetectionParams.dirScale) <= 0.0)
 		this->allParams.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScale * this->allParams.nodeDetectionParams.secondaryReverseScaleRate;
 
 	this->allParams.nodeDetectionParams.dirScale = this->GetSign(dscale); // = dscale; // As given in Matlab code
@@ -1318,19 +1634,20 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 }
 
 int inline ftkVesselTracer::GetSign(double value){
-	if(value < 0)
+	if(value + 0.001 < 0)
 		return -1;
-	if(value > 0) 
+	if(value - 0.001 > 0) 
 		return 1;
+	//std::cout << "ye";
 	return 0;
 }
 
 bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
 	
 	bool exit_fitting = false;
-	this->allParams.nodeDetectionParams.currentMonitoredIter = (iter_number % this->allParams.nodeDetectionParams.iterNMonitorParamChange); // + 1;
+	this->allParams.nodeDetectionParams.currentMonitoredIter = (iter_number % this->allParams.nodeDetectionParams.iterNMonitorParamChange); //+ 1;
 	
-	if(seed.scale >= this->allParams.nodeDetectionParams.maxVesselWidth){
+	if(seed.scale >= (double)this->allParams.nodeDetectionParams.maxVesselWidth){
 		seed.exitIter = iter_number;
 		exit_fitting = true;
 	}
@@ -1344,10 +1661,10 @@ bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
 
 	if(iter_number > iter_minimum){
 		for(int i = 0; i < this->allParams.nodeDetectionParams.iterNMonitorParamChange; i++){
-			total_ch_scale = total_ch_scale + std::abs(this->allParams.nodeDetectionParams.chScale[i]);
-			total_ch_x = total_ch_x + std::abs(this->allParams.nodeDetectionParams.chX[i]);
-			total_ch_y = total_ch_y + std::abs(this->allParams.nodeDetectionParams.chY[i]);
-			total_ch_z = total_ch_z + std::abs(this->allParams.nodeDetectionParams.chZ[i]);
+			total_ch_scale = total_ch_scale + (double)std::abs(this->allParams.nodeDetectionParams.chScale[i]);
+			total_ch_x = total_ch_x + (double)std::abs(this->allParams.nodeDetectionParams.chX[i]);
+			total_ch_y = total_ch_y + (double)std::abs(this->allParams.nodeDetectionParams.chY[i]);
+			total_ch_z = total_ch_z + (double)std::abs(this->allParams.nodeDetectionParams.chZ[i]);
 		}
 		total_ch_position = total_ch_x + total_ch_y + total_ch_z;
 
@@ -1370,17 +1687,22 @@ void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
 		
 		index[0] = this->primaryNodes[i].x; index[1] = this->primaryNodes[i].y; index[2] = this->primaryNodes[i].z;
 
-		if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(index) == false)
+		if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(index) == false){
 			this->primaryNodes.erase(this->primaryNodes.begin() + i);
+			std::cout << "Primary node out-of-bounds erased. " << std::endl;
+		}
 	}
 
 	// Sort the primary nodes in descending order of likelihood
 	std::sort(this->primaryNodes.begin(), this->primaryNodes.end(), compareNodesByLikelihood);
 	std::reverse(this->primaryNodes.begin(), this->primaryNodes.end());
 
+	//for(int i = 0; i < 100; i++)
+	//	std::cout << i << ": " << this->primaryNodes[i].likelihood << ", " << this->primaryNodes[i].scale << std::endl;
+
 	// Remove nodes which are very close to each other (node with higher likelihood remains)
 	this->primaryNodesAfterHitTest.push_back(this->primaryNodes[0]);
-	double norm = 0;
+	double norm = 0.0;
 	bool hit = false;
 	
 	for(int i = 1; i < this->primaryNodes.size(); i++){		
@@ -1393,6 +1715,7 @@ void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
 			norm = Node::ComputeNorm(Node(current_primary_node.x - current_primary_node_final.x, current_primary_node.y - current_primary_node_final.y, 
 				current_primary_node.z - current_primary_node_final.z, 0));
 			if(norm < (this->allParams.nodeDetectionParams.distanceThresholdPrimary * (current_primary_node.scale + current_primary_node_final.scale))){
+				//std::cout << "Hit! norm: " << norm << " Sum of scales: " << (current_primary_node.scale + current_primary_node_final.scale) << std::endl;
 				hit = true;
 				break;
 			}
@@ -1401,28 +1724,28 @@ void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
 			this->primaryNodesAfterHitTest.push_back(current_primary_node);
 	}
 
-	std::cout << "Final primary nodes: " << this->primaryNodesAfterHitTest.size() << std::endl;
-	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++)
-		std::cout << " Scale: " << this->primaryNodesAfterHitTest[i].scale << " Likelihood: " << this->primaryNodesAfterHitTest[i].likelihood << std::endl;
+	//std::cout << "Final primary nodes: " << this->primaryNodesAfterHitTest.size() << std::endl;
+	//for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++)
+	//	std::cout << " Scale: " << this->primaryNodesAfterHitTest[i].scale << " Likelihood: " << this->primaryNodesAfterHitTest[i].likelihood << std::endl;
 }
 
 void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 
-	// For testing purposes
-	ImageType3D::IndexType test_index, test_index1;
-	test_index[0] = 128; test_index[1] = 7; test_index[2] = 25;
-	test_index1[0] = 6; test_index1[1] = 127; test_index1[2] = 24;
-	PixelType test_pixel = this->inputData->GetPixel(test_index);
-	PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
+	//// For testing purposes
+	//ImageType3D::IndexType test_index, test_index1;
+	//test_index[0] = 128; test_index[1] = 7; test_index[2] = 25;
+	//test_index1[0] = 6; test_index1[1] = 127; test_index1[2] = 24;
+	//PixelType test_pixel = this->inputData->GetPixel(test_index);
+	//PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
 
-	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	////this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
 
-	ImageType3D::IndexType test_index2;
-	test_index2[0] = this->primaryNodesAfterHitTest[0].x; 
-	test_index2[1] = this->primaryNodesAfterHitTest[0].y;
-	test_index2[2] = this->primaryNodesAfterHitTest[0].z;
-	PixelType test_pixel2 = this->inputData->GetPixel(test_index2);
-	PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
+	//ImageType3D::IndexType test_index2;
+	//test_index2[0] = this->primaryNodesAfterHitTest[0].x; 
+	//test_index2[1] = this->primaryNodesAfterHitTest[0].y;
+	//test_index2[2] = this->primaryNodesAfterHitTest[0].z;
+	//PixelType test_pixel2 = this->inputData->GetPixel(test_index2);
+	//PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
 	
 	
 	clock_t start_tracing_time, stop_tracing_time;
@@ -1430,24 +1753,25 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 
 	assert((start_tracing_time = clock()) != -1);
 	
-	/*Node a_node;
-	a_node.scale = 3.8346;
-	a_node.y = 124.7428;
-	a_node.x = 64.4287;
-	a_node.z = 19.1630;
-	a_node.likelihood = 0.4169;
-	a_node.meanForegroundIntensity = 0.5671;
-	a_node.meanBackgroundIntensity = 0.1502;
-	a_node.parentIDLength = 4;
-	this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
-	a_node.nHoodSecondaryMultiplier = 2;
-	this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
-	this->primaryNodesAfterHitTest[0] = a_node; */
-	this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	// For testing
+	//Node a_node;
+	//a_node.scale = 2.5;
+	//a_node.y = 57; //124.7428;
+	//a_node.x = 161; //64.4287;
+	//a_node.z = 25;
+	//a_node.likelihood = 0.4169;
+	//a_node.meanForegroundIntensity = 0.5671;
+	//a_node.meanBackgroundIntensity = 0.1502;
+	//a_node.parentIDLength = 4;
+	//this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
+	//a_node.nHoodSecondaryMultiplier = 2;
+	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	//this->primaryNodesAfterHitTest[0] = a_node; 
+	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
 	
 	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
-	PriorityQueueType node_queue(compareNodes(2));
+	//PriorityQueueType node_queue(compareNodes(2));
 	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
 
@@ -1495,7 +1819,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		this->GetBestTrace(light_node_queue, current_queue_element);
 
 		// Break if queue is empty
-		if(current_queue_element.second == this->allParams.nodeDetectionParams.infTraceQuality)
+		if(std::abs(current_queue_element.second - this->allParams.nodeDetectionParams.infTraceQuality) < 0.01)
 			break;
 
 		current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
@@ -1506,8 +1830,11 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			current_node.isPrimary = false;
 	
 		// If the quality of trace is above the threshold, these nodes have low quality (ignore them)
-		if(current_queue_element.second > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false)
+		if(current_queue_element.second > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+		//if(current_node.traceQuality > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+			//std::cout << current_queue_element.second << std::endl;
 			continue;
+		}
 		
 		hit = this->TraceHitTest(current_node);
 
@@ -1525,9 +1852,10 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			continue;
 		} 
 		
-		if(current_node.isPrimary == true){
-			
-			dir_hist = std::vector<double>(this->allParams.oriBin.angleCount, 1.0/this->allParams.oriBin.angleCount);
+		int p = current_node.parentID[0];
+		//if(current_node.isPrimary == true){
+		if(p == -1){	
+			dir_hist = std::vector<double>(this->allParams.oriBin.angleCount, 1.0/(double)this->allParams.oriBin.angleCount);
 			current_node.dirX.push_back(0);
 			current_node.dirY.push_back(0);
 			current_node.dirZ.push_back(0);
@@ -1551,13 +1879,15 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
 			continue;
 
-		std::vector<double> current_dir(3, 0);
+		std::vector<double> current_dir(3, 0.0);
 		//Node secondary_node;
 		for(int i = 0; i < current_node.dirX.size(); i++){
 			
 			// Only branches less than maxBranchAngle are considered
-			if((current_node.dirX[i] * dirX + current_node.dirY[i] * dirY + current_node.dirZ[i] * dirZ) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle * vnl_math::pi / 180))
+			if(((current_node.dirX[i]*dirX) + (current_node.dirY[i]*dirY) + (current_node.dirZ[i]*dirZ)) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0)){
+				//std::cout << std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0) << std::endl;
 				continue;
+			}
 			
 			current_dir[0] = current_node.dirX[i];
 			current_dir[1] = current_node.dirY[i];
@@ -1577,6 +1907,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			if(secondary_node.likelihood <= 0.0){
 				veryBadNodes.push_back(secondary_node);
 				quality_array.push_back(2*this->allParams.nodeDetectionParams.maxTraceCost);
+				//continue;
 			}
 			
 			// Parent IDs of secondary node = circshift(parent IDs of current_node)
@@ -1591,7 +1922,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 
 			trace_quality = this->computeTraceQuality(secondary_node);
 	
-			std::cout << "Trace quality: " << trace_quality << std::endl;
+			std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
 			
 			//node_queue.push(current_node);
 			//node_queue.push(secondary_node);
@@ -1611,26 +1942,66 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
 
 	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
+	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
 
 	//Visualize all nodes
 	//this->VisualizeNodesWithData3D(this->allNodes, true);
 	this->VisualizeNodesWithData3D(this->allNodes, false);
+
 
 	std::vector<Node> nodesWithNonPositiveLikelihood;
 	for(int i = 0; i < this->allNodes.size(); i++){
 		if(this->allNodes[i].likelihood <= 0.0)
 			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
 	}
-	this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
+	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
 
-	if(badNodes.empty() == false)
-		this->VisualizeNodesWithData3D(badNodes, false);
+	//if(badNodes.empty() == false)
+	//	this->VisualizeNodesWithData3D(badNodes, false);
+
+	//Write tracing result to image
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->secondaryNodesImage = RenderImageType3D::New();
+	this->secondaryNodesImage->SetRegions(id_reg);
+	this->secondaryNodesImage->Allocate();
+	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->secondaryNodesImage->FillBuffer(0);
+
+	itk::Index<3> idx;
+	for(int i = 0; i < this->allNodes.size(); i++){
+		
+		idx[0] = this->allNodes[i].x;
+		idx[1] = this->allNodes[i].y;
+		idx[2] = this->allNodes[i].z;
+
+		this->secondaryNodesImage->SetPixel(idx, 255);
+	}
+	
+	std::string secondary_nodes_file_name = this->data_folder_path;
+	secondary_nodes_file_name.append("_SecondaryNodes.tif");
+
+	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
+	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
+	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
+	secondary_nodes_writer->Update();
+
 
 	//Write all nodes to a file
-	this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
+	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
 
 	//write quality array
-	ofstream nodes_file_stream;
+	/*ofstream nodes_file_stream;
 	nodes_file_stream.open("QualityArray.txt", std::ios::out);
 
 	if(nodes_file_stream.is_open() == true){
@@ -1640,6 +2011,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	}
 	else
 		std::cout << "File cannot be opened. " << std::endl;
+		*/
 }
 
 bool compareQueueElement(queue_element e1, queue_element e2){
@@ -1666,7 +2038,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 		return hit;
 	}
 	
-	double norm = 0;
+	double norm = 0.0;
 	bool parent_node_hit = false, common_parents = false;
 	std::vector<double> parent_intersection(2 * node.parentIDLength, 0);
 	
@@ -1685,7 +2057,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 		norm = Node::ComputeNorm(Node(this->allNodes[i].x - node.x, this->allNodes[i].y - node.y, this->allNodes[i].z - node.z, 0));
 		if(norm < this->allParams.nodeDetectionParams.distanceThresholdSecondary * (this->allNodes[i].scale + node.scale)){
 
-			parent_intersection = std::vector<double>(2 * node.parentIDLength, 0);
+			parent_intersection = std::vector<double>(2 * node.parentIDLength, 0.0);
 			//std::set_intersection(this->allNodes[i].parentID.begin(), this->allNodes[i].parentID.end(), node.parentID.begin(), node.parentID.end(), parent_intersection.begin());
 			//std::set_intersection(this->allNodes[i].parentID.begin(), this->allNodes[i].parentID.begin()+this->allNodes[i].parentID.size(), node.parentID.begin(), node.parentID.begin()+node.parentID.size(), parent_intersection.begin());
 			//std::set_intersection(this->allNodes[i].parentID, this->allNodes[i].parentID+this->allNodes[i].parentID.size(), node.parentID, node.parentID+node.parentID.size(), parent_intersection.begin());
@@ -1712,8 +2084,11 @@ int ftkVesselTracer::TraceHitTest(Node node){
 				continue;
 			
 			hit = 1;
-			if(norm < std::min(this->allNodes[i].scale, node.scale))
+			//std::cout << hit << std::endl;
+			if(norm < std::min(this->allNodes[i].scale, node.scale)){
 				hit = 2;
+				//std::cout << hit << std::endl;
+			}
 
 			return hit;
 		}
@@ -1725,12 +2100,12 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 
 	double cost = 0.0; 
 	if(node.likelihood <= 0.0)
-		cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost;
+		cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //traceQualityThreshold; //.maxTraceCost;
 	else
-		cost = -1 * std::log(node.likelihood);
+		cost = -1.0 * std::log(node.likelihood);
 
 	int parent1 = node.parentID[0], parent2 = 0;
-	std::vector<double> pos_diff(3, 0), pos_diff_last(3, 0);
+	std::vector<double> pos_diff(3, 0.0), pos_diff_last(3, 0.0);
 	pos_diff[0] = this->allNodes[parent1].x - node.x;
 	pos_diff[1] = this->allNodes[parent1].y - node.y;
 	pos_diff[2] = this->allNodes[parent1].z - node.z;
@@ -1739,7 +2114,7 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 	pos_diff[1] = pos_diff[1] / pos_diff_norm;
 	pos_diff[2] = pos_diff[2] / pos_diff_norm;
 	
-	double current_curvature = 0;
+	double current_curvature = 0.0;
 	int count = 1;
 	std::vector<double> arr_curvature;
 	for(int i = 1; i < node.parentID.size(); i++){
@@ -1767,6 +2142,7 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 			cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
 		else
 			cost = cost - std::log(this->allNodes[parent1].likelihood);
+			//cost = cost - std::log(current_curvature * this->allNodes[parent1].likelihood);
 		
 		count = count + 1;
 
@@ -1780,19 +2156,22 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 	double std_curvature = 0.0;
 	for(int i = 0; i < arr_curvature.size(); i++)
 		std_curvature = std_curvature + std::pow(arr_curvature[i] - mean_curvature, 2);
-	std_curvature = std::sqrt(std_curvature);
+	std_curvature = std::sqrt(std_curvature / (double)arr_curvature.size());
 
-	node.traceQuality = std_curvature + (cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count;
+	node.traceQuality = std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);
 
 	return node.traceQuality;
 }
 
+void Node::InitDefaultParamsBeforeODFRecursion(){
+	this->nHoodSecondaryMultiplier = 2.0;
+	this->nHoodScaleSecondary = this->nHoodSecondaryMultiplier * this->scale;
+}
+
 void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<double>& dir_hist){
 	
-	// FUNCTION CALL
-	node.nHoodSecondaryMultiplier = 2.0;
+	node.InitDefaultParamsBeforeODFRecursion();
 
-	node.nHoodScaleSecondary = node.nHoodSecondaryMultiplier * node.scale;
 	double nHoodScale = node.nHoodScaleSecondary;
 	int sMaxBin = this->allParams.oriBin.indexLength;
 	nHoodScale = std::min(nHoodScale, (double)sMaxBin);
@@ -1812,8 +2191,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	//PixelType x_normalized = 0, y_normalized = 0, z_normalized = 0, current_pixel = 0;
 	//double radial_dist = 0, hist_val_region_based = 0;
 	//std::vector<int> bin_index(3, 0);
-	std::vector<double> sph_hist_region_based(this->allParams.oriBin.angleCount, 0);
-	std::vector<double> sph_hist_count(this->allParams.oriBin.angleCount, 0);
+	std::vector<double> sph_hist_region_based(this->allParams.oriBin.angleCount, 0.0);
+	std::vector<double> sph_hist_count(this->allParams.oriBin.angleCount, 0.0);
 
 	//#pragma omp parallel for
 	for(int j = nhood_start_index[1]; j <= nhood_end_index[1]; j++){
@@ -1823,23 +2202,24 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 				
 				ImageType3D::IndexType current_index, current_index_1;
 				current_index[0] = i; current_index[1] = j; current_index[2] = k;
+				
 				//current_index_1[0] = j; current_index_1[1] = i; current_index_1[2] = k;
 				
 				if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
 					in_volume_count++;
 				
-					PixelType x_normalized = (i - node.x)/node.scale;
-					PixelType y_normalized = (j - node.y)/node.scale;
-					PixelType z_normalized = (k - node.z)/node.scale;
+					PixelType x_normalized = ((double)i - node.x)/node.scale;
+					PixelType y_normalized = ((double)j - node.y)/node.scale;
+					PixelType z_normalized = ((double)k - node.z)/node.scale;
 					double radial_dist = std::sqrt((x_normalized * x_normalized) + (y_normalized * y_normalized) + (z_normalized * z_normalized));
 
-					//if(radial_dist > 1.0 && radial_dist < node.nHoodSecondaryMultiplier){
+					
 					if(radial_dist > 1.0 && radial_dist < node.nHoodSecondaryMultiplier	){
 						
 						std::vector<int> bin_index(3, 0);
-						bin_index[0] = floor(i - node.x + 0.5); 
-						bin_index[1] = floor(j - node.y + 0.5); 
-						bin_index[2] = floor(k - node.z + 0.5);
+						bin_index[0] = floor((double)i - node.x + 0.5); 
+						bin_index[1] = floor((double)j - node.y + 0.5); 
+						bin_index[2] = floor((double)k - node.z + 0.5);
 						int max_bin_element = *std::max_element(bin_index.begin(), bin_index.end());
 						int min_bin_element = *std::min_element(bin_index.begin(), bin_index.end());
 						
@@ -1852,7 +2232,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 							//int hist_bin2 = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[1] + sMaxBin][bin_index[0] + sMaxBin];
 							
 							
-							int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[0] + sMaxBin][bin_index[1] + sMaxBin];
+							//int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[0] + sMaxBin][bin_index[1] + sMaxBin];
+							int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[1] + sMaxBin][bin_index[0] + sMaxBin];
 							
 							
 							//int hist_bin3 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin][bin_index[1] + sMaxBin][bin_index[2] + sMaxBin];
@@ -1861,6 +2242,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 							PixelType current_pixel = this->normalizedInputData->GetPixel(current_index);
 							//float current_pixel_1 = this->normalizedInputData->GetPixel(current_index_1);
 							
+							//double hist_val_region_based  = current_pixel;
 							double hist_val_region_based = std::abs(current_pixel - node.meanBackgroundIntensity) - std::abs(current_pixel - node.meanForegroundIntensity);
 							
 							sph_hist_region_based[hist_bin] = sph_hist_region_based[hist_bin] + hist_val_region_based;
@@ -1878,14 +2260,14 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	//for(int i = 0; i < sph_hist_region_based.size(); i++)
 	//	std::cout << i << ", " << sph_hist_region_based[i] << std::endl;
 
-	ofstream nodes_file_stream;
+	/*ofstream nodes_file_stream;
 	nodes_file_stream.open("SphHist_Cpp.txt", std::ios::out);
 
 	if(nodes_file_stream.is_open() == true){
 		for(int i = 0; i < sph_hist_region_based.size(); i++)
 			nodes_file_stream << sph_hist_region_based[i] << std::endl;
 		nodes_file_stream.close();
-	}
+	}*/
 
 	//#pragma omp parallel for
 	// Normalize sphrical histogram
@@ -1895,7 +2277,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	}
 
 	double hist_sum = std::accumulate(sph_hist_region_based.begin(), sph_hist_region_based.end(), 0.0);
-	if(hist_sum == 0){
+	if(std::abs(hist_sum - 0.0) < 0.00001){
 		node.dirX.clear(); node.dirY.clear(); node.dirZ.clear();
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
@@ -1904,17 +2286,17 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
-	// Obtain the smoothing prior
-	std::vector<double> smooth_hist_1(this->allParams.oriBin.angleCount, 0), smooth_hist_2(this->allParams.oriBin.angleCount, 0);
+	// Obtain the smoothing prior - According to thesis, this should be a Gaussian transition prior
+	std::vector<double> smooth_hist_1(this->allParams.oriBin.angleCount, 0.0), smooth_hist_2(this->allParams.oriBin.angleCount, 0.0);
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
 		smooth_hist_1[i] = dir_hist[i];
 		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
-			smooth_hist_1[i] = smooth_hist_1[i] + this->allParams.oriBin.histSmoothingFactor * dir_hist[this->allParams.oriBin.nbr[i][j]];
+			smooth_hist_1[i] = smooth_hist_1[i] + (this->allParams.oriBin.histSmoothingFactor * dir_hist[this->allParams.oriBin.nbr[i][j]]);
 	}
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
 		smooth_hist_2[i] = smooth_hist_1[i];
 		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
-			smooth_hist_2[i] = smooth_hist_2[i] + this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]];
+			smooth_hist_2[i] = smooth_hist_2[i] + (this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]]);
 	}
 	
 	//#pragma omp parallel for
@@ -1922,7 +2304,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		sph_hist_region_based[i] = sph_hist_region_based[i] * smooth_hist_2[i];
 	
 	hist_sum = std::accumulate(sph_hist_region_based.begin(), sph_hist_region_based.end(), 0.0);
-	if(hist_sum == 0){
+	if(std::abs(hist_sum - 0.0) < 0.00001){
 		node.dirX.clear(); node.dirY.clear(); node.dirZ.clear();
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
@@ -1932,28 +2314,28 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
 	// Print the histogram
-	for(int i = 0; i < sph_hist_region_based.size(); i++)
-		std::cout << i << ", " << sph_hist_region_based[i] << std::endl;
+	//for(int i = 0; i < sph_hist_region_based.size(); i++)
+	//	std::cout << i << ", " << sph_hist_region_based[i] << std::endl;
 	
-	ofstream nodes_file_stream1;
+	/*ofstream nodes_file_stream1;
 	nodes_file_stream1.open("SphHist_Cpp_smoothed.txt", std::ios::out);
 
 	if(nodes_file_stream1.is_open() == true){
 		for(int i = 0; i < sph_hist_region_based.size(); i++)
 			nodes_file_stream1 << sph_hist_region_based[i] << std::endl;
 		nodes_file_stream1.close();
-	}
+	}*/
 	
 	// Finding modes of the histogram
 	bool mode_flag = false;
 	std::vector<std::vector<double> > mode_bins;
 	std::vector<double> mode_hist_val;
-	std::vector<double> a_bin(3, 0);
+	std::vector<double> a_bin(3, 0.0);
 	int index1 = 0, index2 = 0;
 	// Find out the peaks of the histogram and the corresponding bin locations
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
 		mode_flag = true;
-		if(sph_hist_region_based[i] == 0)
+		if(std::abs(sph_hist_region_based[i] - 0.0) < 0.00001)
 			continue;
 		
 		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++){
@@ -1997,38 +2379,41 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	std::reverse(mode_bins_sorted.begin(), mode_bins_sorted.end());
 	
 	double x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0;
-	std::vector<double> bin1(3, 0), bin2(3, 0);
+	std::vector<double> bin1(3, 0.0), bin2(3, 0.0);
 	for(int i = 1; i < mode_bins_sorted.size(); i++){
 		bin1 = mode_bins_sorted[i];
 		for(int j = 0; j <= i - 1; j++){
 			bin2 = mode_bins_sorted[j];
-			if((bin1[0]*bin2[0] + bin1[1]*bin2[1] + bin1[2]*bin2[2]) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0))
-				mode_hist_val_sorted[i] = 0;
+			if(((bin1[0]*bin2[0]) + (bin1[1]*bin2[1]) + (bin1[2]*bin2[2])) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0))
+				mode_hist_val_sorted[i] = 0.0;
 		}
 	}
 
 	std::vector<std::vector<double> > mode_bins_sorted_1;
 	std::vector<double> mode_hist_val_sorted_1;
 	std::multimap<double, std::vector<double> > bin_and_val_map_1;
-	std::multimap<double, std::vector<double> >::iterator iter_map_1;
+	std::multimap<double, std::vector<double> >::iterator iter_map_1, iter_map_2;
 	for(int i = 0; i < mode_bins_sorted.size(); i++)
 		bin_and_val_map_1.insert(std::pair<double, std::vector<double> >(mode_hist_val_sorted[i], mode_bins_sorted[i]));
 	
-	bin_and_val_map_1.erase(0);
+	bin_and_val_map_1.erase(0.0);
 
 	for(iter_map_1 = bin_and_val_map_1.begin(); iter_map_1 != bin_and_val_map_1.end(); iter_map_1++){
-		mode_hist_val_sorted_1.push_back((*iter_map_1).first);
-		mode_bins_sorted_1.push_back((*iter_map_1).second);
+
+		//if(std::abs((*iter_map_1).first - 0.0) > 0.00001){
+			mode_hist_val_sorted_1.push_back((*iter_map_1).first);
+			mode_bins_sorted_1.push_back((*iter_map_1).second);
+		//}
 	}
 	std::reverse(mode_hist_val_sorted_1.begin(), mode_hist_val_sorted_1.end());
 	std::reverse(mode_bins_sorted_1.begin(), mode_bins_sorted_1.end());
 	
-	double branching_th = 0;
+	double branching_th = 0.0;
 	std::vector<double> dirX, dirY, dirZ;
 	if(mode_bins_sorted_1.size() > 2){
-		branching_th = this->allParams.nodeDetectionParams.branchingThreshold * (mode_hist_val_sorted_1[0] + mode_hist_val_sorted_1[1]);
+		branching_th = 0.5 * (mode_hist_val_sorted_1[0] + mode_hist_val_sorted_1[1]);
 
-		if(mode_hist_val_sorted_1[2] > branching_th){
+		if(mode_hist_val_sorted_1[2] > this->allParams.nodeDetectionParams.branchingThreshold * branching_th){
 			for(int i = 0; i < 3; i++){
 				dirX.push_back(mode_bins_sorted_1[i][0]);
 				dirY.push_back(mode_bins_sorted_1[i][1]);
@@ -2051,9 +2436,9 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		}
 	}
 	if(dirX.size() < 2){
-		dirX.push_back(-1 * dirX[0]);
-		dirY.push_back(-1 * dirY[0]);
-		dirZ.push_back(-1 * dirZ[0]);
+		dirX.push_back(-1.0 * dirX[0]);
+		dirY.push_back(-1.0 * dirY[0]);
+		dirZ.push_back(-1.0 * dirZ[0]);
 	}
 
 	node.dirX = dirX;
@@ -2061,7 +2446,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	node.dirZ = dirZ;
 	node.sphHistRegionBased = sph_hist_region_based;
 
-	// Print the detected maximal nodes
+	// Print the detected maximal modes
 	//for(int i = 0; i < node.dirX.size(); i++){
 	//	std::cout << node.dirX[i] << ", " << node.dirY[i] << ", " << node.dirZ[i] << std::endl;
 	//}
@@ -2213,6 +2598,8 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 	//Node dir;
 	//double norm_dist = 0.0, existingNodeDist = 0.0;
 	//int angleBinLinear = 0;
+
+	std::cout << "Computing affinity graph.. " << std::endl;
 	
 	//allocate memory for the binned edges in every node
 	for(int i = 0; i < this->allNodes.size(); i++)
@@ -2295,7 +2682,9 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 		}
 	}
 
-	//this->VisualizeAffinityGraph();
+	std::cout << "Done with computing affinity graph. " << std::endl;
+
+	//this->VisualizeAffinityGraph(false);
 
 
 
@@ -2367,7 +2756,7 @@ int ftkVesselTracer::ComputeAffinityBin(Node dir){
 	return bin;
 }
 
-void ftkVesselTracer::VisualizeAffinityGraph(void){
+void ftkVesselTracer::VisualizeAffinityGraph(bool render_with_data = false){
 
 	ITKToVTKConnectorType::Pointer ITK_to_VTK_connector = ITKToVTKConnectorType::New();
 
@@ -2471,7 +2860,9 @@ void ftkVesselTracer::VisualizeAffinityGraph(void){
 	poly_actor->GetProperty()->SetColor(0, 255, 0);
 	
 	renderer->AddActor(poly_actor);
-	renderer->AddVolume(volume);
+
+	if(render_with_data)
+		renderer->AddVolume(volume);
 
 	renderer->ResetCamera();
 	
@@ -2480,7 +2871,7 @@ void ftkVesselTracer::VisualizeAffinityGraph(void){
 	render_window_interactor->Start();
 }
 
-void ftkVesselTracer::VisualizeMinimumSpanningForest(void){
+void ftkVesselTracer::VisualizeMinimumSpanningForest(bool render_with_data = false){
 	
 	ITKToVTKConnectorType::Pointer ITK_to_VTK_connector = ITKToVTKConnectorType::New();
 
@@ -2584,7 +2975,9 @@ void ftkVesselTracer::VisualizeMinimumSpanningForest(void){
 	poly_actor->GetProperty()->SetColor(0, 255, 0);
 	
 	renderer->AddActor(poly_actor);
-	renderer->AddVolume(volume);
+
+	if(render_with_data)
+		renderer->AddVolume(volume);
 
 	renderer->ResetCamera();
 	
@@ -2600,6 +2993,7 @@ void ftkVesselTracer::ComputeMinimumSpanningTreeBoost(void){
 
 void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 
+	std::cout << "Creating minimum spanning forest.."<< std::endl;
 	
 	int from = 0, to = 0, label = -1, oldID = 0, newID = 0, loop_count = 0;
 	for(int i = 0; i < this->edges.size(); i++){		
@@ -2699,7 +3093,7 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 		}
 	}
 
-	this->VisualizeMinimumSpanningForest();
+	this->VisualizeMinimumSpanningForest(false);
 
 	/*int count = -1;
 	for(int i = 0; i < label; i++){
@@ -2809,4 +3203,9 @@ void ftkVesselTracer::PrintForest(void){
 		else
 			std::cout << "NULL]" << std::endl;
 	}
+}
+
+void ftkVesselTracer::InitNodeDetectionParamsDefault(void){
+	
+	this->allParams.nodeDetectionParams.initByDefaultValues();
 }
