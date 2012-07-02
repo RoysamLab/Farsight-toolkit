@@ -38,6 +38,9 @@ public:
 
 	template<typename TINPUT, typename TOUTPUT >
 	void rescaleImage( std::string, std::string );
+
+	template<typename TINPUT, typename TOUTPUT >
+	void computeDistMap( std::string inputImageName, std::string outputPath, std::string imageType );
 	
 	template<typename TINPUT >
 	void saveNRRD( std::string );

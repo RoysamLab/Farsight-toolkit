@@ -5,8 +5,9 @@
 #include "ftkMainDarpa.h"
 #include "ftkMainDarpaSegment.h"
 #include "ftkMainDarpaTrace.h"
+#include "ftkMainDarpaAstroTrace.h"
 
-enum STEPS { SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, RESCALE, RESCALE_8BIT, SEGMENT, TRACE};
+enum STEPS { SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
 std::map< std::string, STEPS> stepsmap;
 
 void register_stepsmap()
@@ -18,8 +19,10 @@ void register_stepsmap()
     stepsmap["PROJECTIONFLO"] = PROJECTIONFLO;
     stepsmap["RESCALE"] = RESCALE;
     stepsmap["RESCALE_8BIT"] = RESCALE_8BIT;
+	stepsmap["DISTANCE_MAP"] = DISTANCE_MAP;
     stepsmap["SEGMENT"] = SEGMENT;
     stepsmap["TRACE"] = TRACE;
+	stepsmap["ASTRO_TRACE"] = ASTRO_TRACE;
 }
 
 int main(int argc, char *argv[])
@@ -110,6 +113,17 @@ int main(int argc, char *argv[])
 			objftkMainDarpa->rescaleImage<rawImageType_16bit, rawImageType_8bit>( imageInputName, imageOutputName );
 			break;
 		}
+
+		case DISTANCE_MAP:
+		{
+			std::cout << "DISTANCE_MAP!"; 
+			std::string imageInputName = argv[2];
+			std::string imageOutputName = argv[3];
+			std::string imageType = argv[4];
+			
+			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_16bit>( imageInputName, imageOutputName, imageType );
+			break;
+		}
 			
 		case SEGMENT:
 		{
@@ -139,6 +153,22 @@ int main(int argc, char *argv[])
 			delete objftkMainDarpaTrace_1;
 			break;
 		}
+
+		case ASTRO_TRACE:
+		{
+			ftkMainDarpaAstroTrace *objftkMainDarpaAstroTrace_1;
+			objftkMainDarpaAstroTrace_1 = new ftkMainDarpaAstroTrace;
+			std::cout << "ASTRO_TRACE!"; 
+			std::string astroTraceParams = argv[2];
+
+			objftkMainDarpaAstroTrace_1->readParameters( astroTraceParams );
+			objftkMainDarpaAstroTrace_1->runPreprocesing();
+			objftkMainDarpaAstroTrace_1->runSpliting();
+			objftkMainDarpaAstroTrace_1->runInterestPoints();
+			delete objftkMainDarpaAstroTrace_1;
+			break;
+		}
+
 	}
 	return 0;
 }

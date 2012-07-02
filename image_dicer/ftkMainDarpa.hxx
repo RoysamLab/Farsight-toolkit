@@ -849,3 +849,47 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		myfile.close();
 	}
 }
+
+template<typename TINPUT, typename TOUTPUT >
+void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outputPath, std::string imageType )
+{
+	std::string tipoImagen;
+	int foundType=imageType.find("TIFF");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".tif";
+	}
+	foundType=imageType.find("NRRD");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".nrrd";
+	}
+
+	int found=inputImageName.find(".");
+	std::string inputImageNameLocal = inputImageName.substr(0,found);
+	
+	found = inputImageNameLocal.find_last_of("/\\");
+	inputImageNameLocal = inputImageNameLocal.substr(found+1);
+
+	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
+	std::string temp1a = outputPath + "/" + inputImageNameLocal + "_dist_map" + tipoImagen;
+	
+	typedef itk::BinaryThresholdImageFilter<TINPUT, rawImageType_8bit> ThresholdFilterType;
+	typename ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetLowerThreshold(1);
+	threshold_filter->SetInsideValue(255);
+	threshold_filter->SetOutsideValue(0);
+	threshold_filter->SetInput(inputImage);
+	//threshold_filter->Update();
+
+	typedef itk::SignedMaurerDistanceMapImageFilter<rawImageType_8bit, TOUTPUT> SignedMaurerDistanceMapImageFilterType;
+	typename SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(threshold_filter->GetOutput());
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+
+	writeImage< TINPUT, TOUTPUT >(MaurerFilter->GetOutput(),temp1a.c_str());
+
+}

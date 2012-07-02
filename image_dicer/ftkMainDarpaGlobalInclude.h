@@ -10,6 +10,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkMultiThreader.h"
 #include "itkRGBPixel.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 
 // FTK INCLUDES
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
