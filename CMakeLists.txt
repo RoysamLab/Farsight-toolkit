@@ -414,8 +414,13 @@ if(BUILD_NUCLEI)
 endif(BUILD_NUCLEI)
 
 if(BUILD_VESSEL_TRACING)
-  set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
+  #set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
+  add_subdirectory( VesselTracer )
 endif(BUILD_VESSEL_TRACING)
+
+#if(BUILD_SuperEllipsoidTracer)
+ # 	set(CPACK_PACKAGE_EXECUTABLES "Trace3D" "Super" ${CPACK_PACKAGE_EXECUTABLES})
+#endif(BUILD_SuperEllipsoidTracer)
 
 if(BUILD_VESSEL)
  add_subdirectory( Vessel )
