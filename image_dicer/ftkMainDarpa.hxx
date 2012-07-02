@@ -890,6 +890,6 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 	MaurerFilter->SetInsideIsPositive(false);
 	MaurerFilter->Update();
 
-	writeImage< TINPUT, TOUTPUT >(MaurerFilter->GetOutput(),temp1a.c_str());
+	writeImage< TOUTPUT >(MaurerFilter->GetOutput(),temp1a.c_str());
 
 }
