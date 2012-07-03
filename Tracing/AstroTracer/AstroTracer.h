@@ -258,7 +258,7 @@ public:
 
 	void LoadParameters(const char* parametersFileName);
 
-	void LoadCurvImage(std::string fname, unsigned int pad); 
+	void LoadCurvImageFromPath(std::string fname, unsigned int pad); 
 	void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);

@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
 
 	
 	clock_t LoadCurvImage_start_time = clock();
-	AT->LoadCurvImage(std::string(argv[1]), 0);////
+	AT->LoadCurvImageFromPath(std::string(argv[1]), 0);////
 	std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t LoadSomaImage_start_time = clock();

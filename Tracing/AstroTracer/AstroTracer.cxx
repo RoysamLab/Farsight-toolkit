@@ -57,7 +57,7 @@ void AstroTracer::LoadParameters(const char* parametersFileName)
 	std::cout<<"offshoot="<<this->offshoot<<std::endl;
 
 }
-void AstroTracer::LoadCurvImage(std::string fname, unsigned int pad) 
+void AstroTracer::LoadCurvImageFromPath(std::string fname, unsigned int pad) 
 {
 	std::cout << "Reading input file "<< fname << std::endl;
 	ReaderType::GlobalWarningDisplayOff();
