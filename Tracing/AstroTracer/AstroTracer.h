@@ -81,26 +81,26 @@
 
 typedef float PixelType;
 
-class SWCNode;
-class HeapNode;
-class Comparison;
+class SWCNode_astro;
+class HeapNode_astro;
+class Comparison_astro;
 //class AstroTracer;
 
-class HeapNode
+class HeapNode_astro
 {
 public:
 	itk::Index<3> ndx;
 	PixelType KeyValue;
 	
-	HeapNode(itk::Index<3> , PixelType);
-	HeapNode();
-	bool operator==(const HeapNode&);
+	HeapNode_astro(itk::Index<3> , PixelType);
+	HeapNode_astro();
+	bool operator==(const HeapNode_astro&);
 };
 
-class Comparison
+class Comparison_astro
 {
 public:
-	bool operator() (const HeapNode* lhs, const HeapNode* rhs) const  
+	bool operator() (const HeapNode_astro* lhs, const HeapNode_astro* rhs) const  
 	{
 		return ((lhs->KeyValue) > (rhs->KeyValue));
 	}
@@ -109,7 +109,7 @@ public:
 class RootPointFeatureVector{
 
 public:
-	HeapNode node;	
+	HeapNode_astro node;	
 	unsigned short int ID;
 	double radius;
 	float sphere_likelihood;
@@ -142,8 +142,8 @@ class IntrinsicFeatureVector{
 
 public:
 
-	HeapNode centroid;
-	//HeapNode weightedCentroid;
+	HeapNode_astro centroid;
+	//HeapNode_astro weightedCentroid;
 	unsigned short int ID;
 	int volume;
 	int boundingBoxVolume;
@@ -235,7 +235,7 @@ public:
 	typedef itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D> RescalerType;
 	typedef itk::MedianImageFilter<ImageType3D, ImageType3D> MedianFilterType;
 	typedef itk::Image< unsigned char, 3 > CharImageType3D;
-	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
+	typedef itk::Image< SWCNode_astro*, 3 > SWCImageType3D;
 	typedef itk::Image< unsigned short, 3 > LabelImageType3D;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
 
@@ -272,7 +272,7 @@ public:
 	void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
 
 	void ComputeAstroFeatures(std::string, std::string, unsigned int, const std::string);
-	void ComputeAstroFeaturesPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, LabelImageType3D::Pointer&, const bool);
+	void ComputeAstroFeaturesPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::vector<LabelImageType3D::Pointer>&, const bool);
 	bool PopulateLoGImages(std::vector<float> sigma_vec);
 	void CallFeatureMainExternal();
 
@@ -292,7 +292,7 @@ public:
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
-	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
+	void Set_DistanceMapImage(LabelImageType3D::Pointer distance_map_image);
 
 	
 	//external parameters
@@ -308,10 +308,10 @@ protected:
 	void GetFeature(float sigma); //void GetFeature( float );
 	bool IsSeed(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
-	SWCNode* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
-	float GetCost(SWCNode* , itk::Index<3> &  );
-	float GetCostLocal(SWCNode* , itk::Index<3> & );
-	float GetCostLocalLabel(SWCNode* , itk::Index<3> & );
+	SWCNode_astro* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
+	float GetCost(SWCNode_astro* , itk::Index<3> &  );
+	float GetCostLocal(SWCNode_astro* , itk::Index<3> & );
+	float GetCostLocalLabel(SWCNode_astro* , itk::Index<3> & );
 	void ScanNeighbors( PixelType & a1,PixelType & a2,PixelType & a3, itk::Index<3> &);
 	PixelType Update( PixelType a1,  PixelType a2,  PixelType a3,   PixelType P ) ;
 	void Decimate();
@@ -321,21 +321,21 @@ protected:
 	float getRadiusAndLikelihood(itk::Vector<float,3> & pos, float& likelihood);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
-	float GetCostLocal2(SWCNode*, itk::Index<3>&);
+	float GetCostLocal2(SWCNode_astro*, itk::Index<3>&);
 	bool IsBall(const itk::FixedArray<float, 3>&, unsigned int&, double&);
 	void GetHessianBasedObjectnessMeasures(itk::FixedArray<double, 3>&, ObjectnessMeasures&);
 	
 
 private:
-	std::vector<SWCNode*> SWCNodeContainer;
+	std::vector<SWCNode_astro*> SWCNode_astroContainer;
 	//CharImageType3D::Pointer SomaImage;
 	LabelImageType3D::Pointer SomaImage;
 	PixelType CostThreshold;
-	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > PQ;
+	std::priority_queue < HeapNode_astro* , std::vector<HeapNode_astro*>,  Comparison_astro > PQ;
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
 	ImageType3D::Pointer ObjectnessImage;
-	ImageType3D::Pointer SomaDistanceMapImage;
+	LabelImageType3D::Pointer SomaDistanceMapImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
@@ -350,32 +350,32 @@ private:
 	bool isCoverageOptimized;
 
 	std::vector<ImageType3D::Pointer> LoG_Vector;
-	std::vector<std::vector<HeapNode> > LoGPointsVector;
-	std::vector<HeapNode> AllLoGPointsVector;
+	std::vector<std::vector<HeapNode_astro> > LoGPointsVector;
+	std::vector<HeapNode_astro> AllLoGPointsVector;
 	
 	std::vector<CandidateRootPoint> CandidateRootPoints, AllRootPoints;
 	std::vector<NucleiObject> NucleiObjects;
 
-	std::vector<HeapNode> CentroidListForTracing;
+	std::vector<HeapNode_astro> CentroidListForTracing;
 	std::vector<double> CentroidScales;
-	std::vector<HeapNode> DensityFilteredCentroidListForTracing;
+	std::vector<HeapNode_astro> DensityFilteredCentroidListForTracing;
 };
 
 ///////////////////////////////////////////////////////////////
 
-class SWCNode 
+class SWCNode_astro 
 {
 public:
 	long ID, PID, TreeID;
 	itk::Index<3> ndx;
 	itk::Vector<float,3> pos;
 	bool IsLeaf, IsBranch, IsActive;
-	SWCNode *parent;
-	std::vector<SWCNode*> children;
+	SWCNode_astro *parent;
+	std::vector<SWCNode_astro*> children;
 
-	SWCNode(); 
-	SWCNode(long, long, long, itk::Index<3> );
-	SWCNode(long, SWCNode *, long, itk::Index<3> ); 
+	SWCNode_astro(); 
+	SWCNode_astro(long, long, long, itk::Index<3> );
+	SWCNode_astro(long, SWCNode_astro *, long, itk::Index<3> ); 
 	
 	//static bool IsIndexSame(itk::Index<3>, itk::Index<3>);
 

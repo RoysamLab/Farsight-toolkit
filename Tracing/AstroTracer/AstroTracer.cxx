@@ -257,11 +257,11 @@ void AstroTracer::RunTracing(void)
 	{
 		itk::Index<3> startIndex = (*startIt);
 		startIndex[2] += padz;													//Convert to padded image index
-		SWCNode* start_node = new SWCNode(CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode
+		SWCNode_astro* start_node = new SWCNode_astro(CurrentID++, -1, tID, startIndex);	//This is the seed points SWCNode_astro
 		SWCImage->SetPixel(startIndex,start_node);								//Adding all seed points to the SWCImage
 		ConnImage->SetPixel(startIndex,0.0f);									//Set the ConnectedImage to 0.0 at all the seed nodes (remember that the Connected image is all initialized with MAXVAL)... 
-		SWCNodeContainer.push_back(start_node);									//Fill the _SWCNodeContainer with start points
-		HeapNode *h = new HeapNode(start_node->ndx, 0.0);						//Heap nodes hold an (index, value) pair
+		SWCNode_astroContainer.push_back(start_node);									//Fill the _SWCNode_astroContainer with start points
+		HeapNode_astro *h = new HeapNode_astro(start_node->ndx, 0.0);						//Heap nodes hold an (index, value) pair
 		PQ.push(h);																//Priority Queue contains the seed nodes now...
 	}
 	std::cout << "fillSWCImage1 took: " << (clock() - fillSWCImage1_start_time)/(float) CLOCKS_PER_SEC << std::endl;
@@ -275,7 +275,7 @@ void AstroTracer::RunTracing(void)
 		if (Nit.Get() > 0)	//Vesselness value is greater than 0
 		{
 			itk::Index<3> endx = Nit.GetIndex();
-			SWCNode* s2 = new SWCNode(0, -1, -1*(++eCounter), endx);	//id = 0, parent_id = -1, tree id = -1 * eCounter, index that this vesselness value is greater than 0
+			SWCNode_astro* s2 = new SWCNode_astro(0, -1, -1*(++eCounter), endx);	//id = 0, parent_id = -1, tree id = -1 * eCounter, index that this vesselness value is greater than 0
 			SWCImage->SetPixel(endx,s2);								//Adding all critical points where vesselness value is greater than 0 to the SWC image
 		}
 	}
@@ -311,8 +311,8 @@ void AstroTracer::RunTracing(void)
 
 	while(!PQ.empty())	//For each seed node
 	{
-		//Take the top HeapNode and remove it from the Priority Queue 
-		HeapNode *h = PQ.top();
+		//Take the top HeapNode_astro and remove it from the Priority Queue 
+		HeapNode_astro *h = PQ.top();
 		PQ.pop();
 
 		//Temporarily store the index and value of the node
@@ -320,7 +320,7 @@ void AstroTracer::RunTracing(void)
 		KeyValue = h->KeyValue;
 		delete h;
 
-		//Don't do anything if the heapnode value is larger than the one in the connected image
+		//Don't do anything if the HeapNode_astro value is larger than the one in the connected image
 		if ( KeyValue > ConnImage->GetPixel(ndx) ) 
 			continue;
 
@@ -335,7 +335,7 @@ void AstroTracer::RunTracing(void)
 				showMessage = false;
 			}
 			
-			SWCNode* t  = SWCImage->GetPixel(ndx);
+			SWCNode_astro* t  = SWCImage->GetPixel(ndx);
 			if ( t != NULL) 
 			{
 				if (t->TreeID < 0) 
@@ -346,14 +346,14 @@ void AstroTracer::RunTracing(void)
 			continue;
 		}
 
-		SWCNode* s = SWCImage->GetPixel(ndx);
+		SWCNode_astro* s = SWCImage->GetPixel(ndx);
 		if (s != NULL) 
 		{
 			if (s->TreeID < 0) 
 			{
 				std::vector<IndexType> Chain;
 				
-				SWCNode* L = TBack(ndx, Chain);
+				SWCNode_astro* L = TBack(ndx, Chain);
 
 				if ( L  != NULL ) 
 				{
@@ -366,21 +366,21 @@ void AstroTracer::RunTracing(void)
 					//	continue;
 					
 					std::vector<IndexType>::reverse_iterator cit;
-					SWCNode* par = L;
+					SWCNode_astro* par = L;
 
 					for (cit = Chain.rbegin(); cit != Chain.rend(); ++cit) 
 					{
-						SWCNode* t = SWCImage->GetPixel(*cit);
+						SWCNode_astro* t = SWCImage->GetPixel(*cit);
 						if (t == NULL) 
 						{
 							float val = ConnImage->GetPixel(*cit) * costFactor;
 							ConnImage->SetPixel((*cit),val);
-							SWCNode* s = new SWCNode(CurrentID++, par, L->TreeID, (*cit));
+							SWCNode_astro* s = new SWCNode_astro(CurrentID++, par, L->TreeID, (*cit));
 							SWCImage->SetPixel((*cit),s);
-							SWCNodeContainer.push_back(s);
+							SWCNode_astroContainer.push_back(s);
 							par->children.push_back(s);
 							par = s;
-							HeapNode *h = new HeapNode((*cit), val);
+							HeapNode_astro *h = new HeapNode_astro((*cit), val);
 							PQ.push(h);
 						}
 						else 
@@ -391,13 +391,13 @@ void AstroTracer::RunTracing(void)
 								eCounter--;
 								float val = ConnImage->GetPixel(*cit) * costFactor;
 								ConnImage->SetPixel((*cit),val);
-								SWCNode* s = new SWCNode(CurrentID++, par, L->TreeID, (*cit));
+								SWCNode_astro* s = new SWCNode_astro(CurrentID++, par, L->TreeID, (*cit));
 								SWCImage->SetPixel((*cit),s);
-								SWCNodeContainer.push_back(s);
+								SWCNode_astroContainer.push_back(s);
 								par->children.push_back(s);
 								//std::cout<<"SWCImage Node @ " << (*cit) << "(" << s->ID << ") with parent " << par->ID << "  Cost: " << val << "  " << (100*eCounter)/TotalePoints << "% Remaining.\r";// << std::endl;
 								par = s;
-								HeapNode *h = new HeapNode((*cit), val);
+								HeapNode_astro *h = new HeapNode_astro((*cit), val);
 								PQ.push(h);
 							}
 						}
@@ -426,7 +426,7 @@ void AstroTracer::RunTracing(void)
 			if ( ConnImage->GetPixel(ndx2) > aa )  
 			{
 				ConnImage->SetPixel(ndx2, aa);
-				HeapNode *h = new HeapNode(ndx2, aa);
+				HeapNode_astro *h = new HeapNode_astro(ndx2, aa);
 				PQ.push(h);
 			}
 		}
@@ -929,7 +929,7 @@ void AstroTracer::FeatureMain(void)
 
 }
 
-bool HeapNode::operator ==(const HeapNode& h2){
+bool HeapNode_astro::operator ==(const HeapNode_astro& h2){
 
 	return this->ndx[0] == h2.ndx[0] && this->ndx[1] == h2.ndx[1] && this->ndx[2] == h2.ndx[2];
 }
@@ -1021,7 +1021,7 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 	LoGCurrentScaleImage->Allocate();
 	LoGCurrentScaleImage->FillBuffer(0.0f);
 	
-	std::vector<HeapNode> current_LoG_points;
+	std::vector<HeapNode_astro> current_LoG_points;
 	long ctCnt = 0;
 	long rejectCtCnt = 0;
 	
@@ -1090,18 +1090,18 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 
 					this->LoGScaleImage->SetPixel(ndx, scale_index-1);
 					LoGCurrentScaleImage->SetPixel(ndx, value);
-					current_LoG_points.push_back(HeapNode(ndx, value));	
+					current_LoG_points.push_back(HeapNode_astro(ndx, value));	
 
-					/*HeapNode current_node(ndx, value);
+					/*HeapNode_astro current_node(ndx, value);
 					
 					if(!this->AllLoGPointsVector.empty()){ 
 						
-						std::vector<HeapNode>::iterator vec_it = std::find(this->AllLoGPointsVector.begin(), this->AllLoGPointsVector.end(), current_node);
+						std::vector<HeapNode_astro>::iterator vec_it = std::find(this->AllLoGPointsVector.begin(), this->AllLoGPointsVector.end(), current_node);
 						if(vec_it != this->AllLoGPointsVector.end())
 							this->AllLoGPointsVector.erase(vec_it);
 					}*/
 
-					this->AllLoGPointsVector.push_back(HeapNode(ndx, value));
+					this->AllLoGPointsVector.push_back(HeapNode_astro(ndx, value));
 				}	
 				else
 					rejectCtCnt++;
@@ -1433,10 +1433,10 @@ bool AstroTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-SWCNode* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)  
+SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)  
 {
 	
-	SWCNode* Label = NULL;
+	SWCNode_astro* Label = NULL;
 	itk::Index<3> n;
 	itk::Vector<float,3> p, x, d, dold;
 	for (int i=0; i<3; i++) 
@@ -1544,7 +1544,7 @@ SWCNode* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)
 		n.CopyWithRound(p);
 		Chain.push_back(n);
 		//check termination
-		SWCNode *t = SWCImage->GetPixel(n);
+		SWCNode_astro *t = SWCImage->GetPixel(n);
 		if (t != NULL ) 
 		{
 			if (t->TreeID > 0) 
@@ -1584,7 +1584,7 @@ SWCNode* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-float AstroTracer::GetCost(SWCNode* s, itk::Index<3>& endx ) 
+float AstroTracer::GetCost(SWCNode_astro* s, itk::Index<3>& endx ) 
 {
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, angsum = 0.0f, count = 0.01f;
@@ -1647,7 +1647,7 @@ float AstroTracer::GetCost(SWCNode* s, itk::Index<3>& endx )
 	return cost;
 }
 
-float AstroTracer::GetCostLocal2(SWCNode* s, itk::Index<3>& endx){
+float AstroTracer::GetCostLocal2(SWCNode_astro* s, itk::Index<3>& endx){
 
 	itk::Index<3> new_leaf_ndx = endx, leaf_ndx = s->ndx;
 	float cost = 1.0f, cost_low_bound = 1.0f, cost_high_bound = 2.0f;
@@ -1704,7 +1704,7 @@ float AstroTracer::GetCostLocal2(SWCNode* s, itk::Index<3>& endx){
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
-float AstroTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx ) 
+float AstroTracer::GetCostLocal(SWCNode_astro* s, itk::Index<3>& endx ) 
 {
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, count = 0.01f;
@@ -1755,7 +1755,7 @@ float AstroTracer::GetCostLocal(SWCNode* s, itk::Index<3>& endx )
 	return cost;
 }
 
-float AstroTracer::GetCostLocalLabel(SWCNode* s, itk::Index<3>& endx ) //this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
+float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) //this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
 {
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, count = 0.01f, local_count=0.01f;
@@ -1901,9 +1901,9 @@ PixelType AstroTracer::Update( PixelType a1,  PixelType a2,  PixelType a3,  Pixe
 
 void AstroTracer::Decimate() 
 {
-	//std::cout << "Decimating the tree of size: " << SWCNodeContainer.size() << std::endl;
-	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	//std::cout << "Decimating the tree of size: " << SWCNode_astroContainer.size() << std::endl;
+	std::vector<SWCNode_astro*>::iterator sit;
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		if((*sit)->children.size() >= 2) 
 		{
@@ -1926,7 +1926,7 @@ void AstroTracer::Decimate()
 	}
 
 	//std::cout << "Tree labeled: 1" << std::endl;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsActive == false) 
 		{
@@ -1951,12 +1951,12 @@ void AstroTracer::Decimate()
 	const float minOffshootLength = offshoot;
 	//std::cout << "Removing offshoots of length less than " << minOffshootLength  << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsLeaf == true) 
 		{
 			//std::cout << "Leaf at" << (*sit)->ndx << " ID:" << (*sit)->ID << " ParentID:" << (*sit)->PID << std::endl;
-			SWCNode* par = (*sit)->parent;
+			SWCNode_astro* par = (*sit)->parent;
 			if (par == NULL) 
 			{
 				continue;
@@ -1987,7 +1987,7 @@ void AstroTracer::Decimate()
 
 			if (d < minOffshootLength) 
 			{
-				SWCNode* n = (*sit);
+				SWCNode_astro* n = (*sit);
 				while ( n != par ) 
 				{
 					n->IsActive = false;
@@ -2003,23 +2003,23 @@ void AstroTracer::Decimate()
 
 	//std::cout << "Tree labeled: 3" << std::endl;
 
-	std::vector<SWCNode*> NewContainer;
-	NewContainer.reserve(SWCNodeContainer.size());
+	std::vector<SWCNode_astro*> NewContainer;
+	NewContainer.reserve(SWCNode_astroContainer.size());
 
 	long newID = 1;
-	itk::Array<long> IDLookUp(SWCNodeContainer.size());
+	itk::Array<long> IDLookUp(SWCNode_astroContainer.size());
 	IDLookUp.Fill(0);
 
-	for (unsigned int i=0; i < SWCNodeContainer.size(); ++i) 
+	for (unsigned int i=0; i < SWCNode_astroContainer.size(); ++i) 
 	{
-		if (SWCNodeContainer[i]->IsActive == true) 
+		if (SWCNode_astroContainer[i]->IsActive == true) 
 		{
 			IDLookUp[i] = newID++;		
 		}
 	}
 	//std::cout << "Lookup generated: " << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		if ((*sit)->IsActive == true) 
 		{
@@ -2030,7 +2030,7 @@ void AstroTracer::Decimate()
 				ndx[i] = long((*sit)->pos[i]);
 			}
 
-			SWCNode* par = (*sit)->parent;
+			SWCNode_astro* par = (*sit)->parent;
 			if (par == NULL) 
 			{
 				PID = -1;
@@ -2061,7 +2061,7 @@ void AstroTracer::Decimate()
 				}
 			}
 
-			SWCNode* s = new SWCNode();
+			SWCNode_astro* s = new SWCNode_astro();
 			s->ID = IDLookUp((*sit)->ID - 1);
 			s->PID = PID;
 			s->IsActive = true;
@@ -2080,12 +2080,12 @@ void AstroTracer::Decimate()
 	}
 	//std::cout << "NewContainer created: " << std::endl;
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		delete (*sit);
 	}
 
-	SWCNodeContainer = NewContainer;
+	SWCNode_astroContainer = NewContainer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -2100,8 +2100,8 @@ void AstroTracer::Interpolate(float sigma)
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
 
-	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	std::vector<SWCNode_astro*>::iterator sit;
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		float w,x,y,z;
 		if (((*sit)->children.size() > 0) && ((*sit)->parent != NULL)) 
@@ -2164,7 +2164,7 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 {
 	std::cout << "Removing nodes that fall inside the somas of the Curvelets Image" << std::endl;
 
-	unsigned int originalSize = SWCNodeContainer.size();
+	unsigned int originalSize = SWCNode_astroContainer.size();
 	LabelArrayType somaArray = SomaImage->GetBufferPointer();
 	itk::Size<3> im_size = SomaImage->GetBufferedRegion().GetSize();
 	int slice_size = im_size[0] * im_size[1];
@@ -2172,9 +2172,9 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 
 	//find the root nodes of each tree
 	std::cout << "Finding the root nodes of each tree" << std::endl;
-	std::map<long, SWCNode*> treeIDToRootMap;
-	std::vector<SWCNode*>::iterator sit;
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit)
+	std::map<long, SWCNode_astro*> treeIDToRootMap;
+	std::vector<SWCNode_astro*>::iterator sit;
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit)
 	{
 		//assume that a node with no parent is a centroid
 		if( (*sit)->parent == NULL )
@@ -2198,7 +2198,7 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 	
 	itk::Index<3> dummy_index;
 	//Removing nodes
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end();)
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end();)
 	{
 		//don't check nodes that are outside the extent of the soma image
 		if ( !SomaImage->GetLargestPossibleRegion().IsInside( (*sit)->ndx ) )
@@ -2218,7 +2218,7 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 		/*if ( SomaImage->GetPixel( (*sit)->ndx ) != 0 )
 		{
 			delete (*sit);
-			sit = SWCNodeContainer.erase(sit);
+			sit = SWCNode_astroContainer.erase(sit);
 		}*/
 
 		// Removing nodes only lying in the foreground of the current soma
@@ -2236,12 +2236,12 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 				}
 				
 				delete (*sit);
-				sit = SWCNodeContainer.erase(sit);
+				sit = SWCNode_astroContainer.erase(sit);
 				//std::cout << "Deleted node. " << std::endl;
 			}
 			else{
-				SWCNode *parent = (*sit)->parent;
-				SWCNode *root = treeIDToRootMap[(*sit)->TreeID];
+				SWCNode_astro *parent = (*sit)->parent;
+				SWCNode_astro *root = treeIDToRootMap[(*sit)->TreeID];
 
 				if(parent->ndx == root->ndx){
 					++sit;
@@ -2265,7 +2265,7 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 		//of the centroid instead.
 		else
 		{
-			SWCNode *parent = (*sit)->parent;
+			SWCNode_astro *parent = (*sit)->parent;
 			if ( !SomaImage->GetLargestPossibleRegion().IsInside( parent->ndx ) )
 			{
 				++sit;
@@ -2287,7 +2287,7 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 		}
 	}
 
-	size_t newSize = SWCNodeContainer.size();
+	size_t newSize = SWCNode_astroContainer.size();
 	std::cout << "Just removed " << originalSize - newSize
 		<< " nodes (" << originalSize << " to " << newSize << ")"
 		<< std::endl;
@@ -2298,8 +2298,8 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 void AstroTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz) 
 {
 	// check number of start points to determine number of files to write, with new filename eachtime
-	std::cout << "Total " << SWCNodeContainer.size() << " nodes..." <<std::endl;
-	std::vector<SWCNode*>::iterator sit;
+	std::cout << "Total " << SWCNode_astroContainer.size() << " nodes..." <<std::endl;
+	std::vector<SWCNode_astro*>::iterator sit;
 	float SCALE = 1.0f;
 
 	for (unsigned int i = 0; i < StartPoints.size(); ++i) 
@@ -2317,7 +2317,7 @@ void AstroTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz)
 		std::map<long, long> NodeIDToSWCIDMap;
 		long ID = 1;
 		long rootID = 1;
-		for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+		for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 		{
 			if ((*sit)->TreeID == i+1) 
 				NodeIDToSWCIDMap[(*sit)->ID] = ID++;			
@@ -2325,7 +2325,7 @@ void AstroTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz)
 		std::cout << ID << " Nodes found  ";
 
 		//create the SWCImage file
-		for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+		for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 		{
 			if ((*sit)->TreeID == i+1) 
 			{
@@ -2358,7 +2358,7 @@ void AstroTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz)
 		std::cout << " file written. " << std::endl;
 	}
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 		delete (*sit);
 	
 	std::cout << " done! " << std::endl;
@@ -2492,14 +2492,14 @@ float AstroTracer::getRadiusAndLikelihood(itk::Vector<float,3> &pos, float& like
 ///////////////////////////////////////////////////////////////////////////////////
 void AstroTracer::WriteSWCFile(std::string fname, unsigned int padz) 
 {
-	std::vector<SWCNode*>::iterator sit;
-	std::cout << "Writing SWCImage file " << fname << " with " << SWCNodeContainer.size() << " nodes...";
+	std::vector<SWCNode_astro*>::iterator sit;
+	std::cout << "Writing SWCImage file " << fname << " with " << SWCNode_astroContainer.size() << " nodes...";
 	std::ofstream ofile(fname.c_str());
 	//ofile << "#Neuron Tracing Code 3D, RPI" << std::endl;
 	//ofile << "#author: AM" << std::endl;
 
 
-	for (sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit) 
+	for (sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit) 
 	{
 		//get radius estimate for this node
 		float radius = getRadius((*sit)->pos);
@@ -2607,7 +2607,7 @@ int AstroTracer::optionsCreate(const char* optfile, std::map<std::string,std::st
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-SWCNode::SWCNode()
+SWCNode_astro::SWCNode_astro()
 {
 	ID = -1;
 	PID = -1;
@@ -2618,7 +2618,7 @@ SWCNode::SWCNode()
 	children.reserve(2);
 }
 
-SWCNode::SWCNode(long id, long pid, long tid, itk::Index<3> n)
+SWCNode_astro::SWCNode_astro(long id, long pid, long tid, itk::Index<3> n)
 {
 	ID = id;
 	PID = pid;
@@ -2630,7 +2630,7 @@ SWCNode::SWCNode(long id, long pid, long tid, itk::Index<3> n)
 	children.reserve(2);
 }
 
-SWCNode::SWCNode(long id, SWCNode * p, long tid, itk::Index<3> n)
+SWCNode_astro::SWCNode_astro(long id, SWCNode_astro * p, long tid, itk::Index<3> n)
 {
 	ID = id;
 	PID = p->ID;
@@ -2642,7 +2642,7 @@ SWCNode::SWCNode(long id, SWCNode * p, long tid, itk::Index<3> n)
 	children.reserve(2);
 }
 
-HeapNode::HeapNode(itk::Index<3> n1, PixelType d)
+HeapNode_astro::HeapNode_astro(itk::Index<3> n1, PixelType d)
 {
 	ndx = n1;
 	KeyValue = d;
@@ -2994,15 +2994,15 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 	std::string option2 = "LOG";
 	std::string option3 = "External";
 
-	std::vector<HeapNode> points_list;
+	std::vector<HeapNode_astro> points_list;
 	if(!strcmp(points_source.c_str(), option1.c_str())){
 		std::cout << "Computing features around SWC points. " << std::endl;
 
-		std::vector<SWCNode*>::iterator sit;
-		for(sit = SWCNodeContainer.begin(); sit != SWCNodeContainer.end(); ++sit){
+		std::vector<SWCNode_astro*>::iterator sit;
+		for(sit = SWCNode_astroContainer.begin(); sit != SWCNode_astroContainer.end(); ++sit){
 			itk::Index<3> idx; 
 			idx[0] = (*sit)->pos[0]; idx[1] = (*sit)->pos[1]; idx[2] = (*sit)->pos[2];
-			points_list.push_back(HeapNode(idx, 0));
+			points_list.push_back(HeapNode_astro(idx, 0));
 		}
 	}
 	else if(!strcmp(points_source.c_str(), option2.c_str())){
@@ -3014,7 +3014,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 		}
 
 		for(int i = 0; i < this->AllLoGPointsVector.size(); i++){
-			//std::vector<HeapNode> currentLoGPoints = this->LoGPointsVector[i];
+			//std::vector<HeapNode_astro> currentLoGPoints = this->LoGPointsVector[i];
 			//for(int j = 0; j < currentLoGPoints.size(); j++)
 			
 			points_list.push_back(this->AllLoGPointsVector[i]);
@@ -3444,7 +3444,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 
 
 				CandidateRootPoint a_root;
-				a_root.featureVector.node = HeapNode(points_list[i]);
+				a_root.featureVector.node = HeapNode_astro(points_list[i]);
 				a_root.featureVector.ID = IDIndex;
 				a_root.featureVector.ballness = ballness;
 				a_root.featureVector.plateness = plateness;
@@ -3533,14 +3533,14 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 	std::cout << "Done with RootsImage writing." << std::endl;
 }
 
-void AstroTracer::Set_DistanceMapImage(AstroTracer::ImageType3D::Pointer distance_map_image){
+void AstroTracer::Set_DistanceMapImage(AstroTracer::LabelImageType3D::Pointer distance_map_image){
 	this->SomaDistanceMapImage = distance_map_image;
 }
 
-void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::string IDFname, unsigned int padz, ImageType3D::RegionType regionLocal_inside, std::vector<vtkSmartPointer<vtkTable> >& features_table_vec, LabelImageType3D::Pointer& out_image, const bool writeResult){
+void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::string IDFname, unsigned int padz, ImageType3D::RegionType regionLocal_inside, std::vector<vtkSmartPointer<vtkTable> >& features_table_vec, std::vector<LabelImageType3D::Pointer>& out_images, const bool writeResult){
 	
 	//Prepare a list of points at which to compute the features
-	std::vector<HeapNode> points_list;
+	std::vector<HeapNode_astro> points_list;
 	
 	std::cout << "Computing features around LOG points. " << this->LoGPointsVector.size() << std::endl;
 	if(this->AllLoGPointsVector.empty()){
@@ -3892,7 +3892,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 
 
 				CandidateRootPoint a_root;
-				a_root.featureVector.node = HeapNode(points_list[i]);
+				a_root.featureVector.node = HeapNode_astro(points_list[i]);
 				a_root.featureVector.ID = IDIndex;
 				a_root.featureVector.ballness = ballness;
 				a_root.featureVector.plateness = plateness;
@@ -3991,7 +3991,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 
 	std::cout << "Done with feature vector file. " << std::endl;
 	
-	out_image = IDImage; 
+	out_images[0] = IDImage; 
 		
 	if(writeResult){
 		itk::ImageFileWriter< LabelImageType3D >::Pointer IDImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
@@ -4058,14 +4058,14 @@ bool AstroTracer::PopulateLoGImages(std::vector<float> sigma_vec){
 void AstroTracer::UseActiveLearningRootsModel(std::string model_path){
 }
 
-HeapNode::HeapNode(){
+HeapNode_astro::HeapNode_astro(){
 
 
 }
 
 RootPointFeatureVector::RootPointFeatureVector(){
 
-	HeapNode();
+	HeapNode_astro();
 }
 
 CandidateRootPoint::CandidateRootPoint(){
@@ -4115,7 +4115,7 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 			idx[0] = atof(str_vec[1].c_str());
 			idx[1] = atof(str_vec[2].c_str());
 			idx[2] = atof(str_vec[3].c_str());
-			root_point.featureVector.node = HeapNode(idx, 0);
+			root_point.featureVector.node = HeapNode_astro(idx, 0);
 
 			root_point.featureVector.radius = atof(str_vec[4].c_str());
 			root_point.featureVector.sphere_likelihood = atof(str_vec[5].c_str());
@@ -4286,9 +4286,9 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		//int n_roots = 0;
 		
 		std::vector<double> distance_array;
-		std::multimap<double, HeapNode> distance_idx_map;
-		std::multimap<double, HeapNode>::reverse_iterator map_rit;
-		typedef std::pair<double, HeapNode> distance_idx_pair_type;
+		std::multimap<double, HeapNode_astro> distance_idx_map;
+		std::multimap<double, HeapNode_astro>::reverse_iterator map_rit;
+		typedef std::pair<double, HeapNode_astro> distance_idx_pair_type;
 		
 		LabelImageType3D::IndexType min_root_idx;
 		min_root_idx[0] = this->CandidateRootPoints[0].featureVector.node.ndx[0];
@@ -4343,7 +4343,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 				}
 
 				distance_array.push_back(cur_distance);
-				distance_idx_map.insert(distance_idx_pair_type(this->CandidateRootPoints[j].featureVector.radius, HeapNode(current_root_idx, 0)));
+				distance_idx_map.insert(distance_idx_pair_type(this->CandidateRootPoints[j].featureVector.radius, HeapNode_astro(current_root_idx, 0)));
 
 		}// End of loop over candidate roots	
 
@@ -4362,8 +4362,8 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 			else{
 
 				double cur_scale;
-				HeapNode max_scale_node;
-				std::multimap<double, HeapNode> max_scale_map(distance_idx_map.rbegin(), distance_idx_map.rbegin()+1);
+				HeapNode_astro max_scale_node;
+				std::multimap<double, HeapNode_astro> max_scale_map(distance_idx_map.rbegin(), distance_idx_map.rbegin()+1);
 				
 				for(map_rit = distance_idx_map.rbegin()+1; map_rit != distance_idx_map.rend(); map_rit++){	
 					
@@ -4372,7 +4372,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 				}
 				
 
-				this->CentroidListForTracing.push_back(HeapNode(min_root_idx, 0));
+				this->CentroidListForTracing.push_back(HeapNode_astro(min_root_idx, 0));
 			}*/
 		}
 		//else{
@@ -4395,10 +4395,10 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 			continue;
 		
 		itk::Index<3> cur_idx = this->CentroidListForTracing[i].ndx;
-		std::vector<HeapNode> neighbor_points;
-		std::multimap<double, HeapNode> neighbor_point_map;
-		std::multimap<double, HeapNode>::iterator neighbor_point_map_itr;
-		typedef std::pair<double, HeapNode> distance_idx_pair_type;
+		std::vector<HeapNode_astro> neighbor_points;
+		std::multimap<double, HeapNode_astro> neighbor_point_map;
+		std::multimap<double, HeapNode_astro>::iterator neighbor_point_map_itr;
+		typedef std::pair<double, HeapNode_astro> distance_idx_pair_type;
 
 		for(int j = 0; j < this->CentroidListForTracing.size(); j++){
 
@@ -4415,13 +4415,13 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 				continue;
 			
 			neighbor_flags[j] = true;
-			neighbor_points.push_back(HeapNode(neighbor_idx, 0));
-			neighbor_point_map.insert(distance_idx_pair_type(this->CentroidScales[j], HeapNode(neighbor_idx, 0)));
+			neighbor_points.push_back(HeapNode_astro(neighbor_idx, 0));
+			neighbor_point_map.insert(distance_idx_pair_type(this->CentroidScales[j], HeapNode_astro(neighbor_idx, 0)));
 		}
 
 		if(neighbor_points.empty()){
 			neighbor_flags[i] = false;	
-			this->DensityFilteredCentroidListForTracing.push_back(HeapNode(cur_idx, 0));
+			this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(cur_idx, 0));
 			continue;
 		}
 		neighbor_flags[i] = true;
@@ -4439,7 +4439,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		centroid_of_centroid[1] = cy / neighbor_points.size();
 		centroid_of_centroid[2] = cz / neighbor_points.size();
 		
-		this->DensityFilteredCentroidListForTracing.push_back(HeapNode(centroid_of_centroid, 0));
+		this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(centroid_of_centroid, 0));
 		*/
 		
 		// Replace neighboring root points with their scale-weighted centoids
@@ -4458,7 +4458,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		centroid_of_centroid[1] = cy / weight_sum;
 		centroid_of_centroid[2] = cz / weight_sum;
 		
-		this->DensityFilteredCentroidListForTracing.push_back(HeapNode(centroid_of_centroid, 0));
+		this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(centroid_of_centroid, 0));
 		*/
 
 		//Replace neighboring root points with the highest scale point
@@ -4595,7 +4595,7 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 			idx[0] = atof(str_vec[1].c_str());
 			idx[1] = atof(str_vec[2].c_str());
 			idx[2] = atof(str_vec[3].c_str());
-			nuclei_object.intrinsicFeatures.centroid = HeapNode(idx, 0);
+			nuclei_object.intrinsicFeatures.centroid = HeapNode_astro(idx, 0);
 
 			nuclei_object.intrinsicFeatures.volume = atof(str_vec[4].c_str());
 			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
@@ -4924,7 +4924,7 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 			idx[0] = atof(str_vec[1].c_str());
 			idx[1] = atof(str_vec[2].c_str());
 			idx[2] = atof(str_vec[3].c_str());
-			nuclei_object.intrinsicFeatures.centroid = HeapNode(idx, 0);
+			nuclei_object.intrinsicFeatures.centroid = HeapNode_astro(idx, 0);
 
 			nuclei_object.intrinsicFeatures.volume = atof(str_vec[4].c_str());
 			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
