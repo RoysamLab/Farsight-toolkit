@@ -357,7 +357,6 @@ set( common_libraries
   ftkGraphs
   tinyxml
   PatternAnalysis
-  ftkComputation
   )
 foreach( _lib ${common_libraries} )
   include_directories( ${PROJECT_SOURCE_DIR}/${_lib} )
@@ -414,8 +413,8 @@ if(BUILD_NUCLEI)
 endif(BUILD_NUCLEI)
 
 if(BUILD_VESSEL_TRACING)
-  #set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
-  add_subdirectory( VesselTracer )
+  set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
+  #add_subdirectory( VesselTracer )
 endif(BUILD_VESSEL_TRACING)
 
 #if(BUILD_SuperEllipsoidTracer)
