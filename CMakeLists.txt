@@ -45,7 +45,7 @@ option( BUILD_IMONTAGE "Build iMontage" OFF)
 option( BUILD_FTKVOTING "Build Radial Voting" OFF)
 option( BUILD_FTKNUCLEARSEGMENTATIONNIC "Build Nicolas Segmentation" OFF)
 option( BUILD_Batch_Distance2Device "Build Distance to Device Batch Processing Code" OFF)
-option( BUILD_image_dicer "Build program to dice an image based on a text file centered around a coordinate" OFF)
+option( BUILD_PIPELINE "Build program to dice an image based on a text file centered around a coordinate" OFF)
 option( BUILD_CURVELETS "Build the curvelts based preprocessing executables" OFF)
 
 # Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
@@ -489,7 +489,7 @@ endif(BUILD_ROLLINGBALLFILTER)
 
 if(BUILD_Batch_Distance2Device)
   add_subdirectory( Batch_Distance2Device )
-endif(BUILD_Batch_Distance2Device)
+endif(BUILD_Batch_Distance2Device)ccmake
 
 if(BUILD_PIPELINE)
   add_subdirectory( ftkPipeline)
