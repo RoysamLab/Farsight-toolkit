@@ -9,7 +9,7 @@ import os
 # Create Folder
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
-def main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG, LOCAL_DATASET_PATH_DEBUG, LOCAL_DATASET_PATH_DATA, LOCAL_DATASET_PATH_DATA_DEBUG, LOCAL_DATASET_PATH_SEGM, LOCAL_DATASET_PATH_SEGM_DEBUG, LOCAL_DATASET_PATH_SEGM_DEBUG_L2, LOCAL_DATASET_PATH_SEGM_TEMP, LOCAL_DATASET_PATH_TRAC, LOCAL_DATASET_PATH_TRAC_DEBUG, LOCAL_DATASET_PATH_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_TRAC_TEMP, GLOBAL_DATASET_PATH_RESULTS, LOCAL_DATASET_PATH_TRAC_RESULTS ):
+def main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG, LOCAL_DATASET_PATH_DEBUG, LOCAL_DATASET_PATH_DATA, LOCAL_DATASET_PATH_DATA_DEBUG, LOCAL_DATASET_PATH_SEGM, LOCAL_DATASET_PATH_SEGM_DEBUG, LOCAL_DATASET_PATH_SEGM_DEBUG_L2, LOCAL_DATASET_PATH_SEGM_TEMP, LOCAL_DATASET_PATH_TRAC, LOCAL_DATASET_PATH_TRAC_DEBUG, LOCAL_DATASET_PATH_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_TRAC_TEMP, GLOBAL_DATASET_PATH_RESULTS, LOCAL_DATASET_PATH_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC, LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP ):
 
 	if not os.path.isdir(LOCAL_DEB_DATASET_PATH):
 		print 'creating folder: '+LOCAL_DEB_DATASET_PATH
@@ -197,6 +197,66 @@ def main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG
 		print 'erasing folder: '+LOCAL_DATASET_PATH_TRAC_RESULTS
 		#for the_file in os.listdir(LOCAL_DATASET_PATH_TRAC_RESULTS):
 			#file_path = os.path.join(LOCAL_DATASET_PATH_TRAC_RESULTS, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
+				
+	if not os.path.isdir(LOCAL_DATASET_PATH_ASTRO_TRAC):
+		print 'creating folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC
+		os.makedirs(LOCAL_DATASET_PATH_ASTRO_TRAC)
+	else:
+		print 'erasing folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC
+		#for the_file in os.listdir(LOCAL_DATASET_PATH_ASTRO_TRAC):
+			#file_path = os.path.join(LOCAL_DATASET_PATH_ASTRO_TRAC, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
+				
+	if not os.path.isdir(LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS):
+		print 'creating folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS
+		os.makedirs(LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS)
+	else:
+		print 'erasing folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS
+		#for the_file in os.listdir(LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS):
+			#file_path = os.path.join(LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
+				
+	if not os.path.isdir(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG):
+		print 'creating folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG
+		os.makedirs(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG)
+	else:
+		print 'erasing folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG
+		#for the_file in os.listdir(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG):
+			#file_path = os.path.join(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
+				
+	if not os.path.isdir(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2):
+		print 'creating folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2
+		os.makedirs(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2)
+	else:
+		print 'erasing folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2
+		#for the_file in os.listdir(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2):
+			#file_path = os.path.join(LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
+				
+	if not os.path.isdir(LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP):
+		print 'creating folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP
+		os.makedirs(LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP)
+	else:
+		print 'erasing folder: '+LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP
+		#for the_file in os.listdir(LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP):
+			#file_path = os.path.join(LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP, the_file)
 			#try:
 				#os.unlink(file_path)
 			#except Exception, e:

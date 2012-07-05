@@ -22,6 +22,7 @@ import sys
 import inspect
 import filecmp
 import datetime
+import getpass #ask username
 
 
 import a010_CreateFolders
@@ -38,6 +39,7 @@ import a051_RunResc8bit
 import a052_RunResc8bitMhd
 import a060_RunSegmentation
 import a070_RunTracing
+import a075_RunAstroTracing
 #import a080_RunCheckSum
 import a080_RunCheckSumNew
 #import 
@@ -81,11 +83,11 @@ TRY = 07
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 1	# If 0 the results will be keep
+MOVE_RESULTS = 0	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
-MOVE_LOCALLY = 1
+MOVE_LOCALLY = 0
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
 REMOVE_TEMP_TRAC = 1
@@ -99,6 +101,8 @@ runCopy_db = 1
 runMake = 1		# Flag Make Farsight
 runBack = 1		# Flag to run background substraction
 runBack_db = 1
+runDistMap = 1		# Flag to run distance map computation
+runDistMap_db = 1
 
 runCurv = 1		# Flag to run Curvelets
 runCurv_db = 1
@@ -110,6 +114,8 @@ runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
 runTrac = 1		# Flag to run Tracing
 runTrac_db = 1
+runAstroTrac = 1		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 1
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
@@ -135,6 +141,14 @@ if( p[1] == 'Farsight-05.EE.UH.EDU' ):
 	SERVER = 'far05'
 if( p[1] == 'Farsight-04.EE.UH.EDU' ):
 	SERVER = 'far04'
+	
+	
+USERNAME = 'none'
+p = getpass.getuser()
+if( p[1] == 'vhsomasu' ):
+	USERNAME = 'vhsomasu'
+if( p[1] == 'nrey' ):
+	USERNAME = 'nrey'
 
 #DATA_FOLDER_ALL = ['/0131_test','/0131_test2'] # For testing dont forget the xTile params
 #DATA_FOLDER_ALL = ['/0131_test'] # For testing dont forget the xTile params
@@ -152,14 +166,14 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0113_NRRD_CROPPED','/0117_NRRD_CROPPED','/0120_NRRD_CROPPED','/0123_NRRD_CROPPED','/0128_NRRD_CROPPED','/0131_NRRD_CROPPED','/0323_NRRD_CROPPED','/0405_NRRD_CROPPED','/0409_NRRD_CROPPED','/0410_NRRD_CROPPED','/0412_NRRD_CROPPED','/1206_NRRD_CROPPED']
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
+	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
-	#DATA_FOLDER_ALL = ['/0131_test4']
+	DATA_FOLDER_ALL = ['/0131_test4']
 	#DATA_FOLDER_ALL = ['/0120_NRRD']
 if( SERVER == 'far05' ):
 	REMOVE_MONTAGES = 1
@@ -217,11 +231,20 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	# Folders names 
 	# ---------------------------------------------------------------------------------------------------------------------------------------
 
-	FARSIGHT_BIN = '/data/nicolas/farsight_updated/bin'
-	FARSIGHT_BIN_EXE = '/data/nicolas/farsight_updated/bin/exe'
+	if( USERNAME == 'nrey' ):
+		FARSIGHT_BIN = '/data/nicolas/farsight_updated/bin'
+		FARSIGHT_BIN_EXE = '/data/nicolas/farsight_updated/bin/exe'
 
-	MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
-	MAIN_DEB_DATA_FOLDER = '/data/nicolas/deb'
+		MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
+		MAIN_DEB_DATA_FOLDER = '/data/nicolas/deb'
+		
+	if( USERNAME = 'vhsomasu' ):
+		FARSIGHT_BIN = '/data/vinay/farsight_v1/bin'
+		FARSIGHT_BIN_EXE = '/data/vinay/farsight_v1/bin/exe'
+
+		MAIN_DATA_FOLDER = '/data/vinay/dataNew'
+		MAIN_DEB_DATA_FOLDER = '/data/vinay/deb'
+		
 
 	LOCAL_DATASET_PATH = MAIN_DATA_FOLDER+DATA_FOLDER
 	LOCAL_DEB_DATASET_PATH = MAIN_DEB_DATA_FOLDER+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
@@ -233,15 +256,23 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	#LOCAL_DATASET_PATH_TRACE_SOMASDDIVIDED = LOCAL_DATASET_PATH+'/TracesAndSomasDivided'
 	LOCAL_DATASET_PATH_DATA = LOCAL_DATASET_PATH+'/Data'
 	LOCAL_DATASET_PATH_DATA_DEBUG = LOCAL_DATASET_PATH_DEBUG+'/Data'
+	
 	LOCAL_DATASET_PATH_SEGM = LOCAL_DATASET_PATH+'/Segm'
 	LOCAL_DATASET_PATH_SEGM_DEBUG = LOCAL_DATASET_PATH_DEBUG+'/Segm'
 	LOCAL_DATASET_PATH_SEGM_DEBUG_L2 = LOCAL_DATASET_PATH_SEGM_DEBUG+'/Level2'
 	LOCAL_DATASET_PATH_SEGM_TEMP = LOCAL_DATASET_PATH_SEGM+'/Temp'
+	
 	LOCAL_DATASET_PATH_TRAC = LOCAL_DATASET_PATH+'/Trace'
 	LOCAL_DATASET_PATH_TRAC_RESULTS = LOCAL_DATASET_PATH_TRAC+'/Results'
 	LOCAL_DATASET_PATH_TRAC_DEBUG = LOCAL_DATASET_PATH_DEBUG+'/Trace'
 	LOCAL_DATASET_PATH_TRAC_DEBUG_L2 = LOCAL_DATASET_PATH_TRAC_DEBUG+'/Level2'
 	LOCAL_DATASET_PATH_TRAC_TEMP = LOCAL_DATASET_PATH_TRAC+'/Temp'
+	
+	LOCAL_DATASET_PATH_ASTRO_TRAC = LOCAL_DATASET_PATH+'/Astro_Trace'
+	LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS = LOCAL_DATASET_PATH_ASTRO_TRAC+'/Results'
+	LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG = LOCAL_DATASET_PATH_DEBUG+'/Astro_Trace'
+	LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2 = LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'/Level2'
+	LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP = LOCAL_DATASET_PATH_ASTRO_TRAC+'/Temp'
 
 	GLOBAL_DATASET_PATH = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
 	GLOBAL_DATASET_PARAMS = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
@@ -272,7 +303,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		#if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS) ):
 			#shutil.rmtree(GLOBAL_DATASET_PATH_RESULTS)
 
-	a010_CreateFolders.main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG, LOCAL_DATASET_PATH_DEBUG, LOCAL_DATASET_PATH_DATA, LOCAL_DATASET_PATH_DATA_DEBUG, LOCAL_DATASET_PATH_SEGM, LOCAL_DATASET_PATH_SEGM_DEBUG, LOCAL_DATASET_PATH_SEGM_DEBUG_L2, LOCAL_DATASET_PATH_SEGM_TEMP, LOCAL_DATASET_PATH_TRAC, LOCAL_DATASET_PATH_TRAC_DEBUG, LOCAL_DATASET_PATH_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_TRAC_TEMP, GLOBAL_DATASET_PATH_RESULTS, LOCAL_DATASET_PATH_TRAC_RESULTS )
+	a010_CreateFolders.main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG, LOCAL_DATASET_PATH_DEBUG, LOCAL_DATASET_PATH_DATA, LOCAL_DATASET_PATH_DATA_DEBUG, LOCAL_DATASET_PATH_SEGM, LOCAL_DATASET_PATH_SEGM_DEBUG, LOCAL_DATASET_PATH_SEGM_DEBUG_L2, LOCAL_DATASET_PATH_SEGM_TEMP, LOCAL_DATASET_PATH_TRAC, LOCAL_DATASET_PATH_TRAC_DEBUG, LOCAL_DATASET_PATH_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_TRAC_TEMP, GLOBAL_DATASET_PATH_RESULTS, LOCAL_DATASET_PATH_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC, LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP)
 
 	if( os.path.exists(GLOBAL_DATASET_PARAMS+'/options_mnt') ):
 		shutil.copy(GLOBAL_DATASET_PARAMS+'/options_mnt', LOCAL_DATASET_PATH_PARAMETERS+'/options_mnt')
@@ -586,6 +617,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		a060_RunSegmentation.main( FILE_GFP_BS_CV_RE_bit, FARSIGHT_BIN_EXE, optionsSegm, runSegm_log, LOCAL_DATASET_PATH_DATA )
 		elapsed_1 = (time.time() - start_1)
 		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
+		
+		FILE_LABEL = LOCAL_DATASET_PATH_DATA+'\label'
+		FILE_SOMA = LOCAL_DATASET_PATH_DATA+'\soma'
+		FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'\soma_centrois.txt'
 
 	if( REMOVE_TEMP_SEGM == 1 ):
 		shutil.rmtree(LOCAL_DATASET_PATH_SEGM_TEMP)
@@ -607,8 +642,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		elapsed_2 = (time.time() - start_2)
 		print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
 		
-
-
+	
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print "# Run Tracing: "+DATA_FOLDER+' '+str(datetime.datetime.now())
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
@@ -670,6 +704,86 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	if( REMOVE_TEMP_TRAC == 1 ):
 		shutil.rmtree(LOCAL_DATASET_PATH_TRAC_TEMP)
 
+		
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	print "# Run AstroTracing: "+DATA_FOLDER+' '+str(datetime.datetime.now())
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	if runAstroTrac == 1:
+		start_1 = time.time()
+		runAstroTrac_log = LOCAL_DATASET_PATH_LOG +'/runAstroTracing.log'
+		TEMP_FILE = open(runAstroTrac_log, 'w')
+		TEMP_FILE.write('runAstroTracing\n')
+		TEMP_FILE.close()
+		
+		runDistMap_log = LOCAL_DATASET_PATH_LOG +'/runDistMap.log'
+		TEMP_FILE = open(runDistMap_log, 'w')
+		TEMP_FILE.write('runDistMap\n')
+		TEMP_FILE.close()
+		
+		FILE_LABEL_DIST_MAP = LOCAL_DATASET_PATH_DATA+'/label_dist_map'
+		a061_runDistMap.main( FARSIGHT_BIN_EXE, FILE_LABEL_DIST_MAP, FILE_LABEL, runDistMap_log )
+		
+		optionsAstroTracing = LOCAL_DATASET_PATH_ASTRO_TRAC +'/options_astrocyte_tracing'
+			TEMP_FILE = open(optionsAstroTracing, 'w')
+			if( TEST_RUN == 1):
+				TEMP_FILE.write('-xTile 204\n')
+				TEMP_FILE.write('-yTile 204\n')
+				TEMP_FILE.write('-zTile 102\n')
+				TEMP_FILE.write('-xTileBor 20\n')
+				TEMP_FILE.write('-yTileBor 20\n')
+				TEMP_FILE.write('-zTileBor 10\n')
+			else:
+				TEMP_FILE.write('-xTile 800\n')
+				TEMP_FILE.write('-yTile 800\n')
+				TEMP_FILE.write('-zTile 400\n')
+				TEMP_FILE.write('-xTileBor 200\n')
+				TEMP_FILE.write('-yTileBor 200\n')
+				TEMP_FILE.write('-zTileBor 100\n')
+			TEMP_FILE.write('-num_threads 80\n')
+			if haveCy5 == 1:
+				TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
+			if haveTRT == 1:
+				TEMP_FILE.write('-TRI_Image '+FILE_TRI_BS_RE_bit+'\n')
+			if haveGFP == 1:
+				TEMP_FILE.write('-GFP_Image '+FILE_GFP_BS_CV+'\n')
+			if haveDAP == 1:
+				TEMP_FILE.write('-DAP_Image '+FILE_DAP_BS_RE_bit+'\n')
+			TEMP_FILE.write('-Dist_Map_Image '+FILE_LABEL_DIST_MAP+'\n')
+			TEMP_FILE.write('-Soma_Centroids '+LOCAL_DATASET_PATH_DATA+'/soma_table_centroids.txt'+'\n')
+			TEMP_FILE.write('-Soma_Montage '+LOCAL_DATASET_PATH_DATA+'/soma'+'\n')
+			TEMP_FILE.write('-isSmall '+SMALLIMAGE+'\n')
+			TEMP_FILE.write('-astroTraceParams '+LOCAL_DATASET_PATH_PARAMETERS+'/options_as_tr'+'\n')
+			TEMP_FILE.write('-outPath '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS+'\n')
+			TEMP_FILE.write('-outPathDebug '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'\n')
+			TEMP_FILE.write('-outPathDebugLevel2 '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2+'\n')
+			TEMP_FILE.write('-outPathTemp '+LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP+'\n')
+		TEMP_FILE.close()
+
+		a075_RunAstroTracing.main( FARSIGHT_BIN_EXE, optionsAstroTracing, runAstroTrac_log, LOCAL_DATASET_PATH_DATA )
+		elapsed_1 = (time.time() - start_1)
+		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
+
+	if runAstroTrac_db == 1:
+		start_2 = time.time()
+		runAstroTrac_db_log = LOCAL_DATASET_PATH_LOG +'/runAstroTrac_db.log'
+		TEMP_FILE = open(runAstroTrac_db_log, 'w')
+		TEMP_FILE.write('AstroTracingLog\n')
+		TEMP_FILE.close()
+
+		# Trace editor projection
+		#a024_ProjectFloat.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG, LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP+'/GFP_MNT_PRE', runAstroTrac_db_log, 'ORG', 'NRRD' )
+		#a021_Project.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_SEGM_DEBUG, FILE_GFP_BS_CV_RE_bit+'_label', runSegm_db_log, 'ORG_RES_BIN' )
+		#a023_ProjectRGB.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_SEGM_DEBUG, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV_RE_bit+'_soma', '_GFP_SOMA_', runSegm_db_log )
+		#a023_ProjectRGB.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_SEGM_DEBUG, FILE_DAP_BS_RE_bit, FILE_GFP_BS_CV_RE_bit+'_label', '_DAPI_LABEL_', runSegm_db_log )
+		elapsed_2 = (time.time() - start_2)
+		print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
+		
+		
+		
+		
+		
+		
+		
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print "# Move Files: "+DATA_FOLDER+' '+str(datetime.datetime.now())
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
