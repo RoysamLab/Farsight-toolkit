@@ -347,7 +347,6 @@ if(BUILD_ZERNIKE)
 endif(BUILD_ZERNIKE)
 
 set( common_libraries
-  VesselTracer
   ftkImage
   ColorSegmentation
   ftkCommon
@@ -358,6 +357,7 @@ set( common_libraries
   ftkGraphs
   tinyxml
   PatternAnalysis
+  ftkComputation
   )
 foreach( _lib ${common_libraries} )
   include_directories( ${PROJECT_SOURCE_DIR}/${_lib} )
