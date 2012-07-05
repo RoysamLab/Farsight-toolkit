@@ -268,8 +268,8 @@ public:
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
 	void GenerateTestImage(); 
-	void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);//
-	void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
+	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);//
+	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
 
 	void ComputeAstroFeatures(std::string, std::string, unsigned int, const std::string);
 	void ComputeAstroFeaturesPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::vector<LabelImageType3D::Pointer>&, const bool);
