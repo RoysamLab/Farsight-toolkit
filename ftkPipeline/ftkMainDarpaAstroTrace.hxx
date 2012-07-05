@@ -4,7 +4,7 @@ void ftkMainDarpaAstroTrace::splitStore( typename TINPUT::Pointer ImageMontage, 
 	int found = nameInput.find_last_of("/\\");
 	std::string nameInputNoPath = nameInput.substr(found+1);
 	
-	computeSplitConst( ImageMontage );
+	computeSplitConst< TINPUT >( ImageMontage );
 	itk::Size<3> ImageMontageSize = ImageMontage->GetLargestPossibleRegion().GetSize();
 	
 	int contadorSplit = 0;
