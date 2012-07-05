@@ -491,10 +491,10 @@ if(BUILD_Batch_Distance2Device)
   add_subdirectory( Batch_Distance2Device )
 endif(BUILD_Batch_Distance2Device)
 
-if(BUILD_image_dicer)
-  add_subdirectory( image_dicer)
+if(BUILD_PIPELINE)
+  add_subdirectory( ftkPipeline)
 #	set( BUILD_CURVELETS ON CACHE BOOL "Build the curvelts based preprocessing executables" FORCE )
-endif(BUILD_image_dicer)
+endif(BUILD_PIPELINE)
 
 if(BUILD_CURVELETS)
   add_subdirectory( Tracing/Preprocessing/CurveletFiltering/fdct_wrapping_cpp/src )
