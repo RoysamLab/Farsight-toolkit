@@ -45,7 +45,7 @@ if(BUILD_OPENMP AND BUILD_NUCLEI)
 	ADD_LIBRARY(LIBftkMainDarpa ${MAINDARPA_HDRS} ${MAINDARPA_SRCS})
 
 	add_executable(	ftkMainDarpa main.cpp )
-	target_link_libraries( ftkMainDarpa LIBftkMainDarpa ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib )
+	target_link_libraries( ftkMainDarpa LIBftkMainDarpa ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib AstroTracerLib)
 
 # 	add_executable(darpa_tracer_w_seg darpa_pipeline_w_seg.cpp )
 # 	target_link_libraries(darpa_tracer_w_seg vul ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib segment_soma)
