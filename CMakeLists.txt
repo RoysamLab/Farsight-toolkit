@@ -489,7 +489,7 @@ endif(BUILD_ROLLINGBALLFILTER)
 
 if(BUILD_Batch_Distance2Device)
   add_subdirectory( Batch_Distance2Device )
-endif(BUILD_Batch_Distance2Device)ccmake
+endif(BUILD_Batch_Distance2Device)
 
 if(BUILD_PIPELINE)
   add_subdirectory( ftkPipeline)
