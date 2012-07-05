@@ -17,6 +17,7 @@
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 #include "../NuclearSegmentation/yousef_core/yousef_seg.h"
 #include "../NuclearSegmentation/NucleusEditor/ftkProjectProcessor.h"
+#include "../Tracing/AstroTracer/AstroTracer.h"
 
 // C++ STD
 #include <iostream>

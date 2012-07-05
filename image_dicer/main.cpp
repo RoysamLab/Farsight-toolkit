@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 
 			objftkMainDarpaAstroTrace_1->readParameters( astroTraceParams );
 			objftkMainDarpaAstroTrace_1->runPreprocesing();
-			objftkMainDarpaAstroTrace_1->runSpliting();
+			objftkMainDarpaAstroTrace_1->runSplitting();
 			objftkMainDarpaAstroTrace_1->runInterestPoints();
 			delete objftkMainDarpaAstroTrace_1;
 			break;
