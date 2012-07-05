@@ -1,0 +1,193 @@
+SEGMENT!Choose _Cy5_Image = NULL as default
+Choose _TRI_Image = NULL as default
+
+This are the parameters
+_xTile: 700
+_yTile: 700
+_zTile: 350
+_xTileBor: 200
+_yTileBor: 200
+_zTileBor: 100
+_num_threads: 80
+_Cy5_Image: 
+_TRI_Image: 
+_GFP_Image: /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit
+_DAP_Image: /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit
+_isSmall: 1
+_segParams: /data/nicolas/dataNew/0131_test/Parameters/Seg_Params.ini
+_projectDefinition: /data/nicolas/dataNew/0131_test/Parameters/ProjectDefinition.xml
+_outPath: /data/nicolas/dataNew/0131_test/Segm
+_outPathDebug: /data/nicolas/dataNew/0131_test/DEBUG/Segm
+_outPathTemp: /data/nicolas/dataNew/0131_test/Segm/Temp
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+ImageSplit 1 of 1
+Writing ... /data/nicolas/dataNew/0131_test/Segm/Temp/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_0_0_0.nrrd done: Image size: 444x480x218
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+ImageSplit 1 of 1
+Writing ... /data/nicolas/dataNew/0131_test/Segm/Temp/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit_0_0_0.nrrd done: Image size: 444x480x218
+HERE HERE_2
+HERE HERE_2
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+HERE HERE
+HERE HERE
+		--->>> ImageSegment 1 of 1
+Reading ... /data/nicolas/dataNew/0131_test/Segm/Temp/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_0_0_0.nrrd done: Image size: 444x480x218
+Reading ... /data/nicolas/dataNew/0131_test/Segm/Temp/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit_0_0_0.nrrd done: Image size: 444x480x218
+RECENT CHANGES: Min object size was hard coded to 50, now the size is correctly read from the project definition, so make sure to include this parameter. The minimum number of objects in an image is hard coded to 3, this to avoid spurious sedd detection results in noise tilesClearing binarization stuff
+Allocating 88.6157 MB of memory for binImagePtr
+Start Binarization ...
+Entering MinErrorThresholding
+Getting im Iterator
+Copying image into itkImage
+maxv = 255 minv = 0
+Running MinErrorThresholdingFilter
+mem_size: 72 GB
+image_size: 46460160
+mem_needed: 22.1539 GB
+num_blocks_preferred: 16
+block_divisor: 2.51984
+num_blocks_C: 3 num_blocks_R: 3 num_blocks_Z: 3 cntr: 27
+num_pixels_per_block_R: 190 num_pixels_per_block_C: 176 num_pixels_per_block_Z: 86
+Total Blocks: 27
+Image size: 480x444x218
+Cell Binarization refinement by alpha expansion took 2603.26 seconds
+Entering getConnCompImage: HERE: min obj size: 100
+Copying input image into ITKImage
+Computing the labeled connected component image
+Setting minimum object size
+Writing output of relabel coloring filter to input image
+Returning number of connected components
+Entering getConnCompInfo3D
+Cell Binarized.. with 53 connected components
+
+		 Done binarization:
+aawsNUMTHRE: 1--1Computing distance transform...
+		HERE2: DISTANCE MAP ABOUT TO RUN
+		HERE2: DISTANCE MAP DONEdone
+About to enter Estimating parameters
+LoG block 1 of 1
+Processing scale 7
+Scale 7 done
+Processing scale 8
+Scale 8 done
+Processing scale 9
+Scale 9 done
+Processing scale 10
+Scale 10 done
+Processing scale 11
+Scale 11 done
+Multiscale Log took 1914.54 seconds
+Detecting Seeds
+Local maxima point detection took 371.03 seconds
+done detecting seeds
+137 HERE: seeds were detected
+
+			 Done Seed Detect: Starting Initial Clustering
+scale_xy = 3
+scale_z = 2
+max_nghbr_im initialized
+Max_response array done
+Initial max_nghbr_im took 433.4 seconds
+Entering main Clustering Loop
+change=34990250
+change=27776267
+change=16820805
+change=5355526
+change=263569
+change=0
+
+				 Done Clus: 
+				 HERE2: Done SEG: 
+		 TRTRTR: /data/nicolas/dataNew/0131_test/Parameters/ProjectDefinition.xml 444 480 218Number of tasks to be done:3
+Done: Instrinsic Nuclear Features
+
+---------------------------------------------------------------
+Object Association Rules
+SegmentationSource 
+NumberOfAssociativeMeasures 1
+.................................................................
+Name(0): GFP_TOTAL
+Target_Image(0): 
+Outside_Distance(0): 3
+Inside_Distance(0): 8
+Use_Whole_Object(0): True
+Use_Background_Subtraction(0): True
+Use_MultiLevel_Thresholding(0): False
+Number_Of_Thresholds(0): 1
+Number_Included_In_Foreground(0): 1
+Association_Type(0): TOTAL
+---------------------------------------------------------------
+Starting Associative Features Computation
+Starting threshold computation
+Histogram computed
+Threshold computed: 119.531
+
+---------------------------------------------------------------
+Object Association Rules
+SegmentationSource 
+NumberOfAssociativeMeasures 1
+.................................................................
+Name(0): GFP_AVG
+Target_Image(0): 
+Outside_Distance(0): 3
+Inside_Distance(0): 8
+Use_Whole_Object(0): True
+Use_Background_Subtraction(0): True
+Use_MultiLevel_Thresholding(0): False
+Number_Of_Thresholds(0): 1
+Number_Included_In_Foreground(0): 1
+Association_Type(0): AVERAGE
+---------------------------------------------------------------
+Starting Associative Features Computation
+Starting threshold computation
+Histogram computed
+Threshold computed: 119.531
+Done Associations
+Classification Started Using MCLR
+Classification done
+
+137
+137
+Writing ... /data/nicolas/dataNew/0131_test/Segm/Temp/segLabel__0_0_0_REMO.nrrd done: Image size: 444x480x218
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Z.tif done: Image size: 444x480x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Y.tif done: Image size: 444x218x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_X.tif done: Image size: 218x480x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Z_Re.tif done: Image size: 444x480x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Y_Re.tif done: Image size: 444x218x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_X_Re.tif done: Image size: 218x480x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Z_Bin.tif done: Image size: 444x480x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_Y_Bin.tif done: Image size: 444x218x1
+Writing ... /data/nicolas/dataNew/0131_test/DEBUG/Segm/Level2/segLabel__0_0_0_REMOzPro_X_Bin.tif done: Image size: 218x480x1
+HERE HERE_2
+HERE HERE_2
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+Reading ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit.nrrd done: Image size: 444x480x218
+444 480 218
+1 1 1
+444 480 218
+HERE HERE
+HERE HERE
+		--->>> ImageStich 1 of 1
+Reading ... /data/nicolas/dataNew/0131_test/Segm/Temp/segLabel__0_0_0_REMO.nrrd done: Image size: 444x480x218
+		--->>> ImageStich 1 of 1
+		piu11 The number of row: 137 in 1
+		piu11 The maxvaule before: 0 after: 137 in 1
+		--->>> ImageStichDone 1 of 1
+Writing ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_label.nrrd done: Image size: 444x480x218
+Writing ... /data/nicolas/dataNew/0131_test/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_soma.nrrd done: Image size: 444x480x218

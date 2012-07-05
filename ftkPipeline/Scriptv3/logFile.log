@@ -1,0 +1,102 @@
+# ---------------------------------------------------------------------------------------------------------------------------------------
+ Make Farsight: /0131_test3
+# ---------------------------------------------------------------------------------------------------------------------------------------
+Making Farsight 
+		Time_1: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Create Folder: /0131_test3
+# ---------------------------------------------------------------------------------------------------------------------------------------
+creating folder: /data/nicolas/deb/0131_test3_RESULTS_V3_far04_1
+creating folder: /data/nicolas/dataNew/0131_test3/Exe
+creating folder: /data/nicolas/dataNew/0131_test3/Log
+creating folder: /data/nicolas/dataNew/0131_test3/DEBUG
+creating folder: /data/nicolas/dataNew/0131_test3/TracesAndSomas
+creating folder: /data/nicolas/dataNew/0131_test3/Data
+creating folder: /data/nicolas/dataNew/0131_test3/DEBUG/Data
+creating folder: /data/nicolas/dataNew/0131_test3/Segm
+creating folder: /data/nicolas/dataNew/0131_test3/DEBUG/Segm
+creating folder: /data/nicolas/dataNew/0131_test3/DEBUG/Segm/Level2
+creating folder: /data/nicolas/dataNew/0131_test3/Segm/Temp
+creating folder: /FSdata.auto/data/DARPA_RESULTS/0131_test3_RESULTS_V3_far04_1
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Copy the files to the local dataset: /0131_test3
+# ---------------------------------------------------------------------------------------------------------------------------------------
+copying: /FSdata.auto/data/DARPA_MOSAICS/0131_test3/CROPPED2montage_kt01710_w311GFPdsu.nrrd, to: /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu.nrrd
+copying: /FSdata.auto/data/DARPA_MOSAICS/0131_test3/CROPPED2montage_kt01710_w410DAPIdsu.nrrd, to: /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w410DAPIdsu.nrrd
+		Time_1: 0.49
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w410DAPIdsu
+		Time_2: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Backgroun Substraction: /0131_test3
+# ---------------------------------------------------------------------------------------------------------------------------------------
+GFP BS does not exist
+BackSubstraction of /data/research/Fiji.app/fiji-linux64 --headless -macro /data/nicolas/dataNew/0131_test3/Parameters/fijiMacroBackSubst.ijm /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu -batch
+GFP BS does not exist
+BackSubstraction of /data/research/Fiji.app/fiji-linux64 --headless -macro /data/nicolas/dataNew/0131_test3/Parameters/fijiMacroBackSubst.ijm /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w410DAPIdsu -batch
+		Time_1: 0.0
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu_BS
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS
+		Time_2: 0.01
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Curvelets: /0131_test3
+# ---------------------------------------------------------------------------------------------------------------------------------------
+Curvelets of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu_BS
+		Time_1: 0.0
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test3/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV
+		Time_2: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Rescaling: /0131_test3
+# --------------------------------------------------------------------------------------------------------------------------------------
+Rescale does not exist
+Rescale of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV
+Rescale does not exist
+Rescale of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS
+		Time_1: 0.0
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE
+		Time_2: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Rescaling_bit: /0131_test2
+# ---------------------------------------------------------------------------------------------------------------------------------------
+Rescale does not exist
+Rescale of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV
+Rescale does not exist
+Rescale of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS
+		Time_1: 0.0
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit
+		Time_2: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Segmentation: /0131_test2
+# ---------------------------------------------------------------------------------------------------------------------------------------
+Segmentation
+		Time_1: 0.06
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_soma
+Projection does not exist
+Projection of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit_label
+Projection does not exist
+Projection RGB of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w311GFPdsu_BS_CV_RE_bit
+Projection does not exist
+Projection RGB of /data/nicolas/dataNew/0131_test2/Data/CROPPED2montage_kt01710_w410DAPIdsu_BS_RE_bit
+		Time_2: 0.0
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Run Tracing: /0131_test2
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Move Files: /0131_test2
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Move internally: /0131_test2
+# ---------------------------------------------------------------------------------------------------------------------------------------
+--
