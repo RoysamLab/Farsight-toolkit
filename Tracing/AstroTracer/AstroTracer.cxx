@@ -4205,7 +4205,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	//std::cout << "Nuclei points size: " << this->NucleiObjects.size() << std::endl;
 
 	//Loop over nuclei
-	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 		// Use only astrocyte nuclei
 		if(this->NucleiObjects[i].classValue != 1)
@@ -4295,7 +4295,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		min_root_idx[1] = this->CandidateRootPoints[0].featureVector.node.ndx[1];
 		min_root_idx[2] = this->CandidateRootPoints[0].featureVector.node.ndx[2] - padz;
 
-		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
+		for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
 
 			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
 			
@@ -4685,7 +4685,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	std::cout << "Computing nuclei features. " << std::endl;
 
 	//Loop over nuclei
-	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 		// ROI proportional to nuclei scale, assuming spherical nuclei.
 		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
@@ -4748,7 +4748,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		//std::cout << std::endl;
 
 		std::vector<double> distance_array;
-		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
+		for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
 
 			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
 			
@@ -4858,7 +4858,7 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 	nuclei_feature_vector << "Neurons_SURR" << '\t' << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
 	nuclei_feature_vector << std::endl;
 
-	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 		NucleiObject nuc = this->NucleiObjects[i];
 		
