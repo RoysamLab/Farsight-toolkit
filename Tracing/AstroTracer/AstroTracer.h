@@ -259,17 +259,17 @@ public:
 	void LoadParameters(const char* parametersFileName);
 
 	void LoadCurvImageFromPath(std::string fname, unsigned int pad); 
-	//void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
-	void ReadStartPoints(std::string fname, unsigned int padz);
-	//void ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
+	void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
+	void ReadStartPointsFromPath(std::string fname, unsigned int padz);
+	void ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
 	void SetCostThreshold(float thres){CostThreshold = thres;};
 	void LoadSomaImage(std::string somaFileName);
 	void RunTracing();
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
 	void GenerateTestImage(); 
-	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);//
-	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
+	//void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);//
+	//void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad);//
 
 	void ComputeAstroFeatures(std::string, std::string, unsigned int, const std::string);
 	void ComputeAstroFeaturesPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::vector<LabelImageType3D::Pointer>&, const bool);

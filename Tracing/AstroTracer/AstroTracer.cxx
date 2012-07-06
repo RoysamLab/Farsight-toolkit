@@ -70,7 +70,7 @@ void AstroTracer::LoadCurvImageFromPath(std::string fname, unsigned int pad)
 	LoadCurvImage_1(image, pad);
 }
 
-void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)  
+void AstroTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)  
 {
 	ImageType3D::Pointer CurvImage = image;
 	padz = pad;
@@ -122,7 +122,7 @@ void AstroTracer::LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad)
 	//CurvImage->Delete();
 }
 
-void AstroTracer::ReadStartPoints(std::string fname, unsigned int pad) 
+void AstroTracer::ReadStartPointsFromPath(std::string fname, unsigned int pad) 
 {
 	padz = pad;
 
@@ -196,7 +196,7 @@ void AstroTracer::ReadStartPoints(std::string fname, unsigned int pad)
 	infile.close();
 }
 
-void AstroTracer::ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int pad) 
+void AstroTracer::ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int pad) 
 {
 	padz = pad;
 

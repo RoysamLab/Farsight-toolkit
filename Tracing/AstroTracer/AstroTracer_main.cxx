@@ -145,7 +145,7 @@ int main(int argc, char* argv[]){
 		AT->LoadParameters(argv[4]);	
 		AT->SetCostThreshold(AT->cost_threshold);
 		
-		AT->ReadStartPoints(std::string(argv[5]), 0);
+		AT->ReadStartPointsFromPath(std::string(argv[5]), 0);
 		
 		clock_t RunTracing_start_time = clock();
 		AT->RunTracing();
