@@ -178,7 +178,7 @@ if( SERVER == 'far04' ):
 if( SERVER == 'far05' ):
 	REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
@@ -724,39 +724,39 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		a061_runDistMap.main( FARSIGHT_BIN_EXE, FILE_LABEL_DIST_MAP, FILE_LABEL, runDistMap_log )
 		
 		optionsAstroTracing = LOCAL_DATASET_PATH_ASTRO_TRAC +'/options_astrocyte_tracing'
-			TEMP_FILE = open(optionsAstroTracing, 'w')
-			if( TEST_RUN == 1):
-				TEMP_FILE.write('-xTile 204\n')
-				TEMP_FILE.write('-yTile 204\n')
-				TEMP_FILE.write('-zTile 102\n')
-				TEMP_FILE.write('-xTileBor 20\n')
-				TEMP_FILE.write('-yTileBor 20\n')
-				TEMP_FILE.write('-zTileBor 10\n')
-			else:
-				TEMP_FILE.write('-xTile 800\n')
-				TEMP_FILE.write('-yTile 800\n')
-				TEMP_FILE.write('-zTile 400\n')
-				TEMP_FILE.write('-xTileBor 200\n')
-				TEMP_FILE.write('-yTileBor 200\n')
-				TEMP_FILE.write('-zTileBor 100\n')
-			TEMP_FILE.write('-num_threads 80\n')
-			if haveCy5 == 1:
-				TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
-			if haveTRT == 1:
-				TEMP_FILE.write('-TRI_Image '+FILE_TRI_BS_RE_bit+'\n')
-			if haveGFP == 1:
-				TEMP_FILE.write('-GFP_Image '+FILE_GFP_BS_CV+'\n')
-			if haveDAP == 1:
-				TEMP_FILE.write('-DAP_Image '+FILE_DAP_BS_RE_bit+'\n')
-			TEMP_FILE.write('-Dist_Map_Image '+FILE_LABEL_DIST_MAP+'\n')
-			TEMP_FILE.write('-Soma_Centroids '+LOCAL_DATASET_PATH_DATA+'/soma_table_centroids.txt'+'\n')
-			TEMP_FILE.write('-Soma_Montage '+LOCAL_DATASET_PATH_DATA+'/soma'+'\n')
-			TEMP_FILE.write('-isSmall '+SMALLIMAGE+'\n')
-			TEMP_FILE.write('-astroTraceParams '+LOCAL_DATASET_PATH_PARAMETERS+'/options_as_tr'+'\n')
-			TEMP_FILE.write('-outPath '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS+'\n')
-			TEMP_FILE.write('-outPathDebug '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'\n')
-			TEMP_FILE.write('-outPathDebugLevel2 '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2+'\n')
-			TEMP_FILE.write('-outPathTemp '+LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP+'\n')
+		TEMP_FILE = open(optionsAstroTracing, 'w')
+		if( TEST_RUN == 1):
+			TEMP_FILE.write('-xTile 204\n')
+			TEMP_FILE.write('-yTile 204\n')
+			TEMP_FILE.write('-zTile 102\n')
+			TEMP_FILE.write('-xTileBor 20\n')
+			TEMP_FILE.write('-yTileBor 20\n')
+			TEMP_FILE.write('-zTileBor 10\n')
+		else:
+			TEMP_FILE.write('-xTile 800\n')
+			TEMP_FILE.write('-yTile 800\n')
+			TEMP_FILE.write('-zTile 400\n')
+			TEMP_FILE.write('-xTileBor 200\n')
+			TEMP_FILE.write('-yTileBor 200\n')
+			TEMP_FILE.write('-zTileBor 100\n')
+		TEMP_FILE.write('-num_threads 80\n')
+		if haveCy5 == 1:
+			TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
+		if haveTRT == 1:
+			TEMP_FILE.write('-TRI_Image '+FILE_TRI_BS_RE_bit+'\n')
+		if haveGFP == 1:
+			TEMP_FILE.write('-GFP_Image '+FILE_GFP_BS_CV+'\n')
+		if haveDAP == 1:
+			TEMP_FILE.write('-DAP_Image '+FILE_DAP_BS_RE_bit+'\n')
+		TEMP_FILE.write('-Dist_Map_Image '+FILE_LABEL_DIST_MAP+'\n')
+		TEMP_FILE.write('-Soma_Centroids '+LOCAL_DATASET_PATH_DATA+'/soma_table_centroids.txt'+'\n')
+		TEMP_FILE.write('-Soma_Montage '+LOCAL_DATASET_PATH_DATA+'/soma'+'\n')
+		TEMP_FILE.write('-isSmall '+SMALLIMAGE+'\n')
+		TEMP_FILE.write('-astroTraceParams '+LOCAL_DATASET_PATH_PARAMETERS+'/options_as_tr'+'\n')
+		TEMP_FILE.write('-outPath '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS+'\n')
+		TEMP_FILE.write('-outPathDebug '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'\n')
+		TEMP_FILE.write('-outPathDebugLevel2 '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2+'\n')
+		TEMP_FILE.write('-outPathTemp '+LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP+'\n')
 		TEMP_FILE.close()
 
 		a075_RunAstroTracing.main( FARSIGHT_BIN_EXE, optionsAstroTracing, runAstroTrac_log, LOCAL_DATASET_PATH_DATA )
