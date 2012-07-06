@@ -67,7 +67,7 @@ void AstroTracer::LoadCurvImageFromPath(std::string fname, unsigned int pad)
 	image->Update();
 
 	std::cout << "Entering LoadCurvImage" << std::endl;
-	LoadCurvImage_1(image, pad);
+	LoadCurvImage(image, pad);
 }
 
 void AstroTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)  
