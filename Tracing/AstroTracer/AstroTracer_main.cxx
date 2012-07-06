@@ -1,6 +1,5 @@
 #include "AstroTracer.h"
 #include "time.h"
-#include <conio.h>
 
 int main(int argc, char* argv[]){	
     
