@@ -694,7 +694,51 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 //}
 
 	
+void ftkMainDarpaAstroTrace::RemoveLabelNearBorder(rawImageType_8bit::RegionType regionLocal_inside,std::vector< rawImageType_16bit::Pointer >& Label_Tiles, std::vector< vtkSmartPointer< vtkTable > >& Table_Tiles, std::vector< std::map< unsigned int, itk::Index<3> > >& Centroids_Tiles )
+{
+	rawImageType_16bit::PixelType * Label_TilesArray = Label_Tiles[0]->GetBufferPointer();
+	itk::Size<3> tileSize = Label_Tiles[0]->GetLargestPossibleRegion().GetSize();
+	unsigned long long tileSizeXY = tileSize[1] * tileSize[0];
+	unsigned long long tileSizeX = tileSize[0];	
+	for(unsigned long long z=0; z<tileSize[2]; ++z)
+	{
+		for(unsigned long long y=0; y<tileSize[1]; ++y)
+		{
+			for(unsigned long long x=0; x<tileSize[0]; ++x)
+			{
+				unsigned short value = Label_TilesArray[(tileSizeXY*z) + (tileSizeX*y) + (x)];
+				if(value == 0) 
+					continue;
+				if( !regionLocal_inside.IsInside( Centroids_Tiles[0][value] ) )
+					Label_TilesArray[(tileSizeXY*z) + (tileSizeX*y) + (x)] = 0;
+			}
+		}
+	}
 	
+	vtkSmartPointer< vtkTable > Table_Tiles_out = vtkSmartPointer<vtkTable>::New();
+	Table_Tiles_out->Initialize();
+	for(int c=0; c<(int)Table_Tiles[0]->GetNumberOfColumns(); ++c)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( Table_Tiles[0]->GetColumnName(c) );
+		Table_Tiles_out->AddColumn(column);
+	}
+	for(int r=0; r<(int)Table_Tiles[0]->GetNumberOfRows(); ++r)
+	{
+		rawImageType_8bit::IndexType indexCentroid = Centroids_Tiles[0][ Table_Tiles[0]->GetValue(r, 0).ToUnsignedInt() ];
+		if( !regionLocal_inside.IsInside( indexCentroid ) )
+			continue;
+		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c=0; c<(int)Table_Tiles[0]->GetNumberOfColumns(); ++c)
+		{
+			model_data1->InsertNextValue(Table_Tiles[0]->GetValue(r,c));
+		}
+		Table_Tiles_out->InsertNextRow(model_data1);
+	}
+	// Any kind of memory leakage ???
+	Table_Tiles[0] = Table_Tiles_out;
+}
 	
 	
 
