@@ -296,7 +296,7 @@ public:
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 
-	void Set_DistanceMapImage(LabelImageType3D::Pointer distance_map_image);
+	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
 
 	
 	//external parameters
@@ -339,7 +339,7 @@ private:
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
 	ImageType3D::Pointer ObjectnessImage;
-	LabelImageType3D::Pointer SomaDistanceMapImage;
+	ImageType3D::Pointer SomaDistanceMapImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image

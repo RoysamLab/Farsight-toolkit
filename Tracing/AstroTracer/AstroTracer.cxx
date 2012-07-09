@@ -3533,7 +3533,7 @@ void AstroTracer::ComputeAstroFeatures(std::string outputFname, std::string IDFn
 	std::cout << "Done with RootsImage writing." << std::endl;
 }
 
-void AstroTracer::Set_DistanceMapImage(AstroTracer::LabelImageType3D::Pointer distance_map_image){
+void AstroTracer::Set_DistanceMapImage(AstroTracer::ImageType3D::Pointer distance_map_image){
 	this->SomaDistanceMapImage = distance_map_image;
 }
 
@@ -4177,7 +4177,7 @@ void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTa
 		root_idx[0] = roots_feature_table[0]->GetValueByName(i, "x").ToInt(); 
 		root_idx[1] = roots_feature_table[0]->GetValueByName(i, "y").ToInt();
 		root_idx[2] = roots_feature_table[0]->GetValueByName(i, "z").ToInt();
-		root_point.featureVector.node = HeapNode(root_idx, 0);
+		root_point.featureVector.node = HeapNode_astro(root_idx, 0);
 
 		root_point.featureVector.radius = roots_feature_table[0]->GetValueByName(i, "radius").ToFloat();
 		root_point.featureVector.sphere_likelihood = roots_feature_table[0]->GetValueByName(i, "sph_likelihood").ToFloat();
@@ -4732,7 +4732,7 @@ void AstroTracer::ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<v
 		nuc_idx[0] = nuclei_features_table[0]->GetValueByName(i, "x").ToInt();
 		nuc_idx[1] = nuclei_features_table[0]->GetValueByName(i, "y").ToInt();
 		nuc_idx[2] = nuclei_features_table[0]->GetValueByName(i, "z").ToInt();
-		nuclei_object.intrinsicFeatures.centroid = HeapNode(nuc_idx, 0);
+		nuclei_object.intrinsicFeatures.centroid = HeapNode_astro(nuc_idx, 0);
 		nuclei_object.intrinsicFeatures.volume = nuclei_features_table[0]->GetValueByName(i, "volume").ToFloat();
 		nuclei_object.intrinsicFeatures.integratedIntensity = nuclei_features_table[0]->GetValueByName(i, "sum_int").ToFloat();
 		nuclei_object.intrinsicFeatures.meanIntensity = nuclei_features_table[0]->GetValueByName(i, "mean_int").ToFloat();
