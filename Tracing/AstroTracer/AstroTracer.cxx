@@ -4158,8 +4158,64 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 	std::cout << "Root points file read. " << this->CandidateRootPoints.size() << std::endl;
 }
 
-void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string finalIDImageFileName)
-{
+void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTable> > roots_feature_table){
+
+	bool prediction_found = false;
+	for(int i = roots_feature_table[0]->GetNumberOfColumns(); i > 0; i--){
+		std::string current_column = roots_feature_table[0]->GetColumnName(i);
+		if(current_column.find("prediction") != std::string::npos ){
+			prediction_found = true;
+			break;
+		}	
+	}
+
+	CandidateRootPoint root_point;
+	itk::Index<3> root_idx;
+	for(int i = 0; i < roots_feature_table[0]->GetNumberOfRows(); i++){
+		root_point.featureVector.ID = roots_feature_table[0]->GetValueByName(i, "ID").ToInt();
+
+		root_idx[0] = roots_feature_table[0]->GetValueByName(i, "x").ToInt(); 
+		root_idx[1] = roots_feature_table[0]->GetValueByName(i, "y").ToInt();
+		root_idx[2] = roots_feature_table[0]->GetValueByName(i, "z").ToInt();
+		root_point.featureVector.node = HeapNode(root_idx, 0);
+
+		root_point.featureVector.radius = roots_feature_table[0]->GetValueByName(i, "radius").ToFloat();
+		root_point.featureVector.sphere_likelihood = roots_feature_table[0]->GetValueByName(i, "sph_likelihood").ToFloat();
+		root_point.featureVector.ballness = roots_feature_table[0]->GetValueByName(i, "ball").ToFloat();
+		root_point.featureVector.plateness = roots_feature_table[0]->GetValueByName(i, "plate").ToFloat();
+		root_point.featureVector.vesselness = roots_feature_table[0]->GetValueByName(i, "vessel").ToFloat();
+		root_point.featureVector.intensity = roots_feature_table[0]->GetValueByName(i, "int").ToFloat();
+		root_point.featureVector.meanIntensity = roots_feature_table[0]->GetValueByName(i, "m_int").ToFloat();
+		root_point.featureVector.varianceIntensity = roots_feature_table[0]->GetValueByName(i, "v_int").ToFloat();
+		root_point.featureVector.maxIntensity = roots_feature_table[0]->GetValueByName(i, "mx_int").ToFloat();
+		root_point.featureVector.minIntensity = roots_feature_table[0]->GetValueByName(i, "mn_int").ToFloat();
+		root_point.featureVector.nucleusDistance = roots_feature_table[0]->GetValueByName(i, "nucl_dist").ToFloat();
+		
+		if(prediction_found){
+			root_point.classValue = roots_feature_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
+			root_point.confidenceMeasure = roots_feature_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
+
+			if(root_point.classValue == 1)
+				root_point.isRootPoint = true;
+			else
+				root_point.isRootPoint = false;
+
+			if(root_point.isRootPoint)
+				this->CandidateRootPoints.push_back(root_point);
+		}
+		else{
+			this->CandidateRootPoints.push_back(root_point);
+		}
+	}
+	
+	if(this->CandidateRootPoints.empty()){
+		std::cout << "Root points table is empty! Returning. " << std::endl;
+		return;
+	}
+	std::cout << "Root points table read. " << this->CandidateRootPoints.size() << std::endl;
+}
+
+void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string finalIDImageFileName){
 	int centroid_count=0;
 	
 	//Creating centroids.txt file with class 1 roots which are closest to a nucleus 
@@ -4514,6 +4570,11 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	//End of creating centroids.txt file
 }
 
+void AstroTracer::GetCentroidsForTracingPipeline(){
+
+
+}
+
 void AstroTracer::ReadStartPointsInternal(){
 
 	if(this->DensityFilteredCentroidListForTracing.empty()){
@@ -4601,7 +4662,8 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
 			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[6].c_str());
 			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[7].c_str());
-			nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
+			//nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
+			nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume;
 
 			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[11].c_str());
 			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[15].c_str());
@@ -4642,6 +4704,83 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 		return;
 	}
 	std::cout << "Nuclei features file read. " << this->NucleiObjects.size() << std::endl;
+}
+
+void AstroTracer::ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<vtkTable> > nuclei_features_table){
+	
+	bool prediction_found = false, root_found = false;
+	for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
+		std::string current_column = nuclei_features_table[0]->GetColumnName(i);
+		if(current_column.find("prediction") != std::string::npos ){
+			prediction_found = true;
+			break;
+		}
+	}
+	for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
+		std::string current_column = nuclei_features_table[0]->GetColumnName(i);
+		if(current_column.find("root") != std::string::npos ){
+			root_found = true;
+			break;
+		}
+	}
+
+	NucleiObject nuclei_object;
+	itk::Index<3> nuc_idx;
+	for(int i = 0; i < nuclei_features_table[0]->GetNumberOfRows(); i++){
+		nuclei_object.intrinsicFeatures.ID = nuclei_features_table[0]->GetValueByName(i, "ID").ToInt();
+		
+		nuc_idx[0] = nuclei_features_table[0]->GetValueByName(i, "x").ToInt();
+		nuc_idx[1] = nuclei_features_table[0]->GetValueByName(i, "y").ToInt();
+		nuc_idx[2] = nuclei_features_table[0]->GetValueByName(i, "z").ToInt();
+		nuclei_object.intrinsicFeatures.centroid = HeapNode(nuc_idx, 0);
+		nuclei_object.intrinsicFeatures.volume = nuclei_features_table[0]->GetValueByName(i, "volume").ToFloat();
+		nuclei_object.intrinsicFeatures.integratedIntensity = nuclei_features_table[0]->GetValueByName(i, "sum_int").ToFloat();
+		nuclei_object.intrinsicFeatures.meanIntensity = nuclei_features_table[0]->GetValueByName(i, "mean_int").ToFloat();
+		nuclei_object.intrinsicFeatures.varianceIntensity = nuclei_features_table[0]->GetValueByName(i, "var_int").ToFloat();
+		nuclei_object.intrinsicFeatures.eccentricity = nuclei_features_table[0]->GetValueByName(i, "eccentricity").ToFloat();
+		nuclei_object.intrinsicFeatures.elongation = nuclei_features_table[0]->GetValueByName(i, "elongation").ToFloat();
+		nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume;
+
+		nuclei_object.intrinsicFeatures.meanSurfaceGradient = nuclei_features_table[0]->GetValueByName(i, "mean_surf_gradient").ToFloat();
+		nuclei_object.intrinsicFeatures.radiusVariation = nuclei_features_table[0]->GetValueByName(i, "radius_variation").ToFloat();
+		nuclei_object.intrinsicFeatures.shapeMeasure = nuclei_features_table[0]->GetValueByName(i, "shape_measure").ToFloat();
+		nuclei_object.intrinsicFeatures.energy = nuclei_features_table[0]->GetValueByName(i, "energy").ToFloat();
+		nuclei_object.intrinsicFeatures.entropy = nuclei_features_table[0]->GetValueByName(i, "entropy").ToFloat();
+		nuclei_object.intrinsicFeatures.inverseDiffMoment = nuclei_features_table[0]->GetValueByName(i, "inverse_diff_moment").ToFloat();
+		nuclei_object.intrinsicFeatures.inertia = nuclei_features_table[0]->GetValueByName(i, "inertia").ToFloat();
+		nuclei_object.intrinsicFeatures.clusterShade = nuclei_features_table[0]->GetValueByName(i, "cluster_shade").ToFloat();
+		nuclei_object.intrinsicFeatures.clusterProminence = nuclei_features_table[0]->GetValueByName(i, "cluster_prominence").ToFloat();
+		nuclei_object.associativeFeatures.astro_total = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_TOTAL").ToFloat();
+		nuclei_object.associativeFeatures.astro_avg = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_AVG").ToFloat();
+		nuclei_object.associativeFeatures.astro_surr = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_SURR").ToFloat();
+		nuclei_object.associativeFeatures.micro_total = nuclei_features_table[0]->GetValueByName(i, "Microglia_TOTAL").ToFloat();
+		nuclei_object.associativeFeatures.micro_avg = nuclei_features_table[0]->GetValueByName(i, "Microglia_AVG").ToFloat();
+		nuclei_object.associativeFeatures.micro_surr = nuclei_features_table[0]->GetValueByName(i, "Microglia_SURR").ToFloat();
+		nuclei_object.associativeFeatures.neuro_total = nuclei_features_table[0]->GetValueByName(i, "Neurons_TOTAL").ToFloat();
+		nuclei_object.associativeFeatures.neuro_avg = nuclei_features_table[0]->GetValueByName(i, "Neurons_AVG").ToFloat();
+		nuclei_object.associativeFeatures.neuro_surr = nuclei_features_table[0]->GetValueByName(i, "Neurons_SURR").ToFloat();
+
+		if(root_found){
+			nuclei_object.associativeFeatures.minRootDist = nuclei_features_table[0]->GetValueByName(i, "min_root_dist").ToFloat();
+			nuclei_object.associativeFeatures.maxRootDist = nuclei_features_table[0]->GetValueByName(i, "max_root_dist").ToFloat();
+			nuclei_object.associativeFeatures.meanRootDist = nuclei_features_table[0]->GetValueByName(i, "mean_root_dist").ToFloat();
+			nuclei_object.associativeFeatures.varRootDist = nuclei_features_table[0]->GetValueByName(i, "var_root_dist").ToFloat();
+			nuclei_object.associativeFeatures.nRoots = nuclei_features_table[0]->GetValueByName(i, "n_roots").ToInt();
+		}
+		if(prediction_found){
+			nuclei_object.classValue = nuclei_features_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
+			nuclei_object.confidenceMeasure = nuclei_features_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
+		}
+		
+		this->NucleiObjects.push_back(nuclei_object);
+	}
+
+	if(this->NucleiObjects.empty()){
+		std::cout << "Nuclei feature table is empty! Returning. " << std::endl;
+		return; 
+	}
+	std::cout << "Nuclei features table read. " << this->NucleiObjects.size() << std::endl;
+	
 }
 
 void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
@@ -4841,6 +4980,206 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		//distance_array.clear();
 
 	}//end of loop over nuclei
+}
+
+void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType local_region, std::vector<vtkSmartPointer<vtkTable> >& nuclei_features_table){
+
+	if(this->CandidateRootPoints.empty() || this->NucleiObjects.empty() || this->SomaDistanceMapImage.IsNull()){
+		std::cout << "Either root points table or nuclei table or the distance map image is empty. Returning." << std::endl;
+		return;
+	}
+		
+	ImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	ImageType3D::SizeType sub_volume_size_nuclei;
+	ImageType3D::RegionType sub_volume_region_nuclei;
+	ImageType3D::Pointer sub_volume_nuclei;
+	
+	//sz is the size of the tile plus the padding
+	LabelImageType3D::SizeType sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+
+
+	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
+	
+	std::cout << "Computing nuclei features.. " << std::endl;
+
+	//Loop over nuclei
+	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+
+		
+		CharImageType3D::IndexType current_idx;
+		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
+		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
+		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		if(!local_region.IsInside(current_idx))
+			continue;
+
+		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
+		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
+		
+
+		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
+		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
+
+	    //std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+			(end_index_nuclei[2] > (unsigned int)sz[2]) )
+			continue;
+
+		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+		sub_volume_size_nuclei[0] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2.0 * double_scale_nuclei;
+
+		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
+		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
+
+
+		typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType_nuclei2;
+		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
+		sub_volume_filter_nuclei->SetInput(this->SomaDistanceMapImage);
+		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
+		sub_volume_filter_nuclei->Update();
+		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+
+		ImageType3D::Pointer distance_map = sub_volume_nuclei;
+		
+				
+		double cur_distance;
+		double min_distance = 1000.0;
+		double max_distance = -1000.0; 
+		double mean_distance = 0.0;
+		double variance_distance = 0.0;
+		double acc_distance = 0.0;
+		int n_roots = 0;
+		
+		//std::cout << std::endl;
+
+		std::vector<double> distance_array;
+		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
+
+			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+			
+
+			if(CandidateRootPoints[j].isRootPoint){
+
+				LabelImageType3D::IndexType current_root_idx;
+				current_root_idx[0] = this->CandidateRootPoints[j].featureVector.node.ndx[0];
+				current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
+				current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
+
+				//if(i > 880)
+				//	std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+				
+				int offset = 2; //1;
+				if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
+					current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
+					continue;
+
+
+				//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+				
+				
+				ImageType3D::IndexType relative_root_idx;
+				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
+				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
+				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
+
+				//std::cout << relative_root_idx[0] << ", " << relative_root_idx[1] << ", " << relative_root_idx[2] << std::endl;
+				
+				cur_distance = distance_map->GetPixel(relative_root_idx);
+				
+				if(cur_distance < 0.00000000000001 && cur_distance > 0.0)
+					cur_distance = 0.0;
+
+				if(cur_distance > -0.00000000000001 && cur_distance < 0.0)
+					cur_distance = 0.0;
+				
+				if(cur_distance < -1000.0)
+					cur_distance = -1000.0;
+				
+				if(cur_distance > 1000.0)
+					cur_distance = 1000.0;
+				
+				//std::cout << cur_distance << std::endl;
+
+				if(cur_distance < min_distance)
+					min_distance = cur_distance;
+				if(cur_distance > max_distance)
+					max_distance = cur_distance;
+
+				distance_array.push_back(cur_distance);
+				acc_distance = acc_distance + cur_distance;
+				n_roots++;
+			}
+		}	
+
+		//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
+
+		if(!distance_array.empty()){
+
+			//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
+
+			mean_distance = acc_distance / (double)n_roots;
+			for(int k = 0; k < distance_array.size(); k++)
+				variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
+		
+			variance_distance = variance_distance / (double)n_roots;
+
+			//std::cout << "mean: " << mean_distance << " variance: " << variance_distance << " n_roots: " << n_roots << std::endl;
+
+			this->NucleiObjects[i].associativeFeatures.minRootDist = min_distance; 
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = max_distance;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = mean_distance;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = variance_distance;
+			this->NucleiObjects[i].associativeFeatures.nRoots = n_roots;
+
+			//distance_array.clear();
+		}
+		else{
+			// These features do not exist when no root points are found in the neighborhood
+			this->NucleiObjects[i].associativeFeatures.minRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
+
+		}//loop over candidate roots
+
+		//distance_array.clear();
+
+	}//end of loop over nuclei
+
+	vtkSmartPointer<vtkDoubleArray> min_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> max_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> mean_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> var_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> n_roots_array = vtkSmartPointer<vtkDoubleArray>::New();
+
+	for(int i = 0; i < this->NucleiObjects.size(); i++){
+		min_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.minRootDist);
+		max_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.maxRootDist);
+		mean_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.meanRootDist);
+		var_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.varRootDist);
+		n_roots_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.nRoots);
+	}
+
+	min_dist_array->SetName("min_root_dist");
+	max_dist_array->SetName("max_root_dist");
+	mean_dist_array->SetName("mean_root_dist");
+	var_dist_array->SetName("var_root_dist");
+	n_roots_array->SetName("n_roots");
+
+	nuclei_features_table[0]->AddColumn(min_dist_array);
+	nuclei_features_table[0]->AddColumn(max_dist_array);
+	nuclei_features_table[0]->AddColumn(mean_dist_array);
+	nuclei_features_table[0]->AddColumn(var_dist_array);
+	nuclei_features_table[0]->AddColumn(n_roots_array);
+
 }
 
 void AstroTracer::WriteNucleiFeatures(std::string outputFname){

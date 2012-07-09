@@ -281,9 +281,13 @@ public:
 
 	void UseActiveLearningRootsModel(std::string);
 	void ReadRootPointsExternal(std::string);
+	void ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTable> >);
 	void GetCentroidsForTracing(std::string, std::string);
+	void GetCentroidsForTracingPipeline(void);
 	void ReadNucleiFeaturesExternal(std::string);
+	void ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<vtkTable> >);
 	void ComputeFeaturesFromCandidateRoots(void);
+	void ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&); 
 	void WriteNucleiFeatures(std::string);
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
