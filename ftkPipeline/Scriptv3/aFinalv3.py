@@ -79,7 +79,7 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 07
+TRY = 9
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
@@ -112,8 +112,8 @@ runRescale_bit = 1
 runRescale_bit_db = 1
 runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
-runTrac = 1		# Flag to run Tracing
-runTrac_db = 1
+runTrac = 0		# Flag to run Tracing
+runTrac_db = 0
 runAstroTrac = 1		# Flag to run Astrocyte Tracing
 runAstroTrac_db = 1
 
@@ -129,7 +129,7 @@ runAstroTrac_db = 1
 #runTrac_db = 0#1
 
 haveCy5_for = 0
-haveTRT_for = 0
+haveTRT_for = 1
 haveGFP_for = 1
 haveDAP_for = 1
 
@@ -144,10 +144,10 @@ if( p[1] == 'Farsight-04.EE.UH.EDU' ):
 	
 	
 USERNAME = 'none'
-p = getpass.getuser()
-if( p[1] == 'vhsomasu' ):
+p2 = getpass.getuser()
+if( p2 == 'vhsomasu' ):
 	USERNAME = 'vhsomasu'
-if( p[1] == 'nrey' ):
+if( p2 == 'nrey' ):
 	USERNAME = 'nrey'
 
 #DATA_FOLDER_ALL = ['/0131_test','/0131_test2'] # For testing dont forget the xTile params
@@ -173,8 +173,9 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
-	DATA_FOLDER_ALL = ['/0131_test4']
+	#DATA_FOLDER_ALL = ['/0131_test4']
 	#DATA_FOLDER_ALL = ['/0120_NRRD']
+	DATA_FOLDER_ALL = ['/0410_NRRD_CROPPED_2']
 if( SERVER == 'far05' ):
 	REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
@@ -231,6 +232,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	# Folders names 
 	# ---------------------------------------------------------------------------------------------------------------------------------------
 
+	
 	if( USERNAME == 'nrey' ):
 		FARSIGHT_BIN = '/data/nicolas/farsight_updated/bin'
 		FARSIGHT_BIN_EXE = '/data/nicolas/farsight_updated/bin/exe'
@@ -238,11 +240,11 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
 		MAIN_DEB_DATA_FOLDER = '/data/nicolas/deb'
 		
-	if( USERNAME = 'vhsomasu' ):
+	if( USERNAME == 'vhsomasu' ):
 		FARSIGHT_BIN = '/data/vinay/farsight_v1/bin'
 		FARSIGHT_BIN_EXE = '/data/vinay/farsight_v1/bin/exe'
 
-		MAIN_DATA_FOLDER = '/data/vinay/dataNew'
+		MAIN_DATA_FOLDER = '/data/vinay/data'
 		MAIN_DEB_DATA_FOLDER = '/data/vinay/deb'
 		
 
