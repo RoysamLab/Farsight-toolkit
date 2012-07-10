@@ -262,6 +262,7 @@ public:
 	void LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad);
 	void ReadStartPointsFromPath(std::string fname, unsigned int padz);
 	void ReadStartPoints(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
+	void ReadStartPointsFromVTKTable(const std::vector<vtkSmartPointer<vtkTable> >);
 	void SetCostThreshold(float thres){CostThreshold = thres;};
 	void LoadSomaImage(std::string somaFileName);
 	void RunTracing();
@@ -283,7 +284,7 @@ public:
 	void ReadRootPointsExternal(std::string);
 	void ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTable> >);
 	void GetCentroidsForTracing(std::string, std::string);
-	void GetCentroidsForTracingPipeline(void);
+	void GetCentroidsForTracingPipeline(std::string, std::string, unsigned int, ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::vector<LabelImageType3D::Pointer>&, const bool);
 	void ReadNucleiFeaturesExternal(std::string);
 	void ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<vtkTable> >);
 	void ComputeFeaturesFromCandidateRoots(void);

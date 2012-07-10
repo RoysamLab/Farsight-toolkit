@@ -4216,6 +4216,7 @@ void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTa
 }
 
 void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string finalIDImageFileName){
+	
 	int centroid_count=0;
 	
 	//Creating centroids.txt file with class 1 roots which are closest to a nucleus 
@@ -4223,7 +4224,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	//Preparing IDImage
 	LabelImageType3D::RegionType id_reg;
 	LabelImageType3D::IndexType id_st;
-	LabelImageType3D::SizeType id_sz = PaddedCurvImage->GetBufferedRegion().GetSize();
+	LabelImageType3D::SizeType id_sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
 
 	id_st[0] = 0;
 	id_st[1] = 0;
@@ -4570,9 +4571,272 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	//End of creating centroids.txt file
 }
 
-void AstroTracer::GetCentroidsForTracingPipeline(){
+void AstroTracer::GetCentroidsForTracingPipeline(std::string outputFname, std::string finalIDImageFileName, unsigned int padz, ImageType3D::RegionType regionLocal_inside, std::vector<vtkSmartPointer<vtkTable> >& centroids_table, std::vector<LabelImageType3D::Pointer>& out_images, const bool writeResult){
+
+	int centroid_count = 0;
+	
+	//Creating centroids.txt file with class 1 roots which are closest to a nucleus 
+
+	//Preparing IDImage
+	LabelImageType3D::RegionType id_reg;
+	LabelImageType3D::IndexType id_st;
+	LabelImageType3D::SizeType id_sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	this->FinalRootsImage = LabelImageType3D::New();
+	this->FinalRootsImage->SetRegions(id_reg);
+	this->FinalRootsImage->Allocate();
+	this->FinalRootsImage->SetSpacing(PaddedCurvImage->GetSpacing());
+	this->FinalRootsImage->FillBuffer(0);
+
+	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	LabelImageType3D::SizeType sz = id_sz; //this->PaddedCurvImage->GetBufferedRegion().GetSize();
+	
+	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
+	std::cout << "Nuclei points size: " << this->NucleiObjects.size() << std::endl;
+
+	//Loop over nuclei
+	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
+
+		// Use only astrocyte nuclei
+		if(this->NucleiObjects[i].classValue != 1)
+			continue;
+
+		//std::cout << "Ye!! Asto nuclei found!! " << std::endl;
+
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+		double_scale_nuclei = 2.0 * double_scale_nuclei; 
+		
+		CharImageType3D::IndexType current_idx;
+		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
+		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
+		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		if(!regionLocal_inside.IsInside(current_idx))
+			continue;
+
+		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
+		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
+
+		
+		//std::cout << starting_index_nuclei[0] << ", " << starting_index_nuclei[1] << ", " << starting_index_nuclei[2] << std::endl;
+
+		if(starting_index_nuclei[0] < 0)
+			starting_index_nuclei[0] = 0;
+		if(starting_index_nuclei[1] < 0)
+			starting_index_nuclei[1] = 0;
+		if(starting_index_nuclei[2] < 0)
+			starting_index_nuclei[2] = 0;
+		if(end_index_nuclei[0] > sz[0])
+			end_index_nuclei[0] = sz[0];
+		if(end_index_nuclei[1] > sz[1])
+			end_index_nuclei[1] = sz[1];
+		if(end_index_nuclei[2] > sz[2])
+			end_index_nuclei[2] = sz[2];
+
+		//if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+		//	(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+		//	(end_index_nuclei[2] > (unsigned int)sz[2]) )
+		//	continue;
 
 
+		std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+				
+		double cur_distance = 0.0;
+		std::multimap<double, HeapNode_astro> distance_idx_map;
+		std::multimap<double, HeapNode_astro>::reverse_iterator map_rit;
+		typedef std::pair<double, HeapNode_astro> distance_idx_pair_type;
+		
+		for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
+
+			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+		
+			LabelImageType3D::IndexType current_root_idx;
+			current_root_idx[0] = this->CandidateRootPoints[j].featureVector.node.ndx[0];
+			current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
+			current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
+
+			int offset = 2; //1;
+			if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
+				current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
+				continue;
+			
+			
+			distance_idx_map.insert(distance_idx_pair_type(this->CandidateRootPoints[j].featureVector.radius, HeapNode_astro(current_root_idx, 0)));
+
+		}
+		if(!distance_idx_map.empty()){
+
+			// Among the neighboring root points, keep the root point with highest scale 
+			this->CentroidListForTracing.push_back(distance_idx_map.rbegin()->second);
+			this->CentroidScales.push_back(distance_idx_map.rbegin()->first);
+
+		}
+		//else{
+			// If the map is empty, it means that the astro nuclei did not have any root points in the neighborhood.
+			// In this case, just take the max intensity point in the neighborhood of this nuclei as a root point?
+		//}
+
+		
+	}//end of loop over nuclei
+
+	std::cout << "Before density filtering: " << this->CentroidListForTracing.size() << std::endl;
+	
+	// Filter the centroids based on density
+	double centroid_nhood = 30.0; //25; //50; 
+	std::vector<bool> neighbor_flags(this->CentroidListForTracing.size(), false);
+	
+	for(int i = 0; i < this->CentroidListForTracing.size(); i++){
+
+		if(neighbor_flags[i])
+			continue;
+		
+		itk::Index<3> cur_idx = this->CentroidListForTracing[i].ndx;
+		std::vector<HeapNode_astro> neighbor_points;
+		std::multimap<double, HeapNode_astro> neighbor_point_map;
+		std::multimap<double, HeapNode_astro>::iterator neighbor_point_map_itr;
+		typedef std::pair<double, HeapNode_astro> distance_idx_pair_type;
+
+		for(int j = 0; j < this->CentroidListForTracing.size(); j++){
+
+			if(j == i)
+				continue;
+
+			itk::Index<3> neighbor_idx = this->CentroidListForTracing[j].ndx; 
+			
+			// Please use Eucleidien distance
+			//if(std::abs((int)(cur_idx[0] - neighbor_idx[0])) > centroid_nhood || std::abs((int)(cur_idx[1] - neighbor_idx[1])) > centroid_nhood || 
+			//	std::abs((int)(cur_idx[2] - neighbor_idx[2])) > centroid_nhood)
+			//	continue;
+			if(std::sqrt(std::pow((double)(cur_idx[0] - neighbor_idx[0]), 2) + std::pow((double)(cur_idx[1] - neighbor_idx[1]), 2) + std::pow((double)(cur_idx[2] - neighbor_idx[2]), 2)) > centroid_nhood)
+				continue;
+			
+			neighbor_flags[j] = true;
+			neighbor_points.push_back(HeapNode_astro(neighbor_idx, 0));
+			neighbor_point_map.insert(distance_idx_pair_type(this->CentroidScales[j], HeapNode_astro(neighbor_idx, 0)));
+		}
+
+		if(neighbor_points.empty()){
+			neighbor_flags[i] = false;	
+			this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(cur_idx, 0));
+			continue;
+		}
+		neighbor_flags[i] = true;
+		
+		//Replace neighboring root points with their centroids
+		/*itk::Index<3> centroid_of_centroid;
+		int cx = 0, cy = 0, cz = 0;
+
+		for(int k = 0; k < neighbor_points.size(); k++){
+			cx = cx + neighbor_points[k].ndx[0];
+			cy = cy + neighbor_points[k].ndx[1];
+			cz = cz + neighbor_points[k].ndx[2];
+		}
+		centroid_of_centroid[0] = cx / neighbor_points.size();
+		centroid_of_centroid[1] = cy / neighbor_points.size();
+		centroid_of_centroid[2] = cz / neighbor_points.size();
+		
+		this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(centroid_of_centroid, 0));
+		*/
+		
+		// Replace neighboring root points with their scale-weighted centoids
+		/*itk::Index<3> centroid_of_centroid;
+		int cx = 0, cy = 0, cz = 0;
+		double weight_sum = 0;
+
+		for(neighbor_point_map_itr = neighbor_point_map.begin(); neighbor_point_map_itr != neighbor_point_map.end(); neighbor_point_map_itr++){
+			cx = cx + neighbor_point_map_itr->first * neighbor_point_map_itr->second.ndx[0];
+			cy = cy + neighbor_point_map_itr->first * neighbor_point_map_itr->second.ndx[1];
+			cz = cz + neighbor_point_map_itr->first * neighbor_point_map_itr->second.ndx[2];
+
+			weight_sum = weight_sum + neighbor_point_map_itr->first;
+		}
+		centroid_of_centroid[0] = cx / weight_sum;
+		centroid_of_centroid[1] = cy / weight_sum;
+		centroid_of_centroid[2] = cz / weight_sum;
+		
+		this->DensityFilteredCentroidListForTracing.push_back(HeapNode_astro(centroid_of_centroid, 0));
+		*/
+
+		//Replace neighboring root points with the highest scale point
+		this->DensityFilteredCentroidListForTracing.push_back(neighbor_point_map.rbegin()->second);
+	}
+
+	std::cout << "After density filtering: " << this->DensityFilteredCentroidListForTracing.size() << std::endl;
+
+	for(int i = 0; i < this->DensityFilteredCentroidListForTracing.size(); i++)
+		this->FinalRootsImage->SetPixel(this->DensityFilteredCentroidListForTracing[i].ndx, 255);
+
+	out_images[0] = this->FinalRootsImage;
+
+	vtkSmartPointer<vtkDoubleArray> x_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> y_array = vtkSmartPointer<vtkDoubleArray>::New();
+	vtkSmartPointer<vtkDoubleArray> z_array = vtkSmartPointer<vtkDoubleArray>::New();
+	
+	for(int i = 0; i < this->DensityFilteredCentroidListForTracing.size(); i++){
+		x_array->InsertNextValue(this->DensityFilteredCentroidListForTracing[i].ndx[0]);
+		y_array->InsertNextValue(this->DensityFilteredCentroidListForTracing[i].ndx[1]);
+		z_array->InsertNextValue(this->DensityFilteredCentroidListForTracing[i].ndx[2]);		
+	}
+
+	x_array->SetName("x");
+	y_array->SetName("y");
+	z_array->SetName("z");
+	
+	centroids_table[0]->AddColumn(x_array);
+	centroids_table[0]->AddColumn(y_array);
+	centroids_table[0]->AddColumn(z_array);
+	
+
+	if(writeResult){
+		std::ofstream centroid_points;
+		centroid_points.open(outputFname.c_str(), std::ios::out);
+
+		if(centroid_points.good()){
+
+			for(int i = 0; i < this->DensityFilteredCentroidListForTracing.size(); i++){
+				centroid_points << (float)(this->DensityFilteredCentroidListForTracing[i].ndx[0]) << '\t' 
+					<< (float)(this->DensityFilteredCentroidListForTracing[i].ndx[1]) << '\t' 
+					<< (float)(this->DensityFilteredCentroidListForTracing[i].ndx[2]) << std::endl;
+
+				centroid_count++;
+			}
+
+			/*for(int i = 0; i < this->CentroidListForTracing.size(); i++){
+
+				this->FinalRootsImage->SetPixel(this->CentroidListForTracing[i].ndx, 255);
+
+				centroid_points << (float)(this->CentroidListForTracing[i].ndx[0]) << '\t' 
+					<< (float)(this->CentroidListForTracing[i].ndx[1]) << '\t' 
+					<< (float)(this->CentroidListForTracing[i].ndx[2]) << std::endl;
+
+				centroid_count++;
+			}*/
+		}
+		
+		std::cout << "Points list size: " << this->CandidateRootPoints.size() << std::endl;
+		std::cout << "Centroids list size: " << centroid_count << std::endl;
+
+
+		itk::ImageFileWriter<LabelImageType3D>::Pointer IDImageWriter = itk::ImageFileWriter<LabelImageType3D>::New();
+		IDImageWriter->SetFileName(finalIDImageFileName.c_str());
+		IDImageWriter->SetInput(this->FinalRootsImage);
+		try{
+			IDImageWriter->Update();
+		}
+		catch(itk::ExceptionObject e){
+			std::cout << e << std::endl;
+			//return EXIT_FAILURE;
+		}
+		std::cout << "Done with FinalRootImage writing. " << std::endl;
+
+		centroid_points.close();
+	}
 }
 
 void AstroTracer::ReadStartPointsInternal(){
@@ -4591,6 +4855,27 @@ void AstroTracer::ReadStartPointsInternal(){
 	
 	std::cout << "Start points loaded internally: " << this->StartPoints.size();
 	
+}
+
+void AstroTracer::ReadStartPointsFromVTKTable(const std::vector<vtkSmartPointer<vtkTable> > centroids_table){
+
+	if(centroids_table.empty()){
+		std::cout << "Centroids table vector is empty! Returning.";
+		return;
+	}
+	if(centroids_table[0]->GetNumberOfRows() < 1){
+		std::cout << "Centroids table is empty! Returning.";
+		return;
+	}
+
+	ImageType3D::IndexType idx;
+	for(int i = 0; i < centroids_table[0]->GetNumberOfRows(); i++){
+		idx[0] = centroids_table[0]->GetValueByName(i, "x").ToFloat();
+		idx[1] = centroids_table[0]->GetValueByName(i, "y").ToFloat();
+		idx[2] = centroids_table[0]->GetValueByName(i, "z").ToFloat();
+
+		this->StartPoints.push_back(idx);
+	}
 }
 
 IntrinsicFeatureVector::IntrinsicFeatureVector(){
