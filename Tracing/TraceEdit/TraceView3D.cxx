@@ -1046,9 +1046,10 @@ void View3D::TraceBitImageIntensity(int ImgID)
 }
 void View3D::TraceBitImageIntensityWeighted(int ImgID)
 {
+	std::cout << "TraceBitImageIntensityWeighted" << std::endl;
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! weighted image intensity values at each Trace Bit of trace line
-		//this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
+		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
 	}
 }
 
@@ -4614,12 +4615,16 @@ void View3D::updateSelectionFromCell()
 }
 void View3D::ShowDelaunay3D()
 {
+	std::cout << "ShowDelaunay3D" << std::endl;
+	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
 	if (this->convexHull->isChecked())
 	{
 		delaunayCellsSelected = this->CellModel->GetSelectedCells(); //in progress - Audrey
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
+			this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
+			//delaunayCellsSelected[i]->SetDelaunayValues(convexHullMagnitudeIndex, 0);
 		}
 	}
 	else
@@ -4627,11 +4632,28 @@ void View3D::ShowDelaunay3D()
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
+			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
-	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
+	//int convexHullAzimuthIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Azimuth");
+	//int convexHullElevationIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Elevation");
+	//////////////more
+	//for(unsigned int row = 0; (int)row < this->CellModel->getDataTable()->GetNumberOfRows(); ++row)  
+	//{
+	//	//vnl_vector<double> curr_col = currprob.get_column(row);
+	//	CellTrace* currCell = this->CellModel->GetCellNoSelection(row);
+	//	currCell->SetDelaunayValues(convexHullMagnitudeIndex, 0);
+	//}
+	//this->ShowCellAnalysis();
+
 	this->QVTK->GetRenderWindow()->Render();
+	//use tracesSelected = this->CellModel->GetSelectedTraces??
 	//TraceBitImageIntensityWeighted(-1); //in progress - Audrey
+
+	////test
+	//double angle = PI/2;
+	//StructuredObject * circleMask = new StructuredObject();
+	//circleMask->circleKernel(5,0,angle);
 }
 void View3D::IntensityFeature()
 {
@@ -5299,11 +5321,11 @@ void View3D::StartActiveLearning()
 				//myDataTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 				if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 				{
-					currCell->SetClassifcation(predictionIndex, curr_col.arg_max()+1, confIndex, curr_col(curr_col.arg_max()));
+					currCell->SetClassification(predictionIndex, curr_col.arg_max()+1, confIndex, curr_col(curr_col.arg_max()));
 				}
 				else
 				{
-					currCell->SetClassifcation(predictionIndex, 0, confIndex, curr_col(curr_col.arg_max()));
+					currCell->SetClassification(predictionIndex, 0, confIndex, curr_col(curr_col.arg_max()));
 				}
 			}
 			this->ShowCellAnalysis();

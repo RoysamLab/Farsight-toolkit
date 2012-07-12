@@ -34,6 +34,8 @@ limitations under the License.
 #include "vtkUnstructuredGrid.h"
 #include "vtkDataSetSurfaceFilter.h"
 
+#include "itkImage.h"
+
 class TraceBit;
 class TraceLine;
 class TraceGap;
@@ -45,6 +47,7 @@ class vtkPolyData;
 class vtkCellArray;
 class vtkFloatArray;
 
+typedef itk::Image< unsigned char, 3 >   ImageType;
 
 //needed because gcc doesn't have a built-in method to hash unsigned long long ints
 struct hashulli
@@ -110,7 +113,7 @@ public:
 	void markRootAsModified(int RootID);
 
 	void ImageIntensity(vtkSmartPointer<vtkImageData> imageData);
-	//void ImageWeightedIntensity(ImageType::Pointer intensityImage);
+	void ImageWeightedIntensity(ImageType::Pointer intensityImage);
 	//  operators
 	int getNewLineId();
 	int GetMaximumBitId();

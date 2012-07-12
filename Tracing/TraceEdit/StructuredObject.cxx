@@ -78,155 +78,283 @@ void StructuredObject::sphereKernel(ImageType::Pointer input, ImageType::Pointer
 	mask = imageFilter->GetOutput();
 	mask->SetOrigin( input->GetOrigin() );
 }
-ImageType::Pointer StructuredObject::circleKernel(double radius, double azimuth, double elevation)//need to validate
+void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, double radius, double azimuth, double elevation)//need to validate
 {
-	EllipseType::Pointer circle = EllipseType::New();
-	SpatialObjectToImageFilterType::Pointer imageFilter = SpatialObjectToImageFilterType::New();
+	ImageType::RegionType region = input->GetLargestPossibleRegion();
 
+	mask->SetRegions(region);
+	mask->Allocate();
+
+	SpatialObjectToImageFilterType::Pointer imageFilter = SpatialObjectToImageFilterType::New();
+	
+	ImageType::SizeType outputSize;
+	outputSize[0] = radius*2+1;
+	outputSize[1] = radius*2+1;
+	outputSize[2] = radius*2+1;
+	imageFilter->SetSize( outputSize );
+
+	EllipseType::Pointer circle = EllipseType::New();
+
+	//define radius and position of the circle, and size of image
 	EllipseType::ArrayType radiusArray;
 	radiusArray[0] = radius;
 	radiusArray[1] = radius;
+	radiusArray[2] = 1.0;
+	circle->SetRadius(radiusArray);
 
 	EllipseType::TransformType::OffsetType offset;
 	offset[0] = radius;
 	offset[1] = radius;
 	offset[2] = radius;
-
 	circle->GetObjectToParentTransform()->SetOffset(offset);
+
+	EllipseType::TransformType::CenterType center;
+	center[0] = radius;
+	center[1] = radius;
+	center[2] = radius;
+	circle->GetObjectToParentTransform()->SetCenter( center );
 
 	//rotate
 	EllipseType::TransformType::OutputVectorType axis;
 	axis[0] = 0;
 	axis[1] = 1;
 	axis[2] = 0;
-	double angle = elevation + PI;
-	circle->GetObjectToParentTransform()->Rotate3D(axis,angle,false);
+	circle->GetObjectToParentTransform()->Rotate3D(axis,elevation,false);
 	axis[0] = 0;
 	axis[1] = 0;
 	axis[2] = 1;
 	circle->GetObjectToParentTransform()->Rotate3D(axis,azimuth,false);
 	circle->ComputeObjectToWorldTransform();
 
-	
-	ImageType::SizeType outputSize;
-	outputSize[0] = radius*2+1;
-	outputSize[1] = radius*2+1;
-	outputSize[2] = radius*2+1;
-
-	imageFilter->SetSize( outputSize );
-	imageFilter->SetInput(circle);
-
 	imageFilter->SetInput(circle);
 	circle->SetDefaultInsideValue(255);
 	circle->SetDefaultOutsideValue(0);
 	imageFilter->SetUseObjectValue(true);
 	imageFilter->SetOutsideValue(0);
-
 	imageFilter->Update();
-	ImageType::Pointer slantCircle = imageFilter->GetOutput();
 
-	return slantCircle;
+	//ImageType::Pointer slantCircle = imageFilter->GetOutput();
+
+	//WriterType::Pointer writer = WriterType::New();
+	//writer->SetFileName("circle.tif");
+	//writer->SetInput( imageFilter->GetOutput() );
+
+	//std::cout<< "Circle radius: " << radius << std::endl;
+	
+	//try {
+	//	imageFilter->Update();
+	//	writer->Update();
+	//}
+	//catch (itk::ExceptionObject & excp )
+ //   {
+	//	std::cerr << excp << std::endl;
+ //   }
+
+	mask = imageFilter->GetOutput();
+	mask->SetOrigin( input->GetOrigin() );
 }
-void StructuredObject::CreateTaperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int &maskCount, double radius1, double radius2, double distanceXYZ[3])
-{
+void StructuredObject::taperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int firstBit[], double radius1, int secondBit[], double radius2)
+{//not yet functional
+	//check if length/distanceXYZ is greater than 1 otherwise use circle kernel
+
 	ImageType::RegionType region = image->GetLargestPossibleRegion();
 
 	mask->SetRegions(region);
 	mask->Allocate();
 
 	ImageType::SizeType regionSize = region.GetSize();
-	
 
-	double referencePt[3];
-	referencePt[0] = regionSize[0]/2;
-	referencePt[1] = regionSize[1]/2;
-	referencePt[2] = 0;
+	//add to this image
+	EllipseType::Pointer blank = EllipseType::New();
+	SpatialObjectToImageFilterType::Pointer blankFilter = SpatialObjectToImageFilterType::New();
+	blankFilter->SetSize( regionSize );
+	//blankFilter->SetInput(blank);
+	//circle->SetDefaultInsideValue(0);
+	//circle->SetDefaultOutsideValue(0);
+	blankFilter->SetUseObjectValue(true);
+	blankFilter->SetOutsideValue(0);
+	blankFilter->Update();
 
-	int count = 0;
-	maskCount = 0;
-	double cur_radius = radius1;
-	double length = sqrt(pow(distanceXYZ[0],2)+pow(distanceXYZ[1],2)+pow(distanceXYZ[2],2));
-	std::cout << "Length: " << length << std::endl;
-	int start_z = regionSize[2]/2-length/2;
-	int end_z = regionSize[2]/2+length/2;
-	double radius_increment = (radius2-radius1)/length;
-	double plane_size = (regionSize[0]+1)*(regionSize[1]+1);
 
-	itk::ImageRegionIterator< ImageType > imageIterator(mask,region);
-	imageIterator.GoToBegin();
-	//draw tapered cylinder along z axis
-	while(!imageIterator.IsAtEnd())
-	{
-		double distanceX = fabs(imageIterator.GetIndex()[0] - referencePt[0]);
-		double distanceY = fabs(imageIterator.GetIndex()[1] - referencePt[1]);
-		double distanceR = sqrt( pow(distanceX,2)+pow(distanceY,2) );
+	//double cur_radius = radius1;
+	//double length = sqrt(pow(distanceXYZ[0],2)+pow(distanceXYZ[1],2)+pow(distanceXYZ[2],2));
+	//std::cout << "Length: " << length << std::endl;
+	//int start_z = regionSize[2]/2-length/2;
+	//int end_z = regionSize[2]/2+length/2;
+	//double plane_size = (regionSize[0]+1)*(regionSize[1]+1);
 
-		if (imageIterator.GetIndex()[2] < start_z || imageIterator.GetIndex()[2] > end_z)
-		{
-			imageIterator.Set(0);
-		}
-		else
-		{
-			if(distanceR > cur_radius)
-			{
-				imageIterator.Set(0);
-			}
-			else
-			{
-				imageIterator.Set(255);
-				++maskCount;
-			}
+	////number of voxels along the length
+	//int num_of_voxels = distanceXYZ[0];
+	//for (int i = 1; i < 2; i++)
+	//{
+	//	if (distanceXYZ[i] > num_of_voxels)
+	//		num_of_voxels = distanceXYZ[i];
+	//}
 
-			++count;
-			if (count == plane_size) //next radius
-			{
-				count = 0;
-				cur_radius += radius_increment;
-				referencePt[2]++;
-			}
-		}
-		++imageIterator;
-	}
-	
-	//rotate tapered cylinder
-	//Euler3D
-	TransformType::Pointer transform = TransformType::New();
-	
-	TransformType::InputPointType centerOfRotation;
-	centerOfRotation[0] = referencePt[0];
-	centerOfRotation[1] = referencePt[1];
-	centerOfRotation[2] = regionSize[2]/2;
-	transform->SetCenter(centerOfRotation);
-	
-	double angleX = atan2(distanceXYZ[2],distanceXYZ[1]);
-	double angleY = atan2(distanceXYZ[2],distanceXYZ[0]);
-	double angleZ = atan2(distanceXYZ[1],distanceXYZ[0]);
-	//transform->SetRotation(angleX,angleY,angleZ);
-	transform->SetRotation(0,0,0);
+	//if (num_of_voxels == 0)
+	//{
+	//	num_of_voxels = 1;
+	//}
 
-	transform->Print( std::cout , 3 );
+	//double radius_increment = (radius2-radius1)/num_of_voxels;
 
-	ResampleFilterType::Pointer resampler = ResampleFilterType::New();
-	resampler->SetInput( mask );
-	resampler->SetReferenceImage( mask );
-	resampler->UseReferenceImageOn( );
-	resampler->SetTransform( transform );
+	//double centerPt[3];
+	//centerPt[0] = firstBit[0];
+	//centerPt[1] = firstBit[1];
+	//centerPt[2] = firstBit[2];
+
+	///////////
+	////make a circle for each voxel along the length
+	//for (int i = 0; i < num_of_voxels; i++)
+	//{
+	//	int radius = (int) floor(cur_radius+0.5);
+	//	SpatialObjectToImageFilterType::Pointer imageFilter = SpatialObjectToImageFilterType::New();
+	//	
+	//	//ImageType::SizeType outputSize;
+	//	//outputSize[0] = radius*2+1;
+	//	//outputSize[1] = radius*2+1;
+	//	//outputSize[2] = radius*2+1;
+	//	imageFilter->SetSize( regionSize );
+
+	//	EllipseType::Pointer circle = EllipseType::New();
+
+	//	//define radius and position of the circle, and size of image
+	//	EllipseType::ArrayType radiusArray;
+	//	radiusArray[0] = radius;
+	//	radiusArray[1] = radius;
+	//	radiusArray[2] = 1.0;
+	//	circle->SetRadius(radiusArray);
+
+	//	EllipseType::TransformType::OffsetType offset;
+	//	offset[0] = centerPt[0];
+	//	offset[1] = centerPt[1];
+	//	offset[2] = centerPt[2];
+	//	circle->GetObjectToParentTransform()->SetOffset(offset);
+
+	//	EllipseType::TransformType::CenterType center;
+	//	center[0] = centerPt[0];
+	//	center[1] = centerPt[1];
+	//	center[2] = centerPt[2];
+	//	circle->GetObjectToParentTransform()->SetCenter( center );
+
+	//	//rotate
+	//	EllipseType::TransformType::OutputVectorType axis;
+	//	axis[0] = 0;
+	//	axis[1] = 1;
+	//	axis[2] = 0;
+	//	circle->GetObjectToParentTransform()->Rotate3D(axis,elevation,false);
+	//	axis[0] = 0;
+	//	axis[1] = 0;
+	//	axis[2] = 1;
+	//	circle->GetObjectToParentTransform()->Rotate3D(axis,azimuth,false);
+	//	circle->ComputeObjectToWorldTransform();
+
+	//	imageFilter->SetInput(circle);
+	//	circle->SetDefaultInsideValue(255);
+	//	circle->SetDefaultOutsideValue(0);
+	//	imageFilter->SetUseObjectValue(true);
+	//	imageFilter->SetOutsideValue(0);
+	//	imageFilter->Update();
+
+	//	//ImageType::Pointer slantCircle = imageFilter->GetOutput();
+
+	//	WriterType::Pointer writer = WriterType::New();
+	//	writer->SetFileName("circle.tif");
+	//	writer->SetInput( imageFilter->GetOutput() );
+
+	//	std::cout<< "Circle radius: " << radius << std::endl;
+	//	
+	//	//try {
+	//	//	imageFilter->Update();
+	//	//	writer->Update();
+	//	//}
+	//	//catch (itk::ExceptionObject & excp )
+	// //   {
+	//	//	std::cerr << excp << std::endl;
+	// //   }
+
+
+	//}
+	//	mask = imageFilter->GetOutput();
+	//	mask->SetOrigin( input->GetOrigin() );
+	//	cur_radius += radius_increment;
+	//////
+
+
+	//itk::ImageRegionIterator< ImageType > imageIterator(mask,region);
+	//imageIterator.GoToBegin();
+	////draw tapered cylinder along z axis
+	//while(!imageIterator.IsAtEnd())
+	//{
+	//	double distanceX = fabs(imageIterator.GetIndex()[0] - referencePt[0]);
+	//	double distanceY = fabs(imageIterator.GetIndex()[1] - referencePt[1]);
+	//	double distanceR = sqrt( pow(distanceX,2)+pow(distanceY,2) );
+
+	//	if (imageIterator.GetIndex()[2] < start_z || imageIterator.GetIndex()[2] > end_z)
+	//	{
+	//		imageIterator.Set(0);
+	//	}
+	//	else
+	//	{
+	//		if(distanceR > cur_radius)
+	//		{
+	//			imageIterator.Set(0);
+	//		}
+	//		else
+	//		{
+	//			imageIterator.Set(255);
+	//		}
+
+	//		++count;
+	//		if (count == plane_size) //next radius
+	//		{
+	//			count = 0;
+	//			cur_radius += radius_increment;
+	//			referencePt[2]++;
+	//		}
+	//	}
+	//	++imageIterator;
+	//}
+	//
+	////rotate tapered cylinder
+	////Euler3D
+	//TransformType::Pointer transform = TransformType::New();
+	//
+	//TransformType::InputPointType centerOfRotation;
+	//centerOfRotation[0] = referencePt[0];
+	//centerOfRotation[1] = referencePt[1];
+	//centerOfRotation[2] = regionSize[2]/2;
+	//transform->SetCenter(centerOfRotation);
+	//
+	//double angleX = atan2(distanceXYZ[2],distanceXYZ[1]);
+	//double angleY = atan2(distanceXYZ[2],distanceXYZ[0]);
+	//double angleZ = atan2(distanceXYZ[1],distanceXYZ[0]);
+	////transform->SetRotation(angleX,angleY,angleZ);
+	//transform->SetRotation(0,0,0);
+
+	//transform->Print( std::cout , 3 );
+
+	//ResampleFilterType::Pointer resampler = ResampleFilterType::New();
+	//resampler->SetInput( mask );
+	//resampler->SetReferenceImage( mask );
+	//resampler->UseReferenceImageOn( );
+	//resampler->SetTransform( transform );
 
 	//For validating accuracy
-	WriterType::Pointer writer1 = WriterType::New();
-	writer1->SetFileName( "Input.tif" );
-	writer1->SetInput( image );
+	//WriterType::Pointer writer1 = WriterType::New();
+	//writer1->SetFileName( "Input.tif" );
+	//writer1->SetInput( image );
 
 	WriterType::Pointer writer2 = WriterType::New();
 	writer2->SetFileName( "Mask_Output.tif" );
-	writer2->SetInput( resampler->GetOutput() );
+	writer2->SetInput( blankFilter->GetOutput() );
 	
 	try
 	{
-		resampler->Update();
-		writer1->Update();
+		//resampler->Update();
+		//writer1->Update();
 		writer2->Update();
-		mask = resampler->GetOutput();
+		//mask = resampler->GetOutput();
 	}
 	catch( itk::ExceptionObject & excp )
 	{

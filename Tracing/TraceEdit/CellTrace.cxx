@@ -258,13 +258,19 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
 	this->modified = true;
 }
-void CellTrace::SetClassifcation(int predicCol, double prediction, int confCol,double confidence)
+void CellTrace::SetClassification(int predicCol, double prediction, int confCol,double confidence)
 {
 	//this->segments[0]->SetClassification(prediction, confidence);
 	this->segments[0]->editCellFeature(prediction, predicCol);
 	this->segments[0]->editCellFeature(confidence, confCol);
 	this->modified = true;
 }
+//void CellTrace::SetDelaunayValues(int magCol, double magnitude) //in progress - Audrey
+//{
+//	this->segments[0]->editCellFeature(convexHullMagnitude,magCol); //addCellFeature (NOT editCellFeature)
+//	////////////////////////more
+//	this->modified = true;
+//}
 void CellTrace::addNewFeature(vtkVariant nextFeature)
 {
 	this->segments[0]->addCellFeature(nextFeature);
@@ -461,6 +467,12 @@ void CellTrace::clearAll()
 	this->DeviceDistance = 0;
 	this->prediction = -PI;
 	this->confidence = -PI;
+
+	this->convexHullMagnitude = -1000;
+	this->convexHullAzimuth = -1000;
+	this->convexHullElevation = -1000;
+	this->convexHullArea = -1000;
+	this->convexHullVol = -1000;
 
 	this->modified = false;
 	this->delaunayCreated = false;
@@ -684,33 +696,33 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(AveElevation);
 		CellData->InsertNextValue(this->ElevationMax);
 
-	if (this->BifTorqueLocalCount == 0)
-	{
-		this->BifTorqueLocalCount = 1;
-	}
-	if (this->BifTorqueRemoteCount == 0)
-	{
-		this->BifTorqueRemoteCount = 1;
-	}
-	CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifAmplLocalMin);
-	CellData->InsertNextValue(this->BifAmplLocalMax);
-	CellData->InsertNextValue(this->BifTiltLocal / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltLocalMin);
-	CellData->InsertNextValue(this->BifTiltLocalMax);
-	CellData->InsertNextValue(this->BifTorqueLocal/ this->BifTorqueLocalCount);
-	CellData->InsertNextValue(this->BifTorqueLocalMin);
-	CellData->InsertNextValue(this->BifTorqueLocalMax);
+		if (this->BifTorqueLocalCount == 0)
+		{
+			this->BifTorqueLocalCount = 1;
+		}
+		if (this->BifTorqueRemoteCount == 0)
+		{
+			this->BifTorqueRemoteCount = 1;
+		}
+		CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifAmplLocalMin);
+		CellData->InsertNextValue(this->BifAmplLocalMax);
+		CellData->InsertNextValue(this->BifTiltLocal / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifTiltLocalMin);
+		CellData->InsertNextValue(this->BifTiltLocalMax);
+		CellData->InsertNextValue(this->BifTorqueLocal/ this->BifTorqueLocalCount);
+		CellData->InsertNextValue(this->BifTorqueLocalMin);
+		CellData->InsertNextValue(this->BifTorqueLocalMax);
 
-	CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifAmplRemoteMin);
-	CellData->InsertNextValue(this->BifAmplRemoteMax);
-	CellData->InsertNextValue(this->BifTiltRemote / this->actualBifurcations);
-	CellData->InsertNextValue(this->BifTiltRemoteMin);
-	CellData->InsertNextValue(this->BifTiltRemoteMax);
-	CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
-	CellData->InsertNextValue(this->BifTorqueRemoteMin);
-	CellData->InsertNextValue(this->BifTorqueRemoteMax);
+		CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifAmplRemoteMin);
+		CellData->InsertNextValue(this->BifAmplRemoteMax);
+		CellData->InsertNextValue(this->BifTiltRemote / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifTiltRemoteMin);
+		CellData->InsertNextValue(this->BifTiltRemoteMax);
+		CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
+		CellData->InsertNextValue(this->BifTorqueRemoteMin);
+		CellData->InsertNextValue(this->BifTorqueRemoteMax);
 
 		if (this->terminalTips == 0)
 		{
@@ -845,9 +857,23 @@ vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
 		convexHull->setPoints(tips);
 		convexHull->setReferencePt(point);
 		convexHull->calculate();
+		convexHull->calculateEllipsoid();
 		delaunayActor = convexHull->getActor();
+		ellipsoidActor = convexHull->get3DEllipseActor();
 		delaunayCreated = true;
+
+		convexHullMagnitude = convexHull->getConvexHullMagnitude();
+		convexHullAzimuth = convexHull->getConvexHullAzimuth();
+		convexHullElevation = convexHull->getConvexHullElevation();
+		convexHullArea = convexHull->getConvexHullArea();
+		convexHullVol = convexHull->getConvexHullVol();
+		//std::cout << "ConvexHull Magnitude: " << convexHullMagnitude << std::endl;
 	}
 
 	return delaunayActor;
+}
+
+vtkSmartPointer<vtkActor> CellTrace::GetEllipsoidActor()
+{
+	return ellipsoidActor;
 }

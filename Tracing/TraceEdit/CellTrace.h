@@ -46,10 +46,11 @@ public:
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
 	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
-	void SetClassifcation(int predicCol, double prediction, int confCol,double confidence);
+	void SetClassification(int predicCol, double prediction, int confCol,double confidence);
 	void addNewFeature(vtkVariant nextFeature);
 	std::vector<TraceLine *> getSegments();
 	vtkSmartPointer<vtkActor> GetDelaunayActor();
+	vtkSmartPointer<vtkActor> GetEllipsoidActor();
 
 	bool modified; //check if data needs to update
 
@@ -111,16 +112,19 @@ public:
 
 	double DeviceDistance;
 	double prediction, confidence;
+
+	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;
 	
 private:
-	//double daughterRatioAverage, parentDaughterRatioAverage, partitionAsymmetryAverage, rallPowerAverage, PkAverage, Pk_2Average, Pk_classicAverage;
 	vtkSmartPointer<vtkVariantArray> CellData;
 	std::string FileName;
 	std::set<long int> IDs;
 	//TraceBit rootBit;
-	//delaunay
+
 	bool delaunayCreated;
 	vtkSmartPointer<vtkActor> delaunayActor;
+	//vtkSmartPointer<vtkImageActor> ellipsoidActor;
+	vtkSmartPointer<vtkActor> ellipsoidActor;
 
 	std::vector<TraceBit> tips;
 	//std::vector<int> bounding_tips_indices;

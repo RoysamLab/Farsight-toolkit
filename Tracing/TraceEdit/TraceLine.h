@@ -170,6 +170,8 @@ public:
 	//this loads in with rpi.xml files
 	vtkVariant GetTraceFeature(std::string FeatureName);
 	void SetTraceFeature(std::string FeatureName,vtkVariant FeatureValue);
+	//vtkVariant GetCellFeature(std::string FeatureName);
+	//void SetCellFeature(std::string FeatureName,vtkVariant FeatureValue);
 
 	std::vector<vtkVariant> GetCellFeatures()
 	{
@@ -246,7 +248,8 @@ private:
 	TraceBitsType m_trace_bits;
 
 	std::vector<vtkVariant> CellFeatures;
-	std::map<std::string ,vtkVariant> TraceFeatures;
+	//std::map<std::string, vtkVariant> CellFeatures;
+	std::map<std::string, vtkVariant> TraceFeatures;
 };
 
 #endif

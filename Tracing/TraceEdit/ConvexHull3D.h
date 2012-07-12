@@ -21,6 +21,21 @@
 #include "vtkTriangle.h"
 #include "vtkUnstructuredGrid.h"
 
+//#include "vtkImageActor.h"
+//#include "vtkImageCast.h"
+//#include "vtkImageEllipsoidSource.h"
+//#include "vtkImageMapper3D.h"
+
+#include "vtkParametricEllipsoid.h"
+#include "vtkParametricFunctionSource.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkMatrix4x4.h"
+
+#include "vcl_limits.h"
+//#include "vnl_matrix.h"
+#include "vnl/vnl_math.h"
+#include "vnl/algo/vnl_symmetric_eigensystem.h"
+
 // by Audrey Cheong
 
 class ConvexHull3D
@@ -35,6 +50,14 @@ public:
 	void setReferencePt(double point[3]); //default is (0,0,0)
 	bool calculate();
 	vtkSmartPointer<vtkActor> getActor();
+	void calculateEllipsoid();
+	vtkSmartPointer<vtkActor> get3DEllipseActor();
+
+	double getConvexHullMagnitude() {return convexHullMagnitude;}
+	double getConvexHullAzimuth() {return convexHullAzimuth;}
+	double getConvexHullElevation() {return convexHullElevation;}
+	double getConvexHullArea() {return convexHullArea;}
+	double getConvexHullVol() {return convexHullVol;}
 	//double[] getCellCentroid();
 	//double getArea();
 	//double getVolume();
@@ -45,6 +68,8 @@ private:
 	double refPt[3];
 	double cellCentroid[3];
 	vtkSmartPointer<vtkActor> delaunayActor;
+	//vtkSmartPointer<vtkImageActor> ellipsoidActor;
+	vtkSmartPointer<vtkActor> ellipsoidActor;
 	vtkSmartPointer<vtkDelaunay3D> delaunay3D;
 	vtkPolyData * surfacePolyData;
 };

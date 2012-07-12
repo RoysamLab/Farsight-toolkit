@@ -45,7 +45,7 @@ void ConvexHull3D::setPoints(std::vector<TraceBit> &pts)
 
 	delaunayActor = vtkSmartPointer<vtkActor>::New();
 	delaunayActor->SetMapper(delaunayMapper);
-	delaunayActor->GetProperty()->SetColor(1,0,0);
+	delaunayActor->GetProperty()->SetColor(1,0.0,0.0);
 
 /*	vtkSmartPointer<vtkPoints> outputPoints = polyData->GetPoints();
 	std::cout << "Num of output point: " << outputPoints->GetNumberOfPoints() << std::endl;*/
@@ -186,8 +186,144 @@ vtkSmartPointer<vtkActor> ConvexHull3D::getActor()
 	return delaunayActor;
 }
 
+void ConvexHull3D::calculateEllipsoid()
+{
+	/*!
+	 * Calculate best-fit 3D ellipse
+	 * @author Audrey Cheong
+	 * @return check whether calculations is successful
+	 */
+	//http://www.ahinson.com/algorithms/Sections/InterpolationRegression/EigenPlane.pdf
+	// find best fit plane
+	vnl_matrix<double> A(3,3, 0.0); //3x3 matrix, fill with zeroes
+
+	double x_norm,y_norm,z_norm;
+	double point[3];
+	for (vtkIdType i = 0; i < surfacePolyData->GetNumberOfPoints(); i++)
+	{
+		//normalize points
+		surfacePolyData->GetPoint(i,point);
+		x_norm = point[0]-this->cellCentroid[0];
+		y_norm = point[1]-this->cellCentroid[1];
+		z_norm = point[2]-this->cellCentroid[2];
+
+		//calculate covariance (symmetric matrix)
+		A(0,0) += pow(x_norm,2);	A(0,1) += x_norm * y_norm;	A(0,2) +=  x_norm * z_norm;
+									A(1,1) += pow(y_norm,2);	A(1,2) += y_norm * z_norm;
+																A(2,2) += pow(z_norm,2);
+	}
+		A(1,0) = A(0,1);
+		A(2,0) = A(0,2);
+		A(2,1) = A(1,2);
+
+	// get eigenvector corresponding to the smallest and largest eigenvalue (normal to plane)
+	vnl_symmetric_eigensystem<double> eig(A);
+	double eigenvalues[3];
+	double eigenvalue_norm[3]; //length
+	int num_of_points = (int) surfacePolyData->GetNumberOfPoints();
+
+	std::cout << "Number of points: " << num_of_points << std::endl;
+
+	double min = eig.get_eigenvalue(0);
+	double max = eig.get_eigenvalue(0);
+	int min_index = 0;
+	int max_index = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		eigenvalues[i] = eig.get_eigenvalue(i);
+		eigenvalue_norm[i] = 4*sqrt(eigenvalues[i] / num_of_points); //normalize to get eigenvalue_norm
+		if (eigenvalues[i] < min)
+		{
+			min = eigenvalues[i];
+			min_index = i;
+		}
+		if (eigenvalues[i] >= max)
+		{
+			max = eigenvalues[i];
+			max_index = i;
+		}
+	}
+
+	int median_index = 3 - min_index - max_index;
+	vnl_vector<double> eigenVector_normal = eig.get_eigenvector(min_index);		//normal axis (smallest)
+	vnl_vector<double> eigenVector_minor = eig.get_eigenvector(median_index);	//minor axis
+	vnl_vector<double> eigenVector_major = eig.get_eigenvector(max_index);		//major axis
+	eigenVector_normal.normalize();
+	eigenVector_minor.normalize();
+	eigenVector_major.normalize();
+
+	//std::cout << "EigenVector: ";
+
+	//how to orientate correctly?
+	vtkMatrix4x4 * matrix = vtkMatrix4x4::New();
+	for (int i = 0; i < 3; i++)
+	{
+		vnl_vector<double> eigenVector = eig.get_eigenvector(i);
+
+		for (int j = 0; j < 3; j++)
+		{
+			matrix->SetElement(i,j,eigenVector.get(j));
+		}
+		////rotation
+		//matrix->SetElement(0,i,eigenVector_normal.get(i));
+		//matrix->SetElement(1,i,eigenVector_minor.get(i));
+		//matrix->SetElement(2,i,eigenVector_major.get(i));
+		//position
+		matrix->SetElement(i,3,cellCentroid[i]+200);
+
+		//std::cout << eigenVector_normal.get(i) << " ";
+	}
+
+	//std::cout << std::endl;
+
+	//double x_rotate = eigenVector_normal.get(0);
+	//double y_rotate = eigenVector_normal.get(1);
+	//double z_rotate = eigenVector_normal.get(2);
+
+
+	//std::cout << "Eigenvalues: " << eigenvalue_norm[0] << " " << eigenvalue_norm[1] << " " << eigenvalue_norm[2] << std::endl;
+	//still need to add to table!!
+
+	////validate (draw ellipsoid)
+
+	vtkSmartPointer<vtkParametricEllipsoid> parametricObject = vtkSmartPointer<vtkParametricEllipsoid>::New();
+	//parametricObject->SetXRadius(eigenvalue_norm[min_index]);
+	//parametricObject->SetYRadius(eigenvalue_norm[median_index]);
+	//parametricObject->SetZRadius(eigenvalue_norm[max_index]);
+	parametricObject->SetXRadius(eigenvalue_norm[0]);
+	parametricObject->SetYRadius(eigenvalue_norm[1]);
+	parametricObject->SetZRadius(eigenvalue_norm[2]);
+	vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource = vtkSmartPointer<vtkParametricFunctionSource>::New();
+	parametricFunctionSource->SetParametricFunction(parametricObject);
+	parametricFunctionSource->Update();
+
+	// Setup mapper and actor
+	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputConnection(parametricFunctionSource->GetOutputPort());
+
+	ellipsoidActor = vtkSmartPointer<vtkActor>::New();
+	ellipsoidActor->SetMapper(mapper);
+	ellipsoidActor->SetUserMatrix(matrix);
+	//ellipsoidActor->SetPosition(cellCentroid);
+	//ellipsoidActor->RotateX(180);
+	//ellipsoidActor->RotateY(-90);
+	//ellipsoidActor->RotateZ(-90);
+}
+
+//for validation purposes (unless desired for visualization)
+vtkSmartPointer<vtkActor> ConvexHull3D::get3DEllipseActor()
+{
+	/*!
+	 * @author Audrey Cheong
+	 * @return ellipsoid(vtkActor)
+	 */
+	std::cout<< "Ellipsoid actor" << std::endl;
+	return ellipsoidActor;
+}
+
 //double ConvexHull3D::getVolume()
 //{
 //	
 //	return this->convexHullVol;
 //}
+

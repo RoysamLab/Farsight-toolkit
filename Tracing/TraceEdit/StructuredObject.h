@@ -17,6 +17,7 @@ limitations under the License.
 
 #define PI 3.14159265
 
+#include "itkAddImageFilter.h"
 #include "itkEuler3DTransform.h"
 #include "itkEllipseSpatialObject.h"
 #include "itkFixedCenterOfRotationAffineTransform.h"
@@ -40,6 +41,7 @@ typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleFilterType;
 typedef itk::ImageRegionConstIterator< ImageType > ConstIteratorType;
 typedef itk::ImageRegionIterator< ImageType > IteratorType;
 typedef itk::ImageFileWriter< ImageType > WriterType;
+typedef itk::AddImageFilter< ImageType, ImageType > AddImageFilterType;
 
 class StructuredObject
 {
@@ -48,8 +50,9 @@ public:
 	~StructuredObject();
 		
 	void sphereKernel(ImageType::Pointer input, ImageType::Pointer &mask, int radius);
-	ImageType::Pointer circleKernel(double radius, double azimuth, double elevation);
-	void CreateTaperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int &maskCount, double radius1, double radius2, double distanceXYZ[3]);
+	//void circleKernel(double radius, double azimuth, double elevation);
+	void circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, double radius, double azimuth, double elevation);
+	void taperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int firstBit[], double radius1, int secondBit[], double radius2);
 	
 private:
 
