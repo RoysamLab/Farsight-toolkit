@@ -106,7 +106,7 @@ signals:
 private:
 	std::map< int ,CellTrace*> Cells;
 	std::vector<QString> headers;
-	std::vector<QString> AdditionalHeaders;
+	std::vector<std::string> AdditionalHeaders;
 	void SetupHeaders();
 	vtkSmartPointer<vtkTable> DataTable;
 

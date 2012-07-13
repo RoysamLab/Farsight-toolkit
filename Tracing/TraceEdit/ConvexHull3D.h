@@ -59,9 +59,6 @@ public:
 	double getConvexHullArea() {return convexHullArea;}
 	double getConvexHullVol() {return convexHullVol;}
 	//double[] getCellCentroid();
-	//double getArea();
-	//double getVolume();
-	//static TraceBit getCentroid(std::vector<TraceBit> &points, int index, Face * face);
 
 private:
 	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;

@@ -245,7 +245,7 @@ void CellTraceModel::SetupHeaders()
 	int size = this->AdditionalHeaders.size();
 	for (int k = 0; k < size; k++)
 	{	
-		this->headers.push_back(this->AdditionalHeaders[k]);
+		this->headers.push_back(QString(this->AdditionalHeaders[k].c_str()));
 	}
 	
 	int numHeaders = (int)this->headers.size();
@@ -275,7 +275,7 @@ void CellTraceModel::SyncModel()
 		}
 		else
 		{
-			this->DataTable->InsertNextRow((*CellIDLookupIter).second->GetExtendedDataRow(size));
+			this->DataTable->InsertNextRow((*CellIDLookupIter).second->GetExtendedDataRow(this->AdditionalHeaders));
 			//this->CellIDLookupMAP[ this->Cells[i]->rootID() ] = this->Cells[i];
 		}
 	}
@@ -588,15 +588,15 @@ double CellTraceModel::average(std::vector< std::pair<unsigned int, double> > ID
 }
 int CellTraceModel::AddNewFeatureHeader(std::string NewHeader)
 {
-	QString QnewHeader = QString(NewHeader.c_str());
 	for (int k = 0; k < this->AdditionalHeaders.size(); k++)
 	{
-		if (QnewHeader == this->AdditionalHeaders[k])
+		if (NewHeader == this->AdditionalHeaders[k])
 		{
 			return k;
 		}
 	}
-	this->AdditionalHeaders.push_back(QnewHeader);
+	this->AdditionalHeaders.push_back(NewHeader);
+	this->headers.push_back(QString(NewHeader.c_str()));
 	return -1;
 }
 

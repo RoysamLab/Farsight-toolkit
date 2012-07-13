@@ -3861,8 +3861,9 @@ void View3D::AssociateNeuronToNuclei()
 				{
 					for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 					{
+
 						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
-						currCell->addNewFeature(colData);
+						currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),colData);
 						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
 					}
 					found = true;
@@ -3876,7 +3877,7 @@ void View3D::AssociateNeuronToNuclei()
 				{
 					/*const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
 					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));*/
-					currCell->addNewFeature(vtkVariant(-PI));
+					currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),vtkVariant(-PI));
 				}
 			}
 		}//end of soma row		
@@ -3936,7 +3937,7 @@ void View3D::AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable)
 				if (distance < somaRadii)
 				{
 					vtkVariant colData = debrisTable->GetValue(nucleiRowIter, coln);
-					currCell->addNewFeature(colData);
+					currCell->addNewFeature(debrisTable->GetColumnName(coln),colData);
 					found = true;
 					debrisTable->RemoveRow(nucleiRowIter);
 				}
@@ -3944,7 +3945,7 @@ void View3D::AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable)
 			}//end debris match search
 			if (!found)
 			{
-				currCell->addNewFeature(vtkVariant(-PI));
+				currCell->addNewFeature(debrisTable->GetColumnName(coln),vtkVariant(-PI));
 			}
 		}//end of debris row		
 		this->ShowCellAnalysis();
@@ -4615,17 +4616,23 @@ void View3D::updateSelectionFromCell()
 }
 void View3D::ShowDelaunay3D()
 {
-	std::cout << "ShowDelaunay3D" << std::endl;
-	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
+	//std::cout << "ShowDelaunay3D" << std::endl;
 	if (this->convexHull->isChecked())
 	{
-		delaunayCellsSelected = this->CellModel->GetSelectedCells(); //in progress - Audrey
+		int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
+		delaunayCellsSelected = this->CellModel->GetSelectedCells();
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
-			//delaunayCellsSelected[i]->SetDelaunayValues(convexHullMagnitudeIndex, 0);
 		}
+		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+		{
+			CellTrace* currCell = (*cellCount).second;
+			currCell->addNewFeature("Convex Hull Magnitude",currCell->getFeature("Convex Hull Magnitude"));
+		}
+		this->ShowCellAnalysis();
 	}
 	else
 	{
@@ -4635,16 +4642,6 @@ void View3D::ShowDelaunay3D()
 			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
-	//int convexHullAzimuthIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Azimuth");
-	//int convexHullElevationIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Elevation");
-	//////////////more
-	//for(unsigned int row = 0; (int)row < this->CellModel->getDataTable()->GetNumberOfRows(); ++row)  
-	//{
-	//	//vnl_vector<double> curr_col = currprob.get_column(row);
-	//	CellTrace* currCell = this->CellModel->GetCellNoSelection(row);
-	//	currCell->SetDelaunayValues(convexHullMagnitudeIndex, 0);
-	//}
-	//this->ShowCellAnalysis();
 
 	this->QVTK->GetRenderWindow()->Render();
 	//use tracesSelected = this->CellModel->GetSelectedTraces??

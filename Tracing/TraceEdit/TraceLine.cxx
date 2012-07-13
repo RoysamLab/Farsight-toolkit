@@ -417,11 +417,11 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, 
 void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, std::string ImageName)
 {
 	std::cout << "setTraceBitWeightedIntensities" << std::endl;
+	double totalIntensity = 0;
 	if (this->m_trace_bits.size()>1)
 	{
 		TraceBit curBit, nextBit;
 		TraceBitsType::iterator it = this->m_trace_bits.begin();
-		double totalIntensity = 0;
 		curBit = *it;
 		it++;
 		for (; it != this->m_trace_bits.end(); it++)
@@ -435,7 +435,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			double new_radius = radius1;
 
 			//std::cout << "First bit: " << curBit.x << "," << curBit.y << "," << curBit.z << std::endl;
-			std::cout << "First bit: " << firstBit[0] << "," << firstBit[1] << "," << firstBit[2] << std::endl;
+			//std::cout << "First bit: " << firstBit[0] << "," << firstBit[1] << "," << firstBit[2] << std::endl;
 
 			int secondBit[3];
 			nextBit = *it;
@@ -446,7 +446,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			double radius2 = nextBit.r;
 
 			//std::cout << "Second bit: " << nextBit.x << "," << nextBit.y << "," << nextBit.z << std::endl;
-			std::cout << "First bit: " << secondBit[0] << "," << secondBit[1] << "," << secondBit[2] << std::endl;
+			//std::cout << "First bit: " << secondBit[0] << "," << secondBit[1] << "," << secondBit[2] << std::endl;
 
 			double distance[3]; //actually an integer but pow needs double
 			int imageCenter[3];
@@ -598,6 +598,9 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			curBit = nextBit;
 		}//endfor m_trace_bits
 	}//endif size
+	vtkVariant Intensity = vtkVariant(totalIntensity);
+	this->modified = true;
+	this->SetTraceFeature(ImageName, Intensity);
 
 }
 double TraceLine::GetEuclideanLength()
@@ -969,41 +972,41 @@ void TraceLine::SetTraceFeature(std::string FeatureName,vtkVariant FeatureValue)
 
 }
 
-//vtkVariant TraceLine::GetCellFeature(std::string FeatureName)
-//{
-//	/*!
-//	* return -pi if feature not computed
-//	* cell level features
-//	*/
-//	std::map<std::string ,vtkVariant>::iterator find = this->CellFeatures.find(FeatureName);
-//	if (find != this->CellFeatures.end())
-//	{
-//		return (*find).second;
-//	}
-//	else
-//	{
-//		vtkVariant value = -PI;
-//		return value;
-//	}
-//}
-//
-//void TraceLine::SetCellFeature(std::string FeatureName,vtkVariant FeatureValue)
-//{
-//	/*!
-//	* Set or update cell level features 
-//	* creates if not computed
-//	*/
-//	std::map<std::string ,vtkVariant>::iterator find = this->CellFeatures.find(FeatureName);
-//	if (find != this->CellFeatures.end())
-//	{
-//		(*find).second = FeatureValue;
-//	}
-//	else
-//	{
-//		this->CellFeatures[FeatureName] = FeatureValue;
-//	}
-//
-//}
+vtkVariant TraceLine::GetCellFeature(std::string FeatureName)
+{
+	/*!
+	* return -pi if feature not computed
+	* cell level features
+	*/
+	std::map<std::string ,vtkVariant>::iterator find = this->CellFeatures.find(FeatureName);
+	if (find != this->CellFeatures.end())
+	{
+		return (*find).second;
+	}
+	else
+	{
+		vtkVariant value = -PI;
+		return value;
+	}
+}
+
+void TraceLine::SetCellFeature(std::string FeatureName,vtkVariant FeatureValue)
+{
+	/*!
+	* Set or update cell level features 
+	* creates if not computed
+	*/
+	std::map<std::string ,vtkVariant>::iterator find = this->CellFeatures.find(FeatureName);
+	if (find != this->CellFeatures.end())
+	{
+		(*find).second = FeatureValue;
+	}
+	else
+	{
+		this->CellFeatures[FeatureName] = FeatureValue;
+	}
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 double TraceLine::Euclidean(TraceBit bit1, TraceBit bit2)

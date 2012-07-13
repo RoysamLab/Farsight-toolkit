@@ -157,6 +157,8 @@ void StructuredObject::taperedCylinderMask(ImageType::Pointer image, ImageType::
 {//not yet functional
 	//check if length/distanceXYZ is greater than 1 otherwise use circle kernel
 
+	//try creating multiple circle images and combining them using AddImageFilter
+
 	ImageType::RegionType region = image->GetLargestPossibleRegion();
 
 	mask->SetRegions(region);

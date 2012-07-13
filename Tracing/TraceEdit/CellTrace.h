@@ -35,7 +35,7 @@ public:
 	CellTrace(std::vector<TraceLine*> Segments);
 	void setTraces(std::vector<TraceLine*> Segments);
 	vtkSmartPointer<vtkVariantArray> DataRow();
-	vtkSmartPointer<vtkVariantArray> GetExtendedDataRow(int CheckAddFeatures);
+	vtkSmartPointer<vtkVariantArray> GetExtendedDataRow(std::vector<std::string> FeatureNames);
 	vtkSmartPointer<vtkVariantArray> BoundsRow();
 	std::string BasicFeatureString();
 	std::set<long int> TraceIDsInCell();
@@ -45,9 +45,10 @@ public:
 	std::string GetFileName();
 	void getSomaCoord(double xyz[]);
 	void getCellBounds(double bounds[]);
-	void setDistanceToROI(double newDistance, double Coord_X , double Coord_Y, double Coord_Z);
+	void setDistanceToROI(double newDistance, double Coord_X, double Coord_Y, double Coord_Z);
 	void SetClassification(int predicCol, double prediction, int confCol,double confidence);
-	void addNewFeature(vtkVariant nextFeature);
+	void addNewFeature(std::string featureName, vtkVariant nextFeature);
+	vtkVariant getFeature(std::string featureName);
 	std::vector<TraceLine *> getSegments();
 	vtkSmartPointer<vtkActor> GetDelaunayActor();
 	vtkSmartPointer<vtkActor> GetEllipsoidActor();

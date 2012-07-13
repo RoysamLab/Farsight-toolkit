@@ -78,14 +78,11 @@ bool ConvexHull3D::calculate()
 	vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
 	vtkSmartPointer<vtkTetra> tetra = vtkSmartPointer<vtkTetra>::New();
 
-	//int count = 1;
 	vtkCellArray * polys = this->surfacePolyData->GetPolys();
 	vtkIdType nPts = 0;
 	vtkIdType * ptIds = polys->GetPointer();
 	for (polys->InitTraversal(); polys->GetNextCell(nPts,ptIds);)
 	{
-		//std::cout << "Count: " << count << std::endl;
-		//count++;
 		double vertex[3];
 		double list [3][3]; // 3D triangle
 		for (int j = 0; j < nPts; j++)
@@ -109,43 +106,6 @@ bool ConvexHull3D::calculate()
 	}
 		//std::cout << "Area: " << convexHullArea << std::endl;
 		//std::cout << "Volume: " << convexHullVol << std::endl;
-
-	////volume calculation
-	//vtkSmartPointer<vtkTetra> tetra = vtkSmartPointer<vtkTetra>::New();
-
-	//vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = delaunay3D->GetOutput();
-	//vtkSmartPointer<vtkPoints> allPoints = unstructuredGrid->GetPoints();
-	//vtkSmartPointer<vtkCellArray> cellTetras = unstructuredGrid->GetCells();
-
-	//count = 1;
-	//vtkIdType volNPts = 0;
-	//vtkIdType * volPtIds = cellTetras->GetPointer();
-	//for (cellTetras->InitTraversal(); cellTetras->GetNextCell(volNPts,volPtIds);)
-	//{
-	//	std::cout << "Count: " << count << std::endl;
-	//	count++;
-	//	double vertex[3];
-	//	double list [4][3]; // tetrahedron
-	//	for (int j = 0; j < volNPts; j++)
-	//	{
-	//		allPoints->GetPoint(volPtIds[j], vertex);
-	//		list[j][0] = vertex[0];
-	//		list[j][1] = vertex[1];
-	//		list[j][2] = vertex[2];
-	//		std::cout << j << ": " << vertex[0] << " " << vertex[1] << " " << vertex[2] << std::endl;
-	//	}
-
-	//	double point1[3],point2[3],point3[3],point4[3];
-	//	for (int i = 0; i<3; i++)
-	//	{
-	//		point1[i] = list[0][i];
-	//		point2[i] = list[1][i];
-	//		point3[i] = list[2][i];
-	//		point4[i] = list[3][i];
-	//	}
-	//	this->convexHullVol += tetra->ComputeVolume(point1,point2,point3,point4);
-	//	std::cout << "Volume: " << convexHullVol << std::endl;
-	//}
 
 	//std::cout << "Number of surface points: " << surfacePolyData->GetNumberOfPoints() << std::endl;
 	
@@ -171,8 +131,6 @@ bool ConvexHull3D::calculate()
 	this->cellCentroid[1] = totalY/numOfPts + this->refPt[1];
 	this->cellCentroid[2] = totalZ/numOfPts + this->refPt[2];
 	//std::cout << "Centroid: (" << cellCentroid[0] << " " << cellCentroid[1] << " " << cellCentroid[2] << ")" << std::endl;
-	
-	//add to table later
 
 	return true;
 }
@@ -191,7 +149,7 @@ void ConvexHull3D::calculateEllipsoid()
 	/*!
 	 * Calculate best-fit 3D ellipse
 	 * @author Audrey Cheong
-	 * @return check whether calculations is successful
+	 * @return check whether calculations are successful
 	 */
 	//http://www.ahinson.com/algorithms/Sections/InterpolationRegression/EigenPlane.pdf
 	// find best fit plane
@@ -222,7 +180,7 @@ void ConvexHull3D::calculateEllipsoid()
 	double eigenvalue_norm[3]; //length
 	int num_of_points = (int) surfacePolyData->GetNumberOfPoints();
 
-	std::cout << "Number of points: " << num_of_points << std::endl;
+	//std::cout << "Number of points: " << num_of_points << std::endl;
 
 	double min = eig.get_eigenvalue(0);
 	double max = eig.get_eigenvalue(0);
@@ -320,10 +278,3 @@ vtkSmartPointer<vtkActor> ConvexHull3D::get3DEllipseActor()
 	std::cout<< "Ellipsoid actor" << std::endl;
 	return ellipsoidActor;
 }
-
-//double ConvexHull3D::getVolume()
-//{
-//	
-//	return this->convexHullVol;
-//}
-

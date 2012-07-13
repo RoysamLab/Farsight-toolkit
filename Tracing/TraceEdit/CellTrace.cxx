@@ -260,21 +260,22 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 }
 void CellTrace::SetClassification(int predicCol, double prediction, int confCol,double confidence)
 {
-	//this->segments[0]->SetClassification(prediction, confidence);
-	this->segments[0]->editCellFeature(prediction, predicCol);
-	this->segments[0]->editCellFeature(confidence, confCol);
+	/**
+	*	Needs to be fixed.
+	*/
+	//this->segments[0]->SetClassification(prediction, confidence); //note: this function should not exist
+	//this->segments[0]->editCellFeature(prediction, predicCol);
+	//this->segments[0]->editCellFeature(confidence, confCol);
+	//this->modified = true;
+}
+void CellTrace::addNewFeature(std::string featureName, vtkVariant nextFeature)
+{
+	this->segments[0]->SetCellFeature(featureName,nextFeature);
 	this->modified = true;
 }
-//void CellTrace::SetDelaunayValues(int magCol, double magnitude) //in progress - Audrey
-//{
-//	this->segments[0]->editCellFeature(convexHullMagnitude,magCol); //addCellFeature (NOT editCellFeature)
-//	////////////////////////more
-//	this->modified = true;
-//}
-void CellTrace::addNewFeature(vtkVariant nextFeature)
+vtkVariant CellTrace::getFeature(std::string featureName)
 {
-	this->segments[0]->addCellFeature(nextFeature);
-	this->modified = true;
+	return this->segments[0]->GetCellFeature(featureName);
 }
 void CellTrace::clearAll()
 {
@@ -468,6 +469,7 @@ void CellTrace::clearAll()
 	this->prediction = -PI;
 	this->confidence = -PI;
 
+	//change to -PI later
 	this->convexHullMagnitude = -1000;
 	this->convexHullAzimuth = -1000;
 	this->convexHullElevation = -1000;
@@ -778,24 +780,17 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 	return CellData;
 }
 
-vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(int CheckAddFeatures)
+vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(std::vector<std::string> FeatureNames)
 {
+	/**
+	* needs to get data from root traceline
+	*/
 	this->DataRow();
-	std::vector<vtkVariant> extendedFeatures = this->segments[0]->GetCellFeatures();
-
-	if (extendedFeatures.size() != CheckAddFeatures)
+	std::vector<std::string>::iterator iter;
+	for (iter = FeatureNames.begin(); iter < FeatureNames.end(); iter++)
 	{
-		for (int i = 0; i < CheckAddFeatures; i++)
-		{
-			CellData->InsertNextValue(- PI);
-		}
-	}
-	else
-	{
-		for (int j = 0; j < CheckAddFeatures; j++)
-		{
-			CellData->InsertNextValue(extendedFeatures[j]);
-		}
+		vtkVariant extendedFeature = this->segments[0]->GetCellFeature(*iter);
+		CellData->InsertNextValue(extendedFeature);
 	}
 	//std::cout << "row size " << this->CellData->GetNumberOfValues()<< std::endl;
 	return this->CellData;
@@ -867,7 +862,8 @@ vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
 		convexHullElevation = convexHull->getConvexHullElevation();
 		convexHullArea = convexHull->getConvexHullArea();
 		convexHullVol = convexHull->getConvexHullVol();
-		//std::cout << "ConvexHull Magnitude: " << convexHullMagnitude << std::endl;
+
+		this->addNewFeature("Convex Hull Magnitude",convexHullMagnitude);
 	}
 
 	return delaunayActor;
