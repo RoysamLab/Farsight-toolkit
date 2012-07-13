@@ -255,9 +255,9 @@ void ftkMainDarpaAstroTrace::runSplitting()
 	//}
 	if( !_Dist_Map_Image.empty() )
 	{
-		rawImageType_16bit::Pointer ImageMontage_Dist_Map = readImage< rawImageType_16bit >(_Dist_Map_ImageNRRD.c_str());
+		rawImageType_flo::Pointer ImageMontage_Dist_Map = readImage< rawImageType_flo >(_Dist_Map_ImageNRRD.c_str());
 		_ImageMontage_Dist_MapSize = ImageMontage_Dist_Map->GetLargestPossibleRegion().GetSize();
-		splitStore< rawImageType_16bit >( ImageMontage_Dist_Map, _Dist_Map_Image );
+		splitStore< rawImageType_flo >( ImageMontage_Dist_Map, _Dist_Map_Image );
 	}
 	if( !_Dist_Map_Image.empty() && !_TRI_Image.empty() )
 	{
@@ -374,12 +374,12 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				//rawImageType_8bit::Pointer imageLocalGFP;
 				//rawImageType_8bit::Pointer imageLocalDAP;
 				rawImageType_flo::Pointer imageLocalTRI;
-				rawImageType_16bit::Pointer imageLocalDist_Map;
+				rawImageType_flo::Pointer imageLocalDist_Map;
 
 				std::vector< rawImageType_flo::Pointer > Images_Tiles;
 				Images_Tiles.resize(1);
 
-				std::vector< rawImageType_16bit::Pointer > Dist_Map_Tiles;
+				std::vector< rawImageType_flo::Pointer > Dist_Map_Tiles;
 				Dist_Map_Tiles.resize(1);
 
 				std::vector< rawImageType_16bit::Pointer > Label_Tiles;
@@ -420,7 +420,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 					std::string _Dist_Map_ImageNoPath = _Dist_Map_Image.substr(foundDist_Map+1);
 					// !!! this has to be nrrd is just to test
 					std::string tempDist_Map = _outPathTemp+"/"+_Dist_Map_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
-					imageLocalDist_Map = readImage< rawImageType_16bit >(tempDist_Map.c_str());
+					imageLocalDist_Map = readImage< rawImageType_flo >(tempDist_Map.c_str());
 				}
 				}
 				//Images_Tiles[0] = imageLocalCy5;

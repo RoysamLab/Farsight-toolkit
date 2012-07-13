@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 			std::string imageOutputName = argv[3];
 			std::string imageType = argv[4];
 			
-			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_16bit>( imageInputName, imageOutputName, imageType );
+			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_flo>( imageInputName, imageOutputName, imageType );
 			break;
 		}
 			
