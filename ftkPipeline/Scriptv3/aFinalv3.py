@@ -38,6 +38,7 @@ import a050_RunResc
 import a051_RunResc8bit
 import a052_RunResc8bitMhd
 import a060_RunSegmentation
+import a061_runDistMap
 import a070_RunTracing
 import a075_RunAstroTracing
 #import a080_RunCheckSum
