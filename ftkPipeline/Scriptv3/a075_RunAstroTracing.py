@@ -13,7 +13,7 @@ import filecmp
 # Create Folder
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
-def main( FILE_TRI_BS_CV_RE_bit, FARSIGHT_BIN_EXE, optionsAstroTrac, runAstroTrac_log, LOCAL_DATASET_PATH_DATA ):
+def main( FARSIGHT_BIN_EXE, optionsAstroTrac, runAstroTrac_log, LOCAL_DATASET_PATH_DATA ):
 
 	flag = 0
 	sameFile = 0
