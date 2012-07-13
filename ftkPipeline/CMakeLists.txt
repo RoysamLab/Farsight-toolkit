@@ -1,4 +1,4 @@
-project(image_dicer)
+project(ftkPipeline)
 
 include_directories(${Farsight_SOURCE_DIR}/Tracing/TraceEdit)
 include_directories(${Farsight_SOURCE_DIR}/NuclearSegmentation)
