@@ -724,7 +724,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		TEMP_FILE.close()
 		
 		FILE_LABEL_DIST_MAP = LOCAL_DATASET_PATH_DATA+'/label_dist_map'
-		a061_runDistMap.main( FARSIGHT_BIN_EXE, FILE_LABEL_DIST_MAP, FILE_LABEL, runDistMap_log )
+		a061_runDistMap.main( FARSIGHT_BIN_EXE, FILE_LABEL_DIST_MAP, FILE_LABEL, 'NRRD', runDistMap_log )
 		
 		optionsAstroTracing = LOCAL_DATASET_PATH_ASTRO_TRAC +'/options_astrocyte_tracing'
 		TEMP_FILE = open(optionsAstroTracing, 'w')
