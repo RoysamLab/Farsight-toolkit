@@ -2,8 +2,12 @@
 
 ConvexHull3D::ConvexHull3D()
 {
-	this->convexHullArea = 0;
-	this->convexHullVol = 0;
+	for (int i = 0; i < 5; i++)
+	{
+		convexHullValues[i] = -1;
+	}
+	this->convexHullArea = -1;
+	this->convexHullVol = -1;
 	refPt[0] = -1;
 	refPt[1] = -1;
 	refPt[2] = -1;
@@ -120,17 +124,24 @@ bool ConvexHull3D::calculate()
 		totalZ += point[2]-this->refPt[2];
 		//std::cout << "Point " << i << " : (" << point[0] << " " << point[1] << " " << point[2] << ")" << std::endl;
 	}
-
-	this->convexHullMagnitude = sqrt(pow(totalX,2)+pow(totalY,2)+pow(totalZ,2));
-	this->convexHullAzimuth = atan2(totalY,totalX)*180/PI;
+	double magnitude = sqrt(pow(totalX,2)+pow(totalY,2)+pow(totalZ,2));
+	double azimuth = atan2(totalY,totalX)*180/PI;
 	double hypotenuse = sqrt(pow(totalX,2)+pow(totalY,2));
-	this->convexHullElevation = atan2(totalZ,hypotenuse)*180/PI;
+	double elevation = atan2(totalZ,hypotenuse)*180/PI;
+
 
 	int numOfPts = surfacePolyData->GetNumberOfPoints();
 	this->cellCentroid[0] = totalX/numOfPts + this->refPt[0];
 	this->cellCentroid[1] = totalY/numOfPts + this->refPt[1];
 	this->cellCentroid[2] = totalZ/numOfPts + this->refPt[2];
 	//std::cout << "Centroid: (" << cellCentroid[0] << " " << cellCentroid[1] << " " << cellCentroid[2] << ")" << std::endl;
+
+
+	convexHullValues[0] = magnitude;
+	convexHullValues[1] = azimuth;
+	convexHullValues[2] = elevation;
+	convexHullValues[3] = convexHullArea;
+	convexHullValues[4] = convexHullVol;
 
 	return true;
 }
@@ -275,6 +286,29 @@ vtkSmartPointer<vtkActor> ConvexHull3D::get3DEllipseActor()
 	 * @author Audrey Cheong
 	 * @return ellipsoid(vtkActor)
 	 */
-	std::cout<< "Ellipsoid actor" << std::endl;
 	return ellipsoidActor;
+}
+
+std::vector<std::string> ConvexHull3D::getConvexHullHeaders()
+{
+	/*!
+	 * @author Audrey Cheong
+	 * @return convex hull headers
+	 */
+	std::vector<std::string> headers;
+	headers.push_back("Convex Hull Magnitude");
+	headers.push_back("Convex Hull Azimuth");
+	headers.push_back("Convex Hull Elevation");
+	headers.push_back("Convex Hull Area");
+	headers.push_back("Convex Hull Volume");
+	return headers;
+}
+
+double* ConvexHull3D::getConvexHullValues()
+{
+	/*!
+	 * @author Audrey Cheong
+	 * @return convex hull calculated values in the following order: magnitude, azimuth, elevation, surface area, and volume
+	 */
+	return convexHullValues;
 }

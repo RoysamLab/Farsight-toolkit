@@ -52,16 +52,13 @@ public:
 	vtkSmartPointer<vtkActor> getActor();
 	void calculateEllipsoid();
 	vtkSmartPointer<vtkActor> get3DEllipseActor();
-
-	double getConvexHullMagnitude() {return convexHullMagnitude;}
-	double getConvexHullAzimuth() {return convexHullAzimuth;}
-	double getConvexHullElevation() {return convexHullElevation;}
-	double getConvexHullArea() {return convexHullArea;}
-	double getConvexHullVol() {return convexHullVol;}
 	//double[] getCellCentroid();
+	std::vector<std::string> getConvexHullHeaders();
+	double* getConvexHullValues();
 
 private:
-	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;
+	double convexHullValues[5];
+	double convexHullArea, convexHullVol;
 	double refPt[3];
 	double cellCentroid[3];
 	vtkSmartPointer<vtkActor> delaunayActor;

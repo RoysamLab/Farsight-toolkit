@@ -4620,7 +4620,13 @@ void View3D::ShowDelaunay3D()
 	if (this->convexHull->isChecked())
 	{
 		int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
-		delaunayCellsSelected = this->CellModel->GetSelectedCells();
+		std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+		{
+			CellTrace* currCell = (*cellCount).second;
+			currCell->calculateConvexHull();
+		}
+		/*delaunayCellsSelected = this->CellModel->GetSelectedCells();
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
@@ -4631,7 +4637,7 @@ void View3D::ShowDelaunay3D()
 		{
 			CellTrace* currCell = (*cellCount).second;
 			currCell->addNewFeature("Convex Hull Magnitude",currCell->getFeature("Convex Hull Magnitude"));
-		}
+		}*/
 		this->ShowCellAnalysis();
 	}
 	else

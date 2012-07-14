@@ -839,7 +839,7 @@ std::vector<TraceLine *> CellTrace::getSegments()
 	return this->segments;
 }
 
-vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
+void CellTrace::calculateConvexHull()
 {
 	if(!delaunayCreated)
 	{
@@ -853,23 +853,32 @@ vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
 		convexHull->setReferencePt(point);
 		convexHull->calculate();
 		convexHull->calculateEllipsoid();
+
 		delaunayActor = convexHull->getActor();
 		ellipsoidActor = convexHull->get3DEllipseActor();
+
+		std::vector<std::string> convexHullHeaders = convexHull->getConvexHullHeaders();
+		double* convexHullValues = convexHull->getConvexHullValues();
+
+		//this->addNewFeature("Convex Hull Magnitude",convexHullMagnitude);
 		delaunayCreated = true;
-
-		convexHullMagnitude = convexHull->getConvexHullMagnitude();
-		convexHullAzimuth = convexHull->getConvexHullAzimuth();
-		convexHullElevation = convexHull->getConvexHullElevation();
-		convexHullArea = convexHull->getConvexHullArea();
-		convexHullVol = convexHull->getConvexHullVol();
-
-		this->addNewFeature("Convex Hull Magnitude",convexHullMagnitude);
 	}
+}
 
+vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()
+{
+	if(!delaunayCreated)
+	{
+		this->calculateConvexHull();
+	}
 	return delaunayActor;
 }
 
 vtkSmartPointer<vtkActor> CellTrace::GetEllipsoidActor()
 {
+	if(!delaunayCreated)
+	{
+		this->calculateConvexHull();
+	}
 	return ellipsoidActor;
 }
