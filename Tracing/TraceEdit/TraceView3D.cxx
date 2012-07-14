@@ -1431,7 +1431,11 @@ void View3D::CreateGUIObjects()
 	this->convexHull = new QCheckBox("Convex Hull",this->SettingsWidget);
 	this->convexHull->setObjectName("convexHull");
 	this->convexHull->setChecked(this->renderConvexHull);
-	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(ShowDelaunay3D()));
+	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(CalculateDelaunay3D()));
+
+	this->ConvexHullAction = new QAction("Convex Hull", this->CentralWidget);
+	this->ConvexHullAction->setObjectName(tr("convexHullAction"));
+	connect(this->ConvexHullAction, SIGNAL(triggered()), this, SLOT(CalculateDelaunay3D()));
 
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setObjectName("BackgroundRBox");
@@ -1569,10 +1573,6 @@ void View3D::CreateGUIObjects()
 	this->RotateImageUpCombo->setObjectName("RotateImageUpCombo");
 	this->RotateImageUpCombo->addItems(AxisList);
 	connect(this->RotateImageUpCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(rotateImage(int)));
-
-	/*this->ProjectionAxisCombo = new QComboBox;
-	this->ProjectionAxisCombo->addItems(AxisList);
-	connect(this->ProjectionAxisCombo, SIGNAL(activated(int)), this, SLOT(projectionAlongAxis(int)));*/
 	
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setObjectName(tr("aboutAction"));
@@ -1875,7 +1875,6 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Interactor style:"),this->StyleCombo);
 	DisplayLayout->addRow(tr("Projection style:"),this->ProjectionCombo);
 	DisplayLayout->addRow(tr("Projection plane: "),this->RotateImageUpCombo);
-	//DisplayLayout->addRow(tr("2D Projection: "),this->ProjectionAxisCombo);
 	DisplayLayout->addRow(this->markTraceBits);
 	DisplayLayout->addRow(this->convexHull);
 	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
@@ -1908,14 +1907,11 @@ void View3D::CreateLayout()
 
 	GridlineSettings = new QGroupBox(tr("Grid"));
 	GridlineSettings->setObjectName("GridlineSettings");
-	//GridlineSettings->setEnabled(false);
 	GridlineSettings->setHidden(true);
 	GridlineSettings->setCheckable(true);
 	connect(GridlineSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
 	GridlineLayout->setObjectName("GridlineLayout");
-	//GridlineLayout->addRow(tr("2D/3D Axis:"),this->GridDimensionMode);
-	//GridlineLayout->addRow(tr("Orientation:"),this->GridOrientationBox);
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
 	GridlineLayout->addRow(tr("Depth Spacing: "),this->DepthSpaceBox);
@@ -1924,8 +1920,6 @@ void View3D::CreateLayout()
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
 	GridlineLayout->addRow(tr("Opacity: "),this->GridOpacitySlider);
-	//SettingsToolBox->addItem(GridlineLayout, tr("Grid"));
-	//SettingsToolBox->setItemEnabled(blah blah, false);
 	SettingsBox->addWidget(GridlineSettings);
 
 	//SettingsToolBox->addItem(this->ApplySettingsButton);
@@ -2034,6 +2028,21 @@ void View3D::CreateLayout()
         this->ImageActors->setProgressBar( this->ProgressBar );
         this->ImageActors->setProgressTextWidget( this->ProgressDescription );
 
+	//Visualization Bar
+	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
+	renderer_sub_menu->setObjectName(tr("renderer_sub_menu"));
+	renderer_sub_menu->addAction(this->SetSlicer);
+	renderer_sub_menu->addAction(this->SetProjection);
+	renderer_sub_menu->addAction(this->SetRaycast);
+	soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
+	soma_sub_menu->setObjectName(tr("soma_sub_menu"));
+	soma_sub_menu->addAction(this->SetContour);
+	soma_sub_menu->addAction(this->SetSomaRaycast);
+	soma_sub_menu->setEnabled(false);
+	this->DataViews->addAction(this->ColorByTreesAction);
+	this->DataViews->addAction(this->GridAction);
+
+	//Analysis
 	this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
 	this->analysisViews->addAction(this->ShowPlots);
 	this->analysisViews->addAction(this->showStatisticsAction);
@@ -2047,19 +2056,9 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->BiClusAction);
 	//this->analysisViews->addAction(this->SpectralClusteringAction);
 
-	//this->ShowToolBars->addSeparator();
-	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
-	renderer_sub_menu->setObjectName(tr("renderer_sub_menu"));
-	renderer_sub_menu->addAction(this->SetSlicer);
-	renderer_sub_menu->addAction(this->SetProjection);
-	renderer_sub_menu->addAction(this->SetRaycast);
-	soma_sub_menu = this->DataViews->addMenu(tr("Soma Mode"));
-	soma_sub_menu->setObjectName(tr("soma_sub_menu"));
-	soma_sub_menu->addAction(this->SetContour);
-	soma_sub_menu->addAction(this->SetSomaRaycast);
-	soma_sub_menu->setEnabled(false);
-	this->DataViews->addAction(this->ColorByTreesAction);
-	this->DataViews->addAction(this->GridAction);
+	QMenu *calculations_sub_menu = this->analysisViews->addMenu(tr("Calculate"));
+	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
+	calculations_sub_menu->addAction(this->ConvexHullAction);
 
 	this->createRayCastSliders();
 
@@ -4614,31 +4613,33 @@ void View3D::updateSelectionFromCell()
 	this->statusBar()->showMessage(tr("Selected\t")
 		+ QString::number(limit) +tr("\tCells"));*/
 }
+void View3D::CalculateDelaunay3D()
+{
+	this->ShowCellAnalysis();
+	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
+	int convexHullAzimuthIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Azimuth");
+	int convexHullElevationIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Elevation");
+	int convexHullSurfaceIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Surface Area");
+	int convexHullVolumeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Volume");
+	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
+	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+	{
+		CellTrace* currCell = (*cellCount).second;
+		currCell->calculateConvexHull();
+	}
+	this->ShowCellAnalysis();
+}
 void View3D::ShowDelaunay3D()
 {
 	//std::cout << "ShowDelaunay3D" << std::endl;
 	if (this->convexHull->isChecked())
 	{
-		int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
-		std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
-		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
-		{
-			CellTrace* currCell = (*cellCount).second;
-			currCell->calculateConvexHull();
-		}
-		/*delaunayCellsSelected = this->CellModel->GetSelectedCells();
+		delaunayCellsSelected = this->CellModel->GetSelectedCells();
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
-		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
-		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
-		{
-			CellTrace* currCell = (*cellCount).second;
-			currCell->addNewFeature("Convex Hull Magnitude",currCell->getFeature("Convex Hull Magnitude"));
-		}*/
-		this->ShowCellAnalysis();
 	}
 	else
 	{

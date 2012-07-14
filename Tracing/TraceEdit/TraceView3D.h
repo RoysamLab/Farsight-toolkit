@@ -195,6 +195,7 @@ public slots:
 	void SaveToFile();
 	void SaveProjectFile();
 	void SaveSelected();
+	void CalculateDelaunay3D();
 	void ShowDelaunay3D();
 	void ShowTreeData();
 	void ShowCellAnalysis();
@@ -442,6 +443,7 @@ private:
 	QAction *LoadSeedPointsAsGlyphs;
 
 	QAction *LoadDebrisTable;
+	QAction *ConvexHullAction;
 
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
@@ -501,7 +503,7 @@ private:
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;
-	QComboBox *typeCombo, *HighlightCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo, *ProjectionAxisCombo;
+	QComboBox *typeCombo, *HighlightCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo;
 	QPushButton *updateRotationButton;
 		
 	QTableWidget * projectFilesTable;
@@ -610,7 +612,6 @@ private:
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
 //!Delaunay triangulation - 3D convex hull using terminal tips
-	//bool delaunayFlag;
 	std::vector<CellTrace*> delaunayCellsSelected;
 
 //!Feature Graph

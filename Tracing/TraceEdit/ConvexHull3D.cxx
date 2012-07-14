@@ -299,7 +299,7 @@ std::vector<std::string> ConvexHull3D::getConvexHullHeaders()
 	headers.push_back("Convex Hull Magnitude");
 	headers.push_back("Convex Hull Azimuth");
 	headers.push_back("Convex Hull Elevation");
-	headers.push_back("Convex Hull Area");
+	headers.push_back("Convex Hull Surface Area");
 	headers.push_back("Convex Hull Volume");
 	return headers;
 }

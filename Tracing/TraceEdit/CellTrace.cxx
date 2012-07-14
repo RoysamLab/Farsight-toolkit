@@ -859,8 +859,14 @@ void CellTrace::calculateConvexHull()
 
 		std::vector<std::string> convexHullHeaders = convexHull->getConvexHullHeaders();
 		double* convexHullValues = convexHull->getConvexHullValues();
-
-		//this->addNewFeature("Convex Hull Magnitude",convexHullMagnitude);
+		
+		int convexHullValueIndex = 0;
+		std::vector<std::string>::iterator headerIter;
+		for (headerIter = convexHullHeaders.begin(); headerIter != convexHullHeaders.end(); headerIter++)
+		{
+			this->addNewFeature(*headerIter, convexHullValues[convexHullValueIndex]);
+			convexHullValueIndex++;
+		}
 		delaunayCreated = true;
 	}
 }
