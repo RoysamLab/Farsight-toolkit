@@ -621,9 +621,9 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		elapsed_1 = (time.time() - start_1)
 		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
 		
-		FILE_LABEL = LOCAL_DATASET_PATH_DATA+'\label'
-		FILE_SOMA = LOCAL_DATASET_PATH_DATA+'\soma'
-		FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'\soma_centrois.txt'
+		FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+		FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+		FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
 
 	if( REMOVE_TEMP_SEGM == 1 ):
 		shutil.rmtree(LOCAL_DATASET_PATH_SEGM_TEMP)
