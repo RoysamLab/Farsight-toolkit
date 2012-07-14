@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 			std::cout << "DISTANCE_MAP!"; 
 			std::string imageInputName = argv[2];
 			std::string imageOutputName = argv[3];
-			//std::string imageType = argv[4];
+			std::string imageType = argv[4];
 			
 			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_flo>( imageInputName, imageOutputName, imageType );
 			break;
