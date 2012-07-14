@@ -865,14 +865,14 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 		tipoImagen = ".nrrd";
 	}
 
-	int found=inputImageName.find(".");
-	std::string inputImageNameLocal = inputImageName.substr(0,found);
-	
-	found = inputImageNameLocal.find_last_of("/\\");
-	inputImageNameLocal = inputImageNameLocal.substr(found+1);
+	//int found=inputImageName.find(".");
+	//std::string inputImageNameLocal = inputImageName.substr(0,found);
+	//
+	//found = inputImageNameLocal.find_last_of("/\\");
+	//inputImageNameLocal = inputImageNameLocal.substr(found+1);
 
 	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
-	std::string temp1a = outputPath + "/" + inputImageNameLocal + "_dist_map" + tipoImagen;
+	//std::string temp1a = outputPath + "/" + inputImageNameLocal + "_dist_map" + tipoImagen;
 	
 	typedef itk::BinaryThresholdImageFilter<TINPUT, rawImageType_8bit> ThresholdFilterType;
 	typename ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
@@ -890,6 +890,6 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 	MaurerFilter->SetInsideIsPositive(false);
 	MaurerFilter->Update();
 
-	writeImage< TOUTPUT >(MaurerFilter->GetOutput(),temp1a.c_str());
+	writeImage< TOUTPUT >(MaurerFilter->GetOutput(),outputPath.c_str());
 
 }
