@@ -3965,20 +3965,21 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 
 
 			vtkSmartPointer<vtkVariantArray> table_row = vtkSmartPointer<vtkVariantArray>::New();
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[0]);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[1]);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.node.ndx[2] -  padz);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.radius);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.sphere_likelihood);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.ballness);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.plateness);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.vesselness);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.intensity);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.meanIntensity);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.varianceIntensity);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.maxIntensity);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.minIntensity);
-			table_row->InsertNextValue(this->AllRootPoints[i].featureVector.nucleusDistance);
+			table_row->InsertNextValue(vtkVariant(i));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[0]));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[1]));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[2] -  padz));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.radius));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.sphere_likelihood));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.ballness));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.plateness));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.vesselness));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.intensity));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.meanIntensity));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.varianceIntensity));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.maxIntensity));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.minIntensity));
+			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.nucleusDistance));
 
 			features_table->InsertNextRow(table_row);
 		}
@@ -5440,24 +5441,24 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 	}//end of loop over nuclei
 
 	vtkSmartPointer<vtkDoubleArray> min_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	min_dist_array->SetName("min_root_dist");
 	vtkSmartPointer<vtkDoubleArray> max_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	max_dist_array->SetName("max_root_dist");
 	vtkSmartPointer<vtkDoubleArray> mean_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	mean_dist_array->SetName("mean_root_dist");
 	vtkSmartPointer<vtkDoubleArray> var_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+	var_dist_array->SetName("var_root_dist");
 	vtkSmartPointer<vtkDoubleArray> n_roots_array = vtkSmartPointer<vtkDoubleArray>::New();
+	n_roots_array->SetName("n_roots");
 
 	for(int i = 0; i < this->NucleiObjects.size(); i++){
-		min_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.minRootDist);
-		max_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.maxRootDist);
-		mean_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.meanRootDist);
-		var_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.varRootDist);
-		n_roots_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.nRoots);
-	}
-
-	min_dist_array->SetName("min_root_dist");
-	max_dist_array->SetName("max_root_dist");
-	mean_dist_array->SetName("mean_root_dist");
-	var_dist_array->SetName("var_root_dist");
-	n_roots_array->SetName("n_roots");
+		min_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.minRootDist));
+		max_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.maxRootDist));
+		mean_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.meanRootDist));
+		var_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.varRootDist));
+		n_roots_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.nRoots));
+	}	
+	
 
 	nuclei_features_table[0]->AddColumn(min_dist_array);
 	nuclei_features_table[0]->AddColumn(max_dist_array);
