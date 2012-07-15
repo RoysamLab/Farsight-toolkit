@@ -5452,11 +5452,11 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 	n_roots_array->SetName("n_roots");
 
 	for(int i = 0; i < this->NucleiObjects.size(); i++){
-		min_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.minRootDist));
-		max_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.maxRootDist));
-		mean_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.meanRootDist));
-		var_dist_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.varRootDist));
-		n_roots_array->InsertNextValue(vtkVariant(this->NucleiObjects[i].associativeFeatures.nRoots));
+		min_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.minRootDist);
+		max_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.maxRootDist);
+		mean_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.meanRootDist);
+		var_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.varRootDist);
+		n_roots_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.nRoots);
 	}	
 	
 
