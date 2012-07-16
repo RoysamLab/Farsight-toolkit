@@ -1453,7 +1453,8 @@ void View3D::CreateGUIObjects()
 	this->convexHull = new QCheckBox("Convex Hull",this->SettingsWidget);
 	this->convexHull->setObjectName("convexHull");
 	this->convexHull->setChecked(this->renderConvexHull);
-	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(CalculateDelaunay3D()));
+	this->convexHull->setHidden(true);
+	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(ShowDelaunay3D()));
 
 	this->ConvexHullAction = new QAction("Convex Hull", this->CentralWidget);
 	this->ConvexHullAction->setObjectName(tr("convexHullAction"));
@@ -4651,17 +4652,18 @@ void View3D::CalculateDelaunay3D()
 		currCell->calculateConvexHull();
 	}
 	this->ShowCellAnalysis();
+
+	this->convexHull->setHidden(false);
 }
-void View3D::ShowDelaunay3D() //need to fix, not displaying
+void View3D::ShowDelaunay3D()
 {
-	//std::cout << "ShowDelaunay3D" << std::endl;
 	if (this->convexHull->isChecked())
 	{
 		delaunayCellsSelected = this->CellModel->GetSelectedCells();
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
-			this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
+			//this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
 	else
@@ -4669,7 +4671,7 @@ void View3D::ShowDelaunay3D() //need to fix, not displaying
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
-			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetEllipsoidActor());
+			//this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
 
