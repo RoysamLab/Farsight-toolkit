@@ -492,6 +492,9 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				line_increment[i] = distance[i]/num_of_voxels;
 			}
 
+			ImageType::RegionType input_volume_region = input_image->GetLargestPossibleRegion().GetSize();
+			ImageType::SizeType input_size = input_volume_region.GetSize();
+
 			ImageType::SizeType size;
 			int boxSide = radius*2+1;
 			size[0] = boxSide;
@@ -517,6 +520,40 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 
 			for (int i = 0; i < num_of_voxels; i++)
 			{
+				//boundary conditions - also need to specify center pixel else skip
+				//for (int j = 0; j < 3; j++)
+				//{
+				//	if (start_index[j] < 0)
+				//	{
+				//		size[j] += start_index[j];
+				//		start_index[j] = 0;
+				//	}
+				//	int max_size = input_size.GetSize()[j];
+				//	if (start_index[j]+boxSide > max_size)
+				//	{
+				//		size[j] = max_size - start_index[j];
+				//	}
+				//}
+				bool skip = false;
+				for (int j = 0; j < 3; j++)
+				{
+					if (start_index[j] < 0)
+					{
+						skip = true;
+						break;
+					}
+					int max_size = input_size.GetSize()[j];
+					if (start_index[j]+boxSide > max_size)
+					{
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+				{
+					continue;
+				}
+
 				//std::cout << "Start index: " << start_index[0] << " " <<start_index[1] << " " << start_index[2] <<std::endl;
 
 				ImageType::RegionType volume_region;
