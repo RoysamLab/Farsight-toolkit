@@ -50,7 +50,6 @@ public:
 	~StructuredObject();
 		
 	void sphereKernel(ImageType::Pointer input, ImageType::Pointer &mask, int radius);
-	//void circleKernel(double radius, double azimuth, double elevation);
 	void circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, double radius, double azimuth, double elevation);
 	void taperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int firstBit[], double radius1, int secondBit[], double radius2);
 	

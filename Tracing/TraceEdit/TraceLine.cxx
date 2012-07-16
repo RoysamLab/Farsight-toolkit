@@ -416,7 +416,15 @@ void TraceLine::setTraceBitIntensities(vtkSmartPointer<vtkImageData> imageData, 
 }
 void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, std::string ImageName)
 {
-	std::cout << "setTraceBitWeightedIntensities" << std::endl;
+	/*!
+	 * a circle kernel is used to evaluate the voxel intensities along the centerline
+	 * @author Audrey Cheong
+	 * @param input_image itk image
+	 * @param ImageName feature header
+	 */
+
+	//add a black border to evaluate edge voxels
+	//std::cout << "setTraceBitWeightedIntensities" << std::endl;
 	double totalIntensity = 0;
 	if (this->m_trace_bits.size()>1)
 	{
@@ -458,8 +466,8 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			int radius = (int) floor(new_radius+0.5);
 
 			//if length is zero skip, if length is greater than 1, iterate
-			int length = (int) floor(sqrt(pow(distance[0],2)+pow(distance[1],2)+pow(distance[2],2))+0.5);
-			std::cout << "Length: " << length << std::endl;
+			//int length = (int) floor(sqrt(pow(distance[0],2)+pow(distance[1],2)+pow(distance[2],2))+0.5);
+			//std::cout << "Length: " << length << std::endl;
 
 			double azimuth = AzimuthAngle(curBit,nextBit)/180*PI;
 			double elevation = ElevationAngle(curBit,nextBit)/180*PI;
@@ -484,16 +492,6 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				line_increment[i] = distance[i]/num_of_voxels;
 			}
 
-			//ImageType::Pointer circleImage = circleKernel(radius,azimuth,elevation);
-			//int boxSide = -1;
-			//if (radius1 >= radius2)
-			//{
-			//	int boxSide = ((int) floor(radius1 + 0.5))*2 + length;
-			//}
-			//else
-			//{
-			//	int boxSide = ((int) floor(radius2 + 0.5))*2 + length;
-			//}
 			ImageType::SizeType size;
 			int boxSide = radius*2+1;
 			size[0] = boxSide;
@@ -581,7 +579,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 					//std::cout << "Pixel intensity: " << (int) pixel_value << std::endl;
 					++imageIterator;
 				}//end imageIterator
-				std::cout << "Total intensity: " << totalIntensity << std::endl;
+				//std::cout << "Total intensity: " << totalIntensity << std::endl;
 
 				//next image settings
 				new_radius += radius_increment;

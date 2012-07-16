@@ -1036,7 +1036,27 @@ void View3D::SetImgInt()
 		}
 	}
 }
-
+void View3D::SetImgWeightInt()
+{
+	if (this->ImageActors->NumberOfImages()>=1)
+	{	//! image intensity values at each Trace Bit of trace line using a circle kernel
+		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(-1));
+		this->TreeModel->AddFeatureHeader("Weighted_Intensity");
+		this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
+		this->QVTK->GetRenderWindow()->Render();
+		if (this->FTKTable)
+		{
+			this->FTKTable->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+			this->FTKTable->update();
+		}
+		if (this->TreePlot)
+		{
+			this->TreePlot->setModels(this->TreeModel->getDataTable(), this->TreeModel->GetObjectSelection());
+			this->TreePlot->update();
+		}
+	}
+}
+ 
 void View3D::TraceBitImageIntensity(int ImgID)
 {
 	if (this->ImageActors->NumberOfImages()>=1)
@@ -1046,7 +1066,7 @@ void View3D::TraceBitImageIntensity(int ImgID)
 }
 void View3D::TraceBitImageIntensityWeighted(int ImgID)
 {
-	std::cout << "TraceBitImageIntensityWeighted" << std::endl;
+	//std::cout << "TraceBitImageIntensityWeighted" << std::endl;
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! weighted image intensity values at each Trace Bit of trace line
 		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(ImgID));
@@ -1254,8 +1274,10 @@ void View3D::CreateGUIObjects()
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
 	
-	//this->SetRaycastToSlicer = new QAction("Raycast To Slicer", this->CentralWidget);
-	//connect(this->SetRaycastToSlicer, SIGNAL(triggered()), this, SLOT(raycastToSlicer()));
+	this->ImageWeightedIntensity = new QAction("Weighted Intensity", this->CentralWidget);
+	this->ImageWeightedIntensity->setObjectName(tr("ImageWeightedIntensity"));
+	this->ImageWeightedIntensity->setStatusTip("Calculates intensity of trace bits from one image using a circle kernel");
+	connect(this->ImageWeightedIntensity, SIGNAL(triggered()), this, SLOT(SetImgWeightInt()));
 	 
 	this->SetSlicer = new QAction("Set Slicer", this->CentralWidget);
 	this->SetSlicer->setObjectName(tr("SetSlicer"));
@@ -1773,6 +1795,7 @@ void View3D::CreateLayout()
 	this->EditsToolBar->addSeparator();
 	this->EditsToolBar->addWidget(this->typeCombo);
 	this->EditsToolBar->addAction(this->ImageIntensity);
+	this->EditsToolBar->addAction(this->ImageWeightedIntensity);
 	this->EditsToolBar->addAction(this->FocusAction);
 	this->EditsToolBar->hide();
 
@@ -4629,7 +4652,7 @@ void View3D::CalculateDelaunay3D()
 	}
 	this->ShowCellAnalysis();
 }
-void View3D::ShowDelaunay3D()
+void View3D::ShowDelaunay3D() //need to fix, not displaying
 {
 	//std::cout << "ShowDelaunay3D" << std::endl;
 	if (this->convexHull->isChecked())
@@ -4651,21 +4674,18 @@ void View3D::ShowDelaunay3D()
 	}
 
 	this->QVTK->GetRenderWindow()->Render();
-	//use tracesSelected = this->CellModel->GetSelectedTraces??
-	//TraceBitImageIntensityWeighted(-1); //in progress - Audrey
-
-	////test
-	//double angle = PI/2;
-	//StructuredObject * circleMask = new StructuredObject();
-	//circleMask->circleKernel(5,0,angle);
 }
 void View3D::IntensityFeature()
 {
 	ImageType::Pointer intensityImage = ImageType::New();
 	intensityImage = this->ImageActors->getImageFileData(this->imageFileName,"Image");
 	this->tobj->ImageIntensity(this->ImageActors->GetImageData(-1));
-	//this->tobj->ImageWeightedIntensity( intensityImage );
-	
+}
+void View3D::IntensityWeightedFeature()
+{
+	TraceBitImageIntensityWeighted(-1);
+	this->TreeModel->AddFeatureHeader("Image_Weighted_Intensity");
+	this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 }
 /*  delete traces functions */
 void View3D::DeleteTraces()

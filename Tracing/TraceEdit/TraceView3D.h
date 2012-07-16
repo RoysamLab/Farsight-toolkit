@@ -208,6 +208,7 @@ public slots:
 	void ShowAutomatedEdits();
 
 	void IntensityFeature();
+	void IntensityWeightedFeature();
 
 	//tracing gui slots
 	void PickTracer(int choice);
@@ -230,6 +231,7 @@ public slots:
 	void SetTraceType(int newType);
 	void ReloadState();
 	void SetImgInt();
+	void SetImgWeightInt();
 	void SaveScreenShot();
 	void AutoCellExport();
 
@@ -422,6 +424,7 @@ private:
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;
+	QAction *ImageWeightedIntensity;
 	QAction *GridAction;
 
 	QPushButton *MoveSphere;
