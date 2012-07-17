@@ -3661,7 +3661,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		//Read the distance map value at current_idx (local to rhe PaddedCurvImage) here
 		
 		double nucleus_distance = 0.0;
-		//nucleus_distance = this->SomaDistanceMapImage->GetPixel(convert current_idx to global index);
+		nucleus_distance = this->SomaDistanceMapImage->GetPixel(current_idx);
 		
 		//std::cout << "Root: " << i << " Nuc_dist: " << nucleus_distance << std::endl;
 
