@@ -67,7 +67,6 @@ void ConvexHull3D::setReferencePt(double point[3])
 	this->refPt[0] = point[0];
 	this->refPt[1] = point[1];
 	this->refPt[2] = point[2];
-	//std::cout << "Center: " << refPt[0] << " " << refPt[1] << " " << refPt[2] << std::endl;
 }
 
 bool ConvexHull3D::calculate()
@@ -108,8 +107,6 @@ bool ConvexHull3D::calculate()
 		this->convexHullArea += triangle->TriangleArea(point1,point2,point3);
 		this->convexHullVol += abs(tetra->ComputeVolume(refPt,point1,point2,point3));
 	}
-		//std::cout << "Area: " << convexHullArea << std::endl;
-		//std::cout << "Volume: " << convexHullVol << std::endl;
 
 	//std::cout << "Number of surface points: " << surfacePolyData->GetNumberOfPoints() << std::endl;
 	
@@ -160,7 +157,6 @@ void ConvexHull3D::calculateEllipsoid()
 	/*!
 	 * Calculate best-fit 3D ellipse
 	 * @author Audrey Cheong
-	 * @return check whether calculations are successful
 	 */
 	//http://www.ahinson.com/algorithms/Sections/InterpolationRegression/EigenPlane.pdf
 	// find best fit plane
@@ -200,7 +196,7 @@ void ConvexHull3D::calculateEllipsoid()
 	for (int i = 0; i < 3; i++)
 	{
 		eigenvalues[i] = eig.get_eigenvalue(i);
-		eigenvalue_norm[i] = 4*sqrt(eigenvalues[i] / num_of_points); //normalize to get eigenvalue_norm
+		eigenvalue_norm[i] = 4*sqrt(eigenvalues[i] / num_of_points); //normalize
 		if (eigenvalues[i] < min)
 		{
 			min = eigenvalues[i];
@@ -217,26 +213,28 @@ void ConvexHull3D::calculateEllipsoid()
 	vnl_vector<double> eigenVector_normal = eig.get_eigenvector(min_index);		//normal axis (smallest)
 	vnl_vector<double> eigenVector_minor = eig.get_eigenvector(median_index);	//minor axis
 	vnl_vector<double> eigenVector_major = eig.get_eigenvector(max_index);		//major axis
-	eigenVector_normal.normalize();
-	eigenVector_minor.normalize();
-	eigenVector_major.normalize();
+	vnl_vector<double> eigenVector_normal_norm = eigenVector_normal.normalize();
+	vnl_vector<double> eigenVector_minor_norm = eigenVector_minor.normalize();
+	vnl_vector<double> eigenVector_major_norm = eigenVector_major.normalize();
 
 	//std::cout << "EigenVector: ";
 
-	//how to orientate correctly?
+	//how to orientate correctly? (min, med, max seems to give better results but still incorrect)
 	vtkMatrix4x4 * matrix = vtkMatrix4x4::New();
 	for (int i = 0; i < 3; i++)
 	{
-		vnl_vector<double> eigenVector = eig.get_eigenvector(i);
+		//vnl_vector<double> eigenVector = eig.get_eigenvector(i).normalize();
 
-		for (int j = 0; j < 3; j++)
-		{
-			matrix->SetElement(i,j,eigenVector.get(j));
-		}
-		////rotation
-		//matrix->SetElement(0,i,eigenVector_normal.get(i));
-		//matrix->SetElement(1,i,eigenVector_minor.get(i));
-		//matrix->SetElement(2,i,eigenVector_major.get(i));
+		//for (int j = 0; j < 3; j++)
+		//{
+		//	matrix->SetElement(i,j,eigenVector.get(j));
+		//}
+
+		//rotation
+		matrix->SetElement(0,i,eigenVector_major_norm.get(i));
+		matrix->SetElement(1,i,eigenVector_minor_norm.get(i));
+		matrix->SetElement(2,i,eigenVector_normal_norm.get(i));
+
 		//position
 		matrix->SetElement(i,3,cellCentroid[i]+200);
 
@@ -256,12 +254,12 @@ void ConvexHull3D::calculateEllipsoid()
 	////validate (draw ellipsoid)
 
 	vtkSmartPointer<vtkParametricEllipsoid> parametricObject = vtkSmartPointer<vtkParametricEllipsoid>::New();
-	//parametricObject->SetXRadius(eigenvalue_norm[min_index]);
-	//parametricObject->SetYRadius(eigenvalue_norm[median_index]);
-	//parametricObject->SetZRadius(eigenvalue_norm[max_index]);
-	parametricObject->SetXRadius(eigenvalue_norm[0]);
-	parametricObject->SetYRadius(eigenvalue_norm[1]);
-	parametricObject->SetZRadius(eigenvalue_norm[2]);
+	parametricObject->SetXRadius(eigenvalue_norm[max_index]);
+	parametricObject->SetYRadius(eigenvalue_norm[median_index]);
+	parametricObject->SetZRadius(eigenvalue_norm[min_index]);
+	//parametricObject->SetXRadius(eigenvalue_norm[0]); //incorrect angle
+	//parametricObject->SetYRadius(eigenvalue_norm[1]);
+	//parametricObject->SetZRadius(eigenvalue_norm[2]);
 	vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource = vtkSmartPointer<vtkParametricFunctionSource>::New();
 	parametricFunctionSource->SetParametricFunction(parametricObject);
 	parametricFunctionSource->Update();
