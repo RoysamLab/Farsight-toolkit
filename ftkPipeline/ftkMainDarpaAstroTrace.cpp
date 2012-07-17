@@ -136,6 +136,12 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	{ std::istringstream ss((*iter).second); ss >> _astroTraceParams;}
 	else
 	{ _astroTraceParams.clear(); printf("Choose _astroTraceParams = NULL as default\n");}
+
+	iter = options.find("-roots_model_AL"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _roots_model_AL;}
+	else
+	{ _roots_model_AL.clear(); printf("Choose _roots_model_AL = NULL as default\n");}
 	
 	iter = options.find("-outPath"); 
 	if(iter!=options.end())
@@ -191,6 +197,7 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	std::cout << std::endl << "_Soma_Montage: " << _Soma_Montage;
 	std::cout << std::endl << "_isSmall: " << _isSmall;
 	std::cout << std::endl << "_astroTraceParams: " << _astroTraceParams;
+	std::cout << std::endl << "_roots_model_AL: " << _roots_model_AL;
 	std::cout << std::endl << "_outPath: " << _outPath;
 	std::cout << std::endl << "_outPathDebug: " << _outPathDebug;
 	std::cout << std::endl << "_outPathTemp: " << _outPathTemp;
@@ -440,38 +447,40 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				AstroTracer * AT = new AstroTracer();
 				AT->LoadCurvImage(Images_Tiles[0], 0);
 				//AT->LoadSomaImage(std::string(argv[2]));
-				std::string coverageFileName = _outPathTemp+"/coverage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+				std::string coverageFileName = _outPathTemp+"/coverage_"+xStr+"_"+yStr+"_"+zStr+".txt";
 				AT->OptimizeCoverage(coverageFileName, true);
 				AT->LoadParameters(_astroTraceParams.c_str());	
 				AT->SetScaleRange(4, 4); //(2, 5); //(2, 2)
 				AT->CallFeatureMainExternal();
 				AT->Set_DistanceMapImage(imageLocalDist_Map);
-				std::string featureVectorFileName = _outPathTemp+"/featureVector_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+				std::string featureVectorFileName = _outPathTemp+"/featureVector_"+xStr+"_"+yStr+"_"+zStr+".txt";
 				std::string IDImageFileName = _outPathTemp+"/IDImage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 				AT->ComputeAstroFeaturesPipeline(featureVectorFileName, IDImageFileName, 0, regionLocal_inside, feature_Vector_Tables, ID_Images, true);
-						
+				std::string rootVectorFileName = _outPathTemp+"/rootVector_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				std::string rootsImageFileName = _outPathTemp+"/rootsImage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+				AT->Classification_Roots(feature_Vector_Tables, ID_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);		
 
-				RemoveLabelNearBorder(regionLocal_inside, Label_Tiles, Table_Tiles, Centroids_Tiles );
+				//RemoveLabelNearBorder(regionLocal_inside, Label_Tiles, Table_Tiles, Centroids_Tiles );
 				
 					
 					
-// 					// TEST SAVE SEGMENTATION WITH LABELS REMOVED
-				#pragma omp critical
-				{
-					std::string tempTABLERE = _outPathTemp+"/segTable_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
-					ftk::SaveTable(tempTABLERE, Table_Tiles[0]);
-					std::string tempLABELRE = _outPathTemp+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
-					writeImage<rawImageType_16bit>(Label_Tiles[0],tempLABELRE.c_str());
-
-	// 				std::string tempLABELRE = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.tif";
-					ftkMainDarpa objftkMainDarpa;
-					objftkMainDarpa.projectImage<rawImageType_16bit, rawImageType_16bit>( Label_Tiles[0], tempLABELRE, _outPathDebugLevel2, "ORG_RES_BIN", "TIFF" );
-				}
-				#pragma omp critical
-				{
-					contadorImageDoneSegment++;
-					std::cout<<std::endl<< "\t\t--->>> ImageDoneSegment " << contadorImageDoneSegment << " of " << _kx*_ky*_kz;
-				}
+//// 					// TEST SAVE SEGMENTATION WITH LABELS REMOVED
+//				#pragma omp critical
+//				{
+//					std::string tempTABLERE = _outPathTemp+"/segTable_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
+//					ftk::SaveTable(tempTABLERE, Table_Tiles[0]);
+//					std::string tempLABELRE = _outPathTemp+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
+//					writeImage<rawImageType_16bit>(Label_Tiles[0],tempLABELRE.c_str());
+//
+//	// 				std::string tempLABELRE = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.tif";
+//					ftkMainDarpa objftkMainDarpa;
+//					objftkMainDarpa.projectImage<rawImageType_16bit, rawImageType_16bit>( Label_Tiles[0], tempLABELRE, _outPathDebugLevel2, "ORG_RES_BIN", "TIFF" );
+//				}
+//				#pragma omp critical
+//				{
+//					contadorImageDoneSegment++;
+//					std::cout<<std::endl<< "\t\t--->>> ImageDoneSegment " << contadorImageDoneSegment << " of " << _kx*_ky*_kz;
+//				}
 			}
 		}
 	}

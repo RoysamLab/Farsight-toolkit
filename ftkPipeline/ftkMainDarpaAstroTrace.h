@@ -72,6 +72,7 @@ private:
 	std::string _Soma_Montage;
 	int _isSmall;
 	std::string _astroTraceParams;
+	std::string _roots_model_AL;
 // 	std::string _projectDefinition;
 //	std::string _optionsASTR;
 	std::string _outPath;
