@@ -66,6 +66,9 @@
 
 #include "vnl/vnl_math.h"
 
+#include <ftkUtils.h>
+#include "PatternAnalysis/activeLearning/mclr.h"
+
 #include <queue>
 #include <algorithm>
 #include <string>
@@ -296,6 +299,7 @@ public:
 	void OptimizeCoverage(std::string, bool);
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
+	void Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&, std::vector< LabelImageType3D::Pointer >&, std::string, std::string, std::string, const bool, bool normalize_from_model = false);
 
 	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
 

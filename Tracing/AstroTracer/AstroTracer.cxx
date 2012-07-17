@@ -5594,3 +5594,150 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 	}
 	std::cout << "Nuclei features file read. " << this->NucleiObjects.size() << std::endl;
 }
+
+
+void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >& tableToClassify, std::vector< LabelImageType3D::Pointer >& rootsImage, std::string TrainingFileName, std::string rootsTableName, std::string rootsImageName, const bool writeResult, bool normalize_from_model)
+{
+	std::cout<<"Classification Started Using MCLR\n";
+	if(tableToClassify.size() == 0)
+		return;
+
+	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(TrainingFileName);
+
+	// to generate the Active Learning Matrix
+	vnl_matrix<double> act_learn_matrix;
+	act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
+	for(int row = 2; row<(int)active_model_table->GetNumberOfRows(); ++row)
+	{
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+		{
+			act_learn_matrix.put(col, row-2, active_model_table->GetValue(row,col).ToDouble());
+		}
+	}
+
+	//to generate the std_deviation and the mean vectors
+	vnl_vector<double> std_dev_vec, mean_vec; 
+	std_dev_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	mean_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	for(int col=1; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		std_dev_vec.put(col-1, active_model_table->GetValue(0,col).ToDouble());
+		mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
+	}
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveColumn(0);
+
+	std::string classification_name = "astro_root";
+	double confidence_thresh = 0.5;
+
+	MCLR* mclr = new MCLR();
+	// Number of features and classes needed in "add_bias" fuction of MCLR
+	mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
+	mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
+
+	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+	test_table->Initialize();
+	test_table->SetNumberOfRows(tableToClassify[0]->GetNumberOfRows());
+	for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(active_model_table->GetColumnName(col));
+		test_table->AddColumn(column);	
+	}
+	for(int row = 0; row < (int)tableToClassify[0]->GetNumberOfRows(); ++row)
+	{		
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(tableToClassify[0]->GetValueByName(row,test_table->GetColumnName(c)));
+		test_table->InsertNextRow(model_data1);
+	}	
+
+	////// Final Data  to classify from the model
+	vnl_matrix<double> data_classify;
+	if(normalize_from_model)
+		data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+	else
+		data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
+
+	data_classify = data_classify.transpose();
+
+	vnl_matrix<double> currprob;
+	currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
+
+	std::string prediction_col_name = "prediction_active_" + classification_name;
+	std::string confidence_col_name = "confidence_" + classification_name;
+
+	//// Add the Prediction Column 
+	std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, tableToClassify[0] );
+	if(prediction_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(prediction_col_name.c_str());
+		column->SetNumberOfValues( tableToClassify[0]->GetNumberOfRows() );
+		tableToClassify[0]->AddColumn(column);
+	}
+
+	// Add the confidence column
+	std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, tableToClassify[0] );
+	if(confidence_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+		column_confidence->SetName(confidence_col_name.c_str());
+		column_confidence->SetNumberOfValues( tableToClassify[0]->GetNumberOfRows() );
+		tableToClassify[0]->AddColumn(column_confidence);
+	}
+
+	for(int row = 0; row<(int)tableToClassify[0]->GetNumberOfRows(); ++row)  
+	{
+		vnl_vector<double> curr_col = currprob.get_column(row);
+		tableToClassify[0]->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+		if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+		{
+			tableToClassify[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
+		}
+		else
+		{
+			tableToClassify[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
+		}
+	}
+
+
+	LabelImageType3D::PixelType * rootsImageArray = rootsImage[0]->GetBufferPointer();
+	itk::Size<3> im_size = rootsImage[0]->GetBufferedRegion().GetSize();
+	int slice_size = im_size[1] * im_size[0];
+	int row_size = im_size[0];
+
+	for(int row=0; row<(int)tableToClassify[0]->GetNumberOfRows(); ++row)
+	{
+		if(tableToClassify[0]->GetValueByName(row, prediction_col_name.c_str()).ToInt() != 1)
+		{
+			int x_pos = tableToClassify[0]->GetValue(row,1).ToUnsignedInt();
+			int y_pos = tableToClassify[0]->GetValue(row,2).ToUnsignedInt();
+			int z_pos = tableToClassify[0]->GetValue(row,3).ToUnsignedInt();
+			unsigned long offset = (z_pos*slice_size)+(y_pos*row_size)+x_pos;
+			rootsImageArray[offset] = 0;
+			tableToClassify[0]->RemoveRow(row);
+			--row;
+		}
+	}
+
+	if(writeResult)
+	{
+		ftk::SaveTable(rootsTableName, tableToClassify[0]);
+		itk::ImageFileWriter< LabelImageType3D >::Pointer rootsImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
+		rootsImageWriter->SetFileName(rootsImageName.c_str());
+		rootsImageWriter->SetInput(rootsImage[0]);
+		try
+		{
+			rootsImageWriter->Update();
+		}
+		catch(itk::ExceptionObject e)
+		{
+			std::cout << e << std::endl;
+			//return EXIT_FAILURE;
+		}
+	}
+
+	std::cout<< "Classification done" << std::endl;
+}

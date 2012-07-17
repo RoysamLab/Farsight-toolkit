@@ -29,11 +29,11 @@ SET(AstroTracer_headers
 
 ADD_LIBRARY( AstroTracerLib ${AstroTracer_sources} ${AstroTracer_headers} )
 TARGET_LINK_LIBRARIES(AstroTracerLib
-  ${ITK_LIBRARIES} ${VTK_LIBRARIES} vnl vnl_algo vnl_io rtvl)
+  ${ITK_LIBRARIES} ${VTK_LIBRARIES} vnl vnl_algo vnl_io rtvl MCLR ftkCommon)
 
 ADD_EXECUTABLE( AstroTracer ${AstroTracer_sources} ${AstroTracer_headers} AstroTracer_main.cxx)
 TARGET_LINK_LIBRARIES(AstroTracer
-  ${ITK_LIBRARIES} ${VTK_LIBRARIES} vnl vnl_algo vnl_io rtvl)
+  ${ITK_LIBRARIES} ${VTK_LIBRARIES} vnl vnl_algo vnl_io rtvl MCLR ftkCommon)
 
 
 
