@@ -24,6 +24,7 @@ set( TRACE_SRCS
   SuperEllipsoid.h	SuperEllipsoid.cxx
   ConvexHull3D.h	ConvexHull3D.cxx
   StructuredObject.h	StructuredObject.cxx
+  PadImageFilter.h	PadImageFilter.cxx
   ${GUI_MOC_SRCS}
   ) 
 

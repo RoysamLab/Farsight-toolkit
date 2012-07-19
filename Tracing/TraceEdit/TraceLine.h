@@ -35,12 +35,9 @@ limitations under the License.
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkMaskImageFilter.h"
 #include "itkImageRegionIterator.h"
-//#include "itkAffineTransform.h"
-//#include "itkEuler3DTransform.h"
-//#include "itkFixedCenterOfRotationAffineTransform.h"
-//#include "itkImageFileReader.h"
-//#include "itkNeighborhoodIterator.h"
 #include "itkImageRegionIterator.h"
+
+#include "PadImageFilter.h"
 
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::MaskImageFilter< ImageType, ImageType > MaskFilterType;

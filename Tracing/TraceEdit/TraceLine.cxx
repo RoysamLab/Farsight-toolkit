@@ -492,9 +492,11 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				line_increment[i] = distance[i]/num_of_voxels;
 			}
 
+			//image size
 			ImageType::RegionType input_volume_region = input_image->GetLargestPossibleRegion().GetSize();
 			ImageType::SizeType input_size = input_volume_region.GetSize();
 
+			//crop image
 			ImageType::SizeType size;
 			int boxSide = radius*2+1;
 			size[0] = boxSide;
@@ -518,41 +520,55 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			//start_index[1] = imageCenter[1]-boxSide/2;
 			//start_index[2] = imageCenter[2]-boxSide/2;
 
+			bool padImage = false;
+			ImageType::Pointer paddedImage = ImageType::New();
+			int padSize[6] = {0,0,0,0,0,0};
 			for (int i = 0; i < num_of_voxels; i++)
 			{
-				//boundary conditions - also need to specify center pixel else skip
-				//for (int j = 0; j < 3; j++)
-				//{
-				//	if (start_index[j] < 0)
-				//	{
-				//		size[j] += start_index[j];
-				//		start_index[j] = 0;
-				//	}
-				//	int max_size = input_size.GetSize()[j];
-				//	if (start_index[j]+boxSide > max_size)
-				//	{
-				//		size[j] = max_size - start_index[j];
-				//	}
-				//}
-				bool skip = false;
+				//boundary conditions
 				for (int j = 0; j < 3; j++)
 				{
 					if (start_index[j] < 0)
 					{
-						skip = true;
-						break;
+						size[j] += start_index[j];
+						padSize[j*2] = -1*start_index[j];
+						start_index[j] = 0;
+						padImage = true;
 					}
 					int max_size = input_size.GetSize()[j];
-					if (start_index[j]+boxSide > max_size)
+					int cur_size = start_index[j]+boxSide;
+					if (cur_size > max_size)
 					{
-						skip = true;
-						break;
+						size[j] = max_size - start_index[j];
+						padSize[j*2+1] = cur_size - max_size;
+						padImage = true;
 					}
 				}
-				if (skip)
+
+				if (padImage)
 				{
-					continue;
+					PadImageFilter * padFilter = new PadImageFilter();
+					padFilter->padImage(input_image,paddedImage,padSize);
 				}
+				//bool skip = false;
+				//for (int j = 0; j < 3; j++)
+				//{
+				//	if (start_index[j] < 0)
+				//	{
+				//		skip = true;
+				//		break;
+				//	}
+				//	int max_size = input_size.GetSize()[j];
+				//	if (start_index[j]+boxSide > max_size)
+				//	{
+				//		skip = true;
+				//		break;
+				//	}
+				//}
+				//if (skip)
+				//{
+				//	continue;
+				//}
 
 				//std::cout << "Start index: " << start_index[0] << " " <<start_index[1] << " " << start_index[2] <<std::endl;
 
@@ -561,7 +577,14 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				volume_region.SetIndex( start_index );
 
 				VolumeOfInterestFilterType::Pointer volumeOfInterestFilter = VolumeOfInterestFilterType::New();
-				volumeOfInterestFilter->SetInput( input_image );
+				if (padImage)
+				{
+					volumeOfInterestFilter->SetInput( paddedImage );
+				}
+				else
+				{
+					volumeOfInterestFilter->SetInput( input_image );
+				}
 				volumeOfInterestFilter->SetRegionOfInterest( volume_region );
 				volumeOfInterestFilter->Update();
 
