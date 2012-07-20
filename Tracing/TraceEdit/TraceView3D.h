@@ -197,6 +197,7 @@ public slots:
 	void SaveSelected();
 	void CalculateDelaunay3D();
 	void ShowDelaunay3D();
+	void ShowEllipsoid();
 	void ShowTreeData();
 	void ShowCellAnalysis();
 	void ShowSettingsWindow();
@@ -502,7 +503,7 @@ private:
 	QDoubleSpinBox *ColorValueField;
 	QDoubleSpinBox *TipColor;
 	QSpinBox *LineWidthField;
-	QCheckBox * markTraceBits, * convexHull;
+	QCheckBox * markTraceBits, * convexHull, * ellipsoid;
 	QDoubleSpinBox *BackgroundRBox,*BackgroundGBox,*BackgroundBBox;
 	QDoubleSpinBox *RollBox, *ElevationBox, *AzimuthBox;
 	QDialogButtonBox *ApplySettingsButton;
@@ -616,6 +617,7 @@ private:
 	QSlider * GridOpacitySlider;
 //!Delaunay triangulation - 3D convex hull using terminal tips
 	std::vector<CellTrace*> delaunayCellsSelected;
+	std::vector<CellTrace*> ellipsoidCellsSelected;
 
 //!Feature Graph
 	FeatureRelation * feature;

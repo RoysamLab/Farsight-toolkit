@@ -78,7 +78,7 @@ void StructuredObject::sphereKernel(ImageType::Pointer input, ImageType::Pointer
 	mask = imageFilter->GetOutput();
 	mask->SetOrigin( input->GetOrigin() );
 }
-void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, double radius, double azimuth, double elevation)//need to validate
+void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, int centerVoxel[], double radius, double azimuth, double elevation)//need to validate
 {
 	ImageType::RegionType region = input->GetLargestPossibleRegion();
 
@@ -88,9 +88,9 @@ void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer
 	SpatialObjectToImageFilterType::Pointer imageFilter = SpatialObjectToImageFilterType::New();
 	
 	ImageType::SizeType outputSize;
-	outputSize[0] = radius*2+1;
-	outputSize[1] = radius*2+1;
-	outputSize[2] = radius*2+1;
+	outputSize[0] = region.GetSize()[0];
+	outputSize[1] = region.GetSize()[1];
+	outputSize[2] = region.GetSize()[2];
 	imageFilter->SetSize( outputSize );
 
 	EllipseType::Pointer circle = EllipseType::New();
@@ -102,16 +102,16 @@ void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer
 	radiusArray[2] = 1.0;
 	circle->SetRadius(radiusArray);
 
-	EllipseType::TransformType::OffsetType offset;
-	offset[0] = radius;
-	offset[1] = radius;
-	offset[2] = radius;
+	EllipseType::TransformType::OffsetType offset; //position
+	offset[0] = centerVoxel[0];
+	offset[1] = centerVoxel[1];
+	offset[2] = centerVoxel[2];
 	circle->GetObjectToParentTransform()->SetOffset(offset);
 
-	EllipseType::TransformType::CenterType center;
-	center[0] = radius;
-	center[1] = radius;
-	center[2] = radius;
+	EllipseType::TransformType::CenterType center; //center of rotation
+	center[0] = centerVoxel[0];
+	center[1] = centerVoxel[1];
+	center[2] = centerVoxel[2];
 	circle->GetObjectToParentTransform()->SetCenter( center );
 
 	//rotate
@@ -124,7 +124,7 @@ void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer
 	axis[1] = 0;
 	axis[2] = 1;
 	circle->GetObjectToParentTransform()->Rotate3D(axis,azimuth,false);
-	circle->ComputeObjectToWorldTransform();
+	circle->ComputeObjectToWorldTransform(); //set position and rotation
 
 	imageFilter->SetInput(circle);
 	circle->SetDefaultInsideValue(255);
@@ -132,8 +132,6 @@ void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer
 	imageFilter->SetUseObjectValue(true);
 	imageFilter->SetOutsideValue(0);
 	imageFilter->Update();
-
-	//ImageType::Pointer slantCircle = imageFilter->GetOutput();
 
 	//WriterType::Pointer writer = WriterType::New();
 	//writer->SetFileName("circle.tif");

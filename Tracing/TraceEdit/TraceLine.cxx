@@ -425,7 +425,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 
 	//add a black border to evaluate edge voxels
 	//std::cout << "setTraceBitWeightedIntensities" << std::endl;
-	double totalIntensity = 0;
+	int totalIntensity = 0;
 	if (this->m_trace_bits.size()>1)
 	{
 		TraceBit curBit, nextBit;
@@ -465,7 +465,6 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			}
 			int radius = (int) floor(new_radius+0.5);
 
-			//if length is zero skip, if length is greater than 1, iterate
 			//int length = (int) floor(sqrt(pow(distance[0],2)+pow(distance[1],2)+pow(distance[2],2))+0.5);
 			//std::cout << "Length: " << length << std::endl;
 
@@ -487,6 +486,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 
 			double radius_increment = (double) (radius2 - radius1)/num_of_voxels;
 			double line_increment[3];
+			int center_voxel[3] = { radius, radius, radius };
 			for (int i = 0; i < 3; i++)
 			{
 				line_increment[i] = distance[i]/num_of_voxels;
@@ -516,59 +516,25 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			moving_index[1] = curBit.y-curBit.r;
 			moving_index[2] = curBit.z-curBit.r;
 
-			//start_index[0] = imageCenter[0]-boxSide/2;
-			//start_index[1] = imageCenter[1]-boxSide/2;
-			//start_index[2] = imageCenter[2]-boxSide/2;
-
-			bool padImage = false;
-			ImageType::Pointer paddedImage = ImageType::New();
-			int padSize[6] = {0,0,0,0,0,0};
 			for (int i = 0; i < num_of_voxels; i++)
 			{
 				//boundary conditions
 				for (int j = 0; j < 3; j++)
 				{
+					//if start_index is less than 0, the center voxel needs to shift
 					if (start_index[j] < 0)
 					{
 						size[j] += start_index[j];
-						padSize[j*2] = -1*start_index[j];
+						center_voxel[j] += start_index[j];
 						start_index[j] = 0;
-						padImage = true;
 					}
 					int max_size = input_size.GetSize()[j];
 					int cur_size = start_index[j]+boxSide;
 					if (cur_size > max_size)
 					{
 						size[j] = max_size - start_index[j];
-						padSize[j*2+1] = cur_size - max_size;
-						padImage = true;
 					}
 				}
-
-				if (padImage)
-				{
-					PadImageFilter * padFilter = new PadImageFilter();
-					padFilter->padImage(input_image,paddedImage,padSize);
-				}
-				//bool skip = false;
-				//for (int j = 0; j < 3; j++)
-				//{
-				//	if (start_index[j] < 0)
-				//	{
-				//		skip = true;
-				//		break;
-				//	}
-				//	int max_size = input_size.GetSize()[j];
-				//	if (start_index[j]+boxSide > max_size)
-				//	{
-				//		skip = true;
-				//		break;
-				//	}
-				//}
-				//if (skip)
-				//{
-				//	continue;
-				//}
 
 				//std::cout << "Start index: " << start_index[0] << " " <<start_index[1] << " " << start_index[2] <<std::endl;
 
@@ -577,14 +543,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				volume_region.SetIndex( start_index );
 
 				VolumeOfInterestFilterType::Pointer volumeOfInterestFilter = VolumeOfInterestFilterType::New();
-				if (padImage)
-				{
-					volumeOfInterestFilter->SetInput( paddedImage );
-				}
-				else
-				{
-					volumeOfInterestFilter->SetInput( input_image );
-				}
+				volumeOfInterestFilter->SetInput( input_image );
 				volumeOfInterestFilter->SetRegionOfInterest( volume_region );
 				volumeOfInterestFilter->Update();
 
@@ -592,14 +551,8 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 
 				ImageType::Pointer mask = ImageType::New();
 
-				//StructuredObject * cylinderMask = new StructuredObject();
-				//cylinderMask->taperedCylinderMask(crop_input_image,mask,firstBit,radius1,secondBit,radius2);
-
 				StructuredObject * circleMask = new StructuredObject();
-				circleMask->circleKernel(crop_input_image,mask,radius,azimuth,elevation);
-
-				//StructuredObject * sphereMask = new StructuredObject();
-				//sphereMask->sphereKernel(crop_input_image, mask, radius);
+				circleMask->circleKernel(crop_input_image,mask,center_voxel,radius,azimuth,elevation);
 
 				MaskFilterType::Pointer maskFilter = MaskFilterType::New();
 				maskFilter->SetInput(crop_input_image);
@@ -608,26 +561,28 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 				//mask->Print(std::cout);
 
 				ImageType::Pointer crop_output_image = maskFilter->GetOutput();
+				crop_output_image->Update();
 
 
 				//Validate accuracy
-				WriterType::Pointer writer1 = WriterType::New();
+			/*	WriterType::Pointer writer1 = WriterType::New();
 				writer1->SetFileName( "Input.tif" );
-				writer1->SetInput( crop_input_image );
+				writer1->SetInput( crop_input_image );*/
 
-				WriterType::Pointer writer2 = WriterType::New();
-				writer2->SetFileName( "Output.tif" );
-				writer2->SetInput( crop_output_image );
+				//WriterType::Pointer writer2 = WriterType::New();
+				//writer2->SetFileName( "Output.tif" );
+				//writer2->SetInput( crop_output_image );
 				
-				try
-				{
-					writer1->Update();
-					writer2->Update();
-				}
-				catch( itk::ExceptionObject & excp )
-				{
-					std::cerr << excp << std::endl;
-				}
+				//try
+				//{
+				////	//writer1->Update();
+				////	//writer2->Update();
+				//}
+				//catch( itk::ExceptionObject & excp )
+				//{
+				//	std::cerr << excp << std::endl;
+				//}
+				//scanf("%*d");
 
 				ConstIteratorType imageIterator( crop_output_image,crop_output_image->GetRequestedRegion() );
 				imageIterator.GoToBegin();
@@ -638,6 +593,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 					totalIntensity += (int) pixel_value;
 					//std::cout << "Pixel intensity: " << (int) pixel_value << std::endl;
 					++imageIterator;
+
 				}//end imageIterator
 				//std::cout << "Total intensity: " << totalIntensity << std::endl;
 
@@ -657,6 +613,9 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 		}//endfor m_trace_bits
 	}//endif size
 	vtkVariant Intensity = vtkVariant(totalIntensity);
+	//FILE*fp = fopen("C:/TestDelete/test1.txt","w");
+	//fprintf(fp,"\n%d\n",Intensity.ToInt());
+	//fclose(fp);
 	this->modified = true;
 	this->SetTraceFeature(ImageName, Intensity);
 
@@ -1018,6 +977,7 @@ void TraceLine::SetTraceFeature(std::string FeatureName,vtkVariant FeatureValue)
 	* Set or update segment level features 
 	* creates if not computed
 	*/
+
 	std::map<std::string ,vtkVariant>::iterator find = this->TraceFeatures.find(FeatureName);
 	if (find != this->TraceFeatures.end())
 	{

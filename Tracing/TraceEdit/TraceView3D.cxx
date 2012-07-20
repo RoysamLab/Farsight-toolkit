@@ -1459,6 +1459,12 @@ void View3D::CreateGUIObjects()
 	this->ConvexHullAction = new QAction("Convex Hull", this->CentralWidget);
 	this->ConvexHullAction->setObjectName(tr("convexHullAction"));
 	connect(this->ConvexHullAction, SIGNAL(triggered()), this, SLOT(CalculateDelaunay3D()));
+	
+	this->ellipsoid = new QCheckBox("Ellipsoid",this->SettingsWidget);
+	this->ellipsoid->setObjectName("ellipsoid");
+	this->ellipsoid->setChecked(this->renderConvexHull);
+	this->ellipsoid->setHidden(true);
+	connect(this->ellipsoid, SIGNAL(clicked()), this, SLOT(ShowEllipsoid()));
 
 	this->BackgroundRBox = new QDoubleSpinBox(this->SettingsWidget);
 	this->BackgroundRBox->setObjectName("BackgroundRBox");
@@ -1901,6 +1907,7 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(tr("Projection plane: "),this->RotateImageUpCombo);
 	DisplayLayout->addRow(this->markTraceBits);
 	DisplayLayout->addRow(this->convexHull);
+	DisplayLayout->addRow(this->ellipsoid);
 	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
 	SettingsBox->addWidget(displaySettings);
 
@@ -4654,6 +4661,7 @@ void View3D::CalculateDelaunay3D()
 	this->ShowCellAnalysis();
 
 	this->convexHull->setHidden(false);
+	this->ellipsoid->setHidden(false);
 }
 void View3D::ShowDelaunay3D()
 {
@@ -4663,7 +4671,6 @@ void View3D::ShowDelaunay3D()
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->AddActor(delaunayCellsSelected[i]->GetDelaunayActor());
-			//this->Renderer->AddActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
 	else
@@ -4671,10 +4678,27 @@ void View3D::ShowDelaunay3D()
 		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
 		{
 			this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetDelaunayActor());
-			//this->Renderer->RemoveActor(delaunayCellsSelected[i]->GetEllipsoidActor());
 		}
 	}
-
+	this->QVTK->GetRenderWindow()->Render();
+}
+void View3D::ShowEllipsoid()
+{
+	if (this->ellipsoid->isChecked())
+	{
+		ellipsoidCellsSelected = this->CellModel->GetSelectedCells();
+		for (unsigned int i = 0; i < ellipsoidCellsSelected.size(); i++)
+		{
+			this->Renderer->AddActor(ellipsoidCellsSelected[i]->GetEllipsoidActor());
+		}
+	}
+	else
+	{
+		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		{
+			this->Renderer->RemoveActor(ellipsoidCellsSelected[i]->GetEllipsoidActor());
+		}
+	}
 	this->QVTK->GetRenderWindow()->Render();
 }
 void View3D::IntensityFeature()

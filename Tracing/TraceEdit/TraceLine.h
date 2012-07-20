@@ -30,14 +30,11 @@ limitations under the License.
 #include "vtkImageData.h"
 
 #include "TraceBit.h"
-//#include "ImageActors.h"
 #include "StructuredObject.h"
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkMaskImageFilter.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIterator.h"
-
-#include "PadImageFilter.h"
 
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::MaskImageFilter< ImageType, ImageType > MaskFilterType;

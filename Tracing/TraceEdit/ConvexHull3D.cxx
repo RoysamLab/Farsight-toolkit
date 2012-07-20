@@ -119,7 +119,7 @@ bool ConvexHull3D::calculate()
 		totalX += point[0]-this->refPt[0];
 		totalY += point[1]-this->refPt[1];
 		totalZ += point[2]-this->refPt[2];
-		//std::cout << "Point " << i << " : (" << point[0] << " " << point[1] << " " << point[2] << ")" << std::endl;
+		//std::cout << "Surface point " << i << " : (" << point[0] << " " << point[1] << " " << point[2] << ")" << std::endl;
 	}
 	double magnitude = sqrt(pow(totalX,2)+pow(totalY,2)+pow(totalZ,2));
 	double azimuth = atan2(totalY,totalX)*180/PI;
@@ -151,7 +151,7 @@ vtkSmartPointer<vtkActor> ConvexHull3D::getActor()
 	 */
 	return delaunayActor;
 }
-
+//ellipsoid is bigger than expected - still need to fix
 void ConvexHull3D::calculateEllipsoid()
 {
 	/*!
@@ -180,6 +180,11 @@ void ConvexHull3D::calculateEllipsoid()
 		A(1,0) = A(0,1);
 		A(2,0) = A(0,2);
 		A(2,1) = A(1,2);
+
+		//std::cout << "Matrix: " << std::endl;
+		//std::cout << A(0,0) << " " << A(0,1) <<  " " << A(0,2) << std::endl;
+		//std::cout << A(1,0) << " " << A(1,1) <<  " " << A(1,2) << std::endl;
+		//std::cout << A(2,0) << " " << A(2,1) <<  " " << A(2,2) << std::endl;
 
 	// get eigenvector corresponding to the smallest and largest eigenvalue (normal to plane)
 	vnl_symmetric_eigensystem<double> eig(A);
@@ -217,29 +222,24 @@ void ConvexHull3D::calculateEllipsoid()
 	vnl_vector<double> eigenVector_minor_norm = eigenVector_minor.normalize();
 	vnl_vector<double> eigenVector_major_norm = eigenVector_major.normalize();
 
-	//std::cout << "EigenVector: ";
 
-	//how to orientate correctly? (min, med, max seems to give better results but still incorrect)
 	vtkMatrix4x4 * matrix = vtkMatrix4x4::New();
 	for (int i = 0; i < 3; i++)
 	{
-		//vnl_vector<double> eigenVector = eig.get_eigenvector(i).normalize();
-
-		//for (int j = 0; j < 3; j++)
-		//{
-		//	matrix->SetElement(i,j,eigenVector.get(j));
-		//}
-
 		//rotation
-		matrix->SetElement(0,i,eigenVector_major_norm.get(i));
-		matrix->SetElement(1,i,eigenVector_minor_norm.get(i));
-		matrix->SetElement(2,i,eigenVector_normal_norm.get(i));
+		matrix->SetElement(i,0,eigenVector_major_norm.get(i));
+		matrix->SetElement(i,1,eigenVector_minor_norm.get(i));
+		matrix->SetElement(i,2,eigenVector_normal_norm.get(i));
 
 		//position
-		matrix->SetElement(i,3,cellCentroid[i]+200);
-
-		//std::cout << eigenVector_normal.get(i) << " ";
+		matrix->SetElement(i,3,cellCentroid[i]);
 	}
+
+	//std::cout << "Eigenvector (major axis): " << eigenVector_major.get(0) << " " << eigenVector_major.get(1) << " " << eigenVector_major.get(2) << std::endl;
+
+	//std::cout << "Eigenvector (minor axis): " << eigenVector_minor.get(0) << " " << eigenVector_minor.get(1) << " " << eigenVector_minor.get(2) << std::endl;
+
+	//std::cout << "Eigenvector (normal axis): " << eigenVector_normal.get(0) << " " << eigenVector_normal.get(1) << " " << eigenVector_normal.get(2) << std::endl;
 
 	//std::cout << std::endl;
 
@@ -251,15 +251,11 @@ void ConvexHull3D::calculateEllipsoid()
 	//std::cout << "Eigenvalues: " << eigenvalue_norm[0] << " " << eigenvalue_norm[1] << " " << eigenvalue_norm[2] << std::endl;
 	//still need to add to table!!
 
-	////validate (draw ellipsoid)
-
+	//draw ellipsoid
 	vtkSmartPointer<vtkParametricEllipsoid> parametricObject = vtkSmartPointer<vtkParametricEllipsoid>::New();
 	parametricObject->SetXRadius(eigenvalue_norm[max_index]);
 	parametricObject->SetYRadius(eigenvalue_norm[median_index]);
 	parametricObject->SetZRadius(eigenvalue_norm[min_index]);
-	//parametricObject->SetXRadius(eigenvalue_norm[0]); //incorrect angle
-	//parametricObject->SetYRadius(eigenvalue_norm[1]);
-	//parametricObject->SetZRadius(eigenvalue_norm[2]);
 	vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource = vtkSmartPointer<vtkParametricFunctionSource>::New();
 	parametricFunctionSource->SetParametricFunction(parametricObject);
 	parametricFunctionSource->Update();
@@ -271,13 +267,9 @@ void ConvexHull3D::calculateEllipsoid()
 	ellipsoidActor = vtkSmartPointer<vtkActor>::New();
 	ellipsoidActor->SetMapper(mapper);
 	ellipsoidActor->SetUserMatrix(matrix);
-	//ellipsoidActor->SetPosition(cellCentroid);
-	//ellipsoidActor->RotateX(180);
-	//ellipsoidActor->RotateY(-90);
-	//ellipsoidActor->RotateZ(-90);
+	//std::cout << "EigenValue norm: " << eigenvalue_norm[max_index] << " " << eigenvalue_norm[median_index] << " " << eigenvalue_norm[min_index] << std::endl;
 }
 
-//for validation purposes (unless desired for visualization)
 vtkSmartPointer<vtkActor> ConvexHull3D::get3DEllipseActor()
 {
 	/*!
