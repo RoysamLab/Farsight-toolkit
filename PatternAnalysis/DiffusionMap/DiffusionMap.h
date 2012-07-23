@@ -22,7 +22,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "omp.h"
+#ifdef _OPENMP
+    #include "omp.h"
+#endif
 
 class DiffusionMap
 {
