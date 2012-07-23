@@ -351,7 +351,7 @@ void TraceObject::ImageWeightedIntensity(ImageType::Pointer intensityImage)
 	std::vector<TraceLine*> allLines = this->GetTraceLines();
 	for (unsigned int i = 0; i < allLines.size(); i++)
 	{
-		allLines[i]->setTraceBitWeightedIntensities(intensityImage, "Weighted_Intensity");
+		allLines[i]->setTraceBitWeightedIntensities(intensityImage, "Circle_Intensity");
 	}//end of set
 }
 /*I/O Functions */

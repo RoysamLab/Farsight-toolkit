@@ -1041,7 +1041,7 @@ void View3D::SetImgWeightInt()
 	if (this->ImageActors->NumberOfImages()>=1)
 	{	//! image intensity values at each Trace Bit of trace line using a circle kernel
 		this->tobj->ImageWeightedIntensity(this->ImageActors->GetitkImageData(-1));
-		this->TreeModel->AddFeatureHeader("Weighted_Intensity");
+		this->TreeModel->AddFeatureHeader("Circle_Intensity");
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 		this->QVTK->GetRenderWindow()->Render();
 		if (this->FTKTable)
@@ -4710,7 +4710,7 @@ void View3D::IntensityFeature()
 void View3D::IntensityWeightedFeature()
 {
 	TraceBitImageIntensityWeighted(-1);
-	this->TreeModel->AddFeatureHeader("Image_Weighted_Intensity");
+	this->TreeModel->AddFeatureHeader("Image_Circle_Intensity");
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
 }
 /*  delete traces functions */

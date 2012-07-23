@@ -52,6 +52,7 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 	this->TraceClusterManager = new ClusterManager();
 	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
 	this->TraceClusterManager->setObjectSelection(this->Selection);
+	this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
 //standard headers	
 	this->additionalFeatureHeaders.clear();
 	this->stdHeaders();
