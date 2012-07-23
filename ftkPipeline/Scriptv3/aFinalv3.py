@@ -756,7 +756,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		TEMP_FILE.write('-Soma_Montage '+LOCAL_DATASET_PATH_DATA+'/soma'+'\n')
 		TEMP_FILE.write('-isSmall '+SMALLIMAGE+'\n')
 		TEMP_FILE.write('-astroTraceParams '+LOCAL_DATASET_PATH_PARAMETERS+'/options_astr'+'\n')
-		TEMP_FILE.write('-roots_model_AL '+LOCAL_DATASET_PATH_PARAMETERS+'/roots_model_AL'+'\n')
+		TEMP_FILE.write('-roots_model_AL '+LOCAL_DATASET_PATH_PARAMETERS+'/roots_model_AL.txt'+'\n')
 		TEMP_FILE.write('-outPath '+LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS+'\n')
 		TEMP_FILE.write('-outPathDebug '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'\n')
 		TEMP_FILE.write('-outPathDebugLevel2 '+LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2+'\n')
