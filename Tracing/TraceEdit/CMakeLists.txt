@@ -25,6 +25,7 @@ set( TRACE_SRCS
   ConvexHull3D.h	ConvexHull3D.cxx
   StructuredObject.h	StructuredObject.cxx
   PadImageFilter.h	PadImageFilter.cxx
+  NodeModel.h		NodeModel.cxx
   ${GUI_MOC_SRCS}
   ) 
 
