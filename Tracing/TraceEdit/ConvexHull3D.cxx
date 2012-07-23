@@ -151,7 +151,7 @@ vtkSmartPointer<vtkActor> ConvexHull3D::getActor()
 	 */
 	return delaunayActor;
 }
-//ellipsoid is bigger than expected - still need to fix
+
 void ConvexHull3D::calculateEllipsoid()
 {
 	/*!
@@ -201,7 +201,7 @@ void ConvexHull3D::calculateEllipsoid()
 	for (int i = 0; i < 3; i++)
 	{
 		eigenvalues[i] = eig.get_eigenvalue(i);
-		eigenvalue_norm[i] = 4*sqrt(eigenvalues[i] / num_of_points); //normalize
+		eigenvalue_norm[i] = 2*sqrt(eigenvalues[i] / num_of_points); //normalize
 		if (eigenvalues[i] < min)
 		{
 			min = eigenvalues[i];
@@ -215,21 +215,18 @@ void ConvexHull3D::calculateEllipsoid()
 	}
 
 	int median_index = 3 - min_index - max_index;
-	vnl_vector<double> eigenVector_normal = eig.get_eigenvector(min_index);		//normal axis (smallest)
-	vnl_vector<double> eigenVector_minor = eig.get_eigenvector(median_index);	//minor axis
-	vnl_vector<double> eigenVector_major = eig.get_eigenvector(max_index);		//major axis
-	vnl_vector<double> eigenVector_normal_norm = eigenVector_normal.normalize();
-	vnl_vector<double> eigenVector_minor_norm = eigenVector_minor.normalize();
-	vnl_vector<double> eigenVector_major_norm = eigenVector_major.normalize();
+	vnl_vector<double> eigenVector_normal = eig.get_eigenvector(min_index).normalize();		//normal axis (smallest)
+	vnl_vector<double> eigenVector_minor = eig.get_eigenvector(median_index).normalize();	//minor axis
+	vnl_vector<double> eigenVector_major = eig.get_eigenvector(max_index).normalize();		//major axis
 
 
 	vtkMatrix4x4 * matrix = vtkMatrix4x4::New();
 	for (int i = 0; i < 3; i++)
 	{
 		//rotation
-		matrix->SetElement(i,0,eigenVector_major_norm.get(i));
-		matrix->SetElement(i,1,eigenVector_minor_norm.get(i));
-		matrix->SetElement(i,2,eigenVector_normal_norm.get(i));
+		matrix->SetElement(i,0,eigenVector_major.get(i));
+		matrix->SetElement(i,1,eigenVector_minor.get(i));
+		matrix->SetElement(i,2,eigenVector_normal.get(i));
 
 		//position
 		matrix->SetElement(i,3,cellCentroid[i]);

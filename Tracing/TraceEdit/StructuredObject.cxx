@@ -80,6 +80,15 @@ void StructuredObject::sphereKernel(ImageType::Pointer input, ImageType::Pointer
 }
 void StructuredObject::circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, int centerVoxel[], double radius, double azimuth, double elevation)//need to validate
 {
+	/*!
+	 * @author Audrey Cheong
+	 * @param input input itk image
+	 * @param mask circle mask (foreground is white, background is black)
+	 * @param centerVoxel specify the center of rotation
+	 * @param radius radius of the circle
+	 * @param azimuth angle of rotation
+	 * @param elevation angle of rotation
+	 */
 	ImageType::RegionType region = input->GetLargestPossibleRegion();
 
 	mask->SetRegions(region);

@@ -1452,7 +1452,6 @@ void View3D::CreateGUIObjects()
 
 	this->convexHull = new QCheckBox("Convex Hull",this->SettingsWidget);
 	this->convexHull->setObjectName("convexHull");
-	this->convexHull->setChecked(this->renderConvexHull);
 	this->convexHull->setHidden(true);
 	connect(this->convexHull, SIGNAL(clicked()), this, SLOT(ShowDelaunay3D()));
 
@@ -1462,7 +1461,6 @@ void View3D::CreateGUIObjects()
 	
 	this->ellipsoid = new QCheckBox("Ellipsoid",this->SettingsWidget);
 	this->ellipsoid->setObjectName("ellipsoid");
-	this->ellipsoid->setChecked(this->renderConvexHull);
 	this->ellipsoid->setHidden(true);
 	connect(this->ellipsoid, SIGNAL(clicked()), this, SLOT(ShowEllipsoid()));
 
@@ -3448,7 +3446,6 @@ void View3D::ShowSettingsWindow()
 	this->BackgroundGBox->setValue(this->backColorG);
 	this->BackgroundBBox->setValue(this->backColorB);
 	this->markTraceBits->setChecked(this->renderTraceBits);
-	this->convexHull->setChecked(this->renderConvexHull);
 	this->SettingsWidget->show();
 }
 
@@ -3482,7 +3479,6 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
 	this->renderTraceBits = this->markTraceBits->isChecked();
-	this->renderConvexHull = this->convexHull->isChecked();
 	this->poly_line_data->Modified();
 	this->updateTraceSelectionHighlights();
 	if (gridShown)
@@ -4694,7 +4690,7 @@ void View3D::ShowEllipsoid()
 	}
 	else
 	{
-		for (unsigned int i = 0; i < delaunayCellsSelected.size(); i++)
+		for (unsigned int i = 0; i < ellipsoidCellsSelected.size(); i++)
 		{
 			this->Renderer->RemoveActor(ellipsoidCellsSelected[i]->GetEllipsoidActor());
 		}

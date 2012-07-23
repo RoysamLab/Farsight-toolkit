@@ -492,7 +492,6 @@ private:
 #endif
 
 	bool renderTraceBits;
-	bool renderConvexHull;
 	bool projectLoadedState;
 	//Qt widgets for the settings window
 	QWidget *SettingsWidget;
