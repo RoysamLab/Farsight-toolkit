@@ -2,7 +2,7 @@
 
 ConvexHull3D::ConvexHull3D()
 {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		convexHullValues[i] = -1;
 	}
@@ -74,7 +74,7 @@ bool ConvexHull3D::calculate()
 	/*!
 	 * Calculate area, volume, centroid, etc.
 	 * @author Audrey Cheong
-	 * @return check whether calculations is successful
+	 * @return check whether calculations are successful
 	 */
 	//area calculation
 	vtkSmartPointer<vtkPoints> boundaryPoints = this->surfacePolyData->GetPoints();
@@ -201,7 +201,7 @@ void ConvexHull3D::calculateEllipsoid()
 	for (int i = 0; i < 3; i++)
 	{
 		eigenvalues[i] = eig.get_eigenvalue(i);
-		eigenvalue_norm[i] = 2*sqrt(eigenvalues[i] / num_of_points); //normalize
+		eigenvalue_norm[i] = 4*sqrt(eigenvalues[i] / num_of_points); //normalize
 		if (eigenvalues[i] < min)
 		{
 			min = eigenvalues[i];
@@ -232,27 +232,24 @@ void ConvexHull3D::calculateEllipsoid()
 		matrix->SetElement(i,3,cellCentroid[i]);
 	}
 
+	if (num_of_points != 0)
+	{
+		convexHullValues[5] = eigenvalue_norm[max_index];
+		convexHullValues[6] = eigenvalue_norm[median_index];
+		convexHullValues[7] = eigenvalue_norm[min_index];
+	}
 	//std::cout << "Eigenvector (major axis): " << eigenVector_major.get(0) << " " << eigenVector_major.get(1) << " " << eigenVector_major.get(2) << std::endl;
 
 	//std::cout << "Eigenvector (minor axis): " << eigenVector_minor.get(0) << " " << eigenVector_minor.get(1) << " " << eigenVector_minor.get(2) << std::endl;
 
 	//std::cout << "Eigenvector (normal axis): " << eigenVector_normal.get(0) << " " << eigenVector_normal.get(1) << " " << eigenVector_normal.get(2) << std::endl;
 
-	//std::cout << std::endl;
-
-	//double x_rotate = eigenVector_normal.get(0);
-	//double y_rotate = eigenVector_normal.get(1);
-	//double z_rotate = eigenVector_normal.get(2);
-
-
-	//std::cout << "Eigenvalues: " << eigenvalue_norm[0] << " " << eigenvalue_norm[1] << " " << eigenvalue_norm[2] << std::endl;
-	//still need to add to table!!
 
 	//draw ellipsoid
 	vtkSmartPointer<vtkParametricEllipsoid> parametricObject = vtkSmartPointer<vtkParametricEllipsoid>::New();
-	parametricObject->SetXRadius(eigenvalue_norm[max_index]);
-	parametricObject->SetYRadius(eigenvalue_norm[median_index]);
-	parametricObject->SetZRadius(eigenvalue_norm[min_index]);
+	parametricObject->SetXRadius(eigenvalue_norm[max_index]/2);
+	parametricObject->SetYRadius(eigenvalue_norm[median_index]/2);
+	parametricObject->SetZRadius(eigenvalue_norm[min_index]/2);
 	vtkSmartPointer<vtkParametricFunctionSource> parametricFunctionSource = vtkSmartPointer<vtkParametricFunctionSource>::New();
 	parametricFunctionSource->SetParametricFunction(parametricObject);
 	parametricFunctionSource->Update();
@@ -264,7 +261,6 @@ void ConvexHull3D::calculateEllipsoid()
 	ellipsoidActor = vtkSmartPointer<vtkActor>::New();
 	ellipsoidActor->SetMapper(mapper);
 	ellipsoidActor->SetUserMatrix(matrix);
-	//std::cout << "EigenValue norm: " << eigenvalue_norm[max_index] << " " << eigenvalue_norm[median_index] << " " << eigenvalue_norm[min_index] << std::endl;
 }
 
 vtkSmartPointer<vtkActor> ConvexHull3D::get3DEllipseActor()
@@ -288,6 +284,9 @@ std::vector<std::string> ConvexHull3D::getConvexHullHeaders()
 	headers.push_back("Convex Hull Elevation");
 	headers.push_back("Convex Hull Surface Area");
 	headers.push_back("Convex Hull Volume");
+	headers.push_back("Ellipsoid major length");
+	headers.push_back("Ellipsoid minor length");
+	headers.push_back("Ellipsoid normal length");
 	return headers;
 }
 

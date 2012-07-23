@@ -20,12 +20,13 @@ limitations under the License.
 #include "itkAddImageFilter.h"
 #include "itkEuler3DTransform.h"
 #include "itkEllipseSpatialObject.h"
-#include "itkFixedCenterOfRotationAffineTransform.h"
-#include "itkImageRegionIterator.h"
+//#include "itkFixedCenterOfRotationAffineTransform.h"
+//#include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkMaskImageFilter.h"
 #include "itkResampleImageFilter.h"
 #include "itkSpatialObjectToImageFilter.h"
+
 #include "ImageActors.h"
 #include "itkImageFileWriter.h"
 
@@ -39,7 +40,7 @@ typedef EllipseType::TransformType EllipseTransformType;
 typedef itk::SpatialObjectToImageFilter< EllipseType, ImageType >	SpatialObjectToImageFilterType;
 typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleFilterType;
 typedef itk::ImageRegionConstIterator< ImageType > ConstIteratorType;
-typedef itk::ImageRegionIterator< ImageType > IteratorType;
+//typedef itk::ImageRegionIterator< ImageType > IteratorType;
 typedef itk::ImageFileWriter< ImageType > WriterType;
 typedef itk::AddImageFilter< ImageType, ImageType > AddImageFilterType;
 

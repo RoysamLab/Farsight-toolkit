@@ -21,18 +21,12 @@
 #include "vtkTriangle.h"
 #include "vtkUnstructuredGrid.h"
 
-//#include "vtkImageActor.h"
-//#include "vtkImageCast.h"
-//#include "vtkImageEllipsoidSource.h"
-//#include "vtkImageMapper3D.h"
-
 #include "vtkParametricEllipsoid.h"
 #include "vtkParametricFunctionSource.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkMatrix4x4.h"
 
 #include "vcl_limits.h"
-//#include "vnl_matrix.h"
 #include "vnl/vnl_math.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
 
@@ -57,12 +51,11 @@ public:
 	double* getConvexHullValues();
 
 private:
-	double convexHullValues[5];
+	double convexHullValues[8];
 	double convexHullArea, convexHullVol;
 	double refPt[3];
 	double cellCentroid[3];
 	vtkSmartPointer<vtkActor> delaunayActor;
-	//vtkSmartPointer<vtkImageActor> ellipsoidActor;
 	vtkSmartPointer<vtkActor> ellipsoidActor;
 	vtkSmartPointer<vtkDelaunay3D> delaunay3D;
 	vtkPolyData * surfacePolyData;

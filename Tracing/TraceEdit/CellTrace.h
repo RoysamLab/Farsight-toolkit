@@ -121,14 +121,11 @@ private:
 	vtkSmartPointer<vtkVariantArray> CellData;
 	std::string FileName;
 	std::set<long int> IDs;
-	//TraceBit rootBit;
 
 	bool delaunayCreated;
 	vtkSmartPointer<vtkActor> delaunayActor;
-	//vtkSmartPointer<vtkImageActor> ellipsoidActor;
 	vtkSmartPointer<vtkActor> ellipsoidActor;
 
 	std::vector<TraceBit> tips;
-	//std::vector<int> bounding_tips_indices;
 };
 #endif

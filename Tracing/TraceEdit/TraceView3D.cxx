@@ -4648,6 +4648,9 @@ void View3D::CalculateDelaunay3D()
 	int convexHullElevationIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Elevation");
 	int convexHullSurfaceIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Surface Area");
 	int convexHullVolumeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Volume");
+	int ellipsoidMajorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid major length");
+	int ellipsoidMinorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid minor length");
+	int ellipsoidNormalIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid normal length");
 	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
 	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 	{
