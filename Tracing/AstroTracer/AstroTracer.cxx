@@ -12,6 +12,10 @@ AstroTracer::AstroTracer()
 	this->isCoverageOptimized = false;
 }
 
+AstroTracer::~AstroTracer()
+{
+}
+
 
 void AstroTracer::LoadParameters(const char* parametersFileName)
 {
@@ -3985,7 +3989,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		}
 	}
 
-	features_table_vec.push_back(features_table);
+	features_table_vec[0] = features_table;
 
 	if(writeResult)
 		feature_vector.close();
@@ -5701,7 +5705,7 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 			roots_table->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
 		}
 	}
-	roots_table_vec.push_back(roots_table);
+	roots_table_vec[0] = roots_table;
 
 	delete mclr;
 
