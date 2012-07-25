@@ -5703,6 +5703,8 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 	}
 	roots_table_vec.push_back(roots_table);
 
+	delete mclr;
+
 	roots_Image = IDImage;
 	LabelImageType3D::PixelType * rootsImageArray = roots_Image->GetBufferPointer();
 	itk::Size<3> im_size = roots_Image->GetBufferedRegion().GetSize();
