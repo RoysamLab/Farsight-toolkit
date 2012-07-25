@@ -33,6 +33,7 @@ public:
 	void splitStore( typename TINPUT::Pointer ImageMontage, std::string );
 	void runSplitting();
 	void runInterestPoints();
+	void runStitchRoots( );
 	void runTracing();
 	
 protected:
@@ -67,6 +68,7 @@ private:
 	std::string _TRI_Image;
 	std::string _GFP_Image;
 	std::string _DAP_Image;
+	std::string _Label_Image;
 	std::string _Dist_Map_Image;
 	std::string _Soma_Centroids;
 	std::string _Soma_Montage;
@@ -84,6 +86,7 @@ private:
 	std::string _TRI_ImageNRRD;
 	std::string _GFP_ImageNRRD;
 	std::string _DAP_ImageNRRD;
+	std::string _Label_ImageNRRD;
 	std::string _Dist_Map_ImageNRRD;
 	std::string _Soma_MontageNRRD;
 // 	
@@ -92,12 +95,14 @@ private:
  	rawImageType_8bit::Pointer _ImageMontage_TRI;
  	rawImageType_8bit::Pointer _ImageMontage_GFP;
  	rawImageType_8bit::Pointer _ImageMontage_DAP;
-	rawImageType_16bit::Pointer _ImageMontage_Dist_Map;
+	rawImageType_uint::Pointer _ImageMontage_Label;
+	rawImageType_flo::Pointer _ImageMontage_Dist_Map;
 // 	
  	itk::Size<3> _ImageMontage_Cy5Size;
  	itk::Size<3> _ImageMontage_TRISize;
  	itk::Size<3> _ImageMontage_GFPSize;
  	itk::Size<3> _ImageMontage_DAPSize;
+	itk::Size<3> _ImageMontage_LabelSize;
 	itk::Size<3> _ImageMontage_Dist_MapSize;
  	
  	// Image Split

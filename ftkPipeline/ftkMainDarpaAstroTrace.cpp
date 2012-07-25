@@ -107,6 +107,12 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	else
 	{ _DAP_Image.clear(); printf("Choose _DAP_Image = NULL as default\n");}
 
+	iter = options.find("-Label_Image"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _Label_Image;}
+	else
+	{ _Label_Image.clear(); printf("Choose _Label_Image = NULL as default\n");}
+
 	iter = options.find("-Dist_Map_Image"); 
 	if(iter!=options.end())
 	{ std::istringstream ss((*iter).second); ss >> _Dist_Map_Image;}
@@ -172,6 +178,7 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	_TRI_ImageNRRD = _TRI_Image+".nrrd";
 	_GFP_ImageNRRD = _GFP_Image+".nrrd";
 	_DAP_ImageNRRD = _DAP_Image+".nrrd";
+	_Label_ImageNRRD = _Label_Image+".nrrd";
 	_Dist_Map_ImageNRRD = _Dist_Map_Image+".nrrd";
 	_Soma_MontageNRRD = _Soma_Montage+".nrrd";
 	
@@ -192,6 +199,7 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	std::cout << std::endl << "_TRI_Image: " << _TRI_Image;
 	std::cout << std::endl << "_GFP_Image: " << _GFP_Image;
 	std::cout << std::endl << "_DAP_Image: " << _DAP_Image;
+	std::cout << std::endl << "_Label_Image: " << _Label_Image;
 	std::cout << std::endl << "_Dist_Map_Image: " << _Dist_Map_Image;
 	std::cout << std::endl << "_Soma_Centroids: " << _Soma_Centroids;
 	std::cout << std::endl << "_Soma_Montage: " << _Soma_Montage;
@@ -260,6 +268,13 @@ void ftkMainDarpaAstroTrace::runSplitting()
 	//	_ImageMontage_DAPSize = ImageMontage_DAP->GetLargestPossibleRegion().GetSize();
 	//	splitStore< rawImageType_8bit >( ImageMontage_DAP, _DAP_Image );
 	//}
+	if( !_Label_Image.empty() )
+	{
+		rawImageType_uint::Pointer ImageMontage_Label = readImage< rawImageType_uint >(_Label_ImageNRRD.c_str());
+		_ImageMontage_LabelSize = ImageMontage_Label->GetLargestPossibleRegion().GetSize();
+		splitStore< rawImageType_uint >( ImageMontage_Label, _Label_Image );
+	}
+
 	if( !_Dist_Map_Image.empty() )
 	{
 		rawImageType_flo::Pointer ImageMontage_Dist_Map = readImage< rawImageType_flo >(_Dist_Map_ImageNRRD.c_str());
@@ -380,6 +395,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				//rawImageType_8bit::Pointer imageLocalTRI;
 				//rawImageType_8bit::Pointer imageLocalGFP;
 				//rawImageType_8bit::Pointer imageLocalDAP;
+				rawImageType_uint::Pointer imageLocalLabel;
 				rawImageType_flo::Pointer imageLocalTRI;
 				rawImageType_flo::Pointer imageLocalDist_Map;
 
@@ -389,7 +405,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				std::vector< rawImageType_flo::Pointer > Dist_Map_Tiles;
 				Dist_Map_Tiles.resize(1);
 
-				std::vector< rawImageType_16bit::Pointer > Label_Tiles;
+				std::vector< rawImageType_uint::Pointer > Label_Tiles;
 				Label_Tiles.resize(1);
 				
 				std::vector< vtkSmartPointer< vtkTable > > Table_Tiles;
@@ -431,12 +447,21 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 					std::string tempDist_Map = _outPathTemp+"/"+_Dist_Map_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 					imageLocalDist_Map = readImage< rawImageType_flo >(tempDist_Map.c_str());
 				}
+				if( !_Label_Image.empty( ) )
+				{
+					int foundLabel = _Label_Image.find_last_of("/\\");
+					std::string _Label_ImageNoPath = _Label_Image.substr(foundLabel+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempLabel = _outPathTemp+"/"+_Label_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalLabel = readImage< rawImageType_uint >(tempLabel.c_str());
+				}
 				}
 				//Images_Tiles[0] = imageLocalCy5;
 				//Images_Tiles[1] = imageLocalTRI;
 				//Images_Tiles[2] = imageLocalGFP;
 				//Images_Tiles[3] = imageLocalDAP;
 				Images_Tiles[0] = imageLocalTRI;
+				Label_Tiles[0] = imageLocalLabel;
 
 				Dist_Map_Tiles[0] = imageLocalDist_Map;
 								
@@ -460,33 +485,311 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				AT->ComputeAstroFeaturesPipeline(featureVectorFileName, IDImageFileName, 0, regionLocal_inside, feature_Vector_Tables, ID_Images, true);
 				std::string rootVectorFileName = _outPathTemp+"/rootVector_"+xStr+"_"+yStr+"_"+zStr+".txt";
 				std::string rootsImageFileName = _outPathTemp+"/rootsImage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
-				AT->Classification_Roots(root_Vector_Tables, root_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);		
+				AT->Classification_Roots(root_Vector_Tables, root_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);
+				Centroids_Tiles[0] = GetLabelToCentroidMap(root_Vector_Tables[0]);
+				delete AT;
+				RemoveLabelNearBorder(regionLocal_inside, root_Images, root_Vector_Tables, Centroids_Tiles );
 
-				//RemoveLabelNearBorder(regionLocal_inside, Label_Tiles, Table_Tiles, Centroids_Tiles );
+				//typedef itk::LabelGeometryImageFilter< rawImageType_uint, rawImageType_flo > LabelGeometryType;
+				//LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();		//Dirk's Filter;
+				//labelGeometryFilter->SetInput( imageLocalLabel );
+				//labelGeometryFilter->SetIntensityInput( imageLocalTRI );
+				////SET ADVANCED (OPTIONAL) ITEMS FOR THIS FILTER:
+				//labelGeometryFilter->CalculatePixelIndicesOff();
+				//labelGeometryFilter->CalculateOrientedBoundingBoxOff();
+				//labelGeometryFilter->CalculateOrientedLabelRegionsOff();
+				//labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
+				////UPDATE THE FILTER	
+				//try
+				//{
+				//	labelGeometryFilter->Update();
+				//}
+				//catch (itk::ExceptionObject & e) 
+				//{
+				//	std::cerr << "Exception in Dirk's Label Geometry Filter: " << e << std::endl;
+				//	return false;
+				//}				
+				//std::vector< LabelGeometryType::LabelPixelType > labels = labelGeometryFilter->GetLabels();
 				
-					
-					
-//// 					// TEST SAVE SEGMENTATION WITH LABELS REMOVED
-//				#pragma omp critical
-//				{
-//					std::string tempTABLERE = _outPathTemp+"/segTable_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
-//					ftk::SaveTable(tempTABLERE, Table_Tiles[0]);
-//					std::string tempLABELRE = _outPathTemp+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
-//					writeImage<rawImageType_16bit>(Label_Tiles[0],tempLABELRE.c_str());
-//
-//	// 				std::string tempLABELRE = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.tif";
-//					ftkMainDarpa objftkMainDarpa;
-//					objftkMainDarpa.projectImage<rawImageType_16bit, rawImageType_16bit>( Label_Tiles[0], tempLABELRE, _outPathDebugLevel2, "ORG_RES_BIN", "TIFF" );
-//				}
-//				#pragma omp critical
-//				{
-//					contadorImageDoneSegment++;
-//					std::cout<<std::endl<< "\t\t--->>> ImageDoneSegment " << contadorImageDoneSegment << " of " << _kx*_ky*_kz;
-//				}
+				
+				// TEST SAVE SEGMENTATION WITH LABELS REMOVED
+				#pragma omp critical
+				{
+					std::string tempTABLERE = _outPathTemp+"/rootVector_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
+					ftk::SaveTable(tempTABLERE, root_Vector_Tables[0]);
+					std::string tempLABELRE = _outPathTemp+"/rootsImage_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
+					writeImage<rawImageType_16bit>(root_Images[0],tempLABELRE.c_str());
+
+	// 				std::string tempLABELRE = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.tif";
+					ftkMainDarpa objftkMainDarpa;
+					objftkMainDarpa.projectImage<rawImageType_16bit, rawImageType_16bit>( root_Images[0], tempLABELRE, _outPathDebugLevel2, "ORG_BIN", "TIFF" );
+				}
+				#pragma omp critical
+				{
+					contadorImageDoneSegment++;
+					std::cout<<std::endl<< "\t\t--->>> ImageDoneSegment " << contadorImageDoneSegment << " of " << _kx*_ky*_kz;
+				}
 			}
 		}
 	}
 }
+
+
+
+void ftkMainDarpaAstroTrace::runStitchRoots(  )
+{
+	std::cout << std::endl << "HERE HERE_2";
+	std::cout << std::endl << "HERE HERE_2";
+	
+	if( _isSmall == 1 )
+	{
+		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+		omp_set_nested(1);
+		omp_set_max_active_levels(2);
+		int num_threads = 1;
+		omp_set_num_threads(num_threads);
+	}
+	
+	rawImageType_8bit::RegionType ImageMontageRegion;
+	itk::Size<3> ImageMontageSize;
+	// Assume GFP or dapi always exist
+	if( !_TRI_Image.empty() )
+	{
+		rawImageType_8bit::Pointer ImageMontage_TRI = readImage< rawImageType_8bit >(_TRI_ImageNRRD.c_str());
+		ImageMontageRegion = ImageMontage_TRI->GetLargestPossibleRegion();
+		ImageMontageSize = ImageMontageRegion.GetSize();
+		computeSplitConst( ImageMontage_TRI );
+	}
+	if( !_DAP_Image.empty() )
+	{
+		rawImageType_8bit::Pointer ImageMontage_DAP = readImage< rawImageType_8bit >(_DAP_ImageNRRD.c_str());
+		ImageMontageRegion = ImageMontage_DAP->GetLargestPossibleRegion();
+		ImageMontageSize = ImageMontageRegion.GetSize();
+		computeSplitConst( ImageMontage_DAP );
+	}
+	
+	std::cout << std::endl << "HERE HERE";
+	std::cout << std::endl << "HERE HERE";
+	
+	rawImageType_uint::Pointer imageRootsMontage = rawImageType_uint::New();
+	rawImageType_uint::PointType originz;
+	originz[0] = 0; 
+	originz[1] = 0;
+	originz[2] = 0;
+	imageRootsMontage->SetOrigin( originz );
+	rawImageType_uint::IndexType indexStich;
+	indexStich.Fill(0);
+	rawImageType_uint::RegionType regionz;
+	regionz.SetSize ( ImageMontageSize  );
+	regionz.SetIndex( indexStich );
+	imageRootsMontage->SetRegions( regionz );
+	
+	try
+	{
+		imageRootsMontage->Allocate();
+		imageRootsMontage->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	imageRootsMontage->FillBuffer(0);
+	
+	// GLOBAL TABLE
+	vtkSmartPointer< vtkTable > tableRootsMontage;
+	
+	
+	int contadorSegment = 0;
+	int contadorStich = 0;
+	unsigned int maxValue = 0;
+	unsigned int maxValueOld = 0;
+	int flagFirstStich = 1;
+	
+// #pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+	for(int xco = 0; xco < _kx; xco++)
+	{
+		for(int yco = 0; yco < _ky; yco++)
+		{
+			for(int zco = 0; zco < _kz; zco++)
+			{
+// 				#pragma omp critical
+// 				{
+				++contadorSegment;
+				std::cout<<std::endl<< "\t\t--->>> ImageStich " << contadorSegment << " of " << _kx*_ky*_kz;
+// 				}
+				
+				rawImageType_8bit::RegionType regionLocal_inside = ComputeLocalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				rawImageType_uint::RegionType regionMontage_inside = ComputeGlobalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				
+				rawImageType_8bit::RegionType regionLocal_all = ComputeLocalRegionSplit( ImageMontageSize, xco, yco, zco );
+				rawImageType_8bit::RegionType regionMontage_all = ComputeGlobalRegionSplit( ImageMontageSize, xco, yco, zco );
+
+				// Store local image
+				std::stringstream out_x;
+				std::stringstream out_y;
+				std::stringstream out_z;
+				out_x<<xco;
+				out_y<<yco;
+				out_z<<zco;
+				std::string xStr = out_x.str();
+				std::string yStr = out_y.str();
+				std::string zStr = out_z.str();
+				
+// 				std::cout << std::endl << "REGION_LOC: " << regionLocal_inside;
+// 				std::cout << std::endl << "REGION_MON: " << regionMontage_inside;
+				
+// 				rawImageType_8bit::Pointer imageLocalCy5;
+// 				rawImageType_8bit::Pointer imageLocalTRI;
+// 				rawImageType_8bit::Pointer imageLocalGFP;
+// 				rawImageType_8bit::Pointer imageLocalDAP;
+
+				//std::vector< rawImageType_8bit::Pointer > Images_Tiles;
+				//Images_Tiles.resize(4);
+
+				
+				std::vector< rawImageType_16bit::Pointer > root_Images;
+				root_Images.resize(1);
+				
+				std::vector< vtkSmartPointer< vtkTable > > root_Vector_Tables;
+				root_Vector_Tables.resize(1);
+				
+				//std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_Tiles;
+				//Centroids_Tiles.resize(1);
+				
+// 				// Reading part
+// 				if( !_GFP_Image.empty( ) && !_DAP_Image.empty() )
+// 				{
+// 					int foundGFP = _GFP_Image.find_last_of("/\\");
+// 					std::string _GFP_ImageNoPath = _GFP_Image.substr(foundGFP+1);
+// 					// !!! this has to be nrrd is just to test
+// 					std::string tempGFP = _outPathTemp+"/"+_GFP_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+// 					imageLocalGFP = readImage< rawImageType_8bit >(tempGFP.c_str());
+// 					
+// 					int foundDAP = _DAP_Image.find_last_of("/\\");
+// 					std::string _DAP_ImageNoPath = _DAP_Image.substr(foundDAP+1);
+// 					// !!! this has to be nrrd is just to test
+// 					std::string tempDAP = _outPathTemp+"/"+_DAP_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+// 					imageLocalDAP = readImage< rawImageType_8bit >(tempDAP.c_str());
+// 				}
+// 				Images_Tiles[0] = imageLocalCy5;
+// 				Images_Tiles[1] = imageLocalTRI;
+// 				Images_Tiles[2] = imageLocalGFP;
+// 				Images_Tiles[3] = imageLocalDAP;
+// 				
+// // 				RunSegmentation(regionLocal_inside, Images_Tiles, Label_Tiles, Table_Tiles, Centroids_Tiles);
+// 				
+// 				Label_Tiles[0] = RunNuclearSegmentation( Images_Tiles[3] );
+// 				Table_Tiles[0] = ComputeFeaturesAndAssociations( Images_Tiles, Label_Tiles );
+// 				Centroids_Tiles[0] = GetLabelToCentroidMap(Table_Tiles[0]);
+// 				
+// // 					// TEST PUT A NUMBER IN THE REGION OF INTERES
+// // 					IteratorType_16bit iterLocal16_2 = IteratorType_16bit(Label_Tiles[0],regionLocal_inside); iterLocal16_2.GoToBegin();
+// // 					for(;!iterLocal16_2.IsAtEnd();++iterLocal16_2)
+// // 						iterLocal16_2.Set(50000);
+// // 					// TEST SAVE SEGMENTATION
+// // 					std::string tempLABEL = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+".tif";
+// // 					std::string tempTABLE = _outPathDebugLevel2+"/segTable_"+"_"+xStr+"_"+yStr+"_"+zStr+".txt";
+// // 					writeImage<rawImageType_16bit>(Label_Tiles[0],tempLABEL.c_str());
+// // 					ftk::SaveTable(tempTABLE, Table_Tiles[0]);
+// 				
+// 				RemoveLabelNearBorder(regionLocal_inside, Label_Tiles, Table_Tiles, Centroids_Tiles );
+				
+					
+					
+// 					// TEST SAVE SEGMENTATION WITH LABELS REMOVED
+				std::string tempTABLERE = _outPathTemp+"/rootVector_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
+				root_Vector_Tables[0] = ftk::LoadTable(tempTABLERE);
+				
+				std::string tempLABELRE = _outPathTemp+"/rootsImage_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
+				root_Images[0] = readImage<rawImageType_16bit>(tempLABELRE.c_str());
+
+// 				std::string tempLABELRE = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.tif";
+// 				ftkMainDarpa objftkMainDarpa;
+// 				objftkMainDarpa.projectImage<rawImageType_16bit, rawImageType_16bit>( root_Images[0], tempLABELRE, _outPathDebugLevel2, "ORG_RES_BIN" );
+
+// /*					// TEST PUT A NUMBER IN THE REGION OF INTERES
+// 					IteratorType_16bit iterLocal16_3 = IteratorType_16bit(root_Images[0],regionLocal_inside); iterLocal16_3.GoToBegin();
+// 					for(;!iterLocal16_3.IsAtEnd();++iterLocal16_3)
+// 						iterLocal16_3.Set(50000);
+// 					std::string tempLABELREGIO = _outPathDebugLevel2+"/segLabel_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REGION.nrrd";
+// 					writeImage<rawImageType_16bit>(root_Images[0],tempLABELREGIO.c_str());*/
+				
+// 				StichResults( imageRootsMontage, root_Images, root_Vector_Tables, Centroids_Tiles );
+
+// 				#pragma omp critical
+// 				{
+				++contadorStich;
+				std::cout<<std::endl<< "\t\t--->>> ImageStich " << contadorStich << " of " << _kx*_ky*_kz;
+				
+				if( flagFirstStich == 1 )
+				{
+					flagFirstStich = 0;
+					tableRootsMontage = vtkSmartPointer<vtkTable>::New();
+					tableRootsMontage->Initialize();
+					for(int c=0; c<(int)root_Vector_Tables[0]->GetNumberOfColumns(); ++c)
+					{
+						vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+						column->SetName( root_Vector_Tables[0]->GetColumnName(c) );
+						tableRootsMontage->AddColumn(column);
+					}
+				}
+				
+				maxValueOld = maxValue;
+				if((unsigned long long)root_Vector_Tables[0]->GetNumberOfRows() != 0)
+				{
+					std::cout << std::endl << "\t\tpiu11 The number of row: " << (int)root_Vector_Tables[0]->GetNumberOfRows() << " in " << contadorStich;
+					for(int r=0; r<(int)root_Vector_Tables[0]->GetNumberOfRows(); ++r)
+					{
+						// Can be done here
+						vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+						for(int c=0; c<(int)root_Vector_Tables[0]->GetNumberOfColumns(); ++c)
+						{
+							if(c == 0)
+								model_data1->InsertNextValue(vtkVariant(root_Vector_Tables[0]->GetValue(r,c).ToUnsignedInt() + maxValue));
+							else if(c == 1)
+								model_data1->InsertNextValue(vtkVariant(root_Vector_Tables[0]->GetValue(r,c).ToInt() + regionMontage_all.GetIndex()[0]));
+							else if(c == 2)
+								model_data1->InsertNextValue(vtkVariant(root_Vector_Tables[0]->GetValue(r,c).ToInt() + regionMontage_all.GetIndex()[1]));
+							else if(c == 3)
+								model_data1->InsertNextValue(vtkVariant(root_Vector_Tables[0]->GetValue(r,c).ToInt() + regionMontage_all.GetIndex()[2]));
+							else
+								model_data1->InsertNextValue(root_Vector_Tables[0]->GetValue(r,c));
+						}
+						tableRootsMontage->InsertNextRow(model_data1);
+					}
+					std::cout << std::endl << "\t\tpiu11 The maxvaule before: " << maxValue << " ";
+					maxValue = tableRootsMontage->GetValue((int)tableRootsMontage->GetNumberOfRows()-1, 0).ToUnsignedInt();
+					std::cout << "after: " << maxValue << " in " << contadorStich;
+				}
+			
+				IteratorType_uint iterMontage_1 = IteratorType_uint(imageRootsMontage,regionMontage_all);
+				iterMontage_1.GoToBegin();
+				
+// 				IteratorType_8bit iterLocal_1 = IteratorType_8bit(imageLocalDAP,regionLocal_inside);
+// 				iterLocal_1.GoToBegin();
+				
+				IteratorType_16bit iterLocal16_1 = IteratorType_16bit(root_Images[0],regionLocal_all);
+				iterLocal16_1.GoToBegin();
+				
+				for(;!iterMontage_1.IsAtEnd();++iterMontage_1)
+				{
+// 					iterMontage_1.Set(iterLocal_1.Get());
+// 					++iterLocal8_1;
+					if( iterLocal16_1.Get() != 0 )
+						iterMontage_1.Set(iterLocal16_1.Get() + maxValueOld);
+					++iterLocal16_1;
+				}
+				
+				std::cout<<std::endl<< "\t\t--->>> ImageStichDone " << contadorStich << " of " << _kx*_ky*_kz;
+// 				}
+			}
+		}
+	}
+}
+	
+	
 
 
 //void ftkMainDarpaAstroTrace::runTracing()
@@ -749,6 +1052,26 @@ void ftkMainDarpaAstroTrace::RemoveLabelNearBorder(rawImageType_8bit::RegionType
 	}
 	// Any kind of memory leakage ???
 	Table_Tiles[0] = Table_Tiles_out;
+}
+
+
+std::map< unsigned int, itk::Index<3> > ftkMainDarpaAstroTrace::GetLabelToCentroidMap( vtkSmartPointer< vtkTable > table)
+{
+	std::cout << std::endl << (int)table->GetNumberOfRows();
+	std::cout << std::endl << (int)table->GetNumberOfRows();
+	
+	std::map< unsigned int, itk::Index<3> > centroidMap;
+	for (int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		unsigned int id = table->GetValue(row, 0).ToUnsignedInt();
+		itk::Index<3> indx;
+		indx[0] = table->GetValue(row, 1).ToUnsignedInt();
+		indx[1] = table->GetValue(row, 2).ToUnsignedInt();
+		indx[2] = table->GetValue(row, 3).ToUnsignedInt();
+		centroidMap[id] = indx;
+	}
+
+	return centroidMap;
 }
 	
 	
