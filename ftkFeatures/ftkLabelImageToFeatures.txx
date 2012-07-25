@@ -402,80 +402,193 @@ template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
 bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 ::RunLabelGeometryFilter()
 {
-	if(!intensityImage || !labelImage) return false;
-	
-	typedef itk::LabelGeometryImageFilter< LabelImageType, IntensityImageType > LabelGeometryType;
-	typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
-	LabelGeometryPointer labelGeometryFilter = LabelGeometryType::New();		//Dirk's Filter;
-	
-	labelGeometryFilter->SetInput( labelImage );
-	labelGeometryFilter->SetIntensityInput( intensityImage );
-	
-	//SET ADVANCED (OPTIONAL) ITEMS FOR THIS FILTER:
-	labelGeometryFilter->CalculatePixelIndicesOff();
-	labelGeometryFilter->CalculateOrientedBoundingBoxOff();
-	labelGeometryFilter->CalculateOrientedLabelRegionsOff();
-	labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
-	
-	//UPDATE THE FILTER	
-	try
-	{
-		labelGeometryFilter->Update();
-	}
-	catch (itk::ExceptionObject & e) 
-	{
-		std::cerr << "Exception in Dirk's Label Geometry Filter: " << e << std::endl;
+	typedef itk::ExtractImageFilter< IntensityImageType, Intensity2DType > DataExtractIntensity2DType;
+	typedef itk::ExtractImageFilter< LabelImageType, Label2DType > DataExtractLabel2DType;
+
+	if(!intensityImage || !labelImage)
 		return false;
-	}
-	
-	//Now populate vector of labels & fill in the the map
-	labels.clear();
-	std::vector< typename LabelGeometryType::LabelPixelType > ls = labelGeometryFilter->GetLabels();
-	for (int i = 0; i < (int)ls.size(); ++i)
+
+	typename Intensity2DType::Pointer intensity2D;
+	typename Label2DType::Pointer label2D;
+
+	//Check If Image is 2D
+	if( labelImage->GetLargestPossibleRegion().GetSize()[2] == 1 )
 	{
-		TLPixel l = ls.at(i);
-		labels.push_back( (unsigned short)l );
-		LtoIMap[ l ] = 	i;
+		typename DataExtractIntensity2DType::Pointer deFilter = DataExtractIntensity2DType::New();
+		typename IntensityImageType::RegionType dRegion = intensityImage->GetLargestPossibleRegion();
+		dRegion.SetSize(2,0);
+		deFilter->SetExtractionRegion( dRegion );
+		deFilter->SetDirectionCollapseToIdentity();
+		deFilter->SetInput( intensityImage );
+
+		typename DataExtractLabel2DType::Pointer deFilter1 = DataExtractLabel2DType::New();
+		typename LabelImageType::RegionType dRegion1 = labelImage->GetLargestPossibleRegion();
+		dRegion1.SetSize(2,0);
+		deFilter1->SetExtractionRegion( dRegion1 );
+		deFilter1->SetDirectionCollapseToIdentity();
+		deFilter1->SetInput( labelImage );
+
+		try
+		{
+			deFilter1->Update();
+			deFilter->Update();
+		}
+		catch( itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+			return false;
+		}
+		intensity2D = deFilter->GetOutput();
+		label2D = deFilter1->GetOutput();
+
+		typedef itk::LabelGeometryImageFilter< Label2DType, Intensity2DType > LabelGeometryType;
+		typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
+		LabelGeometryPointer labelGeometryFilter = LabelGeometryType::New();		//Dirk's Filter;
+
+		labelGeometryFilter->SetInput( label2D );
+		labelGeometryFilter->SetIntensityInput( intensity2D );
+		
+		//SET ADVANCED (OPTIONAL) ITEMS FOR THIS FILTER:
+		labelGeometryFilter->CalculatePixelIndicesOff();
+		labelGeometryFilter->CalculateOrientedBoundingBoxOff();
+		labelGeometryFilter->CalculateOrientedLabelRegionsOff();
+		labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
+
+		//UPDATE THE FILTER	
+		try
+		{
+			labelGeometryFilter->Update();
+		}
+		catch (itk::ExceptionObject & e) 
+		{
+			std::cerr << "Exception in Dirk's Label Geometry Filter: " << e << std::endl;
+			return false;
+		}
+
+		//Now populate vector of labels & fill in the the map
+		labels.clear();
+		std::vector< typename LabelGeometryType::LabelPixelType > ls = labelGeometryFilter->GetLabels();
+		for (int i = 0; i < (int)ls.size(); ++i)
+		{
+			TLPixel l = ls.at(i);
+			labels.push_back( (unsigned short)l );
+			LtoIMap[ l ] = 	i;
+		}
+
+		//Now extract the features:
+		for (int i = 0; i < (int)labels.size(); ++i)
+		{
+			TLPixel label = labels.at(i);
+			
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME] = (float)labelGeometryFilter->GetVolume( label );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::INTEGRATED_INTENSITY] = (float)labelGeometryFilter->GetIntegratedIntensity( label );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ECCENTRICITY] = float( labelGeometryFilter->GetEccentricity( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
+			
+			typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].Centroid[i] = float( c[i] );
+			}
+
+			c = labelGeometryFilter->GetWeightedCentroid( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].WeightedCentroid[i] = float( c[i] );
+			}
+
+			typename LabelGeometryType::AxesLengthType aL = labelGeometryFilter->GetAxesLength( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].AxisLength[i] = float( aL[i] );
+			}
+
+			typename LabelGeometryType::BoundingBoxType bbox = labelGeometryFilter->GetBoundingBox( label );
+			for (unsigned int i = 0; i < VImageDimension*2; ++i)
+			{
+				featureVals[label].BoundingBox[i] = float( bbox[i] );
+			}
+
+		}
 	}
-	
-	//Now extract the features:
-	for (int i = 0; i < (int)labels.size(); ++i)
+	else
 	{
-		TLPixel label = labels.at(i);
+		typedef itk::LabelGeometryImageFilter< LabelImageType, IntensityImageType > LabelGeometryType;
+		typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
+		LabelGeometryPointer labelGeometryFilter = LabelGeometryType::New();		//Dirk's Filter;
+
+		labelGeometryFilter->SetInput( labelImage );
+		labelGeometryFilter->SetIntensityInput( intensityImage );
 		
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME] = (float)labelGeometryFilter->GetVolume( label );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::INTEGRATED_INTENSITY] = (float)labelGeometryFilter->GetIntegratedIntensity( label );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::ECCENTRICITY] = float( labelGeometryFilter->GetEccentricity( label ) );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
-		featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
-		
-		typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
-		for (unsigned int i = 0; i < VImageDimension; ++i)
+		//SET ADVANCED (OPTIONAL) ITEMS FOR THIS FILTER:
+		labelGeometryFilter->CalculatePixelIndicesOff();
+		labelGeometryFilter->CalculateOrientedBoundingBoxOff();
+		labelGeometryFilter->CalculateOrientedLabelRegionsOff();
+		labelGeometryFilter->CalculateOrientedIntensityRegionsOff();
+
+		//UPDATE THE FILTER	
+		try
 		{
-			featureVals[label].Centroid[i] = float( c[i] );
+			labelGeometryFilter->Update();
+		}
+		catch (itk::ExceptionObject & e) 
+		{
+			std::cerr << "Exception in Dirk's Label Geometry Filter: " << e << std::endl;
+			return false;
 		}
 
-		c = labelGeometryFilter->GetWeightedCentroid( label );
-		for (unsigned int i = 0; i < VImageDimension; ++i)
+		//Now populate vector of labels & fill in the the map
+		labels.clear();
+		std::vector< typename LabelGeometryType::LabelPixelType > ls = labelGeometryFilter->GetLabels();
+		for (int i = 0; i < (int)ls.size(); ++i)
 		{
-			featureVals[label].WeightedCentroid[i] = float( c[i] );
+			TLPixel l = ls.at(i);
+			labels.push_back( (unsigned short)l );
+			LtoIMap[ l ] = 	i;
 		}
 
-		typename LabelGeometryType::AxesLengthType aL = labelGeometryFilter->GetAxesLength( label );
-		for (unsigned int i = 0; i < VImageDimension; ++i)
+		//Now extract the features:
+		for (int i = 0; i < (int)labels.size(); ++i)
 		{
-			featureVals[label].AxisLength[i] = float( aL[i] );
-		}
+			TLPixel label = labels.at(i);
+			
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::VOLUME] = (float)labelGeometryFilter->GetVolume( label );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::INTEGRATED_INTENSITY] = (float)labelGeometryFilter->GetIntegratedIntensity( label );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ECCENTRICITY] = float( labelGeometryFilter->GetEccentricity( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
+			
+			typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].Centroid[i] = float( c[i] );
+			}
 
-		typename LabelGeometryType::BoundingBoxType bbox = labelGeometryFilter->GetBoundingBox( label );
-		for (unsigned int i = 0; i < VImageDimension*2; ++i)
-		{
-			featureVals[label].BoundingBox[i] = float( bbox[i] );
+			c = labelGeometryFilter->GetWeightedCentroid( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].WeightedCentroid[i] = float( c[i] );
+			}
+
+			typename LabelGeometryType::AxesLengthType aL = labelGeometryFilter->GetAxesLength( label );
+			for (unsigned int i = 0; i < VImageDimension; ++i)
+			{
+				featureVals[label].AxisLength[i] = float( aL[i] );
+			}
+
+			typename LabelGeometryType::BoundingBoxType bbox = labelGeometryFilter->GetBoundingBox( label );
+			for (unsigned int i = 0; i < VImageDimension*2; ++i)
+			{
+				featureVals[label].BoundingBox[i] = float( bbox[i] );
+			}
+
 		}
 
 	}
-	
+
 	return true;
 }
 

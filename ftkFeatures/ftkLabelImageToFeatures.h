@@ -140,6 +140,8 @@ public:
 	typedef itk::Image< LabelPixelType, VImageDimension > LabelImageType;
 	typedef itk::ImageRegionIterator< IntensityImageType> intIteratorType;
 	typedef itk::ImageRegionIterator< LabelImageType> labIteratorType;
+	typedef itk::Image< TIPixel,2 > Intensity2DType;
+	typedef itk::Image< TLPixel,2 > Label2DType;
 	typedef typename IntensityImageType::Pointer IntensityImagePointer;
 	typedef typename LabelImageType::Pointer LabelImagePointer;
 
@@ -198,8 +200,8 @@ private:
 
 	std::vector< std::vector< typename LabelImageType::IndexType > > boundaryPix;	//boundary pixels for each label
 	std::vector< std::vector< typename LabelImageType::IndexType > > interiorPix;	//interior pixels for each label
-	std::vector< std::map<TLPixel, int> > sharePix;				//number of edges shared between boundary pairs
-																//the map will connect neighbors to number of edges shared.
+	std::vector< std::map<TLPixel, int> > sharePix;		//number of edges shared between boundary pairs
+								//the map will connect neighbors to number of edges shared.
 
 	typedef std::map<TLPixel, IntrinsicFeatures> FeatureMapType;
 	FeatureMapType featureVals;					//Holds all Features that have been calculated (including 0)
