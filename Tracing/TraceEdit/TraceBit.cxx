@@ -57,3 +57,20 @@ void TraceBit::Print(std::ostream &c)
   c<<"\t\tTraceBit:"<<std::endl;
   c<<"\t\tx:"<<x<<" y:"<<y<<" z:"<<z<<" r:"<<r<<" id:"<<id<<" marker:"<<marker;
 }
+
+vtkSmartPointer<vtkVariantArray> TraceBit::DataRow()
+{
+	if (this->modified)
+	{
+		CellData->Reset();
+
+		CellData->InsertNextValue(this->id);
+		CellData->InsertNextValue(this->x);
+		CellData->InsertNextValue(this->y);
+		CellData->InsertNextValue(this->z);
+		CellData->InsertNextValue(this->r);
+
+		this->modified = false;
+	}
+	return CellData;
+}

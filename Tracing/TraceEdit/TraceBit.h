@@ -16,6 +16,11 @@ limitations under the License.
 #ifndef __TRACEBIT_H
 #define __TRACEBIT_H
 
+#include "vtkSmartPointer.h"
+#include "vtkDoubleArray.h"
+#include "vtkAbstractArray.h"
+#include "vtkVariantArray.h"
+
 #include <iostream>
 /**
  * A TraceBit has the x,y,z and id of a point on a trace
@@ -34,6 +39,13 @@ class TraceBit
     unsigned int id;
     unsigned int marker;
     void Print(std::ostream &c);
+
+	vtkSmartPointer<vtkVariantArray> DataRow();
+
+	bool modified;
+
+private:
+	vtkSmartPointer<vtkVariantArray> CellData;
 };
 #endif
 
