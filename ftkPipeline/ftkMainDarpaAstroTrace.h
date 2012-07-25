@@ -44,6 +44,7 @@ protected:
 	void computeSplitConst( typename TINPUT::Pointer ImageMontage );
 	template< typename TINPUT >
 	typename TINPUT::Pointer cropImages( typename TINPUT::Pointer , int , int , int );
+	std::map< unsigned int, itk::Index<3> > GetLabelToCentroidMap( vtkSmartPointer< vtkTable > table);
 	//void WriteCenterTrace(vtkSmartPointer< vtkTable > , int , int , int , std::string );
 
 	void RemoveLabelNearBorder(rawImageType_8bit::RegionType, std::vector< rawImageType_16bit::Pointer >&, std::vector< vtkSmartPointer< vtkTable > >&, std::vector< std::map< unsigned int, itk::Index<3> > >& );
