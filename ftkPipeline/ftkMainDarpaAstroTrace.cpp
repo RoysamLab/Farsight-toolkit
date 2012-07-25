@@ -395,11 +395,13 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				std::vector< vtkSmartPointer< vtkTable > > Table_Tiles;
 				Table_Tiles.resize(1);
 
-				std::vector< vtkSmartPointer< vtkTable > > feature_Vector_Tables;
+				std::vector< vtkSmartPointer< vtkTable > > feature_Vector_Tables, root_Vector_Tables;
 				feature_Vector_Tables.resize(1);
+				root_Vector_Tables.resize(1);
 				
-				std::vector< rawImageType_16bit::Pointer > ID_Images;
+				std::vector< rawImageType_16bit::Pointer > ID_Images, root_Images;
 				ID_Images.resize(1);
+				root_Images.resize(1);
 
 				std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_Tiles;
 				Centroids_Tiles.resize(1);
@@ -458,7 +460,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				AT->ComputeAstroFeaturesPipeline(featureVectorFileName, IDImageFileName, 0, regionLocal_inside, feature_Vector_Tables, ID_Images, true);
 				std::string rootVectorFileName = _outPathTemp+"/rootVector_"+xStr+"_"+yStr+"_"+zStr+".txt";
 				std::string rootsImageFileName = _outPathTemp+"/rootsImage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
-				AT->Classification_Roots(feature_Vector_Tables, ID_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);		
+				AT->Classification_Roots(root_Vector_Tables, root_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);		
 
 				//RemoveLabelNearBorder(regionLocal_inside, Label_Tiles, Table_Tiles, Centroids_Tiles );
 				
