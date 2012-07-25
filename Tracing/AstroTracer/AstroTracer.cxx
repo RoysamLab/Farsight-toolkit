@@ -3618,7 +3618,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 	
 	//Creating vtkTable for the feature vectors
 
-	vtkSmartPointer<vtkTable> features_table = vtkSmartPointer<vtkTable>::New();
+	features_table = vtkSmartPointer<vtkTable>::New();
 	features_table->Initialize();
 
 	for(int i = 0; i < col_names.size(); i++){
@@ -5289,7 +5289,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 	std::cout << "Computing nuclei features.. " << std::endl;
 
 	//Loop over nuclei
-	for(SIZE_T i = 0; i < this->NucleiObjects.size(); i++){
+	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 		// ROI proportional to nuclei scale, assuming spherical nuclei.
 		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
@@ -5346,7 +5346,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 		//std::cout << std::endl;
 
 		std::vector<double> distance_array;
-		for(SIZE_T j = 0; j < this->CandidateRootPoints.size(); j++){
+		for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
 
 			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
 			
@@ -5596,12 +5596,13 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 }
 
 
-void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >& tableToClassify, std::vector< LabelImageType3D::Pointer >& rootsImage, std::string TrainingFileName, std::string rootsTableName, std::string rootsImageName, const bool writeResult, bool normalize_from_model)
+void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >& roots_table_vec, std::vector< LabelImageType3D::Pointer >& root_images, std::string TrainingFileName, std::string rootsTableName, std::string rootsImageName, const bool writeResult, bool normalize_from_model)
 {
 	std::cout<<"Classification Started Using MCLR\n";
-	if(tableToClassify.size() == 0)
+	if(!features_table)
 		return;
 
+	vtkSmartPointer<vtkTable> roots_table = features_table;
 	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(TrainingFileName);
 
 	// to generate the Active Learning Matrix
@@ -5638,18 +5639,17 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 
 	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
 	test_table->Initialize();
-	test_table->SetNumberOfRows(tableToClassify[0]->GetNumberOfRows());
 	for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName(active_model_table->GetColumnName(col));
 		test_table->AddColumn(column);	
 	}
-	for(int row = 0; row < (int)tableToClassify[0]->GetNumberOfRows(); ++row)
+	for(int row = 0; row < (int)roots_table->GetNumberOfRows(); ++row)
 	{		
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 		for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
-			model_data1->InsertNextValue(tableToClassify[0]->GetValueByName(row,test_table->GetColumnName(c)));
+			model_data1->InsertNextValue(roots_table->GetValueByName(row,test_table->GetColumnName(c)));
 		test_table->InsertNextRow(model_data1);
 	}	
 
@@ -5669,65 +5669,66 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 	std::string confidence_col_name = "confidence_" + classification_name;
 
 	//// Add the Prediction Column 
-	std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, tableToClassify[0] );
+	std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, roots_table );
 	if(prediction_column_names.size() == 0)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName(prediction_col_name.c_str());
-		column->SetNumberOfValues( tableToClassify[0]->GetNumberOfRows() );
-		tableToClassify[0]->AddColumn(column);
+		column->SetNumberOfValues( roots_table->GetNumberOfRows() );
+		roots_table->AddColumn(column);
 	}
 
 	// Add the confidence column
-	std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, tableToClassify[0] );
+	std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, roots_table );
 	if(confidence_column_names.size() == 0)
 	{
 		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
 		column_confidence->SetName(confidence_col_name.c_str());
-		column_confidence->SetNumberOfValues( tableToClassify[0]->GetNumberOfRows() );
-		tableToClassify[0]->AddColumn(column_confidence);
+		column_confidence->SetNumberOfValues( roots_table->GetNumberOfRows() );
+		roots_table->AddColumn(column_confidence);
 	}
 
-	for(int row = 0; row<(int)tableToClassify[0]->GetNumberOfRows(); ++row)  
+	for(int row = 0; row<(int)roots_table->GetNumberOfRows(); ++row)  
 	{
 		vnl_vector<double> curr_col = currprob.get_column(row);
-		tableToClassify[0]->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+		roots_table->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
 		if(curr_col(curr_col.arg_max()) > confidence_thresh) 
 		{
-			tableToClassify[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
+			roots_table->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
 		}
 		else
 		{
-			tableToClassify[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
+			roots_table->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
 		}
 	}
+	roots_table_vec.push_back(roots_table);
 
-
-	LabelImageType3D::PixelType * rootsImageArray = rootsImage[0]->GetBufferPointer();
-	itk::Size<3> im_size = rootsImage[0]->GetBufferedRegion().GetSize();
+	roots_Image = IDImage;
+	LabelImageType3D::PixelType * rootsImageArray = roots_Image->GetBufferPointer();
+	itk::Size<3> im_size = roots_Image->GetBufferedRegion().GetSize();
 	int slice_size = im_size[1] * im_size[0];
 	int row_size = im_size[0];
 
-	for(int row=0; row<(int)tableToClassify[0]->GetNumberOfRows(); ++row)
+	for(int row=0; row<(int)roots_table->GetNumberOfRows(); ++row)
 	{
-		if(tableToClassify[0]->GetValueByName(row, prediction_col_name.c_str()).ToInt() != 1)
+		if(roots_table->GetValueByName(row, prediction_col_name.c_str()).ToInt() != 1)
 		{
-			int x_pos = tableToClassify[0]->GetValue(row,1).ToUnsignedInt();
-			int y_pos = tableToClassify[0]->GetValue(row,2).ToUnsignedInt();
-			int z_pos = tableToClassify[0]->GetValue(row,3).ToUnsignedInt();
+			int x_pos = roots_table->GetValue(row,1).ToUnsignedInt();
+			int y_pos = roots_table->GetValue(row,2).ToUnsignedInt();
+			int z_pos = roots_table->GetValue(row,3).ToUnsignedInt();
 			unsigned long offset = (z_pos*slice_size)+(y_pos*row_size)+x_pos;
 			rootsImageArray[offset] = 0;
-			tableToClassify[0]->RemoveRow(row);
+			roots_table->RemoveRow(row);
 			--row;
 		}
 	}
 
 	if(writeResult)
 	{
-		ftk::SaveTable(rootsTableName, tableToClassify[0]);
+		ftk::SaveTable(rootsTableName, roots_table);
 		itk::ImageFileWriter< LabelImageType3D >::Pointer rootsImageWriter = itk::ImageFileWriter< LabelImageType3D >::New();
 		rootsImageWriter->SetFileName(rootsImageName.c_str());
-		rootsImageWriter->SetInput(rootsImage[0]);
+		rootsImageWriter->SetInput(roots_Image);
 		try
 		{
 			rootsImageWriter->Update();

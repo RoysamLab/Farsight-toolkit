@@ -354,6 +354,10 @@ private:
 	std::vector<IndexType> StartPoints;
 	unsigned int padz;
 
+	vtkSmartPointer<vtkTable> features_table;
+	vtkSmartPointer<vtkTable> roots_table;
+	LabelImageType3D::Pointer roots_Image;
+
 	int nScales;
 	int startScale, endScale; // Perform LoG at these scales only
 	bool isCoverageOptimized;
