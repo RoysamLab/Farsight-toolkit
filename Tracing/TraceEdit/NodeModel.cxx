@@ -9,7 +9,7 @@ NodeModel::NodeModel()
 	this->additionalHeaders.clear();
 }
 
-NodeModel::NodeModel(std::map<int, TraceBit*> trace_bits)
+NodeModel::NodeModel(std::vector<TraceBit> trace_bits)
 {
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
@@ -22,7 +22,7 @@ NodeModel::~NodeModel()
 	this->Selection = NULL;
 }
 
-void NodeModel::SetNodes(std::map< int ,TraceBit*> trace_bits)
+void NodeModel::SetNodes(std::vector<TraceBit> trace_bits)
 {
 	this->TraceBits.clear();
 	this->TraceBits = trace_bits;
@@ -72,20 +72,12 @@ void NodeModel::SyncModel()
 	this->DataTable->Initialize();
 	this->Selection->clear();
 	this->SetupHeaders();
-	this->NodeIDLookupMAP.clear();
-	//int index = 0;
 	for (NodeIDLookupIter = this->TraceBits.begin();  NodeIDLookupIter != this->TraceBits.end(); NodeIDLookupIter ++)
 	{
 		if (size == 0)
 		{
-			this->DataTable->InsertNextRow((*NodeIDLookupIter).second->DataRow());
+			this->DataTable->InsertNextRow((*NodeIDLookupIter).DataRow());
 		}
-		//else
-		//{
-		//	this->DataTable->InsertNextRow((*NodeIDLookupIter).second->GetExtendedDataRow(this->additionalHeaders));
-		//}
-		//this->NodeIDLookupMAP[this->TraceBits[index]->id] = this->TraceBits[index]
-		//index++;
 	}
 }
 
@@ -126,48 +118,48 @@ std::vector<long int> NodeModel::GetSelectedIDs()
 	return SelectedIDs;
 }
 
-std::vector<TraceBit*> NodeModel::GetSelectedNodes()
-{
-	std::vector<TraceBit*> selectedNodes;
-	std::set<long> selected = this->Selection->getSelections();
-	std::set<long>::iterator it;
-	for (it = selected.begin(); it != selected.end(); ++it)
-	{
-		this->NodeIDLookupIter = this->TraceBits.find((int) *it);
-		if (this->NodeIDLookupIter != this->TraceBits.end())
-		{
-			selectedNodes.push_back((*this->NodeIDLookupIter).second);
-		}
-	}//end for selected
-	
-	//std::vector<long int> IDList = this->GetSelectedIDs();
-
-	////Search for nodes
-	//for ( unsigned int i = 0; i< IDList.size(); i++)
-	//{
-	//	this->NodeIDLookupIter = this->NodeIDLookupMAP.find(IDList[i]);
-	//	if (this->NodeIDLookupIter != this->NodeIDLookupMAP.end())
-	//	{
-	//		selectedNodes.push_back((*this->NodeIDLookupIter).second);
-	//	}
-	//}//finished with id search
-	return selectedNodes;
-}
+//std::vector<TraceBit> NodeModel::GetSelectedNodes()
+//{
+//	std::vector<TraceBit> selectedNodes;
+//	std::set<long> selected = this->Selection->getSelections();
+//	std::set<long>::iterator it;
+//	for (it = selected.begin(); it != selected.end(); ++it)
+//	{
+//		this->NodeIDLookupIter = this->TraceBits.find((int) *it);
+//		if (this->NodeIDLookupIter != this->TraceBits.end())
+//		{
+//			selectedNodes.push_back((*this->NodeIDLookupIter));
+//		}
+//	}//end for selected
+//	
+//	//std::vector<long int> IDList = this->GetSelectedIDs();
+//
+//	////Search for nodes
+//	//for ( unsigned int i = 0; i< IDList.size(); i++)
+//	//{
+//	//	this->NodeIDLookupIter = this->NodeIDLookupMAP.find(IDList[i]);
+//	//	if (this->NodeIDLookupIter != this->NodeIDLookupMAP.end())
+//	//	{
+//	//		selectedNodes.push_back((*this->NodeIDLookupIter).second);
+//	//	}
+//	//}//finished with id search
+//	return selectedNodes;
+//}
 
 unsigned int NodeModel::getNodeCount()
 {
 	return (unsigned int) this->TraceBits.size();
 }
 
-std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiterator()
-{
-	return this->TraceBits.begin();
-}
-
-std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiteratorEnd()
-{
-	return this->TraceBits.end();
-}
+//std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiterator()
+//{
+//	return this->TraceBits.begin();
+//}
+//
+//std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiteratorEnd()
+//{
+//	return this->TraceBits.end();
+//}
 
 ObjectSelection * NodeModel::GetObjectSelection()
 {

@@ -2103,7 +2103,7 @@ void View3D::CreateLayout()
 	QMenu *plot_sub_menu = this->analysisViews->addMenu(tr("Show Plots"));
 	plot_sub_menu->setObjectName(tr("plot_sub_menu"));
 	plot_sub_menu->addAction(this->ShowPlots);
-	plot_sub_menu->addAction(this->ShowNodePlots);
+	//plot_sub_menu->addAction(this->ShowNodePlots);	//need to kill thread
 
 	this->createRayCastSliders();
 
@@ -4128,7 +4128,7 @@ void View3D::Rerender()
 		this->AddPointsAsPoints(vec);
 		this->UpdateBranchActor();
 		this->Renderer->AddActor(this->BranchActor);
-		//this->Node_Model->SetNodes(vec); //make a map
+		this->Node_Model->SetNodes(vec);
 	}
 	else
 	{

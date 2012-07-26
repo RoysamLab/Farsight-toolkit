@@ -17,6 +17,7 @@ limitations under the License.
 
 TraceBit::TraceBit()
 {
+	CellData = vtkSmartPointer<vtkVariantArray>::New();
 }
 TraceBit::TraceBit(const TraceBit& T)
 {
@@ -30,6 +31,8 @@ TraceBit::TraceBit(const TraceBit& T)
 	this->dx = T.dx;
 	this->dy = T.dy;
 	this->dz = T.dz;
+
+	CellData = vtkSmartPointer<vtkVariantArray>::New();
 }
 
 TraceBit::~TraceBit()
@@ -60,8 +63,8 @@ void TraceBit::Print(std::ostream &c)
 
 vtkSmartPointer<vtkVariantArray> TraceBit::DataRow()
 {
-	if (this->modified)
-	{
+	//if (this->modified)
+	//{
 		CellData->Reset();
 
 		CellData->InsertNextValue(this->id);
@@ -70,7 +73,7 @@ vtkSmartPointer<vtkVariantArray> TraceBit::DataRow()
 		CellData->InsertNextValue(this->z);
 		CellData->InsertNextValue(this->r);
 
-		this->modified = false;
-	}
+	//	this->modified = false;
+	//}
 	return CellData;
 }
