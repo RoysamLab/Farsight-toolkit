@@ -122,6 +122,7 @@ limitations under the License.
 #include "TraceLine.h"
 #include "TraceObject.h"
 #include "TraceModel.h"
+#include "NodeModel.h"
 
 #include "VolumeOfInterest.h"
   
@@ -169,6 +170,7 @@ public:
 	void TraceBitImageIntensity(int ImgID);
 	void TraceBitImageIntensityWeighted(int ImgID);
 	void CloseTreePlots();
+	void CloseNodePlots();
 
 	bool readProject(QString projectFile);
 	//todo: make these private with accessors
@@ -198,6 +200,7 @@ public slots:
 	void CalculateDelaunay3D();
 	void ShowDelaunay3D();
 	void ShowEllipsoid();
+	void ShowNodeData();
 	void ShowTreeData();
 	void ShowCellAnalysis();
 	void ShowSettingsWindow();
@@ -308,6 +311,7 @@ protected slots:
 	void updateSelectionFromCell();
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
+	void updateNodeSelection();
 	void CropBorderCells();
 	void SaveComputedCellFeaturesTable();
 
@@ -452,6 +456,7 @@ private:
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
 	QAction *ShowPlots;
+	QAction *ShowNodePlots;
 	QAction *CellAnalysis;
 	QAction *StartActiveLearningAction;
 	QAction *showStatisticsAction;
@@ -469,9 +474,12 @@ private:
 	QString myText;	QString dtext;	QString grayText;
 
 	Qt::SortOrder Ascending;
+	NodeModel *Node_Model;
 	TraceModel *TreeModel;
 	MergeModel *MergeGaps;
 	CellTraceModel *CellModel;
+	TableWindow * NodeTable;
+	PlotWindow *NodePlot;
 	TableWindow * FTKTable;
 	PlotWindow *TreePlot;
 	PlotWindow *GapsPlotView;

@@ -1,6 +1,8 @@
 #ifndef NODEMODEL_H
 #define NODEMODEL_H
 
+#include <vector>
+#include <string>
 //QT INCLUDES
 #include <QtCore>
 #include <QtGui>
@@ -20,6 +22,8 @@
 // 
 #include <map>
 
+class QStandardItemModel;
+class QItemSelectionModel;
 class TraceBit;
 
 class NodeModel : public QObject
@@ -46,8 +50,7 @@ public:
 	unsigned int getNodeCount();
 	//void SelectByIDs(std::vector<int> IDs); //already used elsewhere
 	std::vector<long int> GetSelectedIDs();
-	std::vector<int> GetSelectedNodeIDs();
-	//std::vector<TraceBit*> GetSelectedNodes();
+	std::vector<TraceBit*> GetSelectedNodes();
 	std::map< int ,TraceBit*>::iterator GetNodeiterator();
 	std::map< int ,TraceBit*>::iterator GetNodeiteratorEnd();
 
@@ -57,7 +60,6 @@ signals:
 	void selectionChanged(void);
 
 private:
-	void nodeHeaders();
 	void SetupHeaders();
 	void SyncModel();
 
@@ -69,7 +71,7 @@ private:
 
 	ObjectSelection * Selection;
 
-	//std::map<long int ,TraceBit*> NodeIDLookupMAP;
+	std::map<long int ,TraceBit*> NodeIDLookupMAP;
 	std::map< int ,TraceBit*>::iterator NodeIDLookupIter;
 };
 #endif

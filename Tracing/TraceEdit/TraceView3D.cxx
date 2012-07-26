@@ -50,6 +50,7 @@ View3D::View3D(QWidget *parent)
 	this->FL_histo = NULL;
 	this->FL_MeasureTable = NULL;
 	this->GapsTableView = NULL;
+	this->Node_Model = NULL;
 	this->TreeModel = NULL;
 	this->CellModel = NULL;
 	this->savescreenshotDialog = NULL;
@@ -1135,6 +1136,11 @@ void View3D::setupLinkedSpace()
 		this, SLOT(selectedFeaturesClustering()));
 	////////////////////////////////////////////////////////////////////////
 	this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), this, SLOT(updateStatistics()));
+
+	this->Node_Model = new NodeModel();
+	this->Node_Model->setParent(this);
+	this->connect(this->Node_Model->GetObjectSelection(), SIGNAL(changed()), 
+		this, SLOT(updateNodeSelection()));
 }
 
 /*!Set up the components of the interface */
@@ -1606,10 +1612,16 @@ void View3D::CreateGUIObjects()
 	this->aboutAction->setStatusTip("About Trace Edit");
 	connect(this->aboutAction, SIGNAL(triggered()), this, SLOT(About()));
 
-	this->ShowPlots = new QAction("Show Plots", this);
+	this->ShowPlots = new QAction("Show Segment Plots", this);
 	this->ShowPlots->setObjectName(tr("ShowPlots"));
 	this->ShowPlots->isCheckable();
-	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));	  
+	connect (this->ShowPlots, SIGNAL(triggered()), this, SLOT(ShowTreeData()));
+
+	this->ShowNodePlots = new QAction("Show Node Plots", this);
+	this->ShowNodePlots->setObjectName(tr("ShowNodePlots"));
+	this->ShowNodePlots->isCheckable();
+	connect (this->ShowNodePlots, SIGNAL(triggered()), this, SLOT(ShowNodeData()));
+
 	//Automation widget setup
 	this->AutomationWidget = new QWidget(this);
 
@@ -2073,7 +2085,6 @@ void View3D::CreateLayout()
 
 	//Analysis
 	this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
-	this->analysisViews->addAction(this->ShowPlots);
 	this->analysisViews->addAction(this->showStatisticsAction);
 	// this->analysisViews->addAction(this->updateStatisticsAction);
 	this->analysisViews->addAction(this->CellAnalysis);
@@ -2088,6 +2099,11 @@ void View3D::CreateLayout()
 	QMenu *calculations_sub_menu = this->analysisViews->addMenu(tr("Calculate"));
 	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
 	calculations_sub_menu->addAction(this->ConvexHullAction);
+
+	QMenu *plot_sub_menu = this->analysisViews->addMenu(tr("Show Plots"));
+	plot_sub_menu->setObjectName(tr("plot_sub_menu"));
+	plot_sub_menu->addAction(this->ShowPlots);
+	plot_sub_menu->addAction(this->ShowNodePlots);
 
 	this->createRayCastSliders();
 
@@ -4112,6 +4128,7 @@ void View3D::Rerender()
 		this->AddPointsAsPoints(vec);
 		this->UpdateBranchActor();
 		this->Renderer->AddActor(this->BranchActor);
+		//this->Node_Model->SetNodes(vec); //make a map
 	}
 	else
 	{
@@ -4478,6 +4495,52 @@ void View3D::ShowTreeData()   /// modified to table with null
 	this->TreePlot->move(this->TraceEditSettings.value("TracePlot/pos",QPoint(890, 59)).toPoint());
 	this->TreePlot->show();
 }
+void View3D::CloseTreePlots()
+{
+	if (this->FTKTable)
+	{
+		this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
+		this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
+		this->FTKTable->close();
+	}
+	if (this->TreePlot)
+	{
+		this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
+		this->TreePlot->close();
+	}
+}
+
+void View3D::ShowNodeData()
+{
+	this->CloseNodePlots();
+
+	this->NodeTable = new TableWindow();
+	this->NodeTable->setModels( this->Node_Model->getDataTable(), this->Node_Model->GetObjectSelection());
+	this->NodeTable->setWindowTitle("Node Object Features Table");
+	this->NodeTable->move(this->TraceEditSettings.value("NodeTable/pos",QPoint(32, 561)).toPoint());
+	this->NodeTable->resize(this->TraceEditSettings.value("NodeTable/size",QSize(600, 480)).toSize());
+	this->NodeTable->show();
+
+	this->NodePlot = new PlotWindow();
+	this->NodePlot->setModels(this->Node_Model->getDataTable(), this->Node_Model->GetObjectSelection());
+	this->NodePlot->setWindowTitle("Node Object Features Plot");
+	this->NodePlot->move(this->TraceEditSettings.value("NodePlot/pos",QPoint(890, 59)).toPoint());
+	this->NodePlot->show();
+}
+void View3D::CloseNodePlots()
+{
+	if (this->NodeTable)
+	{
+		this->TraceEditSettings.setValue("NodeTable/pos", this->FTKTable->pos());
+		this->TraceEditSettings.setValue("NodeTable/size", this->FTKTable->size());
+		this->NodeTable->close();
+	}
+	if (this->NodePlot)
+	{
+		this->TraceEditSettings.setValue("NodePlot/pos", this->TreePlot->pos());
+		this->NodePlot->close();
+	}
+}
 
 void View3D::showStatistics(void)
 {
@@ -4511,20 +4574,6 @@ void View3D::updateStatistics(void)
 
 }
 
-void View3D::CloseTreePlots()
-{
-	if (this->FTKTable)
-	{
-		this->TraceEditSettings.setValue("TraceTable/pos", this->FTKTable->pos());
-		this->TraceEditSettings.setValue("TraceTable/size", this->FTKTable->size());
-		this->FTKTable->close();
-	}
-	if (this->TreePlot)
-	{
-		this->TraceEditSettings.setValue("TracePlot/pos", this->TreePlot->pos());
-		this->TreePlot->close();
-	}
-}
 void View3D::ClearSelection()
 {
 	QMessageBox::StandardButton clearMessageBox;
@@ -4571,6 +4620,10 @@ void View3D::FastClearSelection()
 	if (this->TreePlot || this->FTKTable)
 	{
 		this->TreeModel->GetObjectSelection()->clear();
+	}
+	if (this->NodePlot || this->NodeTable)
+	{
+		this->Node_Model->GetObjectSelection()->clear();
 	}
 }
 
@@ -4639,6 +4692,9 @@ void View3D::updateSelectionFromCell()
 	this->QVTK->GetRenderWindow()->Render();/*
 	this->statusBar()->showMessage(tr("Selected\t")
 		+ QString::number(limit) +tr("\tCells"));*/
+}
+void View3D::updateNodeSelection()
+{
 }
 void View3D::CalculateDelaunay3D()
 {
@@ -5997,6 +6053,7 @@ void View3D::closeEvent(QCloseEvent *event)
     this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
   }
 	this->CloseTreePlots();
+	this->CloseNodePlots();
 	this->HideCellAnalysis();
 	this->TraceEditSettings.sync();
 	if(this->TreeModel)
