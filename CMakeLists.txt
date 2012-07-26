@@ -39,7 +39,7 @@ option( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 option( BUILD_CLUSCLUS "Build CLUSCLUS" ON)
 option( BUILD_SPD "Build SPD" ON)
 option( BUILD_MicrogliaMoviePipeline "Build MicrogliaMoviePipeline" OFF)
-
+option( BUILD_EMBREX "Build KPLS from source" OFF)
 
 option( BUILD_IMONTAGE "Build iMontage" OFF)
 option( BUILD_FTKVOTING "Build Radial Voting" OFF)
@@ -59,7 +59,7 @@ endif()
 mark_as_advanced(WRAP_PYTHON)
 mark_as_advanced(BUILD_ZERNIKE)
 mark_as_advanced(BUILD_CURVELETS)
-
+mark_as_advanced(BUILD_EMBREX)
 include_directories( ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR} )
 
 
@@ -301,45 +301,49 @@ endif(BUILD_CUDA)
 
 if(USE_KPLS)
   add_definitions(-DUSE_KPLS)
-  if(WIN32)
-    if(CMAKE_CL_64)
-      set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64")
-    else()
-      set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32")
-    endif()
-    if(MSVC90)
-      find_library(LIB_KPLS_RELEASE NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Release/VS9)
-      find_library(LIB_KPLS_DEBUG NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Debug/VS9)
-    elseif(MSVC10)
-      find_library(LIB_KPLS_RELEASE NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Release/VS10)
-      find_library(LIB_KPLS_DEBUG NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Debug/VS10)
-    else()
-      message("Unsupported compiler for USE_KPLS ON.")
-    endif()
-    set(LIB_KPLS
-      debug ${LIB_KPLS_DEBUG}
-      optimized ${LIB_KPLS_RELEASE}
-      )
-  else()
-    if(APPLE)
-      set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx")
-    endif()
-    if(UNIX)
-      set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix")
-    endif()
-    find_library(LIB_KPLS NAMES libKPLS HINTS "${KPLS_LIB_DIR}")
-  endif(WIN32)
-  if(MSVC10)
-    configure_file(
-      ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_vs10.h
-      ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
-      COPYONLY)
-  else()
-    configure_file(
-      ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_default.h
-      ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
-      COPYONLY)
-  endif()
+  if(NOT BUILD_EMBREX)
+    if(WIN32)
+      if(CMAKE_CL_64)
+        set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win64")
+      else(CMAKE_CL_64)
+        set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/win32")
+      endif(CMAKE_CL_64)
+      if(MSVC90)
+        find_library(LIB_KPLS_RELEASE NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Release/VS9)
+        find_library(LIB_KPLS_DEBUG NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Debug/VS9)
+      elseif(MSVC10)
+        find_library(LIB_KPLS_RELEASE NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Release/VS10)
+        find_library(LIB_KPLS_DEBUG NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Debug/VS10)
+      else(MSVC90)
+        message("Unsupported compiler for USE_KPLS ON.")
+      endif(MSVC90)
+      set(LIB_KPLS
+        debug ${LIB_KPLS_DEBUG}
+        optimized ${LIB_KPLS_RELEASE}
+        )
+    else(WIN32)
+      if(APPLE)
+        set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx")
+      endif()
+      if(UNIX)
+        set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix")
+      endif()
+      find_library(LIB_KPLS NAMES libKPLS HINTS "${KPLS_LIB_DIR}")
+    endif(WIN32)
+    if(MSVC10)
+      configure_file(
+        ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_vs10.h
+        ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
+        COPYONLY)
+    else(MSVC10)
+      configure_file(
+        ${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/kpls_default.h
+        ${PROJECT_BINARY_DIR}/PatternAnalysis/embrex/kpls.h
+        COPYONLY)
+    endif(MSVC10)
+  else(NOT BUILD_EMBREX)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/PatternAnalysis/embrex)
+  endif(NOT BUILD_EMBREX)
 endif(USE_KPLS)
 
 if(BUILD_ZERNIKE)
