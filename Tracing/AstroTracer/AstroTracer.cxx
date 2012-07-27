@@ -12,10 +12,6 @@ AstroTracer::AstroTracer()
 	this->isCoverageOptimized = false;
 }
 
-AstroTracer::~AstroTracer()
-{
-}
-
 
 void AstroTracer::LoadParameters(const char* parametersFileName)
 {
@@ -3969,7 +3965,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 
 
 			vtkSmartPointer<vtkVariantArray> table_row = vtkSmartPointer<vtkVariantArray>::New();
-			table_row->InsertNextValue(vtkVariant(i));
+			table_row->InsertNextValue(vtkVariant(i+1));
 			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[0]));
 			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[1]));
 			table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.node.ndx[2] -  padz));
@@ -5637,7 +5633,7 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 	double confidence_thresh = 0.5;
 
 	MCLR* mclr = new MCLR();
-	// Number of features and classes needed in "add_bias" fuction of MCLR
+	//Number of features and classes needed in "add_bias" fuction of MCLR
 	mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
 	mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
 
@@ -5647,10 +5643,11 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName(active_model_table->GetColumnName(col));
+		column->SetNumberOfValues(roots_table->GetNumberOfRows());
 		test_table->AddColumn(column);	
 	}
 	for(int row = 0; row < (int)roots_table->GetNumberOfRows(); ++row)
-	{		
+	{	
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 		for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
 			model_data1->InsertNextValue(roots_table->GetValueByName(row,test_table->GetColumnName(c)));
@@ -5728,6 +5725,8 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 			--row;
 		}
 	}
+
+	root_images[0] = roots_Image;
 
 	if(writeResult)
 	{

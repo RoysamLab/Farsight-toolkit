@@ -257,7 +257,7 @@ public:
 	//Constructor
 	AstroTracer();
 	//Destructor
-	~AstroTracer();
+	//~AstroTracer();
 
 	void LoadParameters(const char* parametersFileName);
 
