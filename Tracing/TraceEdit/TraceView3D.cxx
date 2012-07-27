@@ -217,6 +217,10 @@ View3D::~View3D()
 	{
 		delete this->TreePlot;
 	}
+	if(this->NodePlot)
+	{
+		delete this->NodePlot;
+	}
 	if(this->FL_MeasurePlot)
 	{
 		delete this->FL_MeasurePlot;
@@ -1888,25 +1892,17 @@ void View3D::CreateLayout()
 	QVBoxLayout * SettingsBox = new QVBoxLayout(this->SettingsWidget);
 	SettingsBox->setObjectName("SettingsBox");
 
-	selectionSettings = new QGroupBox("Selection Settings");
-	selectionSettings->setObjectName("selectionSettings");
-	QFormLayout *settingsLayout = new QFormLayout(selectionSettings);
+	QFormLayout *settingsLayout = new QFormLayout;
 	settingsLayout->setObjectName("settingsLayout");
 	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
 	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
+	QWidget * selectionTab = new QWidget;
+	selectionTab->setLayout(settingsLayout);
 	//settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
 	//selectionSettings->setLayout(settingsLayout);
 	//SettingsToolBox->addItem(settingsLayout, "Selection Settings");
-	selectionSettings->setCheckable(true);
-	connect(selectionSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
-	SettingsBox->addWidget(selectionSettings);
 
-	displaySettings = new QGroupBox("Display Settings");
-	displaySettings->setObjectName("displaySettings");
-	displaySettings->setCheckable(true);
-	connect(displaySettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
-	//displaySettings->setMinimumHeight(25);
-	QFormLayout *DisplayLayout = new QFormLayout(displaySettings);
+	QFormLayout *DisplayLayout = new QFormLayout;
 	DisplayLayout->setObjectName("DisplayLayout");
 	DisplayLayout->addRow(tr("Highlight by:"),this->HighlightCombo);
 	DisplayLayout->addRow(tr("Line Color RGB 0 to 1:"),this->ColorValueField);
@@ -1918,40 +1914,33 @@ void View3D::CreateLayout()
 	DisplayLayout->addRow(this->markTraceBits);
 	DisplayLayout->addRow(this->convexHull);
 	DisplayLayout->addRow(this->ellipsoid);
+	QWidget * displayTab = new QWidget;
+	displayTab->setLayout(DisplayLayout);
 	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
-	SettingsBox->addWidget(displaySettings);
+	//SettingsBox->addWidget(displaySettings);
 
-	rotationSettings = new QGroupBox(tr("Rotation"));
-	rotationSettings->setObjectName("rotationSettings");
-	rotationSettings->setCheckable(true);
-	connect(rotationSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
 	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
 	RotateLayout->setObjectName("RotateLayout");
 	RotateLayout->addRow(tr("Roll: "),this->RollBox);
 	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
 	RotateLayout->addRow(tr("Azimuth: "),this->AzimuthBox);
 	RotateLayout->addWidget(this->updateRotationButton);
+	QWidget * rotationTab = new QWidget;
+	rotationTab->setLayout(RotateLayout);
 	//SettingsToolBox->addItem(RotateLayout, tr("Rotation"));
-	SettingsBox->addWidget(rotationSettings);
+	//SettingsBox->addWidget(rotationSettings);
 
-	BackgroundSettings = new QGroupBox("Background RGB Color");
-	BackgroundSettings->setObjectName("BackgroundSettings");
-	BackgroundSettings->setCheckable(true);
-	connect(BackgroundSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
-	QFormLayout *BackgroundLayout = new QFormLayout(BackgroundSettings);
+	QFormLayout *BackgroundLayout = new QFormLayout;
 	BackgroundLayout->setObjectName("BackgroundLayout");
 	BackgroundLayout->addRow(tr("Value Red: "), this->BackgroundRBox);
 	BackgroundLayout->addRow(tr("Value Blue: "),this->BackgroundGBox);
 	BackgroundLayout->addRow(tr("Value Green: "),this->BackgroundBBox);
+	QWidget * backgroundTab = new QWidget;
+	backgroundTab->setLayout(BackgroundLayout);
 	//SettingsToolBox->addItem(BackgroundLayout, "Background RGB Color");
-	SettingsBox->addWidget(BackgroundSettings);
+	//SettingsBox->addWidget(BackgroundSettings);
 
-	GridlineSettings = new QGroupBox(tr("Grid"));
-	GridlineSettings->setObjectName("GridlineSettings");
-	GridlineSettings->setHidden(true);
-	GridlineSettings->setCheckable(true);
-	connect(GridlineSettings,SIGNAL(toggled(bool)),this, SLOT(adjustEditorSettingsSize(bool)));
-	QFormLayout *GridlineLayout = new QFormLayout(GridlineSettings);
+	QFormLayout *GridlineLayout = new QFormLayout;
 	GridlineLayout->setObjectName("GridlineLayout");
 	GridlineLayout->addRow(tr("Height Spacing: "),this->HeightSpaceBox);
 	GridlineLayout->addRow(tr("Width Spacing: "),this->WidthSpaceBox);
@@ -1961,13 +1950,24 @@ void View3D::CreateLayout()
 	GridlineLayout->addRow(tr("G: "),this->GridGSlider);
 	GridlineLayout->addRow(tr("B: "),this->GridBSlider);
 	GridlineLayout->addRow(tr("Opacity: "),this->GridOpacitySlider);
-	SettingsBox->addWidget(GridlineSettings);
+	this->gridLineTab = new QWidget;
+	gridLineTab->setLayout(GridlineLayout);
+
+	//create tab widgets for more compactness
+	this->tabWidget = new QTabWidget(this);
+	this->tabWidget->setTabPosition(QTabWidget::West);
+	this->tabWidget->addTab(selectionTab,tr("Selection"));
+	this->tabWidget->addTab(displayTab,tr("Display"));
+	this->tabWidget->addTab(rotationTab,tr("Rotation"));
+	this->tabWidget->addTab(backgroundTab,tr("Background Color"));
+
+	SettingsBox->addWidget(tabWidget);
 
 	//SettingsToolBox->addItem(this->ApplySettingsButton);
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	this->SettingsWidget->setMaximumSize(256,800);
+	//this->SettingsWidget->setMaximumSize(256,800);
 	//SettingsToolBox->addItem(this->SettingsWidget, "Editor Settings");
 
 	this->settingsDock = new QDockWidget("Editor Settings", this);
@@ -2238,25 +2238,25 @@ void View3D::adjustEditorSettingsSize(bool changesize) // Replace with QToolBar
 	else
 		selectionSettings->setMaximumHeight(15);
 
-	if (rotationSettings->isChecked())
-		rotationSettings->setMaximumHeight(150);
-	else
-		rotationSettings->setMaximumHeight(15);
-
 	if (displaySettings->isChecked())
 		displaySettings->setMaximumHeight(225);
 	else
 		displaySettings->setMaximumHeight(15);
 
-	if (BackgroundSettings->isChecked())
-		BackgroundSettings->setMaximumHeight(100);
-	else
-		BackgroundSettings->setMaximumHeight(15);
+	//if (rotationSettings->isChecked())
+	//	rotationSettings->setMaximumHeight(150);
+	//else
+	//	rotationSettings->setMaximumHeight(15);
 
-	if (GridlineSettings->isChecked())
-		GridlineSettings->setMaximumHeight(200);
-	else
-		GridlineSettings->setMaximumHeight(15);
+	//if (BackgroundSettings->isChecked())
+	//	BackgroundSettings->setMaximumHeight(100);
+	//else
+	//	BackgroundSettings->setMaximumHeight(15);
+
+	//if (GridlineSettings->isChecked())
+	//	GridlineSettings->setMaximumHeight(200);
+	//else
+	//	GridlineSettings->setMaximumHeight(15);
 }
 void View3D::ShowAutomatedEdits()
 {
@@ -3068,8 +3068,9 @@ void View3D::ToggleGridlines() //2D gridlines
 			Renderer->AddActor(Gridlines->GetDepthGridlines(i));
 		}
 		gridShown = true;
-		GridAction->setChecked(gridShown);
-		GridlineSettings->setHidden(false);
+		gridTabIndex = tabWidget->addTab(gridLineTab,tr("Grid"));
+		//GridAction->setChecked(gridShown);
+		//GridlineSettings->setHidden(false);
 		//GridlineSettings->setEnabled(true);
 	}// turn on grid
 	else
@@ -3090,8 +3091,9 @@ void View3D::ToggleGridlines() //2D gridlines
 			Renderer->RemoveActor(Gridlines->GetDepthGridlines(i));
 		}
 		gridShown = false;
-		GridAction->setChecked(gridShown);
-		GridlineSettings->setHidden(true);
+		tabWidget->removeTab(gridTabIndex);
+		//GridAction->setChecked(gridShown);
+		//GridlineSettings->setHidden(true);
 		//GridlineSettings->setEnabled(false);
 	}// turn off grid
 	this->QVTK->GetRenderWindow()->Render();

@@ -516,6 +516,9 @@ private:
 	QDialogButtonBox *ApplySettingsButton;
 	QComboBox *typeCombo, *HighlightCombo, *StyleCombo, *ProjectionCombo, *RotateImageUpCombo;
 	QPushButton *updateRotationButton;
+	QTabWidget * tabWidget;
+	QWidget * gridLineTab;
+	int gridTabIndex;
 		
 	QTableWidget * projectFilesTable;
 	bool projectFilesTableCreated;
