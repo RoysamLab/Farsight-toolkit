@@ -62,8 +62,9 @@
 #include <time.h>
 
 #define MAXVAL 100000.0f
-
-#include "omp.h"
+#ifdef _OPENMP
+    #include "omp.h"
+#endif
 
 typedef float PixelType;
 

@@ -4,7 +4,9 @@
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
 #include "itkImageFileReader.h"
 #include "itkMultiThreader.h"
-#include "omp.h"
+#ifdef _OPENMP
+    #include "omp.h"
+#endif
 #include "ftkTimeStampOverflowSafeUpdate.h"
 
 int main(int argc, char* argv[])
