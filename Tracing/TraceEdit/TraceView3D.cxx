@@ -36,7 +36,7 @@ v7: new GUI and file control
 #include <boost/math/special_functions/fpclassify.hpp> // isnan
 
 #ifdef _OPENMP
-#include "omp.h"
+    #include "omp.h"
 #endif
 
 View3D::View3D(QWidget *parent)
