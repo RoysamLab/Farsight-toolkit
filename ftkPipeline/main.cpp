@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
 			objftkMainDarpaAstroTrace_1->runSplitting();
 			objftkMainDarpaAstroTrace_1->runInterestPoints();
 			objftkMainDarpaAstroTrace_1->runStitchRoots();
+			objftkMainDarpaAstroTrace_1->computeRootFeaturesForNuclei();
 			delete objftkMainDarpaAstroTrace_1;
 			break;
 		}
