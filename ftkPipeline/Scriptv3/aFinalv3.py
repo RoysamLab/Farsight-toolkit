@@ -622,6 +622,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
 		
 		FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+		FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
 		FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
 		FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
 
@@ -751,6 +752,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			TEMP_FILE.write('-GFP_Image '+FILE_GFP_BS_CV+'\n')
 		if haveDAP == 1:
 			TEMP_FILE.write('-DAP_Image '+FILE_DAP_BS_RE_bit+'\n')
+		TEMP_FILE.write('-Nuclei_Table '+FILE_LABEL_TABLE+'\n')
 		TEMP_FILE.write('-Dist_Map_Image '+FILE_LABEL_DIST_MAP+'\n')
 		TEMP_FILE.write('-Soma_Centroids '+LOCAL_DATASET_PATH_DATA+'/soma_table_centroids.txt'+'\n')
 		TEMP_FILE.write('-Soma_Montage '+LOCAL_DATASET_PATH_DATA+'/soma'+'\n')
