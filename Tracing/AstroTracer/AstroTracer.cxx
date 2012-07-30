@@ -4159,20 +4159,23 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 	std::cout << "Root points file read. " << this->CandidateRootPoints.size() << std::endl;
 }
 
-void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTable> > roots_feature_table){
-
-	bool prediction_found = false;
-	for(int i = roots_feature_table[0]->GetNumberOfColumns(); i > 0; i--){
-		std::string current_column = roots_feature_table[0]->GetColumnName(i);
-		if(current_column.find("prediction") != std::string::npos ){
-			prediction_found = true;
-			break;
-		}	
-	}
+void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTable> > roots_feature_table)
+{
+	//bool prediction_found = false;
+	//for(int i = (int)roots_feature_table[0]->GetNumberOfColumns(); i > 0; i--)
+	//{
+	//	std::string current_column = std::string(roots_feature_table[0]->GetColumnName(i));
+	//	if(current_column.find("prediction") != std::string::npos )
+	//	{
+	//		prediction_found = true;
+	//		break;
+	//	}	
+	//}
 
 	CandidateRootPoint root_point;
 	itk::Index<3> root_idx;
-	for(int i = 0; i < roots_feature_table[0]->GetNumberOfRows(); i++){
+	for(int i = 0; i < roots_feature_table[0]->GetNumberOfRows(); i++)
+	{
 		root_point.featureVector.ID = roots_feature_table[0]->GetValueByName(i, "ID").ToInt();
 
 		root_idx[0] = roots_feature_table[0]->GetValueByName(i, "x").ToInt(); 
@@ -4192,21 +4195,22 @@ void AstroTracer::ReadRootPointsPipeline(const std::vector<vtkSmartPointer<vtkTa
 		root_point.featureVector.minIntensity = roots_feature_table[0]->GetValueByName(i, "mn_int").ToFloat();
 		root_point.featureVector.nucleusDistance = roots_feature_table[0]->GetValueByName(i, "nucl_dist").ToFloat();
 		
-		if(prediction_found){
-			root_point.classValue = roots_feature_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
-			root_point.confidenceMeasure = roots_feature_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
+		//if(prediction_found){
+		//	root_point.classValue = roots_feature_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
+		//	root_point.confidenceMeasure = roots_feature_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
 
-			if(root_point.classValue == 1)
-				root_point.isRootPoint = true;
-			else
-				root_point.isRootPoint = false;
+		//	if(root_point.classValue == 1)
+		//		root_point.isRootPoint = true;
+		//	else
+		//		root_point.isRootPoint = false;
 
-			if(root_point.isRootPoint)
-				this->CandidateRootPoints.push_back(root_point);
-		}
-		else{
-			this->CandidateRootPoints.push_back(root_point);
-		}
+		//	if(root_point.isRootPoint)
+		//		this->CandidateRootPoints.push_back(root_point);
+		//}
+		//else{
+		root_point.isRootPoint = true;
+		this->CandidateRootPoints.push_back(root_point);
+		//}
 	}
 	
 	if(this->CandidateRootPoints.empty()){
@@ -4994,69 +4998,70 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 
 void AstroTracer::ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<vtkTable> > nuclei_features_table){
 	
-	bool prediction_found = false, root_found = false;
-	for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
-		std::string current_column = nuclei_features_table[0]->GetColumnName(i);
-		if(current_column.find("prediction") != std::string::npos ){
-			prediction_found = true;
-			break;
-		}
-	}
-	for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
-		std::string current_column = nuclei_features_table[0]->GetColumnName(i);
-		if(current_column.find("root") != std::string::npos ){
-			root_found = true;
-			break;
-		}
-	}
+	//bool prediction_found = false, root_found = false;
+	//for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
+	//	std::string current_column = nuclei_features_table[0]->GetColumnName(i);
+	//	if(current_column.find("prediction") != std::string::npos ){
+	//		prediction_found = true;
+	//		break;
+	//	}
+	//}
+	//for(int i = nuclei_features_table[0]->GetNumberOfColumns(); i > 0; i--){
+	//	std::string current_column = nuclei_features_table[0]->GetColumnName(i);
+	//	if(current_column.find("root") != std::string::npos ){
+	//		root_found = true;
+	//		break;
+	//	}
+	//}
 
 	NucleiObject nuclei_object;
 	itk::Index<3> nuc_idx;
-	for(int i = 0; i < nuclei_features_table[0]->GetNumberOfRows(); i++){
+	for(int i = 0; i < nuclei_features_table[0]->GetNumberOfRows(); i++)
+	{
 		nuclei_object.intrinsicFeatures.ID = nuclei_features_table[0]->GetValueByName(i, "ID").ToInt();
 		
-		nuc_idx[0] = nuclei_features_table[0]->GetValueByName(i, "x").ToInt();
-		nuc_idx[1] = nuclei_features_table[0]->GetValueByName(i, "y").ToInt();
-		nuc_idx[2] = nuclei_features_table[0]->GetValueByName(i, "z").ToInt();
+		nuc_idx[0] = nuclei_features_table[0]->GetValueByName(i, "centroid_x").ToInt();
+		nuc_idx[1] = nuclei_features_table[0]->GetValueByName(i, "centroid_y").ToInt();
+		nuc_idx[2] = nuclei_features_table[0]->GetValueByName(i, "centroid_z").ToInt();
 		nuclei_object.intrinsicFeatures.centroid = HeapNode_astro(nuc_idx, 0);
 		nuclei_object.intrinsicFeatures.volume = nuclei_features_table[0]->GetValueByName(i, "volume").ToFloat();
-		nuclei_object.intrinsicFeatures.integratedIntensity = nuclei_features_table[0]->GetValueByName(i, "sum_int").ToFloat();
-		nuclei_object.intrinsicFeatures.meanIntensity = nuclei_features_table[0]->GetValueByName(i, "mean_int").ToFloat();
-		nuclei_object.intrinsicFeatures.varianceIntensity = nuclei_features_table[0]->GetValueByName(i, "var_int").ToFloat();
-		nuclei_object.intrinsicFeatures.eccentricity = nuclei_features_table[0]->GetValueByName(i, "eccentricity").ToFloat();
-		nuclei_object.intrinsicFeatures.elongation = nuclei_features_table[0]->GetValueByName(i, "elongation").ToFloat();
+		//nuclei_object.intrinsicFeatures.integratedIntensity = nuclei_features_table[0]->GetValueByName(i, "sum_int").ToFloat();
+		//nuclei_object.intrinsicFeatures.meanIntensity = nuclei_features_table[0]->GetValueByName(i, "mean_int").ToFloat();
+		//nuclei_object.intrinsicFeatures.varianceIntensity = nuclei_features_table[0]->GetValueByName(i, "var_int").ToFloat();
+		//nuclei_object.intrinsicFeatures.eccentricity = nuclei_features_table[0]->GetValueByName(i, "eccentricity").ToFloat();
+		//nuclei_object.intrinsicFeatures.elongation = nuclei_features_table[0]->GetValueByName(i, "elongation").ToFloat();
 		nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume;
 
-		nuclei_object.intrinsicFeatures.meanSurfaceGradient = nuclei_features_table[0]->GetValueByName(i, "mean_surf_gradient").ToFloat();
-		nuclei_object.intrinsicFeatures.radiusVariation = nuclei_features_table[0]->GetValueByName(i, "radius_variation").ToFloat();
-		nuclei_object.intrinsicFeatures.shapeMeasure = nuclei_features_table[0]->GetValueByName(i, "shape_measure").ToFloat();
-		nuclei_object.intrinsicFeatures.energy = nuclei_features_table[0]->GetValueByName(i, "energy").ToFloat();
-		nuclei_object.intrinsicFeatures.entropy = nuclei_features_table[0]->GetValueByName(i, "entropy").ToFloat();
-		nuclei_object.intrinsicFeatures.inverseDiffMoment = nuclei_features_table[0]->GetValueByName(i, "inverse_diff_moment").ToFloat();
-		nuclei_object.intrinsicFeatures.inertia = nuclei_features_table[0]->GetValueByName(i, "inertia").ToFloat();
-		nuclei_object.intrinsicFeatures.clusterShade = nuclei_features_table[0]->GetValueByName(i, "cluster_shade").ToFloat();
-		nuclei_object.intrinsicFeatures.clusterProminence = nuclei_features_table[0]->GetValueByName(i, "cluster_prominence").ToFloat();
-		nuclei_object.associativeFeatures.astro_total = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_TOTAL").ToFloat();
-		nuclei_object.associativeFeatures.astro_avg = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_AVG").ToFloat();
-		nuclei_object.associativeFeatures.astro_surr = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_SURR").ToFloat();
-		nuclei_object.associativeFeatures.micro_total = nuclei_features_table[0]->GetValueByName(i, "Microglia_TOTAL").ToFloat();
-		nuclei_object.associativeFeatures.micro_avg = nuclei_features_table[0]->GetValueByName(i, "Microglia_AVG").ToFloat();
-		nuclei_object.associativeFeatures.micro_surr = nuclei_features_table[0]->GetValueByName(i, "Microglia_SURR").ToFloat();
-		nuclei_object.associativeFeatures.neuro_total = nuclei_features_table[0]->GetValueByName(i, "Neurons_TOTAL").ToFloat();
-		nuclei_object.associativeFeatures.neuro_avg = nuclei_features_table[0]->GetValueByName(i, "Neurons_AVG").ToFloat();
-		nuclei_object.associativeFeatures.neuro_surr = nuclei_features_table[0]->GetValueByName(i, "Neurons_SURR").ToFloat();
+		//nuclei_object.intrinsicFeatures.meanSurfaceGradient = nuclei_features_table[0]->GetValueByName(i, "mean_surf_gradient").ToFloat();
+		//nuclei_object.intrinsicFeatures.radiusVariation = nuclei_features_table[0]->GetValueByName(i, "radius_variation").ToFloat();
+		//nuclei_object.intrinsicFeatures.shapeMeasure = nuclei_features_table[0]->GetValueByName(i, "shape_measure").ToFloat();
+		//nuclei_object.intrinsicFeatures.energy = nuclei_features_table[0]->GetValueByName(i, "energy").ToFloat();
+		//nuclei_object.intrinsicFeatures.entropy = nuclei_features_table[0]->GetValueByName(i, "entropy").ToFloat();
+		//nuclei_object.intrinsicFeatures.inverseDiffMoment = nuclei_features_table[0]->GetValueByName(i, "inverse_diff_moment").ToFloat();
+		//nuclei_object.intrinsicFeatures.inertia = nuclei_features_table[0]->GetValueByName(i, "inertia").ToFloat();
+		//nuclei_object.intrinsicFeatures.clusterShade = nuclei_features_table[0]->GetValueByName(i, "cluster_shade").ToFloat();
+		//nuclei_object.intrinsicFeatures.clusterProminence = nuclei_features_table[0]->GetValueByName(i, "cluster_prominence").ToFloat();
+		//nuclei_object.associativeFeatures.astro_total = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.astro_avg = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.astro_surr = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_SURR").ToFloat();
+		//nuclei_object.associativeFeatures.micro_total = nuclei_features_table[0]->GetValueByName(i, "Microglia_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.micro_avg = nuclei_features_table[0]->GetValueByName(i, "Microglia_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.micro_surr = nuclei_features_table[0]->GetValueByName(i, "Microglia_SURR").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_total = nuclei_features_table[0]->GetValueByName(i, "Neurons_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_avg = nuclei_features_table[0]->GetValueByName(i, "Neurons_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_surr = nuclei_features_table[0]->GetValueByName(i, "Neurons_SURR").ToFloat();
 
-		if(root_found){
-			nuclei_object.associativeFeatures.minRootDist = nuclei_features_table[0]->GetValueByName(i, "min_root_dist").ToFloat();
-			nuclei_object.associativeFeatures.maxRootDist = nuclei_features_table[0]->GetValueByName(i, "max_root_dist").ToFloat();
-			nuclei_object.associativeFeatures.meanRootDist = nuclei_features_table[0]->GetValueByName(i, "mean_root_dist").ToFloat();
-			nuclei_object.associativeFeatures.varRootDist = nuclei_features_table[0]->GetValueByName(i, "var_root_dist").ToFloat();
-			nuclei_object.associativeFeatures.nRoots = nuclei_features_table[0]->GetValueByName(i, "n_roots").ToInt();
-		}
-		if(prediction_found){
-			nuclei_object.classValue = nuclei_features_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
-			nuclei_object.confidenceMeasure = nuclei_features_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
-		}
+		//if(root_found){
+		//	nuclei_object.associativeFeatures.minRootDist = nuclei_features_table[0]->GetValueByName(i, "min_root_dist").ToFloat();
+		//	nuclei_object.associativeFeatures.maxRootDist = nuclei_features_table[0]->GetValueByName(i, "max_root_dist").ToFloat();
+		//	nuclei_object.associativeFeatures.meanRootDist = nuclei_features_table[0]->GetValueByName(i, "mean_root_dist").ToFloat();
+		//	nuclei_object.associativeFeatures.varRootDist = nuclei_features_table[0]->GetValueByName(i, "var_root_dist").ToFloat();
+		//	nuclei_object.associativeFeatures.nRoots = nuclei_features_table[0]->GetValueByName(i, "n_roots").ToInt();
+		//}
+		//if(prediction_found){
+		//	nuclei_object.classValue = nuclei_features_table[0]->GetValueByName(i, "prediction_active_mg").ToInt();
+		//	nuclei_object.confidenceMeasure = nuclei_features_table[0]->GetValueByName(i, "confidence_mg").ToFloat();
+		//}
 		
 		this->NucleiObjects.push_back(nuclei_object);
 	}
