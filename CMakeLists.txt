@@ -343,6 +343,7 @@ if(USE_KPLS)
     endif(MSVC10)
   else(NOT BUILD_EMBREX)
     add_subdirectory(${CMAKE_SOURCE_DIR}/PatternAnalysis/embrex)
+    set(LIB_KPLS libKPLS)
   endif(NOT BUILD_EMBREX)
 endif(USE_KPLS)
 
