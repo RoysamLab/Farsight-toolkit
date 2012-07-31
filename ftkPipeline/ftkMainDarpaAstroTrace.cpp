@@ -1106,8 +1106,8 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 	active_model_table->RemoveRow(0);
 	active_model_table->RemoveColumn(0);
 
-	std::string classification_name = "4_class";
-	double confidence_thresh = 0.25;
+	std::string classification_name = "multi_class";
+	double confidence_thresh = 1/(int)active_model_table->GetNumberOfRows();
 
 	MCLR* mclr = new MCLR();
 	//Number of features and classes needed in "add_bias" fuction of MCLR
