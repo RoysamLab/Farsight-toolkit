@@ -64,6 +64,7 @@ char* LocalMaximaKernel =
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkLaplacianRecursiveGaussianImageFilter.h"
+#include "itkMultiThreader.h"
 
 //added by Yousef on 8/26/2009
 #include "itkExtractImageFilter.h"
@@ -104,6 +105,8 @@ extern "C" void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, 
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
+	std::cout << std::endl << "aawsNUMTHRE: " << itk::MultiThreader::GetGlobalDefaultNumberOfThreads() << "--" << itk::MultiThreader::GetGlobalMaximumNumberOfThreads();
+// 	std::cout << std::endl << 
 	//queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
 
 	//get this inputs
@@ -179,15 +182,20 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		//writer->SetInput( im );
 		//writer->Update();
 		//////////////////////////////////////////////////////////////////////////
-		std::cout<<"Computing distance transform...";
-		dImg = (unsigned short *) malloc(((unsigned long)r)*((unsigned long)c)*((unsigned long)z)*sizeof(unsigned short));
-		if(!dImg)
+		#pragma omp critical // Nicolas for thh
 		{
-			std::cerr<<"Failed to allocate memory for the distance image"<<std::endl;
-			return 0;
+			std::cout<<"Computing distance transform...";
+			dImg = (unsigned short *) malloc(((unsigned long)r)*((unsigned long)c)*((unsigned long)z)*sizeof(unsigned short));
+			if(!dImg)
+			{
+				std::cerr<<"Failed to allocate memory for the distance image, GOING TO DI"<<std::endl;
+// 				return 0;
+			}
+			std::cout << std::endl << "\t\tHERE2: DISTANCE MAP ABOUT TO RUN";
 		}
 		//max_dist = distMap(im, r, c, z,dImg);
 		max_dist = distMap_SliceBySlice(im, r, c, z,dImg);
+		std::cout << std::endl << "\t\tHERE2: DISTANCE MAP DONE";
 		std::cout<<"done"<<std::endl;
 	}
 
@@ -251,14 +259,14 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	clock_t start_time_multiscale_log = clock();
 
-#ifdef _OPENMP
-	omp_set_nested(1);
-#endif
-#ifdef _MSC_VER 
-	#pragma omp parallel for private(min_x, min_y, max_x, max_y) // collapse(2)
-#else
-	#pragma omp parallel for private(min_x, min_y, max_x, max_y) collapse(2)
-#endif
+// #ifdef _OPENMP
+// 	omp_set_nested(1);
+// #endif
+// #ifdef _MSC_VER 
+// 	#pragma omp parallel for private(min_x, min_y, max_x, max_y) // collapse(2)
+// #else
+// 	#pragma omp parallel for private(min_x, min_y, max_x, max_y) collapse(2)
+// #endif
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
@@ -272,19 +280,31 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 				max_x = c-1;
 			if(max_y >= r)
 				max_y = r-1;
+			
+			if( block_divisor == 1 )
+			{
+				multiScaleLoG(im, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
+			}
+			else
+			{
 
-			//Create an itk image to hold the sub image (tile) being processing
-			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
+				//Create an itk image to hold the sub image (tile) being processing
+				MyInputImageType::Pointer im_Small;
+// 				#pragma omp critical
+// 				{			
+					im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
+// 				}
 
-			//By Yousef (8/27/2009): multi-scale LoG is done in one function now
-			multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
-			//
+				//By Yousef (8/27/2009): multi-scale LoG is done in one function now
+				multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
+				//
+			}
 		}
 	}
 
-#ifdef _OPENMP
-	omp_set_nested(0);
-#endif
+// #ifdef _OPENMP
+// 	omp_set_nested(0);
+// #endif
 
 	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
@@ -398,7 +418,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	bool failed = false;
 
-#pragma omp parallel for firstprivate(im) ordered
+// #pragma omp parallel for firstprivate(im) ordered
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
 		int sigma = sigma_max - i;
@@ -444,8 +464,8 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		iterate.GoToBegin();
 
 		unsigned long II;
-#pragma omp ordered
-		{
+// #pragma omp ordered
+// 		{
 			for(int k1=zmin; k1<=zmax; k1++)
 			{
 				for(int i1=rmin; i1<=rmax; i1++)	
@@ -488,7 +508,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 					}
 				}
 			}
-		}
+// 		}
 
 		std::cout<<"Scale " << sigma << " done"<<std::endl;
 	}
@@ -554,7 +574,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 	//int itr = 0;
 	//std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
 
-#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
+// #pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
 	{
 		for(int j=0; j<c; j++)
@@ -860,7 +880,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
-#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
+// #pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
 	{
 		for(int j=1; j<c-1; j++)
@@ -892,13 +912,13 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					lst.push_back(j);
 					lst.push_back(k);
 					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
-#pragma omp critical(scalesCS)
-					{
+// #pragma omp critical(scalesCS)
+// 					{
 						scales.push_back(lst);
 
 						//mean +=mx;
 						cnt++;
-					}
+// 					}
 				}				
 			}			
 		}
@@ -987,19 +1007,19 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 		if(mx<=medianS)
 		{	
-#pragma omp critical (smallScalesPushBack)
-			{
+// #pragma omp critical (smallScalesPushBack)
+// 			{
 				numSmall++;		
 				smallScales.push_back(pp);
-			}
+// 			}
 		}
 		else
 		{
-#pragma omp critical (largeScalesPushBack)	
-			{	
+// #pragma omp critical (largeScalesPushBack)	
+// 			{	
 				numLarge++;		
 				largeScales.push_back(pp);
-			}
+// 			}
 		}
 
 		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;

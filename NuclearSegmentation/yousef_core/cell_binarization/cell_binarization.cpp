@@ -162,16 +162,20 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 
 	clock_t start_time_cell_bin_alpha_exp = clock();
 
-	//Allocate memory for matrix to hold dimensions of subImgBlock
-	long long ****subImgBlockArray = (long long ****) malloc(num_blocks_R * sizeof(long long ***));
-	for (int i = 0; i < num_blocks_R; i++)
+	long long ****subImgBlockArray;
+	#pragma omp critical
 	{
-		subImgBlockArray[i] = (long long ***) malloc(num_blocks_C * sizeof(long long **));
-		for (int j = 0; j < num_blocks_C; j++) 
+		//Allocate memory for matrix to hold dimensions of subImgBlock
+		subImgBlockArray = (long long ****) malloc(num_blocks_R * sizeof(long long ***));
+		for (int i = 0; i < num_blocks_R; i++)
 		{
-			subImgBlockArray[i][j] = (long long **) malloc(Z * sizeof(long long *));
-			for (int k = 0; k < num_blocks_Z; k++)
-				subImgBlockArray[i][j][k] = (long long *) malloc (6 * sizeof(long long));
+			subImgBlockArray[i] = (long long ***) malloc(num_blocks_C * sizeof(long long **));
+			for (int j = 0; j < num_blocks_C; j++) 
+			{
+				subImgBlockArray[i][j] = (long long **) malloc(Z * sizeof(long long *));
+				for (int k = 0; k < num_blocks_Z; k++)
+					subImgBlockArray[i][j][k] = (long long *) malloc (6 * sizeof(long long));
+			}
 		}
 	}
 
@@ -212,16 +216,18 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-#ifdef _OPENMP
-	omp_set_nested(1);
-#endif
-
-	std::cout << "Starting Graph Cuts" << std::endl;
-#ifdef _MSC_VER 
-	#pragma omp parallel for // collapse(3)
-#else
-	#pragma omp parallel for collapse(3)
-#endif
+// #ifdef _OPENMP
+// 	omp_set_nested(1);
+// #endif
+// 
+// 	std::cout << "Starting Graph Cuts" << std::endl;
+// #ifdef _MSC_VER 
+// 	#pragma omp parallel for // collapse(3)
+// #else
+// 	#pragma omp parallel for collapse(3)
+// #endif
+// #pragma omp critical
+// {
 	for(int i=0; i< num_blocks_R; i++)			
 	{
 		for(int j = 0; j < num_blocks_C; j++)
@@ -232,10 +238,10 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 			}
 		}
 	}
-
-#ifdef _OPENMP
-	omp_set_nested(0);
-#endif
+// }
+// #ifdef _OPENMP
+// 	omp_set_nested(0);
+// #endif
 
 	for(int i=0; i< num_blocks_R; i++)
 	{			
