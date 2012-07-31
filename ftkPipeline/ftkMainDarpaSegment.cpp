@@ -1333,8 +1333,10 @@ vtkSmartPointer< vtkTable > ftkMainDarpaSegment::ComputeFeaturesAndAssociations(
 	sourceImages->AppendChannelFromData3D( Images_Tiles[3]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "dapi", color, true);
 	color[0] = 0; color[1] = 255; color[2] = 0;
 	sourceImages->AppendChannelFromData3D( Images_Tiles[2]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "gfp", color, true);
-// 	color[0] = 255; color[1] = 255; color[2] = 0;
-// 	sourceImages->AppendChannelFromData3D( cy5Img->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "cy5", color, true);
+	color[0] = 255; color[1] = 255; color[2] = 0;
+ 	sourceImages->AppendChannelFromData3D( Images_Tiles[1]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "tri", color, true);
+ 	color[0] = 0; color[1] = 255; color[2] = 255;
+ 	sourceImages->AppendChannelFromData3D( Images_Tiles[0]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "cy5", color, true);
 
 	ftk::Image::Pointer labelImage = ftk::Image::New();
 	color[0] = 255; color[1] = 255; color[2] = 255;
