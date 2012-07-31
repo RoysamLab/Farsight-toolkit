@@ -1389,7 +1389,8 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 		ftk::Object::Point point = (*it2).second;
 
 		//if ( (currentZ == point.z) )
-		if( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
+		if(   ( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
+		   || ( labImInfo->numZSlices == 1 ) )
 		{
 			painter->setPen( (*colorItemsMap)["Object IDs"] );
 			painter->drawText(point.x + 2, point.y - 2, QString::number(id));
