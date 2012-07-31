@@ -430,20 +430,40 @@ void ftkMainDarpaSegment::runSegment(  )
 				// Reading part
 				#pragma omp critical
 				{
-				if( !_GFP_Image.empty( ) && !_DAP_Image.empty() )
+				if( !_GFP_Image.empty( ) )
 				{
 					int foundGFP = _GFP_Image.find_last_of("/\\");
 					std::string _GFP_ImageNoPath = _GFP_Image.substr(foundGFP+1);
 					// !!! this has to be nrrd is just to test
 					std::string tempGFP = _outPathTemp+"/"+_GFP_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 					imageLocalGFP = readImage< rawImageType_8bit >(tempGFP.c_str());
-					
+				}
+				if( !_DAP_Image.empty() )
+				{
 					int foundDAP = _DAP_Image.find_last_of("/\\");
 					std::string _DAP_ImageNoPath = _DAP_Image.substr(foundDAP+1);
 					// !!! this has to be nrrd is just to test
 					std::string tempDAP = _outPathTemp+"/"+_DAP_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 					imageLocalDAP = readImage< rawImageType_8bit >(tempDAP.c_str());
 				}
+				if( !_Cy5_Image.empty() )
+				{
+					int foundCy5 = _Cy5_Image.find_last_of("/\\");
+					std::string _Cy5_ImageNoPath = _Cy5_Image.substr(foundCy5+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempCy5 = _outPathTemp+"/"+_Cy5_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalCy5 = readImage< rawImageType_8bit >(tempCy5.c_str());
+				}
+				if( !_TRI_Image.empty() )
+				{
+					int foundTRI = _TRI_Image.find_last_of("/\\");
+					std::string _TRI_ImageNoPath = _TRI_Image.substr(foundTRI+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempTRI = _outPathTemp+"/"+_TRI_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalTRI = readImage< rawImageType_8bit >(tempTRI.c_str());
+				}
+
+
 				}
 				Images_Tiles[0] = imageLocalCy5;
 				Images_Tiles[1] = imageLocalTRI;

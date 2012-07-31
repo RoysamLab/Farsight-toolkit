@@ -6,8 +6,21 @@ import fnmatch
 import os
 import subprocess
 import sys
+import getpass #ask username
 
-MAIN_DATA_FOLDER = '/data/vinay/data'
+
+
+USERNAME = 'none'
+p2 = getpass.getuser()
+if( p2 == 'vhsomasu' ):
+	USERNAME = 'vhsomasu'
+if( p2 == 'nrey' ):
+        USERNAME = 'nrey'
+
+if( USERNAME == 'nrey' ):
+	MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
+if( USERNAME == 'vhsomasu' ):
+	MAIN_DATA_FOLDER = '/data/vinay/data'
 
 SERVER = 'none'
 p = os.uname()

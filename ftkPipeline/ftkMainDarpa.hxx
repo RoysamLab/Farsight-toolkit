@@ -893,3 +893,45 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 	writeImage< TOUTPUT >(MaurerFilter->GetOutput(),outputPath.c_str());
 
 }
+
+
+template<typename TINPUT, typename TOUTPUT >
+void ftkMainDarpa::computeMedianFilter( std::string inputImageName, std::string outputImageName, std::string imageType )
+{
+	std::string tipoImagen;
+	int foundType=imageType.find("TIFF");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".tif";
+	}
+	foundType=imageType.find("NRRD");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".nrrd";
+	}
+
+	//int found=inputImageName.find(".");
+	//std::string inputImageNameLocal = inputImageName.substr(0,found);
+	//
+	//found = inputImageNameLocal.find_last_of("/\\");
+	//inputImageNameLocal = inputImageNameLocal.substr(found+1);
+
+	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
+	//std::string temp1a = outputPath + "/" + inputImageNameLocal + "_dist_map" + tipoImagen;
+	
+	typedef itk::MedianImageFilter<TINPUT, TOUTPUT> MedianFilterType;
+	typename MedianFilterType::Pointer median_filter = MedianFilterType::New();
+	typename MedianFilterType::InputSizeType radius;
+	radius.Fill(2);
+   
+	median_filter->SetRadius(radius);
+	median_filter->SetInput(inputImage);
+	median_filter->Update();
+	
+	std::cout<<"HERE";
+	std::cout<<"HERE";
+	std::cout<<"HERE";
+
+	writeImage< TOUTPUT >(median_filter->GetOutput(),outputImageName.c_str());
+
+}

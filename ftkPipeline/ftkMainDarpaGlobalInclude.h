@@ -12,6 +12,7 @@
 #include "itkRGBPixel.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "itkMedianImageFilter.h"
 
 // FTK INCLUDES
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"

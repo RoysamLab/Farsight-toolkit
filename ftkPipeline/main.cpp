@@ -7,21 +7,22 @@
 #include "ftkMainDarpaTrace.h"
 #include "ftkMainDarpaAstroTrace.h"
 
-enum STEPS { SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
+enum STEPS { SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
 std::map< std::string, STEPS> stepsmap;
 
 void register_stepsmap()
 {
-    stepsmap["SAVENRRD"] = SAVENRRD;
-    stepsmap["PROJECTION"] = PROJECTION;
-    stepsmap["PROJECTION_8BIT"] = PROJECTION_8BIT;
-    stepsmap["PROJECTIONRGB"] = PROJECTIONRGB;
-    stepsmap["PROJECTIONFLO"] = PROJECTIONFLO;
-    stepsmap["RESCALE"] = RESCALE;
-    stepsmap["RESCALE_8BIT"] = RESCALE_8BIT;
+	stepsmap["SAVENRRD"] = SAVENRRD;
+	stepsmap["PROJECTION"] = PROJECTION;
+	stepsmap["PROJECTION_8BIT"] = PROJECTION_8BIT;
+	stepsmap["PROJECTIONRGB"] = PROJECTIONRGB;
+	stepsmap["PROJECTIONFLO"] = PROJECTIONFLO;
+	stepsmap["MEDIAN"] = MEDIAN;
+	stepsmap["RESCALE"] = RESCALE;
+	stepsmap["RESCALE_8BIT"] = RESCALE_8BIT;
 	stepsmap["DISTANCE_MAP"] = DISTANCE_MAP;
-    stepsmap["SEGMENT"] = SEGMENT;
-    stepsmap["TRACE"] = TRACE;
+	stepsmap["SEGMENT"] = SEGMENT;
+	stepsmap["TRACE"] = TRACE;
 	stepsmap["ASTRO_TRACE"] = ASTRO_TRACE;
 }
 
@@ -91,6 +92,17 @@ int main(int argc, char *argv[])
 			
 			
 			objftkMainDarpa->projectImage<rawImageType_flo, rawImageType_flo>( imageInputName, projectImagePath, projectOptions, imageType );
+			break;
+		}
+		
+		case MEDIAN:
+		{
+			std::cout << "MEDIAN!"; 
+			std::string imageInputName = argv[2];
+			std::string imageOutputName = argv[3];
+			std::string imageType = argv[4];
+			
+			objftkMainDarpa->computeMedianFilter<rawImageType_16bit, rawImageType_16bit>( imageInputName, imageOutputName, imageType );
 			break;
 		}
 			

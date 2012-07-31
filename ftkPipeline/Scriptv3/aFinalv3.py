@@ -32,6 +32,7 @@ import a021_Project
 import a022_Project8bits
 import a023_ProjectRGB
 import a024_ProjectFloat
+import a029_RunPrepro
 import a030_RunBack
 import a040_RunCurv
 import a050_RunResc
@@ -80,7 +81,7 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 9
+TRY = 10
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
@@ -100,10 +101,10 @@ SMALLIMAGE = '1'	# if the image is small
 runCopy = 1		# Flag to move images
 runCopy_db = 1
 runMake = 1		# Flag Make Farsight
+runPreproc = 1
+runPreproc_db = 1
 runBack = 1		# Flag to run background substraction
 runBack_db = 1
-runDistMap = 1		# Flag to run distance map computation
-runDistMap_db = 1
 
 runCurv = 1		# Flag to run Curvelets
 runCurv_db = 1
@@ -113,10 +114,12 @@ runRescale_bit = 1
 runRescale_bit_db = 1
 runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
+#runDistMap = 1		# Flag to run distance map computation
+#runDistMap_db = 1
 runTrac = 0		# Flag to run Tracing
 runTrac_db = 0
-runAstroTrac = 1		# Flag to run Astrocyte Tracing
-runAstroTrac_db = 1
+runAstroTrac = 0		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 0
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
@@ -128,8 +131,10 @@ runAstroTrac_db = 1
 #runSegm_db = 0#1
 #runTrac = 0#1		# Flag to run Tracing
 #runTrac_db = 0#1
+#runAstroTrac = 0		# Flag to run Astrocyte Tracing
+#runAstroTrac_db = 0
 
-haveCy5_for = 0
+haveCy5_for = 1
 haveTRT_for = 1
 haveGFP_for = 1
 haveDAP_for = 1
@@ -235,8 +240,8 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 
 	
 	if( USERNAME == 'nrey' ):
-		FARSIGHT_BIN = '/data/nicolas/farsight_updated/bin'
-		FARSIGHT_BIN_EXE = '/data/nicolas/farsight_updated/bin/exe'
+		FARSIGHT_BIN = '/data/nicolas/src-bin/bin/farsight-rel'
+		FARSIGHT_BIN_EXE = '/data/nicolas/src-bin/bin/farsight-rel/exe'
 
 		MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
 		MAIN_DEB_DATA_FOLDER = '/data/nicolas/deb'
@@ -422,13 +427,52 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
 
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	print "# Run Preprocessing the files to the local dataset: "+DATA_FOLDER+' '+str(datetime.datetime.now())
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	if runPreproc == 1:
+		start_1 = time.time()
+		if haveCy5 == 1:
+			FILE_Cy5_MED = FILE_Cy5+'_MED'
+			a029_RunPrepro.main( FARSIGHT_BIN_EXE, FILE_Cy5_MED, FILE_Cy5, 'NRRD' )
+		#if haveTRT == 1:
+			#FILE_TRI_BS = FILE_TRI+'_BS'
+			#a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS, FILE_TRI )
+		#if haveGFP == 1:
+			#FILE_GFP_BS = FILE_GFP+'_BS'
+			#a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS, FILE_GFP )
+		#if haveDAP == 1:
+			#FILE_DAP_BS = FILE_DAP+'_BS'
+			#a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_DAP_BS, FILE_DAP )
+		elapsed_1 = (time.time() - start_1)
+		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))	
+
+	#if runPreproc_db == 1:
+		#start_2 = time.time()
+		#runBack_db_log = LOCAL_DATASET_PATH_LOG +'/runBackSubst_db.log'
+		#TEMP_FILE = open(runBack_db_log, 'w')
+		#TEMP_FILE.write('BackLog\n')
+		#TEMP_FILE.close()
+
+		#if haveCy5 == 1:
+			#a021_Project.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_DATA_DEBUG, FILE_Cy5_BS, runBack_db_log, 'ORG_RES_HISTO', 'TIFF' )
+		#if haveTRT == 1:
+			#a021_Project.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_DATA_DEBUG, FILE_TRI_BS, runBack_db_log, 'ORG_RES_HISTO', 'TIFF' )
+		#if haveGFP == 1:
+			#a021_Project.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_DATA_DEBUG, FILE_GFP_BS, runBack_db_log, 'ORG_RES_HISTO', 'TIFF' )
+		#if haveDAP == 1:
+			#a021_Project.main( LOCAL_DATASET_PATH_LOG, FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_DATA_DEBUG, FILE_DAP_BS, runBack_db_log, 'ORG_RES_HISTO', 'TIFF' )
+		#elapsed_2 = (time.time() - start_2)
+		#print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
+
+
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print "# Run Backgroun Substraction: "+DATA_FOLDER+' '+str(datetime.datetime.now())
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	if runBack == 1:
 		start_1 = time.time()
 		if haveCy5 == 1:
-			FILE_Cy5_BS = FILE_Cy5+'_BS'
-			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS, FILE_Cy5 )
+			FILE_Cy5_BS = FILE_Cy5+'_BS' #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
+			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS, FILE_Cy5_MED ) #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
 		if haveTRT == 1:
 			FILE_TRI_BS = FILE_TRI+'_BS'
 			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS, FILE_TRI )

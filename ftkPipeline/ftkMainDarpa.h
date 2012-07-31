@@ -42,6 +42,9 @@ public:
 	template<typename TINPUT, typename TOUTPUT >
 	void computeDistMap( std::string inputImageName, std::string outputPath, std::string imageType );
 	
+	template<typename TINPUT, typename TOUTPUT >
+	void computeMedianFilter( std::string inputImageName, std::string outputImageName, std::string imageType );
+	
 	template<typename TINPUT >
 	void saveNRRD( std::string );
 	
