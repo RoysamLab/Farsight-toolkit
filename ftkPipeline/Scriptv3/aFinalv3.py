@@ -116,10 +116,10 @@ runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
 #runDistMap = 1		# Flag to run distance map computation
 #runDistMap_db = 1
-runTrac = 0		# Flag to run Tracing
-runTrac_db = 0
-runAstroTrac = 0		# Flag to run Astrocyte Tracing
-runAstroTrac_db = 0
+runTrac = 1		# Flag to run Tracing
+runTrac_db = 1
+runAstroTrac = 1		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 1
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
