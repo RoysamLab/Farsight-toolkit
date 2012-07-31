@@ -34,7 +34,7 @@ public:
 	void runSplitting();
 	void runInterestPoints();
 	void runStitchRoots( );
-	void runTracing();
+	void computeRootFeaturesForNuclei();
 	
 protected:
 	void computeSplitConst( rawImageType_8bit::Pointer ImageMontage );
@@ -70,12 +70,14 @@ private:
 	std::string _GFP_Image;
 	std::string _DAP_Image;
 	std::string _Label_Image;
+	std::string _Nuclei_Table;
 	std::string _Dist_Map_Image;
 	std::string _Soma_Centroids;
 	std::string _Soma_Montage;
 	int _isSmall;
 	std::string _astroTraceParams;
 	std::string _roots_model_AL;
+	std::string _final_classification_model;
 // 	std::string _projectDefinition;
 //	std::string _optionsASTR;
 	std::string _outPath;

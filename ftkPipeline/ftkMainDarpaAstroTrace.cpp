@@ -113,6 +113,12 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	else
 	{ _Label_Image.clear(); printf("Choose _Label_Image = NULL as default\n");}
 
+	iter = options.find("-Nuclei_Table"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _Nuclei_Table;}
+	else
+	{ _Nuclei_Table.clear(); printf("Choose _Nuclei_Table = NULL as default\n");}
+
 	iter = options.find("-Dist_Map_Image"); 
 	if(iter!=options.end())
 	{ std::istringstream ss((*iter).second); ss >> _Dist_Map_Image;}
@@ -148,6 +154,12 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	{ std::istringstream ss((*iter).second); ss >> _roots_model_AL;}
 	else
 	{ _roots_model_AL.clear(); printf("Choose _roots_model_AL = NULL as default\n");}
+
+	iter = options.find("-final_classification_model"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _final_classification_model;}
+	else
+	{ _final_classification_model.clear(); printf("Choose _final_classification_model = NULL as default\n");}
 	
 	iter = options.find("-outPath"); 
 	if(iter!=options.end())
@@ -200,12 +212,14 @@ void ftkMainDarpaAstroTrace::readParameters( std::string astroTraceParams )
 	std::cout << std::endl << "_GFP_Image: " << _GFP_Image;
 	std::cout << std::endl << "_DAP_Image: " << _DAP_Image;
 	std::cout << std::endl << "_Label_Image: " << _Label_Image;
+	std::cout << std::endl << "_Nuclei_Table: " << _Nuclei_Table;
 	std::cout << std::endl << "_Dist_Map_Image: " << _Dist_Map_Image;
 	std::cout << std::endl << "_Soma_Centroids: " << _Soma_Centroids;
 	std::cout << std::endl << "_Soma_Montage: " << _Soma_Montage;
 	std::cout << std::endl << "_isSmall: " << _isSmall;
 	std::cout << std::endl << "_astroTraceParams: " << _astroTraceParams;
 	std::cout << std::endl << "_roots_model_AL: " << _roots_model_AL;
+	std::cout << std::endl << "_final_classification_model: " << _final_classification_model;
 	std::cout << std::endl << "_outPath: " << _outPath;
 	std::cout << std::endl << "_outPathDebug: " << _outPathDebug;
 	std::cout << std::endl << "_outPathTemp: " << _outPathTemp;
@@ -350,6 +364,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 	
 	std::cout << std::endl << "fir MAX NUMBER OF CORES: " << itk::MultiThreader::GetGlobalMaximumNumberOfThreads() << ", fir DEFAULT NUMBER OF CORES: " << itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
 	
+	vtkSmartPointer< vtkTable > AllNucleiTable = ftk::LoadTable( _Nuclei_Table );
 
 	int contadorSegment = 0;
 	int contadorImageDoneSegment = 0;
@@ -398,6 +413,7 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				rawImageType_uint::Pointer imageLocalLabel;
 				rawImageType_flo::Pointer imageLocalTRI;
 				rawImageType_flo::Pointer imageLocalDist_Map;
+				vtkSmartPointer< vtkTable > nucleiTable;
 
 				std::vector< rawImageType_flo::Pointer > Images_Tiles;
 				Images_Tiles.resize(1);
@@ -454,15 +470,43 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 					// !!! this has to be nrrd is just to test
 					std::string tempLabel = _outPathTemp+"/"+_Label_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 					imageLocalLabel = readImage< rawImageType_uint >(tempLabel.c_str());
+				}	
+				nucleiTable = vtkSmartPointer< vtkTable >::New(); 
+				nucleiTable->Initialize();
+				for(int col=0; col<(int)AllNucleiTable->GetNumberOfColumns(); col++)
+				{
+					vtkSmartPointer< vtkDoubleArray > column = vtkSmartPointer< vtkDoubleArray >::New();
+					column->SetName(AllNucleiTable->GetColumnName(col));
+					nucleiTable->AddColumn(column);
 				}
+				for(int row=0; row<(int)AllNucleiTable->GetNumberOfRows(); row++)
+				{
+					itk::Index<3> global_centroid;
+					global_centroid[0] = AllNucleiTable->GetValue(row,1).ToUnsignedInt();
+					global_centroid[1] = AllNucleiTable->GetValue(row,2).ToUnsignedInt();
+					global_centroid[2] = AllNucleiTable->GetValue(row,3).ToUnsignedInt();
+					if(regionMontage_inside.IsInside(global_centroid))
+					{
+						AllNucleiTable->SetValue(row, 1, global_centroid[0] - regionMontage_all.GetIndex()[0]);
+						AllNucleiTable->SetValue(row, 2, global_centroid[1] - regionMontage_all.GetIndex()[1]);
+						AllNucleiTable->SetValue(row, 3, global_centroid[2] - regionMontage_all.GetIndex()[2]);
+						nucleiTable->InsertNextRow(AllNucleiTable->GetRow(row));
+						AllNucleiTable->RemoveRow(row);
+						row--;
+					}
 				}
+				std::string nucleiTableFileName = _outPathTemp+"/InsideNucleiTable_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				ftk::SaveTable(nucleiTableFileName, nucleiTable);
+				}
+
+
 				//Images_Tiles[0] = imageLocalCy5;
 				//Images_Tiles[1] = imageLocalTRI;
 				//Images_Tiles[2] = imageLocalGFP;
 				//Images_Tiles[3] = imageLocalDAP;
 				Images_Tiles[0] = imageLocalTRI;
 				Label_Tiles[0] = imageLocalLabel;
-
+				Table_Tiles[0] = nucleiTable;
 				Dist_Map_Tiles[0] = imageLocalDist_Map;
 								
 // 				RunSegmentation(regionLocal_inside, Images_Tiles, Label_Tiles, Table_Tiles, Centroids_Tiles);
@@ -486,9 +530,9 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				std::string rootVectorFileName = _outPathTemp+"/rootVector_"+xStr+"_"+yStr+"_"+zStr+".txt";
 				std::string rootsImageFileName = _outPathTemp+"/rootsImage_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
 				AT->Classification_Roots(root_Vector_Tables, root_Images, _roots_model_AL, rootVectorFileName, rootsImageFileName, true);
-				Centroids_Tiles[0] = GetLabelToCentroidMap(root_Vector_Tables[0]);
+				//Centroids_Tiles[0] = GetLabelToCentroidMap(root_Vector_Tables[0]);
 				delete AT;
-				RemoveLabelNearBorder(regionLocal_inside, root_Images, root_Vector_Tables, Centroids_Tiles );
+				//RemoveLabelNearBorder(regionLocal_inside, root_Images, root_Vector_Tables, Centroids_Tiles );
 
 				//typedef itk::LabelGeometryImageFilter< rawImageType_uint, rawImageType_flo > LabelGeometryType;
 				//LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();		//Dirk's Filter;
@@ -787,225 +831,362 @@ void ftkMainDarpaAstroTrace::runStitchRoots(  )
 			}
 		}
 	}
+
+	std::string tempAllRoots_Montage = _outPathTemp+"/Roots_Image.nrrd";
+// 	std::cout << std::endl << "SOMA STORED " << temp9;
+	writeImage<rawImageType_uint>(imageRootsMontage,tempAllRoots_Montage.c_str());
+	
+	std::string tempAllRoots_Table = _outPathTemp+"/Roots_Table.txt";
+// 	std::cout << std::endl << "SOMA STORED " << temp9;
+	ftk::SaveTable(tempAllRoots_Table, tableRootsMontage);
 }
+
+
+void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
+{
+	if( _isSmall == 1 )
+	{
+		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+		omp_set_nested(1);
+		omp_set_max_active_levels(2);
+		int num_threads = 1;
+		omp_set_num_threads(num_threads);
+	}
+	
+	rawImageType_8bit::RegionType ImageMontageRegion;
+	itk::Size<3> ImageMontageSize;
+	// Assume GFP or dapi always exist
+	if( !_TRI_Image.empty() )
+	{
+		rawImageType_8bit::Pointer ImageMontage_TRI = readImage< rawImageType_8bit >(_TRI_ImageNRRD.c_str());
+		ImageMontageRegion = ImageMontage_TRI->GetLargestPossibleRegion();
+		ImageMontageSize = ImageMontageRegion.GetSize();
+		computeSplitConst( ImageMontage_TRI );
+	}
+
+	std::string tempAllRoots_Table = _outPathTemp+"/Roots_Table.txt";
+	vtkSmartPointer< vtkTable > AllRootsTable = ftk::LoadTable( tempAllRoots_Table );
+
+	#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+	for(int xco = 0; xco < _kx; xco++)
+	{
+		for(int yco = 0; yco < _ky; yco++)
+		{
+			for(int zco = 0; zco < _kz; zco++)
+			{
+				//#pragma omp critical
+				//{
+				//	++contadorSegment;
+				//	std::cout<<std::endl<< "\t\t--->>> ImageSegment " << contadorSegment << " of " << _kx*_ky*_kz;
+				//}
+				
+				rawImageType_8bit::RegionType regionLocal_inside = ComputeLocalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				rawImageType_uint::RegionType regionMontage_inside = ComputeGlobalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				
+				rawImageType_8bit::RegionType regionLocal_all = ComputeLocalRegionSplit( ImageMontageSize, xco, yco, zco );
+				rawImageType_8bit::RegionType regionMontage_all = ComputeGlobalRegionSplit( ImageMontageSize, xco, yco, zco );
+
+				// Store local image
+				std::stringstream out_x;
+				std::stringstream out_y;
+				std::stringstream out_z;
+				out_x<<xco;
+				out_y<<yco;
+				out_z<<zco;
+				std::string xStr = out_x.str();
+				std::string yStr = out_y.str();
+				std::string zStr = out_z.str();
+
+				rawImageType_uint::Pointer imageLocalLabel;
+				rawImageType_flo::Pointer imageLocalTRI;
+				rawImageType_flo::Pointer imageLocalDist_Map;
+				vtkSmartPointer< vtkTable > nucleiTable, rootsTable;
+
+				std::vector< rawImageType_flo::Pointer > Images_Tiles;
+				Images_Tiles.resize(1);
+
+				std::vector< rawImageType_flo::Pointer > Dist_Map_Tiles;
+				Dist_Map_Tiles.resize(1);
+
+				std::vector< rawImageType_uint::Pointer > Label_Tiles;
+				Label_Tiles.resize(1);
+				
+				std::vector< vtkSmartPointer< vtkTable > > Table_Tiles;
+				Table_Tiles.resize(1);
+
+				std::vector< vtkSmartPointer< vtkTable > > feature_Vector_Tables, root_Vector_Tables;
+				feature_Vector_Tables.resize(1);
+				root_Vector_Tables.resize(1);
+				
+				std::vector< rawImageType_16bit::Pointer > ID_Images, root_Images;
+				ID_Images.resize(1);
+				root_Images.resize(1);
+
+				std::vector< std::map< unsigned int, itk::Index<3> > > Centroids_Tiles;
+				Centroids_Tiles.resize(1);
+				
+				// Reading part
+				#pragma omp critical
+				{
+				if( !_TRI_Image.empty( ) /*&& !_DAP_Image.empty()*/ )
+				{
+					int foundTRI = _TRI_Image.find_last_of("/\\");
+					std::string _TRI_ImageNoPath = _TRI_Image.substr(foundTRI+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempTRI = _outPathTemp+"/"+_TRI_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalTRI = readImage< rawImageType_flo >(tempTRI.c_str());
+					
+					//int foundDAP = _DAP_Image.find_last_of("/\\");
+					//std::string _DAP_ImageNoPath = _DAP_Image.substr(foundDAP+1);
+					//// !!! this has to be nrrd is just to test
+					//std::string tempDAP = _outPathTemp+"/"+_DAP_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					//imageLocalDAP = readImage< rawImageType_8bit >(tempDAP.c_str());
+				}
+				if( !_Dist_Map_Image.empty( ) )
+				{
+					int foundDist_Map = _Dist_Map_Image.find_last_of("/\\");
+					std::string _Dist_Map_ImageNoPath = _Dist_Map_Image.substr(foundDist_Map+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempDist_Map = _outPathTemp+"/"+_Dist_Map_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalDist_Map = readImage< rawImageType_flo >(tempDist_Map.c_str());
+				}
+				if( !_Label_Image.empty( ) )
+				{
+					int foundLabel = _Label_Image.find_last_of("/\\");
+					std::string _Label_ImageNoPath = _Label_Image.substr(foundLabel+1);
+					// !!! this has to be nrrd is just to test
+					std::string tempLabel = _outPathTemp+"/"+_Label_ImageNoPath+"_"+xStr+"_"+yStr+"_"+zStr+".nrrd";
+					imageLocalLabel = readImage< rawImageType_uint >(tempLabel.c_str());
+				}
+				rootsTable = vtkSmartPointer< vtkTable >::New(); 
+				rootsTable->Initialize();
+				for(int col=0; col<(int)AllRootsTable->GetNumberOfColumns(); col++)
+				{
+					vtkSmartPointer< vtkDoubleArray > column = vtkSmartPointer< vtkDoubleArray >::New();
+					column->SetName(AllRootsTable->GetColumnName(col));
+					rootsTable->AddColumn(column);
+				}
+				for(int row=0; row<(int)AllRootsTable->GetNumberOfRows(); row++)
+				{
+					itk::Index<3> global_root;
+					global_root[0] = AllRootsTable->GetValue(row,1).ToUnsignedInt();
+					global_root[1] = AllRootsTable->GetValue(row,2).ToUnsignedInt();
+					global_root[2] = AllRootsTable->GetValue(row,3).ToUnsignedInt();
+					if(regionMontage_all.IsInside(global_root))
+					{
+						AllRootsTable->SetValue(row, 1, global_root[0] - regionMontage_all.GetIndex()[0]);
+						AllRootsTable->SetValue(row, 2, global_root[1] - regionMontage_all.GetIndex()[1]);
+						AllRootsTable->SetValue(row, 3, global_root[2] - regionMontage_all.GetIndex()[2]);
+						rootsTable->InsertNextRow(AllRootsTable->GetRow(row));
+						AllRootsTable->RemoveRow(row);
+						row--;
+					}
+				}
+				std::string testRootsTableFileName = _outPathTemp+"/test_roots_table_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				ftk::SaveTable(testRootsTableFileName, rootsTable);
+				}
+				std::string nucleiTableFileName = _outPathTemp+"/InsideNucleiTable_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				nucleiTable = ftk::LoadTable(nucleiTableFileName);
+				//Images_Tiles[0] = imageLocalCy5;
+				//Images_Tiles[1] = imageLocalTRI;
+				//Images_Tiles[2] = imageLocalGFP;
+				//Images_Tiles[3] = imageLocalDAP;
+				Images_Tiles[0] = imageLocalTRI;
+				Label_Tiles[0] = imageLocalLabel;
+				Table_Tiles[0] = nucleiTable;
+				Dist_Map_Tiles[0] = imageLocalDist_Map;
+				root_Vector_Tables[0] = rootsTable;
+								
+// 				RunSegmentation(regionLocal_inside, Images_Tiles, Label_Tiles, Table_Tiles, Centroids_Tiles);
+				
+				//Label_Tiles[0] = RunNuclearSegmentation( Images_Tiles[3] );
+				//Table_Tiles[0] = ComputeFeaturesAndAssociations( Images_Tiles, Label_Tiles );
+				//Centroids_Tiles[0] = GetLabelToCentroidMap(Table_Tiles[0]);
+
+				AstroTracer * AT = new AstroTracer();
+				AT->LoadCurvImage(Images_Tiles[0], 0);
+				AT->LoadParameters(_astroTraceParams.c_str());	
+				AT->SetScaleRange(4, 4); //(2, 5); //(2, 2)
+				AT->Set_DistanceMapImage(imageLocalDist_Map);
+				AT->ReadRootPointsPipeline(root_Vector_Tables);
+				AT->ReadNucleiFeaturesPipeline(Table_Tiles);
+				AT->ComputeFeaturesFromCandidateRootsPipeline(regionLocal_inside, Table_Tiles);
+				std::string AppendedNucleiTableFileName = _outPathTemp+"/AppendedNucleiTable_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				AT->WriteNucleiFeatures(AppendedNucleiTableFileName);
+				delete AT;
+				//RemoveLabelNearBorder(regionLocal_inside, root_Images, root_Vector_Tables, Centroids_Tiles );
+
+			}
+		}
+	}
+
+	vtkSmartPointer< vtkTable > AllNucleiTable = vtkSmartPointer< vtkTable >::New();
+	AllNucleiTable->Initialize();
+
+	for(int xco = 0; xco < _kx; xco++)
+	{
+		for(int yco = 0; yco < _ky; yco++)
+		{
+			for(int zco = 0; zco < _kz; zco++)
+			{
+				//#pragma omp critical
+				//{
+				//	++contadorSegment;
+				//	std::cout<<std::endl<< "\t\t--->>> ImageSegment " << contadorSegment << " of " << _kx*_ky*_kz;
+				//}
+				
+				rawImageType_8bit::RegionType regionLocal_inside = ComputeLocalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				rawImageType_uint::RegionType regionMontage_inside = ComputeGlobalRegionSegment( ImageMontageSize, xco, yco, zco ); // The inside
+				
+				rawImageType_8bit::RegionType regionLocal_all = ComputeLocalRegionSplit( ImageMontageSize, xco, yco, zco );
+				rawImageType_8bit::RegionType regionMontage_all = ComputeGlobalRegionSplit( ImageMontageSize, xco, yco, zco );
+
+				// Store local image
+				std::stringstream out_x;
+				std::stringstream out_y;
+				std::stringstream out_z;
+				out_x<<xco;
+				out_y<<yco;
+				out_z<<zco;
+				std::string xStr = out_x.str();
+				std::string yStr = out_y.str();
+				std::string zStr = out_z.str();
+
+				std::string AppendedNucleiTableFileName = _outPathTemp+"/AppendedNucleiTable_"+xStr+"_"+yStr+"_"+zStr+".txt";
+				vtkSmartPointer< vtkTable > nucleiTable = ftk::LoadTable(AppendedNucleiTableFileName);
+
+				if( (xco==0) && (yco==0) && (zco==0) )
+				{
+					for(int col=0; col<(int)nucleiTable->GetNumberOfColumns(); col++)
+					{
+						vtkSmartPointer< vtkDoubleArray > column = vtkSmartPointer< vtkDoubleArray >::New();
+						column->SetName(nucleiTable->GetColumnName(col));
+						AllNucleiTable->AddColumn(column);
+					}
+				}
+				for(int row=0; row<(int)nucleiTable->GetNumberOfRows(); row++)
+				{
+					itk::Index<3> local_centroid;
+					local_centroid[0] = nucleiTable->GetValue(row,1).ToUnsignedInt();
+					local_centroid[1] = nucleiTable->GetValue(row,2).ToUnsignedInt();
+					local_centroid[2] = nucleiTable->GetValue(row,3).ToUnsignedInt();
+					nucleiTable->SetValue(row, 1, local_centroid[0] + regionMontage_all.GetIndex()[0]);
+					nucleiTable->SetValue(row, 2, local_centroid[1] + regionMontage_all.GetIndex()[1]);
+					nucleiTable->SetValue(row, 3, local_centroid[2] + regionMontage_all.GetIndex()[2]);
+					AllNucleiTable->InsertNextRow(nucleiTable->GetRow(row));
+				}				
+			}
+		}
+	}
+
+	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(_final_classification_model);
+
+	// to generate the Active Learning Matrix
+	vnl_matrix<double> act_learn_matrix;
+	act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
+	for(int row = 2; row<(int)active_model_table->GetNumberOfRows(); ++row)
+	{
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+		{
+			act_learn_matrix.put(col, row-2, active_model_table->GetValue(row,col).ToDouble());
+		}
+	}
+
+	//to generate the std_deviation and the mean vectors
+	vnl_vector<double> std_dev_vec, mean_vec; 
+	std_dev_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	mean_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	for(int col=1; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		std_dev_vec.put(col-1, active_model_table->GetValue(0,col).ToDouble());
+		mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
+	}
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveColumn(0);
+
+	std::string classification_name = "4_class";
+	double confidence_thresh = 0.25;
+
+	MCLR* mclr = new MCLR();
+	//Number of features and classes needed in "add_bias" fuction of MCLR
+	mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
+	mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
+
+	//setup the test data
+	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+	test_table->Initialize();
+	for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(active_model_table->GetColumnName(col));
+		column->SetNumberOfValues(AllNucleiTable->GetNumberOfRows());
+		test_table->AddColumn(column);	
+	}
+	for(int row = 0; row < (int)AllNucleiTable->GetNumberOfRows(); ++row)
+	{	
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
+			model_data1->InsertNextValue(AllNucleiTable->GetValueByName(row,test_table->GetColumnName(c)));
+		test_table->InsertNextRow(model_data1);
+	}
+
+	////// Final Data  to classify from the model
+	vnl_matrix<double> data_classify;
+	data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+	data_classify = data_classify.transpose();
+
+	vnl_matrix<double> currprob;
+	currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
+
+	std::string prediction_col_name = "prediction_active_" + classification_name;
+	std::string confidence_col_name = "confidence_" + classification_name;
+
+	// Add the Prediction Column 
+	std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, AllNucleiTable );
+	if(prediction_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(prediction_col_name.c_str());
+		column->SetNumberOfValues( AllNucleiTable->GetNumberOfRows() );
+		AllNucleiTable->AddColumn(column);
+	}
+
+	// Add the confidence column
+	std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, AllNucleiTable );
+	if(confidence_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+		column_confidence->SetName(confidence_col_name.c_str());
+		column_confidence->SetNumberOfValues( AllNucleiTable->GetNumberOfRows() );
+		AllNucleiTable->AddColumn(column_confidence);
+	}
+
+	for(int row = 0; row<(int)AllNucleiTable->GetNumberOfRows(); ++row)  
+	{
+		vnl_vector<double> curr_col = currprob.get_column(row);
+		AllNucleiTable->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+		if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+		{
+			AllNucleiTable->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
+		}
+		else
+		{
+			AllNucleiTable->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
+		}
+	}
+	
+	delete mclr;
+		
+
+	std::string tempMulti_Class_Nuclei_Table_Table = _outPathTemp+"/Multi_Class_Nuclei_Table.txt";
+	ftk::SaveTable(tempMulti_Class_Nuclei_Table_Table, AllNucleiTable);
+}
+
 	
 	
 
-
-//void ftkMainDarpaAstroTrace::runTracing()
-//{
-//	std::cout << std::endl << "LETS TRACE";
-//	
-//	if( _isSmall == 1 )
-//	{
-//		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
-//		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
-//		omp_set_nested(1); // For the crop
-//		omp_set_max_active_levels(2); // For the crop
-//		int num_threads = 1;
-//		omp_set_num_threads(num_threads);
-//	}
-//
-//	int counterCentro = 0;
-//	std::vector< itk::Index<3> > centroid_list = getCentroidList();
-//	std::cout << "Number of cells to be traced : " << centroid_list.size() << "\n";
-//
-//	std::string SWCFilename = _outPath + "/OnlySWC.xml";
-//	std::ofstream outSWCFile;
-//	outSWCFile.open(SWCFilename.c_str());
-//	outSWCFile << "<?xml\tversion=\"1.0\"\t?>\n";
-//	outSWCFile << "<Source>\n\n";
-//		
-//	computeSplitConst();
-//		
-//	// CAN NOT BE RUN PARALLEL
-//	for( unsigned int bigTile = 0; bigTile<_numDivisionsInRowCEN ; ++bigTile )
-//	{
-//			std::cout<<std::endl<<"bigTile: "<<bigTile;
-//			std::cout << std::endl << "_initialBigTileLOG: " << _initialBigTileLOG[bigTile][0] <<", "<<_initialBigTileLOG[bigTile][1] <<", "<<_initialBigTileLOG[bigTile][2];
-//			std::cout << std::endl << "_sizeOfBigTilesLOG: " << _sizeOfBigTilesLOG[bigTile][0] <<", "<<_sizeOfBigTilesLOG[bigTile][1] <<", "<<_sizeOfBigTilesLOG[bigTile][2];
-//		
-//// 			stringstream out34;
-//// 			out34<<bigTile;
-//// 			string srr = out34.str();
-//// 			std::string SWCFilenameDivided = _outPath + "/TracesAndSomasDivided/OnlySWC_" + srr +".xml";
-//// 			std::ofstream outfileDivided;
-//// 			outfileDivided.open(SWCFilenameDivided.c_str());
-//// 			outfileDivided << "<?xml\tversion=\"1.0\"\t?>\n";
-//// 			outfileDivided << "<Source>\n\n";
-//
-//		itk::Index<3> initialBigIndexLOG;
-//		itk::Size<3> sizeOfTheRegionLOG;
-//		
-//		initialBigIndexLOG[0] = _initialBigTileLOG[bigTile][0];
-//		initialBigIndexLOG[1] = _initialBigTileLOG[bigTile][1];
-//		initialBigIndexLOG[2] = _initialBigTileLOG[bigTile][2];
-//		
-//		sizeOfTheRegionLOG[0] = _sizeOfBigTilesLOG[bigTile][0];
-//		sizeOfTheRegionLOG[1] = _sizeOfBigTilesLOG[bigTile][1]+_sizeOfBigTilesLOG[bigTile+1][1];
-//		sizeOfTheRegionLOG[2] = _sizeOfBigTilesLOG[bigTile][2];
-//		
-//		std::cout << std::endl << "sizeOfTheRegionLOG: " << sizeOfTheRegionLOG[0] <<", "<<sizeOfTheRegionLOG[1] <<", "<<sizeOfTheRegionLOG[2];
-//		
-//// 		std::cout << std::endl << initialBigIndexLOG;
-//// 		std::cout << std::endl << "SIZE: " << sizeOfTheRegionLOG[1];
-//		
-//		rawImageType_flo::RegionType desiredRegionBigTileLOG;
-//		desiredRegionBigTileLOG.SetSize(sizeOfTheRegionLOG);
-//		desiredRegionBigTileLOG.SetIndex(initialBigIndexLOG);
-//		
-//		itk::Index<3> initialBigIndexCEN;
-//		itk::Size<3> sizeOfTheRegionCEN;
-//		
-//		initialBigIndexCEN[0] = _initialBigTileCEN[bigTile][0];
-//		initialBigIndexCEN[1] = _initialBigTileCEN[bigTile][1];
-//		initialBigIndexCEN[2] = _initialBigTileCEN[bigTile][2];
-//		
-//		sizeOfTheRegionCEN[0] = _sizeOfBigTilesCEN[bigTile][0];
-//		sizeOfTheRegionCEN[1] = _sizeOfBigTilesCEN[bigTile][1];
-//		sizeOfTheRegionCEN[2] = _sizeOfBigTilesCEN[bigTile][2];
-//		
-//		std::cout << std::endl << "_sizeOfBigTilesCEN: " << _sizeOfBigTilesCEN[bigTile][0] <<", "<<_sizeOfBigTilesCEN[bigTile][1] <<", "<<_sizeOfBigTilesCEN[bigTile][2];
-//		std::cout << std::endl << desiredRegionBigTileLOG;
-//		
-//// 			std::vector< rawImageType_flo::Pointer > LoGDesiredRegion;
-//// 			LoGDesiredRegion.resize(6);
-//		
-//// 			rawImageType_uint::Pointer _somaMontageDesiredRegion;
-//// 			rawImageType_flo::Pointer _img_traceDesiredRegion;
-//		
-//// 			std::string tempFileName_42 = _GFP_ImagePREPMNT
-//		_img_traceDesiredRegion = readImageRegion< rawImageType_flo >( _TRI_ImagePREPMNT.c_str(), desiredRegionBigTileLOG );
-//		_somaMontageDesiredRegion = readImageRegion< rawImageType_uint >( _Soma_MontageNRRD.c_str(), desiredRegionBigTileLOG );
-//
-//	#pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
-//		for( unsigned long long a=0; a<centroid_list.size(); ++a )
-//		{
-//			int x, y, z;
-//			std::stringstream ssx, ssy, ssz;
-//
-//			x = centroid_list[a][0];
-//			y = centroid_list[a][1];
-//			z = centroid_list[a][2];
-//			
-//			unsigned long long yMin = initialBigIndexCEN[1];
-//			unsigned long long yMax = initialBigIndexCEN[1] + sizeOfTheRegionCEN[1];
-//
-//			if(!( (yMin <= y) && (y < yMax) ) )
-//			{
-//				continue;
-//			}
-//			
-//			ssx << x; ssy << y; ssz << z;
-//			
-//	#pragma omp critical
-//			{
-//				counterCentro++;
-//				std::cout<<std::endl<<"\t\t\t\t asdfasdf ----->>>>> " << counterCentro << ", of " << centroid_list.size();
-//				std::cout<<", x: "<<centroid_list[a][0]<<", y: "<<centroid_list[a][1]<<", z: "<<centroid_list[a][2]<<std::endl;
-//			}
-//
-//// 			std::cout << std::endl << "x: " << x << ", y: " << y << ", z: " << z;
-//// 			std::cout << std::endl << "xTile: " << _xTile << ", yTile: " << _yTile << ", zTile: " << _zTile;
-//
-//			std::stringstream ssx_off, ssy_off, ssz_off;		
-//			std::stringstream ssx_offBig, ssy_offBig, ssz_offBig;
-//			ssx_offBig << 0;
-//			ssy_offBig << 0;
-//			ssz_offBig << 0;
-//			if(x >= _xTile/2)
-//				ssx_off << x - _xTile/2;
-//			else 
-//				ssx_off << 0;
-//			if(y >= _yTile/2)
-//				ssy_off << y - _yTile/2;
-//			else 
-//				ssy_off << 0;
-//			if(z >= _zTile/2)
-//				ssz_off << z - _zTile/2;
-//			else 
-//				ssz_off << 0;
-//
-//// 			std::cout << std::endl << "_initialBigTileLOG: " << _initialBigTileLOG[bigTile][1];
-//			
-//			int x_local = x;
-//			int y_local = y - _initialBigTileLOG[bigTile][1];
-//			int z_local = z;
-//			
-//// 			std::cout << std::endl << "x_local: " << x_local << ", y_local: " << y_local << ", z_local: " << z_local;
-//// 			std::cout << std::endl << "x: " << x << ", y: " << y << ", z: " << z;
-//			
-//			if(x_local >= _xTile/2)
-//				ssx_offBig << x_local - _xTile/2;
-//			else 
-//				ssx_off << 0;
-//			if(y_local >= _yTile/2)
-//				ssy_offBig << y_local - _yTile/2;
-//			else 
-//				ssy_off << 0;
-//			if(z_local >= _zTile/2)
-//				ssz_offBig << z_local - _zTile/2;
-//			else 
-//				ssz_off << 0;
-//
-//			//########    CROP THE DESIRED DICE FROM THE GFP AND SOMA MONTAGES   ########
-//
-//			
-//			//########    FETCH ALL CENTROIDS THAT FALL WITHIN THE DICE    ########
-//
-//			std::vector< itk::Index<3> > soma_Table = getSomaTable(centroid_list, x, y, z );
-//			
-//// 			//########    RUN TRACING    ########
-//			MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
-//			MNT->LoadParameters(_astroTraceParams.c_str(),5);
-//// 				
-//// 				MNT->LoadCurvImage_1(img_trace, 0);
-//			#pragma omp critical
-//			{
-//// 				std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
-//				rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
-//				MNT->LoadCurvImage_2(img_trace);
-//			}
-//			MNT->ReadStartPoints_1(soma_Table, 0);
-//// 				MNT->SetCostThreshold(1000);
-//			MNT->SetCostThreshold(MNT->cost_threshold);
-//			
-//// 	// 			MNT->LoadSomaImage_1(img_soma_yan);
-//			bool flagLog = false;
-//			MNT->setFlagOutLog(flagLog);
-//			MNT->RunTracing();
-//			
-//			#pragma omp critical
-//			{
-//				rawImageType_uint::Pointer img_soma = cropImages< rawImageType_uint >( _somaMontageDesiredRegion, x, y, z);
-//				MNT->RemoveSoma( img_soma );
-//			}
-//// 
-//			x = min(_xTile/2, x);
-//			y = min(_yTile/2, y);
-//			z = min(_zTile/2, z);
-////
-//			vtkSmartPointer< vtkTable > swcTable = MNT->GetSWCTable(0);
-//			delete MNT;
-//			std::string swcFilename = _outPath + "/Trace_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc";
-//			WriteCenterTrace(swcTable, x, y, z, swcFilename);
-//// 				
-//			#pragma omp critical
-//			{
-//				outSWCFile << "\t<File\tFileName=\"Trace_" << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "_ANT.swc\"\tType=\"Trace\"\ttX=\"" << ssx_off.str() << "\"\ttY=\"" << ssy_off.str() << "\"\ttZ=\"" << ssz_off.str() << "\"/>\n";
-//			}
-//			
-//// // 				vtkSmartPointer< vtkTable > swcTable = MNT->GetSWCTable(0);
-//// 				std::string swcFilenameDivided = _outPath + "/TracesAndSomasDivided/Trace_BigTile_" + srr + "_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + "_ANT.swc";
-//// 				WriteCenterTrace(swcTable, x, y, z, swcFilenameDivided);
-//// // 				
-//// 				#pragma omp critical
-//// 				{
-//// 					outfileDivided << "\t<File\tFileName=\"Trace_BigTile_" << srr << "_" << ssx.str() << "_" << ssy.str() << "_" << ssz.str() << "_ANT.swc\"\tType=\"Trace\"\ttX=\"" << ssx_offBig.str() << "\"\ttY=\"" << ssy_offBig.str() << "\"\ttZ=\"" << ssz_offBig.str() << "\"/>\n";
-//// 				}
-//		}
-//	}
-//}
 
 	
 void ftkMainDarpaAstroTrace::RemoveLabelNearBorder(rawImageType_8bit::RegionType regionLocal_inside,std::vector< rawImageType_16bit::Pointer >& Label_Tiles, std::vector< vtkSmartPointer< vtkTable > >& Table_Tiles, std::vector< std::map< unsigned int, itk::Index<3> > >& Centroids_Tiles )
@@ -1057,8 +1238,8 @@ void ftkMainDarpaAstroTrace::RemoveLabelNearBorder(rawImageType_8bit::RegionType
 
 std::map< unsigned int, itk::Index<3> > ftkMainDarpaAstroTrace::GetLabelToCentroidMap( vtkSmartPointer< vtkTable > table)
 {
-	std::cout << std::endl << (int)table->GetNumberOfRows();
-	std::cout << std::endl << (int)table->GetNumberOfRows();
+	//std::cout << std::endl << (int)table->GetNumberOfRows();
+	//std::cout << std::endl << (int)table->GetNumberOfRows();
 	
 	std::map< unsigned int, itk::Index<3> > centroidMap;
 	for (int row=0; row<(int)table->GetNumberOfRows(); ++row)
