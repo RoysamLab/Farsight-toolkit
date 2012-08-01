@@ -153,6 +153,7 @@ public:
 	float debris_threshold;
 	int offshoot;
 	int device;
+	void RemoveSoma( LabelImageType3D::Pointer image2 );
 
 		
 protected:

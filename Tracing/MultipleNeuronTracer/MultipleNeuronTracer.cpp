@@ -617,10 +617,17 @@ void MultipleNeuronTracer::RunTracing(void)
 	Interpolate(2.0);	
 	std::cout << "Interpolate2 took: " << (clock() - Interpolate2_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	clock_t RemoveIntraSomaNodes_start_time = clock();
-	RemoveIntraSomaNodes();
-	std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+// 	clock_t RemoveIntraSomaNodes_start_time = clock();
+// 	RemoveIntraSomaNodes();
+// 	std::cout << "RemoveIntraSomaNodes took: " << (clock() - RemoveIntraSomaNodes_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
+}
+
+void MultipleNeuronTracer::RemoveSoma( LabelImageType3D::Pointer image )
+{
+	_SomaImage = image;
+	RemoveIntraSomaNodes();
+	
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
