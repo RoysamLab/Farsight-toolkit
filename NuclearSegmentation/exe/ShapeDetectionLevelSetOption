@@ -1,0 +1,11 @@
+-sigmoid_alfa 3
+-sigmoid_beta 50
+-time_threhold 5
+-curvature_scaling 0.5
+-rmsThreshold 0.02
+-max_iterations 800
+-hole_size 10
+-min_object_size 0
+-start_x 0
+-start_y 0
+-start_z 0

@@ -1,0 +1,16 @@
+-sigmoid_alfa 3
+-sigmoid_beta 50
+-advection_scaling 0.5
+-curvature_scaling 0.5
+-max_iterations 800
+-rmsThreshold 0.02
+-min_object_size 0
+
+-sigma 3
+-numberOfIterations 3
+-noiseLevel 500
+
+
+-start_x 0
+-start_y 0
+-start_z 0

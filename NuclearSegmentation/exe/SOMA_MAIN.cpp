@@ -10,55 +10,52 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 
 int main(int argc, char* argv[])
 {	
-	if( argc != 4 && argc != 5 && argc != 6 && argc != 12)
+	if( argc != 4 && argc != 6)
 	{
-		std::cout<<"MakeDices: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
-		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <SomaCentroids.txt> <SomaImage.tif> <alfa 1> <beta 30> <Time Threshold (typically near 10)> <Curvature Scaling (typically 0.5)>\
-					<RMS Error (typically 0.02)> <Hole Size (typically 10)> <Min Object Size (typically 1500)> <Nucleus Table:1; Centroids table:0>\n";
+		std::cout<<"Debris: SomaExtraction <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
+		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
+		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <SomaCentroids.txt> <Nucleus Table:1; Centroids table:0> <Options> <SomaImage.tif> \n";
 		return 0;
 	}
 
-	if( argc == 4)
+	/// debris accumulation
+	if( argc == 4)    
 	{
 		SomaExtractor *Somas = new SomaExtractor();
+		std::cout<< "Reading Montage1"<<std::endl;
 		SomaExtractor::OutputImageType::Pointer inputImage = Somas->Read8BitImage(argv[1]);
+		std::cout<< "Reading Montage2"<<std::endl;
+		SomaExtractor::OutputImageType::Pointer debrisImage = Somas->Read8BitImage(argv[2]);
 		std::vector< itk::Index<3> > somaSeeds;
 		std::vector< itk::Index<3> > debrisSeeds;
-		Somas->ReadSeedpoints( argv[2], somaSeeds, 0);
-		Somas->ReadSeedpoints( argv[3], debrisSeeds, 0);
+
+		Somas->ReadSeedpoints( argv[3], somaSeeds, 0);
+		std::cout<< somaSeeds.size()<<std::endl;
+		std::cout<< "Generating Debris Centroids..."<<std::endl;
+		Somas->GetDebrisCentroids( debrisImage, debrisSeeds);
+		//Somas->ReadSeedpoints( argv[3], debrisSeeds, 0);
+		std::cout<< debrisSeeds.size()<<std::endl;
+		std::cout<< "Associating Debris with Nucleus..."<<std::endl;
 		Somas->AssociateDebris(inputImage, somaSeeds, debrisSeeds);
 		delete Somas;
 	}
 
+	/// soma segmentation
 	if( argc == 6)
-	{
-		SomaExtractor *Somas = new SomaExtractor();
-		std::cout << "Entering SetInputImage" << std::endl;
-		Somas->SetInputImage(argv[1]);
-		SomaExtractor::ProbImageType::Pointer image = Somas->GetFloatInputImage();
-		SomaExtractor::ProbImageType::Pointer image2 = Somas->EnhanceContrast( image, atof(argv[2]), atof(argv[3]), atof(argv[4]));
-		Somas->writeImage("EnhanceImage.tif", image2);
-	}
-
-	if( argc == 5)
-	{
-		MakeDices(argv[1], argv[2], atoi(argv[3]), 3.0, 30.0, 5, 0.6, 0.02, atoi(argv[4]), 1000);
-	}
-
-	if( argc == 12)
 	{
 		SomaExtractor *Somas = new SomaExtractor();
 
 		std::cout << "Entering SetInputImage" << std::endl;
 		Somas->SetInputImage(argv[1]);
 		std::vector< itk::Index<3> > seedVector;
+		Somas->LoadOptions( argv[4]);
 
 		bool bNucleusTable = false;
-		if(atoi(argv[11]) != 0)
+		if(atoi(argv[3]) != 0)
 		{
 			bNucleusTable = true;
 		}
-
+		
 		Somas->ReadSeedpoints( argv[2], seedVector, bNucleusTable);
 		SomaExtractor::ProbImageType::Pointer image = Somas->GetFloatInputImage();
 
@@ -67,10 +64,10 @@ int main(int argc, char* argv[])
 		clock_t SomaExtraction_start_time = clock();
 		
 		std::cout<< "Segmenting..."<<std::endl;
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, seedVector, atof(argv[4]), atof(argv[5]), atoi(argv[6]), atof(argv[7]), atof(argv[8]), atoi(argv[9]), atoi(argv[10]));
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, seedVector);
 
 		std::cout<< "Writing Soma Image."<<std::endl;
-		Somas->writeImage(argv[3], segImage);
+		Somas->writeImage(argv[5], segImage);
 		Somas->writeCentroids( "NewSomaCentroids.txt" ,seedVector);
 
 		vtkSmartPointer<vtkTable> table = Somas->ComputeSomaFeatures(segImage);
@@ -147,17 +144,17 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 		float Origion[3] = {0,0,0};
 		diceImage->SetOrigin(Origion);
 
-		SomaExtractor::SegmentedImageType::Pointer segImage= somaExtractor->SegmentSoma(diceImage, seedsForDice, alfa, 
-							beta, timethreshold, curvatureScaling, rmsThres, holeSize, minObjSize);
+		//SomaExtractor::SegmentedImageType::Pointer segImage= somaExtractor->SegmentSoma(diceImage, seedsForDice, alfa, 
+		//					beta, timethreshold, curvatureScaling, rmsThres, holeSize, minObjSize);
 		//double threshold = 0;
-		//ImageType::Pointer segImage = Somas->EnhanceContrast(diceImage, seedIndex[2], alfa, beta, threshold);
-
-#pragma omp critical
-		std::cout<< "segment "<< i<<"\t"<<seedsForDice.size()<<std::endl;
-		std::ostringstream oss;
-		oss<< "Dice_Segment_"<< i<<".tif";
-		std::string str = oss.str();
-		somaExtractor->writeImage(str.c_str(), segImage);
+//		//ImageType::Pointer segImage = Somas->EnhanceContrast(diceImage, seedIndex[2], alfa, beta, threshold);
+//
+//#pragma omp critical
+//		std::cout<< "segment "<< i<<"\t"<<seedsForDice.size()<<std::endl;
+//		std::ostringstream oss;
+//		oss<< "Dice_Segment_"<< i<<".tif";
+//		std::string str = oss.str();
+//		somaExtractor->writeImage(str.c_str(), segImage);
 		delete somaExtractor;
 	}
 	delete Somas;
