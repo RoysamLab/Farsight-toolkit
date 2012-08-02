@@ -745,6 +745,8 @@ void ftkMainDarpaAstroTrace::runStitchRoots(  )
 // 					// TEST SAVE SEGMENTATION WITH LABELS REMOVED
 				std::string tempTABLERE = _outPathTemp+"/rootVector_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
 				root_Vector_Tables[0] = ftk::LoadTable(tempTABLERE);
+				if(!root_Vector_Tables[0])
+					continue;
 				
 				std::string tempLABELRE = _outPathTemp+"/rootsImage_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.nrrd";
 				root_Images[0] = readImage<rawImageType_16bit>(tempLABELRE.c_str());
