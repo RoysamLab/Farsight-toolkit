@@ -557,6 +557,8 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 				
 				
 				// TEST SAVE SEGMENTATION WITH LABELS REMOVED
+				if(!root_Vector_Tables[0])
+					continue;
 				#pragma omp critical
 				{
 					std::string tempTABLERE = _outPathTemp+"/rootVector_"+"_"+xStr+"_"+yStr+"_"+zStr+"_REMO.txt";
