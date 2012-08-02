@@ -3559,6 +3559,12 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 	
 	std::cout << "Computing features around N points. " << points_list.size() << std::endl;
 
+	if(points_list.size() == 0)
+	{
+		std::cout << "NO N POINTS FOUND. RETURNING. " << std::endl;
+		return;
+	}
+
 	//Preparing IDImage
 	LabelImageType3D::RegionType id_reg;
 	LabelImageType3D::IndexType id_st;
