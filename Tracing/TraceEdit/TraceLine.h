@@ -189,6 +189,7 @@ public:
 	double GetCompartmentCurvature();
 	double Euclidean(TraceBit bit1, TraceBit bit2);
 private:
+	std::set<long int> bitIDs;
 
 	double Angle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);

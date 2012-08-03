@@ -108,7 +108,7 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Min Segment Surface Area");
 	this->headers.push_back("Ave Segment Surface Area");
 	this->headers.push_back("Max Segment Surface Area");
-	this->headers.push_back("Tot Segment Section Area");
+	//this->headers.push_back("Tot Segment Section Area");
 	this->headers.push_back("Min Segment Section Area");
 	this->headers.push_back("Ave Segment Section Area");
 	this->headers.push_back("Max Segment Section Area");

@@ -223,7 +223,7 @@ void TraceLine::calculateVol()
 		this->radii = this->m_trace_bits.front().r; 
 		this->sectionArea = PI*pow((this->radii),2);
 		this->surfaceArea = 4*this->sectionArea;
-		this->volume = (4/3)*PI*pow((this->radii),3);
+		this->volume = (4.0/3.0)*PI*pow((this->radii),3);
 		this->BurkTaper = 0;
 		this->HillmanTaper = 0;
 	}//end else
@@ -423,11 +423,13 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 	 * @param ImageName feature header
 	 */
 
-	//add a black border to evaluate edge voxels
-	//std::cout << "setTraceBitWeightedIntensities" << std::endl;
 	int totalIntensity = 0;
 	if (this->m_trace_bits.size()>1)
 	{
+		//FILE*fp = fopen("C:/TestDelete/intensity.txt","a");
+		//fprintf(fp,"\nRootID	SegmentID	BitID	Pathlength	Intensity\n");
+		double dist = 0;
+
 		TraceBit curBit, nextBit;
 		TraceBitsType::iterator it = this->m_trace_bits.begin();
 		curBit = *it;
@@ -465,6 +467,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			}
 			int radius = (int) floor(new_radius+0.5);
 
+			dist += Euclidean(curBit, nextBit);
 			//int length = (int) floor(sqrt(pow(distance[0],2)+pow(distance[1],2)+pow(distance[2],2))+0.5);
 			//std::cout << "Length: " << length << std::endl;
 
@@ -516,6 +519,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 			moving_index[1] = curBit.y-curBit.r;
 			moving_index[2] = curBit.z-curBit.r;
 
+			int localIntensity = 0;
 			for (int i = 0; i < num_of_voxels; i++)
 			{
 				//boundary conditions
@@ -591,6 +595,7 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 					// Get value of current pixel
 					unsigned char pixel_value = imageIterator.Get();
 					totalIntensity += (int) pixel_value;
+					localIntensity += (int) pixel_value;
 					//std::cout << "Pixel intensity: " << (int) pixel_value << std::endl;
 					++imageIterator;
 
@@ -607,15 +612,15 @@ void TraceLine::setTraceBitWeightedIntensities(ImageType::Pointer input_image, s
 					start_index[i] = (int) floor( moving_index[i] + 0.5 );
 					size[i] = boxSide;
 				}
-			}
+			}//endfor num_of_voxels
+				
+			//fprintf(fp,"%d\t%d\t%d\t%d\t%f\t%d\n", GetRootID(), GetId(), GetLevel(), curBit.id, dist, localIntensity);
 			
 			curBit = nextBit;
 		}//endfor m_trace_bits
+		//fclose(fp);
 	}//endif size
 	vtkVariant Intensity = vtkVariant(totalIntensity);
-	//FILE*fp = fopen("C:/TestDelete/test1.txt","w");
-	//fprintf(fp,"\n%d\n",Intensity.ToInt());
-	//fclose(fp);
 	this->modified = true;
 	this->SetTraceFeature(ImageName, Intensity);
 

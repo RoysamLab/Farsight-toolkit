@@ -22,7 +22,7 @@ NodeModel::~NodeModel()
 	this->Selection = NULL;
 }
 
-void NodeModel::SetNodes(std::vector<TraceBit> trace_bits)
+void NodeModel::SetNodes(std::vector<TraceBit> trace_bits) //pass in tracelines instead of tracebits b/c lack of pointer?
 {
 	this->TraceBits.clear();
 	this->TraceBits = trace_bits;

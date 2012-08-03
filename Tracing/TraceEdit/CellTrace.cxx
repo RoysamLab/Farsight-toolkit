@@ -194,25 +194,14 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->skewnessX = (somaX - (minX + (maxX - minX)/2)); /// ((float)(maxX - minX)/2);
 	this->skewnessY = (somaY - (minY + (maxY - minY)/2)); /// ((float)(maxY - minY)/2);
 	this->skewnessZ = (somaZ - (minZ + (maxZ - minZ)/2)); /// ((float)(maxZ - minZ)/2);
-	this->euclideanSkewness = sqrt(pow(skewnessX, 2) + pow(skewnessY, 2) + pow(skewnessZ, 2)) / sqrt(3.0);
+	this->euclideanSkewness = sqrt(pow(skewnessX, 2) + pow(skewnessY, 2) + pow(skewnessZ, 2));
 
-	if (tips.size() > 0) //do superellipsoid here
+	if (tips.size() > 0)
 	{
 		this->tipMagnitude = sqrt(pow(totalTipX,2)+pow(totalTipY,2)+pow(totalTipZ,2));
 		this->tipAzimuth = atan2(totalTipY,totalTipX)*180/PI;
 		double hypotenuse = sqrt(pow(totalTipX,2)+pow(totalTipY,2));
 		this->tipElevation = atan2(totalTipZ,hypotenuse)*180/PI;
-
-		//time_t begin_time = time(NULL);
-
-		//ConvexHull3D * convex_hull = new ConvexHull3D();
-		//this->bounding_tips_indices = convex_hull->getBoundaryPoints( tips );
-		//get centroid of convex hull?
-
-		//GetPolyData(Segments[0]);
-
-		//time_t end_time = time(NULL);
-		//std::cout << "Elapsed time: " << difftime(end_time,begin_time) << std::endl;
 	}
 	this->modified = true;
 }
@@ -574,7 +563,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->skewnessZ);
 		CellData->InsertNextValue(this->euclideanSkewness);
 
-		CellData->InsertNextValue(this->NumSegments);
+		CellData->InsertNextValue(this->NumSegments-1);
 		CellData->InsertNextValue(this->stems);
 		CellData->InsertNextValue(this->branchingStem);
 		CellData->InsertNextValue(this->branchPoints);
@@ -609,7 +598,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->SurfaceAreaMin);
 		CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
 		CellData->InsertNextValue(this->SurfaceAreaMax);
-		CellData->InsertNextValue(this->sectionAreaTotal);
+		//CellData->InsertNextValue(this->sectionAreaTotal);
 		CellData->InsertNextValue(this->SectionAreaMin);
 		CellData->InsertNextValue(this->sectionAreaTotal/this->NumSegments);
 		CellData->InsertNextValue(this->SectionAreaMax);
@@ -624,11 +613,17 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->HillmanTaperTotal / this->NumSegments);
 		CellData->InsertNextValue(this->BurkTaperMax);
 
+		int noSomaNumSegments = this->NumSegments-1;
+		if (noSomaNumSegments == 0)
+		{
+			noSomaNumSegments = 1;
+		}
+
 		CellData->InsertNextValue(this->TotalEuclideanPath);
-		CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length
+		CellData->InsertNextValue(this->TotalEuclideanPath/noSomaNumSegments);//average segment euclidean length
 		CellData->InsertNextValue(this->PathLengthTotal);
 		CellData->InsertNextValue(this->PathLengthMin);
-		CellData->InsertNextValue(this->PathLengthTotal/this->NumSegments);//average segment length
+		CellData->InsertNextValue(this->PathLengthTotal/noSomaNumSegments);//average segment length
 		CellData->InsertNextValue(this->PathLengthMax);
 
 		CellData->InsertNextValue(this->MinStemDistance);
