@@ -1343,6 +1343,7 @@ vtkSmartPointer< vtkTable > ftkMainDarpaSegment::ComputeFeaturesAndAssociations(
 	{
 		color[0] = 255; color[1] = 255; color[2] = 0;
 		sourceImages->AppendChannelFromData3D( Images_Tiles[1]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "tri", color, true);
+	}
 	if( !_Cy5_Image.empty() )
 	{
 		color[0] = 0; color[1] = 255; color[2] = 255;
