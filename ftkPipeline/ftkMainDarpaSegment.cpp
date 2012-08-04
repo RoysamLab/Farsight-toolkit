@@ -1329,14 +1329,26 @@ vtkSmartPointer< vtkTable > ftkMainDarpaSegment::ComputeFeaturesAndAssociations(
 
 	ftk::Image::Pointer sourceImages = ftk::Image::New();
 	std::vector< unsigned char > color;
-	color.push_back(255); color.push_back(0); color.push_back(0);
-	sourceImages->AppendChannelFromData3D( Images_Tiles[3]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "dapi", color, true);
-	color[0] = 0; color[1] = 255; color[2] = 0;
-	sourceImages->AppendChannelFromData3D( Images_Tiles[2]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "gfp", color, true);
-	color[0] = 255; color[1] = 255; color[2] = 0;
- 	sourceImages->AppendChannelFromData3D( Images_Tiles[1]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "tri", color, true);
- 	color[0] = 0; color[1] = 255; color[2] = 255;
- 	sourceImages->AppendChannelFromData3D( Images_Tiles[0]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "cy5", color, true);
+	if( !_DAP_Image.empty( ) )
+	{
+		color.push_back(255); color.push_back(0); color.push_back(0);
+		sourceImages->AppendChannelFromData3D( Images_Tiles[3]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "dapi", color, true);
+	}
+	if( !_GFP_Image.empty() )
+	{
+		color[0] = 0; color[1] = 255; color[2] = 0;
+		sourceImages->AppendChannelFromData3D( Images_Tiles[2]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "gfp", color, true);
+	}
+	if( !_TRI_Image.empty() )
+	{
+		color[0] = 255; color[1] = 255; color[2] = 0;
+		sourceImages->AppendChannelFromData3D( Images_Tiles[1]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "tri", color, true);
+	if( !_Cy5_Image.empty() )
+	{
+		color[0] = 0; color[1] = 255; color[2] = 255;
+		sourceImages->AppendChannelFromData3D( Images_Tiles[0]->GetBufferPointer(), itk::ImageIOBase::UCHAR, sizeof(unsigned char), tileSize[0], tileSize[1], tileSize[2], "cy5", color,
+						       true);
+	}
 
 	ftk::Image::Pointer labelImage = ftk::Image::New();
 	color[0] = 255; color[1] = 255; color[2] = 255;
