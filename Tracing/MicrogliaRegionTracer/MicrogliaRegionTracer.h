@@ -43,6 +43,7 @@
 #include "itkBSplineScatteredDataPointSetToImageFilter.h"
 #include "itkBSplineControlPointImageFunction.h"
 #include "itkUnaryFunctorImageFilter.h"
+#include "itkLogImageFilter.h"
 
 #ifdef _OPENMP
 	#include "omp.h"

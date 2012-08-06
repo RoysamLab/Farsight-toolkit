@@ -9,7 +9,18 @@ int main(int argc, char* argv[])
 	MicrogliaRegionTracer *MRT;
 	
 	if (argc == 1)	//Only for development purposes
+	{
 		MRT = new MicrogliaRegionTracer("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/", "8bitkt06045_w311GFPdsu.TIF", "E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+		
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
+		MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/1262_1723_169_seedPoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
+	}
 	else if( argc < 5 )
 	{
 		std::cerr << "Usage: "
@@ -36,13 +47,6 @@ int main(int argc, char* argv[])
 	MRT->LoadImage("E:/farsight_images/MicrogliaRegionTracer/input.tif");*/
 
 	std::cout << "Entering LoadCellPoints" << std::endl;
-	MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/1262_1723_169_seedPoint.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
-	//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
 
 	//MRT->LoadCellPoints( argv[4] );
 

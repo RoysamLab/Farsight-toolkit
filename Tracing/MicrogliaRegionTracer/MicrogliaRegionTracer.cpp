@@ -1,5 +1,8 @@
 #include "MicrogliaRegionTracer.h"
 
+#define MASK 1
+#define PRINT_ALL_IMAGES 1
+
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
 {
 	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
@@ -7,8 +10,11 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Acquiring threads through OpenMP, so no need for ITK threads
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
+	//aspect_ratio = 1.0; //xy to z ratio in physical space here
 }
 
+/*	This function takes in the name of the seed points (where tracing starts) and then grabs a 200x200x100 region with mosaic_roi.
+	A new Cell object is created to hold the image and seed point and relevant information. */
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
 {
 	std::ifstream seed_point_file;
@@ -69,17 +75,19 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 	}
 }
 
+/* This is the main loop where tracing takes place */
 void MicrogliaRegionTracer::Trace()
 {
 	//Trace cell by cell
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
 	{
 		Cell* cell = cells[k];
 
 		//Get the mask
-		//cell->GetMask(this->soma_filename);
-		
+#if MASK	//development only
+		cell->GetMask(this->soma_filename);
+#endif
 		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
 		CalculateCandidatePixels(cell);
 
@@ -92,9 +100,9 @@ void MicrogliaRegionTracer::Trace()
 	}
 }
 
+/* This function determines the candidate pixels (pixels which we connect to form the tree) */
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 {
-	
 	CreateIsometricImage(cell);
 	
 	std::cout << "VesselnessDetection" << std::endl;
@@ -104,6 +112,7 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Cell* cell)
 	RidgeDetection(cell);
 }
 
+/* This function resamples the image and creates an "isometric" image according to the ratio set in the constructor */
 void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
 {
 	ImageType::SizeType inputSize = cell->image->GetLargestPossibleRegion().GetSize();
@@ -134,7 +143,9 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
 
 	cell->isometric_image = resample_filter->GetOutput();
 	cell->isometric_image->DisconnectPipeline();
+#if PRINT_ALL_IMAGES
 	cell->WriteImage("isometric_image.mhd", cell->isometric_image);
+#endif
 
 	
 	ImageType::SpacingType spacing;
@@ -142,6 +153,7 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
 	cell->isometric_image->SetSpacing(spacing);
 }
 
+/* This function does Ridge detection (Laplacian of Gaussian implementation) */
 void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 {
 	//Add the seed to the critical points
@@ -156,12 +168,15 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
 
+	cell->WriteImage("multiscaled_LoG_image.mhd", resampled_multiscale_LoG_image);
+
 	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
 
 	ImageType::SpacingType outputSpacing;
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
 	outputSpacing[2] = 1/aspect_ratio;
+	//outputSpacing[2] = 1.0;
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
@@ -170,6 +185,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	resample_filter->SetSize(outputSize);
 	resample_filter->SetOutputSpacing(outputSpacing);
 	resample_filter->SetTransform(TransformType::New());
+
 	try
 	{
 		resample_filter->UpdateLargestPossibleRegion();
@@ -208,7 +224,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 		LoGImageType::PixelType center_pixel_intensity = LoG_neighbor_iter.GetPixel(center_pixel_offset_index);
 		
-		if (center_pixel_intensity >= 0.01)	//Must have greater than 1.0% response from LoG to even be considered for local maximum (so we dont choose points that are part of noise)
+		if (center_pixel_intensity >= 0.01)	//Must have greater than 1.0% response from LoG to even be considered for local maximum (so we don't choose points that are part of noise)
 		{	
 			bool local_maximum = true;
 			
@@ -237,9 +253,12 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 	std::ostringstream criticalpointsFileNameStream;
 	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
+#if PRINT_ALL_IMAGES
 	cell->WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
+#endif
 }
 
+/* This function calculates the Frangi's Vesselness score */
 void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 {
 	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
@@ -253,6 +272,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
 
 	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
+	//multiscale_hessian_filter->SetInput(cell->image);
 	multiscale_hessian_filter->SetInput(cell->isometric_image);
 	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
 	multiscale_hessian_filter->SetSigmaMinimum(1.0);
@@ -270,7 +290,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
 	}
 
-	cell->WriteImage("Resampled_vesselness.mhd", multiscale_hessian_filter->GetOutput());
+	//cell->WriteImage("Resampled_vesselness.mhd", multiscale_hessian_filter->GetOutput());
 
 	//Unsample the image
 	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
@@ -279,6 +299,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
 	outputSpacing[2] = 1/aspect_ratio;
+	//outputSpacing[2] = 1.0;
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
@@ -306,9 +327,12 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	std::ostringstream vesselnessFileNameStream;
 
 	vesselnessFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
-	cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
+#if PRINT_ALL_IMAGES
+		cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
+#endif
 }
 
+/* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
 void MicrogliaRegionTracer::BuildTree(Cell* cell)
 {
 	std::cout << "Building Adjacency Graph" << std::endl;
@@ -339,6 +363,7 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 	delete tree;
 }
 
+/* This function generates a matrix of all possible pairs of candidate pixels */
 double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 {
 	double** AdjGraph = new double*[cell->critical_points_queue.size()];
@@ -359,7 +384,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	return AdjGraph;
 }
 
-//This is the cost function to connect 2 points
+/* This is the distance part of the cost function */
 double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::uint64_t node_to, Cell* cell)
 {
 	ImageType::IndexType node1 = cell->critical_points_queue[node_from];
@@ -375,14 +400,16 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 	if ((node_from == node_to) || (mag_trace_vector < 0.0001))	//Very likely that these two points are equal so we shouldn't try to connect them
 		return std::numeric_limits< double >::max();
 
-	////If we are connecting from the root node
-	//if (node_from == 0)
-	//{	
-	//	if (cell->soma_label_image->GetPixel(node1) == cell->soma_label_image->GetPixel(node2)) //If it is inside the soma our centroid belongs to, we give it 0 weight
-	//		return 0;
-	//	else if (cell->soma_label_image->GetPixel(node2) != 0)											//We are trying to connect to a pixel in another soma, so we give it infinite weight
-	//		return std::numeric_limits< double >::max();	
-	//}
+#if MASK
+	//If we are connecting from the root node
+	if (node_from == 0)
+	{	
+		if (cell->soma_label_image->GetPixel(node1) == cell->soma_label_image->GetPixel(node2)) //If it is inside the soma our centroid belongs to, we give it 0 weight
+			return 0;
+		else if (cell->soma_label_image->GetPixel(node2) != 0)											//We are trying to connect to a pixel in another soma, so we give it infinite weight
+			return std::numeric_limits< double >::max();	
+	}
+#endif
 
 	PathType::Pointer path = PathType::New();
 	path->Initialize();
@@ -399,7 +426,6 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 	itk::uint64_t path_length = 0;
 	itk::uint64_t num_blank_pixels = 0;
 	
-	//path_iter.GoToBegin();
 	while (!path_iter.IsAtEnd())
 	{
 		//std::cout << "Path iterator position: " << path_iter.GetPathPosition() << std::endl;
@@ -416,6 +442,7 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 		return mag_trace_vector;
 }
 
+/* This function generates the minimum spanning tree (Prim's algorithm implementation, the output is a Tree structure */
 Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 {	
 	Tree* tree = new Tree();
@@ -490,6 +517,8 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	return tree;
 }
 
+/*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
+*	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */ 
 void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local)
 {
 	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
@@ -534,8 +563,8 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
 
 	//Write out the SWC lines
-	traceFile		<< node->getID() << " 4 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
-	traceFile_local << node->getID() << " 4 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
+	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
+	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
 	
 	if (children.size() == 0) 
 		return;														//BASE CASE: No children, so don't visit them
@@ -550,13 +579,14 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
 }
 
-
+/* This function smoothes a Tree structure */
 void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
 	CreateSpeedImage(cell);
 	SmoothSegments(cell, tree, tree->getRoot());
 }
 
+/* The Tree segments are traversed here and SmoothPath is called on each segment */
 void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node) //Smooth AND Prune
 {
 	std::vector< Node* > start_node_children = start_node->GetChildren();
@@ -639,6 +669,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 	}
 }
 
+/* This function smoothes each segment of the tree by using a Fast Marching approach with a speed image */
 void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
 
@@ -656,7 +687,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	// Create optimizer
 	typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 	OptimizerType::Pointer optimizer = OptimizerType::New();
-	optimizer->SetNumberOfIterations( 1000000 );
+	optimizer->SetNumberOfIterations( 1000 );
 	optimizer->SetMaximumStepLength( 0.01 );
 	optimizer->SetMinimumStepLength( 0.01 );
 	optimizer->SetRelaxationFactor( 0.00 );
@@ -666,7 +697,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	pathFilter->SetInput( cell->speed_image );
 	pathFilter->SetCostFunction( cost );
 	pathFilter->SetOptimizer( optimizer );
-	pathFilter->SetTerminationValue( 0.0 );
+	pathFilter->SetTerminationValue( 5.0 );
 
 	// Add path information
 	PathFilterType::PathInfo info;
@@ -739,6 +770,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	end_node->SetParent(current_node);
 }
 
+/* The speed image for SmoothPath is created here */
 void MicrogliaRegionTracer::CreateSpeedImage(Cell* cell)
 {
 	//Normalize vesselness image
@@ -776,14 +808,14 @@ void MicrogliaRegionTracer::CreateSpeedImage(Cell* cell)
 		return;
 	}
 
-	cell->WriteImage("pow_image.mhd", pow_image_filter->GetOutput()); 
-
 	cell->speed_image = pow_image_filter->GetOutput();
 
-
+#if PRINT_ALL_IMAGES
 	cell->WriteImage("speed_image.mhd", cell->speed_image);
+#endif
 }
 
+/* Calculate the Euclidean Distance */
 double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2)
 {
 	ImageType::IndexType trace_vector;
