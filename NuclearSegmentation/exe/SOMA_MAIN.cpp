@@ -10,11 +10,11 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 
 int main(int argc, char* argv[])
 {	
-	if( argc != 4 && argc != 6)
+	if( argc != 4 && argc != 7)
 	{
 		std::cout<<"Debris: SomaExtraction <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
-		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <SomaCentroids.txt> <Nucleus Table:1; Centroids table:0> <Options> <SomaImage.tif> \n";
+		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <InitialContourLabeledImage> <SomaCentroids.txt> <Nucleus Table:1; Centroids table:0> <Options> <SomaImage.tif> \n";
 		return 0;
 	}
 
@@ -41,49 +41,52 @@ int main(int argc, char* argv[])
 	}
 
 	/// soma segmentation
-	if( argc == 6)
+	if( argc == 7)
 	{
 		SomaExtractor *Somas = new SomaExtractor();
 
 		std::cout << "Entering SetInputImage" << std::endl;
-		Somas->SetInputImage(argv[1]);
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[1]);
+		SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImage(argv[2]);
 		std::vector< itk::Index<3> > seedVector;
-		Somas->LoadOptions( argv[4]);
+		Somas->LoadOptions( argv[5]); // Load params
 
 		bool bNucleusTable = false;
-		if(atoi(argv[3]) != 0)
+		if(atoi(argv[4]) != 0)
 		{
 			bNucleusTable = true;
 		}
 		
-		Somas->ReadSeedpoints( argv[2], seedVector, bNucleusTable);
-		SomaExtractor::ProbImageType::Pointer image = Somas->GetFloatInputImage();
+		Somas->ReadSeedpoints( argv[3], seedVector, bNucleusTable);
 
 		//image = Somas->EnhanceContrast(image, seedVector[0][2], atof(argv[4]), atof(argv[5]));
 
 		clock_t SomaExtraction_start_time = clock();
 		
 		std::cout<< "Segmenting..."<<std::endl;
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, seedVector);
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma2(image, initialContourImage, seedVector);
 
-		std::cout<< "Writing Soma Image."<<std::endl;
-		Somas->writeImage(argv[5], segImage);
-		Somas->writeCentroids( "NewSomaCentroids.txt" ,seedVector);
-
-		vtkSmartPointer<vtkTable> table = Somas->ComputeSomaFeatures(segImage);
-		ftk::SaveTable("SomaFeatures.txt", table);
-
-		//std::cout<< "Writing Soma Seeds Image."<<std::endl;
-		//Somas->WriteSomaSeedsIntoImage();
-
-		std::cout<< "Writing Soma Features."<<std::endl;
-		if(bNucleusTable)
+		if( segImage)
 		{
-			ftk::SaveTable("SomaFeaturesWithAllSeeds.txt", table);
-		}
-		else
-		{
+			std::cout<< "Writing Soma Image."<<std::endl;
+			Somas->writeImage(argv[6], segImage);
+			Somas->writeCentroids( "NewSomaCentroids.txt" ,seedVector);
+
+			vtkSmartPointer<vtkTable> table = Somas->ComputeSomaFeatures(segImage);
 			ftk::SaveTable("SomaFeatures.txt", table);
+
+			//std::cout<< "Writing Soma Seeds Image."<<std::endl;
+			//Somas->WriteSomaSeedsIntoImage();
+
+			std::cout<< "Writing Soma Features."<<std::endl;
+			if(bNucleusTable)
+			{
+				ftk::SaveTable("SomaFeaturesWithAllSeeds.txt", table);
+			}
+			else
+			{
+				ftk::SaveTable("SomaFeatures.txt", table);
+			}
 		}
 		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 		delete Somas;
@@ -100,8 +103,7 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 	SomaExtractor *Somas = new SomaExtractor();
 
 	std::cout<< "ReadMontage..."<<std::endl;
-	Somas->SetInputImage(montagefileName);
-	ImageType::Pointer image = Somas->GetFloatInputImage();
+	ImageType::Pointer image = Somas->SetInputImage(montagefileName);
 	int SZ = image->GetLargestPossibleRegion().GetSize()[2];
 
 	std::vector< itk::Index<3> > seedVector;

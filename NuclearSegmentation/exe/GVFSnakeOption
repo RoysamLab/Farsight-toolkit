@@ -1,14 +1,15 @@
--sigmoid_alfa 3
--sigmoid_beta 50
--advection_scaling 0.5
+-sigmoid_alfa -3
+-sigmoid_beta 15
+-advection_scaling 1.0
 -curvature_scaling 0.5
 -max_iterations 800
 -rmsThreshold 0.02
 -min_object_size 0
 
--sigma 3
--numberOfIterations 3
--noiseLevel 500
+-sigma 2
+-numberOfIterations 5
+-noiseLevel 2000
+-outlierExpand 5
 
 
 -start_x 0

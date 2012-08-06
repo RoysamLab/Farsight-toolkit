@@ -42,7 +42,7 @@ SomaExtractor::~SomaExtractor()
 {
 }
 
-void SomaExtractor::SetInputImage(const char * fileName)
+SomaExtractor::ProbImageType::Pointer SomaExtractor::SetInputImage(const char * fileName)
 {
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName (fileName);	
@@ -55,6 +55,7 @@ void SomaExtractor::SetInputImage(const char * fileName)
 	width = inputImage->GetLargestPossibleRegion().GetSize()[0];
 	height = inputImage->GetLargestPossibleRegion().GetSize()[1];
 	depth = inputImage->GetLargestPossibleRegion().GetSize()[2];
+	return inputImage;
 }
 
 SomaExtractor::OutputImageType::Pointer SomaExtractor::Read8BitImage(const char * fileName)
@@ -70,14 +71,24 @@ SomaExtractor::OutputImageType::Pointer SomaExtractor::Read8BitImage(const char 
 	return imagePtr;
 }
 
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SetInitalContourImage(const char * fileName)
+{
+	//somaImageReader::Pointer reader = somaImageReader::New();
+	//reader->SetFileName(fileName);	
+	//reader->Update();
+	//SegmentedImageType::Pointer imagePtr = reader->GetOutput();
+	OutputImageType::Pointer image = Read8BitImage(fileName);
+	typedef itk::CastImageFilter<OutputImageType, SegmentedImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(image);
+	caster->Update();
+	SegmentedImageType::Pointer imagePtr = caster->GetOutput();
+	return imagePtr;
+}
+
 void SomaExtractor::SetInputImage( ProbImageType::Pointer probImage)
 {
 	inputImage = probImage;
-}
-
-SomaExtractor::ProbImageType::Pointer SomaExtractor::GetFloatInputImage()
-{
-	return inputImage;
 }
 
 void SomaExtractor::ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable)
@@ -172,6 +183,7 @@ void SomaExtractor::LoadOptions(const char* paramFileName)
 	SetParamValue<double>(opts, "-sigmoid_alfa", alfa, 30);
 	SetParamValue<double>(opts, "-sigmoid_beta", beta, 3);
 	SetParamValue<int>(opts, "-time_threhold", timethreshold, 5);
+	SetParamValue<double>(opts, "-seed_value", seedValue, -3);
 	SetParamValue<double>(opts, "-curvature_scaling", curvatureScaling, 0.5);
 	SetParamValue<double>(opts, "-advection_scaling", advectScaling, 0.5);
 	SetParamValue<double>(opts, "-rmsThreshold", rmsThres, 0.02);
@@ -180,8 +192,9 @@ void SomaExtractor::LoadOptions(const char* paramFileName)
 	SetParamValue<int>(opts, "-min_object_size", minObjSize, 1000);
 
 	SetParamValue<double>(opts, "-sigma", sigma, 3);
-	SetParamValue<unsigned int>(opts, "-numberOfIterations", numberOfIterations, 3);
-	SetParamValue<double>(opts, "-noiseLevel", noiseLevel, 500);
+	SetParamValue<unsigned int>(opts, "-numberOfIterations", numberOfIterations, 5);
+	SetParamValue<double>(opts, "-noiseLevel", noiseLevel, 2000);
+	SetParamValue<double>(opts, "-outlierExpand",outlierExpandValue, 5);
 
 	SetParamValue<int>(opts, "-start_x", startX, 0);
 	SetParamValue<int>(opts, "-start_y", startY, 0);
@@ -190,13 +203,13 @@ void SomaExtractor::LoadOptions(const char* paramFileName)
 
 void SomaExtractor::writeImage(const char* writeFileName, SegmentedImageType::Pointer image)
 {
-	typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
-    CasterType::Pointer caster = CasterType::New();
-    caster->SetInput(image);
+	//typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
+ //   CasterType::Pointer caster = CasterType::New();
+ //   caster->SetInput(image);
 
-	WriterType::Pointer soma_image_writer = WriterType::New();
+	somaImageWriter::Pointer soma_image_writer = somaImageWriter::New();
 	soma_image_writer->SetFileName(writeFileName);
-	soma_image_writer->SetInput(caster->GetOutput());
+	soma_image_writer->SetInput(image);
 
 	try
 	{
@@ -212,28 +225,43 @@ void SomaExtractor::writeImage(const char* writeFileName, ProbImageType::Pointer
 {
 	typedef itk::CastImageFilter<ProbImageType, OutputImageType> CasterType;
     CasterType::Pointer caster = CasterType::New();
-    caster->SetInput(image);
-
 	WriterType::Pointer soma_image_writer = WriterType::New();
+
 	if(bscale)
 	{
-		RescaleUCharFilterType::Pointer rescaleFilter = RescaleUCharFilterType::New();
-		rescaleFilter->SetInput(caster->GetOutput());
+		RescaleFloatFilterType::Pointer rescaleFilter = RescaleFloatFilterType::New();
+		rescaleFilter->SetInput(image);
 		rescaleFilter->SetOutputMinimum(0);
 		rescaleFilter->SetOutputMaximum(255);
-		
-		soma_image_writer->SetFileName(writeFileName);
-		soma_image_writer->SetInput(rescaleFilter->GetOutput());
+		rescaleFilter->Update();
+		caster->SetInput(rescaleFilter->GetOutput());
 	}
 	else
 	{
-		soma_image_writer->SetFileName(writeFileName);
-		soma_image_writer->SetInput(caster->GetOutput());
+	caster->SetInput(image);
 	}
+
+	soma_image_writer->SetFileName(writeFileName);
+	soma_image_writer->SetInput(caster->GetOutput());
 
 	try
 	{
 		soma_image_writer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
+}
+
+void SomaExtractor::writeImage(const char* writeFileName, GradientImageType::Pointer image)
+{
+	VectorImageWriterType::Pointer writer = VectorImageWriterType::New();
+	writer->SetFileName( writeFileName);
+	writer->SetInput( image);
+	try
+	{
+		writer->Update();
 	}
 	catch ( itk::ExceptionObject &err)
 	{
@@ -251,10 +279,9 @@ void SomaExtractor::writeCentroids(const char* writeFileName, std::vector< itk::
 	ofs.close();
 }
 
+/// Get gradient edge map
 SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(ProbImageType::Pointer inputImage, double sigma)
 {
-	ProbImageType::Pointer image;
-
 	std::cout<< "Sharpen the images..."<<std::endl;
 	LaplacianSharpeningImageFilterType::Pointer laplacianSharpeningImageFilter = LaplacianSharpeningImageFilterType::New();
 	laplacianSharpeningImageFilter->SetInput( inputImage);
@@ -268,12 +295,12 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(ProbIma
 	//smooth->SetConductanceParameter(3);
 	//smooth->Update();
 
-	std::cout<< "Gradient Image."<<std::endl;
+	std::cout<< "Gradient Image:"<<sigma<<std::endl;
 	GradientFilterType::Pointer gradientMagnitude = GradientFilterType::New();
 	gradientMagnitude->SetSigma(sigma);
 	gradientMagnitude->SetInput(laplacianSharpeningImageFilter->GetOutput());
 	gradientMagnitude->Update();
-	image = gradientMagnitude->GetOutput();
+	ProbImageType::Pointer image = gradientMagnitude->GetOutput();
 	
 	//SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
 	//sigmoidFilter->SetInput(image);
@@ -284,7 +311,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(ProbIma
 	//sigmoidFilter->Update();
 	//ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
 
-	this->writeImage("GradientImage.tif", image);
+	//this->writeImage("GradientImage.tif", image);
 
 	return image;
 }
@@ -356,7 +383,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 	return imagePt;
 }
 
-// Shape Detection Active Contour Param member:
+// Shape Detection Active Contour Without GVF:
 //	double alfa;
 //	double beta;
 //	int timethreshold; 
@@ -416,7 +443,6 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 		seedPosition[1] = somaCentroids[i][1];
 		seedPosition[2] = somaCentroids[i][2];
 		NodeType node;
-		const double seedValue = -3;
 		node.SetValue( seedValue );
 		node.SetIndex( seedPosition );
 		seeds->InsertElement( i, node );
@@ -500,7 +526,61 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	return somas;
 }
 
-// GVF Active Contour Param member:
+/// Generate Inital Contours by Daniel Distance Map
+SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand)
+{
+	SegThresholdingFilterType::Pointer thresholder = SegThresholdingFilterType::New();
+	thresholder->SetInput(labelImage);
+	thresholder->SetLowerThreshold(1); 
+	thresholder->SetUpperThreshold(100000); 
+	thresholder->SetOutsideValue( 0);
+	thresholder->SetInsideValue(255);
+
+	///generate bounding box
+	LabelFilterType::Pointer label = LabelFilterType::New();
+	label->SetInput(thresholder->GetOutput());
+
+	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
+	labelGeometryImageFilter->SetInput( label->GetOutput());
+	labelGeometryImageFilter->Update();
+	std::cout<<"Number of objects: "<< labelGeometryImageFilter->GetNumberOfObjects()<<std::endl;
+
+	LabelGeometryImageFilterType::LabelsType allLabels = labelGeometryImageFilter->GetLabels();
+	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt =  allLabels.begin();
+	
+	for( allLabelsIt++; allLabelsIt != allLabels.end(); allLabelsIt++ )
+    {
+		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
+		LabelGeometryImageFilterType::BoundingBoxType boundingBox = labelGeometryImageFilter->GetBoundingBox(labelValue);
+
+	}
+	/// Generate Distance Map within the bounding box(not yet finished)
+	DanielssonDistanceMapFilterType::Pointer distanceMapFilter = DanielssonDistanceMapFilterType::New();
+	typedef itk::CastImageFilter<SegmentedImageType, ProbImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(thresholder->GetOutput());
+	distanceMapFilter->SetInput(caster->GetOutput());
+
+	SubtractImageFilterType::Pointer substractImageFilter = SubtractImageFilterType::New();
+	substractImageFilter->SetInput1( distanceMapFilter->GetOutput());
+	substractImageFilter->SetConstant2( outlierExpand);
+
+	try
+	{
+		substractImageFilter->Update();
+	}
+	catch(itk::ExceptionObject exp)
+	{
+		std::cerr << "Exception caught !" << std::endl;
+		std::cerr << exp << std::endl;
+	}
+
+	ProbImageType::Pointer initalContourImage = substractImageFilter->GetOutput();
+	writeImage("InitialContour.tif",initalContourImage, true);
+	return initalContourImage;
+}
+
+// GVF Active Contour with GVF and curvature constraint:
 // edge image:
 // double sigma
 // GVF:
@@ -508,12 +588,13 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 // double noiseLevel;
 // double alfa;
 // double beta;
+// double outlierExpandValue to expand the initial contour
 // activecontour:
 // double curvatureScaling; 
 // double advectScaling
 // double rmsThres;
 // int minObjSize;
-SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, ProbImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids) 																	  
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids) 																	  
 {
 	int SM = input->GetLargestPossibleRegion().GetSize()[0];
     int SN = input->GetLargestPossibleRegion().GetSize()[1];
@@ -521,6 +602,8 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	std::cout<<SM<<"\t"<<SN<<"\t"<<SZ<<std::endl;
 
 	ProbImageType::Pointer edgeImage = GetEdgePotentialMap(input, sigma);
+
+	std::cout<<"Speed Image throught sigmoidFilter: "<<alfa<<"\t"<<beta<<std::endl;
 	SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
 	sigmoidFilter->SetInput(edgeImage);
 	sigmoidFilter->SetOutputMinimum(0);
@@ -528,19 +611,27 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	sigmoidFilter->SetAlpha(alfa);
 	sigmoidFilter->SetBeta(beta);
 	sigmoidFilter->Update();
+	
+	std::cout<< "Initial Contour..."<<std::endl;
+	ProbImageType::Pointer initialContourByDistanceMap = GetInitalContourByDanielssonDistanceMap(initialContour, outlierExpandValue);
 
+	std::cout<<"GVF: "<<noiseLevel<<"\t"<<numberOfIterations<<std::endl;
 	GradientIFilterType::Pointer gradientFilter = GradientIFilterType::New();
 	GVFFilterType::Pointer gvfFilter = GVFFilterType::New();
 	gradientFilter->SetInput(edgeImage);
 	gvfFilter->SetInput(gradientFilter->GetOutput());
-	gvfFilter->SetNoiseLevel(500);
-	gvfFilter->SetIterationNum(5);
+	gvfFilter->SetNoiseLevel(noiseLevel);
+	gvfFilter->SetIterationNum(numberOfIterations);
+	gvfFilter->Update();
 
 	CastFlowFilterType::Pointer castFlowFilter = CastFlowFilterType::New();
 	castFlowFilter->SetInput(gvfFilter->GetOutput());
+	castFlowFilter->Update();
+
+	std::cout<<"GVF Snake: "<<curvatureScaling<<"\t"<<advectScaling<<"\t"<<rmsThres<<std::endl;
 	GeodesicActiveContourFilterType::Pointer GVF_snake = GeodesicActiveContourFilterType::New();
 	GVF_snake->SetAutoGenerateSpeedAdvection(false);
-	GVF_snake->SetInput(initialContour);
+	GVF_snake->SetInput(initialContourByDistanceMap);
 	GVF_snake->SetFeatureImage(sigmoidFilter->GetOutput());
 	GVF_snake->GenerateSpeedImage();
 	GVF_snake->SetAdvectionImage(castFlowFilter->GetOutput());
@@ -549,7 +640,16 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	GVF_snake->SetAdvectionScaling( advectScaling);
 	GVF_snake->SetMaximumRMSError( rmsThres);
 	GVF_snake->SetNumberOfIterations( maxIterations);
-	GVF_snake->Update();
+
+	try
+	{
+		GVF_snake->Update();
+	}
+	catch(...)
+	{
+		cout << "An exception occurred" << std::endl;
+		exit(1);
+	}
 
 	std::cout << "No. elpased iterations: " << GVF_snake->GetElapsedIterations() << std::endl;
 	std::cout<< "Thresholding..."<<endl;
@@ -561,7 +661,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	thresholder->SetInsideValue(255);
 	thresholder->SetInput( GVF_snake->GetOutput());
 
-	/// Label image
+	/// Label image, recaculate centroids
 	LabelFilterType::Pointer label = LabelFilterType::New();
 	label->SetInput(thresholder->GetOutput());
 
@@ -597,6 +697,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	return somas;
 }
 
+/// For soma surface feature
 void SomaExtractor::SomaBoundaryScan(SegmentedImageType::Pointer labelImage, std::map< TLPixel, int> &LtoIMap, std::vector< int> &boundaryPixSize)
 {
 	if(!labelImage) return;
@@ -731,7 +832,7 @@ vtkSmartPointer<vtkTable> SomaExtractor::ComputeSomaFeatures(SegmentedImageType:
 	return table;
 }
 
-// Debris Association
+/// Debris Association
 void SomaExtractor::GetDebrisCentroids( OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &debrisSeeds)
 {
 	debrisSeeds.clear();
