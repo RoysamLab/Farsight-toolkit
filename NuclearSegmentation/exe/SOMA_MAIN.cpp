@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
 		SomaExtractor *Somas = new SomaExtractor();
 
 		std::cout << "Entering SetInputImage" << std::endl;
-		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[1]);
-		SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImage(argv[2]);
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[1]); // Load microglia image
+		SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImage(argv[2]); // Load labeled nucleus image
 		std::vector< itk::Index<3> > seedVector;
 		Somas->LoadOptions( argv[5]); // Load params
 
@@ -64,8 +64,11 @@ int main(int argc, char* argv[])
 		clock_t SomaExtraction_start_time = clock();
 		
 		std::cout<< "Segmenting..."<<std::endl;
+
+		/// SegmentSoma2: GVF Active Contour
 		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma2(image, initialContourImage, seedVector);
 
+		/// Compute soma features and write new seeds back
 		if( segImage)
 		{
 			std::cout<< "Writing Soma Image."<<std::endl;
