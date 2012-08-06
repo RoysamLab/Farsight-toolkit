@@ -116,10 +116,10 @@ runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
 #runDistMap = 1		# Flag to run distance map computation
 #runDistMap_db = 1
-runTrac = 1		# Flag to run Tracing
-runTrac_db = 1
-runAstroTrac = 0		# Flag to run Astrocyte Tracing
-runAstroTrac_db = 0
+runTrac = 0		# Flag to run Tracing
+runTrac_db = 0
+runAstroTrac = 1		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 1
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
@@ -188,6 +188,7 @@ if( SERVER == 'far05' ):
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	DATA_FOLDER_ALL = ['/0113_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
@@ -248,8 +249,8 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		MAIN_DEB_DATA_FOLDER = '/data/nicolas/deb'
 		
 	if( USERNAME == 'vhsomasu' ):
-		FARSIGHT_BIN = '/data/vinay/farsight_v1/bin'
-		FARSIGHT_BIN_EXE = '/data/vinay/farsight_v1/bin/exe'
+		FARSIGHT_BIN = '/data/vinay/farsight/bin'
+		FARSIGHT_BIN_EXE = '/data/vinay/farsight/bin/exe'
 
 		MAIN_DATA_FOLDER = '/data/vinay/data'
 		MAIN_DEB_DATA_FOLDER = '/data/vinay/deb'
@@ -387,6 +388,12 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		runRescale_bit_db = 0
 		runSegm = 0		# Flag to run Segmentation
 		runSegm_db = 0
+
+                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
+                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
+
 
 
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
@@ -542,6 +549,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		runRescale_log = LOCAL_DATASET_PATH_LOG +'/runRescale.log'
 		TEMP_FILE = open(runRescale_log, 'w')
 		TEMP_FILE.write('RunRescaleLog\n')
+                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
+                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
 		TEMP_FILE.close()
 		if haveCy5 == 1:
 			FILE_Cy5_BS_RE = FILE_Cy5_BS+'_RE'
@@ -592,6 +603,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			FILE_TRI_BS_RE_bit = FILE_TRI_BS+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS_RE_bit, FILE_TRI_BS, runRescale_bit_log )
 		if haveGFP == 1:
+                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
+                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
 			FILE_GFP_BS_CV_RE_bit = FILE_GFP_BS_CV+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
 			a052_RunResc8bitMhd.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
@@ -705,6 +720,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		start_1 = time.time()
 		runTrac_log = LOCAL_DATASET_PATH_LOG +'/runTracing.log'
 		TEMP_FILE = open(runTrac_log, 'w')
+                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
+                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
+                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
 		TEMP_FILE.write('RunTracingLog\n')
 		TEMP_FILE.close()
 
@@ -737,7 +756,11 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		TEMP_FILE.write('-outPathTemp '+LOCAL_DATASET_PATH_TRAC_TEMP+'\n')
 		TEMP_FILE.close()
 
-		a070_RunTracing.main( FARSIGHT_BIN_EXE, optionsTracing, runTrac_log, LOCAL_DATASET_PATH_DATA )
+		a070_RunTracing.main( FARSIGHT_BIN_EXE, optionsTracing, runTrac_log, LOCAL_DATASET_PATH_DATA )BEL = LOCAL_DATASET_PATH_DATA+'/label'
+                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
+                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
+                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
+
 		elapsed_1 = (time.time() - start_1)
 		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
 
@@ -794,7 +817,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			TEMP_FILE.write('-xTileBor 200\n')
 			TEMP_FILE.write('-yTileBor 200\n')
 			TEMP_FILE.write('-zTileBor 100\n')
-		TEMP_FILE.write('-num_threads 80\n')
+		TEMP_FILE.write('-num_threads 40\n')
 		if haveCy5 == 1:
 			TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
 		if haveTRT == 1:
