@@ -362,10 +362,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		TEMP8.communicate()
-		#TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*label*'+' '+LOCAL_DATASET_PATH_DATA+'/'
-		#print '\t'+TEMP2
-		#TEMP8 = subprocess.Popen(TEMP2, shell=True)
-		#TEMP8.communicate()
+		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*label*'+' '+LOCAL_DATASET_PATH_DATA+'/'
+		print '\t'+TEMP2
+		TEMP8 = subprocess.Popen(TEMP2, shell=True)
+		TEMP8.communicate()
 		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*soma*'+' '+LOCAL_DATASET_PATH_DATA+'/'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
