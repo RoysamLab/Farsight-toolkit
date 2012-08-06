@@ -85,11 +85,11 @@ TRY = 10
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 0	# If 0 the results will be keep
+MOVE_RESULTS = 1	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
-MOVE_LOCALLY = 0
+MOVE_LOCALLY = 1
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
 REMOVE_TEMP_TRAC = 1
@@ -101,8 +101,8 @@ SMALLIMAGE = '1'	# if the image is small
 runCopy = 1		# Flag to move images
 runCopy_db = 1
 runMake = 1		# Flag Make Farsight
-runPreproc = 1
-runPreproc_db = 1
+runPreproc = 0
+runPreproc_db = 0
 runBack = 1		# Flag to run background substraction
 runBack_db = 1
 
@@ -118,8 +118,8 @@ runSegm_db = 1
 #runDistMap_db = 1
 runTrac = 1		# Flag to run Tracing
 runTrac_db = 1
-runAstroTrac = 1		# Flag to run Astrocyte Tracing
-runAstroTrac_db = 1
+runAstroTrac = 0		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 0
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
@@ -168,9 +168,9 @@ if( p2 == 'nrey' ):
 
 DATA_FOLDER_ALL = ['/0131_test']
 if( SERVER == 'far04' ):
-	REMOVE_MONTAGES = 1
+	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD_CROPPED','/0117_NRRD_CROPPED','/0120_NRRD_CROPPED','/0123_NRRD_CROPPED','/0128_NRRD_CROPPED','/0131_NRRD_CROPPED','/0323_NRRD_CROPPED','/0405_NRRD_CROPPED','/0409_NRRD_CROPPED','/0410_NRRD_CROPPED','/0412_NRRD_CROPPED','/1206_NRRD_CROPPED']
-	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
@@ -180,10 +180,11 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
 	#DATA_FOLDER_ALL = ['/0131_test4']
+	#DATA_FOLDER_ALL = ['/0131_NRRD_CROPPED_3']
 	#DATA_FOLDER_ALL = ['/0120_NRRD']
-	DATA_FOLDER_ALL = ['/0410_NRRD_CROPPED_2']
+	#DATA_FOLDER_ALL = ['/0410_NRRD_CROPPED_2']
 if( SERVER == 'far05' ):
-	REMOVE_MONTAGES = 1
+	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
@@ -193,7 +194,7 @@ if( SERVER == 'far05' ):
 	#DATA_FOLDER_ALL = ['/0131_test4']
 	runMake = 0
 if( TEST_RUN==1 ):
-	DATA_FOLDER_ALL = ['/0131_test4']
+	DATA_FOLDER_ALL = ['/0131_NRRD_CROPPED_3']
 	print "THIS IS A TEST"
 	print "THIS IS A TEST"
 # ---------------------------------------------------------------------------------------------------------------------------------------
@@ -282,10 +283,16 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2 = LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'/Level2'
 	LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP = LOCAL_DATASET_PATH_ASTRO_TRAC+'/Temp'
 
-	GLOBAL_DATASET_PATH = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
-	GLOBAL_DATASET_PARAMS = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
+	GLOBAL_DATASET_PATH = "/FSdata.auto/data/DARPA_MOSAICS"+DATA_FOLDER
+	GLOBAL_DATASET_PARAMS = "/FSdata.auto/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
 	#GLOBAL_DATASET_PATH = "/FSdata/data"+DATA_FOLDER
-	GLOBAL_DATASET_PATH_RESULTS = '/FSdata/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
+	GLOBAL_DATASET_PATH_RESULTS = '/FSdata.auto/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
+
+	# FSdata no auto FSdata (it gives some errors when using FSdata.auto)
+	GLOBAL_DATASET_PATH_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
+	GLOBAL_DATASET_PARAMS_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
+	#GLOBAL_DATASET_PATH_NAUTO = "/FSdata/data"+DATA_FOLDER
+	GLOBAL_DATASET_PATH_RESULTS_NAUTO = '/FSdata/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
 
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print " Make Farsight: "+DATA_FOLDER+' '+str(datetime.datetime.now())
@@ -432,7 +439,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	if runPreproc == 1:
 		start_1 = time.time()
 		if haveCy5 == 1:
-			FILE_Cy5_MED = FILE_Cy5+'_MED'
+			FILE_Cy5_MED = FILE_Cy5 #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
 			a029_RunPrepro.main( FARSIGHT_BIN_EXE, FILE_Cy5_MED, FILE_Cy5, 'NRRD' )
 		#if haveTRT == 1:
 			#FILE_TRI_BS = FILE_TRI+'_BS'
@@ -472,7 +479,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		start_1 = time.time()
 		if haveCy5 == 1:
 			FILE_Cy5_BS = FILE_Cy5+'_BS' #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
-			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS, FILE_Cy5_MED ) #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
+			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS, FILE_Cy5 ) #no MED in the name !!!! CAREFUL DIFFERENT NAME NOT KEEPING THE 'MED'
 		if haveTRT == 1:
 			FILE_TRI_BS = FILE_TRI+'_BS'
 			a030_RunBack.main( LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS, FILE_TRI )
@@ -944,7 +951,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 		print "# Check Sums Files and Send: "+DATA_FOLDER+' '+str(datetime.datetime.now())
 		print "# ---------------------------------------------------------------------------------------------------------------------------------------"
-		a080_RunCheckSumNew.main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS )
+		a080_RunCheckSumNew.main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS_NAUTO, GLOBAL_DATASET_PATH_RESULTS )
 
 		print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 		print "# Move Files to FSdata: "+DATA_FOLDER+' '+str(datetime.datetime.now())
@@ -963,23 +970,23 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			#TEMP3 = subprocess.Popen(TEMP2, shell=True)
 		#subprocess.call(['scp -r '])
 		#TEMP3.communicate()
-		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_EXE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_EXE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/'
 		print '\t'+TEMP2
 		TEMP4 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP4.communicate()
-		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_LOG+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_LOG+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/'
 		print '\t'+TEMP2
 		TEMP5 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP5.communicate()
-		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_PARAMETERS+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_PARAMETERS+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/'
 		print '\t'+TEMP2
 		TEMP6 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP6.communicate()
-		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_SEGM+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_SEGM+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/'
 		print '\t'+TEMP2
 		TEMP7 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP7.communicate()
-		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_TRAC+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+		TEMP2 = 'scp -r '+LOCAL_DATASET_PATH_TRAC+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP8.communicate()
