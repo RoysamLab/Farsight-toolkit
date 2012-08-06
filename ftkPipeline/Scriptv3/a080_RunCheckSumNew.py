@@ -16,7 +16,20 @@ import datetime
 # Create Folder
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
-def main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS ):
+def main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS_NAUTO, GLOBAL_DATASET_PATH_RESULTS ):
+
+
+	if not os.path.isdir(GLOBAL_DATASET_PATH_RESULTS+'/Data/'):
+		print 'creating folder: '+GLOBAL_DATASET_PATH_RESULTS+'/Data/'
+		os.makedirs(GLOBAL_DATASET_PATH_RESULTS+'/Data/')
+	else:
+		print 'erasing folder: '+GLOBAL_DATASET_PATH_RESULTS+'/Data/'
+		#for the_file in os.listdir(LOCAL_DEB_DATASET_PATH):
+			#file_path = os.path.join(LOCAL_DEB_DATASET_PATH, the_file)
+			#try:
+				#os.unlink(file_path)
+			#except Exception, e:
+				#print e
 
 	FILE = ''
 	dirListGlo=os.listdir(LOCAL_DATASET_PATH_DATA)
@@ -34,7 +47,8 @@ def main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS 
 		TEMP_FILE.write(SUM+'\t'+fileGlo+'\n')
 		print "Check sum of: "+fileGlo+", done. Now It will be send ",
 		if( REMOVE_MONTAGES == 1 ):
-			TEMP2 = 'scp -C '+FILE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+			TEMP2 = 'scp -C '+FILE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/Data/'
+			print TEMP2
 			print '\t'
 			TEMP2 = TEMP2 #+';echo "------------------->>>>>>>>>>>>>>>>>>> FINCOPYINGDATA <<<<<<<<<<<<<<<<<<<<-----------------"OF: '+DATA_FOLDER+", START: "+STARTOFCOPY
 			TEMP3 = subprocess.Popen(TEMP2, shell=True)
@@ -44,13 +58,14 @@ def main( LOCAL_DATASET_PATH_DATA, REMOVE_MONTAGES, GLOBAL_DATASET_PATH_RESULTS 
 			TEMP3.communicate()
 			print ' Send and removal done.'
 		else:
-			TEMP2 = 'scp -C '+FILE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS+'/'
+			TEMP2 = 'scp -C '+FILE+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/Data/'
 			print '\t'+TEMP2
 			TEMP3 = subprocess.Popen(TEMP2, shell=True)
 			TEMP3.communicate()
 			print ' Send done.'
 
 	TEMP_FILE.close()
+	TEMP2 = 'scp -C '+LOCAL_DATASET_PATH_DATA+'/checksums'+' far-01:'+GLOBAL_DATASET_PATH_RESULTS_NAUTO+'/Data/'
 
 
 if __name__ == "__main__":
