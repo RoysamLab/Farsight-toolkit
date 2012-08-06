@@ -549,11 +549,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		runRescale_log = LOCAL_DATASET_PATH_LOG +'/runRescale.log'
 		TEMP_FILE = open(runRescale_log, 'w')
 		TEMP_FILE.write('RunRescaleLog\n')
-                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
-                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
-                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
-                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
-		TEMP_FILE.close()
+                TEMP_FILE.close()
 		if haveCy5 == 1:
 			FILE_Cy5_BS_RE = FILE_Cy5_BS+'_RE'
 			a050_RunResc.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS_RE, FILE_Cy5_BS, runRescale_log )
@@ -603,11 +599,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			FILE_TRI_BS_RE_bit = FILE_TRI_BS+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS_RE_bit, FILE_TRI_BS, runRescale_bit_log )
 		if haveGFP == 1:
-                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
-                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
-                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
-                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
-			FILE_GFP_BS_CV_RE_bit = FILE_GFP_BS_CV+'_RE_bit'
+                	FILE_GFP_BS_CV_RE_bit = FILE_GFP_BS_CV+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
 			a052_RunResc8bitMhd.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
 		if haveDAP == 1:
@@ -720,11 +712,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		start_1 = time.time()
 		runTrac_log = LOCAL_DATASET_PATH_LOG +'/runTracing.log'
 		TEMP_FILE = open(runTrac_log, 'w')
-                FILE_LABEL = LOCAL_DATASET_PATH_DATA+'/label'
-                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
-                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
-                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
-		TEMP_FILE.write('RunTracingLog\n')
+                TEMP_FILE.write('RunTracingLog\n')
 		TEMP_FILE.close()
 
 		optionsTracing = LOCAL_DATASET_PATH_TRAC +'/options_tracing'
@@ -756,11 +744,8 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		TEMP_FILE.write('-outPathTemp '+LOCAL_DATASET_PATH_TRAC_TEMP+'\n')
 		TEMP_FILE.close()
 
-		a070_RunTracing.main( FARSIGHT_BIN_EXE, optionsTracing, runTrac_log, LOCAL_DATASET_PATH_DATA )BEL = LOCAL_DATASET_PATH_DATA+'/label'
-                FILE_LABEL_TABLE = LOCAL_DATASET_PATH_DATA+'/label_table.txt'
-                FILE_SOMA = LOCAL_DATASET_PATH_DATA+'/soma'
-                FILE_SOMA_CEN = LOCAL_DATASET_PATH_DATA+'/soma_centrois.txt'
-
+		a070_RunTracing.main( FARSIGHT_BIN_EXE, optionsTracing, runTrac_log, LOCAL_DATASET_PATH_DATA )
+                
 		elapsed_1 = (time.time() - start_1)
 		print "\t\tTime_1: hm: "+str(round(elapsed_1/3600))+":"+str(round(elapsed_1/60))
 
