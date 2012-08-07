@@ -567,7 +567,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		runRescale_log = LOCAL_DATASET_PATH_LOG +'/runRescale.log'
 		TEMP_FILE = open(runRescale_log, 'w')
 		TEMP_FILE.write('RunRescaleLog\n')
-        TEMP_FILE.close()
+        	TEMP_FILE.close()
 		if haveCy5 == 1:
 			FILE_Cy5_BS_RE = FILE_Cy5_BS+'_RE'
 			a050_RunResc.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_Cy5_BS_RE, FILE_Cy5_BS, runRescale_log )
@@ -617,7 +617,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			FILE_TRI_BS_RE_bit = FILE_TRI_BS+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_TRI_BS_RE_bit, FILE_TRI_BS, runRescale_bit_log )
 		if haveGFP == 1:
-            FILE_GFP_BS_CV_RE_bit = FILE_GFP_BS_CV+'_RE_bit'
+            		FILE_GFP_BS_CV_RE_bit = FILE_GFP_BS_CV+'_RE_bit'
 			a051_RunResc8bit.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
 			a052_RunResc8bitMhd.main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, FILE_GFP_BS_CV_RE_bit, FILE_GFP_BS_CV, runRescale_bit_log )
 		if haveDAP == 1:
