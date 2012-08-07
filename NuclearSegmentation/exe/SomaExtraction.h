@@ -35,6 +35,8 @@
 #include "itkGeodesicActiveContourLevelSetImageFilter.h"
 #include "itkSignedDanielssonDistanceMapImageFilter.h"
 #include <itkSubtractImageFilter.h>
+#include "itkMinimumMaximumImageCalculator.h"
+#include "itkImageRegionIterator.h"
 
 class SomaExtractor
 {
@@ -54,7 +56,7 @@ protected:
 	typedef itk::ImageFileReader< SegmentedImageType > somaImageReader;
 	typedef itk::ImageFileWriter< SegmentedImageType > somaImageWriter;
 
-	typedef itk::RegionOfInterestImageFilter< ProbImageType, ProbImageType> RegionOfInterestFilter;
+	//typedef itk::RegionOfInterestImageFilter< ProbImageType, ProbImageType> RegionOfInterestFilter;
 	typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFloatFilterType;
 	typedef itk::RescaleIntensityImageFilter< OutputImageType, OutputImageType> RescaleUCharFilterType;
 	typedef itk::FastMarchingImageFilter< ProbImageType, ProbImageType >    FastMarchingFilterType;
@@ -87,6 +89,10 @@ protected:
 	typedef itk::CastImageFilter<GradientImageType,AdvectionImageType> CastFlowFilterType;
 	typedef itk::SignedDanielssonDistanceMapImageFilter<ProbImageType, ProbImageType> DanielssonDistanceMapFilterType;
 	typedef itk::SubtractImageFilter <ProbImageType, ProbImageType, ProbImageType> SubtractImageFilterType;
+	typedef itk::RegionOfInterestImageFilter< SegmentedImageType, SegmentedImageType> RegionOfInterestFilter;
+	typedef itk::MinimumMaximumImageCalculator <ProbImageType> ImageCalculatorFilterType;
+	typedef itk::ImageRegionConstIterator< ProbImageType > ProbConstIteratorType;
+	typedef itk::ImageRegionIterator< ProbImageType>  ProbIteratorType;
 
 public:
 	//: constructor
@@ -120,7 +126,7 @@ protected:
 	void SomaBoundaryScan(SegmentedImageType::Pointer labelImage, std::map< TLPixel, int> &LtoIMap, std::vector< int> &boundaryPixSize);
 	ProbImageType::Pointer GetEdgePotentialMap(ProbImageType::Pointer inputImage, double sigma);
 	ProbImageType::Pointer GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand);
-	 
+	void CheckBoundary(SegmentedImageType::IndexType &start, SegmentedImageType::IndexType &end, int SX, int SY, int SZ); 
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold);
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius);
 

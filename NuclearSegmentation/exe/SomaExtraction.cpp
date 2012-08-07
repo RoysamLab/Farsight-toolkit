@@ -30,6 +30,7 @@
 #endif
 
 #define N 11
+#define BOUNDARY_EXPAND 5
 std::string SomaInfo[N]={"ID", "centroid_x", "centroid_y", "centroid_z", "volume", "eccentricity", "elongation", "orientation", 
 						"majorAxisLength", "minorAxisLength", "surface_area_volume_ratio"};
 
@@ -526,9 +527,14 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	return somas;
 }
 
+
 /// Generate Inital Contours by Daniel Distance Map
 SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand)
 {
+	int SX = labelImage->GetLargestPossibleRegion().GetSize()[0];
+    int SY = labelImage->GetLargestPossibleRegion().GetSize()[1];
+    int SZ = labelImage->GetLargestPossibleRegion().GetSize()[2];
+
 	SegThresholdingFilterType::Pointer thresholder = SegThresholdingFilterType::New();
 	thresholder->SetInput(labelImage);
 	thresholder->SetLowerThreshold(1); 
@@ -541,27 +547,64 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielsso
 	label->SetInput(thresholder->GetOutput());
 
 	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
-	labelGeometryImageFilter->SetInput( label->GetOutput());
+	labelGeometryImageFilter->CalculateOrientedBoundingBoxOff();
+	labelGeometryImageFilter->CalculateOrientedIntensityRegionsOff();
+	labelGeometryImageFilter->CalculateOrientedLabelRegionsOff();
+	labelGeometryImageFilter->CalculatePixelIndicesOff();
+	labelGeometryImageFilter->SetInput(label->GetOutput());
 	labelGeometryImageFilter->Update();
-	std::cout<<"Number of objects: "<< labelGeometryImageFilter->GetNumberOfObjects()<<std::endl;
 
 	LabelGeometryImageFilterType::LabelsType allLabels = labelGeometryImageFilter->GetLabels();
 	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt =  allLabels.begin();
-	
+	SegmentedImageType::IndexType start;
+	SegmentedImageType::IndexType end;
+	start[0] = SX;
+	start[1] = SY;
+	start[2] = SZ;
+	end[0] = end[1] = end[2] = 0;
+
 	for( allLabelsIt++; allLabelsIt != allLabels.end(); allLabelsIt++ )
     {
 		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
 		LabelGeometryImageFilterType::BoundingBoxType boundingBox = labelGeometryImageFilter->GetBoundingBox(labelValue);
+		start[0] = boundingBox[0] < start[0] ? boundingBox[0] : start[0];
+		start[1] = boundingBox[2] < start[1] ? boundingBox[2] : start[1];
+		start[2] = boundingBox[4] < start[2] ? boundingBox[4] : start[2];
 
+		end[0] = boundingBox[1] > end[0] ? boundingBox[1] : end[0];
+		end[1] = boundingBox[2] > end[1] ? boundingBox[3] : end[1];
+		end[2] = boundingBox[5] > end[2] ? boundingBox[5] : end[2];
 	}
-	/// Generate Distance Map within the bounding box(not yet finished)
-	DanielssonDistanceMapFilterType::Pointer distanceMapFilter = DanielssonDistanceMapFilterType::New();
+
+	start[0] -= (outlierExpand + BOUNDARY_EXPAND);
+	start[1] -= (outlierExpand + BOUNDARY_EXPAND);
+	start[2] -= (outlierExpand + BOUNDARY_EXPAND);
+	end[0] += (outlierExpand + BOUNDARY_EXPAND);
+	end[1] += (outlierExpand + BOUNDARY_EXPAND);
+	end[2] += (outlierExpand + BOUNDARY_EXPAND);
+	CheckBoundary(start, end, SX, SY, SZ);
+
+	/// Generate Distance Map within the bounding box
+	SegmentedImageType::SizeType size;
+	size[0] = end[0] - start[0];
+	size[1] = end[1] - start[1];
+	size[2] = end[2] - start[2];
+
+	SegmentedImageType::RegionType desiredRegion;
+	desiredRegion.SetSize(size);
+	desiredRegion.SetIndex(start);
+
+	RegionOfInterestFilter::Pointer regionFilter = RegionOfInterestFilter::New();
+	regionFilter->SetInput(thresholder->GetOutput());
+	regionFilter->SetRegionOfInterest(desiredRegion);
+
 	typedef itk::CastImageFilter<SegmentedImageType, ProbImageType> CasterType;
     CasterType::Pointer caster = CasterType::New();
-	caster->SetInput(thresholder->GetOutput());
-	distanceMapFilter->SetInput(caster->GetOutput());
+	caster->SetInput(regionFilter->GetOutput());
 
-	SubtractImageFilterType::Pointer substractImageFilter = SubtractImageFilterType::New();
+	DanielssonDistanceMapFilterType::Pointer distanceMapFilter = DanielssonDistanceMapFilterType::New();
+	distanceMapFilter->SetInput(caster->GetOutput());
+	SubtractImageFilterType::Pointer substractImageFilter = SubtractImageFilterType::New();   // expand the contour
 	substractImageFilter->SetInput1( distanceMapFilter->GetOutput());
 	substractImageFilter->SetConstant2( outlierExpand);
 
@@ -575,9 +618,40 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielsso
 		std::cerr << exp << std::endl;
 	}
 
-	ProbImageType::Pointer initalContourImage = substractImageFilter->GetOutput();
-	writeImage("InitialContour.tif",initalContourImage, true);
-	return initalContourImage;
+	/// Write the distance map back to the original size image filled with the maximum value of the distance map
+	ProbImageType::Pointer initialContourRegionImage = substractImageFilter->GetOutput();
+	ProbImageType::Pointer initialContourImage = ProbImageType::New();
+	initialContourImage->SetRegions(labelImage->GetLargestPossibleRegion());
+	initialContourImage->Allocate();
+
+	ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New();
+	imageCalculatorFilter->SetImage(initialContourRegionImage);
+	imageCalculatorFilter->Compute();
+	ProbImageType::PixelType maxPixel = imageCalculatorFilter->GetMaximum();
+	initialContourImage->FillBuffer(maxPixel);
+
+	ProbConstIteratorType inputIt( initialContourRegionImage, initialContourRegionImage->GetLargestPossibleRegion());
+	ProbIteratorType outputIt( initialContourImage, desiredRegion);
+	inputIt.GoToBegin();
+	outputIt.GoToBegin();
+	while( !inputIt.IsAtEnd())
+    {
+		outputIt.Set( inputIt.Get());
+		++inputIt;
+		++outputIt;
+    }
+	return initialContourImage;
+}
+
+
+void SomaExtractor::CheckBoundary(SegmentedImageType::IndexType &start, SegmentedImageType::IndexType &end, int SX, int SY, int SZ)
+{
+	start[0] = start[0] > 0 ? start[0] : 0;
+	start[1] = start[1] > 0 ? start[1] : 0;
+	start[2] = start[2] > 0 ? start[2] : 0;
+	end[0] = end[0] < SX ? end[0] : SX;
+	end[1] = end[1] < SY ? end[1] : SY;
+	end[2] = end[2] < SZ ? end[2] : SZ;
 }
 
 // GVF Active Contour with GVF and curvature constraint:
