@@ -312,7 +312,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(ProbIma
 	//sigmoidFilter->Update();
 	//ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
 
-	//this->writeImage("GradientImage.tif", image);
+	this->writeImage("GradientImage.tif", image);
 
 	return image;
 }
@@ -528,12 +528,13 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 }
 
 
-/// Generate Inital Contours by Daniel Distance Map
+/// Generate Expanded Inital Contours within the boundary of labeled object by Daniel Distance Map
 SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand)
 {
 	int SX = labelImage->GetLargestPossibleRegion().GetSize()[0];
     int SY = labelImage->GetLargestPossibleRegion().GetSize()[1];
     int SZ = labelImage->GetLargestPossibleRegion().GetSize()[2];
+	std::cout<< SX<<"\t"<<SY<<"\t"<<SZ<<std::endl;
 
 	SegThresholdingFilterType::Pointer thresholder = SegThresholdingFilterType::New();
 	thresholder->SetInput(labelImage);
@@ -660,8 +661,6 @@ void SomaExtractor::CheckBoundary(SegmentedImageType::IndexType &start, Segmente
 // GVF:
 // unsigned int numberOfIterations; 
 // double noiseLevel;
-// double alfa;
-// double beta;
 // double outlierExpandValue to expand the initial contour
 // activecontour:
 // double curvatureScaling; 
@@ -676,16 +675,11 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImag
 	std::cout<<SM<<"\t"<<SN<<"\t"<<SZ<<std::endl;
 
 	ProbImageType::Pointer edgeImage = GetEdgePotentialMap(input, sigma);
+	ProbImageType::Pointer speedImage = ProbImageType::New();    // speed image buffered with 1.
+	speedImage->SetRegions(input->GetLargestPossibleRegion());
+	speedImage->Allocate();
+	speedImage->FillBuffer(1);
 
-	std::cout<<"Speed Image throught sigmoidFilter: "<<alfa<<"\t"<<beta<<std::endl;
-	SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
-	sigmoidFilter->SetInput(edgeImage);
-	sigmoidFilter->SetOutputMinimum(0);
-	sigmoidFilter->SetOutputMaximum(1);
-	sigmoidFilter->SetAlpha(alfa);
-	sigmoidFilter->SetBeta(beta);
-	sigmoidFilter->Update();
-	
 	std::cout<< "Initial Contour..."<<std::endl;
 	ProbImageType::Pointer initialContourByDistanceMap = GetInitalContourByDanielssonDistanceMap(initialContour, outlierExpandValue);
 
@@ -706,7 +700,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImag
 	GeodesicActiveContourFilterType::Pointer GVF_snake = GeodesicActiveContourFilterType::New();
 	GVF_snake->SetAutoGenerateSpeedAdvection(false);
 	GVF_snake->SetInput(initialContourByDistanceMap);
-	GVF_snake->SetFeatureImage(sigmoidFilter->GetOutput());
+	GVF_snake->SetFeatureImage(speedImage);
 	GVF_snake->GenerateSpeedImage();
 	GVF_snake->SetAdvectionImage(castFlowFilter->GetOutput());
 	GVF_snake->SetPropagationScaling( 1.0);

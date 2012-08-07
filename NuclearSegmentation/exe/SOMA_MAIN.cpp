@@ -67,6 +67,7 @@ int main(int argc, char* argv[])
 
 		/// SegmentSoma2: GVF Active Contour
 		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma2(image, initialContourImage, seedVector);
+		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
 		/// Compute soma features and write new seeds back
 		if( segImage)
@@ -91,7 +92,6 @@ int main(int argc, char* argv[])
 				ftk::SaveTable("SomaFeatures.txt", table);
 			}
 		}
-		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 		delete Somas;
 	}
 	return 0;
