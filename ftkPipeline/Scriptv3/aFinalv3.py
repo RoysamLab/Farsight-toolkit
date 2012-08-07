@@ -403,6 +403,14 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			print '\t'+TEMP2
 			TEMP8 = subprocess.Popen(TEMP2, shell=True)
 			TEMP8.communicate()
+			
+			runMake = 1		# Flag Make Farsight
+			runBack = 1		# Flag to run background substraction
+			runBack_db = 1
+			runRescale = 1
+			runRescale_db = 1
+			runRescale_bit = 1
+			runRescale_bit_db = 1
 
 
 
