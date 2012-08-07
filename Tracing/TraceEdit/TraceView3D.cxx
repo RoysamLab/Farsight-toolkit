@@ -217,9 +217,17 @@ View3D::~View3D()
 	{
 		delete this->TreePlot;
 	}
+	if(this->NodeTable)
+	{
+		delete this->NodeTable;
+	}
 	if(this->NodePlot)
 	{
 		delete this->NodePlot;
+	}
+	if(this->Node_Model)
+	{
+		delete this->Node_Model;
 	}
 	if(this->FL_MeasurePlot)
 	{
@@ -1919,7 +1927,7 @@ void View3D::CreateLayout()
 	//SettingsToolBox->addItem(DisplayLayout, "Display Settings");
 	//SettingsBox->addWidget(displaySettings);
 
-	QFormLayout *RotateLayout = new QFormLayout(rotationSettings);
+	QFormLayout *RotateLayout = new QFormLayout;
 	RotateLayout->setObjectName("RotateLayout");
 	RotateLayout->addRow(tr("Roll: "),this->RollBox);
 	RotateLayout->addRow(tr("Elevation: "),this->ElevationBox);
@@ -2087,7 +2095,17 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->InformationDisplays->toggleViewAction());
 	this->analysisViews->addAction(this->showStatisticsAction);
 	// this->analysisViews->addAction(this->updateStatisticsAction);
-	this->analysisViews->addAction(this->CellAnalysis);
+
+	QMenu *plot_sub_menu = this->analysisViews->addMenu(tr("Show Plots"));
+	plot_sub_menu->setObjectName(tr("plot_sub_menu"));
+	plot_sub_menu->addAction(this->CellAnalysis);
+	plot_sub_menu->addAction(this->ShowPlots);
+	plot_sub_menu->addAction(this->ShowNodePlots);
+
+	QMenu *calculations_sub_menu = this->analysisViews->addMenu(tr("Calculate"));
+	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
+	calculations_sub_menu->addAction(this->ConvexHullAction);
+
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 	//this->analysisViews->addAction(this->SPDAction);
@@ -2095,24 +2113,12 @@ void View3D::CreateLayout()
 	//this->analysisViews->addAction(this->ClusclusAction);
 	this->analysisViews->addAction(this->BiClusAction);
 	//this->analysisViews->addAction(this->SpectralClusteringAction);
-
-	QMenu *calculations_sub_menu = this->analysisViews->addMenu(tr("Calculate"));
-	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
-	calculations_sub_menu->addAction(this->ConvexHullAction);
-
-	QMenu *plot_sub_menu = this->analysisViews->addMenu(tr("Show Plots"));
-	plot_sub_menu->setObjectName(tr("plot_sub_menu"));
-	plot_sub_menu->addAction(this->ShowPlots);
-	//plot_sub_menu->addAction(this->ShowNodePlots);	//need to kill thread
-
 	this->createRayCastSliders();
 
 	this->menuBar()->addSeparator();
 	this->help = this->menuBar()->addMenu("Help");
 	this->help->setObjectName(tr("help"));
 	this->help->addAction(this->aboutAction);
-
-	//this->createSlicerSlider();
 
   //Testing menu
   #ifdef USE_QT_TESTING
@@ -4130,12 +4136,23 @@ void View3D::Rerender()
 		this->AddPointsAsPoints(vec);
 		this->UpdateBranchActor();
 		this->Renderer->AddActor(this->BranchActor);
-		this->Node_Model->SetNodes(vec);
 	}
 	else
 	{
 		this->Renderer->RemoveActor(this->BranchActor);
 		this->Renderer->RemoveActor(this->PointsActor);
+	}
+
+	this->Node_Model->SetLines(this->tobj->GetTraceLines());
+	if (this->NodeTable)
+	{
+		this->NodeTable->setModels( this->Node_Model->getDataTable(), this->Node_Model->GetObjectSelection());
+		this->NodeTable->update();
+	}
+	if (this->NodePlot)
+	{
+		this->NodePlot->setModels( this->Node_Model->getDataTable(), this->Node_Model->GetObjectSelection());
+		this->NodePlot->update();
 	}
 
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines()); 
@@ -4516,6 +4533,8 @@ void View3D::ShowNodeData()
 {
 	this->CloseNodePlots();
 
+	this->Node_Model->SetLines(this->tobj->GetTraceLines());
+
 	this->NodeTable = new TableWindow();
 	this->NodeTable->setModels( this->Node_Model->getDataTable(), this->Node_Model->GetObjectSelection());
 	this->NodeTable->setWindowTitle("Node Object Features Table");
@@ -4533,13 +4552,13 @@ void View3D::CloseNodePlots()
 {
 	if (this->NodeTable)
 	{
-		this->TraceEditSettings.setValue("NodeTable/pos", this->FTKTable->pos());
-		this->TraceEditSettings.setValue("NodeTable/size", this->FTKTable->size());
+		this->TraceEditSettings.setValue("NodeTable/pos", this->NodeTable->pos());
+		this->TraceEditSettings.setValue("NodeTable/size", this->NodeTable->size());
 		this->NodeTable->close();
 	}
 	if (this->NodePlot)
 	{
-		this->TraceEditSettings.setValue("NodePlot/pos", this->TreePlot->pos());
+		this->TraceEditSettings.setValue("NodePlot/pos", this->NodePlot->pos());
 		this->NodePlot->close();
 	}
 }

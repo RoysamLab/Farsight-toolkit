@@ -1,4 +1,5 @@
 #include "TraceBit.h"
+#include "TraceLine.h"
 #include "NodeModel.h"
 
 NodeModel::NodeModel()
@@ -9,11 +10,11 @@ NodeModel::NodeModel()
 	this->additionalHeaders.clear();
 }
 
-NodeModel::NodeModel(std::vector<TraceBit> trace_bits)
+NodeModel::NodeModel(std::vector<TraceLine*> trace_lines)
 {
 	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
-	this->SetNodes(trace_bits);
+	this->SetLines(trace_lines);
 }
 
 NodeModel::~NodeModel()
@@ -22,13 +23,12 @@ NodeModel::~NodeModel()
 	this->Selection = NULL;
 }
 
-void NodeModel::SetNodes(std::vector<TraceBit> trace_bits) //pass in tracelines instead of tracebits b/c lack of pointer?
+void NodeModel::SetLines(std::vector<TraceLine*> trace_lines)
 {
-	this->TraceBits.clear();
-	this->TraceBits = trace_bits;
+	this->TraceLines.clear();
+	this->TraceLines = trace_lines;
 	this->SyncModel();
 }
-
 
 void NodeModel::SetupHeaders()
 {
@@ -72,11 +72,17 @@ void NodeModel::SyncModel()
 	this->DataTable->Initialize();
 	this->Selection->clear();
 	this->SetupHeaders();
-	for (NodeIDLookupIter = this->TraceBits.begin();  NodeIDLookupIter != this->TraceBits.end(); NodeIDLookupIter ++)
+	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
-		if (size == 0)
+		TraceLine::TraceBitsType::iterator iter = this->TraceLines.at(i)->GetTraceBitIteratorBegin();
+		TraceLine::TraceBitsType::iterator iterend = this->TraceLines.at(i)->GetTraceBitIteratorEnd();
+		while(iter != iterend)
 		{
-			this->DataTable->InsertNextRow((*NodeIDLookupIter).DataRow());
+			if (size == 0)
+			{
+				this->DataTable->InsertNextRow((*iter).DataRow());
+			}
+			iter++;
 		}
 	}
 }
@@ -109,7 +115,7 @@ void NodeModel::SelectByIDs(std::vector<int> IDs)
 std::vector<long int> NodeModel::GetSelectedIDs()
 {
 	std::vector<long int> SelectedIDs;
-	std::set<long> selected = this->Selection->getSelections(); //how to get nodes?
+	std::set<long> selected = this->Selection->getSelections();
 	std::set<long>::iterator it;
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{		
@@ -151,12 +157,12 @@ unsigned int NodeModel::getNodeCount()
 	return (unsigned int) this->TraceBits.size();
 }
 
-//std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiterator()
+//std::map< int ,TraceBit>::iterator NodeModel::GetNodeiterator()
 //{
 //	return this->TraceBits.begin();
 //}
 //
-//std::map< int ,TraceBit*>::iterator NodeModel::GetNodeiteratorEnd()
+//std::map< int ,TraceBit>::iterator NodeModel::GetNodeiteratorEnd()
 //{
 //	return this->TraceBits.end();
 //}

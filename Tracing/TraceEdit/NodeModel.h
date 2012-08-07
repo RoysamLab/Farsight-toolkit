@@ -25,6 +25,7 @@
 class QStandardItemModel;
 class QItemSelectionModel;
 class TraceBit;
+class TraceLine;
 
 class NodeModel : public QObject
 {
@@ -32,11 +33,11 @@ class NodeModel : public QObject
 
 public:
 	NodeModel();
-	NodeModel(std::vector<TraceBit> trace_bits);
+	NodeModel(std::vector<TraceLine*> trace_lines);
 	~NodeModel();
 
-	void SetNodes(std::vector<TraceBit> trace_bits);
-	//std::vector<TraceBit*> GetNodes()
+	void SetLines(std::vector<TraceLine*> trace_lines);
+	//std::vector<TraceBit> GetNodes()
 	//{
 	//	return this->TraceBits;
 	//};
@@ -51,8 +52,8 @@ public:
 	//void SelectByIDs(std::vector<int> IDs); //already used elsewhere
 	std::vector<long int> GetSelectedIDs();
 	//std::vector<TraceBit> GetSelectedNodes();
-	//std::map< int ,TraceBit*>::iterator GetNodeiterator();
-	//std::map< int ,TraceBit*>::iterator GetNodeiteratorEnd();
+	//std::map< int ,TraceBit>::iterator GetNodeiterator();
+	//std::map< int ,TraceBit>::iterator GetNodeiteratorEnd();
 
 
 signals:
@@ -63,6 +64,7 @@ private:
 	void SetupHeaders();
 	void SyncModel();
 
+	std::vector<TraceLine*> TraceLines;
 	std::vector<TraceBit> TraceBits;
 	std::vector<QString> headers;
 	std::vector<std::string> additionalHeaders;
@@ -71,7 +73,8 @@ private:
 
 	ObjectSelection * Selection;
 
-	//std::map<long int ,TraceBit*> NodeIDLookupMAP;
-	std::vector<TraceBit>::iterator NodeIDLookupIter;
+	//std::map< int ,TraceBit>::iterator NodeIDLookupIter;
+	//std::map<long int ,TraceBit> NodeIDLookupMAP;
+	std::vector<TraceLine*>::iterator TraceIDLookupIter;
 };
 #endif
