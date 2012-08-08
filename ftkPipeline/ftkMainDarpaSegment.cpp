@@ -317,8 +317,8 @@ void ftkMainDarpaSegment::runSegment(  )
 	
 	if( _kx*_ky*_kz < _num_threads )
 	{
-		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(int(_num_threads/_kx*_ky*_kz)); // This one can not be changed
-		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(int(_num_threads/_kx*_ky*_kz)); // This one can chenga
+		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(int(_num_threads/(_kx*_ky*_kz))); // This one can not be changed
+		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(int(_num_threads/(_kx*_ky*_kz))); // This one can chenga
 	}
 	else
 	{
