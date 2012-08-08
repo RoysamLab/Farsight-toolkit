@@ -204,13 +204,13 @@ void SomaExtractor::LoadOptions(const char* paramFileName)
 
 void SomaExtractor::writeImage(const char* writeFileName, SegmentedImageType::Pointer image)
 {
-	//typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
- //   CasterType::Pointer caster = CasterType::New();
- //   caster->SetInput(image);
+	typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+    caster->SetInput(image);
 
-	somaImageWriter::Pointer soma_image_writer = somaImageWriter::New();
+	WriterType::Pointer soma_image_writer = WriterType::New();
 	soma_image_writer->SetFileName(writeFileName);
-	soma_image_writer->SetInput(image);
+	soma_image_writer->SetInput(caster->GetOutput());
 
 	try
 	{
@@ -312,7 +312,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetEdgePotentialMap(ProbIma
 	//sigmoidFilter->Update();
 	//ProbImageType::Pointer floatImage = sigmoidFilter->GetOutput();
 
-	this->writeImage("GradientImage.tif", image);
+	//this->writeImage("GradientImage.tif", image);
 
 	return image;
 }
@@ -667,7 +667,7 @@ void SomaExtractor::CheckBoundary(SegmentedImageType::IndexType &start, Segmente
 // double advectScaling
 // double rmsThres;
 // int minObjSize;
-SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids) 																	  
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids) 																	  
 {
 	int SM = input->GetLargestPossibleRegion().GetSize()[0];
     int SN = input->GetLargestPossibleRegion().GetSize()[1];
@@ -680,7 +680,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImag
 	speedImage->Allocate();
 	speedImage->FillBuffer(1);
 
-	std::cout<< "Initial Contour..."<<std::endl;
+	std::cout<< "Initial Contour: "<< outlierExpandValue<<std::endl;
 	ProbImageType::Pointer initialContourByDistanceMap = GetInitalContourByDanielssonDistanceMap(initialContour, outlierExpandValue);
 
 	std::cout<<"GVF: "<<noiseLevel<<"\t"<<numberOfIterations<<std::endl;
@@ -720,6 +720,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma2( ProbImag
 	}
 
 	std::cout << "No. elpased iterations: " << GVF_snake->GetElapsedIterations() << std::endl;
+	std::cout << "RMS Error: " << GVF_snake->GetRMSChange() << std::endl;
 	std::cout<< "Thresholding..."<<endl;
 	
     BinaryThresholdingFilterType::Pointer thresholder = BinaryThresholdingFilterType::New();

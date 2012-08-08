@@ -110,7 +110,7 @@ public:
 
 	/// return labeled image for somas
 	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids);
-	SegmentedImageType::Pointer SegmentSoma2( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
+	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
 
 	void writeImage(const char* writeFileName, SegmentedImageType::Pointer image);
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image, bool bscale = false);

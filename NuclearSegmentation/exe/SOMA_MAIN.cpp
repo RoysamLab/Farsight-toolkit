@@ -10,11 +10,11 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 
 int main(int argc, char* argv[])
 {	
-	if( argc != 4 && argc != 7)
+	if( argc != 4 && argc != 5)
 	{
 		std::cout<<"Debris: SomaExtraction <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
-		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <InitialContourLabeledImage> <SomaCentroids.txt> <Nucleus Table:1; Centroids table:0> <Options> <SomaImage.tif> \n";
+		std::cout<<"SomaExtraction: SomaExtraction <InputImageFileName> <InitialContourLabeledImage> <Options> <SomaImage.tif> \n";
 		return 0;
 	}
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	}
 
 	/// soma segmentation
-	if( argc == 7)
+	if( argc == 5)
 	{
 		SomaExtractor *Somas = new SomaExtractor();
 
@@ -49,15 +49,7 @@ int main(int argc, char* argv[])
 		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[1]); // Load microglia image
 		SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImage(argv[2]); // Load labeled nucleus image
 		std::vector< itk::Index<3> > seedVector;
-		Somas->LoadOptions( argv[5]); // Load params
-
-		bool bNucleusTable = false;
-		if(atoi(argv[4]) != 0)
-		{
-			bNucleusTable = true;
-		}
-		
-		Somas->ReadSeedpoints( argv[3], seedVector, bNucleusTable);
+		Somas->LoadOptions( argv[3]); // Load params
 
 		//image = Somas->EnhanceContrast(image, seedVector[0][2], atof(argv[4]), atof(argv[5]));
 
@@ -66,31 +58,18 @@ int main(int argc, char* argv[])
 		std::cout<< "Segmenting..."<<std::endl;
 
 		/// SegmentSoma2: GVF Active Contour
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma2(image, initialContourImage, seedVector);
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, initialContourImage, seedVector);
 		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
 		/// Compute soma features and write new seeds back
 		if( segImage)
 		{
 			std::cout<< "Writing Soma Image."<<std::endl;
-			Somas->writeImage(argv[6], segImage);
+			Somas->writeImage(argv[4], segImage);
 			Somas->writeCentroids( "NewSomaCentroids.txt" ,seedVector);
 
 			vtkSmartPointer<vtkTable> table = Somas->ComputeSomaFeatures(segImage);
 			ftk::SaveTable("SomaFeatures.txt", table);
-
-			//std::cout<< "Writing Soma Seeds Image."<<std::endl;
-			//Somas->WriteSomaSeedsIntoImage();
-
-			std::cout<< "Writing Soma Features."<<std::endl;
-			if(bNucleusTable)
-			{
-				ftk::SaveTable("SomaFeaturesWithAllSeeds.txt", table);
-			}
-			else
-			{
-				ftk::SaveTable("SomaFeatures.txt", table);
-			}
 		}
 		delete Somas;
 	}
