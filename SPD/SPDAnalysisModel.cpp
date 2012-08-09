@@ -34,6 +34,7 @@ void SPDAnalysisModel::DeInstance()
 	if( s_pmodel != NULL)
 	{
 		delete s_pmodel;
+		s_pmodel = NULL;
 	}
 }
 

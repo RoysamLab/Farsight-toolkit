@@ -42,7 +42,6 @@ protected slots:
 	void loadContrastData();
 	void showOriginalHeatmap();
     void clusterFunction();
-	void clusterCells();
 	void emdFunction();
 	void showPSM();
 	void showPSMHist();
@@ -73,13 +72,9 @@ private:
 
     QLabel *clusterCoherenceLabel;
     QDoubleSpinBox *clusterCoherenceBox;
-	QLabel *sampleCoherenceLabel;
-	QDoubleSpinBox *sampleCoherenceBox;
     QLabel *clusterMergeLabel;
     QDoubleSpinBox *clusterMergeBox;
     QPushButton *clusterButton;
-	QPushButton *cellClusterButton;
-	QListWidget *listWidget;
 
 	QLabel *emdLabel;
 	QLabel *progressionOverDistance;
@@ -90,7 +85,6 @@ private:
 	QLabel *psmLable;
 	QLabel *psmPerLable;
     QPushButton *psmButton;
-	QPushButton *psmHisButton;
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
 	QLabel *maxVetexIdLabel;  // max id to seperate the data

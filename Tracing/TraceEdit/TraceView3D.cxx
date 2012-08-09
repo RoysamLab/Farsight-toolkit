@@ -275,6 +275,7 @@ View3D::~View3D()
 	delete this->ImageActors;
 	delete this->Gridlines;
 	delete this->VOIType;
+	
 }
 /*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
@@ -6374,6 +6375,10 @@ void View3D::SaveComputedCellFeaturesTable()
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
+	if(this->SPDWin)
+	{
+		delete this->SPDWin;
+	}
 	this->SPDWin = new SPDtestWindow();
 	//this->SPDWin = new SPDWindowForNewSelection();
 

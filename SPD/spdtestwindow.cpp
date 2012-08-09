@@ -28,77 +28,68 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	HeatmapWin = NULL;
 	plot = NULL;
 
-    dataFileLabel = new QLabel(tr("Choose file:"));
+    dataFileLabel = new QLabel(tr("Choose file:"), this);
 
     int frameStyle = QFrame::Sunken | QFrame::Panel;
-    dataFileName = new QLabel;
+    dataFileName = new QLabel(this);
     dataFileName->setFrameStyle(frameStyle);
 
-    browseButton = new QPushButton(tr("Browse"));
-    loadButton = new QPushButton(tr("Load"));
-	loadTestButton = new QPushButton(tr("Raw Data Heatmap"));
+    browseButton = new QPushButton(tr("Browse"), this);
+    loadButton = new QPushButton(tr("Load"), this);
+	loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
 
-    featureNumLabel = new QLabel(tr("Feature size:"));
-    featureNum = new QLabel;
+    featureNumLabel = new QLabel(tr("Feature size:"), this);
+    featureNum = new QLabel(this);
     featureNum->setFrameStyle(frameStyle);
-    sampleNumLabel = new QLabel(tr("Sample size:"));
-    sampleNum = new QLabel;
+    sampleNumLabel = new QLabel(tr("Sample size:"), this);
+    sampleNum = new QLabel(this);
     sampleNum->setFrameStyle(frameStyle);
 
-	sampleCoherenceLabel = new QLabel(tr("Sample Coherence(0.0 ~ 1.0):"));;
-	sampleCoherenceBox = new QDoubleSpinBox;
-	sampleCoherenceBox->setValue( 0.9);	
-	sampleCoherenceBox->setRange(0,1); 
-	sampleCoherenceBox->setSingleStep(0.1);
-
-    clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"));
-    clusterCoherenceBox = new QDoubleSpinBox;
+    clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
+    clusterCoherenceBox = new QDoubleSpinBox(this);
 	clusterCoherenceBox->setValue(0.9);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
-    clusterMergeLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"));
-    clusterMergeBox = new QDoubleSpinBox;
+    clusterMergeLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"), this);
+    clusterMergeBox = new QDoubleSpinBox(this);
 	clusterMergeBox->setValue(0.9);
 	clusterMergeBox->setRange(0,1);
 	clusterMergeBox->setSingleStep(0.1);
 
-    clusterButton = new QPushButton(tr("Feature Cluster"));
-	cellClusterButton = new QPushButton(tr("Cell Cluster"));
+    clusterButton = new QPushButton(tr("Feature Cluster"), this);
 	
-	emdLabel = new QLabel(tr("Matching modules based on coherence:"));
-	progressionOverDistance = new QLabel(tr("Progression over distance to device:"));
-	bcheckBox = new QCheckBox();
-	emdButton = new QPushButton(tr("Match"));
+	emdLabel = new QLabel(tr("Matching modules based on coherence:"), this);
+	progressionOverDistance = new QLabel(tr("Progression over distance to device:"), this);
+	bcheckBox = new QCheckBox(this);
+	emdButton = new QPushButton(tr("Match"), this);
 
-	emdThresBox = new QDoubleSpinBox;
+	emdThresBox = new QDoubleSpinBox(this);
 	emdThresBox->setRange(0,1);
 	emdThresBox->setSingleStep(0.1);
 
-	emdPercentageBox = new QLineEdit;
-	psmLable = new QLabel(tr("PSM Threshold(0.0 ~ 1.0):"));
-	psmPerLable = new QLabel(tr("PSM Selected Blocks' Percentage:"));
-    psmButton = new QPushButton(tr("Show PSM"));
-	psmHisButton = new QPushButton(tr("PSM Histogram"));
+	emdPercentageBox = new QLineEdit(this);
+	psmLable = new QLabel(tr("PSM Threshold(0.0 ~ 1.0):"), this);
+	psmPerLable = new QLabel(tr("PSM Selected Blocks' Percentage:"), this);
+    psmButton = new QPushButton(tr("Show PSM"), this);
 
-	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"));
-	psdModuleSelectBox = new QLineEdit;
-	maxVetexIdLabel = new QLabel(tr("Id to seperate:"));
-	maxVetexIdEdit = new QSpinBox();
+	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"), this);
+	psdModuleSelectBox = new QLineEdit(this);
+	maxVetexIdLabel = new QLabel(tr("Id to seperate:"), this);
+	maxVetexIdEdit = new QSpinBox(this);
 	maxVetexIdEdit->setRange(0,1000000);
 	maxVetexIdEdit->setSingleStep(100);
 	maxVetexIdEdit->setValue(4500);
 	
-    psdtButton = new QPushButton(tr("View Progression"));
-	heatmapLabel = new QLabel(tr("View Progression Heatmap:"));
-	heatmapButton = new QPushButton(tr("Heatmap"));
-	distanceThres = new QDoubleSpinBox;
+    psdtButton = new QPushButton(tr("View Progression"), this);
+	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
+	heatmapButton = new QPushButton(tr("Heatmap"), this);
+	distanceThres = new QDoubleSpinBox(this);
 	distanceThres->setRange(0,2000);
 	distanceThres->setSingleStep(0.1);
 	distanceThres->setValue(700.0);
 	
 	clusterButton->setEnabled(FALSE);
-	cellClusterButton->setEnabled(FALSE);
 	emdButton->setEnabled(FALSE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
@@ -110,18 +101,15 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
-	connect(cellClusterButton , SIGNAL(clicked()), this, SLOT(clusterCells()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
-	connect(psmHisButton, SIGNAL(clicked()), this, SLOT(showPSMHist()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
-	//connect(saveFeatureButton, SIGNAL(clicked()), this, SLOT(saveSelectedFeatures()));
 	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
 	connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
 	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
 	
-    QGridLayout *mainLayout = new QGridLayout;
+    QGridLayout *mainLayout = new QGridLayout(this);
 
     for ( int col = 0; col<= 2; col++)
     {
@@ -229,9 +217,7 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
 		loadTestButton->setEnabled(TRUE);
-
 		clusterButton->setEnabled(TRUE);
-		cellClusterButton->setEnabled(TRUE);
 	}
 
 	assert(SPDModel!=NULL);
@@ -371,16 +357,6 @@ void SPDtestWindow::clusterFunction()
 	{
 		std::cout<< "Clustering exception, please try again!"<<endl;
 	}
-}
-
-void SPDtestWindow::clusterCells()
-{
-	std::string clusterCor = this->sampleCoherenceBox->text().toStdString();
-	this->SPDModel->ClusterSamples(atof(clusterCor.c_str()));
-	emdButton->setEnabled(TRUE);
-	psmButton->setEnabled(FALSE);
-	psdtButton->setEnabled(FALSE);
-	heatmapButton->setEnabled(FALSE);
 }
 
 void SPDtestWindow::updateProgressionType()
@@ -720,10 +696,9 @@ bool SPDtestWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
 
 void SPDtestWindow::regenerateProgressionTree()
 {
+	heatmapButton->setEnabled(true);
 	if( selection)
 	{
-		heatmapButton->setEnabled(TRUE);
-
 		std::string distanceThres = this->distanceThres->text().toStdString();
 		std::cout<< "rerender progression view"<<endl;
 		selection->clear();
@@ -762,7 +737,6 @@ void SPDtestWindow::regenerateProgressionTree()
 		{
 			std::cout<< "Graph window error!"<<endl;
 		}
-		showProgressionHeatmap();
 	}
 }
 
@@ -879,29 +853,41 @@ void SPDtestWindow::closeEvent(QCloseEvent *event)
 
 void SPDtestWindow::closeSubWindows()
 {
+	if(originalHeatmap)
+	{
+		originalHeatmap->close();
+		delete originalHeatmap;
+		originalHeatmap = NULL;
+	}
 	if(graph)
 	{
 		graph->close();
+		delete graph;
+		graph = NULL;
 	}
 	if(simHeatmap)
 	{
 		simHeatmap->close();
-	}
-	if(graph)
-	{
-		graph->close();
+		delete simHeatmap;
+		simHeatmap = NULL;
 	}
 	if(progressionHeatmap)
 	{
 		progressionHeatmap->close();
+		delete progressionHeatmap;
+		progressionHeatmap = NULL;
 	}
 	if(HeatmapWin)
 	{
 		HeatmapWin->close();
+		delete HeatmapWin;
+		HeatmapWin = NULL;
 	}
 	if(plot)
 	{
 		plot->close();
+		delete plot;
+		plot = NULL;
 	}
 }
 
