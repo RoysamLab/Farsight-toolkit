@@ -1,14 +1,14 @@
 #include "MicrogliaRegionTracer.h"
 
-#define MASK 1
-#define PRINT_ALL_IMAGES 1
+#define MASK 0
+#define PRINT_ALL_IMAGES 0
 
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
 {
 	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 	this->soma_filename = soma_filename;
 
-	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Acquiring threads through OpenMP, so no need for ITK threads
+	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
 	//aspect_ratio = 1.0; //xy to z ratio in physical space here
 }
@@ -338,6 +338,10 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 	std::cout << "Building Adjacency Graph" << std::endl;
 	double** AdjGraph = BuildAdjacencyGraph(cell);
 
+	//for (int k = 0; k < cell->critical_points_queue.size(); k++)
+	//	std::cout << AdjGraph[0][k] << std::endl;
+
+	std::cout << "Building Minimum Spanning Tree" << std::endl;
 	Tree* tree = BuildMST1(cell, AdjGraph);
 
 	std::ostringstream swc_filename_stream, swc_filename_stream_local;
@@ -370,7 +374,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (itk::int64_t k = 0; k < (itk::int64_t)cell->critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
@@ -445,70 +449,115 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 /* This function generates the minimum spanning tree (Prim's algorithm implementation, the output is a Tree structure */
 Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 {	
+
 	Tree* tree = new Tree();
 	ImageType::IndexType root_index = cell->critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
 
+	//Make a copy of the AdjGraph called TreeAdjGraph which we will use to build the MST
+	double** TreeAdjGraph = new double*[cell->critical_points_queue.size()];
+	for (int k = 0; k < cell->critical_points_queue.size(); k++)
+	{
+		TreeAdjGraph[k] = new double[cell->critical_points_queue.size()];
+		for (int l = 0; l < cell->critical_points_queue.size(); l++)
+			TreeAdjGraph[k][l] = AdjGraph[k][l];
+	}	
+
 	//Root node should have infinite weights to connect to
 	for (int m = 0; m < cell->critical_points_queue.size(); m++)
-		AdjGraph[m][0] = std::numeric_limits<double>::max();
+		TreeAdjGraph[m][0] = std::numeric_limits<double>::max();
 
 	//Prim's algorithm
 	//for each node but the last, find its child
 	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
 	{
 		//std::cout << "Calculating nearest neighbor for point " << l << std::endl;
-		itk::uint64_t minimum_node_index_from_id = 0;
+		itk::uint64_t minimum_connected_node_id = 0;
 		itk::uint64_t minimum_node_index_to_id = 0;
-		double minimum_node_distance = std::numeric_limits<double>::max();
-		Node* minimum_parent_node = NULL;
+		double minimum_node_cost = std::numeric_limits<double>::max();
+		Node* minimum_connected_node = NULL;
 		
-		//For each connected point
+		
 		std::vector<Node*> member_nodes = tree->GetMemberNodes();
 		std::vector<Node*>::iterator member_nodes_iter;
-		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
+		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)	//For each connected node
 		{
-			Node* node = *member_nodes_iter;
+			Node* connected_node = *member_nodes_iter; //node points to the connected node that we are searching the shortest distance for
 
-			//Search through all the nodes and find the minimum distance
+			//Search through all the unconnected nodes and find the minimum distance
 			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
 			{
-				itk::uint64_t node_index_from_id = node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
+				itk::uint64_t connected_node_id = connected_node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
 				
-				if (AdjGraph[node_index_from_id][k] < minimum_node_distance) //from l (connected point) to k (unconnected point) if the current distance is less than the minimum distance
+				double alpha = 0.5;			//this affects the cost weight for the angle
+				double beta = 1.0 - alpha;	//this affects the cost weight for the distance
+								
+				double node_to_candidate_length = TreeAdjGraph[connected_node_id][k];
+				double cost;
+				if (connected_node->GetParent() != NULL)			//is not the root node (has a parent)
 				{
-					minimum_parent_node = node;
-					minimum_node_index_from_id = node_index_from_id;			
+					itk::uint64_t parent_id = connected_node->GetParent()->getID() - 1;
+
+					double parent_to_candidate_length = AdjGraph[parent_id][k];
+					double parent_to_node_length = AdjGraph[parent_id][connected_node_id];
+
+					double chord_length = parent_to_candidate_length;
+					double curve_length =  node_to_candidate_length + parent_to_node_length;
+		
+
+					if (curve_length >= (std::numeric_limits< double >::max() / 2) || chord_length >= (std::numeric_limits< double >::max() / 2))	//avoid overflow issues
+					{
+						cost = std::numeric_limits<double>::max();
+					}
+					else if (chord_length / curve_length < sqrt(2.0) / 2.0)				//avoid angle too large issues
+					{						
+						cost = std::numeric_limits<double>::max();
+					}
+					else
+					{
+						cost = node_to_candidate_length * (alpha * (curve_length / chord_length) + beta);
+					}
+				}
+				else												//is the root node (has no parent)
+				{	
+					cost = beta * node_to_candidate_length;
+				}
+				
+				if (cost < minimum_node_cost) //from l (connected point) to k (unconnected point) if the current cost is less than the minimum cost
+				{
+					minimum_connected_node = connected_node;
+					minimum_connected_node_id = connected_node_id;			
 					minimum_node_index_to_id = k;
-					minimum_node_distance = AdjGraph[minimum_node_index_from_id][minimum_node_index_to_id];
+					minimum_node_cost = cost;
 				}
 			}	
 		}
 
-		if (minimum_node_distance >= std::numeric_limits< double >::max() / 2)
+		if (minimum_node_cost >= std::numeric_limits< double >::max() / 2)
 			break;	//Minimum distance way too far
 		
-		//std::cout << "Found new edge from " << minimum_node_index_from_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_node_index_from_id][0] << " " << cell->critical_points_queue[minimum_node_index_from_id][1] << " " << cell->critical_points_queue[minimum_node_index_from_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
-		ImageType::IndexType cell_origin;
-		cell_origin[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
-		cell_origin[1] = cell->critical_points_queue[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
-		cell_origin[2] = cell->critical_points_queue[minimum_node_index_to_id][2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
+		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
+		//std::cout << "Cost: " << minimum_node_cost << std::endl;
+		ImageType::IndexType point_index;
+		point_index[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
+		point_index[1] = cell->critical_points_queue[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
+		point_index[2] = cell->critical_points_queue[minimum_node_index_to_id][2] + cell->getZ() - cell->getRequestedSize()[2]/2 - cell->getShiftIndex()[2];
 		
-		ImageType::IndexType cell_origin_local;
-		cell_origin_local[0] = cell->critical_points_queue[minimum_node_index_to_id][0];
-		cell_origin_local[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
-		cell_origin_local[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
+		ImageType::IndexType point_local_index;
+		point_local_index[0] = cell->critical_points_queue[minimum_node_index_to_id][0];
+		point_local_index[1] = cell->critical_points_queue[minimum_node_index_to_id][1];
+		point_local_index[2] = cell->critical_points_queue[minimum_node_index_to_id][2];
 
 		
 		for (int m = 0; m < cell->critical_points_queue.size(); m++)
-			AdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
-		AdjGraph[minimum_node_index_to_id][minimum_node_index_from_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
+			TreeAdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
+		TreeAdjGraph[minimum_node_index_to_id][minimum_connected_node_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
 
 		//Connect the unconnected point
-		Node* new_connected_node = new Node(cell_origin_local[0], cell_origin_local[1], cell_origin_local[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
-		new_connected_node->SetParent(minimum_parent_node);
-		minimum_parent_node->AddChild(new_connected_node);
-		tree->AddNode(new_connected_node, minimum_parent_node);
+		Node* new_connected_node = new Node(point_local_index[0], point_local_index[1], point_local_index[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
+		new_connected_node->SetParent(minimum_connected_node);
+		minimum_connected_node->AddChild(new_connected_node);
+		tree->AddNode(new_connected_node, minimum_connected_node);
 	}
 
 	//Update next available ID
@@ -687,7 +736,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	// Create optimizer
 	typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 	OptimizerType::Pointer optimizer = OptimizerType::New();
-	optimizer->SetNumberOfIterations( 1000 );
+	optimizer->SetNumberOfIterations( 10000 );
 	optimizer->SetMaximumStepLength( 0.01 );
 	optimizer->SetMinimumStepLength( 0.01 );
 	optimizer->SetRelaxationFactor( 0.00 );
@@ -697,7 +746,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	pathFilter->SetInput( cell->speed_image );
 	pathFilter->SetCostFunction( cost );
 	pathFilter->SetOptimizer( optimizer );
-	pathFilter->SetTerminationValue( 5.0 );
+	pathFilter->SetTerminationValue( 10.0 );
 
 	// Add path information
 	PathFilterType::PathInfo info;

@@ -15,11 +15,13 @@ int main(int argc, char* argv[])
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
-		MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/1262_1723_169_seedPoint.txt");
+		MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/seedpoints.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/1262_1723_169_seedPoint.txt");
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
 		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
+		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
 	}
 	else if( argc < 5 )
 	{
