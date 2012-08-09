@@ -104,9 +104,13 @@ public:
 	void setDataForTree2(Level_id levels2);
 	void setDataForHeatmap(std::vector<int > & order1,std::vector<int > & order2);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
+	inline void closeWindow(){ close(); };
 
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
+
+protected:
+	virtual void closeEvent(QCloseEvent *event);
 
 private:
 	void normalize();

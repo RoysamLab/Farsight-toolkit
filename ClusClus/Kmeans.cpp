@@ -38,6 +38,9 @@ void Kmeans::setDistasnce(char distancestring)
 	case 'C':
 		this->distance_mode = 2;
 		break;
+	case 'G':
+		this->distance_mode = 3;
+		break;
 	default:
 		break;
 	}
@@ -65,7 +68,8 @@ void Kmeans::Clustering()
 	this->initialClusters();
 	this->initialCentroids();
 
-	while(move)
+	int counter = 0;
+	while(move && counter < 50)
 	{
 		move = false;
 
@@ -79,6 +83,8 @@ void Kmeans::Clustering()
 		{
 			this->updatePointIdInClusters();
 		}
+
+		counter++;
 	}
 }
 
@@ -175,6 +181,18 @@ double Kmeans::computeDistance(std::vector<double > & point1,std::vector<double 
 		}
 
 		return sqrt(sum);
+	}
+
+	if(distance_mode == 3)
+	{
+		double sum = 0.0;
+		for(int i = 0; i < this->num_cols; i++)
+		{
+			sum += (point1[i] - point2[i]) * (point1[i] - point2[i]);
+		}
+		long double exponent = sum;
+		long double result = exp(- exponent / (2 * 20));
+		return result;
 	}
 }
 

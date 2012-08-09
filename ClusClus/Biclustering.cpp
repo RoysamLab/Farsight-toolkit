@@ -3,6 +3,8 @@
 Bicluster::Bicluster()
 {
 	this->num_iteration = 9;
+	this->K1 = 15;
+	this->K2 = 25;
 }
 
 Bicluster::~Bicluster()
@@ -106,7 +108,7 @@ void Bicluster::biclustering()
 		Data1 = this->transpose(Data1);
 		BiTree* tree1 = new BiTree();
 		tree1->setDataToTree(dataT,Data1);
-		tree1->setFirstIterationClusterNumber(15);
+		tree1->setFirstIterationClusterNumber(this->K1);
 		if(i == this->num_iteration - 1)
 			tree1->setReorderFlag(true);
 		tree1->constructTree();
@@ -117,7 +119,7 @@ void Bicluster::biclustering()
 		Data2 = this->transpose(Data2);
 		BiTree* tree2 = new BiTree();
 		tree2->setDataToTree(data,Data2);
-		tree2->setFirstIterationClusterNumber(20);
+		tree2->setFirstIterationClusterNumber(this->K2);
 		if(i == this->num_iteration - 1)
 			tree2->setReorderFlag(true);
 		tree2->constructTree();
@@ -236,3 +238,10 @@ void Bicluster::WriteFile(const char *filename1, const char *filename2)
 	fclose(fp2);
 }
 
+void Bicluster::Setparameter(int k1, int k2)
+{
+	this->K1 = k1;
+	this->K2 = k2;
+	std::cout<<"****..."<<K1<<"kkkkkkkkkkkkkkkkkkkkkk1111111111111111111111"<<std::endl;
+	std::cout<<"****..."<<K2<<"kkkkkkkkkkkkkkkkkkkkkk222222222222222222222222222222"<<std::endl;
+}

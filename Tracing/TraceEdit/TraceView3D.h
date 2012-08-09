@@ -22,6 +22,7 @@ limitations under the License.
 #include <string>
 #include <set>
 #include <QtGui>
+#include <QInputDialog>
 #include <time.h>
 
 #include "ftkGUI/PlotWindow.h"

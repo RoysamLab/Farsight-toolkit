@@ -247,7 +247,7 @@ void clusclus::ComputeSampleDistances()
 double clusclus::MergeClusters(int num_currcluster, int *pivot1, int *pivot2)
 {     
 	int		 pivot;
-	double   minn = 1.0e10;
+	double   minn = 1.0e30;
 
 	for (int k = 0; k < num_currcluster; k++)
 	{
@@ -352,7 +352,7 @@ double clusclus::UpdateClusterDistances(int num_currcluster, int pivot1, int piv
 		int counter=0;		
 		int num_sample_k = num_cluster_samples[k];
 		double tempdistance=0.0,finaldistance=0.0,temp;
-		double minn = 1.0e10, maxx = -1.0e10;
+		double minn = 1.0e30, maxx = -1.0e30;
 		int* cluspk_ID;
 		cluspk_ID = new int[num_sample_k];
 		

@@ -6109,6 +6109,10 @@ void View3D::closeEvent(QCloseEvent *event)
 	{
 		this->HeatmapWin->close();
 	}
+	if (this->Biheatmap)
+	{
+		this->Biheatmap->close();
+	}
 #endif
 
 	event->accept();
@@ -6456,8 +6460,14 @@ void View3D::BiclusAnalysis()
 			points[i].push_back(var);
 			}
 		}
-			
+
 		Bicluster* bicluster = new Bicluster();
+		bool ok1;
+		int k1 = QInputDialog::getInt(this, tr("K for Tree1"),tr("K1:"), 15, 1, 100, 1, &ok1);
+		bool ok2;
+		int k2 = QInputDialog::getInt(this, tr("K for Tree2"),tr("K2:"), 25, 1, 100, 1, &ok2);
+		if(ok1&&ok2)
+			bicluster->Setparameter(k1, k2);
 		bicluster->setDataToBicluster(points);
 		bicluster->biclustering();
 		bicluster->WriteFile("order1.txt", "order2.txt");

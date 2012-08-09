@@ -15,7 +15,8 @@ public:
 	void bispectralclustering();
 	std::vector<std::vector<double > > reorganize(std::vector<std::vector<double > > datatoreorganize, std::vector<int > order);
 
-	void WriteFile(const char *filename1, const char *filename2);
+	void Setparameter(int k1, int k2);
+	void WriteFile(const char *filename1, const char *filename2);	
 
 	std::vector<int > order1;
 	std::vector<int > order2;
@@ -27,6 +28,8 @@ private:
 	int num_rows;
 	int num_cols;
 	int num_iteration;
+	int K1;
+	int K2;
 
 	std::queue<int> qorder1;
 	std::queue<int> qorder2;

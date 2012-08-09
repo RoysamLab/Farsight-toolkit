@@ -59,6 +59,19 @@ void BiHeatmap::creatDataForHeatmap()
 		this->creatDataForTree1();
 	if(this->treedata2 == true)
 		this->creatDataForTree2();
+
+	const char* filename = "reorganized";
+	FILE *fp = fopen(filename,"w");
+	for(int i=0; i<this->num_rows; i++)
+	{
+		for(int j=0; j<this->num_cols; j++)
+		{
+			fprintf(fp,"%f",this->data[i][j]);
+			fprintf(fp,"\t");
+		}				
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 }
 void BiHeatmap::normalize()
 {
@@ -74,6 +87,19 @@ void BiHeatmap::normalize()
 				this->data[i][j] = this->data[i][j];	
 		}
 	}
+	
+	const char* filename = "datatomap";
+	FILE *fp = fopen(filename,"w");
+	for(int i=0; i<this->num_rows; i++)
+	{
+		for(int j=0; j<this->num_cols; j++)
+		{
+			fprintf(fp,"%f",this->data[i][j]);
+			fprintf(fp,"\t");
+		}				
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 
 	//int numr = this->data.size();
 	//int numc = this->data[0].size();
@@ -260,7 +286,8 @@ void BiHeatmap::SetInteractStyle()
 
 rgb BiHeatmap::GetRGBValue(double val)
 {
-	int index = 6 * (val+6.5) - 1;   
+	int index = 6 * (val+6.5) - 1; //original
+	//int index = 2 * (val+24) - 1;   //temp
 	if( index >= COLOR_MAP_SIZE)
 	{
 		index = COLOR_MAP_SIZE - 1;
@@ -1293,4 +1320,9 @@ void BiHeatmap::WriteFile(const char *filename1)
 		fprintf(fp1,"\n");
 	}
 	fclose(fp1);
+}
+
+void BiHeatmap::closeEvent(QCloseEvent *event)
+{
+	mainQTRenderWidget.close();
 }
