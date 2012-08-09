@@ -5047,15 +5047,15 @@ void AstroTracer::ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<v
 		//nuclei_object.intrinsicFeatures.inertia = nuclei_features_table[0]->GetValueByName(i, "inertia").ToFloat();
 		//nuclei_object.intrinsicFeatures.clusterShade = nuclei_features_table[0]->GetValueByName(i, "cluster_shade").ToFloat();
 		//nuclei_object.intrinsicFeatures.clusterProminence = nuclei_features_table[0]->GetValueByName(i, "cluster_prominence").ToFloat();
-		//nuclei_object.associativeFeatures.astro_total = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_TOTAL").ToFloat();
-		//nuclei_object.associativeFeatures.astro_avg = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_AVG").ToFloat();
-		//nuclei_object.associativeFeatures.astro_surr = nuclei_features_table[0]->GetValueByName(i, "Astrocyte_SURR").ToFloat();
-		//nuclei_object.associativeFeatures.micro_total = nuclei_features_table[0]->GetValueByName(i, "Microglia_TOTAL").ToFloat();
-		//nuclei_object.associativeFeatures.micro_avg = nuclei_features_table[0]->GetValueByName(i, "Microglia_AVG").ToFloat();
-		//nuclei_object.associativeFeatures.micro_surr = nuclei_features_table[0]->GetValueByName(i, "Microglia_SURR").ToFloat();
-		//nuclei_object.associativeFeatures.neuro_total = nuclei_features_table[0]->GetValueByName(i, "Neurons_TOTAL").ToFloat();
-		//nuclei_object.associativeFeatures.neuro_avg = nuclei_features_table[0]->GetValueByName(i, "Neurons_AVG").ToFloat();
-		//nuclei_object.associativeFeatures.neuro_surr = nuclei_features_table[0]->GetValueByName(i, "Neurons_SURR").ToFloat();
+		//nuclei_object.associativeFeatures.astro_total = nuclei_features_table[0]->GetValueByName(i, "TRI_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.astro_avg = nuclei_features_table[0]->GetValueByName(i, "TRI_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.astro_surr = nuclei_features_table[0]->GetValueByName(i, "TRI_SURR").ToFloat();
+		//nuclei_object.associativeFeatures.micro_total = nuclei_features_table[0]->GetValueByName(i, "GFP_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.micro_avg = nuclei_features_table[0]->GetValueByName(i, "GFP_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.micro_surr = nuclei_features_table[0]->GetValueByName(i, "GFP_SURR").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_total = nuclei_features_table[0]->GetValueByName(i, "Cy5_TOTAL").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_avg = nuclei_features_table[0]->GetValueByName(i, "Cy5_AVG").ToFloat();
+		//nuclei_object.associativeFeatures.neuro_surr = nuclei_features_table[0]->GetValueByName(i, "Cy5_SURR").ToFloat();
 
 		//if(root_found){
 		//	nuclei_object.associativeFeatures.minRootDist = nuclei_features_table[0]->GetValueByName(i, "min_root_dist").ToFloat();
@@ -5489,9 +5489,9 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
 	nuclei_feature_vector << "var_int" << '\t' << "eccentricity" << '\t' << "elongation" << '\t' << "mean_surf_gradient" << '\t' << "radius_variation" << '\t'; 
 	nuclei_feature_vector << "shape_measure" << '\t' << "energy" << '\t' << "entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
-	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "Astrocyte_TOTAL" << '\t' << "Astrocyte_AVG" << '\t' << "Astrocyte_SURR" << '\t';
-	nuclei_feature_vector << "Microglia_TOTAL" << '\t' << "Microglia_AVG" << '\t' << "Microglia_SURR" << '\t' << "Neurons_TOTAL" << '\t' << "Neurons_AVG" << '\t';
-	nuclei_feature_vector << "Neurons_SURR" << '\t' << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
+	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "TRI_TOTAL" << '\t' << "TRI_AVG" << '\t' << "TRI_SURR" << '\t';
+	nuclei_feature_vector << "GFP_TOTAL" << '\t' << "GFP_AVG" << '\t' << "GFP_SURR" << '\t' << "Cy5_TOTAL" << '\t' << "Cy5_AVG" << '\t';
+	nuclei_feature_vector << "Cy5_SURR" << '\t' << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
 	nuclei_feature_vector << std::endl;
 
 	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
