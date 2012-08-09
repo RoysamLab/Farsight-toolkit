@@ -266,7 +266,7 @@ void TableWindow::changeColumns()
 	//Get the Currently Visible Features in model:
 	QStringList features;
 	QList<bool> visible;
-	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
+	for( int i=1; i < this->tableView->model()->columnCount(); ++i) //skip root trace
 	{	
 		features << this->tableView->model()->headerData(i,Qt::Horizontal).toString();
 		visible << !(this->tableView->isColumnHidden(i));		
@@ -280,18 +280,19 @@ void TableWindow::changeColumns()
 	}
 	delete dialog;
 
-	for( int i=0; i < this->tableView->model()->columnCount(); ++i)
+	for( int i=1; i < this->tableView->model()->columnCount(); ++i)
 	{	
-		this->tableView->setColumnHidden( i, !visible.at(i) );
+		this->tableView->setColumnHidden( i, !visible.at(i-1) );
 	}
 
 	if(this->selection2)
 	{
 		std::set<long int> selectedIDs;
-
-		for( int i=0; i < this->tableView->model()->columnCount(); ++i)
+		
+		selectedIDs.insert(0); //always show root trace
+		for( int i=1; i < this->tableView->model()->columnCount(); ++i)
 		{
-			if(visible.at(i))
+			if(visible.at(i-1))
 				selectedIDs.insert(i);
 		}
 
