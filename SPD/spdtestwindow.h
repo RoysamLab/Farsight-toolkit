@@ -25,10 +25,12 @@ public:
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDtestWindow();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
+	vtkSmartPointer<vtkTable> NormalizeTable(vtkSmartPointer<vtkTable> table);
 
 protected:
 	void split(std::string& s, char delim, std::vector< unsigned int>& indexVec);
 	void GetFeatureOrder(std::vector< unsigned int> &selID, std::vector< int> &selIdOrder, std::vector< int> &unselIdOrder);
+	void showHeatmapAfterFeatureClustering();
 	bool IsExist(std::vector< unsigned int> vec, unsigned int value);
 	virtual void closeEvent(QCloseEvent *event);
 	void closeSubWindows();
@@ -38,6 +40,7 @@ protected slots:
     void browse();
     void load();
 	void loadContrastData();
+	void showOriginalHeatmap();
     void clusterFunction();
 	void clusterCells();
 	void emdFunction();
@@ -101,6 +104,7 @@ private:
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
 	HistoWindow *histo;
+	Heatmap *originalHeatmap;
 	Heatmap *progressionHeatmap;
 	Heatmap *HeatmapWin;
 	PlotWindow *plot;

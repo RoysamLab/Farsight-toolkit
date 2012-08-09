@@ -115,7 +115,7 @@ private:
 	
 	ObjectSelection * Selection;
 	SelectiveClustering * CellClusterSelection;
-	ClusterManager * CellClusterManager;
+	//ClusterManager * CellClusterManager;
 
 	//////////////////////////////////////////////
 	ObjectSelection * ColumnSelection;

@@ -54,10 +54,14 @@ View3D::View3D(QWidget *parent)
 	this->TreeModel = NULL;
 	this->CellModel = NULL;
 	this->savescreenshotDialog = NULL;
+	this->poly_line_data = NULL;
 	//this->ROIExtrudedpolydata = NULL;
 	this->ROIactor = NULL;
 	this->bshowDevice = false;
 	this->statisticsDockWidget = NULL;
+	this->NodeTable = NULL;
+	this->NodePlot = NULL;
+
 #ifdef USE_SPD
 	this->SPDWin = NULL;
 #endif
@@ -79,6 +83,7 @@ View3D::View3D(QWidget *parent)
 	this->numMerged = 0;
 	this->numSplit = 0;
 	this->flag=0;
+	this->bKeepSelectedTraces = false;
 	//this->Volume=0;
 	//bool tracesLoaded = false;
 	this->translateImages = false;	//this is for testing a switch is needed
@@ -1696,6 +1701,7 @@ void View3D::CreateGUIObjects()
 	//connect (this->SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
 	this->SPDAnalysisAction = new QAction("SPD Analysis", this->CentralWidget);
+	this->SPDAnalysisAction->setShortcut(Qt::CTRL + Qt::ALT + Qt::Key_S);
 	connect (this->SPDAnalysisAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
 	//this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
@@ -3503,15 +3509,24 @@ void View3D::ApplyNewSettings()
 	this->TraceEditSettings.setValue("mainWin/ColorB", this->backColorB);
 	this->TraceEditSettings.sync();
 	this->renderTraceBits = this->markTraceBits->isChecked();
-	this->poly_line_data->Modified();
-	this->updateTraceSelectionHighlights();
+
+	if( false == bKeepSelectedTraces)
+	{
+		this->poly_line_data->Modified();   // no change over previous traces
+		this->updateTraceSelectionHighlights();
+	}
+
 	if (gridShown)
 	{
 		this->AdjustGridlines(0);
 	}
 	//this->UpdateLineActor(); //What does this do?
 	this->QVTK->GetRenderWindow()->Render();
-	this->Rerender();
+
+	if( false == bKeepSelectedTraces)
+	{
+		this->Rerender();
+	}
 }
 
 void View3D::HideSettingsWindow()
@@ -3956,7 +3971,7 @@ void View3D::AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable)
 	std::cout<< "Cell number: "<< cellCount<<std::endl;
 	std::cout<< "Debris Table row number: "<< rowCount<<std::endl;
 	vtkIdType coln = 3;
-	if ((cellCount >= 1)&&(rowCount >= cellCount))
+	if (cellCount >= 1)
 	{
 		vtkIdType colSize = debrisTable->GetNumberOfColumns();
 		vtkIdType rowSize = debrisTable->GetNumberOfRows();
@@ -4363,10 +4378,21 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 	case 'q':
 		view->updateSelectionHighlights();
 		break;
+
+	case 'k':
+		view->UpdateKeepSelectedTraces();
+		break;
+
 	default:
 		break;
 	}
 }
+
+void View3D::UpdateKeepSelectedTraces()
+{
+	bKeepSelectedTraces = bKeepSelectedTraces == true ? false : true;
+}
+
 /*  Automated Selection Actions   */
 void View3D::AutomaticEdits()
 {
@@ -4630,7 +4656,11 @@ void View3D::ClearSelection()
 }
 void View3D::FastClearSelection()
 {
-	
+	if( bKeepSelectedTraces)
+	{
+		this->poly_line_data = this->tobj->GetVTKPolyData(true); //restore the color to the original state
+	}
+
 	this->SphereActor->VisibilityOff();
 	this->pointer3d->SetEnabled(0);
 	this->SelectedTraceIDs.clear();
@@ -4646,6 +4676,7 @@ void View3D::FastClearSelection()
 	{
 		this->Node_Model->GetObjectSelection()->clear();
 	}
+	this->Rerender();
 }
 
 void View3D::SelectTrees()
@@ -4665,7 +4696,9 @@ void View3D::updateSelectionFromCell()
 	* Links CellModel selection to TraceModel Selection
 	*/
 	//this->TreeModel->SetSelectionByIDs(this->CellModel->GetSelectedIDs());
-	this->poly_line_data = this->tobj->GetVTKPolyData();
+
+	this->poly_line_data = this->tobj->GetVTKPolyData(!bKeepSelectedTraces);
+
 	std::vector<TraceLine*> Selections = this->CellModel->GetSelectedTraces();
 	//std::vector<CellTrace*> selectedCells = this->CellModel->GetSelectedCells();
 	//int limit = selectedCells.size();
@@ -4682,7 +4715,6 @@ void View3D::updateSelectionFromCell()
 	}
 	if( CentroidsActor)  // color the nucleus
 	{
-		
 		std::set<long int> Ids = this->CellModel->GetSelectedContinuousIDs();
 		unsigned int cellCount = this->CellModel->getCellCount();
 		for (unsigned int i = 0; i < cellCount; i++)
@@ -6060,6 +6092,7 @@ void View3D::AutoCellExport()
 		AutoExportInfo.exec();
 	}
 }
+
 void View3D::closeEvent(QCloseEvent *event)
 {	
   if(this->SaveSettingsOnExit)
@@ -6341,19 +6374,14 @@ void View3D::SaveComputedCellFeaturesTable()
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
-	//this->SPDWin = new SPDtestWindow();
-	this->SPDWin = new SPDWindowForNewSelection();
-	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	this->SPDWin = new SPDtestWindow();
+	//this->SPDWin = new SPDWindowForNewSelection();
+
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 1)
 	{
-		//this->SPDWin->setModels();
-		//QMessageBox mes;
-		//mes.setText("Please compute cell features first!");
-		//mes.exec();
-	}
-	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 5)
-	{
-		std::cout<<"This analysis is for dataset larger than 5 "<<std::endl;
-		return;
+		QMessageBox mes;
+		mes.setText("Please compute cell features first, cell number should be more than one!");
+		mes.exec();
 	}
 	else
 	{
@@ -6363,16 +6391,16 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
-		featureTable->RemoveColumnByName("Soma Volume");
-		featureTable->RemoveColumnByName("Soma Surface Area");
-		featureTable->RemoveColumnByName("Soma Radii");
+		//featureTable->RemoveColumnByName("Soma Volume");
+		//featureTable->RemoveColumnByName("Soma Surface Area");
+		//featureTable->RemoveColumnByName("Soma Radii");
 
 		featureTable->RemoveColumnByName("centroid_x");
 		featureTable->RemoveColumnByName("centroid_y");
 		featureTable->RemoveColumnByName("centroid_z");
 
-		//this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());		
-		this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
+		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());		
+		//this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}
 	this->SPDWin->show();
 #endif
@@ -6435,10 +6463,14 @@ void View3D::BiclusAnalysis()
 
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();	
+
 		featureTable->RemoveColumnByName("Trace File");	
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
+
+		//this->SPDWin = new SPDtestWindow();
+		//featureTable = this->SPDWin->NormalizeTable(featureTable);
 		featureTable->RemoveColumnByName("Distance to Device");
 
 		std::vector<std::vector<double > > points;
@@ -6471,6 +6503,11 @@ void View3D::BiclusAnalysis()
 		bicluster->setDataToBicluster(points);
 		bicluster->biclustering();
 		bicluster->WriteFile("order1.txt", "order2.txt");
+
+		//Heatmap *progressionHeatmap = new Heatmap(this);
+		//std::vector<int> unSelOrder;
+		//progressionHeatmap->setModelsforSPD( featureTable, this->CellModel->GetObjectSelection(), bicluster->order1, bicluster->order2, unSelOrder);
+		//progressionHeatmap->showGraphforSPD( (bicluster->order2).size(), 0, true);
 
 		this->Biheatmap ->setModels(featureTable, this->CellModel->GetObjectSelection());
 		this->Biheatmap ->setDataForHeatmap(bicluster->order1, bicluster->order2);

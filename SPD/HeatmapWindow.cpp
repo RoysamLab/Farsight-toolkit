@@ -1,6 +1,7 @@
 #include "HeatmapWindow.h"
 
 #define pi 3.1415926
+#define POWER_PARAM 0.2
 
 Heatmap::Heatmap(QWidget *parent)
 : QMainWindow(parent)
@@ -326,7 +327,7 @@ void Heatmap::runClusclus()
 	cout<<"finish clusclus....."<<endl;
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
 	this->setDataForDendrograms(cc1->treedata, cc2->treedata);
-	this->creatDataForHeatmap(0.2);	
+	this->creatDataForHeatmap(POWER_PARAM);	
 
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
@@ -376,7 +377,7 @@ void Heatmap::runClus()
 		optimalleaforder2[i]=i;
 	this->setDataForHeatmap(cc1->features, cc1->optimalleaforder, optimalleaforder2,cc1->num_samples, cc1->num_features);
 	this->setDataForDendrograms(cc1->treedata);
-	this->creatDataForHeatmap(0.2);
+	this->creatDataForHeatmap(POWER_PARAM);
 	
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
@@ -600,6 +601,10 @@ void Heatmap::createDataForDendogram1(double powCof)
 		Processed_Coordinate_Data_Tree1[i][3] = 0; 
 	}
 
+	std::cout<<std::endl;
+	std::cout<< "Max value:"<<connect_Data_Tree1[num_samples-2][2]<<std::endl;
+	std::cout<< "devided by:"<<2 * pow(connect_Data_Tree1[num_samples - 2][2], powCof)<<std::endl;
+
 	for(int i = 0; i < num_samples-1; i++)
 	{
 		connect_Data_Tree1[i][2] = pow(connect_Data_Tree1[i][2], powCof);
@@ -670,6 +675,7 @@ void Heatmap::createDataForDendogram2(double powCof)
 		connect_Data_Tree2[i][2] /= pow(connect_Data_Tree2[num_features - 2][2], powCof);
 		connect_Data_Tree2[i][2] /= 2;
 	}
+
 	connect_Data_Tree2[num_features - 2][2] = 0.5;
 
 	for(int i = num_features ; i < 2*num_features - 1; i++)
@@ -1558,6 +1564,8 @@ void Heatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int ev
 	}
 	if(worldPosition[0]<-0.5)
 	{
+		std::cout<<"world position: "<<worldPosition[0] <<endl;
+		std::cout<<"rescaled value: "<< - ( worldPosition[0] + 0.5) <<endl;
 		heatmapWin->addDragLineforSPD(worldPosition);
 	}	
 }
@@ -2246,6 +2254,7 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	{
 		selectedFeatureIDs.insert( selOrder[i]);
 	}
+	std::cout<< selectedFeatureIDs.size()<<std::endl;
 	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
 	this->runClusforSPD(selOrder, unselOrder);
@@ -2340,14 +2349,15 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 	cout<<"finish clusclus....."<<endl;
 	cout<<this->table->GetNumberOfRows();
 	cout<<this->table->GetNumberOfColumns();
-	cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt", "gap.txt", "treedata.txt", "Optimalleaforder.txt");
+	//cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt", "gap.txt", "treedata.txt", "Optimalleaforder.txt");
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
 		delete datasforclus[i];
 	}
 	delete datasforclus;
 	
-	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
+	int featureNum = selOrder.size() + unselOrder.size();
+	int* optimalleaforder2 = new int[featureNum];
 	int counter = 0;
 	for(int i = 0; i < selOrder.size(); i++)
 	{
@@ -2359,9 +2369,9 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		optimalleaforder2[i + counter] = unselOrder[i];
 	}
 
-	this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
+	this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), featureNum);
 	this->setDataForDendrograms(cc1->treedata);
-	this->creatDataForHeatmap(0.2);
+	this->creatDataForHeatmap(POWER_PARAM);
 	
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
@@ -2417,7 +2427,7 @@ void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> sel
 
 	this->setDataForHeatmap( datas, optimalleaforder1, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
 	//this->setDataForDendrograms();
-	this->creatDataForHeatmap(0.2);
+	this->creatDataForHeatmap(POWER_PARAM);
 	
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
@@ -2707,7 +2717,7 @@ void Heatmap::reRunClus()
 		optimalleaforder2[i]=i;
 	
 	this->setDataForHeatmap(datas, optimalleaforder1, optimalleaforder2,this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
-	this->creatDataForHeatmap(0.2);	
+	this->creatDataForHeatmap(POWER_PARAM);	
 }
 
 void Heatmap::showGraphforNe()

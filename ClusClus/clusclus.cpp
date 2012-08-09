@@ -1,10 +1,12 @@
 #include"clusclus.h"
 
+#define LINKMODE 2
+
 clusclus::clusclus()
 {
 	this->num_samples = 0;
 	this->num_features = 0;	
-	this->linkmode = 2;
+	this->linkmode = LINKMODE;
 	this->num_gaps = 5;
 	this->gap = NULL;
 	this->mergers = NULL;
@@ -21,7 +23,7 @@ clusclus::clusclus()
 
 clusclus::clusclus(double** feature,int numsamples, int numfeatures)
 {
-	this->linkmode = 2;
+	this->linkmode = LINKMODE;
 	this->num_gaps = 5;
 	this->num_features = numfeatures;
 	this->num_samples = numsamples;
@@ -827,5 +829,33 @@ void clusclus::RunClusClus()
 	this->Clustering();
 	this->MergersToProgress();
 	this->PrepareTreeData();
+
+	//double max1 = 0;
+	//int maxInd = 0;
+	//double max2 = 0;
+	//double min = 1e10;
+	//for (int i = 0; i < num_samples-1; i++) 
+	//{
+	//	if( treedata[i][2] > max1) 
+	//	{
+	//		max2 = max1;
+	//		max1 = treedata[i][2];
+	//		maxInd = i;
+	//	}
+
+	//	if( treedata[i][2] < min)
+	//	{
+	//		min = treedata[i][2];
+	//	}
+	//}
+
+	//treedata[maxInd][2] = max2+10;
+	//if(max2 + 10 > min)
+	//{
+	//	for(int i = 0; i < num_samples-1; i++)
+	//	{
+	//		treedata[i][2] = (treedata[i][2] - min) / ( max2 + 10 - min);
+	//	}
+	//}
 	this->GetOptimalLeafOrderD();
 }

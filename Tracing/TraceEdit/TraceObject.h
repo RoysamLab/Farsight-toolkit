@@ -143,7 +143,7 @@ public:
 	TraceLine* CreateTraceFromBit(TraceBit firstBit);
 	void ExtendTraceTo(TraceLine* tline, double pt[]);
 	//  public data
-	vtkSmartPointer<vtkPolyData> GetVTKPolyData();
+	vtkSmartPointer<vtkPolyData> GetVTKPolyData(bool bSetScalar = true);
 	vtkSmartPointer<vtkPolyData> generateBranchIllustrator();
 	void Print(std::ostream &c);
 

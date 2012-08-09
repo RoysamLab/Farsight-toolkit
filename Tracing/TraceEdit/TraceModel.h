@@ -92,7 +92,7 @@ private:
 	vtkSmartPointer<vtkTable> DataTable;
 	ObjectSelection * Selection;
 	SelectiveClustering * TraceClusterSelection;
-	ClusterManager * TraceClusterManager;
+	//ClusterManager * TraceClusterManager;
 	
 	std::vector<std::string> additionalFeatureHeaders;
 	std::map<long int ,TraceLine*> TraceIDLookupMAP;

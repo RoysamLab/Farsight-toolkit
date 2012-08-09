@@ -1432,7 +1432,7 @@ std::vector<TraceBit> TraceObject::CollectTraceBits()
 
 
 
-vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
+vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData(bool bSetScalar)
 {
 	hashp.clear();
 	hashc.clear();
@@ -1448,8 +1448,13 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData()
 	this->PolyTraces->SetPoints(line_points);
 	this->PolyTraces->SetLines(line_cells);
 
-	this->PolyTraces->GetPointData()->SetScalars(point_scalars);
+	if(bSetScalar)
+	{
+	    this->PolyTraces->GetPointData()->SetScalars(point_scalars);
+	}
+
 	this->PolyTraces->BuildCells();
+
 	//printf("Done with getVTKPolyData\n");
 	return this->PolyTraces;
 

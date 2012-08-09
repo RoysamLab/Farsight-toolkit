@@ -24,10 +24,10 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	this->DataTable = vtkSmartPointer<vtkTable>::New();
 	this->Selection = new ObjectSelection();
 	this->TraceClusterSelection = new SelectiveClustering();
-	this->TraceClusterManager = new ClusterManager();
-	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
-	this->TraceClusterManager->setObjectSelection(this->Selection);
-	this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
+	//this->TraceClusterManager = new ClusterManager();
+	//this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
+	//this->TraceClusterManager->setObjectSelection(this->Selection);
+	//this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
 
 //standard headers	
 	this->stdHeaders();
@@ -49,10 +49,10 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 {	this->DataTable = vtkSmartPointer<vtkTable>::New();	
 	this->Selection = new ObjectSelection();
 	this->TraceClusterSelection = new SelectiveClustering();
-	this->TraceClusterManager = new ClusterManager();
-	this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
-	this->TraceClusterManager->setObjectSelection(this->Selection);
-	this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
+	//this->TraceClusterManager = new ClusterManager();
+	//this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
+	//this->TraceClusterManager->setObjectSelection(this->Selection);
+	//this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
 //standard headers	
 	this->additionalFeatureHeaders.clear();
 	this->stdHeaders();
@@ -62,9 +62,9 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 
 TraceModel::~TraceModel()
 {
-	this->TraceClusterManager->CloseClusterObjectTables();
+	//this->TraceClusterManager->CloseClusterObjectTables();
 	delete this->Selection;
-	delete this->TraceClusterManager;
+	//delete this->TraceClusterManager;
 	delete this->TraceClusterSelection;
 }
 
@@ -191,7 +191,7 @@ void TraceModel::SyncModel()
 	}//end for traces.size  
 	//this->MapTracesToRows();
 	this->TraceClusterSelection->SetObjectTable(this->DataTable);
-	this->TraceClusterManager->setVisible(true);
+	//this->TraceClusterManager->setVisible(true);
 }
 vtkSmartPointer<vtkTable> TraceModel::getDataTable()
 {
@@ -306,6 +306,6 @@ std::vector<TraceLine*> TraceModel::GetSelectedRoots()
 
 void TraceModel::CloseClusterManager()
 {
-	this->TraceClusterManager->close();
+	//this->TraceClusterManager->close();
 }
 

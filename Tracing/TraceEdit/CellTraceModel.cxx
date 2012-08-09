@@ -25,10 +25,10 @@ CellTraceModel::CellTraceModel()
 	this->ColumnSelection = new ObjectSelection();
 	
 	this->CellClusterSelection = new SelectiveClustering();
-	this->CellClusterManager = new ClusterManager();
-	this->CellClusterManager->setClusteringModel(this->CellClusterSelection );
-	this->CellClusterManager->setObjectSelection(this->Selection);
-	this->CellClusterManager->setManagerTitle("Cell Cluster Manager");
+	//this->CellClusterManager = new ClusterManager();
+	//this->CellClusterManager->setClusteringModel(this->CellClusterSelection );
+	//this->CellClusterManager->setObjectSelection(this->Selection);
+	//this->CellClusterManager->setManagerTitle("Cell Cluster Manager");
 
 	this->Cells.clear();
 	this->graphVisualize = new GraphWindow();
@@ -54,7 +54,7 @@ CellTraceModel::~CellTraceModel()
     delete this->graphVisualize;
     this->graphVisualize = NULL;
     }
-  delete this->CellClusterManager;
+  //delete this->CellClusterManager;
   delete this->CellClusterSelection;
 }
 void CellTraceModel::setCells(std::map< int ,CellTrace*> Cells)
@@ -280,7 +280,7 @@ void CellTraceModel::SyncModel()
 		}
 	}
 	this->CellClusterSelection->SetObjectTable(this->DataTable);
-	this->CellClusterManager->setVisible(true);
+	//this->CellClusterManager->setVisible(true);
 }
 
 
@@ -602,7 +602,7 @@ int CellTraceModel::AddNewFeatureHeader(std::string NewHeader)
 
 void CellTraceModel::CloseClusterManager()
 {
-	this->CellClusterManager->close();
+	//this->CellClusterManager->close();
 }
 
 SelectiveClustering *CellTraceModel::GetCellSelectiveClustering()

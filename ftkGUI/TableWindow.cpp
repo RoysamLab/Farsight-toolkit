@@ -31,9 +31,10 @@ TableWindow::TableWindow(QWidget * parent)
 //Destructor
 TableWindow::~TableWindow()
 {
-  if(this->modAdapter)
+	if(this->modAdapter)
     {
-    delete this->modAdapter;
+		delete this->modAdapter;
+		this->modAdapter = NULL;
     }
 }
 
@@ -48,7 +49,10 @@ void TableWindow::setQtModels(QItemSelectionModel * mod)
 void TableWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)///////////////////////////////////////////
 {
 	if(this->modAdapter)
+	{
 		delete this->modAdapter;	
+		this->modAdapter = NULL;
+	}
 	this->modAdapter = new vtkQtTableModelAdapter();
 	this->modAdapter->setTable(  table );
 	//this->modAdapter->SetKeyColumn(0);	//Key column is used as the row headers

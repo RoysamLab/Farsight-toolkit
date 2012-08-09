@@ -94,8 +94,8 @@ limitations under the License.
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #ifdef USE_SPD
-//#include "SPD/spdtestwindow.h"
-#include "SPD/spdtestwindowForNewSelection.h"
+#include "SPD/spdtestwindow.h"
+//#include "SPD/spdtestwindowForNewSelection.h"
 #endif
 #ifdef USE_Clusclus
 #include "ClusClus/HeatmapWindow.h"
@@ -327,6 +327,7 @@ protected slots:
 	void clearSettings();
 	void recordTest();
 	void resizeForTesting();
+	void UpdateKeepSelectedTraces();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -489,15 +490,18 @@ private:
 	PlotWindow *FL_MeasurePlot;
 	HistoWindow *FL_histo;
 	StatisticsToolbar * statisticsToolbar;
+
+	bool bKeepSelectedTraces;   /// whether keep the last rendered traces
+
 #ifdef USE_SPD
-	//SPDtestWindow *SPDWin;
-	SPDWindowForNewSelection *SPDWin;
+	SPDtestWindow *SPDWin;
+	//SPDWindowForNewSelection *SPDWin;
 #endif
+
 #ifdef	USE_Clusclus
 	Heatmap *HeatmapWin;
 	Heatmap *HeatmapWins;
 	BiHeatmap *Biheatmap;
-
 #endif
 
 	bool renderTraceBits;

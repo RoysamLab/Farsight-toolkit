@@ -80,7 +80,7 @@ public:
 	void GetClusClusData(clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
-	void SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures);
+	void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<unsigned int>& selectedFeatures);
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
@@ -102,6 +102,7 @@ public:
 	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
 				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
+	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 
 protected:
 	SPDAnalysisModel();
@@ -139,6 +140,13 @@ protected:
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
 	bool MergeTables(vtkSmartPointer<vtkTable> firstTable, vtkSmartPointer<vtkTable> secondTable, vtkSmartPointer<vtkTable> table);
 	void CopyTable( vtkSmartPointer<vtkTable> oriTable, vtkSmartPointer<vtkTable> targetTable);
+
+	/// for multi-level demo
+	bool RunSPDforFeatureDistributionTable(std::string fileName);
+	void ComputeDistributionDistance( vnl_matrix<unsigned int> &mat, vnl_matrix<double> &dismat);
+	void ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance);
+	bool GenerateMST( vnl_matrix<double> &mat, bool bfirst);
+	void RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind);
 
 public:
 	std::vector< Tree> PublicTreeData;
@@ -214,5 +222,13 @@ private:
 	// for spdtestwindow
 	vnl_matrix<double> ModuleCompareCorMatrix;
 	vnl_vector<double> DistanceCorVector;
+
+	// for multi-level demo
+	int nSampleSize;
+	int nFeatureSize;
+	int nBinNum;
+
+	// for layer data
+	vnl_vector<int> clusNo;
 };
 #endif

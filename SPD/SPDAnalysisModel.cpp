@@ -15,6 +15,7 @@
 #define NUM_THREAD 4
 #define NUM_BIN 20
 #define DISTANCE_PRECISION 10
+#define LMEASURETABLE 1
 
 SPDAnalysisModel* SPDAnalysisModel::s_pmodel = NULL;
 
@@ -244,6 +245,10 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 	table->RemoveColumnByName("Soma_Y_Pos");
 	table->RemoveColumnByName("Soma_Z_Pos");
 
+	//table->RemoveColumnByName("centroid_x");
+	//table->RemoveColumnByName("centroid_y");
+	//table->RemoveColumnByName("centroid_z");
+
 	//for( long int i = 0; i < table->GetNumberOfRows(); i++)
 	//{
 	//	long int var = table->GetValue( i, 0).ToLong();
@@ -280,9 +285,18 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 		std::cout<< "Data table:"<<table->GetNumberOfRows()<<"\t"<< table->GetNumberOfColumns()<<endl;
 		this->DataTable = table;
 		this->indMapFromIndToVertex.clear();
+
+#if LMEASURETABLE
 		ConvertTableToMatrix( this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, DistanceToDevice);
 		UNDistanceToDevice = DistanceToDevice;
+		double disMean = DistanceToDevice.mean();
+		disCor = (DistanceToDevice - disMean).two_norm();
+		std::cout<< "Distance cor: "<<disCor<<endl;
+#else 
+		ConvertTableToMatrixForLayerData(this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, clusNo);
+#endif
 
+		UNMatrixAfterCellCluster = this->DataMatrix;
 		maxVertexId = 0;
 		for( int i = this->indMapFromIndToVertex.size() - 1; i >= 0; i--)
 		{
@@ -291,11 +305,6 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 				maxVertexId = this->indMapFromIndToVertex[i];
 			}
 		}
-
-		UNMatrixAfterCellCluster = this->DataMatrix;
-		double disMean = DistanceToDevice.mean();
-		disCor = (DistanceToDevice - disMean).two_norm();
-		std::cout<< "Distance cor: "<<disCor<<endl;
 
 		this->CellClusterIndex.set_size(this->DataMatrix.rows());
 		for( int i = 0; i < CellCluster.size(); i++)
@@ -359,6 +368,71 @@ void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl
 
 	table->RemoveColumnByName("Distance to Device");
 	table->RemoveColumnByName("Distance_to_Device");
+
+	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 1);
+	
+	for( int i = 0; i < table->GetNumberOfRows(); i++)
+	{
+		int colIndex = 0;
+		for( int j = 0; j < table->GetNumberOfColumns(); j++)
+		{
+			if( j == 0 )
+			{
+				index.push_back( table->GetValue(i, j).ToInt());
+			}
+			else
+			{
+				double var = table->GetValue(i, j).ToDouble();
+				if( !boost::math::isnan(var))
+				{
+					mat( i, colIndex++) = table->GetValue(i, j).ToDouble();
+				}
+				else
+				{
+					mat( i, colIndex++) = 0;
+				}
+			}
+		}
+	}
+}
+
+void SPDAnalysisModel::ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, 
+        std::vector<int> &index, vnl_vector<int> &clusNo)
+{
+	clusNo.set_size( table->GetNumberOfRows());
+	for( int i = 0; i < clusNo.size(); i++)
+	{
+		clusNo[i] = 0;
+	}
+
+	vtkVariantArray *distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("prediction_active"));
+	if( distanceArray == NULL)
+	{
+		distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("prediction_active"));
+	}
+
+	vtkDoubleArray *distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("prediction_active"));
+	if( distanceDoubleArray == NULL)
+	{
+		distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("prediction_active"));
+	}
+
+	if( distanceArray)
+	{
+		for( int i = 0; i < distanceArray->GetNumberOfValues(); i++)
+		{
+			clusNo[i] = distanceArray->GetValue(i).ToDouble();
+		}
+	}
+	else if( distanceDoubleArray)
+	{
+		for( int i = 0; i < distanceDoubleArray->GetNumberOfTuples(); i++)
+		{
+			clusNo[i] = distanceDoubleArray->GetValue(i);
+		}
+	}
+
+	table->RemoveColumnByName("prediction_active");
 
 	mat.set_size( table->GetNumberOfRows(), table->GetNumberOfColumns() - 1);
 	
@@ -718,9 +792,7 @@ void SPDAnalysisModel::GetCellClusterSize( std::vector<int> &clusterSize)
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GetDataTableAfterCellCluster()
 {
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	std::cout<< UNMatrixAfterCellCluster.rows()<<endl;
-	std::cout<< UNMatrixAfterCellCluster.cols()<<endl;
-	ConvertMatrixToTable( table, UNMatrixAfterCellCluster, DistanceToDevice);
+	ConvertMatrixToTable( table, MatrixAfterCellCluster, DistanceToDevice);
 	return table;
 }
 
@@ -750,25 +822,30 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 	int old_cluster_num = MatrixAfterCellCluster.cols();
 	int new_cluster_num = MatrixAfterCellCluster.cols();
 
+	ofs<<"Left cluster number:"<<endl;
 	do
 	{
 		old_cluster_num = new_cluster_num;
+		ofs<<old_cluster_num<<endl;
 		new_cluster_num = ClusterAggFeatures( MatrixAfterCellCluster, clusterIndex, moduleMean, cor);
 		//ofs<<clusterIndex<<endl<<endl;
 	}
 	while( old_cluster_num != new_cluster_num);
+	ofs<<endl<<endl;
 
 	this->ClusterIndex = clusterIndex;
 	this->ModuleMean = moduleMean;
 
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
-		ofs<<"Cluster:"<< i + 1<<endl;
+		ofs<<"Cluster:"<< i<<endl;
 		for( unsigned int j = 0; j < this->ClusterIndex.size(); j++)
 		{
 			if( ClusterIndex[j] == i)
 			{
-				ofs<<j + 1<<endl;
+				char* name = this->DataTable->GetColumn(j + 1)->GetName();
+				std::string featureName(name);
+				ofs<<featureName<<endl;
 			}
 		}
 	}
@@ -1164,16 +1241,16 @@ void SPDAnalysisModel::GetFeatureIdbyModId(std::vector<unsigned int> &modID, std
 
 void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat)  // after single linkage clustering
 {
-	clusAverageMat.set_size( index.size(), UNMatrixAfterCellCluster.cols());
+	clusAverageMat.set_size( index.size(), MatrixAfterCellCluster.cols());
 	for( int i = 0; i < index.size(); i++)
 	{
-		vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
+		vnl_vector<double> tmp( MatrixAfterCellCluster.cols());
 		tmp.fill(0);
 		for( int j = 0; j < index[i].size(); j++)
 		{
 			long int id = index[i][j];
 			int clusId = combinedIndexMapping.find(id)->second;
-			vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusId);
+			vnl_vector<double> row = MatrixAfterCellCluster.get_row(clusId);
 			tmp = tmp + row;
 		}
 		tmp = tmp / index[i].size();
@@ -2159,18 +2236,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 		{
 			double dist = CityBlockDist( clusterMat, i, vertex[i]);
 			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-			//if( this->CellCluster.size() > 0)    // cluster index continuous, no mapping needed
-			//{
-			//	DataRow->InsertNextValue( i);
-			//	DataRow->InsertNextValue( vertex[i]);
-			//}
-			//else if( this->indMapFromIndToVertex.size() > 0)
-			//{
-			//	DataRow->InsertNextValue( this->indMapFromIndToVertex[i]);
-			//	DataRow->InsertNextValue( this->indMapFromIndToVertex[vertex[i]]);
-			//}
-			//else
-			//{
+ 
 				DataRow->InsertNextValue( i);
 				DataRow->InsertNextValue( vertex[i]);
 			//}
@@ -2225,18 +2291,15 @@ void SPDAnalysisModel::GetSelectedFeatures(std::set<long int>& selectedFeatures)
 	selectedFeatures = this->selectedFeatureIDs;
 }
 
-void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::set<long int>& selectedFeatures)
+void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures)
 {
-	std::set<long int>::iterator iter;
-	QString file = this->filename + filename;
-	std::ofstream ofs( file.toStdString().c_str(), std::ofstream::out);
+	std::ofstream ofs( filename.toStdString().c_str(), std::ofstream::out);
 
-	for( iter = selectedFeatures.begin(); iter != selectedFeatures.end(); iter++)
+	for( int i = 0; i < selectedFeatures.size(); i++)
 	{
-		long int index = *iter;
-		char* name = this->DataTable->GetColumn(index + 1)->GetName();
+		char* name = this->DataTable->GetColumn(selectedFeatures[i] + 1)->GetName();
 		std::string featureName(name);
-		ofs<< index<<"\t"<<featureName<<endl;
+		ofs<<featureName<<endl;
 	}
 	ofs.close();
 }
@@ -2567,10 +2630,12 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
 {
 	disPer.clear();
+	std::ofstream ofs("Distance.txt");
 	if( disCor > 1)
 	{
 		for( int i = 0; i < clusIndex.size(); i++)
 		{
+			ofs<< "Cluster "<<i<<"\t"<<clusIndex[i].size()<<std::endl;
 			int count = 0;
 			int distanceCount = 0;
 			for( int j = 0; j < clusIndex[i].size(); j++)
@@ -2580,13 +2645,18 @@ void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< lon
 				{
 					count++;
 					std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
+					ofs<< UNDistanceToDevice[iter->second]<<"\t";
 					if( iter != indMapFromVertexToClus.end() && UNDistanceToDevice[iter->second] <= disThreshold)
 					{
 						distanceCount++;
 					}
 				}
 			}
-			disPer.push_back( (double)distanceCount / count);
+			ofs<<std::endl<<std::endl;
+			if( count > 0)
+			{
+				disPer.push_back( (double)distanceCount / count);
+			}
 		}
 	}
 	else
@@ -2699,4 +2769,232 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 		}
 	}
 	return table;
+}
+
+/// For milti-level demo
+
+
+/// read the feature distribution table
+bool SPDAnalysisModel::RunSPDforFeatureDistributionTable(std::string fileName)
+{
+	std::ifstream file(fileName.c_str(), std::ifstream::in);
+	int line = LineNum(fileName.c_str());
+	if( !file.is_open() || line == -1)
+	{
+		return false;
+	}
+
+	vtkSmartPointer<vtkTable> table = ftk::LoadTable(fileName);
+	if( table != NULL)
+	{
+		nBinNum = table->GetNumberOfColumns();
+		nFeatureSize = table->GetNumberOfRows() / nSampleSize;
+		for( int k = 0; k < nFeatureSize; k++)
+		{
+			vnl_matrix<unsigned int> mat( nSampleSize, table->GetNumberOfColumns());
+			vnl_matrix<double> dismat( nSampleSize, nSampleSize);
+			for( int i = k * nSampleSize; i < ( k + 1) * nSampleSize; i++)
+			{
+				for( int j = 0; j < table->GetNumberOfColumns(); j++)
+				{
+					unsigned int var = table->GetValue(i, j).ToUnsignedInt();
+					if( !boost::math::isnan(var))
+					{
+						mat( i, j) = var;
+					}
+					else
+					{
+						mat( i, j) = 0;
+					}
+				}
+			}
+			ComputeDistributionDistance(mat, dismat);
+			if( k == 0)
+			{
+				GenerateMST(dismat, true);  // first time clean the 
+			}
+			else
+			{
+				GenerateMST(dismat, false);
+			}
+		}
+
+		this->EMDMatrix.set_size( nFeatureSize, nFeatureSize);
+		this->EMDMatrix.fill(0);
+		for( int k = 0; k < nFeatureSize; k++)
+		{
+			vnl_matrix<unsigned int> mat( nSampleSize, table->GetNumberOfColumns());
+			vnl_vector<double> moduleDistance( nSampleSize, nSampleSize);
+			for( int i = k * nSampleSize; i < ( k + 1) * nSampleSize; i++)
+			{
+				for( int j = 0; j < table->GetNumberOfColumns(); j++)
+				{
+					unsigned int var = table->GetValue(i, j).ToUnsignedInt();
+					if( !boost::math::isnan(var))
+					{
+						mat( i, j) = var;
+					}
+					else
+					{
+						mat( i, j) = 0;
+					}
+				}
+			}
+			ComputeDistributionDistance(mat, moduleDistance);
+			RunEMDAnalysis(moduleDistance, k);
+		}
+	}
+	else
+	{
+		return false;
+	}	
+	return true;
+}
+
+void SPDAnalysisModel::ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_matrix<double> &dismat)
+{
+	dismat.set_size(mat.rows(), mat.rows());
+	dismat.fill(0);
+	for( int i = 0; i < mat.rows(); i++)
+	{
+		vnl_vector<unsigned int> dis1 = mat.get_row(i);
+		for( int j = i + 1; j < mat.rows(); j++)
+		{
+			vnl_matrix<double> flowMatrix( nBinNum, nBinNum);
+			vnl_vector<unsigned int> dis2 = mat.get_row(j);
+			dismat( i, j) = EarthMoverDistance( dis1, dis2, flowMatrix);
+		}
+	}
+}
+
+void SPDAnalysisModel::ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance)
+{
+	int rows = mat.rows();
+	moduleDistance.set_size( rows * (rows - 1) / 2);
+	moduleDistance.fill(0);
+	int ind = 0;
+	for( unsigned int i = 0; i < mat.rows(); i++)
+	{
+		vnl_vector<unsigned int> dis1 = mat.get_row(i);
+		for( unsigned int j = i + 1; j < mat.rows(); j++)
+		{
+			vnl_matrix<double> flowMatrix( nBinNum, nBinNum);
+			vnl_vector<unsigned int> dis2 = mat.get_row(j);
+			moduleDistance[ind++] = EarthMoverDistance( dis1, dis2, flowMatrix);
+		}
+	}
+}
+
+/// mat: distance matrix, nSize: Feature Size, how many msts need to be generated
+bool SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat, bool bfirst)
+{
+	if( mat.rows() != nSampleSize)
+	{
+		return false;
+	}
+
+	if( bfirst)
+	{
+		this->ModuleMST.clear();
+	}
+
+	unsigned int num_nodes = mat.rows();
+
+	Graph graph(num_nodes);
+
+	for( unsigned int k = 0; k < num_nodes; k++)
+	{
+		for( unsigned int j = k + 1; j < num_nodes; j++)
+		{
+			boost::add_edge(k, j, mat(k,j), graph);
+		}
+	}
+
+	std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(num_nodes);
+
+	try
+	{
+		boost::prim_minimum_spanning_tree(graph, &vertex[0]);
+
+	}
+	catch(...)
+	{
+		std::cout<< "MST construction failure!"<<endl;
+		exit(111);
+	}
+
+	this->ModuleMST.push_back(vertex);
+
+	// construct vtk table and show it
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+
+	for(int i = 0; i < this->headers.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( (this->headers)[i].c_str());
+		table->AddColumn(column);
+	}
+	
+	for( unsigned int i = 0; i < num_nodes; i++)
+	{
+		if( i != vertex[i])
+		{
+			double dist = mat(i,vertex[i]);
+			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+			DataRow->InsertNextValue(i);
+			DataRow->InsertNextValue(vertex[i]);
+			DataRow->InsertNextValue(dist);
+			table->InsertNextRow(DataRow);
+		}
+	}
+	this->MSTTable.push_back(table);
+	return true;
+}
+
+void SPDAnalysisModel::RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind)
+{
+	if( this->ModuleMST.size() < nFeatureSize)
+	{
+		std::cout<< "MSTs haven't been built!"<<std::endl;
+		return;
+	}
+
+	vnl_vector<double> hist_interval;
+	vnl_vector<unsigned int> moduleHist;
+	Hist( moduleDistance, NUM_BIN, hist_interval, moduleHist);
+
+	for( int j = 0; j < nFeatureSize; j++)
+	{	
+		std::cout<< "matching module " << ind<< " with MST " << j<<endl;
+
+		vnl_vector<double> mstDistance; 
+		GetMSTMatrixDistance( moduleDistance, this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
+		vnl_vector<unsigned int> mstHist;
+		Hist( mstDistance, hist_interval, mstHist); 
+
+		vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+		this->EMDMatrix( ind, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
+	}
+
+
+	if( ind == nFeatureSize - 1)
+	{
+		for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+		{
+			double max = this->EMDMatrix.get_row(i).max_value();
+			for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
+			{
+				if( max != 0)
+				{
+					this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+				}
+			}
+			if( max != 0)
+			{
+				this->DistanceEMDVector[ i] = this->DistanceEMDVector[ i] / max;
+			}
+		}
+		std::cout<< "EMD matrix has been built successfully"<<endl;
+	}
 }

@@ -23,6 +23,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	graph = NULL;
 	simHeatmap = NULL;
 	histo = NULL;
+	originalHeatmap = NULL;
 	progressionHeatmap = NULL;
 	HeatmapWin = NULL;
 	plot = NULL;
@@ -35,7 +36,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"));
     loadButton = new QPushButton(tr("Load"));
-	loadTestButton = new QPushButton(tr("Load Contrast Data"));
+	loadTestButton = new QPushButton(tr("Raw Data Heatmap"));
 
     featureNumLabel = new QLabel(tr("Feature size:"));
     featureNum = new QLabel;
@@ -84,8 +85,8 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	psdModuleSelectBox = new QLineEdit;
 	maxVetexIdLabel = new QLabel(tr("Id to seperate:"));
 	maxVetexIdEdit = new QSpinBox();
+	maxVetexIdEdit->setRange(0,1000000);
 	maxVetexIdEdit->setSingleStep(100);
-	maxVetexIdEdit->setRange(0,10000);
 	maxVetexIdEdit->setValue(4500);
 	
     psdtButton = new QPushButton(tr("View Progression"));
@@ -107,7 +108,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
-	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(loadContrastData()));
+	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect(cellClusterButton , SIGNAL(clicked()), this, SLOT(clusterCells()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
@@ -128,7 +129,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-     for ( int row = 1; row <= 14; row++)
+     for ( int row = 1; row <= 13; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -139,47 +140,43 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     mainLayout->addWidget(dataFileName, 1, 0, 1, 2);
     mainLayout->addWidget(browseButton, 1, 2);
     mainLayout->addWidget(loadButton, 2, 2);
-	mainLayout->addWidget(loadTestButton, 3, 2);
 
     mainLayout->addWidget(featureNumLabel, 2, 0);
     mainLayout->addWidget(featureNum, 2, 1);
 
     mainLayout->addWidget(sampleNumLabel, 3, 0);
     mainLayout->addWidget(sampleNum, 3, 1);
+	mainLayout->addWidget(loadTestButton, 3, 2);
 
-	mainLayout->addWidget(sampleCoherenceLabel, 4, 0);
-    mainLayout->addWidget(sampleCoherenceBox, 4, 1);
-	//mainLayout->addWidget(cellClusterButton, 4, 2);
+	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
+    mainLayout->addWidget(clusterCoherenceBox, 4, 1);
+	mainLayout->addWidget(clusterButton, 5, 2);
 
-	mainLayout->addWidget(clusterCoherenceLabel, 5, 0);
-    mainLayout->addWidget(clusterCoherenceBox, 5, 1);
-	mainLayout->addWidget(clusterButton, 6, 2);
-
-    mainLayout->addWidget(clusterMergeLabel, 6, 0);
-    mainLayout->addWidget(clusterMergeBox, 6, 1);
+    mainLayout->addWidget(clusterMergeLabel, 5, 0);
+    mainLayout->addWidget(clusterMergeBox, 5, 1);
 	
-	mainLayout->addWidget(progressionOverDistance, 7, 0);
-	mainLayout->addWidget(bcheckBox, 7, 1);
+	mainLayout->addWidget(progressionOverDistance, 6, 0);
+	mainLayout->addWidget(bcheckBox, 6, 1);
 
-	mainLayout->addWidget(emdLabel, 8, 0);
-	mainLayout->addWidget(emdButton, 8, 2);
+	mainLayout->addWidget(emdLabel, 7, 0);
+	mainLayout->addWidget(emdButton, 7, 2);
 
-	mainLayout->addWidget(psmLable, 9, 0);
-	mainLayout->addWidget(emdThresBox, 9, 1);
+	mainLayout->addWidget(psmLable, 8, 0);
+	mainLayout->addWidget(emdThresBox, 8, 1);
 
-	mainLayout->addWidget(psmPerLable, 10, 0);
-	mainLayout->addWidget(emdPercentageBox, 10, 1);
-	mainLayout->addWidget(psmButton, 10, 2);
+	mainLayout->addWidget(psmPerLable, 9, 0);
+	mainLayout->addWidget(emdPercentageBox, 9, 1);
+	mainLayout->addWidget(psmButton, 9, 2);
 
-	mainLayout->addWidget(psdtLable, 11, 0);
-	mainLayout->addWidget(distanceThres, 11, 1);
-	mainLayout->addWidget(psdModuleSelectBox, 12, 0, 1, 2);
-	mainLayout->addWidget(maxVetexIdLabel, 13, 0);
-	mainLayout->addWidget(maxVetexIdEdit, 13, 1);
-	mainLayout->addWidget(psdtButton, 13, 2);
+	mainLayout->addWidget(psdtLable, 10, 0);
+	mainLayout->addWidget(distanceThres, 10, 1);
+	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
+	mainLayout->addWidget(psdtButton, 12, 2);
 
-	mainLayout->addWidget(heatmapLabel, 14, 0);
-	mainLayout->addWidget(heatmapButton, 14, 2);
+	mainLayout->addWidget(heatmapLabel, 13, 0);
+	mainLayout->addWidget(heatmapButton, 13, 2);
 
 
     setLayout(mainLayout);
@@ -226,6 +223,7 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
+
 		//this->SPDModel->NormalizeData();
 		
 		browseButton->setEnabled(FALSE);
@@ -294,6 +292,59 @@ void SPDtestWindow::loadContrastData()
     }
 }
 
+void SPDtestWindow::showOriginalHeatmap()
+{
+	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+	if( this->originalHeatmap)
+	{
+		delete this->originalHeatmap;
+		this->originalHeatmap = NULL;
+	}
+
+	this->originalHeatmap = new Heatmap(this);
+	std::vector< int> sampleOrder;
+	for( int i = 0; i < tableAfterCellCluster->GetNumberOfRows(); i++)
+	{
+		sampleOrder.push_back(i);
+	}
+	std::vector< int> selOrder;
+	for( int i = 0; i < tableAfterCellCluster->GetNumberOfColumns(); i++)
+	{
+		selOrder.push_back(i);
+	}
+	std::vector< int> unselOrder;
+
+	this->originalHeatmap->setModelsforSPD( tableAfterCellCluster, selection, sampleOrder, selOrder, unselOrder);
+	this->originalHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
+}
+
+void SPDtestWindow::showHeatmapAfterFeatureClustering()
+{
+	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+	if( this->originalHeatmap)
+	{
+		delete this->originalHeatmap;
+		this->originalHeatmap = NULL;
+	}
+
+	this->originalHeatmap = new Heatmap(this);
+	std::vector< int> sampleOrder;
+	for( int i = 0; i < tableAfterCellCluster->GetNumberOfRows(); i++)
+	{
+		sampleOrder.push_back(i);
+	}
+	std::vector< int> selOrder;
+	std::vector< unsigned int> inputSelOrder;
+	for( unsigned int i = 0; i < tableAfterCellCluster->GetNumberOfColumns(); i++)
+	{
+		inputSelOrder.push_back(i);
+	}
+	GetFeatureOrder(inputSelOrder, selOrder, unselOrder);
+
+	this->originalHeatmap->setModelsforSPD( tableAfterCellCluster, selection, sampleOrder, selOrder, unselOrder);
+	this->originalHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
+}
+
 void SPDtestWindow::clusterFunction()
 {
 	if ( this->SPDModel->GetFeatureNum() <= 0 && this->SPDModel->GetSampleNum() <= 0)
@@ -309,11 +360,12 @@ void SPDtestWindow::clusterFunction()
 	try
 	{
 		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-		this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+		//this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
 		emdButton->setEnabled(TRUE);
 		psmButton->setEnabled(FALSE);
 		psdtButton->setEnabled(FALSE);
 		heatmapButton->setEnabled(FALSE);
+		//showHeatmapAfterFeatureClustering();
 	}
 	catch(...)
 	{
@@ -332,7 +384,7 @@ void SPDtestWindow::clusterCells()
 }
 
 void SPDtestWindow::updateProgressionType()
-{
+{  
 	if( bcheckBox->isChecked())
 	{
 		bool rtn = this->SPDModel->SetProgressionType( true);   // progression over distance to device
@@ -461,10 +513,22 @@ void SPDtestWindow::showPSM()
 		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
 #endif
 		optimalleaforder.set_size(clus1->num_samples);
+
+
 		for( int i = 0; i < clus1->num_samples; i++)
 		{
 			optimalleaforder[i] = clus1->optimalleaforder[i];
 		}
+
+		//for( int i = 0; i < clus1->num_samples; i++)
+		//{
+		//	clus1->optimalleaforder[i] = i;
+		//}
+		//for( int i = 0; i < clus2->num_samples; i++)
+		//{
+		//	clus2->optimalleaforder[i] = i;
+		//}
+
 		this->simHeatmap->setModels();
 		this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
 		this->simHeatmap->creatDataForSimilarMatrixHeatmap();
@@ -484,6 +548,11 @@ void SPDtestWindow::viewProgression()
 	*/
 	
 	/** heatmap set models */
+	if( this->originalHeatmap)
+	{
+		delete this->originalHeatmap;
+		this->originalHeatmap = NULL;
+	}
 
 	if( this->HeatmapWin)
 	{
@@ -502,16 +571,9 @@ void SPDtestWindow::viewProgression()
 
 	split( selectModulesID, ',', selModuleID);
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
-	if( SPDModel->GetProgressionType())
-	{
-		SPDModel->SaveSelectedFeatureNames("DistanceProgressionSelFeatures.txt", selFeatureID);
-	}
-	else
-	{
-		SPDModel->SaveSelectedFeatureNames("SPDtestWindow_ProgressionSelFeatures.txt", selFeatureID);
-	}
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
+	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
@@ -520,9 +582,25 @@ void SPDtestWindow::viewProgression()
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
+
+	/// show up the heatmap after feature selected
+	//if( this->originalHeatmap)
+	//{
+	//	delete this->originalHeatmap;
+	//}
+
+	//this->originalHeatmap = new Heatmap(this);
+	//std::vector< int> sampleOrder;
+	//for( int i = 0; i < tableAfterCellCluster->GetNumberOfRows(); i++)
+	//{
+	//	sampleOrder.push_back(i);
+	//}
+
+	//this->originalHeatmap->setModelsforSPD( tableAfterCellCluster, selection, sampleOrder, selOrder, unselOrder);
+	//this->originalHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
+
 	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap);
 	this->HeatmapWin->showGraphforSPD( selOrder.size(), unselOrder.size());
-
 
 	//vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
 	//std::vector<std::string> headers;
@@ -530,7 +608,6 @@ void SPDtestWindow::viewProgression()
 	//QString str = SPDModel->GetFileName();
 	//std::set<long int> featureSelectedIDs;
 	//SPDModel->GetSelectedFeatures(featureSelectedIDs);
-	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", featureSelectedIDs);
 
 
 	//this->graph->setModels(data, selection);
@@ -775,7 +852,7 @@ void SPDtestWindow::showProgressionHeatmap()
 	std::string distanceThres = this->distanceThres->text().toStdString();
 	SPDModel->GetPercentage(sampleIndex, percentageOfSamples);
 	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentageOfNearDeviceSamples, atof(distanceThres.c_str()));
-
+	
 	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, percentageOfSamples, percentageOfNearDeviceSamples, selOrder, unselOrder);
 	if( plot)
 	{
@@ -809,6 +886,10 @@ void SPDtestWindow::closeSubWindows()
 	if(simHeatmap)
 	{
 		simHeatmap->close();
+	}
+	if(graph)
+	{
+		graph->close();
 	}
 	if(progressionHeatmap)
 	{
@@ -855,4 +936,11 @@ vtkSmartPointer<vtkTable> SPDtestWindow::GetSubTableExcludeItems(vtkSmartPointer
 		}
 	}
 	return newTable;
+}
+
+vtkSmartPointer<vtkTable> SPDtestWindow::NormalizeTable(vtkSmartPointer<vtkTable> table)
+{
+	SPDModel->ParseTraceFile( table, false);
+	vtkSmartPointer<vtkTable> normalTable = SPDModel->GetDataTableAfterCellCluster();
+	return normalTable;
 }
