@@ -1019,6 +1019,7 @@ void PatternAnalysisWizard::extractTableFromModel(vtkSmartPointer<vtkTable> mod_
 			model_data1->InsertNextValue(m_table->GetValueByName(row,column_name.c_str()));
 
 		}
+		new_table->InsertNextRow(model_data1);
 	}
 }
 
