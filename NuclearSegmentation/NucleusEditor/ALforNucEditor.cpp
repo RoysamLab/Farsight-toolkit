@@ -110,10 +110,10 @@ void ALforNucEd::RunALClassification(bool val)
 	{
 		if(!trainingTable) return;
 
-		if(pWizard)
-		{
-			delete pWizard;
-		}
+		//if(pWizard)
+		//{
+		//	delete pWizard;
+		//}
 
 		QString fileName  = QFileDialog::getOpenFileName(this, "Select training model to open", "",
 			tr("TXT Files (*.txt)"));

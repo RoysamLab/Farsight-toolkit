@@ -2368,15 +2368,19 @@ void NucleusEditor::classifyFromActiveLearningModel()
 {
 	classify_from_model = true;
 	std::vector< vtkSmartPointer<vtkTable> > VectorOfTables;
+	vtkSmartPointer<vtkTable> featureTable;
 	if(myImg->GetImageInfo()->numTSlices==1)
 	{
-		VectorOfTables.push_back(table);		
+		VectorOfTables.push_back(table);
+		featureTable = table;
 	}
 	else
 	{
-		VectorOfTables = nucSeg->table4DImage;			
+		VectorOfTables = nucSeg->table4DImage;
+		featureTable = nucSeg->megaTable;
 	}
-	AL->SetTablesToClassify(VectorOfTables);	
+	AL->SetTablesToClassify(VectorOfTables);
+	AL->SetTableForTraining(featureTable);
 	AL->SetLabelView(segView);
 	AL->RunALClassification(classify_from_model);
 }
