@@ -4,6 +4,7 @@
 import shutil
 import fnmatch
 import os
+import subprocess
 
 # ---------------------------------------------------------------------------------------------------------------------------------------
 # Create Folder
@@ -180,7 +181,9 @@ def main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG
 
 	if not os.path.isdir(GLOBAL_DATASET_PATH_RESULTS):
 		print 'creating folder: '+GLOBAL_DATASET_PATH_RESULTS
-		os.makedirs(GLOBAL_DATASET_PATH_RESULTS)
+		TEMP = 'ssh far-01 \"mkdir -p ' + GLOBAL_DATASET_PATH_RESULTS+'\"'
+		TEMP2 = subprocess.Popen(TEMP, shell=True)
+		TEMP2.communicate()
 	else:
 		print 'erasing folder: '+GLOBAL_DATASET_PATH_RESULTS
 		#for the_file in os.listdir(GLOBAL_DATASET_PATH_RESULTS):
