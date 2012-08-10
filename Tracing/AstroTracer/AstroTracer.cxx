@@ -5650,28 +5650,31 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 
 	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
 	test_table->Initialize();
+	//test_table->SetNumberOfRows(roots_table->GetNumberOfRows());
 	for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
 	{
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName(active_model_table->GetColumnName(col));
-		column->SetNumberOfValues(roots_table->GetNumberOfRows());
 		test_table->AddColumn(column);	
 	}
 	for(int row = 0; row < (int)roots_table->GetNumberOfRows(); ++row)
 	{	
 		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
-		for(int c=0; c<(int)test_table->GetNumberOfColumns();++c)
-			model_data1->InsertNextValue(roots_table->GetValueByName(row,test_table->GetColumnName(c)));
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns();++col)
+		{
+			std::string column_name = active_model_table->GetColumnName(col);
+			model_data1->InsertNextValue(roots_table->GetValueByName(row,column_name.c_str()));
+		}
 		test_table->InsertNextRow(model_data1);
 	}	
 
 	////// Final Data  to classify from the model
 	vnl_matrix<double> data_classify;
-	if(normalize_from_model)
-		data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
-	else
-		data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
-
+	//if(normalize_from_model)
+	//	data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+	//else
+	//	data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
+	data_classify = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
 	data_classify = data_classify.transpose();
 
 	vnl_matrix<double> currprob;
