@@ -11,13 +11,14 @@
  . Test preprocessing with itk-only filters. This might be faster.
  . Use vesselness-enhanced diffusion filter for preprocessing http://www.insight-journal.org/browse/publication/163
  . Add vesselness to the likelihood or to the optimization http://www.insight-journal.org/browse/publication/175
- . Switch back to the old priority_queue structure to compare performance
+ . Switch back to the old priority_queue structure to compare performance (DONE - makes no difference)
+ . Compare the code performance with Amit's 
  . Implement pruning on the MSF and loop completion
  . Get a binary mask for the final segmentation
  . Retrace for filling tracing gaps
  . Add coverage idea to the cost function
- . Add smart editing capabilities
- . Write SWC file output
+ . Add smart editing capabilities (game theoretic/tensor voting)
+ . Write SWC file output (DONE)
  . Compute vessel network features (new class)
  . Classify networks
  */

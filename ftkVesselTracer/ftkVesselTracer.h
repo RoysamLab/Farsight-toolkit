@@ -265,6 +265,7 @@ public:
 	int ID;
 	itk::Index<3> position;
 	double scale;
+	double likelihood;
 	int label;
 	bool isLeaf;
 	bool isBifurgation;
@@ -456,6 +457,10 @@ public:
 	/* Compute all secondary nodes
 	 */
 	void ComputeAllSecondaryNodes(void);
+
+	/* Compute all secondary nodes
+	 */
+	void ComputeAllSecondaryNodes2(void);
 
 	/* Write a vector of nodes to a text file for further processing
 	 * (Vector of nodes to write, file path with extension)

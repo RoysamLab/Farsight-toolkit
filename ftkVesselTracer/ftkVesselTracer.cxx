@@ -46,11 +46,12 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->ComputeAllSecondaryNodes();
 
 		// MST and post processing
-		this->allParams.graphAndMSTParams.initByDefaultValues();
+		/*this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 
 		this->PopulateSWCNodeContainer();
 		this->WriteSWCFileVessel("vessel.swc");
+		*/
 	}
 	else{
 
@@ -2026,6 +2027,291 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		*/
 }
 
+void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
+
+	//// For testing purposes
+	//ImageType3D::IndexType test_index, test_index1;
+	//test_index[0] = 128; test_index[1] = 7; test_index[2] = 25;
+	//test_index1[0] = 6; test_index1[1] = 127; test_index1[2] = 24;
+	//PixelType test_pixel = this->inputData->GetPixel(test_index);
+	//PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
+
+	////this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+
+	//ImageType3D::IndexType test_index2;
+	//test_index2[0] = this->primaryNodesAfterHitTest[0].x; 
+	//test_index2[1] = this->primaryNodesAfterHitTest[0].y;
+	//test_index2[2] = this->primaryNodesAfterHitTest[0].z;
+	//PixelType test_pixel2 = this->inputData->GetPixel(test_index2);
+	//PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
+	
+	
+	clock_t start_tracing_time, stop_tracing_time;
+	double tracing_time = 0.0;
+
+	assert((start_tracing_time = clock()) != -1);
+	
+	// For testing
+	//Node a_node;
+	//a_node.scale = 2.5;
+	//a_node.y = 57; //124.7428;
+	//a_node.x = 161; //64.4287;
+	//a_node.z = 25;
+	//a_node.likelihood = 0.4169;
+	//a_node.meanForegroundIntensity = 0.5671;
+	//a_node.meanBackgroundIntensity = 0.1502;
+	//a_node.parentIDLength = 4;
+	//this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
+	//a_node.nHoodSecondaryMultiplier = 2;
+	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	//this->primaryNodesAfterHitTest[0] = a_node; 
+	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	
+	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+
+	PriorityQueueType node_queue(compareNodes(2));
+	//std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
+	std::vector<double> quality_array;	
+
+	//Node a_node;
+	double trace_quality = 0.0;
+	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++){
+		//Node a_node = this->primaryNodesAfterHitTest[i];           
+
+		// Quality estimate for single nodes. Nodes with high likelihood get low quality, nodes with low likelihood get high quality
+		if(this->primaryNodesAfterHitTest[i].likelihood <= 0){
+			this->primaryNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
+			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
+			//light_node_queue[i] = queue_element(i, this->allParams.nodeDetectionParams.maxTraceCost);
+		}
+		else{
+			trace_quality = -1.0 * std::log(this->primaryNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
+			this->primaryNodesAfterHitTest[i].traceQuality = trace_quality;
+			quality_array.push_back(trace_quality);
+			//light_node_queue[i] = queue_element(i, trace_quality);
+		}
+	
+		this->primaryNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
+		node_queue.push(this->primaryNodesAfterHitTest[i]);
+	}
+
+	//std::cout << "Primary node trace quality.. " << std::endl;
+	//for(int i = 0; i < quality_array.size(); i++)
+	//	std::cout << quality_array[i] << std::endl;
+	
+	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
+	int queue_size = this->primaryNodesAfterHitTest.size();
+	Node current_node, dir_node;
+	double dirX = 0.0, dirY = 0.0, dirZ = 0.0, norm = 0.0;
+	std::vector<double> dir_hist; 
+	std::vector<Node> badNodes, veryBadNodes;
+	queue_element current_queue_element(0, 0.0);
+	
+	//while(queue_iter <= this->primaryNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
+	while(!node_queue.empty() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
+	//while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
+		
+		current_node = node_queue.top();
+		node_queue.pop();
+		
+		//this->GetBestTrace(light_node_queue, current_queue_element);
+
+		// Break if queue is empty
+		//if(std::abs(current_queue_element.second - this->allParams.nodeDetectionParams.infTraceQuality) < 0.01)
+		//	break;
+
+		//current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
+
+		if(current_node.parentID[0] == -1)
+			current_node.isPrimary = true;
+		else
+			current_node.isPrimary = false;
+	
+		// If the quality of trace is above the threshold, these nodes have low quality (ignore them)
+		//if(current_queue_element.second > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+		if(current_node.traceQuality > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+			//std::cout << current_queue_element.second << std::endl;
+			continue;
+		}
+		
+		hit = this->TraceHitTest(current_node);
+
+		if(hit == 2 || (hit == 1 && current_node.isPrimary == true))
+			continue;
+
+		if(current_node.isPrimary == true && hit == 0)
+			primary_counter++;
+		
+		total_nodes_counter++;
+		this->allNodes.push_back(current_node);
+
+		if(hit == 1){
+			hit_counter++;
+			continue;
+		} 
+		
+		int p = current_node.parentID[0];
+		//if(current_node.isPrimary == true){
+		if(p == -1){	
+			dir_hist = std::vector<double>(this->allParams.oriBin.angleCount, 1.0/(double)this->allParams.oriBin.angleCount);
+			current_node.dirX.push_back(0.0);
+			current_node.dirY.push_back(0.0);
+			current_node.dirZ.push_back(0.0);
+		}
+		else{		
+			dirX = this->allNodes[current_node.parentID[0]].x - current_node.x;
+			dirY = this->allNodes[current_node.parentID[0]].y - current_node.y;
+			dirZ = this->allNodes[current_node.parentID[0]].z - current_node.z;
+			
+			dir_node = Node(dirX, dirY, dirZ, 0);
+			
+			norm = Node::ComputeNorm(dir_node);
+			dir_node = Node(dirX/norm, dirY/norm, dirZ/norm, 0);
+			dir_hist = current_node.sphHistRegionBased;
+
+			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+		}
+
+		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+
+		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
+			continue;
+
+		std::vector<double> current_dir(3, 0.0);
+		//Node secondary_node;
+		for(int i = 0; i < current_node.dirX.size(); i++){
+			
+			// Only branches less than maxBranchAngle are considered
+			if(((current_node.dirX[i]*dirX) + (current_node.dirY[i]*dirY) + (current_node.dirZ[i]*dirZ)) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0)){
+				//std::cout << std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0) << std::endl;
+				continue;
+			}
+			
+			current_dir[0] = current_node.dirX[i];
+			current_dir[1] = current_node.dirY[i];
+			current_dir[2] = current_node.dirZ[i];
+			
+			Node secondary_node;
+			secondary_node.parentIDLength = current_node.parentIDLength;
+			secondary_node.parentID = std::vector<double>(current_node.parentIDLength, -1);
+
+			this->FitSphereAtNodeSecondary(current_node, secondary_node, current_dir);			
+			
+			if(secondary_node.isValid == false){ // || secondary_node.likelihood <= 0){
+				badNodes.push_back(secondary_node);
+				quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
+				continue;
+			}
+			if(secondary_node.likelihood <= 0.0){
+				veryBadNodes.push_back(secondary_node);
+				quality_array.push_back(2.0 * this->allParams.nodeDetectionParams.maxTraceCost);
+				//continue;
+			}
+			
+			// Parent IDs of secondary node = circshift(parent IDs of current_node)
+			secondary_node.parentID[0] = current_node.parentID.back(); //*(current_node.parentID.begin() + current_node.parentID.size()-1);
+			for(int j = 1; j < current_node.parentID.size(); j++){
+				secondary_node.parentID[j] = current_node.parentID[j-1];
+			}
+			secondary_node.parentID[0] = total_nodes_counter;
+			
+			//queue_size++;
+			this->primaryNodesAfterHitTest.push_back(secondary_node);
+
+			trace_quality = this->computeTraceQuality(secondary_node);
+	
+			std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
+			
+			//node_queue.push(current_node);
+			node_queue.push(secondary_node);
+
+			quality_array.push_back(trace_quality);
+
+			//light_node_queue[queue_size] = queue_element(queue_size, trace_quality);
+			queue_size++;
+		}
+		queue_iter++;
+		
+		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+		//this->VisualizeNodesWithData3D(this->allNodes, false);
+	}
+
+	stop_tracing_time = clock();
+	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
+
+	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
+	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
+
+	//Visualize all nodes
+	//this->VisualizeNodesWithData3D(this->allNodes, true);
+	this->VisualizeNodesWithData3D(this->allNodes, false);
+
+
+	std::vector<Node> nodesWithNonPositiveLikelihood;
+	for(int i = 0; i < this->allNodes.size(); i++){
+		if(this->allNodes[i].likelihood <= 0.0)
+			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
+	}
+	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
+
+	//if(badNodes.empty() == false)
+	//	this->VisualizeNodesWithData3D(badNodes, false);
+
+	//Write tracing result to image
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->secondaryNodesImage = RenderImageType3D::New();
+	this->secondaryNodesImage->SetRegions(id_reg);
+	this->secondaryNodesImage->Allocate();
+	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->secondaryNodesImage->FillBuffer(0);
+
+	itk::Index<3> idx;
+	for(int i = 0; i < this->allNodes.size(); i++){
+		
+		idx[0] = this->allNodes[i].x;
+		idx[1] = this->allNodes[i].y;
+		idx[2] = this->allNodes[i].z;
+
+		this->secondaryNodesImage->SetPixel(idx, 255);
+	}
+	
+	std::string secondary_nodes_file_name = this->data_folder_path;
+	secondary_nodes_file_name.append("_SecondaryNodes.tif");
+
+	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
+	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
+	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
+	secondary_nodes_writer->Update();
+
+
+	//Write all nodes to a file
+	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
+
+	//write quality array
+	/*ofstream nodes_file_stream;
+	nodes_file_stream.open("QualityArray.txt", std::ios::out);
+
+	if(nodes_file_stream.is_open() == true){
+		for(int i = 0; i < quality_array.size(); i++)
+			nodes_file_stream << quality_array[i] << std::endl;
+		nodes_file_stream.close();
+	}
+	else
+		std::cout << "File cannot be opened. " << std::endl;
+		*/
+}
+
 bool compareQueueElement(queue_element e1, queue_element e2){
 	return(e1.second < e2.second);
 }
@@ -2748,6 +3034,7 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 		this->allForestNodes[i].y = this->allNodes[i].y;
 		this->allForestNodes[i].z = this->allNodes[i].z;
 		this->allForestNodes[i].likelihood = this->allNodes[i].likelihood;
+		this->allForestNodes[i].scale = this->allNodes[i].scale;
 
 		this->allForestNodes[i].ID = this->allNodes[i].ID;
 		this->allForestNodes[i].branchIDs = std::vector<int>(this->allParams.graphAndMSTParams.maxNBranches, -1);
@@ -3239,7 +3526,7 @@ void ftkVesselTracer::InitNodeDetectionParamsDefault(void){
 
 
 SWCNodeVessel::SWCNodeVessel(){
-	this->ID = 0;
+	this->ID = -3;
 	this->scale = 0.0;
 	this->isLeaf = false;
 	this->isBifurgation = false;
@@ -3630,44 +3917,62 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		this->SWCNodeVessel_vec.clear();
 	}
 	
-	// Print the forest
-	for(int i = 0; i < 200; /*this->allForestNodes.size();*/ i++){
-		std::cout << i << " -> ";
-		for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
-			std::cout << this->allForestNodes[i].branchIDs[j] << ", ";
-		}
-		std::cout << std::endl;
-	}
+	// Print the forest to a file
+	/*std::ofstream file_out;
+	file_out.open("graph_file.txt", std::ios::out);
+	if(file_out.good()){
 
+		for(int i = 0; i < this->allForestNodes.size(); i++){
+			file_out << i << " -> ";
+			for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
+				file_out << this->allForestNodes[i].branchIDs[j] << ", ";
+		}
+
+		file_out << std::endl;
+	}
+	
+	file_out.close();
+	}
+	else
+		std::cout << "Could not write graph file! " << std::endl;
+	*/
+	
 	//Labeling the forest
 	//this->allForestNodes.insert(this->allForestNodes.begin(), Node());
 	//this->allForestNodes[0].branchIDs.push_back(-2);
-	
+
 
 	std::vector<Node> dup_allForestNodes(this->allForestNodes);
 	std::vector<std::vector<int> > connected_components;
 	std::queue<int> label_queue;
 	std::vector<bool> isRoot(this->allForestNodes.size(), false);
-	std::vector<bool> isLabeled(this->allForestNodes.size(), false); isLabeled[0] = true;
+	std::vector<bool> isLabeled(this->allForestNodes.size(), false); //isLabeled[0] = true;
 	bool allLabeled = false;
-	int i = 1;
+	int i = 0; //1;
+	int component_count = 0;
 
 	//for(int i = 1; i < dup_allForestNodes.size();){
-	while(allLabeled){
+	while(!allLabeled){
 
 		std::vector<int> a_component; 
 		a_component.push_back(i);
 		isLabeled[i] = true;
-		std::cout << "Formed a new component.. " << i << std::endl;
+		component_count++;
+		this->allForestNodes[i].forestLabel = component_count;
 
-		if(this->allForestNodes[i].branchIDs.empty()){
+		std::cout << "Formed a new component.. " << component_count << std::endl;
+
+		//if(this->allForestNodes[i].branchIDs.empty()){
 			//std::cout << "Branch ids empty!! " << std::endl;
-			continue;
-		}
+			//continue;
+			//break;
+		//}
 
 		std::vector<int> connections = this->allForestNodes[i].branchIDs; //toy_list[i];
-		for(int j = 0; j < connections.size(); j++)
-			label_queue.push(connections[j]);
+		//if(!connections.empty()){
+			for(int j = 0; j < connections.size(); j++)
+				label_queue.push(connections[j]);
+		//}
 
 		while(!label_queue.empty()){
 			
@@ -3679,6 +3984,7 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 			
 			a_component.push_back(cur_label);
 			isLabeled[cur_label] = true;
+			this->allForestNodes[cur_label].forestLabel = component_count;
 
 			std::vector<int> neighbors = this->allForestNodes[cur_label].branchIDs; //toy_list[cur_label];
 			std::vector<int>::iterator itr;	
@@ -3691,21 +3997,49 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		}
 		connected_components.push_back(a_component);
 		isRoot[a_component.front()] = true;
+		this->allForestNodes[a_component.front()].isRoot = true;
+
 		//i = a_component.back();
 		//i++;
 		
-		/*if(!a_component.empty()){
+		if(!a_component.empty()){
+			std::cout << "Component: " << std::endl;
 			for(int j = 0; j < a_component.size(); j++)
-				dup_allForestNodes.erase(dup_allForestNodes.begin() + a_component[j]);
-		}*/
+				std::cout << a_component[j] << std::endl;
+		}
+		//allLabeled = true;
 		
-		for(int j = 1; j < this->allForestNodes.size(); j++){
-			if(isLabeled[j] == false){
-				i = j;
+		int i_past = i;
+		bool unlabeled_found = false;
+		for(int j = 0; j < this->allForestNodes.size(); j++){
+
+			if(j == this->allForestNodes.size()-1){
+				allLabeled = true;
 				break;
 			}
-			allLabeled = true;
-		}	
+
+			if(isLabeled[j])
+				continue;
+			else{
+				i = j;
+				unlabeled_found = true;
+				//break;
+			}
+			if(unlabeled_found){
+				std::cout << "Found unlabeled element: " << j << std::endl;
+				break;
+			}
+			else{
+				std::cout << "No unlabeled element found!! " << std::endl; 
+				allLabeled = true;
+			}
+
+			//if(i == i_past)
+			//if(j == this->allForestNodes.size())
+			//	allLabeled = true;
+		}
+
+		std::cout << " Total unlabeled status: " << allLabeled << std::endl;
 	}
 
 	//Print the labeled graph
@@ -3797,11 +4131,103 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		
 		//for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
 		//	std::cout << i << " hasChild: " << SWCNodeVessel_vec[i].children[j] << std::endl;
+	}*/
+
+	// Construct SWC nodes
+	SWCNodeVessel node_dummy;
+	
+	for(int i = 0; i < connected_components.size(); i++){
+		
+		std::vector<SWCNodeVessel> node_vec_dummy; 
+		node_vec_dummy.resize(this->allForestNodes.size(), node_dummy);
+		std::vector<int> curr_component = connected_components[i];
+		std::vector<int> curr_component_order;
+
+		for(int j = 0; j < curr_component.size(); j++){
+			
+			int curr_ID = curr_component[j];
+			if(this->allForestNodes[curr_ID].isRoot){
+
+				SWCNodeVessel node;
+				node.ID = curr_ID;
+				node.parents.push_back(-1);
+				node.isRoot = true;
+
+				itk::Index<3> idx; idx[0] = this->allForestNodes[curr_ID].x; 
+				idx[1] = this->allForestNodes[curr_ID].y; idx[2] = this->allForestNodes[curr_ID].z; 
+
+				node.position = idx;
+				node.scale = this->allForestNodes[curr_ID].scale;
+
+				node_vec_dummy[curr_ID] = node;
+				curr_component_order.push_back(curr_ID);
+			}
+			
+			std::vector<int> curr_connections = this->allForestNodes[curr_ID].branchIDs;
+			std::vector<bool> isRelated(curr_connections.size(), false);
+
+			for(int k = 0; k < curr_connections.size(); k++){
+				
+				for(int m = 0; m < node_vec_dummy[curr_ID].children.size(); m++){
+					if(curr_connections[k] == node_vec_dummy[curr_ID].children[m]){
+						isRelated[k] = true;
+						break;
+					}
+				}
+				for(int m = 0; m < node_vec_dummy[curr_ID].parents.size(); m++){
+					if(curr_connections[k] == node_vec_dummy[curr_ID].parents[m]){
+						isRelated[k] = true;
+						break;
+					}
+				}
+
+				if(!isRelated[k]){
+					
+					SWCNodeVessel node;
+					if(node_vec_dummy[curr_connections[k]].ID >= 0)
+						node = node_vec_dummy[curr_connections[k]];
+
+					node.ID = curr_connections[k];
+					node.parents.push_back(curr_ID);
+
+					itk::Index<3> idx; idx[0] = this->allForestNodes[curr_connections[k]].x; 
+					idx[1] = this->allForestNodes[curr_connections[k]].y; idx[2] = this->allForestNodes[curr_connections[k]].z; 
+
+					node.position = idx;
+					node.scale = this->allForestNodes[curr_connections[k]].scale;
+
+					node_vec_dummy[curr_connections[k]] = node;
+					curr_component_order.push_back(curr_connections[k]);
+
+					node_vec_dummy[curr_ID].children.push_back(curr_connections[k]);
+				}
+			}
+		}
+
+		for(int j = 0; j < curr_component_order.size(); j++)
+			this->SWCNodeVessel_vec.push_back(node_vec_dummy[curr_component_order[j]]);
+
+		node_vec_dummy.clear();
+		curr_component.clear();
+		curr_component_order.clear();
+	}
+
+	// Massage the SWC file
+	for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
+		
+		this->SWCNodeVessel_vec[i].ID++;
+		
+		for(int j = 0; j < this->SWCNodeVessel_vec[i].children.size(); j++)
+			this->SWCNodeVessel_vec[i].children[j]++;
+		for(int j = 0; j < this->SWCNodeVessel_vec[i].parents.size(); j++){
+			if(this->SWCNodeVessel_vec[i].parents[j] != -1)
+				this->SWCNodeVessel_vec[i].parents[j]++;
+		}
 	}
 	
-	// Printing the SWC file
+	// Printing the SWC file to cout
 	std::cout << "SWC file: " << std::endl;
-	for(int i = 1; i < SWCNodeVessel_vec.size(); i++){
+	for(int i = 0; i < SWCNodeVessel_vec.size(); i++){
 		std::cout << "Node: " << std::endl;
 		std::cout << "	ID: " << SWCNodeVessel_vec[i].ID << std::endl;
 		std::cout << "	Parents: ";
@@ -3813,8 +4239,6 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 			std::cout << SWCNodeVessel_vec[i].children[j] << ", ";
 		std::cout << std::endl;
 	}
-	*/
-
 }
 
 void ftkVesselTracer::WriteSWCFileVessel(const std::string file_name){
@@ -3829,7 +4253,7 @@ void ftkVesselTracer::WriteSWCFileVessel(const std::string file_name){
 	file_out.open(file_name.c_str(), std::ios::out);
 	if(file_out.good()){
 
-		for(int i = 1; i < this->SWCNodeVessel_vec.size(); i++){
+		for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
 			for(int j = 0; j < this->SWCNodeVessel_vec[i].parents.size(); j++){
 				
 				file_out << this->SWCNodeVessel_vec[i].ID << " " << "7" << " " << this->SWCNodeVessel_vec[i].position[0] << " ";
