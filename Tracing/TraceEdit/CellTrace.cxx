@@ -774,14 +774,17 @@ vtkSmartPointer<vtkVariantArray> CellTrace::GetExtendedDataRow(std::vector<std::
 	/**
 	* needs to get data from root traceline
 	*/
-	this->DataRow();
-	std::vector<std::string>::iterator iter;
-	for (iter = FeatureNames.begin(); iter < FeatureNames.end(); iter++)
+	if (this->modified)
 	{
-		vtkVariant extendedFeature = this->segments[0]->GetCellFeature(*iter);
-		CellData->InsertNextValue(extendedFeature);
+		this->DataRow();
+		std::vector<std::string>::iterator iter;
+		for (iter = FeatureNames.begin(); iter < FeatureNames.end(); iter++)
+		{
+			vtkVariant extendedFeature = this->segments[0]->GetCellFeature(*iter);
+			CellData->InsertNextValue(extendedFeature);
+		}
+		//std::cout << "row size " << this->CellData->GetNumberOfValues()<< std::endl;
 	}
-	//std::cout << "row size " << this->CellData->GetNumberOfValues()<< std::endl;
 	return this->CellData;
 }
 vtkSmartPointer<vtkVariantArray> CellTrace::BoundsRow()

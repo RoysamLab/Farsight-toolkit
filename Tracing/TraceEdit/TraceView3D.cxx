@@ -6132,10 +6132,6 @@ void View3D::closeEvent(QCloseEvent *event)
 	{
 		this->SPDWin->close();
 	}
-	if( this->SPDWin)
-	{
-		this->SPDWin->close();
-	}
 #endif
 	
 #ifdef USE_Clusclus
