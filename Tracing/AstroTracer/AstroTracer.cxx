@@ -5279,7 +5279,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	}//end of loop over nuclei
 }
 
-void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType local_region, std::vector<vtkSmartPointer<vtkTable> >& nuclei_features_table){
+void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType local_region, std::vector<vtkSmartPointer<vtkTable> >& nuclei_features_table, std::string outputFname){
 
 	if(this->CandidateRootPoints.empty() || this->NucleiObjects.empty() || this->SomaDistanceMapImage.IsNull()){
 		std::cout << "Either root points table or nuclei table or the distance map image is empty. Returning." << std::endl;
@@ -5476,6 +5476,8 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 	nuclei_features_table[0]->AddColumn(mean_dist_array);
 	nuclei_features_table[0]->AddColumn(var_dist_array);
 	nuclei_features_table[0]->AddColumn(n_roots_array);
+
+	ftk::SaveTable(outputFname, nuclei_features_table[0]);
 
 }
 
@@ -5720,7 +5722,13 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 
 	delete mclr;
 
-	roots_Image = IDImage;
+	//roots_Image = IDImage;
+	roots_Image = LabelImageType3D::New();
+	roots_Image->SetRegions(IDImage->GetBufferedRegion());
+	roots_Image->Allocate();
+	//roots_Image->SetSpacing(PaddedCurvImage->GetSpacing());
+	roots_Image->FillBuffer(0);
+
 	LabelImageType3D::PixelType * rootsImageArray = roots_Image->GetBufferPointer();
 	itk::Size<3> im_size = roots_Image->GetBufferedRegion().GetSize();
 	int slice_size = im_size[1] * im_size[0];
@@ -5730,14 +5738,24 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 	{
 		if(roots_table->GetValueByName(row, prediction_col_name.c_str()).ToInt() != 1)
 		{
-			int x_pos = roots_table->GetValue(row,1).ToUnsignedInt();
-			int y_pos = roots_table->GetValue(row,2).ToUnsignedInt();
-			int z_pos = roots_table->GetValue(row,3).ToUnsignedInt();
-			unsigned long offset = (z_pos*slice_size)+(y_pos*row_size)+x_pos;
-			rootsImageArray[offset] = 0;
+			//int x_pos = roots_table->GetValue(row,1).ToUnsignedInt();
+			//int y_pos = roots_table->GetValue(row,2).ToUnsignedInt();
+			//int z_pos = roots_table->GetValue(row,3).ToUnsignedInt();
+			//unsigned long offset = (z_pos*slice_size)+(y_pos*row_size)+x_pos;
+			//rootsImageArray[offset] = 0;
 			roots_table->RemoveRow(row);
 			--row;
 		}
+	}
+
+	for(int row=0; row<(int)roots_table->GetNumberOfRows(); ++row)
+	{
+		int IDIndex = roots_table->GetValue(row,0).ToInt();
+		ImageType3D::IndexType current_idx;
+		current_idx[0] = roots_table->GetValue(row,1).ToInt();
+		current_idx[1] = roots_table->GetValue(row,2).ToInt();
+		current_idx[2] = roots_table->GetValue(row,3).ToInt();
+		roots_Image->SetPixel(current_idx, IDIndex);
 	}
 
 	root_images[0] = roots_Image;
