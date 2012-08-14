@@ -1440,6 +1440,8 @@ void View3D::CreateGUIObjects()
 	//Setup the settings editing window
 	this->SettingsWidget = new QWidget(this);
 	this->SettingsWidget->setObjectName("SettingsWidget");
+	this->SettingsWidget->setMaximumSize(256,700);
+
 	this->MaxGapField = new QSpinBox(this->SettingsWidget);
 	this->MaxGapField->setObjectName("MaxGapField");
 	this->MaxGapField->setRange(0,1000);
@@ -1974,7 +1976,7 @@ void View3D::CreateLayout()
 	this->tabWidget->addTab(selectionTab,tr("Selection"));
 	this->tabWidget->addTab(displayTab,tr("Display"));
 	this->tabWidget->addTab(rotationTab,tr("Rotation"));
-	this->tabWidget->addTab(backgroundTab,tr("Background Color"));
+	this->tabWidget->addTab(backgroundTab,tr("Background"));
 
 	SettingsBox->addWidget(tabWidget);
 
@@ -1982,11 +1984,10 @@ void View3D::CreateLayout()
 	SettingsBox->addWidget(this->ApplySettingsButton);
 	SettingsBox->addStretch();
 
-	//this->SettingsWidget->setMaximumSize(256,800);
 	//SettingsToolBox->addItem(this->SettingsWidget, "Editor Settings");
 
 	this->settingsDock = new QDockWidget("Editor Settings", this);
-	settingsDock->setObjectName("settingsDock");
+	this->settingsDock->setObjectName("settingsDock");
 	this->settingsDock->setWidget(this->SettingsWidget);
 	//this->settingsDock->setWidget(SettingsToolBox);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->settingsDock);
