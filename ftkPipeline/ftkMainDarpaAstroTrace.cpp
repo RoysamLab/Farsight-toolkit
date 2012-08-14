@@ -1015,9 +1015,9 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 				AT->Set_DistanceMapImage(imageLocalDist_Map);
 				AT->ReadRootPointsPipeline(root_Vector_Tables);
 				AT->ReadNucleiFeaturesPipeline(Table_Tiles);
-				AT->ComputeFeaturesFromCandidateRootsPipeline(regionLocal_inside, Table_Tiles);
 				std::string AppendedNucleiTableFileName = _outPathTemp+"/AppendedNucleiTable_"+xStr+"_"+yStr+"_"+zStr+".txt";
-				AT->WriteNucleiFeatures(AppendedNucleiTableFileName);
+				AT->ComputeFeaturesFromCandidateRootsPipeline(regionLocal_inside, Table_Tiles, AppendedNucleiTableFileName);
+				//AT->WriteNucleiFeatures(AppendedNucleiTableFileName);
 				delete AT;
 				//RemoveLabelNearBorder(regionLocal_inside, root_Images, root_Vector_Tables, Centroids_Tiles );
 
