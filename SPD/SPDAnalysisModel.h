@@ -80,7 +80,7 @@ public:
 	void GetClusClusData(clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
-	void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
+	void SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<unsigned int>& selectedFeatures);
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
