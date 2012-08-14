@@ -37,6 +37,7 @@
 #include <itkSubtractImageFilter.h>
 #include "itkMinimumMaximumImageCalculator.h"
 #include "itkImageRegionIterator.h"
+#include <itkSignedMaurerDistanceMapImageFilter.h>
 
 class SomaExtractor
 {
@@ -88,6 +89,7 @@ protected:
 	typedef GeodesicActiveContourFilterType::VectorImageType  AdvectionImageType;
 	typedef itk::CastImageFilter<GradientImageType,AdvectionImageType> CastFlowFilterType;
 	typedef itk::SignedDanielssonDistanceMapImageFilter<ProbImageType, ProbImageType> DanielssonDistanceMapFilterType;
+	typedef itk::SignedMaurerDistanceMapImageFilter<ProbImageType, ProbImageType> MaurerDistanceMapFilterType;
 	typedef itk::SubtractImageFilter <ProbImageType, ProbImageType, ProbImageType> SubtractImageFilterType;
 	typedef itk::RegionOfInterestImageFilter< SegmentedImageType, SegmentedImageType> RegionOfInterestFilter;
 	typedef itk::MinimumMaximumImageCalculator <ProbImageType> ImageCalculatorFilterType;
@@ -125,7 +127,7 @@ protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);
 	void SomaBoundaryScan(SegmentedImageType::Pointer labelImage, std::map< TLPixel, int> &LtoIMap, std::vector< int> &boundaryPixSize);
 	ProbImageType::Pointer GetEdgePotentialMap(ProbImageType::Pointer inputImage, double sigma);
-	ProbImageType::Pointer GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand);
+	ProbImageType::Pointer GetInitalContourByDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand);
 	void CheckBoundary(SegmentedImageType::IndexType &start, SegmentedImageType::IndexType &end, int SX, int SY, int SZ); 
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold);
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius);

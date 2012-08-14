@@ -24,14 +24,26 @@ limitations under the License.
 
 #include "SampleEditor.h"
 
+//for memory leak checking
+//#define _CRTDBG_MAP_ALLOC 
+//#include <stdlib.h>
+//#include <crtdbg.h>
+
 int main(int argc, char *argv[])
 {
+	//_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
     QApplication app(argc, argv);
 
-	SampleEditor sampleEdit(0,0);
-	sampleEdit.show();
-
-    return app.exec();
+	//for memory leak checking
+	//SPDtestWindow *spdTestWin = new SPDtestWindow(); 
+	//spdTestWin->setModels();
+	//spdTestWin->show();
+	SampleEditor *editor = new SampleEditor(0,0);
+	editor->show();
+	int rtn = app.exec();
+	delete editor;
+	//delete spdTestWin;
+    return rtn;
 }
 
 //This function is used to create a GUI application that does not show the console.

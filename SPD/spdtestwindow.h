@@ -21,7 +21,7 @@ class SPDtestWindow : public QWidget
     Q_OBJECT
 
 public:
-    explicit SPDtestWindow(QWidget *parent = 0);
+    SPDtestWindow(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDtestWindow();
 	void GetProgressionTreeOrder(std::vector<long int> &order);

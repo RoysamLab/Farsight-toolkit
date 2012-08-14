@@ -17,27 +17,6 @@
 #define DISTANCE_PRECISION 10
 #define LMEASURETABLE 1
 
-SPDAnalysisModel* SPDAnalysisModel::s_pmodel = NULL;
-
-SPDAnalysisModel* SPDAnalysisModel::InitInstance()
-{
-	if( s_pmodel == NULL)
-	{
-		s_pmodel = new SPDAnalysisModel;
-
-	}
-	return s_pmodel;
-}
-
-void SPDAnalysisModel::DeInstance()
-{
-	if( s_pmodel != NULL)
-	{
-		delete s_pmodel;
-		s_pmodel = NULL;
-	}
-}
-
 SPDAnalysisModel::SPDAnalysisModel()
 {
 	DataTable = vtkSmartPointer<vtkTable>::New();

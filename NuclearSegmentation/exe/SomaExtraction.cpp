@@ -529,7 +529,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 
 
 /// Generate Expanded Inital Contours within the boundary of labeled object by Daniel Distance Map
-SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielssonDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand)
+SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDistanceMap(SegmentedImageType::Pointer labelImage, double outlierExpand)
 {
 	int SX = labelImage->GetLargestPossibleRegion().GetSize()[0];
     int SY = labelImage->GetLargestPossibleRegion().GetSize()[1];
@@ -603,7 +603,8 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GetInitalContourByDanielsso
     CasterType::Pointer caster = CasterType::New();
 	caster->SetInput(regionFilter->GetOutput());
 
-	DanielssonDistanceMapFilterType::Pointer distanceMapFilter = DanielssonDistanceMapFilterType::New();
+	//DanielssonDistanceMapFilterType::Pointer distanceMapFilter = DanielssonDistanceMapFilterType::New();
+	MaurerDistanceMapFilterType::Pointer distanceMapFilter = MaurerDistanceMapFilterType::New();
 	distanceMapFilter->SetInput(caster->GetOutput());
 	SubtractImageFilterType::Pointer substractImageFilter = SubtractImageFilterType::New();   // expand the contour
 	substractImageFilter->SetInput1( distanceMapFilter->GetOutput());
@@ -681,7 +682,7 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	speedImage->FillBuffer(1);
 
 	std::cout<< "Initial Contour: "<< outlierExpandValue<<std::endl;
-	ProbImageType::Pointer initialContourByDistanceMap = GetInitalContourByDanielssonDistanceMap(initialContour, outlierExpandValue);
+	ProbImageType::Pointer initialContourByDistanceMap = GetInitalContourByDistanceMap(initialContour, outlierExpandValue);
 
 	std::cout<<"GVF: "<<noiseLevel<<"\t"<<numberOfIterations<<std::endl;
 	GradientIFilterType::Pointer gradientFilter = GradientIFilterType::New();

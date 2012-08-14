@@ -9,7 +9,17 @@
 #include <assert.h>
 #include "ClusClus/clusclus.h"
 
-#define MSTSPD 0
+#ifndef NEW_DELETE
+#define NEW_DELETE
+void operator delete(void *memP)
+{
+   if(memP)
+   {
+	   free(memP);
+	   memP = NULL;
+   }
+};
+#endif
 
 using std::ifstream;
 using std::endl;
@@ -169,12 +179,14 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     setLayout(mainLayout);
 
-	SPDModel = SPDAnalysisModel::InitInstance();
+	SPDModel = new SPDAnalysisModel();
 }
 
 SPDtestWindow::~SPDtestWindow()
 {
-	SPDAnalysisModel::DeInstance();
+	delete(SPDModel);
+	delete(selection);
+	delete(selection2);
 }
 
 void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
@@ -211,16 +223,12 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-
-		//this->SPDModel->NormalizeData();
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
 		loadTestButton->setEnabled(TRUE);
 		clusterButton->setEnabled(TRUE);
 	}
-
-	assert(SPDModel!=NULL);
 
 	if(this->simHeatmap)
 	{
@@ -234,7 +242,6 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		delete this->graph;
 	}
 	this->graph = new GraphWindow( this);
-
 
 }
 

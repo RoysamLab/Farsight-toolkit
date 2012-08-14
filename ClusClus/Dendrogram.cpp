@@ -4,6 +4,8 @@ Dendrogram::Dendrogram(QWidget *parent)
 : QMainWindow(parent)
 {
 	this->mainQTRenderWidget;
+	this->Optimal_Leaf_Order = NULL;
+	this->connect_Data_Tree = NULL;
 	//this->graph_Layout = vtkSmartPointer<vtkMutableUndirectedGraph>::New();
 	//this->theme = vtkSmartPointer<vtkViewTheme>::New();
 	//this->graphLayoutView = vtkSmartPointer<vtkGraphLayoutView>::New();
@@ -16,12 +18,16 @@ Dendrogram::Dendrogram(QWidget *parent)
 Dendrogram::~Dendrogram()
 {
 	if(this->Optimal_Leaf_Order)
+	{
 		delete this->Optimal_Leaf_Order;
+		this->Optimal_Leaf_Order = NULL;
+	}
 	if(this->connect_Data_Tree)
 	{
 		for(int i = 0; i<this->num_samples - 1; i++)
 			delete this->connect_Data_Tree[i];
 		delete this->connect_Data_Tree;
+		this->connect_Data_Tree = NULL;
 	}
 }
 

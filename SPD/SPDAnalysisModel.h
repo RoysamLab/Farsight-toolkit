@@ -43,8 +43,8 @@ enum DISTANCE_TYPE
 class SPDAnalysisModel
 {
 public:
-	static SPDAnalysisModel* InitInstance();
-	static void DeInstance();
+	SPDAnalysisModel();
+	~SPDAnalysisModel();
 
 	void GetTableHeaders(std::vector<std::string> &headers);
 	vtkSmartPointer<vtkTable> GetDataTable();
@@ -105,8 +105,7 @@ public:
 	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 
 protected:
-	SPDAnalysisModel();
-	~SPDAnalysisModel();
+
 	void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
@@ -152,7 +151,6 @@ public:
 	std::vector< Tree> PublicTreeData;
 
 private:
-	static SPDAnalysisModel *s_pmodel;
 	std::vector< Tree> TreeData;
 	vnl_vector<int> TreeIndexNew;
 	//save filename

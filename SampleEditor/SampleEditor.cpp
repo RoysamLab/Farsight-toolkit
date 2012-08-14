@@ -24,7 +24,6 @@ limitations under the License.
 SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	SPDModel = SPDAnalysisModel::InitInstance();
 	table = new TableWindow();
 	plot = new PlotWindow(this);
 	histo = new HistoWindow(this);
@@ -34,7 +33,7 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	heatmap = new Heatmap(this);
 	biheatmap = new BiHeatmap(this);
 	progressionheatmap = new ProgressionHeatmap(this);
-	//spdWin = new SPDMainWindow();
+
 	spdTestWin = new SPDtestWindow();
 	this->cc1 = NULL;
 	this->cc2 = NULL;

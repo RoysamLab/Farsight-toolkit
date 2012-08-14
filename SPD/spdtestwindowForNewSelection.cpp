@@ -181,12 +181,12 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
 
     setLayout(mainLayout);
 
-	SPDModel = SPDAnalysisModel::InitInstance();
+	SPDModel = new SPDAnalysisModel();
 }
 
 SPDWindowForNewSelection::~SPDWindowForNewSelection()
 {
-	SPDAnalysisModel::DeInstance();
+
 }
 
 void SPDWindowForNewSelection::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, SelectiveClustering * clusterSelection, ObjectSelection * sels2)
