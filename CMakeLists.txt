@@ -5,13 +5,29 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0005 OLD)
 endif(COMMAND CMAKE_POLICY)
 
+#########################################################################################
+# Set compiler when in OSX to use GCC instead of Clang which is the default in OSX10.8+. 
+# THIS BLOCK OF CODE MUST HAPPEN BEFORE THE project() DEFINITION
+#########################################################################################
+if (APPLE)
+  MESSAGE(WARNING "Mac OS X detected, setting GCC to default compilers")
+  SET(CMAKE_C_COMPILER "/usr/bin/gcc")
+  SET(CMAKE_CXX_COMPILER "/usr/bin/g++")
+endif (APPLE)
+
+###################################
 # set project's name
+###################################
 project( Farsight )
 
+####################################################################
+# Make sure that binaries aren't being built in the source directory
+####################################################################
 if("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
   message(FATAL_ERROR "Farsight must be built with separate source and binary directories.")
 endif("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
-#######################################################################################
+
+
 #########################################
 # ADD NEW MODULES HERE
 #########################################
