@@ -5279,7 +5279,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	}//end of loop over nuclei
 }
 
-void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType local_region, std::vector<vtkSmartPointer<vtkTable> >& nuclei_features_table, std::string outputFname){
+void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType local_region, std::vector<vtkSmartPointer<vtkTable> >& nuclei_features_table, std::string TrainingFileName, std::string outputFname){
 
 	if(this->CandidateRootPoints.empty() || this->NucleiObjects.empty() || this->SomaDistanceMapImage.IsNull()){
 		std::cout << "Either root points table or nuclei table or the distance map image is empty. Returning." << std::endl;
@@ -5476,6 +5476,114 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 	nuclei_features_table[0]->AddColumn(mean_dist_array);
 	nuclei_features_table[0]->AddColumn(var_dist_array);
 	nuclei_features_table[0]->AddColumn(n_roots_array);
+
+
+	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(TrainingFileName);
+
+	// to generate the Active Learning Matrix
+	vnl_matrix<double> act_learn_matrix;
+	act_learn_matrix.set_size((int)active_model_table->GetNumberOfColumns() , (int)active_model_table->GetNumberOfRows() - 2);
+	for(int row = 2; row<(int)active_model_table->GetNumberOfRows(); ++row)
+	{
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+		{
+			act_learn_matrix.put(col, row-2, active_model_table->GetValue(row,col).ToDouble());
+		}
+	}
+
+	//to generate the std_deviation and the mean vectors
+	vnl_vector<double> std_dev_vec, mean_vec; 
+	std_dev_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	mean_vec.set_size((int)active_model_table->GetNumberOfColumns() - 1);
+	for(int col=1; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		std_dev_vec.put(col-1, active_model_table->GetValue(0,col).ToDouble());
+		mean_vec.put(col-1, active_model_table->GetValue(1,col).ToDouble());
+	}
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveRow(0);
+	active_model_table->RemoveColumn(0);
+
+	std::string classification_name = "multi_class";
+	double confidence_thresh = 0.25;
+
+	MCLR* mclr = new MCLR();
+	//Number of features and classes needed in "add_bias" fuction of MCLR
+	mclr->Set_Number_Of_Classes((int)active_model_table->GetNumberOfRows());
+	mclr->Set_Number_Of_Features((int)active_model_table->GetNumberOfColumns());
+
+	vtkSmartPointer<vtkTable> test_table  = vtkSmartPointer<vtkTable>::New();
+	test_table->Initialize();
+	//test_table->SetNumberOfRows(roots_table->GetNumberOfRows());
+	for(int col=0; col<(int)active_model_table->GetNumberOfColumns(); ++col)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(active_model_table->GetColumnName(col));
+		test_table->AddColumn(column);	
+	}
+	for(int row = 0; row < (int)nuclei_features_table[0]->GetNumberOfRows(); ++row)
+	{	
+		vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
+		for(int col=0; col<(int)active_model_table->GetNumberOfColumns();++col)
+		{
+			std::string column_name = active_model_table->GetColumnName(col);
+			model_data1->InsertNextValue(nuclei_features_table[0]->GetValueByName(row,column_name.c_str()));
+		}
+		test_table->InsertNextRow(model_data1);
+	}	
+
+	////// Final Data  to classify from the model
+	vnl_matrix<double> data_classify;
+	//if(normalize_from_model)
+	//	data_classify =  mclr->Normalize_Feature_Matrix_w(mclr->tableToMatrix_w(test_table), std_dev_vec, mean_vec);
+	//else
+	//	data_classify =  mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
+	data_classify = mclr->Normalize_Feature_Matrix(mclr->tableToMatrix_w(test_table));
+	data_classify = data_classify.transpose();
+
+	vnl_matrix<double> currprob;
+	currprob = mclr->Test_Current_Model_w(data_classify, act_learn_matrix);
+
+	std::string prediction_col_name = "prediction_active_" + classification_name;
+	std::string confidence_col_name = "confidence_" + classification_name;
+
+	//// Add the Prediction Column 
+	std::vector< std::string > prediction_column_names = ftk::GetColumsWithString(prediction_col_name, nuclei_features_table[0] );
+	if(prediction_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(prediction_col_name.c_str());
+		column->SetNumberOfValues( nuclei_features_table[0]->GetNumberOfRows() );
+		nuclei_features_table[0]->AddColumn(column);
+	}
+
+	// Add the confidence column
+	std::vector< std::string > confidence_column_names = ftk::GetColumsWithString(confidence_col_name, nuclei_features_table[0] );
+	if(confidence_column_names.size() == 0)
+	{
+		vtkSmartPointer<vtkDoubleArray> column_confidence = vtkSmartPointer<vtkDoubleArray>::New();
+		column_confidence->SetName(confidence_col_name.c_str());
+		column_confidence->SetNumberOfValues( nuclei_features_table[0]->GetNumberOfRows() );
+		nuclei_features_table[0]->AddColumn(column_confidence);
+	}
+
+	for(int row = 0; row<(int)nuclei_features_table[0]->GetNumberOfRows(); ++row)  
+	{
+		vnl_vector<double> curr_col = currprob.get_column(row);
+		nuclei_features_table[0]->SetValueByName(row, confidence_col_name.c_str(), vtkVariant(curr_col(curr_col.arg_max())));
+		if(curr_col(curr_col.arg_max()) > confidence_thresh) 
+		{
+			nuclei_features_table[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(curr_col.arg_max()+1));						
+		}
+		else
+		{
+			nuclei_features_table[0]->SetValueByName(row, prediction_col_name.c_str(), vtkVariant(0));
+		}
+	}
+	//roots_table_vec[0] = roots_table;
+
+	delete mclr;
+
 
 	ftk::SaveTable(outputFname, nuclei_features_table[0]);
 

@@ -291,7 +291,7 @@ public:
 	void ReadNucleiFeaturesExternal(std::string);
 	void ReadNucleiFeaturesPipeline(const std::vector<vtkSmartPointer<vtkTable> >);
 	void ComputeFeaturesFromCandidateRoots(void);
-	void ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::string); 
+	void ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::RegionType, std::vector<vtkSmartPointer<vtkTable> >&, std::string, std::string); 
 	void WriteNucleiFeatures(std::string);
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
