@@ -280,9 +280,6 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		}
 	}
 
-// #ifdef _OPENMP
-// 	omp_set_nested(0);
-// #endif
 
 	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
 
@@ -859,7 +856,6 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
-	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
 	{
 		for(int j=1; j<c-1; j++)
@@ -891,13 +887,10 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 					lst.push_back(j);
 					lst.push_back(k);
 					p<<j<<" "<<i<<" "<<k<<" "<<mx<<std::endl;
-// #pragma omp critical(scalesCS)
-// 					{
-						scales.push_back(lst);
+					scales.push_back(lst);
 
-						//mean +=mx;
-						cnt++;
-// 					}
+					//mean +=mx;
+					cnt++;
 				}				
 			}			
 		}
@@ -985,19 +978,13 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 
 		if(mx<=medianS)
 		{	
-// #pragma omp critical (smallScalesPushBack)
-// 			{
 				numSmall++;		
 				smallScales.push_back(pp);
-// 			}
 		}
 		else
 		{
-// #pragma omp critical (largeScalesPushBack)	
-// 			{	
-				numLarge++;		
-				largeScales.push_back(pp);
-// 			}
+			numLarge++;		
+			largeScales.push_back(pp);
 		}
 
 		//p3<<j<<" "<<i<<" "<<k<<" "<<mx<<" "<<best_scale<<" "<<max_resp<<std::endl;
