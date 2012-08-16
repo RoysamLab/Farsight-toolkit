@@ -182,17 +182,14 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		//writer->SetInput( im );
 		//writer->Update();
 		//////////////////////////////////////////////////////////////////////////
-		#pragma omp critical // Nicolas for thh
+		std::cout<<"Computing distance transform...";
+		dImg = (unsigned short *) malloc(((unsigned long)r)*((unsigned long)c)*((unsigned long)z)*sizeof(unsigned short));
+		if(!dImg)
 		{
-			std::cout<<"Computing distance transform...";
-			dImg = (unsigned short *) malloc(((unsigned long)r)*((unsigned long)c)*((unsigned long)z)*sizeof(unsigned short));
-			if(!dImg)
-			{
-				std::cerr<<"Failed to allocate memory for the distance image, GOING TO DI"<<std::endl;
-// 				return 0;
-			}
-			std::cout << std::endl << "\t\tHERE2: DISTANCE MAP ABOUT TO RUN";
+			std::cerr<<"Failed to allocate memory for the distance image, GOING TO DI"<<std::endl;
+ 			return 0;
 		}
+		std::cout << std::endl << "\t\tHERE2: DISTANCE MAP ABOUT TO RUN";
 		//max_dist = distMap(im, r, c, z,dImg);
 		max_dist = distMap_SliceBySlice(im, r, c, z,dImg);
 		std::cout << std::endl << "\t\tHERE2: DISTANCE MAP DONE";
