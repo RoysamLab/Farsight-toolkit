@@ -81,7 +81,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		//create max_nghbr_im and initialize it with its index (node) value
 		max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
 	
-	// 	#pragma omp parallel for
+	 	#pragma omp parallel for
 		for(int i=0; i<r; i++)
 	{        
 		max_nghbr_im[i] = (int **) malloc(c*sizeof(int*));

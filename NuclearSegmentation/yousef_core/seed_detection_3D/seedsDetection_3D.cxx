@@ -259,14 +259,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	clock_t start_time_multiscale_log = clock();
 
-// #ifdef _OPENMP
-// 	omp_set_nested(1);
-// #endif
-// #ifdef _MSC_VER 
-// 	#pragma omp parallel for private(min_x, min_y, max_x, max_y) // collapse(2)
-// #else
-// 	#pragma omp parallel for private(min_x, min_y, max_x, max_y) collapse(2)
-// #endif
+	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
 	for(int i=0; i<r; i+=r/block_divisor)
 	{
 		for(int j=0; j<c; j+=c/block_divisor)
@@ -418,11 +411,11 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	bool failed = false;
 
-// #pragma omp parallel for firstprivate(im) ordered
+	#pragma omp parallel for firstprivate(im) ordered
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
 		int sigma = sigma_max - i;
-#pragma omp critical (ProcessingScaleCout)
+		#pragma omp critical (ProcessingScaleCout)
 		{
 			std::cout<<"Processing scale "<<sigma<<endl;
 		}
@@ -574,7 +567,7 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 	//int itr = 0;
 	//std::cout << "In Detect_Local_MaximaPoints_3D, about to plunge in the loop" << std::endl;
 
-// #pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
+	#pragma omp parallel for private(II, min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=0; i<r; i++)
 	{
 		for(int j=0; j<c; j++)
@@ -880,7 +873,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
-// #pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
+	#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int i=1; i<r-1; i++)
 	{
 		for(int j=1; j<c-1; j++)
@@ -945,7 +938,6 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	int numSmall = 0;
 	int numLarge = 0;
 
-	//#pragma omp parallel for private(min_r, min_c, min_z, max_r, max_c, max_z)
 	for(int ind=0; ind<cnt; ind++)
 	{
 		int mx = scales[ind][0];
