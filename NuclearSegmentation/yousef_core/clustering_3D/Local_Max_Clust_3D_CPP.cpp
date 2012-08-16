@@ -76,27 +76,23 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 	int*** max_nghbr_im;
     
-	#pragma omp critical
-	{
-		//create max_nghbr_im and initialize it with its index (node) value
-		max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
+	//create max_nghbr_im and initialize it with its index (node) value
+	max_nghbr_im = (int ***) malloc(r*sizeof(int**)); 
 	
-	 	#pragma omp parallel for
-		for(int i=0; i<r; i++)
+	#pragma omp parallel for
+	for(int i=0; i<r; i++)
 	{        
 		max_nghbr_im[i] = (int **) malloc(c*sizeof(int*));
 		for(int j=0; j<c; j++)
 		{			
-				max_nghbr_im[i][j] = (int *) malloc(z*sizeof(int));
-				for(int k=0; k<z; k++)
-				{				
-					max_nghbr_im[i][j][k] = (k*r*c)+(i*c)+j;//LMX;
-		}
+			max_nghbr_im[i][j] = (int *) malloc(z*sizeof(int));
+			for(int k=0; k<z; k++)
+			{				
+				max_nghbr_im[i][j][k] = (k*r*c)+(i*c)+j;//LMX;
+			}
 		}
 	}
-	
-		std::cout << "max_nghbr_im initialized" << endl;
-	}
+	std::cout << "max_nghbr_im initialized" << endl;
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
@@ -113,12 +109,10 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	unsigned short *max_response_c;
 	unsigned short *max_response_z;
 	
-	#pragma omp critical
-	{
-		max_response_r = new unsigned short[r * c * z];
-		max_response_c = new unsigned short[r * c * z];
-		max_response_z = new unsigned short[r * c * z];
-	}
+
+	max_response_r = new unsigned short[r * c * z];
+	max_response_c = new unsigned short[r * c * z];
+	max_response_z = new unsigned short[r * c * z];
 	
 #ifdef OPENCL
 	// START OPENCL BOILERPLATE ----------------------------------------------------------------------------------------------------------------
