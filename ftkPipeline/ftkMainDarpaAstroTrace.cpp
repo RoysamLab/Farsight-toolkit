@@ -1191,11 +1191,11 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 
 	// Soma Montage
 	rawImageType_uint::Pointer astrocyteSomaMontage = rawImageType_uint::New();
-	rawImageType_uint::RegionType ImageMontageRegion = imageLabelMontage->GetBufferedRegion();
-	itk::Size<3> im_size = ImageMontageRegion.GetSize();
+	rawImageType_uint::RegionType uint_ImageMontageRegion = imageLabelMontage->GetBufferedRegion();
+	itk::Size<3> im_size = uint_ImageMontageRegion.GetSize();
 	rawImageType_uint::RegionType region;
-	region.SetSize( ImageMontageRegion.GetSize() );
-	region.SetIndex( ImageMontageRegion.GetIndex() );
+	region.SetSize( uint_ImageMontageRegion.GetSize() );
+	region.SetIndex( uint_ImageMontageRegion.GetIndex() );
 	astrocyteSomaMontage->SetRegions( region );
 	astrocyteSomaMontage->Allocate();
 	astrocyteSomaMontage->FillBuffer(0);
@@ -1234,13 +1234,13 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 		}
 	}	
 	
-	std::string nameAstrocyteSomaMontage = _outPathData+"/astrocyte_soma.nrrd";
+	std::string nameAstrocyteSomaMontage = _outPathTemp+"/astrocyte_soma.nrrd";
 	writeImage< rawImageType_uint >(astrocyteSomaMontage,nameAstrocyteSomaMontage.c_str());
 
 	rawImageType_uint::Pointer microgliaSomaMontage = rawImageType_uint::New();
 	rawImageType_uint::RegionType region1;
-	region1.SetSize( ImageMontageRegion.GetSize() );
-	region1.SetIndex( ImageMontageRegion.GetIndex() );
+	region1.SetSize( uint_ImageMontageRegion.GetSize() );
+	region1.SetIndex( uint_ImageMontageRegion.GetIndex() );
 	microgliaSomaMontage->SetRegions( region1 );
 	microgliaSomaMontage->Allocate();
 	microgliaSomaMontage->FillBuffer(0);
@@ -1279,7 +1279,7 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 		}
 	}	
 	
-	std::string nameMicrogliaSomaMontage = _outPathData+"/microglia_soma.nrrd";
+	std::string nameMicrogliaSomaMontage = _outPathTemp+"/microglia_soma.nrrd";
 	writeImage< rawImageType_uint >(microgliaSomaMontage,nameMicrogliaSomaMontage.c_str());
 
 }
