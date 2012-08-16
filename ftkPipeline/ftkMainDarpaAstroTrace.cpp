@@ -1186,6 +1186,102 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 
 	std::string tempMulti_Class_Nuclei_Table_Table = _outPathTemp+"/Multi_Class_Nuclei_Table.txt";
 	ftk::SaveTable(tempMulti_Class_Nuclei_Table_Table, AllNucleiTable);
+
+	rawImageType_uint::Pointer imageLabelMontage = readImage< rawImageType_uint >(_Label_ImageNRRD.c_str());
+
+	// Soma Montage
+	rawImageType_uint::Pointer astrocyteSomaMontage = rawImageType_uint::New();
+	rawImageType_uint::RegionType ImageMontageRegion = imageLabelMontage->GetBufferedRegion();
+	itk::Size<3> im_size = ImageMontageRegion.GetSize();
+	rawImageType_uint::RegionType region;
+	region.SetSize( ImageMontageRegion.GetSize() );
+	region.SetIndex( ImageMontageRegion.GetIndex() );
+	astrocyteSomaMontage->SetRegions( region );
+	astrocyteSomaMontage->Allocate();
+	astrocyteSomaMontage->FillBuffer(0);
+	try
+	{
+		astrocyteSomaMontage->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	rawImageType_uint::PixelType * astrocyteSomaArray = astrocyteSomaMontage->GetBufferPointer();
+	rawImageType_uint::PixelType * imageLabelArray = imageLabelMontage->GetBufferPointer();
+
+	unsigned long long sizeXY = im_size[1] * im_size[0];
+	unsigned long long sizeX = im_size[0];
+	std::map<unsigned int, int> classMap;
+	for(int row=0; row<(int)AllNucleiTable->GetNumberOfRows(); ++row)
+	{
+		classMap[AllNucleiTable->GetValue(row,0).ToUnsignedInt()] = AllNucleiTable->GetValueByName(row, "prediction_active_multi_class").ToInt();
+	}
+
+	#pragma omp parallel for collapse(3)
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			for(int k=0; k<im_size[0]; ++k)
+			{
+				unsigned long long offset = (i*sizeXY)+(j*sizeX)+k;
+				if( imageLabelArray[offset] != 0 )
+					if(classMap[imageLabelArray[offset]] == 1)
+						astrocyteSomaArray[offset] = imageLabelArray[offset];
+			}
+		}
+	}	
+	
+	std::string nameAstrocyteSomaMontage = _outPathData+"/astrocyte_soma.nrrd";
+	writeImage< rawImageType_uint >(astrocyteSomaMontage,nameAstrocyteSomaMontage.c_str());
+
+	rawImageType_uint::Pointer microgliaSomaMontage = rawImageType_uint::New();
+	rawImageType_uint::RegionType region1;
+	region1.SetSize( ImageMontageRegion.GetSize() );
+	region1.SetIndex( ImageMontageRegion.GetIndex() );
+	microgliaSomaMontage->SetRegions( region1 );
+	microgliaSomaMontage->Allocate();
+	microgliaSomaMontage->FillBuffer(0);
+	try
+	{
+		microgliaSomaMontage->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	rawImageType_uint::PixelType * microgliaSomaArray = microgliaSomaMontage->GetBufferPointer();
+	//rawImageType_uint::PixelType * imageLabelArray = imageLabelMontage->GetBufferPointer();
+
+	//unsigned long long sizeXY = im_size[1] * im_size[0];
+	//unsigned long long sizeX = im_size[0];
+	//std::map<unsigned int, int> classMap;
+	//for(int row=0; row<(int)AllNucleiTable->GetNumberOfRows(); ++row)
+	//{
+	//	classMap[AllNucleiTable->GetValue(row,0).ToUnsignedInt()] = AllNucleiTable->GetValueByName(row, "prediction_active_multi_class").ToInt();
+	//}
+
+	#pragma omp parallel for collapse(3)
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			for(int k=0; k<im_size[0]; ++k)
+			{
+				unsigned long long offset = (i*sizeXY)+(j*sizeX)+k;
+				if( imageLabelArray[offset] != 0 )
+					if(classMap[imageLabelArray[offset]] == 2)
+						microgliaSomaArray[offset] = imageLabelArray[offset];
+			}
+		}
+	}	
+	
+	std::string nameMicrogliaSomaMontage = _outPathData+"/microglia_soma.nrrd";
+	writeImage< rawImageType_uint >(microgliaSomaMontage,nameMicrogliaSomaMontage.c_str());
+
 }
 
 	
