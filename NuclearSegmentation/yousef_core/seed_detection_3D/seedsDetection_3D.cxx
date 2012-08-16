@@ -270,25 +270,13 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 				max_x = c-1;
 			if(max_y >= r)
 				max_y = r-1;
-			
-			if( block_divisor == 1 )
-			{
-				multiScaleLoG(im, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
-			}
-			else
-			{
 
-				//Create an itk image to hold the sub image (tile) being processing
-				MyInputImageType::Pointer im_Small;
-// 				#pragma omp critical
-// 				{			
-					im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
-// 				}
+			//Create an itk image to hold the sub image (tile) being processing
+			MyInputImageType::Pointer im_Small = extract3DImageRegion(im, max_x-min_x+1, max_y-min_y+1, z, min_x, min_y, 0);
 
-				//By Yousef (8/27/2009): multi-scale LoG is done in one function now
-				multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
-				//
-			}
+			//By Yousef (8/27/2009): multi-scale LoG is done in one function now
+			multiScaleLoG(im_Small, r, c, z, min_y, max_y, min_x, max_x, 0, z-1, sigma_min, sigma_max, IM, sampl_ratio, dImg, minIMout, UseDistMap);
+			//
 		}
 	}
 
