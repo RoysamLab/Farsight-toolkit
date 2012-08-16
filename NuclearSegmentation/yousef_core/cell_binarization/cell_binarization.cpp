@@ -215,18 +215,7 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 		}
 	}
 
-// #ifdef _OPENMP
-// 	omp_set_nested(1);
-// #endif
-// 
-// 	std::cout << "Starting Graph Cuts" << std::endl;
-// #ifdef _MSC_VER 
-// 	#pragma omp parallel for // collapse(3)
-// #else
-// 	#pragma omp parallel for collapse(3)
-// #endif
-// #pragma omp critical
-// {
+	#pragma omp parallel for
 	for(int i=0; i< num_blocks_R; i++)			
 	{
 		for(int j = 0; j < num_blocks_C; j++)
@@ -237,10 +226,6 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 			}
 		}
 	}
-// }
-// #ifdef _OPENMP
-// 	omp_set_nested(0);
-// #endif
 
 	for(int i=0; i< num_blocks_R; i++)
 	{			
