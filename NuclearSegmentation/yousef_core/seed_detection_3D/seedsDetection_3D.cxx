@@ -105,8 +105,7 @@ extern "C" void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, 
 
 int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
-	std::cout << std::endl << "aawsNUMTHRE: " << itk::MultiThreader::GetGlobalDefaultNumberOfThreads() << "--" << itk::MultiThreader::GetGlobalMaximumNumberOfThreads();
-// 	std::cout << std::endl << 
+	// 	std::cout << std::endl << 
 	//queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
 
 	//get this inputs
@@ -189,10 +188,8 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 			std::cerr<<"Failed to allocate memory for the distance image, GOING TO DI"<<std::endl;
  			return 0;
 		}
-		std::cout << std::endl << "\t\tHERE2: DISTANCE MAP ABOUT TO RUN";
 		//max_dist = distMap(im, r, c, z,dImg);
 		max_dist = distMap_SliceBySlice(im, r, c, z,dImg);
-		std::cout << std::endl << "\t\tHERE2: DISTANCE MAP DONE";
 		std::cout<<"done"<<std::endl;
 	}
 
