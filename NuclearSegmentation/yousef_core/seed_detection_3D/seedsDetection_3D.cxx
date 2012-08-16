@@ -457,8 +457,9 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		iterate.GoToBegin();
 
 		unsigned long II;
-// #pragma omp ordered
-// 		{
+		
+		#pragma omp ordered
+		{
 			for(int k1=zmin; k1<=zmax; k1++)
 			{
 				for(int i1=rmin; i1<=rmax; i1++)	
@@ -501,7 +502,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 					}
 				}
 			}
-// 		}
+ 		}
 
 		std::cout<<"Scale " << sigma << " done"<<std::endl;
 	}
