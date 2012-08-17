@@ -10,7 +10,6 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
-	//aspect_ratio = 1.0; //xy to z ratio in physical space here
 }
 
 /*	This function takes in the name of the seed points (where tracing starts) and then grabs a 200x200x100 region with mosaic_roi.
@@ -85,9 +84,9 @@ void MicrogliaRegionTracer::Trace()
 		Cell* cell = cells[k];
 
 		//Get the mask
-#if MASK	//development only
-		cell->GetMask(this->soma_filename);
-#endif
+    #if MASK	//development only
+        cell->GetMask(this->soma_filename);
+    #endif
 		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
 		CalculateCandidatePixels(cell);
 
@@ -454,7 +453,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 	ImageType::IndexType root_index = cell->critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
 
-	//Make a copy of the AdjGraph called TreeAdjGraph which we will use to build the MST
+	//Make a copy of the AdjGraph called TreeAdjGraph which we will use to build the MST (Important that we keep the original AdjGraph to measure tortuosity)
 	double** TreeAdjGraph = new double*[cell->critical_points_queue.size()];
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 	{
@@ -468,32 +467,31 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		TreeAdjGraph[m][0] = std::numeric_limits<double>::max();
 
 	//Prim's algorithm
-	//for each node but the last, find its child
+	//for each node but the last, find the minimum weight unconnected node and connect it to the tree
 	for (itk::uint64_t l = 0; l < cell->critical_points_queue.size() - 1; l++)
 	{
-		//std::cout << "Calculating nearest neighbor for point " << l << std::endl;
 		itk::uint64_t minimum_connected_node_id = 0;
 		itk::uint64_t minimum_node_index_to_id = 0;
 		double minimum_node_cost = std::numeric_limits<double>::max();
 		Node* minimum_connected_node = NULL;
-		
-		
 		std::vector<Node*> member_nodes = tree->GetMemberNodes();
 		std::vector<Node*>::iterator member_nodes_iter;
-		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)	//For each connected node
+        
+		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)	//For each node that is already part of the Tree in Prim's algorithm
 		{
-			Node* connected_node = *member_nodes_iter; //node points to the connected node that we are searching the shortest distance for
+			Node* connected_node = *member_nodes_iter;
 
-			//Search through all the unconnected nodes and find the minimum distance
-			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++)
+			for (itk::uint64_t k = 0; k < cell->critical_points_queue.size(); k++) //Search through all the unconnected nodes to this connected node
 			{
 				itk::uint64_t connected_node_id = connected_node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
 				
+                //Weights for tortuosity and distance
 				double alpha = 0.5;			//this affects the cost weight for the angle
 				double beta = 1.0 - alpha;	//this affects the cost weight for the distance
 								
 				double node_to_candidate_length = TreeAdjGraph[connected_node_id][k];
-				double cost;
+				
+                double cost;
 				if (connected_node->GetParent() != NULL)			//is not the root node (has a parent)
 				{
 					itk::uint64_t parent_id = connected_node->GetParent()->getID() - 1;
@@ -537,7 +535,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 			break;	//Minimum distance way too far
 		
 		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
-		//std::cout << "Cost: " << minimum_node_cost << std::endl;
+
 		ImageType::IndexType point_index;
 		point_index[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
 		point_index[1] = cell->critical_points_queue[minimum_node_index_to_id][1] + cell->getY() - cell->getRequestedSize()[1]/2 - cell->getShiftIndex()[1];
@@ -665,7 +663,8 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 		ImageType::IndexType last_node_index = start_node_index;
 
 		std::cout << "Visiting path: " << start_node->getID() << " [" << start_node->x << ", " << start_node->y << ", " << start_node->z << "] ";
-		//Keep going down the segment until we hit a branch point or the leaf node
+		
+        //Keep going down the segment until we hit a branch point or the leaf node
 		while (child_node_children.size() < 2 && child_node_children.size() != 0)
 		{
 			std::cout << child_node->getID() << " [" << child_node->x << ", " << child_node->y << ", " << child_node->z << "] ";
@@ -707,7 +706,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 			current_node = next_node;							//Update current node to point to the next node
 		}
 		
-		//If we have no children, then prune
+		//If we have no children and we are short, then prune
 		if (child_node_children.size() == 0 && segment_length < 5.0)
 			continue;
 		
