@@ -21,8 +21,6 @@ if(BUILD_TracingSystem)
 	ADD_EXECUTABLE(SomaExtraction SOMA_MAIN.cpp)
 	TARGET_LINK_LIBRARIES( SomaExtraction  segment_soma )
 	INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
-else(BUILD_TracingSystem)
-	MESSAGE("Build TracingSystem")
 endif(BUILD_TracingSystem)
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
