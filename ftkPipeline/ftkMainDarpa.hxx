@@ -935,3 +935,175 @@ void ftkMainDarpa::computeMedianFilter( std::string inputImageName, std::string 
 	writeImage< TOUTPUT >(median_filter->GetOutput(),outputImageName.c_str());
 
 }
+
+
+
+template<typename TINPUT >
+void ftkMainDarpa::test_1( std::string inputImageName, std::string outputPath, std::string imageType )
+{
+	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
+	
+	typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
+	itk::Size<3> inputImage_sizez = inputImage->GetLargestPossibleRegion().GetSize();
+	unsigned long long inputImage_slice_size = inputImage_sizez[1] * inputImage_sizez[0];
+	unsigned long long inputImage_row_size = inputImage_sizez[0];	
+
+	// Create z projecImage
+	typedef itk::Image< unsigned char, 3 > TestImageType;
+	typename TestImageType::Pointer testImage = TestImageType::New();
+	typename TestImageType::PointType originz;
+	originz[0] = 0; 
+	originz[1] = 0;
+	originz[2] = 0;
+	testImage->SetOrigin( originz );
+	typename TINPUT::IndexType startz;
+	startz[0] = 0;
+	startz[1] = 0;
+	startz[2] = 0;
+	typename TINPUT::SizeType sizez;
+	sizez[0] = inputImage_sizez[0];
+	sizez[1] = inputImage_sizez[1];
+	sizez[2] = inputImage_sizez[2];
+	typename TINPUT::RegionType regionz;
+	regionz.SetSize ( sizez  );
+	regionz.SetIndex( startz );
+	testImage->SetRegions( regionz );
+	testImage->Allocate();
+	testImage->FillBuffer(0);
+	testImage->Update();
+	typename TestImageType::PixelType * testImageArray = testImage->GetBufferPointer();
+	
+	#pragma omp parallel for collapse(3)
+	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+	{
+		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		{
+			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			{
+				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
+				if( value > 0 )
+				{
+					testImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 255;
+				}
+				else
+				{
+					testImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 0;
+				}
+			}
+		}
+	}
+	std::string temp1a = outputPath + "/test_1.nrrd";
+	
+ 
+	typedef itk::BinaryBallStructuringElement< typename TestImageType::PixelType,3> StructuringElementType;
+	StructuringElementType structuringElement;
+	structuringElement.SetRadius(7);
+	structuringElement.CreateStructuringElement();
+ 
+	typedef itk::BinaryErodeImageFilter< TestImageType, TestImageType, StructuringElementType > BinaryErodeImageFilterType;
+ 
+	BinaryErodeImageFilterType::Pointer dilateFilter = BinaryErodeImageFilterType::New();
+	dilateFilter->SetInput( testImage );
+	dilateFilter->SetKernel(structuringElement);
+	dilateFilter->Update();
+	
+	writeImage< TestImageType >(dilateFilter->GetOutput(),temp1a.c_str());
+}
+
+
+template<typename TINPUT >
+void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageName )
+{
+	std::cout << std::endl << "ACA: " << inputImageName;
+	std::cout << std::endl << "ACA: " << outputImageName << std::flush;
+	
+	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
+	
+	typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
+	itk::Size<3> inputImage_sizez = inputImage->GetLargestPossibleRegion().GetSize();
+	unsigned long long inputImage_slice_size = inputImage_sizez[1] * inputImage_sizez[0];
+	unsigned long long inputImage_row_size = inputImage_sizez[0];	
+	
+// 	std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
+	std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
+	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	{
+		std::vector< unsigned long long > temp((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(),0);
+		histoGram.at(z) = temp;
+	}
+	#pragma omp parallel for
+	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	{
+		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		{
+			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			{
+				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
+				histoGram.at(z).at(value)++;
+			}
+		}
+	}
+	std::vector< unsigned long long > result((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(),0);
+	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
+	{
+		unsigned long long maxMax = 0;
+		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		{
+			maxMax = maxMax + histoGram.at(z).at(num);
+		}
+		result.at(num) = maxMax;
+	}
+	
+	double sum = 0;
+	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
+	{
+		sum = sum + result.at(num);
+	}
+	std::cout << std::endl << "HERE: " << sum;
+	std::cout << std::endl << "HERE: " << sum-inputImage_sizez[2] * inputImage_sizez[1] * inputImage_sizez[0];
+	
+	double sum2 = 0;
+	bool flag=1;
+	double fac = 1;
+	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
+	{
+		sum2 = sum2 + result.at(num);
+		if( (sum2/sum>0.996) && (flag==1))
+		{
+			flag = 0;
+			fac = num;
+		}
+	}
+	std::cout << std::endl << "HERE: " << fac;
+	
+	
+	#pragma omp parallel for collapse(3)
+	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+	{
+		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		{
+			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			{
+				if( inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)]*double(double(65535.0)/double(fac)) >= 65535 )
+					inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 65535;
+				else
+					inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)]*double(double(65535.0)/double(fac));
+			}
+		}
+	}
+	
+	
+// 	typedef  itk::ShiftScaleImageFilter< TINPUT, TINPUT > ShiftScaleImageFilterType;
+// 	typename ShiftScaleImageFilterType::Pointer shiftScaleImageFilter = ShiftScaleImageFilterType::New();
+// 	shiftScaleImageFilter->SetInput( inputImage );
+// 	shiftScaleImageFilter->SetScale( double(double(65535.0)/double(180.0)) );
+// 	std::cout << std::endl << shiftScaleImageFilter->GetScale();
+// 	shiftScaleImageFilter->Update();
+ 
+// 	std::string temp1a = outputPath + "/test_1.nrrd";
+
+// 	writeImage< TINPUT >(inputImage,temp1a.c_str());
+	writeImage< TINPUT >(inputImage,outputImageName.c_str());
+	
+	
+}

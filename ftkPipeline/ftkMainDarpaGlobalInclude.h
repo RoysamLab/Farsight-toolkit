@@ -13,6 +13,11 @@
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkMedianImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
+#include "itkBinaryDilateImageFilter.h"
+#include "itkBinaryErodeImageFilter.h"
+#include "itkAdaptiveHistogramEqualizationImageFilter.h"
+#include "itkShiftScaleImageFilter.h"
 
 // FTK INCLUDES
 #include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"

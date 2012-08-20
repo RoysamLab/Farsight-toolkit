@@ -48,6 +48,12 @@ public:
 	template<typename TINPUT >
 	void saveNRRD( std::string );
 	
+	template<typename TINPUT >
+	void test_1( std::string inputImageName, std::string outputPath, std::string imageType );
+	
+	template<typename TINPUT >
+	void test_2( std::string inputImageName, std::string outputImageName );
+	
 private:
 	
 };

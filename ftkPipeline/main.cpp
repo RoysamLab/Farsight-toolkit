@@ -7,11 +7,13 @@
 #include "ftkMainDarpaTrace.h"
 #include "ftkMainDarpaAstroTrace.h"
 
-enum STEPS { SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
+enum STEPS { TEST_1, TEST_2, SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
 std::map< std::string, STEPS> stepsmap;
 
 void register_stepsmap()
 {
+	stepsmap["TEST_1"] = TEST_1;
+	stepsmap["TEST_2"] = TEST_2;
 	stepsmap["SAVENRRD"] = SAVENRRD;
 	stepsmap["PROJECTION"] = PROJECTION;
 	stepsmap["PROJECTION_8BIT"] = PROJECTION_8BIT;
@@ -36,6 +38,26 @@ int main(int argc, char *argv[])
 	register_stepsmap();
 	switch( stepsmap[argv[1]] )
 	{
+		case TEST_1:
+		{
+			std::cout << "TEST_1!";
+			std::string imageInputName = argv[2];
+			std::string imageOutputName = argv[3];
+			std::string imageType = argv[4];
+// 			
+			objftkMainDarpa->test_1< rawImageType_16bit >( imageInputName, imageOutputName, imageType );
+			break;
+		}
+		case TEST_2:
+		{
+			std::cout << "TEST_2!";
+			std::string imageInputName = argv[2];
+			std::string imageOutputName = argv[3];
+// 			std::string imageType = argv[4];
+// 			
+			objftkMainDarpa->test_2< rawImageType_16bit >( imageInputName, imageOutputName );
+			break;
+		}
 		case SAVENRRD:
 		{
 			std::cout << "SAVENRRD!";
