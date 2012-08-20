@@ -4,7 +4,9 @@
 ftkVesselTracer::ftkVesselTracer(){
 }
 
-ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false){
+ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false, bool use_vesselness = true){
+
+	this->useVesselness = use_vesselness;
 
 	if(preprocess){
 		this->allParams.preProcessingParams.initByDefaultValues();
@@ -14,7 +16,6 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 
 	//testing
 	//this->PrintToySWCFile();
-
 
 	this->data_folder_path = input_data_path;
 	this->data_folder_path.erase(this->data_folder_path.length()-4, this->data_folder_path.length());
@@ -46,12 +47,12 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->ComputeAllSecondaryNodes();
 
 		// MST and post processing
-		/*this->allParams.graphAndMSTParams.initByDefaultValues();
+		this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 
 		this->PopulateSWCNodeContainer();
-		this->WriteSWCFileVessel("vessel.swc");
-		*/
+		this->WriteSWCFileVessel();
+		
 	}
 	else{
 
@@ -77,8 +78,60 @@ void PreprocessingParameters::initByDefaultValues(void){
 	this->anisDiffusionConductance = 30;
 	this->smoothingSigma = 2.0f;
 	this->iterNGVF = 30; //30; //10;
+
+	VesselnessMeasures();
 }
 
+VesselnessMeasures::VesselnessMeasures(){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.025; //0.1;  //0.25;
+	
+	this->sigma_min = 1;
+	this->sigma_max = 10.0;
+	this->sigma_intervals = 10;
+	this->vesselness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+VesselnessMeasures::VesselnessMeasures(float alpha, float beta, float gamma){
+
+	this->alpha = alpha;
+	this->beta = beta;
+	this->gamma = gamma;
+
+	this->sigma_min = 0.5;
+	this->sigma_max = 2.0;
+	this->sigma_intervals = 1;
+	this->vesselness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+VesselnessMeasures::VesselnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.25;
+
+	this->sigma_min = sigma_min;
+	this->sigma_max = sigma_max;
+	this->sigma_intervals = sigma_intervals;
+	this->vesselness_type = obj_type;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
 void SphericalBinInfo::initByDefaultValues(void){
 	
 	this->indexLength = 50;
@@ -120,7 +173,7 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->likelihoodThresholdPrimary = 0.01; //0.005;
 	this->distanceThresholdPrimary = 1.2;
 
-	this->traceQualityThreshold = 4.0; //5.0; // IMP PARAM
+	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
 	this->maxQueueIter = 20000;
 	this->distanceThresholdSecondary = 1.0; //0.5; // IMP PARAM
 	this->maxBranchAngle = 60.0; //60.0; // in degrees // IMP PARAM
@@ -143,6 +196,9 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->maxQueueSize = 10000;
 	this->traceLengthCost = 0.5; //0.1; //0.5; //0.5; //1.0; //0.5; //1.0; //0.5; //0.0; // IMP PARAM
 	this->primaryNodeSearchRadFactor = 0.75; //1.0; //0.5; // IMP PARAM
+
+	this->vesselnessThershold = 0.001; //0.0001;
+	this->vesselnessWeight = 0.3;
 }
 
 void GraphAndMSTPartameters::initByDefaultValues(void){
@@ -151,8 +207,8 @@ void GraphAndMSTPartameters::initByDefaultValues(void){
 	this->NBinsAffinity = 32;
 	this->maxEdgeWeight = 99.0;
 	this->minBranchAngle = vnl_math::pi/8.0;
-	this->maxNBranches = 25; //10; //5;
-	this->maxTreeNodes = 100;
+	this->maxNBranches = 40; //25; //10; //5;
+	this->maxTreeNodes = 500; //100;
 }
 void AllParameters::initByDefaultValues(void){
 	
@@ -179,7 +235,6 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 		std::cout << e << std::endl;
 		return EXIT_FAILURE;
 	}
-
 	std::cout << "Done with reading input image. " << std::endl;
 
 	//PARAMS: Make available outside function
@@ -208,6 +263,10 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 	Common::GVFDiffusionFaster(smoothing_sigma, GVF_N_iter, write_file_path, data_ptr);	
 	std::cout << "Done with GVF diffusion. " << std::endl;
 
+	//Compute vesselness image
+	this->ComputeVesselnessImage(this->allParams.preProcessingParams.vesselness_measures, write_file_path, data_ptr);
+	
+
 	timer.Stop();
 	std::cout << "The pre-processing took " << timer.GetMeanTime() << " seconds. " << std::endl;
 
@@ -222,6 +281,7 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 	std::string append_gx = "_gx.mhd";
 	std::string append_gy = "_gy.mhd";
 	std::string append_gz = "_gz.mhd";
+	std::string append_vesselness = "_vesselness.mhd";
 
 	try{
 		Common::ReadImage3D(data_path + std::string(append_ext), this->inputData); //input data is preprocessed data
@@ -230,10 +290,15 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 		Common::ReadImage3D(data_path + std::string(append_gx), this->gx);
 		Common::ReadImage3D(data_path + std::string(append_gy), this->gy);
 		Common::ReadImage3D(data_path + std::string(append_gz), this->gz);
+		Common::ReadImage3D(data_path + std::string(append_vesselness), this->VesselnessImage);
 	}
 	catch(itk::ExceptionObject& e){
 		std::cout << e << std::endl;		
 	}
+
+	// Use the vesselness image instead of intensity image?
+	//this->inputData = this->VesselnessImage;
+	
 
 	//testing the data..
 	/*MinMaxCalculatorType::Pointer min_max_filter = MinMaxCalculatorType::New();
@@ -2412,9 +2477,12 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 	pos_diff[1] = pos_diff[1] / pos_diff_norm;
 	pos_diff[2] = pos_diff[2] / pos_diff_norm;
 	
-	double current_curvature = 0.0;
+	double current_curvature = 0.0, curr_vesselness, curr_likelihood;
 	int count = 1;
-	std::vector<double> arr_curvature;
+	std::vector<double> arr_curvature, arr_vesselness, arr_likelihood;
+	itk::Index<3> curr_idx, curr_idx1;
+	double vesselness_diff;
+	double vesselnessWt = this->allParams.nodeDetectionParams.vesselnessWeight;	
 	for(int i = 1; i < node.parentID.size(); i++){
 		parent2 = node.parentID[i];
 
@@ -2428,19 +2496,40 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 			pos_diff[1] = pos_diff[1] / pos_diff_norm;
 			pos_diff[2] = pos_diff[2] / pos_diff_norm;
 			
-			current_curvature = pos_diff[0] * pos_diff_last[0] + pos_diff[1] * pos_diff_last[1] + pos_diff[2] * pos_diff_last[2];
+			current_curvature = (pos_diff[0] * pos_diff_last[0]) + (pos_diff[1] * pos_diff_last[1]) + (pos_diff[2] * pos_diff_last[2]);
+
+			curr_idx[0] = this->allNodes[parent1].x; curr_idx[1] = this->allNodes[parent1].y; curr_idx[2] = this->allNodes[parent1].z;
+			curr_idx1[0] = this->allNodes[parent2].x; curr_idx1[1] = this->allNodes[parent2].y; curr_idx1[2] = this->allNodes[parent2].z;
+			
+			curr_vesselness = this->VesselnessImage->GetPixel(curr_idx);
+			curr_likelihood = this->allNodes[parent1].likelihood;
 		}
-		else
+		else{
 			current_curvature = 1.0;
+			curr_vesselness = 1.0;
+			curr_likelihood = 1.0;
+		}
 
 		arr_curvature.push_back(current_curvature);
+		arr_vesselness.push_back(curr_vesselness);
+		arr_likelihood.push_back(curr_likelihood);
 		
+
 		// Cost function is different than one given in thesis?
-		if(this->allNodes[parent1].likelihood <= 0.0)
-			cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
-		else
-			cost = cost - std::log(this->allNodes[parent1].likelihood);
-			//cost = cost - std::log(current_curvature * this->allNodes[parent1].likelihood);
+		if(this->useVesselness){
+
+			if(this->allNodes[parent1].likelihood <= 0.0 || curr_vesselness < this->allParams.nodeDetectionParams.vesselnessThershold)
+				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
+			else
+				cost = cost - std::log(this->allNodes[parent1].likelihood + curr_vesselness); //- std::log(curr_vesselness);
+		}
+		else{
+			if(this->allNodes[parent1].likelihood <= 0.0)
+				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
+			else
+				cost = cost - std::log(this->allNodes[parent1].likelihood);
+		}
+		
 		
 		count = count + 1;
 
@@ -2456,7 +2545,15 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 		std_curvature = std_curvature + std::pow(arr_curvature[i] - mean_curvature, 2);
 	std_curvature = std::sqrt(std_curvature / (double)arr_curvature.size());
 
-	node.traceQuality = std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);
+	double total_vesselness = std::accumulate(arr_vesselness.begin(), arr_vesselness.end(), 0.0);
+	double total_likelihood = std::accumulate(arr_likelihood.begin(), arr_likelihood.end(), 0.0);
+	
+	if(this->useVesselness)
+		node.traceQuality = vesselnessWt*(1.0/(total_vesselness + total_likelihood)) + std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);	
+	else	
+		node.traceQuality = std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);
+	
+	//node.traceQuality = 0.3*(1.0/(total_likelihood*total_vesselness)) + 0.4*std_curvature + 0.5*((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);
 
 	return node.traceQuality;
 }
@@ -2990,7 +3087,7 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 
 	std::cout << "Done with computing affinity graph. " << std::endl;
 
-	//this->VisualizeAffinityGraph(true);
+	this->VisualizeAffinityGraph(true);
 
 
 
@@ -3306,12 +3403,14 @@ void ftkVesselTracer::ComputeMinimumSpanningTreeBoost(void){
 
 void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 
-	std::cout << "Creating minimum spanning forest.."<< std::endl;
+	std::cout << "Creating minimum spanning forest.. " << this->edges.size() << std::endl;
 	
 	int from = 0, to = 0, label = -1, oldID = 0, newID = 0, loop_count = 0;
 	for(int i = 0; i < this->edges.size(); i++){		
 		from = this->edges[i].from;
 		to = this->edges[i].to;
+		
+		//std::cout << i << std::endl;
 
 		if(this->allForestNodes[from].ID  == -1 && this->allForestNodes[to].ID == -1){
 			
@@ -4241,16 +4340,19 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 	}
 }
 
-void ftkVesselTracer::WriteSWCFileVessel(const std::string file_name){
+void ftkVesselTracer::WriteSWCFileVessel(void){
 
 	if(this->SWCNodeVessel_vec.empty()){
 		std::cout << "SWCNode container is empty. Returning." << std::endl;
 		return;
 	}
 
+	std::string swc_file_name = this->data_folder_path;
+	swc_file_name.append("_vesselTraces.swc");
+
 	//Write SWC file
 	std::ofstream file_out;
-	file_out.open(file_name.c_str(), std::ios::out);
+	file_out.open(swc_file_name.c_str(), std::ios::out);
 	if(file_out.good()){
 
 		for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
@@ -4266,4 +4368,58 @@ void ftkVesselTracer::WriteSWCFileVessel(const std::string file_name){
 	}
 	else
 		std::cout << "Could not write SWC file! " << std::endl;
+}
+
+
+void ftkVesselTracer::ComputeVesselnessImage(VesselnessMeasures& obj_measures, std::string& write_file_path, ImageType3D::Pointer& data_ptr){
+
+	//float sigma_min = 2.0f; //0.5f;
+	//float sigma_max = 10.0f; //4.0f;
+	//int sigma_steps = 5;
+
+	//float alpha = 0.5, beta = 0.5, gamma = 0.25; //5.0;
+
+	//int obj_dim = objectness_type; //1; //0: Blobness, 1: Vesselness, 2: Plateness
+
+	std::cout << "Computing vesselness..."  << std::endl;
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(data_ptr);
+	stats_filter->Update();
+	double img_max_val = stats_filter->GetMaximum();
+
+	obj_measures.alpha = obj_measures.alpha * img_max_val;
+	obj_measures.beta = obj_measures.beta * img_max_val;
+	obj_measures.gamma = obj_measures.gamma * img_max_val;
+
+
+	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
+	multi_scale_Hessian->SetInput(data_ptr);
+	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
+	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
+
+	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	
+	objectness_filter->SetScaleObjectnessMeasure(false);
+	objectness_filter->SetBrightObject(true);
+	objectness_filter->SetAlpha(obj_measures.alpha);
+	objectness_filter->SetBeta(obj_measures.beta);
+	objectness_filter->SetGamma(obj_measures.gamma);
+	objectness_filter->SetObjectDimension(obj_measures.vesselness_type);
+	
+	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
+
+	multi_scale_Hessian->Update();
+
+	Common::NormalizeData(multi_scale_Hessian->GetOutput(), this->VesselnessImage);
+	
+	//this->VesselnessImage = normalization_filter->GetOutput();
+
+	std::cout << "Writing vesselness image.." << std::endl;
+
+	std::string output_file;
+	output_file = write_file_path + "_vesselness.mhd";
+	Common::WriteImage3D(output_file, this->VesselnessImage);		
 }

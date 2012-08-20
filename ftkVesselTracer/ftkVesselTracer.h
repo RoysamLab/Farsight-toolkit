@@ -75,6 +75,13 @@
 #include "itkStatisticsImageFilter.h"
 #include "itkInvertIntensityImageFilter.h"
 #include "itkImageFileWriter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkHessianToObjectnessMeasureImageFilter.h"
+#include "itkAddImageFilter.h"
+#include "itkMultiplyImageFilter.h"
+#include "itkNormalizeImageFilter.h"
+
+#include <vnl/vnl_vector_fixed.h>
 
 #include "Common.h"
 
@@ -119,6 +126,11 @@ typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
 typedef itk::ImageFileWriter<RenderImageType3D> ImageWriter;
+typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
+typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+typedef itk::AddImageFilter<ImageType3D> AddImageFilterType;
+typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilterType;
+typedef itk::NormalizeImageFilter<ImageType3D, ImageType3D> NormalizeImageFilterType;
 
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
@@ -141,6 +153,28 @@ struct SphericalBinInfo{
 	void initByDefaultValues(void);
 };
 
+class VesselnessMeasures{
+	
+public:
+	float alpha;
+	float beta;
+	float gamma;
+
+	float sigma_min;
+	float sigma_max;
+	int sigma_intervals;
+	int vesselness_type; //0: Blobness, 1: Vesselness, 2: Plateness
+	
+	float noiseness;
+	float ballness;
+	float plateness;
+	float vesselness;
+
+	VesselnessMeasures();
+	VesselnessMeasures(float alpha, float beta, float gamma);
+	VesselnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type);
+};
+
 struct PreprocessingParameters{
 
 	int medianFilterRadius;
@@ -148,6 +182,8 @@ struct PreprocessingParameters{
 	int anisDiffusionConductance;
 	double smoothingSigma;
 	int iterNGVF;
+	VesselnessMeasures vesselness_measures;
+
 	void initByDefaultValues(void);
 };
 
@@ -203,6 +239,9 @@ struct NodeDetectionParameters{
 	double primaryNodeSearchRadFactor; // Defines the factor of primary node radius which contributes to the initial position of secondary nodes
 	double infTraceQuality;
 	int maxQueueSize;
+
+	double vesselnessThershold;
+	double vesselnessWeight;
 
 	void initByDefaultValues(void);
 };
@@ -404,7 +443,7 @@ class ftkVesselTracer{
 public:
 
 	ftkVesselTracer();
-	ftkVesselTracer(std::string, bool, bool);
+	ftkVesselTracer(std::string, bool, bool, bool);
 	~ftkVesselTracer();
 
 	/** Preprocessing of data: 1. Reading the data from TIFF files 2. Median filtering 3. Edge enhancing
@@ -524,9 +563,11 @@ public:
 
 	void PopulateSWCNodeContainer(void);
 
-	void WriteSWCFileVessel(const std::string);  
+	void WriteSWCFileVessel(void);  
 
 	void PrintToySWCFile(void);
+
+	void ComputeVesselnessImage(VesselnessMeasures&, std::string&, ImageType3D::Pointer&);
 
 private:
 
@@ -541,6 +582,7 @@ private:
 	ImageType3D::Pointer gx;
 	ImageType3D::Pointer gy;
 	ImageType3D::Pointer gz;
+	ImageType3D::Pointer VesselnessImage;
 
 	RenderImageType3D::Pointer originalDataForRendering;
 	RenderImageType3D::Pointer inputDataForRendering;
@@ -558,6 +600,8 @@ private:
 	std::vector<AffinityEdge> loops;
 	std::vector<Tree> forest;
 	std::vector<SWCNodeVessel> SWCNodeVessel_vec;
+
+	bool useVesselness; 
 
 	/* Update the node appearance 
 	 * (Node object)

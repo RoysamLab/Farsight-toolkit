@@ -26,7 +26,7 @@
 int main(int argc, char* argv[]){
 
 	if(argc < 2 || argc > 3){
-		std::cout << "ftkVesselTracer.exe <InputFileName> <preProcessData?(0/1)>" << std::endl;
+		std::cout << "ftkVesselTracer.exe <InputFileName> <preProcessData?>" << std::endl;
 		return -1;
 	}
 
@@ -54,8 +54,10 @@ int main(int argc, char* argv[]){
 	if(strcmp(preprocess_str.c_str(), "1") == 0)
 		preprocess = true; 
 
+	bool useVesselness = true;
+
 	bool startWithMST = false; 
-	ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST);
+	ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);
 
 
 	// Please do not use this, it is not cross platform.

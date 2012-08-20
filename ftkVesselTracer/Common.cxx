@@ -790,7 +790,7 @@ PixelType NormalizeData(ImageType3D::Pointer inputData, ImageType3D::Pointer& no
 	image_duplicator->Update();
 	normalizedInputData = image_duplicator->GetOutput();*/
 	
-	if(volumeMax != 1){
+	if(volumeMax != 1.0){
 
 		DuplicatorType::Pointer image_duplicator2 = DuplicatorType::New();
 		image_duplicator2->SetInputImage(inputData);
