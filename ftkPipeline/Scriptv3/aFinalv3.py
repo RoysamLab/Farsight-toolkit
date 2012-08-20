@@ -81,15 +81,15 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 10
+TRY = 13
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 1	# If 0 the results will be keep
+MOVE_RESULTS = 0	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
-MOVE_LOCALLY = 1
+MOVE_LOCALLY = 0
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
 REMOVE_TEMP_TRAC = 1
@@ -183,6 +183,7 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0131_NRRD_CROPPED_3']
 	#DATA_FOLDER_ALL = ['/0120_NRRD']
 	#DATA_FOLDER_ALL = ['/0410_NRRD_CROPPED_2']
+	DATA_FOLDER_ALL = ['/0113_NRRD']
 if( SERVER == 'far05' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
@@ -284,10 +285,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2 = LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG+'/Level2'
 	LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP = LOCAL_DATASET_PATH_ASTRO_TRAC+'/Temp'
 
-	GLOBAL_DATASET_PATH = "/FSdata.auto/data/DARPA_MOSAICS"+DATA_FOLDER
-	GLOBAL_DATASET_PARAMS = "/FSdata.auto/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
+	GLOBAL_DATASET_PATH = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
+	GLOBAL_DATASET_PARAMS = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
 	#GLOBAL_DATASET_PATH = "/FSdata/data"+DATA_FOLDER
-	GLOBAL_DATASET_PATH_RESULTS = '/FSdata.auto/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
+	GLOBAL_DATASET_PATH_RESULTS = '/FSdata/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
 
 	# FSdata no auto FSdata (it gives some errors when using FSdata.auto)
 	GLOBAL_DATASET_PATH_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
@@ -814,13 +815,13 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			TEMP_FILE.write('-yTileBor 20\n')
 			TEMP_FILE.write('-zTileBor 10\n')
 		else:
-			TEMP_FILE.write('-xTile 800\n')
-			TEMP_FILE.write('-yTile 800\n')
-			TEMP_FILE.write('-zTile 400\n')
+			TEMP_FILE.write('-xTile 600\n')
+			TEMP_FILE.write('-yTile 600\n')
+			TEMP_FILE.write('-zTile 300\n')
 			TEMP_FILE.write('-xTileBor 200\n')
 			TEMP_FILE.write('-yTileBor 200\n')
 			TEMP_FILE.write('-zTileBor 100\n')
-		TEMP_FILE.write('-num_threads 40\n')
+		TEMP_FILE.write('-num_threads 80\n')
 		if haveCy5 == 1:
 			TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
 		if haveTRT == 1:
