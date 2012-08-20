@@ -71,12 +71,14 @@ INSTALL( TARGETS TIF16bitTo8bit RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
 
 ADD_EXECUTABLE(itkRolloverOpenMPTest itkRolloverOpenMPTest.cpp)
 TARGET_LINK_LIBRARIES(itkRolloverOpenMPTest ${ITK_LIBRARIES})
-ADD_TEST(itkRolloverOpenMPTest
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/itkRolloverOpenMPTest
-  ${FARSIGHT_DATA_ROOT}/TraceData/10_spine2.tif
-  )
-SET_TESTS_PROPERTIES(itkRolloverOpenMPTest PROPERTIES
-  TIMEOUT 1800) #30 minutes
+
+#Removing itkRolloverOpenMPTest because it takes way too long to run on dashboard machines
+#ADD_TEST(itkRolloverOpenMPTest
+#  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/itkRolloverOpenMPTest
+#  ${FARSIGHT_DATA_ROOT}/TraceData/10_spine2.tif
+#  )
+#SET_TESTS_PROPERTIES(itkRolloverOpenMPTest PROPERTIES
+#  TIMEOUT 1800) #30 minutes
 
 ADD_EXECUTABLE(ftkVS2010CrashTest ftkVS2010CrashTest.cpp)
 TARGET_LINK_LIBRARIES(ftkVS2010CrashTest ${ITK_LIBRARIES} ${QT_LIBRARIES})
