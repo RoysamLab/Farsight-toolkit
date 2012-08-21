@@ -427,7 +427,9 @@ void NuclearAssociationRules::Compute(vtkSmartPointer<vtkTable> tbl)
 			thresh = 0;
 		//cout<<"Computing Features For Association Rule "<<i+1<<": ";
 		if( assocRulesList[i].GetAssocType() == ASSOC_SURROUNDEDNESS ){
-			std::vector<float> ec_feat_vals = compute_ec_features( inpImage, labImage, num_rois, thresh, assocRulesList[i].GetOutDistance(), assocRulesList[i].GetInDistance()  );
+		std::vector<float> ec_feat_vals;
+			if( numOfLabels )
+				 ec_feat_vals = compute_ec_features( inpImage, labImage, num_rois, thresh, assocRulesList[i].GetOutDistance(), assocRulesList[i].GetInDistance()  );
 			for(int j=0; j<numOfLabels; ++j)
 				assocMeasurementsList[i][j] = ec_feat_vals[j];
 		} else {

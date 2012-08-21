@@ -414,7 +414,6 @@ omp_set_nested(1);
 omp_set_nested(0);
 #endif
 		number_of_rois = number_of_rois*2;
-		std::cout<<"Starting k-means\n";
 		if( labelsList.size() == 1 )
 		{
 			qfied_num.clear();
@@ -428,10 +427,12 @@ omp_set_nested(0);
 	
 		bool skipKmeans;
 		double Positive_thresh;
-		if( quantified_numbers_cell.begin() == quantified_numbers_cell.end() )
+		if( quantified_numbers_cell.at(0) == quantified_numbers_cell.at(quantified_numbers_cell.size()-1) )
 			skipKmeans = true;
 
 		if( !skipKmeans ){
+			std::cout<<"Starting k-means\n";
+			std::cout<<"First:"<<quantified_numbers_cell.at(0)<<" Last:"<<quantified_numbers_cell.at(quantified_numbers_cell.size()-1)<<std::endl;
 			unsigned k = 2;
 			//Vectors and matrices for k-means
 			std::vector< USImageType::PixelType > partition( roi_list_size, 0 );
@@ -441,9 +442,10 @@ omp_set_nested(0);
 
 			//Use the elements that are evenly spaced to get the intial centers
 			for( unsigned i=0; i<k; ++i ){
-				double index = ((double)(i+1)*roi_list_size)/(k+1);
+				double index = ((double)(i)*roi_list_size)/(k+1);
 				centers.at(i) = quantified_numbers_cell.at((itk::SizeValueType)index);
 				bool duplicated;
+				std::cout<<"Initializing centers\n"<<std::flush;
 				if(i){
 					if( centers.at((i-1)) == centers.at(i) ){
 						duplicated = true;
@@ -460,6 +462,7 @@ omp_set_nested(0);
 			}
 
 			bool changed = true;
+			std::cout<<"Waiting for kmeans to converge\n"<<std::flush;
 			while(changed){
 				changed = false;
 				for(itk::SizeValueType i=0; i<roi_list_size; ++i){
