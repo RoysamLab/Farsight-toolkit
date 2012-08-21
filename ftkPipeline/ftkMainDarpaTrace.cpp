@@ -384,7 +384,7 @@ void ftkMainDarpaTrace::runTracing()
 			#pragma omp critical
 			{
 				rawImageType_uint::Pointer img_soma = cropImages< rawImageType_uint >( _somaMontageDesiredRegion, x, y, z);
-				//MNT->RemoveSoma( img_soma );
+				MNT->RemoveSoma( img_soma );
 			}
 // 
 			x = min(_xTile/2, x);
