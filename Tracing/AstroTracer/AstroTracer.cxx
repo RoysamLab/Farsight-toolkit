@@ -794,11 +794,16 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 		double total_objectness = mean_objectness * (im_size[0]*im_size[1]*im_size[2]);
 		double total_intensity = img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
 		double total_int_obj_sum = added_img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+
+		if(added_img_mean_val < 0.0001)
+			total_int_obj_sum = 0.001 * (im_size[0]*im_size[1]*im_size[2]);
 	
 
 		Mi_coverage4 = total_fg_objectness / total_objectness;
 		Mi_coverage5 = total_fg_intensity / total_intensity;
 		Mi_coverage6 = total_fg_wt_obj_int / total_int_obj_sum;
+
+		std::cout << "num: " << total_fg_wt_obj_int << " den: " << added_img_mean_val << std::endl;
 		
 		std::cout << std::endl;
 		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
