@@ -425,60 +425,71 @@ omp_set_nested(0);
 		//Run k-means
 		//Most of the code is adapted from mul/mbl/mbl_k_means.cxx
 		std::sort(quantified_numbers_cell.begin(), quantified_numbers_cell.end());
-		unsigned k = 2;
-		//Vectors and matrices for k-means
-		std::vector< USImageType::PixelType > partition( roi_list_size, 0 );
-		std::vector< double > sums   ( k, 0.0 );
-		std::vector< double > centers( k, 0.0 );
-		std::vector< USImageType::PixelType > nNearest( k, 0 );
-		//Use the elements that are evenly spaced to get the intial centers
-		for( unsigned i=0; i<k; ++i ){
-			double index = ((double)(i+1)*roi_list_size)/(k+1);
-			centers.at(i) = quantified_numbers_cell.at((itk::SizeValueType)index);
-			bool duplicated;
-			if(i){
-				if( centers.at((i-1)) == centers.at(i) ){
-					duplicated = true;
-					itk::SizeValueType ind=i+1;
-					while( centers.at((i-1))==quantified_numbers_cell.at(ind) )
-						++ind;
-					centers.at(i) = quantified_numbers_cell.at(ind);
-					sums.at(i)    = quantified_numbers_cell.at(ind);
-				}
-			}
-			if( !duplicated )
-				sums.at(i) = quantified_numbers_cell.at((i+1)/(k+1));
-			++nNearest[i];
-		}
+	
+		bool skipKmeans;
+		double Positive_thresh;
+		if( quantified_numbers_cell.begin() == quantified_numbers_cell.end() )
+			skipKmeans = true;
 
-		bool changed = true;
-		while(changed){
-			changed = false;
-			for(itk::SizeValueType i=0; i<roi_list_size; ++i){
-				unsigned bestCentre = 0;
-				double bestDist = fabs((centers.at(0)-quantified_numbers_cell.at(i)));
-				for(unsigned j=1; j<k; ++j){
-					double dist = fabs((centers.at(j)-quantified_numbers_cell.at(i)));
-					if( dist < bestDist ){
-						bestDist = dist; bestCentre = j;
+		if( !skipKmeans ){
+			unsigned k = 2;
+			//Vectors and matrices for k-means
+			std::vector< USImageType::PixelType > partition( roi_list_size, 0 );
+			std::vector< double > sums   ( k, 0.0 );
+			std::vector< double > centers( k, 0.0 );
+			std::vector< USImageType::PixelType > nNearest( k, 0 );
+
+			//Use the elements that are evenly spaced to get the intial centers
+			for( unsigned i=0; i<k; ++i ){
+				double index = ((double)(i+1)*roi_list_size)/(k+1);
+				centers.at(i) = quantified_numbers_cell.at((itk::SizeValueType)index);
+				bool duplicated;
+				if(i){
+					if( centers.at((i-1)) == centers.at(i) ){
+						duplicated = true;
+						itk::SizeValueType ind=i+1;
+						while( centers.at((i-1))==quantified_numbers_cell.at(ind) )
+							++ind;
+						centers.at(i) = quantified_numbers_cell.at(ind);
+						sums.at(i)    = quantified_numbers_cell.at(ind);
 					}
 				}
-				sums[bestCentre] += quantified_numbers_cell.at(i);
-				++ nNearest[bestCentre];
-				if( bestCentre != partition.at(i) ){
-					changed = true;
-					partition.at(i) = bestCentre;
-				}
+				if(!duplicated)
+					sums.at(i) = quantified_numbers_cell.at((i+1)/(k+1));
+				++nNearest[i];
 			}
-			for( unsigned j=0; j<k; ++j) centers.at(j)  = sums.at(j)/nNearest.at(j);
-			for( unsigned j=0; j<k; ++j) sums.at(j)     = 0;
-			for( unsigned j=0; j<k; ++j) nNearest.at(j) = 0;
-		}
-		for( unsigned i=0; i<k; ++i )
-			std::cout<<"Center "<<i<<" "<<centers.at(i)<<"\n";
 
-		double Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (255.0*thresh)?
-					 ((centers.at(0)+centers.at(1))/2) : (255.0*thresh); //Arbitrary upper thresh
+			bool changed = true;
+			while(changed){
+				changed = false;
+				for(itk::SizeValueType i=0; i<roi_list_size; ++i){
+					unsigned bestCentre = 0;
+					double bestDist = fabs((centers.at(0)-quantified_numbers_cell.at(i)));
+					for(unsigned j=1; j<k; ++j){
+						double dist = fabs((centers.at(j)-quantified_numbers_cell.at(i)));
+						if( dist < bestDist ){
+							bestDist = dist; bestCentre = j;
+						}
+					}
+					sums[bestCentre] += quantified_numbers_cell.at(i);
+					++ nNearest[bestCentre];
+					if( bestCentre != partition.at(i) ){
+						changed = true;
+						partition.at(i) = bestCentre;
+					}
+				}
+				for( unsigned j=0; j<k; ++j) centers.at(j)  = sums.at(j)/nNearest.at(j);
+				for( unsigned j=0; j<k; ++j) sums.at(j)     = 0;
+				for( unsigned j=0; j<k; ++j) nNearest.at(j) = 0;
+			}
+			for( unsigned i=0; i<k; ++i )
+				std::cout<<"Center "<<i<<" "<<centers.at(i)<<"\n";
+
+			Positive_thresh = ((centers.at(0)+centers.at(1))/2) < (255.0*thresh)?
+						 ((centers.at(0)+centers.at(1))/2) : (255.0*thresh); //Arbitrary upper thresh
+		}
+		else
+			Positive_thresh = 255.0*thresh;
 
 		std::cout<<"Positive_thresh "<<Positive_thresh<<"\n";
 
