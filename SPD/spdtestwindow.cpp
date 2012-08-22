@@ -433,31 +433,6 @@ void SPDtestWindow::editPercentage()
 	//emdThresBox->setText(QString::number(thres));
 }
 
-void SPDtestWindow::showPSMHist()
-{
-	vtkSmartPointer<vtkTable> emdTable = vtkSmartPointer<vtkTable>::New();
-	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-	column->SetName("earth mover distance");
-	emdTable->AddColumn(column);
-	vnl_matrix<double> emdMatrix;
-	this->SPDModel->GetEMDMatrixDivByMax(emdMatrix);
-
-	for( int i = 0; i < emdMatrix.rows(); i++)
-	{
-		for( int j = 0; j < emdMatrix.cols(); j++)
-		{
-			if( i != j)
-			{
-				vtkSmartPointer<vtkVariantArray> row = vtkSmartPointer<vtkVariantArray>::New();
-				row->InsertNextValue( vtkVariant( emdMatrix(i,j)));
-				emdTable->InsertNextRow(row);
-			}
-		}
-	}
-	this->histo->setModels(emdTable);
-	this->histo->show();
-}
-
 void SPDtestWindow::showPSM()
 {
 	std::string emdThres = this->emdThresBox->text().toStdString();
@@ -843,6 +818,21 @@ void SPDtestWindow::showProgressionHeatmap()
 	plot->setModels(tableForAverModulePlot, selection);
 	plot->show();
 
+	std::vector< std::vector< long int> > clusIndexByTreeOrder;
+	for( int i = 0; i < TreeOrder.size(); i++)
+	{
+		clusIndexByTreeOrder.push_back(clusIndex[ TreeOrder[i] ]);
+	}
+
+	vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(sampleIndex, TreeOrder, selOrder, unselOrder);
+	if( histo)
+	{
+		delete histo;
+	}
+	histo = new HistoWindow(this);
+	histo->setModels(tableForHistPlot, selection, &clusIndexByTreeOrder);
+	histo->show();
+
 	// progression heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
@@ -895,6 +885,12 @@ void SPDtestWindow::closeSubWindows()
 		plot->close();
 		delete plot;
 		plot = NULL;
+	}
+	if(histo)
+	{
+		histo->close();
+		delete histo;
+		histo = NULL;
 	}
 }
 

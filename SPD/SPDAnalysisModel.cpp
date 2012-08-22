@@ -2751,6 +2751,60 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 	return table;
 }
 
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetTableForHist(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, 
+															std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+	vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
+	column->SetName( "Distance To Device");
+	table->AddColumn(column);
+	
+	for(int i = 0; i < selFeatureOrder.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( DataTable->GetColumn(selFeatureOrder[i] + 1)->GetName());
+		table->AddColumn(column);
+	}
+	for(int i = 0; i < unselFeatureOrder.size(); i++)
+	{		
+		column = vtkSmartPointer<vtkVariantArray>::New();
+		column->SetName( DataTable->GetColumn(unselFeatureOrder[i] + 1)->GetName());
+		table->AddColumn(column);
+	}
+
+	for( int i = 0; i < TreeOrder.size(); i++)
+	{
+		long int n = TreeOrder[i];
+		for( int j = 0; j < clusIndex[n].size(); j++)
+		{
+			int id = clusIndex[n][j];
+			if( id < maxVertexId)
+			{
+				std::map< int, int>::iterator iter = indMapFromVertexToClus.find( id); 
+				if( iter != indMapFromVertexToClus.end())
+				{
+					vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+
+					DataRow->InsertNextValue( UNDistanceToDevice[iter->second]);
+
+					for( int k = 0; k < selFeatureOrder.size(); k++)
+					{
+						DataRow->InsertNextValue( UNMatrixAfterCellCluster(iter->second, selFeatureOrder[k]));
+					}
+					for( int k = 0; k < unselFeatureOrder.size(); k++)
+					{
+						DataRow->InsertNextValue( UNMatrixAfterCellCluster(iter->second, unselFeatureOrder[k]));
+					}
+
+					table->InsertNextRow(DataRow);
+				}
+			}
+		}
+	}
+	return table;
+}
+
 /// For milti-level demo
 
 

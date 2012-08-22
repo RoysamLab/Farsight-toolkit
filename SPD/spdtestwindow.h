@@ -44,7 +44,6 @@ protected slots:
     void clusterFunction();
 	void emdFunction();
 	void showPSM();
-	void showPSMHist();
 	void viewProgression();
 	//void saveSelectedFeatures();
 	void updateSelMod();

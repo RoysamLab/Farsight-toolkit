@@ -60,7 +60,7 @@ class HistoWindow : public QMainWindow
 
 public:
 	HistoWindow(QWidget *parent = 0);
-	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL);
+	void setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels = NULL, std::vector< std::vector< long int> > * clusIndex = NULL);
 
 public slots:
 	void update(void);
@@ -78,30 +78,40 @@ private:
 	bool ReadHistogramData(const char* fileName);
 	void Normalize();
 	void SetNumofBins(int n);
+	void SetClusterNumber(int n);
+	void SetLogNumber(int n);
 	bool findFrequencies();
 	void setBucketNames();
 	void ConstructBarChart();
 	//Helpers:
 	void updateOptionMenus();
-	void initMap(std::map<int,int> &v, int n);
+	void initMap(std::map<int,double> &v, int n);
 	double GetMaxNumber(){ std::multiset<double>::iterator pos=std::max_element(data.begin(), data.end());
 						   return *pos;};
 private slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	void columnChange(QAction *action);
 	void binsChange(QAction *action);
+	void clusterChange(QAction *action);
+	void logChange(QAction *action);
 
 private:
 	int columnNum;
+	int clusterNum;
+	int logNum;
 	std::string columnName;
 	int numofbins;				//
 	bool status;				//will be false if num of bins is less than 2 or larger than 10	
 	bool normalized;			//false if not normalized
 	double distanceToUpperBound;//change this if you need more precision for bar charts and frequencies
-	std::map<int,int> result_fq;
+	std::map<int,double> result_fq;
+	std::map<int,double> cluster_result_fq; // of the values in each cluster
 	std::vector<std::string> names; //Names of bins will be stored here
 
 	std::multiset<double> data;		//The column of all data
+	std::multiset<double> cluster_data;
+
+	std::vector< std::vector< long int> > clusIndex;
 
 	ObjectSelection *selection;
 	vtkSmartPointer<vtkTable> m_table;
@@ -113,6 +123,8 @@ private:
 	QMenu *optionsMenu;
 	QMenu *columnMenu;
 	QMenu *binsMenu;
+	QMenu *clusterNoMenu;
+	QMenu *logMenu;
 };
 
 #endif
