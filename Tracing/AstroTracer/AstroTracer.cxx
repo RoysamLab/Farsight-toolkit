@@ -3570,6 +3570,13 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		return;
 	}
 
+	if(points_list.size() > 100000)
+	{
+		std::cout << "\nTOO MANY LOG POINTS\n";
+		std::cout << "TILE NO: " << outputFname << "\n";
+		return;
+	}
+
 	//Preparing IDImage
 	LabelImageType3D::RegionType id_reg;
 	LabelImageType3D::IndexType id_st;
