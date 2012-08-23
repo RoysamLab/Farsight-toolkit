@@ -824,7 +824,7 @@ void SPDtestWindow::showProgressionHeatmap()
 		clusIndexByTreeOrder.push_back(clusIndex[ TreeOrder[i] ]);
 	}
 
-	vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(sampleIndex, TreeOrder, selOrder, unselOrder);
+	vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(selOrder, unselOrder);
 	if( histo)
 	{
 		delete histo;

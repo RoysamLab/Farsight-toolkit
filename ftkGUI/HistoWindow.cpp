@@ -24,6 +24,7 @@ limitations under the License.
 #include <vtkQtChartArea.h>
 #include <vtkQtChartArea.h>
 #include <math.h>
+#include <QFileDialog>
 
 //Constructor
 HistoWindow::HistoWindow(QWidget *parent)
@@ -44,6 +45,9 @@ HistoWindow::HistoWindow(QWidget *parent)
 	clusterNoMenu = NULL;
 
 	//Setup menu:
+	fileMenu = new QMenu(tr("File"), this);
+	connect( fileMenu, SIGNAL(triggered(QAction *)), this, SLOT(saveFrequency(QAction *)));
+	menuBar()->addMenu(fileMenu);
 	columnMenu = new QMenu(tr("Set Column"), this);
 	connect(columnMenu, SIGNAL(triggered(QAction *)), this, SLOT(columnChange(QAction *)));
 	menuBar()->addMenu(columnMenu);
@@ -209,6 +213,9 @@ void HistoWindow::updateOptionMenus()
 		  xAct->setChecked(true);
 		}
 	}
+
+	QAction *saveAct = new QAction( "Save Frequency", this );
+	fileMenu->addAction(saveAct);
 }
 
 void HistoWindow::columnChange(QAction *action)
@@ -250,6 +257,24 @@ void HistoWindow::logChange(QAction *action)
 	this->ConstructBarChart();
 }
 
+void HistoWindow::saveFrequency(QAction *action)
+{
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Frequency"), "", tr(" (*.txt);;All Files (*)"));
+	std::ofstream ofs(fileName.toStdString().c_str());
+	ofs<< "Overall Frequency:"<<std::endl;
+	for( int i = 0; i < result_fq.size(); i++)
+	{
+		ofs<< result_fq[i]<<"\t";
+	}
+	ofs<< std::endl<<"Local Frequency:"<<std::endl;
+	for( int i = 0; i < cluster_result_fq.size(); i++)
+	{
+		ofs<< cluster_result_fq[i]<<"\t";
+	}
+	ofs<< std::endl;
+	ofs.close();
+}
+
 void HistoWindow::SyncModel()
 {
 	if(!m_table) return;
@@ -273,7 +298,6 @@ void HistoWindow::SyncModel()
 			cluster_data.insert(val);
 		}
 	}
-	// insert cluster data
 }
 
 void HistoWindow::Normalize() 

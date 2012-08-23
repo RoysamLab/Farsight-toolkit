@@ -2751,8 +2751,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 	return table;
 }
 
-vtkSmartPointer<vtkTable> SPDAnalysisModel::GetTableForHist(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, 
-															std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetTableForHist(std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
 {
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
 
@@ -2773,35 +2772,30 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetTableForHist(std::vector< std::ve
 		table->AddColumn(column);
 	}
 
-	for( int i = 0; i < TreeOrder.size(); i++)
+	for( int i =0; i < indMapFromIndToVertex.size(); i++)
 	{
-		long int n = TreeOrder[i];
-		for( int j = 0; j < clusIndex[n].size(); j++)
+		if(indMapFromIndToVertex[i] < maxVertexId)
 		{
-			int id = clusIndex[n][j];
-			if( id < maxVertexId)
+			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+
+			DataRow->InsertNextValue( UNDistanceToDevice[i]);
+
+			for( int k = 0; k < selFeatureOrder.size(); k++)
 			{
-				std::map< int, int>::iterator iter = indMapFromVertexToClus.find( id); 
-				if( iter != indMapFromVertexToClus.end())
-				{
-					vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-
-					DataRow->InsertNextValue( UNDistanceToDevice[iter->second]);
-
-					for( int k = 0; k < selFeatureOrder.size(); k++)
-					{
-						DataRow->InsertNextValue( UNMatrixAfterCellCluster(iter->second, selFeatureOrder[k]));
-					}
-					for( int k = 0; k < unselFeatureOrder.size(); k++)
-					{
-						DataRow->InsertNextValue( UNMatrixAfterCellCluster(iter->second, unselFeatureOrder[k]));
-					}
-
-					table->InsertNextRow(DataRow);
-				}
+				DataRow->InsertNextValue( UNMatrixAfterCellCluster(i, selFeatureOrder[k]));
 			}
+			for( int k = 0; k < unselFeatureOrder.size(); k++)
+			{
+				DataRow->InsertNextValue( UNMatrixAfterCellCluster(i, unselFeatureOrder[k]));
+			}
+			table->InsertNextRow(DataRow);
+		}
+		else
+		{
+			break;  // all the left vertex id larger than maxVertexId
 		}
 	}
+
 	return table;
 }
 

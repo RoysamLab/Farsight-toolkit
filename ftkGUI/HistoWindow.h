@@ -94,6 +94,7 @@ private slots:
 	void binsChange(QAction *action);
 	void clusterChange(QAction *action);
 	void logChange(QAction *action);
+	void saveFrequency(QAction *action);
 
 private:
 	int columnNum;
@@ -125,6 +126,7 @@ private:
 	QMenu *binsMenu;
 	QMenu *clusterNoMenu;
 	QMenu *logMenu;
+	QMenu *fileMenu;
 };
 
 #endif
