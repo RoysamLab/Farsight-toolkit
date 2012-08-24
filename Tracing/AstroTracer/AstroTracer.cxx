@@ -5320,7 +5320,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 		nuclei_features_table[0]->AddColumn(mean_dist_array);
 		nuclei_features_table[0]->AddColumn(var_dist_array);
 		nuclei_features_table[0]->AddColumn(n_roots_array);
-		return;
+		//return;
 	}
 	
 	else
