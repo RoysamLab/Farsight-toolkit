@@ -5295,199 +5295,227 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 
 	if(this->CandidateRootPoints.empty() || this->NucleiObjects.empty() || this->SomaDistanceMapImage.IsNull()){
 		std::cout << "Either root points table or nuclei table or the distance map image is empty. Returning." << std::endl;
-		return;
-	}
-		
-	ImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
-	ImageType3D::SizeType sub_volume_size_nuclei;
-	ImageType3D::RegionType sub_volume_region_nuclei;
-	ImageType3D::Pointer sub_volume_nuclei;
-	
-	//sz is the size of the tile plus the padding
-	LabelImageType3D::SizeType sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+		vtkSmartPointer<vtkDoubleArray> min_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		min_dist_array->SetName("min_root_dist");
+		vtkSmartPointer<vtkDoubleArray> max_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		max_dist_array->SetName("max_root_dist");
+		vtkSmartPointer<vtkDoubleArray> mean_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		mean_dist_array->SetName("mean_root_dist");
+		vtkSmartPointer<vtkDoubleArray> var_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		var_dist_array->SetName("var_root_dist");
+		vtkSmartPointer<vtkDoubleArray> n_roots_array = vtkSmartPointer<vtkDoubleArray>::New();
+		n_roots_array->SetName("n_roots");
 
-
-	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
-	
-	std::cout << "Computing nuclei features.. " << std::endl;
-
-	//Loop over nuclei
-	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
-
-		// ROI proportional to nuclei scale, assuming spherical nuclei.
-		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
-
-		
-		CharImageType3D::IndexType current_idx;
-		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
-		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
-		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
-
-		if(!local_region.IsInside(current_idx))
-			continue;
-
-		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
-		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
-		
-
-		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
-		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
-
-	    //std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
-
-		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
-			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
-			(end_index_nuclei[2] > (unsigned int)sz[2]) )
-			continue;
-
-		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
-
-		sub_volume_size_nuclei[0] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2.0 * double_scale_nuclei;
-
-		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
-		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
-
-
-		typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType_nuclei2;
-		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
-		sub_volume_filter_nuclei->SetInput(this->SomaDistanceMapImage);
-		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
-		sub_volume_filter_nuclei->Update();
-		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
-
-		ImageType3D::Pointer distance_map = sub_volume_nuclei;
-		
-				
-		double cur_distance;
-		double min_distance = 1000.0;
-		double max_distance = -1000.0; 
-		double mean_distance = 0.0;
-		double variance_distance = 0.0;
-		double acc_distance = 0.0;
-		int n_roots = 0;
-		
-		//std::cout << std::endl;
-
-		std::vector<double> distance_array;
-		for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
-
-			//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
-			
-
-			if(CandidateRootPoints[j].isRootPoint){
-
-				LabelImageType3D::IndexType current_root_idx;
-				current_root_idx[0] = this->CandidateRootPoints[j].featureVector.node.ndx[0];
-				current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
-				current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
-
-				//if(i > 880)
-				//	std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
-				
-				int offset = 2; //1;
-				if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
-					current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
-					continue;
-
-
-				//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
-				
-				
-				ImageType3D::IndexType relative_root_idx;
-				relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
-				relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
-				relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
-
-				//std::cout << relative_root_idx[0] << ", " << relative_root_idx[1] << ", " << relative_root_idx[2] << std::endl;
-				
-				cur_distance = distance_map->GetPixel(relative_root_idx);
-				
-				if(cur_distance < 0.00000000000001 && cur_distance > 0.0)
-					cur_distance = 0.0;
-
-				if(cur_distance > -0.00000000000001 && cur_distance < 0.0)
-					cur_distance = 0.0;
-				
-				if(cur_distance < -1000.0)
-					cur_distance = -1000.0;
-				
-				if(cur_distance > 1000.0)
-					cur_distance = 1000.0;
-				
-				//std::cout << cur_distance << std::endl;
-
-				if(cur_distance < min_distance)
-					min_distance = cur_distance;
-				if(cur_distance > max_distance)
-					max_distance = cur_distance;
-
-				distance_array.push_back(cur_distance);
-				acc_distance = acc_distance + cur_distance;
-				n_roots++;
-			}
+		for(int i = 0; i < this->NucleiObjects.size(); i++){
+			min_dist_array->InsertNextValue(100000.0);
+			max_dist_array->InsertNextValue(100000.0);
+			mean_dist_array->InsertNextValue(100000.0);
+			var_dist_array->InsertNextValue(100000.0);
+			n_roots_array->InsertNextValue(0);
 		}	
 
-		//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
-		if(!distance_array.empty()){
+		nuclei_features_table[0]->AddColumn(min_dist_array);
+		nuclei_features_table[0]->AddColumn(max_dist_array);
+		nuclei_features_table[0]->AddColumn(mean_dist_array);
+		nuclei_features_table[0]->AddColumn(var_dist_array);
+		nuclei_features_table[0]->AddColumn(n_roots_array);
+		return;
+	}
+	
+	else
+	{
+		ImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+		ImageType3D::SizeType sub_volume_size_nuclei;
+		ImageType3D::RegionType sub_volume_region_nuclei;
+		ImageType3D::Pointer sub_volume_nuclei;
+
+		//sz is the size of the tile plus the padding
+		LabelImageType3D::SizeType sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+
+
+		std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
+
+		std::cout << "Computing nuclei features.. " << std::endl;
+
+		//Loop over nuclei
+		for(size_t i = 0; i < this->NucleiObjects.size(); i++){
+
+			// ROI proportional to nuclei scale, assuming spherical nuclei.
+			float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+
+
+			CharImageType3D::IndexType current_idx;
+			current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
+			current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
+			current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+			if(!local_region.IsInside(current_idx))
+				continue;
+
+			starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
+			end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
+
+
+			//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
+			//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
+
+			//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+			if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+				(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+				(end_index_nuclei[2] > (unsigned int)sz[2]) )
+				continue;
+
+			//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+			sub_volume_size_nuclei[0] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2.0 * double_scale_nuclei;
+
+			sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
+			sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
+
+
+			typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType_nuclei2;
+			VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
+			sub_volume_filter_nuclei->SetInput(this->SomaDistanceMapImage);
+			sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
+			sub_volume_filter_nuclei->Update();
+			sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+
+			ImageType3D::Pointer distance_map = sub_volume_nuclei;
+
+
+			double cur_distance;
+			double min_distance = 1000.0;
+			double max_distance = -1000.0; 
+			double mean_distance = 0.0;
+			double variance_distance = 0.0;
+			double acc_distance = 0.0;
+			int n_roots = 0;
+
+			//std::cout << std::endl;
+
+			std::vector<double> distance_array;
+			for(size_t j = 0; j < this->CandidateRootPoints.size(); j++){
+
+				//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+
+
+				if(CandidateRootPoints[j].isRootPoint){
+
+					LabelImageType3D::IndexType current_root_idx;
+					current_root_idx[0] = this->CandidateRootPoints[j].featureVector.node.ndx[0];
+					current_root_idx[1] = this->CandidateRootPoints[j].featureVector.node.ndx[1];
+					current_root_idx[2] = this->CandidateRootPoints[j].featureVector.node.ndx[2] - padz;
+
+					//if(i > 880)
+					//	std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+
+					int offset = 2; //1;
+					if(current_root_idx[0] < starting_index_nuclei[0]+offset || current_root_idx[1] < starting_index_nuclei[1]+offset || current_root_idx[2] < starting_index_nuclei[2]+offset ||
+						current_root_idx[0] > end_index_nuclei[0]-offset || current_root_idx[1] > end_index_nuclei[1]-offset || current_root_idx[2] > end_index_nuclei[2]-offset)
+						continue;
+
+
+					//std::cout << "Nuclei: "  << i << " Root: " << j << std::endl;
+
+
+					ImageType3D::IndexType relative_root_idx;
+					relative_root_idx[0] = current_root_idx[0] - starting_index_nuclei[0];
+					relative_root_idx[1] = current_root_idx[1] - starting_index_nuclei[1];
+					relative_root_idx[2] = current_root_idx[2] - starting_index_nuclei[2];
+
+					//std::cout << relative_root_idx[0] << ", " << relative_root_idx[1] << ", " << relative_root_idx[2] << std::endl;
+
+					cur_distance = distance_map->GetPixel(relative_root_idx);
+
+					if(cur_distance < 0.00000000000001 && cur_distance > 0.0)
+						cur_distance = 0.0;
+
+					if(cur_distance > -0.00000000000001 && cur_distance < 0.0)
+						cur_distance = 0.0;
+
+					if(cur_distance < -1000.0)
+						cur_distance = -1000.0;
+
+					if(cur_distance > 1000.0)
+						cur_distance = 1000.0;
+
+					//std::cout << cur_distance << std::endl;
+
+					if(cur_distance < min_distance)
+						min_distance = cur_distance;
+					if(cur_distance > max_distance)
+						max_distance = cur_distance;
+
+					distance_array.push_back(cur_distance);
+					acc_distance = acc_distance + cur_distance;
+					n_roots++;
+				}
+			}	
 
 			//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
-			mean_distance = acc_distance / (double)n_roots;
-			for(int k = 0; k < distance_array.size(); k++)
-				variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
-		
-			variance_distance = variance_distance / (double)n_roots;
+			if(!distance_array.empty()){
 
-			//std::cout << "mean: " << mean_distance << " variance: " << variance_distance << " n_roots: " << n_roots << std::endl;
+				//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
-			this->NucleiObjects[i].associativeFeatures.minRootDist = min_distance; 
-			this->NucleiObjects[i].associativeFeatures.maxRootDist = max_distance;
-			this->NucleiObjects[i].associativeFeatures.meanRootDist = mean_distance;
-			this->NucleiObjects[i].associativeFeatures.varRootDist = variance_distance;
-			this->NucleiObjects[i].associativeFeatures.nRoots = n_roots;
+				mean_distance = acc_distance / (double)n_roots;
+				for(int k = 0; k < distance_array.size(); k++)
+					variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
+
+				variance_distance = variance_distance / (double)n_roots;
+
+				//std::cout << "mean: " << mean_distance << " variance: " << variance_distance << " n_roots: " << n_roots << std::endl;
+
+				this->NucleiObjects[i].associativeFeatures.minRootDist = min_distance; 
+				this->NucleiObjects[i].associativeFeatures.maxRootDist = max_distance;
+				this->NucleiObjects[i].associativeFeatures.meanRootDist = mean_distance;
+				this->NucleiObjects[i].associativeFeatures.varRootDist = variance_distance;
+				this->NucleiObjects[i].associativeFeatures.nRoots = n_roots;
+
+				//distance_array.clear();
+			}
+			else{
+				// These features do not exist when no root points are found in the neighborhood
+				this->NucleiObjects[i].associativeFeatures.minRootDist = 100000.0; //double_scale_nuclei;
+				this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000.0; //double_scale_nuclei;
+				this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000.0; //double_scale_nuclei;
+				this->NucleiObjects[i].associativeFeatures.varRootDist = 100000.0; //double_scale_nuclei;
+				this->NucleiObjects[i].associativeFeatures.nRoots = 0;
+
+			}//loop over candidate roots
 
 			//distance_array.clear();
-		}
-		else{
-			// These features do not exist when no root points are found in the neighborhood
-			this->NucleiObjects[i].associativeFeatures.minRootDist = 100000.0; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000.0; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000.0; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000.0; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
 
-		}//loop over candidate roots
+		}//end of loop over nuclei
 
-		//distance_array.clear();
+		vtkSmartPointer<vtkDoubleArray> min_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		min_dist_array->SetName("min_root_dist");
+		vtkSmartPointer<vtkDoubleArray> max_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		max_dist_array->SetName("max_root_dist");
+		vtkSmartPointer<vtkDoubleArray> mean_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		mean_dist_array->SetName("mean_root_dist");
+		vtkSmartPointer<vtkDoubleArray> var_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
+		var_dist_array->SetName("var_root_dist");
+		vtkSmartPointer<vtkDoubleArray> n_roots_array = vtkSmartPointer<vtkDoubleArray>::New();
+		n_roots_array->SetName("n_roots");
 
-	}//end of loop over nuclei
+		for(int i = 0; i < this->NucleiObjects.size(); i++){
+			min_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.minRootDist);
+			max_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.maxRootDist);
+			mean_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.meanRootDist);
+			var_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.varRootDist);
+			n_roots_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.nRoots);
+		}	
 
-	vtkSmartPointer<vtkDoubleArray> min_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
-	min_dist_array->SetName("min_root_dist");
-	vtkSmartPointer<vtkDoubleArray> max_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
-	max_dist_array->SetName("max_root_dist");
-	vtkSmartPointer<vtkDoubleArray> mean_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
-	mean_dist_array->SetName("mean_root_dist");
-	vtkSmartPointer<vtkDoubleArray> var_dist_array = vtkSmartPointer<vtkDoubleArray>::New();
-	var_dist_array->SetName("var_root_dist");
-	vtkSmartPointer<vtkDoubleArray> n_roots_array = vtkSmartPointer<vtkDoubleArray>::New();
-	n_roots_array->SetName("n_roots");
 
-	for(int i = 0; i < this->NucleiObjects.size(); i++){
-		min_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.minRootDist);
-		max_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.maxRootDist);
-		mean_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.meanRootDist);
-		var_dist_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.varRootDist);
-		n_roots_array->InsertNextValue(this->NucleiObjects[i].associativeFeatures.nRoots);
-	}	
-	
-
-	nuclei_features_table[0]->AddColumn(min_dist_array);
-	nuclei_features_table[0]->AddColumn(max_dist_array);
-	nuclei_features_table[0]->AddColumn(mean_dist_array);
-	nuclei_features_table[0]->AddColumn(var_dist_array);
-	nuclei_features_table[0]->AddColumn(n_roots_array);
+		nuclei_features_table[0]->AddColumn(min_dist_array);
+		nuclei_features_table[0]->AddColumn(max_dist_array);
+		nuclei_features_table[0]->AddColumn(mean_dist_array);
+		nuclei_features_table[0]->AddColumn(var_dist_array);
+		nuclei_features_table[0]->AddColumn(n_roots_array);
+	}
 
 
 	vtkSmartPointer<vtkTable> active_model_table = ftk::LoadTable(TrainingFileName);
