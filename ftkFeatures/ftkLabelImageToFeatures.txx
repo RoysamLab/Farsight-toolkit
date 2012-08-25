@@ -228,6 +228,14 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		labIndex[i] = index[i];
 		labSize[i] = size[i];
 	}
+	//For the case when 2D images are passed as 3D
+	if( intImgIn->GetLargestPossibleRegion().GetSize()[2] == 1 )
+	{
+		intSize[2] = 0;
+		labIndex[2] = 0;
+		intIndex[2] = 0;
+		labSize[2] = 0;
+	}
 
 	intRegion.SetIndex(intIndex);
 	intRegion.SetSize(intSize);
