@@ -188,6 +188,10 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 	column->SetName( "centroid_z" );
 	table->AddColumn(column);
 
+//	column = vtkSmartPointer<vtkDoubleArray>::New();
+//	column->SetName( "num_z_slices" );
+//	table->AddColumn(column);
+//
 	for (int i=0; i < IntrinsicFeatures::N; ++i)
 	{
 		if(doFeat[i])
@@ -238,6 +242,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		row->InsertNextValue( vtkVariant((int)features->Centroid[0]) );
 		row->InsertNextValue( vtkVariant((int)features->Centroid[1]) );
 		row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
+//		row->InsertNextValue( vtkVariant((int)intensityImage->GetImageInfo()->numZSlices) );
 		for (int i=0; i<IntrinsicFeatures::N; ++i)
 		{
 			if(doFeat[i])
@@ -416,7 +421,8 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			if(row == -1)
 			{
 				vtkSmartPointer<vtkVariantArray> nrow = vtkSmartPointer<vtkVariantArray>::New();
-				nrow->SetNumberOfValues( table->GetNumberOfColumns() );
+				for( unsigned ii=0; ii<table->GetNumberOfColumns(); ++ii )
+					nrow->InsertNextValue( vtkVariant(0.0) );
 				table->InsertNextRow(nrow);
 				row = table->GetNumberOfRows() - 1;
 				table->SetValue(row, 0, vtkVariant(id));
@@ -426,6 +432,7 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			table->SetValueByName(row,"centroid_x", vtkVariant((int)features->Centroid[0]));
 			table->SetValueByName(row,"centroid_y", vtkVariant((int)features->Centroid[1]));
 			table->SetValueByName(row,"centroid_z", vtkVariant((int)features->Centroid[2]));
+//			table->SetValueByName(row,"num_z_slices", vtkVariant((int)intensityImage->GetImageInfo()->numZSlices));
 			int col_count = 0;
 			for (int f=0; f<IntrinsicFeatures::N; ++f)
 			{
@@ -535,7 +542,8 @@ void IntrinsicFeatureCalculator::Append(vtkSmartPointer<vtkTable> table)
 		if(row == -1)
 		{
 			vtkSmartPointer<vtkVariantArray> nrow = vtkSmartPointer<vtkVariantArray>::New();
-			nrow->SetNumberOfValues( table->GetNumberOfColumns() );
+			for( unsigned ii=0; ii<table->GetNumberOfColumns(); ++ii )
+				nrow->InsertNextValue( vtkVariant(0.0) );
 			table->InsertNextRow(nrow);
 			row = table->GetNumberOfRows() - 1;
 			table->SetValue(row, 0, vtkVariant(id));

@@ -123,7 +123,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(intImgIn);
 		cropFilter->SetExtractionRegion(intRegion);
-		cropFilter->Update();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter1: " << err << std::endl;
+		}
+
 		intensityImage = cropFilter->GetOutput();
 	}
 	else
@@ -139,7 +147,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(lblImgIn);
 		cropFilter->SetExtractionRegion(lblRegion);
-		cropFilter->Update();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter2: " << err << std::endl;
+		}
+
 		labelImage = cropFilter->GetOutput();
 	}
 	else
@@ -174,7 +190,15 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(intImgIn);
 		cropFilter->SetExtractionRegion(intRegion);
-		cropFilter->Update();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter3: " << err << std::endl;
+		}
+
 		intensityImage = cropFilter->GetOutput();
 	}
 	else
@@ -190,7 +214,14 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		typename CropFilterType::Pointer cropFilter = CropFilterType::New();
 		cropFilter->SetInput(lblImgIn);
 		cropFilter->SetExtractionRegion(lblRegion);
-		cropFilter->Update();
+		try
+		{
+			cropFilter->Update();
+		}
+		catch (itk::ExceptionObject &err)
+		{
+			std::cout << "Error in cropFilter4: " << err << std::endl;
+		}
 		labelImage = cropFilter->GetOutput();
 	}
 	else
@@ -231,10 +262,10 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	//For the case when 2D images are passed as 3D
 	if( intImgIn->GetLargestPossibleRegion().GetSize()[2] == 1 )
 	{
-		intSize[2] = 0;
+		intSize[2] = 1;
 		labIndex[2] = 0;
 		intIndex[2] = 0;
-		labSize[2] = 0;
+		labSize[2] = 1;
 	}
 
 	intRegion.SetIndex(intIndex);
@@ -257,7 +288,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		}
 		catch (itk::ExceptionObject &err)
 		{
-			std::cout << "Error in cropFilter1: " << err << std::endl;
+			std::cout << "Error in cropFilter5: " << err << std::endl;
 		}
 		intensityImage = cropFilter->GetOutput();
 	}
@@ -280,7 +311,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 		}
 		catch (itk::ExceptionObject &err)
 		{
-			std::cout << "Error in cropFilter2: " << err << std::endl;
+			std::cout << "Error in cropFilter6: " << err << std::endl;
 		}
 		labelImage = cropFilter->GetOutput();
 	}
