@@ -43,6 +43,11 @@
 #include "ftkTrackFeatures.h"
 #include "itkBinaryThinningImageFilter3D.h"
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+
+
 //int npes,rank;
 #define PRINTF(...) PRINTF1(__VA_ARGS__,1)
 #define PRINTF1(s,...) {printf("%d/%d: "s,rank,npes,__VA_ARGS__);}//{printf("%d/%d: ",rank,npes);printf(__VA_ARGS__);}

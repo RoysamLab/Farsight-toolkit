@@ -588,48 +588,111 @@ double features_diff(FeatureType &f1, FeatureType &f2,bool overlap)
 
 void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Pointer in_image, std::vector<ftk::IntrinsicFeatures> & feature_vector, int time, int tag)
 {
+
+
+std::stringstream testName2;
+testName2<<time;
+std::string testImage2 = "/data/nicolas/test/Image2_" + testName2.str() + ".tif";
+std::string testLabel2 = "/data/nicolas/test/Label2_" + testName2.str() + ".tif";
+
+typedef itk::ImageFileWriter<LabelImageType> WriterTypeLabel2;
+            WriterTypeLabel2::Pointer writerLabel2 = WriterTypeLabel2::New();
+                writerLabel2->SetInput(im);
+                writerLabel2->SetFileName(testLabel2.c_str());
+                 writerLabel2->Update();
+
+typedef itk::ImageFileWriter<InputImageType> WriterTypeImage2;
+                  WriterTypeImage2::Pointer writerImage2 = WriterTypeImage2::New();
+                   writerImage2->SetInput(in_image);
+                    writerImage2->SetFileName(testImage2.c_str());
+                      writerImage2->Update();
+
+
 	//printf("Started feature calculation\n");
-	//if(im->GetLargestPossibleRegion().GetSize()[2]==1)
-	//{
-	//	//convert it to a 2D Image
-	//	LabelImageType::SizeType linsize = im->GetLargestPossibleRegion().GetSize();
-	//	Label2DImageType::Pointer l2d = Label2DImageType::New();
-	//	Label2DImageType::SizeType l2dsize; l2dsize[0] = linsize[0]; l2dsize[1] = linsize[1];
-	//	Label2DImageType::IndexType l2dindex; l2dindex.Fill(0);
-	//	Label2DImageType::RegionType l2dregion; l2dregion.SetSize(l2dsize); l2dregion.SetIndex(l2dindex);
-	//	l2d->SetRegions(l2dregion);
-	//	l2d->Allocate();
-	//	memcpy(im->GetBufferPointer(),l2d->GetBufferPointer(),sizeof(LabelImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+	if(im->GetLargestPossibleRegion().GetSize()[2]==1)
+	{
+		//convert it to a 2D Image
+		LabelImageType::SizeType linsize = im->GetLargestPossibleRegion().GetSize();
+		Label2DImageType::Pointer l2d = Label2DImageType::New();
+		Label2DImageType::SizeType l2dsize; l2dsize[0] = linsize[0]; l2dsize[1] = linsize[1];
+		Label2DImageType::IndexType l2dindex; l2dindex.Fill(0);
+		Label2DImageType::RegionType l2dregion; l2dregion.SetSize(l2dsize); l2dregion.SetIndex(l2dindex);
+		l2d->SetRegions(l2dregion);
+		l2d->Allocate();
+		l2d->Update();
+		
+		LabelImageType::PixelType *iterLabelCopy = l2d->GetBufferPointer();
+		LabelImageType::PixelType *iterLabel = im->GetBufferPointer();
 
-	//	Input2DImageType::Pointer i2d = Input2DImageType::New();
-	//	i2d->SetRegions(l2dregion);
-	//	i2d->Allocate();
-	//	memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(InputImageType::PixelType)*l2dsize[0]*l2dsize[1]);
-	//
-	//	typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
-	//	FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
-	//	fc2d->SetImageInputs(i2d,l2d);
+		#pragma omp parallel for
+		for( int ii=0; ii<l2dsize[0]*l2dsize[1]; ++ii )
+		{
+			iterLabelCopy[ii] = iterLabel[ii];
+		}
 
-	//	fc2d->SetLevel(3);
-	//	//fc2d->ComputeTexturesOn();
+		//memcpy(im->GetBufferPointer(),l2d->GetBufferPointer(),sizeof(LabelImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+
+		Input2DImageType::Pointer i2d = Input2DImageType::New();
+		Input2DImageType::RegionType l2dregionInput; l2dregionInput.SetSize(l2dsize); l2dregionInput.SetIndex(l2dindex);
+		i2d->SetRegions(l2dregionInput);
+		i2d->Allocate();
+		i2d->Update();
+
+		InputImageType::PixelType *iterInputCopy = i2d->GetBufferPointer();
+                InputImageType::PixelType *iterInput = in_image->GetBufferPointer();
+
+		#pragma omp parallel for
+		for( int ii=0; ii<l2dsize[0]*l2dsize[1]; ++ii )
+		{
+			   iterInputCopy[ii] = iterInput[ii];
+		}
+		//memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(Input2DImageType::PixelType)*l2dsize[0]*l2dsize[1]);
+	
+
+		std::stringstream testName;
+		testName<<time;
+		std::string testImage = "/data/nicolas/test/Image_" + testName.str() + ".tif";
+		std::string testLabel = "/data/nicolas/test/Label_" + testName.str() + ".tif";
+
+
+		typedef itk::ImageFileWriter<Label2DImageType> WriterTypeLabel;
+		WriterTypeLabel::Pointer writerLabel = WriterTypeLabel::New();
+		writerLabel->SetInput(l2d);
+		writerLabel->SetFileName(testLabel.c_str());
+		writerLabel->Update();
+
+                typedef itk::ImageFileWriter<Input2DImageType> WriterTypeImage;
+                WriterTypeImage::Pointer writerImage = WriterTypeImage::New();
+                writerImage->SetInput(i2d);
+                writerImage->SetFileName(testImage.c_str());
+
+		writerImage->Update();
+
+
+		typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
+		FeatureCalculator2DType::Pointer fc2d = FeatureCalculator2DType::New();
+		fc2d->SetImageInputs(i2d,l2d);
+
+		fc2d->SetLevel(1);
+		//fc2d->ComputeTexturesOn();
 	//	//fc2d->ComputeHistogramOn();		Amin comment
-	//	fc2d->Update();
-	//	std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
+		fc2d->Update();
+		std::vector<Label2DImageType::PixelType> labels = fc2d->GetLabels();
 	//	printf("label size:%d\n",labels.size());
-	//	for(unsigned int counter=0; counter<labels.size();counter++)
-	//	{
+		for(unsigned int counter=0; counter<labels.size();counter++)
+		{
 	//		printf("label:%d\n",labels[counter]);
-	//		if(labels[counter]==0)
-	//			continue;
-	//		 feature_vector.push_back(*(fc2d->GetFeatures(labels[counter])));
-	//		 feature_vector.back().num=labels[counter];
-	//		 feature_vector.back().tag = tag;
-	//		 feature_vector.back().time = time;
-	//		 printf("added:%d\n",feature_vector.back().num);
-	//	}
-	//	
-	//}
-	//else
+			if(labels[counter]==0)
+				continue;
+			feature_vector.push_back(*(fc2d->GetFeatures(labels[counter])));
+			feature_vector.back().num=labels[counter];
+			feature_vector.back().tag = tag;
+			feature_vector.back().time = time;
+	//		printf("added:%d\n",feature_vector.back().num);
+		}
+		
+	}
+	else
 	{
 		typedef ftk::LabelImageToFeatures<InputImageType::PixelType,LabelImageType::PixelType,3> FeatureCalculatorType;
 		FeatureCalculatorType::Pointer fc = FeatureCalculatorType::New();
@@ -2037,10 +2100,17 @@ InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer 
 }
 LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageType::Pointer l)
 {
+
+	LabelImageType::RegionType test = l->GetLargestPossibleRegion();
+	std::cout << std::endl << test;
+
+
+
 	int bb[6];
 	for(int co = 0; co < 6; co++)
 	{
 		bb[co] = int(bbox[co]+0.5);
+		std::cout << std::endl << bbox[co];
 	}
 	LabelImageType::Pointer lp = LabelImageType::New();
 	LabelImageType::IndexType lindex;
@@ -2060,6 +2130,10 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 	lindex[1] = bb[2];
 	lindex[2] = bb[4];
 	lregion.SetIndex(lindex);
+
+	std::cout << std::endl << lregion;
+	std::cout << std::flush;
+
 	LabelIteratorType liter(l,lregion);
 	for(;!lpiter.IsAtEnd(); ++lpiter,++liter)
 	{

@@ -125,12 +125,21 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			std::vector<FeatureType> f;
 			std::vector<helpers::LabelImageType::Pointer> li;
 			std::vector<helpers::InputImageType::Pointer> ri;
+			std::cout << std::endl << "\t\tHERE: " << tempimage->GetLargestPossibleRegion();
+			std::cout << std::endl << "\t\tHERE: " << tempsegmented->GetLargestPossibleRegion();
 			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
 			for(int counter=0; counter < f.size(); counter++)
 			{
 				//LabelImageType::Pointer tmpli = extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented);
 				//if(tmpli->GetLargestPossibleRegion().GetSize()[2]==1)
 				//	continue;
+				std::cout << std::endl << "\t\tHERE: " << t << " " << f[counter].num << " " << counter;
+				for( int ii =0;ii<6;++ii)
+				{
+					std::cout << std::endl << f[counter].BoundingBox[ii];
+				}
+				std::cout << std::flush;
+
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
 //				annotateImage(number,cimp,f[counter].num,MAX(f[counter].Centroid[0],0),MAX(f[counter].Centroid[1],0));
