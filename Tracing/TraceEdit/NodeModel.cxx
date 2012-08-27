@@ -38,6 +38,8 @@ void NodeModel::SetupHeaders()
 	this->headers.push_back("Y");
 	this->headers.push_back("Z");
 	this->headers.push_back("Radius");
+	this->headers.push_back("Segment ID");
+	this->headers.push_back("Root ID");
 	
 	int size = this->additionalHeaders.size();
 	for (int k = 0; k < size; k++)
@@ -80,7 +82,11 @@ void NodeModel::SyncModel()
 		{
 			if (size == 0)
 			{
-				this->DataTable->InsertNextRow((*iter).DataRow());
+				vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+				DataRow = (*iter).DataRow();
+				DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
+				DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
+				this->DataTable->InsertNextRow(DataRow);
 			}
 			iter++;
 		}
