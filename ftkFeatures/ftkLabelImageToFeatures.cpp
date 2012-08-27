@@ -241,7 +241,10 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		row->InsertNextValue( vtkVariant(id) );
 		row->InsertNextValue( vtkVariant((int)features->Centroid[0]) );
 		row->InsertNextValue( vtkVariant((int)features->Centroid[1]) );
-		row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
+		if( intensityImage->GetImageInfo()->numZSlices > 2 )
+			row->InsertNextValue( vtkVariant((int)features->Centroid[2]) );
+		else
+			row->InsertNextValue( vtkVariant(0));
 //		row->InsertNextValue( vtkVariant((int)intensityImage->GetImageInfo()->numZSlices) );
 		for (int i=0; i<IntrinsicFeatures::N; ++i)
 		{
@@ -310,7 +313,10 @@ void IntrinsicFeatureCalculator::GetObjectCentroids(vtkSmartPointer<vtkTable> ta
 		ftk::IntrinsicFeatures * features = labFilter->GetFeatures(id);
 		table->SetValueByName( i, "centroid_x", vtkVariant((int)features->Centroid[0]) );
 		table->SetValueByName( i, "centroid_y", vtkVariant((int)features->Centroid[1]) );
-		table->SetValueByName( i, "centroid_z", vtkVariant((int)features->Centroid[2]) );
+		if( labelImage->GetImageInfo()->numZSlices > 2 )
+			table->SetValueByName( i, "centroid_z", vtkVariant((int)features->Centroid[2]) );
+		else
+			table->SetValueByName( i, "centroid_z", vtkVariant(0) );
 
 		
 	}
@@ -431,7 +437,11 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			//Update table:
 			table->SetValueByName(row,"centroid_x", vtkVariant((int)features->Centroid[0]));
 			table->SetValueByName(row,"centroid_y", vtkVariant((int)features->Centroid[1]));
-			table->SetValueByName(row,"centroid_z", vtkVariant((int)features->Centroid[2]));
+			if( labelImage->GetImageInfo()->numZSlices > 2 )
+				table->SetValueByName(row,"centroid_z", vtkVariant((int)features->Centroid[2]));
+			else
+				table->SetValueByName(row,"centroid_z", vtkVariant(0));
+
 //			table->SetValueByName(row,"num_z_slices", vtkVariant((int)intensityImage->GetImageInfo()->numZSlices));
 			int col_count = 0;
 			for (int f=0; f<IntrinsicFeatures::N; ++f)
@@ -458,7 +468,10 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			Object::Point c;
 			c.x = (int)features->Centroid[0];
 			c.y = (int)features->Centroid[1];
-			c.z = (int)features->Centroid[2];
+			if( intensityImage->GetImageInfo()->numZSlices > 2 )
+				c.z = (int)features->Centroid[2];
+			else
+				c.z = 0;
 			c.t = currtime;
 			(*cc)[(int)id] = c;
 		}
@@ -471,8 +484,16 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 			b.max.x = (int)features->BoundingBox[1];
 			b.min.y = (int)features->BoundingBox[2];
 			b.max.y = (int)features->BoundingBox[3];
-			b.min.z = (int)features->BoundingBox[4];
-			b.max.z = (int)features->BoundingBox[5];
+			if( intensityImage->GetImageInfo()->numZSlices > 2 )
+			{
+				b.min.z = (int)features->BoundingBox[4];
+				b.max.z = (int)features->BoundingBox[5];
+			}
+			else
+			{
+				b.min.z = 0;
+				b.max.z = 0;
+			}
 			b.min.t = currtime;
 			b.max.t = currtime;
 			(*bbox)[(int)id] = b;
