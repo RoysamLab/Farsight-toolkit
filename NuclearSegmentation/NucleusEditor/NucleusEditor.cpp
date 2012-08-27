@@ -3739,7 +3739,9 @@ void NucleusEditor::mergeCells(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 	//int newObj = nucSeg->Merge(ids, table);
+	std::cout<<"Number of rows in table before merge: "<<table->GetNumberOfRows()<<std::endl;
 	std::vector< std::vector<int> > new_grps = nucSeg->GroupMerge(ids, table, NucAdjTable);
+	std::cout<<"Number of rows in table after merge: "<<table->GetNumberOfRows()<<std::endl;
 	if(new_grps.size() != 0)
 	{
 		projectFiles.outputSaved = false;
@@ -3750,10 +3752,10 @@ void NucleusEditor::mergeCells(void)
 		if(NucAdjTable)
 			segView->SetNucAdjTable(NucAdjTable);
 
-		for(int i=0; i<(int)new_grps.size(); ++i)
+		for(unsigned i=0; i<new_grps.size(); ++i)
 		{
 			std::string log_entry = "MERGE , ";
-			for(int j=0; j<(int)new_grps.at(i).size()-1; ++j)
+			for(unsigned j=0; j<new_grps.at(i).size()-1; ++j)
 			{
 				log_entry += " " + ftk::NumToString(new_grps.at(i).at(j));
 			}

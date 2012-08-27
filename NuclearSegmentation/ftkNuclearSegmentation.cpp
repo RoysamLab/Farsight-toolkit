@@ -1869,17 +1869,17 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 	while(ids.size() != 0)
 	{
 		//Get neighbors of first object in vector:
-		int currentID = ids.at(0);
+		unsigned currentID = ids.at(0);
 		std::vector<int> nbs = GetNeighbors(currentID);
 
 		bool added = false;
 		//iterate through groups, to see if I belong to a different group (if one of my neighbors is already in a group):
-		for(int n=0; n<(int)nbs.size(); ++n)
+		for(unsigned n=0; n<nbs.size(); ++n)
 		{
 			int currentN = nbs.at(n);
-			for(int i=0; i<(int)groups.size(); ++i)
+			for(unsigned i=0; i<groups.size(); ++i)
 			{
-				for(int j=0; j<(int)groups.at(i).size(); ++j)
+				for(unsigned j=0; j<groups.at(i).size(); ++j)
 				{
 					if(groups.at(i).at(j) == currentN) //Found match so add current ID to group
 					{
@@ -1896,9 +1896,9 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 			std::vector<int> grp;
 
 			//iterate though ids to find out which ones are neighbors and add to group.
-			for(int i=0; i<(int)ids.size(); ++i)
+			for(unsigned i=0; i<ids.size(); ++i)
 			{
-				for(int j=0; j<(int)nbs.size(); ++j)
+				for(unsigned j=0; j<nbs.size(); ++j)
 				{
 					if(ids.at(i) == nbs.at(j))
 					{
@@ -1908,9 +1908,9 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 			}
 
 			//Remove everything in the group from the input ids vector:
-			for(int g=0; g<(int)grp.size(); ++g)
+			for(unsigned g=0; g<grp.size(); ++g)
 			{
-				for(int i=0; i<(int)ids.size(); ++i)
+				for(unsigned i=0; i<ids.size(); ++i)
 				{
 					if(grp.at(g) == ids.at(i))
 					{
@@ -1930,7 +1930,7 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 		}
 
 		//erase currentID from the input ids:
-		for(int i=0; i<(int)ids.size(); ++i)
+		for(unsigned i=0; i<ids.size(); ++i)
 		{
 			if(ids.at(i) == currentID)
 			{
@@ -1940,7 +1940,7 @@ std::vector< std::vector<int> > NuclearSegmentation::GroupMerge(std::vector<int>
 	}
 
 	//Iterate though groups and merge them together
-	for(int i=0; i<(int)groups.size(); ++i)
+	for(unsigned i=0; i<groups.size(); ++i)
 	{
 		int newID = Merge(groups.at(i), table, NucAdjTable);
 		groups.at(i).push_back(newID);	//Put the new id at the end of the group
@@ -1960,19 +1960,19 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table,
 	int newID = maxID() + 1;
 	if(NucAdjTable)
 	{
-		for(int j=0; j<(int)ids.size(); ++j)
+		for(unsigned j=0; j<ids.size(); ++j)
 		{
 			int OldID = ids.at(j);
-			for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+			for(unsigned row=0; row<NucAdjTable->GetNumberOfRows(); ++row)
 			{
-				for(int col=0; col<(int)NucAdjTable->GetNumberOfRows(); ++col)
+				for(unsigned col=0; col<NucAdjTable->GetNumberOfRows(); ++col)
 				{
 					if(NucAdjTable->GetValue(row,col).ToInt() == OldID)
 						NucAdjTable->SetValue(row,col,newID);
 				}
 			}
 		}
-		for(int row=0; row<(int)NucAdjTable->GetNumberOfRows(); ++row)
+		for(unsigned row=0; row<NucAdjTable->GetNumberOfRows(); ++row)
 		{
 			if((NucAdjTable->GetValue(row,0).ToInt()) == (NucAdjTable->GetValue(row,1).ToInt()))
 			{
@@ -1982,12 +1982,12 @@ int NuclearSegmentation::Merge(vector<int> ids, vtkSmartPointer<vtkTable> table,
 		}
 	}
 
-	ReassignLabels(ids, newID);					//Assign all old labels to this new label
+	this->ReassignLabels(ids, newID);					//Assign all old labels to this new label
 	ftk::Object::Box region = ExtremaBox(ids);
 	this->addObjectToMaps(newID, region.min.x, region.min.y, region.min.z, region.max.x, region.max.y, region.max.z, table);
-	for(unsigned int i=0; i<ids.size(); ++i)
+	for(unsigned i=0; i<ids.size(); ++i)
 	{
-		removeObjectFromMaps(ids.at(i),table);
+		this->removeObjectFromMaps(ids.at(i),table);
 	}
 	EditsNotSaved = true;
 
