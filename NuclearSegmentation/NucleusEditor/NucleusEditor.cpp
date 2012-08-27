@@ -3739,9 +3739,7 @@ void NucleusEditor::mergeCells(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 	//int newObj = nucSeg->Merge(ids, table);
-	std::cout<<"Number of rows in table before merge: "<<table->GetNumberOfRows()<<std::endl;
 	std::vector< std::vector<int> > new_grps = nucSeg->GroupMerge(ids, table, NucAdjTable);
-	std::cout<<"Number of rows in table after merge: "<<table->GetNumberOfRows()<<std::endl;
 	if(new_grps.size() != 0)
 	{
 		projectFiles.outputSaved = false;

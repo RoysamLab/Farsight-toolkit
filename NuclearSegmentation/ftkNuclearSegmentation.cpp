@@ -1083,6 +1083,8 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 	if(region.max.y >= R) region.max.y = R-1;
 	if(region.max.z >= Z) region.max.z = Z-1;
 
+	if(region.min.z > region.max.z) region.min.z = region.max.z;
+
 	for(int z = region.min.z; z <= region.max.z; ++z)
 	{
 		for(int r=region.min.y; r <= region.max.y; ++r)
