@@ -540,8 +540,16 @@ bool NuclearSegmentation::ComputeAllGeometries(void)
 			b.max.x = (int)features->BoundingBox[1];
 			b.min.y = (int)features->BoundingBox[2];
 			b.max.y = (int)features->BoundingBox[3];
-			b.min.z = (int)features->BoundingBox[4];
-			b.max.z = (int)features->BoundingBox[5];
+			if( labelImage->GetImageInfo()->numZSlices > 2 )
+			{
+				b.min.z = (int)features->BoundingBox[4];
+				b.max.z = (int)features->BoundingBox[5];
+			}
+			else
+			{
+				b.min.z = 0;
+				b.max.z = 0;
+			}
 			b.min.t = 0;
 			b.max.t = 0;
 
@@ -1083,7 +1091,16 @@ void NuclearSegmentation::ReassignLabels(vector<int> fromIds, int toId)
 	if(region.max.y >= R) region.max.y = R-1;
 	if(region.max.z >= Z) region.max.z = Z-1;
 
-	if(region.min.z > region.max.z) region.min.z = region.max.z;
+	if(labelImage->GetImageInfo()->numZSlices<2)
+	{
+		region.min.z = 0;
+		region.max.z = 0;
+	}
+	if(labelImage->GetImageInfo()->numTSlices<2)
+	{
+		region.min.t = 0;
+		region.max.t = 0;
+	}
 
 	for(int z = region.min.z; z <= region.max.z; ++z)
 	{
