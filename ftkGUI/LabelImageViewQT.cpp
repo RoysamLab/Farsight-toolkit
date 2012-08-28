@@ -1516,6 +1516,11 @@ void LabelImageViewQT::drawKNeighbors(QPainter *painter)
 	if(!kNeighborTable) return;
 	if(!centerMap) return;
 
+	const ftk::Image::Info *info;
+	if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int num_slices = (*info).numZSlices;
+	
 	int currentZ = vSpin->value();
 		
 	for(int i=0; i<(int)kNeighborTable->GetNumberOfRows(); ++i )
@@ -1527,8 +1532,13 @@ void LabelImageViewQT::drawKNeighbors(QPainter *painter)
 		{
 			ftk::Object::Point source = (*centerMap)[src_id];
 			ftk::Object::Point target = (*centerMap)[trg_id];
-			if ( (currentZ == source.z) && (currentZ == target.z) )
+			if(num_slices == 1)
 				painter->drawLine(source.x, source.y, target.x, target.y);
+			else
+			{
+				if ( (currentZ == source.z) && (currentZ == target.z) )
+					painter->drawLine(source.x, source.y, target.x, target.y);
+			}
 		}
 		else
 		{
@@ -1540,8 +1550,13 @@ void LabelImageViewQT::drawKNeighbors(QPainter *painter)
 					{
 						ftk::Object::Point source = (*centerMap)[src_id];
 						ftk::Object::Point target = (*centerMap)[trg_id];
-						if ( (currentZ == source.z) && (currentZ == target.z) )
+						if(num_slices == 1)
 							painter->drawLine(source.x, source.y, target.x, target.y);
+						else
+						{
+							if ( (currentZ == source.z) && (currentZ == target.z) )
+								painter->drawLine(source.x, source.y, target.x, target.y);
+						}
 						break;
 					}
 				}
@@ -1556,6 +1571,11 @@ void LabelImageViewQT::drawRadNeighbors(QPainter *painter)
 	if(!radNeighborTable) return;
 	if(!centerMap) return;
 
+	const ftk::Image::Info *info;
+	if(labelImg) info = labelImg->GetImageInfo();
+	else return;
+	int num_slices = (*info).numZSlices;
+
 	int currentZ = vSpin->value();
 		
 	for(int i=0; i<(int)radNeighborTable->GetNumberOfRows(); ++i )
@@ -1565,8 +1585,13 @@ void LabelImageViewQT::drawRadNeighbors(QPainter *painter)
 		ftk::Object::Point source = (*centerMap)[src_id];
 		ftk::Object::Point target = (*centerMap)[trg_id];
 		painter->setPen(Qt::yellow);
-		if ( (currentZ == source.z) && (currentZ == target.z) )
+		if(num_slices == 1)
 			painter->drawLine(source.x, source.y, target.x, target.y);
+		else
+		{
+			if ( (currentZ == source.z) && (currentZ == target.z) )
+				painter->drawLine(source.x, source.y, target.x, target.y);
+		}
 	}
 }
 
