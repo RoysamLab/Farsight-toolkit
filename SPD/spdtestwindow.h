@@ -49,6 +49,7 @@ protected slots:
 	void updateSelMod();
 	void editThreshold();
 	void editPercentage();
+	void editNearestNeighbor();
 	void showProgressionHeatmap();
 	void regenerateProgressionTree();
 	void updateProgressionType();
@@ -71,8 +72,8 @@ private:
 
     QLabel *clusterCoherenceLabel;
     QDoubleSpinBox *clusterCoherenceBox;
-    QLabel *clusterMergeLabel;
-    QDoubleSpinBox *clusterMergeBox;
+    QLabel *kNearestNeighborLabel;
+    QSpinBox *kNearestNeighborBox;
     QPushButton *clusterButton;
 
 	QLabel *emdLabel;
@@ -92,7 +93,9 @@ private:
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
 	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
-   
+	QLabel *connectedGraphLabel;
+	QLineEdit *connectedGraphEdit;
+
 	QString FileName;
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
@@ -103,7 +106,6 @@ private:
 	PlotWindow *plot;
 
 	vnl_vector<int> optimalleaforder;
-	vnl_vector<int> selMod;
 
 	vtkSmartPointer<vtkTable> data;
 	std::set<long int> excludedIds;

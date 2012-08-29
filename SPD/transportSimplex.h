@@ -98,16 +98,16 @@ typedef struct TsVogPen {
 } TsVogPen;
 
 /* DECLARATION OF GLOBALS */
-double ** _tsC = NULL;				// Cost matrix
-double _tsMaxC;						// Maximum of all costs
-double _tsMaxW;						// Maximum of all weights
+//double ** _tsC = NULL;				// Cost matrix
+//double _tsMaxC;						// Maximum of all costs
+//double _tsMaxW;						// Maximum of all weights
 
 
 /* INTERNAL FUNCTIONS */
-double _pivot(TsBasic * basics, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2);
+double _pivot(TsBasic * basics, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxC);
 TsStone * _BFS(TsStone *stoneTree, TsBasic ** srcBasics, TsBasic ** snkBasics, bool complete = false);
-void _initVogel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2);
-void _initRussel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2);
+void _initVogel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxW);
+void _initRussel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxW);
 
 /*
 transportSimplex() - Program entry point. 
@@ -146,7 +146,10 @@ double transportSimplex(TsSignature<TF> *signature1, TsSignature<TF> *signature2
 	double * src = NULL;						//Array of source supplies
 	double * snk =NULL;							//Array of sink demands
 	
-	
+	double ** _tsC = NULL;				// Cost matrix
+	double _tsMaxC;						// Maximum of all costs
+	double _tsMaxW;						// Maximum of all weights
+
 	// Equalize source and sink weights. A dummy source or sink may be added to equalize the total sink
 	// and source weights. n1 = signature1->n + 1 if there is a dummy source, and n2 = signature2->n + 1
 	// if there is a dummy sink.
@@ -232,12 +235,12 @@ double transportSimplex(TsSignature<TF> *signature1, TsSignature<TF> *signature2
 		// Find the initail basic feasible solution. Use either _initRussel or _initVogel
 		
 		
-		_initRussel(src, snk, basics, srcBasics, snkBasics, isBasic, n1, n2);
-		//_initVogel(src, snk, basics, srcBasics, snkBasics, isBasic, n1, n2);
+		_initRussel(src, snk, basics, srcBasics, snkBasics, isBasic, n1, n2, _tsC, _tsMaxW);
+		//_initVogel(src, snk, basics, srcBasics, snkBasics, isBasic, n1, n2, _tsC);
 		
 			
 		// Enter the main pivot loop
-		totalCost = _pivot(basics, srcBasics, snkBasics, isBasic, n1, n2);
+		totalCost = _pivot(basics, srcBasics, snkBasics, isBasic, n1, n2, _tsC, _tsMaxC);
 		
 	} catch (...) {
 		for(i = 0; i < n1; i++)
@@ -297,7 +300,7 @@ double transportSimplex(TsSignature<TF> *signature1, TsSignature<TF> *signature2
 Main pivot loop. 
 Pivots until the system is optimal and return the optimal transportation cost. 
 */
-double _pivot(TsBasic * basics, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2)  {
+double _pivot(TsBasic * basics, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxC)  {
 	
 	double * srcDuals = NULL;
 	double * snkDuals = NULL;
@@ -512,7 +515,7 @@ inline void addPenalty(TsVogPen * pitr, double cost, int i) {
 /**********************
     Vogel's initialization method
 **********************/
-void _initVogel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2) {
+void _initVogel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxW) {
 	int i, j;
 	TsVogPen *srcPens = NULL;
 	TsVogPen *snkPens = NULL;
@@ -647,7 +650,7 @@ void _initVogel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics,
 /**********************
     Russel's initialization method
 **********************/
-void _initRussel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2) {
+void _initRussel(double *S, double *D, TsBasic * basicsEnd, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxW) {
 	double ** Delta = NULL;
 	int i, j, lowI, lowJ;
 	TsRusPen *U  = NULL;

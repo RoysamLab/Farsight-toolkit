@@ -92,6 +92,8 @@ public:
 	void GetClusterOrder(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &treeOrder, std::vector< int> &clusterOrder);
 
 	void ModuleCoherenceMatchAnalysis();
+	void ModuleCorrelationMatrixMatch(unsigned int kNeighbor);
+
 	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	double GetCorMatSelectedPercentage(double thres);
 	void GetCombinedDataTable(vtkSmartPointer<vtkTable> table);
@@ -104,7 +106,9 @@ public:
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
 	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 	vtkSmartPointer<vtkTable> GetTableForHist(std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
-															
+	int GetConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component);
+	unsigned int GetKNeighborNum();
+
 protected:
 
 	void NormalizeData(vnl_matrix<double> &mat);
@@ -127,12 +131,19 @@ protected:
 	void SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue);
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
+	void CityBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
+	void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
+	void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
+	void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
+	int GetConnectedComponent(std::vector< unsigned int>& index, std::vector< int>& component, unsigned int kNeighbor);
 	double EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	int GetSingleModuleSize( vnl_vector<unsigned int>& index, unsigned int ind);
 	void GetMatrixDistance( vnl_matrix<double>& data, vnl_vector<double>&distance, DISTANCE_TYPE type);
 	void GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance);
 	void Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	void Hist(vnl_vector<double>&distance, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
+	void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis);
+
 	//double Dist(int *first, int *second);
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
@@ -212,11 +223,13 @@ private:
 	vnl_matrix<double> EMDMatrix;
 	std::set< long int> selectedFeatureIDs;
 	vnl_vector<double> DistanceEMDVector;
+	unsigned int m_kNeighbor;
 
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;
 	vnl_matrix<double> heatmapMatrixNew;
 	std::vector< int> clusterOrder;
+	std::vector< int> moduleForSelection;
 
 	// for spdtestwindow
 	vnl_matrix<double> ModuleCompareCorMatrix;

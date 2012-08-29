@@ -73,8 +73,8 @@ private:
     QDoubleSpinBox *clusterCoherenceBox;
 	QLabel *sampleCoherenceLabel;
 	QDoubleSpinBox *sampleCoherenceBox;
-    QLabel *clusterMergeLabel;
-    QDoubleSpinBox *clusterMergeBox;
+    QLabel *kNearestNeighborLabel;
+    QDoubleSpinBox *kNearestNeighborBox;
     QPushButton *clusterButton;
 	QPushButton *cellClusterButton;
 	QListWidget *listWidget;

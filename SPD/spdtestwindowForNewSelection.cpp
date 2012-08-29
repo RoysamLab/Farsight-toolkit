@@ -54,11 +54,11 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
-    clusterMergeLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"));
-    clusterMergeBox = new QDoubleSpinBox;
-	clusterMergeBox->setValue(0.9);
-	clusterMergeBox->setRange(0,1);
-	clusterMergeBox->setSingleStep(0.1);
+    kNearestNeighborLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"));
+    kNearestNeighborBox = new QDoubleSpinBox;
+	kNearestNeighborBox->setValue(0.9);
+	kNearestNeighborBox->setRange(0,1);
+	kNearestNeighborBox->setSingleStep(0.1);
 
     clusterButton = new QPushButton(tr("Feature Cluster"));
 	cellClusterButton = new QPushButton(tr("Cell Cluster"));
@@ -153,8 +153,8 @@ SPDWindowForNewSelection::SPDWindowForNewSelection(QWidget *parent) :
     mainLayout->addWidget(clusterCoherenceBox, 5, 1);
 	mainLayout->addWidget(clusterButton, 6, 2);
 
-    mainLayout->addWidget(clusterMergeLabel, 6, 0);
-    mainLayout->addWidget(clusterMergeBox, 6, 1);
+    mainLayout->addWidget(kNearestNeighborLabel, 6, 0);
+    mainLayout->addWidget(kNearestNeighborBox, 6, 1);
 	
 	mainLayout->addWidget(progressionOverDistance, 7, 0);
 	mainLayout->addWidget(bcheckBox, 7, 1);
@@ -310,7 +310,7 @@ void SPDWindowForNewSelection::clusterFunction()
 	}
 
 	std::string clusterCor = this->clusterCoherenceBox->text().toStdString();
-	std::string clusterMer = this->clusterMergeBox->text().toStdString();
+	std::string clusterMer = this->kNearestNeighborBox->text().toStdString();
 
 	try
 	{

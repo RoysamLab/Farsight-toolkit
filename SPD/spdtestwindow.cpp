@@ -9,6 +9,8 @@
 #include <assert.h>
 #include "ClusClus/clusclus.h"
 
+#define MSTSPD 0
+
 #ifndef NEW_DELETE
 #define NEW_DELETE
 void operator delete(void *memP)
@@ -61,11 +63,11 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
-    clusterMergeLabel = new QLabel(tr("Feature Merge Coherence(0.0 ~ 1.0):"), this);
-    clusterMergeBox = new QDoubleSpinBox(this);
-	clusterMergeBox->setValue(0.9);
-	clusterMergeBox->setRange(0,1);
-	clusterMergeBox->setSingleStep(0.1);
+    kNearestNeighborLabel = new QLabel(tr("Nearest Neighbor Number:"), this);
+    kNearestNeighborBox = new QSpinBox(this);
+	kNearestNeighborBox->setValue(2);
+	kNearestNeighborBox->setMinimum (0);
+	kNearestNeighborBox->setSingleStep(1);
 
     clusterButton = new QPushButton(tr("Feature Cluster"), this);
 	
@@ -75,7 +77,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	emdButton = new QPushButton(tr("Match"), this);
 
 	emdThresBox = new QDoubleSpinBox(this);
-	emdThresBox->setRange(0,1);
+	//emdThresBox->setRange(0,1);
 	emdThresBox->setSingleStep(0.1);
 
 	emdPercentageBox = new QLineEdit(this);
@@ -90,6 +92,12 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	maxVetexIdEdit->setRange(0,1000000);
 	maxVetexIdEdit->setSingleStep(100);
 	maxVetexIdEdit->setValue(4500);
+
+	connectedGraphLabel = new QLabel(tr("Connected Graphs:"), this);
+	connectedGraphEdit = new QLineEdit(this);
+	connectedGraphEdit->setText(QString::number(0));
+	connectedGraphEdit->setReadOnly( true);
+	connectedGraphEdit->setEnabled( false);
 	
     psdtButton = new QPushButton(tr("View Progression"), this);
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
@@ -112,6 +120,8 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
+	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
+	
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
@@ -127,7 +137,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-     for ( int row = 1; row <= 13; row++)
+     for ( int row = 1; row <= 14; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -148,10 +158,10 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
 	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
     mainLayout->addWidget(clusterCoherenceBox, 4, 1);
-	mainLayout->addWidget(clusterButton, 5, 2);
+	mainLayout->addWidget(clusterButton, 4, 2);
 
-    mainLayout->addWidget(clusterMergeLabel, 5, 0);
-    mainLayout->addWidget(clusterMergeBox, 5, 1);
+    mainLayout->addWidget(kNearestNeighborLabel, 5, 0);
+    mainLayout->addWidget(kNearestNeighborBox, 5, 1);
 	
 	mainLayout->addWidget(progressionOverDistance, 6, 0);
 	mainLayout->addWidget(bcheckBox, 6, 1);
@@ -169,12 +179,14 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psdtLable, 10, 0);
 	mainLayout->addWidget(distanceThres, 10, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
-	mainLayout->addWidget(maxVetexIdLabel, 12, 0);
-	mainLayout->addWidget(maxVetexIdEdit, 12, 1);
-	mainLayout->addWidget(psdtButton, 12, 2);
+	mainLayout->addWidget(connectedGraphLabel, 12, 0);
+	mainLayout->addWidget(connectedGraphEdit, 12, 1);
+	mainLayout->addWidget(maxVetexIdLabel, 13, 0);
+	mainLayout->addWidget(maxVetexIdEdit, 13, 1);
+	mainLayout->addWidget(psdtButton, 13, 2);
 
-	mainLayout->addWidget(heatmapLabel, 13, 0);
-	mainLayout->addWidget(heatmapButton, 13, 2);
+	mainLayout->addWidget(heatmapLabel, 14, 0);
+	mainLayout->addWidget(heatmapButton, 14, 2);
 
 
     setLayout(mainLayout);
@@ -348,12 +360,10 @@ void SPDtestWindow::clusterFunction()
 	}
 
 	std::string clusterCor = this->clusterCoherenceBox->text().toStdString();
-	std::string clusterMer = this->clusterMergeBox->text().toStdString();
-
+	
 	try
 	{
-		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
-		//this->SPDModel->ClusterMerge( atof(clusterCor.c_str()), atof(clusterMer.c_str()));
+		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterCor.c_str()));
 		emdButton->setEnabled(TRUE);
 		psmButton->setEnabled(FALSE);
 		psdtButton->setEnabled(FALSE);
@@ -393,7 +403,9 @@ void SPDtestWindow::emdFunction()
 		this->SPDModel->GenerateDistanceMST();
 		this->SPDModel->RunEMDAnalysis();
 #else
-		this->SPDModel->ModuleCoherenceMatchAnalysis();
+		//this->SPDModel->ModuleCoherenceMatchAnalysis();
+		std::string kNeighbor = this->kNearestNeighborBox->text().toStdString();
+		this->SPDModel->ModuleCorrelationMatrixMatch(atoi(kNeighbor.c_str()));
 #endif
 		psmButton->setEnabled(TRUE);
 		psdtButton->setEnabled(FALSE);
@@ -408,15 +420,15 @@ void SPDtestWindow::emdFunction()
 void SPDtestWindow::editThreshold()
 {
 	QString emdThres = this->emdThresBox->text();
-	double thres = this->emdThresBox->valueFromText(emdThres);
+	double thres = emdThres.toDouble();
 	double per = 0;
 	if( thres >= 0 && thres <= 1)
 	{
-#if MSTSPD
+//#if MSTSPD
 		per = this->SPDModel->GetEMDSelectedPercentage( thres);
-#else
-		per = this->SPDModel->GetCorMatSelectedPercentage( thres);
-#endif
+//#else
+//		per = this->SPDModel->GetCorMatSelectedPercentage( thres);
+//#endif
 	}
 	emdPercentageBox->setText(QString::number(per));
 }
@@ -433,6 +445,19 @@ void SPDtestWindow::editPercentage()
 	//emdThresBox->setText(QString::number(thres));
 }
 
+void SPDtestWindow::editNearestNeighbor()
+{
+	QString str = this->kNearestNeighborBox->text();
+	int numNeighbor = str.toInt();
+	int kNum = this->SPDModel->GetKNeighborNum();
+	if( kNum <= 0 || kNum != numNeighbor)
+	{
+		psmButton->setEnabled(FALSE);
+		psdtButton->setEnabled(FALSE);
+		heatmapButton->setEnabled(FALSE);
+	}
+}
+
 void SPDtestWindow::showPSM()
 {
 	std::string emdThres = this->emdThresBox->text().toStdString();
@@ -442,12 +467,12 @@ void SPDtestWindow::showPSM()
 	std::vector< unsigned int> moduleIDs;
 	if( SPDModel->GetProgressionType())
 	{
-#if MSTSPD
+//#if MSTSPD
 		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
-#else
-
-		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
-#endif
+//#else
+//		
+//		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+//#endif
 
 		QString str;
 		int i = 0;
@@ -464,12 +489,12 @@ void SPDtestWindow::showPSM()
 	}
 	else
 	{
-#if MSTSPD
+//#if MSTSPD
 		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
-#else
-
-		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
-#endif
+//#else
+//
+//		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+//#endif
 		optimalleaforder.set_size(clus1->num_samples);
 
 
@@ -735,7 +760,7 @@ void SPDtestWindow::ReColorProgressionTree(int nfeature)
 	}
 }
 
-void SPDtestWindow::updateSelMod()   // possible bugs
+void SPDtestWindow::updateSelMod()   
 {
 	int r1 = 0;
 	int r2 = 0;
@@ -749,9 +774,10 @@ void SPDtestWindow::updateSelMod()   // possible bugs
 	int num = abs(r1 - r2) + 1;
 	int max = r1 > r2 ? r1 : r2;
 
+	std::vector<unsigned int> selMod;
 	if( num < size)
 	{
-		selMod.set_size(num);
+		selMod.resize(num);
 		QString str;
 		
 		for( int i = 0; i < num; i++)
@@ -771,6 +797,11 @@ void SPDtestWindow::updateSelMod()   // possible bugs
 		psdtButton->setEnabled(TRUE);
 		heatmapButton->setEnabled(FALSE);
 	}
+
+	std::vector<int> connectedComponent;
+	int connectedNum = this->SPDModel->GetConnectedComponent(selMod, connectedComponent);
+	QString str = QString::number(connectedNum);
+	connectedGraphEdit->setText(str);
 }
 
 void SPDtestWindow::GetProgressionTreeOrder(std::vector<long int> &order)
