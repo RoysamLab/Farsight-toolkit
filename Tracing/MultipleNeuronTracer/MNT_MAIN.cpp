@@ -1,5 +1,5 @@
 #include "MultipleNeuronTracer.h"
-#include "time.h"
+#include <ctime>
 
 int main(int argc, char* argv[])
 {	

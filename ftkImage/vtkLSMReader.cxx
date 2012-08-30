@@ -57,7 +57,7 @@ limitations under the License.
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include <time.h>
+#include <ctime>
 
 #define PRT_EXT(ext) ext[0],ext[1],ext[2],ext[3],ext[4],ext[5]
 #define PRT_EXT2(ext) ext[0]<<","<<ext[1]<<","<<ext[2]<<","<<ext[3]<<","<<ext[4]<<","<<ext[5]

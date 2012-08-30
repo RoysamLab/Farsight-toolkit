@@ -1,5 +1,5 @@
 #include "MultipleNeuronTracer.h"
-#include "time.h"
+#include <ctime>
 
 #ifdef _OPENMP
 #include "omp.h"

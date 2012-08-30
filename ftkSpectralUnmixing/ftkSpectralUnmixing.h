@@ -2,8 +2,8 @@
 #define __ftkSpectralUnmixing_h
 //includes
 
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
 #include <vector>
 #include <algorithm>
 #include <iomanip>
