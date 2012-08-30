@@ -634,10 +634,8 @@ void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
-void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree) //Smooth AND Prune
+void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node) //Smooth AND Prune
 {
-	Node* start_node = tree->getRoot();
-	
 	std::vector< Node* > start_node_children = start_node->GetChildren();
 	if (start_node_children.size() == 0)
 		return;	//start_node has no children so it is a leaf node so there is no segment
