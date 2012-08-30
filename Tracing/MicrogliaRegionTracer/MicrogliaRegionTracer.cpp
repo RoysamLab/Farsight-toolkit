@@ -575,7 +575,7 @@ void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::stri
 	std::cout << "Opening " << filename_local << std::endl;
 	traceFile_local.open(filename_local.c_str());
 	
-	Node* root = tree->getRoot();
+	Node* root = tree->GetRoot();
 
 	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
 	WriteLinkToParent(root, tree_depth, cell, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
@@ -629,8 +629,8 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
 	CreateSpeedImage(cell);
-	SmoothSegments(cell, tree, tree->getRoot());
-	//SmoothSegments2(cell, tree, tree->getRoot());
+	//SmoothSegments(cell, tree, tree->GetRoot());
+	SmoothSegments2(cell, tree);
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
@@ -872,4 +872,36 @@ double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType no
 	trace_vector[2] = node2[2] - node1[2];
 
 	return sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
+}
+
+/* This function smooths the tree from the root node to the leaf node in one go without taking into account the in between critical points as opposed to the previous method of smoothing between branch points */
+void MicrogliaRegionTracer::SmoothSegments2(Cell* cell, Tree* tree)
+{
+	Node* root_node = tree->GetRoot();
+	itk::Index<3> root_node_index;
+	root_node_index[0] = root_node->x;
+	root_node_index[1] = root_node->y;
+	root_node_index[2] = root_node->z;
+
+
+	std::vector<Node*> leaf_nodes;	
+	tree->GetLeafNodes(leaf_nodes);
+
+	//Smooth all the paths that is connected to this start_node
+	std::vector< Node* >::iterator leaf_nodes_iter;
+	for (leaf_nodes_iter = leaf_nodes.begin(); leaf_nodes_iter != leaf_nodes.end(); ++leaf_nodes_iter)
+	{
+		//Make a new path for each possible segment from this start_node
+		PathType::Pointer path = PathType::New();
+		path->Initialize();
+		path->AddVertex(root_node_index);
+		
+		Node* leaf_node = *leaf_nodes_iter;
+		itk::Index<3> leaf_node_index;
+		leaf_node_index[0] = leaf_node->x;
+		leaf_node_index[1] = leaf_node->y;
+		leaf_node_index[2] = leaf_node->z;
+		
+		path->AddVertex(leaf_node_index);
+	}
 }
