@@ -136,7 +136,7 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		std::cerr << "resample_filter exception: " << err << std::endl;
 		return;
 	}
 
@@ -191,7 +191,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		std::cerr << "resample_filter exception: " << err << std::endl;
 		return;
 	}
 
@@ -313,7 +313,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << resample_filter << std::endl;
+		std::cerr << "resample_filter exception: " << err << std::endl;
 		return;
 	}
 
