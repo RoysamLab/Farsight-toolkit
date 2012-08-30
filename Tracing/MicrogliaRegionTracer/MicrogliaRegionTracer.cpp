@@ -629,8 +629,8 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
 	CreateSpeedImage(cell);
-//	SmoothSegments(cell, tree, tree->getRoot())
-	SmoothSegments2(cell, tree);
+	SmoothSegments(cell, tree, tree->getRoot());
+	//SmoothSegments2(cell, tree, tree->getRoot());
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
