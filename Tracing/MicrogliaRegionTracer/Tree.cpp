@@ -69,7 +69,7 @@ void Tree::VisitChildrenForLeafNodes(Node* node, std::vector<Node*> &leaf_nodes)
 	else
 	{
 		std::vector<Node*>::iterator children_iter;
-		for (children_iter = children.begin(); children_iter != children.end(); children_iter++)
+		for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
 			VisitChildrenForLeafNodes(*children_iter, leaf_nodes);
 	}
 }
