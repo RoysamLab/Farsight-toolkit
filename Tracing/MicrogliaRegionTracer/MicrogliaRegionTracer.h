@@ -88,8 +88,8 @@ public:
 	Tree*		BuildMST1(Cell* cell, double** AdjGraph);
 
 	void		SmoothTree(Cell* cell, Tree* tree);
-	void		SmoothSegments(Cell* cell, Tree* tree, Node* start_node);
-	void		SmoothSegments2(Cell* cell, Tree* tree, Node* start_node);
+	void		SmoothSegments(Cell* cell, Tree* tree);
+	void		SmoothSegments2(Cell* cell, Tree* tree);
 	void		SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
 	void		CreateSpeedImage(Cell* cell);

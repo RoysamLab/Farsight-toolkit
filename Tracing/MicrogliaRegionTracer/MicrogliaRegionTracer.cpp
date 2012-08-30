@@ -448,7 +448,6 @@ double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::ui
 /* This function generates the minimum spanning tree (Prim's algorithm implementation, the output is a Tree structure */
 Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 {	
-
 	Tree* tree = new Tree();
 	ImageType::IndexType root_index = cell->critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
@@ -630,12 +629,15 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
 	CreateSpeedImage(cell);
-	SmoothSegments(cell, tree, tree->getRoot());
+//	SmoothSegments(cell, tree, tree->getRoot())
+	SmoothSegments2(cell, tree);
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
-void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node) //Smooth AND Prune
+void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree) //Smooth AND Prune
 {
+	Node* start_node = tree->getRoot();
+	
 	std::vector< Node* > start_node_children = start_node->GetChildren();
 	if (start_node_children.size() == 0)
 		return;	//start_node has no children so it is a leaf node so there is no segment
