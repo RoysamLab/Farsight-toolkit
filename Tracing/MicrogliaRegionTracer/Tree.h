@@ -14,15 +14,13 @@ public:
 	Tree();
 	~Tree();
 
-	void SetRoot(Node *root);
-
-	void AddNode(Node* node, Node* parent);
-
-	std::vector<Node*> GetMemberNodes();
-
-	Node* getRoot();
-
-	bool RemoveNode(Node* node);
+	void				SetRoot(Node *root);
+	void				AddNode(Node* node, Node* parent);
+	std::vector<Node*>	GetMemberNodes();
+	Node*				GetRoot();
+	bool				RemoveNode(Node* node);
+	void				GetLeafNodes(std::vector<Node*> &leaf_nodes);
+	void				VisitChildrenForLeafNodes(Node* node, std::vector<Node*> &leaf_nodes);
 };
 
 #endif

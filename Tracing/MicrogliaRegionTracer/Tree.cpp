@@ -31,7 +31,7 @@ std::vector<Node*> Tree::GetMemberNodes()
 	return member_nodes;
 }
 
-Node* Tree::getRoot()
+Node* Tree::GetRoot()
 {
 	return root;
 }
@@ -51,4 +51,25 @@ bool Tree::RemoveNode(Node* node)
 	}
 
 	return false;
+}
+
+void Tree::GetLeafNodes(std::vector<Node *> &leaf_nodes)
+{
+	Node* root_node = GetRoot();
+
+	VisitChildrenForLeafNodes(root_node, leaf_nodes);
+}
+
+void Tree::VisitChildrenForLeafNodes(Node* node, std::vector<Node*> &leaf_nodes)
+{
+	std::vector<Node*> children = node->GetChildren();
+
+	if (children.size() == 0)
+		leaf_nodes.push_back(node);
+	else
+	{
+		std::vector<Node*>::iterator children_iter;
+		for (children_iter = children.begin(); children_iter != children.end(); children_iter++)
+			VisitChildrenForLeafNodes(*children_iter, leaf_nodes);
+	}
 }
