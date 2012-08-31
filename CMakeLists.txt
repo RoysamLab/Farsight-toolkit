@@ -20,7 +20,9 @@ if (APPLE)
     SET(CMAKE_CXX_COMPILER "/usr/bin/clang++")
   endif (NOT APPLE_USE_CLANG)
 else (APPLE)
-  MESSAGE (FATAL_ERROR "You appear to have defined APPLE_USE_CLANG but you are not on an Apple platform")
+  if (DEFINED APPLE_USE_CLANG)  
+    MESSAGE (FATAL_ERROR "You appear to have defined APPLE_USE_CLANG but you are not on an Apple platform")
+  endif (DEFINED APPLE_USE_CLANG)
 endif (APPLE)
 
 ###################################
