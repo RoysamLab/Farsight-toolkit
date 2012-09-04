@@ -5,6 +5,15 @@
 
 int main(int argc, char *argv[])
 {
+	if (argc < 3)
+	{
+		std::cerr << "Usage: "
+			<< "<input filename> "
+			<< "<output filename> "
+			<< std::endl;
+		return 1;
+	}
+	
 	typedef unsigned short InputPixelType;
 	typedef unsigned char OutputPixelType;
 	
@@ -19,7 +28,7 @@ int main(int argc, char *argv[])
 	InputReaderType::Pointer reader = InputReaderType::New();
 	OutputWriterType::Pointer writer = OutputWriterType::New();
 
-	std::string outputFileName = "8bit";
+	const char* outputFilename = argv[2];
 	const char* inputFilename = argv[1];
 
 	reader->SetFileName(inputFilename);
@@ -52,9 +61,7 @@ int main(int argc, char *argv[])
 
 	writer->SetInput(rescaleFilter->GetOutput());
 	
-	outputFileName.append(inputFilename);
-	
-	writer->SetFileName(outputFileName);
+	writer->SetFileName(outputFilename);
 	
 	try
 	{
