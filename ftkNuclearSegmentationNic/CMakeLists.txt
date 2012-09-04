@@ -23,8 +23,8 @@
 SET( FTKNUCLEARSEGMENTATIONNIC_SRCS
 
 main.cpp
-1__1_1_BinarizeMixPoisson/graph.cpp
-1__1_1_BinarizeMixPoisson/maxflow.cpp
+#1__1_1_BinarizeMixPoisson/graph.cpp
+#1__1_1_BinarizeMixPoisson/maxflow.cpp
 #ftkNuclearSegmentationNic.cpp
  
 )
