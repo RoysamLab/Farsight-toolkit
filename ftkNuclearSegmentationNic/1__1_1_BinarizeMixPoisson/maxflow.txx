@@ -2,7 +2,7 @@
 
 
 #include <stdio.h>
-#include "graph.h"
+//#include "graph.h"
 
 
 /*
@@ -681,4 +681,4 @@ template <typename captype, typename tcaptype, typename flowtype>
 	}
 }
 
-#include "instances.inc"
+//#include "instances.inc"
