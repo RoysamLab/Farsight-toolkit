@@ -1,21 +1,3 @@
-#ADD_SUBDIRECTORY(
-
-#1__1_1_BinarizeMixPoisson
-#1__1_2_BinarizeMixGaussian
-#1__1_3_BinarizeOtsu
-#1__1_4_OtherMethod
-#1__2_1_SeedDetection
-#1__3_1_MaxClustering
-#1__4_1_AlphaExpansion
-#2__1_1_RadVoting
-#2__2_1_CellShapeIni
-#2__3_1_GVFforce
-#2__3_2_AnotherForce
-#2__4_1_LevelSet
-#3__1_1_LevlSet
-
-#)
-
 ################################################################################
 ################################################################################
 
@@ -41,13 +23,13 @@ frkGlobalStructs.h
 ftkNuclearSegmentationNic.h
 ftkNuclearSegmentationNic.hxx
 
-1__1_1_BinarizeMixPoisson/BinarizeMixPoisson.h
-1__1_1_BinarizeMixPoisson/graph.h
+BinarizeMixPoisson/BinarizeMixPoisson.h
+BinarizeMixPoisson/graph.h
 
-1__2_1_SeedDetection/SeedDetectionLoG.h
-1__2_1_SeedDetection/itklaplacianrecursivegaussianimagefilternew.h
+SeedDetection/SeedDetectionLoG.h
+SeedDetection/itklaplacianrecursivegaussianimagefilternew.h
 
-1__3_1_MaxClustering/MaxClustering.h
+MaxClustering/MaxClustering.h
  
 )
 

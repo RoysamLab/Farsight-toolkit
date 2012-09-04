@@ -27,19 +27,19 @@
 
 
 // NUCLEAR SEGMENTATION NIC INCLUDES
-#include "1__1_1_BinarizeMixPoisson/BinarizeMixPoisson.h"
-//#include "1__1_2_BinarizeMixGaussian/BinarizeMixGaussian.h"
-//#include "1__1_3_BinarizeOtsu/BinarizeOtsu.h"
-//#include "1__1_4_OtherMethod/OtherMethod.h"
-#include "1__2_1_SeedDetection/SeedDetectionLoG.h"
-#include "1__3_1_MaxClustering/MaxClustering.h"
-#include "1__4_1_AlphaExpansion/AlphaExpansion.h"
-//#include "2__1_1_RadVoting/RadVoting.h"
-//#include "2__2_1_CellShapeIni/CellShapeIni.h"
-//#include "2__3_1_GVFforce/GVFforce.h"
-//#include "2__3_2_AnotherForce/AnotherForce.h"
-//#include "2__4_1_LevelSet/LevelSet.h"
-//#include "3__1_1_LevlSet/LevlSet.h"
+#include "BinarizeMixPoisson/BinarizeMixPoisson.h"
+//#include "BinarizeMixGaussian/BinarizeMixGaussian.h"
+//#include "BinarizeOtsu/BinarizeOtsu.h"
+//#include "OtherMethod/OtherMethod.h"
+#include "SeedDetection/SeedDetectionLoG.h"
+#include "MaxClustering/MaxClustering.h"
+#include "AlphaExpansion/AlphaExpansion.h"
+//#include "RadVoting/RadVoting.h"
+//#include "CellShapeIni/CellShapeIni.h"
+//#include "GVFforce/GVFforce.h"
+//#include "AnotherForce/AnotherForce.h"
+//#include "LevelSet/LevelSet.h"
+//#include "LevlSet/LevlSet.h"
 
 namespace ftk{
 	/**
