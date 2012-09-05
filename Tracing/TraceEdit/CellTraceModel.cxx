@@ -69,13 +69,14 @@ void CellTraceModel::SetupHeaders()
 	this->headers.clear();
 	this->headers.push_back("Root Trace");
 
+	this->headers.push_back("Soma X Pos");
+	this->headers.push_back("Soma Y Pos");
+	this->headers.push_back("Soma Z Pos");
+
 	this->headers.push_back("Width X");
 	this->headers.push_back("Height Y");
 	this->headers.push_back("Depth Z");
 
-	this->headers.push_back("Soma X Pos");
-	this->headers.push_back("Soma Y Pos");
-	this->headers.push_back("Soma Z Pos");
 	this->headers.push_back("Soma Radii");
 	this->headers.push_back("Soma Surface Area");
 	this->headers.push_back("Soma Volume");

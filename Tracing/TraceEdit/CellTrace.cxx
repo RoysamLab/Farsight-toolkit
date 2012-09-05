@@ -547,13 +547,14 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->Reset();
 		CellData->InsertNextValue(this->segments[0]->GetId());
 
-		CellData->InsertNextValue(this->maxX - this->minX);//Width
-		CellData->InsertNextValue(this->maxY - this->minY);//Length
-		CellData->InsertNextValue(this->maxZ - this->minZ);//Height
-		
 		CellData->InsertNextValue(this->somaX);
 		CellData->InsertNextValue(this->somaY);
 		CellData->InsertNextValue(this->somaZ);
+		
+		CellData->InsertNextValue(this->maxX - this->minX);//Width
+		CellData->InsertNextValue(this->maxY - this->minY);//Length
+		CellData->InsertNextValue(this->maxZ - this->minZ);//Height		
+
 		CellData->InsertNextValue(this->somaRadii);
 		CellData->InsertNextValue(this->somaSurface);
 		CellData->InsertNextValue(this->somaVolume);
