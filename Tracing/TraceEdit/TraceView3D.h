@@ -28,6 +28,7 @@ limitations under the License.
 #include "ftkGUI/PlotWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/TableWindow.h"
+#include "ftkGUI/FTKRenderWindow.h"
 #include "ftkGUI/StatisticsToolbar.h"
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
@@ -290,6 +291,7 @@ public slots:
 	void SPDAnalysis();
 	void ClusclusAnalysis();
 	void BiclusAnalysis();
+	void FeatureDistributionAnalysis();
 	void SpectralCluserting();
 	void selectedFeaturesClustering();
 
@@ -467,6 +469,7 @@ private:
 	QAction *SPDAnalysisAction;
 	QAction *ClusclusAction;
 	QAction *BiClusAction;
+	QAction *FeatureDistributionAction;
 	QAction *SpectralClusteringAction;
 
 	/*QAction *UndoButton;
@@ -489,6 +492,7 @@ private:
 	TableWindow * FL_MeasureTable;
 	PlotWindow *FL_MeasurePlot;
 	HistoWindow *FL_histo;
+	FTKRenderWindow *FeatDistWin;
 	StatisticsToolbar * statisticsToolbar;
 
 	bool bKeepSelectedTraces;   /// whether keep the last rendered traces

@@ -61,6 +61,7 @@ View3D::View3D(QWidget *parent)
 	this->statisticsDockWidget = NULL;
 	this->NodeTable = NULL;
 	this->NodePlot = NULL;
+	this->FeatDistWin = NULL;
 
 #ifdef USE_SPD
 	this->SPDWin = NULL;
@@ -245,6 +246,10 @@ View3D::~View3D()
 	if(this->FL_MeasureTable)
 	{
 		delete this->FL_MeasureTable;
+	}
+	if(this->FeatDistWin)
+	{
+		delete this->FeatDistWin;
 	}
 	if(this->GapsTableView)
 	{
@@ -1713,6 +1718,9 @@ void View3D::CreateGUIObjects()
 	this->BiClusAction= new QAction("BiClus Analysis", this->CentralWidget);
 	connect (this->BiClusAction, SIGNAL(triggered()), this, SLOT(BiclusAnalysis()));
 
+	this->FeatureDistributionAction= new QAction("Render Feature Distribution", this->CentralWidget);
+	connect (this->FeatureDistributionAction, SIGNAL(triggered()), this, SLOT(FeatureDistributionAnalysis()));
+
 	//this->SpectralClusteringAction= new QAction("SpectralbiClus Analysis", this->CentralWidget);
 	//connect (this->SpectralClusteringAction, SIGNAL(triggered()), this, SLOT(SpectralCluserting()));
 
@@ -2120,6 +2128,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->SPDAnalysisAction);
 	//this->analysisViews->addAction(this->ClusclusAction);
 	this->analysisViews->addAction(this->BiClusAction);
+	this->analysisViews->addAction(this->FeatureDistributionAction);
 	//this->analysisViews->addAction(this->SpectralClusteringAction);
 	this->createRayCastSliders();
 
@@ -6522,6 +6531,21 @@ void View3D::BiclusAnalysis()
 		delete bicluster;
 	}
 #endif
+}
+
+void View3D::FeatureDistributionAnalysis()
+{
+	this->FeatDistWin = new FTKRenderWindow ();
+	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
+	{
+		QMessageBox mes;
+		mes.setText("Please compute cell features first!");
+		mes.exec();
+	}
+
+	//connect(FeatDistWin, SIGNAL(closing(QWidget *)), this, SLOT(viewClosing(QWidget *)));
+	FeatDistWin->show();
+	this->FeatDistWin->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
 }
 
 void View3D::SpectralCluserting()
