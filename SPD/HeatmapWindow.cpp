@@ -148,15 +148,15 @@ void Heatmap::creatDataForHeatmap(double powCof)
 	for(int i = 0; i < this->num_samples; i++)
 		mapdata[this->num_samples - i - 1] = tempdata[Optimal_Leaf_Order1[i]]; 
 
-	const char* filename = "mapdata.txt";
-	FILE *fp1 = fopen(filename,"w");
-	for(int i=0; i<num_samples; i++)
-	{
-		for(int j=0; j<num_features; j++)
-			fprintf(fp1,"%f\t",mapdata[i][j]);
-		fprintf(fp1,"\n");
-	}
-	fclose(fp1);
+	//const char* filename = "mapdata.txt";
+	//FILE *fp1 = fopen(filename,"w");
+	//for(int i=0; i<num_samples; i++)
+	//{
+	//	for(int j=0; j<num_features; j++)
+	//		fprintf(fp1,"%f\t",mapdata[i][j]);
+	//	fprintf(fp1,"\n");
+	//}
+	//fclose(fp1);
 
 	if( this->connect_Data_Tree1 != NULL)
 	{
@@ -313,14 +313,14 @@ void Heatmap::runClusclus()
 		#pragma omp section
 		{
 			cc1->RunClusClus();
-			cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
-				"gap.txt", "treedata.txt", "Optimalleaforder.txt");
+			/*cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt",
+				"gap.txt", "treedata.txt", "Optimalleaforder.txt");*/
 		}
 		#pragma omp section
 		{
 			cc2->RunClusClus();
-			cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
-				"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");
+			/*cc2->WriteClusteringOutputToFile("mergers2.txt","features2.txt","progress2.txt", "members2.txt",
+				"gap2.txt", "treedata2.txt", "Optimalleaforder2.txt");*/
 		}
 	}
 
@@ -1735,7 +1735,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 			this->interselectedIDs = selectedIDs1;
 		try
 		{
-			cout<<"set select============="<<endl;
+			//cout<<"set select============="<<endl;
 			this->Selection2->select(selectedIDs2);
 			this->Selection->select(selectedIDs1);
 		}
@@ -1752,12 +1752,12 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 		{
 			for(int i = 0; i<this->num_samples; i++)
 				selectedIDs1.insert( indMapFromIndToVertex[i]);
-			cout<<"set select============="<<endl;
+			//cout<<"set select============="<<endl;
 			this->Selection->select(selectedIDs1);
 		}
 		else
 		{
-			cout<<"set select============="<<endl;
+			//cout<<"set select============="<<endl;
 			this->Selection->select(interselectedIDs);
 		}
 
@@ -1773,7 +1773,7 @@ void Heatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 	else
 	{
 		this->Selection2->clear();
-		cout<<"set select============="<<endl;
+		//cout<<"set select============="<<endl;
 		this->Selection->clear();
 	}
 }
@@ -2145,13 +2145,10 @@ void Heatmap::selectClustersforSPD(double* worldPosition)
 {
 	reselectedClusterSPD.clear();
 	std::set<long int> selectedClusterSPD;
-	long int index = 2*this->num_samples - 2;
-	while(1)
-	{	
+	for( int index = 0; index < 2 * this->num_samples - 1; index++)
+	{
 		if(worldPosition[0] > Processed_Coordinate_Data_Tree1[index][1])
-			selectedClusterSPD.insert(index--);
-		else
-			break;
+			selectedClusterSPD.insert(index);
 	}
 	this->reselectClustersforSPD(selectedClusterSPD);
 }
@@ -2182,24 +2179,42 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 	}
 	//cout<<"cluster number is "<<clusternumber<<endl;
 
-	std::vector< std::set< long int> > clusIndex;
-	std::vector< std::set< long int> > sampleIndex;
+	std::vector< std::vector< long int> > clusIndex;
+	std::vector< std::vector< long int> > sampleIndex;
+
 	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
 	{
-		std::set<long int> sampleIdsforSPD;
+		std::vector<long int> sampleIdsVec;
 		std::set<long int> clusIdsforSPD;
-		this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
-		//cout<<"...\n";
-		sampleIndex.push_back(sampleIdsforSPD);
-		clusIndex.push_back(clusIdsforSPD);
+		std::vector<long int> clusIdsVec;
+		this->reselectIdsforSPD(*it, &clusIdsforSPD);
+
+		for( int i = 0; i < this->num_samples; i++)
+		{
+			if(clusIdsforSPD.find(Optimal_Leaf_Order1[i]) != clusIdsforSPD.end())
+			{
+				for( int k = 0; k < clusIdsforSPD.size(); k++)
+				{
+					int ind = Optimal_Leaf_Order1[i + k];
+
+					clusIdsVec.push_back(ind);
+					for( int j = 0; j < indSPDMapFromIndToVertex[ind].size(); j++)
+					{
+						sampleIdsVec.push_back( indSPDMapFromIndToVertex[ind][j]);
+					}
+				}
+				break;
+			}
+		}
+		sampleIndex.push_back(sampleIdsVec);
+		clusIndex.push_back(clusIdsVec);
 	}
 
 	this->Selection->SetClusterIndex(clusIndex);
 	this->Selection->SetSampleIndex(sampleIndex);
-
 }
 
-void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD)
+void Heatmap::reselectIdsforSPD(long int id, std::set<long int> *clusidforSPD)
 {
 	if(id < this->num_samples)
 	{
@@ -2208,20 +2223,16 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std:
 		{
 			clusidforSPD->insert(id);
 		}
-
-		for( int i = 0; i < indSPDMapFromIndToVertex[id].size(); i++)
-		{
-			idsforSPD.insert( indSPDMapFromIndToVertex[id][i]);
-		}
 	}
 	else
 	{
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0], clusidforSPD);
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1], clusidforSPD);
+		this->reselectIdsforSPD(connect_Data_Tree1[rowMapForTreeData.find(id)->second][0], clusidforSPD);
+		this->reselectIdsforSPD(connect_Data_Tree1[rowMapForTreeData.find(id)->second][1], clusidforSPD);
 	}
 }
 
-void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder,  std::map< int, int> *indexCluster, ObjectSelection * sels2)
+void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster,
+							   std::vector<int> *component, int numOfComponenets, vnl_matrix<double> *subTreeDistance, ObjectSelection * sels2)
 {
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
@@ -2249,6 +2260,11 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	else
 		this->Selection2 = sels2;
 
+	if(component)
+	{
+		connectedComponent = *component;
+	}
+
 	selectedFeatureIDs.clear();
 	for( int i = 0; i < selOrder.size(); i++)
 	{
@@ -2257,7 +2273,11 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	std::cout<< selectedFeatureIDs.size()<<std::endl;
 	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
-	this->runClusforSPD(selOrder, unselOrder);
+
+	if( subTreeDistance != NULL && numOfComponenets >= 1)
+	{
+		this->runClusforSPD(selOrder, unselOrder, numOfComponenets, *subTreeDistance);
+	}
 }
 
 void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster, ObjectSelection * sels2)
@@ -2298,88 +2318,212 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	this->runClusforSPD( sampleOrder, selOrder, unselOrder);
 }
 
-void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder)
+void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder, int numberofcomponents, vnl_matrix<double> &subTreeDistance)
 {
 	this->clusflag = true;
-	double** datas;
-	double** datasforclus;
-	vtkVariant temp; 
 
-	datas = new double*[this->table->GetNumberOfRows()];
-	datasforclus = new double*[this->table->GetNumberOfRows()];
-
-	std::cout<<this->table->GetNumberOfRows()<<endl;
-	std::cout<<this->table->GetNumberOfColumns()<<endl;
-
-	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	if(connectedComponent.size() == this->table->GetNumberOfRows())
 	{
-		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
-	}
+		clock_t start_time = clock();
+		std::vector< std::vector<int> > graphVertex;
+		graphVertex.resize(numberofcomponents);
 
-	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
-	{
-		datasforclus[i] = new double[selOrder.size() + 2 ];
-	}
-
-	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
-	{		
-		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		for( int i = 0; i < connectedComponent.size(); i++)
 		{
-			temp = this->table->GetValue(i, j);
-			datas[i][j-1] = temp.ToDouble();
+			int n = connectedComponent[i];
+			graphVertex[n].push_back(i);
 		}
-	}
 
-	int index = 0;
-	for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
-	{
-		if( selectedFeatureIDs.find( j - 1) != selectedFeatureIDs.end())
+		double** datas = new double*[this->table->GetNumberOfRows()];
+		
+		for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 		{
-			for( int i = 0; i < this->table->GetNumberOfRows(); i++)
+			datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+			for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
 			{
-				temp = this->table->GetValue(i, j);
-				datasforclus[i][index] = temp.ToDouble();
+				vtkVariant temp = this->table->GetValue(i, j);
+				datas[i][j-1] = temp.ToDouble();
 			}
-			index++;
 		}
-	}
 
-	cc1 = new clusclus(datasforclus, (int)this->table->GetNumberOfRows(), (int)selOrder.size());
-	cc1->RunClusClus();
-	cout<<"finish clusclus....."<<endl;
-	cout<<this->table->GetNumberOfRows();
-	cout<<this->table->GetNumberOfColumns();
-	//cc1->WriteClusteringOutputToFile("mergers.txt","features.txt","progress.txt", "members.txt", "gap.txt", "treedata.txt", "Optimalleaforder.txt");
-	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
-	{
-		delete datasforclus[i];
-	}
-	delete datasforclus;
-	
-	int featureNum = selOrder.size() + unselOrder.size();
-	int* optimalleaforder2 = new int[featureNum];
-	int counter = 0;
-	for(int i = 0; i < selOrder.size(); i++)
-	{
-		optimalleaforder2[i] = selOrder[i];
-		counter++;
-	}
-	for(int i = 0; i < unselOrder.size(); i++)
-	{
-		optimalleaforder2[i + counter] = unselOrder[i];
-	}
+		std::vector< std::vector< ClusterTree> > treeVec;
+		treeVec.resize( numberofcomponents);
 
-	this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), featureNum);
-	this->setDataForDendrograms(cc1->treedata);
-	this->creatDataForHeatmap(POWER_PARAM);
-	
-	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
-	{
-		delete datas[i];
-	}
-	delete datas;
+		#pragma omp parallel for
+		for( int i = 0; i < graphVertex.size(); i++)
+		{
+			double** datasforclus = new double*[graphVertex[i].size()];
+			for (int j = 0; j < graphVertex[i].size(); j++)
+			{
+				datasforclus[j] = new double[selOrder.size() + 2 ];
+			}
 
-	delete cc1;
+			int index = 0;
+			for(std::set<long int >::iterator iter = selectedFeatureIDs.begin(); iter != selectedFeatureIDs.end(); iter++)
+			{
+				for( int k = 0; k < graphVertex[i].size(); k++)
+				{
+					int ni = graphVertex[i][k];
+					datasforclus[k][index] = datas[ni][*iter];
+				}
+				index++;
+			}
+
+			clusclus *cc = new clusclus(datasforclus, (int)graphVertex[i].size(), (int)selOrder.size());
+			cc->RunClusClus();
+			
+			///save the tree 
+			cc->GetTreeStructure(treeVec[i]);
+			
+			for (int j = 0; j < graphVertex[i].size(); j++)
+			{
+				delete datasforclus[j];
+			}
+			delete datasforclus;
+			delete cc;
+		}
+
+		//std::ofstream ofs("Tree.txt");
+		/// adjust the local tree index to fit the global tree index
+	 	int clusNo = this->table->GetNumberOfRows();
+		std::vector< int> parentIndex;  // save the parent index of each sub tree
+		double maxdis = 0; // find the maximum distance of all the tree
+		parentIndex.resize(treeVec.size());
+		for( int i = 0; i < treeVec.size(); i++)
+		{
+			int maxi = treeVec[i].size() + 1;
+			//ofs<<maxi<<std::endl;
+			parentIndex[i] = 0;
+			for( int j = 0; j < treeVec[i].size(); j++)
+			{
+				ClusterTree tree = treeVec[i][j];
+				tree.first = tree.first < maxi ? graphVertex[i][tree.first] : tree.first - maxi + clusNo;
+				tree.second = tree.second < maxi ? graphVertex[i][tree.second] : tree.second - maxi + clusNo;
+				tree.parent = tree.parent < maxi ? graphVertex[i][tree.parent] : tree.parent - maxi + clusNo;
+				treeVec[i][j] = tree;
+				if(tree.dis > maxdis)
+				{
+					maxdis = tree.dis;
+				}
+			}
+			clusNo += treeVec[i].size();
+			parentIndex[i] = clusNo - 1;
+		}
+
+		
+		/// print out the tree structure
+		//for( int i = 0; i < treeVec.size(); i++)
+		//{
+		//	for( int j = 0; j < treeVec[i].size(); j++)
+		//	{
+		//		ClusterTree tree = treeVec[i][j];
+		//		ofs<< tree.first<< "\t"<< tree.second << "\t"<<tree.dis<< "\t"<< tree.parent <<std::endl;
+		//	}
+		//	ofs<< std::endl;
+		//}
+
+		/// construct the overal tree and the overal order
+		std::vector< ClusterTree> overallTree;
+		while(overallTree.size() < numberofcomponents - 1)  
+		{
+			unsigned int location = subTreeDistance.arg_min();
+			int nrow = location / subTreeDistance.rows();
+			int ncol = location % subTreeDistance.rows();
+			if( parentIndex[nrow] != parentIndex[ncol])
+			{
+				ClusterTree tree( parentIndex[nrow], parentIndex[ncol], 2 * maxdis, clusNo);
+				overallTree.push_back(tree);
+				subTreeDistance(ncol, nrow)= 1e9;
+				subTreeDistance(nrow, ncol)= 1e9;
+				int ind1 = parentIndex[nrow];
+				int ind2 = parentIndex[ncol];
+
+				for( int i = 0; i < parentIndex.size(); i++)
+				{
+					if( parentIndex[i] == ind1 || parentIndex[i] == ind2)
+					{
+						parentIndex[i] = clusNo;
+					}
+				}
+				clusNo++;
+			}
+			else
+			{
+				subTreeDistance(ncol, nrow)= 1e9;
+				subTreeDistance(nrow, ncol)= 1e9;
+			}
+		}
+
+		for( int i = 0; i < overallTree.size(); i++)
+		{
+			ClusterTree tree = overallTree[i];
+			//ofs<< tree.first<< "\t"<< tree.second << "\t"<<tree.dis<< "\t"<< tree.parent <<std::endl;
+		}
+		//ofs.close();
+
+		int featureNum = selOrder.size() + unselOrder.size();
+		int* optimalleaforder2 = new int[featureNum];
+		int counter = 0;
+		for(int i = 0; i < selOrder.size(); i++)
+		{
+			optimalleaforder2[i] = selOrder[i];
+			counter++;
+		}
+		for(int i = 0; i < unselOrder.size(); i++)
+		{
+			optimalleaforder2[i + counter] = unselOrder[i];
+		}
+
+		double **ftreedata = new double*[ this->table->GetNumberOfRows() - 1];
+		int count = 0;
+		for( int i = 0; i < treeVec.size(); i++)
+		{
+			for( int j = 0; j < treeVec[i].size(); j++)
+			{
+				ClusterTree tree = treeVec[i][j];
+				ftreedata[count] = new double[4];
+				ftreedata[count][0] = tree.first;
+				ftreedata[count][1] = tree.second;
+				ftreedata[count][2] = tree.dis;
+				ftreedata[count][3] = tree.parent;
+				count++;
+			}
+		}
+		for(int i = 0; i < overallTree.size(); i++)
+		{
+			ClusterTree tree = overallTree[i];
+			ftreedata[count] = new double[4];
+			ftreedata[count][0] = tree.first;
+			ftreedata[count][1] = tree.second;
+			ftreedata[count][2] = tree.dis;
+			ftreedata[count][3] = tree.parent;
+			count++;
+		}
+
+		clusclus *cc1 = new clusclus();
+		cc1->Initialize(ftreedata, this->table->GetNumberOfRows());
+		cc1->GetOptimalLeafOrderD();
+
+		this->setDataForHeatmap( datas, cc1->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), featureNum);
+		this->setDataForDendrograms(cc1->treedata);
+		this->creatDataForHeatmap(POWER_PARAM);
+		
+		for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+		{
+			delete datas[i];
+		}
+		delete datas;
+		for( int i = 0; i < this->table->GetNumberOfRows() - 1; i++)
+		{
+			delete ftreedata[i];
+		}
+		delete ftreedata;
+		std::cout << "Total time to generate progression heatmap is: " << (clock() - start_time) / (float) CLOCKS_PER_SEC << std::endl;
+	}
+	else
+	{
+		std::cout<< "Error in component array size"<<std::endl;
+	}
 }
 
 void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder)

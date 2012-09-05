@@ -1,12 +1,10 @@
 #include"clusclus.h"
 
-#define LINKMODE 2
-
-clusclus::clusclus()
+clusclus::clusclus(int linkmode)
 {
 	this->num_samples = 0;
 	this->num_features = 0;	
-	this->linkmode = LINKMODE;
+	this->linkmode = linkmode;
 	this->num_gaps = 5;
 	this->gap = NULL;
 	this->mergers = NULL;
@@ -21,9 +19,9 @@ clusclus::clusclus()
 	this->num_cluster_samples = NULL;	
 }
 
-clusclus::clusclus(double** feature,int numsamples, int numfeatures)
+clusclus::clusclus(double** feature,int numsamples, int numfeatures, int linkmode)
 {
-	this->linkmode = LINKMODE;
+	this->linkmode = linkmode;
 	this->num_gaps = 5;
 	this->num_features = numfeatures;
 	this->num_samples = numsamples;
@@ -192,14 +190,14 @@ void clusclus::Initialize( double** treedata, int numsamples)
 		}
 	}
 
-	FILE *fp = fopen("ClusInitialize.txt","w");
-	for(int i=0; i<num_samples - 1; i++)
-	{
-		for(int j=0; j<4; j++)
-			fprintf(fp,"%f\t",this->treedata[i][j]);
-		fprintf(fp,"\n");
-	}
-	fclose(fp);
+	//FILE *fp = fopen("ClusInitialize.txt","w");
+	//for(int i=0; i<num_samples - 1; i++)
+	//{
+	//	for(int j=0; j<4; j++)
+	//		fprintf(fp,"%f\t",this->treedata[i][j]);
+	//	fprintf(fp,"\n");
+	//}
+	//fclose(fp);
 }
 
 void clusclus::Clustering()
@@ -222,7 +220,7 @@ void clusclus::Clustering()
 	{
 		if( num_currcluster % 100 == 0)
 		{
-			std::cout<<"left: "<<num_currcluster<<endl;
+			std::cout<<"left: "<<num_currcluster<< std::endl;
 		}
 		mergers[i][0] = i;
 		mergers[i][4]=MergeClusters(num_currcluster, &pivot1, &pivot2);
@@ -387,13 +385,13 @@ double clusclus::UpdateClusterDistances(int num_currcluster, int pivot1, int piv
 					maxx = temp;
 			}
 		}
-		if(linkmode == 2)
+		if(this->linkmode == 2)
 		{
 			finaldistance = sqrt(tempdistance*tempdistance/num_sample_p1/num_sample_k);
 		}
-		else if(linkmode == 1)
+		else if(this->linkmode == 1)
 			finaldistance = minn;
-		else if(linkmode == 3)
+		else if(this->linkmode == 3)
 			finaldistance = maxx;
 
 		if(k < pivot1) cluster_distances[pivot1*(pivot1+1)/2+k] = finaldistance;
@@ -858,4 +856,14 @@ void clusclus::RunClusClus()
 	//	}
 	//}
 	this->GetOptimalLeafOrderD();
+}
+
+void clusclus::GetTreeStructure(std::vector< ClusterTree> &treeVec)
+{
+	treeVec.clear();
+	for(int i = 0; i < num_samples - 1; i++)
+	{
+		ClusterTree tree((int)treedata[i][0], (int)treedata[i][1], treedata[i][2], (int)treedata[i][3]);
+		treeVec.push_back(tree);
+	}
 }

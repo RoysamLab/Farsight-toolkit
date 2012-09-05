@@ -109,6 +109,9 @@ public:
 	int GetConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component);
 	unsigned int GetKNeighborNum();
 
+	void BuildMSTForConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component, int connectedNum);
+	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
+
 protected:
 
 	void NormalizeData(vnl_matrix<double> &mat);
@@ -132,6 +135,7 @@ protected:
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	void CityBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
+	void EuclideanBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
 	void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
@@ -143,6 +147,8 @@ protected:
 	void Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	void Hist(vnl_vector<double>&distance, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis);
+	double FindMinBetweenConnectComponent(vnl_matrix<double> &dis, std::vector<int> ver1, std::vector<int> ver2);
+	void GetComponentMinDistance(vnl_matrix<double> &distMat, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
 
 	//double Dist(int *first, int *second);
 	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
@@ -161,6 +167,7 @@ protected:
 
 public:
 	std::vector< Tree> PublicTreeData;
+	std::vector< Tree> mstTreeList;
 
 private:
 	std::vector< Tree> TreeData;

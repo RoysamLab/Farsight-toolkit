@@ -467,9 +467,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		vertextList( i, 2) = edgeWeights[i];
 	}
 
-	std::ofstream verofs("vertextList.txt");
-	verofs<< vertextList<<endl;
-	verofs.close();
+	//std::ofstream verofs("vertextList.txt");
+	//verofs<< vertextList<<endl;
+	//verofs.close();
 
 	std::cout<< "calculate coordinates"<<endl;
 	std::vector<Point> oldPointList;
@@ -1109,10 +1109,10 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		find( mark, 0, noncheckNode, checkNode);
 	}
 
-	QString hopStr = this->fileName + "shortest_hop.txt";
-	ofstream ofs(hopStr.toStdString().c_str());
-	ofs<< shortest_hop<<endl;
-	ofs.close();
+	//QString hopStr = this->fileName + "shortest_hop.txt";
+	//ofstream ofs(hopStr.toStdString().c_str());
+	//ofs<< shortest_hop<<endl;
+	//ofs.close();
 
 	/// find the root and chains of the tree
 	long int maxhop = shortest_hop.max_value();
@@ -1130,8 +1130,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	tag.fill( 0);
 
 	std::cout<<"build chains"<<endl;
-	QString chainStr = this->fileName + "chains.txt";
-	ofstream ofChains( chainStr.toStdString().c_str());
+	//QString chainStr = this->fileName + "chains.txt";
+	//ofstream ofChains( chainStr.toStdString().c_str());
 	/// find the backbone
 	for( long int i = 0; i < shortest_hop.cols(); i++)
 	{
@@ -1177,12 +1177,12 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 						}
 						else
 						{
-							ofChains<< "already searched branchnode: "<< ind<<"\t"<< i <<"\t"<< j<<endl;
-							for( long int st = 0; st < debugbackbones.size(); st++)
-							{
-								ofChains<< debugbackbones[st] + 1<<endl;
-							}
-							ofChains<< tag<<endl;
+							//ofChains<< "already searched branchnode: "<< ind<<"\t"<< i <<"\t"<< j<<endl;
+							//for( long int st = 0; st < debugbackbones.size(); st++)
+							//{
+							//	ofChains<< debugbackbones[st] + 1<<endl;
+							//}
+							//ofChains<< tag<<endl;
 						}
 					}
 				}
@@ -1203,25 +1203,25 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		tmpbackbones.pop();
 	}
 
-	ofChains << "backbones:" <<endl;
-	for( long int i = 0; i < backbones.size(); i++)
-	{
-		ofChains << backbones[i]<<"\t";
-	}
-	ofChains <<endl;
-	ofChains << "branch chains:"<<endl;
-	std::vector< std::pair< long int, std::vector<long int> > >::iterator chainIter;
-	for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
-	{
-		std::pair< long int, std::vector< long int> >tmp = *chainIter;
-		ofChains << tmp.first;
-		std::vector< long int> branchlist = tmp.second;
-		for( long int i = 0; i < branchlist.size(); i++)
-		{
-			ofChains << "\t"<< branchlist[i];
-		}
-		ofChains <<endl;
-	}
+	//ofChains << "backbones:" <<endl;
+	//for( long int i = 0; i < backbones.size(); i++)
+	//{
+	//	ofChains << backbones[i]<<"\t";
+	//}
+	//ofChains <<endl;
+	//ofChains << "branch chains:"<<endl;
+	//std::vector< std::pair< long int, std::vector<long int> > >::iterator chainIter;
+	//for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
+	//{
+	//	std::pair< long int, std::vector< long int> >tmp = *chainIter;
+	//	ofChains << tmp.first;
+	//	std::vector< long int> branchlist = tmp.second;
+	//	for( long int i = 0; i < branchlist.size(); i++)
+	//	{
+	//		ofChains << "\t"<< branchlist[i];
+	//	}
+	//	ofChains <<endl;
+	//}
 
 	SortChainList( shortest_hop, backbones, chainList);   // the order to draw the subbones
 	//for( chainIter = chainList.begin(); chainIter != chainList.end(); chainIter++)
@@ -1235,13 +1235,13 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	//	}
 	//	ofChains <<endl;
 	//}
-	ofChains.close();
+	//ofChains.close();
 
 	/// calculate the coordinates of the nodes
 	std::cout<<"calculate nodes position"<<endl;
-	QString corStr = this->fileName + "coordinates.txt";
-	ofstream ofCoordinate( corStr.toStdString().c_str());
-	ofCoordinate.precision(4);
+	//QString corStr = this->fileName + "coordinates.txt";
+	//ofstream ofCoordinate( corStr.toStdString().c_str());
+	//ofCoordinate.precision(4);
 
 	vnl_matrix< double> nodePos( 2, adj_matrix.cols());
 	vnl_vector< int> nodePosAssigned( adj_matrix.cols());
@@ -1387,8 +1387,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		nodePos.set_row(i, tmpNodePos);
 	}
 
-	ofCoordinate << setiosflags(ios::fixed)<< nodePos.transpose()<<endl;
-	ofCoordinate.close();
+	//ofCoordinate << setiosflags(ios::fixed)<< nodePos.transpose()<<endl;
+	//ofCoordinate.close();
 
 	for( long int i = 0; i < nodePos.cols(); i++)
 	{

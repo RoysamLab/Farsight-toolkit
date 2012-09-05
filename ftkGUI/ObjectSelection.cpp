@@ -166,55 +166,40 @@ void ObjectSelection::SelectPoints(std::vector<Point> points)
 	emit MultiChanged();
 }
 
-void ObjectSelection::SetSampleIndex( std::vector< std::set<long int> > &sampleIndex)
+void ObjectSelection::SetSampleIndex( std::vector< std::vector<long int> > &sampleIndex)
 {
-	for( int i = 0; i < index.size(); i++)
-	{
-		index[i].clear();
-	}
 	index.clear();
-	index = sampleIndex;
+	for( int i = 0; i < sampleIndex.size(); i++)
+	{
+		index.push_back(sampleIndex[i]);
+	}
 	emit thresChanged();
 }
 
 void ObjectSelection::GetSampleIndex( std::vector< std::vector<long int> > &sampleIndex)
 {
+	sampleIndex.clear();
 	for( int i = 0; i < index.size(); i++)
 	{
-		std::set< long int> setIndex = index[i];
-		std::set< long int>::iterator iter;
-		std::vector< long int> tmp;
-		for( iter = setIndex.begin(); iter != setIndex.end(); iter++)
-		{
-			tmp.push_back( *iter);
-		}
-		sampleIndex.push_back( tmp);
+		sampleIndex.push_back(index[i]);
 	}
 }
 
-void ObjectSelection::SetClusterIndex( std::vector< std::set<long int> > &clusIndex)
+void ObjectSelection::SetClusterIndex( std::vector< std::vector<long int> > &clusIndex)
 {
-	for( int i = 0; i < indexClus.size(); i++)
-	{
-		indexClus[i].clear();
-	}
 	indexClus.clear();
-	indexClus = clusIndex;
-	//emit thresChanged();
+	for( int i = 0; i < clusIndex.size(); i++)
+	{
+		indexClus.push_back(clusIndex[i]);
+	}
 }
 
 void ObjectSelection::GetClusterIndex( std::vector< std::vector<long int> > &clusIndex)
 {
+	clusIndex.clear();
 	for( int i = 0; i < indexClus.size(); i++)
 	{
-		std::set< long int> setIndex = indexClus[i];
-		std::set< long int>::iterator iter;
-		std::vector< long int> tmp;
-		for( iter = setIndex.begin(); iter != setIndex.end(); iter++)
-		{
-			tmp.push_back( *iter);
-		}
-		clusIndex.push_back( tmp);
+		clusIndex.push_back(indexClus[i]);
 	}
 }
 

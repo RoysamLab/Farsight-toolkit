@@ -2662,24 +2662,42 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 	}
 	//cout<<"cluster number is "<<clusternumber<<endl;
 
-	std::vector< std::set< long int> > clusIndex;
-	std::vector< std::set< long int> > sampleIndex;
+	std::vector< std::vector< long int> > clusIndex;
+	std::vector< std::vector< long int> > sampleIndex;
+
 	for(it = reselectedClusterSPD.begin(); it != reselectedClusterSPD.end(); it++)
 	{
-		std::set<long int> sampleIdsforSPD;
+		std::vector<long int> sampleIdsVec;
 		std::set<long int> clusIdsforSPD;
-		this->reselectIdsforSPD(sampleIdsforSPD, *it, &clusIdsforSPD);
-		//cout<<"...\n";
-		sampleIndex.push_back(sampleIdsforSPD);
-		clusIndex.push_back(clusIdsforSPD);
+		std::vector<long int> clusIdsVec;
+		this->reselectIdsforSPD(*it, &clusIdsforSPD);
+
+		for( int i = 0; i < this->num_samples; i++)
+		{
+			if(clusIdsforSPD.find(Optimal_Leaf_Order1[i]) != clusIdsforSPD.end())
+			{
+				for( int k = 0; k < clusIdsforSPD.size(); k++)
+				{
+					int ind = Optimal_Leaf_Order1[i + k];
+
+					clusIdsVec.push_back(ind);
+					for( int j = 0; j < indSPDMapFromIndToVertex[ind].size(); j++)
+					{
+						sampleIdsVec.push_back( indSPDMapFromIndToVertex[ind][j]);
+					}
+				}
+				break;
+			}
+		}
+		sampleIndex.push_back(sampleIdsVec);
+		clusIndex.push_back(clusIdsVec);
 	}
 
 	this->Selection->SetClusterIndex(clusIndex);
 	this->Selection->SetSampleIndex(sampleIndex);
-
 }
 
-void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD)
+void Heatmap::reselectIdsforSPD(long int id, std::set<long int> *clusidforSPD)
 {
 	if(id < this->num_samples)
 	{
@@ -2688,16 +2706,11 @@ void Heatmap::reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std:
 		{
 			clusidforSPD->insert(id);
 		}
-
-		for( int i = 0; i < indSPDMapFromIndToVertex[id].size(); i++)
-		{
-			idsforSPD.insert( indSPDMapFromIndToVertex[id][i]);
-		}
 	}
 	else
 	{
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][0], clusidforSPD);
-		this->reselectIdsforSPD(idsforSPD, connect_Data_Tree1[rowMapForTreeData.find(id)->second][1], clusidforSPD);
+		this->reselectIdsforSPD(connect_Data_Tree1[rowMapForTreeData.find(id)->second][0], clusidforSPD);
+		this->reselectIdsforSPD(connect_Data_Tree1[rowMapForTreeData.find(id)->second][1], clusidforSPD);
 	}
 }
 

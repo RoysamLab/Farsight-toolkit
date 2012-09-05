@@ -117,6 +117,8 @@ private:
 	std::vector< int> unselOrder;
 	vtkSmartPointer<vtkTable> tableAfterCellCluster;
 	std::map< int, int> indexMap;
+	std::vector<int> connectedComponent;
+	int connectedNum;
 };
 
 #endif // SPDTESTWINDOW_H

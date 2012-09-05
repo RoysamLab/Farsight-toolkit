@@ -165,7 +165,7 @@ private:
 	void addDragLineforSPD(double* worldPosition);
 	void selectClustersforSPD(double* worldPosition);
 	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
-	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD = NULL);
+	void reselectIdsforSPD(long int id, std::set<long int> *clusidforSPD);
 	void SetdenSelectedIdsForSPD(std::set<long int>& IDs);
 	void reselectSPDIds1(std::set<long int>& selectedIDs, long int id);
 

@@ -14,14 +14,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 
-using namespace std;
+
+typedef struct ClusterTree
+{
+	ClusterTree()
+	{
+	};
+	ClusterTree(int fir, int sec, double d, int par)
+	{
+		first = fir;
+		second = sec;
+		dis = d;
+		parent = par;
+	};
+	int first;
+	int second;
+	double dis;
+	int parent;
+}ClusterTree;
 
 class clusclus 
 {
 public:
-	clusclus();
-	clusclus(double** features,int num_samples, int num_features);
+	clusclus(int linkmode = 2);
+	clusclus(double** features,int num_samples, int num_features, int linkmode = 2);
 
 	~clusclus();
 
@@ -39,10 +57,10 @@ public:
 	int  ComputeGapStatistics();
 	void PrepareTreeData();
 	void GetOptimalLeafOrderD();
+	void GetTreeStructure(std::vector< ClusterTree> &treeVec);
 
 	int       num_samples;
 	int       num_features;
-	int       linkmode;
 	int		  num_gaps;
 	int*      optimalleaforder;
 	double**  gap;
@@ -50,6 +68,7 @@ public:
 	double**  treedata;
 	double**  features;
 	double**  transposefeatures;
+	int linkmode;
 
 private:
 //	void   NormalizeFeatures();

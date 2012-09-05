@@ -1472,7 +1472,7 @@ void SPDAnalysisModel::GenerateMST()
 		{
 			for( unsigned int j = k + 1; j < num_nodes; j++)
 			{
-				double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+				double dist = EuclideanBlockDist( clusterMat, k, j);   // need to be modified 
 				//double dist = EuclideanBlockDist( clusterMat, k, j);
 				boost::add_edge(k, j, dist, graph);
 			}
@@ -1519,7 +1519,7 @@ void SPDAnalysisModel::GenerateMST()
 		{
 			if( i != this->ModuleMST[n][i])
 			{
-				double dist = CityBlockDist( clusterMat, i, this->ModuleMST[n][i]);
+				double dist = EuclideanBlockDist( clusterMat, i, this->ModuleMST[n][i]);
 				vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
 				DataRow->InsertNextValue(i);
 				DataRow->InsertNextValue( this->ModuleMST[n][i]);
@@ -1597,7 +1597,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 	{
 		for( unsigned int j = k + 1; j < num_nodes; j++)
 		{
-			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+			double dist = EuclideanBlockDist( clusterMat, k, j);   // need to be modified 
 			//double dist = EuclideanBlockDist( clusterMat, k, j);
 			boost::add_edge(k, j, dist, graph);
 		}
@@ -1628,7 +1628,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 	{
 		if( i != vertex[i])
 		{
-			double dist = CityBlockDist( clusterMat, i, vertex[i]);
+			double dist = EuclideanBlockDist( clusterMat, i, vertex[i]);
 			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
 			DataRow->InsertNextValue(i);
 			DataRow->InsertNextValue( vertex[i]);
@@ -1677,7 +1677,7 @@ void SPDAnalysisModel::GenerateDistanceMST()
 	{
 		for( unsigned int j = k + 1; j < num_nodes; j++)
 		{
-			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+			double dist = EuclideanBlockDist( clusterMat, k, j);   // need to be modified 
 				//double dist = EuclideanBlockDist( clusterMat, k, j);
 			boost::add_edge(k, j, dist, graph);
 		}
@@ -1730,6 +1730,27 @@ void SPDAnalysisModel::CityBlockDist( vnl_matrix<double>& mat, vnl_matrix<double
 			{
 				dis += abs(subm[i]);
 			}
+			matDis(ind1, ind2) = dis;
+			matDis(ind2, ind1) = dis;
+		}
+	}
+}
+
+void SPDAnalysisModel::EuclideanBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis)
+{
+	unsigned int nrows = mat.rows();
+	matDis.set_size( nrows, nrows);
+	matDis.fill(1e6);
+
+	for( int ind1 = 0; ind1 < mat.rows(); ind1++)
+	{
+//#pragma omp parallel for
+		for( int ind2 = ind1 + 1; ind2 < mat.rows(); ind2++)
+		{
+			vnl_vector<double> module1 = mat.get_row(ind1);
+			vnl_vector<double> module2 = mat.get_row(ind2);
+			vnl_vector<double> subm = module1 - module2;
+			double dis = subm.magnitude();
 			matDis(ind1, ind2) = dis;
 			matDis(ind2, ind1) = dis;
 		}
@@ -2152,9 +2173,9 @@ void SPDAnalysisModel::GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix)
 
 void SPDAnalysisModel::GetClusClusData(clusclus *c1, clusclus *c2, double threshold, std::vector< unsigned int> *disModIndex)
 {
-	QString filenameSM = this->filename + "similarity_matrix.txt";
-	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
-	ofSimatrix.precision(4);
+	//QString filenameSM = this->filename + "similarity_matrix.txt";
+	//std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
+	//ofSimatrix.precision(4);
 
 	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols());
 	this->heatmapMatrix.fill(0);
@@ -2162,33 +2183,33 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, clusclus *c2, double thresh
 
 	if( bProgression)
 	{
-		ofSimatrix<< "Progression over distance"<<endl;
+		//ofSimatrix<< "Progression over distance"<<endl;
 		for(unsigned int i = 0; i < DistanceEMDVector.size(); i++)
 		{
 			if( DistanceEMDVector[i] <= threshold)    // change to smaller than
 			{
 				disModIndex->push_back(i);
-				ofSimatrix<< i<< "\t"<< DistanceEMDVector[i]<<endl;
+				//ofSimatrix<< i<< "\t"<< DistanceEMDVector[i]<<endl;
 			}
 		}
 	}
 	else
 	{
-		ofSimatrix<< "Overal Progression"<<endl;
+		//ofSimatrix<< "Overal Progression"<<endl;
 		vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
 		for( unsigned int i = 0; i < moduleForSelection.size(); i++)
 		{
 			int moduleI = moduleForSelection[i];
-			ofSimatrix <<"MST "<<moduleI<<endl;
+			//ofSimatrix <<"MST "<<moduleI<<endl;
 			for( unsigned int j = 0; j < moduleForSelection.size(); j++)
 			{
 				if( this->EMDMatrix( moduleI, moduleForSelection[j]) <= threshold)     // find the modules that support common mst    change to smaller than
 				{
 					simModIndex.push_back(moduleForSelection[j]);
-					ofSimatrix << moduleForSelection[j] <<"\t";
+					//ofSimatrix << moduleForSelection[j] <<"\t";
 				}
 			}
-			ofSimatrix <<endl;
+			//ofSimatrix <<endl;
 
 			if( simModIndex.size() > 1)   // not only include itself
 			{
@@ -2212,8 +2233,8 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, clusclus *c2, double thresh
 		c2->Initialize( c1->transposefeatures,c1->num_features, c1->num_samples);
 		c2->RunClusClus();
 	}
-	ofSimatrix << this->heatmapMatrix<< std::endl;
-	ofSimatrix.close();	
+	//ofSimatrix << this->heatmapMatrix<< std::endl;
+	//ofSimatrix.close();	
 }
 
 void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
@@ -2293,7 +2314,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 	{
 		for( unsigned int j = k + 1; j < num_nodes; j++)
 		{
-			double dist = CityBlockDist( clusterMat, k, j);   // need to be modified 
+			double dist = EuclideanBlockDist( clusterMat, k, j);   // need to be modified 
 			//double dist = EuclideanBlockDist( clusterMat, k, j);
 			boost::add_edge(k, j, dist, graph);
 		}
@@ -2329,7 +2350,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateProgressionTree( std::string
 	{
 		if( i != vertex[i])
 		{
-			double dist = CityBlockDist( clusterMat, i, vertex[i]);
+			double dist = EuclideanBlockDist( clusterMat, i, vertex[i]);
 			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
  
 				DataRow->InsertNextValue( i);
@@ -2590,7 +2611,7 @@ unsigned int SPDAnalysisModel::GetKNeighborNum()
 void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 {
 	m_kNeighbor = kNeighbor;
-	std::ofstream ofs("NewEMD.txt");
+	//std::ofstream ofs("NewEMD.txt");
 	int size = ClusterIndex.max_value() + 1;
 	std::vector< std::vector< unsigned int> > featureClusterIndex;
 	featureClusterIndex.resize( size);
@@ -2616,7 +2637,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		vnl_matrix< double> modulei(this->MatrixAfterCellCluster.rows(), featureClusterIndex[i].size());
 		GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, i, modulei);
 		vnl_matrix< double> modDisti;
-		CityBlockDist(modulei, modDisti);
+		EuclideanBlockDist(modulei, modDisti);
 		std::vector<unsigned int> nearIndex;
 		std::vector<unsigned int> farIndex;
 		vnl_vector<double> nearWeights;
@@ -2635,12 +2656,19 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		double min = modDisti.min_value();
 		double max = modDisti.max_value();
 		double interval = ( max - min) / NUM_BIN;
-		vnl_vector<unsigned int> histNear, histFar;
-		Hist(nearWeights, interval, min, histNear);
-		Hist(farWeights, interval, min, histFar);
+		if( interval > 1e-9)
+		{
+			vnl_vector<unsigned int> histNear, histFar;
+			Hist(nearWeights, interval, min, histNear);
+			Hist(farWeights, interval, min, histFar);
 
-		vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
-		disScale[i] = EarthMoverDistance( histFar, histNear, flowMatrix);
+			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+			disScale[i] = EarthMoverDistance( histFar, histNear, flowMatrix);
+		}
+		else
+		{
+			disScale[i] = 0;
+		}
 		disMatrixPtList[i] = modDisti;
 		kNearIndex[i] = nearIndex;
 	}
@@ -2659,51 +2687,58 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		double max = disMatrixPtList[i].max_value();
 		double interval = ( max - min) / NUM_BIN;
 
-		vnl_vector<double> weights;
-		vnl_vector<unsigned int> histi;
-		GetKWeights( disMatrixPtList[i], kNearIndex[i], weights, kNeighbor);
-		Hist(weights, interval, min, histi);
-
 		vnl_vector< double> row;
 		row.set_size(featureClusterIndex.size());
-
-		for( int j = 0; j < featureClusterIndex.size(); j++)
+		if( interval > 1e-9)
 		{
-			vnl_vector<double> matchWeights;
-			vnl_vector<unsigned int> histj;
-			
-			GetKWeights( disMatrixPtList[i], kNearIndex[j], matchWeights, kNeighbor);
-			Hist( matchWeights, interval, min, histj);
+			vnl_vector<double> weights;
+			vnl_vector<unsigned int> histi;
+			GetKWeights( disMatrixPtList[i], kNearIndex[i], weights, kNeighbor);
+			Hist(weights, interval, min, histi);
 
-			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+			for( int j = 0; j < featureClusterIndex.size(); j++)
+			{
+				vnl_vector<double> matchWeights;
+				vnl_vector<unsigned int> histj;
+				
+				GetKWeights( disMatrixPtList[i], kNearIndex[j], matchWeights, kNeighbor);
+				Hist( matchWeights, interval, min, histj);
 
-			double movedEarth = EarthMoverDistance( histj, histi, flowMatrix);
-			//#ifdef _OPENMP
-			//	omp_set_lock(&lock);
-			//#endif
-			row[j] = movedEarth;
-			//#ifdef _OPENMP
-			//	omp_unset_lock(&lock);
-			//#endif
-		}
-		vnl_vector< double> nrow = row - row.mean();
-		double var = nrow.squared_magnitude() / nrow.size();
-		var = sqrt(var);
-		if( var < 0.3 || disScale[i] < 1e-9)
-		{
-			row.fill(-10);
+				vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+
+				double movedEarth = EarthMoverDistance( histj, histi, flowMatrix);
+				//#ifdef _OPENMP
+				//	omp_set_lock(&lock);
+				//#endif
+				row[j] = movedEarth;
+				//#ifdef _OPENMP
+				//	omp_unset_lock(&lock);
+				//#endif
+			}
+			vnl_vector< double> nrow = row - row.mean();
+			double var = nrow.squared_magnitude() / nrow.size();
+			var = sqrt(var);
+			if( var < 0.3 || disScale[i] < 1e-9)
+			{
+				row.fill(-10);
+			}
+			else
+			{
+				row = row / disScale[i];
+			}
+			this->EMDMatrix.set_row(i, row);
 		}
 		else
 		{
-			row = row / disScale[i];
+			row.fill(-10);
+			this->EMDMatrix.set_row(i, row);
 		}
-		this->EMDMatrix.set_row(i, row);
 	}
 
 	moduleForSelection.clear();
 	for( int i = 0; i < EMDMatrix.rows(); i++)
 	{
-		if(EMDMatrix(i,0) > -1e-9)
+		if( EMDMatrix(i,0) > -1e-9)
 		{
 			moduleForSelection.push_back(i);
 		}
@@ -2715,10 +2750,10 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		this->EMDMatrix = this->EMDMatrix / max1;
 	}
 
-	ofs<< kNeighbor<<"\t"<<max1<<std::endl;
-	ofs<< this->EMDMatrix<< std::endl;
+	//ofs<< kNeighbor<<"\t"<<max1<<std::endl;
+	//ofs<< this->EMDMatrix<< std::endl;
 
-	ofs.close();
+	//ofs.close();
 	std::cout<< "EMD matrix has been built successfully"<<endl;
 }
 
@@ -2774,11 +2809,256 @@ int SPDAnalysisModel::GetConnectedComponent(std::vector< unsigned int> &selFeatu
 	vnl_matrix<double> selMat;
 	GetCombinedMatrix( this->MatrixAfterCellCluster, selFeatureID, selMat);
 	vnl_matrix< double> distMat;
-	CityBlockDist(selMat, distMat);
+	EuclideanBlockDist(selMat, distMat);
 	std::vector<unsigned int> nearIndex;
 	FindNearestKSample(distMat, nearIndex, m_kNeighbor);
+
+	component.clear();
 	int connectedNum = GetConnectedComponent(nearIndex, component, m_kNeighbor);
 	return connectedNum;
+}
+
+void SPDAnalysisModel::BuildMSTForConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component, int connectedNum)
+{
+	vnl_matrix<double> selMat;
+	GetCombinedMatrix( this->MatrixAfterCellCluster, selFeatureID, selMat);
+	vnl_matrix< double> distMat;
+	EuclideanBlockDist(selMat, distMat);
+	std::vector<unsigned int> nearIndex;
+	FindNearestKSample(distMat, nearIndex, m_kNeighbor);
+	std::vector< std::vector<unsigned int> >neighborIndex;
+	neighborIndex.resize( nearIndex.size() / m_kNeighbor);
+	for( int i = 0; i < nearIndex.size() / m_kNeighbor; i++)
+	{
+		std::vector<unsigned int> index;
+		index.resize(m_kNeighbor);
+		for(int j = 0; j < m_kNeighbor; j++)
+		{
+			index[j] = nearIndex[ i * m_kNeighbor + j];
+
+		}
+		neighborIndex[i] = index;
+	}
+
+	std::vector< std::vector<int> > graphVertex;
+	std::vector< std::map<int, int> > graphMap;
+	vnl_vector< int> size(connectedNum);
+	graphVertex.resize(connectedNum);
+	graphMap.resize(connectedNum);
+	size.fill(0);
+
+	for( int i = 0; i < component.size(); i++)
+	{
+		int n = component[i];
+		graphVertex[n].push_back(i);
+		graphMap[n][i] = size[n];
+		size[n]++;
+	}
+
+	std::vector< std::multimap< double, std::pair<int, int> > > edgeMapVec;
+	edgeMapVec.resize(connectedNum);
+
+	//std::ofstream ofs("BuildMSTForConnectedComponent.txt");
+	double minEdge = 1e6;
+	for( int i = 0; i < graphVertex.size(); i++)
+	{
+		Graph graph(graphVertex[i].size());
+		vnl_matrix< unsigned char> mat;
+		mat.set_size(this->MatrixAfterCellCluster.rows(), this->MatrixAfterCellCluster.rows());
+		mat.fill(0);
+		for( int j = 0; j < graphVertex[i].size(); j++)
+		{
+			int node = graphVertex[i][j];
+			for( int k = 0; k < neighborIndex[node].size(); k++)
+			{
+				int node2 = neighborIndex[node][k];
+				if( mat(node, node2) == 0)
+				{
+					//ofs << graphMap[i][node]<<"\t"<< graphMap[i][node2]<< "\t"<<distMat(node, node2)<<std::endl;
+					boost::add_edge(graphMap[i][node], graphMap[i][node2], distMat(node, node2), graph);
+					mat(node, node2) = 1;
+					mat(node2, node) = 1;
+				}
+			}
+		}
+		
+		std::vector< boost::graph_traits< Graph>::vertex_descriptor> vertex(graphVertex[i].size());
+
+		try
+		{
+			boost::prim_minimum_spanning_tree(graph, &vertex[0]);
+
+		}
+		catch(...)
+		{
+			std::cout<< "MST construction failure!"<<endl;
+			exit(111);
+		}
+		
+		std::multimap< double, std::pair<int, int>> edgeMap;
+		for( int k = 0; k < vertex.size(); k++)
+		{
+			int nodeInd = vertex[k];
+			if( k != nodeInd)
+			{
+				std::pair< int, int> pair = std::pair< int, int>( graphVertex[i][k], graphVertex[i][nodeInd]);
+				double dis = distMat(graphVertex[i][k], graphVertex[i][nodeInd]);
+				if( dis < minEdge)
+				{
+					minEdge = dis;
+				}
+				edgeMap.insert( std::pair< double, std::pair<int, int> >(dis, pair));
+				//ofs << dis<<"\t"<< graphVertex[i][k]<< "\t"<<graphVertex[i][nodeInd]<<std::endl;
+			}
+		}
+		edgeMapVec[i] = edgeMap;
+	}
+
+	//ofs <<std::endl;
+
+	int clusNo = MatrixAfterCellCluster.rows();
+	std::vector< int> parentIndex;	// save tree root index for each node
+	parentIndex.resize(clusNo);
+	for( int i = 0; i < clusNo; i++)
+	{
+		parentIndex[i] = i;
+	}
+	
+	mstTreeList.clear();
+	vnl_vector<int> parent(edgeMapVec.size()); // save the parent tree index for each connected graph
+	for( int i = 0; i < edgeMapVec.size(); i++)
+	{
+		std::multimap< double, std::pair<int, int> > map = edgeMapVec[i];
+		std::multimap< double, std::pair<int, int> >::iterator iter;
+		for( iter = map.begin(); iter != map.end(); iter++)
+		{
+			std::pair< int, int> pair = iter->second;
+			int fir = pair.first;
+			int sec = pair.second;
+			Tree tree(parentIndex[fir], parentIndex[sec], iter->first - minEdge, clusNo);
+			mstTreeList.push_back( tree);
+			int firstIndex = parentIndex[fir];
+			int secIndex = parentIndex[sec];
+			//ofs << iter->first<<"\t"<< parentIndex[fir]<< "\t"<<parentIndex[sec]<<"\t"<<clusNo<<std::endl;
+			for( int j = 0; j < parentIndex.size(); j++)
+			{
+				if( parentIndex[j] == firstIndex || parentIndex[j] == secIndex)
+				{
+					parentIndex[j] = clusNo;
+				}
+			}
+			clusNo++;
+		}
+		parent[i] = clusNo - 1;
+	}
+	//ofs << parentIndex <<std::endl;
+	//ofs <<std::endl;
+
+	vnl_matrix< double> subTreeDistance;
+	GetComponentMinDistance(distMat, component, connectedNum, subTreeDistance);
+	//ofs<< subTreeDistance<<std::endl;
+	while(mstTreeList.size() < MatrixAfterCellCluster.rows() - 1)  
+	{
+		unsigned int location = subTreeDistance.arg_min();
+		int nrow = location / subTreeDistance.rows();
+		int ncol = location % subTreeDistance.rows();
+		if( parent[nrow] != parent[ncol])
+		{
+			Tree tree( parent[nrow], parent[ncol], subTreeDistance(nrow, ncol) - minEdge, clusNo);
+			//ofs << subTreeDistance(nrow, ncol)<<"\t"<< parent[nrow]<< "\t"<< parent[ncol]<<"\t"<<clusNo<<std::endl;
+			mstTreeList.push_back(tree);
+			subTreeDistance(ncol, nrow)= 1e9;
+			subTreeDistance(nrow, ncol)= 1e9;
+
+			for( int i = 0; i < parent.size(); i++)
+			{
+				if( parent[i] == parent[nrow] || parent[i] == parent[ncol])
+				{
+					parent[i] = clusNo;
+				}
+			}
+			clusNo++;
+		}
+		else
+		{
+			subTreeDistance(ncol, nrow)= 1e9;
+			subTreeDistance(nrow, ncol)= 1e9;
+		}
+	}
+	//ofs.close();
+}
+
+void SPDAnalysisModel::GetComponentMinDistance( vnl_matrix<double> &distMat, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis)
+{
+	dis.set_size(connectedNum, connectedNum);
+	dis.fill(1e9);
+	
+	std::vector< std::vector<int> > graphVertex;
+	graphVertex.resize(connectedNum);
+
+	for( int i = 0; i < component.size(); i++)
+	{
+		int n = component[i];
+		graphVertex[n].push_back(i);
+	}
+
+	for( int i = 0; i < graphVertex.size(); i++)
+	{
+		for( int j = i + 1; j < graphVertex.size(); j++)
+		{
+			double min = FindMinBetweenConnectComponent(distMat, graphVertex[i], graphVertex[j]);
+			dis( i, j) = min;
+			dis( j, i) = min;
+		}
+	}
+}
+
+void SPDAnalysisModel::GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis)
+{
+	vnl_matrix<double> selMat;
+	GetCombinedMatrix( this->MatrixAfterCellCluster, selFeatureID, selMat);
+	vnl_matrix< double> distMat;
+	EuclideanBlockDist(selMat, distMat);
+
+	dis.set_size(connectedNum, connectedNum);
+	dis.fill(1e9);
+	
+	std::vector< std::vector<int> > graphVertex;
+	graphVertex.resize(connectedNum);
+
+	for( int i = 0; i < component.size(); i++)
+	{
+		int n = component[i];
+		graphVertex[n].push_back(i);
+	}
+
+	for( int i = 0; i < graphVertex.size(); i++)
+	{
+		for( int j = i + 1; j < graphVertex.size(); j++)
+		{
+			double min = FindMinBetweenConnectComponent(distMat, graphVertex[i], graphVertex[j]);
+			dis( i, j) = min;
+			dis( j, i) = min;
+		}
+	}
+}
+
+double SPDAnalysisModel::FindMinBetweenConnectComponent(vnl_matrix<double> &dis, std::vector<int> ver1, std::vector<int> ver2)
+{
+	double min = 1e9;
+	for( int i = 0; i < ver1.size(); i++)
+	{
+		int m = ver1[i];
+		for( int j = 0; j < ver2.size(); j++)
+		{
+			int n = ver2[j];
+			if( dis(m, n) < min)
+			{
+				min = dis(m,n);
+			}
+		}
+	}
+	return min;
 }
 
 int SPDAnalysisModel::GetConnectedComponent(std::vector< unsigned int>& index, std::vector< int>& component, unsigned int kNeighbor)
@@ -2937,12 +3217,12 @@ void SPDAnalysisModel::GetPercentage(std::vector< std::vector< long int> > &clus
 void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold)
 {
 	disPer.clear();
-	std::ofstream ofs("Distance.txt");
+	//std::ofstream ofs("Distance.txt");
 	if( disCor > 1)
 	{
 		for( int i = 0; i < clusIndex.size(); i++)
 		{
-			ofs<< "Cluster "<<i<<"\t"<<clusIndex[i].size()<<std::endl;
+			//ofs<< "Cluster "<<i<<"\t"<<clusIndex[i].size()<<std::endl;
 			int count = 0;
 			int distanceCount = 0;
 			for( int j = 0; j < clusIndex[i].size(); j++)
@@ -2952,14 +3232,14 @@ void SPDAnalysisModel::GetCloseToDevicePercentage( std::vector< std::vector< lon
 				{
 					count++;
 					std::map< int, int>::iterator iter = indMapFromVertexToClus.find( index);  
-					ofs<< UNDistanceToDevice[iter->second]<<"\t";
+					//ofs<< UNDistanceToDevice[iter->second]<<"\t";
 					if( iter != indMapFromVertexToClus.end() && UNDistanceToDevice[iter->second] <= disThreshold)
 					{
 						distanceCount++;
 					}
 				}
 			}
-			ofs<<std::endl<<std::endl;
+			//ofs<<std::endl<<std::endl;
 			if( count > 0)
 			{
 				disPer.push_back( (double)distanceCount / count);

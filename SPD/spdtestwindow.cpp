@@ -39,6 +39,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	progressionHeatmap = NULL;
 	HeatmapWin = NULL;
 	plot = NULL;
+	connectedNum = 0;
 
     dataFileLabel = new QLabel(tr("Choose file:"), this);
 
@@ -522,15 +523,13 @@ void SPDtestWindow::showPSM()
 }
 
 void SPDtestWindow::viewProgression()
-{
-	/* needs to be changed:
-	   get orders of the features
-	   setmodels heatmap: table after dimension reduced in sample space
-	   selection: threshold selection, node selection
-	   show default heatmap and tree here
-	*/
-	
+{	
 	/** heatmap set models */
+	if(connectedNum <= 1e-9)
+	{
+		return;
+	}
+
 	if( this->originalHeatmap)
 	{
 		delete this->originalHeatmap;
@@ -566,44 +565,30 @@ void SPDtestWindow::viewProgression()
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
 
-	/// show up the heatmap after feature selected
-	//if( this->originalHeatmap)
+	//SPDModel->BuildMSTForConnectedComponent(selFeatureID, connectedComponent, connectedNum);
+
+	//std::vector< Tree> sampleTree = SPDModel->mstTreeList;
+	//double **streedata = new double*[sampleTree.size()];
+	//for(int i = 0; i < sampleTree.size(); i++)
 	//{
-	//	delete this->originalHeatmap;
+	//	streedata[i] = new double[4];
+	//	streedata[i][0] = sampleTree[i].first;
+	//	streedata[i][1] = sampleTree[i].second;
+	//	streedata[i][2] = sampleTree[i].cor;
+	//	streedata[i][3] = sampleTree[i].parent;
 	//}
 
-	//this->originalHeatmap = new Heatmap(this);
-	//std::vector< int> sampleOrder;
-	//for( int i = 0; i < tableAfterCellCluster->GetNumberOfRows(); i++)
-	//{
-	//	sampleOrder.push_back(i);
-	//}
-
-	//this->originalHeatmap->setModelsforSPD( tableAfterCellCluster, selection, sampleOrder, selOrder, unselOrder);
-	//this->originalHeatmap->showGraphforSPD( selOrder.size(), unselOrder.size(), true);
-
-	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap);
+	vnl_matrix<double> subTreeDistance;
+	SPDModel->GetComponentMinDistance(selFeatureID, connectedComponent, connectedNum, subTreeDistance);
+	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap,\
+										&connectedComponent, connectedNum, &subTreeDistance);
 	this->HeatmapWin->showGraphforSPD( selOrder.size(), unselOrder.size());
 
-	//vtkSmartPointer<vtkTable> table = this->SPDModel->GenerateProgressionTree(selectModulesID);
-	//std::vector<std::string> headers;
-	//SPDModel->GetTableHeaders( headers);
-	//QString str = SPDModel->GetFileName();
-	//std::set<long int> featureSelectedIDs;
-	//SPDModel->GetSelectedFeatures(featureSelectedIDs);
-
-
-	//this->graph->setModels(data, selection);
-	//this->graph->SetTreeTable( table, headers[0], headers[1], headers[2]);
-	//try
+	//for(int i = 0; i < sampleTree.size(); i++)
 	//{
-	//	this->graph->ShowGraphWindow();
-	//	//this->HeatmapWin->showGraph();
+	//	delete streedata[i];
 	//}
-	//catch(...)
-	//{
-	//	std::cout<< "Graph window error!"<<endl;
-	//}
+	//delete streedata;
 }
 
 void SPDtestWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
@@ -723,7 +708,7 @@ void SPDtestWindow::regenerateProgressionTree()
 		SPDModel->GetPercentage(sampleIndex, colorVec);
 		SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
 
-		SPDModel->SaveSelectedFeatureNames("ReGenProgressionSelFeatures.txt", selFeatureID);
+		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
 
 		/** graph window set models */
@@ -798,8 +783,8 @@ void SPDtestWindow::updateSelMod()
 		heatmapButton->setEnabled(FALSE);
 	}
 
-	std::vector<int> connectedComponent;
-	int connectedNum = this->SPDModel->GetConnectedComponent(selMod, connectedComponent);
+	SPDModel->GetFeatureIdbyModId(selMod, selFeatureID);
+	connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
 	QString str = QString::number(connectedNum);
 	connectedGraphEdit->setText(str);
 }

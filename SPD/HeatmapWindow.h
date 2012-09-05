@@ -100,13 +100,15 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2 = NULL);
 	void creatDataForHeatmap(double powCof);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
-	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> selOrder, std::vector< int> unselOrder, 
+		std::map< int, int> *indexCluster = NULL, std::vector<int> *component = NULL, int numOfComponenets = 0, vnl_matrix<double> *subTreeDistance = NULL, ObjectSelection * sels2 = NULL);
+	void setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, std::vector< int> sampleOrder, std::vector< int> selOrder, 
+		std::vector< int> unselOrder, std::map< int, int> *indexCluster = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
 	void runClus();
 	inline void setPriority(std::vector<int> order){ priority_order = order; };
 	inline void closeWindow(){ close(); };
-	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
+	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder, int numberofcomponents, vnl_matrix<double> &subTreeDistance);
 	void runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
 	void showGraphforSPD( int selCol = 0, int unselCol = 0, bool bprogressionHeatmap = false);
@@ -157,7 +159,7 @@ private:
 	void addDragLineforSPD(double* worldPosition);
 	void selectClustersforSPD(double* worldPosition);
 	void reselectClustersforSPD(std::set<long int>& selectedClusterSPD);
-	void reselectIdsforSPD(std::set<long int>& idsforSPD, long int id, std::set<long int> *clusidforSPD = NULL);
+	void reselectIdsforSPD(long int id, std::set<long int> *clusidforSPD = NULL);
 	void SetdenSelectedIdsForSPD(std::set<long int>& IDs);
 	void reselectSPDIds1(std::set<long int>& selectedIDs, long int id);
 
@@ -253,6 +255,7 @@ private:
 
 	clusclus *cc1;
 	clusclus *cc2;
+	std::vector<int> connectedComponent;
 };
 
 #endif
