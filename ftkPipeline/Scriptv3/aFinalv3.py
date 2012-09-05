@@ -84,12 +84,12 @@ if len(sys.argv) == 2:
 TRY = 13
 #DEBUG = 1
 #----------------------------------
-REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 0	# If 0 the results will be keep
+REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
+MOVE_RESULTS = 1	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
-MOVE_LOCALLY = 0
+MOVE_LOCALLY = 1
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
 REMOVE_TEMP_TRAC = 1
@@ -118,8 +118,8 @@ runSegm_db = 1
 #runDistMap_db = 1
 runTrac = 0		# Flag to run Tracing
 runTrac_db = 0
-runAstroTrac = 1		# Flag to run Astrocyte Tracing
-runAstroTrac_db = 1
+runAstroTrac = 0		# Flag to run Astrocyte Tracing
+runAstroTrac_db = 0
 
 #runCurv = 0#1		# Flag to run Curvelets
 #runCurv_db = 0#1
@@ -170,9 +170,10 @@ DATA_FOLDER_ALL = ['/0131_test']
 if( SERVER == 'far04' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD_CROPPED','/0117_NRRD_CROPPED','/0120_NRRD_CROPPED','/0123_NRRD_CROPPED','/0128_NRRD_CROPPED','/0131_NRRD_CROPPED','/0323_NRRD_CROPPED','/0405_NRRD_CROPPED','/0409_NRRD_CROPPED','/0410_NRRD_CROPPED','/0412_NRRD_CROPPED','/1206_NRRD_CROPPED']
-	DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
+	DATA_FOLDER_ALL = ['/0323_NRRD_CROPPED_M_1','/0323_NRRD_CROPPED_M_2','/0323_NRRD_CROPPED_M_3','/0323_NRRD_CROPPED_M_4','/0323_NRRD_CROPPED_M_5','/0323_NRRD_CROPPED_M_6']
 	#DATA_FOLDER_ALL = ['/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD']
@@ -183,13 +184,13 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0131_NRRD_CROPPED_3']
 	#DATA_FOLDER_ALL = ['/0120_NRRD']
 	#DATA_FOLDER_ALL = ['/0410_NRRD_CROPPED_2']
-	DATA_FOLDER_ALL = ['/0113_NRRD']
+	#DATA_FOLDER_ALL = ['/0113_NRRD']
 if( SERVER == 'far05' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0113_NRRD']
+	#DATA_FOLDER_ALL = ['/0113_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
@@ -672,7 +673,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			TEMP_FILE.write('-yTileBor 200\n')
 			TEMP_FILE.write('-zTileBor 100\n')
 
-		TEMP_FILE.write('-num_threads 80\n')
+		TEMP_FILE.write('-num_threads 65\n')
 		if haveCy5 == 1:
 			TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
 		if haveTRT == 1:
