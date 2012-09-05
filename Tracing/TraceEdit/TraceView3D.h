@@ -292,6 +292,9 @@ public slots:
 	void ClusclusAnalysis();
 	void BiclusAnalysis();
 	void FeatureDistributionAnalysis();
+	void KNearestNeighborAnalysis();
+	double ComputeAverageDistance(std::vector< std::pair<unsigned int, double> >);
+	void NeighborsWithinRadiusAnalysis();
 	void SpectralCluserting();
 	void selectedFeaturesClustering();
 
@@ -471,6 +474,8 @@ private:
 	QAction *BiClusAction;
 	QAction *FeatureDistributionAction;
 	QAction *SpectralClusteringAction;
+	QAction *KNearestAction;
+	QAction *InRadiusAction;
 
 	/*QAction *UndoButton;
 	QAction *RedoButton;*/
@@ -673,4 +678,39 @@ private:
 
 	std::string imageFileName;
 };
+
+class QueryDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	QueryDialog(int QueryType, QVector<QString> classes, bool diffusion_graph, QWidget *parent = 0);
+	std::vector<unsigned int> parseIDs(void);
+	unsigned int parseK(void);
+	double parseRad(void);
+	unsigned short getSourceClass(void);
+	unsigned short getDestClass(void);
+	bool getKMutual(void);
+
+private:
+	QLabel * idLabel;
+	QLineEdit * IDs;
+	QHBoxLayout *idLayout;
+	QLabel * kLabel;
+	QLineEdit * K;
+	QHBoxLayout *kLayout;
+	QLabel * radLabel;
+	QLineEdit * RAD;
+	QHBoxLayout *radLayout;
+	QLabel * classLabel1;
+	QComboBox * classCombo1;
+	QHBoxLayout * classLayout1;
+	QLabel * classLabel2;
+	QComboBox * classCombo2;
+	QHBoxLayout * classLayout2;
+	QCheckBox * check;
+	QPushButton * okButton;
+	QHBoxLayout * bLayout;
+	QVBoxLayout * layout;
+};
+
 #endif
