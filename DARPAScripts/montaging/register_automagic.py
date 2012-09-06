@@ -189,6 +189,6 @@ def main(argv):
 
 if __name__ == "__main__":
     head= os.path.split(sys.argv[0])[0]
-    scriptsfolder = head if head else '.'
+    #scriptsfolder = head if head else '.'
     main(sys.argv[1:])
 
