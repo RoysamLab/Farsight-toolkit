@@ -2895,7 +2895,7 @@ void SPDAnalysisModel::BuildMSTForConnectedComponent(std::vector< unsigned int> 
 			exit(111);
 		}
 		
-		std::multimap< double, std::pair<int, int>> edgeMap;
+		std::multimap< double, std::pair<int, int> > edgeMap;
 		for( int k = 0; k < vertex.size(); k++)
 		{
 			int nodeInd = vertex[k];
