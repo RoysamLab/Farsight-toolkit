@@ -148,8 +148,8 @@ public:
 	HeapNode_astro centroid;
 	//HeapNode_astro weightedCentroid;
 	unsigned short int ID;
-	int volume;
-	int boundingBoxVolume;
+	double volume;
+	double boundingBoxVolume;
 	int integratedIntensity;
 	double meanIntensity;
 	double varianceIntensity;
@@ -181,6 +181,9 @@ public:
 	double neuro_total;
 	double neuro_avg;
 	double neuro_surr;
+	double vessel_total;
+	double vessel_avg;
+	double vessel_surr;
 
 	double minRootDist;
 	double maxRootDist;

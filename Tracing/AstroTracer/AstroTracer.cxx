@@ -544,13 +544,28 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 	
 
 	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0);
-	obj_measures.alpha = 0.5; //0.5*img_max_val;
-	obj_measures.beta = 0.5; //0.5*img_max_val;
-	obj_measures.gamma = 0.25; //0.25*img_max_val;
+	obj_measures.alpha = 0.5 * img_max_val;
+	obj_measures.beta = 0.5 * img_max_val;
+	obj_measures.gamma = 0.25 * img_max_val; //0.25 * img_max_val;
 
 	//std::cout << "Max image value: " << img_max_val << " Mean img value: " << img_mean_val << std::endl;
 
 	this->ComputeObjectnessImage(obj_measures);
+
+	//Write out the vesselenss image
+	if(writeResult){
+		std::string vesselnessPointsFileName = coverageFileName;
+		vesselnessPointsFileName.erase(vesselnessPointsFileName.length()-4, vesselnessPointsFileName.length());
+		vesselnessPointsFileName.append("_vesselness.mhd");
+
+		//std::cout << vesselnessPointsFileName << std::endl;
+
+		typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+		ImageWriterType::Pointer image_writer = ImageWriterType::New();
+		image_writer->SetFileName(vesselnessPointsFileName);
+		image_writer->SetInput(this->ObjectnessImage);
+		image_writer->Update();
+	}
 
 	StatisticsFilterType::Pointer stats_filter2 = StatisticsFilterType::New();
 	stats_filter2->SetInput(this->ObjectnessImage);
@@ -608,13 +623,6 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 	stats_filter5->SetInput(int_obj_sum_img);
 	stats_filter5->Update();
 	double added_img_mean_val = stats_filter5->GetMean();
-	
-
-	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
-	ImageWriterType::Pointer image_writer = ImageWriterType::New();
-	image_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage.mhd");
-	image_writer->SetInput(this->ObjectnessImage);
-	image_writer->Update();*/
 	
 	LoGFilterType::Pointer gauss = LoGFilterType::New();
 	gauss->SetInput( PaddedCurvImage );
@@ -688,7 +696,9 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 	float max_coverage = 0.002; //0.01; //0.0;
 	float min_coverage = 0.001; // 0.0;
 	float coverage_upper_limit = max_coverage + (0.2*max_coverage); //(0.05*max_coverage);
-	float coverage_lower_limit = min_coverage - (0.2*min_coverage); //(0.05*min_coverage);
+	float coverage_lower_limit = min_coverage - (0.25*min_coverage); //(0.2*min_coverage); //(0.05*min_coverage);
+
+	std::cout << "Coverage limits: [" << coverage_lower_limit << ", " << coverage_upper_limit << "] " << std::endl;
 
 	float thresh1_step_size = 0.02;
 	float thresh2_step_size = 0.0004;
@@ -806,8 +816,8 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 		std::cout << "num: " << total_fg_wt_obj_int << " den: " << added_img_mean_val << std::endl;
 		
 		std::cout << std::endl;
-		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
 		std::cout << "Number of CTs at this stage: " << ctCnt <<std::endl;
+		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
 		
 		//std::cout << "Total foreground objectness: " << total_fg_objectness << std::endl;
 		//std::cout << "Total foreground intensity: " << total_fg_intensity << std::endl;
@@ -4995,6 +5005,9 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 			nuclei_object.associativeFeatures.neuro_total = atof(str_vec[38].c_str());
 			nuclei_object.associativeFeatures.neuro_avg = atof(str_vec[39].c_str());
 			nuclei_object.associativeFeatures.neuro_surr = atof(str_vec[40].c_str());
+			nuclei_object.associativeFeatures.vessel_total = atof(str_vec[41].c_str());
+			nuclei_object.associativeFeatures.vessel_avg = atof(str_vec[42].c_str());
+			nuclei_object.associativeFeatures.vessel_surr = atof(str_vec[43].c_str());
 
 			this->NucleiObjects.push_back(nuclei_object);
 
@@ -5136,8 +5149,8 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 		// ROI proportional to nuclei scale, assuming spherical nuclei.
-		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
-
+		float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
+		float double_scale_nuclei = 1.5 * sph_rad;
 		
 		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
@@ -5161,7 +5174,7 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
 
-		sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
+		sub_volume_size_nuclei[0] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2.0 * double_scale_nuclei;
 
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
@@ -5260,11 +5273,11 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 			//std::cout << "acc_dist: " << acc_distance << " n_roots: " << n_roots << std::endl;
 
-			mean_distance = acc_distance / n_roots;
+			mean_distance = acc_distance / (double)n_roots;
 			for(int k = 0; k < distance_array.size(); k++)
 				variance_distance = variance_distance + std::pow(distance_array[k] - mean_distance, 2);
 		
-			variance_distance = variance_distance / n_roots;
+			variance_distance = variance_distance / (double)n_roots;
 
 			//std::cout << "mean: " << mean_distance << " variance: " << variance_distance << " n_roots: " << n_roots << std::endl;
 
@@ -5278,10 +5291,10 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 		}
 		else{
 			// These features do not exist when no root points are found in the neighborhood
-			this->NucleiObjects[i].associativeFeatures.minRootDist = 100000; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000; //double_scale_nuclei;
-			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.minRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.maxRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.meanRootDist = 100000.0; //double_scale_nuclei;
+			this->NucleiObjects[i].associativeFeatures.varRootDist = 100000.0; //double_scale_nuclei;
 			this->NucleiObjects[i].associativeFeatures.nRoots = 0;
 
 		}//loop over candidate roots
@@ -5332,19 +5345,44 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 
 		//sz is the size of the tile plus the padding
 		LabelImageType3D::SizeType sz = this->PaddedCurvImage->GetBufferedRegion().GetSize();
+		
+		/*std::cout << "Writing distance maps to disk. " << std::endl;
+		itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer = itk::ImageFileWriter< LabelImageType3D >::New();
+		distance_map_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\distance_map.tif");
+		distance_map_writer->SetInput(nucleus_distance);
+		distance_map_writer->Update();
 
+		itk::ImageFileWriter< LabelImageType3D >::Pointer distance_map_writer3 = itk::ImageFileWriter< LabelImageType3D >::New();
+		distance_map_writer3->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\voronoi_map.tif");
+		distance_map_writer3->SetInput(voronoi_map);
+		distance_map_writer3->Update();*/
+		
+		
+		typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
+		ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+		threshold_filter->SetLowerThreshold(1);
+		threshold_filter->SetInsideValue(255);
+		threshold_filter->SetOutsideValue(0);
+		threshold_filter->SetInput(this->SomaImage);
+		threshold_filter->Update();
+		
+		/*itk::ImageFileWriter< CharImageType3D >::Pointer nuclei_writer = itk::ImageFileWriter<CharImageType3D>::New();
+		nuclei_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\Binary_nuclei.tif");
+		nuclei_writer->SetInput(threshold_filter->GetOutput());
+		nuclei_writer->Update();*/
 
 		std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 
-		std::cout << "Computing nuclei features.. " << std::endl;
+		std::cout << "Computing nuclei features. " << std::endl;
 
 		//Loop over nuclei
 		for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
 			// ROI proportional to nuclei scale, assuming spherical nuclei.
-			float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
-
-
+			float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
+			float double_scale_nuclei = 1.5 * sph_rad;
+			
+	
 			CharImageType3D::IndexType current_idx;
 			current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 			current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
@@ -5639,9 +5677,10 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
 	nuclei_feature_vector << "var_int" << '\t' << "eccentricity" << '\t' << "elongation" << '\t' << "mean_surf_gradient" << '\t' << "radius_variation" << '\t'; 
 	nuclei_feature_vector << "shape_measure" << '\t' << "energy" << '\t' << "entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
-	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "TRI_TOTAL" << '\t' << "TRI_AVG" << '\t' << "TRI_SURR" << '\t';
-	nuclei_feature_vector << "GFP_TOTAL" << '\t' << "GFP_AVG" << '\t' << "GFP_SURR" << '\t' << "Cy5_TOTAL" << '\t' << "Cy5_AVG" << '\t';
-	nuclei_feature_vector << "Cy5_SURR" << '\t' << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
+	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "Astro_TOTAL" << '\t' << "Astro_AVG" << '\t' << "Astro_SURR" << '\t';
+	nuclei_feature_vector << "Micro_TOTAL" << '\t' << "Micro_AVG" << '\t' << "Micro_SURR" << '\t' << "Neuro_TOTAL" << '\t' << "Neuro_AVG" << '\t';
+	nuclei_feature_vector << "Neuro_SURR" << '\t' <<  "Vessel_TOTAL" << '\t' << "Vessel_AVG" << '\t' << "Vessel_SURR" << '\t';
+	nuclei_feature_vector << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
 	nuclei_feature_vector << std::endl;
 
 	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
@@ -5657,6 +5696,7 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 			nuclei_feature_vector << nuc.associativeFeatures.astro_total << '\t' << nuc.associativeFeatures.astro_avg << '\t' << nuc.associativeFeatures.astro_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.micro_total << '\t' << nuc.associativeFeatures.micro_avg << '\t' << nuc.associativeFeatures.micro_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.neuro_total << '\t' << nuc.associativeFeatures.neuro_avg << '\t' << nuc.associativeFeatures.neuro_surr << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.vessel_total << '\t' << nuc.associativeFeatures.vessel_avg << '\t' << nuc.associativeFeatures.vessel_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.minRootDist << '\t' << nuc.associativeFeatures.maxRootDist << '\t' << nuc.associativeFeatures.meanRootDist << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.varRootDist << '\t' << nuc.associativeFeatures.nRoots << '\t';
 			nuclei_feature_vector << std::endl;
