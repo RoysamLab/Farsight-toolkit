@@ -99,6 +99,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	connectedGraphEdit->setText(QString::number(0));
 	connectedGraphEdit->setReadOnly( true);
 	connectedGraphEdit->setEnabled( false);
+	updateConnectedNumButton = new QPushButton(tr("Update"), this);
 	
     psdtButton = new QPushButton(tr("View Progression"), this);
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
@@ -122,6 +123,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
 	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
+	connect( updateConnectedNumButton, SIGNAL(clicked()), this, SLOT(UpdateConnectedNum()));
 	
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
@@ -182,6 +184,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
 	mainLayout->addWidget(connectedGraphLabel, 12, 0);
 	mainLayout->addWidget(connectedGraphEdit, 12, 1);
+	mainLayout->addWidget(updateConnectedNumButton, 12, 2);
 	mainLayout->addWidget(maxVetexIdLabel, 13, 0);
 	mainLayout->addWidget(maxVetexIdEdit, 13, 1);
 	mainLayout->addWidget(psdtButton, 13, 2);
@@ -542,7 +545,6 @@ void SPDtestWindow::viewProgression()
 	}
 	this->HeatmapWin = new Heatmap(this);
 
-
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	std::vector< unsigned int> selModuleID;
 
@@ -577,6 +579,8 @@ void SPDtestWindow::viewProgression()
 	//	streedata[i][2] = sampleTree[i].cor;
 	//	streedata[i][3] = sampleTree[i].parent;
 	//}
+	std::cout<< "Update Connected Component..."<<std::endl;
+	UpdateConnectedNum();  // update connected component
 
 	vnl_matrix<double> subTreeDistance;
 	SPDModel->GetComponentMinDistance(selFeatureID, connectedComponent, connectedNum, subTreeDistance);
@@ -782,11 +786,36 @@ void SPDtestWindow::updateSelMod()
 		psdtButton->setEnabled(TRUE);
 		heatmapButton->setEnabled(FALSE);
 	}
+}
 
-	SPDModel->GetFeatureIdbyModId(selMod, selFeatureID);
-	connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
-	QString str = QString::number(connectedNum);
-	connectedGraphEdit->setText(str);
+void SPDtestWindow::UpdateConnectedNum()
+{
+	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
+	std::vector< unsigned int> selModuleID;
+	split( selectModulesID, ',', selModuleID);
+	bool bchanged = false;
+	for(int i = 0; i < selModuleID.size(); i++)
+	{
+		if(m_selModuleID.find(selModuleID[i]) == m_selModuleID.end())
+		{
+			bchanged = true;
+		}
+	}
+
+	if( bchanged)
+	{
+		m_selModuleID.clear();
+		for(int i = 0; i < selModuleID.size(); i++)
+		{
+			m_selModuleID.insert(selModuleID[i]);
+		}
+		selFeatureID.clear();
+		SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
+
+		connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
+		QString str = QString::number(connectedNum);
+		connectedGraphEdit->setText(str);
+	}
 }
 
 void SPDtestWindow::GetProgressionTreeOrder(std::vector<long int> &order)

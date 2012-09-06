@@ -55,6 +55,7 @@ protected slots:
 	void updateProgressionType();
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
+	void UpdateConnectedNum();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -95,7 +96,8 @@ private:
 	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
 	QLabel *connectedGraphLabel;
 	QLineEdit *connectedGraphEdit;
-
+	QPushButton *updateConnectedNumButton;  // update connected component number
+	
 	QString FileName;
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
@@ -119,6 +121,7 @@ private:
 	std::map< int, int> indexMap;
 	std::vector<int> connectedComponent;
 	int connectedNum;
+	std::set<unsigned int> m_selModuleID;
 };
 
 #endif // SPDTESTWINDOW_H
