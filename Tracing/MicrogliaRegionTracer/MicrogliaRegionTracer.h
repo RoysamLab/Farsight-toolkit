@@ -52,15 +52,13 @@
 class MicrogliaRegionTracer
 {
 private:
-	typedef Cell::ImageType						ImageType;
-	typedef Cell::LoGImageType					LoGImageType;
-	//typedef Cell::HessianImageType			HessianImageType;
-	//typedef Cell::HessianTensorType			HessianTensorType;
-	typedef Cell::VesselnessImageType			VesselnessImageType;
-	typedef Cell::DistanceImageType				DistanceImageType;
-	typedef itk::Image< unsigned char, 3 >		MaskedImageType;
+	typedef Cell::ImageType													ImageType;
+	typedef Cell::LoGImageType												LoGImageType;
+	typedef Cell::VesselnessImageType										VesselnessImageType;
+	typedef Cell::DistanceImageType											DistanceImageType;
+	typedef itk::Image< unsigned char, 3 >									MaskedImageType;
 
-	typedef itk::PolyLineParametricPath< 3 >	PathType;
+	typedef itk::PolyLineParametricPath< 3 >								PathType;
 
 private:
 	std::vector<Cell*> cells;
@@ -77,27 +75,28 @@ public:
 	void	Trace();
 
 
-	void	CalculateCandidatePixels(Cell* cell);
-	void	CreateIsometricImage(Cell* cell);
-	void	RidgeDetection(Cell* cell);
-	void	VesselnessDetection(Cell* cell);
+	void				CalculateCandidatePixels(Cell* cell);
+	void				CreateIsometricImage(Cell* cell);
+	void				RidgeDetection(Cell* cell);
+	void				VesselnessDetection(Cell* cell);
 
-	void		BuildTree(Cell* cell);
-	double**	BuildAdjacencyGraph(Cell* cell);
-	double		CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);	//THIS IS NOT THE EUCLIDEAN DISTANCE
-	Tree*		BuildMST1(Cell* cell, double** AdjGraph);
+	void				BuildTree(Cell* cell);
+	double**			BuildAdjacencyGraph(Cell* cell);
+	double				CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);	//THIS IS NOT THE EUCLIDEAN DISTANCE
+	Tree*				BuildMST1(Cell* cell, double** AdjGraph);
 
-	void		SmoothTree(Cell* cell, Tree* tree);
-	void		SmoothSegments(Cell* cell, Tree* tree, Node* start_node);
-	void		SmoothSegments2(Cell* cell, Tree* tree);
-	void		SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path );
+	Tree*				SmoothTree(Cell* cell, Tree* tree);
+	void				SmoothSegments(Cell* cell, Tree* tree, Node* start_node);
+	void				ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, PathType::Pointer speed_path, Node* start_node, Node* end_node);
+	Tree*				SmoothSegments2(Cell* cell, Tree* tree);
+	PathType::Pointer	SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
-	void		CreateSpeedImage(Cell* cell);
+	void				CreateSpeedImage(Cell* cell);
 
-	void		WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
-	void		WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	void				WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
+	void				WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
 	
-	double		CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2);
+	double				CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2);
 
 };
 

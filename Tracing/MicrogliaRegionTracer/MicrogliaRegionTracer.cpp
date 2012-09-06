@@ -350,20 +350,21 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 
 	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-	SmoothTree(cell, tree);
+	Tree* smoothed_tree = SmoothTree(cell, tree);
 
 	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
 	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
 	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
 
 
-	WriteTreeToSWCFile(tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
 	delete[] AdjGraph;
 
 	delete tree;
+	delete smoothed_tree;
 }
 
 /* This function generates a matrix of all possible pairs of candidate pixels */
@@ -626,11 +627,13 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 }
 
 /* This function smoothes a Tree structure */
-void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
+Tree* MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
 {
 	CreateSpeedImage(cell);
 	//SmoothSegments(cell, tree, tree->GetRoot());
-	SmoothSegments2(cell, tree);
+	Tree* smoothed_tree = SmoothSegments2(cell, tree);
+	
+	return smoothed_tree;
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
@@ -711,25 +714,26 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 			continue;
 		
 
-		SmoothPath(cell, tree, start_node, end_node, path);
+		PathType::Pointer speed_path = SmoothPath(cell, tree, start_node, end_node, path);	//Get the smoothed path
+		
+		ReplaceTreeSegmentWithPath(cell, tree, speed_path, start_node, end_node);			//Replace the segment in the tree with the smoothed path
 
 		SmoothSegments(cell, tree, end_node);							//Call SmoothSegments on the next segment
 	}
 }
 
-/* This function smoothes each segment of the tree by using a Fast Marching approach with a speed image */
-void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
+/* This function takes takes in start_node and end_node and a path in between and returns the smoothed path */
+MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
-
 	//Extract path from speed image (the cubed distance map)
 	// Create interpolator
-	typedef itk::SpeedFunctionToPathFilter< DistanceImageType, PathType > PathFilterType;
-	typedef PathFilterType::CostFunctionType::CoordRepType CoordRepType;
+	typedef itk::SpeedFunctionToPathFilter< DistanceImageType, PathType >	SpeedPathFilterType;
+	typedef SpeedPathFilterType::CostFunctionType::CoordRepType CoordRepType;
 	typedef itk::LinearInterpolateImageFunction<DistanceImageType, CoordRepType> InterpolatorType;
 	InterpolatorType::Pointer interp = InterpolatorType::New();
 
 	// Create cost function
-	PathFilterType::CostFunctionType::Pointer cost = PathFilterType::CostFunctionType::New();
+	SpeedPathFilterType::CostFunctionType::Pointer cost = SpeedPathFilterType::CostFunctionType::New();
 	cost->SetInterpolator( interp );
 
 	// Create optimizer
@@ -741,15 +745,15 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	optimizer->SetRelaxationFactor( 0.00 );
 
 	// Create path filter
-	PathFilterType::Pointer pathFilter = PathFilterType::New();
+	SpeedPathFilterType::Pointer pathFilter = SpeedPathFilterType::New();
 	pathFilter->SetInput( cell->speed_image );
 	pathFilter->SetCostFunction( cost );
 	pathFilter->SetOptimizer( optimizer );
 	pathFilter->SetTerminationValue( 10.0 );
 
 	// Add path information
-	PathFilterType::PathInfo info;
-	PathFilterType::PointType start;
+	SpeedPathFilterType::PathInfo info;
+	SpeedPathFilterType::PointType start;
 	start[0] = start_node->x; start[1] = start_node->y; start[2] = start_node->z;
 	
 	//std::cout << "Setting smoothing start index to: " << start << std::endl;
@@ -764,7 +768,7 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 		//info.AddWayPoint(vertex);
 	}
 
-	PathFilterType::PointType end;
+	SpeedPathFilterType::PointType end;
 	end[0] = end_node->x; end[1] = end_node->y; end[2] = end_node->z;
 	//std::cout << "Adding smoothing endpoint index to: " << end << std::endl;
 		
@@ -779,11 +783,17 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	catch (itk::ExceptionObject &err)
 	{
 		std::cerr << "pathFilter exception: " << err << std::endl;
-		return;
+		return NULL;
 	}
-
-	//Convert path output back to tree format
+	
 	PathType::Pointer speed_path = pathFilter->GetOutput();
+
+	return speed_path;
+}
+
+void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, PathType::Pointer speed_path, Node* start_node, Node* end_node)
+{
+	//Convert path output back to tree format
 	if ( speed_path->GetVertexList()->Size() == 0 )
 	{
 		std::cerr << "WARNING: Path contains no points!" << std::endl;
@@ -798,11 +808,11 @@ void MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node,
 	for (unsigned int i = 0; i < smoothed_vertex_list->Size(); ++i)
 	{
 		PathType::ContinuousIndexType path_index = smoothed_vertex_list->GetElement(i);
-		
+
 		Node* new_node = new Node(path_index[0], path_index[1], path_index[2], cell->next_available_ID );
 
 		//std::cout << "Adding smoothed path index: " << path_index << std::endl;
-		
+
 		//Update next available ID
 		++(cell->next_available_ID);
 
@@ -875,14 +885,17 @@ double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType no
 }
 
 /* This function smooths the tree from the root node to the leaf node in one go without taking into account the in between critical points as opposed to the previous method of smoothing between branch points */
-void MicrogliaRegionTracer::SmoothSegments2(Cell* cell, Tree* tree)
+Tree* MicrogliaRegionTracer::SmoothSegments2(Cell* cell, Tree* tree)
 {
+	Tree* smoothed_tree = new Tree();
+	
 	Node* root_node = tree->GetRoot();
 	itk::Index<3> root_node_index;
 	root_node_index[0] = root_node->x;
 	root_node_index[1] = root_node->y;
 	root_node_index[2] = root_node->z;
 
+	smoothed_tree->SetRoot(root_node);
 
 	std::vector<Node*> leaf_nodes;	
 	tree->GetLeafNodes(leaf_nodes);
@@ -903,5 +916,11 @@ void MicrogliaRegionTracer::SmoothSegments2(Cell* cell, Tree* tree)
 		leaf_node_index[2] = leaf_node->z;
 		
 		path->AddVertex(leaf_node_index);
+
+		PathType::Pointer speed_path = SmoothPath(cell, tree, root_node, leaf_node, path);
+
+		ReplaceTreeSegmentWithPath(cell, tree, speed_path, root_node, leaf_node);
 	}
+
+	return smoothed_tree;
 }
