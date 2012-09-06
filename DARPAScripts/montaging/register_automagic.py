@@ -12,7 +12,7 @@ colors=None
 regisColor=None
 
 #scriptsfolder='/FSdata/bbusse/ftk/src/DARPAScripts/montaging' 
-scriptsfolder='' #The folder with all the registration scripts and stuff
+scriptsfolder='/data/nicolas/src-bin/src/farsight/trunk/DARPAScripts/montaging/' #The folder with all the registration scripts and stuff
 #execfolder='/FSdata/bbusse/ftk/release/Farsight/exe' #The folder with all the executables
 imgpairname='imgpairs.txt' #keeping windows names so as not to confuse people
 index_length=5 #number of digits in image num, used for leading zeros
