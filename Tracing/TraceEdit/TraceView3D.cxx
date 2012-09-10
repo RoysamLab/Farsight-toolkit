@@ -1876,6 +1876,7 @@ void View3D::CreateLayout()
 	CursorROILayout->addWidget(this->ToggleBinaryVOIButton);
 	this->ToggleBinaryVOIButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
+	this->WriteVOIButton->setEnabled(false);
 	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
 	this->CalculateDistanceToDeviceButton->setEnabled(false);
 	CursorROIBox->setLayout(CursorROILayout);
@@ -3789,6 +3790,7 @@ void View3D::DrawROI()
 	this->QVTK->GetRenderWindow()->Render();
 	this->createNewROIPointButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
+	this->WriteVOIButton->setEnabled(true);
 	this->CalculateDistanceToDeviceButton->setEnabled(true);
 }
 
@@ -3821,6 +3823,7 @@ void View3D::ReadVOI()
 		this->QVTK->GetRenderWindow()->Render();
 		this->createNewROIPointButton->setEnabled(false);
 		this->ExtrudeROIButton->setEnabled(false);
+		this->WriteVOIButton->setEnabled(true);
 		this->CalculateDistanceToDeviceButton->setEnabled(true);
 		this->ToggleBinaryVOIButton->setEnabled(true);
 	}
