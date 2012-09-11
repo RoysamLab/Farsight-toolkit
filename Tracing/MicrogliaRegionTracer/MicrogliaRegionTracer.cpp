@@ -2,6 +2,7 @@
 
 #define MASK 0
 #define PRINT_ALL_IMAGES 0
+#define PI (4.0*atan(1.0))
 
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
 {
@@ -9,6 +10,7 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->soma_filename = soma_filename;
 
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
+
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
 
@@ -167,7 +169,9 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
 
+#if PRINT_ALL_IMAGES
 	cell->WriteImage("multiscaled_LoG_image.mhd", resampled_multiscale_LoG_image);
+#endif
 
 	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
 
@@ -492,31 +496,36 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 				double node_to_candidate_length = TreeAdjGraph[connected_node_id][k];
 				
                 double cost;
-				if (connected_node->GetParent() != NULL)			//is not the root node (has a parent)
+				if (connected_node->GetParent() != NULL)	//is not the root node (has a parent)
 				{
 					itk::uint64_t parent_id = connected_node->GetParent()->getID() - 1;
 
 					double parent_to_candidate_length = AdjGraph[parent_id][k];
 					double parent_to_node_length = AdjGraph[parent_id][connected_node_id];
-
-					double chord_length = parent_to_candidate_length;
-					double curve_length =  node_to_candidate_length + parent_to_node_length;
-		
-
-					if (curve_length >= (std::numeric_limits< double >::max() / 2) || chord_length >= (std::numeric_limits< double >::max() / 2))	//avoid overflow issues
-					{
-						cost = std::numeric_limits<double>::max();
-					}
-					else if (chord_length / curve_length < sqrt(2.0) / 2.0)				//avoid angle too large issues
-					{						
-						cost = std::numeric_limits<double>::max();
-					}
-					else
-					{
-						cost = node_to_candidate_length * (alpha * (curve_length / chord_length) + beta);
-					}
+					
+					//Law of cosines solved for the missing angle. PI then is subtracted from that, since it is deviation from a straight line.
+					//Theta ranges between 0 and PI with 0 being the least deviation from a straight-line with the parent trace
+					double theta = PI - acos((pow(parent_to_node_length, 2.0) + pow(node_to_candidate_length, 2.0) - pow(parent_to_candidate_length, 2.0)) / (2 * parent_to_node_length * node_to_candidate_length)); 
+					cost = node_to_candidate_length * (alpha * theta / PI + beta);
+					
+					/* OLD WAY OF CALCULATING TORTUOSITY */
+					//double chord_length = parent_to_candidate_length;
+					//double curve_length =  node_to_candidate_length + parent_to_node_length;
+					//
+					//if (curve_length >= (std::numeric_limits< double >::max() / 2) || chord_length >= (std::numeric_limits< double >::max() / 2))	//avoid overflow issues
+					//{
+					//	cost = std::numeric_limits<double>::max();
+					//}
+					//else if (chord_length / curve_length < sqrt(2.0) / 2.0)				//avoid angle too large issues
+					//{						
+					//	cost = std::numeric_limits<double>::max();
+					//}
+					//else
+					//{
+					//	//cost = node_to_candidate_length * (alpha * (curve_length / chord_length) + beta);							
+					//}
 				}
-				else												//is the root node (has no parent)
+				else	//is the root node (has no parent)
 				{	
 					cost = beta * node_to_candidate_length;
 				}
@@ -534,7 +543,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		if (minimum_node_cost >= std::numeric_limits< double >::max() / 2)
 			break;	//Minimum distance way too far
 		
-		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << std::endl;
+		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << " cost: " << minimum_node_cost << std::endl;
 
 		ImageType::IndexType point_index;
 		point_index[0] = cell->critical_points_queue[minimum_node_index_to_id][0] + cell->getX() - cell->getRequestedSize()[0]/2 - cell->getShiftIndex()[0];
@@ -740,8 +749,8 @@ MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell*
 	typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 	OptimizerType::Pointer optimizer = OptimizerType::New();
 	optimizer->SetNumberOfIterations( 10000 );
-	optimizer->SetMaximumStepLength( 0.01 );
-	optimizer->SetMinimumStepLength( 0.01 );
+	optimizer->SetMaximumStepLength( 0.1 );
+	optimizer->SetMinimumStepLength( 0.1 );
 	optimizer->SetRelaxationFactor( 0.00 );
 
 	// Create path filter
@@ -791,6 +800,7 @@ MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell*
 	return speed_path;
 }
 
+/* This function modifies the tree passed to it and replaces the path between start_node and end_node with the speed_path */
 void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, PathType::Pointer speed_path, Node* start_node, Node* end_node)
 {
 	//Convert path output back to tree format
