@@ -56,6 +56,7 @@
 #include "itkMultiplyImageFilter.h"
 #include "itkAddImageFilter.h"
 #include "itkPowImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
@@ -256,6 +257,7 @@ public:
 	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
 	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;
 	typedef itk::PowImageFilter<ImageType3D> PowImageFilter;
+	typedef itk::LabelGeometryImageFilter<LabelImageType3D, CharImageType3D> LabelGeometryFilterType;
 
 	//Constructor
 	AstroTracer();
@@ -305,7 +307,7 @@ public:
 	void Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&, std::vector< LabelImageType3D::Pointer >&, std::string, std::string, std::string, const bool, bool normalize_from_model = false);
 
 	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
-
+	void Set_NucleiLabelImage(LabelImageType3D::Pointer nuc_label_image);
 	
 	//external parameters
 	float intensity_threshold;
@@ -350,6 +352,7 @@ private:
 	ImageType3D::Pointer SomaDistanceMapImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
+	LabelImageType3D::Pointer NucleiLabelImage;
 	SWCImageType3D::Pointer SWCImage; //swc label image
 	itk::Size<3> size;
 	std::vector<OffsetType> off;

@@ -3552,6 +3552,10 @@ void AstroTracer::Set_DistanceMapImage(AstroTracer::ImageType3D::Pointer distanc
 	this->SomaDistanceMapImage = distance_map_image;
 }
 
+void AstroTracer::Set_NucleiLabelImage(AstroTracer::LabelImageType3D::Pointer nuc_label_image){
+	this->NucleiLabelImage = nuc_label_image;
+}
+
 void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::string IDFname, unsigned int padz, ImageType3D::RegionType regionLocal_inside, std::vector<vtkSmartPointer<vtkTable> >& features_table_vec, std::vector<LabelImageType3D::Pointer>& out_images, const bool writeResult){
 	
 	//Prepare a list of points at which to compute the features
@@ -5109,7 +5113,6 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 
 	// Derive this from: nuclei_object.intrinsicFeatures.boundingBoxVolume
 	//float double_scale_nuclei = 25;
-	
 
 	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
 	CharImageType3D::SizeType sub_volume_size_nuclei;
@@ -5140,6 +5143,10 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	nuclei_writer->SetFileName("C:\\Users\\msavelon\\Desktop\\Astro\\TrainingWithBill\\Binary_nuclei.tif");
 	nuclei_writer->SetInput(threshold_filter->GetOutput());
 	nuclei_writer->Update();*/
+
+	LabelGeometryFilterType::Pointer label_geometry_filter = LabelGeometryFilterType::New();
+	label_geometry_filter->SetInput(this->SomaImage); 
+	label_geometry_filter->Update();
 	
 	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 	
@@ -5148,14 +5155,15 @@ void AstroTracer::ComputeFeaturesFromCandidateRoots(void){
 	//Loop over nuclei
 	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
-		// ROI proportional to nuclei scale, assuming spherical nuclei.
-		float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
-		float double_scale_nuclei = 1.5 * sph_rad;
-		
 		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
 		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		//float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
+		float sph_rad = 0.5 * label_geometry_filter->GetMajorAxisLength(this->SomaImage->GetPixel(current_idx));
+		float double_scale_nuclei = 1.5 * sph_rad;
 
 		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
 		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
@@ -5371,6 +5379,10 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 		nuclei_writer->SetInput(threshold_filter->GetOutput());
 		nuclei_writer->Update();*/
 
+		LabelGeometryFilterType::Pointer label_geometry_filter = LabelGeometryFilterType::New();
+		label_geometry_filter->SetInput(this->SomaImage);
+		label_geometry_filter->Update();
+
 		std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 
 		std::cout << "Computing nuclei features. " << std::endl;
@@ -5378,15 +5390,15 @@ void AstroTracer::ComputeFeaturesFromCandidateRootsPipeline(const ImageType3D::R
 		//Loop over nuclei
 		for(size_t i = 0; i < this->NucleiObjects.size(); i++){
 
-			// ROI proportional to nuclei scale, assuming spherical nuclei.
-			float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
-			float double_scale_nuclei = 1.5 * sph_rad;
-			
-	
 			CharImageType3D::IndexType current_idx;
 			current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 			current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
 			current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+			// ROI proportional to nuclei scale, assuming spherical nuclei.
+			//float sph_rad = std::pow((double)(0.23877 * this->NucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
+			float sph_rad = 0.5 * label_geometry_filter->GetMajorAxisLength(this->SomaImage->GetPixel(current_idx));
+			float double_scale_nuclei = 1.5 * sph_rad;
 
 			if(!local_region.IsInside(current_idx))
 				continue;
