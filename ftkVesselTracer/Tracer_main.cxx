@@ -16,52 +16,60 @@
  . Implement pruning on the MSF and loop completion
  . Get a binary mask for the final segmentation
  . Retrace for filling tracing gaps
- . Add coverage idea to the cost function
+ . Add coverage idea to the cost function  
  . Add smart editing capabilities (game theoretic/tensor voting)
  . Write SWC file output (DONE)
- . Compute vessel network features (new class)
+ . Compute vessel network features (Read papers from Audrey. To be computed after final editing. Get branch-based features from TraceEditor.)
  . Classify networks
+ . Set inside region for vessel tracing and improve vessel mask by using spheres
  */
 
 int main(int argc, char* argv[]){
 
-	if(argc < 2 || argc > 3){
-		std::cout << "ftkVesselTracer.exe <InputFileName> <preProcessData?>" << std::endl;
+	if(argc < 2 || argc > 7){
+		std::cout << "ftkVesselTracer.exe <Step_no: 1. Tracing mode 2. Vessel features for nuclei> ";
+		std::cout << " <(1)InputFileName, (2)NeucleiFeatureTable> <(1)preProcessData?, (2) SkeletonImage> ";
+		std::cout << " <(2)NodeFeaturesFile> <(2)NucleiLabelImage> <(2)VesselMaskImage>" << std::endl;
 		return -1;
 	}
 
-
-	// IO for now..
-	//std::string input_data_path = "C:\\Lab\\data\\Amit\\25_6_1099_AJ_left_b_Ch1_cropped.tif";
-	//std::string input_data_path = "C:\\Prathamesh\\Vessels\\CroppedExp\\25_6_1099_AJ_left_b_Ch1_cropped_8bit.mhd";
-	//std::string input_data_path = "C:\\Lab\\data\\Naren_data\\9.5_1\\ContourImage__TiffStack_pre_1.tif";
-
-	//std::string input_data_path = "C:\\Prathamesh\\Vessels\\EriksenExp\\_CROP_Lectin_IM2011-12-21_15-18_pre.tif";
-	//std::string input_data_path = "C:\\Prathamesh\\Vessels\\BigExp\\25_0_1101_AJ_left_Ch1_8bit.tif";
-	//std::string input_data_path = "C:\\Lab\\data\\forAstrocytes\\ASTRO_Cropped2_montage_8bitkt11410_w212TRITCdsu.tif";
-
-	std::string input_data_path = std::string(argv[1]);
-
+	int step_no = atoi(argv[1]);
 	
-	std::string preprocess_str = argv[2];
-
-	/*if(strcmp(preprocess_str.c_str(), "0") != 0 || strcmp(preprocess_str.c_str(), "1") != 0){
-		std::cout << "Incorrect option for preprocessData, should be 0 or 1. " << std::endl;
+	if(step_no < 1 || step_no > 2){
+		std::cout << "Incorrect parameter: step_no. Returning. " << std::endl;
 		return -1;
-	}*/
+	}
 
-	bool preprocess = false;
-	if(strcmp(preprocess_str.c_str(), "1") == 0)
-		preprocess = true; 
+	if(step_no == 1){
 
-	bool useVesselness = true;
+		std::string input_data_path = std::string(argv[2]);
+		
+		std::string preprocess_str = argv[3];
 
-	bool startWithMST = false; 
-	ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);
+		/*if(strcmp(preprocess_str.c_str(), "0") != 0 || strcmp(preprocess_str.c_str(), "1") != 0){
+			std::cout << "Incorrect option for preprocessData, should be 0 or 1. " << std::endl;
+			return -1;
+		}*/
 
+		bool preprocess = false;
+		if(strcmp(preprocess_str.c_str(), "1") == 0)
+			preprocess = true; 
 
-	// Please do not use this, it is not cross platform.
-	//_getch();
+		bool useVesselness = true;
+		bool startWithMST = false; 
+		ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);
+	}
+
+	if(step_no == 2){
+
+		std::string nuc_table_path = std::string(argv[2]);
+		std::string skeleton_img_path = std::string(argv[3]);
+		std::string node_prop_path = std::string(argv[4]);
+		std::string nuc_label_img_path = std::string(argv[5]);
+		std::string vessel_mask_path = std::string(argv[6]);
+
+		VesselBasedNucleiFeatures *VesselNucfeatures = new VesselBasedNucleiFeatures(nuc_table_path, skeleton_img_path, node_prop_path, nuc_label_img_path, vessel_mask_path);
+	}
 
 	return 0;
 }

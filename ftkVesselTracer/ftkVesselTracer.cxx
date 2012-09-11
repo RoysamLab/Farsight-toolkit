@@ -48,11 +48,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 
 		// MST and post processing
 		this->allParams.graphAndMSTParams.initByDefaultValues();
-		this->CreateMinimumSpanningForest();
-
-		this->PopulateSWCNodeContainer();
-		this->WriteSWCFileVessel();
-		
+		this->CreateMinimumSpanningForest();		
 	}
 	else{
 
@@ -67,6 +63,15 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 	}
+	
+	this->PopulateSWCNodeContainerAndComputeNodeFeatures();
+	this->WriteNodePropertiesFile();
+	this->WriteSWCFileVessel();
+	this->WriteSkeletonImage();
+	this->WriteSegmentationMask();
+
+	// "Smart" retracing
+	this->SmartRetrace();
 }
 ftkVesselTracer::~ftkVesselTracer(){
 }
@@ -170,7 +175,7 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	
 	this->maxVesselWidth = 20;
 	this->minVesselWidth = 2; //1;
-	this->likelihoodThresholdPrimary = 0.01; //0.005;
+	this->likelihoodThresholdPrimary = 0.04; //0.1; //0.01; //0.005;
 	this->distanceThresholdPrimary = 1.2;
 
 	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
@@ -199,6 +204,25 @@ void NodeDetectionParameters::initByDefaultValues(void){
 
 	this->vesselnessThershold = 0.001; //0.0001;
 	this->vesselnessWeight = 0.3;
+}
+
+VesselNetworkFeatures::VesselNetworkFeatures(){
+
+	this->totalVesselLength = 0.0;
+	this->totalVesselVolume = 0.0;
+	this->totalVesselness = 0.0;
+	this->nBifurgations = 0;
+	this->nTrifurgations = 0;
+	this->nMultifurfations = 0;
+	this->meanRadius = 0.0;
+	this->meanVesselness = 0.0;
+	this->vesselVolumePercentage = 0.0;
+	
+	this->totalTortuosity = 0.0;
+	this->meanTortuosity = 0.0;
+	this->nLoops = 0;
+	this->collaterality = 0.0;
+	this->meanLoopRadius = 0.0;
 }
 
 void GraphAndMSTPartameters::initByDefaultValues(void){
@@ -298,6 +322,9 @@ void ftkVesselTracer::LoadPreprocessedData(std::string data_path){
 
 	// Use the vesselness image instead of intensity image?
 	//this->inputData = this->VesselnessImage;
+
+
+	// Specify a region 
 	
 
 	//testing the data..
@@ -790,6 +817,7 @@ void ftkVesselTracer::VisualizeNodesWithData3D(std::vector<Node> node_vec, bool 
 		node_mappers.push_back(poly_mapper);
 		node_actors.push_back(actor);		
 	}
+	
 
 	for(int i = 0; i < n_seeds; i++)		
 		renderer->AddActor(node_actors[i]);
@@ -809,29 +837,30 @@ Node::Node(){
 	this->y = 0;
 	this->z = 0;
 	this->intensity = 0;
-	this->scale = 1;
-	this->likelihood = 0;
+	this->scale = 1.0;
+	this->likelihood = 0.0;
 	this->isValid = true;
 	this->nHoodScale = this->scale;
 	this->bandNhood = this->scale;
 	this->bandArea = 0;
 	this->foregroundArea = 0;
 	this->backgroundArea = 0;
-	this->meanBackgroundIntensity = 0;
-	this->meanForegroundIntensity = 255;
+	this->meanBackgroundIntensity = 0.0;
+	this->meanForegroundIntensity = 255.0;
 	this->exitIter = 0;
+	this->vesselness = 0.0;
 
-	this->traceQuality = 0;
+	this->traceQuality = 0.0;
 	this->parentIDLength = 0;
 	this->isPrimary = false;
 	this->isSecondary = false;
-	this->nHoodSecondaryMultiplier = 0;
-	this->nHoodScaleSecondary = 0;
+	this->nHoodSecondaryMultiplier = 0.0;
+	this->nHoodScaleSecondary = 0.0;
 	
-	this->secondaryNodeSearchRad = 0;
-	this->xInitSecondary = 0;
-	this->yInitSecondary = 0;
-	this->zInitSecondary = 0;
+	this->secondaryNodeSearchRad = 0.0;
+	this->xInitSecondary = 0.0;
+	this->yInitSecondary = 0.0;
+	this->zInitSecondary = 0.0;
 
 	
 	this->ID = -1;
@@ -839,6 +868,11 @@ Node::Node(){
 
 	this->forestLabel = -3;
 	this->isRoot = false;
+	this->isLeaf = false;
+	this->isBifurgation = false;
+	this->isMultifurgation = false;
+	this->isTrifurgation = false;
+	this->isOrphan = false;
 }
 
 Node::Node(double x, double y, double z, PixelType intensity){
@@ -848,29 +882,30 @@ Node::Node(double x, double y, double z, PixelType intensity){
 	this->z = z;
 	this->intensity = intensity;
 
-	this->scale = 1;
-	this->likelihood = 0;
+	this->scale = 1.0;
+	this->likelihood = 0.0;
 	this->isValid = true;
-	this->nHoodScale = 2*this->scale;
+	this->nHoodScale = 2.0 * this->scale;
 	this->bandNhood = 0.5;
 	this->bandArea = 0;
 	this->foregroundArea = 0;
 	this->backgroundArea = 0;
-	this->meanBackgroundIntensity = 0;
-	this->meanForegroundIntensity = 255;
+	this->meanBackgroundIntensity = 0.0;
+	this->meanForegroundIntensity = 255.0;
 	this->exitIter = 0;
+	this->vesselness = 0.0;
 
-	this->traceQuality = 0;
+	this->traceQuality = 0.0;
 	this->parentIDLength = 4;
 	this->isPrimary = true;
 	this->isSecondary = false;
-	this->nHoodSecondaryMultiplier = 2;
+	this->nHoodSecondaryMultiplier = 2.0;
 	this->nHoodScaleSecondary = this->nHoodSecondaryMultiplier * this->scale;
 	
 	this->secondaryNodeSearchRad = 0.0;
-	this->xInitSecondary = 0;
-	this->yInitSecondary = 0;
-	this->zInitSecondary = 0;
+	this->xInitSecondary = 0.0;
+	this->yInitSecondary = 0.0;
+	this->zInitSecondary = 0.0;
 
 
 	this->ID = -1;
@@ -878,6 +913,12 @@ Node::Node(double x, double y, double z, PixelType intensity){
 
 	this->forestLabel = -3;
 	this->isRoot = false;
+	this->isRoot = false;
+	this->isLeaf = false;
+	this->isBifurgation = false;
+	this->isMultifurgation = false;
+	this->isTrifurgation = false;
+	this->isOrphan = false;
 }
 
 bool compareNodesByLikelihood(Node n1, Node n2){	
@@ -1830,6 +1871,8 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	double tracing_time = 0.0;
 
 	assert((start_tracing_time = clock()) != -1);
+
+	std::cout << "Started with tracing... " << std::endl;
 	
 	// For testing
 	//Node a_node;
@@ -1925,10 +1968,31 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		total_nodes_counter++;
 		this->allNodes.push_back(current_node);
 
+		//std::cout << total_nodes_counter << " " << this->allNodes.size() << std::endl;
+
 		if(hit == 1){
+
+			// These will be secondary nodes only
 			hit_counter++;
+
+			dir_hist = current_node.sphHistRegionBased;
+			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+
+			if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
+				this->allNodes[total_nodes_counter].dirX = current_node.dirX;
+				this->allNodes[total_nodes_counter].dirY = current_node.dirY;
+				this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+			}
+			else{
+				// if nowhere to go, all there dirs are zero
+				this->allNodes[total_nodes_counter].dirX.push_back(0.0);
+				this->allNodes[total_nodes_counter].dirY.push_back(0.0);
+				this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+			}
+			
 			continue;
-		} 
+		}
 		
 		int p = current_node.parentID[0];
 		//if(current_node.isPrimary == true){
@@ -1953,9 +2017,26 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		}
 
 		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+		
+		if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
+			this->allNodes[total_nodes_counter].dirX = current_node.dirX;
+			this->allNodes[total_nodes_counter].dirY = current_node.dirY;
+			this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+		}
+		else{
 
-		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
+			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
+
+			// if nowhere to go, all there dirs are zero
+			this->allNodes[total_nodes_counter].dirX.push_back(0.0);
+			this->allNodes[total_nodes_counter].dirY.push_back(0.0);
+			this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+		}
+
+		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty()){
+			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
 			continue;
+		}
 
 		std::vector<double> current_dir(3, 0.0);
 		//Node secondary_node;
@@ -1996,11 +2077,11 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			secondary_node.parentID[0] = total_nodes_counter;
 			
 			//queue_size++;
-			this->primaryNodesAfterHitTest.push_back(secondary_node);
-
 			trace_quality = this->computeTraceQuality(secondary_node);
+
+			this->primaryNodesAfterHitTest.push_back(secondary_node);
 	
-			std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
+			//std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
 			
 			//node_queue.push(current_node);
 			//node_queue.push(secondary_node);
@@ -2238,6 +2319,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 		}
 
 		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+
 
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
 			continue;
@@ -2841,6 +2923,18 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		dirZ.push_back(-1.0 * dirZ[0]);
 	}
 
+	for(int i = 0; i < dirX.size(); i++){
+		
+		if(std::abs(dirX[i] - 0.0) < 0.000000001)
+			dirX[i] = 0.0;	
+		
+		if(std::abs(dirY[i] - 0.0) < 0.000000001)
+			dirY[i] = 0.0;
+		
+		if(std::abs(dirZ[i] - 0.0) < 0.000000001)
+			dirZ[i] = 0.0;
+	}
+
 	node.dirX = dirX;
 	node.dirY = dirY;
 	node.dirZ = dirZ;
@@ -3125,6 +3219,7 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 	std::sort(this->edges.begin(), this->edges.end(), CompareEdges);
 
 	// Initialize all forest nodes
+	itk::Index<3> node_idx;
 	this->allForestNodes = std::vector<Node>(this->allNodes.size());
 	for(int i = 0; i < this->allNodes.size(); i++){
 		this->allForestNodes[i].x = this->allNodes[i].x;
@@ -3133,9 +3228,30 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 		this->allForestNodes[i].likelihood = this->allNodes[i].likelihood;
 		this->allForestNodes[i].scale = this->allNodes[i].scale;
 
+		node_idx[0] = this->allNodes[i].x;
+		node_idx[1] = this->allNodes[i].y;
+		node_idx[2] = this->allNodes[i].z;
+		this->allForestNodes[i].vesselness = this->VesselnessImage->GetPixel(node_idx);
+
 		this->allForestNodes[i].ID = this->allNodes[i].ID;
 		this->allForestNodes[i].branchIDs = std::vector<int>(this->allParams.graphAndMSTParams.maxNBranches, -1);
 		this->allForestNodes[i].NBranches = this->allNodes[i].NBranches;
+		this->allForestNodes[i].traceQuality = this->allNodes[i].traceQuality;
+
+		if(this->allNodes[i].dirX.empty() || this->allNodes[i].dirY.empty() || this->allNodes[i].dirZ.empty()){
+			
+			std::cout << "Empty dir!!! : " << i << std::endl;
+
+			this->allForestNodes[i].dirX.push_back(0.0);
+			this->allForestNodes[i].dirY.push_back(0.0);
+			this->allForestNodes[i].dirZ.push_back(0.0);
+		}
+		else{
+			this->allForestNodes[i].dirX = this->allNodes[i].dirX;
+			this->allForestNodes[i].dirY = this->allNodes[i].dirY;
+			this->allForestNodes[i].dirZ = this->allNodes[i].dirZ;
+		}
+
 	}
 
 	// Used no longer
@@ -4004,7 +4120,7 @@ void ftkVesselTracer::PrintToySWCFile(void){
 	}
 }
 
-void ftkVesselTracer::PopulateSWCNodeContainer(void){
+void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 
 	if(this->allForestNodes.empty()){
 		std::cout << "Forest nodes are empty! Returning. " << std::endl;
@@ -4041,6 +4157,18 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 	//this->allForestNodes[0].branchIDs.push_back(-2);
 
 
+	// Node-based features - Branching
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+		if(this->allForestNodes[i].branchIDs.size() == 3)
+			this->allForestNodes[i].isBifurgation = true;
+		if(this->allForestNodes[i].branchIDs.size() == 4)
+			this->allForestNodes[i].isTrifurgation = true;
+		if(this->allForestNodes[i].branchIDs.size() > 4)
+			this->allForestNodes[i].isMultifurgation = true;
+	}
+
+	std::cout << "Finding connected components of the network... " << std::endl;
+
 	std::vector<Node> dup_allForestNodes(this->allForestNodes);
 	std::vector<std::vector<int> > connected_components;
 	std::queue<int> label_queue;
@@ -4059,7 +4187,7 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		component_count++;
 		this->allForestNodes[i].forestLabel = component_count;
 
-		std::cout << "Formed a new component.. " << component_count << std::endl;
+		//std::cout << "Formed a new component.. " << component_count << std::endl;
 
 		//if(this->allForestNodes[i].branchIDs.empty()){
 			//std::cout << "Branch ids empty!! " << std::endl;
@@ -4101,11 +4229,11 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		//i = a_component.back();
 		//i++;
 		
-		if(!a_component.empty()){
-			std::cout << "Component: " << std::endl;
-			for(int j = 0; j < a_component.size(); j++)
-				std::cout << a_component[j] << std::endl;
-		}
+		//if(!a_component.empty()){
+			//std::cout << "Component: " << std::endl;
+			//for(int j = 0; j < a_component.size(); j++)
+				//std::cout << a_component[j] << std::endl;
+		//}
 		//allLabeled = true;
 		
 		int i_past = i;
@@ -4125,11 +4253,11 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 				//break;
 			}
 			if(unlabeled_found){
-				std::cout << "Found unlabeled element: " << j << std::endl;
+				//std::cout << "Found unlabeled element: " << j << std::endl;
 				break;
 			}
 			else{
-				std::cout << "No unlabeled element found!! " << std::endl; 
+				//std::cout << "No unlabeled element found!! " << std::endl; 
 				allLabeled = true;
 			}
 
@@ -4138,7 +4266,7 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 			//	allLabeled = true;
 		}
 
-		std::cout << " Total unlabeled status: " << allLabeled << std::endl;
+		//std::cout << " Total unlabeled status: " << allLabeled << std::endl;
 	}
 
 	//Print the labeled graph
@@ -4157,87 +4285,16 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		if(this->allForestNodes[i].isRoot)
 			std::cout << i << std::endl;
 	}*/
-
-	// Constructing SWC nodes
-	/*SWCNodeVessel node_dummy;
-	SWCNodeVessel_vec.resize(this->allForestNodes.size(), node_dummy);
-	SWCNodeVessel_vec[0] = node_dummy;
-
-	for(int i = 1; i < this->allForestNodes.size(); i++){
-
-		if(this->allForestNodes[i].isRoot){
-		//if(i == 1){
-
-			SWCNodeVessel node;
-			node.ID = i;
-			node.parents.push_back(-1);
-			node.isRoot = true;
-
-			itk::Index<3> idx; idx[0] = this->allForestNodes[i].x; idx[1] = this->allForestNodes[i].y; idx[2] = this->allForestNodes[i].z; 
-			node.position = idx;
-			node.scale = this->allForestNodes[i].scale;
-
-			SWCNodeVessel_vec[i] = node;
-		}
-
-		std::vector<int> a_row = this->allForestNodes[i].branchIDs;
-		std::vector<int> isRelated(a_row.size(), false);
-		for(int j = 0; j < a_row.size(); j++){
-
-			if(!SWCNodeVessel_vec[i].children.empty()){
-				for(int k = 0; k < SWCNodeVessel_vec[i].children.size(); k++){
-					if(a_row[j] == SWCNodeVessel_vec[i].children[k]){
-						//std::cout << "Related: " << i << " hasChild: " << a_row[j] << std::endl;
-						isRelated[j] = true;
-						break;
-					}
-				}
-			}
-			if(!SWCNodeVessel_vec[i].parents.empty()){
-				for(int k = 0; k < SWCNodeVessel_vec[i].parents.size(); k++){
-					if(a_row[j] == SWCNodeVessel_vec[i].parents[k]){
-						//std::cout << "Related: " << i << " hasParent: " << a_row[j] << std::endl;
-						isRelated[j] = true;
-						break;
-					}
-				}
-			}
-
-			if(!isRelated[j]){
-				//std::cout << i << ": " << a_row[j] << std::endl;
-
-				if(a_row[j] < 0)
-					continue;
-				
-				SWCNodeVessel node;
-				if(SWCNodeVessel_vec[a_row[j]].ID > 0)
-					node = SWCNodeVessel_vec[a_row[j]];	
-				
-				node.ID = a_row[j];
-				node.parents.push_back(i);
-
-				itk::Index<3> idx; idx[0] = this->allForestNodes[a_row[j]].x; idx[1] = this->allForestNodes[a_row[j]].y; idx[2] = this->allForestNodes[a_row[j]].z; 
-				node.position = idx;
-				node.scale = this->allForestNodes[a_row[j]].scale;
-
-				SWCNodeVessel_vec[a_row[j]] = node;
-
-				SWCNodeVessel_vec[i].children.push_back(a_row[j]);
-
-				//std::cout << i << " hasChild: " << a_row[j] << std::endl;
-			}
-		}
-		
-		//for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
-		//	std::cout << i << " hasChild: " << SWCNodeVessel_vec[i].children[j] << std::endl;
-	}*/
+	
+	std::cout << "Converting the network to a directed graph... " << std::endl;
 
 	// Construct SWC nodes
 	SWCNodeVessel node_dummy;
+	std::vector<std::vector<SWCNodeVessel> > SWCNodeVec_byComponent;
 	
 	for(int i = 0; i < connected_components.size(); i++){
 		
-		std::vector<SWCNodeVessel> node_vec_dummy; 
+		std::vector<SWCNodeVessel> node_vec_dummy, node_vec_component; 
 		node_vec_dummy.resize(this->allForestNodes.size(), node_dummy);
 		std::vector<int> curr_component = connected_components[i];
 		std::vector<int> curr_component_order;
@@ -4303,13 +4360,45 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 			}
 		}
 
-		for(int j = 0; j < curr_component_order.size(); j++)
+		for(int j = 0; j < curr_component_order.size(); j++){
 			this->SWCNodeVessel_vec.push_back(node_vec_dummy[curr_component_order[j]]);
+			node_vec_component.push_back(node_vec_dummy[curr_component_order[j]]);
+		}
+		//SWCNodeVec_byComponent.push_back(node_vec_component);
+
+		// Node-based features - Identify leaf points and orphans
+		for(int j = 0; j < curr_component.size(); j++){
+			if(node_vec_component.size() > 1){	
+
+				bool is_leaf = true;
+				for(int k = 0; k < node_vec_component.size(); k++){
+					for(int m = 0; m < node_vec_component[k].parents.size(); m++){
+						if(curr_component[j] == node_vec_component[k].parents[m]){
+							is_leaf = false;
+							break;
+						}
+					}
+					if(!is_leaf)
+						break;
+				}
+				if(is_leaf)
+					this->allForestNodes[curr_component[j]].isLeaf = true;
+			}
+			if(node_vec_component.size() == 1)
+				this->allForestNodes[curr_component[j]].isOrphan = true;
+		}
+
+		for(int j = 0; j < node_vec_component.size(); j++){
+			this->allForestNodes[node_vec_component[j].ID].children = node_vec_component[j].children;
+			this->allForestNodes[node_vec_component[j].ID].parents = node_vec_component[j].parents;
+		}
 
 		node_vec_dummy.clear();
 		curr_component.clear();
 		curr_component_order.clear();
+		node_vec_component.clear();
 	}
+
 
 	// Massage the SWC file
 	for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
@@ -4325,7 +4414,7 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 	}
 	
 	// Printing the SWC file to cout
-	std::cout << "SWC file: " << std::endl;
+	/*std::cout << "SWC file: " << std::endl;
 	for(int i = 0; i < SWCNodeVessel_vec.size(); i++){
 		std::cout << "Node: " << std::endl;
 		std::cout << "	ID: " << SWCNodeVessel_vec[i].ID << std::endl;
@@ -4337,7 +4426,9 @@ void ftkVesselTracer::PopulateSWCNodeContainer(void){
 		for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
 			std::cout << SWCNodeVessel_vec[i].children[j] << ", ";
 		std::cout << std::endl;
-	}
+	}*/
+
+	std::cout << "Done with computing the SWC file structure. " << std::endl;
 }
 
 void ftkVesselTracer::WriteSWCFileVessel(void){
@@ -4365,6 +4456,8 @@ void ftkVesselTracer::WriteSWCFileVessel(void){
 		}
 
 		file_out.close();
+
+		std::cout << "Done with writing the SWC file: " << swc_file_name << std::endl;
 	}
 	else
 		std::cout << "Could not write SWC file! " << std::endl;
@@ -4422,4 +4515,877 @@ void ftkVesselTracer::ComputeVesselnessImage(VesselnessMeasures& obj_measures, s
 	std::string output_file;
 	output_file = write_file_path + "_vesselness.mhd";
 	Common::WriteImage3D(output_file, this->VesselnessImage);		
+}
+
+void ftkVesselTracer::WriteSkeletonImage(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Forest nodes container is empty. Returning." << std::endl;
+		return;
+	}
+	
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->skeletonImage = RenderImageType3D::New();
+	this->skeletonImage->SetRegions(id_reg);
+	this->skeletonImage->Allocate();
+	this->skeletonImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->skeletonImage->FillBuffer(0);
+
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+
+		itk::Index<3> pixel0;
+		pixel0[0] = this->allForestNodes[i].x;
+		pixel0[1] = this->allForestNodes[i].y;
+		pixel0[2] = this->allForestNodes[i].z;
+
+		if(!this->allForestNodes[i].children.empty()){
+
+			for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
+
+				//std::cout << this->SWCNodeVessel_vec[i].children[j] << std::endl;
+				
+				LineType3D line;
+				itk::Index<3> pixel1;
+				pixel1[0] = this->allForestNodes[this->allForestNodes[i].children[j]].x;
+				pixel1[1] = this->allForestNodes[this->allForestNodes[i].children[j]].y;
+				pixel1[2] = this->allForestNodes[this->allForestNodes[i].children[j]].z;
+
+				double euclid_distance = std::sqrt(std::pow((double)(pixel0[0] - pixel1[0]), 2) + std::pow((double)(pixel0[1] - pixel1[1]), 2) + std::pow((double)(pixel0[2] - pixel1[2]), 2));  
+
+				if(euclid_distance < 1.0){
+					//std::cout << "Distance between two nodes was less than 1 !! " << std::endl;
+					//std::cout << "Parent: " << i << " at: " << pixel0 << " Child: " << this->allForestNodes[i].children[j] << " at: " << pixel1 << std::endl;
+					this->skeletonImage->SetPixel(pixel0, 255);
+					continue;
+				}
+				
+				//std::cout << distance << std::endl;
+
+				std::vector<itk::Index<3> > line_pixels = line.BuildLine(pixel0, pixel1);
+
+				for(int k = 0; k < line_pixels.size(); k++){
+				//	std::cout << line_pixels[k] << std::endl;
+					this->skeletonImage->SetPixel(line_pixels[k], 255);
+				}
+				//std::cout << std::endl;
+				//line_pixels.clear();
+
+				//LineIteratorType3D line_it(this->skeletonImage, pixel0, pixel1);
+				//line_it.GoToBegin();
+				//while(!line_it.IsAtEnd())
+				//	this->skeletonImage->SetPixel(line_it.GetIndex(), 255);
+			}
+		}
+	}
+	
+	std::string skeleton_file_name = this->data_folder_path;
+	skeleton_file_name.append("_SkeletonImage.tif");
+	//std::cout << skeleton_file_name << std::endl;
+
+	ImageWriter::Pointer skeleton_writer = ImageWriter::New();	
+	skeleton_writer->SetFileName(skeleton_file_name);	
+	skeleton_writer->SetInput(this->skeletonImage);
+	skeleton_writer->Update();
+
+	std::cout << "Done with writing the skeleton image: " << skeleton_file_name << std::endl;
+}
+
+void ftkVesselTracer::WriteSegmentationMask(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Forest nodes container is empty. Returning." << std::endl;
+		return;
+	}
+	
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->segmentationMaskImage = RenderImageType3D::New();
+	this->segmentationMaskImage->SetRegions(id_reg);
+	this->segmentationMaskImage->Allocate();
+	this->segmentationMaskImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->segmentationMaskImage->FillBuffer(0);
+
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+
+		double rad = this->allForestNodes[i].scale;
+		itk::Index<3> idx;
+		idx[0] = this->allForestNodes[i].x; idx[1] = this->allForestNodes[i].y; idx[2] = this->allForestNodes[i].z;
+
+		RenderImageType3D::IndexType starting_index, end_index;
+		RenderImageType3D::SizeType sub_volume_size;
+		RenderImageType3D::RegionType sub_volume_region;
+		RenderImageType3D::Pointer sub_volume;
+
+		starting_index[0] = idx[0] - rad; starting_index[1] = idx[1] - rad; starting_index[2] = idx[2] - rad;
+		end_index[0] = idx[0] + rad; end_index[1] = idx[1] + rad; end_index[2] = idx[2] + rad;
+	
+		if(starting_index[0] < 0)
+			starting_index[0] = 0;
+		if(starting_index[1] < 0)
+			starting_index[1] = 0;
+		if(starting_index[2] < 0)
+			starting_index[2] = 0;
+		if(end_index[0] > id_sz[0])
+			end_index[0] = id_sz[0];
+		if(end_index[1] > id_sz[1])
+			end_index[1] = id_sz[1];
+		if(end_index[2] > id_sz[2])
+			end_index[2] = id_sz[2];
+
+				
+		for(int k = starting_index[0]; k < end_index[0]; k++){
+			for(int l = starting_index[1]; l < end_index[1]; l++){
+				for(int m = starting_index[2]; m < end_index[2]; m++){
+
+					itk::Index<3> idx1;
+					idx1[0] = k; idx1[1] = l; idx1[2] = m;
+
+					double euclid_distance = std::sqrt(std::pow((double)(idx[0] - idx1[0]), 2) + std::pow((double)(idx[1] - idx1[1]), 2) + std::pow((double)(idx[2] - idx1[2]), 2));  
+		
+					if(euclid_distance <= rad)
+						this->segmentationMaskImage->SetPixel(idx1, 255);
+				}
+			}
+		}
+	}
+
+	std::string mask_file_name = this->data_folder_path;
+	mask_file_name.append("_SegmentationMaskImage.tif");
+	//std::cout << mask_file_name << std::endl;
+
+	ImageWriter::Pointer mask_writer = ImageWriter::New();	
+	mask_writer->SetFileName(mask_file_name);	
+	mask_writer->SetInput(this->segmentationMaskImage);
+	mask_writer->Update();
+
+	std::cout << "Done with writing the segmentation mask image: " << mask_file_name << std::endl;
+}
+
+void ftkVesselTracer::WriteNodePropertiesFile(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Node container is empty. Returning. " << std::endl;
+		return;
+	}
+	
+	std::string prop_file_name = this->data_folder_path;
+	prop_file_name.append("_nodeFeatures.txt");
+
+	std::ofstream file_stream;
+	file_stream.open(prop_file_name.c_str(), std::ios::out);
+
+	if(file_stream.is_open() == true){
+
+		file_stream << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "scale" << '\t' << "likelihood" << '\t' << "forest_label" << '\t';
+		file_stream << "is_leaf" << '\t' << "is_root" << '\t' << "is_bifurgation" << '\t' << "is_trifurgation" << '\t' << "trace_quality" << '\t' << "ODF_modes" << '\t';
+		file_stream << "ODF_mode_0_x" << '\t' << "ODF_mode_0_y" << '\t' << "ODF_mode_0_z" << '\t' << "ODF_mode_1_x" << '\t' << "ODF_mode_1_y" << '\t' << "ODF_mode_1_z" << '\t'; 
+		file_stream << "ODF_mode_2_x" << '\t' << "ODF_mode_2_y" << '\t' << "ODF_mode_2_z" << '\t';
+		file_stream << std::endl;
+
+		//std::cout << this->allForestNodes.size() << std::endl;
+
+		for(int i = 0; i < this->allForestNodes.size(); i++){
+						
+			file_stream << i << '\t' << this->allForestNodes[i].x << '\t' << this->allForestNodes[i].y << '\t' << this->allForestNodes[i].z << '\t';
+			file_stream << this->allForestNodes[i].scale << '\t' << this->allForestNodes[i].likelihood << '\t' << this->allForestNodes[i].forestLabel << '\t';
+			file_stream << this->allForestNodes[i].isLeaf << '\t' << this->allForestNodes[i].isRoot << '\t' << this->allForestNodes[i].isBifurgation << '\t';
+			file_stream << this->allForestNodes[i].isTrifurgation << '\t' << this->allForestNodes[i].traceQuality << '\t';
+			
+			file_stream << this->allForestNodes[i].dirX.size() << '\t' << this->allForestNodes[i].dirX[0] << '\t' << this->allForestNodes[i].dirY[0] << '\t' << this->allForestNodes[i].dirZ[0] << '\t';
+
+			if(this->allForestNodes[i].dirX.size() == 2){
+				file_stream << this->allForestNodes[i].dirX[1] << '\t' << this->allForestNodes[i].dirY[1] << '\t' << this->allForestNodes[i].dirZ[1] << '\t';
+				file_stream << 0.0 << '\t' << 0.0 << '\t' << 0.0 << '\t';
+			}
+			else if(this->allForestNodes[i].dirX.size() == 3){
+				file_stream << this->allForestNodes[i].dirX[1] << '\t' << this->allForestNodes[i].dirY[1] << '\t' << this->allForestNodes[i].dirZ[1] << '\t';
+				file_stream << this->allForestNodes[i].dirX[2] << '\t' << this->allForestNodes[i].dirY[2] << '\t' << this->allForestNodes[i].dirZ[2] << '\t';
+			}
+			else{
+				file_stream << 0.0 << '\t' << 0.0 << '\t' << 0.0 << '\t';
+				file_stream << 0.0 << '\t' << 0.0 << '\t' << 0.0 << '\t';
+			}
+
+			file_stream << std::endl;
+
+			//for(int j = 0; j < this->allForestNodes[i].dirX.size(); j++)
+			//	nodes_file_stream << this->allForestNodes[i].dirX[j] << '\t';
+		}
+		file_stream.close();
+
+		std::cout << "Done with writing node properties file: " << prop_file_name << std::endl;
+	}
+	else
+		std::cout << " Unable to open file for writing nodes: " << prop_file_name << std::endl;
+}
+
+void ftkVesselTracer::SmartRetrace(void){
+
+	this->ComputeRetracingStartPoints();
+}
+
+void ftkVesselTracer::ComputeRetracingStartPoints(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Forest nodes container is emtpy. Returning. " << std::endl;
+		return;
+	}
+
+
+	// Compute leaf and root points
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+		
+		if(this->allForestNodes[i].isLeaf || this->allForestNodes[i].isRoot || this->allForestNodes[i].isOrphan)
+			this->retracingStartPoints.push_back(this->allForestNodes[i]);
+	}
+
+	std::cout << "Done with computing starting points for retracing: " << this->retracingStartPoints.size();
+
+	// Compute possible correction lines
+	int retrace_nhood = 100;
+	for(int i = 0; i < this->retracingStartPoints.size(); i++){
+		
+		
+	}
+
+	// Write the retracing points image
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->retracingStartPointsImage = RenderImageType3D::New();
+	this->retracingStartPointsImage->SetRegions(id_reg);
+	this->retracingStartPointsImage->Allocate();
+	this->retracingStartPointsImage->SetSpacing(this->inputData->GetSpacing());
+	this->retracingStartPointsImage->FillBuffer(0);
+
+	itk::Index<3> idx;
+	for(int i = 0; i < this->retracingStartPoints.size(); i++){
+		
+		idx[0] = this->retracingStartPoints[i].x;
+		idx[1] = this->retracingStartPoints[i].y;
+		idx[2] = this->retracingStartPoints[i].z;
+
+		this->retracingStartPointsImage->SetPixel(idx, 255);
+	}
+	
+	std::string retracing_start_nodes_file_name = this->data_folder_path;
+	retracing_start_nodes_file_name.append("_RetracingStartPoints.tif");
+
+	ImageWriter::Pointer retracing_start_nodes_writer = ImageWriter::New();	
+	retracing_start_nodes_writer->SetFileName(retracing_start_nodes_file_name);	
+	retracing_start_nodes_writer->SetInput(this->retracingStartPointsImage);
+	retracing_start_nodes_writer->Update();
+	
+}
+
+IntrinsicFeatureVector_VT::IntrinsicFeatureVector_VT(){
+}
+
+AssociativeFeatureVector_VT::AssociativeFeatureVector_VT(){
+
+	this->minRootDist = 100000;
+	this->maxRootDist = 100000;
+	this->meanRootDist = 100000;
+	this->varRootDist = 100000;
+	this->nRoots = 0;
+
+	this->distToVessel = 0.0;
+	this->meanVesselDist = 10000;
+	this->varVesselDist = 10000;
+	this->alignmentWithVessel = -1;
+	this->nVesselPoints = 0;
+	this->overlapWithVessel = 0.0;
+}
+
+NucleiObject_VT::NucleiObject_VT(){
+
+	IntrinsicFeatureVector_VT();
+	AssociativeFeatureVector_VT();
+}
+
+VesselBasedNucleiFeatures::VesselBasedNucleiFeatures(){
+}
+
+VesselBasedNucleiFeatures::~VesselBasedNucleiFeatures(){
+}
+
+VesselBasedNucleiFeatures::VesselBasedNucleiFeatures(const std::string nuc_table_path, const std::string skeleton_img_path, const std::string node_prop_path, const std::string nuc_label_path, const std::string vessel_mask_path){
+
+	this->data_folder_path = node_prop_path;
+	this->data_folder_path.erase(this->data_folder_path.length()-4, this->data_folder_path.length());
+	
+	this->ReadNucleiFeatureTable(nuc_table_path);
+	this->ReadSkeletonImage(skeleton_img_path);
+	this->ReadNodePropertiesFile(node_prop_path);
+	this->ReadNucleiLabelImage(nuc_label_path);
+	this->ReadSegmentationMask(vessel_mask_path); 
+	
+	this->SetInsideRegionToGlobal();
+	this->ComputeSkeletonDistanceMap();
+	this->ComputeNucleiDistanceMap();
+
+	this->ComputeVesselFeaturesForNuclei();
+	this->WriteNucleiFeatureTable();
+}
+
+void VesselBasedNucleiFeatures::ReadNucleiFeatureTable(const std::string file_path){
+	
+	std::ifstream nucleiPoints;
+	nucleiPoints.open(file_path.c_str(), std::ios::in); 
+	std::cout << "Reading nuclei features file. " << std::endl;
+	
+	std::vector<std::string> str_vec;
+	std::string line, str1;
+	if(nucleiPoints.is_open()){
+		
+		unsigned short line_number = 0;
+		NucleiObject_VT nuclei_object;
+
+		while(nucleiPoints.good()){
+
+			line_number++;
+			//std::cout << line_number << std::endl;
+
+			if(!std::getline(nucleiPoints, line))
+				break;
+
+			////Ignore the first line since it is all text
+			if(line_number == 1)
+				continue;
+			
+			std::istringstream str_stream(line); 
+			while(str_stream.good()){
+				
+				if(!getline(str_stream, str1, '\t'))
+					break;
+				
+				//// Crazy "nan" is replaced by -1
+				if(strcmp(str1.c_str(), "nan") == 0)
+					str1 = "-1";
+
+				str_vec.push_back(str1);
+			}
+
+			nuclei_object.intrinsicFeatures.ID = atof(str_vec[0].c_str());
+
+			itk::Index<3> idx;
+			idx[0] = atof(str_vec[1].c_str());
+			idx[1] = atof(str_vec[2].c_str());
+			idx[2] = atof(str_vec[3].c_str());
+			nuclei_object.intrinsicFeatures.centroid = idx;
+
+			nuclei_object.intrinsicFeatures.volume = atof(str_vec[4].c_str());
+			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
+			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[6].c_str());
+			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[7].c_str());
+
+			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[8].c_str());
+			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[9].c_str());
+			//nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
+			nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume;
+
+			nuclei_object.intrinsicFeatures.meanSurfaceGradient = atof(str_vec[10].c_str());
+			nuclei_object.intrinsicFeatures.radiusVariation = atof(str_vec[11].c_str());
+			nuclei_object.intrinsicFeatures.shapeMeasure = atof(str_vec[12].c_str());
+			
+			nuclei_object.intrinsicFeatures.energy = atof(str_vec[13].c_str());
+			nuclei_object.intrinsicFeatures.entropy = atof(str_vec[14].c_str());
+			nuclei_object.intrinsicFeatures.inverseDiffMoment = atof(str_vec[15].c_str());
+			nuclei_object.intrinsicFeatures.inertia = atof(str_vec[16].c_str());
+			nuclei_object.intrinsicFeatures.clusterShade = atof(str_vec[17].c_str());
+			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[18].c_str());
+
+			nuclei_object.associativeFeatures.astro_total = atof(str_vec[19].c_str());
+			nuclei_object.associativeFeatures.astro_avg = atof(str_vec[20].c_str());
+			nuclei_object.associativeFeatures.astro_surr = atof(str_vec[21].c_str());
+			nuclei_object.associativeFeatures.micro_total = atof(str_vec[22].c_str());
+			nuclei_object.associativeFeatures.micro_avg = atof(str_vec[23].c_str());
+			nuclei_object.associativeFeatures.micro_surr = atof(str_vec[24].c_str());
+			nuclei_object.associativeFeatures.neuro_total = atof(str_vec[25].c_str());
+			nuclei_object.associativeFeatures.neuro_avg = atof(str_vec[26].c_str());
+			nuclei_object.associativeFeatures.neuro_surr = atof(str_vec[27].c_str());
+			nuclei_object.associativeFeatures.vessel_total = atof(str_vec[28].c_str());
+			nuclei_object.associativeFeatures.vessel_avg = atof(str_vec[29].c_str());
+			nuclei_object.associativeFeatures.vessel_surr = atof(str_vec[30].c_str());
+			
+			nuclei_object.associativeFeatures.minRootDist = atof(str_vec[31].c_str());
+			nuclei_object.associativeFeatures.maxRootDist = atof(str_vec[32].c_str());
+			nuclei_object.associativeFeatures.meanRootDist = atof(str_vec[33].c_str());
+			nuclei_object.associativeFeatures.varRootDist = atof(str_vec[34].c_str());
+			nuclei_object.associativeFeatures.nRoots = atof(str_vec[35].c_str());
+
+			this->nucleiObjects.push_back(nuclei_object);
+
+			str_vec.clear();
+		}
+		nucleiPoints.close();
+	}
+	else{
+		std::cout << " Could not open nuclei features file. Exiting now. " << std::endl;
+		return;
+	}
+
+	if(this->nucleiObjects.empty()){
+		std::cout << " Empty nuclei features file. Returning. " << std::endl;
+		return;
+	}
+	std::cout << "Nuclei features file read: " << this->nucleiObjects.size() << std::endl;
+}
+
+void VesselBasedNucleiFeatures::ReadSkeletonImage(const std::string file_path){
+
+	Common::ReadImage3DUChar(file_path, this->skeletonImage);
+} 
+
+void VesselBasedNucleiFeatures::ReadNodePropertiesFile(const std::string file_path){
+
+	std::ifstream nodePoints;
+	nodePoints.open(file_path.c_str(), std::ios::in); 
+	std::cout << "Reading vessel node features file. " << std::endl;
+	
+	std::vector<std::string> str_vec;
+	std::string line, str1;
+	if(nodePoints.is_open()){
+		
+		unsigned short line_number = 0;
+		Node node_object;
+
+		while(nodePoints.good()){
+
+			line_number++;
+			//std::cout << line_number << std::endl;
+
+			if(!std::getline(nodePoints, line))
+				break;
+
+			//Ignore the first line since it is all text
+			if(line_number == 1)
+				continue;
+			
+			std::istringstream str_stream(line); 
+			while(str_stream.good()){
+				
+				if(!getline(str_stream, str1, '\t'))
+					break;
+				
+				// Crazy "nan" is replaced by -1
+				//if(strcmp(str1.c_str(), "nan") == 0)
+				//	str1 = "-1";
+
+				str_vec.push_back(str1);
+			}
+
+			node_object.ID = atof(str_vec[0].c_str());
+
+			node_object.x = atof(str_vec[1].c_str());
+			node_object.y = atof(str_vec[2].c_str());
+			node_object.z = atof(str_vec[3].c_str());
+			
+			node_object.scale = atof(str_vec[4].c_str());
+			node_object.likelihood = atof(str_vec[5].c_str());
+
+			node_object.forestLabel = atof(str_vec[6].c_str());
+			node_object.isLeaf = atof(str_vec[7].c_str());
+			node_object.isRoot = atof(str_vec[8].c_str());
+			node_object.isBifurgation = atof(str_vec[9].c_str());
+			node_object.isTrifurgation = atof(str_vec[10].c_str());
+
+			node_object.traceQuality = atof(str_vec[11].c_str());
+			node_object.ODF_modes = atof(str_vec[12].c_str());
+
+			node_object.dirX.push_back(atof(str_vec[13].c_str()));
+			node_object.dirY.push_back(atof(str_vec[14].c_str()));
+			node_object.dirZ.push_back(atof(str_vec[15].c_str()));
+
+			if(node_object.ODF_modes == 2){
+				node_object.dirX.push_back(atof(str_vec[16].c_str()));
+				node_object.dirY.push_back(atof(str_vec[17].c_str())); 
+				node_object.dirZ.push_back(atof(str_vec[18].c_str()));
+			}
+			if(node_object.ODF_modes == 3){
+				node_object.dirX.push_back(atof(str_vec[19].c_str()));
+				node_object.dirY.push_back(atof(str_vec[20].c_str())); 
+				node_object.dirZ.push_back(atof(str_vec[21].c_str()));
+			}
+
+			this->skeletonNodes.push_back(node_object);
+
+			str_vec.clear();
+		}
+		nodePoints.close();
+	}
+	else{
+		std::cout << " Could not open vessel nodes features file. Exiting now. " << std::endl;
+		return;
+	}
+
+	if(this->skeletonNodes.empty()){
+		std::cout << " Empty vessel node features file. Quitting. " << std::endl;
+		return;
+	}
+	std::cout << "Vessel node features file read. " << this->skeletonNodes.size() << std::endl;
+}
+
+void VesselBasedNucleiFeatures::ReadNucleiLabelImage(const std::string file_path){
+
+	Common::ReadImage3DUShort(file_path, this->nucLabelImage);
+}
+
+void VesselBasedNucleiFeatures::ReadSegmentationMask(const std::string file_path){
+
+	Common::ReadImage3DUChar(file_path, this->vesselMaskImage);
+}
+
+void VesselBasedNucleiFeatures::SetInsideRegionToGlobal(void){
+
+	this->insideRegion = this->vesselMaskImage->GetBufferedRegion();
+}
+
+void VesselBasedNucleiFeatures::ComputeSkeletonDistanceMap(void){
+
+	std::cout << "Computing skeleton distance map... " << std::endl;
+
+	SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(this->skeletonImage);
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+	
+	this->skeletonDistanceMap = MaurerFilter->GetOutput();
+	
+	// Write the skeleton distance map to disk
+	/*std::string dist_file_name = this->data_folder_path;
+	dist_file_name.append("_skeletonDistanceMap.mhd");
+	Common::WriteImage3D(dist_file_name, this->skeletonDistanceMap);*/
+}
+
+void VesselBasedNucleiFeatures::ComputeNucleiDistanceMap(void){
+
+	std::cout << "Computing nuclei distance map... " << std::endl;
+
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetLowerThreshold(1);
+	threshold_filter->SetInsideValue(255);
+	threshold_filter->SetOutsideValue(0);
+	threshold_filter->SetInput(this->nucLabelImage);
+	threshold_filter->Update();
+
+	this->nucBinaryImage = threshold_filter->GetOutput();
+
+	SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(threshold_filter->GetOutput());
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+
+	this->nucDistanceMap = MaurerFilter->GetOutput();
+}
+
+void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
+	
+	if(this->nucleiObjects.empty()){
+		std::cout << "Nuclei objects vector is empty. Returning. " << std::endl;
+		return;
+	}
+
+	std::cout << "Computing vessel features for nuclei... " << this->nucleiObjects.size() << std::endl;
+
+	// Compute label geometry features - IF THIS WORKS, PUT IT IN THE ASTRO TRACER FOR NEUCLEI NEIGHBORHOOD USING MAJOR AXIS LENGTH
+	LabelGeometryFilterType::Pointer label_geometry_filter = LabelGeometryFilterType::New();
+	label_geometry_filter->SetInput(nucLabelImage);
+	label_geometry_filter->Update();
+
+	RenderImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	RenderImageType3D::SizeType sub_volume_size_nuclei;
+	RenderImageType3D::RegionType sub_volume_region_nuclei, sub_volume_region_vessel;
+	RenderImageType3D::Pointer sub_volume_nuclei, sub_volume_vessel;
+
+	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VolumeOfInterestFilterType_nuclei;
+	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VolumeOfInterestFilterType_vessel;
+
+	for(int i = 0; i < this->nucleiObjects.size(); i++){
+	
+		itk::Index<3> nuc_centroid = this->nucleiObjects[i].intrinsicFeatures.centroid;
+
+		// Distance to the closest vessel (centerline)
+		this->nucleiObjects[i].associativeFeatures.distToVessel = this->skeletonDistanceMap->GetPixel(nuc_centroid);
+
+		
+		// Alignment with vessel
+
+		// ROI proportional to nuclei scale, assuming spherical nuclei.
+		//float sph_rad = std::pow((double)(0.23877 * this->nucleiObjects[i].intrinsicFeatures.volume), (double)0.333333);
+		float sph_rad = 0.5 * label_geometry_filter->GetMajorAxisLength(this->nucLabelImage->GetPixel(nuc_centroid));
+		float double_scale_nuclei = 1.5 * sph_rad;
+		
+		
+		starting_index_nuclei[0] = nuc_centroid[0] - double_scale_nuclei; starting_index_nuclei[1] = nuc_centroid[1] - double_scale_nuclei; starting_index_nuclei[2] = nuc_centroid[2] - double_scale_nuclei;
+		end_index_nuclei[0] = nuc_centroid[0] + double_scale_nuclei; end_index_nuclei[1] = nuc_centroid[1] + double_scale_nuclei; end_index_nuclei[2] = nuc_centroid[2] + double_scale_nuclei;
+
+		LabelImageType3D::SizeType sz = this->nucLabelImage->GetBufferedRegion().GetSize();
+
+		//std::cout << "Nuclei: Starting Indices:"<<starting_index_nuclei[0]<<" "<<starting_index_nuclei[1]<<" "<<starting_index_nuclei[2]<<" "<<std::endl;
+		//std::cout << "Nuclei: End Indices:"<<end_index_nuclei[0]<<" "<<end_index_nuclei[1]<<" "<<end_index_nuclei[2]<<std::endl;
+
+	    //std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+		sub_volume_size_nuclei[0] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2.0 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2.0 * double_scale_nuclei;
+
+		// Better boundary management, but gives vnl errors!!
+		/*if(starting_index_nuclei[0] < 0){
+			sub_volume_nuclei[0] = (long)sub_volume_nuclei[0] - (long)std::abs((int)starting_index_nuclei[0]);
+			starting_index_nuclei[0] = 0;
+		}
+		if(starting_index_nuclei[1] < 0){
+			sub_volume_nuclei[1] = sub_volume_nuclei[1] - (RenderImageType3D::PixelType)std::abs((int)starting_index_nuclei[1]);
+			starting_index_nuclei[1] = 0;
+		}
+		if(starting_index_nuclei[2] < 0){
+			sub_volume_nuclei[2] = sub_volume_nuclei[2] - (RenderImageType3D::PixelType)std::abs((int)starting_index_nuclei[2]);
+			starting_index_nuclei[2] = 0;
+		}
+		if(end_index_nuclei[0] > sz[0]){
+			sub_volume_nuclei[0] = sub_volume_nuclei[0] - (end_index_nuclei[0] - sz[0]);
+			end_index_nuclei[0] = sz[0];
+		}
+		if(end_index_nuclei[1] > sz[1]){
+			sub_volume_nuclei[1] = sub_volume_nuclei[1] - (end_index_nuclei[1] - sz[1]);
+			end_index_nuclei[1] = sz[1];
+		}
+		if(end_index_nuclei[2] > sz[2]){
+			sub_volume_nuclei[2] = sub_volume_nuclei[2] - (end_index_nuclei[2] - sz[2]);
+			end_index_nuclei[2] = sz[2];
+		}*/
+
+		if ( (starting_index_nuclei[0] < 0) || (starting_index_nuclei[1] < 0) || (starting_index_nuclei[2] < 0) ||
+			(end_index_nuclei[0] > (unsigned int)sz[0]) || (end_index_nuclei[1] > (unsigned int)sz[1]) ||
+			(end_index_nuclei[2] > (unsigned int)sz[2]) )
+			continue;
+
+		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+
+		double curr_distance, min_distance = 10000.0, max_distance = -10000.0, mean_distance = 0.0, var_distance = 0.0;
+		int min_lin_idx = -1;
+		std::vector<double> dist_vec;
+		RenderImageType3D::IndexType curr_skeleton_idx, min_dist_idx, max_dist_idx;
+
+		for(int j = 0; j < this->skeletonNodes.size(); j++){
+		
+			curr_skeleton_idx[0] = this->skeletonNodes[j].x; curr_skeleton_idx[1] = this->skeletonNodes[j].y; curr_skeleton_idx[2] = this->skeletonNodes[j].z;
+
+			int offset = 1; //1;
+			if(curr_skeleton_idx[0] < starting_index_nuclei[0]+offset || curr_skeleton_idx[1] < starting_index_nuclei[1]+offset || curr_skeleton_idx[2] < starting_index_nuclei[2]+offset ||
+				curr_skeleton_idx[0] > end_index_nuclei[0]-offset || curr_skeleton_idx[1] > end_index_nuclei[1]-offset || curr_skeleton_idx[2] > end_index_nuclei[2]-offset)
+				continue;
+
+			curr_distance = this->nucDistanceMap->GetPixel(curr_skeleton_idx);
+
+			//std::cout << "Vessel point: " << j << " Dist: " << curr_distance << std::endl;
+			
+			dist_vec.push_back(curr_distance);
+
+			if(curr_distance < min_distance){
+				
+				min_distance = curr_distance;
+				min_dist_idx = curr_skeleton_idx;
+				min_lin_idx = j;
+			}
+
+			if(curr_distance > max_distance){
+
+				max_distance = curr_distance;
+				max_dist_idx = curr_skeleton_idx;
+			}
+		}
+
+			
+		//	CHECK IF ANY NEIGHBORHOOD POINT WAS DETECTED
+		if(!dist_vec.empty()){
+
+			//std::vector<std::vector<double> > vessel_dir_all; //(3, std::vector<double>(3, 0.0));
+			vnl_vector<double> vessel_dir(3, 0.0);
+		    double max_abs_cosine = -2.0, ang = 0.0, abs_cos_angle = 0.0;
+			
+			LabelGeometryFilterType::MatrixType nuc_dir = label_geometry_filter->GetEigenvectors(this->nucLabelImage->GetPixel(nuc_centroid));
+			LabelGeometryFilterType::VectorType eigen_vals = label_geometry_filter->GetEigenvalues(this->nucLabelImage->GetPixel(nuc_centroid));
+			//nuc_dir.normalize_columns(); 
+			
+			vnl_vector<double> eigen_vals_vnl(eigen_vals.size(), 0.0);
+			for(int l = 0; l < eigen_vals.size(); l++)
+				eigen_vals_vnl[l] = eigen_vals[l];
+			
+			int arg_max_ev = eigen_vals_vnl.arg_max();
+			vnl_vector<double> largest_axis_dir = nuc_dir.get_column(arg_max_ev);
+			vnl_vector<double> abs_cos_vec(3, -1.0), ang_vec(3, 0.0);
+
+			for(int k = 0; k < this->skeletonNodes[min_lin_idx].ODF_modes; k++){
+
+				vessel_dir[0] = this->skeletonNodes[min_lin_idx].dirX[k];
+				vessel_dir[1] = this->skeletonNodes[min_lin_idx].dirY[k];
+				vessel_dir[2] = this->skeletonNodes[min_lin_idx].dirZ[k];
+				//vessel_dir.normalize();
+				
+
+				ang = angle(vessel_dir, largest_axis_dir);
+				abs_cos_angle = vcl_abs(vcl_cos(ang));
+				
+				ang_vec[k] = ang;
+				abs_cos_vec[k] = abs_cos_angle; 
+				
+				//if(abs_cos_angle > max_abs_cosine)
+				//	max_abs_cosine = abs_cos_angle;
+				
+			}
+
+			int arg_max_abs_cos = abs_cos_vec.arg_max();
+			double align_with_vessel = ang_vec[arg_max_abs_cos];
+			
+
+			double mean_distance = 0.0, variance_distance = 0.0;
+			mean_distance = std::accumulate(dist_vec.begin(), dist_vec.end(), 0.0) / (double)dist_vec.size();
+			
+			for(int k = 0; k < dist_vec.size(); k++)
+				variance_distance = variance_distance + std::pow(dist_vec[k] - mean_distance, 2);
+
+			variance_distance = variance_distance / (double)dist_vec.size();
+			
+			//if(variance_distance < 0.001)
+			//	std::cout << mean_distance << ", " << variance_distance << std::endl;
+
+			this->nucleiObjects[i].associativeFeatures.alignmentWithVessel = align_with_vessel;
+			this->nucleiObjects[i].associativeFeatures.nVesselPoints = dist_vec.size();
+			this->nucleiObjects[i].associativeFeatures.meanVesselDist = mean_distance;
+			this->nucleiObjects[i].associativeFeatures.varVesselDist = variance_distance;
+		
+		}
+		else{
+			this->nucleiObjects[i].associativeFeatures.alignmentWithVessel = -1.0;
+			this->nucleiObjects[i].associativeFeatures.nVesselPoints = 0;
+			this->nucleiObjects[i].associativeFeatures.meanVesselDist = 10000;
+			this->nucleiObjects[i].associativeFeatures.varVesselDist = 10000;
+		}
+		
+
+		
+		// Overlap with vessel
+
+		
+		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
+		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
+
+		sub_volume_region_vessel.SetIndex(starting_index_nuclei);
+		sub_volume_region_vessel.SetSize(sub_volume_size_nuclei);
+		
+		//std::cout << starting_index_nuclei << ", " << end_index_nuclei << std::endl;
+		
+		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
+		sub_volume_filter_nuclei->SetInput(this->nucBinaryImage);
+		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
+		sub_volume_filter_nuclei->Update();
+		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
+		
+		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;	
+
+		VolumeOfInterestFilterType_vessel::Pointer sub_volume_filter_vessel = VolumeOfInterestFilterType_vessel::New();
+		sub_volume_filter_vessel->SetInput(this->vesselMaskImage);
+		sub_volume_filter_vessel->SetRegionOfInterest(sub_volume_region_vessel);
+		sub_volume_filter_vessel->Update();
+		sub_volume_vessel = sub_volume_filter_vessel->GetOutput();
+
+		LabelOverlapFilterType::Pointer label_overlap_filter = LabelOverlapFilterType::New();
+		label_overlap_filter->SetSourceImage(sub_volume_vessel);
+		label_overlap_filter->SetTargetImage(sub_volume_nuclei);
+		label_overlap_filter->Update();
+
+		this->nucleiObjects[i].associativeFeatures.overlapWithVessel = label_overlap_filter->GetTotalOverlap();
+
+		//std::cout << this->nucleiObjects[i].associativeFeatures.overlapWithVessel << std::endl;
+	
+	}
+
+	std::cout << "Done with computing vessel features for nuclei. " << std::endl;
+}
+
+void VesselBasedNucleiFeatures::WriteNucleiFeatureTable(void){
+
+	if(this->nucleiObjects.empty()){
+		std::cout << "Nuclei objects container is empty. Returning. " << std::endl;
+		return;
+	}
+
+	std::cout << "Writing final nuclei features file... " << std::endl;
+
+	std::string outputFname = this->data_folder_path;
+	outputFname.append("_nucFeaturesVessel.txt");
+
+	std::ofstream nuclei_feature_vector;
+	nuclei_feature_vector.open(outputFname.c_str(), std::ios::out);
+	//std::cout << "After feature_vector.open"<<std::endl;
+	
+	unsigned short IDIndex = 0;//ID index
+	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
+	nuclei_feature_vector << "var_int" << '\t' << "eccentricity" << '\t' << "elongation" << '\t' << "mean_surf_gradient" << '\t' << "radius_variation" << '\t'; 
+	nuclei_feature_vector << "shape_measure" << '\t' << "energy" << '\t' << "entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
+	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "Astro_TOTAL" << '\t' << "Astro_AVG" << '\t' << "Astro_SURR" << '\t';
+	nuclei_feature_vector << "Micro_TOTAL" << '\t' << "Micro_AVG" << '\t' << "Micro_SURR" << '\t' << "Neuro_TOTAL" << '\t' << "Neuro_AVG" << '\t';
+	nuclei_feature_vector << "Neuro_SURR" << '\t' <<  "Vessel_TOTAL" << '\t' << "Vessel_AVG" << '\t' << "Vessel_SURR" << '\t';
+	nuclei_feature_vector << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
+	nuclei_feature_vector << "dist_to_vessel"  << '\t' << "mean_vessel_dist" << '\t' << "var_vessel_dist" << '\t' << "n_vessel_points" << '\t';
+	nuclei_feature_vector << "align_with_vessel" << '\t' << "overlap_with_vessel" << '\t';
+	nuclei_feature_vector << std::endl;
+
+	for(size_t i = 0; i < this->nucleiObjects.size(); i++){
+
+		NucleiObject_VT nuc = this->nucleiObjects[i];
+		
+		//if(nuc.associativeFeatures.nRoots != 0){
+			nuclei_feature_vector << nuc.intrinsicFeatures.ID << '\t' << nuc.intrinsicFeatures.centroid[0] << '\t' << nuc.intrinsicFeatures.centroid[1] << '\t' << nuc.intrinsicFeatures.centroid[2] << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.volume << '\t' << nuc.intrinsicFeatures.integratedIntensity << '\t' << nuc.intrinsicFeatures.meanIntensity << '\t' << nuc.intrinsicFeatures.varianceIntensity << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.eccentricity << '\t' << nuc.intrinsicFeatures.elongation << '\t' << nuc.intrinsicFeatures.meanSurfaceGradient << '\t' << nuc.intrinsicFeatures.radiusVariation << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.shapeMeasure << '\t' << nuc.intrinsicFeatures.energy << '\t' << nuc.intrinsicFeatures.entropy << '\t' << nuc.intrinsicFeatures.inverseDiffMoment << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.inertia << '\t' << nuc.intrinsicFeatures.clusterShade << '\t' << nuc.intrinsicFeatures.clusterProminence << '\t'; 
+			nuclei_feature_vector << nuc.associativeFeatures.astro_total << '\t' << nuc.associativeFeatures.astro_avg << '\t' << nuc.associativeFeatures.astro_surr << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.micro_total << '\t' << nuc.associativeFeatures.micro_avg << '\t' << nuc.associativeFeatures.micro_surr << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.neuro_total << '\t' << nuc.associativeFeatures.neuro_avg << '\t' << nuc.associativeFeatures.neuro_surr << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.vessel_total << '\t' << nuc.associativeFeatures.vessel_avg << '\t' << nuc.associativeFeatures.vessel_surr << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.minRootDist << '\t' << nuc.associativeFeatures.maxRootDist << '\t' << nuc.associativeFeatures.meanRootDist << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.varRootDist << '\t' << nuc.associativeFeatures.nRoots << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.distToVessel << '\t' << nuc.associativeFeatures.meanVesselDist << '\t' << nuc.associativeFeatures.varVesselDist << '\t';
+			nuclei_feature_vector << nuc.associativeFeatures.nVesselPoints << '\t' << nuc.associativeFeatures.alignmentWithVessel << '\t' << nuc.associativeFeatures.overlapWithVessel << '\t';
+			nuclei_feature_vector << std::endl;
+		//}
+	}
+	nuclei_feature_vector.close();
+	std::cout << "Done with writing nuclei feature vector file: " << outputFname << std::endl;
+
 }

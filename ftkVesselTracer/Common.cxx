@@ -4,7 +4,7 @@
 namespace Common
 {
 
-void ReadImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
+void ReadImage3D(const std::string file_name, ImageType3D::Pointer& data_ptr){
 
 	std::cout << "Reading input file " << file_name << std::endl;
 
@@ -20,7 +20,39 @@ void ReadImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
 	std::cout << "Input file size: " << data_ptr->GetBufferedRegion().GetSize() << std::endl;
 }
 
-void WriteTIFFImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
+void ReadImage3DUChar(const std::string file_name, RenderImageType3D::Pointer& data_ptr){
+
+	std::cout << "Reading input file " << file_name << std::endl;
+
+	typedef itk::ImageFileReader<RenderImageType3D> ReaderType;
+	//ReaderType::GlobalWarningDisplayOff();
+	ReaderType::Pointer image_reader = ReaderType::New();
+	image_reader->SetFileName(file_name);
+	image_reader->Update();
+
+	data_ptr = image_reader->GetOutput();
+	data_ptr->Update();
+
+	std::cout << "Input file size: " << data_ptr->GetBufferedRegion().GetSize() << std::endl;
+}
+
+void ReadImage3DUShort(const std::string file_name, LabelImageType3D::Pointer& data_ptr){
+
+	std::cout << "Reading input file " << file_name << std::endl;
+
+	typedef itk::ImageFileReader<LabelImageType3D> ReaderType;
+	//ReaderType::GlobalWarningDisplayOff();
+	ReaderType::Pointer image_reader = ReaderType::New();
+	image_reader->SetFileName(file_name);
+	image_reader->Update();
+
+	data_ptr = image_reader->GetOutput();
+	data_ptr->Update();
+
+	std::cout << "Input file size: " << data_ptr->GetBufferedRegion().GetSize() << std::endl;
+}
+
+void WriteTIFFImage3D(const std::string file_name, ImageType3D::Pointer& data_ptr){
 
 	std::cout << "Writing output file" << file_name << std::endl;
 
@@ -654,7 +686,7 @@ double inline EpsilonClip(double EPS, double x){
 	return (x);
 }
 
-void WriteImage3D(const std::string& file_name, ImageType3D::Pointer& data_ptr){
+void WriteImage3D(const std::string file_name, ImageType3D::Pointer& data_ptr){
 
 	std::cout << "Writing output file "<< file_name << std::endl;
 

@@ -54,10 +54,11 @@
 #include "vtkImageViewer2.h"
 
 typedef float PixelType;
-typedef itk::Image<PixelType, 3> ImageType3D;
 typedef unsigned char RenderPixelType;
+typedef unsigned short LabelPixelType;
+typedef itk::Image<PixelType, 3> ImageType3D;
 typedef itk::Image<RenderPixelType, 3> RenderImageType3D;
-
+typedef itk::Image<LabelPixelType, 3> LabelImageType3D; 
 typedef itk::ImageToVTKImageFilter<RenderImageType3D> ITKToVTKConnectorType;
 typedef itk::ShiftScaleImageFilter<ImageType3D,ImageType3D> ShiftScaleFilterType;
 typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType;
@@ -73,22 +74,34 @@ typedef itk::SquareImageFilter<ImageType3D, ImageType3D> SquareImageFilter;
 namespace Common{
 	
 	/**
-	 * Read a 3D TIFF image to disk.
+	 * Read a 3D float image rfom disk.
 	 * (data path with extension, empty data pointer)
 	 */
-	void ReadImage3D(const std::string&, ImageType3D::Pointer&);
+	void ReadImage3D(const std::string, ImageType3D::Pointer&);
+
+	/**
+	 * Read a 3D unsigned char image from disk.
+	 * (data path with extension, empty data pointer)
+	 */
+	void ReadImage3DUChar(const std::string, RenderImageType3D::Pointer&);
+
+	/**
+	 * Read a 3D unsigned short image from disk.
+	 * (data path with extension, empty data pointer)
+	 */
+	void ReadImage3DUShort(const std::string, LabelImageType3D::Pointer&);
 
 	/**
 	 * Wirte a 3D TIFF image to disk. 
 	 * (data path with extension, data pointer)
 	 */
-	void WriteTIFFImage3D(const std::string&, ImageType3D::Pointer&);
+	void WriteTIFFImage3D(const std::string, ImageType3D::Pointer&);
 
 	/**
 	 * Wirte a 3D image as mhd file to disk. 
 	 * (data path with extension, data pointer)
 	 */
-	void WriteImage3D(const std::string&, ImageType3D::Pointer&);
+	void WriteImage3D(const std::string, ImageType3D::Pointer&);
 
 	/**
 	 * Curvature anisotropic diffusion filter used by Amit.

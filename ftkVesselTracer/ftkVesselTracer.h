@@ -59,6 +59,7 @@
 #include "vtkDirectedGraph.h"
 #include "vtkOutEdgeIterator.h"
 #include "vtkInEdgeIterator.h"
+#include "vtkTable.h"
 
 #include "itkTimeProbe.h"
 #include "itkStatisticsImageFilter.h"
@@ -80,8 +81,21 @@
 #include "itkAddImageFilter.h"
 #include "itkMultiplyImageFilter.h"
 #include "itkNormalizeImageFilter.h"
+#include "itkBresenhamLine.h"
+#include "itkPoint.h"
+#include "itkLineIterator.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
+#include "itkLabelOverlapMeasuresImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
 
 #include <vnl/vnl_vector_fixed.h>
+#include <vnl/vnl_vector.h>
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_numeric_traits.h>
+#include <vnl/vnl_math.h>
+
+#include <vcl_complex.h>
 
 #include "Common.h"
 
@@ -112,9 +126,11 @@
  */
 
 typedef float PixelType;
-typedef itk::Image<PixelType, 3> ImageType3D;
 typedef unsigned char RenderPixelType;
+typedef unsigned short LabelPixelType;
+typedef itk::Image<PixelType, 3> ImageType3D;
 typedef itk::Image<RenderPixelType, 3> RenderImageType3D;
+typedef itk::Image<LabelPixelType, 3> LabelImageType3D; 
 typedef itk::ImageToVTKImageFilter<RenderImageType3D> ITKToVTKConnectorType; 
 typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
 typedef itk::ImageDuplicator<ImageType3D> DuplicatorType;
@@ -131,6 +147,12 @@ typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFil
 typedef itk::AddImageFilter<ImageType3D> AddImageFilterType;
 typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilterType;
 typedef itk::NormalizeImageFilter<ImageType3D, ImageType3D> NormalizeImageFilterType;
+typedef itk::BresenhamLine<3> LineType3D;
+typedef itk::LineIterator<RenderImageType3D> LineIteratorType3D;
+typedef itk::SignedMaurerDistanceMapImageFilter<RenderImageType3D, ImageType3D> SignedMaurerDistanceMapImageFilterType;
+typedef itk::BinaryThresholdImageFilter<LabelImageType3D, RenderImageType3D> ThresholdFilterType;
+typedef itk::LabelGeometryImageFilter<LabelImageType3D, RenderImageType3D> LabelGeometryFilterType;
+typedef itk::LabelOverlapMeasuresImageFilter<RenderImageType3D> LabelOverlapFilterType;
 
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
@@ -319,6 +341,32 @@ public:
 	SWCNodeVessel();
 };
 
+class VesselNetworkFeatures{
+
+	double totalVesselLength;
+	double totalVesselVolume;
+	double totalVesselness;
+	int nBifurgations;
+	int nTrifurgations;
+	int nMultifurfations;
+	double meanRadius;
+	double meanVesselSize;
+	double meanVesselness;
+	double vesselVolumePercentage;
+
+	// Not worked on computing these
+	double totalTortuosity;
+	double meanTortuosity;
+	int nLoops;
+	double collaterality;
+	double meanLoopRadius;
+	
+	// Add associative features
+
+
+	VesselNetworkFeatures();
+};
+
 struct Node{
 
 	double x;
@@ -329,6 +377,7 @@ struct Node{
 	double likelihood;
 	bool isValid;
 	double nHoodScale;
+	double vesselness;
 
 	static const int DEFALUT_SCALE = 4.0;
 	static const int MIN_LIKELIHOOD = 0;
@@ -383,6 +432,14 @@ struct Node{
 
 	int forestLabel;
 	bool isRoot;
+	bool isLeaf;
+	bool isBifurgation;
+	bool isTrifurgation;
+	bool isMultifurgation;
+	bool isOrphan;
+	std::vector<int> children;
+	std::vector<int> parents;
+	int ODF_modes;
 
 	Node();
 	Node(double, double, double, PixelType);
@@ -438,6 +495,82 @@ private:
 	int index;
 };
 
+
+class IntrinsicFeatureVector_VT{
+
+public:
+
+	itk::Index<3> centroid;
+	//HeapNode_astro weightedCentroid;
+	unsigned short int ID;
+	double volume;
+	double boundingBoxVolume;
+	int integratedIntensity;
+	double meanIntensity;
+	double varianceIntensity;
+	double eccentricity;
+	double elongation;
+	double meanSurfaceGradient;
+	double radiusVariation;
+	double shapeMeasure; // Ratio of surface voxels to total voxels
+	double energy;
+	double entropy;
+	double inverseDiffMoment;
+	double inertia;
+	double clusterShade;
+	double clusterProminence;
+	
+	IntrinsicFeatureVector_VT();
+};
+
+class AssociativeFeatureVector_VT{
+
+public:
+
+	double astro_total;
+	double astro_avg;
+	double astro_surr;
+	double micro_total;
+	double micro_avg;
+	double micro_surr;
+	double neuro_total;
+	double neuro_avg;
+	double neuro_surr;
+	double vessel_total;
+	double vessel_avg;
+	double vessel_surr;
+
+	double minRootDist;
+	double maxRootDist;
+	double meanRootDist;
+	double varRootDist;
+	double nRoots;
+
+	double distToVessel;
+	double alignmentWithVessel;
+	double overlapWithVessel;
+	//double minVesselDist;
+	//double maxVesselDist;
+	double meanVesselDist;
+	double varVesselDist;
+	int nVesselPoints;
+
+	AssociativeFeatureVector_VT();
+
+};
+
+class NucleiObject_VT{
+
+public:
+	IntrinsicFeatureVector_VT intrinsicFeatures;
+	AssociativeFeatureVector_VT associativeFeatures;
+	
+	// 1: Astrpcytes	2: Microglia	3:Neurons	4: Endotheliels
+	int classValue; 
+	double confidenceMeasure;
+
+	NucleiObject_VT();
+};
 class ftkVesselTracer{
 
 public:
@@ -558,17 +691,48 @@ public:
 	 * (Node object, image_ptr, gx ptr, gy, ptr, gz ptr)	
 	 */
 	void FitSphereAtNode(Node&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
-
+	
+	/* Internal function	
+	 */
 	void InitNodeDetectionParamsDefault(void);
 
-	void PopulateSWCNodeContainer(void);
+	/* Generate a labelled, directed graph from the unlabelled graph. Also generates preliminary node-based features
+	 */
+	void PopulateSWCNodeContainerAndComputeNodeFeatures(void);
 
+	/* Write the SWC file to disk
+	 */
 	void WriteSWCFileVessel(void);  
 
+	/* Print a toy SWC file to cout
+	 */
 	void PrintToySWCFile(void);
 
+	/* Compute vesselness image (part of preprocessing)
+	 */
 	void ComputeVesselnessImage(VesselnessMeasures&, std::string&, ImageType3D::Pointer&);
 
+	/* Pipeline function for smart tracing
+	 */
+	void SmartRetrace(void);
+
+	/* Estimate points to begin retracing from
+	 */
+	void ComputeRetracingStartPoints(void);
+
+	/* Write vessel skeleton image to disk
+	 */
+	void WriteSkeletonImage(void);
+
+	/* Write the segmentation mask to disk
+	 */
+	void WriteSegmentationMask(void);
+	
+	/* Write node properties to file
+	 */
+	void WriteNodePropertiesFile(void);
+
+	
 private:
 
 	AllParameters allParams;
@@ -589,12 +753,15 @@ private:
 	RenderImageType3D::Pointer maximumProjectionImage;
 	RenderImageType3D::Pointer minimumProjectionImage;
 	RenderImageType3D::Pointer primaryNodesImage, secondaryNodesImage;
+	RenderImageType3D::Pointer retracingStartPointsImage;
+	RenderImageType3D::Pointer skeletonImage, segmentationMaskImage;
 	
 	std::vector<Node> initialSeeds;
 	std::vector<Node> primaryNodes;
 	std::vector<Node> primaryNodesAfterHitTest;
 	std::vector<Node> allNodes;
 	std::vector<Node> allForestNodes;
+	std::vector<Node> retracingStartPoints;
 
 	std::vector<AffinityEdge> edges;
 	std::vector<AffinityEdge> loops;
@@ -672,4 +839,80 @@ private:
 	/* Sort the queue based on trace quality and return the best trace index and quality
 	 */
 	void GetBestTrace(std::vector<queue_element>&, queue_element&);
+};
+
+class VesselBasedNucleiFeatures{
+
+public:
+
+	VesselBasedNucleiFeatures();
+	~VesselBasedNucleiFeatures();
+
+	/* Initialize file locations
+	 * (feature table, skeleton image, nuclei label image, vessel segmentation mask)
+	 */
+	VesselBasedNucleiFeatures(const std::string, const std::string, const std::string, const std::string, const std::string);
+	
+	/* Read nuclei feature table
+	 * (file path)
+	 */
+	void ReadNucleiFeatureTable(const std::string);
+
+	/* Write the updated nuclei feature table to disk
+	 */
+	void WriteNucleiFeatureTable(void);
+	
+	/* Read skeleton image and compute distance map
+	 * (file path)
+	 */
+	void ReadSkeletonImage(const std::string);
+
+	/* Read the nuclei label image
+	 * (file path)
+	 */
+	void ReadNucleiLabelImage(const std::string);
+
+	/* Read the segmentation mask image
+	 * (file path)
+	 */
+	void ReadSegmentationMask(const std::string);
+
+	/* Compute vessel-based features for nuclei
+	 */
+	void ComputeVesselFeaturesForNuclei(void);
+
+	/* Set the inside region
+	 */
+	void SetInsideRegionToGlobal(void);
+
+	/* Compute distance map image from the vessel skeleton
+	 */
+	void ComputeSkeletonDistanceMap(void);	
+
+	/* Compute distance map image from the nuclei label image
+	 */
+	void ComputeNucleiDistanceMap(void);	
+
+	/* Read node properties from file
+	 * (file path)
+	 */
+	void ReadNodePropertiesFile(const std::string);
+
+private:
+
+	std::string data_folder_path;
+
+    std::vector<vtkSmartPointer<vtkTable> > nucFeaturesTable;
+
+	RenderImageType3D::Pointer skeletonImage;
+	RenderImageType3D::Pointer vesselMaskImage;
+	LabelImageType3D::Pointer nucLabelImage;
+	ImageType3D::Pointer skeletonDistanceMap;
+	ImageType3D::Pointer nucDistanceMap;
+	RenderImageType3D::Pointer nucBinaryImage;
+
+	RenderImageType3D::RegionType insideRegion;
+
+	std::vector<NucleiObject_VT> nucleiObjects;
+	std::vector<Node> skeletonNodes;
 };
