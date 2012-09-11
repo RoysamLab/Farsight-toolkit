@@ -2,6 +2,7 @@
 
 #include <cstddef> // for NULL
 
+//Constructor
 Node::Node(double x, double y, double z, itk::uint64_t id)
 {
 	this->x = x;
@@ -12,6 +13,21 @@ Node::Node(double x, double y, double z, itk::uint64_t id)
 	this->parent = NULL;
 }
 
+//Copy Constructor
+//Note: 
+//parent is set to old_node parent, the tree copy constructor must take care to regenerate the links to any new parents
+//children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
+Node::Node(const Node& old_node)
+{
+	this->x = old_node.x;
+	this->y = old_node.y;
+	this->z = old_node.z;
+	this->id = old_node.id;
+
+	this->parent = old_node.parent;
+	this->children = old_node.children;
+}	
+
 void Node::AddChild(Node *child)
 {
 	children.push_back(child);
@@ -19,10 +35,6 @@ void Node::AddChild(Node *child)
 
 void Node::SetParent(Node *parent)
 {
-	////Search for the reference in the old parent to this child and delete it
-	//Node* old_parent = this->parent;
-
-	//parent->AddChild(this);	//Add the child to the new parent
 	this->parent = parent;	//Set the new parent
 }
 

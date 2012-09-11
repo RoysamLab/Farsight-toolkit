@@ -9,8 +9,6 @@ class Node
 {
 private:
 	Node *parent;
-	std::vector<Node*> children;
-	
 	itk::uint64_t id;
 
 public:
@@ -18,11 +16,18 @@ public:
 	double y;
 	double z;
 
-	
+	std::vector<Node*> children;
 
 public:
+	//Default constructor
 	Node(double x, double y, double z, itk::uint64_t id);
-
+	
+	//Copy constructor
+	//Note: 
+	//parent is set to old_node parent, the tree copy constructor must take care to regenerate the links to any new parents
+	//children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
+	Node(const Node& old_node);
+	
 	//Adds the child
 	//Note: This does not make the child update its reference to the parent
 	void AddChild(Node *child);

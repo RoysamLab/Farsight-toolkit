@@ -354,7 +354,8 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 
 	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-	Tree* smoothed_tree = SmoothTree(cell, tree);
+	Tree* smoothed_tree = new Tree(*tree);
+	SmoothTree(cell, smoothed_tree);
 
 	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
 	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
@@ -636,17 +637,16 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 }
 
 /* This function smoothes a Tree structure */
-Tree* MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* tree )
+void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* smoothed_tree)
 {
 	CreateSpeedImage(cell);
-	//SmoothSegments(cell, tree, tree->GetRoot());
-	Tree* smoothed_tree = SmoothSegments2(cell, tree);
-	
-	return smoothed_tree;
+
+	SmoothSegments(cell, smoothed_tree, smoothed_tree->GetRoot());
+	//Tree* smoothed_tree = SmoothSegments2(cell, tree);
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
-void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_node) //Smooth AND Prune
+void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* smoothed_tree, Node* start_node) //Smooth AND Prune
 {
 	std::vector< Node* > start_node_children = start_node->GetChildren();
 	if (start_node_children.size() == 0)
@@ -688,7 +688,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 			segment_length += CalculateEuclideanDistance(last_node_index, child_node_index);
 
 			//Remove the child_node from the tree
-			tree->RemoveNode(child_node);
+			smoothed_tree->RemoveNode(child_node);
 
 			//Updating variables to point to the next node along the segment
 			last_node_index = child_node_index;
@@ -723,16 +723,16 @@ void MicrogliaRegionTracer::SmoothSegments(Cell* cell, Tree* tree, Node* start_n
 			continue;
 		
 
-		PathType::Pointer speed_path = SmoothPath(cell, tree, start_node, end_node, path);	//Get the smoothed path
+		PathType::Pointer speed_path = SmoothPath(cell, smoothed_tree, start_node, end_node, path);	//Get the smoothed path
 		
-		ReplaceTreeSegmentWithPath(cell, tree, speed_path, start_node, end_node);			//Replace the segment in the tree with the smoothed path
+		ReplaceTreeSegmentWithPath(cell, smoothed_tree, speed_path, start_node, end_node);			//Replace the segment in the tree with the smoothed path
 
-		SmoothSegments(cell, tree, end_node);							//Call SmoothSegments on the next segment
+		SmoothSegments(cell, smoothed_tree, end_node);							//Call SmoothSegments on the next segment
 	}
 }
 
 /* This function takes takes in start_node and end_node and a path in between and returns the smoothed path */
-MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path )
+MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell* cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
 	//Extract path from speed image (the cubed distance map)
 	// Create interpolator
@@ -801,7 +801,7 @@ MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell*
 }
 
 /* This function modifies the tree passed to it and replaces the path between start_node and end_node with the speed_path */
-void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, PathType::Pointer speed_path, Node* start_node, Node* end_node)
+void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell* cell, Tree* smoothed_tree, PathType::Pointer speed_path, Node* start_node, Node* end_node)
 {
 	//Convert path output back to tree format
 	if ( speed_path->GetVertexList()->Size() == 0 )
@@ -829,7 +829,7 @@ void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, P
 		//Connect this new node to the current_node
 		current_node->AddChild(new_node);
 		new_node->SetParent(current_node);
-		tree->AddNode(new_node, current_node);
+		smoothed_tree->AddNode(new_node, current_node);
 
 		current_node = new_node;
 	}

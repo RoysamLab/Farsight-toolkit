@@ -5,6 +5,42 @@ Tree::Tree()
 	this->root = NULL;
 }
 
+//Copy constructors, for making deep copies
+Tree::Tree(const Tree& old_tree)
+{
+	Node* new_root = new Node(*(old_tree.root));	//Deep copy of node "root", see Node.h
+	this->root = new_root;
+	
+	this->member_nodes.clear();
+	CopyConstructorHelper(new_root, old_tree.root);
+}
+
+void Tree::CopyConstructorHelper(Node* const new_node, const Node* const old_node)
+{
+	new_node->children.clear();
+	this->member_nodes.push_back(new_node);
+
+	std::vector<Node *>::const_iterator old_node_children_iter;
+	for (old_node_children_iter = old_node->children.begin(); old_node_children_iter != old_node->children.end(); ++old_node_children_iter)
+	{
+		Node* child = *old_node_children_iter;
+
+		Node* new_child = new Node(*child);
+		CopyConstructorHelper(new_child, child);
+
+		//Add each new child
+		new_node->AddChild(new_child);
+	}
+
+	//At the new parent node (here), we go to the new child (which we updated in the last step) and change it so that it points back to the new parent
+	std::vector<Node *>::iterator new_node_children_iter;
+	for (new_node_children_iter = new_node->children.begin(); new_node_children_iter != new_node->children.end(); ++new_node_children_iter)
+	{
+		Node* new_child = *new_node_children_iter;
+		new_child->SetParent(new_node);
+	}
+}
+
 Tree::~Tree()
 {
 	//TODO: Delete all the nodes in the tree, otherwise big memory leak!

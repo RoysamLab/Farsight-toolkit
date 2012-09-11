@@ -35,7 +35,7 @@
 #include "ROIGrabber.h"
 #include "LoG.h"
 
-#include "Tree.h"
+#include "Tree.h"				
 #include "time.h"
 
 #include "itkVector.h"
@@ -85,11 +85,11 @@ public:
 	double				CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);	//THIS IS NOT THE EUCLIDEAN DISTANCE
 	Tree*				BuildMST1(Cell* cell, double** AdjGraph);
 
-	Tree*				SmoothTree(Cell* cell, Tree* tree);
-	void				SmoothSegments(Cell* cell, Tree* tree, Node* start_node);
-	void				ReplaceTreeSegmentWithPath(Cell* cell, Tree* tree, PathType::Pointer speed_path, Node* start_node, Node* end_node);
+	void				SmoothTree(Cell* cell, Tree* smoothed_tree);
+	void				SmoothSegments(Cell* cell, Tree* smoothed_tree, Node* start_node);
+	void				ReplaceTreeSegmentWithPath(Cell* cell, Tree* smoothed_tree, PathType::Pointer speed_path, Node* start_node, Node* end_node);
 	Tree*				SmoothSegments2(Cell* cell, Tree* tree);
-	PathType::Pointer	SmoothPath(Cell* cell, Tree* tree, Node* start_node, Node* end_node, PathType::Pointer path );
+	PathType::Pointer	SmoothPath(Cell* cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
 	void				CreateSpeedImage(Cell* cell);
 

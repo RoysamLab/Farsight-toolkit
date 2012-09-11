@@ -7,11 +7,12 @@
 class Tree
 {
 private:
-	Node *root;
-	std::vector<Node*> member_nodes;
+	Node *				root;
+	std::vector<Node*>	member_nodes;
 
 public:
 	Tree();
+	Tree(const Tree& old_tree);	//Copy constructor, for making deep copies!
 	~Tree();
 
 	void				SetRoot(Node *root);
@@ -21,6 +22,9 @@ public:
 	bool				RemoveNode(Node* node);
 	void				GetLeafNodes(std::vector<Node*> &leaf_nodes);
 	void				VisitChildrenForLeafNodes(Node* node, std::vector<Node*> &leaf_nodes);
+
+private:
+	void				CopyConstructorHelper(Node* const new_node, const Node* const old_node);
 };
 
 #endif
