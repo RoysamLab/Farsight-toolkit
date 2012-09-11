@@ -83,7 +83,7 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects<nu
 				{
 					for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
 					{
-						if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+						if( (ID == featureTable->GetValue(row, 0).ToUnsignedInt())
 							&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_src) )
 						{
 							kNearestIds = k_nearest_neighbors_ID(ID, k, Class_dest);
@@ -201,7 +201,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 								for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
 								{
 									// check if the neighbor is of the desired class
-									if( ((*iter).first == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+									if( ((*iter).first == featureTable->GetValue(row, 0).ToUnsignedInt())
 										&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_dest) )
 									{
 										// push the neighbor into a temporary vector and increase the count
@@ -308,7 +308,7 @@ std::vector< std::vector< std::pair<unsigned int, double> > > kNearestObjects<nu
 				{
 					for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
 					{
-						if( (ID == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+						if( (ID == featureTable->GetValue(row, 0).ToUnsignedInt())
 							&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_src) )
 						{
 							inRadiusIds = neighborsWithinRadius_ID(ID, radius, Class_dest);
@@ -390,7 +390,7 @@ std::vector< std::pair<unsigned int, double> > kNearestObjects<num_dimensions>::
 						{
 							for(int row = 0; row<(int)featureTable->GetNumberOfRows(); ++row)
 							{
-								if( ((*iter).first == featureTable->GetValueByName(row, "ID").ToUnsignedInt())
+								if( ((*iter).first == featureTable->GetValue(row, 0).ToUnsignedInt())
 									&& (featureTable->GetValue(row, col).ToUnsignedShort() == Class_dest) )
 								{
 									double dist = distanceMetric->Evaluate( tree->GetMeasurementVector( radNeighbors[i] ));
