@@ -1,7 +1,7 @@
 #include "MicrogliaRegionTracer.h"
 
 #define MASK 0
-#define PRINT_ALL_IMAGES 0
+#define PRINT_ALL_IMAGES 1
 #define PI (4.0*atan(1.0))
 
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
@@ -203,31 +203,96 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	cell->multiscale_LoG_image->SetSpacing(spacing);
-
-
-	//Make a new image to store the critical points	
+	
+	//Make a new image to store the ridge pixels
 	ImageType::SizeType size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
-	cell->critical_point_image = ImageType::New();
+	cell->ridge_image = LoGImageType::New();
 	ImageType::IndexType start;
 	start.Fill(0);
 	ImageType::RegionType region(start, size);
-	cell->critical_point_image->SetRegions(region);
-	cell->critical_point_image->Allocate();
-	cell->critical_point_image->FillBuffer(0);
+	cell->ridge_image->SetRegions(region);
+	cell->ridge_image->Allocate();
+	cell->ridge_image->FillBuffer(0);
 
+    //Non-maximal suppression
 	//Make a iterator for the image and a neighborhood around the current point we are visiting
 	itk::Size<3> rad = {{1,1,1}};
-	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< LoGImageType > ridge_img_iter(cell->ridge_image, cell->ridge_image->GetLargestPossibleRegion());
 	itk::ConstNeighborhoodIterator< LoGImageType > LoG_neighbor_iter(rad, cell->multiscale_LoG_image, cell->multiscale_LoG_image->GetLargestPossibleRegion());
 
 	while(!LoG_neighbor_iter.IsAtEnd()) 
 	{
+        LoGImageType::PixelType a = LoG_neighbor_iter.GetPixel(4);
+		
+		if (a > 0.01) //Ignore pixels less than 1% response
+		{
+			bool isInBounds;
+			LoGImageType::PixelType a1 = LoG_neighbor_iter.GetPixel(0, isInBounds);
+			if (!isInBounds)
+				a1 = 0;
+			LoGImageType::PixelType a2 = LoG_neighbor_iter.GetPixel(1, isInBounds);
+			if (!isInBounds)
+				a2 = 0;
+			LoGImageType::PixelType a3 = LoG_neighbor_iter.GetPixel(2, isInBounds);
+			if (!isInBounds)
+				a3 = 0;
+			LoGImageType::PixelType a4 = LoG_neighbor_iter.GetPixel(3, isInBounds);
+			if (!isInBounds)
+				a4 = 0;
+			LoGImageType::PixelType a5 = LoG_neighbor_iter.GetPixel(5, isInBounds);	//note the change in indexing
+			if (!isInBounds)
+				a5 = 0;
+			LoGImageType::PixelType a6 = LoG_neighbor_iter.GetPixel(6, isInBounds);
+			if (!isInBounds)
+				a6 = 0;
+			LoGImageType::PixelType a7 = LoG_neighbor_iter.GetPixel(7, isInBounds);
+			if (!isInBounds)
+				a7 = 0;
+			LoGImageType::PixelType a8 = LoG_neighbor_iter.GetPixel(8, isInBounds);
+			if (!isInBounds)
+				a8 = 0;
+        
+			bool ridge_pixel = false;
+        
+			if ((a1 + a4 + a6 < a2 + a + a7 && a2 + a + a7 > a3 + a5 + a8) ||   //pixel on vertical ridge
+				(a1 + a2 + a3 < a4 + a + a5 && a4 + a + a5 > a6 + a7 + a8) ||   //pixel on horizontal ridge
+				(a1 + a2 + a4 < a3 + a + a6 && a3 + a + a6 > a5 + a7 + a8) ||   //pixel on 45 degree ridge
+				(a2 + a3 + a5 < a1 + a + a8 && a1 + a + a8 > a4 + a6 + a7)      //pixel on 135 degree ridge
+				)
+				ridge_pixel = true;
+        
+			if (ridge_pixel)
+				ridge_img_iter.Set(a);
+		}
+
+		++ridge_img_iter;
+		++LoG_neighbor_iter;
+	}
+
+
+	//Make a new image to store the critical points	
+	ImageType::SizeType LoG_image_size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
+	cell->critical_point_image = ImageType::New();
+	ImageType::IndexType LoG_image_start;
+	LoG_image_start.Fill(0);
+	ImageType::RegionType LoG_image_region(LoG_image_start, LoG_image_size);
+	cell->critical_point_image->SetRegions(LoG_image_region);
+	cell->critical_point_image->Allocate();
+	cell->critical_point_image->FillBuffer(0);
+
+	//Make a iterator for the image and a neighborhood around the current point we are visiting
+	itk::Size<3> LoG_image_rad = {{1,1,1}};
+	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
+	itk::ConstNeighborhoodIterator< LoGImageType > ridge_neighbor_iter(rad, cell->ridge_image, cell->ridge_image->GetLargestPossibleRegion());
+
+	while(!ridge_neighbor_iter.IsAtEnd()) 
+	{
 		unsigned int neighborhood_size = (rad[0] * 2 + 1) * (rad[1] * 2 + 1) * (rad[2] * 2 + 1);
 		unsigned int center_pixel_offset_index = neighborhood_size / 2;
 
-		LoGImageType::PixelType center_pixel_intensity = LoG_neighbor_iter.GetPixel(center_pixel_offset_index);
+		LoGImageType::PixelType center_pixel_intensity = ridge_neighbor_iter.GetPixel(center_pixel_offset_index);
 		
-		if (center_pixel_intensity >= 0.01)	//Must have greater than 1.0% response from LoG to even be considered for local maximum (so we don't choose points that are part of noise)
+		if (center_pixel_intensity >= 0.005)	//Must have greater than 0.5% response from LoG to even be considered for local maximum (so we don't choose points that are part of noise)
 		{	
 			bool local_maximum = true;
 			
@@ -236,7 +301,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 				if (neighborhood_index != center_pixel_offset_index)
 				{
 					bool isInBounds; //true if the pixel is in bounds
-					LoGImageType::PixelType neighbor_pixel_log_intensity = LoG_neighbor_iter.GetPixel(neighborhood_index, isInBounds);
+					LoGImageType::PixelType neighbor_pixel_log_intensity = ridge_neighbor_iter.GetPixel(neighborhood_index, isInBounds);
 
 					if (isInBounds && neighbor_pixel_log_intensity > center_pixel_intensity)
 						local_maximum = false;
@@ -251,8 +316,10 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 		}
 
 		++critical_point_img_iter;
-		++LoG_neighbor_iter;
+		++ridge_neighbor_iter;
 	}
+    
+        
 
 	std::ostringstream criticalpointsFileNameStream;
 	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
@@ -261,7 +328,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 #endif
 }
 
-/* This function calculates the Frangi's Vesselness score */
+/* This function calculates the Vesselness score */
 void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 {
 	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
@@ -508,23 +575,6 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 					//Theta ranges between 0 and PI with 0 being the least deviation from a straight-line with the parent trace
 					double theta = PI - acos((pow(parent_to_node_length, 2.0) + pow(node_to_candidate_length, 2.0) - pow(parent_to_candidate_length, 2.0)) / (2 * parent_to_node_length * node_to_candidate_length)); 
 					cost = node_to_candidate_length * (alpha * theta / PI + beta);
-					
-					/* OLD WAY OF CALCULATING TORTUOSITY */
-					//double chord_length = parent_to_candidate_length;
-					//double curve_length =  node_to_candidate_length + parent_to_node_length;
-					//
-					//if (curve_length >= (std::numeric_limits< double >::max() / 2) || chord_length >= (std::numeric_limits< double >::max() / 2))	//avoid overflow issues
-					//{
-					//	cost = std::numeric_limits<double>::max();
-					//}
-					//else if (chord_length / curve_length < sqrt(2.0) / 2.0)				//avoid angle too large issues
-					//{						
-					//	cost = std::numeric_limits<double>::max();
-					//}
-					//else
-					//{
-					//	//cost = node_to_candidate_length * (alpha * (curve_length / chord_length) + beta);							
-					//}
 				}
 				else	//is the root node (has no parent)
 				{	
@@ -541,7 +591,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 			}	
 		}
 
-		if (minimum_node_cost >= std::numeric_limits< double >::max() / 2)
+		if (minimum_node_cost >= 200)
 			break;	//Minimum distance way too far
 		
 		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << " cost: " << minimum_node_cost << std::endl;

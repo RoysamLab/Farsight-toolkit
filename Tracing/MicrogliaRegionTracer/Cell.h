@@ -80,6 +80,7 @@ public:
 	ImageType::Pointer				image;
 	ImageType::Pointer				critical_point_image;
 	LoGImageType::Pointer			multiscale_LoG_image;
+	LoGImageType::Pointer			ridge_image;
 	VesselnessImageType::Pointer	vesselness_image;
 	ImageType::Pointer				masked_image;
 	MaskImageType::Pointer			mask;
