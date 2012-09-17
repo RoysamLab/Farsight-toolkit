@@ -54,7 +54,7 @@ bool VolumeOfInterest::ExtrudeVOI()
 	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
 	extrude->SetInput( ROIpolydata);
 	extrude->SetExtrusionTypeToNormalExtrusion();
-	extrude->SetScaleFactor (100);
+	extrude->SetScaleFactor (100); //adjust depending upon size of image stack
 	extrude->Update();
 
 	this->VOIPolyData.push_back( extrude->GetOutput());

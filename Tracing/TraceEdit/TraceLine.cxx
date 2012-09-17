@@ -222,8 +222,10 @@ void TraceLine::calculateVol()
 		this->length = 0;
 		this->radii = this->m_trace_bits.front().r; 
 		this->sectionArea = PI*pow((this->radii),2);
-		this->surfaceArea = 4*this->sectionArea;
-		this->volume = (4.0/3.0)*PI*pow((this->radii),3);
+		this->surfaceArea = 0;
+		this->volume = 0;
+		this->somaSurfaceArea = 4*this->sectionArea;
+		this->somaVolume = (4.0/3.0)*PI*pow((this->radii),3);
 		this->BurkTaper = 0;
 		this->HillmanTaper = 0;
 	}//end else

@@ -74,8 +74,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 
 	tips.push_back(rootBit);
 
-	this->somaSurface = this->segments[0]->GetSurfaceArea();
-	this->somaVolume = this->segments[0]->GetVolume();
+	this->somaSurface = this->segments[0]->GetSomaSurfaceArea();
+	this->somaVolume = this->segments[0]->GetSomaVolume();
 	this->somaRadii = this->segments[0]->GetRadii();
 	this->DeviceDistance = this->segments[0]->GetDistanceToROI();
 
@@ -639,7 +639,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 		CellData->InsertNextValue(this->FragmentationTotal);
 		CellData->InsertNextValue(this->FragmentationMin);
-		CellData->InsertNextValue(this->FragmentationTotal / this->NumSegments);
+		CellData->InsertNextValue((int) floor((double) this->FragmentationTotal / this->NumSegments + 0.5));
 		CellData->InsertNextValue(this->FragmentationMax);
 
 		CellData->InsertNextValue(this->daughterRatioMin);
@@ -696,24 +696,24 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		{
 			this->BifTorqueRemoteCount = 1;
 		}
-		CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifAmplLocalMin);
+		CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifAmplLocalMax);
-		CellData->InsertNextValue(this->BifTiltLocal / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifTiltLocalMin);
+		CellData->InsertNextValue(this->BifTiltLocal / this->BifTiltLocalCount);
 		CellData->InsertNextValue(this->BifTiltLocalMax);
-		CellData->InsertNextValue(this->BifTorqueLocal/ this->BifTorqueLocalCount);
 		CellData->InsertNextValue(this->BifTorqueLocalMin);
+		CellData->InsertNextValue(this->BifTorqueLocal/ this->BifTorqueLocalCount);
 		CellData->InsertNextValue(this->BifTorqueLocalMax);
 
-		CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifAmplRemoteMin);
+		CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifAmplRemoteMax);
-		CellData->InsertNextValue(this->BifTiltRemote / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifTiltRemoteMin);
+		CellData->InsertNextValue(this->BifTiltRemote / this->BifTiltRemoteCount);
 		CellData->InsertNextValue(this->BifTiltRemoteMax);
-		CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
 		CellData->InsertNextValue(this->BifTorqueRemoteMin);
+		CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
 		CellData->InsertNextValue(this->BifTorqueRemoteMax);
 
 		if (this->terminalTips == 0)

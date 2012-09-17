@@ -181,24 +181,24 @@ void CellTraceModel::SetupHeaders()
 	this->headers.push_back("Ave Elevation");
 	this->headers.push_back("Max Elevation");
 
-	this->headers.push_back("Ave Local Bifurcation Amp");
 	this->headers.push_back("Min Local Bifurcation Amp");
+	this->headers.push_back("Ave Local Bifurcation Amp");
 	this->headers.push_back("Max Local Bifurcation Amp");
-	this->headers.push_back("Ave Local Bifurcation Tilt");
 	this->headers.push_back("Min Local Bifurcation Tilt");
+	this->headers.push_back("Ave Local Bifurcation Tilt");
 	this->headers.push_back("Max Local Bifurcation Tilt");
-	this->headers.push_back("Ave Local Bifurcation Torque");
 	this->headers.push_back("Min Local Bifurcation Torque");
+	this->headers.push_back("Ave Local Bifurcation Torque");
 	this->headers.push_back("Max Local Bifurcation Torque");
 	
-	this->headers.push_back("Ave Remote Bifurcation Amp");
 	this->headers.push_back("Min Remote Bifurcation Amp");
+	this->headers.push_back("Ave Remote Bifurcation Amp");
 	this->headers.push_back("Max Remote Bifurcation Amp");
-	this->headers.push_back("Ave Remote Bifurcation Tilt");
 	this->headers.push_back("Min Remote Bifurcation Tilt");
+	this->headers.push_back("Ave Remote Bifurcation Tilt");
 	this->headers.push_back("Max Remote Bifurcation Tilt");
-	this->headers.push_back("Ave Remote Bifurcation Torque");
 	this->headers.push_back("Min Remote Bifurcation Torque");
+	this->headers.push_back("Ave Remote Bifurcation Torque");
 	this->headers.push_back("Max Remote Bifurcation Torque");
 
 	this->headers.push_back("Min Leaf Level");

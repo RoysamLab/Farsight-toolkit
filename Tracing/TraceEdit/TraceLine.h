@@ -69,6 +69,8 @@ public:
 	double GetDistToParent();
 	double GetFragmentationSmoothness();
 	double GetRadii(){return radii;}
+	double GetSomaVolume() {return somaVolume;}
+	double GetSomaSurfaceArea() {return somaSurfaceArea;}
 	double GetVolume() {return volume;}
 	double GetBurkTaper() {return BurkTaper;}
 	double GetHillmanTaper() {return HillmanTaper;}
@@ -204,6 +206,7 @@ private:
 	std::vector<double> planeAngleLocal, planeAngleRemote;
 	double BifTiltLocalAvg, BifTiltRemoteAvg, BifTorqueLocalAvg, BifTorqueRemoteAvg;
 	double traceColor, radii, sectionArea, length, volume, surfaceArea, PathLength, EuclideanD, DistToParent;
+	double somaVolume, somaSurfaceArea;
 	double BitDensity, BurkTaper, HillmanTaper, HillmanThreshold;
 	double BifToSomaEucDistance;
 	double daughterLengthRatio;
