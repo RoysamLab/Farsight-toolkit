@@ -606,13 +606,13 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 		//CellData->InsertNextValue(this->BurkTaperTotal);
 		CellData->InsertNextValue(this->BurkTaperMin);
-		CellData->InsertNextValue(this->BurkTaperTotal / this->actualBifurcations);
+		CellData->InsertNextValue(this->BurkTaperTotal / (this->actualBifurcations*2));
 		CellData->InsertNextValue(this->BurkTaperMax);
 
 		//CellData->InsertNextValue(this->HillmanTaperTotal);
 		CellData->InsertNextValue(this->HillmanTaperMin);
-		CellData->InsertNextValue(this->HillmanTaperTotal / this->actualBifurcations);
-		CellData->InsertNextValue(this->BurkTaperMax);
+		CellData->InsertNextValue(this->HillmanTaperTotal / (this->actualBifurcations*2));
+		CellData->InsertNextValue(this->HillmanTaperMax);
 
 		CellData->InsertNextValue(this->TotalEuclideanPath);
 		CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length

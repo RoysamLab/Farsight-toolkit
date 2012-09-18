@@ -204,7 +204,7 @@ void TraceLine::calculateVol()
 		if (Df !=Dl)
 		{
 			this->BurkTaper = (Df - Dl)/dist;
-			this->HillmanTaper = Dl/Df;
+			this->HillmanTaper = (Df - Dl)/Df;
 		}
 		else
 		{
