@@ -1,7 +1,7 @@
 #include "MicrogliaRegionTracer.h"
 
 #define MASK 0
-#define PRINT_ALL_IMAGES 1
+#define PRINT_ALL_IMAGES 0
 #define PI (4.0*atan(1.0))
 
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
@@ -31,49 +31,6 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 		
 		Cell* cell = new Cell(cellX, cellY, cellZ);
 
-		//Setup the size of the initial ROI
-		ImageType::SizeType roi_size;
-		roi_size[0] = 200;
-		roi_size[1] = 200;
-		roi_size[2] = 100;
-  
-		cell->setRequestedSize(roi_size);
-
-		//Grab the initial cellimage
-		//std::cout << "Grabbing ROI for cell" << std::endl;
-		ImageType::IndexType shift_index;
-		ImageType::Pointer temp_cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
-
-		//Set the origin of the image to be {0, 0, 0}
-		ImageType::PointType origin = temp_cell_image->GetOrigin();
-		cell->SetOrigin(origin);
-		origin[0] = 0;
-		origin[1] = 0;
-		origin[2] = 0;
-		temp_cell_image->SetOrigin(origin);
-
-		//Duplicate the image so that the requests don't propagate back up to roi_grabber
-		typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-		DuplicatorType::Pointer duplicator = DuplicatorType::New();
-		duplicator->SetInputImage(temp_cell_image);
-		ftk::TimeStampOverflowSafeUpdate( duplicator.GetPointer() );
-		cell->image = duplicator->GetOutput();
-		cell->image->DisconnectPipeline();
-		
-		//Shift_index is just to demonstrate how much the center point of the local point of the image if it got cropped by the left, top, closest point of the image
-		cell->setShiftIndex(shift_index);
-		//std::cout << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
-		
-		//Make the file name of the raw cell image
-		std::stringstream cell_filename_stream;
-		cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
-
-		//Write the cell image
-		cell->WriteImage(cell_filename_stream.str(), cell->image);
-
-		roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
-		cell->SetSize(roi_size);
-
 		cells.push_back(cell);
 	}
 }
@@ -81,26 +38,115 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 /* This is the main loop where tracing takes place */
 void MicrogliaRegionTracer::Trace()
 {
-	//Trace cell by cell
-	//#pragma omp parallel for
-	for (int k = 0; k < cells.size(); k++)
-	{
-		Cell* cell = cells[k];
+	//Create groups of n cells at a time (where n is the number of logical processors)
+    //This is needed because OpenMP doesn't play well with ITK
+    int num_threads = 1;    //Default 1 thread in a group
+#ifdef _OPENMP
+    num_threads = omp_get_num_procs();
+#endif
+    
+    int num_groups = std::ceil(cells.size() / (double) num_threads);
+	std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
+    std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
 
-		//Get the mask
-    #if MASK	//development only
-        cell->GetMask(this->soma_filename);
-    #endif
-		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
-		CalculateCandidatePixels(cell);
-
-		std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
-		
-		std::cout << "Tree Building" << std::endl;
-		BuildTree(cell);
-
-		delete cell;
-	}
+    for (int group_num = 0; group_num < num_groups; group_num++)
+    {
+        int num_local_threads = (cells.size() / num_threads) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
+		std::cerr << "number of local threads: " << num_local_threads << std::endl;
+		for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
+        {
+            int global_thread_num = group_num * num_threads + local_thread_num;
+            
+            Cell* cell = cells[global_thread_num];
+            std::cerr << "Reading cell #: " << global_thread_num << std::endl;
+                      
+            //Setup the size of the initial ROI
+            ImageType::SizeType roi_size;
+            roi_size[0] = 200;
+            roi_size[1] = 200;
+            roi_size[2] = 100;
+            
+            cell->setRequestedSize(roi_size);
+            
+            //Grab the initial cellimage
+            //std::cout << "Grabbing ROI for cell" << std::endl;
+            ImageType::IndexType shift_index;
+            ImageType::Pointer temp_cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
+            
+            //Set the origin of the image to be {0, 0, 0}
+            ImageType::PointType origin = temp_cell_image->GetOrigin();
+            cell->SetOrigin(origin);
+            origin[0] = 0;
+            origin[1] = 0;
+            origin[2] = 0;
+            temp_cell_image->SetOrigin(origin);
+            
+            //Duplicate the image so that the requests don't propagate back up to roi_grabber
+            typedef itk::ImageDuplicator< ImageType > DuplicatorType;
+            DuplicatorType::Pointer duplicator = DuplicatorType::New();
+            duplicator->SetInputImage(temp_cell_image);
+            ftk::TimeStampOverflowSafeUpdate( duplicator.GetPointer() );
+            cell->image = duplicator->GetOutput();
+            cell->image->DisconnectPipeline();
+            
+            //Shift_index is just to demonstrate how much the center point of the local point of the image if it got cropped by the left, top, closest point of the image
+            cell->setShiftIndex(shift_index);
+            //std::cout << cell->getShiftIndex()[0] << " " << cell->getShiftIndex()[1] << " " << cell->getShiftIndex()[2] << std::endl;
+            
+            //Make the file name of the raw cell image
+            std::stringstream cell_filename_stream;
+            cell_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << ".TIF";	//X_Y_Z.TIF
+            
+            //Write the cell image
+            cell->WriteImage(cell_filename_stream.str(), cell->image);
+            
+            roi_size = cell->image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
+            cell->SetSize(roi_size);
+        }
+        
+        //Trace a group of cells
+        #pragma omp parallel for
+        for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
+        {
+            int global_thread_num = group_num * num_threads + local_thread_num;
+            Cell* cell = cells[global_thread_num];
+            
+            //Get the mask
+        #if MASK	//development only
+            cell->GetMask(this->soma_filename);
+        #endif
+            std::cout << "Calculating candidate pixels for a new cell" << std::endl;
+            CalculateCandidatePixels(cell);
+            
+            std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
+            
+            std::cout << "Tree Building" << std::endl;
+            BuildTree(cell);
+            
+            delete cell;
+        }
+    }
+    
+//    //Trace cell by cell
+//	#pragma omp parallel for
+//	for (int k = 0; k < cells.size(); k++)
+//	{
+//		Cell* cell = cells[k];
+//
+//		//Get the mask
+//    #if MASK	//development only
+//        cell->GetMask(this->soma_filename);
+//    #endif
+//		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
+//		CalculateCandidatePixels(cell);
+//
+//		std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
+//		
+//		std::cout << "Tree Building" << std::endl;
+//		BuildTree(cell);
+//
+//		delete cell;
+//	}
 }
 
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
