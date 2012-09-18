@@ -9,8 +9,10 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
 	this->soma_filename = soma_filename;
 
+#ifdef _OPENMP
+	std::cerr << "OpenMP is on, setting itkGlobalDefaultNumberOfThreads to 1" << std::endl;
 	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
-
+#endif
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
 
@@ -80,7 +82,7 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 void MicrogliaRegionTracer::Trace()
 {
 	//Trace cell by cell
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (int k = 0; k < cells.size(); k++)
 	{
 		Cell* cell = cells[k];
@@ -405,13 +407,13 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 /* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
 void MicrogliaRegionTracer::BuildTree(Cell* cell)
 {
-	std::cout << "Building Adjacency Graph" << std::endl;
+	std::cerr << "Building Adjacency Graph" << std::endl;
 	double** AdjGraph = BuildAdjacencyGraph(cell);
 
 	//for (int k = 0; k < cell->critical_points_queue.size(); k++)
 	//	std::cout << AdjGraph[0][k] << std::endl;
 
-	std::cout << "Building Minimum Spanning Tree" << std::endl;
+	std::cerr << "Building Minimum Spanning Tree" << std::endl;
 	Tree* tree = BuildMST1(cell, AdjGraph);
 
 	std::ostringstream swc_filename_stream, swc_filename_stream_local;
@@ -446,7 +448,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		AdjGraph[k] = new double[cell->critical_points_queue.size()];
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (itk::int64_t k = 0; k < (itk::int64_t)cell->critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
@@ -798,7 +800,7 @@ MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell*
 	// Create optimizer
 	typedef itk::RegularStepGradientDescentOptimizer OptimizerType;
 	OptimizerType::Pointer optimizer = OptimizerType::New();
-	optimizer->SetNumberOfIterations( 10000 );
+	optimizer->SetNumberOfIterations( 1000000 );
 	optimizer->SetMaximumStepLength( 0.1 );
 	optimizer->SetMinimumStepLength( 0.1 );
 	optimizer->SetRelaxationFactor( 0.00 );
