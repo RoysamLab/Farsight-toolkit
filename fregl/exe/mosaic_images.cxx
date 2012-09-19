@@ -33,6 +33,9 @@ limitations under the License.
 //    -new_str      The replacement of the old substr
 //    -output       The output image name.
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 
 #include <iostream>
 using std::cerr;
@@ -147,12 +150,35 @@ main(int argc, char* argv[]) {
                 continue;
 
             //fuse the image
-            RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
-            RegionIterator outputIt(final_image, final_image->GetRequestedRegion());
+	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
+	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
+	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
+	    
+#ifdef _MSC_VER
+        #pragma omp parallel for //collapse(3)
+#else
+        #pragma omp parallel for collapse(3)
+#endif
+            for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
+            {
+                for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
+                {
+                    for( int kk=0; kk<iamgeOutputSize[0]; ++kk )
+                    {
+                        itk::Index<1> offset;
+                        offset[0] = (ii*iamgeOutputSize[0]*iamgeOutputSize[1])+(jj*iamgeOutputSize[0])+kk;
+                        imageOutputArray[offset[0]] = vnl_math_max(imageOutputArray[offset[0]],imageInputArray[offset[0]]);
+		    }
+		}
+	    }
 
-            for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd(); ++inputIt, ++outputIt) {
-                outputIt.Set(outputIt.Get() + inputIt.Get());
-            }
+            ////fuse the image
+            //RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
+            //RegionIterator outputIt(final_image, final_image->GetRequestedRegion());
+
+            //for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd(); ++inputIt, ++outputIt) {
+            //    outputIt.Set(outputIt.Get() + inputIt.Get());
+            //}
         }
 
     } else if (arg_blending() == 1) { //taking the average in the overlapping regions
@@ -226,7 +252,7 @@ main(int argc, char* argv[]) {
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
         ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
-        std::cout << "Composing the final image ..." << std::endl;
+        std::cout << "Composing the final image2 ..." << std::endl;
         final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
         for (unsigned int i = 1; i < image_names.size(); i++) {
             image_name = arg_img_path() + std::string("/") + image_names[i];
@@ -235,7 +261,29 @@ main(int argc, char* argv[]) {
             if (!xformed_image)
                 continue;
 
-            //fuse the image
+//            //fuse the image
+//	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
+//	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
+//	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
+//#ifdef _MSC_VER
+//	#pragma omp parallel for //collapse(3)
+//#else
+//	#pragma omp parallel for collapse(3)
+//#endif
+//	    for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
+//	    {
+//	        for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
+//	        {
+//		    for( int kk=0; kk<iamgeOutputSize[0]; ++kk )
+//		    {
+//		    	itk::Index<1> offset;
+//			offset[0] = (ii*iamgeOutputSize[0]*iamgeOutputSize[1])+(jj*iamgeOutputSize[0])+kk;
+//			imageOutputArray[offset[0]] = vnl_math_max(imageOutputArray[offset[0]],imageInputArray[offset[0]]);
+//		    }
+//		}
+//            }
+
+	    // Fuse image
             RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
             RegionIterator outputIt(final_image, final_image->GetRequestedRegion());
 
@@ -282,6 +330,7 @@ main(int argc, char* argv[]) {
     if (arg_3d()) {
         ImageType::PointType OutOrigin;
         // Make sure there are no offsets in the Mosaic file origin
+	std::cout << std::endl << " \tNow it will create the images in 3d and NRRD";
         OutOrigin[0] = 0;
         OutOrigin[1] = 0;
         OutOrigin[2] = 0;
