@@ -286,7 +286,7 @@ main(int argc, char* argv[]) {
         OutOrigin[1] = 0;
         OutOrigin[2] = 0;
         final_image->SetOrigin(OutOrigin);
-        std::string name_3d = name_prefix + std::string(".mhd");
+        std::string name_3d = name_prefix + std::string(".nrrd");
         typedef itk::ImageFileWriter< ImageType > WriterType;
         WriterType::Pointer writer = WriterType::New();
         writer->SetFileName(name_3d);
