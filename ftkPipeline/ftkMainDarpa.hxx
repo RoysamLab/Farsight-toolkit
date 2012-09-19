@@ -1112,7 +1112,7 @@ void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageNa
 
 
 template<typename TINPUT >
-void ftkMainDarpa::test_3( std::string inputFile )
+int ftkMainDarpa::test_3( std::string inputFile )
 {
 	std::ifstream myfile;
 	myfile.open( inputFile.c_str() );
@@ -1128,6 +1128,8 @@ void ftkMainDarpa::test_3( std::string inputFile )
 	myfile >> sizeZ;
 	int numFiles;
 	myfile >> numFiles;
+	if( numFiles == 0 )
+		return 0;
 	std::vector< std::string > namesFiles;
 	namesFiles.resize(numFiles);
 	for( int i=0; i<numFiles;++i )
@@ -1209,10 +1211,10 @@ void ftkMainDarpa::test_3( std::string inputFile )
 		}
 	}
 
-	std::string temp5b = outputFolder + "/aTemporal.tif";
+	std::string temp5b = outputFolder; // + "/aTemporal.tif";
         writeImage< TINPUT >(zProjectImage,temp5b.c_str());
 
-
+	return 1;
 }
 
 
