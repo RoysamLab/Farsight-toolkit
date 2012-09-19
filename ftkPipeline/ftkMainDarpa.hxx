@@ -1107,3 +1107,134 @@ void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageNa
 	
 	
 }
+
+
+
+
+template<typename TINPUT >
+void ftkMainDarpa::test_3( std::string inputFile )
+{
+	std::ifstream myfile;
+	myfile.open( inputFile.c_str() );
+	int flagOrder;
+	myfile >> flagOrder;
+	int numRows;
+	myfile >> numRows;
+	int sizeX;
+	myfile >> sizeX;
+	int sizeY;
+	myfile >> sizeY;
+	int sizeZ;
+	myfile >> sizeZ;
+	int numFiles;
+	myfile >> numFiles;
+	std::vector< std::string > namesFiles;
+	namesFiles.resize(numFiles);
+	for( int i=0; i<numFiles;++i )
+	{
+		myfile >> namesFiles[i];
+		std::cout << std::endl << namesFiles[i];
+	}
+	std::string outputFolder;
+	myfile >> outputFolder;
+
+	std::cout << std::endl << outputFolder;
+	myfile.close();
+
+
+	typename TINPUT::Pointer zProjectImage = TINPUT::New();
+	typename TINPUT::PointType originz;
+ 	originz[0] = 0;
+   	originz[1] = 0;
+    	originz[2] = 0;
+        zProjectImage->SetOrigin( originz );
+        typename TINPUT::IndexType startz;
+       	startz[0] = 0;
+        startz[1] = 0;
+	startz[2] = 0;
+	typename TINPUT::SizeType sizez;
+	sizez[0] = sizeX*numRows;
+	sizez[1] = sizeY*int((numFiles-1)/numRows+1);
+	sizez[2] = 1;
+	typename TINPUT::RegionType regionz;
+	regionz.SetSize ( sizez  );
+	regionz.SetIndex( startz );
+	zProjectImage->SetRegions( regionz );
+	zProjectImage->Allocate();
+	zProjectImage->FillBuffer(0);
+	zProjectImage->Update();
+	typename TINPUT::PixelType * zProjectImageArray = zProjectImage->GetBufferPointer();
+
+	for( int i=0; i<numFiles;++i )
+	{
+		int inverse;
+		int xCoord;
+		int yCoord;
+		if( flagOrder == 1 ) // Starts at upper left
+		{
+			inverse = i;
+		}	
+		else if( flagOrder == 2 ) // Starts at lower right
+		{
+			inverse = numRows * int((numFiles-1)/numRows+1)  - 1 - i;
+		}
+		xCoord = inverse%numRows;
+		yCoord = inverse/numRows;
+		
+
+		std::cout << std::endl << numFiles << " " << numRows << " " << xCoord << " " << yCoord <<" " << sizez[0] << " " << sizez[1];
+		
+		unsigned long long xySizeBig = sizeX*numRows;
+		unsigned long long xySizeSmall = sizeX;
+		//unsigned long long xIni = 
+		//unsigned long long yIni = yCoord*
+
+		typename TINPUT::Pointer inputImage = readImage< TINPUT >(namesFiles[i].c_str());
+
+		std::vector< typename TINPUT::Pointer > inputImageProjected(3);
+	  	inputImageProjected = getProjectImage< TINPUT, TINPUT >( inputImage, "ORG" );
+		typename TINPUT::PixelType * inputImageProjectedArray = inputImageProjected[0]->GetBufferPointer();
+
+
+		#pragma omp parallel for collapse(2)
+		for(unsigned long long x=0; x<sizeX; ++x)
+ 		{
+          		for(unsigned long long y=0; y<sizeY; ++y)
+   			{
+				unsigned long long newX = x + xCoord*sizeX;
+				unsigned long long newY = y + yCoord*sizeY;
+				zProjectImageArray[(xySizeBig*newY) + newX] = inputImageProjectedArray[(xySizeSmall*y) + x];
+
+			}
+		}
+	}
+
+	std::string temp5b = outputFolder + "/aTemporal.tif";
+        writeImage< TINPUT >(zProjectImage,temp5b.c_str());
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

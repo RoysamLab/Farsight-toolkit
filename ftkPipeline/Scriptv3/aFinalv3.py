@@ -81,7 +81,7 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 13
+TRY = 102
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
@@ -116,8 +116,8 @@ runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
 #runDistMap = 1		# Flag to run distance map computation
 #runDistMap_db = 1
-runTrac = 0		# Flag to run Tracing
-runTrac_db = 0
+runTrac = 1		# Flag to run Tracing
+runTrac_db = 1
 runAstroTrac = 0		# Flag to run Astrocyte Tracing
 runAstroTrac_db = 0
 
@@ -177,7 +177,7 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD']
-	#DATA_FOLDER_ALL = ['/0131_test']
+	DATA_FOLDER_ALL = ['/0117_NRRD','/0113_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
 	#DATA_FOLDER_ALL = ['/0131_test4']
@@ -188,7 +188,8 @@ if( SERVER == 'far04' ):
 if( SERVER == 'far05' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
+	DATA_FOLDER_ALL = ['/0405_NRRD','/0323_NRRD','/0409_NRRD','/0412_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']

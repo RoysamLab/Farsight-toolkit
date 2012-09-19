@@ -53,7 +53,10 @@ public:
 	
 	template<typename TINPUT >
 	void test_2( std::string inputImageName, std::string outputImageName );
-	
+
+	template<typename TINPUT >
+	void test_3( std::string inputFile );
+
 private:
 	
 };

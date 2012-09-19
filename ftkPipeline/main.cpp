@@ -7,13 +7,14 @@
 #include "ftkMainDarpaTrace.h"
 #include "ftkMainDarpaAstroTrace.h"
 
-enum STEPS { TEST_1, TEST_2, SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
+enum STEPS { TEST_1, TEST_2, TEST_3, SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
 std::map< std::string, STEPS> stepsmap;
 
 void register_stepsmap()
 {
 	stepsmap["TEST_1"] = TEST_1;
 	stepsmap["TEST_2"] = TEST_2;
+	stepsmap["TEST_3"] = TEST_3;
 	stepsmap["SAVENRRD"] = SAVENRRD;
 	stepsmap["PROJECTION"] = PROJECTION;
 	stepsmap["PROJECTION_8BIT"] = PROJECTION_8BIT;
@@ -58,6 +59,15 @@ int main(int argc, char *argv[])
 			objftkMainDarpa->test_2< rawImageType_16bit >( imageInputName, imageOutputName );
 			break;
 		}
+		case TEST_3:
+		{       
+			std::cout << "TEST_3!";
+		   	std::string fileInput = argv[2];
+
+		     	objftkMainDarpa->test_3< rawImageType_16bit >( fileInput );
+			break;
+		}
+		               
 		case SAVENRRD:
 		{
 			std::cout << "SAVENRRD!";
