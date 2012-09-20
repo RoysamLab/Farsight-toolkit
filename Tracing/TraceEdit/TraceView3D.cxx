@@ -513,7 +513,7 @@ QString View3D::getSomaFile()
 {
 	QString somaDir = this->TraceEditSettings.value("somaDir", ".").toString();
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", somaDir, 
-		tr("Image File ( *.tiff *.tif *.pic *.PIC *.mhd" ));
+		tr("Image File ( *.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if(!somaFiles.isEmpty())
 	{
 		somaDir = QFileInfo(somaFiles).absolutePath();
@@ -580,7 +580,7 @@ QString View3D::getImageFile()
 {
 	QString imageDir = this->TraceEditSettings.value("imageDir", ".").toString();
 	QString NewImageFile = QFileDialog::getOpenFileName(this , "Load Trace Image Data", imageDir,
-		tr("Trace Image ( *.tiff *.tif *.pic *.PIC *.mhd" ));
+		tr("Trace Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!NewImageFile.isEmpty())
 	{
 		imageDir = QFileInfo(NewImageFile).absolutePath();
