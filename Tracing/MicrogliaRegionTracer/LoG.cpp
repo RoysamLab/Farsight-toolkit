@@ -4,7 +4,11 @@ LoG::LoG()
 {
 }
 
-LoG::LoGImageType* LoG::RunLoG(ImageType::Pointer & image, float scale)
+LoG::~LoG()
+{
+}
+
+LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer & image, float scale)
 {
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
@@ -32,7 +36,7 @@ LoG::LoGImageType* LoG::RunLoG(ImageType::Pointer & image, float scale)
 	}
 	LoGImageType::Pointer LoG_image = LoGFilter->GetOutput();
 
-	LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
+	//LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 
 	//Scale to (-1, 1) range and invert   
 	typedef itk::ShiftScaleImageFilter<LoGImageType, LoGImageType> InvertFilterType;
@@ -54,8 +58,8 @@ LoG::LoGImageType* LoG::RunLoG(ImageType::Pointer & image, float scale)
 
 	inverted_LoG_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 
-	inverted_LoG_image->Register();
-	return inverted_LoG_image.GetPointer();;
+    //std::cerr << inverted_LoG_image << std::endl;
+	return inverted_LoG_image;
 }
 
 void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer & image)
@@ -76,7 +80,7 @@ void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer & image)
 	}
 }
 
-LoG::LoGImageType * LoG::RunMultiScaleLoG(Cell* cell)
+LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 {
 	std::vector<LoGImageType::Pointer> LoG_vector;
 
@@ -97,7 +101,7 @@ LoG::LoGImageType * LoG::RunMultiScaleLoG(Cell* cell)
 			std::cerr << "RunMultiScaleLoG exception: " << std::endl;
 			std::cerr << "For cell: " << cell->getX() << ", " << cell->getY() << ", " << cell->getZ() << " at scale: " << scale << " Origin: " << origin << " Size: " << size << std::endl;
 		}
-
+        
 		LoG_vector.push_back(LoGimage);
 	}
 
@@ -142,9 +146,6 @@ LoG::LoGImageType * LoG::RunMultiScaleLoG(Cell* cell)
 
 	logimageFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_LoG.mhd";
 
-	multiscale_LoG_image->DisconnectPipeline();
-
 	//WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
-	multiscale_LoG_image->Register();
-	return multiscale_LoG_image.GetPointer();
+	return multiscale_LoG_image;
 }

@@ -1,5 +1,7 @@
 #include "Tree.h"
 
+#include <iostream>
+
 Tree::Tree()
 {
 	this->root = NULL;
@@ -24,26 +26,36 @@ void Tree::CopyConstructorHelper(Node* const new_node, const Node* const old_nod
 	for (old_node_children_iter = old_node->children.begin(); old_node_children_iter != old_node->children.end(); ++old_node_children_iter)
 	{
 		Node* child = *old_node_children_iter;
-
 		Node* new_child = new Node(*child);
-		CopyConstructorHelper(new_child, child);
+        
+        new_child->SetParent(new_node); //Update the reference to point to the new parent
+        
+        CopyConstructorHelper(new_child, child);
 
-		//Add each new child
-		new_node->AddChild(new_child);
-	}
-
-	//At the new parent node (here), we go to the new child (which we updated in the last step) and change it so that it points back to the new parent
-	std::vector<Node *>::iterator new_node_children_iter;
-	for (new_node_children_iter = new_node->children.begin(); new_node_children_iter != new_node->children.end(); ++new_node_children_iter)
-	{
-		Node* new_child = *new_node_children_iter;
-		new_child->SetParent(new_node);
+		new_node->AddChild(new_child); //Add each new child
 	}
 }
 
 Tree::~Tree()
 {
-	//TODO: Delete all the nodes in the tree, otherwise big memory leak!
+    TreeDestructorHelper(root);
+    
+    //vector and other things implicitly destroyed here
+}
+
+void Tree::TreeDestructorHelper(Node* node)
+{
+    std::vector<Node*> children = node->GetChildren();
+    std::vector<Node*>::iterator child_iter;
+    
+    for (child_iter = children.begin(); child_iter != children.end(); ++child_iter)
+    {
+        Node* child = *child_iter;
+        TreeDestructorHelper(child);
+    }
+    
+    //std::cerr << "Deleting node: " << node->getID() << std::endl;
+    delete node;
 }
 
 void Tree::SetRoot(Node *root)

@@ -6,6 +6,11 @@ ROIGrabber::ROIGrabber(std::string joint_transforms_filename, std::string img_pa
 	this->roi_filter = new fregl_roi< InputPixelType >(joint_transforms_filename, img_path, anchor_filename, true, 6);
 }
 
+ROIGrabber::~ROIGrabber()
+{
+    delete this->roi_filter;
+}
+
 ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
 {
 	ImageType::PointType roi_origin;

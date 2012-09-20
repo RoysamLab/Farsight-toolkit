@@ -16,6 +16,11 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
 
+MicrogliaRegionTracer::~MicrogliaRegionTracer()
+{
+    delete this->roi_grabber;
+}
+
 /*	This function takes in the name of the seed points (where tracing starts) and then grabs a 200x200x100 region with mosaic_roi.
 	A new Cell object is created to hold the image and seed point and relevant information. */
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
@@ -126,27 +131,6 @@ void MicrogliaRegionTracer::Trace()
             delete cell;
         }
     }
-    
-//    //Trace cell by cell
-//	#pragma omp parallel for
-//	for (int k = 0; k < cells.size(); k++)
-//	{
-//		Cell* cell = cells[k];
-//
-//		//Get the mask
-//    #if MASK	//development only
-//        cell->GetMask(this->soma_filename);
-//    #endif
-//		std::cout << "Calculating candidate pixels for a new cell" << std::endl;
-//		CalculateCandidatePixels(cell);
-//
-//		std::cout << "Detected " << cell->critical_points_queue.size() << " critical points" << std::endl;
-//		
-//		std::cout << "Tree Building" << std::endl;
-//		BuildTree(cell);
-//
-//		delete cell;
-//	}
 }
 
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
@@ -216,7 +200,8 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	LoG *log_obj = new LoG();
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
-
+    delete log_obj;
+    
 #if PRINT_ALL_IMAGES
 	cell->WriteImage("multiscaled_LoG_image.mhd", resampled_multiscale_LoG_image);
 #endif
@@ -248,6 +233,9 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	}
 
 	cell->multiscale_LoG_image = resample_filter->GetOutput();
+    
+    std::cerr << resampled_multiscale_LoG_image << std::endl;
+    
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	cell->multiscale_LoG_image->SetSpacing(spacing);
@@ -335,7 +323,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 	while(!ridge_neighbor_iter.IsAtEnd()) 
 	{
-		unsigned int neighborhood_size = (rad[0] * 2 + 1) * (rad[1] * 2 + 1) * (rad[2] * 2 + 1);
+		unsigned int neighborhood_size = (LoG_image_rad[0] * 2 + 1) * (LoG_image_rad[1] * 2 + 1) * (LoG_image_rad[2] * 2 + 1);
 		unsigned int center_pixel_offset_index = neighborhood_size / 2;
 
 		LoGImageType::PixelType center_pixel_intensity = ridge_neighbor_iter.GetPixel(center_pixel_offset_index);
@@ -469,22 +457,22 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 
 	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-	Tree* smoothed_tree = new Tree(*tree);
-	SmoothTree(cell, smoothed_tree);
-
-	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
-	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
-	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
-
-
-	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+//	Tree* smoothed_tree = new Tree(*tree);
+//	SmoothTree(cell, smoothed_tree);
+//
+//	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
+//	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
+//	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
+//
+//
+//	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
 	delete[] AdjGraph;
 
 	delete tree;
-	delete smoothed_tree;
+//	delete smoothed_tree;
 }
 
 /* This function generates a matrix of all possible pairs of candidate pixels */
@@ -668,7 +656,11 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 
 	//Update next available ID
 	cell->next_available_ID = cell->critical_points_queue.size() + 1;	//We used up IDs [1, critical_pts_queue.size()], so here we start at critical_points_queue.size + 1
-
+    
+    for (int k = 0; k < cell->critical_points_queue.size(); k++)
+		delete[] TreeAdjGraph[k];
+	delete[] TreeAdjGraph;
+    
 	return tree;
 }
 

@@ -4,6 +4,9 @@
 #include "itkIntTypes.h"
 #include <vector>
 #include <cstddef>
+#include <algorithm>
+#include <cassert>
+#include <iostream>
 
 class Node
 {
@@ -28,6 +31,9 @@ public:
 	//children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
 	Node(const Node& old_node);
 	
+    //Destructor
+    ~Node();
+    
 	//Adds the child
 	//Note: This does not make the child update its reference to the parent
 	void AddChild(Node *child);
@@ -38,7 +44,7 @@ public:
 
 	void SetParent(Node *parent);
 	
-	std::vector<Node*> GetChildren();
+	std::vector<Node*>& GetChildren();
 
 	itk::uint64_t getID();
 	

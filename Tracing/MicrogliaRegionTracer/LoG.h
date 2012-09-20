@@ -19,10 +19,10 @@ public:
 	LoG();
 	~LoG();
 
-	LoGImageType* RunLoG(ImageType::Pointer & image, float scale);
+    LoGImageType::Pointer RunLoG(ImageType::Pointer & image, float scale);
 	void WriteLoGImage(std::string filename, LoGImageType::Pointer &  image);
 
-	LoGImageType* RunMultiScaleLoG(Cell* cell);
+    LoGImageType::Pointer RunMultiScaleLoG(Cell* cell);
 };
 
 #endif
