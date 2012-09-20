@@ -46,20 +46,25 @@ public:
 	
 	static const int Dim = 3;
 	typedef unsigned int TLPixel;
+	typedef unsigned short UShortPixel;
 	typedef itk::Image< unsigned char, 3 > OutputImageType;
 	typedef itk::Image< float, 3 > ProbImageType;
-	typedef itk::Image< float, 3 > ProbImageSliceType;
 	typedef itk::Image< TLPixel,3 > SegmentedImageType;
+	typedef itk::Image< UShortPixel,3 > UShortImageType;
 
 protected:
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
 	typedef itk::ImageFileWriter< OutputImageType > WriterType;
 	typedef itk::ImageFileReader< SegmentedImageType > somaImageReader;
 	typedef itk::ImageFileWriter< SegmentedImageType > somaImageWriter;
+	typedef itk::ImageFileReader< UShortImageType > ushortImageReader;
+	typedef itk::ImageFileWriter< UShortImageType > ushortImageWriter;
+	typedef itk::ImageFileReader< ProbImageType > probImageReader;
 
 	//typedef itk::RegionOfInterestImageFilter< ProbImageType, ProbImageType> RegionOfInterestFilter;
 	typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFloatFilterType;
 	typedef itk::RescaleIntensityImageFilter< OutputImageType, OutputImageType> RescaleUCharFilterType;
+	typedef itk::RescaleIntensityImageFilter< UShortImageType, OutputImageType> RescaleUshortFilterType;
 	typedef itk::FastMarchingImageFilter< ProbImageType, ProbImageType >    FastMarchingFilterType;
 	typedef FastMarchingFilterType::NodeContainer           NodeContainer;
     typedef FastMarchingFilterType::NodeType                NodeType;
@@ -70,8 +75,8 @@ protected:
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, SegmentedImageType> BinaryThresholdingFilterType;
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, ProbImageType> BinaryProbThresholdingFilterType;
 	typedef itk::BinaryThresholdImageFilter< SegmentedImageType, SegmentedImageType> SegThresholdingFilterType;
-	typedef itk::ExtractImageFilter< ProbImageType, ProbImageSliceType> ExtractFilterType;
-	typedef itk::HuangThresholdImageFilter< ProbImageSliceType, ProbImageSliceType> HuangThresholdFilter;
+	typedef itk::ExtractImageFilter< ProbImageType, ProbImageType> ExtractFilterType;
+	typedef itk::HuangThresholdImageFilter< ProbImageType, ProbImageType> HuangThresholdFilter;
 	typedef itk::SigmoidImageFilter < ProbImageType, ProbImageType> SigmoidImageFilterType;
 	typedef itk::VotingBinaryHoleFillingImageFilter< SegmentedImageType, SegmentedImageType> HoleFillingFilterType;
 	typedef itk::AdaptiveHistogramEqualizationImageFilter< ProbImageType> AdaptiveHistogramEqualizationImageFilterType;
@@ -103,18 +108,20 @@ public:
 	virtual ~SomaExtractor();
 
 	ProbImageType::Pointer SetInputImage(const char * fileName);
+	ProbImageType::Pointer SetInputImageByPortion(const char * fileName);
 	SegmentedImageType::Pointer SetInitalContourImage(const char * fileName);
+	SegmentedImageType::Pointer SetInitalContourImageByPortion(const char * fileName);
 	OutputImageType::Pointer Read8BitImage(const char * fileName);
-	void SetInputImage( ProbImageType::Pointer probImage);
-	
+	OutputImageType::Pointer Read16BitImage(const char * fileName);
 	void ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
 	void LoadOptions(const char* paramFileName);
 
 	/// return labeled image for somas
-	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids);
+	SegmentedImageType::Pointer SegmentSoma( OutputImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr);
 	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
 
 	void writeImage(const char* writeFileName, SegmentedImageType::Pointer image);
+	void writeImage(const char* writeFileName, OutputImageType::Pointer image);
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image, bool bscale = false);
 	void writeImage(const char* writeFileName, GradientImageType::Pointer image);
 	void writeCentroids(const char* writeFileName, std::vector< itk::Index<3> > &seedVec);
@@ -122,6 +129,9 @@ public:
 	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
 	void GetDebrisCentroids( OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &debrisSeeds);
 	void AssociateDebris(OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, std::vector< itk::Index<3> > &debrisSeeds);
+
+	// generate soma seed points for the input image
+	ProbImageType::Pointer GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids);
 
 protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);
@@ -133,31 +143,49 @@ protected:
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius);
 
 private:
-	ProbImageType::Pointer inputImage;
+	//ProbImageType::Pointer inputImage;
 	int width;
 	int height;
 	int depth;
 
+	// speed image
 	double alfa;
 	double beta;
+	// for initial contour
 	int timethreshold; 
 	double seedValue;
-
+	// active contour
 	double curvatureScaling; 
 	double advectScaling;
 	double rmsThres;
 	int maxIterations;
 	int holeSize;
 	int minObjSize;
-
+	// GVF active contour
 	double sigma;
 	unsigned int numberOfIterations; 
 	double noiseLevel;
 	double outlierExpandValue;
 	
+	// read portion of image
 	int startX;
 	int startY;
 	int startZ;
+	int sizeX;
+	int sizeY;
+	int sizeZ;
+
+	// for automatic soma seed detection
+	ProbImageType::Pointer binProbImagePtr;
+
+	int num_bins;
+	int shift;
+	double scaleMin;
+	double scaleMax;
+	double regionXY;
+	double regionZ;
+	int useDistMap;
+	int sampling_ratio_XY_to_Z;
 };
 
 #endif

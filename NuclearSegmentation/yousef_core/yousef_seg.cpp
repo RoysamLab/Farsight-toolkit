@@ -18,6 +18,8 @@
 #include "yousef_seg.h"
 #include <fstream>
 
+using namespace std;
+
 //Constructor
 yousef_nucleus_seg::yousef_nucleus_seg()
 {
@@ -70,7 +72,7 @@ void yousef_nucleus_seg::setParams(int *params)
 	minObjSize	= *params;
 }
 
-void yousef_nucleus_seg::setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio)
+void yousef_nucleus_seg::setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio, int minSize)
 {
 	shift = highsensitivity;
 	scaleMin = sMin;
@@ -79,6 +81,7 @@ void yousef_nucleus_seg::setParamsForSeedDetection(int highsensitivity, double s
 	regionZ = rZ;
 	useDistMap = usedistMap;
 	sampling_ratio_XY_to_Z = samplingRatio;
+	minObjSize = minSize;
 }
 
 
@@ -141,7 +144,7 @@ void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 }
 void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 {
-	std::cout<<std::endl<<"RECENT CHANGES: Min object size was hard coded to 50, now the size is correctly read from the project definition, so make sure to include this parameter. The minimum number of objects in an image is hard coded to 3, this to avoid spurious sedd detection results in noise tiles";
+	//std::cout<<std::endl<<"RECENT CHANGES: Min object size was hard coded to 50, now the size is correctly read from the project definition, so make sure to include this parameter. The minimum number of objects in an image is hard coded to 3, this to avoid spurious sedd detection results in noise tiles";
 	
 	//try this for now
 	//runGradAnisDiffSmoothing();
@@ -308,6 +311,8 @@ void yousef_nucleus_seg::runSeedDetection()
 	if ( !dataImagePtr || !binImagePtr )
 		return;
 
+	std::cout<< scaleMin<<"\t"<< scaleMax<<"\t"<< regionXY <<"\t"<<regionZ<<std::endl;
+	std::cout<< numStacks<<"\t"<< numRows<<"\t"<< numColumns <<std::endl;
 	//Now clear all subsequent variables
 	clearSeedImagePtr();
 	clearLogImagePtr();

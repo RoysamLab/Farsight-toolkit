@@ -17,6 +17,7 @@
 
 #include "SomaExtraction.h"
 #include "ftkUtils.h"
+#include "yousef_core/yousef_seg.h"
 #include "itkInvertIntensityImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include <itkShapeLabelObject.h>
@@ -45,17 +46,64 @@ SomaExtractor::~SomaExtractor()
 
 SomaExtractor::ProbImageType::Pointer SomaExtractor::SetInputImage(const char * fileName)
 {
-	ReaderType::Pointer reader = ReaderType::New();
+	ushortImageReader::Pointer reader = ushortImageReader::New();
 	reader->SetFileName (fileName);	
 
-	typedef itk::CastImageFilter<OutputImageType, ProbImageType> CasterType;
+	typedef itk::CastImageFilter<UShortImageType, ProbImageType> CasterType;
     CasterType::Pointer caster = CasterType::New();
     caster->SetInput(reader->GetOutput());
 	caster->Update();
-	inputImage = caster->GetOutput();
+	ProbImageType::Pointer inputImage = caster->GetOutput();
 	width = inputImage->GetLargestPossibleRegion().GetSize()[0];
 	height = inputImage->GetLargestPossibleRegion().GetSize()[1];
 	depth = inputImage->GetLargestPossibleRegion().GetSize()[2];
+	std::cout<<width<<"\t"<<height<<"\t"<<depth<<std::endl;
+	return inputImage;
+}
+
+SomaExtractor::ProbImageType::Pointer SomaExtractor::SetInputImageByPortion(const char * fileName)
+{
+	std::cout<< sizeof(UShortPixel)<<std::endl;
+	std::cout<<"Read region:"<<startX<<"\t"<<startY<<"\t"<<startZ<<"\t"<<sizeX<<"\t"<<sizeY<<"\t"<<sizeZ<<std::endl;
+
+	UShortImageType::IndexType index;
+	index[0] = startX;
+	index[1] = startY;
+	index[2] = startZ;
+
+	UShortImageType::SizeType size;
+	size[0] = sizeX;
+	size[1] = sizeY;
+	size[2] = sizeZ;
+
+	UShortImageType::RegionType region;
+	region.SetIndex( index);
+	region.SetSize( size);
+
+	ushortImageReader::Pointer reader = ushortImageReader::New();
+
+	reader->SetFileName(fileName);
+	reader->GetOutput()->SetRequestedRegion(region);
+
+	try
+	{
+		reader->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
+
+	typedef itk::CastImageFilter<UShortImageType, ProbImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(reader->GetOutput());
+	caster->Update();
+
+	ProbImageType::Pointer inputImage = caster->GetOutput();
+	width = inputImage->GetLargestPossibleRegion().GetSize()[0];
+	height = inputImage->GetLargestPossibleRegion().GetSize()[1];
+	depth = inputImage->GetLargestPossibleRegion().GetSize()[2];
+	std::cout<<"Region:"<<width<<"\t"<<height<<"\t"<<depth<<std::endl;
 	return inputImage;
 }
 
@@ -72,34 +120,117 @@ SomaExtractor::OutputImageType::Pointer SomaExtractor::Read8BitImage(const char 
 	return imagePtr;
 }
 
-SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SetInitalContourImage(const char * fileName)
+SomaExtractor::OutputImageType::Pointer SomaExtractor::Read16BitImage(const char * fileName)
 {
-	//somaImageReader::Pointer reader = somaImageReader::New();
-	//reader->SetFileName(fileName);	
-	//reader->Update();
-	//SegmentedImageType::Pointer imagePtr = reader->GetOutput();
-	OutputImageType::Pointer image = Read8BitImage(fileName);
-	typedef itk::CastImageFilter<OutputImageType, SegmentedImageType> CasterType;
-    CasterType::Pointer caster = CasterType::New();
-	caster->SetInput(image);
-	caster->Update();
-	SegmentedImageType::Pointer imagePtr = caster->GetOutput();
+	ushortImageReader::Pointer reader = ushortImageReader::New();
+	reader->SetFileName(fileName);	
+
+	RescaleUshortFilterType::Pointer rescaleFilter = RescaleUshortFilterType::New();
+	rescaleFilter->SetInput(reader->GetOutput());
+	rescaleFilter->SetOutputMinimum(0);
+	rescaleFilter->SetOutputMaximum(255);
+	try
+	{
+		rescaleFilter->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in Read16BitImage " << err << std::endl; 
+	}
+	OutputImageType::Pointer imagePtr = rescaleFilter->GetOutput();
 	return imagePtr;
 }
 
-void SomaExtractor::SetInputImage( ProbImageType::Pointer probImage)
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SetInitalContourImage(const char * fileName)
 {
-	inputImage = probImage;
+	somaImageReader::Pointer reader = somaImageReader::New();
+	reader->SetFileName(fileName);	
+	try
+	{
+		reader->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
+	SegmentedImageType::Pointer imagePtr = reader->GetOutput();
+	//OutputImageType::Pointer image = Read8BitImage(fileName);
+	//typedef itk::CastImageFilter<OutputImageType, SegmentedImageType> CasterType;
+ //   CasterType::Pointer caster = CasterType::New();
+	//caster->SetInput(image);
+	//caster->Update();
+	return imagePtr;
+}
+
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SetInitalContourImageByPortion(const char * fileName)
+{
+	std::cout<<"Read region:"<<startX<<"\t"<<startY<<"\t"<<startZ<<"\t"<<sizeX<<"\t"<<sizeY<<"\t"<<sizeZ<<std::endl;
+	SegmentedImageType::IndexType index;
+	//index[0] = startX;
+	//index[1] = startY;
+	//index[2] = startZ;
+	index.Fill(5);
+	std::cout<<index<<std::endl;
+
+	SegmentedImageType::SizeType size;
+	//size[0] = sizeX;
+	//size[1] = sizeY;
+	//size[2] = sizeZ;
+	size.Fill(5);
+	std::cout<<size<<std::endl;
+
+	SegmentedImageType::RegionType region;
+	region.SetIndex( index);
+	region.SetSize( size);
+
+	ushortImageReader::Pointer reader = ushortImageReader::New();
+	reader->SetFileName(fileName);
+	//reader->GetOutput()->SetRequestedRegion(region);
+	
+	/*try
+	{
+		reader->Update();
+		reader->GetOutput()->Print(std::cout);
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}*/
+	reader->Print(std::cout);
+
+	typedef itk::CastImageFilter<UShortImageType, SegmentedImageType> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+	caster->SetInput(reader->GetOutput());
+
+	typedef itk::ExtractImageFilter< SegmentedImageType, SegmentedImageType> ROIFilterType;
+	ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
+	ROIfilter->SetExtractionRegion(region);
+	ROIfilter->SetInput( caster->GetOutput());
+	ROIfilter->SetDirectionCollapseToIdentity();
+	try
+	{
+		ROIfilter->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+
+	//caster->Update();
+	SegmentedImageType::Pointer imagePtr = ROIfilter->GetOutput();
+	return imagePtr;
 }
 
 void SomaExtractor::ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable)
 {
 	std::cout << "ReadSeedpoints" << std::endl;
 	seedVec.clear();
-	int endX = startX + width;
-	int endY = startY + height;
-	int endZ = startZ + depth;
-	std::cout<< "Bounding Area:"<<startX<<"\t"<<startY<<"\t"<<endX<<"\t"<<endY<<std::endl;
+	//int endX = startX + width;
+	//int endY = startY + height;
+	//int endZ = startZ + depth;
+	//std::cout<< "Bounding Area:"<<startX<<"\t"<<startY<<"\t"<<endX<<"\t"<<endY<<std::endl;
 	if( false == bNucleusTable)
 	{
 		vtkSmartPointer<vtkTable> table = ftk::LoadXYZTable( std::string(fileName));
@@ -109,14 +240,14 @@ void SomaExtractor::ReadSeedpoints(const char * fileName, std::vector< itk::Inde
 			index[0] = table->GetValue(i,0).ToUnsignedInt();
 			index[1] = table->GetValue(i,1).ToUnsignedInt();
 			index[2] = table->GetValue(i,2).ToUnsignedInt();
-			if( index[0] >= startX && index[0] <= endX && index[1] >= startY && index[1] <= endY && index[2] >= startZ && index[2] <= endZ)
-			{
-				itk::Index<3> newIndex;
-				newIndex[0] = index[0] - startX;
-				newIndex[1] = index[1] - startY;
-				newIndex[2] = index[2] - startZ;
-				seedVec.push_back(newIndex);
-			}
+			//if( index[0] >= startX && index[0] <= endX && index[1] >= startY && index[1] <= endY && index[2] >= startZ && index[2] <= endZ)
+			//{
+			//	itk::Index<3> newIndex;
+			//	newIndex[0] = index[0] - startX;
+			//	newIndex[1] = index[1] - startY;
+			//	newIndex[2] = index[2] - startZ;
+			seedVec.push_back(index);
+			//}
 		}
 	}
 	else
@@ -135,14 +266,14 @@ void SomaExtractor::ReadSeedpoints(const char * fileName, std::vector< itk::Inde
 				index[0] = (unsigned int)centroidX->GetValue( i);
 				index[1] = (unsigned int)centroidY->GetValue( i);
 				index[2] = (unsigned int)centroidZ->GetValue( i);
-				if( index[0] >= startX && index[0] <= endX && index[1] >= startY && index[1] <= endY && index[2] >= startZ && index[2] <= endZ)
-				{
-					itk::Index<3> newIndex;
-					newIndex[0] = index[0] - startX;
-					newIndex[1] = index[1] - startY;
-					newIndex[2] = index[2] - startZ;
-					seedVec.push_back(newIndex);
-				}
+				//if( index[0] >= startX && index[0] <= endX && index[1] >= startY && index[1] <= endY && index[2] >= startZ && index[2] <= endZ)
+				//{
+					//itk::Index<3> newIndex;
+					//newIndex[0] = index[0] - startX;
+					//newIndex[1] = index[1] - startY;
+					//newIndex[2] = index[2] - startZ;
+				seedVec.push_back(index);
+				//}
 			}
 		}
 	}
@@ -200,17 +331,44 @@ void SomaExtractor::LoadOptions(const char* paramFileName)
 	SetParamValue<int>(opts, "-start_x", startX, 0);
 	SetParamValue<int>(opts, "-start_y", startY, 0);
 	SetParamValue<int>(opts, "-start_z", startZ, 0);
+	SetParamValue<int>(opts, "-size_x", sizeX, 0);
+	SetParamValue<int>(opts, "-size_y", sizeY, 0);
+	SetParamValue<int>(opts, "-size_z", sizeZ, 0);
+
+	SetParamValue<int>(opts, "-num_bins", num_bins, 128);
+	SetParamValue<int>(opts, "-shift", shift, 0);
+	SetParamValue<double>(opts, "-scaleMin", scaleMin, 30);
+	SetParamValue<double>(opts, "-scaleMax", scaleMax, 35);
+	SetParamValue<double>(opts, "-regionXY", regionXY, 30);
+	SetParamValue<double>(opts, "-regionZ", regionZ, 20);
+	SetParamValue<int>(opts, "-useDistMap", useDistMap, 1);
+	SetParamValue<int>(opts, "-sampling_ratio_XY_to_Z", sampling_ratio_XY_to_Z, 2);
+}
+
+void SomaExtractor::writeImage(const char* writeFileName, OutputImageType::Pointer image)
+{
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(writeFileName);
+	writer->SetInput(image);
+	try
+	{
+		writer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
 }
 
 void SomaExtractor::writeImage(const char* writeFileName, SegmentedImageType::Pointer image)
 {
-	typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
-    CasterType::Pointer caster = CasterType::New();
-    caster->SetInput(image);
+	//typedef itk::CastImageFilter<SegmentedImageType, OutputImageType> CasterType;
+ //   CasterType::Pointer caster = CasterType::New();
+ //   caster->SetInput(image);
 
-	WriterType::Pointer soma_image_writer = WriterType::New();
+	somaImageWriter::Pointer soma_image_writer = somaImageWriter::New();
 	soma_image_writer->SetFileName(writeFileName);
-	soma_image_writer->SetInput(caster->GetOutput());
+	soma_image_writer->SetInput(image);
 
 	try
 	{
@@ -239,7 +397,7 @@ void SomaExtractor::writeImage(const char* writeFileName, ProbImageType::Pointer
 	}
 	else
 	{
-	caster->SetInput(image);
+		caster->SetInput(image);
 	}
 
 	soma_image_writer->SetFileName(writeFileName);
@@ -340,7 +498,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 	extractFilter->SetDirectionCollapseToIdentity(); // This is required.
 #endif
 	extractFilter->Update();
-	ProbImageSliceType::Pointer slice = extractFilter->GetOutput();
+	ProbImageType::Pointer slice = extractFilter->GetOutput();
 	//std::cout<< "Slice Done... "<< std::endl;
 
 	HuangThresholdFilter::Pointer huangThresholdFilter = HuangThresholdFilter::New();
@@ -392,7 +550,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::EnhanceContrast( ProbImageT
 //	double rmsThres;
 //	int holeSize;
 //	int minObjSize;
-SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids)
+SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( OutputImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr)
 {
 	//typedef itk::NearestNeighborInterpolateImageFunction< ProbImageType, float>  InterpolatorType;
 	//InterpolatorType::Pointer I_Interpolator = InterpolatorType::New();
@@ -422,15 +580,19 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	//	}
 	//}
 
-	std::cout << "RescaleIntensity "<<alfa<<"\t"<<beta<<std::endl;
-    SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
-	sigmoidFilter->SetInput(input);
-	sigmoidFilter->SetOutputMinimum(0);
-	sigmoidFilter->SetOutputMaximum(1);
-	sigmoidFilter->SetAlpha(alfa);
-	sigmoidFilter->SetBeta(beta);
-	sigmoidFilter->Update();
-	writeImage("Sigmoid.tif",sigmoidFilter->GetOutput());
+ //   SigmoidImageFilterType::Pointer sigmoidFilter = SigmoidImageFilterType::New();
+	//sigmoidFilter->SetInput(input);
+	//sigmoidFilter->SetOutputMinimum(0);
+	//sigmoidFilter->SetOutputMaximum(1);
+	//sigmoidFilter->SetAlpha(alfa);
+	//sigmoidFilter->SetBeta(beta);
+	//sigmoidFilter->Update();
+	//writeImage("Sigmoid.tif",sigmoidFilter->GetOutput());
+
+	RescaleFloatFilterType::Pointer rescaleImageFilter = RescaleFloatFilterType::New();
+	rescaleImageFilter->SetInput(binImagePtr);
+	rescaleImageFilter->SetOutputMaximum(1);
+	rescaleImageFilter->SetOutputMinimum(0);
 
 	FastMarchingFilterType::Pointer fastMarching = FastMarchingFilterType::New();
     NodeContainer::Pointer seeds = NodeContainer::New();
@@ -453,7 +615,6 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
     fastMarching->SetOutputSize( input->GetBufferedRegion().GetSize() );
     fastMarching->SetStoppingValue(  timethreshold);
 	fastMarching->SetSpeedConstant( 1.0 );
-	fastMarching->Update();
 
 	std::cout<< "Shape Detection " <<curvatureScaling<<"\t"<<rmsThres<<std::endl;
 	
@@ -465,9 +626,19 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	shapeDetection->SetNumberOfIterations( maxIterations);
 
 	shapeDetection->SetInput( fastMarching->GetOutput());
-	shapeDetection->SetFeatureImage( sigmoidFilter->GetOutput());
-	shapeDetection->Update();
-	std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
+	shapeDetection->SetFeatureImage( rescaleImageFilter->GetOutput());
+
+	try
+	{
+		shapeDetection->Update();
+		std::cout << "No. elpased iterations: " << shapeDetection->GetElapsedIterations() << std::endl;
+		std::cout << "RMS change: " << shapeDetection->GetRMSChange() << std::endl;
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in shape detection filter: " << err << std::endl; 
+		return NULL;
+	}
 
 	std::cout<< "Thresholding..."<<endl;
 	
@@ -478,22 +649,22 @@ SomaExtractor::SegmentedImageType::Pointer SomaExtractor::SegmentSoma( ProbImage
 	thresholder->SetInsideValue(255);
 	thresholder->SetInput( shapeDetection->GetOutput());
 
-	/// morphological closing
-	KernelType ball;
-	KernelType::SizeType ballSize;
-	ballSize[0] = holeSize;
-	ballSize[1] = holeSize;
-	ballSize[2] = 1;
-	ball.SetRadius(ballSize);
-	ball.CreateStructuringElement();
-	CloseFilterType::Pointer closeFilter = CloseFilterType::New();
-	closeFilter->SetInput( thresholder->GetOutput());
-	closeFilter->SetKernel( ball );
-	closeFilter->SetForegroundValue( 255);
+	///// morphological closing
+	//KernelType ball;
+	//KernelType::SizeType ballSize;
+	//ballSize[0] = holeSize;
+	//ballSize[1] = holeSize;
+	//ballSize[2] = 1;
+	//ball.SetRadius(ballSize);
+	//ball.CreateStructuringElement();
+	//CloseFilterType::Pointer closeFilter = CloseFilterType::New();
+	//closeFilter->SetInput( thresholder->GetOutput());
+	//closeFilter->SetKernel( ball );
+	//closeFilter->SetForegroundValue( 255);
 
 	/// Label image
 	LabelFilterType::Pointer label = LabelFilterType::New();
-	label->SetInput(closeFilter->GetOutput());
+	label->SetInput(thresholder->GetOutput());
 
 	RelabelFilterType::Pointer relabel = RelabelFilterType::New();
 	relabel->SetInput( label->GetOutput());
@@ -997,3 +1168,105 @@ void SomaExtractor::AssociateDebris(OutputImageType::Pointer inputImage, std::ve
 	}
 	ftk::SaveTable( "DebrisTable.txt", table);
 }
+
+SomaExtractor::ProbImageType::Pointer SomaExtractor::GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids)
+{
+	int size1 = inputImgPt->GetLargestPossibleRegion().GetSize()[0];
+	int size2 = inputImgPt->GetLargestPossibleRegion().GetSize()[1];
+	int size3 = inputImgPt->GetLargestPossibleRegion().GetSize()[2];
+
+	unsigned char *in_Image;
+	in_Image = (unsigned char *) malloc (size1*size2*size3);
+	memset(in_Image, 0, size1*size2*size3*sizeof(unsigned char));
+
+	typedef itk::ImageRegionConstIterator< OutputImageType > ConstIteratorType;
+	ConstIteratorType pix_buf( inputImgPt, inputImgPt->GetRequestedRegion() );
+
+	int ind=0;
+	for ( pix_buf.GoToBegin(); !pix_buf.IsAtEnd(); ++pix_buf, ++ind )
+	{
+		in_Image[ind]=(pix_buf.Get());
+	}
+	
+	yousef_nucleus_seg * NucleusSeg = new yousef_nucleus_seg();
+	NucleusSeg->setDataImage(in_Image, size1, size2, size3, "");
+	NucleusSeg->setParamsForSeedDetection(shift, scaleMin, scaleMax, regionXY, regionZ, useDistMap, sampling_ratio_XY_to_Z, 0);
+	std::cout<<std::endl << "Run Binarization"<<std::endl;
+	NucleusSeg->runBinarization(num_bins);
+	//std::cout<<std::endl << "Run SeedDetection"<<std::endl;
+	//NucleusSeg->runSeedDetection();
+	//std::cout<<std::endl << "Output Seeds"<<std::endl;
+	//NucleusSeg->outputSeeds();
+
+	//vector<Seed> seeds = NucleusSeg->getSeedsList();
+	//somaCentroids.clear();
+	//somaCentroids.resize(seeds.size());
+ //   for( int i = 0; i < seeds.size(); i++)
+	//{
+	//	itk::Index<3> index;
+	//	index[0] = seeds[i].x();
+	//	index[1] = seeds[i].y();
+	//	index[2] = seeds[i].z();
+	//	somaCentroids[i] = index;
+	//}
+
+	/// save binarized image as the speed image
+	unsigned short *binImage = NucleusSeg->getBinImage();
+	OutputImageType::Pointer binImagePtr = OutputImageType::New();
+	OutputImageType::PointType origin;
+	origin[0] = 0; 
+	origin[1] = 0;    
+	origin[2] = 0;    
+	binImagePtr->SetOrigin( origin );
+
+	OutputImageType::IndexType start;
+	start[0] = 0;  
+	start[1] = 0;     
+	start[2] = 0;     
+	OutputImageType::SizeType  size;
+	size[0] = size1;  
+	size[1] = size2; 
+	size[2] = size3;  
+	OutputImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+
+	binImagePtr->SetRegions( region );
+	binImagePtr->Allocate();
+	binImagePtr->FillBuffer(0);
+	binImagePtr->Update();
+
+	//copy the bin image into the ITK image
+	typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
+	IteratorType iterator1( binImagePtr, binImagePtr->GetRequestedRegion());		
+	for( int i = 0; i < size1 * size2 * size3; i++)
+	{				
+		unsigned short val = (unsigned short)binImage[i];
+		iterator1.Set(val);			
+		++iterator1;				
+	}
+
+	typedef itk::CastImageFilter< OutputImageType, ProbImageType> CastUCharToFloatFilterType;
+    CastUCharToFloatFilterType::Pointer castFilter = CastUCharToFloatFilterType::New();
+	castFilter->SetInput(binImagePtr);
+	BinaryProbThresholdingFilterType::Pointer binaryFilterPointer = BinaryProbThresholdingFilterType::New();
+	binaryFilterPointer->SetInput(castFilter->GetOutput());
+	binaryFilterPointer->SetLowerThreshold(1);
+	binaryFilterPointer->SetInsideValue(1);
+	binaryFilterPointer->SetOutsideValue(0);
+
+	try
+	{
+		binaryFilterPointer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in rescale image filter: " << err << std::endl; 
+		return NULL;
+	}
+	ProbImageType::Pointer binProbImagePtr = binaryFilterPointer->GetOutput();
+	//writeImage("binarize_image.tif",binProbImagePtr);
+	delete NucleusSeg;
+	return binProbImagePtr;
+}
+

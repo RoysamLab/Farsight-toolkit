@@ -54,9 +54,6 @@
 //#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
 
 
-using namespace std;
-
-
 void ucharToFloat(unsigned char* fromLoc, float* toLoc,int r, int c, int z, char invert);
 void ucharToUShort(unsigned char* fromLoc, unsigned short* toLoc,int r, int c, int z, char invert);
 void ushortToFloat(unsigned short* fromLoc, float* toLoc,int r, int c, int z, char invert);
@@ -92,7 +89,7 @@ public:
 
 	void setDataImage(unsigned char* imgPtr, int x, int y, int z, const char* filename);	//The image is loaded elsewhere and passed here.  I do not delete the data.
 	void setParams(int *params);		//All parameters passed as integers, set the parameters accordingly
-  	void setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio);
+  	void setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio, int minSize = 50);
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								
 	unsigned short* getBinImage(){ return binImagePtr; }; 
 	void setBinImage(unsigned short* ptr); 
