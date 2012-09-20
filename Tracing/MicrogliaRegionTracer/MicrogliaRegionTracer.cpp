@@ -234,7 +234,6 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 	cell->multiscale_LoG_image = resample_filter->GetOutput();
     
-    std::cerr << resampled_multiscale_LoG_image << std::endl;
     
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
@@ -457,22 +456,22 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 
 	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-//	Tree* smoothed_tree = new Tree(*tree);
-//	SmoothTree(cell, smoothed_tree);
-//
-//	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
-//	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
-//	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
-//
-//
-//	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+	Tree* smoothed_tree = new Tree(*tree);
+	SmoothTree(cell, smoothed_tree);
+
+	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
+	swc_filename_stream_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_smoothed.swc";
+	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
+
+
+	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
 	delete[] AdjGraph;
 
 	delete tree;
-//	delete smoothed_tree;
+	delete smoothed_tree;
 }
 
 /* This function generates a matrix of all possible pairs of candidate pixels */
