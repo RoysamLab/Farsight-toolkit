@@ -228,6 +228,7 @@ std::vector<TraceLine*> TraceObject::GetTraceLines()
 			if (it == this->Cells.end())
 			{
 				CellTrace* NextCell = new CellTrace(segments);
+				NextCell->setFileName(segments[0]->GetFileName());
 				#pragma omp critical
 				{
 					this->Cells[rootID] = NextCell;
@@ -575,7 +576,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 bool TraceObject::ReadFromSWCFile(char * filename)
 {
 	FILE * fp = fopen(filename, "r");
-	this->ParseFileName(filename);
+	std::string traceFileName = this->ParseFileName(filename);
 	if(fp==NULL)
 	{
 		printf("Couldn't open file %s for parsing\n",filename);
@@ -724,6 +725,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	while(iter != criticals.end())
 	{
 		TraceLine * ttemp = new TraceLine();
+		ttemp->SetFileName(&traceFileName[0]);
 		ttemp->SetId(global_id_number++);
 		ttemp->SetType(hash_type[*iter]);
 		ttemp->setTraceColor( GetTraceLUT( ttemp ));
@@ -786,7 +788,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	free(child_id);
 	return true;
 }
-void TraceObject::ParseFileName(char * fullName)
+std::string TraceObject::ParseFileName(char * fullName)
 {
 	std::vector<char * > parsedFileName;
 	char * pch;
@@ -799,6 +801,7 @@ void TraceObject::ParseFileName(char * fullName)
 	}
 	std::string newName = parsedFileName[parsedFileName.size() -2];
 	this->ParsedName.push_back(newName);
+	return newName;
 	//std::cout<< this->ParsedName.back() << " at "<<this->ParsedName.size() << std::endl;
 }
 void TraceObject::ReadFromVTKFile(char * filename)

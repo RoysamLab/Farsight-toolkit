@@ -190,7 +190,7 @@ private:
 	void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline);
 	void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline);
 
-	void ParseFileName(char* fullName);
+	std::string ParseFileName(char* fullName);
 	std::vector<std::string> ParsedName;
 	//helper functions & objects for converting .vtk polydata into a TraceObject
 	void ConvertVTKDataToTraceLines();
