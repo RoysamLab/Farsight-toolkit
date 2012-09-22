@@ -306,23 +306,23 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 
 
 	//Make a new image to store the critical points	
-	ImageType::SizeType LoG_image_size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
+	ImageType::SizeType critical_point_image_size = cell->multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
 	cell->critical_point_image = ImageType::New();
-	ImageType::IndexType LoG_image_start;
-	LoG_image_start.Fill(0);
-	ImageType::RegionType LoG_image_region(LoG_image_start, LoG_image_size);
-	cell->critical_point_image->SetRegions(LoG_image_region);
+	ImageType::IndexType critical_point_image_start;
+	critical_point_image_start.Fill(0);
+	ImageType::RegionType critical_image_region(critical_point_image_start, critical_point_image_size);
+	cell->critical_point_image->SetRegions(critical_image_region);
 	cell->critical_point_image->Allocate();
 	cell->critical_point_image->FillBuffer(0);
 
 	//Make a iterator for the image and a neighborhood around the current point we are visiting
-	itk::Size<3> LoG_image_rad = {{1,1,1}};
+	itk::Size<3> ridge_neighbor_iter_rad = {{1,1,1}};
 	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
-	itk::ConstNeighborhoodIterator< LoGImageType > ridge_neighbor_iter(rad, cell->ridge_image, cell->ridge_image->GetLargestPossibleRegion());
+	itk::ConstNeighborhoodIterator< LoGImageType > ridge_neighbor_iter(ridge_neighbor_iter_rad, cell->ridge_image, cell->ridge_image->GetLargestPossibleRegion());
 
 	while(!ridge_neighbor_iter.IsAtEnd()) 
 	{
-		unsigned int neighborhood_size = (LoG_image_rad[0] * 2 + 1) * (LoG_image_rad[1] * 2 + 1) * (LoG_image_rad[2] * 2 + 1);
+		unsigned int neighborhood_size = (ridge_neighbor_iter_rad[0] * 2 + 1) * (ridge_neighbor_iter_rad[1] * 2 + 1) * (ridge_neighbor_iter_rad[2] * 2 + 1);
 		unsigned int center_pixel_offset_index = neighborhood_size / 2;
 
 		LoGImageType::PixelType center_pixel_intensity = ridge_neighbor_iter.GetPixel(center_pixel_offset_index);
