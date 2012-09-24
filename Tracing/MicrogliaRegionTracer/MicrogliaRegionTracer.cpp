@@ -316,7 +316,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	cell->critical_point_image->FillBuffer(0);
 
 	//Make a iterator for the image and a neighborhood around the current point we are visiting
-	itk::Size<3> ridge_neighbor_iter_rad = {{1,1,1}};
+	itk::Size<3> ridge_neighbor_iter_rad = {{3,3,3}};
 	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell->critical_point_image, cell->critical_point_image->GetLargestPossibleRegion());
 	itk::ConstNeighborhoodIterator< LoGImageType > ridge_neighbor_iter(ridge_neighbor_iter_rad, cell->ridge_image, cell->ridge_image->GetLargestPossibleRegion());
 
