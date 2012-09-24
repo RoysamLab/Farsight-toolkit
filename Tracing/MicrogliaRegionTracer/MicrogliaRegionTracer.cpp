@@ -28,14 +28,10 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 	std::ifstream seed_point_file;
 	seed_point_file.open(seedpoints_filename.c_str());
 
-	while (seed_point_file)
+	itk::uint64_t cellX, cellY, cellZ;
+	while (seed_point_file >> cellX >> cellY >> cellZ)
 	{	
-		itk::uint64_t cellX, cellY, cellZ;
-		seed_point_file >> cellX >> cellY >> cellZ;
-		//std::cout << "Reading in cell: (" << cellX << ", " << cellY << ", " << cellZ << ")" << std::endl;
-		
 		Cell* cell = new Cell(cellX, cellY, cellZ);
-
 		cells.push_back(cell);
 	}
 }
