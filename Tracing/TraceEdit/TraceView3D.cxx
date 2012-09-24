@@ -889,7 +889,7 @@ void View3D::ShowProjectTable()
 				found = true;
 			}
 			
-			if (found && type == "Image")
+			if (found && (type == "Image" || type == "Soma"))
 			{
 				//1st column of table
 				QTableWidgetItem *newfileItem = new QTableWidgetItem(QString::fromStdString(FileName1));
@@ -981,63 +981,66 @@ void View3D::choosetoRender(int row, int col)
 }
 void View3D::changeDimension(int row, int col)
 {
-	if (this->projectFilesTable->item(row,2)->text() == "on")
+	if (this->projectFilesTable->item(row,1)->text() == "Image")
 	{
-		if(col == 3) //click on one cell in the 4th column (2D/3D) only to activate
+		if (this->projectFilesTable->item(row,2)->text() == "on")
 		{
-			QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-			Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-			QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-			QFont font;
-			font.setBold(true);
-			Item3D->setFont(font);
-			Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-			renderMode = SLICERRAYCAST;
+			if(col == 3) //click on one cell in the 4th column (2D/3D) only to activate
+			{
+				QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+				Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+				QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+				QFont font;
+				font.setBold(true);
+				Item3D->setFont(font);
+				Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+				renderMode = SLICERRAYCAST;
 
-			if(this->projectFilesTable->item(row,3)->text() == "3d")
-			{
-				this->projectFilesTable->setItem(row,3,Item2D);
-				if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
+				if(this->projectFilesTable->item(row,3)->text() == "3d")
 				{
-					this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
-					this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
-					this->ImageActors->setIs2D(row, true);
-					this->ImageActors->setRenderStatus(row, false);
+					this->projectFilesTable->setItem(row,3,Item2D);
+					if ((this->ImageActors->getRenderStatus(row))&&(this->ImageActors->isRayCast(row)))
+					{
+						this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
+						this->Renderer->AddActor(this->ImageActors->createProjection(row,this->projectionStyle,this->projection_axis));
+						this->ImageActors->setIs2D(row, true);
+						this->ImageActors->setRenderStatus(row, false);
+					}
+				} //end if 3d to 2d
+				else
+				{
+					this->projectFilesTable->setItem(row,3,Item3D);
+					this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
+					this->ImageActors->setIs2D(row, false);
+					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
+					this->ImageActors->setRenderStatus(row, true);
+				} //end else 2d to 3d
+			}
+			// Check if there are 3D images
+			int numof3d=0;
+			for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
+			{ 
+				if (!this->ImageActors->is2D(i))
+				{
+					numof3d++;
 				}
-			} //end if 3d to 2d
-			else
-			{
-				this->projectFilesTable->setItem(row,3,Item3D);
-				this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
-				this->ImageActors->setIs2D(row, false);
-				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
-				this->ImageActors->setRenderStatus(row, true);
-			} //end else 2d to 3d
-		}
-		// Check if there are 3D images
-		int numof3d=0;
-		for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-		{ 
-			if (!this->ImageActors->is2D(i))
-			{
-				numof3d++;
 			}
-		}
-		if (numof3d>0) {
-			this->chooseInteractorStyle(0);
-			this->RaycastBar->toggleViewAction()->setDisabled(0);
-			this->RaycastBar->show();
-		}
-		else 
-		{
-			this->chooseInteractorStyle(1);
-			this->RaycastBar->toggleViewAction()->setDisabled(1);
-			if (this->RaycastBar->isVisible())
-			{
-				this->RaycastBar->hide();
+			if (numof3d>0) {
+				this->chooseInteractorStyle(0);
+				this->RaycastBar->toggleViewAction()->setDisabled(0);
+				this->RaycastBar->show();
 			}
-		}
-	}//end if "on"
+			else 
+			{
+				this->chooseInteractorStyle(1);
+				this->RaycastBar->toggleViewAction()->setDisabled(1);
+				if (this->RaycastBar->isVisible())
+				{
+					this->RaycastBar->hide();
+				}
+			}
+		}//end if "on"
+	}//end if "Image"
 }
 void View3D::SetImgInt()
 {
@@ -2144,6 +2147,7 @@ void View3D::CreateLayout()
 	spatial_stats_sub_menu->addAction(this->InRadiusAction);
 	
 	this->createRayCastSliders();
+	this->createSomaSliders();
 
 	this->menuBar()->addSeparator();
 	this->help = this->menuBar()->addMenu("Help");
@@ -2666,8 +2670,11 @@ void View3D::setProjectionMode()
 		/***************************************************************/
 		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-		this->projectFilesTable->setItem(i,3,Item2D);
+		if (this->projectFilesTable->item(i,1)->text() == "Image")
+		{
+			this->projectFilesTable->setItem(i,3,Item2D);
 		//std::cout << "i: " << i << "make 2D." << std::endl;
+		}
 		/***************************************************************/
 	}
 
@@ -2709,7 +2716,10 @@ void View3D::setRaycastMode()
 		QFont font;
 		font.setBold(true);
 		Item3D->setFont(font);
-		this->projectFilesTable->setItem(i,3,Item3D);
+		if (this->projectFilesTable->item(i,1)->text() == "Image")
+		{
+			this->projectFilesTable->setItem(i,3,Item3D);
+		}
 		/***************************************************************/
 	}
 	this->RaycastBar->toggleViewAction()->setDisabled(0);
@@ -2745,12 +2755,22 @@ void View3D::setContourMode()
 	{  
 		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 		this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
+
+		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+		if (this->projectFilesTable->item(i,1)->text() == "Soma")
+		{
+			this->projectFilesTable->setItem(i,3,Item2D);
+		//std::cout << "i: " << i << "make 2D." << std::endl;
+		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
 
 	this->viewContour = true;
 	SetContour->setChecked(true);
 	SetSomaRaycast->setChecked(false);
+	
+	this->SomaBar->hide();
 }
 void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 {
@@ -2758,14 +2778,24 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 	{
 		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+
+		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+		QFont font;
+		font.setBold(true);
+		Item3D->setFont(font);
+		if (this->projectFilesTable->item(i,1)->text() == "Soma")
+		{
+			this->projectFilesTable->setItem(i,3,Item3D);
+		}
+
 	}
 	this->QVTK->GetRenderWindow()->Render();
-
 	this->viewContour = false;
 	SetContour->setChecked(false);
 	SetSomaRaycast->setChecked(true);
 
-	this->createSomaSliders();
+	this->SomaBar->show();
 }
 
 void View3D::focusOn()
