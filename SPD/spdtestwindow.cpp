@@ -40,6 +40,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	HeatmapWin = NULL;
 	plot = NULL;
 	connectedNum = 0;
+	bconnected = true;
 
     dataFileLabel = new QLabel(tr("Choose file:"), this);
 
@@ -66,7 +67,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     kNearestNeighborLabel = new QLabel(tr("Nearest Neighbor Number:"), this);
     kNearestNeighborBox = new QSpinBox(this);
-	kNearestNeighborBox->setValue(2);
+	kNearestNeighborBox->setValue(3);
 	kNearestNeighborBox->setMinimum (0);
 	kNearestNeighborBox->setSingleStep(1);
 
@@ -94,6 +95,8 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	maxVetexIdEdit->setSingleStep(100);
 	maxVetexIdEdit->setValue(4500);
 
+	//searchSubsetsButton = new QPushButton(tr("Search subsets"), this);
+
 	connectedGraphLabel = new QLabel(tr("Connected Graphs:"), this);
 	connectedGraphEdit = new QLineEdit(this);
 	connectedGraphEdit->setText(QString::number(0));
@@ -113,6 +116,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	emdButton->setEnabled(FALSE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
+	//searchSubsetsButton->setEnabled(FALSE);
 	heatmapButton->setEnabled(FALSE);
 	bcheckBox->setChecked(FALSE);
 	//saveFeatureButton = new QPushButton(tr("Save Selected Features"));
@@ -124,13 +128,14 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
 	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
 	connect( updateConnectedNumButton, SIGNAL(clicked()), this, SLOT(UpdateConnectedNum()));
-	
+	//connect( searchSubsetsButton, SIGNAL(clicked()), this, SLOT(searchSubsetsOfFeatures()));
+	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
+
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
 	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
 	connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
-	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
 	
     QGridLayout *mainLayout = new QGridLayout(this);
 
@@ -182,6 +187,8 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psdtLable, 10, 0);
 	mainLayout->addWidget(distanceThres, 10, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	//mainLayout->addWidget(searchSubsetsButton, 11, 2);
+
 	mainLayout->addWidget(connectedGraphLabel, 12, 0);
 	mainLayout->addWidget(connectedGraphEdit, 12, 1);
 	mainLayout->addWidget(updateConnectedNumButton, 12, 2);
@@ -201,7 +208,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 SPDtestWindow::~SPDtestWindow()
 {
 	delete(SPDModel);
-	delete(selection);
+	//delete(selection);
 	delete(selection2);
 }
 
@@ -276,12 +283,12 @@ void SPDtestWindow::load()
 {
 	std::string file = this->FileName.toStdString();
 
-	if ( true == this->SPDModel->ReadCellTraceFile(file, false))
+	if ( true == this->SPDModel->ReadRawData(file))
 	{
 		data = this->SPDModel->GetDataTable();
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		//this->SPDModel->NormalizeData();
+		clusterButton->setEnabled(TRUE);
 	}
 }
 
@@ -527,7 +534,7 @@ void SPDtestWindow::showPSM()
 
 void SPDtestWindow::viewProgression()
 {	
-	/** heatmap set models */
+	UpdateConnectedNum();  // update connected component
 	if(connectedNum <= 1e-9)
 	{
 		return;
@@ -557,9 +564,10 @@ void SPDtestWindow::viewProgression()
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
-	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
+	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+
 	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
 	connect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
 	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorProgressionTree(int)));
@@ -579,8 +587,6 @@ void SPDtestWindow::viewProgression()
 	//	streedata[i][2] = sampleTree[i].cor;
 	//	streedata[i][3] = sampleTree[i].parent;
 	//}
-	std::cout<< "Update Connected Component..."<<std::endl;
-	UpdateConnectedNum();  // update connected component
 
 	vnl_matrix<double> subTreeDistance;
 	SPDModel->GetComponentMinDistance(selFeatureID, connectedComponent, connectedNum, subTreeDistance);
@@ -593,6 +599,21 @@ void SPDtestWindow::viewProgression()
 	//	delete streedata[i];
 	//}
 	//delete streedata;
+}
+
+
+void SPDtestWindow::searchSubsetsOfFeatures()
+{
+	//std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
+	std::vector< unsigned int> selModuleID;
+	//split( selectModulesID, ',', selModuleID);
+	bool bstate = SPDModel->SearchSubsetsOfFeatures(selModuleID);
+	if( false == bstate)
+	{
+		QMessageBox mes;
+		mes.setText("Distance not available, target unclear.");
+		mes.exec();
+	}
 }
 
 void SPDtestWindow::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
@@ -692,17 +713,15 @@ bool SPDtestWindow::IsExist(std::vector< unsigned int> vec, unsigned int value)
 
 void SPDtestWindow::regenerateProgressionTree()
 {
-	heatmapButton->setEnabled(true);
-	if( selection)
+	heatmapButton->setEnabled(TRUE);
+	if( selection && this->HeatmapWin)
 	{
-		std::string distanceThres = this->distanceThres->text().toStdString();
 		std::cout<< "rerender progression view"<<endl;
 		selection->clear();
 		std::vector< std::vector< long int> > sampleIndex;
 		selection->GetSampleIndex( sampleIndex);
 		
 		vnl_matrix<double> clusAverageMat;
-		std::vector<int> modSize;
 		std::vector< double> colorVec;
 		std::vector< double> percentVec;
 		SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
@@ -710,10 +729,13 @@ void SPDtestWindow::regenerateProgressionTree()
 		int maxId = this->maxVetexIdEdit->value();
 		SPDModel->SetMaxVertexID(maxId);
 		SPDModel->GetPercentage(sampleIndex, colorVec);
+		std::string distanceThres = this->distanceThres->text().toStdString();
 		SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
 
-		SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
-		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
+		std::vector<int> clusterNum;
+		this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
+		//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
+		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
 
 		/** graph window set models */
 		std::vector<int> index;
@@ -764,7 +786,7 @@ void SPDtestWindow::updateSelMod()
 	int max = r1 > r2 ? r1 : r2;
 
 	std::vector<unsigned int> selMod;
-	if( num < size)
+	if( num <= size)   
 	{
 		selMod.resize(num);
 		QString str;
@@ -784,6 +806,7 @@ void SPDtestWindow::updateSelMod()
 		str += QString::number(selMod[num - 1]);
 		psdModuleSelectBox->setText(str);
 		psdtButton->setEnabled(TRUE);
+		//searchSubsetsButton->setEnabled(TRUE);
 		heatmapButton->setEnabled(FALSE);
 	}
 }
@@ -804,6 +827,7 @@ void SPDtestWindow::UpdateConnectedNum()
 
 	if( bchanged)
 	{
+		std::cout<< "Update Connected Component..."<<std::endl;
 		m_selModuleID.clear();
 		for(int i = 0; i < selModuleID.size(); i++)
 		{

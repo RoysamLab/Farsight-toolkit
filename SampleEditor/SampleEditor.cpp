@@ -32,9 +32,9 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	dendro2 = new Dendrogram(this);
 	heatmap = new Heatmap(this);
 	biheatmap = new BiHeatmap(this);
-	progressionheatmap = new ProgressionHeatmap(this);
+	spdTestWin = NULL;
+	//progressionheatmap = new ProgressionHeatmap(this);
 
-	spdTestWin = new SPDtestWindow();
 	this->cc1 = NULL;
 	this->cc2 = NULL;
 
@@ -56,9 +56,9 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	connect(selection, SIGNAL(changed()), this, SLOT(updateStatistics()));
     
 	this->ClusterSelections = new SelectiveClustering();
-	this->SampleClusterManager = new ClusterManager();
-	this->SampleClusterManager->setClusteringModel(this->ClusterSelections );
-	this->SampleClusterManager->setObjectSelection(selection);
+	//this->SampleClusterManager = new ClusterManager();
+	//this->SampleClusterManager->setClusteringModel(this->ClusterSelections );
+	//this->SampleClusterManager->setObjectSelection(selection);
 	//this->SampleClusterManager->setVisible(true);
 
 	this->resize(500,500);
@@ -248,7 +248,7 @@ void SampleEditor::loadFile()
 	//this->dendro2->setModels(data,selection2);
 	//this->heatmap->setModels(data,selection,selection2);
 	this->ClusterSelections->SetObjectTable(data);
-	this->SampleClusterManager->setVisible(true);
+	//this->SampleClusterManager->setVisible(true);
 
 }
 
@@ -491,6 +491,11 @@ void SampleEditor::updateStatistics(void)
 
 void SampleEditor::SPDTestAnalysis()
 {
+	if( spdTestWin)
+	{
+		delete spdTestWin;
+	}
+	spdTestWin = new SPDtestWindow();
 	if( this->data->GetNumberOfRows() <= 0)
 	{
 		spdTestWin->setModels();
@@ -501,229 +506,7 @@ void SampleEditor::SPDTestAnalysis()
 	}
 
 	spdTestWin->show();
-
-	//SPDAnalysisModel *SPDModel = SPDAnalysisModel::InitInstance();
-	//SPDModel->ParseTraceFile( this->data);
-	//std::cout<< "Normalizing" << std::endl;
-	//SPDModel->NormalizeData();
-	//std::cout<< "clustering" << std::endl;
-	//SPDModel->ClusterAgglomerate( 0.5, 0.9);
-	////std::cout<< "Merging" << std::endl;
-	////SPDModel->ClusterMerge( 0.9, 0.9);
-	//std::cout<< "Generating MST" << std::endl;
-	//SPDModel->GenerateMST();
-	//SPDModel->RunEMDAnalysis();
-
-	//QString str = "0";
-	//vtkSmartPointer<vtkTable> table = SPDModel->GenerateProgressionTree(str.toStdString());
-	//if( table != NULL)
-	//{
-	//	std::vector<std::string> headers;
-	//	SPDModel->GetTableHeaders( headers);
-	//	QString str = SPDModel->GetFileName();
-	//	std::set<long int> featureSelectedIDs;
-	//	SPDModel->GetSelectedFeatures(featureSelectedIDs);
-	//	this->graph->SetTreeTable( table, headers[0], headers[1], headers[2], featureSelectedIDs, str);
-	//	//this->graph->SetGraphTable( table, headers[0], headers[1], headers[2]);
-	//	this->graph->ShowGraphWindow();
-	//}
 }
-
-//void SampleEditor::spdSampledendrogram()
-//{
-//	//SPDModel->HierachicalClustering(data, false);
-//	//std::vector< Tree> TreeData = SPDModel->PublicTreeData;
-//	//std::cout << TreeData.size()<<endl;
-//	//if( TreeData.size() <= 0)
-//	//{
-//	//	return;
-//	//}
-//
-//	//this->dendro1->setModels(data, selection, 1);
-//	//double **treedata = new double*[TreeData.size()];
-//
-//	//for(int i = 0; i < TreeData.size(); i++)
-//	//{
-//	//	treedata[i] = new double[4];
-//	//	treedata[i][0] = TreeData[i].first;
-//	//	treedata[i][1] = TreeData[i].second;
-//	//	treedata[i][2] = (1 - TreeData[i].cor + 0.01) * 100;
-//	//	treedata[i][3] = TreeData[i].parent;
-//	//}
-//
-//	//cc1 = new clusclus();
-//	//cc1->Initialize(treedata, TreeData.size() + 1);
-//	//cc1->GetOptimalLeafOrderD();
-//
-//	//this->dendro1->setTreeData(cc1->num_samples, cc1->treedata, cc1->optimalleaforder);
-//	//this->dendro1->createDataForDendogram();
-//	//this->dendro1->showGraph();
-//
-//	//for( int i = 0; i < TreeData.size(); i++)
-//	//{
-//	//	delete treedata[i];
-//	//}
-//	//delete treedata;
-//	//delete cc1;
-//}
-//
-//void SampleEditor::spdFeatureDendroram()
-//{
-//	SPDModel->HierachicalClustering();
-//	std::vector< Tree> TreeData = SPDModel->PublicTreeData;
-//	std::cout << TreeData.size()<<endl;
-//	if( TreeData.size() <= 0)
-//	{
-//		return;
-//	}
-//
-//	this->dendro2->setModels(data,selection2, 1);
-//	double **treedata = new double*[TreeData.size()];
-//
-//	ofstream ofs("featureOrder.txt");
-//	for(int i = 0; i < TreeData.size(); i++)
-//	{
-//		treedata[i] = new double[4];
-//		treedata[i][0] = TreeData[i].first;
-//		treedata[i][1] = TreeData[i].second;
-//		treedata[i][2] = (1 - TreeData[i].cor + 0.01) * 100;
-//		treedata[i][3] = TreeData[i].parent;
-//		ofs<< treedata[i][0]<<"\t"<<treedata[i][1]<<"\t"<<treedata[i][2]<<"\t"<<treedata[i][3]<<endl;
-//	}
-//
-//	cc2 = new clusclus();
-//	cc2->Initialize(treedata, TreeData.size() + 1);
-//	cc2->GetOptimalLeafOrderD();
-//
-//	ofs<< "feature optimal order:"<<endl;
-//	for( int i = 0; i < cc2->num_samples; i++)
-//	{
-//		ofs<< cc2->optimalleaforder[i]<<"\t";
-//	}
-//	ofs<<endl;
-//	ofs.close();
-//
-//	this->dendro2->setTreeData(cc2->num_samples, cc2->treedata, cc2->optimalleaforder);
-//	this->dendro2->createDataForDendogram();
-//	this->dendro2->showGraph();
-//
-//	for( int i = 0; i < TreeData.size(); i++)
-//	{
-//		delete treedata[i];
-//	}
-//	delete treedata;
-//	delete cc2;
-//}
-
-//void SampleEditor::spdShowHeatmap()
-//{
-//	ofstream ofs("SPDHeatmapOptimalOrder.txt");
-//	this->progressionheatmap->setModels(data,selection,selection2);
-//	//SPDModel->HierachicalClustering(data, false);
-//	//std::vector< Tree> SampleTreeData = SPDModel->TreeData;
-//
-//	//if( SampleTreeData.size() <= 0)
-//	//{
-//	//	return;
-//	//}
-//
-//	//double **streedata = new double*[SampleTreeData.size()];
-//
-//	//for(int i = 0; i < SampleTreeData.size(); i++)
-//	//{
-//	//	streedata[i] = new double[4];
-//	//	streedata[i][0] = SampleTreeData[i].first;
-//	//	streedata[i][1] = SampleTreeData[i].second;
-//	//	streedata[i][2] = (1 - SampleTreeData[i].cor + 0.01) * 100;
-//	//	streedata[i][3] = SampleTreeData[i].parent;
-//	//}
-//
-//	//cc1 = new clusclus();
-//	//cc1->Initialize(streedata, SampleTreeData.size() + 1);
-//	//cc1->GetOptimalLeafOrderD();
-//	//
-//	//ofs<< "sample optimal order:"<<endl;
-//	//for( int i = 0; i < cc1->num_samples; i++)
-//	//{
-//	//	ofs<< cc1->optimalleaforder[i]<<"\t";
-//	//}
-//	//ofs<<endl<<endl;
-//
-//	std::vector<long int> TreeOrder;
-//	spdWin->GetProgressionTreeOrder(TreeOrder);
-//	int *order = new int[TreeOrder.size()];
-//	ofs<< "Sample Tree Order:"<<endl;
-//	for( long int i = 0; i < TreeOrder.size(); i++)
-//	{
-//		order[i] = TreeOrder[i];
-//		ofs<< TreeOrder[i]<<"\t";
-//	}
-//	ofs<<endl;
-//
-//	//SPDModel->HierachicalClustering(data, true);
-//	SPDModel->HierachicalClustering();
-//	std::vector< Tree> FeatureTreeData = SPDModel->PublicTreeData;
-//	double **ftreedata = new double*[FeatureTreeData.size()];
-//
-//	for(int i = 0; i < FeatureTreeData.size(); i++)
-//	{
-//		ftreedata[i] = new double[4];
-//		ftreedata[i][0] = FeatureTreeData[i].first;
-//		ftreedata[i][1] = FeatureTreeData[i].second;
-//		ftreedata[i][2] = (1 - FeatureTreeData[i].cor + 0.01) * 100;
-//		ftreedata[i][3] = FeatureTreeData[i].parent;
-//	}
-//
-//	cc2 = new clusclus();
-//	cc2->Initialize(ftreedata, FeatureTreeData.size() + 1);
-//	cc2->GetOptimalLeafOrderD();
-//	
-//	ofs<< "feature optimal order:"<<endl;
-//	for( int i = 0; i < cc2->num_samples; i++)
-//	{
-//		ofs<< cc2->optimalleaforder[i]<<"\t";
-//	}
-//	ofs<<endl;
-//	ofs.close();
-//	
-//	vnl_matrix<double> mat;
-//	SPDModel->GetMatrixData(mat);
-//	for(int i = 0; i < mat.cols(); i++)
-//	{
-//		vnl_vector<double> coln = mat.get_column(i);
-//		double max = abs( coln.max_value());
-//		if( max != 0)
-//		{
-//			coln = coln / max;
-//			mat.set_column(i, coln);
-//		}
-//	}
-//	
-//	// optimal order is the mst tree order
-//	this->progressionheatmap->setDataForHeatmap(mat.data_array(), order, cc2->optimalleaforder, TreeOrder.size(), cc2->num_samples);
-//	//this->heatmap->setDataForHeatmap(mat.data_array(), cc1->optimalleaforder, cc2->optimalleaforder,cc1->num_samples, cc2->num_samples);
-//	this->progressionheatmap->setDataForDendrograms(NULL, cc2->treedata);
-//	this->progressionheatmap->creatDataForHeatmap(1);	
-//	this->progressionheatmap->showSPDGraph();
-//	//this->heatmap->showDendrogram2();
-//
-//	//for( int i = 0; i < SampleTreeData.size(); i++)
-//	//{
-//	//	delete streedata[i];
-//	//}
-//	//delete streedata;
-//	for( int i = 0; i < FeatureTreeData.size(); i++)
-//	{
-//		delete ftreedata[i];
-//	}
-//	delete ftreedata;
-//
-//	//delete cc1;
-//	delete cc2;
-//	delete order;
-//	
-//	cout<<"finish heatmap..."<<endl;
-//}
 
 void SampleEditor::sampledendrogram()
 {

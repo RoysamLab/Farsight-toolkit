@@ -54,7 +54,7 @@ limitations under the License.
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
 #include "ClusClus/LocalGeometryRef.h"
-#include "SPD/ProgressionHeatmapWindow.h"
+//#include "SPD/ProgressionHeatmapWindow.h"
 //#include "SPD/spdmainwindow.h"
 #include "SPD/spdtestwindow.h"
 #include <vector>
@@ -142,11 +142,10 @@ private:
 	Dendrogram *dendro2;
 	Heatmap *heatmap;
 	BiHeatmap *biheatmap;
-	ProgressionHeatmap *progressionheatmap;
+	//ProgressionHeatmap *progressionheatmap;
 
 	//SPDMainWindow *spdWin;
 	SPDtestWindow *spdTestWin;
-	SPDAnalysisModel *SPDModel;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;

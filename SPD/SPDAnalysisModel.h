@@ -52,7 +52,7 @@ public:
 
 	bool ReadCellTraceFile(std::string fileName, bool bContrast);
 	void ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bContrast = false);
-
+	bool ReadRawData(std::string fileName);
 	unsigned int GetSampleNum();
 	unsigned int GetFeatureNum();
 	unsigned int GetContrastDataSampleNum();
@@ -72,7 +72,7 @@ public:
 	void GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex);   
 
 	void GenerateMST();
-	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures);
+	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
 	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
@@ -111,6 +111,7 @@ public:
 
 	void BuildMSTForConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component, int connectedNum);
 	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
+    bool SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules);
 
 protected:
 
@@ -125,7 +126,8 @@ protected:
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
-	void GetCombinedMatrix( vnl_matrix<double> &datamat, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
+	void GetCombinedMatrix( vnl_matrix<double> &datamat, int nstart, int nrow, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
+	void GetCombinedMatrixByModuleId( vnl_matrix<double> &datamat, std::vector< std::vector< unsigned int> > &featureClusterIndex, std::vector< unsigned int> &selModuleIDs, vnl_matrix<double>& mat);
 	void GetCombinedInversedMatrix(vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleInversedId, vnl_matrix<double>& mat);
 	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
@@ -136,6 +138,8 @@ protected:
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	void CityBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
 	void EuclideanBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
+    void EuclideanBlockDist( vnl_vector<double>& vec, vnl_matrix<double>& matDis);
+	double EuclideanBlockDist( vnl_vector<double>& vec1, vnl_vector<double>& vec2);
 	void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
@@ -146,7 +150,8 @@ protected:
 	void GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance);
 	void Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	void Hist(vnl_vector<double>&distance, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
-	void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis);
+	void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis, int num_bin);
+	void Hist(vnl_matrix<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis);
 	double FindMinBetweenConnectComponent(vnl_matrix<double> &dis, std::vector<int> ver1, std::vector<int> ver2);
 	void GetComponentMinDistance(vnl_matrix<double> &distMat, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
 
@@ -157,6 +162,9 @@ protected:
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
 	bool MergeTables(vtkSmartPointer<vtkTable> firstTable, vtkSmartPointer<vtkTable> secondTable, vtkSmartPointer<vtkTable> table);
 	void CopyTable( vtkSmartPointer<vtkTable> oriTable, vtkSmartPointer<vtkTable> targetTable);
+
+	double ComputeModuleDistanceAndConnection(vnl_matrix<double> &mati, vnl_matrix<double> &matj, int &rowi, int &rowj);
+	void GetAverageVec(vnl_matrix<double> &mat, vnl_vector<double> &vec);
 
 	/// for multi-level demo
 	bool RunSPDforFeatureDistributionTable(std::string fileName);

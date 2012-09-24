@@ -121,6 +121,8 @@ public:
 	void reRunClus();
 	void showGraphforNe();
 	void drawPointsforNe();
+	vtkSmartPointer<vtkTable> GetTreeTable();
+	void GetSubTreeClusterNum(std::vector<int> &clusterNum);
 
 signals:
 	void SelChanged();
@@ -255,7 +257,10 @@ private:
 
 	clusclus *cc1;
 	clusclus *cc2;
+	double **ftreedata;
 	std::vector<int> connectedComponent;
+	std::vector< int> parentIndex;
+	vnl_vector< int> clusterNumVec;
 };
 
 #endif

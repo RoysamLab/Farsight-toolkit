@@ -56,6 +56,7 @@ protected slots:
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
 	void UpdateConnectedNum();
+	void searchSubsetsOfFeatures();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -97,6 +98,7 @@ private:
 	QLabel *connectedGraphLabel;
 	QLineEdit *connectedGraphEdit;
 	QPushButton *updateConnectedNumButton;  // update connected component number
+	QPushButton *searchSubsetsButton;  // search subsets of features to best fit distance 
 	
 	QString FileName;
 	GraphWindow *graph;
@@ -122,6 +124,7 @@ private:
 	std::vector<int> connectedComponent;
 	int connectedNum;
 	std::set<unsigned int> m_selModuleID;
+	bool bconnected;
 };
 
 #endif // SPDTESTWINDOW_H

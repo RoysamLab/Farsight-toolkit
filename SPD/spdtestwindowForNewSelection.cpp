@@ -705,7 +705,11 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 	SPDModel->GetPercentage(sampleIndex, sampleVec);
 	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, distanceThres->value());
 
-	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID);
+	std::vector<int> clusterNum;
+	//this->HeatmapWin->GetSubTreeClusterNum(clusterNum);   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
+	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+
 	this->graph->setModels(averageClusterTable, ClusterSelections);
 
 	std::vector<std::string> headers;
