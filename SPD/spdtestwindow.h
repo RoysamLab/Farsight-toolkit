@@ -48,11 +48,11 @@ protected slots:
 	//void saveSelectedFeatures();
 	void updateSelMod();
 	void editThreshold();
-	void editPercentage();
+	//void editPercentage();
 	void editNearestNeighbor();
 	void showProgressionHeatmap();
 	void regenerateProgressionTree();
-	void updateProgressionType();
+	//void updateProgressionType();
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
 	void UpdateConnectedNum();
@@ -65,7 +65,7 @@ private:
     QLabel *dataFileName;
     QPushButton *browseButton;
     QPushButton *loadButton;
-	QPushButton *loadTestButton;
+	//QPushButton *loadTestButton;
 	
     QLabel *featureNumLabel;
     QLabel *featureNum;
@@ -76,11 +76,11 @@ private:
     QDoubleSpinBox *clusterCoherenceBox;
     QLabel *kNearestNeighborLabel;
     QSpinBox *kNearestNeighborBox;
-    QPushButton *clusterButton;
+    //QPushButton *clusterButton;
 
 	QLabel *emdLabel;
-	QLabel *progressionOverDistance;
-	QCheckBox *bcheckBox;   // progression overall or over distance to device
+	//QLabel *progressionOverDistance;
+	//QCheckBox *bcheckBox;   // progression overall or over distance to device
 	QPushButton *emdButton;
 	QDoubleSpinBox *emdThresBox;
 	QLineEdit *emdPercentageBox;
@@ -94,6 +94,7 @@ private:
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
+	QLabel *distanceLabel;
 	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
 	QLabel *connectedGraphLabel;
 	QLineEdit *connectedGraphEdit;

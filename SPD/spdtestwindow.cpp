@@ -50,7 +50,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"), this);
     loadButton = new QPushButton(tr("Load"), this);
-	loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
+	//loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
 
     featureNumLabel = new QLabel(tr("Feature size:"), this);
     featureNum = new QLabel(this);
@@ -61,28 +61,30 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
     clusterCoherenceBox = new QDoubleSpinBox(this);
-	clusterCoherenceBox->setValue(0.9);
+	clusterCoherenceBox->setValue(0.95);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
     kNearestNeighborLabel = new QLabel(tr("Nearest Neighbor Number:"), this);
     kNearestNeighborBox = new QSpinBox(this);
-	kNearestNeighborBox->setValue(3);
+	kNearestNeighborBox->setValue(5);
 	kNearestNeighborBox->setMinimum (0);
 	kNearestNeighborBox->setSingleStep(1);
 
-    clusterButton = new QPushButton(tr("Feature Cluster"), this);
+    //clusterButton = new QPushButton(tr("Feature Cluster"), this);
 	
-	emdLabel = new QLabel(tr("Matching modules based on coherence:"), this);
-	progressionOverDistance = new QLabel(tr("Progression over distance to device:"), this);
-	bcheckBox = new QCheckBox(this);
+	emdLabel = new QLabel(tr("KNNG based EMD module matching:"), this);
+	//progressionOverDistance = new QLabel(tr("Progression over distance to device:"), this);
+	//bcheckBox = new QCheckBox(this);
 	emdButton = new QPushButton(tr("Match"), this);
 
 	emdThresBox = new QDoubleSpinBox(this);
-	//emdThresBox->setRange(0,1);
-	emdThresBox->setSingleStep(0.1);
+	emdThresBox->setRange(0,1);
+	emdThresBox->setValue(0.3);
 
 	emdPercentageBox = new QLineEdit(this);
+	emdPercentageBox->setReadOnly( true);
+	emdPercentageBox->setEnabled( false);
 	psmLable = new QLabel(tr("PSM Threshold(0.0 ~ 1.0):"), this);
 	psmPerLable = new QLabel(tr("PSM Selected Blocks' Percentage:"), this);
     psmButton = new QPushButton(tr("Show PSM"), this);
@@ -107,25 +109,27 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     psdtButton = new QPushButton(tr("View Progression"), this);
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
 	heatmapButton = new QPushButton(tr("Heatmap"), this);
+
+	distanceLabel = new QLabel(tr("Distance Threshold:"), this);
 	distanceThres = new QDoubleSpinBox(this);
 	distanceThres->setRange(0,2000);
 	distanceThres->setSingleStep(0.1);
 	distanceThres->setValue(700.0);
 	
-	clusterButton->setEnabled(FALSE);
-	emdButton->setEnabled(FALSE);
+	emdButton->setEnabled(TRUE);
 	psmButton->setEnabled(FALSE);
 	psdtButton->setEnabled(FALSE);
+	updateConnectedNumButton->setEnabled(FALSE);
 	//searchSubsetsButton->setEnabled(FALSE);
 	heatmapButton->setEnabled(FALSE);
-	bcheckBox->setChecked(FALSE);
+	//bcheckBox->setChecked(FALSE);
 	//saveFeatureButton = new QPushButton(tr("Save Selected Features"));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
-	connect(loadTestButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
-    connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
-	connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
+	//connect(loadTestButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
+    //connect(clusterButton, SIGNAL(clicked()), this, SLOT(clusterFunction()));
+	//connect( bcheckBox, SIGNAL(clicked()), this, SLOT(updateProgressionType()));
 	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
 	connect( updateConnectedNumButton, SIGNAL(clicked()), this, SLOT(UpdateConnectedNum()));
 	//connect( searchSubsetsButton, SIGNAL(clicked()), this, SLOT(searchSubsetsOfFeatures()));
@@ -135,7 +139,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
 	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
-	connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
+	//connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
 	
     QGridLayout *mainLayout = new QGridLayout(this);
 
@@ -162,30 +166,31 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 
     mainLayout->addWidget(sampleNumLabel, 3, 0);
     mainLayout->addWidget(sampleNum, 3, 1);
-	mainLayout->addWidget(loadTestButton, 3, 2);
+	//mainLayout->addWidget(loadTestButton, 3, 2);
 
 	mainLayout->addWidget(clusterCoherenceLabel, 4, 0);
-    mainLayout->addWidget(clusterCoherenceBox, 4, 1);
-	mainLayout->addWidget(clusterButton, 4, 2);
+	mainLayout->addWidget(clusterCoherenceBox, 4, 1);
+	//mainLayout->addWidget(clusterButton, 4, 2);
 
     mainLayout->addWidget(kNearestNeighborLabel, 5, 0);
     mainLayout->addWidget(kNearestNeighborBox, 5, 1);
 	
-	mainLayout->addWidget(progressionOverDistance, 6, 0);
-	mainLayout->addWidget(bcheckBox, 6, 1);
+	//mainLayout->addWidget(progressionOverDistance, 6, 0);
+	//mainLayout->addWidget(bcheckBox, 6, 1);
 
-	mainLayout->addWidget(emdLabel, 7, 0);
-	mainLayout->addWidget(emdButton, 7, 2);
+	mainLayout->addWidget(emdLabel, 6, 0);
+	mainLayout->addWidget(emdButton, 6, 2);
 
-	mainLayout->addWidget(psmLable, 8, 0);
-	mainLayout->addWidget(emdThresBox, 8, 1);
+	mainLayout->addWidget(psmLable, 7, 0);
+	mainLayout->addWidget(emdThresBox, 7, 1);
 
-	mainLayout->addWidget(psmPerLable, 9, 0);
-	mainLayout->addWidget(emdPercentageBox, 9, 1);
-	mainLayout->addWidget(psmButton, 9, 2);
+	mainLayout->addWidget(psmPerLable, 8, 0);
+	mainLayout->addWidget(emdPercentageBox, 8, 1);
+	mainLayout->addWidget(psmButton, 8, 2);
 
 	mainLayout->addWidget(psdtLable, 10, 0);
-	mainLayout->addWidget(distanceThres, 10, 1);
+	mainLayout->addWidget(distanceLabel, 9, 0);
+	mainLayout->addWidget(distanceThres, 9, 1);
 	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
 	//mainLayout->addWidget(searchSubsetsButton, 11, 2);
 
@@ -238,7 +243,7 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	{
 		browseButton->setEnabled(TRUE);
 		loadButton->setEnabled(TRUE);
-		loadTestButton->setEnabled(TRUE);
+		//loadTestButton->setEnabled(TRUE);
 	}
 	else
 	{
@@ -249,8 +254,7 @@ void SPDtestWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection *
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
-		loadTestButton->setEnabled(TRUE);
-		clusterButton->setEnabled(TRUE);
+		//loadTestButton->setEnabled(TRUE);
 	}
 
 	if(this->simHeatmap)
@@ -288,7 +292,6 @@ void SPDtestWindow::load()
 		data = this->SPDModel->GetDataTable();
 		this->featureNum->setText( QString::number(this->SPDModel->GetFeatureNum()));
 		this->sampleNum->setText( QString::number(this->SPDModel->GetSampleNum()));
-		clusterButton->setEnabled(TRUE);
 	}
 }
 
@@ -375,10 +378,6 @@ void SPDtestWindow::clusterFunction()
 	try
 	{
 		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterCor.c_str()));
-		emdButton->setEnabled(TRUE);
-		psmButton->setEnabled(FALSE);
-		psdtButton->setEnabled(FALSE);
-		heatmapButton->setEnabled(FALSE);
 		//showHeatmapAfterFeatureClustering();
 	}
 	catch(...)
@@ -387,26 +386,27 @@ void SPDtestWindow::clusterFunction()
 	}
 }
 
-void SPDtestWindow::updateProgressionType()
-{  
-	if( bcheckBox->isChecked())
-	{
-		bool rtn = this->SPDModel->SetProgressionType( true);   // progression over distance to device
-		if( rtn == false)
-		{
-			QMessageBox mes;
-			mes.setText("Distance to device is not available!");
-			mes.exec();
-		}
-	}
-	else
-	{
-		this->SPDModel->SetProgressionType( false);  // overall progression
-	}
-}
+//void SPDtestWindow::updateProgressionType()
+//{  
+//	if( bcheckBox->isChecked())
+//	{
+//		bool rtn = this->SPDModel->SetProgressionType( true);   // progression over distance to device
+//		if( rtn == false)
+//		{
+//			QMessageBox mes;
+//			mes.setText("Distance to device is not available!");
+//			mes.exec();
+//		}
+//	}
+//	else
+//	{
+//		this->SPDModel->SetProgressionType( false);  // overall progression
+//	}
+//}
 
 void SPDtestWindow::emdFunction()
 {
+	clusterFunction();
 	try
 	{
 #if MSTSPD
@@ -444,17 +444,17 @@ void SPDtestWindow::editThreshold()
 	emdPercentageBox->setText(QString::number(per));
 }
 
-void SPDtestWindow::editPercentage()
-{
-	//std::string emdPer = this->emdPercentageBox->text().toStdString();
-	//double per = atof(emdPer.c_str());
-	//double thres = 0;
-	//if( per >= 0 && per <=1)
-	//{
-	//	thres = this->SPDModel->GetEMDSelectedThreshold( per);
-	//}
-	//emdThresBox->setText(QString::number(thres));
-}
+//void SPDtestWindow::editPercentage()
+//{
+//	//std::string emdPer = this->emdPercentageBox->text().toStdString();
+//	//double per = atof(emdPer.c_str());
+//	//double thres = 0;
+//	//if( per >= 0 && per <=1)
+//	//{
+//	//	thres = this->SPDModel->GetEMDSelectedThreshold( per);
+//	//}
+//	//emdThresBox->setText(QString::number(thres));
+//}
 
 void SPDtestWindow::editNearestNeighbor()
 {
@@ -471,6 +471,8 @@ void SPDtestWindow::editNearestNeighbor()
 
 void SPDtestWindow::showPSM()
 {
+	editThreshold();
+
 	std::string emdThres = this->emdThresBox->text().toStdString();
 
 	clusclus *clus1 = new clusclus();
@@ -807,6 +809,7 @@ void SPDtestWindow::updateSelMod()
 		psdModuleSelectBox->setText(str);
 		psdtButton->setEnabled(TRUE);
 		//searchSubsetsButton->setEnabled(TRUE);
+		updateConnectedNumButton->setEnabled(TRUE);
 		heatmapButton->setEnabled(FALSE);
 	}
 }
@@ -893,14 +896,14 @@ void SPDtestWindow::showProgressionHeatmap()
 		clusIndexByTreeOrder.push_back(clusIndex[ TreeOrder[i] ]);
 	}
 
-	vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(selOrder, unselOrder);
-	if( histo)
-	{
-		delete histo;
-	}
-	histo = new HistoWindow(this);
-	histo->setModels(tableForHistPlot, selection, &clusIndexByTreeOrder);
-	histo->show();
+	//vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(selOrder, unselOrder);
+	//if( histo)
+	//{
+	//	delete histo;
+	//}
+	//histo = new HistoWindow(this);
+	//histo->setModels(tableForHistPlot, selection, &clusIndexByTreeOrder);
+	//histo->show();
 
 	// progression heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();

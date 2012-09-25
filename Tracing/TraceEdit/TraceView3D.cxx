@@ -6447,21 +6447,22 @@ void View3D::SaveComputedCellFeaturesTable()
 void View3D::SPDAnalysis()
 {
 #ifdef USE_SPD
-	if(this->SPDWin)
-	{
-		delete this->SPDWin;
-	}
-	this->SPDWin = new SPDtestWindow();
 	//this->SPDWin = new SPDWindowForNewSelection();
-
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 1)
 	{
 		QMessageBox mes;
 		mes.setText("Please compute cell features first, cell number should be more than one!");
 		mes.exec();
+		return;
 	}
 	else
 	{
+		if(this->SPDWin)
+		{
+			delete this->SPDWin;
+		}
+		this->SPDWin = new SPDtestWindow();
+
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");
@@ -6476,10 +6477,10 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("centroid_y");
 		featureTable->RemoveColumnByName("centroid_z");
 
-		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());		
+		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());	
+		this->SPDWin->show();
 		//this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}
-	this->SPDWin->show();
 #endif
 }
 
