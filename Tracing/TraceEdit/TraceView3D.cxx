@@ -1330,6 +1330,7 @@ void View3D::CreateGUIObjects()
 	this->SetContour->setObjectName(tr("SetContour"));
 	this->SetContour->setCheckable(true);
 	this->SetContour->setChecked(true);
+	this->SetContour->setEnabled(false);
 	connect(this->SetContour, SIGNAL(triggered()), this, SLOT(setContourMode()));
 
 	this->SetSomaRaycast = new QAction("Set Raycast", this->CentralWidget);
@@ -2658,24 +2659,24 @@ void View3D::setProjectionMode()
 			if (this->projectFilesTable->item(i,2)->text() == "on")
 			{
 				this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
+			}		
+			//Incompatible with slicer/projection upgrade
+			/***************************************************************/
+			QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+			Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+			if (this->projectFilesTable->item(i,1)->text() == "Image")
+			{
+				this->projectFilesTable->setItem(i,3,Item2D);
+			//std::cout << "i: " << i << "make 2D." << std::endl;
 			}
+			/***************************************************************/
 		}
 		else
 			this->Renderer->AddActor(this->ImageActors->createProjection(i,this->projectionStyle,this->projection_axis));
 
 		//this->ImageActors->setIs2D(i, true); //this line incompatible with multiple mode renderer
 		this->ImageActors->setRenderStatus(i, false);
-		
-		//Incompatible with slicer/projection upgrade
-		/***************************************************************/
-		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-		if (this->projectFilesTable->item(i,1)->text() == "Image")
-		{
-			this->projectFilesTable->setItem(i,3,Item2D);
-		//std::cout << "i: " << i << "make 2D." << std::endl;
-		}
-		/***************************************************************/
+
 	}
 
 	//this->QVTK->GetRenderWindow()->Render();
@@ -2703,24 +2704,24 @@ void View3D::setRaycastMode()
 			{
 				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 			}
+			//Incompatible with slice/projection upgrade
+			/***************************************************************/
+			QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+			Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+			QFont font;
+			font.setBold(true);
+			Item3D->setFont(font);
+			if (this->projectFilesTable->item(i,1)->text() == "Image")
+			{
+				this->projectFilesTable->setItem(i,3,Item3D);
+			}
+			/***************************************************************/
 		}
 		else
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 			
 		this->ImageActors->setRenderStatus(i, true);
 
-		//Incompatible with slice/projection upgrade
-		/***************************************************************/
-		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-		QFont font;
-		font.setBold(true);
-		Item3D->setFont(font);
-		if (this->projectFilesTable->item(i,1)->text() == "Image")
-		{
-			this->projectFilesTable->setItem(i,3,Item3D);
-		}
-		/***************************************************************/
 	}
 	this->RaycastBar->toggleViewAction()->setDisabled(0);
 
@@ -2756,19 +2757,24 @@ void View3D::setContourMode()
 		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
 		this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
 
-		QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
-		Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
-		if (this->projectFilesTable->item(i,1)->text() == "Soma")
+		if (projectFilesTableCreated)
 		{
-			this->projectFilesTable->setItem(i,3,Item2D);
-		//std::cout << "i: " << i << "make 2D." << std::endl;
+			QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
+			Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
+			if (this->projectFilesTable->item(i,1)->text() == "Soma")
+			{
+				this->projectFilesTable->setItem(i,3,Item2D);
+			//std::cout << "i: " << i << "make 2D." << std::endl;
+			}
 		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
 
 	this->viewContour = true;
 	SetContour->setChecked(true);
+	SetContour->setEnabled(false);
 	SetSomaRaycast->setChecked(false);
+	SetSomaRaycast->setEnabled(true);
 	
 	this->SomaBar->hide();
 }
@@ -2779,21 +2785,25 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
 		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 
-		QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
-		Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
-		QFont font;
-		font.setBold(true);
-		Item3D->setFont(font);
-		if (this->projectFilesTable->item(i,1)->text() == "Soma")
+		if (projectFilesTableCreated)
 		{
-			this->projectFilesTable->setItem(i,3,Item3D);
+			QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
+			Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
+			QFont font;
+			font.setBold(true);
+			Item3D->setFont(font);
+			if (this->projectFilesTable->item(i,1)->text() == "Soma")
+			{
+				this->projectFilesTable->setItem(i,3,Item3D);
+			}
 		}
-
 	}
 	this->QVTK->GetRenderWindow()->Render();
 	this->viewContour = false;
 	SetContour->setChecked(false);
+	SetContour->setEnabled(true);
 	SetSomaRaycast->setChecked(true);
+	SetSomaRaycast->setEnabled(false);
 
 	this->SomaBar->show();
 }
