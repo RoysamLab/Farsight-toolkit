@@ -52,7 +52,7 @@ void MicrogliaRegionTracer::Trace()
 
     for (int group_num = 0; group_num < num_groups; group_num++)
     {
-        int num_local_threads = (cells.size() / num_threads) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
+        int num_local_threads = (cells.size() / ((group_num+1) * num_threads)) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
 		std::cerr << "number of local threads: " << num_local_threads << std::endl;
 		for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
         {
