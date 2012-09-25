@@ -2755,10 +2755,13 @@ void View3D::setContourMode()
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{  
 		this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(i));
-		this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
 
 		if (projectFilesTableCreated)
 		{
+			if (this->projectFilesTable->item(i,2)->text() == "on")
+			{
+				this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
+			}
 			QTableWidgetItem *Item2D = new QTableWidgetItem(tr("2d"));
 			Item2D->setFlags(Item2D->flags() & (~Qt::ItemIsEditable));
 			if (this->projectFilesTable->item(i,1)->text() == "Soma")
@@ -2767,6 +2770,9 @@ void View3D::setContourMode()
 			//std::cout << "i: " << i << "make 2D." << std::endl;
 			}
 		}
+		else
+			this->Renderer->AddActor(this->ImageActors->GetContourActor(i));
+
 	}
 	this->QVTK->GetRenderWindow()->Render();
 
@@ -2783,10 +2789,13 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
 		this->Renderer->RemoveActor(this->ImageActors->GetContourActor(i));
-		this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 
 		if (projectFilesTableCreated)
 		{
+			if (this->projectFilesTable->item(i,2)->text() == "on")
+			{
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
+			}
 			QTableWidgetItem *Item3D = new QTableWidgetItem(tr("3d"));
 			Item3D->setFlags(Item3D->flags() & (~Qt::ItemIsEditable));
 			QFont font;
@@ -2797,6 +2806,8 @@ void View3D::setRaycastSomaMode() //Is soma volume already shown? No
 				this->projectFilesTable->setItem(i,3,Item3D);
 			}
 		}
+		else
+			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
 	}
 	this->QVTK->GetRenderWindow()->Render();
 	this->viewContour = false;
