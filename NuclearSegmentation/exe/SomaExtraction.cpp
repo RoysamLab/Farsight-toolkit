@@ -32,8 +32,8 @@
 
 #define N 11
 #define BOUNDARY_EXPAND 5
-std::string SomaInfo[N]={"ID", "centroid_x", "centroid_y", "centroid_z", "volume", "eccentricity", "elongation", "orientation", 
-						"majorAxisLength", "minorAxisLength", "surface_area_volume_ratio"};
+std::string SomaInfo[N]={"ID", "centroid_x", "centroid_y", "centroid_z", "soma_volume", "eccentricity", "elongation", "orientation", 
+						"majorAxisLength", "minorAxisLength", "soma_surface_area"};
 
 
 SomaExtractor::SomaExtractor()
@@ -1064,9 +1064,7 @@ vtkSmartPointer<vtkTable> SomaExtractor::ComputeSomaFeatures(SegmentedImageType:
 		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetOrientation(labelValue)));
 		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetMajorAxisLength(labelValue)));
 		row->InsertNextValue(vtkVariant(labelGeometryImageFilter->GetMinorAxisLength(labelValue)));
-
-		double ratio = (double)boundaryPixSize[LtoIMap[labelValue] ] / volume;
-		row->InsertNextValue(vtkVariant(ratio));
+		row->InsertNextValue(vtkVariant(boundaryPixSize[LtoIMap[labelValue] ]));
 		table->InsertNextRow(row);
     }
 
@@ -1270,3 +1268,99 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GenerateSeedPoints(OutputIm
 	return binProbImagePtr;
 }
 
+SomaExtractor::ProbImageType2D::Pointer SomaExtractor::SetInputImage2D(const char * fileName)
+{
+	ushortImage2DReader::Pointer reader = ushortImage2DReader::New();
+	reader->SetFileName (fileName);	
+
+	typedef itk::CastImageFilter<UShortImageType2D, ProbImageType2D> CasterType;
+    CasterType::Pointer caster = CasterType::New();
+    caster->SetInput(reader->GetOutput());
+	caster->Update();
+	ProbImageType2D::Pointer image = caster->GetOutput();
+	return image;
+}
+
+SomaExtractor::UShortImageType::Pointer SomaExtractor::DevideAndScale(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, int bmultiply)
+{
+	int width = image->GetLargestPossibleRegion().GetSize()[0];
+	int height = image->GetLargestPossibleRegion().GetSize()[1];
+	int depth = image->GetLargestPossibleRegion().GetSize()[2];
+
+	int width2 = backgroundImage->GetLargestPossibleRegion().GetSize()[0];
+	int height2 = backgroundImage->GetLargestPossibleRegion().GetSize()[1];
+	if( width != width2 || height != height2)
+	{
+		std::cout<< "Input image and background image do not match!"<<std::endl;
+	}
+	else
+	{
+		std::cout<< "Input image and background image match!"<<std::endl;
+	}
+
+	typedef itk::ImageRegionConstIterator< ProbImageType2D > Prob2DConstIteratorType;
+	Prob2DConstIteratorType backgroundIt( backgroundImage, backgroundImage->GetLargestPossibleRegion());
+
+	double max = 0;
+
+	for(int i = 0; i < depth; i++)
+	{
+		backgroundIt.GoToBegin();
+		ProbImageType::IndexType desiredStart;
+		desiredStart[0] = 0;
+		desiredStart[1] = 0;
+		desiredStart[2] = i;
+ 
+		ProbImageType::SizeType desiredSize;
+		desiredSize[0] = width;
+		desiredSize[1] = height;
+		desiredSize[2] = 1;
+ 
+		ProbImageType::RegionType desiredRegion(desiredStart, desiredSize);
+		ProbIteratorType imageIt( image, desiredRegion);
+		imageIt.GoToBegin();
+		
+		while( !backgroundIt.IsAtEnd() && !imageIt.IsAtEnd())
+		{
+			if( imageIt.Get() > max)
+			{
+				max = imageIt.Get();
+			}
+			imageIt.Set( imageIt.Get() * bmultiply / backgroundIt.Get());
+			++imageIt;
+			++backgroundIt;
+		}
+	}
+
+	std::cout<< "Rescale to 0 ~ "<< max<<std::endl;
+	typedef itk::RescaleIntensityImageFilter< ProbImageType, UShortImageType> RescaleFloatShortFilterType;
+	RescaleFloatShortFilterType::Pointer rescaleFilter = RescaleFloatShortFilterType::New();
+	rescaleFilter->SetInput(image);
+	rescaleFilter->SetOutputMinimum(0);
+	rescaleFilter->SetOutputMaximum(max);
+	try
+	{
+		rescaleFilter->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in DevideAndScale; " << err << std::endl; 
+	}
+	UShortImageType::Pointer rtnImage = rescaleFilter->GetOutput();
+	return rtnImage;
+}
+
+void SomaExtractor::writeImage(const char* writeFileName, UShortImageType::Pointer image)
+{
+	ushortImageWriter::Pointer writer = ushortImageWriter::New();
+	writer->SetFileName(writeFileName);
+	writer->SetInput(image);
+	try
+	{
+		writer->Update();
+	}
+	catch ( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in bin_image_writer: " << err << std::endl; 
+	}
+}

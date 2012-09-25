@@ -49,8 +49,10 @@ public:
 	typedef unsigned short UShortPixel;
 	typedef itk::Image< unsigned char, 3 > OutputImageType;
 	typedef itk::Image< float, 3 > ProbImageType;
+	typedef itk::Image< float, 2 > ProbImageType2D;
 	typedef itk::Image< TLPixel,3 > SegmentedImageType;
 	typedef itk::Image< UShortPixel,3 > UShortImageType;
+	typedef itk::Image< UShortPixel,2 > UShortImageType2D;
 
 protected:
 	typedef itk::ImageFileReader< OutputImageType > ReaderType;
@@ -60,6 +62,7 @@ protected:
 	typedef itk::ImageFileReader< UShortImageType > ushortImageReader;
 	typedef itk::ImageFileWriter< UShortImageType > ushortImageWriter;
 	typedef itk::ImageFileReader< ProbImageType > probImageReader;
+	typedef itk::ImageFileReader< UShortImageType2D > ushortImage2DReader;
 
 	//typedef itk::RegionOfInterestImageFilter< ProbImageType, ProbImageType> RegionOfInterestFilter;
 	typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFloatFilterType;
@@ -100,7 +103,6 @@ protected:
 	typedef itk::MinimumMaximumImageCalculator <ProbImageType> ImageCalculatorFilterType;
 	typedef itk::ImageRegionConstIterator< ProbImageType > ProbConstIteratorType;
 	typedef itk::ImageRegionIterator< ProbImageType>  ProbIteratorType;
-
 public:
 	//: constructor
 	SomaExtractor();
@@ -108,6 +110,7 @@ public:
 	virtual ~SomaExtractor();
 
 	ProbImageType::Pointer SetInputImage(const char * fileName);
+	ProbImageType2D::Pointer SetInputImage2D(const char * fileName);
 	ProbImageType::Pointer SetInputImageByPortion(const char * fileName);
 	SegmentedImageType::Pointer SetInitalContourImage(const char * fileName);
 	SegmentedImageType::Pointer SetInitalContourImageByPortion(const char * fileName);
@@ -124,6 +127,7 @@ public:
 	void writeImage(const char* writeFileName, OutputImageType::Pointer image);
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image, bool bscale = false);
 	void writeImage(const char* writeFileName, GradientImageType::Pointer image);
+	void writeImage(const char* writeFileName, UShortImageType::Pointer image);
 	void writeCentroids(const char* writeFileName, std::vector< itk::Index<3> > &seedVec);
 	
 	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
@@ -132,6 +136,8 @@ public:
 
 	// generate soma seed points for the input image
 	ProbImageType::Pointer GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids);
+
+	UShortImageType::Pointer DevideAndScale(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, int bmultiply = 1);
 
 protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);

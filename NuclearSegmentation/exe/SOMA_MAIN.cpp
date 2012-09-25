@@ -11,7 +11,7 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 int main(int argc, char* argv[])
 {
 	std::string str = std::string("XML");
-	if( std::string(argv[1]) == str && argc == 5 && atoi(argv[2]) >= 1)
+	if( argc == 5 && std::string(argv[1]) == str && atoi(argv[2]) >= 1)  // generate project file for the image sequences
 	{
 		SomaExtractor *Somas = new SomaExtractor();	
 		SomaExtractor::OutputImageType::Pointer inputImage = Somas->Read8BitImage("1_8bit.tif");
@@ -28,21 +28,23 @@ int main(int argc, char* argv[])
 			int coln = (i-1) % col;
 			int tx = width * 1.1 * coln;
 			int ty = height * 1.1 * rown;
-			ofs<<"\t"<<"<File	FileName=\""<<i<<"_ANT.swc\""<<"\t"<<"Type=\"Trace\"\ttX=\""<<tx<<"\"\ttY=\""<<ty<<"\"\ttZ=\"0\"/>"<<std::endl;
+			ofs<<"\t"<<"<File	FileName=\""<<i<<"_CV_ANT.swc\""<<"\t"<<"Type=\"Trace\"\ttX=\""<<tx<<"\"\ttY=\""<<ty<<"\"\ttZ=\"0\"/>"<<std::endl;
 			ofs<<"\t"<<"<File	FileName=\""<<i<<"_8bit.tif\""<<"\t"<<"Type=\"Image\"\ttX=\""<<tx<<"\"\ttY=\""<<ty<<"\"\ttZ=\"0\"/>"<<std::endl;
 			ofs<<"\t"<<"<File	FileName=\""<<i<<"_soma.mhd\""<<"\t"<<"Type=\"Soma\"\ttX=\""<<tx<<"\"\ttY=\""<<ty<<"\"\ttZ=\"0\"/>"<<std::endl;
+			//ofs<<"\t"<<"<File	FileName=\""<<i<<"_soma_features.txt\""<<"\t"<<"Type=\"Nuclei_Table\"\ttX=\""<<tx<<"\"\ttY=\""<<ty<<"\"\ttZ=\"0\"/>"<<std::endl;
 		}
 		ofs<< "</Source>"<<std::endl;
 		delete Somas;
 		return 0;
 	}
 
-	if( argc < 2 || (atoi(argv[1]) != 0 && atoi(argv[1]) != 1 && atoi(argv[1]) != 2))
+	if( argc < 2 || (atoi(argv[1]) < 0 && atoi(argv[1]) > 2))
 	{
 		std::cout<<"Debris: SomaExtraction <0> <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
 		std::cout<<"SomaExtraction: SomaExtraction <1> <InputImageFileName> <InitialContourLabeledImage> <Options>\n";
 		std::cout<<"SomaExtraction without seeds: SomaExtraction <2> <InputImageFileName> <SomaCentroids.txt> <Options>\n";
+		std::cout<<"Normalize intensity: SomaExtraction <3> <InputImageFileName> <BackgroundImageFileName>\n";
 		return 0;
 	}
 
@@ -156,6 +158,27 @@ int main(int argc, char* argv[])
 			std::cout<< "Writing "<< somaFeatureName<<std::endl;
 			ftk::SaveTable(somaFeatureName.c_str(), table);
 		}
+	}
+	else if( atoi(argv[1]) == 3 && argc >= 4 && argc <= 5)  /// normalize the intensity
+	{
+		std::string InputFilename = std::string(argv[2]);
+		std::string imageName = InputFilename;
+		imageName.erase(imageName.length()-4,imageName.length());
+		imageName.append("_normalize.tif");
+
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); // Load microglia image 16bit
+		SomaExtractor::ProbImageType2D::Pointer imageBackground = Somas->SetInputImage2D(argv[3]); // Load microglia image 16bit
+		// Devide image by imageBackground, rescale the result to the maximum scale of the origional image scale
+		SomaExtractor::UShortImageType::Pointer resultImage;
+		if( argc == 5 && atoi(argv[4]) > 1)
+		{
+			resultImage = Somas->DevideAndScale(image, imageBackground, atoi(argv[4])); 
+		}
+		else
+		{
+			resultImage = Somas->DevideAndScale(image, imageBackground); 
+		}
+		Somas->writeImage(imageName.c_str(), resultImage);
 	}
 	delete Somas;
 	return 0;
