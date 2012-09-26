@@ -10,6 +10,7 @@
 // GLOBAL INCLUDES
 #include "ftkMainDarpaGlobalInclude.h"
 #include "ftkMainDarpa.h"
+#include <boost/lexical_cast.hpp>
 
 // TEMPLATES
 #include "ftkMainDarpaTemplates.h"
@@ -30,7 +31,11 @@ public:
 	void readParameters( std::string );
 	void runPreprocesing(); // Before preprocess always run redParams before
 	void runTracing();
-	
+	void calcLMeasures(int argc, char *argv[]);
+	float getCalcThreshold(std::vector<float> &features, std::string type);
+	std::vector<float> computeFeatures(rawImageType_flo::Pointer &image);
+
+
 protected:
 	void computeSplitConst( );
 	std::vector< itk::Index<3> > getCentroidList();
@@ -71,6 +76,7 @@ private:
 	std::string _GFP_ImageNRRD;
 	std::string _DAP_ImageNRRD;
 	std::string _Soma_MontageNRRD;
+	std::string _overridedefaultsTraceParams;
 // 	
 // // 	std::vector< rawImageType_8bit::Pointer > _ImageMontages;
 // 	rawImageType_8bit::Pointer _ImageMontage_Cy5;

@@ -1,4 +1,3 @@
-
 #include "ftkMainDarpaTrace.h"
 
 void ftkMainDarpaTrace::readParameters( std::string segmentParams )
@@ -137,6 +136,11 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	else
 	{ _outPathTemp.clear(); printf("Choose _outPathTemp = NULL as default\n");}
 	
+	iter = options.find("-overridedefaultsTraceParams"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _overridedefaultsTraceParams;}
+	else
+	{ _overridedefaultsTraceParams = "NO"; printf("Choose _overridedefaultsTraceParams = NO as default\n");}
 	
 	_Cy5_ImageNRRD = _Cy5_Image+".nrrd";
 	_TRI_ImageNRRD = _TRI_Image+".nrrd";
@@ -165,6 +169,7 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	std::cout << std::endl << "_outPath: " << _outPath;
 	std::cout << std::endl << "_outPathDebug: " << _outPathDebug;
 	std::cout << std::endl << "_outPathTemp: " << _outPathTemp;
+	std::cout<< std::endl <<"_overridedefaultsTraceParams "<<_overridedefaultsTraceParams;
 }
 
 void ftkMainDarpaTrace::runPreprocesing()
@@ -363,7 +368,7 @@ void ftkMainDarpaTrace::runTracing()
 			
 // 			//########    RUN TRACING    ########
 			MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
-			MNT->LoadParameters(_traceParams.c_str(),5);
+
 // 				
 // 				MNT->LoadCurvImage_1(img_trace, 0);
 			#pragma omp critical
@@ -371,7 +376,31 @@ void ftkMainDarpaTrace::runTracing()
 // 				std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
 				rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
 				MNT->LoadCurvImage_2(img_trace);
+				/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
+				float calc_intensity_threshold = 0;
+				float calc_contrast_threshold = 0;
+				if(_overridedefaultsTraceParams == "YES")
+				{
+					std::vector<float> features = this->computeFeatures(img_trace);
+					calc_intensity_threshold = getCalcThreshold(features,"intensity");
+					calc_contrast_threshold = getCalcThreshold(features,"contrast");
+					// For some images the threshold goes to negative in that case use the once that is specified in the 
+					// option_mnt
+					if(calc_intensity_threshold < 0 || calc_contrast_threshold < 0 )
+					{
+						MNT->LoadParameters(_traceParams.c_str(),5);
+					}
+					else
+					{
+						MNT->LoadParameters_1(_traceParams.c_str(),calc_intensity_threshold,calc_contrast_threshold,350);
+					}
+				}else
+				{
+					MNT->LoadParameters(_traceParams.c_str(),5);
+				}
+
 			}
+			
 			MNT->ReadStartPoints_1(soma_Table, 0);
 // 				MNT->SetCostThreshold(1000);
 			MNT->SetCostThreshold(MNT->cost_threshold);
@@ -633,4 +662,129 @@ void ftkMainDarpaTrace::WriteCenterTrace(vtkSmartPointer< vtkTable > swcNodes, i
 		outfile << "\n";
 	}
 	outfile.close();
+}
+/** 
+	Calculate L Measures 
+**/
+void ftkMainDarpaTrace::calcLMeasures(int argc, char *argv[])
+{
+
+	
+	std::string LMeasure_FileName = _outPath + "/LMeasures.xls";
+	std::string tracesSCreenShot = _outPath + "A_trace_screenShot.tif";
+	//QApplication app(argc, argv);
+	//ImageFeatureThreshold *featureThreshold = new ImageFeatureThreshold();
+	////std::string inputFilename = "C:\\Data\\mnt_data\\InputImage.tif";
+	//ImageViewer *imageView = new ImageViewer();
+	//imageView->setImageFeatureThreshold(featureThreshold);
+	//imageView->show();
+	//imageView->showImage();
+	//imageView->showTracesXML();
+	//imageView->saveScreenShot(tracesSCreenShot);
+	//imageView->saveTraceFeatures(LMeasure_FileName);
+	//app.closeAllWindows();
+	//app.exec();
+	//app.quit();
+
+}
+
+float ftkMainDarpaTrace::getCalcThreshold(std::vector<float> &features, std::string type){
+	std::cout<<"in getCalcThreshold"<<std::endl;
+	float threshold = 0.00;
+	if(type == "intensity"){
+		//Const = 0
+		//		var	PReg
+		//		2	-0.2046
+		//		4	25.9873
+		//		6	-60.3184
+		//		11	-640.2467
+		//		12	363.7265
+		//		13	987.3842
+		//		14	-406.3363
+		threshold = features[1]*(-0.2046)
+			+features[3]*(25.9873)
+			+features[5]*(-60.3184)
+			+features[10]*(-640.2467)
+			+features[11]*(363.7265)
+			+features[12]*(987.3842)
+			+features[13]*(-406.3363);
+
+	}else if(type=="contrast"){
+		//Const = 0
+		//var	PReg
+		//1		-0.0109
+		//4		-12.4757
+		//6		70.7617
+		//8		-188.6227
+		//9		-13.0697
+		//10	330.6868
+		//12	-397.2717
+		//14	243.9354
+		threshold = features[0]*(-0.0109)
+			+features[3]*(-12.4757)
+			+features[5]*(70.7617)
+			+features[7]*(-188.6227)
+			+features[8]*(-13.0697)
+			+features[9]*(330.6868)
+			+features[11]*(-397.2717)
+			+features[13]*(243.9354);
+	}else{
+		threshold = 0.003;//Return default
+	}
+	return threshold;
+}
+std::vector<float> ftkMainDarpaTrace::computeFeatures(rawImageType_flo::Pointer &image){
+
+	std::vector<float> features;
+	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
+	typedef float PixelType;
+	typedef itk::Image< PixelType, 3 >  ImageType3D;
+	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
+	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsImageFilterType;
+
+	
+	//RescalerType::Pointer rescaler = RescalerType::New();
+	//rescaler->SetOutputMinimum(0.0);
+	//rescaler->SetOutputMaximum(1.0);
+	//rescaler->SetInput(_PaddedCurvImage);
+
+	////Median filter
+	//std::cout << "Running Median Filter" << std::endl;
+	//MedianFilterType::Pointer medfilt = MedianFilterType::New();
+	//medfilt->SetNumberOfThreads(16);
+	//medfilt->SetInput(rescaler->GetOutput());
+
+	//ImageType3D::SizeType rad = { {1, 1, 1} };
+	//medfilt->SetRadius(rad);
+	//medfilt->Update();
+	// Image is rescaled
+	ImageType3D::Pointer _PaddedCurvImage = image;
+
+	StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New ();
+	statisticsImageFilter->SetInput(_PaddedCurvImage);
+	statisticsImageFilter->Update();
+
+	features.push_back(statisticsImageFilter->GetMean());
+	features.push_back(statisticsImageFilter->GetSigma());
+
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+
+		GFilterType::Pointer gauss = GFilterType::New();
+		gauss->SetInput( _PaddedCurvImage );
+		gauss->SetSigma( sigmas[i] );
+		gauss->SetNormalizeAcrossScale(false);
+		gauss->GetOutput()->Update();
+
+		StatisticsImageFilterType::Pointer LOGstatisticsImageFilter = StatisticsImageFilterType::New ();
+		LOGstatisticsImageFilter->SetInput(gauss->GetOutput());
+		LOGstatisticsImageFilter->Update();
+		//std::cout << "Mean: " << LOGstatisticsImageFilter->GetMean() << std::endl;
+		//std::cout << "Std.: " << LOGstatisticsImageFilter->GetSigma() << std::endl;
+		features.push_back(LOGstatisticsImageFilter->GetMean());
+		features.push_back(LOGstatisticsImageFilter->GetSigma());
+	}
+	//std::cout<<"********************END computing features*********************"<<std::endl;
+
+	return features;
 }
