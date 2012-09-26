@@ -1180,6 +1180,14 @@ int ftkMainDarpa::test_3( std::string inputFile )
 		{
 			inverse = numRows * int((numFiles-1)/numRows+1)  - 1 - i;
 		}
+		else if( flagOrder == 3 )
+		{
+			int roww = i/numRows;
+			int coll = numRows - 1 - i%numRows;
+			
+			inverse = roww*(numRows) + coll;
+			std::cout << std::endl << "\t\t" << i << " " <<inverse;
+		}
 		xCoord = inverse%numRows;
 		yCoord = inverse/numRows;
 		
@@ -1217,11 +1225,94 @@ int ftkMainDarpa::test_3( std::string inputFile )
 	return 1;
 }
 
+template<typename TINPUT >
+int ftkMainDarpa::test_4( std::string inputFile )
+{
+	std::ifstream myfile;
+	myfile.open( inputFile.c_str() );
+	int flagOrder;
+	myfile >> flagOrder;
+	int numRows;
+	myfile >> numRows;
+	int sizeX;
+	myfile >> sizeX;
+	int sizeY;
+	myfile >> sizeY;
+	int sizeZ;
+	myfile >> sizeZ;
+	int numFiles;
+	myfile >> numFiles;
+	if( numFiles == 0 )
+		return 0;
+	std::vector< std::string > namesFiles;
+	namesFiles.resize(numFiles);
+	for( int i=0; i<numFiles;++i )
+	{
+		myfile >> namesFiles[i];
+		std::cout << std::endl << namesFiles[i];
+	}
+	std::string outputFolder;
+	myfile >> outputFolder;
 
+	std::cout << std::endl << outputFolder;
+	myfile.close();
 
-
-
-
+	itk::Image<double,3>::Pointer zProjectImage = itk::Image<double,3>::New();
+	itk::Image<double,3>::PointType originz;
+ 	originz[0] = 0;
+   	originz[1] = 0;
+    	originz[2] = 0;
+        zProjectImage->SetOrigin( originz );
+        itk::Image<double,3>::IndexType startz;
+       	startz[0] = 0;
+        startz[1] = 0;
+	startz[2] = 0;
+	itk::Image<double,3>::SizeType sizez;
+	sizez[0] = sizeX;
+	sizez[1] = sizeY;
+	sizez[2] = sizeZ;
+	itk::Image<double,3>::RegionType regionz;
+	regionz.SetSize ( sizez  );
+	regionz.SetIndex( startz );
+	zProjectImage->SetRegions( regionz );
+	zProjectImage->Allocate();
+	zProjectImage->FillBuffer(0);
+	zProjectImage->Update();
+	itk::Image<double,3>::PixelType * zProjectImageArray = zProjectImage->GetBufferPointer();
+	
+	
+	for( int i=0; i<numFiles;++i )
+	{
+		typename TINPUT::Pointer inputImage = readImage< TINPUT >(namesFiles[i].c_str());
+		typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
+		#pragma omp parallel for collapse(3)
+		for(unsigned long long x=0; x<sizeX; ++x)
+ 		{
+          		for(unsigned long long y=0; y<sizeY; ++y)
+   			{
+				for(unsigned long long z=0; z<sizeZ; ++z)
+				{
+					unsigned long long coord = (sizeY*sizeX*z) + (sizeX*y) + (x);
+					zProjectImageArray[coord] = zProjectImageArray[coord] + inputImageArray[coord];
+				}
+			}
+		}
+	//	std::cout << std::endl << numFiles << " " << numRows << " " << xCoord << " " << yCoord <<" " << sizez[0] << " " << sizez[1];
+	}
+	for(unsigned long long x=0; x<sizeX; ++x)
+	{
+		for(unsigned long long y=0; y<sizeY; ++y)
+		{
+			for(unsigned long long z=0; z<sizeZ; ++z)
+			{
+				unsigned long long coord = (sizeY*sizeX*z) + (sizeX*y) + (x);
+				zProjectImageArray[coord] = zProjectImageArray[coord];
+			}
+		}
+	}
+	std::string nameop = "/data/nicolas/test.nrrd";
+	writeImage< itk::Image<double,3> >(zProjectImage,nameop.c_str());
+}
 
 
 

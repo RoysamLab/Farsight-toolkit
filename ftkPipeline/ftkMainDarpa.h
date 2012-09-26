@@ -56,6 +56,9 @@ public:
 
 	template<typename TINPUT >
 	int test_3( std::string inputFile );
+	
+	template<typename TINPUT >
+	int test_4( std::string inputFile );
 
 private:
 	

@@ -369,37 +369,36 @@ void ftkMainDarpaTrace::runTracing()
 // 			//########    RUN TRACING    ########
 			MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 
-// 				
-// 				MNT->LoadCurvImage_1(img_trace, 0);
-			#pragma omp critical
+// 			
+// 			Automatic parameter estimation
+//
+			//MNT->LoadCurvImage_1(img_trace, 0);
+			//std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
+			rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
+			MNT->LoadCurvImage_2(img_trace);
+			/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
+			float calc_intensity_threshold = 0;
+			float calc_contrast_threshold = 0;
+			if(_overridedefaultsTraceParams == "YES")
 			{
-// 				std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
-				rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
-				MNT->LoadCurvImage_2(img_trace);
-				/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
-				float calc_intensity_threshold = 0;
-				float calc_contrast_threshold = 0;
-				if(_overridedefaultsTraceParams == "YES")
-				{
-					std::vector<float> features = this->computeFeatures(img_trace);
-					calc_intensity_threshold = getCalcThreshold(features,"intensity");
-					calc_contrast_threshold = getCalcThreshold(features,"contrast");
-					// For some images the threshold goes to negative in that case use the once that is specified in the 
-					// option_mnt
-					if(calc_intensity_threshold < 0 || calc_contrast_threshold < 0 )
-					{
-						MNT->LoadParameters(_traceParams.c_str(),5);
-					}
-					else
-					{
-						MNT->LoadParameters_1(_traceParams.c_str(),calc_intensity_threshold,calc_contrast_threshold,350);
-					}
-				}else
+				std::vector<float> features = this->computeFeatures(img_trace);
+				calc_intensity_threshold = getCalcThreshold(features,"intensity");
+				calc_contrast_threshold = getCalcThreshold(features,"contrast");
+				// For some images the threshold goes to negative in that case use the once that is specified in the 
+				// option_mnt
+				if(calc_intensity_threshold < 0 || calc_contrast_threshold < 0 )
 				{
 					MNT->LoadParameters(_traceParams.c_str(),5);
 				}
-
+				else
+				{
+					MNT->LoadParameters_1(_traceParams.c_str(),calc_intensity_threshold,calc_contrast_threshold,350);
+				}
+			}else
+			{
+				MNT->LoadParameters(_traceParams.c_str(),5);
 			}
+
 			
 			MNT->ReadStartPoints_1(soma_Table, 0);
 // 				MNT->SetCostThreshold(1000);
