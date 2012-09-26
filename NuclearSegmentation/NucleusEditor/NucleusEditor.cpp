@@ -3031,18 +3031,24 @@ void NucleusEditor::queryKNearest()
 	}
 	delete dialog;
 
-	std::map<int, ftk::Object::Point> *	centerMap;
-	centerMap = segView->GetCenterMapPointer();
-	std::map<int, ftk::Object::Point>::iterator it;
+	//std::map<int, ftk::Object::Point> *	centerMap;
+	//centerMap = segView->GetCenterMapPointer();
+	//std::map<int, ftk::Object::Point>::iterator it;
 	std::map< unsigned int, std::vector<double> > centroidMap;
-	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	//for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	for ( int row=0; row<(int)table->GetNumberOfRows(); ++row )
 	{
-		unsigned int id = (unsigned int)(*it).first;
+		//unsigned int id = (unsigned int)(*it).first;
+		//std::vector<double> c;
+		//c.push_back((*it).second.x);
+		//c.push_back((*it).second.y);
+		//c.push_back((*it).second.z);
+		unsigned int id = table->GetValue(row,0).ToUnsignedInt();
 		std::vector<double> c;
-		c.push_back((*it).second.x);
-		c.push_back((*it).second.y);
-		c.push_back((*it).second.z);
-		centroidMap[id] = c;				
+		c.push_back(table->GetValue(row,1).ToDouble());
+		c.push_back(table->GetValue(row,2).ToDouble());
+		c.push_back(table->GetValue(row,3).ToDouble());
+		centroidMap[id] = c;
 	}
 
 	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
@@ -3156,17 +3162,23 @@ void NucleusEditor::queryInRadius()
 	}
 	delete dialog;
 
-	std::map<int, ftk::Object::Point> *	centerMap;
-	centerMap = segView->GetCenterMapPointer();
-	std::map<int, ftk::Object::Point>::iterator it;
+	//std::map<int, ftk::Object::Point> *	centerMap;
+	//centerMap = segView->GetCenterMapPointer();
+	//std::map<int, ftk::Object::Point>::iterator it;
 	std::map< unsigned int, std::vector<double> > centroidMap;
-	for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	//for ( it = centerMap->begin() ; it != centerMap->end(); ++it )
+	for ( int row=0; row<(int)table->GetNumberOfRows(); ++row )
 	{
-		unsigned int id = (unsigned int)(*it).first;
+		//unsigned int id = (unsigned int)(*it).first;
+		//std::vector<double> c;
+		//c.push_back((*it).second.x);
+		//c.push_back((*it).second.y);
+		//c.push_back((*it).second.z);
+		unsigned int id = table->GetValue(row,0).ToUnsignedInt();
 		std::vector<double> c;
-		c.push_back((*it).second.x);
-		c.push_back((*it).second.y);
-		c.push_back((*it).second.z);
+		c.push_back(table->GetValue(row,1).ToDouble());
+		c.push_back(table->GetValue(row,2).ToDouble());
+		c.push_back(table->GetValue(row,3).ToDouble());
 		centroidMap[id] = c;
 	}
 
@@ -3177,6 +3189,8 @@ void NucleusEditor::queryInRadius()
 		radNeighborIDs = KNObj->neighborsWithinRadius_All(radius, Class_dest, Class_src);
 	else
 		radNeighborIDs = KNObj->neighborsWithinRadius_IDs(IDs, radius, Class_dest);
+
+	std::cout << radNeighborIDs.size() << "\n";
 
 	std::string full_string;
 	std::stringstream ss1;
