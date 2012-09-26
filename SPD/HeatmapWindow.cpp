@@ -2298,9 +2298,8 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 		sampleIndex.push_back(sampleIdsVec);
 		clusIndex.push_back(clusIdsVec);
 	}
-
-	//this->Selection->SetClusterIndex(clusIndex);
-	//this->Selection->SetSampleIndex(sampleIndex);
+	this->Selection->SetClusterIndex(clusIndex);
+	this->Selection->SetSampleIndex(sampleIndex);
 }
 
 vtkSmartPointer<vtkTable> Heatmap::GetTreeTable()
