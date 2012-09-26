@@ -66,6 +66,50 @@ void MultipleNeuronTracer::LoadParameters(const char* parametersFileName,int _ar
 	std::cout<<"device="<<this->device<<std::endl;
 
 }
+void MultipleNeuronTracer::LoadParameters_1(const char* parametersFileName,float intensityThreshold,float contrastThreshold,int costThreshold)
+{
+	std::map<std::string, std::string> opts;  
+	
+	std::map<std::string,std::string>::iterator mi;
+
+	this->intensity_threshold = intensityThreshold;
+	std::cout<<"intensity_threshold "<<intensity_threshold<<std::endl;	
+	
+	this->contrast_threshold = contrastThreshold; 
+	std::cout<<"contrast_threshold "<<contrastThreshold<<std::endl;	
+
+	mi = opts.find("-cost_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->cost_threshold; }
+	else
+	{ this->cost_threshold = costThreshold; printf("Chose cost_threshold = 700 as default\n");}
+
+	mi = opts.find("-debris_threshold"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->debris_threshold; }
+	else
+	{ this->debris_threshold = 0.8; printf("Chose debris_threshold = 0.8 as default\n"); }
+
+	mi = opts.find("-offshoot"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->offshoot; }
+	else
+	{ this->offshoot = 10; printf("Chose offshoot = 10 as default\n"); }
+
+	mi = opts.find("-device"); 
+	if(mi!=opts.end())
+	{ std::istringstream ss((*mi).second); ss>>this->device; }
+	else
+	{ this->device = 1; printf("Chose device = 0 as default\n"); }
+
+	std::cout<<"intensity_threshold="<<this->intensity_threshold<<std::endl;
+	std::cout<<"contrast_threshold="<<this->contrast_threshold<<std::endl;
+	std::cout<<"cost_threshold="<<this->cost_threshold<<std::endl;
+	std::cout<<"debris_threshold="<<this->debris_threshold<<std::endl;
+	std::cout<<"offshoot="<<this->offshoot<<std::endl;
+	std::cout<<"device="<<this->device<<std::endl;
+
+}
 void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad) 
 {
 	std::cout << "Reading input file "<< fname << std::endl;

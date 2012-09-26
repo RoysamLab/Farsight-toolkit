@@ -114,6 +114,7 @@ public:
 	~MultipleNeuronTracer();
 
 	void LoadParameters(const char* parametersFileName, int _argc);
+	void LoadParameters_1(const char* parametersFileName,float intensityThreshold,float contrastThreshold,int costThreshold);
 
 	void LoadCurvImage(std::string fname, unsigned int pad); 
 	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);
