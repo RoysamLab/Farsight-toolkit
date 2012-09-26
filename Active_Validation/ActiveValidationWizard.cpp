@@ -154,22 +154,35 @@ void Active_Validation_Wizard::Run()
 	}
 
 	ActiveValidation *active_validation = new ActiveValidation();
-	double sumnumsam = 0;
-	double sumnumit = 0;
+	this->sumnumsam = 0;
+	this->sumnumit = 0;
 	for(int i = 0; i < runtime; i++ )
 	{
 		active_validation->Initializing(this->data, this->label, numbin, delta,(unsigned long)i);
 		active_validation->Sampling();
+		active_validation->TrueAccuracy();
 		this->phat.push_back(active_validation->phat);
 		this->varphat.push_back(sqrt( (double)active_validation->varphat));
 		this->numiteration.push_back(active_validation->numiteration);
 		this->numsampled.push_back(active_validation->numsampled);
-		std::cout <<"run time left" <<runtime - i<<std::endl;
+		this->varphattrue.push_back( (active_validation->phat - active_validation->trueaccuracy) / active_validation->phat );
+	
 		sumnumsam += active_validation->numsampled;
 		sumnumit += active_validation->numiteration;
+
+
+
+		if (i == 1)
+		{
+			std::cout <<"The true accuracy is "<<active_validation->trueaccuracy<<std::endl;
+		}
+		if(i%100 == 0)
+			std::cout <<"run time left" <<runtime - i<<std::endl;
 	}
-	std::cout <<"Averrage sample number for "<<runtime<<" is "<<sumnumsam/(double)runtime<<std::endl;
-	std::cout <<"Averrage iteration number for "<<runtime<<" is "<<sumnumit/(double)runtime<<std::endl;
+	this->sumnumsam = this->sumnumsam/(double)runtime;
+	this->sumnumit = this->sumnumit/(double)runtime;
+	std::cout <<"Averrage sample number for "<<runtime<<" is "<<this->sumnumsam<<std::endl;
+	std::cout <<"Averrage iteration number for "<<runtime<<" is "<<this->sumnumit<<std::endl;
 	this->WriteFile();
 	delete active_validation;
 }
@@ -284,13 +297,16 @@ void Active_Validation_Wizard::WriteFile()
 	fprintf(fp,"\t");
 	fprintf(fp,"%s", "varphat");
 	fprintf(fp,"\t");
-	fprintf(fp,"%s", "numit");
+	fprintf(fp,"%s", "numiteration");
 	fprintf(fp,"\t");
-	fprintf(fp,"%s", "numsam");
+	fprintf(fp,"%s", "numsample");
+	fprintf(fp,"\t");
+	fprintf(fp,"%s", "difference_phat_trueaccuracy");
 	fprintf(fp,"\t");
 	fprintf(fp,"\n");
 
 	//runtime result
+	int counter = 0;
 	for(int i = 0; i < this->phat.size(); i++)
 	{
 		fprintf(fp,"%f", this->phat[i]);
@@ -300,7 +316,23 @@ void Active_Validation_Wizard::WriteFile()
 		fprintf(fp,"%d", this->numiteration[i]);
 		fprintf(fp,"\t");
 		fprintf(fp,"%d", this->numsampled[i]);
+		fprintf(fp,"\t");
+		fprintf(fp,"%f", this->varphattrue[i]);
 		fprintf(fp,"\n");
+		if(this->varphattrue[i] < 0.05 && this->varphattrue[i] > -0.05 )
+		{
+			counter++;
+		}
 	}
+	std::cout<< "there are  "<<counter << " times that the phat is within  0.05 of true accuracy !"<<std::endl;
+	fprintf(fp,"%s", "average numsample");
+	fprintf(fp,"\t");
+	fprintf(fp,"%f", this->sumnumsam);
+	fprintf(fp,"\t");
+	fprintf(fp,"%s", "average iteration");
+	fprintf(fp,"\t");
+	fprintf(fp,"%f", this->sumnumit);
+	fprintf(fp,"\t");
+	fprintf(fp,"\n");
 	fclose(fp);
 }

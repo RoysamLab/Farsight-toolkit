@@ -86,9 +86,13 @@ private:
 	std::vector<double > varphat;
 	std::vector<int> numiteration;
 	std::vector<int > numsampled;
+	std::vector<double > varphattrue;
 
 	void WriteFile();
 
+private:
+	double sumnumsam;
+	double sumnumit;
 };
 
 #endif

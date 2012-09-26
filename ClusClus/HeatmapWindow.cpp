@@ -2693,8 +2693,8 @@ void Heatmap::reselectClustersforSPD(std::set<long int>& selectedClusterSPD)
 		clusIndex.push_back(clusIdsVec);
 	}
 
-	this->Selection->SetClusterIndex(clusIndex);
-	this->Selection->SetSampleIndex(sampleIndex);
+	//this->Selection->SetClusterIndex(clusIndex);
+	//this->Selection->SetSampleIndex(sampleIndex);
 }
 
 void Heatmap::reselectIdsforSPD(long int id, std::set<long int> *clusidforSPD)

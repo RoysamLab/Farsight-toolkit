@@ -98,8 +98,9 @@ LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	
 	//Defaults:
 	this->computationLevel = 2;
-	this->computeHistogram = false;					
+	this->computeHistogram = false;		
 	this->computeTextures = false;
+	this->surfacecomputation = false;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -330,6 +331,13 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
 	if(computationLevel <= 1)
 		this->SetLevel(2);
 	this->computeHistogram = true;
+}
+
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension>
+::ComputeSurfaceOn()
+{
+	this->surfacecomputation = true;
 }
 
 template< typename TIPixel, typename TLPixel, unsigned int VImageDimension > 
@@ -589,6 +597,12 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		}
 
 		//Now extract the features:
+		//Surface feature Extraction
+		if(this->surfacecomputation)
+		{
+			this->RunSurfaceFeature(labelGeometryFilter);
+		}
+		//Geometry feature Extraction
 		for (int i = 0; i < (int)labels.size(); ++i)
 		{
 			TLPixel label = labels.at(i);
@@ -598,7 +612,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 			featureVals[label].ScalarFeatures[IntrinsicFeatures::ECCENTRICITY] = float( labelGeometryFilter->GetEccentricity( label ) );
 			featureVals[label].ScalarFeatures[IntrinsicFeatures::ELONGATION] = float( labelGeometryFilter->GetElongation( label ) );
 			featureVals[label].ScalarFeatures[IntrinsicFeatures::ORIENTATION] = float( labelGeometryFilter->GetOrientation( label ) );
-			featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) );
+			featureVals[label].ScalarFeatures[IntrinsicFeatures::BBOX_VOLUME] = float( labelGeometryFilter->GetBoundingBoxVolume( label ) ); 
 			
 			typename LabelGeometryType::LabelPointType c = labelGeometryFilter->GetCentroid( label );
 			for (unsigned int i = 0; i < VImageDimension; ++i)
@@ -1443,7 +1457,154 @@ void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 	#endif
 }
 
+template< typename TIPixel, typename TLPixel, unsigned int VImageDimension >
+void LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
+::RunSurfaceFeature(LabelGeometryPointer labelGeometryFilter)
+{
+	// Iterator over the label image.
+	typedef itk::ImageRegionConstIterator< LabelImageType> labelItType;	
+	typedef itk::ImageRegionConstIteratorWithIndex< LabelImageType > IndexItType;
 
+	labelItType labelIt( labelGeometryFilter->GetInput(), labelGeometryFilter->GetInput()->GetBufferedRegion() );
+	labelItType labelItxp;  
+	labelItType labelItxn;
+	labelItType labelItyp;
+	labelItType labelItyn;
+	labelItType labelItzp;
+	labelItType labelItzn;
+
+	typename LabelGeometryType::LabelPixelType label;
+	typename LabelGeometryType::LabelPixelType labelxp;
+	typename LabelGeometryType::LabelPixelType labelxn;
+	typename LabelGeometryType::LabelPixelType labelyp;
+	typename LabelGeometryType::LabelPixelType labelyn;
+	typename LabelGeometryType::LabelPixelType labelzp;
+	typename LabelGeometryType::LabelPixelType labelzn;
+
+	typename IndexItType::IndexType index;
+	typename IndexItType::IndexType indexxp;
+	typename IndexItType::IndexType indexxn;
+	typename IndexItType::IndexType indexyp;
+	typename IndexItType::IndexType indexyn;
+	typename IndexItType::IndexType indexzp;
+	typename IndexItType::IndexType indexzn;
+
+	typename LabelImageType::SizeType labelSize; 
+	labelSize = labelImage->GetLargestPossibleRegion().GetSize();
+	itk::SizeValueType sizex = labelSize[0];
+	itk::SizeValueType sizey = labelSize[1];
+	itk::SizeValueType sizez = labelSize[2];
+
+	int counterx = 0;
+	int countery = 0;
+	int counterz = 0;
+
+	// Do the work
+	std::vector< std::vector<double[3] > > surfacecoordinates;
+	while ( !labelIt.IsAtEnd() )
+    {
+		label = labelIt.Get();
+		index = labelIt.GetIndex();
+		//if(label != 0)
+		//{		
+		//	bool surface = false;
+		//	if(counterx != 0)
+		//	{
+		//		labelItxn = labelIt - 1;
+		//		labelxn = labelItxn.Get();
+		//		indexxn = labelItxn.GetIndex();
+		//		if(indexxn[0] != index[0])
+		//			surface = true;
+		//	}
+		//	if(counterx != sizex - 1)
+		//	{
+		//		labelItxp = labelIt + 1;
+		//		labelxp = labelItxp.Get();
+		//		indexxp = labelItxp.GetIndex();
+		//		if(indexxp[0] != index[0])
+		//			surface = true;
+		//	}
+		//	
+		//	if(countery != 0)
+		//	{
+		//		labelItyn = labelIt - sizex;
+		//		labelyn = labelItyn.Get();
+		//		indexyn = labelItyn.GetIndex();
+		//		if(indexyn[1] != index[1])
+		//			surface = true;
+		//	}
+		//	if(countery != sizey - 1)
+		//	{
+		//		labelItyp = labelIt + sizex;
+		//		labelyp = labelItyp.Get();
+		//		indexyp = labelItyp.GetIndex();
+		//		if(indexyp[1] != index[1])
+		//			surface = true;
+		//	}
+
+		//	if(counterz != 0)
+		//	{
+		//		labelItzn = labelIt - sizex*sizey;
+		//		labelzn = labelItzn.Get();
+		//		indexzn = labelItzn.GetIndex();
+		//		if(indexzn[2] != index[2])
+		//			surface = true;
+		//	}
+		//	if(counterz != sizez - 1)
+		//	{
+		//		labelItzp = labelIt + sizex*sizey;
+		//		labelzp = labelItzp.Get();
+		//		indexzp = labelItzp.GetIndex();
+		//		if(indexzp[2] != index[2])
+		//			surface = true;
+		//	}
+		//	if(surface == true)
+		//	{
+		//		if(surfacecoordinates.size() < label)
+		//			surfacecoordinates.resize (label)
+		//		double coordinate[3];
+		//		coordinate[0] = index[0];
+		//		coordinate[1] = index[1];
+		//		coordinate[2] = index[2];
+		//		surfacecoordinates[label].push_back(coordinate);
+		//	}
+		//}
+
+		counterx++;
+		if(counterx == sizex - 1)
+		{
+			counterx = 0;
+			countery++;
+		}
+		if(countery == sizey - 1)
+		{
+			countery = 0;
+			counterz++;
+		}
+		labelIt++;
+	}
+
+	///////////////////////////////////////////////write to files;
+	const char* filename = "Surface_Coordinate.txt";
+	FILE *fp = fopen(filename,"w");
+	for(int i = 0; i < 20; i++)
+	{
+		fprintf(fp,"%s", "lable ");
+		fprintf(fp,"\t");
+		fprintf(fp,"%d", label);
+		fprintf(fp,"\n");
+		for(int j = 0; j < surfacecoordinates[i].size (); j++)
+		{
+			fprintf(fp,"%d", surfacecoordinates[i][j][0]);
+			fprintf(fp,"\t");
+			fprintf(fp,"%d", surfacecoordinates[i][j][1]);
+			fprintf(fp,"\t");
+			fprintf(fp,"%d", surfacecoordinates[i][j][2]);
+			fprintf(fp,"\n");
+		}
+	}	
+	fclose(fp);
+}
 
 //**************************************************************************
 // This function will compute the percent of the object's boundary with label 

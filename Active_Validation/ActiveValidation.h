@@ -13,6 +13,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkVariant.h>
 #include <vtkTable.h>
+#include <vtkAbstractArray.h>
 
 #include <ClusClus/Kmeans.h>
 
@@ -58,32 +59,44 @@ public:
 	void Initializing(vnl_matrix<double> data, vnl_vector<int> lable, int K, double delta, unsigned long seed);
 	void Initializing(std::vector<std::vector<double > > datavector, 
 		              std::vector<int > lablevector, int K, double delta, unsigned long seed);
+	void Initializing( vtkSmartPointer<vtkTable > table, int K, double delta);
 	//Get homogenous groups
 	void Stratifing();
+	//Get groups acording to claasification result
+	void StratifingwithoutLabel();
+	//Random sampling m variables from n entries without label
+	std::vector<int > RandomSamplingwithoutLabel(int m, int n, int kth_strata);
+	//Calculate hk for each strata without label
+	void CalculatehkwithoutLabel(int kth_strata, std::vector<int > learned);
 	//Sampling from original dataset
 	void Sampling();
 	//Output files
 	void FileWrite();
+	//Calculate the true accuracy of entire dataset
+	void TrueAccuracy();
 
 public:
 	double phat;                           //true mean of entire dataset
 	double varphat;                        //variance of phat
 	int numiteration;                      //number of iteration
 	int numsampled;                        //total number of samples
-	unsigned long seed;                             //seed for random generator
-
-private:
-	vnl_matrix<double> data;               //original data set to be processed
+	unsigned long seed;                    //seed for random generator
+	double trueaccuracy;                   //the true accuracy of dataset
+	vtkSmartPointer<vtkTable > table;      //table
 	vnl_vector<int> lable;	               //lables to original data
+	vnl_matrix<double> data;               //original data set to be processed
 	int N;                                 //total number of elements in the entire dataset                               
 	int numfeat;                           //number of features in original data set
 	int numbin;                            //number of bins                                                  
 	double delta;                          //interval radious for significance level
 	std::vector<strata > stratas;          //vector of stratas for entire dataset
+	int t;                                 //converge control from outside
+	int current;                           //current processing strata
+	bool convergepub;                      //converge sign from outside
                     
 	                        
 
-private:
+public:
 	//Calculate hk for each strata
 	void Calculatehk(int kth_strata);
 	//Check strata whether it need to to be split
@@ -108,5 +121,7 @@ private:
 	bool ConvergeCheck();
 	//Update bins after random sampling from each strata
 	void UpdateBins(int kth_strata);
+	//Query and sample from outside
+	void QuearyandSample();
 };
 #endif

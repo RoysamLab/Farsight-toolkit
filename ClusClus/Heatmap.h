@@ -109,6 +109,9 @@ public:
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
 
+signals:
+	void lable(std::set<long int> lables);
+
 protected:
 	virtual void closeEvent(QCloseEvent *event);
 

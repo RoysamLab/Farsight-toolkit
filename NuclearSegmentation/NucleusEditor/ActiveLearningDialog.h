@@ -51,7 +51,7 @@ class ActiveLearningDialog : public QDialog
 public:
 	ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int num_classes,std::vector<int> active_query,std::vector<int>top_feats,QWidget *parent=0);
 	//ActiveLearningDialog(std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,std::string validate,QWidget *parent=0);
-	ActiveLearningDialog(std::string validate,std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,int num_classes,QWidget *parent=0);
+	ActiveLearningDialog(/*std::string validate,*/std::vector<QImage> snapshot, vtkSmartPointer<vtkTable> table,int classval,std::vector<int> rowvals,int num_classes,QWidget *parent=0);
 	//std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group);
 	std::vector<QHBoxLayout *> Validation_Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int classval,int PIA_query,int group,int num_classes);
 	std::vector<QHBoxLayout *> Sample_Details(QImage snapshot, vtkSmartPointer<vtkTable> table,int num_classes,int active_query,std::vector<int>top_feats,int group);
@@ -75,6 +75,8 @@ public:
 signals:
 	void start_classification(bool create_model);
 	void retrain(bool first_pop, std::vector<std::pair<int,int> > labels);
+	void finishquery(std::vector<std::pair<int,int> > labels);
+	void next(std::vector<std::pair<int,int> > labels);
 
 private slots:
 	void StartClassification();
@@ -84,6 +86,7 @@ private slots:
 	void Set_Class_Validate();
 	void User_Validation_Response();
 	void rejectAction();
+	void nextquery();
 	
 	
 private:

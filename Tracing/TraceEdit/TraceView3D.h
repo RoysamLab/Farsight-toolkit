@@ -291,6 +291,7 @@ public slots:
 	void SPDAnalysis();
 	void ClusclusAnalysis();
 	void BiclusAnalysis();
+	void Getlabel(std::set<long int> labels);
 	void FeatureDistributionAnalysis();
 	void KNearestNeighborAnalysis();
 	double ComputeAverageDistance(std::vector< std::pair<unsigned int, double> >);

@@ -3,6 +3,7 @@
 
 #include "Kmeans.h"
 #include "clusclus.h"
+#include "LocalGeometryRef.h"
 
 typedef struct 
 {
@@ -17,6 +18,7 @@ public:
 	BiTree();
 	~BiTree();
 	void constructTree();
+	void constructSpecTree();
 	void WriteFile(const char *filename1);
 	void setFirstIterationClusterNumber(int firstK);
 	void setReorderFlag(bool value);

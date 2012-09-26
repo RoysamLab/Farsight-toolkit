@@ -35,7 +35,8 @@ void BiHeatmap::creatDataForHeatmap()
 {
 	this->data.resize(this->table->GetNumberOfRows());
 	for(int i = 0; i < this->table->GetNumberOfRows(); i++)
-		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		/////////////////////////////////////////////////////////////
+		for(int j = 1; j < this->table->GetNumberOfColumns() ; j++)
 			this->data[i].push_back(this->table->GetValue(i,j).ToDouble());
 	this->normalize();
 
@@ -132,6 +133,7 @@ void BiHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sel
 	this->table = table;
 	for( int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
+		////////////////////////////////4
 		for( int j = 1; j < this->table->GetNumberOfColumns(); j++)
 		{
 			 double var = this->table->GetValue(i, j).ToDouble();
@@ -150,6 +152,7 @@ void BiHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sel
 	}
 
 	this->num_rows = this->table->GetNumberOfRows();
+	///////////////////////////////////////
 	this->num_cols = this->table->GetNumberOfColumns() - 1;
 
 	this->indMapFromVertexToInd.clear();
@@ -197,7 +200,7 @@ void BiHeatmap::showHeatmap()
 
 	this->celllut = vtkSmartPointer<vtkLookupTable>::New();
 	this->celllut->SetNumberOfTableValues(this->num_rows*this->num_cols);
-	this->celllut->SetTableRange(0, this->num_rows*this->num_cols - 1);   
+	this->celllut->SetTableRange(0, this->num_rows*this->num_cols - 1);   //////////////////////
 	this->celllut->Build();
 	int k = 0;
 	for(int i = 0; i < this->num_rows; i++)
@@ -1035,6 +1038,7 @@ void BiHeatmap::setSelectIds(std::set<long int>& IDs)
 		this->updataTree1();
 		this->Selection2->select(selectedIDs2);
 		this->Selection->select(selectedIDs1);
+		emit lable(selectedIDs1);
 	}
 	else if(selectedIDs2.size() > 0)
 	{
@@ -1145,6 +1149,7 @@ void BiHeatmap::setselectedCellIds()
 	this->localselection = true;
 	this->Selection2->select(selectedIDs2);
 	this->Selection->select(selectedIDs1);
+	emit lable(selectedIDs1);
 }
 
 void BiHeatmap::updataTree1()

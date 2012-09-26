@@ -561,7 +561,6 @@ void NucleusEditor::createMenus()
 	//showGalleryAction->setEnabled(false);
 	saveActiveResultsAction->setEnabled(false);
 
-
 	classifyMenu = toolMenu->addMenu(tr("Classifier"));
 	classifyMenu->setObjectName("classifyMenu");
 
@@ -574,6 +573,13 @@ void NucleusEditor::createMenus()
 	kplsAction->setObjectName("kplsAction");
 	connect(kplsAction, SIGNAL(triggered()), this, SLOT(startKPLS()));
 	classifyMenu->addAction(kplsAction);
+
+	validationMenu = toolMenu->addMenu(tr("Validation"));
+	validationMenu->setObjectName("validationMenu");
+	activeValidation = new QAction(tr("Start Active Validation"), this);
+	activeValidation->setObjectName("activeValidation");
+	connect(activeValidation, SIGNAL(triggered()), this, SLOT(startActiveValidation()));
+	validationMenu->addAction(activeValidation);
 
 	runClusAction = new QAction(tr("Clustering Heatmap"), this);
 	runClusAction->setObjectName("runClusAction");
@@ -2410,6 +2416,151 @@ void NucleusEditor::ExtractClassificationResult()
 }
 
 
+/****************************************************************
+Active Validation
+*****************************************************************/
+void NucleusEditor::startActiveValidation()
+{
+	int numbin;
+	double delta;
+
+	//Set parameters needed in validation
+	SamplePercentDialog *dialog = new SamplePercentDialog(this);
+	if( dialog->exec() )
+	{
+		delta = dialog->getDelta();
+		numbin = dialog->getNumbin();		
+	}
+	else
+		return;
+	delete dialog;
+
+	a_v = new ActiveValidation();
+	a_v->Initializing(this->table, numbin, delta);
+	a_v->StratifingwithoutLabel();
+	a_v->CalculatenumToBeDrawn();
+	queries.clear();
+	queries = a_v->RandomSamplingwithoutLabel(a_v->stratas[0].numtobeDrawn, a_v->stratas[0].numleft,0);
+	learned.clear();
+	PreLabellearning(0, numbin);
+}
+
+void NucleusEditor::ActiveValidationQuery()
+{
+	a_v->CalculatehkwithoutLabel(a_v->current, learned);
+	a_v->Calculatephatak(a_v->current);
+	a_v->CalculateVarphatk(a_v->current);
+	a_v->CalculateSigmak(a_v->current);
+	a_v->UpdateBins(a_v->current);
+
+	a_v->current += 1;
+	
+	if(a_v->current < a_v->numbin)
+	{
+		queries.clear();
+		queries = a_v->RandomSamplingwithoutLabel(a_v->stratas[a_v->current].numtobeDrawn,
+				  a_v->stratas[a_v->current].numleft, a_v->current);
+		learned.clear();
+		PreLabellearning( a_v->current,  a_v->numbin);
+	}
+	else
+	{
+		bool converge = false;
+		a_v->Calculatephata();
+		a_v->CalculateVarphat();
+		converge = a_v->ConvergeCheck();
+
+		if(converge)
+		{
+			a_v->t++;
+		}
+		else
+		{
+			a_v->t = 0;
+		}
+
+		a_v->numiteration++;
+		a_v->current = 0;
+		std::cout<<"iteration "<<a_v->numiteration<<std::endl;
+		std::cout<<"phat = "<<a_v->phat<<std::endl;
+		std::cout<<"varphat = "<<sqrt( (double)a_v->varphat)<<std::endl;
+
+		if(a_v->t < 2)
+		{
+			a_v->CalculatenumToBeDrawn();
+			queries.clear();
+			queries = a_v->RandomSamplingwithoutLabel(a_v->stratas[a_v->current].numtobeDrawn,
+				      a_v->stratas[a_v->current].numleft, a_v->current);
+			learned.clear();
+		    PreLabellearning(a_v->current,  a_v->numbin);
+		}
+		else
+		{
+			std::cout<<"................................................."<<std::endl;
+			std::cout<<"active validation done !"<<std::endl;
+			std::cout<<"number of iteration "<<a_v->numiteration<<std::endl;
+			std::cout<<"number of sample "<<a_v->numsampled<<std::endl;
+			std::cout<<"phat = "<<a_v->phat<<std::endl;
+			std::cout<<"varphat = "<<sqrt( (double)a_v->varphat)<<std::endl;
+			delete a_v;
+		}
+	}	
+}
+
+void NucleusEditor::Labellearning(std::vector<std::pair<int,int> > query)
+{
+	for(int i = 0; i < query.size(); i++)
+	{
+		learned.push_back(query[i].second);
+	}
+
+	if( looptime < queries.size())
+	{
+		std::vector<QImage> subsnapshots;
+		std::vector<int > subqueries;
+		int i = 0;
+		for(i,looptime; (i < 5)&& (looptime < queries.size()); looptime++,i++)
+		{	
+			std::cout<<queries[looptime]<<std::endl;
+			subsnapshots.push_back( segView->getSnapshotforID(queries[looptime] + 1) );
+			subqueries.push_back(queries[looptime]);
+		}	
+		ActiveLearningDialog *alDialog = new ActiveLearningDialog(subsnapshots, table, a_v->current,
+											subqueries, a_v->numbin);	
+
+		connect(alDialog, SIGNAL(finishquery(std::vector<std::pair<int,int> >)), 
+				this, SLOT(Labellearning (std::vector<std::pair<int,int> >)));
+		connect( alDialog, SIGNAL( next(std::vector<std::pair<int,int> >) ),
+				this, SLOT(Labellearning(std::vector<std::pair<int,int> >) ) );
+		alDialog->show();
+	}
+	else
+	{
+		ActiveValidationQuery();
+	}	
+}
+
+void NucleusEditor::PreLabellearning(int classval, int numclass)
+{
+	std::vector<QImage> subsnapshots;
+	std::vector<int > subqueries;
+	std::cout<<"queries size is "<< queries.size() <<std::endl;
+	this->looptime = 0;
+	int i = 0;
+	for( i,looptime; (i < 5) && (looptime < queries.size()); looptime++,i++)
+	{	std::cout<<queries[looptime]<<std::endl;
+		subqueries.push_back(queries[looptime]);
+		subsnapshots.push_back( segView->getSnapshotforID(queries[looptime] + 1) );
+	}	
+	ActiveLearningDialog *alDialog = new ActiveLearningDialog(subsnapshots, table, a_v->current,
+									subqueries, a_v->numbin);	
+
+	connect(alDialog, SIGNAL(finishquery(std::vector<std::pair<int,int> >)), 
+			this, SLOT(Labellearning (std::vector<std::pair<int,int> >)));
+	connect( alDialog, SIGNAL( next(std::vector<std::pair<int,int> >) ),
+			this, SLOT( Labellearning(std::vector<std::pair<int,int> >) ) );
+	alDialog->show();
+}
 /****************************************************************
 function for heatmap of active learning result
 *****************************************************************/
@@ -4494,7 +4645,58 @@ SamplePercentDialog::SamplePercentDialog(int no_of_samples,int numberOfClasses,Q
 	this->setWindowFlags(flags);
 }
 
+SamplePercentDialog::SamplePercentDialog(QWidget *parent) 
+: QDialog(parent)
+{
+	deltaLabel = new QLabel("Enter delta : ");
+	delta = new QLineEdit();
+	delta->setMinimumWidth(30);
+	delta->setFocusPolicy(Qt::StrongFocus);
+	deltaLayout = new QHBoxLayout;
+	deltaLayout->addWidget(deltaLabel);
+	deltaLayout->addWidget(delta);
+	
+	numbinLabel = new QLabel("Specify numbin: ");
+	numbin = new QLineEdit();
+	numbin->setMinimumWidth(30);
+	numbin->setFocusPolicy(Qt::StrongFocus);
+	numbinLayout = new QHBoxLayout;
+	numbinLayout->addWidget(numbinLabel);
+	numbinLayout->addWidget(numbin);
+	
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	bLayout = new QHBoxLayout;
+	bLayout->addStretch(20);
+	bLayout->addWidget(okButton);
 
+	layout = new QVBoxLayout;
+	layout->addLayout(deltaLayout);
+	layout->addLayout(numbinLayout);
+	layout->addLayout(bLayout);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Parameter Setting"));
+
+	Qt::WindowFlags flags = this->windowFlags();
+	flags &= ~Qt::WindowContextHelpButtonHint;
+	this->setWindowFlags(flags);
+}
+
+double SamplePercentDialog::getDelta()
+{
+	QString input = delta->displayText();
+	double delta;
+	delta = atof((input.toStdString()).c_str());
+	return delta;
+}
+
+int SamplePercentDialog::getNumbin()
+{
+	QString input = numbin->displayText();
+	int numbin;
+	numbin = atoi((input.toStdString()).c_str());
+	return numbin;
+}
 void SamplePercentDialog::setNumber(double x)
 {
 	disconnect(vSpinNumber, SIGNAL(valueChanged(int)),this, SLOT(setPercent(int)));

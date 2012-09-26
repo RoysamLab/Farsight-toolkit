@@ -3976,7 +3976,12 @@ void View3D::AssociateNeuronToNuclei()
 		vtkIdType nucleiRowSize = this->nucleiTable->GetNumberOfRows();
 		for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 		{
+			/////////////////////////////////////////////////////////////////////////////////////////////
+			//////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////
+			///////////////////////////////////delete 1 line
 			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter));
+			////////////////////////////////////////////////////////
 		}
 		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
 		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
@@ -4005,7 +4010,11 @@ void View3D::AssociateNeuronToNuclei()
 					{
 
 						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
+									//////////////////////////////////////////////////
+					///////////////////////////////////////////////////////////
+					///////////////////////////////////delete 1 line
 						currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),colData);
+						////////////////////////////////////////////////////////////////////
 						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
 					}
 					found = true;
@@ -4019,7 +4028,10 @@ void View3D::AssociateNeuronToNuclei()
 				{
 					/*const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
 					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));*/
+					///////////////////////////////////////////////////////////
+					/////////////////////////////////////delete one line
 					currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),vtkVariant(-PI));
+					//////////////////////////////////////////////////////
 				}
 			}
 		}//end of soma row		
@@ -6525,6 +6537,8 @@ void View3D::BiclusAnalysis()
 {
 #ifdef USE_Clusclus
 	this->Biheatmap = new BiHeatmap ();
+	connect(Biheatmap, SIGNAL(lable(std::set<long int>)),this, SLOT(Getlabel (std::set<long int>)));
+
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
 		QMessageBox mes;
@@ -6539,16 +6553,20 @@ void View3D::BiclusAnalysis()
 	else
 	{
 
-		vtkSmartPointer<vtkTable> featureTable;
-		featureTable = this->CellModel->getDataTable();	
+		vtkSmartPointer<vtkTable> featureTable = vtkSmartPointer<vtkTable>::New();
+		featureTable->Initialize();
+		featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(0));
+		for(int col=4; col<(int)this->CellModel->getDataTable()->GetNumberOfColumns(); ++col)
+			featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(col));
+		
+		//vtkSmartPointer<vtkTable> featureTable = this->CellModel->getDataTable();	
+
 
 		featureTable->RemoveColumnByName("Trace File");	
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
 
-		//this->SPDWin = new SPDtestWindow();
-		//featureTable = this->SPDWin->NormalizeTable(featureTable);
 		featureTable->RemoveColumnByName("Distance to Device");
 
 		std::vector<std::vector<double > > points;
@@ -6595,11 +6613,64 @@ void View3D::BiclusAnalysis()
 		this->Biheatmap ->showTree1();
 		this->Biheatmap ->showTree2();
 
+		//for adding label
+		vtkSmartPointer<vtkVariantArray> labelcol = vtkSmartPointer<vtkVariantArray>::New();
+		for(unsigned int i = 0; i < this->CellModel->getDataTable()->GetNumberOfRows(); i++ )
+			labelcol->InsertNextValue ( vtkVariant ( 0.0 ) );
+
+		labelcol->SetName("prediction_active");
+		this->CellModel->getDataTable()->AddColumn(labelcol);
+
+		if(this->FL_MeasurePlot)
+		{
+			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasurePlot->update();
+		}
+		if (this->FL_MeasureTable)
+		{
+			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->update();
+		}
+		
+
 		delete bicluster;
 	}
 #endif
 }
 
+void View3D::Getlabel(std::set<long int> labels)
+{
+	std::cout<<"I am here................."<<std::endl;
+	bool ok;
+	int label = QInputDialog::getInt(this, tr("Label for this cluster"),tr("Label:"), 0, 0, 20, 1, &ok);
+
+	if(!ok)
+	{
+		std::cout<<"Please specify the label !"<<std::endl;
+		return;
+	}
+
+	std::set<long int>::iterator it = labels.begin();
+	while(it != labels.end())
+	{
+		int id = *it;
+		this->CellModel->getDataTable()->GetColumnByName ("prediction_active")->SetVariantValue(id, label);
+		it++;
+	}
+
+	if(this->FL_MeasurePlot)
+	{
+		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_MeasurePlot->update();
+	}
+	if (this->FL_MeasureTable)
+	{
+		this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+		this->FL_MeasureTable->update();
+	}
+	std::cout<<"I am here................."<<std::endl;
+
+}
 void View3D::FeatureDistributionAnalysis()
 {
 	this->FeatDistWin = new FTKRenderWindow ();
@@ -7189,4 +7260,3 @@ bool QueryDialog::getKMutual()
 {
 	return check->isChecked();
 }
-

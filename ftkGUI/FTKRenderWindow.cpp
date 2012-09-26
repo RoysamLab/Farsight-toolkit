@@ -160,12 +160,23 @@ void FTKRenderWindow::updateRenderView(void)
 		}		
 	}
 
+	std::set<long int> sels = selection->getSelections();
+	std::vector<int> ids(sels.begin(), sels.end());
+
 
 	for(int row=0; row<(int)table->GetNumberOfRows(); row++)
 	{
 		//std::cout << "myCentroid : " << row <<"\r";
+		if(ids.size() == 0);
+		else
+		{
+			std::vector<int>::iterator posn1 = std::find(ids.begin(), ids.end(), table->GetValue(row, 0).ToInt());
+			if(posn1 == ids.end())
+				return;
+		}
+
 		vtkSmartPointer<vtkSphereSource> centroidSphere =  vtkSmartPointer<vtkSphereSource>::New();
-		centroidSphere->SetRadius(20);	
+		centroidSphere->SetRadius(30);	
 		vtkSmartPointer<vtkPolyDataMapper> centroidMapper =  vtkSmartPointer<vtkPolyDataMapper>::New();
 		centroidMapper->SetInputConnection(centroidSphere->GetOutputPort()); 
 		vtkSmartPointer<vtkActor> centroidactor = vtkSmartPointer<vtkActor>::New();

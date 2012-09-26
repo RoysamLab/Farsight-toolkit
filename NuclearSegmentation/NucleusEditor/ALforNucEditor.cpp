@@ -388,7 +388,8 @@ void ALforNucEd::Perform_Classification()
 
 		if(classification_name != "")
 		{
-			prediction_col_name = "prediction_active_" + classification_name;
+			//prediction_col_name = "prediction_active_" + classification_name;
+			prediction_col_name = "prediction_active";
 			confidence_col_name = "confidence_" + classification_name;
 		}
 

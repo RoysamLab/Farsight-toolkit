@@ -27,6 +27,28 @@ void Kmeans::setDataToKmeans(std::vector<std::vector<double > > & points)
 	this->num_cols = points[0].size();
 }
 
+//set Data to the Kmeans object in vnl form
+void Kmeans::setDataToKmeans(vnl_matrix<double> points)
+{
+	if(points.empty())
+	{
+		std::cout<<"No data to clustering !......."<<std::endl;
+		return;
+	}
+	
+	this->num_rows = points.rows();
+	this->num_cols = points.columns();
+	this->points.resize(points.rows());
+	for(int row = 0; row < this->num_rows; row++)
+	{
+		this->points[row].resize(this->num_cols);
+		for (int col = 0; col < this->num_cols; col++)
+		{
+			this->points[row][col] = points(row,col);
+		}
+	}
+}
+
 //Set distance mode(Euclidean or Cosine)
 void Kmeans::setDistasnce(char distancestring)
 {
@@ -225,4 +247,19 @@ std::vector<int > Kmeans::getPointsToClusters()
 std::vector<std::set<int > > Kmeans::getClustersToPoints()
 {
 	return this->clustersToPoints;
+}
+std::vector<std::vector<int > > Kmeans::getClustersToPointsvector()
+{
+	this->clustersToPointsvector.clear();
+	for(int i = 0; i < this->num_clusters; i++)
+	{
+		std::vector<int > tempvector;
+		std::set<int >::iterator it = this->clustersToPoints[i].begin();
+		for(int j = 0; j < this->clustersToPoints[i].size(); j++)
+		{
+			tempvector.push_back(*it++);
+		}
+		this->clustersToPointsvector.push_back(tempvector);
+	}
+	return this->clustersToPointsvector;
 }

@@ -65,6 +65,7 @@ option( BUILD_XML_GENERATOR "Build XML_Generator" OFF)
 option( BUILD_CLUSCLUS "Build CLUSCLUS" ON)
 option( BUILD_SPD "Build SPD" ON)
 option( BUILD_MicrogliaMoviePipeline "Build MicrogliaMoviePipeline" OFF)
+option( BUILD_ACTIVEVALIDATION "Build ActiveValidation" OFF)
 
 option( BUILD_IMONTAGE "Build iMontage" OFF)
 option( BUILD_FTKVOTING "Build Radial Voting" OFF)
@@ -491,6 +492,10 @@ endif(BUILD_XML_GENERATOR)
 if(BUILD_CLUSCLUS)
   add_subdirectory(ClusClus)
 endif(BUILD_CLUSCLUS)
+
+if(BUILD_ACTIVEVALIDATION)
+  add_subdirectory(Active_Validation)
+endif(BUILD_ACTIVEVALIDATION)
 
 if(BUILD_IMONTAGE)
   add_subdirectory(iMontage)

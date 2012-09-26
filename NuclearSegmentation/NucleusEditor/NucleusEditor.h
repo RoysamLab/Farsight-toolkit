@@ -97,6 +97,7 @@
 #include "ftkGraphs/kNearestObjects.h"
 #include "ftkSpectralUnmixing/ftkSpectralUnmixing.h"
 #include "PatternAnalysis/DiffusionMap/DiffusionMap.h"
+#include "Active_Validation\ActiveValidation.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
@@ -261,6 +262,10 @@ protected slots:
 	void SaveActiveLearningModel();
 	void ExtractClassificationResult();
 	void classifyFromActiveLearningModel();
+	void startActiveValidation(); 
+	void ActiveValidationQuery();
+	void Labellearning(std::vector<std::pair<int,int> > query);
+	void PreLabellearning( int classval, int numclass);
 	// Clus
 	void runClus();
 	void HeatmapforActivelearning(vtkSmartPointer<vtkTable>, int class_num);//for neuclei editing
@@ -370,6 +375,8 @@ protected:
 	QMenu *classifyMenu;
 	QAction *trainAction;	//Train the KPLS Classifier
 	QAction *kplsAction;	//Start the KPLS Classifier
+	QMenu *validationMenu;
+	QAction *activeValidation; // Active Validation
 	QAction *runClusAction;
 
 	//For Editing Menu
@@ -502,6 +509,12 @@ protected:
 		BiHeatmap *biheatmap;
 	#endif
 
+	//Active Validation variables
+	ActiveValidation *a_v;
+	int looptime;
+	std::vector<int > queries;
+	std::vector<int > learned;
+
 	// Loads all the tables of the time series
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	std::vector<std::string> imageNames;
@@ -563,11 +576,14 @@ class SamplePercentDialog : public QDialog
 	Q_OBJECT
 public:
 	SamplePercentDialog(int no_of_samples,int no_of_classes,QWidget *parent = 0);
+	SamplePercentDialog(QWidget *parent = 0);
 	int samples;
 	QSpinBox * vSpinNumber;
 	int class_number;
-	public slots:	
-	
+	double getDelta();
+	int getNumbin();
+
+public slots:		
 	void setNumber(double x);
 	void setPercent(int x);
 
@@ -582,7 +598,15 @@ private:
 	QVBoxLayout *layout;
 	QDoubleSpinBox * vSpinPercent;
 	
-
+	QLabel *deltaLabel;
+	QLineEdit *delta;
+	QHBoxLayout *deltaLayout;
+	QLabel *numbinLabel;
+	QLineEdit *numbin;
+	QHBoxLayout *numbinLayout;
+	//QPushButton *okButton;
+	//QHBoxLayout *bLayout;
+	//QVBoxLayout *layout;
 };
 
 

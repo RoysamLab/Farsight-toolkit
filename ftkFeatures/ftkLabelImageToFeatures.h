@@ -36,6 +36,8 @@ limitations under the License.
 #include <itkGradientMagnitudeImageFilter.h>
 #include <itkSignedDanielssonDistanceMapImageFilter.h>
 #include <itkLineIterator.h>
+#include <itkImageRegionConstIterator.h>
+#include <itkImageRegionConstIteratorWithIndex.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkDoubleArray.h>
@@ -144,6 +146,8 @@ public:
 	typedef itk::Image< TLPixel,2 > Label2DType;
 	typedef typename IntensityImageType::Pointer IntensityImagePointer;
 	typedef typename LabelImageType::Pointer LabelImagePointer;
+	typedef itk::LabelGeometryImageFilter< LabelImageType, IntensityImageType > LabelGeometryType;
+	typedef typename LabelGeometryType::Pointer LabelGeometryPointer;
 
 	//typedef zernike::ImageType zernikeImageType;
 	typedef itk::Image< unsigned char,2> zernikeImageType;
@@ -165,6 +169,8 @@ public:
 	std::vector< std::vector<double> > GetZernikeMoments( LabelPixelType label ){ return IDtoZernikeMap[label]; };
 	std::vector< LabelPixelType > GetLabels() { return this->labels; };
 
+	void ComputeSurfaceOn();
+	void ComputeSurfaceOff(){ this->surfacecomputation = false; };
 	void ComputeHistogramOn();
 	void ComputeHistogramOff(){ this->computeHistogram = false; };
 	void ComputeTexturesOn();
@@ -191,6 +197,7 @@ private:
 	void LabelImageScan();
 	void CalculateScanFeatures();
 	void SetHistogramParameters(int* numBins, int* lowerBound, int* upperBound);
+	void RunSurfaceFeature(LabelGeometryPointer);
 
 	//Internal Variables:
 	IntensityImagePointer intensityImage;	//Input intensity image;
@@ -211,6 +218,7 @@ private:
 	
 	//OPTIONS
 	short int computationLevel;					//We have 3 levels of computation
+	bool surfacecomputation;                    //Surface features needed
 	bool computeHistogram;						//Requires Level 2
 	bool computeTextures;						//Requires Level 3
 

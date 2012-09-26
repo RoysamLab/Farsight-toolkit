@@ -5,6 +5,7 @@ ActiveValidation::ActiveValidation()
 {	
 	this->data = NULL;
 	this->lable = NULL;
+	this->table = NULL;
 	this->N = 0;
 	this->numfeat = 0;
 	this->numbin = 0;
@@ -37,6 +38,7 @@ void ActiveValidation::Initializing(vnl_matrix<double> data, vnl_vector<int> lab
 	{
 		this->data = NULL;
 		this->lable = NULL;
+		this->table = NULL;
 		this->N = 0;
 		this->numfeat = 0;
 		this->numbin = 0;
@@ -84,6 +86,7 @@ void ActiveValidation::Initializing(std::vector<std::vector<double > > datavecto
 	{
 		this->data = NULL;
 		this->lable = NULL;
+		this->table = NULL;
 		this->N = 0;
 		this->numfeat = 0;
 		this->numbin = 0;
@@ -114,6 +117,52 @@ void ActiveValidation::Initializing(std::vector<std::vector<double > > datavecto
 	{
 		this->lable(i) = lablevector[i];
 	}
+}
+void ActiveValidation::Initializing(vtkSmartPointer<vtkTable > table, int K, double delta)
+{
+	//check input data
+	if(table->GetNumberOfRows() < 1 )
+	{ 
+		std::cout<<"invalid input data!!!"<<std::endl;
+		return;
+	}
+
+	//clear existing variables
+	if(!this->data.empty())
+	{
+		this->data = NULL;
+		this->lable = NULL;
+		this->table = NULL;
+		this->N = 0;
+		this->numfeat = 0;
+		this->numbin = 0;
+		this->phat = 0;
+		this->varphat = 0;
+		this->delta = 0;
+		this->numiteration = 0;
+		this->stratas.clear();
+		this->numsampled = 0;
+	}
+
+	//reload and setup variables
+	this->current = 0;
+	this->convergepub = false;
+	this->t = 0;
+	this->seed = 0;
+	this->N = table->GetNumberOfRows();
+	this->numbin = K;
+	this->delta = delta;
+	this->numfeat = table->GetNumberOfColumns() - 4;
+	this->data.set_size(this->N, this->numfeat);
+	for(int row = 0; row < this->N; row++)
+	{
+		for(int col = 0; col < this->numfeat; col++)
+		{
+			this->data(row, col) = table->GetValue(row, col + 1).ToDouble();
+		}
+	}
+	this->table = table;
+	this->lable.set_size(this->N);
 }
 //Get homogenous groups
 void ActiveValidation::Stratifing()
@@ -153,6 +202,43 @@ void ActiveValidation::Stratifing()
 		temp.hk = 0;
 		temp.nk = 0;
 		this->stratas.push_back(temp);
+	}
+}
+
+//Get groups acording to claasification result
+void ActiveValidation::StratifingwithoutLabel()
+{
+	this->stratas.resize(this->numbin);
+	for(int i = 0; i< this->table->GetNumberOfRows(); i++)
+	{	
+		vtkVariant cn = table->GetValueByName(i, "prediction_active" );
+		//std::cout<<table->GetColumnByName("prediction_active")->GetSize()<<std::endl;
+		int strataid = cn.ToInt();
+		this->stratas[strataid].idsk.push_back(i);
+	}
+
+	for(int i = 0; i < this->numbin; i++)
+	{
+		this->stratas[i].Nk = this->stratas[i].idsk.size();
+
+		vnl_matrix<double> tempdata;
+		tempdata.set_size(this->stratas[i].Nk, this->numfeat);
+		std::vector<int > tempunselectedidsk;
+		for(int j = 0; j < this->stratas[i].Nk; j++)
+		{
+			for(int  k = 0 ; k < this->numfeat; k++)
+			{
+				tempdata(j, k ) = this->table->GetValue(this->stratas[i].idsk[j], k + 1).ToDouble();
+			}
+
+			tempunselectedidsk.push_back(j);
+		}
+		this->stratas[i].strdata = tempdata;
+		this->stratas[i].unselectedidsk = tempunselectedidsk;
+		this->stratas[i].numleft = this->stratas[i].Nk;
+		this->stratas[i].hk = 0;
+		this->stratas[i].nk = 0;
+		this->stratas[i].strlable.set_size(this->stratas[i].Nk);
 	}
 }
 
@@ -196,6 +282,37 @@ void ActiveValidation::RandomSampling(int m, int n, int kth_strata)
 	this->stratas[kth_strata].selectingidsk = tempselecting;
 	this->stratas[kth_strata].nk += m;
 }
+
+std::vector<int > ActiveValidation::RandomSamplingwithoutLabel(int m, int n, int kth_strata)
+{
+	std::vector<int > tempselecting;
+	std::vector<int > queries;
+	//real random number generator using time as seed
+	srand( (unsigned)time( NULL ) + this->seed );
+	for(int i = 0; i < m; i++) 
+	{
+		int tempint = rand()%n;
+		for(int k = 0; k < tempselecting.size(); k++)
+		{
+			if(tempint == tempselecting[k])
+			{
+				tempint = rand()%n;
+			}
+		}
+		tempselecting.push_back(tempint);
+	}
+	this->stratas[kth_strata].selectingidsk = tempselecting;
+	this->stratas[kth_strata].nk += m;
+
+	for(int i = 0; i < m; i++)
+	{
+		int id = tempselecting[i];
+		queries.push_back(this->stratas[kth_strata].idsk[this->stratas[kth_strata].unselectedidsk [id] ]);
+	}
+
+	return queries;
+}
+
 
 //Split strata with variance larger than threshold
 void ActiveValidation::StrataSplit(int kth_strata)
@@ -444,8 +561,12 @@ void ActiveValidation::CalculatenumToBeDrawn()
 				temint += 1;
 				
 			/*tempnumtobedrawn = tempnumtobedrawn * coe;*/
-			this->stratas[i].numtobeDrawn = tempnumtobedrawn;
-			this->numsampled += tempnumtobedrawn;
+			//using floor
+			//this->stratas[i].numtobeDrawn = tempnumtobedrawn;
+			//this->numsampled += tempnumtobedrawn;
+			//using around
+			this->stratas[i].numtobeDrawn = temint;
+			this->numsampled += temint;
 		}
 	}
 }
@@ -454,7 +575,13 @@ void ActiveValidation::CalculatenumToBeDrawn()
 bool ActiveValidation::ConvergeCheck()
 {
 	bool converge = false;
-	if(sqrt((double)this->varphat) < this->delta )
+	
+	double co = 1 / sqrt( ( double)this->N);
+	double c1 = sqrt( (double)(this->phat / (1 - this->phat)));
+	double c2 = sqrt( (double)((1 - this->phat) / this->phat));
+	double norapproxcri = co * abs(c1 - c2);
+	double var = 1.96 * sqrt((double)this->varphat);
+	if((var < this->delta) && norapproxcri < 0.3 )
 	{
 		converge = true;
 	}
@@ -470,6 +597,7 @@ void ActiveValidation::Calculatephata()
 		tempphat += this->stratas[i].phatk * (double)this->stratas[i].Nk / (double)this->N;
 	}
 	this->phat = tempphat;
+	//std::cout<<"phat = "<<this->phat<<std::endl;
 }
 
 //Calculate variance of phat
@@ -479,9 +607,11 @@ void ActiveValidation::CalculateVarphat()
 	for(int i = 0; i < this->numbin; i++)
 	{
 		double coe = (double)this->stratas[i].Nk / (double)this->N;
-		tempvarphat += this->stratas[i].varphatk  * coe * coe ;
+		//tempvarphat += this->stratas[i].varphatk  * coe * coe ;
+		tempvarphat += this->stratas[i].fpcvarphatk  * coe * coe ;
 	}
 	this->varphat = tempvarphat;
+	//std::cout<<"varphat = "<<this->varphat<<std::endl;
 }
 
 //Calculate hk for each strata
@@ -498,6 +628,23 @@ void ActiveValidation::Calculatehk(int kth_strata)
 	}
 	this->stratas[kth_strata].hk += counter;
 }
+
+//Calculate hk for each strata without labels
+void ActiveValidation::CalculatehkwithoutLabel(int kth_strata, std::vector<int > learned)
+{
+	int counter = 0;
+	for(int i = 0; i < learned.size(); i++)
+	{
+		int tempid = learned[i];
+		if(tempid == kth_strata )
+		{
+			counter++;
+		}
+	}
+	this->stratas[kth_strata].hk += counter;
+	std::cout<<"hk = "<<this->stratas[kth_strata].hk<<std::endl;
+}
+
 //Update bins after random sampling from each strata
 void ActiveValidation::UpdateBins(int kth_strata)
 {
@@ -550,4 +697,56 @@ void ActiveValidation::FileWrite()
 		}
 	}
 	fclose(fp);
+}
+//Calculate the true accuracy of entire dataset
+void ActiveValidation::TrueAccuracy()
+{
+	this->trueaccuracy = 0;
+	for(int i = 0; i < this->N; i++)
+	{
+		if(this->lable(i) == 1)
+		{
+			this->trueaccuracy +=1;
+		}
+	}
+
+	this->trueaccuracy = this->trueaccuracy / (double)this->N ;
+}
+//Query and sample from outside
+void ActiveValidation::QuearyandSample()
+{
+	//while(this->t < 2)
+	//{
+	//	std::vector<int > queries;
+	//	std::vector<int > learned;
+	//	a_v->CalculatenumToBeDrawn();
+	//	for(int i = 0; i < numbin; i++)
+	//	{
+	//		queries = a_v->RandomSamplingwithoutLabel
+	//			(a_v->stratas[i].numtobeDrawn, a_v->stratas[i].numleft, i);
+
+	//		learned = Labellearning(queries, i, numbin);
+	//		a_v->CalculatehkwithoutLabel(i, learned);
+	//		a_v->Calculatephatak(i);
+	//		a_v->CalculateVarphatk(i);
+	//		a_v->CalculateSigmak(i);
+	//		a_v->UpdateBins(i);
+	//	}
+
+	//	//calculate result and check converge
+	//	a_v->Calculatephata();
+	//	a_v->CalculateVarphat();
+	//	converge = a_v->ConvergeCheck();
+
+	//	//avoid spurious
+	//	if(converge)
+	//	{
+	//		t++;
+	//	}
+	//	else
+	//	{
+	//		t = 0;
+	//	}
+	//	a_v->numiteration++;
+	//}
 }

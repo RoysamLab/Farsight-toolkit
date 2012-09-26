@@ -92,6 +92,69 @@ void BiTree::constructTree()
 	}
 }
 
+void BiTree::constructSpecTree()
+{
+	this->InitialLevelId();
+	int num_cluster = this->firstK;
+	std::vector<std::vector<double > > datatobekmeans = this->matrix;
+	int L = 1;
+
+	while(num_cluster > 0)
+	{
+		std::vector<std::set<int > > clustersToPoints;
+		std::vector<std::vector<double > > normalized;
+		this->normalize(datatobekmeans, normalized);
+
+		//cluster with normalized data 
+		clustersToPoints = this->KmeansClustering(normalized,num_cluster);
+
+		//cluster with unnormalized data
+		//clustersToPoints = this->KmeansClustering(datatobekmeans,num_cluster);
+
+		std::vector<std::vector<double > > meanmatrix;
+		for(int i = 0; i < num_cluster; i++)
+		{
+			std::vector<std::vector<double > > submatrix;
+			std::vector<int > ctp;
+			std::set<int >::iterator it;
+			for(it = clustersToPoints[i].begin(); it != clustersToPoints[i].end(); it++)
+			{
+				ctp.push_back(*it);
+				submatrix.push_back(datatobekmeans[*it]);
+			}
+		
+			if(submatrix.empty())
+			{
+				continue;
+			}
+			//function clustering reorder maybe
+			if((this->reorderFlag == true) && (submatrix.size() > 2))
+			{
+				this->reOrder(submatrix, ctp);
+			}
+
+			std::vector<double > mean;
+			mean = this->computerMeanSubmatrix(submatrix);
+			meanmatrix.push_back(mean);
+			this->levels.level_id.resize(L + 1);
+			this->levels.level_id[L].push_back(ctp);
+		}
+		this->levels.numm_levels++;
+		datatobekmeans = meanmatrix;
+
+		//function to append meanmatrix to original matrix
+		this->append(datatobekmeans);
+		if(num_cluster == 1)
+			num_cluster = 0;
+		else
+		{
+			float last_num_cluster = (float)num_cluster;
+			num_cluster = ceil(last_num_cluster/(float)3) ;
+		}
+		L++;
+	}
+}
+
 void BiTree::InitialLevelId()
 {
 	this->levels.numm_levels = 0;
