@@ -1038,16 +1038,16 @@ void BiHeatmap::setSelectIds(std::set<long int>& IDs)
 		this->updataTree1();
 		this->Selection2->select(selectedIDs2);
 		this->Selection->select(selectedIDs1);
-		emit lable(selectedIDs1);
+		//emit lable(selectedIDs1);
 	}
 	else if(selectedIDs2.size() > 0)
 	{
-		for(int i = 0; i<this->num_rows; i++)
-			selectedIDs1.insert( indMapFromIndToVertex[i]);
-		std::cout<<"I selected from tree2"<<std::endl;
-		this->updataTree2();
-		this->Selection2->select(selectedIDs2);
-		this->Selection->select(selectedIDs1);
+		//for(int i = 0; i<this->num_rows; i++)
+		//	selectedIDs1.insert( indMapFromIndToVertex[i]);
+		//std::cout<<"I selected from tree2"<<std::endl;
+		//this->updataTree2();
+		//this->Selection2->select(selectedIDs2);
+		//this->Selection->select(selectedIDs1);
 	}
 	else
 	{

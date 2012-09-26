@@ -600,7 +600,7 @@ bool LabelImageToFeatures< TIPixel, TLPixel, VImageDimension >
 		//Surface feature Extraction
 		if(this->surfacecomputation)
 		{
-			this->RunSurfaceFeature(labelGeometryFilter);
+			//this->RunSurfaceFeature(labelGeometryFilter);
 		}
 		//Geometry feature Extraction
 		for (int i = 0; i < (int)labels.size(); ++i)
