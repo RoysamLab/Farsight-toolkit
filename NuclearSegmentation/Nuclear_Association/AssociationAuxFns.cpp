@@ -174,7 +174,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		for( unsigned i=0; i<qnum_sz; ++i ){
 			unsigned counter=0;
 			for( unsigned j=0; j<number_of_rois; ++j ){
-				if( quantified_numbers[(i*number_of_rois+j)] > 1 )
+				if( quantified_numbers[(i*number_of_rois+j)] > (255.0*surr_dist) )
 					++counter;
 			}
 			qfied_num.push_back(counter);
@@ -212,13 +212,8 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 omp_set_nested(1);
 #endif
 
-#ifdef _MSC_VER
 		#pragma omp parallel for
 		for( int i=0; i<labelsList.size(); ++i ){
-#else
-		#pragma omp parallel for
-		for( USPixelType i=0; i<labelsList.size(); ++i ){
-#endif
 			itk::SizeValueType ind;
 			if( zp && (zero==i) ) continue;
 			if( zp && (i>zero)  ) ind = i-1;
