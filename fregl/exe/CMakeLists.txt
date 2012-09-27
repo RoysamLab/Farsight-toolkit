@@ -77,6 +77,17 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    ADD_EXECUTABLE( initialized_register_pair initialized_register_pair.cxx)
    TARGET_LINK_LIBRARIES( initialized_register_pair fregl   ${ITK_LIBRARIES} )
 
+   
+   ADD_EXECUTABLE( register_pair register_pair_16.cxx)
+   TARGET_LINK_LIBRARIES( register_pair_16 fregl   ${ITK_LIBRARIES} )
+
+   ADD_EXECUTABLE( register_joint register_joint_16.cxx)
+   TARGET_LINK_LIBRARIES( register_joint_16 fregl   ${ITK_LIBRARIES} )
+   
+   ADD_EXECUTABLE( mosaic_images mosaic_images_16.cxx)
+   TARGET_LINK_LIBRARIES( mosaic_images_16 fregl   ${ITK_LIBRARIES} )
+   
+   
    #ADD_EXECUTABLE( update_result_sets update_result_sets.cxx)
    #TARGET_LINK_LIBRARIES( update_result_sets fregl )
 

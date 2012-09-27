@@ -55,7 +55,7 @@ using std::endl;
 #include <fregl/fregl_reg_record.h>
 #include <fregl/fregl_util.h>
 
-typedef unsigned char                   InputPixelType;
+typedef unsigned short                   InputPixelType;
 typedef itk::Image< InputPixelType, 3 > ImageType3D;
 typedef float                           InternalPixelType;
 typedef itk::Image<InternalPixelType, 3 > InternalImageType;

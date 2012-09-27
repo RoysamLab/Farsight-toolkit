@@ -55,7 +55,7 @@ using std::endl;
 #include "itkImageSeriesWriter.h"
 #include "itkNumericSeriesFileNames.h"
 
-typedef unsigned char InputPixelType;
+typedef unsigned short InputPixelType;
 typedef itk::Image< InputPixelType, 3 > ImageType;
 typedef itk::Image< InputPixelType, 2 > ImageType2D;
 typedef ImageType::PointType PointType; //physical space
