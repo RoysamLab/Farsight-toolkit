@@ -122,7 +122,7 @@ int main(int argc, char* argv[]){
 		AT->ReadFinalNucleiTable(std::string(argv[6])); 
 		
 		AT->GetCentroidsForTracing(centroidsForTracingFileName, finalIDImageFileName);
-			
+		
 		std::cout << "GetCentroidsForTracing finished. " << std::endl; 
 
 		if(true){

@@ -305,7 +305,7 @@ public:
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 	void Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&, std::vector< LabelImageType3D::Pointer >&, std::string, std::string, std::string, const bool, bool normalize_from_model = false);
-
+	
 	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
 	void Set_NucleiLabelImage(LabelImageType3D::Pointer nuc_label_image);
 	
@@ -323,9 +323,11 @@ protected:
 	bool IsSeed(const itk::FixedArray<float, 3> & , unsigned int & );
 	bool RegisterIndex(const float, itk::Index<3> &, itk::Size<3> &, long);
 	SWCNode_astro* TBack(itk::Index<3> & ndx, std::vector<IndexType> &  );
-	float GetCost(SWCNode_astro* , itk::Index<3> &  );
+	float GetCost(SWCNode_astro*, itk::Index<3>&);
 	float GetCostLocal(SWCNode_astro* , itk::Index<3> & );
 	float GetCostLocalLabel(SWCNode_astro* , itk::Index<3> & );
+	float GetCostOld(SWCNode_astro* , itk::Index<3> &  );
+
 	void ScanNeighbors( PixelType & a1,PixelType & a2,PixelType & a3, itk::Index<3> &);
 	PixelType Update( PixelType a1,  PixelType a2,  PixelType a3,   PixelType P ) ;
 	void Decimate();
@@ -336,6 +338,7 @@ protected:
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
 	float GetCostLocal2(SWCNode_astro*, itk::Index<3>&);
+	float GetCostLocal3(SWCNode_astro*, itk::Index<3>&);
 	bool IsBall(const itk::FixedArray<float, 3>&, unsigned int&, double&);
 	void GetHessianBasedObjectnessMeasures(itk::FixedArray<double, 3>&, ObjectnessMeasures&);
 	
@@ -349,6 +352,7 @@ private:
 	ImageType3D::Pointer PaddedCurvImage, ConnImage, NDXImage, NDXImage2, NDXImage3;   //Input Image, EK image, CT image
 	ImageType3D::Pointer LoGScaleImage;
 	ImageType3D::Pointer ObjectnessImage;
+	ImageType3D::Pointer ObjectnessHybridImage;
 	ImageType3D::Pointer SomaDistanceMapImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;

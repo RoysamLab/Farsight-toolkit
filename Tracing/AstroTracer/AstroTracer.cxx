@@ -235,6 +235,83 @@ void AstroTracer::RunTracing(void)
 {
 	FeatureMain();			//Nice function here that is easy to miss....
 
+	////////////////////////////////
+
+	// Compute vesselness image for tracing
+	float sigma_min = 1.0;
+	float sigma_max = 10.0;
+	int sigma_intervals = 10;
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(this->PaddedCurvImage);
+	stats_filter->Update();
+	double img_max_val = stats_filter->GetMaximum();
+	
+	std::cout << "Max img value: " << img_max_val << std::endl;
+	
+	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1);
+	obj_measures.alpha = 0.5 * img_max_val;
+	obj_measures.beta = 0.5 * img_max_val;
+	obj_measures.gamma = 0.25 * img_max_val; //0.25 * img_max_val;
+
+	this->ComputeObjectnessImage(obj_measures);
+
+	StatisticsFilterType::Pointer stats_filter2 = StatisticsFilterType::New();
+	stats_filter2->SetInput(this->ObjectnessImage);
+	stats_filter2->Update();
+	double max_objectness = stats_filter2->GetMaximum();
+
+	std::cout << "Max objectness value: " << max_objectness << std::endl;
+
+	MultiplyImageFilter::Pointer img_multiplier = MultiplyImageFilter::New();
+	img_multiplier->SetInput(this->ObjectnessImage);
+	img_multiplier->SetConstant2(1.0/(max_objectness));
+	img_multiplier->Update();
+
+	MultiplyImageFilter::Pointer img_multiplier2 = MultiplyImageFilter::New();
+	img_multiplier2->SetInput(this->PaddedCurvImage);
+	img_multiplier2->SetConstant2(1.0/(img_max_val));
+	img_multiplier2->Update();
+
+	this->PaddedCurvImage = img_multiplier2->GetOutput();
+	this->ObjectnessImage = img_multiplier->GetOutput();
+
+	// Create a vesselness-intensity hybrid image
+	MultiplyImageFilter::Pointer img_multiplier3 = MultiplyImageFilter::New();
+	img_multiplier3->SetInput1(this->PaddedCurvImage);
+	img_multiplier3->SetInput2(this->ObjectnessImage);
+	img_multiplier3->Update();
+	
+	this->ObjectnessHybridImage = img_multiplier3->GetOutput();
+
+	// Write the images out
+	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+	ImageWriterType::Pointer image_writer = ImageWriterType::New();
+	image_writer->SetFileName("F:\\AstroTracingTiny1\\VesselnessImage_astro.mhd");
+	image_writer->SetInput(this->ObjectnessImage);
+	image_writer->Update();
+
+	ImageWriterType::Pointer image_writer1 = ImageWriterType::New();
+	image_writer1->SetFileName("F:\\AstroTracingTiny1\\Paddedcurv_astro.mhd");
+	image_writer1->SetInput(this->PaddedCurvImage);
+	image_writer1->Update();
+
+	ImageWriterType::Pointer image_writer2 = ImageWriterType::New();
+	image_writer2->SetFileName("F:\\AstroTracingTiny1\\Hybrid_vesselness.mhd");
+	image_writer2->SetInput(this->ObjectnessHybridImage);
+	image_writer2->Update();
+	
+	std::cout << "Done with writing vesselness image. " << std::endl;*/
+
+	
+	// Do traing on the vesselness image directly!!
+	//this->PaddedCurvImage = this->ObjectnessImage;
+
+
+
+
+	////////////////////////////////////////
+
 	CurrentID = 1;
 
 	//set up the connection image and swc image
@@ -252,6 +329,7 @@ void AstroTracer::RunTracing(void)
 	std::vector<IndexType>::iterator startIt;
 	int tID = 1;
 	
+	// Initialize containers with start points - call this primary nodes. TreeID is positive for primary nodes.
 	clock_t fillSWCImage1_start_time = clock();
 	for (startIt = StartPoints.begin(); startIt != StartPoints.end(); ++startIt, ++tID)
 	{
@@ -268,6 +346,7 @@ void AstroTracer::RunTracing(void)
 
 	clock_t fillSWCImage2_start_time = clock();
 	
+	// Putting all the "interest" points in SWCImage - call this secondary nodes. TreeID is negetive for secondary nodes.
 	long eCounter = 0, TotalePoints;
 	itk::ImageRegionConstIterator<ImageType3D> Nit(NDXImage, NDXImage->GetBufferedRegion());
 	for (Nit.GoToBegin(); !Nit.IsAtEnd(); ++Nit) 
@@ -283,7 +362,7 @@ void AstroTracer::RunTracing(void)
 
 
 	TotalePoints = eCounter;
-	std::cout<<"eCounter = "<<eCounter<<std::endl;	//eCounter is just number of nodes that are critical points (but not seed points)
+	std::cout << "eCounter = " << eCounter << std::endl;	//eCounter is just number of nodes that are critical points (but not seed points)
 	//std::cout << "No of CTs inserted : " <<  TotalePoints << std::endl;
 
 	//Generating some kind of offset neighborhood... this needs to be done with itkNeighborhoodIterator
@@ -309,6 +388,7 @@ void AstroTracer::RunTracing(void)
 	
 	clock_t PQ_popping_start_time = clock();
 
+	// Start tracing by popping from the priority queue. This is initialized with start points only
 	while(!PQ.empty())	//For each seed node
 	{
 		//Take the top HeapNode_astro and remove it from the Priority Queue 
@@ -346,21 +426,31 @@ void AstroTracer::RunTracing(void)
 			continue;
 		}
 
+		// Initially SWCImage contains only primary and secondary nodes
 		SWCNode_astro* s = SWCImage->GetPixel(ndx);
+		// Go in if the current node is either primary or secondary
 		if (s != NULL) 
 		{
+			// Go in if the current node is a secondary node
 			if (s->TreeID < 0) 
 			{
 				std::vector<IndexType> Chain;
 				
+				// Trace back from a secondary node.
+				// The cost function inside TBack is used to decide whether or not the Chain will join the tree
 				SWCNode_astro* L = TBack(ndx, Chain);
 
 				if ( L  != NULL ) 
 				{
 					// By influencing this cost, atleast one "bad" node will be added to the tree.
 					// Consider placing a hard cost-based threshold to avoid crazy nodes being added
+					// This cost will only slowly discourage traces from going into the high cost areas. This cost is between 0 and 1, 0: will encourage 
+					// tracing in this area, 1: will not affect the cost, meaning it will be decided by the intensity cost alone.
+					
+					float costFactor = GetCost(L, ndx);
+					//float costFactor = GetCostOld(L, ndx);
 					//float costFactor = GetCostLocal( L , ndx);
-					float costFactor = GetCostLocal2(L , ndx);
+					//float costFactor = GetCostLocal2(L , ndx);
 
 					//if(costFactor > 1.5)
 					//	continue;
@@ -405,13 +495,16 @@ void AstroTracer::RunTracing(void)
 				} 
 			}
 		}
-
+		
+		// Consider adding the neighbors of ndx to the queue for tracing. This is done until we hit a primary or secondary node which is already present in SWCImage.
+		// This is because of the condition "if(s != NULL)" above.
 		for (oit = off.begin(); oit < off.end(); ++oit) 
 		{
 			itk::Index<3> ndx2 = ndx + (*oit);
 			if ( (ndx2[0] < 2) || (ndx2[1] < 2) || (ndx2[2] < 2) || (ndx2[0] >= unsigned(size[0] - 2)) || (ndx2[1] >= unsigned(size[1] - 2)) || (ndx2[2] >= unsigned(size[2] - 2)) )  
 				continue;
 			
+			// If the neighbouring point is already a node (primary/secondary) and if it has been assigned to a tree, then do nothing for it.
 			if (SWCImage->GetPixel(ndx2) != NULL) 
 			{
 				if (SWCImage->GetPixel(ndx2)->TreeID > 0) 
@@ -419,10 +512,20 @@ void AstroTracer::RunTracing(void)
 					continue;			
 				}
 			}
+
+			// This block tries to estimate the cost of pushing a neighboring point to the queue. The cost depends non-linearly on the pixel value at ndx2
+			// and the values in the ConnImage at the minimum-cost neighbors in each direction (a1, a2, a3) of ndx2. The initial cost, for the very first
+			// point, is just inversely proportional to the pixel value at ndx2 (P).
 			PixelType P = 1/(PaddedCurvImage->GetPixel(ndx2) + 0.001f);  // consider taking inverse here
 			PixelType a1, a2, a3;
+
+			//a1, a2, a3 are the minimum cost (per ConnImage) neighbors of ndx2 in each direction
 			ScanNeighbors(a1,a2,a3, ndx2);
+
+			// This function returns the cost of adding ndx2 to the queue to further consider it for tracing
 			PixelType aa = Update( a1, a2, a3, P );
+
+			// Check if the existing cost is greater than the current cost. Go for the lower cost and push ndx2 to the queue
 			if ( ConnImage->GetPixel(ndx2) > aa )  
 			{
 				ConnImage->SetPixel(ndx2, aa);
@@ -1168,7 +1271,7 @@ void AstroTracer::GetFeatureExternal( float sigma , int scale_index){
 
 void AstroTracer::GetFeature( float sigma ) 
 {
-	std::cout<<std::endl<<"Get Feature 1";
+	std::cout << "Get Feature 1 " << std::endl;
 	
 	clock_t LoG_start_time = clock();
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> GFilterType;
@@ -1177,7 +1280,8 @@ void AstroTracer::GetFeature( float sigma )
 	gauss->SetSigma( sigma );
 	gauss->SetNormalizeAcrossScale(false);
 	gauss->GetOutput()->Update();
-	std::cout << "325Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	
+	std::cout << "Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	float tot = 0.0f, num = 0.0f;
 	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
@@ -1294,7 +1398,7 @@ void AstroTracer::GetFeature( float sigma )
 		++it;
 		++nit;
 	}
-	std::cout <<"asdfNumber of CTs at this stage: " << ctCnt <<std::endl<<std::flush;
+	std::cout << "Number of CTs at this stage: " << ctCnt << std::endl << std::flush;
 	//out_seeds.close();
 }
 
@@ -1450,8 +1554,9 @@ bool AstroTracer::RegisterIndex(const float value, itk::Index<3> &ndx, itk::Size
 /////////////////////////////////////////////////////////////////////////////////////////////
 SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Chain)  
 {
-	
+	// Label is either the top of the chain (a primary node) or NULL
 	SWCNode_astro* Label = NULL;
+
 	itk::Index<3> n;
 	itk::Vector<float,3> p, x, d, dold;
 	for (int i=0; i<3; i++) 
@@ -1460,16 +1565,21 @@ SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Ch
 		dold[i] = 0.0f;
 	}
 	bool done = false;
+
+	// If this is a primary node, do not trace back, return NULL.
 	if (SWCImage->GetPixel(ndx)->TreeID > 0) 
 	{
 		done = true;
 	}
 	const float MAXDERV = 10000.0f;
 
+	// Pushed back the cuurent index, ndx, the starting point of the chain.
 	Chain.push_back(ndx);
 
+	// Continue tracing in the direction of the derivative of the tracing cost (from ConnImage) until you hit a primary/labeled node or until you are lost!
 	while (done == false) 
 	{
+		// Find the derivative of the ConnImage (cost of tracing) in the three directions
 		//x
 		x = p; 
 		x[0]++;
@@ -1557,11 +1667,17 @@ SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Ch
 		}
 
 		n.CopyWithRound(p);
+		
+		// Push back next element index to the chain
 		Chain.push_back(n);
+
 		//check termination
 		SWCNode_astro *t = SWCImage->GetPixel(n);
+		
+		// Check if the chain has hit either a valid node (primary or secondary node)
 		if (t != NULL ) 
 		{
+			// If it has hit a primary/labeled node, stop the chain here
 			if (t->TreeID > 0) 
 			{
 				done = true;
@@ -1569,6 +1685,8 @@ SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Ch
 				break;
 			}
 		}
+
+		// If the chain is growing to be so big, you are misleaded!!
 		if (Chain.size() > 500) 
 		{
 			//std::cout << "Tree not found for " << ndx << " in 500 steps, exiting!! " << std::endl;
@@ -1578,21 +1696,25 @@ SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Ch
 			break;
 		}
 	}
-	//
+	
 
 	float costFactorLabel = 0.0;
 	
-	if (Chain.size()!=0 )
-		costFactorLabel = GetCostLocalLabel( Label , ndx);
+	if(Chain.size() != 0 ){
 
-	if (costFactorLabel>=10.0)
-		{	
-			Chain.clear();
-			done=true;
-			return NULL;}
+		//this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
+		costFactorLabel = GetCostLocalLabel(Label , ndx);
+	}
+
+	// If the curvature-based cost if too high, then this chain is not added to the tree.
+	// This is a good place to add additional contraints for astrocytes?
+	if(costFactorLabel >= 10.0){	
+		Chain.clear();
+		done = true;
+		return NULL;
+	}
 	else 
 		return Label;
-	//
 
 
 	//return Label;
@@ -1601,6 +1723,251 @@ SWCNode_astro* AstroTracer::TBack(itk::Index<3> &ndx, std::vector<IndexType>& Ch
 ///////////////////////////////////////////////////////////////////////////////////
 float AstroTracer::GetCost(SWCNode_astro* s, itk::Index<3>& endx ) 
 {
+
+	// Similar to GetCostLocal, but accumulates the angles along the trace at regular intervals, and returns this as the cost.
+	// If the accumulated angle is high, this would indicate abrupt turns.
+
+	// Try to use the std(curvature) in a similar way for cost
+
+	// Try adding vesselness to the cost function
+
+	itk::Index<3> base = endx, ndx = s->ndx;
+	float cost = 0.0f, angsum = 0.0f, count = 0.01f, ignore_dist = 0.0;
+	itk::Vector<float,3> d1, d2 , gd, gd1;
+	d1.Filled(0.0);
+	gd1.Fill(0.0);
+	bool first = true;
+	int max_points = 500; //1000; //500
+	std::vector<float> angle_vec, del_scale_vec, del_likelihood_vec, del_vesselness_vec;
+	float acc_likelihood = 0.0, acc_del_scale = 0.0, acc_vesselness = 0.0;
+	float max_trace_length = 150.0, trace_length = 0.0, trace_length_norm = 0.0;
+
+
+	while (count < max_points) 
+	{
+		
+		// Length based cost (this is a hard cost, consider giving low weight to this)
+		trace_length++;
+
+		if(first)
+			ignore_dist = 50.0f;
+		else
+			ignore_dist = 3.0; //10; //20.0f; //10.0f; // 10 is good for curvature cost
+
+		float d = (ndx[0] - base[0])*(ndx[0] - base[0]) + (ndx[1] - base[1])*(ndx[1] - base[1]) + (ndx[2] - base[2])*(ndx[2] - base[2]) ;
+		if ( vcl_sqrt(d) > ignore_dist) //6.0f) 
+		{
+			d2 = d1;
+			d1[0] = float(ndx[0] - base[0]);
+			d1[1] = float(ndx[1] - base[1]);
+			d1[2] = float(ndx[2] - base[2]);
+			d1.Normalize();
+
+			if (first == true) 
+			{
+				first = false;
+				gd1 = d1;
+				//count++;
+
+				//del_vesselness_vec.push_back(this->ObjectnessHybridImage->GetPixel(base));
+				//itk::Vector<float, 3> pos_base;
+				//pos_base[0] = base[0]; pos_base[1] = base[1]; pos_base[2] = base[2];
+				//float likelihood_base = 0.0;
+				//float scale_base = getRadiusAndLikelihood(pos_base, likelihood_base);
+				//del_likelihood_vec.push_back(likelihood_base);
+			}
+			else 
+			{
+				// Scale gradient based cost
+				itk::Vector<float, 3> pos_ndx, pos_base;
+				pos_ndx[0] = ndx[0]; pos_ndx[1] = ndx[1]; pos_ndx[2] = ndx[2];
+				pos_base[0] = base[0]; pos_base[1] = base[1]; pos_base[2] = base[2];
+				float likelihood_ndx = 0.0, likelihood_base = 0.0;
+				float scale_ndx = getRadiusAndLikelihood(pos_ndx, likelihood_ndx);
+				float scale_base = getRadiusAndLikelihood(pos_base, likelihood_base);
+
+				float del_scale = scale_ndx - scale_base;
+				float del_likelihood = likelihood_ndx * likelihood_base;
+
+				//std::cout << del_scale << ", " << del_likelihood << std::endl;
+				
+				acc_likelihood += (likelihood_ndx * likelihood_base);
+				acc_del_scale += del_scale;
+				
+				del_scale_vec.push_back(del_scale);
+				del_likelihood_vec.push_back(del_likelihood);
+
+				// Vesselness-based cost
+				float del_vesselness = this->ObjectnessHybridImage->GetPixel(ndx) * this->ObjectnessHybridImage->GetPixel(base);
+				del_vesselness_vec.push_back(del_vesselness);				
+
+				acc_vesselness += del_vesselness;
+				
+				// Curvature-based cost
+				PixelType w = dot_product(d1.Get_vnl_vector(),d2.Get_vnl_vector());
+				if (w < 0.99f) 
+				{
+					angsum += vcl_acos(vnl_math_abs(w));
+					angle_vec.push_back(vcl_acos(vnl_math_abs(w)));
+				}
+
+				count ++;
+			}
+			base = ndx;
+		}
+		s = s->parent;
+		if (s == NULL) 
+		{
+			break;
+		}
+		ndx = s->ndx;
+	}
+
+	if(angle_vec.empty())
+		return 0;
+	if(angle_vec.size() < ignore_dist)
+		return 0;
+	
+	float mean_curvature = std::accumulate(angle_vec.begin(), angle_vec.end(), 0.0);
+	mean_curvature = mean_curvature / (float)angle_vec.size();
+	
+	float std_curvature = 0.0;
+	for(int i = 0; i < angle_vec.size(); i++)
+		std_curvature = std_curvature + std::pow(angle_vec[i] - mean_curvature, 2);
+	std_curvature = std::sqrt(std_curvature / (float)angle_vec.size());
+
+	
+	float mean_del_scale = std::accumulate(del_scale_vec.begin(), del_scale_vec.end(), 0.0);
+	mean_del_scale = mean_del_scale / (float)del_scale_vec.size();
+	
+	float std_del_scale = 0.0;
+	for(int i = 0; i < del_scale_vec.size(); i++)
+		std_del_scale = std_del_scale + std::pow(del_scale_vec[i] - mean_del_scale, 2);
+	std_del_scale = std::sqrt(std_del_scale / (float)del_scale_vec.size());
+	
+
+	float mean_del_likelihood = std::accumulate(del_likelihood_vec.begin(), del_likelihood_vec.end(), 0.0);
+	mean_del_likelihood = mean_del_likelihood / (float)del_likelihood_vec.size();
+	
+	float std_del_likelihood = 0.0;
+	for(int i = 0; i < del_likelihood_vec.size(); i++)
+		std_del_likelihood = std_del_likelihood + std::pow(del_likelihood_vec[i] - mean_del_likelihood, 2);
+	std_del_likelihood = std::sqrt(std_del_likelihood / (float)del_likelihood_vec.size());
+
+
+	float mean_vesselness = std::accumulate(del_vesselness_vec.begin(), del_vesselness_vec.end(), 0.0);
+	mean_vesselness = mean_vesselness / (float)del_vesselness_vec.size();
+	
+	float std_vesselness = 0.0;
+	for(int i = 0; i < del_vesselness_vec.size(); i++)
+		std_vesselness = std_vesselness + std::pow(del_vesselness_vec[i] - mean_vesselness, 2);
+	std_vesselness = std::sqrt(std_vesselness / (float)del_vesselness_vec.size());
+
+	
+	//trace_length = count; 
+
+	//std::cout << std_curvature << ", " << std_del_scale << ", " << std_del_likelihood << std::endl;
+	//std::cout << mean_del_scale << ", " << mean_del_likelihood << std::endl;
+	//std::cout << mean_vesselness << ", " << acc_vesselness << ", " << std_vesselness << std::endl;
+	//std::cout << "Trace length: " << trace_length/max_trace_length << std::endl;
+
+	gd[0] = float(ndx[0] - endx[0]);
+	gd[1] = float(ndx[1] - endx[1]);
+	gd[2] = float(ndx[2] - endx[2]);
+	gd.Normalize();
+
+	float allowedTurns = 1.0f; //1.0f; //4.0f;
+
+	// If the trace has taken a U-turn, the dot product will be negetive 
+	// Allowing U-turns for astrocytes
+	if(true) //(dot_product(gd.Get_vnl_vector(),gd1.Get_vnl_vector() ) >= 0) 
+	{
+		//cost = (angsum/allowedTurns);
+		//cost = std_curvature;
+		//cost = mean_curvature;
+		//cost = std_del_scale;
+
+		if(mean_del_scale > 1.0)
+			mean_del_scale = 1.0;
+		if(mean_del_scale < 0.0)
+			mean_del_scale = 0.0;
+
+		//cost = 1.0 - mean_del_scale;
+		
+		if(mean_del_likelihood > 1.0)
+			mean_del_likelihood = 1.0;
+		if(mean_del_likelihood < 0.0)
+			mean_del_likelihood = 0.0;
+
+		//cost = 1.0 - mean_del_likelihood;
+
+		if(acc_del_scale > 1.0)
+			acc_del_scale = 1.0;
+		if(acc_del_scale < 0.0)
+			acc_del_scale = 0.0;
+		
+		//cost = 1.0 - acc_del_scale;
+
+		if(acc_likelihood > 1.0)
+			acc_likelihood = 1.0;
+		if(acc_likelihood < 0.0)
+			acc_likelihood = 0.0;
+
+		//cost = 1.0 - acc_likelihood;
+
+		if(acc_vesselness > 1.0)
+			acc_vesselness = 1.0;
+		if(acc_vesselness < 0.0)
+			acc_vesselness = 0.0;
+
+		//cost = 1.0 - acc_vesselness;
+
+		if(mean_vesselness > 1.0)
+			mean_vesselness = 1.0;
+		if(mean_vesselness < 0.0)
+			mean_vesselness = 0.0;
+
+		//cost = 1.0 - mean_vesselness;
+
+		trace_length_norm = trace_length / max_trace_length;
+		if(trace_length_norm > 1.0)
+			trace_length_norm = 1.0;
+
+		//cost = std_vesselness;
+
+
+		//cost = 10.0 * std_del_likelihood;
+		//cost = mean_del_likelihood;
+
+		//cost = 1.0 - acc_likelihood; // try this with scale also
+		
+
+		// Combine the costs into "mother of all costs"
+		float scale_based_cost = 1.0 - mean_del_scale;
+		float likelihood_based_cost = 1.0 - mean_del_likelihood;
+		float vesselness_based_cost = 1.0 - mean_vesselness;
+		float length_based_cost = trace_length_norm;
+
+		// Equally weighing all the costs right now
+		cost = (scale_based_cost + likelihood_based_cost + vesselness_based_cost + length_based_cost)/4.0;
+
+		//std::cout << "Combined cost: " << cost << std::endl;
+
+		if ( cost > 1.0) 
+		{
+			cost = 1.0f;		
+		}
+	}
+	else 
+	{
+		cost = 1.0f;
+	}
+	
+	return cost;
+}
+
+float AstroTracer::GetCostOld(SWCNode_astro* s, itk::Index<3>& endx){
+
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, angsum = 0.0f, count = 0.01f;
 	itk::Vector<float,3> d1, d2 , gd, gd1;
@@ -1664,10 +2031,72 @@ float AstroTracer::GetCost(SWCNode_astro* s, itk::Index<3>& endx )
 
 float AstroTracer::GetCostLocal2(SWCNode_astro* s, itk::Index<3>& endx){
 
+	// Returns a cost between 0 and 1, based on standard deviation of the curvature in order to avoid abrupt changes in the traces.
+	// Curvature is computed as the cosine of successive nodes starting from the current node upto its root.
+
 	itk::Index<3> new_leaf_ndx = endx, leaf_ndx = s->ndx;
 	float cost = 1.0f, cost_low_bound = 1.0f, cost_high_bound = 2.0f;
 	float current_curvature = 0.0f;
-	int ignore_N_nodes = 6.0, most_N_nodes = 500;
+	int ignore_N_nodes = 6.0, most_N_nodes = 1000;
+	std::vector<float> curvature_vec;
+	itk::Vector<float, 3> pos_diff, pos_diff_last;
+	pos_diff.Fill(0.0); pos_diff_last.Fill(0.0);
+
+	
+	pos_diff[0] = leaf_ndx[0] - new_leaf_ndx[0];
+	pos_diff[1] = leaf_ndx[1] - new_leaf_ndx[1];
+	pos_diff[2] = leaf_ndx[2] - new_leaf_ndx[2];
+	pos_diff.Normalize();
+
+	for(int i = 0; i < most_N_nodes; i++){
+
+		s = s->parent;
+		if(s == NULL) 
+			break;
+		
+		new_leaf_ndx = leaf_ndx;
+		leaf_ndx = s->ndx;
+
+		pos_diff_last = pos_diff;
+		pos_diff[0] = leaf_ndx[0] - new_leaf_ndx[0];
+		pos_diff[1] = leaf_ndx[1] - new_leaf_ndx[1];
+		pos_diff[2] = leaf_ndx[2] - new_leaf_ndx[2];
+		pos_diff.Normalize();
+		
+		current_curvature = vcl_acos(vcl_abs(dot_product(pos_diff.Get_vnl_vector(), pos_diff_last.Get_vnl_vector())));
+		curvature_vec.push_back(current_curvature);
+	}
+
+	if(curvature_vec.empty())
+		return 0; //cost_low_bound;
+	if(curvature_vec.size() < ignore_N_nodes)
+		return 0; //cost_low_bound;
+	
+	float mean_curvature = std::accumulate(curvature_vec.begin(), curvature_vec.end(), 0.0);
+	mean_curvature = mean_curvature / (float)curvature_vec.size();
+	
+	float std_curvature = 0.0;
+	for(int i = 0; i < curvature_vec.size(); i++)
+		std_curvature = std_curvature + std::pow(curvature_vec[i] - mean_curvature, 2);
+	std_curvature = std::sqrt(std_curvature / (float)curvature_vec.size());
+	
+	cost = std_curvature; //+ cost_low_bound; // Minimum cost is cost_low_bound when std is zero
+
+	if(cost > 1.0)
+		cost = 1.0;
+			
+	return cost;
+}
+
+float AstroTracer::GetCostLocal3(SWCNode_astro* s, itk::Index<3>& endx){
+
+
+	// Check modifications to the cost function based on gradient of scale, likelihood and intensity
+
+	itk::Index<3> new_leaf_ndx = endx, leaf_ndx = s->ndx;
+	float cost = 1.0f, cost_low_bound = 1.0f, cost_high_bound = 2.0f;
+	float current_curvature = 0.0f;
+	int ignore_N_nodes = 6.0, most_N_nodes = 10000;
 	std::vector<float> curvature_vec;
 	itk::Vector<float, 3> pos_diff, pos_diff_last;
 	pos_diff.Fill(0.0); pos_diff_last.Fill(0.0);
@@ -1697,30 +2126,13 @@ float AstroTracer::GetCostLocal2(SWCNode_astro* s, itk::Index<3>& endx){
 		curvature_vec.push_back(current_curvature);
 	}
 
-	if(curvature_vec.empty())
-		return 0; //cost_low_bound;
-	if(curvature_vec.size() < ignore_N_nodes)
-		return 0; //cost_low_bound;
-	
-	float mean_curvature = std::accumulate(curvature_vec.begin(), curvature_vec.end(), 0.0);
-	mean_curvature = mean_curvature / (float)curvature_vec.size();
-	
-	float std_curvature = 0.0;
-	for(int i = 0; i < curvature_vec.size(); i++)
-		std_curvature = std_curvature + std::pow(curvature_vec[i] - mean_curvature, 2);
-	std_curvature = std::sqrt(std_curvature / (float)curvature_vec.size());
-	
-	cost = std_curvature + cost_low_bound; // Minimum cost is cost_low_bound when std is zero
-
-	if(cost > cost_high_bound)
-		cost = cost_high_bound;
-			
-	return std_curvature;
+	return cost;
 }
-
 /////////////////////////////////////////////////////////////////////////////////////
 float AstroTracer::GetCostLocal(SWCNode_astro* s, itk::Index<3>& endx ) 
 {
+	// Same as GetCostLocalLabel but does not flag abrupt turns
+
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, count = 0.01f;
 	itk::Vector<float,3> d1, d2;
@@ -1770,7 +2182,7 @@ float AstroTracer::GetCostLocal(SWCNode_astro* s, itk::Index<3>& endx )
 	return cost;
 }
 
-float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) //this functions is used in TBack to prevent nodes to join trees, in cases of abrupt directional changes 
+float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) 
 {
 	itk::Index<3> base = endx, ndx = s->ndx;
 	float cost = 0.0f, count = 0.01f, local_count=0.01f;
@@ -1789,6 +2201,8 @@ float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) //t
 	while (count < 500.0f) //500 (5)
 	{
 		float d = (ndx[0] - base[0])*(ndx[0] - base[0]) + (ndx[1] - base[1])*(ndx[1] - base[1]) + (ndx[2] - base[2])*(ndx[2] - base[2]) ;
+
+		// Make sure you have reached far enough along the parents of the top of the chain to avoid being too local
 		if ( vcl_sqrt(d) > 6.0f) //6.0 (0)
 		{
 			d2[0] = float(ndx[0] - base[0]); //  ancestor-leaf
@@ -1797,7 +2211,8 @@ float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) //t
 			d2.Normalize();
 
 			PixelType w = dot_product(d1.Get_vnl_vector(),d2.Get_vnl_vector());
-
+			
+			// Cost depends on the cosine of the angle between 2 vectors
 			if ( w <= 0.4f) //0.0 (0.2)
 			{
 				cost = 1.0f; //1.0 (10.0)
@@ -1811,8 +2226,12 @@ float AstroTracer::GetCostLocalLabel(SWCNode_astro* s, itk::Index<3>& endx ) //t
 			{
 				cost = 0.0f;//0
 			}
+
+			// The cost is computed only once when you have reached far enough along the parents of the label (i.e s). This could be computed as an accumulated
+			// cost as one moves away from the top of the chain (label).
 			break;
 		}
+
 		count++;
 		s = s->parent;
 		if (s == NULL) 
@@ -1867,6 +2286,7 @@ void AstroTracer::ScanNeighbors( PixelType &a1, PixelType &a2, PixelType &a3, it
 ///////////////////////////////////////////////////////////////////////
 PixelType AstroTracer::Update( PixelType a1,  PixelType a2,  PixelType a3,  PixelType P )  
 {
+	// Sort a1, a2, a3 in ascending order
 	if (a1 > a2)  
 	{
 		PixelType temp = a2;
@@ -2309,7 +2729,6 @@ void AstroTracer::RemoveIntraSomaNodes(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
 void AstroTracer::WriteMultipleSWCFiles(std::string fname, unsigned int padz) 
 {
 	// check number of start points to determine number of files to write, with new filename eachtime
@@ -4280,10 +4699,10 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	std::ofstream centroid_points;
 	centroid_points.open(outputFname.c_str(), std::ios::out);
 
-	CharImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
-	CharImageType3D::SizeType sub_volume_size_nuclei;
-	CharImageType3D::RegionType sub_volume_region_nuclei;
-	CharImageType3D::Pointer sub_volume_nuclei;
+	ImageType3D::IndexType starting_index_nuclei, end_index_nuclei;
+	ImageType3D::SizeType sub_volume_size_nuclei;
+	ImageType3D::RegionType sub_volume_region_nuclei;
+	ImageType3D::Pointer sub_volume_nuclei;
 	
 	typedef itk::BinaryThresholdImageFilter<LabelImageType3D, CharImageType3D> ThresholdFilterType;
 	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
@@ -4293,9 +4712,21 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 	threshold_filter->SetInput(this->SomaImage);
 	threshold_filter->Update();
 
+	SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(threshold_filter->GetOutput());
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+
 	LabelImageType3D::SizeType sz = this->SomaImage->GetBufferedRegion().GetSize();
+
 	
-	std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
+	LabelGeometryFilterType::Pointer label_geometry_filter = LabelGeometryFilterType::New();
+	label_geometry_filter->SetInput(this->SomaImage); 
+	label_geometry_filter->Update();
+	
+	//std::cout << "Root points size: " << this->CandidateRootPoints.size() << std::endl;
 	//std::cout << "Nuclei points size: " << this->NucleiObjects.size() << std::endl;
 
 	//Loop over nuclei
@@ -4308,13 +4739,17 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		//std::cout << "Ye!! Asto nuclei found!! " << std::endl;
 
 		// ROI proportional to nuclei scale, assuming spherical nuclei.
-		float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
-		double_scale_nuclei = 2.0 * double_scale_nuclei; 
+		//float double_scale_nuclei = 0.5*std::pow((float)this->NucleiObjects[i].intrinsicFeatures.boundingBoxVolume, (float)0.333333);
+		//double_scale_nuclei = 2.0 * double_scale_nuclei; 
 		
 		CharImageType3D::IndexType current_idx;
 		current_idx[0] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[0];
 		current_idx[1] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[1];
 		current_idx[2] = this->NucleiObjects[i].intrinsicFeatures.centroid.ndx[2] - padz; 
+
+		
+		float sph_rad = 0.5 * label_geometry_filter->GetMajorAxisLength(this->SomaImage->GetPixel(current_idx));
+		float double_scale_nuclei = 1.5 * sph_rad;
 
 		starting_index_nuclei[0] = current_idx[0] - double_scale_nuclei; starting_index_nuclei[1] = current_idx[1] - double_scale_nuclei; starting_index_nuclei[2] = current_idx[2] - double_scale_nuclei;
 		end_index_nuclei[0] = current_idx[0] + double_scale_nuclei; end_index_nuclei[1] = current_idx[1] + double_scale_nuclei; end_index_nuclei[2] = current_idx[2] + double_scale_nuclei;
@@ -4342,7 +4777,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 
 
 
-		std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
+		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;
 
 		//sub_volume_size_nuclei[0] = 2 * double_scale_nuclei; sub_volume_size_nuclei[1] = 2 * double_scale_nuclei; sub_volume_size_nuclei[2] = 2 * double_scale_nuclei;
 		sub_volume_size_nuclei[0] = end_index_nuclei[0] - starting_index_nuclei[0];
@@ -4353,23 +4788,14 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		sub_volume_region_nuclei.SetIndex(starting_index_nuclei);
 		sub_volume_region_nuclei.SetSize(sub_volume_size_nuclei);
 
-
-		typedef itk::RegionOfInterestImageFilter<CharImageType3D, CharImageType3D> VolumeOfInterestFilterType_nuclei2;
+		typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType_nuclei2;
 		VolumeOfInterestFilterType_nuclei2::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei2::New();
-		sub_volume_filter_nuclei->SetInput(threshold_filter->GetOutput());
+		sub_volume_filter_nuclei->SetInput(MaurerFilter->GetOutput());
 		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
 		sub_volume_filter_nuclei->Update();
 		sub_volume_nuclei = sub_volume_filter_nuclei->GetOutput();
-
-
-		SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
-		MaurerFilter->SetInput(sub_volume_nuclei);
-		MaurerFilter->SetSquaredDistance(false);
-		MaurerFilter->SetUseImageSpacing(false);
-		MaurerFilter->SetInsideIsPositive(false);
-		MaurerFilter->Update();
 		
-		ImageType3D::Pointer distance_map = MaurerFilter->GetOutput();
+		ImageType3D::Pointer distance_map = sub_volume_nuclei; //MaurerFilter->GetOutput();
 				
 		double cur_distance = 0.0;
 		double min_distance = 1000.0;
@@ -4602,7 +5028,7 @@ void AstroTracer::GetCentroidsForTracing(std::string outputFname, std::string fi
 		std::cout << e << std::endl;
 		//return EXIT_FAILURE;
 	}
-	std::cout << "Done with FinalRootImage writing. " << std::endl;
+	std::cout << "Done with FinalRootImage writing: " << finalIDImageFileName << std::endl;
 
 	centroid_points.close();
 	//End of creating centroids.txt file
@@ -5786,8 +6212,8 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[18].c_str());
 
 			
-			nuclei_object.classValue = atof(str_vec[34].c_str());
-			nuclei_object.confidenceMeasure = atof(str_vec[35].c_str());
+			nuclei_object.classValue = atof(str_vec[43].c_str());
+			nuclei_object.confidenceMeasure = atof(str_vec[44].c_str());
 
 
 			this->NucleiObjects.push_back(nuclei_object);
