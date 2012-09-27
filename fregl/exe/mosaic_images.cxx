@@ -157,7 +157,7 @@ main(int argc, char* argv[]) {
 #ifdef _MSC_VER
         #pragma omp parallel for //collapse(3)
 #else
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for //collapse(3) // Temporary solution for now, we have to find a general fix for the collapse directive in all possible plataforms
 #endif
             for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
             {
