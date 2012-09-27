@@ -231,9 +231,9 @@ void ScatterView::selectRegion(void)
 	//QRect rect(LMargin, TMargin, this->width() - (LMargin+RMargin), this->height() - (BMargin+TMargin));
 	QRect rect(0,0,this->width(), this->height());
 	QImage img(rect.width(),rect.height(),QImage::Format_Mono);
-	img.fill(Qt::white);
+	img.fill(QColor(Qt::white).rgb());
 	QPainter painter(&img);
-	painter.setPen(Qt::black);
+	painter.setPen(QColor(Qt::black).rgb());
 	painter.setBrush(Qt::black);
 	painter.drawPath(path);
 	//Turn the image into a Region
