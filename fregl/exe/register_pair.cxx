@@ -144,7 +144,6 @@ main(  int argc, char* argv[] )
 
 	// Perform registration
 	//
-	std::cout << std::endl << "FIXME num of slices " << slices();
 	fregl_pairwise_register< InputPixelType > registor(from_image, to_image, from_image_id_wo_ext, to_image_id_wo_ext, background());
 	if (slices.set()) registor.set_stack_size( slices() );
 	registor.set_smoothing( smooth() );
