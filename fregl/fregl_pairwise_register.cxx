@@ -1071,5 +1071,5 @@ string_trim (const vcl_string& source, const vcl_string& pat)
 }
 
 //Explicit Instantiation
-//template class fregl_pairwise_register< unsigned char >;
+template class fregl_pairwise_register< unsigned char >;
 template class fregl_pairwise_register< unsigned short >;
