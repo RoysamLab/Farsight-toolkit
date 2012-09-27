@@ -4,7 +4,7 @@
 #include <itkImage.h>
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "..\Tracing\MultipleNeuronTracer\MultipleNeuronTracer.h"
+#include "../Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 
 class MicrogliaMovieSegTracer
 {
