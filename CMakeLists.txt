@@ -107,6 +107,7 @@ if( BUILD_NUCLEI )
   if( NOT BUILD_CLUSCLUS )
     message(FATAL_ERROR "NucleusEditor requires Clusclus. Turn on BUILD_Clusclus")
   endif()
+  set( BUILD_ACTIVEVALIDATION ON CACHE BOOL "Build ActiveValidation" FORCE )
 endif()
 
 if(BUILD_MicrogliaMoviePipeline)
