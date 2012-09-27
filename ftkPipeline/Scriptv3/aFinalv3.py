@@ -155,6 +155,8 @@ if( p2 == 'vhsomasu' ):
 	USERNAME = 'vhsomasu'
 if( p2 == 'nrey' ):
 	USERNAME = 'nrey'
+if( p2 == 'mmmegjha' ):
+	USERNAME = 'mmmegjha'
 
 #DATA_FOLDER_ALL = ['/0131_test','/0131_test2'] # For testing dont forget the xTile params
 #DATA_FOLDER_ALL = ['/0131_test'] # For testing dont forget the xTile params
@@ -258,7 +260,14 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		MAIN_DATA_FOLDER = '/data/vinay/data'
 		MAIN_DEB_DATA_FOLDER = '/data/vinay/deb'
 		
+	if( USERNAME == 'mmmegjha' ):
+		FARSIGHT_BIN = '/data/mmmegjha/farsight/bin'
+		FARSIGHT_BIN_EXE = '/data/mmmegjha/farsight/bin/exe'
 
+		MAIN_DATA_FOLDER = '/data/mmmegjha/dataNew'
+		MAIN_DEB_DATA_FOLDER = '/data/mmmegjha/deb'
+
+		
 	LOCAL_DATASET_PATH = MAIN_DATA_FOLDER+DATA_FOLDER
 	LOCAL_DEB_DATASET_PATH = MAIN_DEB_DATA_FOLDER+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
 

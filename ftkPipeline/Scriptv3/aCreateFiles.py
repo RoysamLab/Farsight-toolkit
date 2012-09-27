@@ -16,11 +16,15 @@ if( p2 == 'vhsomasu' ):
 	USERNAME = 'vhsomasu'
 if( p2 == 'nrey' ):
         USERNAME = 'nrey'
+if( p2 == 'mmmegjha' ):
+        USERNAME = 'mmmegjha'		
 
 if( USERNAME == 'nrey' ):
 	MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
 if( USERNAME == 'vhsomasu' ):
 	MAIN_DATA_FOLDER = '/data/vinay/data'
+if( USERNAME == 'mmmegjha' ):
+	MAIN_DATA_FOLDER = '/data/mmmegjha/dataNew'
 
 SERVER = 'none'
 p = os.uname()
