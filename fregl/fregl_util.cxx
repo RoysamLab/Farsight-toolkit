@@ -155,6 +155,7 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	if (sigma <= 0) return image2D;
 
 	// Perform Gaussian smoothing if the 
+	std::cout << std::endl << "FIXME Im smoothing the image in max projection";
 	typename SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
 	typename CastFilterType::Pointer caster = CastFilterType::New();
 	smoother->SetInput( image2D );

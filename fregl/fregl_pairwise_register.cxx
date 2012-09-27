@@ -159,9 +159,9 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 	// of later by the coarse-to-fine refinement in 3D
 
 	ImageType2DPointer from_image_2d = fregl_util< TPixel >::fregl_util_max_projection(from_image_);
-	vcl_cout << "Projecting the from_image ....\n";
+	vcl_cout << "Projecting2 the from_image ....\n";
 	ImageType2DPointer to_image_2d = fregl_util< TPixel >::fregl_util_max_projection(to_image_);
-	vcl_cout << "Projecting the to_image ....\n";
+	vcl_cout << "Projecting2 the to_image ....\n";
 
 	// output max projected images to files and read them back as vxl
 	// images. This might not be a very neat approach, but it is much
@@ -171,18 +171,20 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 	vcl_string to_2dfilename = from_image_filename + vcl_string("_to_") + to_image_filename + vcl_string("_xxx_")+to_image_filename+vcl_string("_proj.tif");
 
 	typedef itk::ImageFileWriter< typename fregl_util< TPixel >::GDBICPImageType >  WriterType2D;
-	typedef itk::RescaleIntensityImageFilter< ImageType2D , typename fregl_util< TPixel >::GDBICPImageType > RescaleIntensityImageFilterType2D;
+	//typedef itk::RescaleIntensityImageFilter< ImageType2D , typename fregl_util< TPixel >::GDBICPImageType > RescaleIntensityImageFilterType2D;
 
 	try {
-		typename RescaleIntensityImageFilterType2D::Pointer rescaleFilter = RescaleIntensityImageFilterType2D::New();
+		//typename RescaleIntensityImageFilterType2D::Pointer rescaleFilter = RescaleIntensityImageFilterType2D::New();
 		typename WriterType2D::Pointer writer2D = WriterType2D::New();
-		rescaleFilter->SetInput( from_image_2d );
+		//rescaleFilter->SetInput( from_image_2d );
 		writer2D->SetFileName( from_2dfilename );
-		writer2D->SetInput( rescaleFilter->GetOutput() );
+		//writer2D->SetInput( rescaleFilter->GetOutput() );
+		writer2D->SetInput( from_image_2d );
 		writer2D->Update();
 
 		writer2D->SetFileName( to_2dfilename );
-		rescaleFilter->SetInput( to_image_2d );
+		//rescaleFilter->SetInput( to_image_2d );
+		writer2D->SetInput( to_image_2d );
 		writer2D->Update();
 	}
 	catch(itk::ExceptionObject& e) {
@@ -237,7 +239,7 @@ run(double& obj_value, const vcl_string & gdbicp_exe_path, bool scaling)
 		from_image_crop = crop_image(from_image_);
 		to_image_crop = crop_image(to_image_);
 
-
+std::cout << std::endl << "FIXME 3d REGION: " << from_image_crop->GetRequestedRegion();
 		// Force early release of images that are not needed anymore.
 		from_image_2d = 0;
 		to_image_2d = 0;
@@ -327,9 +329,9 @@ run(double init_x, double init_y, double& obj_value)
 	// of later by the coarse-to-fine refinement in 3D
 
 	ImageType2DPointer from_image_2d = fregl_util< TPixel >::fregl_util_max_projection(from_image_);
-	vcl_cout << "Projecting the from_image ....\n";
+	vcl_cout << "Projecting3 the from_image ....\n";
 	ImageType2DPointer to_image_2d = fregl_util< TPixel >::fregl_util_max_projection(to_image_);
-	vcl_cout << "Projecting the to_image ....\n";
+	vcl_cout << "Projecting3 the to_image ....\n";
 
 	// output max projected images to files and read them back as vxl
 	// images. This might not be a very neat approach, but it is much
@@ -823,31 +825,33 @@ crop_image( InputImageTypePointer image )
 			outputIt.Set( inputIt.Get() );
 		}
 	}
-
+std::cout << std::endl << "Smooth " << smoothing_;
 	if (!smoothing_) return image_crop;
 
 	// perform smoothing
 
 	typedef itk::DiscreteGaussianImageFilter< InternalImageType,InternalImageType > SmoothingFilterType;
-	typedef itk::RescaleIntensityImageFilter< InternalImageType, InternalImageType> RescalerType;
+	//typedef itk::RescaleIntensityImageFilter< InternalImageType, InternalImageType> RescalerType;
 
 	SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
-	RescalerType::Pointer rescaler = RescalerType::New();
-
+	//RescalerType::Pointer rescaler = RescalerType::New();
+std::cout << std::endl << "FIXME why Im here, scaling to 25, scaling to 2500 ";
 	smoother->SetInput( image_crop );
 	smoother->SetVariance(smoothing_);
-	smoother->SetMaximumKernelWidth(15);
-	rescaler->SetInput( smoother->GetOutput() );
-	rescaler->SetOutputMinimum( 0 );
-	rescaler->SetOutputMaximum( 250 );
+	smoother->SetMaximumKernelWidth(35);
+	//rescaler->SetInput( smoother->GetOutput() );
+	//rescaler->SetOutputMinimum( 0 );
+	//rescaler->SetOutputMaximum( 65535 );
 	try {
-		rescaler->Update();
+		smoother->GetOutput();
+		//rescaler->Update();
 	}
 	catch(itk::ExceptionObject& e) {
 		vcl_cout << e << vcl_endl;
 	}
 
-	return rescaler->GetOutput();
+	return smoother->GetOutput();
+	//return rescaler->GetOutput();
 }
 
 // Check the validity of the 2D xform to be sure the affine components
@@ -1067,5 +1071,5 @@ string_trim (const vcl_string& source, const vcl_string& pat)
 }
 
 //Explicit Instantiation
-template class fregl_pairwise_register< unsigned char >;
+//template class fregl_pairwise_register< unsigned char >;
 template class fregl_pairwise_register< unsigned short >;

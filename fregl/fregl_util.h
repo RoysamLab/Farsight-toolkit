@@ -49,7 +49,7 @@ class fregl_util
 {
 public: 
 	typedef TPixel							InputPixelType;
-	typedef unsigned char						GDBICPPixelType;
+	typedef unsigned short						GDBICPPixelType;
 
 	typedef itk::Image< InputPixelType, 3 >		ImageType;
 	typedef typename ImageType::Pointer		ImageTypePointer;
