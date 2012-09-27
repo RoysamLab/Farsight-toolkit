@@ -97,7 +97,7 @@
 #include "ftkGraphs/kNearestObjects.h"
 #include "ftkSpectralUnmixing/ftkSpectralUnmixing.h"
 #include "PatternAnalysis/DiffusionMap/DiffusionMap.h"
-#include "Active_Validation\ActiveValidation.h"
+#include "Active_Validation/ActiveValidation.h"
 
 //VTK includes:
 #include "vtkQtTableView.h"
