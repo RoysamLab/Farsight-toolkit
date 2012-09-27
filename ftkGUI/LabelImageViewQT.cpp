@@ -1450,37 +1450,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 				painter->setBrush(myColor1);
 			}
 			//painter->drawRect(point.x - 2, point.y - 2, 5, 5);
-			//painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
-			if(cls1 == 1)
-			{
-				myColor1 = Qt::yellow;
-				painter->setBrush(myColor1);
-				painter->drawEllipse(point.x - 4, point.y - 4, 9, 9);
-				
-			}
-			if(cls1 == 2)
-			{
-				myColor1 = Qt::magenta;
-				painter->setBrush(myColor1);
-				painter->drawRect(point.x - 4, point.y - 4, 9, 9);
-				
-			}
-			if(cls1 == 3)
-			{
-				myColor1 = Qt::cyan;
-				painter->setBrush(myColor1);
-				painter->drawEllipse(point.x - 4, point.y - 4, 9, 9);
-				
-			}
-			if(cls1 == 4)
-			{
-				myColor1 = Qt::green;
-				painter->setBrush(myColor1);
-				painter->drawRect(point.x - 4, point.y - 4, 9, 9);
-				
-			}
-
-
+			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}
 	}
 	
@@ -1670,8 +1640,8 @@ QVector<QColor> LabelImageViewQT::CreateColorTable()
 	QVector<QColor> colorTable;
 	
 	//Colors for 10 classes
-	colorTable.append(Qt::magenta);
 	colorTable.append(Qt::cyan);
+	colorTable.append(Qt::magenta);
 	colorTable.append(Qt::yellow);
 	colorTable.append(Qt::red);
 	colorTable.append(Qt::green);

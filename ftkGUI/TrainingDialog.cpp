@@ -114,7 +114,7 @@ void TrainingDialog::addClass(void)
 		return;
 
 	LabelImageViewQT *labelimview = new LabelImageViewQT;
-	QString class_color_name = labelimview->GetColorNameFromTable( inputValues.size() );
+	QString class_color_name = labelimview->GetColorNameFromTable( inputValues.size()+1 );
 	delete labelimview;
 	//Create input box
 	QLabel *label = new QLabel("Class " + QString::number(inputValues.size() + 1) + " ("  + class_color_name + ")" + ": ");
