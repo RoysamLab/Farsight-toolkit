@@ -206,7 +206,9 @@ void MicrogliaMovieSegTracer::GenerateSeedPointsForSoma(CharImageType::Pointer i
 MicrogliaMovieSegTracer::LabelImageType::Pointer MicrogliaMovieSegTracer::SegmentSoma(FloatImageType::Pointer inputImage, std::vector< itk::Index<3> > &seedVec)
 {
 	SomaExtractor *Somas = new SomaExtractor();
-	SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(inputImage, seedVec, alfa, beta, timethreshold, curvatureScaling, rmsThres, holeSize, minObjSize);
+	SomaExtractor::OutputImageType::Pointer ucharImage = SomaExtractor::OutputImageType::New();
+	SomaExtractor::ProbImageType::Pointer binImage = SomaExtractor::ProbImageType::New();
+	SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(ucharImage, seedVec, binImage);
 	delete Somas;											
 	return segImage;
 }
