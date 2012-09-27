@@ -296,6 +296,11 @@ void NucleusEditor::createMenus()
 	saveSomaImageAction->setObjectName("saveSomaImageAction");
 	connect(saveSomaImageAction, SIGNAL(triggered()), this, SLOT(saveSomaImage()));
 	fileMenu->addAction(saveSomaImageAction);
+    
+    saveNeuronImageAction = new QAction(tr("Save Neuron Image..."), this);
+	saveNeuronImageAction->setObjectName("saveNeuronImageAction");
+	connect(saveNeuronImageAction, SIGNAL(triggered()), this, SLOT(saveNeuronImage()));
+	fileMenu->addAction(saveNeuronImageAction);
 
 	saveImageAction = new QAction(tr("Save Image..."), this);
 	saveImageAction->setObjectName("saveImageAction");
@@ -1031,6 +1036,131 @@ bool NucleusEditor::saveSomaImage()
 	return true;
 
 
+}
+
+bool NucleusEditor::saveNeuronImage()
+{
+    if(!labImg)
+    {
+        std::cerr << "No label image detected" << std::endl;
+        return false;
+    }
+    
+    if (!table)
+    {
+        std::cerr << "No table detected" << std::endl;
+        return false;
+    }
+    
+	std::vector< vtkSmartPointer<vtkTable> > featureTableVector;
+	if(myImg->GetImageInfo()->numTSlices > 1)
+		featureTableVector = nucSeg->table4DImage;
+	else
+		featureTableVector.push_back(table);
+    
+    
+	bool prediction_active_mg_column_name_found = false;
+	for(vtkIdType col = table->GetNumberOfColumns() - 1; col>=0; --col)
+	{
+		std::string current_column_name = table->GetColumnName(col);
+		if(current_column_name.find("prediction_active_mg") != std::string::npos )
+		{
+			prediction_active_mg_column_name_found = true;
+			break;
+		}
+	}
+	
+    if(!prediction_active_mg_column_name_found)
+    {
+        std::cerr << "Did not find a column named \"prediction_active_mg\"" << std::endl;
+        return false;
+    }
+	
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save Soma Image As..."),lastPath, standardImageTypes);
+	if(filename == "")
+	{
+        std::cerr << "Did not get a filename from Save Soma Image As dialog" << std::endl;
+        return false;
+	}
+    lastPath = QFileInfo(filename).absolutePath();
+	std::string Filename = filename.toStdString();
+    std::string::iterator it;
+	it = Filename.end() - 4;
+	Filename.erase(it, it+4);
+	
+    typedef unsigned short LabelImagePixelType;
+	typedef itk::Image<LabelImagePixelType, 3> LabelImageType;
+	typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
+	
+    for(unsigned short t = 0; t < myImg->GetImageInfo()->numTSlices; ++t)
+	{
+		std::stringstream ss;
+		ss << t;
+		std::string time = ss.str();
+		
+        std::string somasFilename = Filename + "_somas_" + time + ".tif";
+		
+        LabelImageType::Pointer labelImage = labImg->GetItkPtr<LabelImagePixelType>(t,0);
+        
+		LabelImageType::Pointer somaImage = LabelImageType::New();
+        itk::Size<3> somaImage_size = labelImage->GetLargestPossibleRegion().GetSize();
+		LabelImageType::IndexType start;    start.Fill(0);
+		LabelImageType::PointType origin;   origin.Fill(0);
+        somaImage->SetOrigin( origin );
+		LabelImageType::RegionType region(start, somaImage_size);
+		somaImage->SetRegions( region );
+		somaImage->Allocate();
+		somaImage->FillBuffer(0);
+		somaImage->Update();
+        
+		std::map<unsigned short, int> classMap;
+		for(vtkIdType row=0; row < featureTableVector[t]->GetNumberOfRows(); ++row)
+		{
+			classMap[featureTableVector[t]->GetValue(row,0).ToUnsignedShort()] = featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+		}
+        
+        itk::ImageConstIterator<LabelImageType> labelImage_iter;
+        itk::ImageIterator<LabelImageType> soma_image_iter;
+        
+        while(!soma_image_iter.IsAtEnd())
+        {
+            LabelImagePixelType label_image_pixel_value = labelImage_iter.Get();
+            if (classMap[label_image_pixel_value] == 1)
+                soma_image_iter.Set(label_image_pixel_value);
+        }
+        
+		LabelWriterType::Pointer writer = LabelWriterType::New();
+		writer->SetFileName(somasFilename);
+		writer->SetInput(somaImage);
+		writer->Update();
+        
+		//it = Filename.end() - 12;
+		//Filename.erase(it, it+12);
+		std::string centroidsFilename = Filename + "_centroids_" + time + ".txt";
+        
+		ofstream outFile;
+		outFile.open(centroidsFilename.c_str(), ios::out | ios::trunc );
+		if ( !outFile.is_open() )
+		{
+			std::cerr << "Failed to Load Document: " << outFile << std::endl;
+			return false;
+		}
+		
+        //Write out the features:
+		for(vtkIdType row = 0; row < featureTableVector[t]->GetNumberOfRows(); ++row)
+		{
+			if(featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+			{
+				outFile << featureTableVector[t]->GetValue(row,1).ToInt() << "\t" ;
+				outFile << featureTableVector[t]->GetValue(row,2).ToInt() << "\t" ;
+				outFile << featureTableVector[t]->GetValue(row,3).ToInt() << "\t" ;
+				outFile << "\n";
+			}
+		}
+		outFile.close();
+	}
+	
+	return true;
 }
 bool NucleusEditor::saveProject()
 {

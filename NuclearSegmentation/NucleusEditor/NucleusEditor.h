@@ -163,6 +163,7 @@ protected slots:
 	//Saving:
 	bool saveProject(void);
 	bool saveSomaImage(void);
+    bool saveNeuronImage(void);
 	bool askSaveImage(void);
 	bool saveImage(void);
 	bool askSaveResult(void);
@@ -319,6 +320,7 @@ protected:
 	QAction *processProjectAction;
 	QAction *saveProjectAction;
 	QAction *saveSomaImageAction;
+    QAction *saveNeuronImageAction;
 	QAction *saveImageAction;
 	QAction *saveLabelAction;
 	QAction *saveTableAction;
