@@ -920,118 +920,189 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 //*********************************************************************************
 bool NucleusEditor::saveSomaImage()
 {
-	if(!labImg || !table) return false;
+		// Soma Montage
+	typedef itk::Image<unsigned int, 3> rawImageType_uint;
+	typedef itk::ImageFileWriter< rawImageType_uint > uintImageWriter;
+	typedef itk::ImageFileReader< rawImageType_uint > uintImageReader;
 
-	std::vector< vtkSmartPointer< vtkTable > > featureTable;
-	if(myImg->GetImageInfo()->numTSlices > 1)
-		featureTable = nucSeg->table4DImage;
-	else
-		featureTable.push_back(table);
+	std::string nameLabelMontage = "G:/DATA/0128_neurons/control/Input_Image_label_nuc.tif";
+	uintImageReader::Pointer reader = uintImageReader::New();
+	reader->SetFileName(nameLabelMontage);
+	reader->Update();
+	rawImageType_uint::Pointer imageLabelMontage = reader->GetOutput();
+	rawImageType_uint::RegionType ImageMontageRegion = imageLabelMontage->GetLargestPossibleRegion();
 
-
-	bool found = false;
-	for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
-	{	
-		std::string current_column = table->GetColumnName(col);
-		if(current_column.find("prediction_active_mg") != std::string::npos )
-		{
-			found = true;
-			break;			
-		}	
-	}
-	if(!found) return false;
-
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save Soma Image As..."),lastPath, standardImageTypes);
-	if(filename == "")
-		return false;
-	lastPath = QFileInfo(filename).absolutePath();
-	std::string Filename = filename.toStdString();
-	string::iterator it;
-	it = Filename.end() - 4;
-	Filename.erase(it, it+4);
-	
-	typedef itk::Image<unsigned short, 3> LabelImageType;
-	//typedef itk::Image<unsigned char, 3> UCharImageType;
-	typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
-	for(int t=0; t<(int)myImg->GetImageInfo()->numTSlices; ++t)
+	rawImageType_uint::Pointer imageSomaMontage = rawImageType_uint::New();
+	itk::Size<3> im_size = imageLabelMontage->GetBufferedRegion().GetSize();
+	rawImageType_uint::RegionType region;
+	region.SetSize( ImageMontageRegion.GetSize() );
+	region.SetIndex( ImageMontageRegion.GetIndex() );
+	imageSomaMontage->SetRegions( region );
+	imageSomaMontage->Allocate();
+	imageSomaMontage->FillBuffer(0);
+	try
 	{
-		std::stringstream ss;
-		ss << t;
-		std::string time = ss.str();
-		std::string somasFilename = Filename + "_somas_" + time + ".tif";
-		LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(t,0);
-		LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
-
-		LabelImageType::Pointer somaImage = LabelImageType::New();
-		itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
-		LabelImageType::IndexType start;
-		start[0] =   0;  // first index on X
-		start[1] =   0;  // first index on Y    
-		start[2] =   0;  // first index on Z  
-		LabelImageType::PointType origin;
-		origin[0] = 0; 
-		origin[1] = 0;    
-		origin[2] = 0;    
-		somaImage->SetOrigin( origin );
-		LabelImageType::RegionType region;
-		region.SetSize( im_size );
-		region.SetIndex( start );
-		somaImage->SetRegions( region );
-		somaImage->Allocate();
-		somaImage->FillBuffer(0);
-		somaImage->Update();
-		LabelImageType::PixelType * somaArray = somaImage->GetBufferPointer();
-
-		int slice_size = im_size[1] * im_size[0];
-		int row_size = im_size[0];
-		std::map<unsigned short, int> classMap;
-		for(int row=0; row<(int)featureTable[t]->GetNumberOfRows(); ++row)
-		{
-			classMap[featureTable[t]->GetValue(row,0).ToUnsignedShort()] = featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt();
-		}
-
-		for(int i=0; i<im_size[2]; ++i)
-		{
-			for(int j=0; j<im_size[1]; ++j)
-			{
-				for(int k=0; k<im_size[0]; ++k)
-				{
-					unsigned long offset = (i*slice_size)+(j*row_size)+k;
-					if(classMap[labelArray[offset]] == 1)
-						somaArray[offset] = labelArray[offset];
-				}
-			}
-		}
-
-		LabelWriterType::Pointer writer = LabelWriterType::New();
-		writer->SetFileName(somasFilename);
-		writer->SetInput(somaImage);
-		writer->Update();
-
-		//it = Filename.end() - 12;
-		//Filename.erase(it, it+12);
-		std::string centroidsFilename = Filename + "_centroids_" + time + ".txt";
-
-		ofstream outFile; 
-		outFile.open(centroidsFilename.c_str(), ios::out | ios::trunc );
-		if ( !outFile.is_open() )
-		{
-			std::cerr << "Failed to Load Document: " << outFile << std::endl;
-			return false;
-		}
-		//Write out the features:
-		for(int row = 0; row < (int)featureTable[t]->GetNumberOfRows(); ++row)
-		{
-			if(featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
-			{
-				outFile << featureTable[t]->GetValue(row,1).ToInt() << "\t" ;
-				outFile << featureTable[t]->GetValue(row,2).ToInt() << "\t" ;
-				outFile << featureTable[t]->GetValue(row,3).ToInt() << "\t" ;
-				outFile << "\n";
-			}
-		}
-		outFile.close();
+		imageSomaMontage->Update();
 	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	rawImageType_uint::PixelType * imageSomaArray = imageSomaMontage->GetBufferPointer();
+	rawImageType_uint::PixelType * imageLabelArray = imageLabelMontage->GetBufferPointer();
+
+	unsigned long long sizeXY = im_size[1] * im_size[0];
+	unsigned long long sizeX = im_size[0];
+	std::map<unsigned int, int> classMap;
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		classMap[table->GetValue(row,0).ToUnsignedInt()] = table->GetValueByName(row, "prediction_active_neu").ToInt();
+	}
+
+	#pragma omp parallel for //collapse(3)
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			for(int k=0; k<im_size[0]; ++k)
+			{
+				unsigned long long offset = (i*sizeXY)+(j*sizeX)+k;
+				if( imageLabelArray[offset] != 0 )
+					if(classMap[imageLabelArray[offset]] == 1)
+						imageSomaArray[offset] = imageLabelArray[offset];
+			}
+		}
+	}	
+
+	std::string nameSomaMontage = "G:/DATA/0128_neurons/control/neuron_soma.nrrd";
+	uintImageWriter::Pointer writer = uintImageWriter::New();
+	writer->SetFileName(nameSomaMontage);
+	writer->SetInput(imageSomaMontage);
+	writer->Update();
+
+	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	{
+		if(table->GetValueByName(row, "prediction_active_neu").ToInt() != 1)
+		{
+			table->RemoveRow(row);
+			--row;
+		}
+	}
+
+
+	//if(!labImg || !table) return false;
+
+	//std::vector< vtkSmartPointer< vtkTable > > featureTable;
+	//if(myImg->GetImageInfo()->numTSlices > 1)
+	//	featureTable = nucSeg->table4DImage;
+	//else
+	//	featureTable.push_back(table);
+
+
+	//bool found = false;
+	//for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
+	//{	
+	//	std::string current_column = table->GetColumnName(col);
+	//	if(current_column.find("prediction_active_mg") != std::string::npos )
+	//	{
+	//		found = true;
+	//		break;			
+	//	}	
+	//}
+	//if(!found) return false;
+
+	//QString filename = QFileDialog::getSaveFileName(this, tr("Save Soma Image As..."),lastPath, standardImageTypes);
+	//if(filename == "")
+	//	return false;
+	//lastPath = QFileInfo(filename).absolutePath();
+	//std::string Filename = filename.toStdString();
+	//string::iterator it;
+	//it = Filename.end() - 4;
+	//Filename.erase(it, it+4);
+	//
+	//typedef itk::Image<unsigned short, 3> LabelImageType;
+	////typedef itk::Image<unsigned char, 3> UCharImageType;
+	//typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
+	//for(int t=0; t<(int)myImg->GetImageInfo()->numTSlices; ++t)
+	//{
+	//	std::stringstream ss;
+	//	ss << t;
+	//	std::string time = ss.str();
+	//	std::string somasFilename = Filename + "_somas_" + time + ".tif";
+	//	LabelImageType::Pointer labelImage = labImg->GetItkPtr<unsigned short>(t,0);
+	//	LabelImageType::PixelType * labelArray = labelImage->GetBufferPointer();
+
+	//	LabelImageType::Pointer somaImage = LabelImageType::New();
+	//	itk::Size<3> im_size = labelImage->GetBufferedRegion().GetSize();
+	//	LabelImageType::IndexType start;
+	//	start[0] =   0;  // first index on X
+	//	start[1] =   0;  // first index on Y    
+	//	start[2] =   0;  // first index on Z  
+	//	LabelImageType::PointType origin;
+	//	origin[0] = 0; 
+	//	origin[1] = 0;    
+	//	origin[2] = 0;    
+	//	somaImage->SetOrigin( origin );
+	//	LabelImageType::RegionType region;
+	//	region.SetSize( im_size );
+	//	region.SetIndex( start );
+	//	somaImage->SetRegions( region );
+	//	somaImage->Allocate();
+	//	somaImage->FillBuffer(0);
+	//	somaImage->Update();
+	//	LabelImageType::PixelType * somaArray = somaImage->GetBufferPointer();
+
+	//	int slice_size = im_size[1] * im_size[0];
+	//	int row_size = im_size[0];
+	//	std::map<unsigned short, int> classMap;
+	//	for(int row=0; row<(int)featureTable[t]->GetNumberOfRows(); ++row)
+	//	{
+	//		classMap[featureTable[t]->GetValue(row,0).ToUnsignedShort()] = featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+	//	}
+
+	//	for(int i=0; i<im_size[2]; ++i)
+	//	{
+	//		for(int j=0; j<im_size[1]; ++j)
+	//		{
+	//			for(int k=0; k<im_size[0]; ++k)
+	//			{
+	//				unsigned long offset = (i*slice_size)+(j*row_size)+k;
+	//				if(classMap[labelArray[offset]] == 1)
+	//					somaArray[offset] = labelArray[offset];
+	//			}
+	//		}
+	//	}
+
+	//	LabelWriterType::Pointer writer = LabelWriterType::New();
+	//	writer->SetFileName(somasFilename);
+	//	writer->SetInput(somaImage);
+	//	writer->Update();
+
+	//	//it = Filename.end() - 12;
+	//	//Filename.erase(it, it+12);
+	//	std::string centroidsFilename = Filename + "_centroids_" + time + ".txt";
+
+	//	ofstream outFile; 
+	//	outFile.open(centroidsFilename.c_str(), ios::out | ios::trunc );
+	//	if ( !outFile.is_open() )
+	//	{
+	//		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+	//		return false;
+	//	}
+	//	//Write out the features:
+	//	for(int row = 0; row < (int)featureTable[t]->GetNumberOfRows(); ++row)
+	//	{
+	//		if(featureTable[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+	//		{
+	//			outFile << featureTable[t]->GetValue(row,1).ToInt() << "\t" ;
+	//			outFile << featureTable[t]->GetValue(row,2).ToInt() << "\t" ;
+	//			outFile << featureTable[t]->GetValue(row,3).ToInt() << "\t" ;
+	//			outFile << "\n";
+	//		}
+	//	}
+	//	outFile.close();
+	//}
 	
 	return true;
 
