@@ -1040,11 +1040,11 @@ bool NucleusEditor::saveSomaImage()
 
 bool NucleusEditor::saveNeuronImage()
 {
-    if(!labImg)
-    {
-        std::cerr << "No label image detected" << std::endl;
-        return false;
-    }
+//    if(!labImg)
+//    {
+//        std::cerr << "No label image detected" << std::endl;
+//        return false;
+//    }
     
     if (!table)
     {
@@ -1054,11 +1054,9 @@ bool NucleusEditor::saveNeuronImage()
     
 	std::vector< vtkSmartPointer<vtkTable> > featureTableVector;
     
-    std::cerr << "numTSlice: " << myImg->GetImageInfo()->numTSlices << std::endl;
-    if(myImg->GetImageInfo()->numTSlices > 1)
-		featureTableVector = nucSeg->table4DImage;
-	else
-		featureTableVector.push_back(table);
+    //std::cerr << "numTSlice: " << myImg->GetImageInfo()->numTSlices << std::endl;
+
+	featureTableVector.push_back(table);
     
     
 	bool prediction_active_mg_column_name_found = false;
@@ -1094,7 +1092,7 @@ bool NucleusEditor::saveNeuronImage()
 	typedef itk::Image<LabelImagePixelType, 3> LabelImageType;
 	typedef itk::ImageFileWriter<LabelImageType> LabelWriterType;
 	
-    for(unsigned short t = 0; t < myImg->GetImageInfo()->numTSlices; ++t)
+    for(unsigned short t = 0; t < 1; ++t)
 	{
 		std::stringstream ss;
 		ss << t;
@@ -1102,7 +1100,20 @@ bool NucleusEditor::saveNeuronImage()
 		
         std::string somasFilename = Filename + "_somas_" + time + ".tif";
 		
-        LabelImageType::Pointer labelImage = labImg->GetItkPtr<LabelImagePixelType>(t,0);
+        //LabelImageType::Pointer labelImage = labImg->GetItkPtr<LabelImagePixelType>(t,0);
+        typedef itk::ImageFileReader<LabelImageType> LabelImageReaderType;
+        
+        LabelImageReaderType::Pointer reader = LabelImageReaderType::New();
+        reader->SetFileName("/Users/hocheung20/Desktop/nuc_test/nuc_labels.tif");
+        try
+        {
+            reader->Update();
+        }
+        catch (itk::ExceptionObject &err)
+        {
+            std::cerr << err << std::endl;
+        }
+        LabelImageType::Pointer labelImage = reader->GetOutput();
         
 		LabelImageType::Pointer somaImage = LabelImageType::New();
         itk::Size<3> somaImage_size = labelImage->GetLargestPossibleRegion().GetSize();
@@ -1154,9 +1165,14 @@ bool NucleusEditor::saveNeuronImage()
 		}
 		
         //Write out the features:
+        outFile << featureTableVector[t]->GetColumnName(1) << "\t";
+        outFile << featureTableVector[t]->GetColumnName(2) << "\t";
+        outFile << featureTableVector[t]->GetColumnName(3) << "\t\n";
+        
+        
 		for(vtkIdType row = 0; row < featureTableVector[t]->GetNumberOfRows(); ++row)
-		{
-			if(featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
+		{     
+            if(featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt() == 1)
 			{
 				outFile << featureTableVector[t]->GetValue(row,1).ToInt() << "\t" ;
 				outFile << featureTableVector[t]->GetValue(row,2).ToInt() << "\t" ;

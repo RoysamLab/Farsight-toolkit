@@ -106,6 +106,7 @@
 #include "ftkPreprocess.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
+#include "itkImageFileReader.h"
 
 class ParamsFileDialog;
 class ProcessThread;
