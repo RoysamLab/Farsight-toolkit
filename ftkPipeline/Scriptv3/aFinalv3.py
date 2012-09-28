@@ -40,6 +40,7 @@ import a051_RunResc8bit
 import a052_RunResc8bitMhd
 import a060_RunSegmentation
 import a061_runDistMap
+import a062_runDistToDevice
 import a070_RunTracing
 import a075_RunAstroTracing
 #import a080_RunCheckSum
@@ -114,8 +115,8 @@ runRescale_bit = 1
 runRescale_bit_db = 1
 runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
-#runDistMap = 1		# Flag to run distance map computation
-#runDistMap_db = 1
+runDistToDevice = 1		# Flag to run distance to device computation
+runDistToDevice_db = 1
 runTrac = 1		# Flag to run Tracing
 runTrac_db = 1
 runAstroTrac = 0		# Flag to run Astrocyte Tracing
@@ -138,6 +139,7 @@ haveCy5_for = 1
 haveTRT_for = 1
 haveGFP_for = 1
 haveDAP_for = 1
+haveDEVICE_for = 1
 
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -214,6 +216,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	haveTRT = 1
 	haveGFP = 1
 	haveDAP = 1
+	haveDEVICE = 1
 
 	if( haveCy5_for == 0 ):
 		haveCy5 = 0
@@ -223,6 +226,8 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		haveGFP = 0
 	if( haveDAP_for == 0 ):
 		haveDAP = 0
+	if( haveDEVICE_for == 0 ):
+		haveDEVICE = 0
 
 	FILE_Cy5 = ''
 	FILE_TRI = ''
@@ -735,6 +740,26 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
 		
 	
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	print "# Run Distance to device: "+DATA_FOLDER+' '+str(datetime.datetime.now())
+	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
+	if runDistToDevice == 1:
+		start_1 = time.time()
+		runDistToDevice_log = LOCAL_DATASET_PATH_LOG +'/runDistanceToDevice.log'
+		TEMP_FILE = open(runDistToDevice_log, 'w')
+        TEMP_FILE.write('RunDistanceToDeviceLog\n')
+		TEMP_FILE.close()
+		
+		if haveDEVICE == 1
+			FILE_DEVICE_IMAGE = LOCAL_DATASET_PATH_DATA+'/device'
+			TABLE_NO_DEVICE = ''
+			TABLE_DEVICE = ''
+			a062_runDistToDevice.main( FARSIGHT_BIN_EXE, FILE_DEVICE_IMAGE, TABLE_NO_DEVICE, TABLE_DEVICE, 'NRRD', runDistToDevice_log )
+		
+		elapsed_2 = (time.time() - start_2)
+		print "\t\tTime_2: hm: "+str(round(elapsed_2/3600))+":"+str(round(elapsed_1/60))
+		
+		
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print "# Run Tracing: "+DATA_FOLDER+' '+str(datetime.datetime.now())
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
