@@ -104,6 +104,8 @@
 //ITK Preprocessing includes:
 #include "ftkPreprocessDialog.h"
 #include "ftkPreprocess.h"
+#include "itkImageRegionIterator.h"
+#include "itkImageRegionConstIterator.h"
 
 class ParamsFileDialog;
 class ProcessThread;

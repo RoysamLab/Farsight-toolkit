@@ -1053,7 +1053,9 @@ bool NucleusEditor::saveNeuronImage()
     }
     
 	std::vector< vtkSmartPointer<vtkTable> > featureTableVector;
-	if(myImg->GetImageInfo()->numTSlices > 1)
+    
+    std::cerr << "numTSlice: " << myImg->GetImageInfo()->numTSlices << std::endl;
+    if(myImg->GetImageInfo()->numTSlices > 1)
 		featureTableVector = nucSeg->table4DImage;
 	else
 		featureTableVector.push_back(table);
@@ -1116,17 +1118,22 @@ bool NucleusEditor::saveNeuronImage()
 		std::map<unsigned short, int> classMap;
 		for(vtkIdType row=0; row < featureTableVector[t]->GetNumberOfRows(); ++row)
 		{
-			classMap[featureTableVector[t]->GetValue(row,0).ToUnsignedShort()] = featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+            int cell_class = featureTableVector[t]->GetValueByName(row, "prediction_active_mg").ToInt();
+            //std::cerr << "Cell class: " << cell_class << std::endl;
+            classMap[featureTableVector[t]->GetValue(row,0).ToUnsignedShort()] = cell_class;
 		}
         
-        itk::ImageConstIterator<LabelImageType> labelImage_iter;
-        itk::ImageIterator<LabelImageType> soma_image_iter;
+        itk::ImageRegionConstIterator<LabelImageType> labelImage_iter(labelImage, labelImage->GetLargestPossibleRegion());
+        itk::ImageRegionIterator<LabelImageType> soma_image_iter(somaImage, somaImage->GetLargestPossibleRegion());
         
         while(!soma_image_iter.IsAtEnd())
         {
             LabelImagePixelType label_image_pixel_value = labelImage_iter.Get();
             if (classMap[label_image_pixel_value] == 1)
                 soma_image_iter.Set(label_image_pixel_value);
+            
+            ++soma_image_iter;
+            ++labelImage_iter;
         }
         
 		LabelWriterType::Pointer writer = LabelWriterType::New();
