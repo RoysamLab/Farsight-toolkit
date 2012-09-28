@@ -69,6 +69,7 @@ View3D::View3D(QWidget *parent)
 	
 #ifdef USE_Clusclus
 	this->HeatmapWin = NULL;
+    this->Biheatmap = NULL;
 #endif
 
   this->SaveSettingsOnExit = true;
