@@ -7,7 +7,7 @@
 #include "ftkMainDarpaTrace.h"
 #include "ftkMainDarpaAstroTrace.h"
 
-enum STEPS { TEST_1, TEST_2, TEST_3, TEST_4, SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, SEGMENT, TRACE, ASTRO_TRACE};
+enum STEPS { TEST_1, TEST_2, TEST_3, TEST_4, SAVENRRD, PROJECTION, PROJECTION_8BIT, PROJECTIONRGB, PROJECTIONFLO, MEDIAN, RESCALE, RESCALE_8BIT, DISTANCE_MAP, DISTANCE_TO_DEVICE, SEGMENT, TRACE, ASTRO_TRACE};
 std::map< std::string, STEPS> stepsmap;
 
 void register_stepsmap()
@@ -25,6 +25,7 @@ void register_stepsmap()
 	stepsmap["RESCALE"] = RESCALE;
 	stepsmap["RESCALE_8BIT"] = RESCALE_8BIT;
 	stepsmap["DISTANCE_MAP"] = DISTANCE_MAP;
+	stepsmap["DISTANCE_TO_DEVICE"] = DISTANCE_TO_DEVICE;
 	stepsmap["SEGMENT"] = SEGMENT;
 	stepsmap["TRACE"] = TRACE;
 	stepsmap["ASTRO_TRACE"] = ASTRO_TRACE;
@@ -175,6 +176,18 @@ int main(int argc, char *argv[])
 			std::string imageType = argv[4];
 			
 			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_flo>( imageInputName, imageOutputName, imageType );
+			break;
+		}
+
+		case DISTANCE_TO_DEVICE:
+		{
+			std::cout << "DISTANCE_TO_DEVICE!"; 
+			std::string imageInputName = argv[2];
+			std::string tableInputName = argv[3];
+			std::string tableOutputName = argv[4];
+			std::string imageType = argv[5];
+			
+			objftkMainDarpa->computeDistMap<rawImageType_uint, rawImageType_flo>( imageInputName, tableInputName, tableOutputName, imageType );
 			break;
 		}
 			

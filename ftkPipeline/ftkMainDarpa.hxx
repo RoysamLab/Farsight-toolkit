@@ -896,6 +896,71 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 
 
 template<typename TINPUT, typename TOUTPUT >
+void ftkMainDarpa::computeDistToDevice( std::string inputImageName, std::string inputTableName, std::string outputTableName, std::string imageType )
+{
+	std::string tipoImagen;
+	int foundType=imageType.find("TIFF");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".tif";
+	}
+	foundType=imageType.find("NRRD");
+	if (foundType!=string::npos)
+	{
+		tipoImagen = ".nrrd";
+	}
+
+	//int found=inputImageName.find(".");
+	//std::string inputImageNameLocal = inputImageName.substr(0,found);
+	//
+	//found = inputImageNameLocal.find_last_of("/\\");
+	//inputImageNameLocal = inputImageNameLocal.substr(found+1);
+
+	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
+	//std::string temp1a = outputPath + "/" + inputImageNameLocal + "_dist_map" + tipoImagen;
+	
+	//typedef itk::BinaryThresholdImageFilter<TINPUT, rawImageType_8bit> ThresholdFilterType;
+	//typename ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	//threshold_filter->SetLowerThreshold(1);
+	//threshold_filter->SetInsideValue(255);
+	//threshold_filter->SetOutsideValue(0);
+	//threshold_filter->SetInput(inputImage);
+	////threshold_filter->Update();
+
+	typedef itk::SignedMaurerDistanceMapImageFilter<rawImageType_8bit, TOUTPUT> SignedMaurerDistanceMapImageFilterType;
+	typename SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(inputImage);
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+	typename TOUTPUT::Pointer outputImage = MaurerFilter->GetOutput();
+	itk::Size<3> im_size = outputImage->GetLargestPossibleRegion().GetSize();
+	typename TOUTPUT::PixelType * outputImageArray = outputImage->GetBufferPointer();
+	unsigned long long slice_size = im_size[1] * im_size[0];
+	unsigned long long row_size = im_size[0];
+
+	vtkSmartPointer<vtkTable> featureTable = ftk::LoadTable(inputTableName);
+	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	column->SetName("DistanceToDevice");
+	column->SetNumberOfValues(featureTable->GetNumberOfRows());
+	featureTable->AddColumn(column);
+	int column_index = featureTable->GetNumberOfColumns() - 1;
+	for(int row=0; row<(int)featureTable->GetNumberOfRows(); ++row)
+	{
+		unsigned int xx = featureTable->GetValue(row,1).ToUnsignedInt();
+		unsigned int yy = featureTable->GetValue(row,2).ToUnsignedInt();
+		unsigned int zz = featureTable->GetValue(row,3).ToUnsignedInt();
+		unsigned long long offset = (zz*sizeXY) + (yy*sizeX) + xx;
+		featureTable->SetValue(row, column_index, outputImageArray[offset]);
+	}
+
+	ftk::SaveTable(outputTableName, featureTable);
+
+}
+
+
+template<typename TINPUT, typename TOUTPUT >
 void ftkMainDarpa::computeMedianFilter( std::string inputImageName, std::string outputImageName, std::string imageType )
 {
 	std::string tipoImagen;
