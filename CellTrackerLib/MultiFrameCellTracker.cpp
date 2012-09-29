@@ -4,6 +4,12 @@ MultiFrameCellTracker::MultiFrameCellTracker()
 {
 
 }
+
+MultiFrameCellTracker::~MultiFrameCellTracker()
+{
+
+}
+
 void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string,float> > parameters)
 {
 
@@ -110,6 +116,9 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 
 	char *filename_number = new char [numbersfile.size()+1];
 	strcpy(filename_number,numbersfile.c_str());
+	
+	// Pointers of the label image
+	std::vector<helpers::LabelImageType::Pointer> labelImagePointers;
 
 	//Color2DImageType::Pointer number = readImage<Color2DImageType>(filename_number);
 	fvar.time_last = num_t-1;
@@ -117,7 +126,8 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		{
 
 			tempimage = rawimage->GetItkPtr<helpers::InputPixelType>(t,channel_to_track,readmode);	// channels FIXME
-			tempsegmented = labelimage->GetItkPtr<helpers::LabelPixelType>(t,0,readmode);	
+			tempsegmented = labelimage->GetItkPtr<helpers::LabelPixelType>(t,0,readmode);
+			labelImagePointers.push_back(tempsegmented);
 //			tempsegmented = labelimage->GetItkPtr<short int>(t,0,readmode);	
 			//itk::ImageIOBase::IOComponentType mytype = tempsegmented->getc
 
@@ -125,20 +135,20 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 			std::vector<FeatureType> f;
 			std::vector<helpers::LabelImageType::Pointer> li;
 			std::vector<helpers::InputImageType::Pointer> ri;
-			std::cout << std::endl << "\t\tHERE: " << tempimage->GetLargestPossibleRegion();
-			std::cout << std::endl << "\t\tHERE: " << tempsegmented->GetLargestPossibleRegion();
+// 			std::cout << std::endl << "\t\tHERE: " << tempimage->GetLargestPossibleRegion();
+// 			std::cout << std::endl << "\t\tHERE: " << tempsegmented->GetLargestPossibleRegion();
 			getFeatureVectorsFarsight(tempsegmented,tempimage,f,t,c);
 			for(int counter=0; counter < f.size(); counter++)
 			{
 				//LabelImageType::Pointer tmpli = extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented);
 				//if(tmpli->GetLargestPossibleRegion().GetSize()[2]==1)
 				//	continue;
-				std::cout << std::endl << "\t\tHERE: " << t << " " << f[counter].num << " " << counter;
-				for( int ii =0;ii<6;++ii)
-				{
-					std::cout << std::endl << f[counter].BoundingBox[ii];
-				}
-				std::cout << std::flush;
+// 				std::cout << std::endl << "\t\tHERE: " << t << " " << f[counter].num << " " << counter;
+// 				for( int ii =0;ii<6;++ii)
+// 				{
+// 					std::cout << std::endl << f[counter].BoundingBox[ii];
+// 				}
+// 				std::cout << std::flush;
 
 				li.push_back(extract_label_image(f[counter].num,f[counter].BoundingBox,tempsegmented));
 				ri.push_back(extract_raw_image(f[counter].BoundingBox,tempimage));
@@ -171,10 +181,10 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		fvar.BoundingBox[3] = imsize[1]-1;
 		fvar.BoundingBox[5] = imsize[2]-1;
 
-		for(int count =0;count<locfvector.size();++count)
-		{
-			std::cout<<locfvector[count].size()<<std::endl;
-		}
+// 		for(int count =0;count<locfvector.size();++count)
+// 		{
+// 			std::cout<<locfvector[count].size()<<std::endl;
+// 		}
 	    this->setData(locfvector,loclimages,locrimages);
 		this->dataset_id = dataset_id;
 		//helpers::ColorImageType::Pointer debugcol1 = helpers::ColorImageType::New();
@@ -201,81 +211,89 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		//debugcol2->FillBuffer(colorpixel);
 		//debugcol3->FillBuffer(colorpixel);
 		//this->set_debug_images(debugcol1,debugcol2,debugcol3);
-		this->run();
+		if ( this->run() )
+		{
 
-		printf("Rerunning with computed variances\n");
-		FeatureVariances fvarnew(this->get_computed_variances());
-		fvarnew.MS_prior = 0.4;
-		fvarnew.AD_prior = 0.01;
-		fvarnew.T_prior = 1;
-		fvarnew.timeVariance = 1;
-		fvarnew.overlapVariance = 1;
-	 
-		//std::string checkfile = entropyfiledirectory+"\\";
-		//checkfile +=   "check.txt";
-		//FILE *fp4 = fopen(checkfile.c_str(),"w");
-
-		 //typedef itk::LabelStatisticsImageFilter< helpers::LabelImageType, helpers::LabelImageType> LabelStatisticsImageFilterType;
+			printf("Rerunning with computed variances\n");
+			FeatureVariances fvarnew(this->get_computed_variances());
+			fvarnew.MS_prior = 0.4;
+			fvarnew.AD_prior = 0.01;
+			fvarnew.T_prior = 1;
+			fvarnew.timeVariance = 1;
+			fvarnew.overlapVariance = 1;
 		
-		std::vector<helpers::LabelImageType::Pointer> ItkTrackImagePtr;
-		for(int t = 0; t< num_t; t++)
-		{
-			printf("In final loop t = %d\n",t);
+			//std::string checkfile = entropyfiledirectory+"\\";
+			//checkfile +=   "check.txt";
+			//FILE *fp4 = fopen(checkfile.c_str(),"w");
+
+			//typedef itk::LabelStatisticsImageFilter< helpers::LabelImageType, helpers::LabelImageType> LabelStatisticsImageFilterType;
 			
+			std::vector<helpers::LabelImageType::Pointer> ItkTrackImagePtr;
+			for(int t = 0; t< num_t; t++)
+			{
+				printf("In final loop t = %d\n",t);
+				
 
-			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
-			//LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
-			//labelStatisticsImageFilter->SetLabelInput(track);
-			//labelStatisticsImageFilter->SetInput(track);
-			//labelStatisticsImageFilter->Update();
-		//	fprintf(fp4,"%d\t%d\n",t,(int)labelStatisticsImageFilter->GetNumberOfLabels());
+				helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
+				//LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
+				//labelStatisticsImageFilter->SetLabelInput(track);
+				//labelStatisticsImageFilter->SetInput(track);
+				//labelStatisticsImageFilter->Update();
+			//	fprintf(fp4,"%d\t%d\n",t,(int)labelStatisticsImageFilter->GetNumberOfLabels());
 
 
-			//std::map<int, std::vector<int> > my_map = this->ComputeEntropyUtilitiesAtTime(t);
-			//VertexUtilities.push_back(my_map);
-			ItkTrackImagePtr.push_back(track);
-			//Color2DImageType::Pointer cimp = getColor2DImage(track,2);
-			//std::vector<FeatureType> f;
-			//getFeatureVectorsFarsight(track,tempimage,f,t,c);
-			printf("About to begin annotate loop\n");
-			//for(int counter=0; counter< f.size(); counter++)
-			//{
-			//	std::vector<FeatureType> conncomp = get_all_connected_components(track,f[counter]);
-			//	for(int counter1 = 0; counter1 < conncomp.size(); counter1++)
-			//	{
-			//		annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
-			//	}
-			//}
-			//PAUSE;
-			printf("Finished annotate loop\n");
-			//output.push_back(cimp);
-			//printf("About to call writeImage\n");
-			//writeImage<helpers::LabelImageType>(track,outputfilenames[t].c_str());
+				//std::map<int, std::vector<int> > my_map = this->ComputeEntropyUtilitiesAtTime(t);
+				//VertexUtilities.push_back(my_map);
+				ItkTrackImagePtr.push_back(track);
+				//Color2DImageType::Pointer cimp = getColor2DImage(track,2);
+				//std::vector<FeatureType> f;
+				//getFeatureVectorsFarsight(track,tempimage,f,t,c);
+				printf("About to begin annotate loop\n");
+				//for(int counter=0; counter< f.size(); counter++)
+				//{
+				//	std::vector<FeatureType> conncomp = get_all_connected_components(track,f[counter]);
+				//	for(int counter1 = 0; counter1 < conncomp.size(); counter1++)
+				//	{
+				//		annotateImage(number,cimp,f[counter].num, MAX(conncomp[counter1].Centroid[0],0),MAX(conncomp[counter1].Centroid[1],0));
+				//	}
+				//}
+				//PAUSE;
+				printf("Finished annotate loop\n");
+				//output.push_back(cimp);
+				//printf("About to call writeImage\n");
+				//writeImage<helpers::LabelImageType>(track,outputfilenames[t].c_str());
+			}
+			//fclose(fp4); 
+
+
+			// Reload Images:
+			/*if(!resultImages->LoadFile(outputfilenames[0]))
+				resultImages = NULL;
+
+			for(int t = 1; t <num_t; t++)
+			{
+				tmpImage->LoadFile(outputfilenames[t]);
+				resultImages->AppendImage(tmpImage,writemode,true);
+			}*/
+			convertItkImagesToftkImages(labelimage,rawimage,ItkTrackImagePtr);
+		
+		/*	helpers::ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
+			debugstring = debugfolder + "\\" +  debugprefix + "_debugcol1.tif";
+			writeImage<helpers::ColorImageType>(debugcol1,debugstring.c_str());
+			debugstring = debugfolder+ "\\" + debugprefix + "_debugcol2.tif";
+			writeImage<helpers::ColorImageType>(debugcol2,debugstring.c_str());
+			debugstring = debugfolder + "\\" + debugprefix + "_debugcol3.tif";
+			writeImage<helpers::ColorImageType>(debugcol3,debugstring.c_str());
+			debugstring = debugfolder + "\\" + debugprefix + "_output.tif";
+			writeImage<helpers::ColorImageType>(colout,debugstring.c_str());*/
+			summarize_tracking(rawimage);
 		}
-		//fclose(fp4); 
-
-
-		// Reload Images:
-		/*if(!resultImages->LoadFile(outputfilenames[0]))
-			resultImages = NULL;
-
-		for(int t = 1; t <num_t; t++)
+		// In case the tracking did not worked
+		else
 		{
-			tmpImage->LoadFile(outputfilenames[t]);
-			resultImages->AppendImage(tmpImage,writemode,true);
-		}*/
-		convertItkImagesToftkImages(labelimage,rawimage,ItkTrackImagePtr);
-	
-	/*	helpers::ColorImageType::Pointer colout = getColorImageFromColor2DImages(output);
-		debugstring = debugfolder + "\\" +  debugprefix + "_debugcol1.tif";
-		writeImage<helpers::ColorImageType>(debugcol1,debugstring.c_str());
-		debugstring = debugfolder+ "\\" + debugprefix + "_debugcol2.tif";
-		writeImage<helpers::ColorImageType>(debugcol2,debugstring.c_str());
-		debugstring = debugfolder + "\\" + debugprefix + "_debugcol3.tif";
-		writeImage<helpers::ColorImageType>(debugcol3,debugstring.c_str());
-		debugstring = debugfolder + "\\" + debugprefix + "_output.tif";
-		writeImage<helpers::ColorImageType>(colout,debugstring.c_str());*/
-		summarize_tracking(rawimage);
+			convertItkImagesToftkImages(labelimage,rawimage,labelImagePointers);
+			summarize_tracking(rawimage);
+		}
 
 
 
@@ -357,29 +375,40 @@ void MultiFrameCellTracker::set_inputs_from_cmd(std::vector< InputImageType::Poi
 		fvar.BoundingBox[3] = imsize[1]-1;
 		fvar.BoundingBox[5] = imsize[2]-1;
 
-		for(int count =0;count<locfvector.size();++count)
-		{
-			std::cout<<locfvector[count].size()<<std::endl;
-		}
+// 		for(int count =0;count<locfvector.size();++count)
+// 		{
+// 			std::cout<<locfvector[count].size()<<std::endl;
+// 		}
 	    this->setData(locfvector,loclimages,locrimages);
 		this->dataset_id = dataset_id;
 
-		this->run();
-
-		printf("Rerunning with computed variances\n");
-		FeatureVariances fvarnew(this->get_computed_variances());
-		fvarnew.MS_prior = 0.4;
-		fvarnew.AD_prior = 0.01;
-		fvarnew.T_prior = 1;
-		fvarnew.timeVariance = 1;
-		fvarnew.overlapVariance = 1;
-	 
-		
-		for(int t = 0; t< num_t; t++)
+		if ( this->run() )
 		{
-			printf("In final loop t = %d\n",t);
-			helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
-			output_images_.push_back(track);
+
+
+			printf("Rerunning with computed variances\n");
+			FeatureVariances fvarnew(this->get_computed_variances());
+			fvarnew.MS_prior = 0.4;
+			fvarnew.AD_prior = 0.01;
+			fvarnew.T_prior = 1;
+			fvarnew.timeVariance = 1;
+			fvarnew.overlapVariance = 1;
+		
+			
+			for(int t = 0; t< num_t; t++)
+			{
+				printf("In final loop t = %d\n",t);
+				helpers::LabelImageType::Pointer track = this->getOutputAtTime(t);
+				output_images_.push_back(track);
+			}
+		}
+		else
+		{
+			for(int t =0; t<num_t; t++)
+			{
+				output_images_.push_back(lab_img[t]);
+			}
+			
 		}
 	
 }
@@ -405,7 +434,7 @@ void MultiFrameCellTracker::convertItkImagesToftkImages(ftk::Image::Pointer labe
 		std::vector <std::string> tmp_file;
 		std::string name = ftk::GetFilePath(labelImage->GetTimeChannelFilenames().at(i).at(0))+"\\tracked_"+ftk::GetFilenameFromFullPath(labelImage->GetTimeChannelFilenames().at(i).at(0));
 		tmp_file.push_back(name);
-		std::cout<<name<<std::endl;
+// 		std::cout<<name<<std::endl;
 		tmp_filenames.push_back(tmp_file);
 	}
 	resultImages->SetTimeChannelFilenames(tmp_filenames);
@@ -2436,7 +2465,7 @@ void MultiFrameCellTracker::solve_higher_order()
 		
 		printf("lredges.size() = %d\n", lredges.size());	// print number of second order edges
 		printf("num_v = %d avg_in_degree = %0.2f avg_out_degree = %0.2f\n", num_v, in_deg_count*1.0/num_v, out_deg_count*1.0/num_v);
-		//scanf("%*d");
+// 		scanf("%*d");
 		varc = lredges.size();
 		IloNumVarArray x(env,varc,0,1,ILOBOOL);
 		IloNumArray numarr(env,varc);
@@ -4212,7 +4241,7 @@ void MultiFrameCellTracker::print_all_LRUtilities(TGraph::vertex_descriptor v)
 		}
 	}	
 }
-void MultiFrameCellTracker::run()
+bool MultiFrameCellTracker::run()
 {
 
 	TGraph::vertex_descriptor vt1 = TGraph::null_vertex();
@@ -4251,6 +4280,7 @@ void MultiFrameCellTracker::run()
 //	firsttime = clock();
 
 // set up the graph:
+
 	for(int t = 1; t < fvector.size(); t++)
 	{
 		int tmin = MAX(0,t-K);
@@ -4262,15 +4292,21 @@ void MultiFrameCellTracker::run()
 			g[v].findex = counter;
 			rmap[t][counter] = v;
 		}
-			populate_merge_candidates(t);//populate_merge_candidates"
-			nec += this->add_normal_edges(tmin,t);// add_normal_edges()"
-			msec+= this->add_merge_split_edges(t);// add_merge_split_edges()"
-			dvc += this->add_disappear_vertices(t);// add_disappear_vertices()
-			avc += this->add_appear_vertices(t-1);// add_appear_vertices()
-			printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
+		populate_merge_candidates(t);//populate_merge_candidates"
+		nec += this->add_normal_edges(tmin,t);// add_normal_edges()"
+		msec+= this->add_merge_split_edges(t);// add_merge_split_edges()"
+		dvc += this->add_disappear_vertices(t);// add_disappear_vertices()
+		avc += this->add_appear_vertices(t-1);// add_appear_vertices()
+		printf("total edges = %d+%d+%d+%d = %d\n",nec,dvc,avc,msec,nec+dvc+avc+msec);
 
-			prune(t);//TOC("prune()");
+		prune(t);//TOC("prune()");
 	}
+	
+	// In case there is no edges, this thing will crash, so return with 0
+	unsigned long numEdges = avc + dvc + nec + msec;
+	
+	if( numEdges == 0 )
+		return 0;
 
 	
 
@@ -4496,6 +4532,9 @@ void MultiFrameCellTracker::run()
 
 	printf("number of connected components = %d reduced = %d maxcomp = %d\n",num,tempnum,max1);
 	//PAUSE;
+	
+	// In case the tracking worked as "expected"
+	return 1;
 }
 
 

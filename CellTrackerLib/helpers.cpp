@@ -590,22 +590,22 @@ void getFeatureVectorsFarsight(LabelImageType::Pointer im, InputImageType::Point
 {
 
 
-std::stringstream testName2;
-testName2<<time;
-std::string testImage2 = "/data/nicolas/test/Image2_" + testName2.str() + ".tif";
-std::string testLabel2 = "/data/nicolas/test/Label2_" + testName2.str() + ".tif";
+// std::stringstream testName2;
+// testName2<<time;
+// std::string testImage2 = "/data/nicolas/test/Image2_" + testName2.str() + ".tif";
+// std::string testLabel2 = "/data/nicolas/test/Label2_" + testName2.str() + ".tif";
 
-typedef itk::ImageFileWriter<LabelImageType> WriterTypeLabel2;
-            WriterTypeLabel2::Pointer writerLabel2 = WriterTypeLabel2::New();
-                writerLabel2->SetInput(im);
-                writerLabel2->SetFileName(testLabel2.c_str());
-                 writerLabel2->Update();
-
-typedef itk::ImageFileWriter<InputImageType> WriterTypeImage2;
-                  WriterTypeImage2::Pointer writerImage2 = WriterTypeImage2::New();
-                   writerImage2->SetInput(in_image);
-                    writerImage2->SetFileName(testImage2.c_str());
-                      writerImage2->Update();
+// typedef itk::ImageFileWriter<LabelImageType> WriterTypeLabel2;
+//             WriterTypeLabel2::Pointer writerLabel2 = WriterTypeLabel2::New();
+//                 writerLabel2->SetInput(im);
+//                 writerLabel2->SetFileName(testLabel2.c_str());
+//                  writerLabel2->Update();
+// 
+// typedef itk::ImageFileWriter<InputImageType> WriterTypeImage2;
+//                   WriterTypeImage2::Pointer writerImage2 = WriterTypeImage2::New();
+//                    writerImage2->SetInput(in_image);
+//                     writerImage2->SetFileName(testImage2.c_str());
+//                       writerImage2->Update();
 
 
 	//printf("Started feature calculation\n");
@@ -649,24 +649,24 @@ typedef itk::ImageFileWriter<InputImageType> WriterTypeImage2;
 		//memcpy(in_image->GetBufferPointer(),i2d->GetBufferPointer(),sizeof(Input2DImageType::PixelType)*l2dsize[0]*l2dsize[1]);
 	
 
-		std::stringstream testName;
-		testName<<time;
-		std::string testImage = "/data/nicolas/test/Image_" + testName.str() + ".tif";
-		std::string testLabel = "/data/nicolas/test/Label_" + testName.str() + ".tif";
+// 		std::stringstream testName;
+// 		testName<<time;
+// 		std::string testImage = "/data/nicolas/test/Image_" + testName.str() + ".tif";
+// 		std::string testLabel = "/data/nicolas/test/Label_" + testName.str() + ".tif";
 
 
-		typedef itk::ImageFileWriter<Label2DImageType> WriterTypeLabel;
-		WriterTypeLabel::Pointer writerLabel = WriterTypeLabel::New();
-		writerLabel->SetInput(l2d);
-		writerLabel->SetFileName(testLabel.c_str());
-		writerLabel->Update();
-
-                typedef itk::ImageFileWriter<Input2DImageType> WriterTypeImage;
-                WriterTypeImage::Pointer writerImage = WriterTypeImage::New();
-                writerImage->SetInput(i2d);
-                writerImage->SetFileName(testImage.c_str());
-
-		writerImage->Update();
+// 		typedef itk::ImageFileWriter<Label2DImageType> WriterTypeLabel;
+// 		WriterTypeLabel::Pointer writerLabel = WriterTypeLabel::New();
+// 		writerLabel->SetInput(l2d);
+// 		writerLabel->SetFileName(testLabel.c_str());
+// 		writerLabel->Update();
+// 
+//                 typedef itk::ImageFileWriter<Input2DImageType> WriterTypeImage;
+//                 WriterTypeImage::Pointer writerImage = WriterTypeImage::New();
+//                 writerImage->SetInput(i2d);
+//                 writerImage->SetFileName(testImage.c_str());
+// 
+// 		writerImage->Update();
 
 
 		typedef ftk::LabelImageToFeatures<Input2DImageType::PixelType, Label2DImageType::PixelType, 2> FeatureCalculator2DType;
@@ -2101,16 +2101,14 @@ InputImageType::Pointer extract_raw_image(float bbox[6],InputImageType::Pointer 
 LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageType::Pointer l)
 {
 
-	LabelImageType::RegionType test = l->GetLargestPossibleRegion();
-	std::cout << std::endl << test;
-
-
+// 	LabelImageType::RegionType test = l->GetLargestPossibleRegion();
+// 	std::cout << std::endl << test;
 
 	int bb[6];
 	for(int co = 0; co < 6; co++)
 	{
 		bb[co] = int(bbox[co]+0.5);
-		std::cout << std::endl << bbox[co];
+// 		std::cout << std::endl << bbox[co];
 	}
 	LabelImageType::Pointer lp = LabelImageType::New();
 	LabelImageType::IndexType lindex;
@@ -2131,8 +2129,8 @@ LabelImageType::Pointer extract_label_image(int label, float bbox[6],LabelImageT
 	lindex[2] = bb[4];
 	lregion.SetIndex(lindex);
 
-	std::cout << std::endl << lregion;
-	std::cout << std::flush;
+// 	std::cout << std::endl << lregion;
+// 	std::cout << std::flush;
 
 	LabelIteratorType liter(l,lregion);
 	for(;!lpiter.IsAtEnd(); ++lpiter,++liter)
@@ -2482,7 +2480,7 @@ void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,Feature
 		if(num1+num2 == lsize1[0]*lsize1[1]*lsize1[2])
 		{
 			printf("num1 = %d num2 = %d volume = %d\n",num1,num2,lsize1[0]*lsize1[1]*lsize1[2]);
-			scanf("%*d");
+// 			scanf("%*d");
 		}
 		if(num1==0 || num2 == 0)
 		{			
@@ -2729,4 +2727,66 @@ LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n)
 //		iter2.Set(
 //	}
 //}
+
+
+int relabelWells(std::vector<LabelImageType::Pointer> & tracked_images, int maxPreviousLabel )
+{
+	int maxValue, minValue;
+	minValue = 2000000;
+	maxValue = 0;
+	bool flagMinValue = 0; // In case the imag is blank
+		
+	for( int ii=0;ii<tracked_images.size();++ii )
+	{
+		LabelIteratorType it(tracked_images.at(ii),tracked_images.at(ii)->GetLargestPossibleRegion());
+		for(it.GoToBegin();!it.IsAtEnd(); ++it)
+		{
+			if(it.Get() > 0 )
+			{
+				minValue = MIN(it.Get(),minValue);
+				flagMinValue = 1;
+			}
+			maxValue = MAX(it.Get(),maxValue);
+		}
+	}
+	if(!flagMinValue)
+		return maxPreviousLabel;
+	if( maxValue == 0 )
+		return maxPreviousLabel;
+
+	int newMaxLabel = maxPreviousLabel + 1;
+	bool flagOneLabelNewMax = 0;
+	
+	// Relabel
+	for( int jj=minValue;jj<=maxValue;++jj )
+	{
+		for( int ii=0;ii<tracked_images.size();++ii )
+		{
+			LabelIteratorType it(tracked_images.at(ii),tracked_images.at(ii)->GetLargestPossibleRegion());
+			for(it.GoToBegin();!it.IsAtEnd(); ++it)
+			{
+				if( it.Get() == jj )
+				{
+					it.Set(newMaxLabel);
+					flagOneLabelNewMax = 1;
+				}
+			}
+		}
+		if( flagOneLabelNewMax == 1 )
+		{
+			newMaxLabel++;
+		}
+		flagOneLabelNewMax = 0;
+	}
+	newMaxLabel--;
+	
+	return newMaxLabel;
+		
 }
+
+} // end of namespace helpers
+// 		// Write the output:
+// 		for(int t =0; t<tracked_images.size(); t++)
+// 		{
+// 			writeImage<LabelImageType>(tracked_images[t],trackfnames[t].c_str());
+// 		}

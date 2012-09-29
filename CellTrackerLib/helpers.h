@@ -189,6 +189,8 @@ struct FeatureVariances{
 	float MS_prior;
 	float AD_prior;
 	float T_prior;
+	
+	bool FlagRoi;
 };
 // all header declarations
 //
@@ -251,6 +253,8 @@ std::vector<FeatureType> get_all_connected_components(LabelImageType::Pointer,Fe
 void SplitCell(LabelImageType::Pointer lin, InputImageType::Pointer imin,FeatureType fin, FeatureVariances fvar,std::vector<LabelImageType::Pointer> &lout,std::vector<InputImageType::Pointer> &rout,std::vector<FeatureType> &fvecout);
 void MergeCells(std::vector<LabelImageType::Pointer> lin, std::vector<InputImageType::Pointer> imin, std::vector<FeatureType> fin, FeatureVariances fvar, LabelImageType::Pointer &lout, InputImageType::Pointer &rout, FeatureType &fout);
 LabelImageType::Pointer fillHoles(LabelImageType::Pointer im, int n);
+
+int relabelWells(std::vector<LabelImageType::Pointer> & tracked_images, int maxPreviousLabel );
 
 }
 #endif

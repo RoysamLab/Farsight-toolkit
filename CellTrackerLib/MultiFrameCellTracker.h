@@ -121,7 +121,7 @@ private:
 
 
 
-	void run();
+	bool run();
     void assignmentsuboptimal1(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns);
 	void writeGraphViz(char * filename);
 	void writeGraphML (char * filename);
