@@ -43,9 +43,6 @@ public:
 	void computeDistMap( std::string inputImageName, std::string outputPath, std::string imageType );
 	
 	template<typename TINPUT, typename TOUTPUT >
-	void computeDistToDevice( std::string inputImageName, std::string inputTableName, std::string outputTableName, std::string imageType );
-	
-	template<typename TINPUT, typename TOUTPUT >
 	void computeMedianFilter( std::string inputImageName, std::string outputImageName, std::string imageType );
 	
 	template<typename TINPUT >
