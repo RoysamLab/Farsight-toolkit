@@ -85,38 +85,38 @@ if len(sys.argv) == 2:
 TRY = 103
 #DEBUG = 1
 #----------------------------------
-REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 1	# If 0 the results will be keep
+REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
+MOVE_RESULTS = 0	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
 MOVE_LOCALLY = 1
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
-REMOVE_TEMP_TRAC = 1
+REMOVE_TEMP_TRAC = 0
 #----------------------------------
 MOVE_INTER_STEPS = 0
 
 SMALLIMAGE = '1'	# if the image is small
 
-runCopy = 1		# Flag to move images
-runCopy_db = 1
-runMake = 1		# Flag Make Farsight
+runCopy = 0		# Flag to move images
+runCopy_db = 0
+runMake = 0		# Flag Make Farsight
 runPreproc = 0
 runPreproc_db = 0
-runBack = 1		# Flag to run background substraction
-runBack_db = 1
+runBack = 0		# Flag to run background substraction
+runBack_db = 0
 
-runCurv = 1		# Flag to run Curvelets
-runCurv_db = 1
-runRescale = 1
-runRescale_db = 1
-runRescale_bit = 1
-runRescale_bit_db = 1
-runSegm = 1		# Flag to run Segmentation
-runSegm_db = 1
-runDistToDevice = 1		# Flag to run distance to device computation
-runDistToDevice_db = 1
+runCurv = 0		# Flag to run Curvelets
+runCurv_db = 0
+runRescale = 0
+runRescale_db = 0
+runRescale_bit = 0
+runRescale_bit_db = 0
+runSegm = 0		# Flag to run Segmentation
+runSegm_db = 0
+runDistToDevice = 0		# Flag to run distance to device computation
+runDistToDevice_db = 0
 runTrac = 1		# Flag to run Tracing
 runTrac_db = 1
 runAstroTrac = 0		# Flag to run Astrocyte Tracing
@@ -354,7 +354,12 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		flag = 1
 	if( (flag == 1)):
 		if( filecmp.cmp(LOCAL_DATASET_PATH_PARAMETERS+'/options_curvelets', GLOBAL_DATASET_PATH_RESULTS+'/Data/'+'options_curvelets') ):
-			sameFile = 1;
+			if( os.path.exists(LOCAL_DATASET_PATH_DATA+'/options_curvelets') ):
+				sameFile = 0
+			else:
+				sameFile = 1
+		else:
+			sameFile = 0
 	if( sameFile == 1 ):
 		print "Curvelets found in: "+GLOBAL_DATASET_PATH_RESULTS+" --> Copy curvelets results"
 		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_curvelets'+' '+LOCAL_DATASET_PATH_DATA+'/options_curvelets'
@@ -368,7 +373,9 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		FILE_GFP_BS_CV = a019_FindFile.main( LOCAL_DATASET_PATH_DATA, '*GFPdsu_BS_CV.' )
 		previousCurve = 1
 		runCurv = 0
-		
+	
+	# temporary
+	FILE_GFP_BS_CV = a019_FindFile.main( LOCAL_DATASET_PATH_DATA, '*GFPdsu_BS_CV.' )	
 
 	# Solo si existe
 	flag = 0
@@ -747,10 +754,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		start_1 = time.time()
 		runDistToDevice_log = LOCAL_DATASET_PATH_LOG +'/runDistanceToDevice.log'
 		TEMP_FILE = open(runDistToDevice_log, 'w')
-        TEMP_FILE.write('RunDistanceToDeviceLog\n')
+	        TEMP_FILE.write('RunDistanceToDeviceLog\n')
 		TEMP_FILE.close()
 		
-		if haveDEVICE == 1
+		if haveDEVICE == 1:
 			FILE_DEVICE_IMAGE = LOCAL_DATASET_PATH_DATA+'/device'
 			TABLE_NO_DEVICE = ''
 			TABLE_DEVICE = ''

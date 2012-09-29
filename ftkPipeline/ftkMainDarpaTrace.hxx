@@ -77,8 +77,8 @@ typename TINPUT::Pointer ftkMainDarpaTrace::cropImages( typename TINPUT::Pointer
 	desiredRegion.SetIndex(start);
 
 	
-// 	std::cout << std::endl << "DESIRE REGION: " << desiredRegion << std::flush;
-// 	std::cout << std::endl << "INPUT REGION: " << inputImage->GetLargestPossibleRegion() << std::flush;
+ 	std::cout << std::endl << "DESIRE REGION: " << desiredRegion << std::flush;
+ 	std::cout << std::endl << "INPUT REGION: " << inputImage->GetLargestPossibleRegion() << std::flush;
 // 	rawImageType_8bit::RegionType desiredRegion2;
 // 	desiredRegion2.SetSize(size2);
 // 	desiredRegion2.SetIndex(start2);
