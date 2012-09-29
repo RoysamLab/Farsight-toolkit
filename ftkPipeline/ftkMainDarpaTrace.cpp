@@ -140,7 +140,7 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	if(iter!=options.end())
 	{ std::istringstream ss((*iter).second); ss >> _overridedefaultsTraceParams;}
 	else
-	{ _overridedefaultsTraceParams = "NO"; printf("Choose _overridedefaultsTraceParams = NO as default\n");}
+	{ _overridedefaultsTraceParams = "YES"; printf("Choose _overridedefaultsTraceParams = YES as default\n");}
 	
 	_Cy5_ImageNRRD = _Cy5_Image+".nrrd";
 	_TRI_ImageNRRD = _TRI_Image+".nrrd";
@@ -374,8 +374,11 @@ void ftkMainDarpaTrace::runTracing()
 //
 			//MNT->LoadCurvImage_1(img_trace, 0);
 			//std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
-			rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
-			MNT->LoadCurvImage_2(img_trace);
+			#pragma omp critical
+			{
+				rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
+				MNT->LoadCurvImage_2(img_trace);
+			}
 			/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
 			float calc_intensity_threshold = 0;
 			float calc_contrast_threshold = 0;
