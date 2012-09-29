@@ -374,9 +374,10 @@ void ftkMainDarpaTrace::runTracing()
 //
 			//MNT->LoadCurvImage_1(img_trace, 0);
 			//std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
+			rawImageType_flo::Pointer img_trace;
 			#pragma omp critical
 			{
-				rawImageType_flo::Pointer img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
+				img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
 				MNT->LoadCurvImage_2(img_trace);
 			}
 			/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
