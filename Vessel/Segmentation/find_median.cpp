@@ -43,10 +43,11 @@ limitations under the License.
 
 /* A very good linear time implementation of finding median that I borrowed*/
 /* - Arun */
-
+#include <vector>
 #define max(a,b) (((a)>(b))?(a):(b))
 #define min(a,b) (((a)<(b))?(a):(b))
-double median (int n, unsigned char x[])
+using namespace std;
+double median (int n, vector<unsigned char> x)
 /*
 Find the median of X(1), ... , X(N), using as much of the quicksort
 algorithm as is needed to isolate it.
