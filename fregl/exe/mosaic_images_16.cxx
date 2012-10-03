@@ -261,36 +261,36 @@ main(int argc, char* argv[]) {
             if (!xformed_image)
                 continue;
 
-//            //fuse the image
-//	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
-//	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
-//	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
-//#ifdef _MSC_VER
-//	#pragma omp parallel for //collapse(3)
-//#else
-//	#pragma omp parallel for collapse(3)
-//#endif
-//	    for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
-//	    {
-//	        for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
-//	        {
-//		    for( int kk=0; kk<iamgeOutputSize[0]; ++kk )
-//		    {
-//		    	itk::Index<1> offset;
-//			offset[0] = (ii*iamgeOutputSize[0]*iamgeOutputSize[1])+(jj*iamgeOutputSize[0])+kk;
-//			imageOutputArray[offset[0]] = vnl_math_max(imageOutputArray[offset[0]],imageInputArray[offset[0]]);
-//		    }
-//		}
-//            }
+           //fuse the image
+	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
+	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
+	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
+#ifdef _MSC_VER
+	#pragma omp parallel for //collapse(3)
+#else
+	#pragma omp parallel for collapse(3)
+#endif
+	    for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
+	    {
+	        for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
+	        {
+		    for( int kk=0; kk<iamgeOutputSize[0]; ++kk )
+		    {
+		    	itk::Index<1> offset;
+			offset[0] = (ii*iamgeOutputSize[0]*iamgeOutputSize[1])+(jj*iamgeOutputSize[0])+kk;
+			imageOutputArray[offset[0]] = vnl_math_max(imageOutputArray[offset[0]],imageInputArray[offset[0]]);
+		    }
+		}
+           }
 
-	    // Fuse image
-            RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
-            RegionIterator outputIt(final_image, final_image->GetRequestedRegion());
-
-            for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();
-                    ++inputIt, ++outputIt) {
-                outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
-            }
+// 	    // Fuse image
+//             RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
+//             RegionIterator outputIt(final_image, final_image->GetRequestedRegion());
+// 
+//             for (inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd();
+//                     ++inputIt, ++outputIt) {
+//                 outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
+//             }
         }
     }
 
