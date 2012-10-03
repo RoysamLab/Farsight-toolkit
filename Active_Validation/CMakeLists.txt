@@ -8,13 +8,6 @@ PROJECT(ActiveValidation)
 ################################################################################
 FIND_PACKAGE(VTK)
 FIND_PACKAGE(VXL)
-IF(VTK_FOUND AND VXL_FOUND)
-    INCLUDE( ${VTK_USE_FILE} )
-    SET(VXL_PROVIDE_STANDARD_OPTIONS 1)
-    INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
-ELSEIF(VTK_FOUND AND VXL_FOUND)
-        MESSAGE(FATAL_ERROR "Cannot build without VTK & VXL.")
-ENDIF(VTK_FOUND AND VXL_FOUND)
 
 SET(ActiveValidation_SRCS
   ActiveValidation.cpp

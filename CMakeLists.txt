@@ -228,7 +228,7 @@ set(VXL_PROVIDE_STANDARD_optionS 1)
 include(${VXL_CMAKE_DIR}/UseVXL.cmake)
 # UseITK.cmake utilizes include_directories(BEFORE..., so we do the same here
 # because we want the VXL vxl_config.h to be found first.
-include_directories(BEFORE ${VXL_VCL_INCLUDE_DIR} ${VXL_CORE_INCLUDE_DIR})
+include_directories(BEFORE ${VXL_VCL_INCLUDE_DIR} ${VXL_CORE_INCLUDE_DIR} ${VXL_RPL_INCLUDE_DIR})
 
 # Find Qt
 find_package(Qt4)
