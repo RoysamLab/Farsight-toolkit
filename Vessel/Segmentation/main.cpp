@@ -30,15 +30,15 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include <itkImageRegionIterator.h>
-#include <itkDanielssonDistanceMapImageFilter.h>
+#include "itkImageRegionIterator.h"
+#include "itkDanielssonDistanceMapImageFilter.h"
 
 //lets try tensor 66
-#include <rtvl/rtvl_tensor.hxx>
-#include <rtvl/rtvl_vote.hxx>
-#include <rtvl/rtvl_votee.hxx>
-#include <rtvl/rtvl_voter.hxx>
-#include <rtvl/rtvl_weight_smooth.hxx>
+#include "rtvl/rtvl_tensor.hxx"
+#include "rtvl/rtvl_vote.hxx"
+#include "rtvl/rtvl_votee.hxx"
+#include "rtvl/rtvl_voter.hxx"
+#include "rtvl/rtvl_weight_smooth.hxx"
 
 //#include <rtvl_tensor.hxx>
 //#include <rtvl_vote.hxx>
@@ -47,10 +47,10 @@
 //#include <rtvl_weight_smooth.hxx>
 
 
-#include <vnl/vnl_vector_fixed.h>
-#include <vnl/vnl_matrix_fixed.h>
+#include "vnl/vnl_vector_fixed.h"
+#include "vnl/vnl_matrix_fixed.h"
 
-#include <vcl_iostream.h>
+#include "vcl_iostream.h"
 //66
 
 //for vesselness
