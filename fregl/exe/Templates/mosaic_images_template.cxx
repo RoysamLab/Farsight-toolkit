@@ -137,13 +137,15 @@ mosaic_images_template(
 	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
 	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
 	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
-	    
-#ifdef _MSC_VER
-        #pragma omp parallel for //collapse(3)
-#else
-        #pragma omp parallel for //collapse(3) // Temporary solution for now, we have to find a general fix for the collapse directive in all possible plataforms
+
+#ifdef _OPENMP
+	#if _OPENMP >= 200805L
+        #pragma omp parallel for collapse(3)
+	#else
+        #pragma omp parallel for
+	#endif
 #endif
-            for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
+			for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
             {
                 for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
                 {
@@ -152,9 +154,9 @@ mosaic_images_template(
                         itk::Index<1> offset;
                         offset[0] = (ii*iamgeOutputSize[0]*iamgeOutputSize[1])+(jj*iamgeOutputSize[0])+kk;
                         imageOutputArray[offset[0]] = vnl_math_max(imageOutputArray[offset[0]],imageInputArray[offset[0]]);
-		    }
-		}
-	    }
+					}
+				}
+			}
 
             ////fuse the image
             //RegionConstIterator inputIt(xformed_image, xformed_image->GetRequestedRegion());
