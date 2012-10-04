@@ -14,11 +14,11 @@ SET( fregl_sources
 	fregl_reg_record.h          	fregl_reg_record.cxx
 	fregl_pairwise_register.h   	fregl_pairwise_register.cxx
 	fregl_joint_register.h      	fregl_joint_register.cxx
-	fregl_space_transformer.h	fregl_space_transformer.cxx
+	fregl_space_transformer.h	     fregl_space_transformer.cxx
 	fregl_image_manager.h       	fregl_image_manager.cxx
 	#fregl_result_record.h       	fregl_result_record.cxx
  	fregl_util.h                	fregl_util.cxx
- 	fregl_roi.h			fregl_roi.cxx
+ 	fregl_roi.h			     fregl_roi.cxx
 )
 
 AUX_SOURCE_DIRECTORY( Templates fregl_sources )

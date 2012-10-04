@@ -59,17 +59,26 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
 #TARGET_LINK_LIBRARIES( update_features maciejseg vul   ${ITK_LIBRARIES} )
 
 #IF (BUILD_FREGL)
-   ADD_EXECUTABLE( register_pair register_pair.cxx)
+   ADD_EXECUTABLE( register_pair register_pair.cxx Templates/register_pair_template.cxx Templates/register_pair_template.h)
    TARGET_LINK_LIBRARIES( register_pair fregl   ${ITK_LIBRARIES} )
 
-   ADD_EXECUTABLE( register_joint register_joint.cxx)
+   ADD_EXECUTABLE( register_pair_16 register_pair_16.cxx Templates/register_pair_template.cxx Templates/register_pair_template.h)
+   TARGET_LINK_LIBRARIES( register_pair_16 fregl  ${ITK_LIBRARIES} )
+
+   ADD_EXECUTABLE( register_joint register_joint.cxx Templates/register_joint_template.cxx Templates/register_joint_template.h)
    TARGET_LINK_LIBRARIES( register_joint fregl   ${ITK_LIBRARIES} )
 
+   ADD_EXECUTABLE( register_joint_16 register_joint_16.cxx Templates/register_joint_template.cxx Templates/register_joint_template.h)
+   TARGET_LINK_LIBRARIES( register_joint_16 fregl   ${ITK_LIBRARIES} )
+   
    ADD_EXECUTABLE( mosaic_image_pair mosaic_image_pair.cxx)
    TARGET_LINK_LIBRARIES( mosaic_image_pair fregl   ${ITK_LIBRARIES} )
 
-   ADD_EXECUTABLE( mosaic_images mosaic_images.cxx)
+   ADD_EXECUTABLE( mosaic_images mosaic_images.cxx Templates/mosaic_images_template.cxx Templates/mosaic_images_template.h)
    TARGET_LINK_LIBRARIES( mosaic_images fregl   ${ITK_LIBRARIES} )
+
+   ADD_EXECUTABLE( mosaic_images_16 mosaic_images_16.cxx Templates/mosaic_images_template.cxx Templates/mosaic_images_template.h)
+   TARGET_LINK_LIBRARIES( mosaic_images_16 fregl   ${ITK_LIBRARIES} )
 
    ADD_EXECUTABLE( mosaic_roi mosaic_roi.cxx)
    TARGET_LINK_LIBRARIES( mosaic_roi fregl   ${ITK_LIBRARIES} )
@@ -77,17 +86,6 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    ADD_EXECUTABLE( initialized_register_pair initialized_register_pair.cxx)
    TARGET_LINK_LIBRARIES( initialized_register_pair fregl   ${ITK_LIBRARIES} )
 
-   
-   ADD_EXECUTABLE( register_pair_16 register_pair_16.cxx)
-   TARGET_LINK_LIBRARIES( register_pair_16 fregl   ${ITK_LIBRARIES} )
-
-   ADD_EXECUTABLE( register_joint_16 register_joint_16.cxx)
-   TARGET_LINK_LIBRARIES( register_joint_16 fregl   ${ITK_LIBRARIES} )
-   
-   ADD_EXECUTABLE( mosaic_images_16 mosaic_images_16.cxx)
-   TARGET_LINK_LIBRARIES( mosaic_images_16 fregl   ${ITK_LIBRARIES} )
-   
-   
    #ADD_EXECUTABLE( update_result_sets update_result_sets.cxx)
    #TARGET_LINK_LIBRARIES( update_result_sets fregl )
 
@@ -115,7 +113,7 @@ TARGET_LINK_LIBRARIES( extract_stack_interfaces fregl vul   ${ITK_LIBRARIES} )
    TARGET_LINK_LIBRARIES( SubsampleVolume   ${ITK_LIBRARIES} )
 #ENDIF(BUILD_FREGL)
 
-INSTALL( TARGETS ${LSM_TO_TIFF_EXEC} register_pair register_joint mosaic_image_pair mosaic_images mosaic_roi 
+INSTALL( TARGETS ${LSM_TO_TIFF_EXEC} register_pair register_pair_16 register_joint register_joint_16 mosaic_image_pair mosaic_images mosaic_images_16 mosaic_roi
 DESTINATION ${INSTALL_BIN_DIR} )
 
 #copy the gdbicp to the installation directory
