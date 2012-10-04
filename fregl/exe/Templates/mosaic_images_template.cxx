@@ -138,13 +138,12 @@ mosaic_images_template(
 	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
 	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
 
-#ifdef _OPENMP
-	#if _OPENMP >= 200805L
-        #pragma omp parallel for collapse(3)
-	#else
-        #pragma omp parallel for
-	#endif
-#endif
+
+		#if _OPENMP >= 200805L
+			#pragma omp parallel for collapse(3)
+		#else
+			#pragma omp parallel for
+		#endif
 			for( int ii=0; ii<iamgeOutputSize[2]; ++ii )
             {
                 for( int jj=0; jj<iamgeOutputSize[1]; ++jj )
