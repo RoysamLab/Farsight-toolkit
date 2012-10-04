@@ -55,9 +55,7 @@
 
 //for vesselness
 #include "itkHessianToObjectnessMeasureImageFilter.h"
-#include "itkHessianToObjectnessMeasureImageFilter.txx"
 #include "itkMultiScaleHessianBasedMeasureImageFilter.h"
-#include "itkMultiScaleHessianBasedMeasureImageFilter.txx"
 #include "itkCastImageFilter.h"
 #include "itkStatisticsImageFilter.h"
 #include "itkDivideImageFilter.h"
