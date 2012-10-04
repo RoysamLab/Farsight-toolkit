@@ -51,19 +51,14 @@
 #include "vnl/vnl_matrix_fixed.h"
 
 #include "vcl_iostream.h"
-//66
 
 //for vesselness
-#include "itkHessianToObjectnessMeasureImageFilter.h"
-#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkStatisticsImageFilter.h"
 #include "itkDivideImageFilter.h"
 
 typedef itk::Image<unsigned char,3> ImageType;
 typedef itk::Image<float,3> ImageTypeFloat;
-typedef itk::HessianToObjectnessMeasureImageFilter<float, 3> ObjectnessFilterType;
-typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageTypeFloat, ObjectnessFilterType, ImageTypeFloat> MultiScaleHessianFilterType;
 
 
 
