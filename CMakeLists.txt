@@ -240,7 +240,6 @@ endif(QT4_FOUND)
 
 # Find Boost
 find_package(Boost)
-link_directories( ${Boost_LIBRARY_DIRS})
 include_directories ( ${Boost_INCLUDE_DIRS})
 
 #####################################################################################
