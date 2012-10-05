@@ -32,7 +32,7 @@ register_joint_template(
 	}
 	in_file_str.close();
 
-	fregl_joint_register< PixelType >::Pointer jointer_register;
+	typename fregl_joint_register< PixelType >::Pointer jointer_register;
 	if ( !arg_roi_file.set() ) {
 		jointer_register = new fregl_joint_register < PixelType >( filenames, arg_multiplier(), arg_error_bound() );
 	}

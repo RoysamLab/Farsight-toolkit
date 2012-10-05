@@ -1,20 +1,21 @@
 #include "register_pair_template.h"
 
-template <typename TImageType3D>
+template <typename TImageType3D, typename TInternalImageType>
 typename TImageType3D::Pointer 
 smooth_image(typename TImageType3D::Pointer image, int num_sub_images )
 {
 	typedef TImageType3D ImageType3D;
-	typedef itk::DiscreteGaussianImageFilter< ImageType3D,InternalImageType > SmoothingFilterType;
-
-	typedef itk::CastImageFilter< InternalImageType,ImageType3D > CastFilterType;
+    typedef TInternalImageType InternalImageType;
+	
+    typedef typename itk::DiscreteGaussianImageFilter< ImageType3D, InternalImageType > SmoothingFilterType;
+	typedef typename itk::CastImageFilter< InternalImageType,ImageType3D > CastFilterType;
 	typedef itk::RescaleIntensityImageFilter< ImageType3D, ImageType3D> RescalerType;
 	typedef itk::StreamingImageFilter<ImageType3D, ImageType3D> StreamingFilterType;
 
-	SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
-	RescalerType::Pointer rescaler = RescalerType::New();
-	CastFilterType::Pointer caster = CastFilterType::New();
-	StreamingFilterType::Pointer streamer = StreamingFilterType::New();
+	typename SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
+	typename RescalerType::Pointer rescaler = RescalerType::New();
+	typename CastFilterType::Pointer caster = CastFilterType::New();
+	typename StreamingFilterType::Pointer streamer = StreamingFilterType::New();
 
 	smoother->SetInput( image );
 	smoother->SetVariance(1.0);

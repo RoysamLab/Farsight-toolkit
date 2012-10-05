@@ -36,7 +36,7 @@ limitations under the License.
 #include <vul/vul_arg.h>
 
 int
-	main(  int argc, char* argv[] )
+main(  int argc, char* argv[] )
 {
 	vul_arg< vcl_string > arg_file_from  ( 0, "From image file" );
 	vul_arg< vcl_string > arg_file_to    ( 0, "To image file" );

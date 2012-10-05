@@ -37,7 +37,7 @@ int
 	vul_arg< vcl_string >   prior_arg
 );
 
-template <typename TImageType3D>
+template <typename TImageType3D, typename TInternalImageType>
 typename TImageType3D::Pointer
 	smooth_image(typename TImageType3D::Pointer image, int num_sub_images );
 

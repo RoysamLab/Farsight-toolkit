@@ -60,9 +60,9 @@ mosaic_images_template(
 	typedef TPixel InputPixelType;
 	typedef itk::Image< InputPixelType, 3 > ImageType;
 	typedef itk::Image< InputPixelType, 2 > ImageType2D;
-	typedef ImageType::PointType PointType; //physical space
-	typedef ImageType::IndexType IndexType; //physical space
-	typedef ImageType::SizeType SizeType;
+	typedef typename ImageType::PointType PointType; //physical space
+	typedef typename ImageType::IndexType IndexType; //physical space
+	typedef typename ImageType::SizeType SizeType;
 	typedef itk::ImageRegionConstIterator< ImageType > RegionConstIterator;
 	typedef itk::ImageRegionIterator< ImageType > RegionIterator;
 	typedef itk::ImageRegionConstIterator< ImageType2D > RegionConstIterator2D;
@@ -71,7 +71,7 @@ mosaic_images_template(
 	typedef itk::ImageSliceConstIteratorWithIndex< ImageType > SliceConstIteratorType;
 	
 	// Cosntruct the graph of joint registration
-    fregl_joint_register< InputPixelType >::Pointer joint_register = new fregl_joint_register< InputPixelType > (arg_xml_file());
+    typename fregl_joint_register< InputPixelType >::Pointer joint_register = new fregl_joint_register< InputPixelType > (arg_xml_file());
     if (arg_old_str.set() && arg_new_str.set()) {
         std::cout << "Replace the name substr" << std::endl;
         joint_register->replace_image_name_substr(arg_old_str(), arg_new_str());
@@ -94,7 +94,7 @@ mosaic_images_template(
 
     //bool in_anchor = false;
     space_transformer.set_anchor(arg_anchor(), arg_in_anchor(), arg_overlap());
-    ImageType::Pointer final_image = ImageType::New();
+    typename ImageType::Pointer final_image = ImageType::New();
 
     // Read in each image one by one. Transform each image and compose
     // the image with the final image.
@@ -114,7 +114,7 @@ mosaic_images_template(
         for (unsigned int i = 0; i < image_names.size(); i++) {
             std::string image_name = arg_img_path() + std::string("/") + image_names[i];
             std::cout << "Image " << image_name << std::endl;
-            ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
+            typename ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
             float alpha = 5;
             space_transformer.set_individual_weight_map(i, image, alpha);
         }
@@ -122,21 +122,21 @@ mosaic_images_template(
 
         // Now doing the blending
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
-        ImageType::Pointer image, xformed_image;
+        typename ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
         std::cout << "Composing the final image ..." << std::endl;
         final_image = space_transformer.transform_image_weighted(image, 0, 0, arg_nn());
         for (unsigned int i = 1; i < image_names.size(); i++) {
             std::string image_name = arg_img_path() + std::string("/") + image_names[i];
-            ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
+            typename ImageType::Pointer image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
             xformed_image = space_transformer.transform_image_weighted(image, i, 0, arg_nn());
             if (!xformed_image)
                 continue;
 
             //fuse the image
-	    ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
-	    ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
-	    ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
+	    typename ImageType::SizeType iamgeOutputSize = final_image->GetRequestedRegion().GetSize();
+	    typename ImageType::PixelType * imageOutputArray = final_image->GetBufferPointer();
+	    typename ImageType::PixelType * imageInputArray = xformed_image->GetBufferPointer();
 
 
 		#if _OPENMP >= 200805L
@@ -167,12 +167,12 @@ mosaic_images_template(
         }
 
     } else if (arg_blending() == 1) { //taking the average in the overlapping regions
-        ImageType2D::Pointer weight_image = space_transformer.compute_weighted_image_2D();
-        ImageType::IndexType start;
+        typename ImageType2D::Pointer weight_image = space_transformer.compute_weighted_image_2D();
+        typename ImageType::IndexType start;
         start[0] = 0;
         start[1] = 0;
         start[2] = 0;
-        ImageType::RegionType region;
+        typename ImageType::RegionType region;
         region.SetSize(space_transformer.montage_size());
         region.SetIndex(start);
         final_image->SetRegions(region);
@@ -184,7 +184,7 @@ mosaic_images_template(
         std::cout << "Composing the final image ..." << std::endl;
         for (unsigned int i = 0; i < image_names.size(); i++) {
             std::string image_name = arg_img_path() + std::string("/") + image_names[i];
-            ImageType::Pointer image, xformed_image;
+            typename ImageType::Pointer image, xformed_image;
             image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
             xformed_image = space_transformer.transform_image(image, i, 0, arg_nn());
             if (!xformed_image)
@@ -235,7 +235,7 @@ mosaic_images_template(
         }
     } else { //Taking the maximum
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
-        ImageType::Pointer image, xformed_image;
+        typename ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
         std::cout << "Composing the final image2 ..." << std::endl;
         final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
@@ -313,7 +313,7 @@ mosaic_images_template(
       seriesWriter->Update();*/
 
     if (arg_3d()) {
-        ImageType::PointType OutOrigin;
+        typename ImageType::PointType OutOrigin;
         // Make sure there are no offsets in the Mosaic file origin
 	std::cout << std::endl << " \tNow it will create the images in 3d and NRRD";
         OutOrigin[0] = 0;
@@ -322,16 +322,16 @@ mosaic_images_template(
         final_image->SetOrigin(OutOrigin);
         std::string name_3d = name_prefix + std::string(".nrrd");
         typedef itk::ImageFileWriter< ImageType > WriterType;
-        WriterType::Pointer writer = WriterType::New();
+        typename WriterType::Pointer writer = WriterType::New();
         writer->SetFileName(name_3d);
         writer->SetInput(final_image);
         writer->Update();
     }
 
     // doing the 2d maximum projection and dump it out
-    ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_max_projection(final_image);
+    typename ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_max_projection(final_image);
     typedef itk::ImageFileWriter< ImageType2D > WriterType2D;
-    WriterType2D::Pointer writer2D = WriterType2D::New();
+    typename WriterType2D::Pointer writer2D = WriterType2D::New();
     std::string name_2d = name_prefix + std::string("_2d_proj.png");
     writer2D->SetFileName(name_2d);
     writer2D->SetInput(image_2d);
