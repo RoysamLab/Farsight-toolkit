@@ -62,7 +62,9 @@ protected:
 	typedef itk::ImageFileReader< UShortImageType > ushortImageReader;
 	typedef itk::ImageFileWriter< UShortImageType > ushortImageWriter;
 	typedef itk::ImageFileReader< ProbImageType > probImageReader;
+	typedef itk::ImageFileReader< ProbImageType2D > probImage2DReader;
 	typedef itk::ImageFileReader< UShortImageType2D > ushortImage2DReader;
+	typedef itk::ImageFileWriter< UShortImageType2D > ushortImage2DWriter;
 
 	//typedef itk::RegionOfInterestImageFilter< ProbImageType, ProbImageType> RegionOfInterestFilter;
 	typedef itk::RescaleIntensityImageFilter< ProbImageType, ProbImageType> RescaleFloatFilterType;
@@ -110,14 +112,18 @@ public:
 	virtual ~SomaExtractor();
 
 	ProbImageType::Pointer SetInputImage(const char * fileName);
+	ProbImageType::Pointer SetInputImage8bit(const char * fileName);
 	ProbImageType2D::Pointer SetInputImage2D(const char * fileName);
 	ProbImageType::Pointer SetInputImageByPortion(const char * fileName);
 	SegmentedImageType::Pointer SetInitalContourImage(const char * fileName);
 	SegmentedImageType::Pointer SetInitalContourImageByPortion(const char * fileName);
+	SegmentedImageType::Pointer SetInitalContourImage16bit(const char * fileName);
 	OutputImageType::Pointer Read8BitImage(const char * fileName);
 	OutputImageType::Pointer Read16BitImage(const char * fileName);
 	void ReadSeedpoints(const char * fileName, std::vector< itk::Index<3> > &seedVec, bool bNucleusTable);
 	void LoadOptions(const char* paramFileName);
+	ProbImageType2D::Pointer SetInputImageFloat2D(const char *fileName);
+	ProbImageType::Pointer SetInputImageFloat(const char *fileName);
 
 	/// return labeled image for somas
 	SegmentedImageType::Pointer SegmentSoma( OutputImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr);
@@ -136,8 +142,12 @@ public:
 
 	// generate soma seed points for the input image
 	ProbImageType::Pointer GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids);
-
-	UShortImageType::Pointer DevideAndScale(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, int bmultiply = 1);
+ 
+	ProbImageType2D::Pointer GetAverage(const char * channelName, int n);
+	ProbImageType2D::Pointer GetBackgroundImage(ProbImageType::Pointer image, double sigma);
+	UShortImageType::Pointer DevideAndScaleToOriginalMean(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage);
+	UShortImageType::Pointer DevideAndScale(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, double mean);
+	UShortImageType::Pointer RescaleImage(ProbImageType::Pointer image, double globalMax, double intensityMax);
 
 protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);
@@ -192,6 +202,7 @@ private:
 	double regionZ;
 	int useDistMap;
 	int sampling_ratio_XY_to_Z;
+	int radius;
 };
 
 #endif

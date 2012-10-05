@@ -38,13 +38,13 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if( argc < 2 || (atoi(argv[1]) < 0 && atoi(argv[1]) > 2))
+	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 3 )
 	{
 		std::cout<<"Debris: SomaExtraction <0> <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
 		std::cout<<"SomaExtraction: SomaExtraction <1> <InputImageFileName> <InitialContourLabeledImage> <Options>\n";
 		std::cout<<"SomaExtraction without seeds: SomaExtraction <2> <InputImageFileName> <SomaCentroids.txt> <Options>\n";
-		std::cout<<"Normalize intensity: SomaExtraction <3> <InputImageFileName> <BackgroundImageFileName>\n";
+		std::cout<<"Normalize intensity: SomaExtraction <3> <InputImageFileName> <Gaussian Blur Sigma> <Global Mean> <0: using global mean, 1: using original mean>\n";
 		return 0;
 	}
 
@@ -158,28 +158,59 @@ int main(int argc, char* argv[])
 			std::cout<< "Writing "<< somaFeatureName<<std::endl;
 			ftk::SaveTable(somaFeatureName.c_str(), table);
 		}
-	}
-	else if( atoi(argv[1]) == 3 && argc >= 4 && argc <= 5)  /// normalize the intensity
+	} 
+	else if( atoi(argv[1]) == 3 && argc == 6)  /// normalize the intensity: get background image
 	{
 		std::string InputFilename = std::string(argv[2]);
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(InputFilename.c_str()); 
+		SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImage(image, atof(argv[3]));
 		std::string imageName = InputFilename;
-		imageName.erase(imageName.length()-4,imageName.length());
-		imageName.append("_normalize.tif");
-
-		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); // Load microglia image 16bit
-		SomaExtractor::ProbImageType2D::Pointer imageBackground = Somas->SetInputImage2D(argv[3]); // Load microglia image 16bit
-		// Devide image by imageBackground, rescale the result to the maximum scale of the origional image scale
-		SomaExtractor::UShortImageType::Pointer resultImage;
-		if( argc == 5 && atoi(argv[4]) > 1)
+		SomaExtractor::UShortImageType::Pointer rescaledImage;
+		switch( atoi(argv[5]))
 		{
-			resultImage = Somas->DevideAndScale(image, imageBackground, atoi(argv[4])); 
+		case 0:
+			imageName.erase(imageName.length()-4,imageName.length());
+			imageName.append("_global_mean.tif");
+			rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]));
+			Somas->writeImage(imageName.c_str(), rescaledImage);
+			break;
+		case 1:
+			imageName.erase(imageName.length()-4,imageName.length());
+			imageName.append("_original_mean.tif");
+			rescaledImage = Somas->DevideAndScaleToOriginalMean(image, backgroundImage);
+			Somas->writeImage(imageName.c_str(), rescaledImage);
+			break;
+		default:
+			break;
 		}
-		else
-		{
-			resultImage = Somas->DevideAndScale(image, imageBackground); 
-		}
-		Somas->writeImage(imageName.c_str(), resultImage);
 	}
+	//else if( atoi(argv[1]) == 4 && argc == 4)  /// normalize the intensity: devide and calculate the max 
+	//{
+	//	std::string InputFilename = std::string(argv[2]);
+	//	SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); // Load image 16bit
+	//	SomaExtractor::ProbImageType2D::Pointer imageBackground = Somas->SetInputImageFloat2D(argv[3]); // Load background image float
+	//	Somas->DevideAndScale(image, imageBackground, InputFilename); 
+	//	//Somas->writeImage(imageName.c_str(), resultImage);
+	//}
+	//else if( atoi(argv[1]) == 5 && argc == 5)  /// normalize the intensity: scale the image
+	//{
+	//	std::string InputFilename = std::string(argv[2]);
+	//	std::string imageName = InputFilename;
+	//	imageName.erase(imageName.length()-5,imageName.length());
+	//	imageName.append("_normalize.tif");
+
+	//	SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImageFloat(argv[2]); // Load devide image float
+	//	SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->RescaleImage(image, atof(argv[3]), atof(argv[4]));
+	//	Somas->writeImage(imageName.c_str(), rescaledImage);
+	//}
+	//else if( atoi(argv[1]) == 6 && argc == 4)  /// normalize the intensity: scale the image
+	//{
+	//	Somas->GetAverage(argv[2], atoi(argv[3]));
+	//}
+	//else if( atoi(argv[1]) == 7 && argc == 4)  /// normalize the intensity: scale the image
+	//{
+	//	Somas->GetAverage(argv[2], atoi(argv[3]));
+	//}
 	delete Somas;
 	return 0;
 }
