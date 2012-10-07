@@ -56,7 +56,7 @@ int main(const int argc, char** argv)	{
 		
 		// create the nodes
 		std::vector<TraceNode*>::iterator itr;
-		std::map<long, itk::Vector<double,3>> IDmap;
+		std::map<long, itk::Vector<double,3> > IDmap;
 		for(itr = NodeContainer.begin(); itr != NodeContainer.end(); ++itr)	{
 			IDmap[(*itr)->ID] = (*itr)->loc;
 		}
