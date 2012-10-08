@@ -37,6 +37,8 @@ TraceLine::TraceLine()
 	this->sectionArea = 0;
 	this->surfaceArea = 0;
 	this->volume = 0;
+	this->somaSurfaceArea = 0;
+	this->somaVolume = 0;
 	this->BurkTaper = 0;
 	this->HillmanTaper = 0;
 	this->HillmanThreshold = 0;
