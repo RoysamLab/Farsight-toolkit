@@ -280,6 +280,23 @@ void TableWindow::changeColumns()
 	}
 	delete dialog;
 
+	QString qstr1("Trace File"); //heatmap cannot take chars so skip
+	QString qstr2("Distance to Device");
+	int num_visible = 0;
+	for (int i = 0; i < visible.size(); i++)
+	{
+		int equal1 = QString::compare(features[i],qstr1);
+		int equal2 = QString::compare(features[i],qstr2);
+		if ( equal1 != 0 && equal2 != 0)
+			num_visible += visible.at(i);
+	}
+
+	if(num_visible == 0)
+	{
+		std::cout<< "No features were selected" << std::endl;
+		return;
+	}
+
 	for( int i=1; i < this->tableView->model()->columnCount(); ++i)
 	{	
 		this->tableView->setColumnHidden( i, !visible.at(i-1) );
@@ -290,8 +307,13 @@ void TableWindow::changeColumns()
 		std::set<long int> selectedIDs;
 		
 		selectedIDs.insert(0); //always show root trace
+
 		for( int i=1; i < this->tableView->model()->columnCount(); ++i)
 		{
+			int equal1 = QString::compare(features[i-1],qstr1);
+			int equal2 = QString::compare(features[i-1],qstr2);
+			if ( equal1 == 0 || equal2 == 0)
+				continue;
 			if(visible.at(i-1))
 				selectedIDs.insert(i);
 		}
