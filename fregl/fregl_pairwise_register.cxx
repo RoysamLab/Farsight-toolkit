@@ -24,8 +24,8 @@ limitations under the License.
 #include "itkImageFileWriter.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageSliceIteratorWithIndex.h"
-#include "itkDiscreteGaussianImageFilter.h"
-#include "itkRescaleIntensityImageFilter.h"
+#include "itkRecursiveGaussianImageFilter.h"
+#include "itkShiftScaleImageFilter.h"
 
 #include <rgrl/rgrl_cast.h>
 #include <rgrl/rgrl_trans_affine.h>
@@ -299,8 +299,14 @@ std::cout << std::endl << "FIXME 3d REGION: " << from_image_crop->GetRequestedRe
 		optimizer->AddObserver( itk::IterationEvent(), observer );
 
 		// Now run the registration
-		registrator->Update();
-
+		try
+		{
+			registrator->Update();
+		}
+		catch (itk::ExceptionObject& err)
+		{
+			std::cerr << "Error in registrator: " << err << std::endl;
+		}
 		// Set the final transform
 		TransformType::ParametersType final_parameters;
 		final_parameters = registrator->GetLastTransformParameters();
@@ -830,28 +836,27 @@ std::cout << std::endl << "Smooth " << smoothing_;
 
 	// perform smoothing
 
-	typedef itk::DiscreteGaussianImageFilter< InternalImageType,InternalImageType > SmoothingFilterType;
-	//typedef itk::RescaleIntensityImageFilter< InternalImageType, InternalImageType> RescalerType;
+	typedef itk::RecursiveGaussianImageFilter< InternalImageType,InternalImageType > SmoothingFilterType;
+	typedef itk::ShiftScaleImageFilter< InternalImageType, InternalImageType> RescalerType;
 
 	SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
-	//RescalerType::Pointer rescaler = RescalerType::New();
-std::cout << std::endl << "FIXME why Im here, scaling to 25, scaling to 2500 ";
+	RescalerType::Pointer rescaler = RescalerType::New();
+
 	smoother->SetInput( image_crop );
-	smoother->SetVariance(smoothing_);
-	smoother->SetMaximumKernelWidth(35);
-	//rescaler->SetInput( smoother->GetOutput() );
-	//rescaler->SetOutputMinimum( 0 );
-	//rescaler->SetOutputMaximum( 65535 );
+	smoother->SetSigma(smoothing_);
+	//smoother->SetMaximumKernelWidth(15);
+	
+	rescaler->SetInput( smoother->GetOutput() );
+	rescaler->SetScale( std::numeric_limits< InputPixelType >::max() / std::numeric_limits< InternalImageType::PixelType >::max());
+
 	try {
-		smoother->GetOutput();
-		//rescaler->Update();
+		rescaler->Update();
 	}
 	catch(itk::ExceptionObject& e) {
 		vcl_cout << e << vcl_endl;
 	}
 
-	return smoother->GetOutput();
-	//return rescaler->GetOutput();
+	return rescaler->GetOutput();
 }
 
 // Check the validity of the 2D xform to be sure the affine components
