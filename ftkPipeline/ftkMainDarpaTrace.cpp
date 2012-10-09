@@ -212,7 +212,9 @@ void ftkMainDarpaTrace::runTracing()
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		omp_set_nested(1); // For the crop
+	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2); // For the crop
+	#endif
 		int num_threads = 1;
 		omp_set_num_threads(num_threads);
 	}
@@ -290,7 +292,11 @@ void ftkMainDarpaTrace::runTracing()
 		_somaMontageDesiredRegion = readImageRegion< rawImageType_uint >( _Soma_MontageNRRD.c_str(), desiredRegionBigTileLOG );
 
 	#pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
+	#if _OPENMP >= 200805L
 		for( unsigned long long a=0; a<centroid_list.size(); ++a )
+	#else
+		for( long long a=0; a<centroid_list.size(); ++a )	//OpenMP2.5 requires signed intergral type
+	#endif
 		{
 			int x, y, z;
 			std::stringstream ssx, ssy, ssz;

@@ -358,7 +358,9 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 	}
 		
 	omp_set_nested(1);
+#if _OPENMP >= 200805L
 	omp_set_max_active_levels(2);
+#endif
 	int num_threads = 1;
 	omp_set_num_threads(num_threads);
 	
@@ -373,7 +375,11 @@ void ftkMainDarpaAstroTrace::runInterestPoints(  )
 	unsigned int maxValueOld = 0;
 	int flagFirstStich = 1;
 	
-#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
+	#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+#endif
 	for(int xco = 0; xco < _kx; xco++)
 	{
 		for(int yco = 0; yco < _ky; yco++)
@@ -592,7 +598,9 @@ void ftkMainDarpaAstroTrace::runStitchRoots(  )
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		omp_set_nested(1);
+	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
+	#endif
 		int num_threads = 1;
 		omp_set_num_threads(num_threads);
 	}
@@ -853,7 +861,9 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		omp_set_nested(1);
+	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
+	#endif
 		int num_threads = 1;
 		omp_set_num_threads(num_threads);
 	}
@@ -872,7 +882,11 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 	std::string tempAllRoots_Table = _outPathTemp+"/Roots_Table.txt";
 	vtkSmartPointer< vtkTable > AllRootsTable = ftk::LoadTable( tempAllRoots_Table );
 
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+#endif	
 	for(int xco = 0; xco < _kx; xco++)
 	{
 		for(int yco = 0; yco < _ky; yco++)
@@ -1219,7 +1233,11 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 		classMap[AllNucleiTable->GetValue(row,0).ToUnsignedInt()] = AllNucleiTable->GetValueByName(row, "prediction_active_multi_class").ToInt();
 	}
 
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3)
+#endif	
 	for(int i=0; i<im_size[2]; ++i)
 	{
 		for(int j=0; j<im_size[1]; ++j)
@@ -1264,7 +1282,11 @@ void ftkMainDarpaAstroTrace::computeRootFeaturesForNuclei(  )
 	//	classMap[AllNucleiTable->GetValue(row,0).ToUnsignedInt()] = AllNucleiTable->GetValueByName(row, "prediction_active_multi_class").ToInt();
 	//}
 
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3)
+#endif
 	for(int i=0; i<im_size[2]; ++i)
 	{
 		for(int j=0; j<im_size[1]; ++j)

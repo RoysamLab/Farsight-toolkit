@@ -229,7 +229,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -245,7 +249,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -261,7 +269,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -289,7 +301,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -298,7 +314,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TOUTPUT::PixelType>::max();
 			}
 		}
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -308,7 +328,11 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 			}
 		}
 		
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -430,7 +454,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -446,7 +474,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -462,7 +494,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -508,7 +544,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -517,7 +557,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -527,7 +571,11 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 			}
 		}
 		
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -556,7 +604,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 			histoGram.at(z) = temp;
 		}
 		#pragma omp parallel for
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		for(long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 			{
@@ -691,7 +739,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -707,7 +759,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif	
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -723,7 +779,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(2)
+#endif
 	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -769,7 +829,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -778,7 +842,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
@@ -788,7 +856,11 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 			}
 		}
 		
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
 		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -816,8 +888,9 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 			std::vector< unsigned long long > temp((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1,0);
 			histoGram.at(z) = temp;
 		}
+
 		#pragma omp parallel for
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		for(long long z=0; z<inputImage_sizez[2]; ++z) //OpenMP 2.5 requires signed intergral type
 		{
 			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 			{
@@ -973,7 +1046,11 @@ void ftkMainDarpa::test_1( std::string inputImageName, std::string outputPath, s
 	testImage->Update();
 	typename TestImageType::PixelType * testImageArray = testImage->GetBufferPointer();
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3)
+#endif
 	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -1032,7 +1109,7 @@ void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageNa
 		histoGram.at(z) = temp;
 	}
 	#pragma omp parallel for
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	for(long long z=0; z<inputImage_sizez[2]; ++z)
 	{
 		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 		{
@@ -1077,7 +1154,11 @@ void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageNa
 	std::cout << std::endl << "HERE: " << fac;
 	
 	
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3)
+#endif
 	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
 	{
 		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
@@ -1206,7 +1287,12 @@ int ftkMainDarpa::test_3( std::string inputFile )
 		typename TINPUT::PixelType * inputImageProjectedArray = inputImageProjected[0]->GetBufferPointer();
 
 
+	#if _OPENMP < 200805L
+		#pragma omp parallel
+	#else
 		#pragma omp parallel for collapse(2)
+	#endif
+
 		for(unsigned long long x=0; x<sizeX; ++x)
  		{
           		for(unsigned long long y=0; y<sizeY; ++y)
@@ -1285,7 +1371,11 @@ int ftkMainDarpa::test_4( std::string inputFile )
 	{
 		typename TINPUT::Pointer inputImage = readImage< TINPUT >(namesFiles[i].c_str());
 		typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
-		#pragma omp parallel for collapse(3)
+		#if _OPENMP < 200805L
+			#pragma omp parallel
+		#else
+			#pragma omp parallel for collapse(3)
+		#endif
 		for(unsigned long long x=0; x<sizeX; ++x)
  		{
           		for(unsigned long long y=0; y<sizeY; ++y)

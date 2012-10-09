@@ -229,7 +229,11 @@ void ftkMainDarpaSegment::splitStore( rawImageType_8bit::Pointer ImageMontage, s
 	itk::Size<3> ImageMontageSize = ImageMontage->GetLargestPossibleRegion().GetSize();
 	
 	int contadorSplit = 0;
-#pragma omp parallel for collapse(3) //TEST
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
+	#pragma omp parallel for collapse(3)
+#endif
 	for(int xco = 0; xco < _kx; xco++)
 	{
 		for(int yco = 0; yco < _ky; yco++)
@@ -327,7 +331,9 @@ void ftkMainDarpaSegment::runSegment(  )
 	}
 		
 	omp_set_nested(1);
+#if _OPENMP >= 200805L
 	omp_set_max_active_levels(2);
+#endif
 	int num_threads = 1;
 	omp_set_num_threads(num_threads);
 	
@@ -375,8 +381,11 @@ void ftkMainDarpaSegment::runSegment(  )
 	unsigned int maxValue = 0;
 	unsigned int maxValueOld = 0;
 	int flagFirstStich = 1;
-	
-#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
+	#pragma omp parallel for collapse(3) num_threads(_num_threads) schedule(dynamic, 1)
+#endif
 	for(int xco = 0; xco < _kx; xco++)
 	{
 		for(int yco = 0; yco < _ky; yco++)
@@ -752,7 +761,9 @@ void ftkMainDarpaSegment::runStich(  )
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		omp_set_nested(1);
+	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
+	#endif	
 		int num_threads = 1;
 		omp_set_num_threads(num_threads);
 	}
@@ -1031,7 +1042,11 @@ void ftkMainDarpaSegment::runStich(  )
 		classMap[tableLabelMontage->GetValue(row,0).ToUnsignedInt()] = tableLabelMontage->GetValueByName(row, "prediction_active_mg").ToInt();
 	}
 
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
 	#pragma omp parallel for collapse(3)
+#endif
 	for(int i=0; i<ImageMontageSize[2]; ++i)
 	{
 		for(int j=0; j<ImageMontageSize[1]; ++j)
@@ -1689,7 +1704,9 @@ void ftkMainDarpaSegment::runStichOneAtTheTime(  )
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		omp_set_nested(1);
+	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
+	#endif		
 		int num_threads = 1;
 		omp_set_num_threads(num_threads);
 	}

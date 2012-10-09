@@ -8,7 +8,11 @@ void ftkMainDarpaAstroTrace::splitStore( typename TINPUT::Pointer ImageMontage, 
 	itk::Size<3> ImageMontageSize = ImageMontage->GetLargestPossibleRegion().GetSize();
 	
 	int contadorSplit = 0;
-#pragma omp parallel for collapse(3) //TEST
+#if _OPENMP < 200805L
+	#pragma omp parallel for
+#else
+	#pragma omp parallel for collapse(3) //TEST
+#endif
 	for(int xco = 0; xco < _kx; xco++)
 	{
 		for(int yco = 0; yco < _ky; yco++)
