@@ -1,3 +1,11 @@
+if (NOT BUILD_AstroTracer)
+	message (FATAL_ERROR "BUILD_PIPELINE requires BUILD_AstroTracer")
+endif()
+
+if (NOT BUILD_MultipleNeuronTracer)
+	message (FATAL_ERROR "BUILD_PIPELINE requires BUILD_MultipleNeuronTracer")
+endif()
+
 project(ftkPipeline)
 
 include_directories(${Farsight_SOURCE_DIR}/Tracing/TraceEdit)
