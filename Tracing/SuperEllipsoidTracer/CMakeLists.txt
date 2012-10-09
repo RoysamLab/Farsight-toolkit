@@ -47,5 +47,5 @@ TARGET_LINK_LIBRARIES( ConvertToSWC TinyXML ${ITK_LIBRARIES})
 ADD_EXECUTABLE ( TraceOverlay TraceOverlay.cxx TraceNode.h )
 TARGET_LINK_LIBRARIES( TraceOverlay TinyXML ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( Trace3D_package ${Trace3D_sources} ${Trace3D_headers} TraceMain.cxx Render.cxx ConvertToSWC.cxx TraceOverlay.cxx TraceNode.h )
-TARGET_LINK_LIBRARIES( Trace3D_package ${ITK_LIBRARIES} TinyXML ${VTK_LIBRARIES} )
+#ADD_EXECUTABLE( Trace3D_package ${Trace3D_sources} ${Trace3D_headers} TraceMain.cxx Render.cxx ConvertToSWC.cxx TraceOverlay.cxx TraceNode.h )
+#TARGET_LINK_LIBRARIES( Trace3D_package ${ITK_LIBRARIES} TinyXML ${VTK_LIBRARIES} )
