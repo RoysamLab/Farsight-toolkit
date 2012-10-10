@@ -1,4 +1,3 @@
-
 template<typename TINPUT >
 typename TINPUT::Pointer ftkMainDarpaTrace::cropImages( typename TINPUT::Pointer inputImage, int x, int y, int z)
 {

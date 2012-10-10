@@ -329,13 +329,15 @@ void ftkMainDarpaSegment::runSegment(  )
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 	}
-		
+	
+	int num_threads = 1;		
+	#ifdef _OPENMP
 	omp_set_nested(1);
-#if _OPENMP >= 200805L
+	#if _OPENMP >= 200805L
 	omp_set_max_active_levels(2);
-#endif
-	int num_threads = 1;
+	#endif
 	omp_set_num_threads(num_threads);
+	#endif
 	
 	std::cout << std::endl << "fir MAX NUMBER OF CORES: " << itk::MultiThreader::GetGlobalMaximumNumberOfThreads() << ", fir DEFAULT NUMBER OF CORES: " << itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
 	
@@ -760,12 +762,14 @@ void ftkMainDarpaSegment::runStich(  )
 	{
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
-		omp_set_nested(1);
+		int num_threads = 1;
+    	#ifdef _OPENMP
+        	omp_set_nested(1);
 	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
-	#endif	
-		int num_threads = 1;
+	#endif
 		omp_set_num_threads(num_threads);
+    	#endif
 	}
 	
 	rawImageType_8bit::RegionType ImageMontageRegion;
@@ -1703,12 +1707,14 @@ void ftkMainDarpaSegment::runStichOneAtTheTime(  )
 	{
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
-		omp_set_nested(1);
+		int num_threads = 1;
+    	#ifdef _OPENMP
+        	omp_set_nested(1);
 	#if _OPENMP >= 200805L
 		omp_set_max_active_levels(2);
-	#endif		
-		int num_threads = 1;
+	#endif
 		omp_set_num_threads(num_threads);
+    	#endif
 	}
 	
 	rawImageType_8bit::RegionType ImageMontageRegion;

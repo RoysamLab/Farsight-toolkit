@@ -211,12 +211,14 @@ void ftkMainDarpaTrace::runTracing()
 	{
 		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
-		omp_set_nested(1); // For the crop
-	#if _OPENMP >= 200805L
-		omp_set_max_active_levels(2); // For the crop
-	#endif
 		int num_threads = 1;
+    	#ifdef _OPENMP
+        	omp_set_nested(1);
+	#if _OPENMP >= 200805L
+		omp_set_max_active_levels(2);
+	#endif
 		omp_set_num_threads(num_threads);
+    	#endif
 	}
 
 	int counterCentro = 0;
