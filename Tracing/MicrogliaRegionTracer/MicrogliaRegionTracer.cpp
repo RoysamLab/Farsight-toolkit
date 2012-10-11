@@ -563,7 +563,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 		TreeAdjGraph[k] = new double[cell->critical_points_queue.size()];
 		for (int l = 0; l < cell->critical_points_queue.size(); l++)
 			TreeAdjGraph[k][l] = AdjGraph[k][l];
-	}	
+	}
 
 	//Root node should have infinite weights to connect to
 	for (int m = 0; m < cell->critical_points_queue.size(); m++)
@@ -624,6 +624,8 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 
 		if (minimum_node_cost >= 200)
 			break;	//Minimum distance way too far
+        
+        assert(minimum_node_cost < std::numeric_limits<double>::max() && minimum_connected_node != NULL);
 		
 		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell->critical_points_queue[minimum_connected_node_id][0] << " " << cell->critical_points_queue[minimum_connected_node_id][1] << " " << cell->critical_points_queue[minimum_connected_node_id][2] << " " << cell->critical_points_queue[minimum_node_index_to_id][0] << " " << cell->critical_points_queue[minimum_node_index_to_id][1] << " "  << cell->critical_points_queue[minimum_node_index_to_id][2] << " cost: " << minimum_node_cost << std::endl;
 
