@@ -33,11 +33,11 @@ int main(int argc, char* argv[])
 			<< std::endl;
 		return 1;
 	}
-	std::string mask_image;
-	if( argc > 5 )
+    else //( argc >= 5 )
 	{
-		mask_image = argv[5];
-		MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str() );
+		std::string mask_image;
+        mask_image = argv[5];
+		MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str());
 	}
 
 	
