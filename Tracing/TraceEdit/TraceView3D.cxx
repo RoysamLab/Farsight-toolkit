@@ -4850,6 +4850,8 @@ void View3D::CalculateDelaunay3D()
 	int ellipsoidMajorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid major length");
 	int ellipsoidMinorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid minor length");
 	int ellipsoidNormalIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid normal length");
+	int ellipsoidMajorAzimuthIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid Major Azimuth");
+	int ellipsoidMajorElevationIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid Major Elevation");
 	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
 	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 	{

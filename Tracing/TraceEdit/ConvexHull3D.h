@@ -51,7 +51,7 @@ public:
 	double* getConvexHullValues();
 
 private:
-	double convexHullValues[8];
+	double convexHullValues[10];
 	double convexHullArea, convexHullVol;
 	double refPt[3];
 	double cellCentroid[3];
