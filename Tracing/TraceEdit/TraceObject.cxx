@@ -609,7 +609,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	numPoints++; // set it to 1 + maximum id in the file
 	rewind(fp);
 
-	unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(char));
+	unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(unsigned char));
 	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1
 
 	vtksys::hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
