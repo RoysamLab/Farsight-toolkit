@@ -145,7 +145,7 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 
 
 
-	_MaskedImage = ImageType3D::New();
+	//_MaskedImage = ImageType3D::New();
 	_MaskedImage = thresholdFilter->GetOutput();
 
 
