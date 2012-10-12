@@ -31,10 +31,6 @@
 #include "itkImageRegionConstIterator.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkStatisticsImageFilter.h"
-#include "itkHuangThresholdImageFilter.h"
-#include "itkOtsuThresholdImageFilter.h"
-#include "itkBinaryThresholdImageFilter.h"
-#include "itkMinimumMaximumImageCalculator.h"
 
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkCastImageFilter.h"
@@ -111,10 +107,6 @@ public:
 	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
 	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
-	typedef itk::HuangThresholdImageFilter<ImageType3D,ImageType3D> HuangThresholdFilterType;
-	typedef itk::OtsuThresholdImageFilter<ImageType3D,ImageType3D>  OtsuThresholdImageFilterType;
-	typedef itk::BinaryThresholdImageFilter <ImageType3D,ImageType3D>	BinaryThresholdImageFilterType;
-	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxImageCalculatorType;
 
 	//Constructor
 	MultipleNeuronTracer();
@@ -196,7 +188,7 @@ private:
 	LabelImageType3D::Pointer _SomaImage;
 	PixelType _CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > _PQ;
-	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage, _MaskedImage;   //Input Image, EK image, CT image
+	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage;   //Input Image, EK image, CT image
 	CharImageType3D::Pointer _NDXImage2;
 	SWCImageType3D::Pointer _SWCImage; //swc label image
 	itk::Size<3> _size;
@@ -204,7 +196,7 @@ private:
 	long _CurrentID;
 	std::vector<IndexType> _StartPoints;
 	unsigned int _padz;
-	bool debug;
+
 	//Additions after including in the pipeline
 	itk::Size<3> _sizeDice;
 	itk::Index<3> _indxDice;
