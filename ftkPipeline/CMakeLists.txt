@@ -33,7 +33,7 @@ SET(MAINDARPA_SRCS
 	ftkMainDarpaTrace.cpp
 )
 
-if(BUILD_OPENMP AND BUILD_NUCLEI)
+if(BUILD_NUCLEI)
 
 	ADD_LIBRARY(LIBftkMainDarpa ${MAINDARPA_HDRS} ${MAINDARPA_SRCS})
 
@@ -41,9 +41,5 @@ if(BUILD_OPENMP AND BUILD_NUCLEI)
 	target_link_libraries( ftkMainDarpa LIBftkMainDarpa ${ITK_LIBRARIES} Project_Processor MultipleNeuronTracerLib AstroTracerLib)
 
 else()
-  message(WARNING "BUILD_image_dicer is ON, but
-
-  BUILD_OPENMP or BUILD_NUCLEI
-  
-  are OFF.  image_dicer executables cannot be built without these modules")
+  message(FATAL_ERROR "BUILD_image_dicer is ON, but BUILD_NUCLEI is OFF.  image_dicer executables cannot be built without these modules")
 endif()
