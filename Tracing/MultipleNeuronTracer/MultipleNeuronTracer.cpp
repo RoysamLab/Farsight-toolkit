@@ -184,6 +184,7 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	_flagOutLog = false;
 	ImageType3D::Pointer CurvImage = image;
 	
+
 	unsigned int padz = 0;
 	
 	//pad z slices
@@ -215,6 +216,30 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 
 	std::cout << "Input file size (after zero padding) is " << _PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
+
+	//Binarize the image and use as this as the mask instead of the intensity and contrast thresholds
+	MinMaxImageCalculatorType::Pointer minMaxImageCalFilter = MinMaxImageCalculatorType::New();
+	minMaxImageCalFilter->SetImage(_PaddedCurvImage);
+	minMaxImageCalFilter->Compute();	
+
+
+	OtsuThresholdImageFilterType::Pointer otsuThresholdImageFilter = OtsuThresholdImageFilterType::New();
+	otsuThresholdImageFilter->SetInput(_PaddedCurvImage);
+	otsuThresholdImageFilter->Update();
+	std::cout << (int)(otsuThresholdImageFilter->GetThreshold()) << std::endl;
+
+	float lowerThreshold = otsuThresholdImageFilter->GetThreshold();
+	lowerThreshold = lowerThreshold *0.9;
+
+	BinaryThresholdImageFilterType::Pointer thresholdFilter = BinaryThresholdImageFilterType::New();
+	thresholdFilter->SetInput(_PaddedCurvImage);
+	thresholdFilter->SetLowerThreshold(lowerThreshold);
+	thresholdFilter->SetUpperThreshold(minMaxImageCalFilter->GetMaximum());
+	thresholdFilter->SetInsideValue(255);
+	thresholdFilter->SetOutsideValue(0);
+	thresholdFilter->Update();
+
+	_MaskedImage = thresholdFilter->GetOutput();
 }
 
 
