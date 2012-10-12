@@ -316,12 +316,14 @@ void TraceLine::calculateBifFeatures()
 	//Daughter1->setBifTiltRemote(this->Angle(previousBit, BranchBit, D1B));
 	//Daughter2->setBifTiltRemote(this->Angle(previousBit, BranchBit, D2B));
 
-	double* ParentPlaneLocal_ptr  = this->Plane(D1F, BranchBit, D2F);
-	double* ParentPlaneRemote_ptr = this->Plane(D1B, BranchBit, D2B);
-	double* Daughter1PlaneLocal_ptr;
-	double* Daughter1PlaneRemote_ptr;
-	double* Daughter2PlaneLocal_ptr;
-	double* Daughter2PlaneRemote_ptr;
+    
+    double ParentPlaneLocal[3]; this->Plane(D1F, BranchBit, D2F, ParentPlaneLocal);
+    double ParentPlaneRemote[3]; this->Plane(D1B, BranchBit, D2B, ParentPlaneRemote);
+    
+	double Daughter1PlaneLocal[3];
+	double Daughter1PlaneRemote[3];
+	double Daughter2PlaneLocal[3];
+	double Daughter2PlaneRemote[3];
 	
 	double planeAnglelocal1 = -1;
 	double planeAnglelocal2 = -1;
@@ -336,10 +338,10 @@ void TraceLine::calculateBifFeatures()
 		TraceBit GD1B1 = GrandDaughter1of1->GetTraceBitsPointer()->back();
 		TraceBit GD2F1 = GrandDaughter2of1->GetTraceBitsPointer()->front();
 		TraceBit GD2B1 = GrandDaughter2of1->GetTraceBitsPointer()->back();
-		Daughter1PlaneLocal_ptr  = this->Plane(GD1F1,D1B,GD2F1);
-		Daughter1PlaneRemote_ptr = this->Plane(GD1B1,D1B,GD2B1);
-		planeAnglelocal1 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter1PlaneLocal_ptr);
-		planeAngleremote1 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter1PlaneRemote_ptr);
+		this->Plane(GD1F1,D1B,GD2F1, Daughter1PlaneLocal);
+		this->Plane(GD1B1,D1B,GD2B1, Daughter1PlaneRemote);
+		planeAnglelocal1 = this->PlaneAngle(ParentPlaneLocal, Daughter1PlaneLocal);
+		planeAngleremote1 = this->PlaneAngle(ParentPlaneRemote,Daughter1PlaneRemote);
 	}
 	if (!Daughter2->isLeaf() && Daughter2->GetBranchPointer()->size() == 2)
 	{
@@ -349,10 +351,10 @@ void TraceLine::calculateBifFeatures()
 		TraceBit GD1B2 = GrandDaughter1of2->GetTraceBitsPointer()->back();
 		TraceBit GD2F2 = GrandDaughter2of2->GetTraceBitsPointer()->front();
 		TraceBit GD2B2 = GrandDaughter2of2->GetTraceBitsPointer()->back();
-		Daughter2PlaneLocal_ptr  = this->Plane(GD1F2,D2B,GD2F2);
-		Daughter2PlaneRemote_ptr = this->Plane(GD1B2,D2B,GD2B2);
-		planeAnglelocal2 = this->PlaneAngle(ParentPlaneLocal_ptr, Daughter2PlaneLocal_ptr);
-		planeAngleremote2 = this->PlaneAngle(ParentPlaneRemote_ptr,Daughter2PlaneRemote_ptr);
+        this->Plane(GD1F2,D2B,GD2F2, Daughter1PlaneRemote);
+		this->Plane(GD1B2,D2B,GD2B2, Daughter2PlaneRemote);
+		planeAnglelocal2 = this->PlaneAngle(ParentPlaneLocal, Daughter2PlaneLocal);
+		planeAngleremote2 = this->PlaneAngle(ParentPlaneRemote,Daughter2PlaneRemote);
 	}
 
 	if (planeAnglelocal1 != planeAnglelocal1) //quickfix for invalid numbers
@@ -1318,7 +1320,7 @@ std::string TraceLine::RootCoord()
 }
 std::string TraceLine::statHeaders()
 {
-	std::stringstream thisStatsHeaders; 
+	std::stringstream thisStatsHeaders;
 	thisStatsHeaders <<"ID"
 		<<"\tType"
 		<<"\tSize"
@@ -1330,13 +1332,11 @@ std::string TraceLine::statHeaders()
 	return thisStatsHeaders.str();
 }
 
-double* TraceLine::Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2)
+void TraceLine::Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2, double vector[])
 {
-	double vector[3];
 	vector[0] = bit1.x - vertex.x;
 	vector[1] = bit1.y - vertex.y;
 	vector[2] = bit1.z - vertex.z;
-	return vector;
 }
 
 double TraceLine::PlaneAngle(double *plane1, double *plane2)

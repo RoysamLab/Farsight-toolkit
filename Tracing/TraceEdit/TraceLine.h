@@ -197,7 +197,7 @@ private:
 	double Angle(TraceBit bit1, TraceBit vertex, TraceBit bit2);
 	double AzimuthAngle(TraceBit vertex, TraceBit bit1);
 	double ElevationAngle(TraceBit vertex, TraceBit bit1);
-	double* Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2);
+	void   Plane(TraceBit bit1, TraceBit vertex, TraceBit bit2, double vector[]);
 	double PlaneAngle(double* plane1, double* plane2);
 	double RallPower(double diamParent, double diamD1, double diamD2);
 	double daughterRatio, parentDaughterRatio, partitionAsymmetry, rallPower, Pk, Pk_2, Pk_classic;
