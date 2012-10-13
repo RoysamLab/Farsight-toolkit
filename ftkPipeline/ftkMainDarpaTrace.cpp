@@ -209,7 +209,7 @@ void ftkMainDarpaTrace::runTracing()
 	
 	if( _isSmall == 1 )
 	{
-		itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+		//itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
 		itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
 		int num_threads = 1;
     	#ifdef _OPENMP
@@ -290,8 +290,37 @@ void ftkMainDarpaTrace::runTracing()
 // 			rawImageType_flo::Pointer _img_traceDesiredRegion;
 		
 // 			std::string tempFileName_42 = _GFP_ImagePREPMNT
+	        if( _isSmall == 1 )
+        	{
+                	//itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+	                itk::MultiThreader::SetGlobalMaximumNumberOfThreads(80); // This one can chenga
+	        	int num_threads = 1;
+     	#ifdef _OPENMP
+                  	omp_set_nested(1);
+	#if _OPENMP >= 200805L
+        	        omp_set_max_active_levels(2);
+        #endif
+	     		omp_set_num_threads(num_threads);
+        #endif
+                 }
 		_img_traceDesiredRegion = readImageRegion< rawImageType_flo >( _GFP_ImagePREPMNT.c_str(), desiredRegionBigTileLOG );
 		_somaMontageDesiredRegion = readImageRegion< rawImageType_uint >( _Soma_MontageNRRD.c_str(), desiredRegionBigTileLOG );
+
+                if( _isSmall == 1 )
+                {
+                        //itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
+                        itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1); // This one can chenga
+                        int num_threads = 1;
+              	#ifdef _OPENMP
+                        omp_set_nested(1);
+                #if _OPENMP >= 200805L
+                        omp_set_max_active_levels(2);
+	        #endif
+                        omp_set_num_threads(num_threads);
+        	#endif
+                }
+
+
 
 	#pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
 	#if _OPENMP >= 200805L
