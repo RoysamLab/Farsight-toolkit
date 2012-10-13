@@ -140,7 +140,7 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	if(iter!=options.end())
 	{ std::istringstream ss((*iter).second); ss >> _overridedefaultsTraceParams;}
 	else
-	{ _overridedefaultsTraceParams = "YES"; printf("Choose _overridedefaultsTraceParams = YES as default\n");}
+	{ _overridedefaultsTraceParams = "NO"; printf("Choose _overridedefaultsTraceParams = NO as default\n");}
 	
 	_Cy5_ImageNRRD = _Cy5_Image+".nrrd";
 	_TRI_ImageNRRD = _TRI_Image+".nrrd";
