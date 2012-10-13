@@ -70,7 +70,7 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = [('/0113_NRRD',4),('/0117_NRRD',4),('/0120_NRRD',4),('/0123_NRRD',4),('/0128_NRRD',4),('/0131_NRRD',4)]
 	#DATA_FOLDER_ALL = [('/0323_NRRD_CROPPED_M_1',2),('/0323_NRRD_CROPPED_M_2',2),('/0323_NRRD_CROPPED_M_3',2),('/0323_NRRD_CROPPED_M_4',2),('/0323_NRRD_CROPPED_M_5',2),('/0323_NRRD_CROPPED_M_6',2)]
 	#DATA_FOLDER_ALL = [('/0113_NRRD',4),('/0117_NRRD',4)]
-	DATA_FOLDER_ALL = [('/0410_NRRD',4)]
+	DATA_FOLDER_ALL = [('/0131_NRRD',4)]
 
 if( SERVER == 'far05' ):
 	REMOVE_MONTAGES = 1
@@ -80,7 +80,7 @@ if( SERVER == 'far05' ):
 	#DATA_FOLDER_ALL = [('/0405_NRRD',2),('/0323_NRRD',2),('/0409_NRRD',2),('/0412_NRRD',2)]
 	#DATA_FOLDER_ALL = [('/0113_NRRD',4)]
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0410_NRRD']
+	DATA_FOLDER_ALL = [('/0128_NRRD',4)]
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
 	#DATA_FOLDER_ALL = ['/0131_test4']
@@ -269,7 +269,7 @@ for index, DATA_FOLDER in enumerate(DATA_FOLDER_ALL):
 		TRACE_FILE.write('-intensity_threshold 0.003\n')
 		TRACE_FILE.write('-contrast_threshold 0.003\n')
 		TRACE_FILE.write('-cost_threshold 300\n')
-		TRACE_FILE.write('-debris_threshold 0.8\n')
+		TRACE_FILE.write('-debris_threshold 1\n')
 		TRACE_FILE.write('-offshoot 15\n')
 		TRACE_FILE.write('-device 0\n')
 		TRACE_FILE.write('-overridedefaultsTraceParams NO\n')
