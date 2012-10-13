@@ -58,6 +58,7 @@ void MultipleNeuronTracer::LoadParameters(const char* parametersFileName,int _ar
 	else
 	{ this->device = 1; printf("Chose device = 0 as default\n"); }
 
+	debug = true;
 	std::cout<<"intensity_threshold="<<this->intensity_threshold<<std::endl;
 	std::cout<<"contrast_threshold="<<this->contrast_threshold<<std::endl;
 	std::cout<<"cost_threshold="<<this->cost_threshold<<std::endl;
@@ -119,7 +120,39 @@ void MultipleNeuronTracer::LoadCurvImage(std::string fname, unsigned int pad)
 	ImageType3D::Pointer image = reader->GetOutput();
 	image->Update();
 
+	//Binarize the image and use as this as the mask instead of the intensity and contrast thresholds
+	MinMaxImageCalculatorType::Pointer minMaxImageCalFilter = MinMaxImageCalculatorType::New();
+	minMaxImageCalFilter->SetImage(image);
+	minMaxImageCalFilter->Compute();	
+	
+
+	OtsuThresholdImageFilterType::Pointer otsuThresholdImageFilter = OtsuThresholdImageFilterType::New();
+	otsuThresholdImageFilter->SetInput(image);
+	otsuThresholdImageFilter->Update();
+	std::cout << (int)(otsuThresholdImageFilter->GetThreshold()) << std::endl;
+	
+	float lowerThreshold = otsuThresholdImageFilter->GetThreshold();
+	lowerThreshold = lowerThreshold *0.9;
+
+	BinaryThresholdImageFilterType::Pointer thresholdFilter = BinaryThresholdImageFilterType::New();
+	thresholdFilter->SetInput(image);
+	thresholdFilter->SetLowerThreshold(lowerThreshold);
+	thresholdFilter->SetUpperThreshold(minMaxImageCalFilter->GetMaximum());
+	thresholdFilter->SetInsideValue(255);
+	thresholdFilter->SetOutsideValue(0);
+	thresholdFilter->Update();
+
+
+
+
+	_MaskedImage = ImageType3D::New();
+	_MaskedImage = thresholdFilter->GetOutput();
+
+
 	std::cout << "Entering LoadCurvImage" << std::endl;
+	
+	// add the code for Huang Threshold 
+	// get the Masked Image
 	LoadCurvImage_1(image, pad);
 }
 
@@ -184,7 +217,6 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	_flagOutLog = false;
 	ImageType3D::Pointer CurvImage = image;
 	
-
 	unsigned int padz = 0;
 	
 	//pad z slices
@@ -221,6 +253,7 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	MinMaxImageCalculatorType::Pointer minMaxImageCalFilter = MinMaxImageCalculatorType::New();
 	minMaxImageCalFilter->SetImage(_PaddedCurvImage);
 	minMaxImageCalFilter->Compute();	
+	
 
 
 	OtsuThresholdImageFilterType::Pointer otsuThresholdImageFilter = OtsuThresholdImageFilterType::New();
@@ -718,7 +751,7 @@ void MultipleNeuronTracer::FeatureMain(void)
 	_NDXImage2->FillBuffer(0.0f);///////////////////////////
 
 	
-	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f };	//LoG scales
+	float sigmas[] =  { 2.0f, 2.8284f, 4.0f, 5.6569f, 8.0f, 11.31f};	//LoG scales
 	for (unsigned int i = 0; i < 6; ++i)
 	{
 		std::cout << "Analysis at " << sigmas[i] << std::endl;
@@ -793,6 +826,7 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	//ImageType3D::Pointer smoothedCurvImage = gauss->GetOutput();
 	gauss->GetOutput()->Update();
 	std::cout << "325Laplacian of Gaussian at " << sigma << " took " << (clock() - LoG_start_time)/(float) CLOCKS_PER_SEC << std::endl;
+	
 
 	//itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::Pointer rescaler = itk::RescaleIntensityImageFilter<ImageType3D, ImageType3D>::New();
 	//rescaler->SetInput(gauss->GetOutput());;
@@ -821,6 +855,18 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		tot += q*q;
 		num ++;
 	}
+
+
+
+
+	//if(debug){
+	//	itk::ImageFileWriter<ImageType3D>::Pointer writer = itk::ImageFileWriter<ImageType3D>::New();
+	//	writer->SetInput(gauss->GetOutput());
+	//	writer->SetFileName("D:\\Data\\FSData\\LOG_TEST_ROYSAM\\LOG_" + ss.str() + ".tif");
+	//	writer->Update();
+	//}
+
+
 	//std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
 
 	// set the diagonal terms in neighborhood iterator
@@ -905,8 +951,11 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		}
 		
 		float val = nit.GetPixel(13) ;
-
-		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		
+		float mask_value = _MaskedImage->GetPixel(ndx);
+		
+		//if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		if(mask_value > 0)
 		{
 			TensorType h;
 			h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
@@ -967,6 +1016,12 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		++it;
 		++nit;
 	}
+	//if(debug){
+	//	itk::ImageFileWriter<ImageType3D>::Pointer writer2 = itk::ImageFileWriter<ImageType3D>::New();
+	//	writer2->SetInput(_NDXImage);
+	//	writer2->SetFileName("D:\\Data\\FSData\\LOG_TEST_ROYSAM\\NDX_IMAGE" + ss.str() + ".tif");
+	//	writer2->Update();
+	//}
 	std::cout <<"asdfNumber of CTs at this stage: " << ctCnt <<std::endl<<std::flush;
 	//out_seeds.close();
 }
