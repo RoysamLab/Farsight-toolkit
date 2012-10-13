@@ -82,18 +82,18 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 103
+TRY = 102
 #DEBUG = 1
 #----------------------------------
-REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 0	# If 0 the results will be keep
+REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
+MOVE_RESULTS = 1	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
 MOVE_LOCALLY = 1
 #----------------------------------
 REMOVE_TEMP_SEGM = 1
-REMOVE_TEMP_TRAC = 0
+REMOVE_TEMP_TRAC = 1
 #----------------------------------
 MOVE_INTER_STEPS = 0
 
@@ -193,9 +193,9 @@ if( SERVER == 'far05' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 	#DATA_FOLDER_ALL = ['/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	DATA_FOLDER_ALL = ['/0405_NRRD','/0323_NRRD','/0409_NRRD','/0412_NRRD']
+	#DATA_FOLDER_ALL = ['/0405_NRRD','/0323_NRRD','/0409_NRRD','/0412_NRRD']
 	#DATA_FOLDER_ALL = ['/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
-	#DATA_FOLDER_ALL = ['/0113_NRRD']
+	DATA_FOLDER_ALL = ['/0128_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
@@ -302,13 +302,13 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP = LOCAL_DATASET_PATH_ASTRO_TRAC+'/Temp'
 
 	GLOBAL_DATASET_PATH = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
-	GLOBAL_DATASET_PARAMS = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
+	GLOBAL_DATASET_PARAMS = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_'+'2'#str(TRY)
 	#GLOBAL_DATASET_PATH = "/FSdata/data"+DATA_FOLDER
 	GLOBAL_DATASET_PATH_RESULTS = '/FSdata/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
 
 	# FSdata no auto FSdata (it gives some errors when using FSdata.auto)
 	GLOBAL_DATASET_PATH_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER
-	GLOBAL_DATASET_PARAMS_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_DEVICE_'+'1'#str(TRY)
+	GLOBAL_DATASET_PARAMS_NAUTO = "/FSdata/data/DARPA_MOSAICS"+DATA_FOLDER+'_PARAMS_'+'2'#str(TRY)
 	#GLOBAL_DATASET_PATH_NAUTO = "/FSdata/data"+DATA_FOLDER
 	GLOBAL_DATASET_PATH_RESULTS_NAUTO = '/FSdata/data/DARPA_RESULTS'+'/'+str(TRY)+DATA_FOLDER+'_RESULTS_V3_'+SERVER
 
@@ -362,11 +362,11 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			sameFile = 0
 	if( sameFile == 1 ):
 		print "Curvelets found in: "+GLOBAL_DATASET_PATH_RESULTS+" --> Copy curvelets results"
-		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_curvelets'+' '+LOCAL_DATASET_PATH_DATA+'/options_curvelets'
+		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_curvelets'+' '+LOCAL_DATASET_PATH_DATA+'/options_curvelets'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		TEMP8.communicate()
-		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*GFPdsu_BS_CV.nrrd'+' '+LOCAL_DATASET_PATH_DATA+'/'
+		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*GFPdsu_BS_CV.nrrd'+' '+LOCAL_DATASET_PATH_DATA+'/'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		TEMP8.communicate()
@@ -382,7 +382,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	sameFile = 0
 	if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation') & (previousCurve == 1) ):
 		print "Segmentation found in: "+GLOBAL_DATASET_PATH_RESULTS+" --> Copy segmentation results"
-		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation'+' '+LOCAL_DATASET_PATH_DATA+'/options_segmentation'
+		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation'+' '+LOCAL_DATASET_PATH_DATA+'/options_segmentation'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		TEMP8.communicate()
@@ -390,7 +390,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 		#print '\t'+TEMP2
 		#TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		#TEMP8.communicate()
-		TEMP2 = 'scp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*soma*'+' '+LOCAL_DATASET_PATH_DATA+'/'
+		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/*soma*'+' '+LOCAL_DATASET_PATH_DATA+'/'
 		print '\t'+TEMP2
 		TEMP8 = subprocess.Popen(TEMP2, shell=True)
 		TEMP8.communicate()
