@@ -338,10 +338,10 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 
 	a010_CreateFolders.main( LOCAL_DEB_DATASET_PATH, LOCAL_DATASET_PATH_EXE, LOCAL_DATASET_PATH_LOG, LOCAL_DATASET_PATH_DEBUG, LOCAL_DATASET_PATH_DATA, LOCAL_DATASET_PATH_DATA_DEBUG, LOCAL_DATASET_PATH_SEGM, LOCAL_DATASET_PATH_SEGM_DEBUG, LOCAL_DATASET_PATH_SEGM_DEBUG_L2, LOCAL_DATASET_PATH_SEGM_TEMP, LOCAL_DATASET_PATH_TRAC, LOCAL_DATASET_PATH_TRAC_DEBUG, LOCAL_DATASET_PATH_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_TRAC_TEMP, GLOBAL_DATASET_PATH_RESULTS, LOCAL_DATASET_PATH_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC, LOCAL_DATASET_PATH_ASTRO_TRAC_RESULTS, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG, LOCAL_DATASET_PATH_ASTRO_TRAC_DEBUG_L2, LOCAL_DATASET_PATH_ASTRO_TRAC_TEMP)
 
-	if( os.path.exists(GLOBAL_DATASET_PARAMS+'/options_mnt') ):
-		shutil.copy(GLOBAL_DATASET_PARAMS+'/options_mnt', LOCAL_DATASET_PATH_PARAMETERS+'/options_mnt')
-	if( os.path.exists(GLOBAL_DATASET_PARAMS+'/options_curvelets') ):
-		shutil.copy(GLOBAL_DATASET_PARAMS+'/options_curvelets', LOCAL_DATASET_PATH_PARAMETERS+'/options_curvelets')
+	#if( os.path.exists(GLOBAL_DATASET_PARAMS+'/options_mnt') ):
+	#	shutil.copy(GLOBAL_DATASET_PARAMS+'/options_mnt', LOCAL_DATASET_PATH_PARAMETERS+'/options_mnt')
+	#if( os.path.exists(GLOBAL_DATASET_PARAMS+'/options_curvelets') ):
+	#	shutil.copy(GLOBAL_DATASET_PARAMS+'/options_curvelets', LOCAL_DATASET_PATH_PARAMETERS+'/options_curvelets')
 
 	print "# ---------------------------------------------------------------------------------------------------------------------------------------"
 	print "# Test previous results: "+DATA_FOLDER+' '+str(datetime.datetime.now())
@@ -353,14 +353,14 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS+'/Data/options_curvelets') ):
 		flag = 1
 	if( (flag == 1)):
-		if( filecmp.cmp(LOCAL_DATASET_PATH_PARAMETERS+'/options_curvelets', GLOBAL_DATASET_PATH_RESULTS+'/Data/'+'options_curvelets') ):
-			if( os.path.exists(LOCAL_DATASET_PATH_DATA+'/options_curvelets') ):
-				sameFile = 0
-			else:
+		if( os.path.exists( LOCAL_DATASET_PATH_DATA+'/options_curvelets') ):
+			if( filecmp.cmp(LOCAL_DATASET_PATH_DATA+'/options_curvelets', GLOBAL_DATASET_PATH_RESULTS+'/Data/'+'options_curvelets') ):	
 				sameFile = 1
+			else:
+				sameFile = 0
 		else:
 			sameFile = 0
-	if( sameFile == 1 ):
+	if( (sameFile == 0) & (flag == 1)):
 		print "Curvelets found in: "+GLOBAL_DATASET_PATH_RESULTS+" --> Copy curvelets results"
 		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_curvelets'+' '+LOCAL_DATASET_PATH_DATA+'/options_curvelets'
 		print '\t'+TEMP2
@@ -380,7 +380,18 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 	# Solo si existe
 	flag = 0
 	sameFile = 0
-	if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation') & (previousCurve == 1) ):
+        if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation') ):
+                flag = 1
+        if( (flag == 1)):
+		if( os.path.exists( LOCAL_DATASET_PATH_DATA+'/options_segmentation') ):
+	                if( filecmp.cmp(LOCAL_DATASET_PATH_DATA+'/options_segmentation', GLOBAL_DATASET_PATH_RESULTS+'/Data/'+'options_segmentation') ):
+        	                sameFile = 1
+	                else:
+        	                sameFile = 0
+		else:
+			sameFile = 0
+        if( (sameFile == 0) & (flag == 1)):
+#	if( os.path.exists(GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation') & (previousCurve == 1) ):
 		print "Segmentation found in: "+GLOBAL_DATASET_PATH_RESULTS+" --> Copy segmentation results"
 		TEMP2 = 'cp '+GLOBAL_DATASET_PATH_RESULTS+'/Data/options_segmentation'+' '+LOCAL_DATASET_PATH_DATA+'/options_segmentation'
 		print '\t'+TEMP2
