@@ -94,16 +94,16 @@ typename T::Pointer readImageRegion(const char* filename, typename T::RegionType
 
 	typename ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(filename);
-// 	try
-// 	{
-// 		reader->Update();
-// 	}
-// 	catch(itk::ExceptionObject &err)
-// 	{
-// 		std::cerr << "ExceptionObject caught!" <<std::endl;
-// 		std::cerr << err << std::endl;
-// // 		return EXIT_FAILURE;
-// 	}
+ 	try
+ 	{
+ 		reader->Update();
+ 	}
+ 	catch(itk::ExceptionObject &err)
+ 	{
+ 		std::cerr << "ExceptionObject caught!" <<std::endl;
+ 		std::cerr << err << std::endl;
+ // 		return EXIT_FAILURE;
+ 	}
 	typedef typename itk::ExtractImageFilter< T, T > ROIFilterType;
 	typename ROIFilterType::Pointer ROIfilter = ROIFilterType::New();
 	ROIfilter->SetExtractionRegion(region);
