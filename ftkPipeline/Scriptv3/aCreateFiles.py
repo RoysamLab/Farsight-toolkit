@@ -272,7 +272,7 @@ for index, DATA_FOLDER in enumerate(DATA_FOLDER_ALL):
 		TRACE_FILE.write('-debris_threshold 0.8\n')
 		TRACE_FILE.write('-offshoot 15\n')
 		TRACE_FILE.write('-device 0\n')
-		TRACE_FILE.write('-overridedefaultsTraceParams YES\n')
+		TRACE_FILE.write('-overridedefaultsTraceParams NO\n')
 		TRACE_FILE.close()
 
 		ASTRO_TRACE_FILE = LOCAL_FOLDER_PARAMS+'/options_astr'
