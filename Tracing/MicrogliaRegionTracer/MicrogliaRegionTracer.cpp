@@ -1,7 +1,7 @@
 #include "MicrogliaRegionTracer.h"
 
 #define MASK 0
-#define PRINT_ALL_IMAGES 0
+#define PRINT_ALL_IMAGES 0  //UNSAFE TO TURN THIS ON WHEN TRACING MORE THAN 1 CELL
 #define PI (4.0*atan(1.0))
 
 MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
@@ -10,8 +10,7 @@ MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transform
 	this->soma_filename = soma_filename;
 
 #ifdef _OPENMP
-	std::cerr << "OpenMP is on, setting itkGlobalDefaultNumberOfThreads to 1" << std::endl;
-	itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 1 );	//Acquiring threads through OpenMP, so no need for ITK threads
+	std::cerr << "OpenMP detected!" << std::endl;
 #endif
 	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
@@ -51,12 +50,20 @@ void MicrogliaRegionTracer::Trace()
     std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
     std::cerr << "Number of cells to process in the last group" << cells.size() % num_threads << std::endl;
     
-
+    
+    //The following for loops are to handle the case of parallelizing the processing of the
+    //microglia because the fregl_roi class does not like to be accessed by different OpenMP
+    //threads even though if it guarded by a omp critical section.
+    //First we read num_thread number of cells sequentially, then we process in parallel.
     for (int group_num = 0; group_num < num_groups; group_num++)
     {
+        
         int num_local_threads = (cells.size() / ((group_num+1) * num_threads)) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
-		std::cerr << "number of local threads: " << num_local_threads << std::endl;
-		for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
+
+        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Change default number of threads to 16 for ITK filters in fregl_roi
+        
+        //In this for loop we read num_thread ROIs without OpenMP (see comment before outer for loop)
+        for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
         {
             int global_thread_num = group_num * num_threads + local_thread_num;
             
@@ -107,7 +114,8 @@ void MicrogliaRegionTracer::Trace()
             cell->SetSize(roi_size);
         }
         
-        //Trace a group of cells
+        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
+        //Then we trace a group of cells using OpenMP
         #pragma omp parallel for
         for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
         {
@@ -431,7 +439,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 
 	vesselnessFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
 #if PRINT_ALL_IMAGES
-		cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
+    cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
 #endif
 }
 
