@@ -47,8 +47,10 @@ void MicrogliaRegionTracer::Trace()
 #endif
     
     int num_groups = std::ceil(cells.size() / (double) num_threads);
-	std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
-    std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
+	std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
+    std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
+    std::cerr << "Number of cells to process in the last group" << cells.size() % num_threads << std::endl;
+    
 
     for (int group_num = 0; group_num < num_groups; group_num++)
     {
