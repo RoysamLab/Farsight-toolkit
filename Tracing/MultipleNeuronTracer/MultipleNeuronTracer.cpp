@@ -248,7 +248,10 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 
 	std::cout << "Input file size (after zero padding) is " << _PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
+}
 
+void MultipleNeuronTracer::RunMask()
+{
 	//Binarize the image and use as this as the mask instead of the intensity and contrast thresholds
 	MinMaxImageCalculatorType::Pointer minMaxImageCalFilter = MinMaxImageCalculatorType::New();
 	minMaxImageCalFilter->SetImage(_PaddedCurvImage);

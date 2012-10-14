@@ -127,6 +127,7 @@ public:
 	void LoadCurvImage(std::string fname, unsigned int pad); 
 	void LoadCurvImage_1(ImageType3D::Pointer &image, unsigned int pad);
 	void LoadCurvImage_2(ImageType3D::Pointer &image);
+	void RunMask();
 	
 	void ReadStartPoints(std::string fname, unsigned int padz);
 	void ReadStartPoints_1(std::vector< itk::Index<3> > somaCentroids, unsigned int padz);
