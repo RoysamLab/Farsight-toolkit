@@ -417,6 +417,7 @@ void ftkMainDarpaTrace::runTracing()
 				img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
 				MNT->LoadCurvImage_2(img_trace);
 			}
+			MNT->RunMask();
 			/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
 			float calc_intensity_threshold = 0;
 			float calc_contrast_threshold = 0;
