@@ -1063,7 +1063,7 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 	im_index[2] = 0;
 
 	std::cout<<"finished reading image, started allocation..."<<std::endl;
-	TINPUT::RegionType region;
+	typename TINPUT::RegionType region;
 	region.SetSize( im_size );
 	region.SetIndex( im_index );
 	clean_labelImage->SetRegions( region );
