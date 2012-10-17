@@ -229,17 +229,19 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+
+	for( long long x=0; x<inputImage_sizez[0]; ++x)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for( long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			for( long long z=0; z<inputImage_sizez[2]; ++z)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -249,17 +251,17 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+	for( long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		for( long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -269,17 +271,17 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+	for( long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for( long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -301,41 +303,41 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for( long long x=0; x<inputImage_sizez[0]; ++x)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( zProjectImageArray[(inputImage_row_size*y) + (x)] != 0 )
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TOUTPUT::PixelType>::max();
 			}
 		}
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				if( yProjectImageArray[(inputImage_sizez[0]*z) + (x)] != 0 )
 					yProjectImageArray[(inputImage_sizez[0]*z) + (x)] = std::numeric_limits<typename TOUTPUT::PixelType>::max();
 			}
 		}
 		
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( xProjectImageArray[(inputImage_sizez[2]*y) + (z)] != 0 )
 					xProjectImageArray[(inputImage_sizez[2]*y) + (z)] = std::numeric_limits<typename TOUTPUT::PixelType>::max();
@@ -454,17 +456,13 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+	//#pragma omp parallel for collapse(2)
+	for( long long x=0; x<inputImage_sizez[0]; ++x)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for( long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			for( long long z=0; z<inputImage_sizez[2]; ++z)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -474,17 +472,17 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+	for(long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		for( long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -494,17 +492,17 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+	for(long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for( long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -544,41 +542,41 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for(long long x=0; x<inputImage_sizez[0]; ++x)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( zProjectImageArray[(inputImage_row_size*y) + (x)] != 0 )
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for(long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				if( yProjectImageArray[(inputImage_sizez[0]*z) + (x)] != 0 )
 					yProjectImageArray[(inputImage_sizez[0]*z) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
 		
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for(long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for(long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( xProjectImageArray[(inputImage_sizez[2]*y) + (z)] != 0 )
 					xProjectImageArray[(inputImage_sizez[2]*y) + (z)] = std::numeric_limits<typename TINPUT::PixelType>::max();
@@ -598,17 +596,17 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
 		std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		for(long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			std::vector< unsigned long long > temp((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1,0);
 			histoGram.at(z) = temp;
 		}
 		#pragma omp parallel for
-		for(long long z=0; z<inputImage_sizez[2]; ++z)
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for(long long x=0; x<inputImage_sizez[0]; ++x)
 			{
-				for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+				for(long long y=0; y<inputImage_sizez[1]; ++y)
 				{
 					typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 					histoGram.at(z).at(value)++;
@@ -616,10 +614,10 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 			}
 		}
 		std::vector< unsigned long long > result((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1,0);
-		for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
+		for( long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
 		{
 			unsigned long long maxMax = 0;
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			for( long long z=0; z<inputImage_sizez[2]; ++z)
 			{
 				maxMax = maxMax + histoGram.at(z).at(num);
 			}
@@ -629,7 +627,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		ofstream myfile;
 		myfile.open (temp3.c_str());
 		myfile << (unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max() << "\n";
-		for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
+		for( long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
 		{
 			myfile << result.at(num) << "\n";
 		}
@@ -739,17 +737,19 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+	
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+
+	for(long long x=0; x<inputImage_sizez[0]; ++x)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for(long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			for(long long z=0; z<inputImage_sizez[2]; ++z)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -759,17 +759,18 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif	
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+
+	for( long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		for(long long x=0; x<inputImage_sizez[0]; ++x)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for(long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -779,17 +780,18 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(2)
-#endif
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+	#ifdef _MSC_VER 
+		#pragma omp parallel for //collapse(2) //TEST
+	#else
+		#pragma omp parallel for collapse(2)
+	#endif
+
+	for( long long z=0; z<inputImage_sizez[2]; ++z)
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		for( long long y=0; y<inputImage_sizez[1]; ++y)
 		{
 			typename TINPUT::PixelType max_val = 0;
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 				if( max_val < value )
@@ -829,41 +831,42 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=string::npos)
 	{
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+
+		for( long long x=0; x<inputImage_sizez[0]; ++x)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for(long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( zProjectImageArray[(inputImage_row_size*y) + (x)] != 0 )
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for(long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for(long long x=0; x<inputImage_sizez[0]; ++x)
 			{
 				if( yProjectImageArray[(inputImage_sizez[0]*z) + (x)] != 0 )
 					yProjectImageArray[(inputImage_sizez[0]*z) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
 		
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		#ifdef _MSC_VER 
+			#pragma omp parallel for //collapse(2) //TEST
+		#else
+			#pragma omp parallel for collapse(2)
+		#endif
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+			for( long long y=0; y<inputImage_sizez[1]; ++y)
 			{
 				if( xProjectImageArray[(inputImage_sizez[2]*y) + (z)] != 0 )
 					xProjectImageArray[(inputImage_sizez[2]*y) + (z)] = std::numeric_limits<typename TINPUT::PixelType>::max();
@@ -883,18 +886,17 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
 		std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
 			std::vector< unsigned long long > temp((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1,0);
 			histoGram.at(z) = temp;
 		}
-
 		#pragma omp parallel for
-		for(long long z=0; z<inputImage_sizez[2]; ++z) //OpenMP 2.5 requires signed intergral type
+		for( long long z=0; z<inputImage_sizez[2]; ++z)
 		{
-			for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+			for( long long x=0; x<inputImage_sizez[0]; ++x)
 			{
-				for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+				for( long long y=0; y<inputImage_sizez[1]; ++y)
 				{
 					typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
 					histoGram.at(z).at(value)++;
@@ -902,10 +904,10 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 			}
 		}
 		std::vector< unsigned long long > result((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1,0);
-		for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
+		for( long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
 		{
 			unsigned long long maxMax = 0;
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			for( long long z=0; z<inputImage_sizez[2]; ++z)
 			{
 				maxMax = maxMax + histoGram.at(z).at(num);
 			}
@@ -915,7 +917,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		ofstream myfile;
 		myfile.open (temp3.c_str());
 		myfile << std::numeric_limits<typename TINPUT::PixelType>::max() << "\n";
-		for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
+		for( long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max()+1; ++num)
 		{
 			myfile << result.at(num) << "\n";
 		}
@@ -1008,416 +1010,186 @@ void ftkMainDarpa::computeMedianFilter( std::string inputImageName, std::string 
 	writeImage< TOUTPUT >(median_filter->GetOutput(),outputImageName.c_str());
 
 }
-
-
-
 template<typename TINPUT >
-void ftkMainDarpa::test_1( std::string inputImageName, std::string outputPath, std::string imageType )
+void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInput, std::string coordinate )
 {
-	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
 	
-	typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
-	itk::Size<3> inputImage_sizez = inputImage->GetLargestPossibleRegion().GetSize();
-	unsigned long long inputImage_slice_size = inputImage_sizez[1] * inputImage_sizez[0];
-	unsigned long long inputImage_row_size = inputImage_sizez[0];	
+	std::cout<<"reading the file 2"<<std::endl;
 
-	// Create z projecImage
-	typedef itk::Image< unsigned char, 3 > TestImageType;
-	typename TestImageType::Pointer testImage = TestImageType::New();
-	typename TestImageType::PointType originz;
-	originz[0] = 0; 
-	originz[1] = 0;
-	originz[2] = 0;
-	testImage->SetOrigin( originz );
-	typename TINPUT::IndexType startz;
-	startz[0] = 0;
-	startz[1] = 0;
-	startz[2] = 0;
-	typename TINPUT::SizeType sizez;
-	sizez[0] = inputImage_sizez[0];
-	sizez[1] = inputImage_sizez[1];
-	sizez[2] = inputImage_sizez[2];
-	typename TINPUT::RegionType regionz;
-	regionz.SetSize ( sizez  );
-	regionz.SetIndex( startz );
-	testImage->SetRegions( regionz );
-	testImage->Allocate();
-	testImage->FillBuffer(0);
-	testImage->Update();
-	typename TestImageType::PixelType * testImageArray = testImage->GetBufferPointer();
-	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(3)
-#endif
-	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
+	/// read region of interest ///
+	std::ifstream coordinate_file;
+	coordinate_file.open( coordinate.c_str() );
+	itk::SizeValueType Xmin;
+	coordinate_file >> Xmin;
+
+	itk::SizeValueType Xsize;
+	coordinate_file >> Xsize;
+	itk::SizeValueType Ymin;
+	coordinate_file >> Ymin;
+	itk::SizeValueType Ysize;
+	coordinate_file >> Ysize;
+	itk::SizeValueType Zmin;
+	coordinate_file >> Zmin;
+	itk::SizeValueType Zsize;
+	coordinate_file >> Zsize;
+
+	std::cout<<Xmin<<std::endl;
+	std::cout<<Xsize<<std::endl;
+	std::cout<<Ymin<<std::endl;
+	std::cout<<Ysize<<std::endl;
+	std::cout<<Zmin<<std::endl;
+	std::cout<<Zsize<<std::endl;
+	//scanf("%d");
+
+	/// read table ///
+	vtkSmartPointer< vtkTable > feature_table = ftk::LoadTable(tableInput);
+
+	/// read label image ///
+	typename TINPUT::Pointer labelImage = readImage< TINPUT >(imageInput.c_str());
+
+	/// start cleaning the labels ///
+
+	/// crop the label image ///
+	itk::Image<unsigned short,3>::Pointer clean_labelImage = itk::Image<unsigned short,3>::New();
+	//itk::Image<unsigned short,3>
+	itk::Size<3> im_size;
+	im_size[0] = Xsize;
+	im_size[1] = Ysize;
+	im_size[2] = Zsize;
+
+	itk::Index<3> im_index;
+	im_index[0] = 0;
+	im_index[1] = 0;
+	im_index[2] = 0;
+
+	std::cout<<"finished reading image, started allocation..."<<std::endl;
+	TINPUT::RegionType region;
+	region.SetSize( im_size );
+	region.SetIndex( im_index );
+	clean_labelImage->SetRegions( region );
+	clean_labelImage->Allocate();
+	clean_labelImage->FillBuffer(0);
+	try
 	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
+		clean_labelImage->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+
+
+
+	itk::SizeValueType Xmax =  Xmin + Xsize;
+	itk::SizeValueType Ymax =  Ymin + Ysize;
+	itk::SizeValueType Zmax =  Zmin + Zsize;
+	unsigned int id = -1;
+	std::map<unsigned int, bool> classMap;
+	std::map<unsigned int, unsigned int> idMap;
+	unsigned short new_id =1;
+	std::cout<<"starting.."<<std::endl;
+
+	for(int row=0; row<(int)feature_table->GetNumberOfRows(); ++row)
+	{
+		itk::SizeValueType x_centroid = feature_table->GetValue(row,1).ToUnsignedInt();
+		itk::SizeValueType y_centroid = feature_table->GetValue(row,2).ToUnsignedInt();
+		itk::SizeValueType z_centroid = feature_table->GetValue(row,3).ToUnsignedInt();
+		unsigned int id = feature_table->GetValue(row,0).ToUnsignedInt();
+
+
+		if((x_centroid > Xmin && x_centroid < Xmax) && (y_centroid > Ymin && y_centroid < Ymax) && (z_centroid >=Zmin && z_centroid < Zmax) )
 		{
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
+			classMap[id] = true;
+			idMap[id] = new_id;
+		///	std::cout<<new_id<<std::endl;
+			new_id++;
+		}
+		else
+		{
+			classMap[id] = false;
+		}
+
+	}
+	std::cout<<"finished looking for inside cells.."<<std::endl;
+	itk::Image<unsigned short,3>::PixelType * clean_labelArray = clean_labelImage->GetBufferPointer();
+	typename TINPUT::PixelType * labelArray = labelImage->GetBufferPointer();
+
+	itk::SizeValueType sizeXYsmall = im_size[1] * im_size[0];
+	itk::SizeValueType sizeXsmall = im_size[0];
+
+
+	itk::Size<3> montage_size = labelImage->GetBufferedRegion().GetSize();
+	itk::SizeValueType sizeXYlarge= montage_size[1] * montage_size[0];
+	itk::SizeValueType sizeXlarge = montage_size[0];
+
+	///#pragma omp parallel for collapse(3)
+	#pragma omp parallel for 
+	for(int i=0; i<im_size[2]; ++i)
+	{
+		//itk::SizeValueType sm01 = i*sizeXYsmall;
+		//itk::SizeValueType la01 = (i+Xmin)*sizeXYlarge;
+
+		for(int j=0; j<im_size[1]; ++j)
+		{
+			//itk::SizeValueType  sm02 = sm01 +(j*sizeXsmall);
+			//itk::SizeValueType  la02 = la01 +(j+Ymin)*sizeXlarge;
+
+			for(int k=0; k<im_size[0]; ++k)
 			{
-				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
-				if( value > 0 )
-				{
-					testImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 255;
-				}
-				else
-				{
-					testImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 0;
-				}
-			}
-		}
-	}
-	std::string temp1a = outputPath + "/test_1.nrrd";
-	
- 
-	typedef itk::BinaryBallStructuringElement< typename TestImageType::PixelType,3> StructuringElementType;
-	StructuringElementType structuringElement;
-	structuringElement.SetRadius(7);
-	structuringElement.CreateStructuringElement();
- 
-	typedef itk::BinaryErodeImageFilter< TestImageType, TestImageType, StructuringElementType > BinaryErodeImageFilterType;
- 
-	BinaryErodeImageFilterType::Pointer dilateFilter = BinaryErodeImageFilterType::New();
-	dilateFilter->SetInput( testImage );
-	dilateFilter->SetKernel(structuringElement);
-	dilateFilter->Update();
-	
-	writeImage< TestImageType >(dilateFilter->GetOutput(),temp1a.c_str());
-}
-
-
-template<typename TINPUT >
-void ftkMainDarpa::test_2( std::string inputImageName, std::string outputImageName )
-{
-	std::cout << std::endl << "ACA: " << inputImageName;
-	std::cout << std::endl << "ACA: " << outputImageName << std::flush;
-	
-	typename TINPUT::Pointer inputImage = readImage< TINPUT >(inputImageName.c_str());
-	
-	typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
-	itk::Size<3> inputImage_sizez = inputImage->GetLargestPossibleRegion().GetSize();
-	unsigned long long inputImage_slice_size = inputImage_sizez[1] * inputImage_sizez[0];
-	unsigned long long inputImage_row_size = inputImage_sizez[0];	
-	
-// 	std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
-	std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
-	for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
-	{
-		std::vector< unsigned long long > temp((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(),0);
-		histoGram.at(z) = temp;
-	}
-	#pragma omp parallel for
-	for(long long z=0; z<inputImage_sizez[2]; ++z)
-	{
-		for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
-		{
-			for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
-			{
-				typename TINPUT::PixelType value = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)];
-				histoGram.at(z).at(value)++;
-			}
-		}
-	}
-	std::vector< unsigned long long > result((unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(),0);
-	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
-	{
-		unsigned long long maxMax = 0;
-		for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
-		{
-			maxMax = maxMax + histoGram.at(z).at(num);
-		}
-		result.at(num) = maxMax;
-	}
-	
-	double sum = 0;
-	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
-	{
-		sum = sum + result.at(num);
-	}
-	std::cout << std::endl << "HERE: " << sum;
-	std::cout << std::endl << "HERE: " << sum-inputImage_sizez[2] * inputImage_sizez[1] * inputImage_sizez[0];
-	
-	double sum2 = 0;
-	bool flag=1;
-	double fac = 1;
-	for(unsigned long long num=0; num<(unsigned long long)std::numeric_limits<typename TINPUT::PixelType>::max(); ++num)
-	{
-		sum2 = sum2 + result.at(num);
-		if( (sum2/sum>0.996) && (flag==1))
-		{
-			flag = 0;
-			fac = num;
-		}
-	}
-	std::cout << std::endl << "HERE: " << fac;
-	
-	
-#if _OPENMP < 200805L
-	#pragma omp parallel
-#else
-	#pragma omp parallel for collapse(3)
-#endif
-	for(unsigned long long x=0; x<inputImage_sizez[0]; ++x)
-	{
-		for(unsigned long long y=0; y<inputImage_sizez[1]; ++y)
-		{
-			for(unsigned long long z=0; z<inputImage_sizez[2]; ++z)
-			{
-				if( inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)]*double(double(65535.0)/double(fac)) >= 65535 )
-					inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = 65535;
-				else
-					inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)] = inputImageArray[(inputImage_slice_size*z) + (inputImage_row_size*y) + (x)]*double(double(65535.0)/double(fac));
-			}
-		}
-	}
-	
-	
-// 	typedef  itk::ShiftScaleImageFilter< TINPUT, TINPUT > ShiftScaleImageFilterType;
-// 	typename ShiftScaleImageFilterType::Pointer shiftScaleImageFilter = ShiftScaleImageFilterType::New();
-// 	shiftScaleImageFilter->SetInput( inputImage );
-// 	shiftScaleImageFilter->SetScale( double(double(65535.0)/double(180.0)) );
-// 	std::cout << std::endl << shiftScaleImageFilter->GetScale();
-// 	shiftScaleImageFilter->Update();
- 
-// 	std::string temp1a = outputPath + "/test_1.nrrd";
-
-// 	writeImage< TINPUT >(inputImage,temp1a.c_str());
-	writeImage< TINPUT >(inputImage,outputImageName.c_str());
-	
-	
-}
-
-
-
-
-template<typename TINPUT >
-int ftkMainDarpa::test_3( std::string inputFile )
-{
-	std::ifstream myfile;
-	myfile.open( inputFile.c_str() );
-	int flagOrder;
-	myfile >> flagOrder;
-	int numRows;
-	myfile >> numRows;
-	int sizeX;
-	myfile >> sizeX;
-	int sizeY;
-	myfile >> sizeY;
-	int sizeZ;
-	myfile >> sizeZ;
-	int numFiles;
-	myfile >> numFiles;
-	if( numFiles == 0 )
-		return 0;
-	std::vector< std::string > namesFiles;
-	namesFiles.resize(numFiles);
-	for( int i=0; i<numFiles;++i )
-	{
-		myfile >> namesFiles[i];
-		std::cout << std::endl << namesFiles[i];
-	}
-	std::string outputFolder;
-	myfile >> outputFolder;
-
-	std::cout << std::endl << outputFolder;
-	myfile.close();
-
-
-	typename TINPUT::Pointer zProjectImage = TINPUT::New();
-	typename TINPUT::PointType originz;
- 	originz[0] = 0;
-   	originz[1] = 0;
-    	originz[2] = 0;
-        zProjectImage->SetOrigin( originz );
-        typename TINPUT::IndexType startz;
-       	startz[0] = 0;
-        startz[1] = 0;
-	startz[2] = 0;
-	typename TINPUT::SizeType sizez;
-	sizez[0] = sizeX*numRows;
-	sizez[1] = sizeY*int((numFiles-1)/numRows+1);
-	sizez[2] = 1;
-	typename TINPUT::RegionType regionz;
-	regionz.SetSize ( sizez  );
-	regionz.SetIndex( startz );
-	zProjectImage->SetRegions( regionz );
-	zProjectImage->Allocate();
-	zProjectImage->FillBuffer(0);
-	zProjectImage->Update();
-	typename TINPUT::PixelType * zProjectImageArray = zProjectImage->GetBufferPointer();
-
-	for( int i=0; i<numFiles;++i )
-	{
-		int inverse;
-		int xCoord;
-		int yCoord;
-		if( flagOrder == 1 ) // Starts at upper left
-		{
-			inverse = i;
-		}	
-		else if( flagOrder == 2 ) // Starts at lower right
-		{
-			inverse = numRows * int((numFiles-1)/numRows+1)  - 1 - i;
-		}
-		else if( flagOrder == 3 )
-		{
-			int roww = i/numRows;
-			int coll = numRows - 1 - i%numRows;
-			
-			inverse = roww*(numRows) + coll;
-			std::cout << std::endl << "\t\t" << i << " " <<inverse;
-		}
-		xCoord = inverse%numRows;
-		yCoord = inverse/numRows;
 		
+				//itk::SizeValueType small_offset = sm02 + k;
+				//itk::SizeValueType large_offset = la02 +(k+Zmin);
 
-		std::cout << std::endl << numFiles << " " << numRows << " " << xCoord << " " << yCoord <<" " << sizez[0] << " " << sizez[1];
-		
-		unsigned long long xySizeBig = sizeX*numRows;
-		unsigned long long xySizeSmall = sizeX;
-		//unsigned long long xIni = 
-		//unsigned long long yIni = yCoord*
-
-		typename TINPUT::Pointer inputImage = readImage< TINPUT >(namesFiles[i].c_str());
-
-		std::vector< typename TINPUT::Pointer > inputImageProjected(3);
-	  	inputImageProjected = getProjectImage< TINPUT, TINPUT >( inputImage, "ORG" );
-		typename TINPUT::PixelType * inputImageProjectedArray = inputImageProjected[0]->GetBufferPointer();
-
-
-	#if _OPENMP < 200805L
-		#pragma omp parallel
-	#else
-		#pragma omp parallel for collapse(2)
-	#endif
-
-		for(unsigned long long x=0; x<sizeX; ++x)
- 		{
-          		for(unsigned long long y=0; y<sizeY; ++y)
-   			{
-				unsigned long long newX = x + xCoord*sizeX;
-				unsigned long long newY = y + yCoord*sizeY;
-				zProjectImageArray[(xySizeBig*newY) + newX] = inputImageProjectedArray[(xySizeSmall*y) + x];
-
+				itk::SizeValueType small_offset = (i*sizeXYsmall)+(j*sizeXsmall)+k;
+				itk::SizeValueType large_offset = ((i+Zmin)*sizeXYlarge)+((j+Ymin)*sizeXlarge)+(k+Xmin);
+				///std::cout<<labelArray[large_offset]<<std::endl;
+				if( labelArray[large_offset] != 0 )
+					if(classMap[labelArray[large_offset]])
+					{
+//						clean_labelArray[small_offset] = labelArray[large_offset];
+						clean_labelArray[small_offset] = idMap[labelArray[large_offset]];
+						//std::cout<<idMap[labelArray[large_offset]]<<std::endl;
+					}
 			}
 		}
-	}
-
-	std::string temp5b = outputFolder; // + "/aTemporal.tif";
-        writeImage< TINPUT >(zProjectImage,temp5b.c_str());
-
-	return 1;
-}
-
-template<typename TINPUT >
-int ftkMainDarpa::test_4( std::string inputFile )
-{
-	std::ifstream myfile;
-	myfile.open( inputFile.c_str() );
-	int flagOrder;
-	myfile >> flagOrder;
-	int numRows;
-	myfile >> numRows;
-	int sizeX;
-	myfile >> sizeX;
-	int sizeY;
-	myfile >> sizeY;
-	int sizeZ;
-	myfile >> sizeZ;
-	int numFiles;
-	myfile >> numFiles;
-	if( numFiles == 0 )
-		return 0;
-	std::vector< std::string > namesFiles;
-	namesFiles.resize(numFiles);
-	for( int i=0; i<numFiles;++i )
+	}	
+	std::cout<<"finished copying the image.."<<std::endl;
+	/// clean up the table ///
+	for( unsigned int row = 0; row < feature_table->GetNumberOfRows(); ++row)
 	{
-		myfile >> namesFiles[i];
-		std::cout << std::endl << namesFiles[i];
-	}
-	std::string outputFolder;
-	myfile >> outputFolder;
-
-	std::cout << std::endl << outputFolder;
-	myfile.close();
-
-	itk::Image<double,3>::Pointer zProjectImage = itk::Image<double,3>::New();
-	itk::Image<double,3>::PointType originz;
- 	originz[0] = 0;
-   	originz[1] = 0;
-    	originz[2] = 0;
-        zProjectImage->SetOrigin( originz );
-        itk::Image<double,3>::IndexType startz;
-       	startz[0] = 0;
-        startz[1] = 0;
-	startz[2] = 0;
-	itk::Image<double,3>::SizeType sizez;
-	sizez[0] = sizeX;
-	sizez[1] = sizeY;
-	sizez[2] = sizeZ;
-	itk::Image<double,3>::RegionType regionz;
-	regionz.SetSize ( sizez  );
-	regionz.SetIndex( startz );
-	zProjectImage->SetRegions( regionz );
-	zProjectImage->Allocate();
-	zProjectImage->FillBuffer(0);
-	zProjectImage->Update();
-	itk::Image<double,3>::PixelType * zProjectImageArray = zProjectImage->GetBufferPointer();
-	
-	
-	for( int i=0; i<numFiles;++i )
-	{
-		typename TINPUT::Pointer inputImage = readImage< TINPUT >(namesFiles[i].c_str());
-		typename TINPUT::PixelType * inputImageArray = inputImage->GetBufferPointer();
-		#if _OPENMP < 200805L
-			#pragma omp parallel
-		#else
-			#pragma omp parallel for collapse(3)
-		#endif
-		for(unsigned long long x=0; x<sizeX; ++x)
- 		{
-          		for(unsigned long long y=0; y<sizeY; ++y)
-   			{
-				for(unsigned long long z=0; z<sizeZ; ++z)
-				{
-					unsigned long long coord = (sizeY*sizeX*z) + (sizeX*y) + (x);
-					zProjectImageArray[coord] = zProjectImageArray[coord] + inputImageArray[coord];
-				}
-			}
-		}
-	//	std::cout << std::endl << numFiles << " " << numRows << " " << xCoord << " " << yCoord <<" " << sizez[0] << " " << sizez[1];
-	}
-	for(unsigned long long x=0; x<sizeX; ++x)
-	{
-		for(unsigned long long y=0; y<sizeY; ++y)
+		if(!classMap[feature_table->GetValue(row,0).ToUnsignedInt()])
 		{
-			for(unsigned long long z=0; z<sizeZ; ++z)
-			{
-				unsigned long long coord = (sizeY*sizeX*z) + (sizeX*y) + (x);
-				zProjectImageArray[coord] = zProjectImageArray[coord];
-			}
+			feature_table->RemoveRow(row);
+			--row;
+		}
+		else
+		{
+			unsigned int newId = idMap[feature_table->GetValue(row,0).ToUnsignedInt()];
+			feature_table->SetValue(row,0,newId);
+
+			itk::SizeValueType x_centroid = feature_table->GetValue(row,1).ToUnsignedInt();
+			itk::SizeValueType y_centroid = feature_table->GetValue(row,2).ToUnsignedInt();
+			itk::SizeValueType z_centroid = feature_table->GetValue(row,3).ToUnsignedInt();
+
+			feature_table->SetValue(row,1,x_centroid-Xmin);
+			feature_table->SetValue(row,2,y_centroid-Ymin);
+			feature_table->SetValue(row,3,z_centroid-Zmin);
+
+
 		}
 	}
-	std::string nameop = "/data/nicolas/test.nrrd";
-	writeImage< itk::Image<double,3> >(zProjectImage,nameop.c_str());
+	std::cout<<"finished relabeling  the table.."<<std::endl;
+
+
+	std::string curr_path = ftk::GetFilePath(imageInput);
+	std::string imfname = ftk::GetFilenameFromFullPath(imageInput);
+	std::string imoutfname = curr_path + "/cropped_" +imfname;
+	writeImage< itk::Image<unsigned short,3> >(clean_labelImage,imoutfname.c_str());
+
+
+	std::string tabfname = ftk::GetFilenameFromFullPath(tableInput);
+	ftk::SaveTable(curr_path + "/cropped_" + tabfname, feature_table);
+
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -47,19 +47,11 @@ public:
 	
 	template<typename TINPUT >
 	void saveNRRD( std::string );
-	
-	template<typename TINPUT >
-	void test_1( std::string inputImageName, std::string outputPath, std::string imageType );
-	
-	template<typename TINPUT >
-	void test_2( std::string inputImageName, std::string outputImageName );
 
 	template<typename TINPUT >
-	int test_3( std::string inputFile );
-	
-	template<typename TINPUT >
-	int test_4( std::string inputFile );
+	void cropImageDarpa( std::string, std::string, std::string );
 
+	
 private:
 	
 };
