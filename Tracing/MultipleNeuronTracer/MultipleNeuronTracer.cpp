@@ -16,23 +16,34 @@ MultipleNeuronTracer::~MultipleNeuronTracer()
 void MultipleNeuronTracer::LoadParameters(const char* parametersFileName,int _argc)
 {
 	std::map<std::string, std::string> opts;  
-	if(_argc == 5)
+
+	if(_argc == 6){
+		std::cout << " _argc: " << _argc << std::endl;
 		this->optionsCreate(parametersFileName, opts);
+	}
 	
 	std::map<std::string,std::string>::iterator mi;
 
 	mi = opts.find("-intensity_threshold"); 
-	if(mi!=opts.end())
-	{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+	if(!this->_isCoverageOptimized){
+		if(mi!=opts.end())
+		{ std::istringstream ss((*mi).second); ss>>this->intensity_threshold; 
+		}
+		else
+		{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
 	}
 	else
-	{ this->intensity_threshold = 0.005; printf("Chose intensity_threshold = 0.005 as default\n");}
-
-	mi = opts.find("-contrast_threshold");
-	if(mi!=opts.end())
-	{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
+		this->intensity_threshold += 0.02;
+	
+	if(!this->_isCoverageOptimized){
+		mi = opts.find("-contrast_threshold");
+		if(mi!=opts.end())
+		{ std::istringstream ss((*mi).second); ss>>this->contrast_threshold; }
+		else
+		{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+	}
 	else
-	{	  this->contrast_threshold = 0.0003; printf("Chose contrast_threshold = 0.0003 as default\n"); }
+		this->contrast_threshold += 0.0004;
 
 	mi = opts.find("-cost_threshold"); 
 	if(mi!=opts.end())
@@ -249,6 +260,510 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	std::cout << "Input file size (after zero padding) is " << _PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
 }
+
+ObjectnessMeasures::ObjectnessMeasures(){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.25;
+	
+	this->sigma_min = 0.5;
+	this->sigma_max = 2.0;
+	this->sigma_intervals = 1;
+	this->objectness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+ObjectnessMeasures::ObjectnessMeasures(float alpha, float beta, float gamma){
+
+	this->alpha = alpha;
+	this->beta = beta;
+	this->gamma = gamma;
+
+	this->sigma_min = 0.5;
+	this->sigma_max = 2.0;
+	this->sigma_intervals = 1;
+	this->objectness_type = 1;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+ObjectnessMeasures::ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type){
+
+	this->alpha = 0.5;
+	this->beta = 0.5;
+	this->gamma = 0.25;
+
+	this->sigma_min = sigma_min;
+	this->sigma_max = sigma_max;
+	this->sigma_intervals = sigma_intervals;
+	this->objectness_type = obj_type;
+
+	this->ballness = 0.0;
+	this->plateness = 0.0;
+	this->vesselness = 0.0;
+	this->noiseness = 0.0;
+}
+
+void MultipleNeuronTracer::Set_isCoverageOptimized(bool opt_cov){
+	this->_isCoverageOptimized = opt_cov;
+}
+
+void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool writeResult){
+
+	std::cout << std::endl<< "Optimizing feature coverage for the image." << std::endl;
+
+	// Optimizing coverage at single scale	
+	float sigma = 5.6569f;
+	float sigma_min = sigma;
+	float sigma_max = sigma;
+	int sigma_intervals = 1;
+
+	double intensity_weight = 0.2; //0.1; //0.4; //0.2;
+	double objectness_weight = 1.0 - intensity_weight;
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(this->_PaddedCurvImage);
+	stats_filter->Update();
+	double img_max_val = stats_filter->GetMaximum();
+	
+
+	//ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0); // use this for astrocytes
+	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1); // use this for microglia
+	obj_measures.alpha = 0.5 * img_max_val;
+	obj_measures.beta = 0.5 * img_max_val;
+	obj_measures.gamma = 0.25 * img_max_val; //0.25 * img_max_val;
+
+	//std::cout << "Max image value: " << img_max_val << " Mean img value: " << img_mean_val << std::endl;
+
+	this->ComputeObjectnessImage(obj_measures);
+
+	//Write out the vesselenss image
+	if(writeResult){
+		std::string vesselnessPointsFileName = coverageFileName;
+		vesselnessPointsFileName.erase(vesselnessPointsFileName.length()-4, vesselnessPointsFileName.length());
+		vesselnessPointsFileName.append("_vesselness.mhd");
+
+		//std::cout << vesselnessPointsFileName << std::endl;
+
+		typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+		ImageWriterType::Pointer image_writer = ImageWriterType::New();
+		image_writer->SetFileName(vesselnessPointsFileName);
+		image_writer->SetInput(this->ObjectnessImage);
+		image_writer->Update();
+	}
+
+	StatisticsFilterType::Pointer stats_filter2 = StatisticsFilterType::New();
+	stats_filter2->SetInput(this->ObjectnessImage);
+	stats_filter2->Update();
+	double max_objectness = stats_filter2->GetMaximum();
+
+	MultiplyImageFilter::Pointer img_multiplier = MultiplyImageFilter::New();
+	img_multiplier->SetInput(this->ObjectnessImage);
+	img_multiplier->SetConstant2(1.0/(max_objectness));
+	img_multiplier->Update();
+
+	MultiplyImageFilter::Pointer img_multiplier2 = MultiplyImageFilter::New();
+	img_multiplier2->SetInput(this->_PaddedCurvImage);
+	img_multiplier2->SetConstant2(1.0/(img_max_val));
+	img_multiplier2->Update();
+
+	ImageType3D::Pointer normalized_img = img_multiplier2->GetOutput();
+
+	ImageType3D::Pointer normalized_obj_img = img_multiplier->GetOutput();
+
+	StatisticsFilterType::Pointer stats_filter3 = StatisticsFilterType::New();
+	stats_filter3->SetInput(normalized_obj_img);
+	stats_filter3->Update();
+	double mean_objectness = stats_filter3->GetMean();
+	double std_objectness = stats_filter3->GetVariance();
+
+	StatisticsFilterType::Pointer stats_filter4 = StatisticsFilterType::New();
+	stats_filter4->SetInput(normalized_img);
+	stats_filter4->Update();
+	double img_mean_val = stats_filter4->GetMean();
+	double img_std_val = stats_filter4->GetVariance();
+	
+
+	MultiplyImageFilter::Pointer img_multiplier3 = MultiplyImageFilter::New();
+	img_multiplier3->SetInput1(normalized_img);
+	img_multiplier3->SetInput2(normalized_obj_img);
+	img_multiplier3->Update();
+	ImageType3D::Pointer int_obj_prod_img = img_multiplier3->GetOutput();
+
+	MultiplyImageFilter::Pointer img_multiplier4 = MultiplyImageFilter::New();
+	img_multiplier4->SetInput(normalized_img);
+	img_multiplier4->SetConstant2(intensity_weight);
+	img_multiplier4->Update();
+	MultiplyImageFilter::Pointer img_multiplier5 = MultiplyImageFilter::New();
+	img_multiplier5->SetInput(normalized_obj_img);
+	img_multiplier5->SetConstant2(objectness_weight);
+	img_multiplier5->Update();
+	AddImageFilter::Pointer img_adder = AddImageFilter::New();
+	img_adder->SetInput1(img_multiplier4->GetOutput());
+	img_adder->SetInput2(img_multiplier5->GetOutput());
+	img_adder->Update();
+	ImageType3D::Pointer int_obj_sum_img = img_adder->GetOutput();
+	
+	StatisticsFilterType::Pointer stats_filter5 = StatisticsFilterType::New();
+	stats_filter5->SetInput(int_obj_sum_img);
+	stats_filter5->Update();
+	double added_img_mean_val = stats_filter5->GetMean();
+	
+	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType3D , ImageType3D> LoGFilterType;
+	LoGFilterType::Pointer gauss = LoGFilterType::New();
+	gauss->SetInput( _PaddedCurvImage );
+	gauss->SetSigma( sigma );
+	gauss->SetNormalizeAcrossScale(false);
+	gauss->GetOutput()->Update();
+	
+	float tot = 0.0f, num = 0.0f;
+	itk::ImageRegionIterator<ImageType3D> ittemp(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	float gamma = 1.6f;
+	float tnorm = vcl_pow(sigma,gamma);
+	for(ittemp.GoToBegin(); !ittemp.IsAtEnd(); ++ittemp){
+		float q = ittemp.Get()*tnorm;
+		ittemp.Set(-1.0f*q);
+		tot += q*q;
+		num ++;
+	}
+	//std::cout << "Scale "<< sigma << " had average Energy: " << tot <<std::endl;
+
+	
+	// set the diagonal terms in neighborhood iterator
+	itk::Offset<3>
+		xp =  {{2 ,  0 ,   0}},
+		xn =  {{-2,  0,    0}},
+		yp =  {{0,   2,   0}},
+		yn =  {{0,  -2,    0}},
+		zp =  {{0,   0,    2}},
+		zn =  {{0,   0,   -2}};
+
+	itk::Size<3> rad = {{1,1,1}};
+	itk::NeighborhoodIterator<ImageType3D> nit(rad , gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> it(gauss->GetOutput(), gauss->GetOutput()->GetBufferedRegion());
+
+	unsigned int
+		xy1 =  17, //{ 1 ,   1 ,  0 },
+		xy2 =  9,  //{ -1,  -1 ,  0 },
+		xy3 =  15, //{ -1,   1 ,  0 },
+		xy4 =  11, //{ 1 ,  -1 ,  0 },
+
+		yz1 =  25, //{ 0 ,   1 ,  1 },
+		yz2 =  1,  //{ 0 ,  -1 , -1 },
+		yz3 =  19, //{ 0 ,  -1 ,  1 },
+		yz4 =  7,  //{ 0 ,   1 , -1 },
+
+		xz1 =  23, //{ 1 ,   0 ,  1 },
+		xz2 =  3,  //{-1 ,   0 , -1 },
+		xz3 =  21, //{-1 ,   0 ,  1 },
+		xz4 =  5;  //{ 1 ,   0 , -1 };
+
+	typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+	typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+	typedef itk::SymmetricSecondRankTensor<double,3> TensorType;
+
+	itk::Size<3> sz = _PaddedCurvImage->GetBufferedRegion().GetSize();
+	sz[0] = sz[0] - 3;
+	sz[1] = sz[1] - 3; 
+	sz[2] = sz[2] - 3;
+
+	itk::Vector<float,3> sp = _PaddedCurvImage->GetSpacing();
+
+
+	// This parameter will affect the density og LoG points detected at each scale.
+	float win_scale = 2;
+
+	long win = long(sigma)/2;
+	//long win = win_scale * long(sigma);
+	if (win <2) 
+		win = 2;
+	
+	int opt_iter = 0, max_opt_iter = 10; //20;
+	float max_coverage = 0.002; //0.01; //0.0;
+	float min_coverage = 0.001; // 0.0;
+	float coverage_upper_limit = max_coverage + (0.2*max_coverage); //(0.05*max_coverage);
+	float coverage_lower_limit = min_coverage - (0.25*min_coverage); //(0.2*min_coverage); //(0.05*min_coverage);
+
+	std::cout << "Coverage limits: [" << coverage_lower_limit << ", " << coverage_upper_limit << "] " << std::endl;
+
+	float thresh1_step_size = 0.02;
+	float thresh2_step_size = 0.0004;
+
+	float thresh1 = 0.01; //0.03; //0.01; //0.05; //0.08; //0.005; //0.03   // 3% of maximum theshold from Lowe 2004
+	float thresh2 = 0.0001; //0.0005; //0.0001; //0.0009; //0.015; //0.0003;  //0.001 -0.1 percent of range
+
+	double Mi_coverage4 = 0.0;
+	double Mi_coverage5 = 0.0;
+	double Mi_coverage6 = 0.0;
+
+
+	std::ofstream optim_internal_file;
+	
+	if(writeResult){
+		std::string internalOptimFileName = coverageFileName;
+		internalOptimFileName.erase(internalOptimFileName.length()-4, internalOptimFileName.length());
+		internalOptimFileName.append("_internal.txt");
+		optim_internal_file.open(internalOptimFileName.c_str(), std::ios::out);
+	}
+			
+	while(opt_iter < max_opt_iter){
+		
+		_NDXImage = ImageType3D::New();
+		_NDXImage->SetRegions(_PaddedCurvImage->GetBufferedRegion());
+		_NDXImage->Allocate();
+		_NDXImage->FillBuffer(0.0f);
+
+		it.GoToBegin();
+		nit.GoToBegin();
+		
+		long ctCnt = 0;
+		long rejectCtCnt = 0;
+
+		float total_fg_objectness = 0.0;
+		float total_fg_intensity = 0.0;
+		float total_fg_obj_int = 0.0;
+		float total_fg_wt_obj_int = 0.0;
+		
+		while(!nit.IsAtEnd()){
+
+			itk::Index<3> ndx = it.GetIndex();
+			if ( (ndx[0] < 2) || (ndx[1] < 2) || (ndx[2] < 2) ||
+				(ndx[0] > (unsigned int)sz[0]) || (ndx[1] > (unsigned int)sz[1]) ||
+				(ndx[2] > (unsigned int)sz[2]) ){
+				++it;
+				++nit;
+				continue;
+			}
+
+			float a1 = 0.0;
+			for (unsigned int i=0; i < 13; ++i)
+				a1 += vnl_math_max(nit.GetPixel(i), nit.GetPixel(26 - i));
+					
+			float val = nit.GetPixel(13);
+			
+			if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 )){
+
+				TensorType h;
+				h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );
+				h[3] = gauss->GetOutput()->GetPixel( ndx + yp ) + gauss->GetOutput()->GetPixel( ndx + yn ) - 2*nit.GetPixel( 13 );
+				h[5] = gauss->GetOutput()->GetPixel( ndx + zp ) + gauss->GetOutput()->GetPixel( ndx + zn ) - 2*nit.GetPixel( 13 );
+				h[1] = nit.GetPixel(xy1) + nit.GetPixel(xy2) - nit.GetPixel(xy3) - nit.GetPixel(xy4);
+				h[2] = nit.GetPixel(xz1) + nit.GetPixel(xz2) - nit.GetPixel(xz3) - nit.GetPixel(xz4);
+				h[4] = nit.GetPixel(yz1) + nit.GetPixel(yz2) - nit.GetPixel(yz3) - nit.GetPixel(yz4);
+
+				EigenValuesArrayType ev;
+				EigenVectorMatrixType em;
+				h.ComputeEigenAnalysis (ev, em);
+
+				
+				unsigned int w;
+				if(true){ //(IsSeed(ev, w)){
+
+					float value = vnl_math_abs(ev[0]) + vnl_math_abs(ev[1]) + vnl_math_abs(ev[2]) - vnl_math_abs(ev[w]); // How is this score derived?
+					if (RegisterIndex(value, ndx, sz, win)){
+						
+
+						_NDXImage->SetPixel(ndx, value);
+						ctCnt++;
+
+			
+						total_fg_objectness += normalized_obj_img->GetPixel(ndx); //this->ObjectnessImage->GetPixel(ndx);
+						total_fg_intensity += normalized_img->GetPixel(ndx);  //this->_PaddedCurvImage->GetPixel(ndx);
+						//total_fg_obj_int += this->ObjectnessImage->GetPixel(ndx) * this->_PaddedCurvImage->GetPixel(ndx);
+						total_fg_obj_int += normalized_obj_img->GetPixel(ndx) * this->_PaddedCurvImage->GetPixel(ndx);
+						total_fg_wt_obj_int += int_obj_sum_img->GetPixel(ndx);
+
+					}	
+					else
+						rejectCtCnt++;
+				}
+			}
+			++it;
+			++nit;
+		}
+
+		double Mi_coverage = (double)ctCnt / img_mean_val;
+		double Mi_coverage2 = (double)ctCnt / mean_objectness;
+		double Mi_coverage3 = (double)ctCnt / (img_mean_val * mean_objectness);
+		
+		ImageType3D::SizeType im_size = this->_PaddedCurvImage->GetBufferedRegion().GetSize();
+		double total_objectness = mean_objectness * (im_size[0]*im_size[1]*im_size[2]);
+		double total_intensity = img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+		double total_int_obj_sum = added_img_mean_val * (im_size[0]*im_size[1]*im_size[2]);
+
+		if(added_img_mean_val < 0.0001)
+			total_int_obj_sum = 0.001 * (im_size[0]*im_size[1]*im_size[2]);
+	
+
+		Mi_coverage4 = total_fg_objectness / total_objectness;
+		Mi_coverage5 = total_fg_intensity / total_intensity;
+		Mi_coverage6 = total_fg_wt_obj_int / total_int_obj_sum;
+
+		std::cout << "num: " << total_fg_wt_obj_int << " den: " << added_img_mean_val << std::endl;
+		
+		std::cout << std::endl;
+		std::cout << "Number of CTs at this stage: " << ctCnt <<std::endl;
+		std::cout << "Number of CTs rejected by RegisterIndex() are: " << rejectCtCnt << std::endl;
+		
+		//std::cout << "Total foreground objectness: " << total_fg_objectness << std::endl;
+		//std::cout << "Total foreground intensity: " << total_fg_intensity << std::endl;
+		//std::cout << "Total foreground obj*intensity: " << total_fg_obj_int << std::endl;
+		//std::cout << "Mi_coverage: " << Mi_coverage << std::endl;
+		//std::cout << "Mi_coverage2: " << Mi_coverage2 << std::endl;
+		//std::cout << "Mi_coverage3: " << Mi_coverage3 << std::endl;
+		//std::cout << "Mi_coverage4: " << Mi_coverage4 << std::endl;
+		//std::cout << "Mi_coverage5: " << Mi_coverage5 << std::endl;
+		//std::cout << "Mi_coverage6: " << Mi_coverage6 << std::endl;
+
+		std::cout << "Iter: " << opt_iter << " Mi_coverage6: " << Mi_coverage6 << " Intensity threshold: " << thresh1 << ", Contrast threshold: " << thresh2 << std::endl;
+
+		if(writeResult){
+			if(optim_internal_file.good())
+				optim_internal_file << Mi_coverage6 << '\t' << thresh1 << '\t' << thresh2 << '\t' << ctCnt << std::endl;
+			else
+				std::cout << "Error writing coverage internal file. " << std::endl;
+		}
+
+		opt_iter++;
+		
+
+		if(Mi_coverage6 > coverage_upper_limit){
+			thresh1 += thresh1_step_size;
+			thresh2 += thresh2_step_size;
+		}
+		else if(Mi_coverage6 < coverage_upper_limit && Mi_coverage6 > max_coverage){
+			thresh1 += thresh1_step_size / 5.0;
+			thresh2 += thresh2_step_size / 5.0;
+		}
+		else if(Mi_coverage6 < coverage_lower_limit){
+
+			if(thresh1 <= 0.01){
+				thresh1 -= thresh1_step_size / 5.0;
+				thresh2 -= thresh2_step_size / 5.0;
+			}
+			else if(thresh1 <= 0.0){
+				thresh1 = 0.0;
+				thresh2 = 0.0;
+				break;
+			}
+			else{
+				thresh1 -= thresh1_step_size;
+				thresh2 -= thresh2_step_size;
+			}
+		}
+		else
+			break;		
+	}
+
+	if(writeResult)
+		optim_internal_file.close();
+
+	// Setting thresholds based on the optimized coverage
+	this->intensity_threshold = thresh1;
+	this->contrast_threshold = thresh2;
+
+	// Printing the results
+	if(opt_iter == max_opt_iter){
+		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
+		this->_isCoverageOptimized = false;
+	}
+	else if(thresh1 = 0.0){
+		std::cout << "Coverage might not be correctly optimized. Manual adjustments might be needed. " << std::endl;
+		this->_isCoverageOptimized = false;
+	}
+	else{
+		std::cout << "Done with optimizing coverage. " <<  std::endl;
+		this->_isCoverageOptimized = true;
+	}
+
+	
+	if(writeResult){
+
+		std::ofstream coverage_file;
+		coverage_file.open(coverageFileName.c_str(), std::ios::out);
+		if(coverage_file.good()){
+			coverage_file << "intensity threshold: " /*<< Mi_coverage6 << std::endl*/ << this->intensity_threshold + 0.02 << std::endl << "contrast threshold: " << this->contrast_threshold + 0.0004 << std::endl;
+			//coverage_file << img_mean_val << std::endl << img_std_val << std::endl << mean_objectness << std::endl << std_objectness << std::endl;
+
+			coverage_file.close();
+		}
+		else
+			std::cout << "Error writing coverage file. " << std::endl;
+		
+
+		std::string LoGPointsFileName = coverageFileName;
+		LoGPointsFileName.erase(LoGPointsFileName.length()-4, LoGPointsFileName.length());
+		LoGPointsFileName.append("_optimum_LOG_points.tif");
+		
+		RescalerType::Pointer rescaler2 = RescalerType::New();
+		rescaler2->SetInput(_NDXImage);
+		rescaler2->SetOutputMaximum( 255 );
+		rescaler2->SetOutputMinimum( 0 );
+		rescaler2->Update();
+		itk::CastImageFilter< ImageType3D, CharImageType3D>::Pointer caster2 = itk::CastImageFilter< ImageType3D, CharImageType3D>::New();
+		caster2->SetInput(rescaler2->GetOutput());
+
+		itk::ImageFileWriter< CharImageType3D >::Pointer LoGwriter2 = itk::ImageFileWriter< CharImageType3D >::New();
+
+		LoGwriter2->SetFileName(LoGPointsFileName.c_str());	
+		LoGwriter2->SetInput(caster2->GetOutput());
+		LoGwriter2->Update();			
+	}
+}
+
+void MultipleNeuronTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
+
+	//float sigma_min = 2.0f; //0.5f;
+	//float sigma_max = 10.0f; //4.0f;
+	//int sigma_steps = 5;
+
+	//float alpha = 0.5, beta = 0.5, gamma = 0.25; //5.0;
+
+	//int obj_dim = objectness_type; //1; //0: Blobness, 1: Vesselness, 2: Plateness
+
+	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
+	multi_scale_Hessian->SetInput(this->_PaddedCurvImage);
+	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
+	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
+
+	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	
+	objectness_filter->SetScaleObjectnessMeasure(false);
+	objectness_filter->SetBrightObject(true);
+	objectness_filter->SetAlpha(obj_measures.alpha);
+	objectness_filter->SetBeta(obj_measures.beta);
+	objectness_filter->SetGamma(obj_measures.gamma);
+	objectness_filter->SetObjectDimension(obj_measures.objectness_type);
+	
+	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
+
+	multi_scale_Hessian->Update();
+	
+	this->ObjectnessImage = multi_scale_Hessian->GetOutput();
+
+	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+	ImageWriterType::Pointer image_writer = ImageWriterType::New();
+
+	image_writer->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage.mhd");
+	image_writer->SetInput(multi_scale_Hessian->GetOutput());
+	image_writer->Update();
+
+	ImageWriterType::Pointer image_writer2 = ImageWriterType::New();
+	image_writer2->SetFileName("C:\\Prathamesh\\Astrocytes\\CoverageExp\\VesselnessImage_scales.mhd");
+	image_writer2->SetInput(multi_scale_Hessian->GetScalesOutput());
+	image_writer2->Update();*/
+}
+
 
 void MultipleNeuronTracer::RunMask()
 {
@@ -932,6 +1447,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 	const float thresh1 = intensity_threshold;// 0.01;//0.005;   // 3% of maximum theshold from Lowe 2004
 	const float thresh2 = contrast_threshold;//0.003;//0.0003;  // -0.1 percent of range
 
+	//std::cout << "Intensity thr: "  << intensity_threshold << " Contrast thr: " << contrast_threshold << std::endl;
+
 	long ctCnt = 0;
 	int inrt = 0; // niclas testing
 	while(!nit.IsAtEnd()) 
@@ -957,8 +1474,8 @@ void MultipleNeuronTracer::GetFeature( float sigma )
 		
 		float mask_value = _MaskedImage->GetPixel(ndx);
 		
-		//if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
-		if(mask_value > 0)
+		if ( ((val - a1/13.0f) > thresh2 ) && ( val > thresh1 ))  
+		//if(mask_value > 0)
 		{
 			TensorType h;
 			h[0] = gauss->GetOutput()->GetPixel( ndx + xp ) + gauss->GetOutput()->GetPixel( ndx + xn ) - 2*nit.GetPixel( 13 );

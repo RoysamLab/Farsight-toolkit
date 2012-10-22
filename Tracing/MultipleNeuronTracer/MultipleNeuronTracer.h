@@ -47,6 +47,14 @@
 #include "itkSymmetricSecondRankTensor.h"
 #include "itkSymmetricEigenAnalysis.h"
 #include "itkMedianImageFilter.h"
+#include "itkHessianToObjectnessMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "itkMinimumMaximumImageCalculator.h"
+#include "itkMultiplyImageFilter.h"
+#include "itkAddImageFilter.h"
+#include "itkPowImageFilter.h"
+
 #include "vnl/vnl_math.h"
 #include "vtkSmartPointer.h"
 #include "vtkTable.h"
@@ -95,6 +103,27 @@ public:
 	}
 };
 
+class ObjectnessMeasures{
+	
+public:
+	float alpha;
+	float beta;
+	float gamma;
+
+	float sigma_min;
+	float sigma_max;
+	int sigma_intervals;
+	int objectness_type; //0: Blobness, 1: Vesselness, 2: Plateness
+	
+	float noiseness;
+	float ballness;
+	float plateness;
+	float vesselness;
+
+	ObjectnessMeasures();
+	ObjectnessMeasures(float alpha, float beta, float gamma);
+	ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type);
+};
 
 class MultipleNeuronTracer
 {
@@ -115,6 +144,14 @@ public:
 	typedef itk::OtsuThresholdImageFilter<ImageType3D,ImageType3D>  OtsuThresholdImageFilterType;
 	typedef itk::BinaryThresholdImageFilter <ImageType3D,ImageType3D>	BinaryThresholdImageFilterType;
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxImageCalculatorType;
+	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
+	typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
+	typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
+	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
+	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;
+	typedef itk::PowImageFilter<ImageType3D> PowImageFilter;
+
 
 	//Constructor
 	MultipleNeuronTracer();
@@ -165,6 +202,9 @@ public:
 	int device;
 	void RemoveSoma( LabelImageType3D::Pointer image2 );
 
+	void OptimizeCoverage(std::string, bool);
+	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
+	void Set_isCoverageOptimized(bool);
 		
 protected:
 	void FeatureMain();
@@ -198,6 +238,7 @@ private:
 	PixelType _CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > _PQ;
 	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage, _MaskedImage;   //Input Image, EK image, CT image
+	ImageType3D::Pointer ObjectnessImage;
 	CharImageType3D::Pointer _NDXImage2;
 	SWCImageType3D::Pointer _SWCImage; //swc label image
 	itk::Size<3> _size;
@@ -218,6 +259,7 @@ private:
 	
 	bool _flagPipeline;
 	bool _flagOutLog;
+	bool _isCoverageOptimized;
 
 };
 
