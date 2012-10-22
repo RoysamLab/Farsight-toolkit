@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 
 	if(argc < 4 || argc > 6)
 	{
-		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <SomaImageFile> [options file] <OptimizeCoverage?>" << std::endl;
+		std::cout << "MultipleNeuronTracer.exe <InputFileName> <SomaCentroids.txt> <SomaImageFile> [options file] [Optimize Coverage (0 or 1)]" << std::endl;
 		return -1;
 	}
 
