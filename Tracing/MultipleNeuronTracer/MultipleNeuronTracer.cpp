@@ -261,7 +261,7 @@ void MultipleNeuronTracer::LoadCurvImage_2(ImageType3D::Pointer &image)
 	_size = _PaddedCurvImage->GetBufferedRegion().GetSize();
 }
 
-ObjectnessMeasures::ObjectnessMeasures(){
+ObjectnessMeasures_micro::ObjectnessMeasures_micro(){
 
 	this->alpha = 0.5;
 	this->beta = 0.5;
@@ -278,7 +278,7 @@ ObjectnessMeasures::ObjectnessMeasures(){
 	this->noiseness = 0.0;
 }
 
-ObjectnessMeasures::ObjectnessMeasures(float alpha, float beta, float gamma){
+ObjectnessMeasures_micro::ObjectnessMeasures_micro(float alpha, float beta, float gamma){
 
 	this->alpha = alpha;
 	this->beta = beta;
@@ -295,7 +295,7 @@ ObjectnessMeasures::ObjectnessMeasures(float alpha, float beta, float gamma){
 	this->noiseness = 0.0;
 }
 
-ObjectnessMeasures::ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type){
+ObjectnessMeasures_micro::ObjectnessMeasures_micro(float sigma_min, float sigma_max, float sigma_intervals, int obj_type){
 
 	this->alpha = 0.5;
 	this->beta = 0.5;
@@ -335,8 +335,8 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
 	double img_max_val = stats_filter->GetMaximum();
 	
 
-	//ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0); // use this for astrocytes
-	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1); // use this for microglia
+	//ObjectnessMeasures_micro obj_measures(sigma_min, sigma_max, sigma_intervals, 0); // use this for astrocytes
+	ObjectnessMeasures_micro obj_measures(sigma_min, sigma_max, sigma_intervals, 1); // use this for microglia
 	obj_measures.alpha = 0.5 * img_max_val;
 	obj_measures.beta = 0.5 * img_max_val;
 	obj_measures.gamma = 0.25 * img_max_val; //0.25 * img_max_val;
@@ -719,7 +719,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
 	}
 }
 
-void MultipleNeuronTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
+void MultipleNeuronTracer::ComputeObjectnessImage(ObjectnessMeasures_micro obj_measures){
 
 	//float sigma_min = 2.0f; //0.5f;
 	//float sigma_max = 10.0f; //4.0f;

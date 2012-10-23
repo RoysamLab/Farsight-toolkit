@@ -103,7 +103,7 @@ public:
 	}
 };
 
-class ObjectnessMeasures{
+class ObjectnessMeasures_micro{
 	
 public:
 	float alpha;
@@ -120,9 +120,9 @@ public:
 	float plateness;
 	float vesselness;
 
-	ObjectnessMeasures();
-	ObjectnessMeasures(float alpha, float beta, float gamma);
-	ObjectnessMeasures(float sigma_min, float sigma_max, float sigma_intervals, int obj_type);
+	ObjectnessMeasures_micro();
+	ObjectnessMeasures_micro(float alpha, float beta, float gamma);
+	ObjectnessMeasures_micro(float sigma_min, float sigma_max, float sigma_intervals, int obj_type);
 };
 
 class MultipleNeuronTracer
@@ -203,7 +203,7 @@ public:
 	void RemoveSoma( LabelImageType3D::Pointer image2 );
 
 	void OptimizeCoverage(std::string, bool);
-	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
+	void ComputeObjectnessImage(ObjectnessMeasures_micro obj_measures);
 	void Set_isCoverageOptimized(bool);
 		
 protected:
