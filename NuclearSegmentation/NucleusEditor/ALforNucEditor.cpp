@@ -247,7 +247,7 @@ void ALforNucEd::ALDialogPopUP(bool first_pop, std::vector<std::pair<int,int> > 
 			}
 		}
 
-#ifndef _WIN32
+#ifndef _MSC_VER
 		if(this->HeatmapWin == NULL)
 		{
 			this->HeatmapWin = new Heatmap();
