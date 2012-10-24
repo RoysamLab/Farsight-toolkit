@@ -27,11 +27,12 @@ SET(MAINDARPA_HDRS
 SET(MAINDARPA_SRCS
 	main.cpp
 	ftkMainDarpa.cpp
-
+	
 	ftkMainDarpaSegment.cpp
 	ftkMainDarpaAstroTrace.cpp
 	ftkMainDarpaTrace.cpp
 )
+
 
 if(BUILD_NUCLEI)
 
@@ -43,3 +44,9 @@ if(BUILD_NUCLEI)
 else()
   message(FATAL_ERROR "BUILD_image_dicer is ON, but BUILD_NUCLEI is OFF.  image_dicer executables cannot be built without these modules")
 endif()
+
+add_executable( ftkSpatialStats ftkSpatialStats.cpp)
+target_link_libraries( ftkSpatialStats ftkGraphs )
+
+
+
