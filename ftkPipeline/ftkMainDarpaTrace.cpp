@@ -450,7 +450,7 @@ void ftkMainDarpaTrace::runTracing()
 				
 					#pragma omp critical
 					{
-						MNT->OptimizeCoverage(coverageFileName, false);
+						MNT->OptimizeCoverage(coverageFileName, true);
 					}
 				}
 
