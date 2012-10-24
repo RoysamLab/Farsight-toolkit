@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 			std::string tableInput = argv[3];
 			std::string coordinate = argv[4];
 
-		     	objftkMainDarpa->cropImageDarpa< rawImageType_16bit >( imageInput, tableInput, coordinate );
+		     	objftkMainDarpa->cropImageDarpa< rawImageType_uint >( imageInput, tableInput, coordinate );
 			break;
 		}
 		case SAVENRRD:
