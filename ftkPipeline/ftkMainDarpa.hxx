@@ -1123,8 +1123,11 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 	itk::SizeValueType sizeXYlarge= montage_size[1] * montage_size[0];
 	itk::SizeValueType sizeXlarge = montage_size[0];
 
-	///#pragma omp parallel for collapse(3)
-	#pragma omp parallel for 
+#if _OPENMP < 200805L
+	#pragma omp parallel
+#else
+	#pragma omp parallel for collapse(3)
+#endif
 	for(int i=0; i<im_size[2]; ++i)
 	{
 		//itk::SizeValueType sm01 = i*sizeXYsmall;
