@@ -446,8 +446,12 @@ void ftkMainDarpaTrace::runTracing()
 			}else
 			{
 				if(_optimizeCoverage == 1){
-					std::string coverageFileName = _outPath + "/Coverage.txt";
-					MNT->OptimizeCoverage(coverageFileName, true);
+					std::string coverageFileName = _outPathDebug + "/Coverage_" + ssx.str() + "_" + ssy.str() + "_" + ssz.str() + ".txt";
+				
+					#pragma omp critical
+					{
+						MNT->OptimizeCoverage(coverageFileName, false);
+					}
 				}
 
 				MNT->LoadParameters(_traceParams.c_str(), 6);
