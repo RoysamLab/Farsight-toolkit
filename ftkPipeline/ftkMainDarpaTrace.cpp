@@ -140,7 +140,7 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	if(iter!=options.end())
 	{ std::istringstream ss((*iter).second); ss >> _optimizeCoverage;}
 	else
-	{ _outPathTemp.clear(); printf("Choose _optimizeCoverage? = NULL as default\n");}
+	{ _optimizeCoverage.clear(); printf("Choose _optimizeCoverage? = NULL as default\n");}
 	
 	iter = options.find("-overridedefaultsTraceParams"); 
 	if(iter!=options.end())
