@@ -206,6 +206,7 @@ void ftkMainDarpaTrace::runPreprocesing()
 	std::cout<<std::endl<<"MedFilter"<<std::flush;
 	
 	_GFP_ImagePREPMNT = _outPathTemp+"/GFP_MNT_PRE.nrrd";
+	std::cout<<_GFP_ImagePREPMNT<<std::endl;
 	writeImage< Data_flo >( medfilt->GetOutput(), _GFP_ImagePREPMNT.c_str());
 }
 
