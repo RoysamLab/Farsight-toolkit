@@ -1062,7 +1062,7 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 	im_index[1] = 0;
 	im_index[2] = 0;
 
-	std::cout<<"finished reading image, started allocation..."<<std::endl;
+	std::cout<<"finished reading image, started allocation..."<<std::endl << std::flush;
 	typename TINPUT::RegionType region;
 	region.SetSize( im_size );
 	region.SetIndex( im_index );
@@ -1088,7 +1088,7 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 	std::map<unsigned int, bool> classMap;
 	std::map<unsigned int, unsigned int> idMap;
 	unsigned short new_id =1;
-	std::cout<<"starting.."<<std::endl;
+	std::cout<<"starting.."<<std::endl << std::flush;
 
 	for(int row=0; row<(int)feature_table->GetNumberOfRows(); ++row)
 	{
@@ -1111,7 +1111,7 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 		}
 
 	}
-	std::cout<<"finished looking for inside cells.."<<std::endl;
+	std::cout<<"finished looking for inside cells.."<<std::endl << std::flush;
 	itk::Image<unsigned short,3>::PixelType * clean_labelArray = clean_labelImage->GetBufferPointer();
 	typename TINPUT::PixelType * labelArray = labelImage->GetBufferPointer();
 
@@ -1184,15 +1184,22 @@ void ftkMainDarpa::cropImageDarpa( std::string imageInput, std::string tableInpu
 	}
 	std::cout<<"finished relabeling  the table.."<<std::endl;
 
+	std::stringstream out_x;
+  std::stringstream out_y;
+	std::stringstream out_z;
+	out_x<<Xmin;
+	out_y<<Ymin;
+  out_z<<Zmin;
+	
 
 	std::string curr_path = ftk::GetFilePath(imageInput);
 	std::string imfname = ftk::GetFilenameFromFullPath(imageInput);
-	std::string imoutfname = curr_path + "/cropped_" +imfname;
+	std::string imoutfname = curr_path + "/cropped_"+out_x.str()+"_"+out_y.str()+"_"+out_z.str()+"_"+imfname;
 	writeImage< itk::Image<unsigned short,3> >(clean_labelImage,imoutfname.c_str());
 
 
 	std::string tabfname = ftk::GetFilenameFromFullPath(tableInput);
-	ftk::SaveTable(curr_path + "/cropped_" + tabfname, feature_table);
+	ftk::SaveTable(curr_path + "/cropped_"+out_x.str()+"_"+out_y.str()+"_"+out_z.str()+"_"+tabfname, feature_table);
 
 
 }
