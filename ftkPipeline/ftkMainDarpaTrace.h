@@ -77,6 +77,8 @@ private:
 	std::string _DAP_ImageNRRD;
 	std::string _Soma_MontageNRRD;
 	std::string _overridedefaultsTraceParams;
+
+	bool _optimizeCoverage;
 // 	
 // // 	std::vector< rawImageType_8bit::Pointer > _ImageMontages;
 // 	rawImageType_8bit::Pointer _ImageMontage_Cy5;

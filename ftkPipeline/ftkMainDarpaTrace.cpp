@@ -135,6 +135,12 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	{ std::istringstream ss((*iter).second); ss >> _outPathTemp;}
 	else
 	{ _outPathTemp.clear(); printf("Choose _outPathTemp = NULL as default\n");}
+
+	iter = options.find("-optimizeCoverage?"); 
+	if(iter!=options.end())
+	{ std::istringstream ss((*iter).second); ss >> _optimizeCoverage;}
+	else
+	{ _outPathTemp.clear(); printf("Choose _optimizeCoverage? = NULL as default\n");}
 	
 	iter = options.find("-overridedefaultsTraceParams"); 
 	if(iter!=options.end())
@@ -170,6 +176,7 @@ void ftkMainDarpaTrace::readParameters( std::string segmentParams )
 	std::cout << std::endl << "_outPathDebug: " << _outPathDebug;
 	std::cout << std::endl << "_outPathTemp: " << _outPathTemp;
 	std::cout<< std::endl <<"_overridedefaultsTraceParams "<<_overridedefaultsTraceParams;
+	std::cout << std::endl << "_optimizeCoverage? " << _optimizeCoverage; 
 }
 
 void ftkMainDarpaTrace::runPreprocesing()
@@ -438,7 +445,12 @@ void ftkMainDarpaTrace::runTracing()
 				}
 			}else
 			{
-				MNT->LoadParameters(_traceParams.c_str(),5);
+				if(_optimizeCoverage == 1){
+					std::string coverageFileName = _outPath + "/Coverage.txt";
+					MNT->OptimizeCoverage(coverageFileName, true);
+				}
+
+				MNT->LoadParameters(_traceParams.c_str(), 6);
 			}
 
 			
