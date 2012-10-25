@@ -5,21 +5,24 @@ double average(std::vector< std::pair<unsigned int, double> >);
 int main(int argc, char* argv[])
 {	
 
-	if(argc < 3)
-	{
-		std::cout << "SpatialMeasurements.exe <InputTableName> <NumberOfCellTypes>" << std::endl;
-		return -1;
-	}
+	//if(argc < 3)
+	//{
+	//	std::cout << "SpatialMeasurements.exe <InputTableName> <NumberOfCellTypes>" << std::endl;
+	//	return -1;
+	//}
 
 	std::string MyName = argv[0];					
 	std::string InputTableName = argv[1];					
 	int NumberOfCellTypes = atoi(argv[2]);
 
+	//std::string InputTableName = "G:/DATA/0131/microglia_types.txt";					
+	//int NumberOfCellTypes = 4;
+
 
 
 	vtkSmartPointer<vtkTable> table = ftk::LoadTable(InputTableName);
 
-	for(int row=(int)table->GetNumberOfRows(); row>0; --row)
+	for(int row=(int)table->GetNumberOfRows()-1; row>0; --row)
 	{
 		int electrode_number = table->GetValueByName(row,"prediction_active_mg_neu").ToInt() - NumberOfCellTypes;
 		if(electrode_number <= 0) break;
@@ -34,13 +37,14 @@ int main(int argc, char* argv[])
 		double x1 = 0.267 * table->GetValue(row,1).ToDouble();
 		double y1 = 0.267 * table->GetValue(row,2).ToDouble();
 		double z1 = 0.3 * table->GetValue(row,3).ToDouble();
-		for(int r=0; r<(int)table->GetNumberOfRows(); ++row)
+		for(int r=0; r<(int)table->GetNumberOfRows(); ++r)
 		{
 			double x2 = 0.267 * table->GetValue(r,1).ToDouble();
 			double y2 = 0.267 * table->GetValue(r,2).ToDouble();
 			double z2 = 0.3 * table->GetValue(r,3).ToDouble();
 			double dist = std::sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2) );
 			table->SetValue(r, table->GetNumberOfColumns()-1, dist);
+			//std::cout << "ID: " << table->GetValue(r,0).ToInt() << "\r";
 		}
 	}
 
@@ -64,6 +68,7 @@ int main(int argc, char* argv[])
 		c.push_back(0.267 * table->GetValue(row,2).ToDouble());
 		c.push_back(0.3 * table->GetValue(row,3).ToDouble());		
 		centroidMaps[cell_class-1][id] = c;
+		//std::cout << "ID: " << table->GetValue(row,0).ToInt() << "\r";
 	}
 
 	for(int i=0; i<NumberOfCellTypes; ++i)
@@ -81,10 +86,10 @@ int main(int argc, char* argv[])
 		{
 			table->SetValueByName(row, full_string.c_str(), 0);
 		}
-		for(int i=0; i < (int)kNeighborID_vectors[i].size(); ++i)
+		for(int j=0; j < (int)kNeighborID_vectors[i].size(); ++j)
 		{
-			int Id = kNeighborID_vectors[i].at(i).at(0).first;
-			double avg_dist = average(kNeighborID_vectors[i].at(i));
+			int Id = kNeighborID_vectors[i].at(j).at(0).first;
+			double avg_dist = average(kNeighborID_vectors[i].at(j));
 			for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
 			{
 				if(table->GetValue(row,0).ToInt() == Id)
@@ -99,7 +104,7 @@ int main(int argc, char* argv[])
 	std::string::iterator it;
 	it = InputTableName.end() - 4;
 	InputTableName.erase(it, it+4);
-	std::string OutputTableName = InputTableName + "_spat_stats.tif";
+	std::string OutputTableName = InputTableName + "_spat_stats.txt";
 	ftk::SaveTable(OutputTableName, table);
 
 	return 0;
@@ -110,9 +115,9 @@ int main(int argc, char* argv[])
 double average(std::vector< std::pair<unsigned int, double> > ID)
 {
 	double dist = 0;
-	for(int i=1; i<(int)ID.size(); ++i)
+	for(int k=1; k<(int)ID.size(); ++k)
 	{
-		dist += ID.at(i).second;
+		dist += ID.at(k).second;
 	}
 	double average = dist/(int)(ID.size()-1);
 	return average;
