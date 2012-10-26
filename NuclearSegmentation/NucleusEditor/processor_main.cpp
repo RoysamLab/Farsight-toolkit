@@ -45,7 +45,10 @@ int main(int argc, char *argv[])
 	{
 		myImg = ftk::Image::New();
 		if( !myImg->LoadFile(inputFilename) )
+		{
+			std::cout<<"Could not load input image\n";
 			myImg = NULL;
+		}
 	}
 	
 	if(!myImg)
@@ -69,7 +72,10 @@ int main(int argc, char *argv[])
 		{
 			labImg = ftk::Image::New();
 			if( !labImg->LoadFile(labelFilename) )
+			{
+				std::cout<<"Could not load label image\n";
 				labImg = NULL;
+			}
 		}
 	}
 
