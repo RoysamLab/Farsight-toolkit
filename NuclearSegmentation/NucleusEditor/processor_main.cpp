@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 	for(classImageMapIter = myClassImageMap.begin(); classImageMapIter != myClassImageMap.end(); ++classImageMapIter)
 	{
 		std::string className = classImageMapIter->first;
-		std::string classImageFileName = myFilename + "_" + className + ".tif";
+		std::string classImageFileName = myFilename + "_" + className + ".nrrd";
 		LabelImagePointer classImage = classImageMapIter->second;
 		LabelWriterType::Pointer writer = LabelWriterType::New();
 		writer->SetFileName(classImageFileName);
