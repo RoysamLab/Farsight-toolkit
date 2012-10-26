@@ -5,11 +5,11 @@ double average(std::vector< std::pair<unsigned int, double> >);
 int main(int argc, char* argv[])
 {	
 
-	//if(argc < 3)
-	//{
-	//	std::cout << "SpatialMeasurements.exe <InputTableName> <NumberOfCellTypes>" << std::endl;
-	//	return -1;
-	//}
+	if(argc < 3)
+	{
+		std::cout << "SpatialMeasurements.exe <InputTableName> <NumberOfCellTypes>" << std::endl;
+		return -1;
+	}
 
 	std::string MyName = argv[0];					
 	std::string InputTableName = argv[1];					
