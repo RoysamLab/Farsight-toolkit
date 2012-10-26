@@ -116,14 +116,6 @@ int main(int argc, char *argv[])
 	labImg = pProc->GetOutputImage();
 	table = pProc->GetTable();
 
-	typedef ftk::ProjectProcessor::LabelImageType::Pointer LabelImagePointer;
-	std::map< std::string, LabelImagePointer > myClassImageMap = pProc->GetClassImageMap();
-	std::map< std::string, vtkSmartPointer<vtkTable> > myClassCentroidMap = pProc->GetClassCentroidMap();
-	std::string myFilename = inputFilename;
-	string::iterator it;
-	it = myFilename.end() - 4;
-	myFilename.erase(it, it+4);
-
 	//Save results:
 	if( ftk::GetExtension(labelFilename) == "xml" )
 		ftk::SaveXMLImage(labelFilename, labImg);
@@ -132,46 +124,8 @@ int main(int argc, char *argv[])
 
 	ftk::SaveTable( tableFilename, table );
 
-	typedef itk::ImageFileWriter< ftk::ProjectProcessor::LabelImageType > LabelWriterType;
-	std::map< std::string, ftk::ProjectProcessor::LabelImageType::Pointer >::iterator classImageMapIter;
-	for(classImageMapIter = myClassImageMap.begin(); classImageMapIter != myClassImageMap.end(); ++classImageMapIter)
-	{
-		std::string className = classImageMapIter->first;
-		std::string classImageFileName = myFilename + "_" + className + ".tif";
-		LabelImagePointer classImage = classImageMapIter->second;
-		LabelWriterType::Pointer writer = LabelWriterType::New();
-		writer->SetFileName(classImageFileName);
-		writer->SetInput(classImage);
-		writer->Update();
-	}
-
-	std::map< std::string, vtkSmartPointer<vtkTable> >::iterator classCentroidMapIter;
-	for(classCentroidMapIter = myClassCentroidMap.begin(); classCentroidMapIter != myClassCentroidMap.end(); ++classCentroidMapIter)
-	{
-		std::string className = classCentroidMapIter->first;
-		std::string classCentroidsFileName = myFilename + "_" + className + "_centroids.txt";
-		vtkSmartPointer<vtkTable> centroid_table = classCentroidMapIter->second;
-
-		ofstream outFile; 
-		outFile.open(classCentroidsFileName.c_str(), ios::out | ios::trunc );
-		if ( !outFile.is_open() )
-		{
-			std::cerr << "Failed to Load Document: " << outFile << std::endl;
-			return false;
-		}
-		//Write out the features:
-		for(int row = 0; row < (int)centroid_table->GetNumberOfRows(); ++row)
-		{
-			outFile << centroid_table->GetValue(row,0).ToInt() << "\t" ;
-			outFile << centroid_table->GetValue(row,1).ToInt() << "\t" ;
-			outFile << centroid_table->GetValue(row,2).ToInt() << "\t" ;
-			outFile << "\n";			
-		}
-		outFile.close();
-	}
-
 	projectDef.Write(definitionFilename);
-	
+
 	delete pProc;
 
 	return EXIT_SUCCESS;
