@@ -2594,9 +2594,12 @@ void View3D::removeImageActors()
 	{
 		this->RaycastBar->hide();
 	}
-	if (this->SlicerBar->isVisible())
+	if (this->SlicerBarCreated)
 	{
-		this->SlicerBar->hide();
+		if (this->SlicerBar->isVisible())
+		{
+			this->SlicerBar->hide();
+		}
 	}
 	this->QVTK->GetRenderWindow()->Render();
 }
