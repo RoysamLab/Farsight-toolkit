@@ -920,20 +920,19 @@ void NucleusEditor::closeEvent(QCloseEvent *event)
 //*********************************************************************************
 bool NucleusEditor::saveSomaImage()
 {
-		// Soma Montage
-	typedef itk::Image<unsigned int, 3> rawImageType_uint;
+	if(!labImg){
+		std::cout<<"No label image\n";
+		return false;
+	}
+
+	// Soma Montage
+	typedef itk::Image<unsigned short, 3> rawImageType_uint;
 	typedef itk::ImageFileWriter< rawImageType_uint > uintImageWriter;
-	typedef itk::ImageFileReader< rawImageType_uint > uintImageReader;
 
-	std::string nameLabelMontage = "G:/DATA/0128_neurons/control/Input_Image_label_nuc.tif";
-	uintImageReader::Pointer reader = uintImageReader::New();
-	reader->SetFileName(nameLabelMontage);
-	reader->Update();
-	rawImageType_uint::Pointer imageLabelMontage = reader->GetOutput();
+	rawImageType_uint::Pointer imageLabelMontage = labImg->GetItkPtr<rawImageType_uint::PixelType>(0,0);
 	rawImageType_uint::RegionType ImageMontageRegion = imageLabelMontage->GetLargestPossibleRegion();
-
 	rawImageType_uint::Pointer imageSomaMontage = rawImageType_uint::New();
-	itk::Size<3> im_size = imageLabelMontage->GetBufferedRegion().GetSize();
+	rawImageType_uint::SizeType im_size = imageLabelMontage->GetBufferedRegion().GetSize();
 	rawImageType_uint::RegionType region;
 	region.SetSize( ImageMontageRegion.GetSize() );
 	region.SetIndex( ImageMontageRegion.GetIndex() );
@@ -952,35 +951,57 @@ bool NucleusEditor::saveSomaImage()
 	rawImageType_uint::PixelType * imageSomaArray = imageSomaMontage->GetBufferPointer();
 	rawImageType_uint::PixelType * imageLabelArray = imageLabelMontage->GetBufferPointer();
 
-	unsigned long long sizeXY = im_size[1] * im_size[0];
-	unsigned long long sizeX = im_size[0];
-	std::map<unsigned int, int> classMap;
-	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+	itk::SizeValueType sizeXY = im_size[1] * im_size[0];
+	itk::SizeValueType sizeX = im_size[0];
+	std::map<unsigned int, unsigned int> classMap;
+	std::string prediction_column;
+	for( unsigned i=0; i<table->GetNumberOfColumns(); ++i ){
+		std::string current_column;
+		current_column = table->GetColumnName(i);
+		if( current_column.find("prediction") != std::string::npos ){
+			prediction_column = current_column;
+			break;
+		}
+	}
+
+	if(prediction_column.empty()){
+		std::cout<<"No prediction column\n";
+		return false;
+	}
+
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Load Label Image"), lastPath, standardImageTypes);
+
+	std::cout<<"Writing the labels for class 1 in "<<prediction_column<<" to soma file\n"; 
+
+	for(itk::SizeValueType row=0; row<table->GetNumberOfRows(); ++row)
 	{
-		classMap[table->GetValue(row,0).ToUnsignedInt()] = table->GetValueByName(row, "prediction_active_neu").ToInt();
+		classMap[table->GetValue(row,0).ToUnsignedInt()] = table->GetValueByName( row, prediction_column.c_str() ).ToInt();
 	}
 
 	#pragma omp parallel for //collapse(3)
-	for(int i=0; i<im_size[2]; ++i)
+	for(unsigned int i=0; i<im_size[2]; ++i)
 	{
-		for(int j=0; j<im_size[1]; ++j)
+		for(unsigned int j=0; j<im_size[1]; ++j)
 		{
-			for(int k=0; k<im_size[0]; ++k)
+			for(unsigned int k=0; k<im_size[0]; ++k)
 			{
-				unsigned long long offset = (i*sizeXY)+(j*sizeX)+k;
+				itk::SizeValueType offset = (i*sizeXY)+(j*sizeX)+k;
 				if( imageLabelArray[offset] != 0 )
 					if(classMap[imageLabelArray[offset]] == 1)
 						imageSomaArray[offset] = imageLabelArray[offset];
+					else
+						imageSomaArray[offset] = 0;
 			}
 		}
 	}	
 
-	std::string nameSomaMontage = "G:/DATA/0128_neurons/control/neuron_soma.nrrd";
+	std::string nameSomaMontage = fileName.toStdString();
 	uintImageWriter::Pointer writer = uintImageWriter::New();
 	writer->SetFileName(nameSomaMontage);
 	writer->SetInput(imageSomaMontage);
 	writer->Update();
 
+	/*
 	for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
 	{
 		if(table->GetValueByName(row, "prediction_active_neu").ToInt() != 1)
@@ -988,7 +1009,7 @@ bool NucleusEditor::saveSomaImage()
 			table->RemoveRow(row);
 			--row;
 		}
-	}
+	}*/
 
 
 	//if(!labImg || !table) return false;
