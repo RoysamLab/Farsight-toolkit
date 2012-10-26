@@ -805,12 +805,13 @@ bool ProjectProcessor::Classify_mclr(void)
 //***********************************************************************************************************
 bool ProjectProcessor::Extract_Class(void)
 {
-	for(int i=0; i<(int)definition->Classification_Rules.size(); ++i)
+	for(int i=0; i<(int)definition->Class_Extraction_Rules.size(); ++i)
 	{
 		bool found = false;
 		std::string className = definition->Class_Extraction_Rules[i].Class_Name;
 		std::string classColumnName = "prediction_active_" + className;
 		int class_ext = definition->Class_Extraction_Rules[i].Class;
+		std::cout<<"Extracting from classifier "<<classColumnName<<" class:"<<class_ext<<std::endl<<std::flush;
 
 		for(int col=((int)table->GetNumberOfColumns())-1; col>=0; --col)
 		{	
@@ -848,23 +849,27 @@ bool ProjectProcessor::Extract_Class(void)
 		classImage->Update();
 		LabelImageType::PixelType * classArray = classImage->GetBufferPointer();
 
-		int slice_size = im_size[1] * im_size[0];
-		int row_size = im_size[0];
+		itk::SizeValueType slice_size = im_size[1] * im_size[0];
+		itk::SizeValueType row_size = im_size[0];
 		std::map<unsigned short, int> classMap;
-		for(int row=0; row<(int)table->GetNumberOfRows(); ++row)
+		for(unsigned int row=0; row<table->GetNumberOfRows(); ++row)
 		{
 			classMap[table->GetValue(row,0).ToUnsignedShort()] = table->GetValueByName(row, classColumnName.c_str()).ToInt();
 		}
-
-		for(int i=0; i<im_size[2]; ++i)
+#ifdef _OPENMP
+		#pragma omp parallel for
+#endif
+		for(itk::SizeValueType i=0; i<im_size[2]; ++i)
 		{
-			for(int j=0; j<im_size[1]; ++j)
+			for(itk::SizeValueType j=0; j<im_size[1]; ++j)
 			{
-				for(int k=0; k<im_size[0]; ++k)
+				for(itk::SizeValueType k=0; k<im_size[0]; ++k)
 				{
-					unsigned long offset = (i*slice_size)+(j*row_size)+k;
+					itk::SizeValueType offset = (i*slice_size)+(j*row_size)+k;
 					if(classMap[labelArray[offset]] == class_ext)
 						classArray[offset] = labelArray[offset];
+					else
+						classArray[offset] = 0;
 				}
 			}
 		}
@@ -882,7 +887,7 @@ bool ProjectProcessor::Extract_Class(void)
 		vtkSmartPointer<vtkDoubleArray> column_z = vtkSmartPointer<vtkDoubleArray>::New();
 		column_z->SetName("centroid_z");
 		centroid_table->AddColumn(column_z);	
-		for(int row = 0; row<(int)table->GetNumberOfRows(); ++row)
+		for(unsigned int row = 0; row<table->GetNumberOfRows(); ++row)
 		{		
 			vtkSmartPointer<vtkVariantArray> model_data1 = vtkSmartPointer<vtkVariantArray>::New();
 			if(table->GetValueByName(row, classColumnName.c_str()).ToInt() == class_ext)
