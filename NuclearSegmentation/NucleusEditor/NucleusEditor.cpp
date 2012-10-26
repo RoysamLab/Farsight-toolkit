@@ -977,9 +977,17 @@ bool NucleusEditor::saveSomaImage()
 	{
 		classMap[table->GetValue(row,0).ToUnsignedInt()] = table->GetValueByName( row, prediction_column.c_str() ).ToInt();
 	}
-
+#ifdef _OPENMP
+#ifdef _MSC_VER
+	#pragma omp parallel for //collapse(3)
+	for(int i=0; i<im_size[2]; ++i)
+#else
 	#pragma omp parallel for //collapse(3)
 	for(unsigned int i=0; i<im_size[2]; ++i)
+#endif
+#else
+	for(unsigned int i=0; i<im_size[2]; ++i)
+#endif
 	{
 		for(unsigned int j=0; j<im_size[1]; ++j)
 		{
