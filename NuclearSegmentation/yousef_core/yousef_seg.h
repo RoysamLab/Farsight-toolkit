@@ -146,9 +146,9 @@ public:
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
 	//added by Yousef on 9/11/2009
-	int AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID);
+	int AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID);
 	//added by Yousef on 9/26/2009
-	int AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID);
+	int AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID);
 	
 
 private:	

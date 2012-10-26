@@ -1825,7 +1825,7 @@ std::vector< int > NuclearSegmentation::SplitAlongZ(int objID, int cutSlice, vtk
 		return ret_ids;
 	}
 
-	std::vector<unsigned short> size = labelImage->Size();
+	std::vector<itk::SizeValueType> size = labelImage->Size();
 	if(size[1] == 1)	//Only 1 z slice
 	{
 		errorMessage = "2D image cannot be split along z";
@@ -2021,7 +2021,7 @@ int NuclearSegmentation::AddObject(int x1, int y1, int z1, int x2, int y2, int z
 		errorMessage = "label image or data image doesn't exist";					
 		return -1;
 	}	
-	std::vector<unsigned short> size = labelImage->Size();
+	std::vector<itk::SizeValueType> size = labelImage->Size();
 
 	int sz_x = x2-x1+1;
 	int sz_y = y2-y1+1;
@@ -2157,7 +2157,7 @@ bool NuclearSegmentation::FillAnObject(int objID)
 	//Start by getting the bounding box around the object of interest
 	ftk::Object::Box region = bBoxMap[objID];	
 	//Extend the bounding box by 10 from each size
-	std::vector<unsigned short> SZ = labelImage->Size();
+	std::vector<itk::SizeValueType> SZ = labelImage->Size();
 	int min_x = region.min.x-10;
 	if(min_x<0)
 		min_x = 0;

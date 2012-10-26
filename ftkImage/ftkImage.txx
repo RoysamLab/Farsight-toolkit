@@ -28,7 +28,7 @@ namespace ftk
 {
 
 //I NEVER RELEASE MEMORY FOR SLICES!!!
-template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int Z, PtrMode mode)
+template <typename pixelType> pixelType * Image::GetSlicePtr(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, PtrMode mode)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices )
 		return NULL;
@@ -39,9 +39,9 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 	if( mode == RELEASE_CONTROL)
 		return NULL;
 
-	int numPix = (m_Info.numColumns)*(m_Info.numRows);
+	itk::SizeValueType numPix = (m_Info.numColumns)*(m_Info.numRows);
 	pixelType * stack = static_cast<pixelType *>(imageDataPtrs[T][CH].mem);
-	pixelType * slice = stack + ((unsigned long)Z*(unsigned long)numPix);
+	pixelType * slice = stack + Z*numPix;
 	pixelType * mem;
 	if( mode == DEEP_COPY)
 	{
@@ -59,7 +59,7 @@ template <typename pixelType> pixelType * Image::GetSlicePtr(int T, int CH, int 
 }
 
 
-template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::GetItkPtr(int T, int CH, PtrMode mode)
+template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::GetItkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode)
 {
 	if( !IsMatch<pixelType>(m_Info.dataType) ) //Forced to duplicate image because the datatypes are different
 		mode = DEEP_COPY;
@@ -89,8 +89,8 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 		itkManageMemory = false;
 	}
 
-	int numPixels = m_Info.numColumns * m_Info.numRows * m_Info.numZSlices;
-	int numBytes = sizeof(pixelType) * numPixels;
+	itk::SizeValueType numPixels = m_Info.numColumns * m_Info.numRows * m_Info.numZSlices;
+	itk::SizeValueType numBytes = sizeof(pixelType) * numPixels;
 	
 	void * mem = NULL;	//This will point to the data I want to create the array from;
 	if(makeCopy)		//Make a copy of the data	
@@ -101,9 +101,9 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 			return NULL;
 		if( !IsMatch<pixelType>(m_Info.dataType) ){		//Datatypes are not the same; use C-style cast and copy all pixels
 			pixelType *out_pixel_container = static_cast<pixelType *>(mem);
-			for(int k=0; k<m_Info.numZSlices; ++k)
-				for(int j=0; j<m_Info.numRows; ++j)
-					for(int i=0; i<m_Info.numColumns; ++i){
+			for(itk::SizeValueType k=0; k<m_Info.numZSlices; ++k)
+				for(itk::SizeValueType j=0; j<m_Info.numRows; ++j)
+					for(itk::SizeValueType i=0; i<m_Info.numColumns; ++i){
 						//*out_pixel_container = static_cast<pixelType>( this->GetPixel(T,CH,k,j,i) );
 						*out_pixel_container = this->GetPixelT<pixelType>(T,CH,k,j,i);
 						++out_pixel_container;
@@ -165,40 +165,6 @@ template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer Image::
 
 	return image;
 }
-//template <typename pixelType> void CreateData3DFromItkPtr(typename itk::Image<pixelType, 3>::Pointer itkImagePtr)
-//{
-//	typedef itk::Image< pixelType, 3 >	ImageType;
-//	typedef typename ImageType::Pointer	ImagePointer;	
-//
-//	if(imageDataPtrs.size() > 0)
-//		return;
-//	ImagePointer img = itkImagePtr;
-//	//Set up the size info of the new image I am about to copy:
-//	typename ImageType::RegionType region = img->GetBufferedRegion();
-//	typename ImageType::RegionType::IndexType start = region.GetIndex();
-//	typename ImageType::RegionType::SizeType size = region.GetSize();
-//
-//	//Info of this new image!!
-//	m_Info.numColumns = size[0] - start[0];				//x-dimension
-//	m_Info.numRows = size[1] - start[1];				//y-dimension
-//	m_Info.numZSlices = size[2] - start[2];				//z-dimension
-//	m_Info.numTSlices = 1;		  						//t-dimension
-//	m_Info.bytesPerPix = sizeof(pixelType);				
-//	m_Info.dataType = pixelType;							
-//	m_Info.numChannels = 1;								
-//	m_Info.spacing.assign(3,1);			
-//
-//	//Resize the vector:
-//	imageDataPtrs.resize(m_Info.numTSlices);
-//	unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
-//	ImageMemoryBlock block;
-//	block.manager = FTK;
-//	memcpy(mem,img->GetBufferPointer(),numBytesPerChunk);
-//	block.mem = mem;
-//	imageDataPtrs[0].push_back(block);
-//	img = 0;
-//
-//}
 
 template <typename newType> void Image::Cast()
 {
@@ -206,13 +172,13 @@ template <typename newType> void Image::Cast()
 	if( IsMatch<newType>(m_Info.dataType) )
 		return;
 	
-	int x = m_Info.numColumns;
-	int y = m_Info.numRows;
-	int z = m_Info.numZSlices;
+	itk::SizeValueType x = m_Info.numColumns;
+	itk::SizeValueType y = m_Info.numRows;
+	itk::SizeValueType z = m_Info.numZSlices;
 	int n = m_Info.bytesPerPix;
 	int numBytes = x*y*z*n;
 	
-	for (int t=0; t<m_Info.numTSlices; ++t)
+	for (itk::SizeValueType t=0; t<m_Info.numTSlices; ++t)
 	{
 		for (int ch=0; ch<m_Info.numChannels; ++ch)
 		{
@@ -225,11 +191,11 @@ template <typename newType> void Image::Cast()
 			if(newArray == NULL)
 				return;
 			
-			for(int k=0; k<z; ++k)
+			for(itk::SizeValueType k=0; k<z; ++k)
 			{
-				for(int j=0; j<y; ++j)
+				for(itk::SizeValueType j=0; j<y; ++j)
 				{
-					for(int i=0; i<x; ++i)
+					for(itk::SizeValueType i=0; i<x; ++i)
 					{
 						newType pix = this->GetPixelT<newType>(t,ch,k,j,i);
 						newArray[k*y*x + j*x + i] = pix;
@@ -249,7 +215,7 @@ template <typename newType> void Image::Cast()
 }
 
 //IF MULTIPLE T, SAVE THEM IN THEIR OWN FILE:
-template <typename TPixel> bool Image::WriteImageITK(int channel, std::string baseName, std::string ext)
+template <typename TPixel> bool Image::WriteImageITK(itk::SizeValueType channel, std::string baseName, std::string ext)
 {
 	if(m_Info.numTSlices == 1)
 	{
@@ -259,7 +225,7 @@ template <typename TPixel> bool Image::WriteImageITK(int channel, std::string ba
 	}
 	else
 	{
-		for(int t=0; t<m_Info.numTSlices; ++t)
+		for(itk::SizeValueType t=0; t<m_Info.numTSlices; ++t)
 		{
 			std::string fullname = baseName + "_t" + itoa(t) + "." + ext;
 			if(!WriteImageITK<TPixel>(fullname, t, channel))
@@ -269,7 +235,7 @@ template <typename TPixel> bool Image::WriteImageITK(int channel, std::string ba
 	return true;
 }
 
-template <typename TPixel> bool Image::WriteImageITK(std::string fileName, int T, int CH)
+template <typename TPixel> bool Image::WriteImageITK(std::string fileName, itk::SizeValueType T, itk::SizeValueType CH)
 {
 	//Will not work if wrong pixel type is requested
 	if(!IsMatch<TPixel>(m_Info.dataType))
@@ -374,7 +340,7 @@ template <typename pType, typename rType> rType Image::GetPixelValue(void * p)
 }
 
 //Casts the value to rType and returns it
-template <typename rType> rType Image::GetPixelT(int T, int CH, int Z, int R, int C)
+template <typename rType> rType Image::GetPixelT(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices \
 		|| R >= m_Info.numRows || C >= m_Info.numColumns )
@@ -383,8 +349,8 @@ template <typename rType> rType Image::GetPixelT(int T, int CH, int Z, int R, in
 	if( T < 0 || CH < 0 || Z < 0 || R < 0 || C < 0 )
 		return static_cast<rType>(0.0);
 
-	unsigned int x = m_Info.numColumns;
-	unsigned int y = m_Info.numRows;
+	itk::SizeValueType x = m_Info.numColumns;
+	itk::SizeValueType y = m_Info.numRows;
 	unsigned int n = m_Info.bytesPerPix;
 	char *p = static_cast<char *>(imageDataPtrs[T][CH].mem) + Z*y*x*n + R*x*n + C*n;	//any 8-bit type works here
 
@@ -428,7 +394,7 @@ template <typename rType> rType Image::GetPixelT(int T, int CH, int Z, int R, in
 	return value;
 }
 
-template<typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels)
+template<typename TComp> void Image::LoadImageITK(std::string fileName, itk::SizeValueType numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels)
 {
 	if(imageDataPtrs.size() > 0)
 	{
@@ -468,7 +434,7 @@ template<typename TComp> void Image::LoadImageITK(std::string fileName, unsigned
 }
 
 //THIS IS AN INTERMEDIATE STEP WHEN A TYPE WITH VARIABLE LENGTH FIELDS IS USED:
-template< typename TComp> void Image::LoadImageITK(std::string fileName, unsigned int numChannels, bool stacksAreForTime, bool appendChannels)
+template< typename TComp> void Image::LoadImageITK(std::string fileName, itk::SizeValueType numChannels, bool stacksAreForTime, bool appendChannels)
 {
 	switch(numChannels)
 	{
@@ -496,7 +462,7 @@ template< typename TComp> void Image::LoadImageITK(std::string fileName, unsigne
 
 //THIS ASSUMES THAT THE IMAGE CAN BE LOADED AS A FIXED ARRAY!!!! 
 //IF DATA ALREADY EXITS WILL ATTEMPT TO APPEND THE NEW IMAGE
-template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels)
+template< typename TComp, itk::SizeValueType channels > void Image::LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels)
 {
 	typedef itk::FixedArray<TComp,channels>		PixelType;
 	typedef itk::Image< PixelType, 5 >			ImageType;
@@ -580,14 +546,14 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 
 	m_Info.numChannels = startingCH + nInfo.numChannels;
 
-	unsigned int numBytesPerChunk = m_Info.BytesPerChunk();
+	itk::SizeValueType numBytesPerChunk = m_Info.BytesPerChunk();
 
 	//Create a pointer for each channel and time slice (allocate memory)
 	ImageMemoryBlock block;
 	block.manager = FTK;
-	for(int t=startingT; t<m_Info.numTSlices; ++t)
+	for(itk::SizeValueType t=startingT; t<m_Info.numTSlices; ++t)
 	{
-		for(int c=startingCH; c<m_Info.numChannels; ++c)
+		for(itk::SizeValueType c=startingCH; c<m_Info.numChannels; ++c)
 		{
 			//block.mem = (void *)(new TComp[numBytesPerChunk]);
 			void * mem = malloc(numBytesPerChunk);
@@ -601,8 +567,8 @@ template< typename TComp, unsigned int channels > void Image::LoadImageITK(std::
 	//Iterate through the input image and extract time and channel images:
 	typedef itk::ImageRegionConstIterator< ImageType > IteratorType;
 	IteratorType it( img, img->GetRequestedRegion() );
-	unsigned int b = 0;
-	unsigned short t = startingT;
+	itk::SizeValueType b = 0;
+	itk::SizeValueType t = startingT;
 	for ( it.GoToBegin(); !it.IsAtEnd(); ++it) 
 	{
 		//create a pixel object & Get each channel value

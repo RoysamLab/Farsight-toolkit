@@ -214,35 +214,11 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 {
 	// Find out the pixel type of the image in file
 	itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO( fileName.c_str(), itk::ImageIOFactory::ReadMode );
-#if 0
-	// If it is a pathology slide that is only supported by Openslide and not ITK
-	openslide_t *openslide_reader = openslide_open(fileName.c_str());
-	if( !imageIO && openslide_reader==NULL ){
-		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
-		return false;
-	}
-	// OpenSlide can handle this image
-	if( !imageIO ){
-		//If OpenSlideCurrentLevel is -1 the middle layer is automatically read 
-		OpenSlideManaged = true;
-		if( OpenSlideCurrentLevel < 0 )
-			OpenSlideCurrentLevel = OpenSlideNumLevels/2;
-		if( OpenSlideCurrentLevel >= OpenSlideNumLevels ){
-			std::cerr << "THE SLIDE LEVEL EXCEEDS THE NUMBER OF LAYERS" << std::endl;
-			return false;
-		}
-		path = this->GetPath(fileName);				//Path to this image file
-		filenames.push_back( this->GetFilename(fileName) );	//Filename of this image
-		bool open_slide_success = this->LoadDifferentLevelInOpenSlide(OpenSlideCurrentLevel);
-		return true;
-	}
-#else
 	if( !imageIO )
 	{
 		std::cerr << "NO IMAGEIO WAS FOUND" << std::endl;
 		return false;
 	}
-#endif
 	// Now that we found the appropriate ImageIO class, ask it to 
 	// read the meta data from the image file.
 	// Now that we found the appropriate ImageIO class, ask it to 
@@ -262,7 +238,7 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 	int numDimensions = imageIO->GetNumberOfDimensions();
 	int dim3size = 1;
 
-	if( numComponents > 6 )	//Can't handle more than 6 channels
+	if( numComponents > 12 )	//Can't handle more than 12 channels
 	{
 		itk::ExceptionObject excp;
 		excp.SetDescription("TOO MANY COMPONENTS");
@@ -352,96 +328,6 @@ bool Image::LoadStandardImage( std::string fileName, bool stacksAreForTime, bool
 	return true;
 }
 
-#if 0
-bool Image::LoadDifferentLevelInOpenSlide(int layer_num){
-	if( !OpenSlideManaged )
-		return false;
-	std::string previous_file = path+filenames.at(filenames.size()-1);
-	std::cout<<"DEBUG: Filename = "<<previous_file;
-	openslide_t *openslide_reader = openslide_open(previous_file.c_str());
-	int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
-	if( layer_num >= OpenSlideNumLevels || layer_num<0 ){
-		std::cerr << "THE SLIDE LEVEL EXCEEDS THE NUMBER OF LAYERS" << std::endl;
-		return false;
-	}
-	this->OpenSlideCurrentLevel = layer_num;
-	//Allocate memory and read image
-	int64_t width,height;
-	openslide_get_layer_dimensions(openslide_reader, OpenSlideCurrentLevel, &width, &height);
-	uint64_t mem_needed = width*height*4;
-	uint64_t mem_needed_rgb = width*height;
-	uint32_t *buffer = (uint32_t *) malloc(mem_needed);
-	openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
-
-	//Fill in info for the new image
-	//Don't bother with the colors defaults will be set
-	Info nInfo;
-	nInfo.numColumns = width;		//x-dim
-	nInfo.numRows = height;		//y-dim
-	nInfo.numZSlices = 1;		//z-dim 
-	nInfo.numTSlices = 1;		//T-slices 
-	nInfo.bytesPerPix = 1;		//Beacuse Image is RGB
-	nInfo.dataType = itk::ImageIOBase::UCHAR;	//8-bit RGB Datatype
-	nInfo.numChannels = 3;		//Till we figure out how to read more channels with openslide
-
-	m_Info = nInfo;			//Copy info into current image
-
-	uint64_t numBytesPerChunk = m_Info.BytesPerChunk();
-	//Create a pointer for each channel and allocate memory
-	imageDataPtrs.resize(1);		//Since there is only one time pt
-	ImageMemoryBlock block;
-	block.manager = FTK;
-	for(uint32_t c=0; c<m_Info.numChannels; ++c){
-		void * mem = malloc(numBytesPerChunk);
-		if(mem == NULL){
-			std::cerr << "Unable to allocate enough memory for the slide\n";
-			return false;
-		}
-		block.mem = mem;
-		imageDataPtrs[0].push_back(block);
-	}
-
-	uint64_t b = 0;
-	for( uint64_t i=0; i<mem_needed_rgb; ++i ){
-		uint32_t ch = 0; ++i; 	//Skip alpha
-		for(int32_t c=0; c<m_Info.numChannels; ++c){
-			unsigned char *toLoc = ((unsigned char*)(imageDataPtrs[0][ch++].mem));
-			toLoc[b] = buffer[i++];
-		}
-		++b;
-	}
-	free( buffer );
-	return true;
-}
-
-bool Image::SaveMhdFromOpenSlide(std::string out_filename){
-	if( !OpenSlideManaged )
-		return false;
-	std::string previous_file = path+filenames.at(filenames.size()-1);
-	std::cout<<"DEBUG: Filename = "<<previous_file;
-	openslide_t *openslide_reader = openslide_open(previous_file.c_str());
-	int OpenSlideNumLevels = openslide_get_layer_count(openslide_reader);
-
-	if( !strcmp(GetExtension(out_filename).c_str(),"mhd") )
-		out_filename = out_filename + ".mhd";
-
-	if( OpenSlideCurrentLevel == (OpenSlideNumLevels-1) ){
-		//Write image in memory as it is the bottom layer
-		
-	}
-	else{
-		int64_t width,height;
-		openslide_get_layer_dimensions(openslide_reader, (OpenSlideNumLevels-1), &width, &height);
-		uint64_t mem_needed = width*height*4;
-		uint64_t mem_needed_rgb = width*height;
-		uint32_t *buffer = (uint32_t *) malloc(mem_needed);
-		openslide_read_region(openslide_reader, buffer, 0, 0, OpenSlideCurrentLevel, width, height);
-		asd;
-	}
-}
-#endif
-
-
 
 #if VTK_MAJOR_VERSION <= 5
 bool Image::LoadLSMImage( std::string fileName )
@@ -471,7 +357,7 @@ bool Image::LoadLSMImage( std::string fileName )
 
 	imageDataPtrs.clear();
 	imageDataPtrs.resize( m_Info.numTSlices );		//First level is Time
-	for (int t=0; t < m_Info.numTSlices; ++t)
+	for (itk::SizeValueType t=0; t < m_Info.numTSlices; ++t)
 	{
 		for (int ch=0; ch < this->m_Info.numChannels; ch++)
 		{
@@ -530,9 +416,9 @@ bool Image::LoadLSMImage( std::string fileName )
 }
 #endif
 
-std::vector< unsigned short > Image::Size(void)
+std::vector< itk::SizeValueType > Image::Size(void)
 {
-	std::vector< unsigned short > rVal;
+	std::vector< itk::SizeValueType > rVal;
 	rVal.push_back( m_Info.numTSlices );
 	rVal.push_back( m_Info.numZSlices );
 	rVal.push_back( m_Info.numRows );
@@ -540,7 +426,7 @@ std::vector< unsigned short > Image::Size(void)
 	return rVal;
 }
 
-void * Image::GetDataPtr(int T, int CH, PtrMode mode)
+void * Image::GetDataPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode)
 {
 	if( T > m_Info.numTSlices || CH > m_Info.numChannels )
 		return NULL;
@@ -560,7 +446,7 @@ void * Image::GetDataPtr(int T, int CH, PtrMode mode)
 	}
 	else if(mode == DEEP_COPY)
 	{
-		int numBytes = m_Info.BytesPerChunk();
+		itk::SizeValueType numBytes = m_Info.BytesPerChunk();
 		//mem = (void *)new unsigned char[numBytes];
 		mem = malloc( numBytes );
 		if(mem == NULL)
@@ -570,7 +456,7 @@ void * Image::GetDataPtr(int T, int CH, PtrMode mode)
 	return mem;
 }
 
-Image::VtkImagePtr Image::GetVtkPtr(int T, int CH, PtrMode mode)
+Image::VtkImagePtr Image::GetVtkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels )
 		return NULL;
@@ -649,7 +535,7 @@ bool Image::AppendImage( ftk::Image::Pointer img, PtrMode mode, bool isforOneTim
 
 	imageDataPtrs.resize(m_Info.numTSlices);
 
-	int t = m_Info.numTSlices - 1;
+	itk::SizeValueType t = m_Info.numTSlices - 1;
 	if(m_Info.numTSlices==2)
 		FileNames.push_back(this->filenames);
 	FileNames.push_back(img->GetFilenames());
@@ -686,7 +572,7 @@ bool Image::AppendImage(ftk::Image::Pointer img, PtrMode mode)
 	m_Info.numTSlices += in_size->numTSlices;
 	imageDataPtrs.resize(m_Info.numTSlices);
 
-	for( int t=0; t<in_size->numTSlices; ++t)
+	for( itk::SizeValueType t=0; t<in_size->numTSlices; ++t)
 	{
 		for (int ch=0; ch<m_Info.numChannels; ++ch)
 		{
@@ -710,7 +596,7 @@ bool Image::AppendImage(ftk::Image::Pointer img, PtrMode mode)
 // copy = true will make a copy of the data, copy = false will just assign pointer
 // ftk::Image will manage the memory from this point on.
 //*********************************************************************
-bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy)
+bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, itk::SizeValueType cs, itk::SizeValueType rs, itk::SizeValueType zs, std::string name, std::vector<unsigned char> color, bool copy)
 {
 	if( imageDataPtrs.size() == 0 )	//This is my first image, so set the size info
 	{
@@ -755,7 +641,7 @@ bool Image::AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, in
 	return true;
 }
 
-bool Image::AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, bool copy)
+bool Image::AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, itk::SizeValueType cs, itk::SizeValueType rs, itk::SizeValueType zs, std::string name, bool copy)
 {
 	if( imageDataPtrs.size() == 0 )	//This is my first image, so set the size info
 	{
@@ -929,7 +815,7 @@ Image::DataType Image::GetDataTypeITK(int vtk_type)
 //	  we copy the image data to create a new image and vtkImage handles the new data, ftk::Image still handles original data
 // 4. makeCopy = true, vtkManageMemory = false (INVALID OPTION)
 //	  Option 3 will be used in this case
-vtkSmartPointer<vtkDataArray> Image::GetVtkDataArray(int T, int CH, bool makeCopy = false, bool vtkManageMemory = false)
+vtkSmartPointer<vtkDataArray> Image::GetVtkDataArray(itk::SizeValueType T, itk::SizeValueType CH, bool makeCopy = false, bool vtkManageMemory = false)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels )
 		return NULL;
@@ -1083,7 +969,7 @@ void Image::SetDefaultColors(void)
 	}
 }
 
-void Image::SetPixel(int T, int CH, int Z, int R, int C, double newValue)
+void Image::SetPixel(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C, double newValue)
 {
 	if( T >= m_Info.numTSlices || CH >= m_Info.numChannels || Z >= m_Info.numZSlices \
 		|| R >= m_Info.numRows || C >= m_Info.numColumns )
@@ -1157,7 +1043,7 @@ void Image::SetPixel(int T, int CH, int Z, int R, int C, double newValue)
 //*****************************************************************************************
 // GetPixel
 //*****************************************************************************************
-double Image::GetPixel(int T, int CH, int Z, int R, int C)
+double Image::GetPixel(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C)
 {
 	return this->GetPixelT<double>(T,CH,Z,R,C);
 }

@@ -77,37 +77,37 @@ public:
 
 	bool SaveChannelAs( int channel, std::string baseName, std::string ext );
 
-	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, std::vector<unsigned char> color, bool copy);
-	bool AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, int cs, int rs, int zs, std::string name, bool copy);
-    bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
-    bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
+	bool AppendChannelFromData3D(void *dptr, DataType dataType, int bpPix, itk::SizeValueType cs, itk::SizeValueType rs, itk::SizeValueType zs, std::string name, std::vector<unsigned char> color, bool copy);
+	bool AppendImageFromData3D(void *dptr, DataType dataType, int bpPix, itk::SizeValueType cs, itk::SizeValueType rs, itk::SizeValueType zs, std::string name, bool copy);
+	bool AppendImage(ftk::Image::Pointer img, PtrMode mode);	//Will add the image data as a new time slice or slices if all other sizes match.
+	bool AppendImage(ftk::Image::Pointer img, PtrMode mode, bool isforOneTime);    // overloaded function	
 	void SetSpacing(float x, float y, float z);
 
-	std::vector< unsigned short > Size(void);
+	std::vector< itk::SizeValueType > Size(void);
 	std::vector< std::string > GetFilenames(void){ return filenames; };
 	std::vector< std::vector <std::string> > GetTimeChannelFilenames(void){ return this->FileNames; };
 	void SetTimeChannelFilenames(std::vector< std::vector <std::string> > filenames){this->FileNames.clear();this->FileNames = filenames;};
 
-	void * GetDataPtr(int T, int CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
-	VtkImagePtr GetVtkPtr(int T, int CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
-	void SetPixel(int T, int Ch, int Z, int R, int C, double newValue); // Casts from double to image pixel type and sets pixel
-	double GetPixel(int T, int CH, int Z, int R, int C);				// Casts the value to double and returns it
+	void * GetDataPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode = DEFAULT);			//Returns void * to this 3D stack using 1 of 3 modes, PtrMode defaults to DEFAULT
+	VtkImagePtr GetVtkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode = DEFAULT);		//Returns vtkSmartPointer of vtkImageData at this T and CH, PtrMode defaults to DEFAULT
+	void SetPixel(itk::SizeValueType T, itk::SizeValueType Ch, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C, double newValue); // Casts from double to image pixel type and sets pixel
+	double GetPixel(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);				// Casts the value to double and returns it
 	std::vector< std::string > GetChannelNames(void){ return m_Info.channelNames; };
 
 	//Also have templated functions
-	template <typename rType> rType GetPixelT(int T, int CH, int Z, int R, int C);	//Casts the value to rType and returns it
+	template <typename rType> rType GetPixelT(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);	//Casts the value to rType and returns it
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
-	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(int T, int CH, PtrMode mode = DEFAULT);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
-	template <typename pixelType> pixelType * GetSlicePtr(int T, int CH, int Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
+	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode = DEFAULT);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
+	template <typename pixelType> pixelType * GetSlicePtr(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
 
 	typedef struct 
 	{
-		unsigned short numColumns;		//Number of Columns in Image (x)
-		unsigned short numRows;			//Number of Rows in Image (y)
-		unsigned short numZSlices;		//Number of Z Slices in Image (z)
-		unsigned short numTSlices;		//Number of Time Slices in Image (t)
-		unsigned short numChannels;		//Number of Channels in this Image (ch)
-		unsigned char bytesPerPix;		//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)		
+		itk::SizeValueType numColumns;		//Number of Columns in Image (x)
+		itk::SizeValueType numRows;		//Number of Rows in Image (y)
+		itk::SizeValueType numZSlices;		//Number of Z Slices in Image (z)
+		itk::SizeValueType numTSlices;		//Number of Time Slices in Image (t)
+		itk::SizeValueType numChannels;		//Number of Channels in this Image (ch)
+		int bytesPerPix;		//Number of bytes per pixel (UCHAR - 1 or USHORT - 2)		
 		DataType dataType;				//From enum ftk::Image::DataType;
 
 		std::vector< std::vector <unsigned char> > channelColors;	//Holds the color components of each channel
@@ -115,7 +115,7 @@ public:
 
 		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
-		unsigned int BytesPerChunk(void)
+		itk::SizeValueType BytesPerChunk(void)
 		{
 			return numZSlices*numRows*numColumns*bytesPerPix;
 		};
@@ -156,7 +156,7 @@ private:
 	bool LoadLSMImage( std::string fileName );
 #endif
 
-	vtkSmartPointer<vtkDataArray> GetVtkDataArray(int T, int CH, bool makeCopy, bool vtkManageMemory); //Returns vtkSmartPointer at this T and CH
+	vtkSmartPointer<vtkDataArray> GetVtkDataArray(itk::SizeValueType T, itk::SizeValueType CH, bool makeCopy, bool vtkManageMemory); //Returns vtkSmartPointer at this T and CH
 	int GetDataTypeVTK(DataType itk);
 	DataType GetDataTypeITK(int vtk_type);
 
@@ -164,12 +164,12 @@ private:
 	template<typename pixelType1> bool IsMatch(DataType pixelType2);
 	template<typename pixelType> DataType GetDataType();
 
-	template<typename TPixel> bool WriteImageITK(int channel, std::string baseName, std::string ext);
-	template<typename TPixel> bool WriteImageITK(std::string fullFilename, int T, int CH);
+	template<typename TPixel> bool WriteImageITK(itk::SizeValueType channel, std::string baseName, std::string ext);
+	template<typename TPixel> bool WriteImageITK(std::string fullFilename, itk::SizeValueType T, itk::SizeValueType CH);
 
-	template<typename TComp> void LoadImageITK(std::string fileName, unsigned int numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
-	template<typename TComp> void LoadImageITK(std::string filename, unsigned int numChannels, bool stacksAreForTime, bool appendChannels);
-	template<typename TComp, unsigned int channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);
+	template<typename TComp> void LoadImageITK(std::string fileName, itk::SizeValueType numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
+	template<typename TComp> void LoadImageITK(std::string filename, itk::SizeValueType numChannels, bool stacksAreForTime, bool appendChannels);
+	template<typename TComp, itk::SizeValueType channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);
 
 };
 
