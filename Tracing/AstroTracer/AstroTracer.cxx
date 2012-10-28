@@ -6702,7 +6702,7 @@ double inline AstroTracer::EpsilonClip(double EPS, double x){
 
 void AstroTracer::ApplyCurvatureAnisotropicDiffusion(int num_iter, float conductance){
 
-	CurvatureAnisotropicDiffusionFilterType::Pointer diffusion_filter = CurvatureAnisotropicDiffusionFilterType::New();
+	/*CurvatureAnisotropicDiffusionFilterType::Pointer diffusion_filter = CurvatureAnisotropicDiffusionFilterType::New();
 	diffusion_filter->SetInput(this->PaddedCurvImage);
 	diffusion_filter->SetConductanceParameter(conductance);
 	diffusion_filter->SetNumberOfIterations(num_iter);
@@ -6715,7 +6715,7 @@ void AstroTracer::ApplyCurvatureAnisotropicDiffusion(int num_iter, float conduct
 	ImageWriterType::Pointer image_writer = ImageWriterType::New();
 	image_writer->SetFileName(this->InputDataPath + "_AnisotropicDiffused.mhd");
 	image_writer->SetInput(this->AnisotropicDiffusedImage);
-	image_writer->Update();
+	image_writer->Update();*/
 }
 
 void AstroTracer::FitSphereAtNode(VesselNode_astro& seed){
