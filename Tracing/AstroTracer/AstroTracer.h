@@ -60,7 +60,7 @@
 #include "itkSquareImageFilter.h"
 #include "itkLabelGeometryImageFilter.h"
 #include "itkImageDuplicator.h"
-#include "itkCurvatureAnisotropicDiffusionImagefilter.h"
+//#include "itkCurvatureAnisotropicDiffusionImagefilter.h"
 
 #include "vtkTable.h"
 #include "vtkVariant.h"
@@ -384,7 +384,7 @@ public:
 	typedef itk::SubtractImageFilter<ImageType3D> SubtractImageFilterType;
 	typedef itk::SquareImageFilter<ImageType3D, ImageType3D> SquareImageFilterType;
 	typedef itk::ImageDuplicator<ImageType3D> DuplicatorType;
-	typedef itk::CurvatureAnisotropicDiffusionImageFilter<ImageType3D, ImageType3D> CurvatureAnisotropicDiffusionFilterType;
+	//typedef itk::CurvatureAnisotropicDiffusionImageFilter<ImageType3D, ImageType3D> CurvatureAnisotropicDiffusionFilterType;
 	
 	//Constructor
 	AstroTracer();
