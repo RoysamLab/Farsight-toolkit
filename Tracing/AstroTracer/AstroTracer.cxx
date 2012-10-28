@@ -13,6 +13,9 @@ AstroTracer::AstroTracer()
 }
 
 
+void AstroTracer::SetInputDataPath(const std::string path){
+	this->InputDataPath = path;
+}
 void AstroTracer::LoadParameters(const char* parametersFileName)
 {
 	std::map<std::string, std::string> opts;  
@@ -120,6 +123,46 @@ void AstroTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)
 	std::cout << "Input file size (after zero padding) is " << PaddedCurvImage->GetBufferedRegion().GetSize() << std::endl;
 	size = PaddedCurvImage->GetBufferedRegion().GetSize();
 	//CurvImage->Delete();
+}
+
+void AstroTracer::DoPreprocessing(void){
+	
+	// Some more preprocessing
+	int diffusion_iter = 10; 
+	float conductance = 30;
+	float smoothing_sigma = 2.0;
+	int gvf_iter = 30;
+
+	std::cout << "Running curvature anisotropic diffusion " << std::endl;
+	this->ApplyCurvatureAnisotropicDiffusion(diffusion_iter, conductance);
+
+	std::cout << "Running GVF " << std::endl;
+	this->ComputeGVF(smoothing_sigma, gvf_iter, true);
+}
+
+void AstroTracer::LoadPreprocessingResults(){
+
+	typedef itk::ImageFileReader<ImageType3D> ReaderType;
+	
+	ReaderType::Pointer reader1 = ReaderType::New();
+	reader1->SetFileName(this->InputDataPath + "_AnisotropicDiffused.mhd");
+	reader1->Update();
+	this->AnisotropicDiffusedImage = reader1->GetOutput();
+
+	ReaderType::Pointer reader2 = ReaderType::New();
+	reader2->SetFileName(this->InputDataPath + "_gx.mhd");
+	reader2->Update();
+	this->AnisotropicDiffusedImage = reader2->GetOutput();
+
+	ReaderType::Pointer reader3 = ReaderType::New();
+	reader3->SetFileName(this->InputDataPath + "_gy.mhd");
+	reader3->Update();
+	this->AnisotropicDiffusedImage = reader3->GetOutput();
+
+	ReaderType::Pointer reader4 = ReaderType::New();
+	reader4->SetFileName(this->InputDataPath + "_gz.mhd");
+	reader4->Update();
+	this->AnisotropicDiffusedImage = reader4->GetOutput();
 }
 
 void AstroTracer::ReadStartPointsFromPath(std::string fname, unsigned int pad) 
@@ -287,17 +330,17 @@ void AstroTracer::RunTracing(void)
 	// Write the images out
 	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
 	ImageWriterType::Pointer image_writer = ImageWriterType::New();
-	image_writer->SetFileName("F:\\AstroTracingTiny1\\VesselnessImage_astro.mhd");
+	image_writer->SetFileName("F:\\SfN12_posterChild\\1\\VesselnessImage_astro.mhd");
 	image_writer->SetInput(this->ObjectnessImage);
 	image_writer->Update();
 
 	ImageWriterType::Pointer image_writer1 = ImageWriterType::New();
-	image_writer1->SetFileName("F:\\AstroTracingTiny1\\Paddedcurv_astro.mhd");
+	image_writer1->SetFileName("F:\\SfN12_posterChild\\1\\Paddedcurv_astro.mhd");
 	image_writer1->SetInput(this->PaddedCurvImage);
 	image_writer1->Update();
 
 	ImageWriterType::Pointer image_writer2 = ImageWriterType::New();
-	image_writer2->SetFileName("F:\\AstroTracingTiny1\\Hybrid_vesselness.mhd");
+	image_writer2->SetFileName("F:\\SfN12_posterChild\\1\\Hybrid_vesselness.mhd");
 	image_writer2->SetInput(this->ObjectnessHybridImage);
 	image_writer2->Update();
 	
@@ -646,7 +689,8 @@ void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResul
 	double img_max_val = stats_filter->GetMaximum();
 	
 
-	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0);
+	ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 0); // use this for astrocytes
+	//ObjectnessMeasures obj_measures(sigma_min, sigma_max, sigma_intervals, 1); // use this for microglia
 	obj_measures.alpha = 0.5 * img_max_val;
 	obj_measures.beta = 0.5 * img_max_val;
 	obj_measures.gamma = 0.25 * img_max_val; //0.25 * img_max_val;
@@ -3102,8 +3146,8 @@ void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
 	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
-	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
-	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	//ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
 	
 	objectness_filter->SetScaleObjectnessMeasure(false);
 	objectness_filter->SetBrightObject(true);
@@ -4582,8 +4626,8 @@ void AstroTracer::ReadRootPointsExternal(std::string rootPointsFileName){
 			root_point.featureVector.nucleusDistance = atof(str_vec[14].c_str());
 			
 			// Be careful with the last two. These change depending on how the file was saved from nuc_editor.
-			root_point.classValue = atof(str_vec[16].c_str());
-			root_point.confidenceMeasure = atof(str_vec[17].c_str());
+			root_point.classValue = atof(str_vec[15].c_str());
+			root_point.confidenceMeasure = atof(str_vec[16].c_str());
 
 			// ONLY TWO CLASSES OF ROOT POINTS ARE CONSIDERED
 			if(root_point.classValue == 1)
@@ -5410,14 +5454,27 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 			nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[5].c_str());
 			nuclei_object.intrinsicFeatures.eccentricity = atof(str_vec[6].c_str());
 			nuclei_object.intrinsicFeatures.elongation = atof(str_vec[7].c_str());
+			nuclei_object.intrinsicFeatures.orientation = atof(str_vec[8].c_str());
 			//nuclei_object.intrinsicFeatures.boundingBoxVolume = atof(str_vec[9].c_str());
 			nuclei_object.intrinsicFeatures.boundingBoxVolume = nuclei_object.intrinsicFeatures.volume;
 
+			//nuclei_object.intrinsicFeatures.integratedIntensity = atof(str_vec[10].c_str());
 			nuclei_object.intrinsicFeatures.meanIntensity = atof(str_vec[11].c_str());
+			nuclei_object.intrinsicFeatures.minIntensity = atof(str_vec[12].c_str());
+			nuclei_object.intrinsicFeatures.maxIntensity = atof(str_vec[13].c_str());
+
 			nuclei_object.intrinsicFeatures.varianceIntensity = atof(str_vec[15].c_str());
 			nuclei_object.intrinsicFeatures.meanSurfaceGradient = atof(str_vec[16].c_str());
+			nuclei_object.intrinsicFeatures.interiorGradient = atof(str_vec[17].c_str());
+			nuclei_object.intrinsicFeatures.surfaceIntensity = atof(str_vec[18].c_str());
+			nuclei_object.intrinsicFeatures.interiorIntensity = atof(str_vec[19].c_str());
+			nuclei_object.intrinsicFeatures.intensityRatio = atof(str_vec[20].c_str());
+			nuclei_object.intrinsicFeatures.convexity = atof(str_vec[21].c_str());
+
 			nuclei_object.intrinsicFeatures.radiusVariation = atof(str_vec[22].c_str());
+			nuclei_object.intrinsicFeatures.surfaceArea = atof(str_vec[23].c_str());
 			nuclei_object.intrinsicFeatures.shapeMeasure = atof(str_vec[24].c_str());
+			nuclei_object.intrinsicFeatures.sharedBoundary = atof(str_vec[25].c_str());
 			
 			nuclei_object.intrinsicFeatures.energy = atof(str_vec[26].c_str());
 			nuclei_object.intrinsicFeatures.entropy = atof(str_vec[27].c_str());
@@ -5435,9 +5492,16 @@ void AstroTracer::ReadNucleiFeaturesExternal(std::string nucleiFeaturesFileName)
 			nuclei_object.associativeFeatures.neuro_total = atof(str_vec[38].c_str());
 			nuclei_object.associativeFeatures.neuro_avg = atof(str_vec[39].c_str());
 			nuclei_object.associativeFeatures.neuro_surr = atof(str_vec[40].c_str());
-			nuclei_object.associativeFeatures.vessel_total = atof(str_vec[41].c_str());
-			nuclei_object.associativeFeatures.vessel_avg = atof(str_vec[42].c_str());
-			nuclei_object.associativeFeatures.vessel_surr = atof(str_vec[43].c_str());
+			
+			// Only for 5 channel analysis
+			//nuclei_object.associativeFeatures.vessel_total = atof(str_vec[41].c_str());
+			//nuclei_object.associativeFeatures.vessel_avg = atof(str_vec[42].c_str());
+			//nuclei_object.associativeFeatures.vessel_surr = atof(str_vec[43].c_str());
+
+			//TEMP: DARPA HACK
+			nuclei_object.classValue = atof(str_vec[41].c_str());
+			nuclei_object.confidenceMeasure = atof(str_vec[42].c_str());
+			nuclei_object.distanceToElectrode = atof(str_vec[43].c_str());
 
 			this->NucleiObjects.push_back(nuclei_object);
 
@@ -6112,13 +6176,28 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 	//std::cout << "After feature_vector.open"<<std::endl;
 	
 	unsigned short IDIndex = 0;//ID index
-	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
+	
+	/*nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "sum_int" << '\t' << "mean_int" << '\t';	
 	nuclei_feature_vector << "var_int" << '\t' << "eccentricity" << '\t' << "elongation" << '\t' << "mean_surf_gradient" << '\t' << "radius_variation" << '\t'; 
 	nuclei_feature_vector << "shape_measure" << '\t' << "energy" << '\t' << "entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
 	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "Astro_TOTAL" << '\t' << "Astro_AVG" << '\t' << "Astro_SURR" << '\t';
 	nuclei_feature_vector << "Micro_TOTAL" << '\t' << "Micro_AVG" << '\t' << "Micro_SURR" << '\t' << "Neuro_TOTAL" << '\t' << "Neuro_AVG" << '\t';
-	nuclei_feature_vector << "Neuro_SURR" << '\t' <<  "Vessel_TOTAL" << '\t' << "Vessel_AVG" << '\t' << "Vessel_SURR" << '\t';
+	nuclei_feature_vector << "Neuro_SURR" << '\t'; //<<  "Vessel_TOTAL" << '\t' << "Vessel_AVG" << '\t' << "Vessel_SURR" << '\t';
 	nuclei_feature_vector << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
+	nuclei_feature_vector << std::endl;*/
+
+	nuclei_feature_vector << "ID" << '\t' << "x" << '\t' << "y" << '\t' << "z" << '\t' << "volume" << '\t' << "inegrated_intensity" << '\t';
+	nuclei_feature_vector << "eccentricity" << '\t' << "elongation" << '\t' << "orientation" << '\t' << "mean_int" << '\t' << "minimum" << '\t' << "maximum" << '\t' << "variance" << '\t';	
+	nuclei_feature_vector << "surface_gradient" << '\t' << "interior_gradient" << '\t' << "surface_intensity" << "\t" << "interior_intensity" << '\t' << "intensity_ratio" << '\t' << "convexity" << '\t';
+	nuclei_feature_vector << "radius_variation" << '\t' << "surface_area" << '\t' << "shape" << '\t' << "shared_boundary" << '\t' << "t_energy" << '\t' << "t_entropy" << '\t' << "inverse_diff_moment" << '\t' << "inertia" << '\t';
+	nuclei_feature_vector << "cluster_shade" << '\t' << "cluster_prominence" << '\t' << "TRI_TOTAL" << '\t' << "TRI_AVG" << '\t' << "TRI_SURR" << '\t';
+	nuclei_feature_vector << "GFP_TOTAL" << '\t' << "GFP_AVG" << '\t' << "GFP_SURR" << '\t' << "Cy5_TOTAL" << '\t' << "Cy5_AVG" << '\t';
+	nuclei_feature_vector << "Cy5_SURR" << '\t'; //<<  "Vessel_TOTAL" << '\t' << "Vessel_AVG" << '\t' << "Vessel_SURR" << '\t';
+	nuclei_feature_vector << "min_root_dist" << '\t' << "max_root_dist" << '\t' << "mean_root_dist" << '\t' << "var_root_dist" << '\t' << "n_roots" << '\t';
+	
+	//TEMP: DARPA HACK
+	nuclei_feature_vector << "p_neu" << '\t' << "c_neu" << '\t' << "distance_to_electrode" << '\t';
+
 	nuclei_feature_vector << std::endl;
 
 	for(size_t i = 0; i < this->NucleiObjects.size(); i++){
@@ -6127,16 +6206,22 @@ void AstroTracer::WriteNucleiFeatures(std::string outputFname){
 		
 		//if(nuc.associativeFeatures.nRoots != 0){
 			nuclei_feature_vector << nuc.intrinsicFeatures.ID << '\t' << nuc.intrinsicFeatures.centroid.ndx[0] << '\t' << nuc.intrinsicFeatures.centroid.ndx[1] << '\t' << nuc.intrinsicFeatures.centroid.ndx[2] << '\t';
-			nuclei_feature_vector << nuc.intrinsicFeatures.volume << '\t' << nuc.intrinsicFeatures.integratedIntensity << '\t' << nuc.intrinsicFeatures.meanIntensity << '\t' << nuc.intrinsicFeatures.varianceIntensity << '\t';
-			nuclei_feature_vector << nuc.intrinsicFeatures.eccentricity << '\t' << nuc.intrinsicFeatures.elongation << '\t' << nuc.intrinsicFeatures.meanSurfaceGradient << '\t' << nuc.intrinsicFeatures.radiusVariation << '\t';
-			nuclei_feature_vector << nuc.intrinsicFeatures.shapeMeasure << '\t' << nuc.intrinsicFeatures.energy << '\t' << nuc.intrinsicFeatures.entropy << '\t' << nuc.intrinsicFeatures.inverseDiffMoment << '\t';
-			nuclei_feature_vector << nuc.intrinsicFeatures.inertia << '\t' << nuc.intrinsicFeatures.clusterShade << '\t' << nuc.intrinsicFeatures.clusterProminence << '\t'; 
+			nuclei_feature_vector << nuc.intrinsicFeatures.volume << '\t' << nuc.intrinsicFeatures.integratedIntensity << '\t' << nuc.intrinsicFeatures.eccentricity << '\t' << nuc.intrinsicFeatures.elongation << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.orientation << '\t' << nuc.intrinsicFeatures.meanIntensity << '\t' << nuc.intrinsicFeatures.minIntensity << '\t' << nuc.intrinsicFeatures.maxIntensity << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.varianceIntensity << '\t' << nuc.intrinsicFeatures.meanSurfaceGradient << '\t' << nuc.intrinsicFeatures.interiorGradient << '\t' << nuc.intrinsicFeatures.surfaceIntensity << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.interiorIntensity << '\t' <<nuc.intrinsicFeatures.intensityRatio << '\t' << nuc.intrinsicFeatures.convexity << '\t' << nuc.intrinsicFeatures.radiusVariation << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.surfaceArea << '\t' << nuc.intrinsicFeatures.shapeMeasure << '\t' << nuc.intrinsicFeatures.sharedBoundary << '\t' << nuc.intrinsicFeatures.energy << '\t';
+			nuclei_feature_vector << nuc.intrinsicFeatures.entropy << '\t' << nuc.intrinsicFeatures.inverseDiffMoment << '\t' << nuc.intrinsicFeatures.inertia << '\t' << nuc.intrinsicFeatures.clusterShade << '\t' << nuc.intrinsicFeatures.clusterProminence << '\t'; 
 			nuclei_feature_vector << nuc.associativeFeatures.astro_total << '\t' << nuc.associativeFeatures.astro_avg << '\t' << nuc.associativeFeatures.astro_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.micro_total << '\t' << nuc.associativeFeatures.micro_avg << '\t' << nuc.associativeFeatures.micro_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.neuro_total << '\t' << nuc.associativeFeatures.neuro_avg << '\t' << nuc.associativeFeatures.neuro_surr << '\t';
-			nuclei_feature_vector << nuc.associativeFeatures.vessel_total << '\t' << nuc.associativeFeatures.vessel_avg << '\t' << nuc.associativeFeatures.vessel_surr << '\t';
+			//nuclei_feature_vector << nuc.associativeFeatures.vessel_total << '\t' << nuc.associativeFeatures.vessel_avg << '\t' << nuc.associativeFeatures.vessel_surr << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.minRootDist << '\t' << nuc.associativeFeatures.maxRootDist << '\t' << nuc.associativeFeatures.meanRootDist << '\t';
 			nuclei_feature_vector << nuc.associativeFeatures.varRootDist << '\t' << nuc.associativeFeatures.nRoots << '\t';
+
+			//TEMP: DARPA HACK
+			nuclei_feature_vector << nuc.classValue << '\t' << nuc.confidenceMeasure << '\t' << nuc.distanceToElectrode << '\t';
+
 			nuclei_feature_vector << std::endl;
 		//}
 	}
@@ -6212,8 +6297,8 @@ void AstroTracer::ReadFinalNucleiTable(std::string finalNucleiTableFileName){
 			nuclei_object.intrinsicFeatures.clusterProminence = atof(str_vec[18].c_str());
 
 			
-			nuclei_object.classValue = atof(str_vec[43].c_str());
-			nuclei_object.confidenceMeasure = atof(str_vec[44].c_str());
+			nuclei_object.classValue = atof(str_vec[33].c_str());
+			nuclei_object.confidenceMeasure = atof(str_vec[34].c_str());
 
 
 			this->NucleiObjects.push_back(nuclei_object);
@@ -6405,3 +6490,713 @@ void AstroTracer::Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&
 
 	std::cout<< "Classification done" << std::endl;
 }
+
+void AstroTracer::ComputeGVF(float smoothing_sigma, int N_iter, bool write_result){
+
+	std::string write_path = this->InputDataPath;
+	ImageType3D::Pointer data_ptr = this->AnisotropicDiffusedImage;
+
+	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
+	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
+	smoothing_filter->SetInput(data_ptr);
+	smoothing_filter->SetSigma(smoothing_sigma);
+	smoothing_filter->Update();
+
+	ImageType3D::Pointer smoothing_output = smoothing_filter->GetOutput();
+	smoothing_output->Update();
+
+	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
+	stats_filter->SetInput(smoothing_output);
+	stats_filter->Update();
+	float max = stats_filter->GetMaximum();
+	float min = stats_filter->GetMinimum();
+	
+	SubtractImageFilterType::Pointer img_subtacter = SubtractImageFilterType::New();
+	img_subtacter->SetInput(smoothing_output);
+	img_subtacter->SetConstant2(min);
+	
+	MultiplyImageFilter::Pointer img_multiplier = MultiplyImageFilter::New();
+	img_multiplier->SetInput(img_subtacter->GetOutput());
+	img_multiplier->SetConstant2(1.0/(max - min));
+
+	SquareImageFilterType::Pointer img_squarer = SquareImageFilterType::New();
+	img_squarer->SetInput(img_multiplier->GetOutput());
+	img_squarer->Update();
+
+	ImageType3D::Pointer smoothing_output1 = img_squarer->GetOutput();
+
+	
+	/*itk::ImageRegionIterator<ImageType3D> iter_data(smoothing_output, smoothing_output->GetBufferedRegion());
+
+	// Calculate min and max of the dataset
+	float max = -1000.0f, min = 1000.0f;
+    for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		max = vnl_math_max(max, iter_data.Get());
+		min = vnl_math_min(min, iter_data.Get());
+	}
+	std::cout << "max : " << max << " min : " << min << std::endl;
+
+	for (iter_data.GoToBegin(); !iter_data.IsAtEnd(); ++iter_data ) {
+		float d = iter_data.Get();
+		d = (d - min)/(max - min);
+		d = vcl_pow(d, 2.0f);
+		iter_data.Set(d);
+	}*/
+
+
+	//initialize gx, gy, gz
+	gx = ImageType3D::New(); gx->SetRegions(data_ptr->GetBufferedRegion());	gx->Allocate();
+	gy = ImageType3D::New(); gy->SetRegions(data_ptr->GetBufferedRegion());	gy->Allocate();
+	gz = ImageType3D::New(); gz->SetRegions(data_ptr->GetBufferedRegion());	gz->Allocate();
+	ImageType3D::Pointer g1x = ImageType3D::New();	g1x->SetRegions(data_ptr->GetBufferedRegion());	g1x->Allocate();
+	ImageType3D::Pointer g1y = ImageType3D::New();	g1y->SetRegions(data_ptr->GetBufferedRegion());	g1y->Allocate();
+	ImageType3D::Pointer g1z = ImageType3D::New();	g1z->SetRegions(data_ptr->GetBufferedRegion());	g1z->Allocate();
+    
+    // These are for the derivatives in x, y, and z directions?
+	itk::Size<3> rad = {{1,1,1}};
+	itk::ImageRegionIterator<ImageType3D> x_iter(gx, gx->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> y_iter(gy, gy->GetBufferedRegion());
+	itk::ImageRegionIterator<ImageType3D> z_iter(gz, gz->GetBufferedRegion());
+
+    // Calculating the derivative image?
+	itk::NeighborhoodIterator<ImageType3D> iter_nhood(rad , smoothing_output1, smoothing_output1->GetBufferedRegion());
+	
+	const double EPS = 0.001;
+	for (iter_nhood.GoToBegin(), x_iter.GoToBegin(), y_iter.GoToBegin(), z_iter.GoToBegin(); !iter_nhood.IsAtEnd(); ++iter_nhood, ++x_iter, ++y_iter, ++z_iter)	{
+		float dx = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(0) - iter_nhood.GetPrevious(0)));
+		float dy = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(1) - iter_nhood.GetPrevious(1)));
+		float dz = EpsilonClip(EPS, 0.5*(iter_nhood.GetNext(2) - iter_nhood.GetPrevious(2)));
+
+		x_iter.Set(dx);
+		y_iter.Set(dy);
+		z_iter.Set(dz);
+	}
+
+	itk::Size<3> data_size = smoothing_output1->GetBufferedRegion().GetSize();
+
+	//std::cout << "Done with smooothing3. Going for iterations: " << N_iter << std::endl;
+    
+    // Looks like a Laplacian?
+	const double filter[27] = {	0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206,  \
+									0.0339, 0.0560, 0.0339,  0.0560, 0.0923, 0.0560,  0.0339, 0.0560, 0.0339,  \
+	                                0.0206, 0.0339, 0.0206,  0.0339, 0.0560, 0.0339,  0.0206, 0.0339, 0.0206   \
+								};
+	//int N_iter = 30;
+	for (int iter = 0; iter < N_iter; ++iter) {
+
+		double update = 0.0;
+		for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+
+					itk::Index<3> ndx = {i,j,k};
+
+					double dx = double(gx->GetPixel(ndx)), dy = double(gy->GetPixel(ndx)), dz = double(gz->GetPixel(ndx));
+					double g = (dx*dx) + (dy*dy) + (dz*dz) + EPS; 
+
+                    // Application of the above filter
+					double d1x = 0.0f, d1y = 0.0f, d1z = 0.0f;
+					int f = 0;
+					for (long kk = k-1; kk <= k+1 ; ++kk) {
+						for (long jj = j-1; jj <= j+1 ; ++jj) {
+							for (long ii = i-1; ii <= i+1 ; ++ii) {
+								itk::Index<3> ndx1 = {ii,jj,kk};
+								d1x += double(gx->GetPixel(ndx1))*filter[f];
+								d1y += double(gy->GetPixel(ndx1))*filter[f];
+								d1z += double(gz->GetPixel(ndx1))*filter[f];
+								++f;
+							}
+						}
+					}
+
+					double g1 = (d1x*d1x) + (d1y*d1y) + (d1z*d1z) + EPS;
+
+					if (g1 > g )  {
+						g1x->SetPixel(ndx, float(d1x));
+						g1y->SetPixel(ndx, float(d1y));
+						g1z->SetPixel(ndx, float(d1z));
+						update += (g1 - g);
+					}
+					else {
+						g1x->SetPixel(ndx, float(dx));
+						g1y->SetPixel(ndx, float(dy));
+						g1z->SetPixel(ndx, float(dz));
+						g1 = g;
+					}
+				}
+			}
+		}
+
+		std::cout << " GVF iter # " << iter << " Update :" << update << std::endl;
+
+		DuplicatorType::Pointer img_dupx = DuplicatorType::New();
+		img_dupx->SetInputImage(g1x);
+		img_dupx->Update();
+		
+		DuplicatorType::Pointer img_dupy = DuplicatorType::New();
+		img_dupy->SetInputImage(g1y);
+		img_dupy->Update();
+
+		DuplicatorType::Pointer img_dupz = DuplicatorType::New();
+		img_dupz->SetInputImage(g1z);
+		img_dupz->Update();
+
+		gx = img_dupx->GetOutput();
+		gy = img_dupy->GetOutput();
+		gz = img_dupz->GetOutput();
+
+		/*for (long k = 1; k < data_size[2]-1; ++k) {
+			for (long j = 1; j < data_size[1]-1; ++j) {
+				for (long i = 1; i < data_size[0]-1; ++i)	{
+					itk::Index<3> ndx = {i,j,k};
+						gx->SetPixel(ndx, g1x->GetPixel(ndx));
+						gy->SetPixel(ndx, g1y->GetPixel(ndx));
+						gz->SetPixel(ndx, g1z->GetPixel(ndx));
+				}
+			}
+		}*/
+
+		//std::cout << "Done with iter: " << iter << std::endl;
+	}
+
+    // Write the gradient images and the vol image to disk
+	
+	if(write_result){
+
+		typedef itk::ImageFileWriter<ImageType3D> WriterType;
+		WriterType::GlobalWarningDisplayOff();
+	
+		std::string output_file_gx= write_path + "_gx.mhd";
+		WriterType::Pointer image_writer1 = WriterType::New();
+		image_writer1->SetFileName(output_file_gx);
+		image_writer1->SetInput(gx);
+		std::cout << "Writing output file: "<< output_file_gx << std::endl;
+		image_writer1->Update();
+
+		std::string output_file_gy = write_path + "_gy.mhd";
+		WriterType::Pointer image_writer2 = WriterType::New();
+		image_writer2->SetFileName(output_file_gy);
+		image_writer2->SetInput(gy);
+		std::cout << "Writing output file: "<< output_file_gy << std::endl;
+		image_writer2->Update();
+			
+		std::string output_file_gz = write_path + "_gz.mhd";
+		WriterType::Pointer image_writer3 = WriterType::New();
+		image_writer3->SetFileName(output_file_gz);
+		image_writer3->SetInput(gz);
+		std::cout << "Writing output file: "<< output_file_gz << std::endl;
+		image_writer3->Update();
+		
+		
+		//output_file = write_path + "_pre.mhd";
+		//WriteImage3D(output_file, data_ptr);
+	}
+}
+
+double inline AstroTracer::EpsilonClip(double EPS, double x){
+	if ( vnl_math_abs(x) < EPS ) {
+		x = (x < 0.0) ? -1*EPS : EPS ;
+	}
+	return (x);
+}
+
+void AstroTracer::ApplyCurvatureAnisotropicDiffusion(int num_iter, float conductance){
+
+	CurvatureAnisotropicDiffusionFilterType::Pointer diffusion_filter = CurvatureAnisotropicDiffusionFilterType::New();
+	diffusion_filter->SetInput(this->PaddedCurvImage);
+	diffusion_filter->SetConductanceParameter(conductance);
+	diffusion_filter->SetNumberOfIterations(num_iter);
+	diffusion_filter->Update();
+
+	this->AnisotropicDiffusedImage = diffusion_filter->GetOutput();
+
+	// Write diffusion result
+	typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
+	ImageWriterType::Pointer image_writer = ImageWriterType::New();
+	image_writer->SetFileName(this->InputDataPath + "_AnisotropicDiffused.mhd");
+	image_writer->SetInput(this->AnisotropicDiffusedImage);
+	image_writer->Update();
+}
+
+void AstroTracer::FitSphereAtNode(VesselNode_astro& seed){
+
+	//testing on a pseudo node
+	// Same pixel apparently has different values in ITK and Matlab!!
+	/*seed.x = 21;
+	seed.y = 17;
+	seed.z = 16;
+	ImageType3D::IndexType test_index;
+	test_index[0] = seed.x; test_index[1] = seed.y; test_index[2] = seed.z;
+	PixelType test_pixel = this->inputData->GetPixel(test_index);
+	PixelType test_pixel2 = this->normalizedInputData->GetPixel(test_index);
+	*/
+	
+	//seed.InitDefaultParamsBeforeOptimization();
+	
+	// Very important step!! 
+	//#pragma omp critical
+	this->NodeDetectionParams.initByDefaultValues();
+
+	int node_iter = this->NodeDetectionParams.iterNPrimaryNode;
+
+	for(int i = 0; i < node_iter; i++){
+
+		//testing
+		//std::cout << seed.meanForegroundIntensity << ", " << seed.meanBackgroundIntensity << ", " << seed.likelihood << std::endl;
+			
+		this->UpdateAppearanceVectorized(seed);
+		
+		if(seed.isValid == false)
+			break; 
+
+		this->UpdateModel(seed, i);
+
+		if(this->ExitModelFitting(seed, i) == true)
+			break;
+	}
+
+}
+
+VesselNode_astro::VesselNode_astro(){
+
+	this->x = 0;
+	this->y = 0;
+	this->z = 0;
+	this->intensity = 0;
+	this->scale = 1.0;
+	this->likelihood = 0.0;
+	this->isValid = true;
+	this->nHoodScale = this->scale;
+	this->bandNhood = this->scale;
+	this->bandArea = 0;
+	this->foregroundArea = 0;
+	this->backgroundArea = 0;
+	this->meanBackgroundIntensity = 0.0;
+	this->meanForegroundIntensity = 255.0;
+	this->exitIter = 0;
+	this->vesselness = 0.0;
+	this->isPrimary = true;
+	this->isSecondary = false;
+}
+
+VesselNode_astro::VesselNode_astro(double x, double y, double z, PixelType intensity){
+
+	this->x = x;
+	this->y = y;
+	this->z = z;
+	this->intensity = intensity;
+
+	this->scale = 1.0;
+	this->likelihood = 0.0;
+	this->isValid = true;
+	this->nHoodScale = 2.0 * this->scale;
+	this->bandNhood = 0.5;
+	this->bandArea = 0;
+	this->foregroundArea = 0;
+	this->backgroundArea = 0;
+	this->meanBackgroundIntensity = 0.0;
+	this->meanForegroundIntensity = 255.0;
+	this->exitIter = 0;
+	this->vesselness = 0.0;
+	this->isPrimary = true;
+	this->isSecondary = false;
+}
+
+void VesselNode_astro::InitDefaultParamsBeforeOptimization(){
+	
+	this->scale = (double)VesselNode_astro::DEFALUT_SCALE;
+	this->nHoodScale = 2 * this->scale;
+	this->likelihood = (double)VesselNode_astro::MIN_LIKELIHOOD;
+}
+
+void NodeDetectionParameters_astro::initByDefaultValues(void){
+	
+	this->gridSpacing = 20; //30; //20; //30; //10; //15; //20; //15;
+	this->iterNPrimaryNode = 100;
+
+	this->increaseLikelihoodThreshold = 0.001;
+	this->discardNodeLikelihoodThreshold = 0.01; // 0.001 accroding to thesis
+	this->iterNForOnlyRegionBasedTerm = 15;
+	this->iterNMinimum = 10;
+	this->regionBasedTermWeight = 0.3; // 30%
+	this->edgeBasedTermWeight = 0.7; // 70%
+	this->minimumAccumulatedParamChange = 0.1;
+	this->iterNMonitorParamChange = 5;
+	this->currentMonitoredIter = 0;
+
+	this->dtX = 5000.0; //50000; 
+	this->dtY = 5000.0; //50000; 
+	this->dtZ = 5000.0; //50000;
+	this->dtScale = 1000.0; //10000;
+	this->dirX = 0; this->dirY = 0; this->dirZ = 0;
+	this->dirScale = 0;
+	this->chX = std::vector<double>(this->iterNMonitorParamChange, 0.0); 
+	this->chY = std::vector<double>(this->iterNMonitorParamChange, 0.0); 
+	this->chZ = std::vector<double>(this->iterNMonitorParamChange, 0.0);
+	this->chScale = std::vector<double>(this->iterNMonitorParamChange, 0.0);
+	
+	this->maxVesselWidth = 20;
+	this->minVesselWidth = 2; //1;
+	this->likelihoodThresholdPrimary = 0.04; //0.1; //0.01; //0.005; // Vary according to the noise level in the data
+	this->distanceThresholdPrimary = 1.2;
+
+	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
+	this->maxQueueIter = 20000;
+	this->distanceThresholdSecondary = 1.0; //0.5; // IMP PARAM
+	this->maxBranchAngle = 60.0; //60.0; // in degrees // IMP PARAM
+	this->branchingThreshold = 0.1;
+	this->secondaryParamRateReduction = 1000.0;
+	this->dtXSecondary = this->dtX / this->secondaryParamRateReduction;
+	this->dtYSecondary = this->dtY / this->secondaryParamRateReduction;
+	this->dtZSecondary = this->dtZ / this->secondaryParamRateReduction;
+	this->dtScaleSecondary = this->dtScale / this->secondaryParamRateReduction;
+	this->iterNMinimumSecondary = 15;
+	this->regionBasedTermWeightSecondary = 0.5;
+	this->edgeBasedTermWeightSecondary = 0.5;
+	this->secondarySearchConstraint = std::sqrt(2.0);
+	this->primaryReversePositionRate = 0.5;
+	this->primaryReverseScaleRate = 0.5;
+	this->secondaryReversePositionRate = 0.8;
+	this->secondaryReverseScaleRate = 0.9;
+	this->maxTraceCost = 10.0;
+	this->infTraceQuality = 100.0;
+	this->maxQueueSize = 10000;
+	this->traceLengthCost = 0.5; //0.1; //0.5; //0.5; //1.0; //0.5; //1.0; //0.5; //0.0; // IMP PARAM
+	this->primaryNodeSearchRadFactor = 0.75; //1.0; //0.5; // IMP PARAM
+
+	this->vesselnessThershold = 0.001; //0.0001;
+	this->vesselnessWeight = 0.3;
+
+	this->traceLengthCostRetracing = 0.1;
+	this->traceQualityThresholdRetracing = 5.0;
+}
+
+void AstroTracer::UpdateAppearanceVectorized(VesselNode_astro& seed){
+	
+	ImageType3D::IndexType seed_index;
+	seed_index[0] = seed.x; seed_index[1] = seed.y; seed_index[2] = seed.z;
+	ImageType3D::SizeType size = this->AnisotropicDiffusedImage->GetLargestPossibleRegion().GetSize();
+
+	//if(this->normalizedInputData->GetBufferedRegion().IsInside(seed_index) == false)
+	//if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(seed_index) == false){
+	if((seed.x < 0) || (seed.x > size[0]) || (seed.y < 0) || (seed.y > size[1]) || (seed.z < 0) || (seed.z > size[2])){
+		seed.isValid = false;
+		return;
+	}
+	
+	ImageType3D::IndexType nhood_start_index, nhood_end_index;
+	ImageType3D::SizeType nhood_size;
+	ImageType3D::RegionType sub_vol;
+
+	// VIS!
+	seed.nHoodScale = 2.0 * seed.scale;
+	
+	nhood_start_index[0] = floor(seed.x - seed.nHoodScale + 0.5); 
+	nhood_start_index[1] = floor(seed.y - seed.nHoodScale + 0.5); 
+	nhood_start_index[2] = floor(seed.z - seed.nHoodScale + 0.5);
+	nhood_end_index[0] = floor(seed.x + seed.nHoodScale + 0.5);
+	nhood_end_index[1] = floor(seed.y + seed.nHoodScale + 0.5);
+	nhood_end_index[2] = floor(seed.z + seed.nHoodScale + 0.5);
+
+	nhood_size[0] = 2.0*seed.nHoodScale; nhood_size[1] = 2.0*seed.nHoodScale; nhood_size[2] = 2.0*seed.nHoodScale;
+	
+	/*VolumeOfInterestFilterType::Pointer sub_vol_filter = VolumeOfInterestFilterType::New();
+	sub_vol_filter->SetInput(this->normalizedInputData);
+	sub_vol.SetIndex(nhood_start_index);
+	sub_vol.SetSize(nhood_size);
+	sub_vol_filter->SetRegionOfInterest(sub_vol);
+	sub_vol_filter->Update();
+	*/
+	
+	seed.bandArea = 0;
+	seed.foregroundArea = 0;
+	seed.backgroundArea = 0;
+	seed.meanForegroundIntensity = 0.0;
+	seed.meanBackgroundIntensity = 0.0;
+	seed.xNormalizedInBand.clear();
+	seed.yNormalizedInBand.clear();
+	seed.zNormalizedInBand.clear();
+	seed.intensityInBand.clear();
+	seed.gxInBand.clear();
+	seed.gyInBand.clear();
+	seed.gzInBand.clear(); 
+
+	ImageType3D::IndexType current_index;
+	PixelType x_normalized = 0.0, y_normalized = 0.0, z_normalized = 0.0, radial_dist = 0.0;
+	bool is_inside_volume = true, is_outside_volume = false, is_on_foreground = true, is_on_background = false, contributes_to_energy = true, energy_band_outside_volume = false;
+	int in_volume_count = 0, out_volume_count = 0;
+	std::vector<double> foreground_values, background_values;
+	
+	for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
+		for(int i = nhood_start_index[0]; i <= nhood_end_index[0]; i++){
+			for(int j = nhood_start_index[1]; j <= nhood_end_index[1]; j++){
+			//for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
+				
+				current_index[0] = i; current_index[1] = j; current_index[2] = k; 
+				
+				//if(this->normalizedInputData->GetBufferedRegion().IsInside(current_index) == true){
+				//if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
+				if((i > 0) && (i < size[0]) && (j > 0) && (j < size[1]) && (k > 0) && (k < size[2])){
+					is_inside_volume = true;
+					in_volume_count++;
+				}
+				else{
+					is_inside_volume = false;
+					out_volume_count++;
+				}
+								
+				x_normalized = ((double)i - seed.x)/seed.scale;
+				y_normalized = ((double)j - seed.y)/seed.scale;
+				z_normalized = ((double)k - seed.z)/seed.scale;
+				radial_dist = std::sqrt((x_normalized*x_normalized) + (y_normalized*y_normalized) + (z_normalized*z_normalized));
+
+				if((radial_dist - 1.0 <= 0.00001) && (is_inside_volume == true))
+				//if(((radial_dist < 1.0) || (std::abs(radial_dist - 1.0) < 0.000001)) && (is_inside_volume == true))
+					is_on_foreground = true;
+				else
+					is_on_foreground = false;
+
+				if((is_on_foreground == false) && (is_inside_volume == true))
+					is_on_background = true;
+				else
+					is_on_background = false;
+
+				if(((double)abs(radial_dist - 1.0) < seed.bandNhood) && (is_inside_volume == true))		
+					contributes_to_energy = true;
+				else
+					contributes_to_energy = false;
+
+				if(((double)abs(radial_dist - 1.0) < seed.bandNhood) && (is_inside_volume == false))		
+					energy_band_outside_volume = true;
+				else
+					energy_band_outside_volume = false;
+
+				if(contributes_to_energy == true){
+					seed.xNormalizedInBand.push_back(x_normalized/radial_dist);
+					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
+					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
+					seed.intensityInBand.push_back(this->AnisotropicDiffusedImage->GetPixel(current_index));
+					seed.gxInBand.push_back(this->gx->GetPixel(current_index));
+					seed.gyInBand.push_back(this->gy->GetPixel(current_index));
+					seed.gzInBand.push_back(this->gz->GetPixel(current_index));
+
+					seed.bandArea++;
+				}
+
+				if(energy_band_outside_volume == true){
+					seed.xNormalizedInBand.push_back(x_normalized/radial_dist);
+					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
+					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
+					seed.intensityInBand.push_back(0);
+					seed.gxInBand.push_back(0);
+					seed.gyInBand.push_back(0);
+					seed.gzInBand.push_back(0);
+					
+					seed.bandArea++;
+				}
+				
+				if(is_on_foreground == true){
+
+					//std::cout << "Position: " << i << ", " << j << ", " << k << " Value: " << this->normalizedInputData->GetPixel(current_index) << std::endl;
+					
+					foreground_values.push_back(this->AnisotropicDiffusedImage->GetPixel(current_index));
+					
+					seed.meanForegroundIntensity = seed.meanForegroundIntensity + this->AnisotropicDiffusedImage->GetPixel(current_index);
+					seed.foregroundArea++;
+				}
+				if(is_on_background == true){
+
+					background_values.push_back(this->AnisotropicDiffusedImage->GetPixel(current_index));
+
+					seed.meanBackgroundIntensity = seed.meanBackgroundIntensity + this->AnisotropicDiffusedImage->GetPixel(current_index);
+					seed.backgroundArea++;
+				}
+
+			} 
+		}
+	}
+
+	if(seed.isSecondary == true){
+		
+		if(foreground_values.size() != 0){
+			// Calculate the median
+			std::sort(foreground_values.begin(), foreground_values.end());
+
+			seed.meanForegroundIntensity = *(foreground_values.begin() + (foreground_values.size()/2));
+		}
+		else
+			seed.meanForegroundIntensity = 0.0;
+
+		if(background_values.size() != 0){
+			std::sort(background_values.begin(), background_values.end());
+			seed.meanBackgroundIntensity = *(background_values.begin() + (background_values.size()/2));
+		}
+		else
+			seed.meanBackgroundIntensity = 0.0;
+	}
+	else{
+
+		// Calculate the mean
+		seed.meanForegroundIntensity = seed.meanForegroundIntensity / (float)seed.foregroundArea;
+		seed.meanBackgroundIntensity = seed.meanBackgroundIntensity / (float)seed.backgroundArea;
+	}
+
+	seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
+
+	//testing
+	//std::cout << seed.foregroundArea << ", " << seed.backgroundArea << ", ";
+	//std::cout << seed.meanForegroundIntensity << ", " << seed.meanBackgroundIntensity << ", " << seed.likelihood << std::endl;
+
+	// If likelood is less than 0.001, do what? According to the thesis, the subvolume should be discarded. But here, the likelihood value is
+	// increased if it is less then 0.001
+	/*double mean_of_means = 0.0;
+	if(seed.isSecondary == true && seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
+		
+		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
+		seed.meanForegroundIntensity = mean_of_means + this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		if(seed.meanBackgroundIntensity < 0)
+			seed.meanBackgroundIntensity = 0;
+		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
+	}*/
+	
+	// Set seed as invalid if majority of its neighbourhood lies outside the data limits
+	if(in_volume_count < out_volume_count)
+		seed.isValid = false;
+	else
+		seed.isValid = true;	
+}
+
+void AstroTracer::UpdateModel(VesselNode_astro& seed, int iter_number){
+
+	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
+	double last_scale = seed.scale;
+
+	std::vector<double> inside_region_term, outside_region_term;
+	for(int i = 0; i < seed.intensityInBand.size(); i++){
+		inside_region_term.push_back(std::abs(seed.meanForegroundIntensity - seed.intensityInBand[i]));
+		outside_region_term.push_back(std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i])));
+	}
+	
+	std::vector<double> del_energy, region_based_term, gvf_based_term;
+	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
+	for(int i = 0; i < inside_region_term.size(); i++){
+		region_based_term.push_back(inside_region_term[i] - outside_region_term[i]);
+	}
+	
+	double region_weight = this->NodeDetectionParams.regionBasedTermWeight;
+	double gvf_weight = this->NodeDetectionParams.edgeBasedTermWeight;
+	if(iter_number < this->NodeDetectionParams.iterNForOnlyRegionBasedTerm)
+		del_energy = region_based_term;
+	else{
+		for(int i = 0; i < seed.bandArea; i++)
+			gvf_based_term.push_back(seed.xNormalizedInBand[i] * seed.gxInBand[i] + seed.yNormalizedInBand[i] * seed.gyInBand[i] + seed.zNormalizedInBand[i] * seed.gzInBand[i]);
+		
+		for(int i = 0; i < seed.bandArea; i++)
+			del_energy.push_back(region_weight * region_based_term[i] - gvf_weight * gvf_based_term[i]);
+	}
+	
+	double acc_energy = std::accumulate(del_energy.begin(), del_energy.end(), 0.0);
+	double dscale = acc_energy / seed.bandArea;
+
+	//std::cout << " Energy: " << acc_energy << std::endl;
+	
+	double dx = 0.0, dy = 0.0, dz = 0.0;
+	for(int i = 0; i < seed.bandArea; i++){
+		dx = dx + (seed.xNormalizedInBand[i] * del_energy[i]);
+		dy = dy + (seed.yNormalizedInBand[i] * del_energy[i]);
+		dz = dz + (seed.zNormalizedInBand[i] * del_energy[i]);
+	}
+	dx = dx / (double)seed.bandArea;
+	dy = dy / (double)seed.bandArea;
+	dz = dz / (double)seed.bandArea;
+	
+	dscale = dscale * this->NodeDetectionParams.dtScale;
+	dx = dx * this->NodeDetectionParams.dtX;
+	dy = dy * this->NodeDetectionParams.dtY;
+	dz = dz * this->NodeDetectionParams.dtZ;
+
+	dscale = std::min(1.0, std::max(-1.0, dscale));
+	dx = std::min(1.0, std::max(-1.0, dx));
+	dy = std::min(1.0, std::max(-1.0, dy));
+	dz = std::min(1.0, std::max(-1.0, dz));
+
+	seed.scale = seed.scale - dscale;
+	seed.x = seed.x - dx;
+	seed.y = seed.y - dy;
+	seed.z = seed.z - dz;
+
+	if(seed.scale > (double)this->NodeDetectionParams.maxVesselWidth)
+		seed.scale = this->NodeDetectionParams.maxVesselWidth;
+	if(seed.scale < (double)this->NodeDetectionParams.minVesselWidth)
+		seed.scale = this->NodeDetectionParams.minVesselWidth;
+
+	if(this->GetSign(dx) != this->GetSign((double)this->NodeDetectionParams.dirX))
+		this->NodeDetectionParams.dtX = this->NodeDetectionParams.dtX * this->NodeDetectionParams.primaryReversePositionRate;
+	if(this->GetSign(dy) != this->GetSign((double)this->NodeDetectionParams.dirY))
+		this->NodeDetectionParams.dtY = this->NodeDetectionParams.dtY * this->NodeDetectionParams.primaryReversePositionRate;
+	if(this->GetSign(dz) != this->GetSign((double)this->NodeDetectionParams.dirZ))
+		this->NodeDetectionParams.dtZ = this->NodeDetectionParams.dtZ * this->NodeDetectionParams.primaryReversePositionRate;
+
+	this->NodeDetectionParams.dirX = this->GetSign(dx);
+	this->NodeDetectionParams.dirY = this->GetSign(dy);
+	this->NodeDetectionParams.dirZ = this->GetSign(dz);
+
+	this->NodeDetectionParams.chX[this->NodeDetectionParams.currentMonitoredIter] = seed.x - last_x;
+	this->NodeDetectionParams.chY[this->NodeDetectionParams.currentMonitoredIter] = seed.y - last_y;
+	this->NodeDetectionParams.chZ[this->NodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
+
+	
+	if((dscale * (double)this->NodeDetectionParams.dirScale) <= 0.0)
+		this->NodeDetectionParams.dtScale = this->NodeDetectionParams.dtScale * this->NodeDetectionParams.primaryReverseScaleRate;
+
+	this->NodeDetectionParams.dirScale = this->GetSign(dscale);
+	this->NodeDetectionParams.chScale[this->NodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
+}
+
+bool AstroTracer::ExitModelFitting(VesselNode_astro& seed, int iter_number){
+	
+	bool exit_fitting = false;
+	this->NodeDetectionParams.currentMonitoredIter = (iter_number % this->NodeDetectionParams.iterNMonitorParamChange); //+ 1;
+	
+	if(seed.scale >= (double)this->NodeDetectionParams.maxVesselWidth){
+		seed.exitIter = iter_number;
+		exit_fitting = true;
+	}
+	
+	double total_ch_scale = 0.0, total_ch_x = 0.0, total_ch_y = 0.0, total_ch_z = 0.0, total_ch_position = 0.0;
+	int iter_minimum = 0;
+	if(seed.isSecondary == true)
+		iter_minimum = this->NodeDetectionParams.iterNMinimumSecondary;
+	else
+		iter_minimum = this->NodeDetectionParams.iterNMinimum;
+
+	if(iter_number > iter_minimum){
+		for(int i = 0; i < this->NodeDetectionParams.iterNMonitorParamChange; i++){
+			total_ch_scale = total_ch_scale + (double)std::abs(this->NodeDetectionParams.chScale[i]);
+			total_ch_x = total_ch_x + (double)std::abs(this->NodeDetectionParams.chX[i]);
+			total_ch_y = total_ch_y + (double)std::abs(this->NodeDetectionParams.chY[i]);
+			total_ch_z = total_ch_z + (double)std::abs(this->NodeDetectionParams.chZ[i]);
+		}
+		total_ch_position = total_ch_x + total_ch_y + total_ch_z;
+
+		if(total_ch_scale < this->NodeDetectionParams.minimumAccumulatedParamChange && total_ch_position < this->NodeDetectionParams.minimumAccumulatedParamChange){
+			seed.exitIter = iter_number;
+			exit_fitting = true;
+		}
+	}
+	if(iter_number == this->NodeDetectionParams.iterNPrimaryNode)
+		seed.exitIter = iter_number;
+	
+	return exit_fitting;
+}
+
+int inline AstroTracer::GetSign(double value){
+	if(value + 0.001 < 0)
+		return -1;
+	if(value - 0.001 > 0) 
+		return 1;
+	//std::cout << "ye";
+	return 0;
+}
+

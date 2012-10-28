@@ -9,14 +9,17 @@ int main(int argc, char* argv[]){
 	argv[2] = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\nuc_labels.tif";*/
 
 
-	if(argc < 2 || argc > 7)
+	if(argc < 2 || argc > 8)
 	{
-		std::cout << "AstroTracer.exe <InputFileName> <SomaImageFile> <Step_no: 0: Optimize coverage 1:Compute root features, 2:Compute nuclei features";
-		std::cout << " 3:Generate centroids for tracing and run tracing 4. Only run tracing (like MNT)> <OptionsFileName> <RootPointsFileName> <NucleiFeaturesFileName>" << std::endl;
+		std::cout << "AstroTracer.exe <InputFileName> <SomaImageFile> <DoPreprocessing?> <Step_no: 0: Optimize coverage 1:Compute root features, 2:Compute nuclei features";
+		std::cout << " 3:Generate centroids for tracing and run tracing 4. Only run tracing (like MNT)> <OptionsFileName> <RootPointsFileName>";
+		std::cout << " <NucleiFeaturesFileName>" << std::endl;
 		return -1;
 	}
+
+	int do_preprocessing = atoi(argv[3]);
 	
-	int step_no = atoi(argv[3]);
+	int step_no = atoi(argv[4]);
 	
 	if(step_no < 0 || step_no > 4){
 		std::cout << "Incorrect parameter: step_no. " << std::endl;
@@ -72,7 +75,8 @@ int main(int argc, char* argv[]){
 
 	AstroTracer * AT = new AstroTracer();
 
-	
+	AT->SetInputDataPath(InputFilename.erase(InputFilename.length()-4, InputFilename.length()));
+
 	clock_t LoadCurvImage_start_time = clock();
 	AT->LoadCurvImageFromPath(std::string(argv[1]), 0);////
 	std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
@@ -81,7 +85,18 @@ int main(int argc, char* argv[]){
 	AT->LoadSomaImage(std::string(argv[2]));
 	std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-	
+
+	if(do_preprocessing == 1){
+
+		clock_t preprocessing_start_time = clock();
+		AT->DoPreprocessing();
+		std::cout << "Anisotropic diffusion and GVF took: " << (clock() - preprocessing_start_time)/(float) CLOCKS_PER_SEC << std::endl;	
+	}
+	else{
+
+		std::cout << "No preprocessing. Loading from disk. " << std::endl;
+		//AT->LoadPreprocessingResults();
+	}
 
 	// step 0 is for testing whatever you want
 	if(step_no == 0){
@@ -96,7 +111,7 @@ int main(int argc, char* argv[]){
 	if(step_no == 1){
 
 		//bool inPipeline = false;
-		AT->LoadParameters(argv[4]);	
+		AT->LoadParameters(argv[5]);	
 		AT->SetScaleRange(4, 4); //(2, 5); //(2, 2)
 		AT->CallFeatureMainExternal();
 		AT->ComputeAstroFeatures(featureVectorFileName, IDImageFileName, 0, std::string("LOG"));
@@ -104,8 +119,8 @@ int main(int argc, char* argv[]){
 	}
 	if(step_no == 2){
 
-		AT->ReadRootPointsExternal(std::string(argv[5]));
-		AT->ReadNucleiFeaturesExternal(std::string(argv[6]));
+		AT->ReadRootPointsExternal(std::string(argv[6]));
+		AT->ReadNucleiFeaturesExternal(std::string(argv[7]));
 		AT->ComputeFeaturesFromCandidateRoots();
 		AT->WriteNucleiFeatures(nucleiFeaturesAppendedFileName);
 		std::cout << "Done with computing nuclei-based features. " << std::endl;
@@ -115,11 +130,11 @@ int main(int argc, char* argv[]){
 		//For this part, make sure:
 		// 1. The soma file should have only astrocyte somas	2. The nucleiFeaturesFile and the rootPointsFile should have the respective class labels
 		
-		AT->LoadParameters(argv[4]);	
+		AT->LoadParameters(argv[5]);	
 		AT->SetCostThreshold(AT->cost_threshold);
 
-		AT->ReadRootPointsExternal(std::string(argv[5]));
-		AT->ReadFinalNucleiTable(std::string(argv[6])); 
+		AT->ReadRootPointsExternal(std::string(argv[6]));
+		AT->ReadFinalNucleiTable(std::string(argv[7])); 
 		
 		AT->GetCentroidsForTracing(centroidsForTracingFileName, finalIDImageFileName);
 		
@@ -142,10 +157,10 @@ int main(int argc, char* argv[]){
 		//For this part, make sure:
 		// 1. Root points file name is a simple list of centroids
 
-		AT->LoadParameters(argv[4]);	
+		AT->LoadParameters(argv[5]);	
 		AT->SetCostThreshold(AT->cost_threshold);
 		
-		AT->ReadStartPointsFromPath(std::string(argv[5]), 0);
+		AT->ReadStartPointsFromPath(std::string(argv[6]), 0);
 		
 		clock_t RunTracing_start_time = clock();
 		AT->RunTracing();
