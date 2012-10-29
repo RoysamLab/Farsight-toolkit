@@ -290,6 +290,7 @@ public slots:
 
 	void SPDAnalysis();
 	void ClusclusAnalysis();
+	void Highlighted_selected();
 	void BiclusAnalysis();
 	void Getlabel(std::set<long int> labels);
 	void FeatureDistributionAnalysis();
@@ -472,6 +473,7 @@ private:
 	QAction *SPDAction;
 	QAction *SPDAnalysisAction;
 	QAction *ClusclusAction;
+	QAction *selectedAction;
 	QAction *BiClusAction;
 	QAction *FeatureDistributionAction;
 	QAction *SpectralClusteringAction;
@@ -580,6 +582,7 @@ private:
 
   //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
+	std::map<int, int> indMapFromIndToVertex;
 
 	// for nucleus
 	vtkSmartPointer<vtkUnsignedCharArray> colors;

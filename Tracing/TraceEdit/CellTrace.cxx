@@ -704,7 +704,6 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		{
 			this->BifTiltRemoteCount = 1;
 		}
-
 		CellData->InsertNextValue(this->BifAmplLocalMin);
 		CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
 		CellData->InsertNextValue(this->BifAmplLocalMax);

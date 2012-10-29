@@ -138,16 +138,21 @@ void BiHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sel
 		{
 			 double var = this->table->GetValue(i, j).ToDouble();
 			 if( !boost::math::isnan(var))
-			 {}
-			 else
 			 {
-				 if(i>0)
-					 vtkVariant value = this->table->GetValue(i-1, j);
-				 else 
-					 vtkVariant value = this->table->GetValue(i+1, j);
-				 this->table->SetValue(i, j, 0);
-				 break;
+				if( var > 1E20)
+				{
+					std::cout<<" entry is too large, modified! Warning! "<<std::endl;
+					 var = 1E10;
+				}
+				if( var < -1E20)
+				{
+					 var = -1E10;
+					 std::cout<<" entry is too negative, modified! Warning! "<<std::endl;
+				}
 			 }
+			 else
+				var = 0;
+			 this->table->SetValue(i, j, var);
 		}
 	}
 
@@ -1038,7 +1043,7 @@ void BiHeatmap::setSelectIds(std::set<long int>& IDs)
 		this->updataTree1();
 		this->Selection2->select(selectedIDs2);
 		this->Selection->select(selectedIDs1);
-		//emit lable(selectedIDs1);
+		emit lable(selectedIDs1);
 	}
 	else if(selectedIDs2.size() > 0)
 	{
@@ -1061,7 +1066,7 @@ void BiHeatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 {
 	if(id < this->num_rows)
 	{
-		std::cout<<indMapFromIndToVertex[id]<<"..."<<std::endl;
+		//std::cout<<indMapFromIndToVertex[id]<<"..."<<std::endl;
 		selectedIDs.insert(indMapFromIndToVertex[id]);
 	}
 	else

@@ -1720,6 +1720,8 @@ void View3D::CreateGUIObjects()
 	//this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
 	//connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 
+	this->selectedAction = new QAction("Selected IDs", this->CentralWidget);
+	connect (this->selectedAction, SIGNAL(triggered()), this, SLOT(Highlighted_selected()));
 	this->BiClusAction= new QAction("BiClus Analysis", this->CentralWidget);
 	connect (this->BiClusAction, SIGNAL(triggered()), this, SLOT(BiclusAnalysis()));
 
@@ -2139,6 +2141,7 @@ void View3D::CreateLayout()
 	//this->analysisViews->addAction(this->SPDAction);
 	this->analysisViews->addAction(this->SPDAnalysisAction);
 	//this->analysisViews->addAction(this->ClusclusAction);
+	this->analysisViews->addAction(this->selectedAction);
 	this->analysisViews->addAction(this->BiClusAction);
 	this->analysisViews->addAction(this->FeatureDistributionAction);
 	//this->analysisViews->addAction(this->SpectralClusteringAction);
@@ -3980,12 +3983,8 @@ void View3D::AssociateNeuronToNuclei()
 		vtkIdType nucleiRowSize = this->nucleiTable->GetNumberOfRows();
 		for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 		{
-			/////////////////////////////////////////////////////////////////////////////////////////////
-			//////////////////////////////////////////////////
-			///////////////////////////////////////////////////////////
-			///////////////////////////////////delete 1 line
-			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter));
-			////////////////////////////////////////////////////////
+
+			this->CellModel->AddNewFeatureHeader(this->nucleiTable->GetColumnName(nucleiColIter)); 
 		}
 		std::map< int ,CellTrace*>::iterator cellCount = CellModel->GetCelliterator();
 		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
@@ -4014,12 +4013,9 @@ void View3D::AssociateNeuronToNuclei()
 					{
 
 						vtkVariant colData = this->nucleiTable->GetValue(nucleiRowIter, nucleiColIter);
-									//////////////////////////////////////////////////
-					///////////////////////////////////////////////////////////
-					///////////////////////////////////delete 1 line
+
 						currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),colData);
-						////////////////////////////////////////////////////////////////////
-						/*OutputTable->SetValueByName(somaRowIter, colName, colData);*/
+						//OutputTable->SetValueByName(somaRowIter, colName, colData);
 					}
 					found = true;
 					this->nucleiTable->RemoveRow(nucleiRowIter);
@@ -4030,12 +4026,9 @@ void View3D::AssociateNeuronToNuclei()
 			{
 				for (vtkIdType nucleiColIter = nStartColumnOfNucleusTable; nucleiColIter< nucleiColSize; nucleiColIter++)
 				{
-					/*const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
-					OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));*/
-					///////////////////////////////////////////////////////////
-					/////////////////////////////////////delete one line
+					const char* colName = this->nucleiTable->GetColumnName(nucleiColIter);
+					//OutputTable->SetValueByName(somaRowIter, colName, vtkVariant(-PI));
 					currCell->addNewFeature(this->nucleiTable->GetColumnName(nucleiColIter),vtkVariant(-PI));
-					//////////////////////////////////////////////////////
 				}
 			}
 		}//end of soma row		
@@ -6558,22 +6551,42 @@ void View3D::BiclusAnalysis()
 	}
 	else
 	{
+		std::cout<<"Using Pattern Analysis Wizard!"<<std::endl;
+		//vtkSmartPointer<vtkTable> featureTable;
+		/*if Using pattern analysis wizard*/
+		//PatternAnalysisWizard* pWizard = new PatternAnalysisWizard( this->CellModel->getDataTable(), PatternAnalysisWizard::_CLUS, "", "", this);
+		//connect(pWizard, SIGNAL(changedTable()), this, SLOT(updateViews()));
+		//connect(pWizard, SIGNAL(enableModels()), this, SLOT(EnableModels()));
+		//pWizard->setWindowTitle(tr("Pattern Analysis Wizard"));
+		//pWizard->exec();
+		//if(pWizard->result())
+		//{	
+		//	std::cout<<"What??????????????????????????????"<<std::endl;
+		//	featureTable = pWizard->getExtractedTable();
+		//	featureTable->RemoveColumnByName("Trace File");	
+		//	featureTable->RemoveColumnByName("Soma X Pos");
+		//	featureTable->RemoveColumnByName("Soma Y Pos");
+		//	featureTable->RemoveColumnByName("Soma Z Pos");
+		//	featureTable->RemoveColumnByName("Distance to Device");
+		//}
+		/* Using pattern analysis wizard*/
 
+		/*if Not using pattern analysis wizard*/
 		vtkSmartPointer<vtkTable> featureTable = vtkSmartPointer<vtkTable>::New();
 		featureTable->Initialize();
 		featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(0));
 		for(int col=4; col<(int)this->CellModel->getDataTable()->GetNumberOfColumns(); ++col)
 			featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(col));
 		
-		//vtkSmartPointer<vtkTable> featureTable = this->CellModel->getDataTable();	
-
-
+		//vtkSmartPointer<vtkTable> featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");	
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
-
+		featureTable->RemoveColumnByName("Ave_Local_Bifurcation_Tilt");
+		featureTable->RemoveColumnByName("Ave_Remote_Bifurcation_Tilt");
 		featureTable->RemoveColumnByName("Distance to Device");
+		/* Not Using pattern analysis wizard*/
 
 		std::vector<std::vector<double > > points;
 		points.resize(featureTable->GetNumberOfRows());
@@ -6582,14 +6595,25 @@ void View3D::BiclusAnalysis()
 			for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
 			{
 				double var = featureTable->GetValue(i, j).ToDouble();
-#ifdef _MSC_VER
-				const bool isnan = _isnan(var);
-#else
+				#ifdef _MSC_VER
+					const bool isnan = _isnan(var);
+				#else
 				const bool isnan = boost::math::isnan(var);
-#endif
+				#endif
 				if( isnan )
 				{				
 					var = 0;
+					std::cout<<"there is invalid data !"<<std::endl;
+				}
+				if( var > 1E20)
+				{
+					std::cout<<"value is too large, modified during analysis in entry "<<i<<"and "<<j<< std::endl;
+					var = 1E10;
+				}
+				if( var < -1E20)
+				{
+					std::cout<<"value is too negative, modified during analysis in entry "<<i<<"and "<<j<< std::endl;
+					var = -1E10;
 				}
 			points[i].push_back(var);
 			}
@@ -6604,7 +6628,8 @@ void View3D::BiclusAnalysis()
 			bicluster->Setparameter(k1, k2);
 		bicluster->setDataToBicluster(points);
 		bicluster->biclustering();
-		bicluster->WriteFile("order1.txt", "order2.txt");
+		std::cout<<"finish clustering"<<std::endl;
+		//bicluster->WriteFile("order1.txt", "order2.txt");
 
 		//Heatmap *progressionHeatmap = new Heatmap(this);
 		//std::vector<int> unSelOrder;
@@ -6612,17 +6637,24 @@ void View3D::BiclusAnalysis()
 		//progressionHeatmap->showGraphforSPD( (bicluster->order2).size(), 0, true);
 
 		this->Biheatmap ->setModels(featureTable, this->CellModel->GetObjectSelection());
+		std::cout<<"Models set"<<std::endl;
 		this->Biheatmap ->setDataForHeatmap(bicluster->order1, bicluster->order2);
+		std::cout<<"Data set"<<std::endl;
 		this->Biheatmap ->setDataForTree1(bicluster->levels1);
 		this->Biheatmap ->setDataForTree2(bicluster->levels2);
+		std::cout<<"TreeData set"<<std::endl;
 		this->Biheatmap ->showHeatmap();
 		this->Biheatmap ->showTree1();
 		this->Biheatmap ->showTree2();
 
 		//for adding label
-		vtkSmartPointer<vtkVariantArray> labelcol = vtkSmartPointer<vtkVariantArray>::New();
-		for(unsigned int i = 0; i < this->CellModel->getDataTable()->GetNumberOfRows(); i++ )
+		vtkSmartPointer<vtkVariantArray> labelcol = vtkSmartPointer<vtkVariantArray>::New();		
+		for(unsigned int i = 0; i < this->CellModel->getDataTable()->GetNumberOfRows(); i++)
+		{
 			labelcol->InsertNextValue ( vtkVariant ( 0.0 ) );
+			int var = this->CellModel->getDataTable()->GetValue( i, 0).ToInt();
+			this->indMapFromIndToVertex.insert( std::pair< int, int>(var, i));
+		}
 
 		labelcol->SetName("prediction_active");
 		this->CellModel->getDataTable()->AddColumn(labelcol);
@@ -6644,9 +6676,54 @@ void View3D::BiclusAnalysis()
 #endif
 }
 
+
+void View3D::Highlighted_selected()
+{
+	std::set<long int> tempselectedid;
+	const char* filename = "ids.txt";
+	FILE *fp = fopen(filename,"r");
+	int num_samples = 0;
+	int num_features = 0;
+	if(fp == NULL)
+	{
+		fprintf(stderr,"can't open input file %s\n",filename);
+		exit(1);
+	}
+
+	int n=0;
+	while(1)
+	{
+		int c = fgetc(fp);
+		switch(c)
+		{
+			case '\n':				
+				(num_samples)++;	
+				n++;
+				if(num_features == 0)num_features = n;
+				break;	
+			case '\t':
+				n++;
+				break;
+			case EOF:
+				goto out;
+			default:
+				;
+		}
+	}
+	out:
+	rewind(fp);
+	for(int i=0; i<num_samples; i++)
+	{
+		double temp;
+		fscanf(fp, "%lf", &temp);
+		tempselectedid.insert((long int)temp);
+	}
+
+	std::cout<<"ids file loaded !!!"<<std::endl;
+	this->CellModel->GetObjectSelection()->select (tempselectedid);
+}
 void View3D::Getlabel(std::set<long int> labels)
 {
-	std::cout<<"I am here................."<<std::endl;
 	bool ok;
 	int label = QInputDialog::getInt(this, tr("Label for this cluster"),tr("Label:"), 0, 0, 20, 1, &ok);
 
@@ -6660,6 +6737,7 @@ void View3D::Getlabel(std::set<long int> labels)
 	while(it != labels.end())
 	{
 		int id = *it;
+		id = this->indMapFromIndToVertex.find(id)->second;
 		this->CellModel->getDataTable()->GetColumnByName ("prediction_active")->SetVariantValue(id, label);
 		it++;
 	}
@@ -6674,8 +6752,6 @@ void View3D::Getlabel(std::set<long int> labels)
 		this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 		this->FL_MeasureTable->update();
 	}
-	std::cout<<"I am here................."<<std::endl;
-
 }
 void View3D::FeatureDistributionAnalysis()
 {

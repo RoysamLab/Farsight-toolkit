@@ -179,29 +179,92 @@ void ActiveValidation::Stratifing()
 	//set up structure element for each strata
 	for(int i = 0; i < this->numbin; i++)
 	{
-		strata temp;
-		temp.Nk = clustersToPointsvector[i].size();
-		temp.idsk = clustersToPointsvector[i];	
-
-		vnl_matrix<double> tempdata;
-		tempdata.set_size(temp.Nk, this->numfeat);
-		vnl_vector<int> templable; 
-		templable.set_size(temp.Nk);
-		std::vector<int > tempunselectedidsk;
-		for(int j = 0; j < temp.Nk; j++)
+		if(clustersToPointsvector[i].size() == 0)
+		{}
+		else if( (i < numbin - 1) && (clustersToPointsvector[i + 1].size() == 0) )
 		{
-			vnl_vector<double> temprow = this->data.get_row(clustersToPointsvector[i][j]);
-			tempdata.set_row(j,temprow);
-			templable[j] = this->lable[clustersToPointsvector[i][j]];
-			tempunselectedidsk.push_back(j);
+			std::vector<int >  clustersToPointsvector1;
+			std::vector<int >  clustersToPointsvector2;
+			int num1 = clustersToPointsvector[i].size() / 2;
+			int num2 = clustersToPointsvector[i].size()  - num1;
+			int k = 0;
+			for(; k < num1; k++)
+				clustersToPointsvector1.push_back(clustersToPointsvector[i][k]);
+			for(; k < clustersToPointsvector[i].size(); k++)
+				clustersToPointsvector2.push_back(clustersToPointsvector[i][k]);
+
+			strata temp1;
+			temp1.Nk = num1;
+			temp1.idsk = clustersToPointsvector1;	
+			vnl_matrix<double> tempdata1;
+			tempdata1.set_size(temp1.Nk, this->numfeat);
+			vnl_vector<int> templable1; 
+			templable1.set_size(temp1.Nk);
+			std::vector<int > tempunselectedidsk1;
+			for(int j = 0; j < temp1.Nk; j++)
+			{
+				vnl_vector<double> temprow1 = this->data.get_row(clustersToPointsvector1[j]);
+				tempdata1.set_row(j,temprow1);
+				templable1[j] = this->lable[clustersToPointsvector1[j]];
+				tempunselectedidsk1.push_back(j);
+			}
+			temp1.strdata = tempdata1;
+			temp1.strlable = templable1;
+			temp1.unselectedidsk = tempunselectedidsk1;
+			temp1.numleft = temp1.Nk;
+			temp1.hk = 0;
+			temp1.nk = 0;
+			this->stratas.push_back(temp1);
+
+			strata temp2;
+			temp2.Nk = num2;
+			temp2.idsk = clustersToPointsvector2;	
+			vnl_matrix<double> tempdata2;
+			tempdata2.set_size(temp2.Nk, this->numfeat);
+			vnl_vector<int> templable2; 
+			templable2.set_size(temp2.Nk);
+			std::vector<int > tempunselectedidsk2;
+			for(int j = 0; j < temp2.Nk; j++)
+			{
+				vnl_vector<double> temprow2 = this->data.get_row(clustersToPointsvector1[j]);
+				tempdata2.set_row(j,temprow2);
+				templable2[j] = this->lable[clustersToPointsvector1[j]];
+				tempunselectedidsk2.push_back(j);
+			}
+			temp2.strdata = tempdata2;
+			temp2.strlable = templable2;
+			temp2.unselectedidsk = tempunselectedidsk2;
+			temp2.numleft = temp2.Nk;
+			temp2.hk = 0;
+			temp2.nk = 0;
+			this->stratas.push_back(temp2);
 		}
-		temp.strdata = tempdata;
-		temp.strlable = templable;
-		temp.unselectedidsk = tempunselectedidsk;
-		temp.numleft = temp.Nk;
-		temp.hk = 0;
-		temp.nk = 0;
-		this->stratas.push_back(temp);
+		else
+		{
+			strata temp;
+			temp.Nk = clustersToPointsvector[i].size();
+			temp.idsk = clustersToPointsvector[i];	
+
+			vnl_matrix<double> tempdata;
+			tempdata.set_size(temp.Nk, this->numfeat);
+			vnl_vector<int> templable; 
+			templable.set_size(temp.Nk);
+			std::vector<int > tempunselectedidsk;
+			for(int j = 0; j < temp.Nk; j++)
+			{
+				vnl_vector<double> temprow = this->data.get_row(clustersToPointsvector[i][j]);
+				tempdata.set_row(j,temprow);
+				templable[j] = this->lable[clustersToPointsvector[i][j]];
+				tempunselectedidsk.push_back(j);
+			}
+			temp.strdata = tempdata;
+			temp.strlable = templable;
+			temp.unselectedidsk = tempunselectedidsk;
+			temp.numleft = temp.Nk;
+			temp.hk = 0;
+			temp.nk = 0;
+			this->stratas.push_back(temp);
+		}
 	}
 }
 

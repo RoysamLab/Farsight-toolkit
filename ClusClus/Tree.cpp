@@ -250,6 +250,7 @@ void BiTree::reOrder(std::vector<std::vector<double > > submatrix, std::vector<i
 
 	clusclus *cc = new clusclus(data, nrow, ncol);
 	cc->RunClusClus();
+	std::cout<<"Finish clusclus now! "<<std::endl;
 
 	std::vector<int > temp;
 	for(int i = 0; i < nrow; i++)

@@ -242,6 +242,7 @@ void CellTraceModel::SetupHeaders()
 	/*this->headers.push_back("Prediction");
 	this->headers.push_back("Confidence");*/
 	this->headers.push_back("Distance to Device");
+	//this->headers.push_back("Label");
 
 	int size = this->AdditionalHeaders.size();
 	for (int k = 0; k < size; k++)
