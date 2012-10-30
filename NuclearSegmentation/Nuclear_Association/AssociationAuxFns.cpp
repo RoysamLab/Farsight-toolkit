@@ -210,10 +210,16 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 
 #ifdef _OPENMP
 omp_set_nested(1);
+#pragma omp parallel for
+#if _OPENMP < 200805L
+		for( int i=0; i<labelsList.size(); ++i )
+#else
+		for( USImageType::PixelType i=0; i<labelsList.size(); ++i )
 #endif
-
-		#pragma omp parallel for
-		for( int i=0; i<labelsList.size(); ++i ){
+#else
+		for( USImageType::PixelType i=0; i<labelsList.size(); ++i )
+#endif
+		{
 			itk::SizeValueType ind;
 			if( zp && (zero==i) ) continue;
 			if( zp && (i>zero)  ) ind = i-1;
