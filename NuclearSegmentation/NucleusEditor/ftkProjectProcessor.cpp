@@ -859,7 +859,7 @@ bool ProjectProcessor::Extract_Class(void)
 #ifdef _OPENMP
 #ifdef _MSC_VER
 		#pragma omp parallel for
-		for(long int i=0; i<im_size[2]; ++i)
+		for(itk::IndexValueType i=0; i<im_size[2]; ++i)
 #else
 		#pragma omp parallel for
 		for(itk::SizeValueType i=0; i<im_size[2]; ++i)
