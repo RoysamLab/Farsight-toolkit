@@ -101,8 +101,8 @@ private:
 		bool fixed;
 		bool selected;		// which edge has been selected
 		unsigned char type;
-		std::vector<int> frontlre;
-		std::vector<int> backlre;
+		std::vector<int> frontlre; // ??
+		std::vector<int> backlre;  // ??
 		unsigned int index;
 	};
 

@@ -42,15 +42,17 @@ void MultiFrameCellTracker::setTrackParameters(std::vector<std::pair<std::string
 	fvar.distMean = parameters.at(4).second; 
 	fvar.timeVariance = parameters.at(5).second;
 	fvar.timeMean = parameters.at(6).second; 
-	fvar.overlapVariance = parameters.at(7).second;
-	fvar.overlapMean = parameters.at(8).second;
+	fvar.overlapVariance = parameters.at(7).second;   // ??
+	fvar.overlapMean = parameters.at(8).second;       // ??
 	//fvar.variances[FeatureVariances::VOLUME] = parameters.at(9).second; 
-	fvar.MS_prior = parameters.at(10).second; 
-	fvar.AD_prior = parameters.at(11).second; 
-	fvar.T_prior = parameters.at(12).second; 
-	fvar.boundDistMean = parameters.at(13).second; 
-	fvar.boundDistVariance = parameters.at(14).second; 
-	std::cout<<"Merge/Split Prior:"<<fvar.MS_prior<<"\n";
+	fvar.MS_prior = parameters.at(10).second;         // Merge split prior 
+	fvar.AD_prior = parameters.at(11).second;         // Appear D prior
+	fvar.T_prior = parameters.at(12).second;          // Traslation prior
+	fvar.boundDistMean = parameters.at(13).second;    // ??
+	fvar.boundDistVariance = parameters.at(14).second; // ??
+
+
+	//std::cout<<"Merge/Split Prior:"<<fvar.MS_prior<<"\n";
 
 
 }
@@ -185,7 +187,8 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 // 		{
 // 			std::cout<<locfvector[count].size()<<std::endl;
 // 		}
-	    this->setData(locfvector,loclimages,locrimages);
+    // Copy the local variable to private variables
+	  this->setData(locfvector,loclimages,locrimages);
 		this->dataset_id = dataset_id;
 		//helpers::ColorImageType::Pointer debugcol1 = helpers::ColorImageType::New();
 		//helpers::ColorImageType::Pointer debugcol2 = helpers::ColorImageType::New();
@@ -214,13 +217,13 @@ void MultiFrameCellTracker::setTrackImages(ftk::Image::Pointer rawimage,ftk::Ima
 		if ( this->run() )
 		{
 
-			printf("Rerunning with computed variances\n");
-			FeatureVariances fvarnew(this->get_computed_variances());
-			fvarnew.MS_prior = 0.4;
-			fvarnew.AD_prior = 0.01;
-			fvarnew.T_prior = 1;
-			fvarnew.timeVariance = 1;
-			fvarnew.overlapVariance = 1;
+			//printf("Rerunning with computed variances\n");
+			//FeatureVariances fvarnew(this->get_computed_variances());
+			//fvarnew.MS_prior = 0.4;
+			//fvarnew.AD_prior = 0.01;
+			//fvarnew.T_prior = 1;
+			//fvarnew.timeVariance = 1;
+			//fvarnew.overlapVariance = 1;
 		
 			//std::string checkfile = entropyfiledirectory+"\\";
 			//checkfile +=   "check.txt";
@@ -386,13 +389,13 @@ void MultiFrameCellTracker::set_inputs_from_cmd(std::vector< InputImageType::Poi
 		{
 
 
-			printf("Rerunning with computed variances\n");
-			FeatureVariances fvarnew(this->get_computed_variances());
-			fvarnew.MS_prior = 0.4;
-			fvarnew.AD_prior = 0.01;
-			fvarnew.T_prior = 1;
-			fvarnew.timeVariance = 1;
-			fvarnew.overlapVariance = 1;
+			//printf("Rerunning with computed variances\n");
+			//FeatureVariances fvarnew(this->get_computed_variances());
+ /*     fvarnew.MS_prior = 0.4;*/
+			//fvarnew.AD_prior = 0.01;
+			//fvarnew.T_prior = 1;
+			//fvarnew.timeVariance = 1;
+			//fvarnew.overlapVariance = 1;
 		
 			
 			for(int t = 0; t< num_t; t++)
