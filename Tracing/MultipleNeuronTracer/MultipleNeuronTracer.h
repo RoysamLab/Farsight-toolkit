@@ -21,6 +21,8 @@
 
 #include <stdlib.h>
 #include "itkTimeProbe.h"
+#include "PointOperation.h"
+#include "ftkUtils.h"
 #include "itkImage.h"
 #include "itkArray.h"
 #include "itkCovariantVector.h"
@@ -62,9 +64,33 @@
 #include "vtkDoubleArray.h"
 
 
+
+#include "Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkGradientVectorFlowImageFilter.h"
+#include "itkGradientImageFilter.h"
+#include "itkGradientRecursiveGaussianImageFilter.h"
+#include "itkGradientAnisotropicDiffusionImageFilter.h"
+#include "itkLaplacianRecursiveGaussianImageFilter.h"
+#include "itkCovariantVector.h"
+#include "itkImageSliceConstIteratorWithIndex.h"
+#include "itkImageSliceIteratorWithIndex.h"
+#include "itkImageLinearIteratorWithIndex.h"
+#include "itkImageAdaptor.h"
+#include "itkLabelStatisticsImageFilter.h"
+#include "itkVectorLinearInterpolateImageFunction.h"
+#include "itkConnectedComponentImageFilter.h"
+#include "itkRelabelComponentImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
+#include "itkIdentityTransform.h"
+#include "itkBSplineInterpolateImageFunction.h"
+#include "itkResampleImageFilter.h"
+
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkImageDuplicator.h"
-
+#include "itkListSample.h"
 #include <queue>
 #include <algorithm>
 #include <string>
@@ -80,12 +106,35 @@
 
 typedef float PixelType;
 
+typedef itk::CovariantVector< float, 3 >  GradientPixelType;
+typedef itk::Image< GradientPixelType, 3 > GradientImageType;
+typedef itk::Vector< float, 3 > SeedType;
+typedef itk::Statistics::ListSample< SeedType > SampleType;
+typedef SampleType::Pointer SamplePointer;
+
+typedef GradientImageType::Pointer GradientImagePointer;
+typedef itk::Image< PixelType, 3 >  ImageType3D;
+typedef ImageType3D::Pointer ProbImagePointer;
+typedef itk::Image<unsigned long int, 3> LabelImageTypeCCIF;//////////for connected component image filter in seed_centroid()
+typedef LabelImageTypeCCIF::Pointer LabelImagePointerCCIF;
+
+ProbImagePointer extract_one_component(int index, GradientImagePointer IG);
+static void tred2(double V[3][3], double d[3], double e[3]);
+static void tql2(double V[3][3], double d[3], double e[3]);
+void eigen_decomposition(double A[3][3], double V[3][3], double d[3]);
+void eigen_decomposition2D(double A[2][2], double V[2][2], double d[2]);
+double MAX(double a, double b);
+static double hypot2(double x, double y);
+double absd(double val);
+
+
+
 class SWCNode;
 class DebrisNode;
 class HeapNode;
 class Comparison;
 //class MultipleNeuronTracer;
-
+class VectorPixelAccessor;
 class HeapNode
 {
 public:
@@ -119,6 +168,7 @@ public:
 	float ballness;
 	float plateness;
 	float vesselness;
+	//automatically selected threshold value
 
 	ObjectnessMeasures_micro();
 	ObjectnessMeasures_micro(float alpha, float beta, float gamma);
@@ -139,6 +189,7 @@ public:
 	typedef itk::RescaleIntensityImageFilter<CharImageType3D, CharImageType3D> CharRescalerType;
 	typedef itk::Image< SWCNode*, 3 > SWCImageType3D;
 	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
+	typedef LabelImageType3D::Pointer LabelImagePointer;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
 	typedef itk::HuangThresholdImageFilter<ImageType3D,ImageType3D> HuangThresholdFilterType;
 	typedef itk::OtsuThresholdImageFilter<ImageType3D,ImageType3D>  OtsuThresholdImageFilterType;
@@ -151,6 +202,8 @@ public:
 	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
 	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;
 	typedef itk::PowImageFilter<ImageType3D> PowImageFilter;
+
+
 
 
 	//Constructor
@@ -173,6 +226,7 @@ public:
 	void LoadSomaImage(std::string somaFileName);
 	void LoadSomaImage_1(LabelImageType3D::Pointer image){ _SomaImage = image; };
 	void RunTracing();
+	void RunGVFTracing();
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
@@ -208,6 +262,19 @@ public:
 		
 protected:
 	void FeatureMain();
+	void UpdateNDXImage_GVF();
+	void ComputeMultiVesselness(double sigma_min, double sigma_max, int sigma_step);
+	void computeGVF(int mu, int ITER, int smoothing_scale);
+	void ComputeGVFVesselness();
+	void SeedDetection(float th, int detection_method, int radius);
+	void SeedAdjustment(int iter_num);
+	bool SeedSparsify(SamplePointer seeds_candidate, SeedType query_point, int radius);
+	void seed_centroid();
+	void normalizeGVF();
+	void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, float* Alpha3, float* P_I1, float* P_I2, size_t r, size_t c, size_t z);
+	ProbImagePointer Upsampling(ProbImagePointer, int);
+	LabelImagePointer UpsamplingLabel(LabelImagePointer,int);
+
 	void GetFeature( float );
 	
 	bool IsPlate(const itk::FixedArray<float, 3> & , unsigned int & );
@@ -227,17 +294,24 @@ protected:
 	float getRadius(itk::Vector<float,3> & pos);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
-
 	void GetFeature_2( float, int );
+	//ProbImagePointer extract_one_component(int index, GradientImagePointer IG);
 
 private:
+	int SM;
+	int SN;
+	int SZ;
+	vnl_vector<int> visit_label;
+
 	std::vector<SWCNode*> _SWCNodeContainer;
 	std::vector<DebrisNode*> _DebrisNodeContainer;
 	//CharImageType3D::Pointer SomaImage;
 	LabelImageType3D::Pointer _SomaImage;
 	PixelType _CostThreshold;
 	std::priority_queue < HeapNode* , std::vector<HeapNode*>,  Comparison > _PQ;
-	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage, _MaskedImage;   //Input Image, EK image, CT image
+	ImageType3D::Pointer _PaddedCurvImage, _ConnImage, _NDXImage, _MaskedImage,_IVessel;   //Input Image, EK image, CT image
+	GradientImagePointer _IGVF;
+	PointList3D SeedPt;
 	ImageType3D::Pointer ObjectnessImage;
 	CharImageType3D::Pointer _NDXImage2;
 	SWCImageType3D::Pointer _SWCImage; //swc label image
@@ -260,6 +334,7 @@ private:
 	bool _flagPipeline;
 	bool _flagOutLog;
 	bool _isCoverageOptimized;
+	float v_threshold; 
 
 };
 
@@ -299,6 +374,27 @@ public:
 
 
 //////////////////////////////////////////////////////////////////
+class VectorPixelAccessor  
+{
+public:
+  typedef itk::CovariantVector<float,3>   InternalType;
+  typedef                      float      ExternalType;
+
+  void operator=( const VectorPixelAccessor & vpa )
+    {
+      m_Index = vpa.m_Index;
+    }
+  ExternalType Get( const InternalType & input ) const 
+    {
+    return static_cast<ExternalType>( input[ m_Index ] );
+    }
+  void SetIndex( unsigned int index )
+    {
+    m_Index = index;
+    }
+private:
+  unsigned int m_Index;
+};
 
 #endif
 
