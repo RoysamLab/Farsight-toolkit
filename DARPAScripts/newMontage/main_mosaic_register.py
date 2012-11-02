@@ -15,7 +15,7 @@ else:
   print "IT WILL NOT DO THE MOSAIC ONLY THE PREPROCESING"
 
 # Path for the raw data and the destination data
-DATASET_RAW = "0515"
+DATASET_RAW = "1005"
 DATASET_DEST = DATASET_RAW+"_NRRD"
 #GLOBAL_RAW = "/space1/nicolas/FSdata/data/DARPA_RAW/"
 #GLOBAL_DEST = "/space1/nicolas/FSdata/data/DARPA_MOSAICS/"
@@ -31,19 +31,20 @@ GLOBAL_RAW_PATH = GLOBAL_RAW+DATASET_RAW+"/"
 GLOBAL_DEST_PATH = GLOBAL_DEST+DATASET_DEST+"/"
 
 # Local path
-LOCAL_PATH = "/data/nicolas/xyz/"
+LOCAL_PATH = "/data/prathamesh/data/"
 
 
 # Path where the scripts and exe are located
-SCRIPTS_PATH = "/data/nicolas/FINAL/"
-FARSIGHT_EXE = "/data/nicolas/src-bin/bin/farsight-rel/exe/"
+SCRIPTS_PATH = "/data/prathamesh/data/montaging_scripts/"
+FARSIGHT_EXE = "/data/prathamesh/data/farsight_exes"
 
 # Variables of the image, size, first tile, and most important of all, NUMCOLS
-ORDER = "1"
-NUMCOLS = "8"
+# ORDER: 1: Top left, 2: Bottom right, 3: Top right, 4: Bottom left
+ORDER = "3"
+NUMCOLS = "21"
 XSIZE = "1004"
 YSIZE = "1002"
-ZSIZE = "667"
+ZSIZE = "350"
 ANCHORIMAGE = "0"
 
 #############################################################################
@@ -61,7 +62,7 @@ COLORS =['NIC','DAPI','Cy5','GFP','TRITC']
 # print "making "+GLOBAL_DEST_PATH
 # os.makedirs(GLOBAL_DEST_PATH)
 
-#check if the unused folder exist
+#check if the unused folder exist, this is used as a flag to indicate that the registration has not run already, this folder will be created by the register_automagic script
 #if not os.path.isfile(LOCAL_PATH+DATASET_RAW+"/aDAPI.tif") | os.path.isdir(LOCAL_PATH+DATASET_RAW+"/unused"):
 if not os.path.isdir(LOCAL_PATH+DATASET_RAW+"/unused"):
   print "The unused folder does not exist, now it will exit !!"
@@ -81,12 +82,18 @@ if not os.path.isdir(LOCAL_PATH+DATASET_RAW+"/unused"):
   TEMP3 = subprocess.Popen(TEMP2, shell=True)
   TEMP3.communicate()
 
-  # copy ftkMainDarpa
-  TEMP2 = "cp "+FARSIGHT_EXE+"/ftkMainDarpa "+" /data/nicolas/xyz/"+DATASET_RAW
-  TEMP3 = subprocess.Popen(TEMP2, shell=True)
-  TEMP3.communicate()
+  ## copy ftkMainDarpa
+  #TEMP2 = "cp "+FARSIGHT_EXE+"/ftkMainDarpa "+LOCAL_PATH+DATASET_RAW
+  #TEMP3 = subprocess.Popen(TEMP2, shell=True)
+  #TEMP3.communicate()
 
+  print "Copied scripts and ftkMainDarpa"
+
+# The file prepScript is used as a flag to tell tha script that the preprocessing is already done.
   if not os.path.isfile(LOCAL_PATH+DATASET_RAW+"/prepScript.ijm"):
+
+    print "Preprocessing....."
+
     # Preprocess images
     FIJISCRIPT = LOCAL_PATH+DATASET_RAW+"/prepScript.ijm"
     FIJISCRIPT = open(FIJISCRIPT,'w')
@@ -108,11 +115,11 @@ if not os.path.isdir(LOCAL_PATH+DATASET_RAW+"/unused"):
       temp = dapiTile.partition("DAPI")
       #print temp[0]
       TEMP2 = '/data/research/Fiji.app/fiji-linux64 --headless -macro '+LOCAL_PATH+DATASET_RAW+"/prepScript.ijm "+temp[0]+' -batch'
-      #TEMP3 = subprocess.Popen(TEMP2, shell=True)
+      TEMP3 = subprocess.Popen(TEMP2, shell=True)
       print '\tPrep '+temp[0]+" of "+DAPITILES[-1]
       preprocessList.append(TEMP2)
-      #TEMP3.communicate()
-    runParallel.main(preprocessList)
+      TEMP3.communicate()
+    #runParallel.main(preprocessList)
 
     # remove tif in lower case
     NICTILES=sorted(glob.glob(LOCAL_PATH+DATASET_RAW+"/*NIC*dsu.tif"))
