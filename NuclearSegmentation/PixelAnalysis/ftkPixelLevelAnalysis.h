@@ -51,7 +51,7 @@
 namespace ftk
 {
 
-typedef itk::Image< unsigned short int, 3 > UShortImageType;
+typedef itk::Image< unsigned short, 3 > UShortImageType;
 
 class PixelLevelAnalysis{
 	public:

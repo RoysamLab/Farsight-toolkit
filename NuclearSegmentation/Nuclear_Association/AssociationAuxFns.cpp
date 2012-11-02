@@ -209,7 +209,6 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		std::cout<<"Bounding boxes computed"<<std::endl;
 
 #ifdef _OPENMP
-omp_set_nested(1);
 #pragma omp parallel for
 #if _OPENMP < 200805L
 		for( int i=0; i<labelsList.size(); ++i )
@@ -411,9 +410,6 @@ omp_set_nested(1);
 				}
 			}
 		}
-#ifdef _OPENMP
-omp_set_nested(0);
-#endif
 		number_of_rois = number_of_rois*2;
 		if( labelsList.size() == 1 )
 		{
