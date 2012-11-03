@@ -528,14 +528,18 @@ USImageType::PixelType returnthresh( itk::SmartPointer<USImageType> input_image,
 		tempHist[i] = 0;
 
 	USImageType::PixelType maxval = itk::NumericTraits<USImageType::PixelType>::ZeroValue();
+	USImageType::PixelType minval = itk::NumericTraits<USImageType::PixelType>::max();
 	//Populate the histogram (assume pixel type is actually is some integer type):
 	ConstIteratorType it( input_image, input_image->GetRequestedRegion() );
 	for ( it.GoToBegin(); !it.IsAtEnd(); ++it ){
 		USImageType::PixelType pix = it.Get();
 		++tempHist[pix];
 		if( pix > maxval ) maxval = pix;
+		if( pix < minval ) minval = pix;
 	}
-	const int numBinsPresent = maxval+1;
+	//return max of type if there is no variation in the staining
+	if( (maxval-minval)<3 ) return itk::NumericTraits<USImageType::PixelType>::max(); 
+	const USImageType::PixelType numBinsPresent = maxval+1;
 	
 	//Find max value in the histogram
 	double floatIntegerMax = itk::NumericTraits<USImageType::PixelType>::max();
@@ -565,7 +569,7 @@ USImageType::PixelType returnthresh( itk::SmartPointer<USImageType> input_image,
 	histogram->SetMeasurementVectorSize(1);
 	histogram->Initialize(size, lowerBound, upperBound ) ;
 
-	int i=0;
+	USImageType::PixelType i=0;
 	for (HistogramType::Iterator iter = histogram->Begin(); iter != histogram->End(); ++iter ){
 		float norm_freq = (float)(tempHist[i] * scaleFactor);
 		iter.SetFrequency(norm_freq);
