@@ -758,7 +758,6 @@ void MicrogliaRegionTracer::SmoothTree(Cell* cell, Tree* smoothed_tree)
 	CreateSpeedImage(cell);
 
 	SmoothSegments(cell, smoothed_tree, smoothed_tree->GetRoot());
-	//Tree* smoothed_tree = SmoothSegments2(cell, tree);
 }
 
 /* The Tree segments are traversed here and SmoothPath is called on each segment */
@@ -1008,45 +1007,4 @@ double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType no
 	trace_vector[2] = node2[2] - node1[2];
 
 	return sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
-}
-
-/* This function smooths the tree from the root node to the leaf node in one go without taking into account the in between critical points as opposed to the previous method of smoothing between branch points */
-Tree* MicrogliaRegionTracer::SmoothSegments2(Cell* cell, Tree* tree)
-{
-	Tree* smoothed_tree = new Tree();
-	
-	Node* root_node = tree->GetRoot();
-	itk::Index<3> root_node_index;
-	root_node_index[0] = root_node->x;
-	root_node_index[1] = root_node->y;
-	root_node_index[2] = root_node->z;
-
-	smoothed_tree->SetRoot(root_node);
-
-	std::vector<Node*> leaf_nodes;	
-	tree->GetLeafNodes(leaf_nodes);
-
-	//Smooth all the paths that is connected to this start_node
-	std::vector< Node* >::iterator leaf_nodes_iter;
-	for (leaf_nodes_iter = leaf_nodes.begin(); leaf_nodes_iter != leaf_nodes.end(); ++leaf_nodes_iter)
-	{
-		//Make a new path for each possible segment from this start_node
-		PathType::Pointer path = PathType::New();
-		path->Initialize();
-		path->AddVertex(root_node_index);
-		
-		Node* leaf_node = *leaf_nodes_iter;
-		itk::Index<3> leaf_node_index;
-		leaf_node_index[0] = leaf_node->x;
-		leaf_node_index[1] = leaf_node->y;
-		leaf_node_index[2] = leaf_node->z;
-		
-		path->AddVertex(leaf_node_index);
-
-		PathType::Pointer speed_path = SmoothPath(cell, tree, root_node, leaf_node, path);
-
-		ReplaceTreeSegmentWithPath(cell, tree, speed_path, root_node, leaf_node);
-	}
-
-	return smoothed_tree;
 }

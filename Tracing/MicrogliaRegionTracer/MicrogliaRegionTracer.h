@@ -94,7 +94,6 @@ public:
 	void				SmoothTree(Cell* cell, Tree* smoothed_tree);
 	void				SmoothSegments(Cell* cell, Tree* smoothed_tree, Node* start_node);
 	void				ReplaceTreeSegmentWithPath(Cell* cell, Tree* smoothed_tree, PathType::Pointer speed_path, Node* start_node, Node* end_node);
-	Tree*				SmoothSegments2(Cell* cell, Tree* tree);
 	PathType::Pointer	SmoothPath(Cell* cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
 	void				CreateSpeedImage(Cell* cell);
