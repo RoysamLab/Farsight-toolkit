@@ -1329,7 +1329,7 @@ void MultipleNeuronTracer::RunGVFTracing(void)
 
 	
 	
-	WriteImage3D(std::string("seedPoint_Image.mhd"), _NDXImage);
+	//WriteImage3D(std::string("seedPoint_Image.mhd"), _NDXImage);
 	
 
 
@@ -1643,7 +1643,7 @@ void MultipleNeuronTracer::UpdateNDXImage_GVF()
 
 		std::cout<<"compute GVF Vesselness"<<std::endl;
 		this->ComputeGVFVesselness();
-		WriteImage3D(std::string("GVF_Vesselness_enhancement.tif"), _IVessel);
+		//WriteImage3D(std::string("GVF_Vesselness_enhancement.tif"), _IVessel);
 		std::cout<<"compute seed Detection"<<std::endl;
 		v_threshold = 0.1;// this value is calculated in the computeGVFVesselness() function by 
 		this->SeedDetection(v_threshold,detection_method,radius);
@@ -2748,7 +2748,7 @@ ProbImagePointer MultipleNeuronTracer::Upsampling(ProbImagePointer inputImage,in
 	pWriter->SetFileName("test.tif");
 	pWriter->SetInput(pResizeFilter->GetOutput());
 	std::cout<<"in upscale after write"<<std::endl;*/
-	WriteImage3D(std::string("test.tif"), pResizeFilter->GetOutput());
+	//WriteImage3D(std::string("test.tif"), pResizeFilter->GetOutput());
 	ProbImagePointer outputImage = pResizeFilter->GetOutput();
 	return outputImage;	 
 
