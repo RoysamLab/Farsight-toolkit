@@ -11,7 +11,7 @@ private:
 	std::vector<Node*>	member_nodes;
 
 public:
-                        Tree();
+                        explicit Tree();
                         Tree(const Tree& old_tree);	//Copy constructor, for making deep copies!
                         ~Tree();
     void                TreeDestructorHelper(Node* node);
