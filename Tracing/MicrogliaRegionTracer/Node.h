@@ -23,7 +23,7 @@ public:
 
 public:
 	//Default constructor
-	Node(double x, double y, double z, itk::uint64_t id);
+	explicit Node(double x, double y, double z, itk::uint64_t id);
 	
 	//Copy constructor
 	//Note: 
