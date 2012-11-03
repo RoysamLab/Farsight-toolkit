@@ -2,13 +2,12 @@
 
 //Constructor, important that you dont make a new fregl_roi for each new object you want to get, otherwise you will lose the in-memory cache
 ROIGrabber::ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename)
+	: roi_filter(fregl_roi< InputPixelType >(joint_transforms_filename, img_path, anchor_filename, true, 6))
 {
-	this->roi_filter = new fregl_roi< InputPixelType >(joint_transforms_filename, img_path, anchor_filename, true, 6);
 }
 
 ROIGrabber::~ROIGrabber()
 {
-    delete this->roi_filter;
 }
 
 ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
@@ -35,7 +34,7 @@ ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell* cell, ImageType::SizeTyp
 	else 
 		shift_index[2] = 0;
 	
-	this->roi_filter->setROI(roi_origin, roi_size);	//Set the ROI
+	this->roi_filter.setROI(roi_origin, roi_size);	//Set the ROI
 
-	return this->roi_filter->getROI();				//Get the ROI and return as itkImage
+	return this->roi_filter.getROI();				//Get the ROI and return as itkImage
 }

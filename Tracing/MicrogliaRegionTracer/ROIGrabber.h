@@ -18,7 +18,7 @@ public:
 	ImageType::Pointer GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index);
 
 private:
-	fregl_roi< InputPixelType > *roi_filter;
+	fregl_roi< InputPixelType > roi_filter;
 	ImageType::Pointer image;
 };
 
