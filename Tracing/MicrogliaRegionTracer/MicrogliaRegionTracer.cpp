@@ -4,20 +4,18 @@
 #define PRINT_ALL_IMAGES 0  //UNSAFE TO TURN THIS ON WHEN TRACING MORE THAN 1 CELL
 #define PI (4.0*atan(1.0))
 
-MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename)
+MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename) :
+	roi_grabber(joint_transforms_filename, img_path, anchor_filename),
+	soma_filename(soma_filename), 
+	aspect_ratio(3) //xy to z ratio in physical space here
 {
-	this->roi_grabber = new ROIGrabber(joint_transforms_filename, img_path, anchor_filename);
-	this->soma_filename = soma_filename;
-
 #ifdef _OPENMP
 	std::cerr << "OpenMP detected!" << std::endl;
 #endif
-	aspect_ratio = 3.0; //xy to z ratio in physical space here
 }
 
 MicrogliaRegionTracer::~MicrogliaRegionTracer()
 {
-    delete this->roi_grabber;
 }
 
 /*	This function takes in the name of the seed points (where tracing starts) and then grabs a 200x200x100 region with mosaic_roi.
@@ -81,7 +79,7 @@ void MicrogliaRegionTracer::Trace()
             //Grab the initial cellimage
             //std::cout << "Grabbing ROI for cell" << std::endl;
             ImageType::IndexType shift_index;
-            ImageType::Pointer temp_cell_image = roi_grabber->GetROI(cell, roi_size, shift_index);
+            ImageType::Pointer temp_cell_image = roi_grabber.GetROI(cell, roi_size, shift_index);
             
             //Set the origin of the image to be {0, 0, 0}
             ImageType::PointType origin = temp_cell_image->GetOrigin();

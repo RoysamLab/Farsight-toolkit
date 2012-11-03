@@ -62,7 +62,7 @@ private:
 
 private:
 	std::vector<Cell*> cells;
-	ROIGrabber* roi_grabber;
+	ROIGrabber roi_grabber;
 	std::string soma_filename;
 	double aspect_ratio;
 
