@@ -1,70 +1,72 @@
 #include "MicrogliaRegionTracer.h"
-
 #include "time.h"
-
 #include "itkMultiThreader.h"
+#include <cstdlib>
 
 int main(int argc, char* argv[])
 {
-	MicrogliaRegionTracer *MRT;
+	MicrogliaRegionTracer MRT;
 	
 	if (argc == 1)	//Only for development purposes
-	{
-		MRT = new MicrogliaRegionTracer("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/", "8bitkt06045_w311GFPdsu.TIF", "E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+	{		
+		//MRT = new MicrogliaRegionTracer("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml", "E:/Farsight_Images/MicrogliaRegionTracer/GFP/", "8bitkt06045_w311GFPdsu.TIF", "E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
 		
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
-		//MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
-		MRT->LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
+		MRT.SetJointTransformsFile("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml");
+		MRT.SetImageSeriesPath("E:/Farsight_Images/MicrogliaRegionTracer/GFP/");
+		MRT.SetAnchorImage("8bitkt06045_w311GFPdsu.TIF");
+		MRT.SetSomaImage("E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+		
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
+		//MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
+		MRT.LoadCellPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
+		MRT.SetAspectRatio(3);
 	}
-	else if( argc < 5 )
+	else if( argc < 6 )
 	{
 		std::cerr << "Usage: "
 			<< "<joint_transforms.xml> "
 			<< "<image series path> "
 			<< "<filename from image series> "
 			<< "<seedpoints file> "
+			<< "<aspect_ratio> "
 			<< "[mask image]"
 			<< std::endl;
 		return 1;
 	}
-    else //( argc >= 5 )
+    else //( argc >= 6 )
 	{
 		std::string mask_image;
         mask_image = argv[5];
-		MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str());
+		//MRT = new MicrogliaRegionTracer(argv[1], argv[2], argv[3], mask_image.c_str());
+		MRT.SetJointTransformsFile(argv[1]);
+		MRT.SetImageSeriesPath(argv[2]);
+		MRT.SetAnchorImage(argv[3]);
+		MRT.LoadCellPoints(argv[4]);
+		MRT.SetAspectRatio(atof(argv[5]));
+		MRT.SetSomaImage(argv[6]);
 	}
 
 	
 
 	clock_t start_time = clock();
-
-	/*std::cout << "Loading image" << std::endl;
-	MRT->LoadImage("E:/farsight_images/MicrogliaRegionTracer/input.tif");*/
-
-	std::cout << "Entering LoadCellPoints" << std::endl;
-
-	//MRT->LoadCellPoints( argv[4] );
-
 	std::cout << "Entering Trace" << std::endl;
 	try
 	{
-		MRT->Trace();
+		MRT.Trace();
 	}
 	catch ( const std::exception & e )
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
-		delete MRT;
 		return 1;
 	}
 
 	std::cout << "Total time for MicrogliaRegionTracing is: " << (clock() - start_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
 
-	delete MRT;
 	return 0;
 }

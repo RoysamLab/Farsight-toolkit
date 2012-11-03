@@ -62,15 +62,22 @@ private:
 
 private:
 	std::vector<Cell*> cells;
-	ROIGrabber roi_grabber;
-	std::string soma_filename;
+	std::string joint_transforms_filename;
+	std::string image_series_pathname;
+	std::string anchor_image_filename;
+	std::string soma_image_filename;
 	double aspect_ratio;
 
 public:
-	explicit MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename);
+	explicit MicrogliaRegionTracer();
 	~MicrogliaRegionTracer();
 
-	void LoadCellPoints(const std::string & image_filename);
+	void				SetJointTransformsFile(const std::string & joint_transforms_filename);
+	void				SetImageSeriesPath(const std::string & image_series_pathname);
+	void				SetAnchorImage(const std::string & anchor_image_filename);
+	void				LoadCellPoints(const std::string & seedpoints_filename);
+	void				SetSomaImage(const std::string & soma_image_filename);
+	void				SetAspectRatio(const float & aspect_ratio);
 
 	void				Trace();
 	

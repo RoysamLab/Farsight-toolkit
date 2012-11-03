@@ -4,10 +4,7 @@
 #define PRINT_ALL_IMAGES 0  //UNSAFE TO TURN THIS ON WHEN TRACING MORE THAN 1 CELL
 #define PI (4.0*atan(1.0))
 
-MicrogliaRegionTracer::MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename) :
-	roi_grabber(joint_transforms_filename, img_path, anchor_filename),
-	soma_filename(soma_filename), 
-	aspect_ratio(3) //xy to z ratio in physical space here
+MicrogliaRegionTracer::MicrogliaRegionTracer()
 {
 #ifdef _OPENMP
 	std::cerr << "OpenMP detected!" << std::endl;
@@ -18,8 +15,21 @@ MicrogliaRegionTracer::~MicrogliaRegionTracer()
 {
 }
 
-/*	This function takes in the name of the seed points (where tracing starts) and then grabs a 200x200x100 region with mosaic_roi.
-	A new Cell object is created to hold the image and seed point and relevant information. */
+void MicrogliaRegionTracer::SetJointTransformsFile(const std::string & joint_transforms_filename)
+{
+	this->joint_transforms_filename = joint_transforms_filename;
+}
+
+void MicrogliaRegionTracer::SetImageSeriesPath(const std::string & image_series_pathname)
+{
+	this->image_series_pathname = image_series_pathname;
+}
+
+void MicrogliaRegionTracer::SetAnchorImage(const std::string & anchor_image_filename)
+{
+	this->anchor_image_filename = anchor_image_filename;
+}
+
 void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
 {
 	std::ifstream seed_point_file;
@@ -31,6 +41,16 @@ void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filena
 		Cell* cell = new Cell(cellX, cellY, cellZ);
 		cells.push_back(cell);
 	}
+}
+
+void MicrogliaRegionTracer::SetSomaImage(const std::string & soma_image_filename)
+{
+	this->soma_image_filename = soma_image_filename;
+}
+
+void MicrogliaRegionTracer::SetAspectRatio(const float & aspect_ratio)
+{
+	this->aspect_ratio = aspect_ratio;
 }
 
 /* This is the main loop where tracing takes place */
@@ -48,7 +68,8 @@ void MicrogliaRegionTracer::Trace()
     std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
     std::cerr << "Number of cells to process in the last group" << cells.size() % num_threads << std::endl;
     
-    
+    ROIGrabber roi_grabber(this->joint_transforms_filename, this->image_series_pathname, this->anchor_image_filename);
+
     //The following for loops are to handle the case of parallelizing the processing of the
     //microglia because the fregl_roi class does not like to be accessed by different OpenMP
     //threads even though if it guarded by a omp critical section.
@@ -89,7 +110,7 @@ void MicrogliaRegionTracer::Trace()
             origin[2] = 0;
             temp_cell_image->SetOrigin(origin);
             
-            //Duplicate the image so that the requests don't propagate back up to roi_grabber
+            //Duplicate the image so that when roi_grabber gets destroyed the roi's dont get destroyed with it
             typedef itk::ImageDuplicator< ImageType > DuplicatorType;
             DuplicatorType::Pointer duplicator = DuplicatorType::New();
             duplicator->SetInputImage(temp_cell_image);
