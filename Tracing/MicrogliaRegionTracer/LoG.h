@@ -16,7 +16,7 @@ private:
 	typedef Cell::LoGImageType LoGImageType;
 
 public:
-	LoG();
+	explicit LoG();
 	~LoG();
 
     LoGImageType::Pointer RunLoG(ImageType::Pointer & image, float scale);
