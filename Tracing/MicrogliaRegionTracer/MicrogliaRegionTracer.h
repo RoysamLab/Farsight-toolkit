@@ -73,8 +73,7 @@ public:
 	void LoadCellPoints(const std::string & image_filename);
 
 	void				Trace();
-
-
+	
 	void				CalculateCandidatePixels(Cell* cell);
 	void				CreateIsometricImage(Cell* cell);
 	void				RidgeDetection(Cell* cell);
@@ -82,7 +81,7 @@ public:
 
 	void				BuildTree(Cell* cell);
 	double**			BuildAdjacencyGraph(Cell* cell);
-	double				CalculateDistance(itk::uint64_t k, itk::uint64_t l, Cell* cell);	//THIS IS NOT THE EUCLIDEAN DISTANCE
+	double				CalculateDistance(Cell* cell, itk::uint64_t k, itk::uint64_t l);	//THIS IS NOT THE EUCLIDEAN DISTANCE
 	Tree*				BuildMST1(Cell* cell, double** AdjGraph);
 
 	void				SmoothTree(Cell* cell, Tree* smoothed_tree);
@@ -93,11 +92,10 @@ public:
 
 	void				CreateSpeedImage(Cell* cell);
 
-	void				WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local);	
-	void				WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	void				WriteTreeToSWCFile(Cell* cell, Tree* tree, std::string filename, std::string filename_local);	
+	void				WriteLinkToParent(Cell* cell, Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);
 	
 	double				CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2);
-
 };
 
 #endif

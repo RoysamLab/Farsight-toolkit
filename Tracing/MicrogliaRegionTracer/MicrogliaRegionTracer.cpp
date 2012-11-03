@@ -460,7 +460,7 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 	swc_filename_stream_local << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local.swc";
 
 
-	WriteTreeToSWCFile(tree, cell, swc_filename_stream.str(), swc_filename_stream_local.str());
+	WriteTreeToSWCFile(cell, tree, swc_filename_stream.str(), swc_filename_stream_local.str());
 
 	Tree* smoothed_tree = new Tree(*tree);
 	SmoothTree(cell, smoothed_tree);
@@ -470,7 +470,7 @@ void MicrogliaRegionTracer::BuildTree(Cell* cell)
 	swc_filename_stream_local_smoothed << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_tree_local_smoothed.swc";
 
 
-	WriteTreeToSWCFile(smoothed_tree, cell, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+	WriteTreeToSWCFile(cell, smoothed_tree, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell->critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
@@ -493,7 +493,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 		//std::cout << "Calculating distance for node " << k << std::endl;
 		for (itk::uint64_t l = 0; l < cell->critical_points_queue.size(); l++)
 		{
-			AdjGraph[k][l] = CalculateDistance(k, l, cell);
+			AdjGraph[k][l] = CalculateDistance(cell, k, l);
 		}
 	}
 
@@ -502,7 +502,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell* cell)
 }
 
 /* This is the distance part of the cost function */
-double MicrogliaRegionTracer::CalculateDistance(itk::uint64_t node_from, itk::uint64_t node_to, Cell* cell)
+double MicrogliaRegionTracer::CalculateDistance(Cell* cell, itk::uint64_t node_from, itk::uint64_t node_to)
 {
 	ImageType::IndexType node1 = cell->critical_points_queue[node_from];
 	ImageType::IndexType node2 = cell->critical_points_queue[node_to];
@@ -673,7 +673,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell* cell, double** AdjGraph)
 
 /*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
 *	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */ 
-void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::string filename, std::string filename_local)
+void MicrogliaRegionTracer::WriteTreeToSWCFile(Cell* cell, Tree* tree, std::string filename, std::string filename_local)
 {
 	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
 	std::ofstream traceFile, traceFile_local;
@@ -686,7 +686,7 @@ void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::stri
 	Node* root = tree->GetRoot();
 
 	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
-	WriteLinkToParent(root, tree_depth, cell, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
+	WriteLinkToParent(cell, root, tree_depth, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
 
 	traceFile.close();
 	traceFile_local.close();	
@@ -694,7 +694,7 @@ void MicrogliaRegionTracer::WriteTreeToSWCFile(Tree* tree, Cell* cell, std::stri
 
 //This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
 //CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively or increase stack size if this is the case...
-void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, Cell* cell, std::ofstream &traceFile, std::ofstream &traceFile_local)
+void MicrogliaRegionTracer::WriteLinkToParent(Cell* cell, Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local)
 {
 	//Calculate some node indices
 	ImageType::PointType node_index, node_index_local;
@@ -727,7 +727,7 @@ void MicrogliaRegionTracer::WriteLinkToParent(Node* node, itk::uint64_t tree_dep
 	for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
 	{
 		Node* child_node = *children_iter;
-		WriteLinkToParent(child_node, tree_depth+1, cell, traceFile, traceFile_local);
+		WriteLinkToParent(cell, child_node, tree_depth+1, traceFile, traceFile_local);
 	}
 
 	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
