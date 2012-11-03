@@ -12,7 +12,7 @@ public:
 	
 
 public:
-	ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
+	explicit ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
 	~ROIGrabber();
 	
 	ImageType::Pointer GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index);
