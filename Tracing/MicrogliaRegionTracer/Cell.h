@@ -44,7 +44,7 @@ public:
 	typedef itk::ImageFileReader < SomaImageType >		SomaReaderType;
 
 public:
-	Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
+	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
 	
 	itk::uint64_t getX() const;  
 	itk::uint64_t getY() const;
