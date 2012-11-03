@@ -28,12 +28,8 @@
 class Cell
 {
 public:
-	typedef	unsigned char							InputPixelType;
-	typedef fregl_roi< InputPixelType >::ImageType	ImageType;
-	
-	//typedef ImageType::Pointer					ImageTypePointer;
-	//typedef ImageType::SizeType					ImageSizeType;
-	//typedef ImageType::IndexType					ImageIndexType;
+	typedef	unsigned char								InputPixelType;
+	typedef fregl_roi< InputPixelType >::ImageType		ImageType;
 
 	typedef itk::Image< float, 3 >						LoGImageType;
 	typedef itk::Image< float, 3 >						VesselnessImageType;
