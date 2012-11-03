@@ -67,12 +67,12 @@ private:
 	double aspect_ratio;
 
 public:
-	MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename);
+	explicit MicrogliaRegionTracer(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename, const std::string & soma_filename);
 	~MicrogliaRegionTracer();
 
 	void LoadCellPoints(const std::string & image_filename);
 
-	void	Trace();
+	void				Trace();
 
 
 	void				CalculateCandidatePixels(Cell* cell);
