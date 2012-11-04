@@ -38,6 +38,11 @@
 #include "itkMinimumMaximumImageCalculator.h"
 #include "itkImageRegionIterator.h"
 #include <itkSignedMaurerDistanceMapImageFilter.h>
+#include <itkDivideImageFilter.h>
+#include <itkAddImageFilter.h>
+#include <itkStatisticsImageFilter.h>
+#include <itkThresholdImageFilter.h>
+#include "itkMedianImageFilter.h"
 
 class SomaExtractor
 {
@@ -63,6 +68,7 @@ protected:
 	typedef itk::ImageFileWriter< UShortImageType > ushortImageWriter;
 	typedef itk::ImageFileReader< ProbImageType > probImageReader;
 	typedef itk::ImageFileReader< ProbImageType2D > probImage2DReader;
+	typedef itk::ImageFileWriter< ProbImageType2D > probImage2DWriter;
 	typedef itk::ImageFileReader< UShortImageType2D > ushortImage2DReader;
 	typedef itk::ImageFileWriter< UShortImageType2D > ushortImage2DWriter;
 
@@ -81,7 +87,7 @@ protected:
 	typedef itk::BinaryThresholdImageFilter< ProbImageType, ProbImageType> BinaryProbThresholdingFilterType;
 	typedef itk::BinaryThresholdImageFilter< SegmentedImageType, SegmentedImageType> SegThresholdingFilterType;
 	typedef itk::ExtractImageFilter< ProbImageType, ProbImageType> ExtractFilterType;
-	typedef itk::HuangThresholdImageFilter< ProbImageType, ProbImageType> HuangThresholdFilter;
+	typedef itk::HuangThresholdImageFilter< ProbImageType, OutputImageType> HuangThresholdFilter;
 	typedef itk::SigmoidImageFilter < ProbImageType, ProbImageType> SigmoidImageFilterType;
 	typedef itk::VotingBinaryHoleFillingImageFilter< SegmentedImageType, SegmentedImageType> HoleFillingFilterType;
 	typedef itk::AdaptiveHistogramEqualizationImageFilter< ProbImageType> AdaptiveHistogramEqualizationImageFilterType;
@@ -101,10 +107,23 @@ protected:
 	typedef itk::SignedDanielssonDistanceMapImageFilter<ProbImageType, ProbImageType> DanielssonDistanceMapFilterType;
 	typedef itk::SignedMaurerDistanceMapImageFilter<ProbImageType, ProbImageType> MaurerDistanceMapFilterType;
 	typedef itk::SubtractImageFilter <ProbImageType, ProbImageType, ProbImageType> SubtractImageFilterType;
+	typedef itk::SubtractImageFilter <ProbImageType2D, ProbImageType2D, ProbImageType2D> SubtractImageFilterType2D;
+	typedef itk::AddImageFilter <ProbImageType, ProbImageType, ProbImageType> AddImageFilterType;
+	typedef itk::AddImageFilter <ProbImageType2D, ProbImageType2D, ProbImageType2D> AddImageFilterType2D;
+	typedef itk::DivideImageFilter <ProbImageType, ProbImageType, ProbImageType > DivideImageFilterType;
+	typedef itk::DivideImageFilter <ProbImageType2D, ProbImageType2D, ProbImageType2D > DivideImageFilterType2D;
 	typedef itk::RegionOfInterestImageFilter< SegmentedImageType, SegmentedImageType> RegionOfInterestFilter;
 	typedef itk::MinimumMaximumImageCalculator <ProbImageType> ImageCalculatorFilterType;
 	typedef itk::ImageRegionConstIterator< ProbImageType > ProbConstIteratorType;
+	typedef itk::ImageRegionConstIterator< ProbImageType2D > Prob2DConstIteratorType;
 	typedef itk::ImageRegionIterator< ProbImageType>  ProbIteratorType;
+	typedef itk::ImageRegionIterator< OutputImageType>  UcharIteratorType;
+	typedef itk::ImageRegionIterator< ProbImageType2D > Prob2DIteratorType;
+	typedef itk::StatisticsImageFilter<ProbImageType> StatisticsImageFilterType;
+	typedef itk::StatisticsImageFilter<ProbImageType2D> StatisticsImageFilterType2D;
+	typedef itk::ThresholdImageFilter< ProbImageType2D> ThresholdImageFilterType;
+	typedef itk::MedianImageFilter<ProbImageType2D, ProbImageType2D> MedianFilterType;
+
 public:
 	//: constructor
 	SomaExtractor();
@@ -134,6 +153,7 @@ public:
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image, bool bscale = false);
 	void writeImage(const char* writeFileName, GradientImageType::Pointer image);
 	void writeImage(const char* writeFileName, UShortImageType::Pointer image);
+	void WriteFloat2DImage(const char* writeFileName, ProbImageType2D::Pointer image);
 	void writeCentroids(const char* writeFileName, std::vector< itk::Index<3> > &seedVec);
 	
 	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
@@ -143,11 +163,17 @@ public:
 	// generate soma seed points for the input image
 	ProbImageType::Pointer GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids);
  
-	ProbImageType2D::Pointer GetAverage(const char * channelName, int n);
+	ProbImageType2D::Pointer GetAverage(const char * channelName, int n, double sigma);
 	ProbImageType2D::Pointer GetBackgroundImage(ProbImageType::Pointer image, double sigma);
-	UShortImageType::Pointer DevideAndScaleToOriginalMean(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage);
-	UShortImageType::Pointer DevideAndScale(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, double mean);
+	ProbImageType2D::Pointer GetBackgroundImageByFirstSlice(ProbImageType::Pointer image, double sigma);
+	UShortImageType::Pointer DevideAndScaleToOriginalMean(ProbImageType::Pointer image, ProbImageType2D::Pointer backgroundImage, int border);
+	UShortImageType::Pointer DevideAndScale(ProbImageType::Pointer oriImage, ProbImageType2D::Pointer backgroundImage, double median, double ratio_threshold = 0);
 	UShortImageType::Pointer RescaleImage(ProbImageType::Pointer image, double globalMax, double intensityMax);
+	ProbImageType2D::Pointer adjustMeanStd(ProbImageType2D::Pointer image, double globalMean, double globalStd);
+	void NormalizeUsingBackgroundImage(ProbImageType2D::Pointer image, ProbImageType2D::Pointer backgroundimage, double sigma);
+	void writeUnshort2D(const char *fileName, UShortImageType2D::Pointer image);
+	void GetSeedpointsInRegion(std::vector< itk::Index<3> > &seedVec, std::vector< itk::Index<3> > &seedInRegion, int startX, int startY, int width, int height);
+	void CaculateMeanStd(std::string fileName, ProbImageType::Pointer image);
 
 protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);
@@ -157,6 +183,9 @@ protected:
 	void CheckBoundary(SegmentedImageType::IndexType &start, SegmentedImageType::IndexType &end, int SX, int SY, int SZ); 
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, int sliceNum, double alfa, double beta, double &threshold);
 	ProbImageType::Pointer EnhanceContrast( ProbImageType::Pointer inputImage, double alfa, double beta, double radius);
+	void ShrinkPixel(ProbImageType2D::Pointer image, int border);
+	ProbImageType2D::Pointer ExtractSlice(ProbImageType::Pointer image, int sliceId);
+	ProbImageType::Pointer RemoveImageBorderByPixel(ProbImageType::Pointer image, int border);
 
 private:
 	//ProbImageType::Pointer inputImage;

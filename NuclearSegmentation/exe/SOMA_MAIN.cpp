@@ -10,6 +10,7 @@ void MakeDices(const char * montagefileName, const char * seedfileName, int dice
 
 int main(int argc, char* argv[])
 {
+	/// generate XML for microglia video images
 	std::string str = std::string("XML");
 	if( argc == 5 && std::string(argv[1]) == str && atoi(argv[2]) >= 1)  // generate project file for the image sequences
 	{
@@ -38,13 +39,14 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 3 )
+	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 4)
 	{
 		std::cout<<"Debris: SomaExtraction <0> <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
 		std::cout<<"SomaExtraction: SomaExtraction <1> <InputImageFileName> <InitialContourLabeledImage> <Options>\n";
-		std::cout<<"SomaExtraction without seeds: SomaExtraction <2> <InputImageFileName> <SomaCentroids.txt> <Options>\n";
-		std::cout<<"Normalize intensity: SomaExtraction <3> <InputImageFileName> <Gaussian Blur Sigma> <Global Mean> <0: using global mean, 1: using original mean>\n";
+		std::cout<<"SomaExtraction without seeds: SomaExtraction <2> <InputImageFileName> <Options>\n";
+		std::cout<<"Get Statistics of the image: SomaExtraction <3> <InputImageFileName> \n";
+		std::cout<<"Normalize intensity: SomaExtraction <4> <InputImageFileName> <Gaussian Blur Sigma> <Global Median> <ratio threshold, if below, autothresholding to keep background>\n";
 		return 0;
 	}
 
@@ -67,7 +69,7 @@ int main(int argc, char* argv[])
 		std::cout<< "Associating Debris with Nucleus..."<<std::endl;
 		Somas->AssociateDebris(inputImage, somaSeeds, debrisSeeds);
 	}
-	else if( atoi(argv[1]) == 1) /// soma segmentation
+	else if( atoi(argv[1]) == 1) /// soma segmentation with initial contours
 	{
 		Somas->LoadOptions( argv[4]); // Load params
 		
@@ -87,16 +89,13 @@ int main(int argc, char* argv[])
 		somaFeatureName.append("_soma_features.txt");
 
 		std::cout << "Set initial contour" << std::endl;
-		//SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImageByPortion(argv[2]); // Load labeled nucleus image by portion 16 bit
 		SomaExtractor::SegmentedImageType::Pointer initialContourImage = Somas->SetInitalContourImage(argv[3]); // Load labeled nucleus image
 		
-		std::vector< itk::Index<3> > seedVector;
-		//image = Somas->EnhanceContrast(image, seedVector[0][2], atof(argv[4]), atof(argv[5]));
-
 		clock_t SomaExtraction_start_time = clock();
 		
 		std::cout<< "Segmenting..."<<std::endl;
 
+		std::vector< itk::Index<3> > seedVector;
 		/// SegmentSoma2: GVF Active Contour
 		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, initialContourImage, seedVector);
 		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
@@ -115,7 +114,7 @@ int main(int argc, char* argv[])
 	}
 	else if( atoi(argv[1]) == 2)  /// soma segmentation without initial seeds
 	{
-		Somas->LoadOptions( argv[4]); // Load params
+		Somas->LoadOptions( argv[3]); // Load params
 		std::cout << "Set input image" << std::endl;
 		SomaExtractor::OutputImageType::Pointer image = Somas->Read16BitImage(argv[2]); // Load microglia image 16bit	
 		
@@ -137,7 +136,7 @@ int main(int argc, char* argv[])
 
 		std::vector< itk::Index<3> > seedVector;
 		SomaExtractor::ProbImageType::Pointer binImagePtr = Somas->GenerateSeedPoints(image, seedVector);
-		Somas->ReadSeedpoints(argv[3], seedVector, false);
+		//Somas->ReadSeedpoints(argv[3], seedVector, false);
 
 		clock_t SomaExtraction_start_time = clock();
 		
@@ -159,58 +158,75 @@ int main(int argc, char* argv[])
 			ftk::SaveTable(somaFeatureName.c_str(), table);
 		}
 	} 
-	else if( atoi(argv[1]) == 3 && argc == 6)  /// normalize the intensity: get background image
+	else if( atoi(argv[1]) == 3 && argc == 3)   // print out mean and std and the ratio
+	{
+		std::string InputFilename = std::string(argv[2]);
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); 
+		Somas->CaculateMeanStd(InputFilename, image);
+	}
+	else if( atoi(argv[1]) == 4 && argc == 6)  /// normalize the intensity: get background image
 	{
 		std::string InputFilename = std::string(argv[2]);
 		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(InputFilename.c_str()); 
-		SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImage(image, atof(argv[3]));
+		SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImageByFirstSlice(image, atof(argv[3]));
 		std::string imageName = InputFilename;
-		SomaExtractor::UShortImageType::Pointer rescaledImage;
-		switch( atoi(argv[5]))
-		{
-		case 0:
-			imageName.erase(imageName.length()-4,imageName.length());
-			imageName.append("_global_mean.tif");
-			rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]));
-			Somas->writeImage(imageName.c_str(), rescaledImage);
-			break;
-		case 1:
-			imageName.erase(imageName.length()-4,imageName.length());
-			imageName.append("_original_mean.tif");
-			rescaledImage = Somas->DevideAndScaleToOriginalMean(image, backgroundImage);
-			Somas->writeImage(imageName.c_str(), rescaledImage);
-			break;
-		default:
-			break;
-		}
+		imageName.erase(imageName.length()-4,imageName.length());
+		imageName.append("_normalize.tif");
+		SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]), atof(argv[5]));
+		Somas->writeImage(imageName.c_str(), rescaledImage);
 	}
-	//else if( atoi(argv[1]) == 4 && argc == 4)  /// normalize the intensity: devide and calculate the max 
-	//{
-	//	std::string InputFilename = std::string(argv[2]);
-	//	SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); // Load image 16bit
-	//	SomaExtractor::ProbImageType2D::Pointer imageBackground = Somas->SetInputImageFloat2D(argv[3]); // Load background image float
-	//	Somas->DevideAndScale(image, imageBackground, InputFilename); 
-	//	//Somas->writeImage(imageName.c_str(), resultImage);
-	//}
-	//else if( atoi(argv[1]) == 5 && argc == 5)  /// normalize the intensity: scale the image
-	//{
-	//	std::string InputFilename = std::string(argv[2]);
-	//	std::string imageName = InputFilename;
-	//	imageName.erase(imageName.length()-5,imageName.length());
-	//	imageName.append("_normalize.tif");
 
-	//	SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImageFloat(argv[2]); // Load devide image float
-	//	SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->RescaleImage(image, atof(argv[3]), atof(argv[4]));
+	//else if( atoi(argv[1]) == 5 && argc == 5)  /// normalize by the input background
+	//{
+	//	std::string InputFilename = std::string(argv[2]);
+	//	SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(InputFilename.c_str()); 
+	//	SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->SetInputImageFloat2D(argv[3]);
+	//	SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->DevideAndScaleToOriginalMean(image, backgroundImage, atoi(argv[4]));
+	//	
+	//	std::string imageName = InputFilename;
+	//	imageName.erase(imageName.length()-4,imageName.length());
+	//	imageName.append("_normalize.tif");
 	//	Somas->writeImage(imageName.c_str(), rescaledImage);
 	//}
-	//else if( atoi(argv[1]) == 6 && argc == 4)  /// normalize the intensity: scale the image
+	//else if( atoi(argv[1]) == 6 && argc == 5)  /// normalize the intensity: get background image
 	//{
-	//	Somas->GetAverage(argv[2], atoi(argv[3]));
+	//	std::string InputFilename = std::string(argv[2]);
+	//	//SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); 
+	//	//SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImage(image, atof(argv[3]));
+	//	SomaExtractor::ProbImageType2D::Pointer backModel = Somas->SetInputImage2D(argv[2]);
+	//	SomaExtractor::ProbImageType2D::Pointer backimage = Somas->SetInputImage2D(argv[3]);
+
+	//	//std::string imageName = InputFilename;
+	//	//imageName.erase(imageName.length()-4,imageName.length());
+	//	//imageName.append("_background.nrrd");
+	//	//Somas->WriteFloat2DImage(imageName.c_str(), backgroundImage);
+
+	//	//std::cout<<"Read background image"<<std::endl;
+	//	//
+	//	//std::cout<<"NormalizeUsingBackgroundImage"<<std::endl;
+	//	Somas->NormalizeUsingBackgroundImage(backModel, backimage, atof(argv[4]));
+	//	/*std::string imageName = InputFilename;
+	//	imageName.erase(imageName.length()-4,imageName.length());
+	//	imageName.append("_normalize.tif");
+	//	SomaExtractor::UShortImageType::Pointer normalizedImage = Somas->NormalizeUsingBackgroundImage(image, backgroundImage);
+	//	Somas->writeImage(imageName.c_str(), normalizedImage);*/
 	//}
-	//else if( atoi(argv[1]) == 7 && argc == 4)  /// normalize the intensity: scale the image
+	//else if( atoi(argv[1]) == 7 && argc == 7)   // get seed coordinates 
 	//{
-	//	Somas->GetAverage(argv[2], atoi(argv[3]));
+	//	std::vector< itk::Index<3> > seedVector;
+	//	Somas->ReadSeedpoints(argv[2], seedVector, false);
+	//	std::cout<< "Original Seed Size: "<<seedVector.size()<<std::endl;
+
+	//	std::string InputFilename = std::string(argv[2]);
+	//	std::string outputFilename = InputFilename;
+	//	outputFilename.erase(outputFilename.length()-4,outputFilename.length());
+	//	outputFilename.append("_crop.txt");
+	//	std::vector< itk::Index<3> > seedInRegion;
+	//	Somas->GetSeedpointsInRegion(seedVector, seedInRegion, atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]));  
+	//	std::cout<< "Seed Size in region: "<<seedInRegion.size()<<std::endl;
+	//	Somas->writeCentroids(outputFilename.c_str(), seedInRegion);
 	//}
+
 	delete Somas;
 	return 0;
 }
