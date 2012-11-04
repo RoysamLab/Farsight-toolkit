@@ -82,8 +82,6 @@
 #include <ftkCommon/ftkUtils.h>
 #include "ObjectSelection.h"
 
-using namespace std;
-
 class Dendrogram : public QMainWindow
 {
     Q_OBJECT;
@@ -99,7 +97,7 @@ public:
 
 	double** connect_Data_Tree;
 	int*    Optimal_Leaf_Order;
-	vector<vector<double > > Processed_Coordinate_Data_Tree;
+	std::vector<std::vector< double > > Processed_Coordinate_Data_Tree;
 	int num_samples;
 	
 protected slots:

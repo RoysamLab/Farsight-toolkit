@@ -842,12 +842,12 @@ void NucleusEditor::about()
 //******************************************************************************
 // SLOT: changes the status bar to say the mouse coordinates
 //******************************************************************************
-void NucleusEditor::setMouseStatus(int x, int y, int z, int t, list<int> v)
+void NucleusEditor::setMouseStatus(int x, int y, int z, int t, std::list<int> v)
 {
 	QString statusMsg("X: " + QString::number(x) + ", Y: " + QString::number(y) + ", Z: " + QString::number(z) + ", T: " + QString::number(t));
 
 	int i = 1;
-	for(list<int>::iterator it = v.begin(); it != v.end(); it++) {
+	for(std::list<int>::iterator it = v.begin(); it != v.end(); it++) {
 		statusMsg.append(", Value " + QString::number(i)  + ": " + QString::number(*it));
 		++i;
 	}
@@ -4010,7 +4010,7 @@ void NucleusEditor::changeClass(void)
 	
 	for(int i = 0 ; i<ids.size() ;++i)
 	{
-		vector<int>::iterator posn1 = std::find(allIds.begin(), allIds.end(), ids.at(i));
+		std::vector<int>::iterator posn1 = std::find(allIds.begin(), allIds.end(), ids.at(i));
 		table->SetValueByName(posn1-allIds.begin(),classifier.c_str(),new_class);
 	}
 
@@ -4303,7 +4303,7 @@ void NucleusEditor::splitCellAlongZ(void)
 		return;
 
 	selection->clear();
-	for ( set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
+	for ( std::set<long int>::iterator it=sels.begin(); it != sels.end(); it++ )
 	{
 		std::vector<int> ret = nucSeg->SplitAlongZ(*it,segView->GetCurrentZ(), table);
 		if(ret.size() != 0)

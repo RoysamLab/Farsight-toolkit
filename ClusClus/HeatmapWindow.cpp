@@ -167,7 +167,7 @@ void Heatmap::creatDataForHeatmap(double powCof)
 	//this->scaleData(mustd);
 	this->scaleData();
 
-	vector<double > temp;
+	std::vector< double > temp;
 	temp.resize(num_features);
 
 	double** tempdata;

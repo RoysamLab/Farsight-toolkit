@@ -23,8 +23,6 @@
 #include<limits>
 #include <vector>
 
-using namespace std;
-
 #define MAX_SZ 50
 
 void Initialize_Parameters(std::vector<std::vector<double> > *X,int** SEEDS,double** U,double*** Segma,double* PI,double** Z,int num_points,int num_components);

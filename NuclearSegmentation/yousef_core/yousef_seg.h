@@ -100,7 +100,7 @@ public:
 	std::vector<int> getImageSize();		// Returns in form [0]numStacks, [1]numRows, [2]numColumns	
 
 	//Return a list of seeds detected during Seeds Detection Function
-	vector<Seed> getSeeds(){ return mySeeds; };
+	std::vector<Seed> getSeeds(){ return mySeeds; };
 	void outputSeeds(void);
 
 	//sub-modules that can be executed
@@ -138,7 +138,7 @@ public:
 	//Read the output from the previous IDL format
 	int readFromIDLFormat(std::string fileName);
 	//return a list of seeds
-	vector<Seed> getSeedsList() { return mySeeds; }
+	std::vector<Seed> getSeedsList() { return mySeeds; }
 
 	//
 	std::vector< int > SplitInit(ftk::Object::Point P1, ftk::Object::Point P2);
@@ -171,7 +171,7 @@ private:
 
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg
-	string dataFilename;
+	std::string dataFilename;
 	unsigned short* binImagePtr;				//Created in yousef_seg
 	unsigned short* seedImagePtr;				//Created in yousef_seg
 	float* logImagePtr;				//Created in yousef_seg
@@ -183,7 +183,7 @@ private:
 	size_t numRows;
 	size_t numColumns;
 
-	vector<Seed> mySeeds;
+	std::vector<Seed> mySeeds;
 	ConnComp* myConnComp;	//added by Yousef on 05-21-2008
 	int numConnComp;		//added by Yousef on 05-21-2008
 	int minLoGImg;			//minimum value from Laplacian of Gaussian image

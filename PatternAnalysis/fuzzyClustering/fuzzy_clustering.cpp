@@ -155,7 +155,7 @@ out:
 		double label;		
 		if( fscanf(fp,"%lf",&label) == EOF )
       {
-      cerr << "fscanf encountered end of file!" << endl;
+      std::cerr << "fscanf encountered end of file!" << std::endl;
       }
 		labels[i] = (int) label;
 		
@@ -373,7 +373,7 @@ void FuzzyClustering::Run()
 		//check the termination condition
 		if(Err <= precision)
 		{
-			cout<< "Number of Iterations is: "<<i+1<<"\nCurrent Error is "<< Err <<endl;
+			std::cout<< "Number of Iterations is: "<<i+1<<"\nCurrent Error is "<< Err <<std::endl;
 			break;
 		}
 	}

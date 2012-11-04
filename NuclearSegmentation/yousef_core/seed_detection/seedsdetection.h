@@ -33,8 +33,6 @@
 //typedef    float     InputPixelType;
 //typedef itk::Image< InputPixelType,  2 >   InputImageType;
 
-using namespace std;
-
 //int detect_seeds(itk::SmartPointer<InputImageType>, int , int , const double, float*);
 
 //double get_maximum(double** A, int r1, int r2, int c1, int c2);

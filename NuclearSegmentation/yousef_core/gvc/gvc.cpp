@@ -18,7 +18,7 @@
 /*    Columbia, Missouri, USA 65211                                           */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
-bool GVC::solve(vector< vector<int> > &map, int v, int ncolors)
+bool GVC::solve(std::vector< std::vector<int> > &map, int v, int ncolors)
 {
     int nobjects = (int)map.size();
     
@@ -44,7 +44,7 @@ bool GVC::solve(vector< vector<int> > &map, int v, int ncolors)
     }
 }
 
-bool GVC::valid(vector< vector<int> > &map, int v, int c)
+bool GVC::valid(std::vector< std::vector<int> > &map, int v, int c)
 {
     for (unsigned int i = 0; i < map[v].size(); i++)
     {

@@ -36,8 +36,6 @@
 #define INF 100000.0
 #endif
 
-using namespace std;
-
 class GVC
 {
     public:
@@ -51,12 +49,12 @@ class GVC
                                     vector< vector<int> > &vec,
                                     vector< vector<int> > &map );
 */
-          void sequential_coloring(int nobjects, int ncolors, int* ColorOut, vector< vector<int> > &map );
+          void sequential_coloring(int nobjects, int ncolors, int* ColorOut, std::vector< std::vector<int> > &map );
     private:
         int  *ColorClass;
         
-        bool  solve(vector< vector<int> > &map, int v, int ncolors);
-        bool  valid(vector< vector<int> > &map, int v, int c);
+        bool  solve(std::vector< std::vector<int> > &map, int v, int ncolors);
+        bool  valid(std::vector< std::vector<int> > &map, int v, int c);
         bool  goal(int v, int nobjects);
 };
 

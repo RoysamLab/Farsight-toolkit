@@ -36,8 +36,6 @@
 #define SIZE_MAX ((size_t)-1)
 #endif
 
-//using namespace std;
-
 //Main function for 2-D binarization
 int Cell_Binarization_2D(unsigned char* imgIn, unsigned short *imgOut, int R, int C, int shd)
 {			

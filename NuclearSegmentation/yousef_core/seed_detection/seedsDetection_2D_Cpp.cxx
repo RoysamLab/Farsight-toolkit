@@ -398,10 +398,10 @@ void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, unsig
     {
         for(int j=0; j<c; j++)
         {					
-            min_r = (int) max(0.0,i-scale);
-            min_c = (int) max(0.0,j-scale);
-            max_r = (int)min((double)r-1,i+scale);
-            max_c = (int)min((double)c-1,j+scale);                         
+            min_r = (int) std::max(0.0,i-scale);
+            min_c = (int) std::max(0.0,j-scale);
+            max_r = (int) std::min((double)r-1,i+scale);
+            max_c = (int) std::min((double)c-1,j+scale);                         
             float mx = get_maximum(im, min_r, max_r, min_c, max_c);
             if(im[i][j] == mx)  
 			{
@@ -444,7 +444,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
 	 dt_obj->Update() ;
   }
   catch( itk::ExceptionObject & err ){
-	std::cerr << "Error calculating distance transform: " << err << endl ;
+	std::cerr << "Error calculating distance transform: " << err << std::endl ;
     return -1;
   }
  
@@ -481,10 +481,10 @@ void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm,
     {
         for(int j=1; j<c-1; j++)
         {								
-			min_r = (int) max(0.0,(double)i-2);
-			min_c = (int) max(0.0,(double)j-2);
-			max_r = (int)min((double)r-1,(double)i+2);
-			max_c = (int)min((double)c-1,(double)j+2);                         			
+			min_r = (int) std::max(0.0,(double)i-2);
+			min_c = (int) std::max(0.0,(double)j-2);
+			max_r = (int) std::min((double)r-1,(double)i+2);
+			max_c = (int) std::min((double)c-1,(double)j+2);                         			
 			unsigned short mx = get_maximumV2(distIm, min_r, max_r, min_c, max_c, r, c);
 			
 			if(mx <= 2)
@@ -542,10 +542,10 @@ void estimateMinMaxScales2D(itk::SmartPointer<InputImageType> im, float* distIm,
 		if(smin == 1)
 			smin++;
 		cnt2++;
-		min_r = (int) max(0.0,(double)i-mx);
-		min_c = (int) max(0.0,(double)j-mx);		
-		max_r = (int)min((double)r-1,(double)i+mx);
-		max_c = (int)min((double)c-1,(double)j+mx);                         
+		min_r = (int) std::max(0.0,(double)i-mx);
+		min_c = (int) std::max(0.0,(double)j-mx);		
+		max_r = (int) std::min((double)r-1,(double)i+mx);
+		max_c = (int) std::min((double)c-1,(double)j+mx);                         
 					
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;		

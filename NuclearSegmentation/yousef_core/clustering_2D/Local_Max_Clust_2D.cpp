@@ -17,8 +17,6 @@
 
 #include "Local_Max_Clust_2D.h"
 
-using namespace std;
-
 float get_maximum(float** A, int r1, int r2, int c1, int c2, int* rx, int* cx)
 {
     float mx = A[r1][c1];
@@ -86,10 +84,10 @@ int local_max_clust_2D(float* im_vals, int r, int c, double scale, unsigned shor
 			//if(im[i][j] == 0)
 			//	continue;			
 
-            min_r = (int) max(0.0,i-scale);
-            min_c = (int) max(0.0,j-scale);
-            max_r = (int)min((double)r-1,i+scale);
-            max_c = (int)min((double)c-1,j+scale);          
+            min_r = (int) std::max(0.0,i-scale);
+            min_c = (int) std::max(0.0,j-scale);
+            max_r = (int) std::min((double)r-1,i+scale);
+            max_c = (int) std::min((double)c-1,j+scale);          
        
             if(local_max_im[i][j]!=0)
             {

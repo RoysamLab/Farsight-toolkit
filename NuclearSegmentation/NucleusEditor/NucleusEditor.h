@@ -131,7 +131,7 @@ protected:
   void parseArguments(QStringList args);
 
 protected slots:
-	void setMouseStatus(int,int,int,int,list<int>);
+	void setMouseStatus(int, int, int, int, std::list<int>);
 	void EnableModels() {modelsMenu->setEnabled(true);};
 	//Loading:
 	void askLoadImage(void);

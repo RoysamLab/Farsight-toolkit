@@ -28,8 +28,6 @@
 #include <utility>
 #include <fstream>
 
-using namespace boost;
-
 template <int num_dimensions>
 class kNearestObjects
 {
@@ -40,13 +38,13 @@ public:
 	typedef itk::Statistics::KdTreeNode< MeasurementVectorType > KdTreeNodeType;
 	typedef typename TreeGeneratorType::KdTreeType TreeType;
 	typedef itk::Statistics::EuclideanDistanceMetric< MeasurementVectorType > DistanceMetricType;
-	typedef property<vertex_name_t, std::string > VertexProperties;
-	typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> NeighborGraph;
-	typedef graph_traits<NeighborGraph>::vertex_descriptor node;
-	typedef graph_traits<NeighborGraph>::edge_descriptor Edge;
-	typedef property_map<NeighborGraph, vertex_name_t>::type node_name;
-	graph_traits < NeighborGraph >::vertex_iterator vi, vi_end;
-	graph_traits < NeighborGraph >::adjacency_iterator ai, ai_end;
+	typedef boost::property< boost::vertex_name_t, std::string > VertexProperties;
+	typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::undirectedS, VertexProperties> NeighborGraph;
+	typedef boost::graph_traits<NeighborGraph>::vertex_descriptor node;
+	typedef boost::graph_traits<NeighborGraph>::edge_descriptor Edge;
+	typedef boost::property_map<NeighborGraph, boost::vertex_name_t>::type node_name;
+	boost::graph_traits < NeighborGraph >::vertex_iterator vi, vi_end;
+	boost::graph_traits < NeighborGraph >::adjacency_iterator ai, ai_end;
 
 	//constructor
 	kNearestObjects(std::map< unsigned int, std::vector<double> > centroidMap);
@@ -57,7 +55,7 @@ public:
 	std::vector< std::vector< std::pair<unsigned int, double> > > k_nearest_neighbors_IDs(std::vector<unsigned int> IDs, unsigned int k, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > k_nearest_neighbors_ID(unsigned int id, unsigned int k, unsigned short Class_dest);
 	
-	std::vector<std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src);
+	std::vector< std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_All(double radius, unsigned short Class_dest, unsigned short Class_src);
 	std::vector< std::vector< std::pair<unsigned int, double> > > neighborsWithinRadius_IDs(std::vector<unsigned int> IDs, double radius, unsigned short Class_dest);
 	std::vector< std::pair<unsigned int, double> > neighborsWithinRadius_ID(unsigned int id, double radius, unsigned short Class_dest);
 /* conversions vrom the vectors of pairs to useable formats*/	

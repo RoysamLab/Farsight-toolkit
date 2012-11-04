@@ -20,12 +20,10 @@
 #include <iostream>
 #include <stdlib.h>
 
-using namespace std;
-
 int main(int argc, char* argv[])
 {
-	string segFName;
-	string xmlFname;
+	std::string segFName;
+	std::string xmlFname;
 
 
 	//ftk::ObjectAssociation *ObjAssoc;	
@@ -44,20 +42,20 @@ int main(int argc, char* argv[])
 		ObjAssoc = new ftk::NuclearAssociationRules(argv[1], atoi(argv[3]));
 		
 		//Now, the user will add the rules (define them) one by one
-		string ruleName,targFileName;
+		std::string ruleName, targFileName;
 		int outsideDistance, insideDistance, assocType, useAllObj, num_threshs, num_in_fg;
 		bool useAllObject,subBkground,use_multiple_thresh;
 		subBkground = false; use_multiple_thresh = false; num_threshs=1; num_in_fg=1;
 		for(int i=1; i<=atoi(argv[3]); i++)
 		{
-			cout<<"Enter Rule("<<i<<") Name:";
-			cin>>ruleName;
-			cout<<"Enter Target File("<<i<<") Name:";
-			cin>>targFileName;
-			cout<<"Enter Ouside Distance("<<i<<") value:";
-			cin>>outsideDistance;
-			cout<<"Use Whole cell("<<i<<") ?:(1=True,else=False)";
-			cin>>useAllObj;
+			std::cout <<"Enter Rule("<<i<<") Name:";
+			std::cin >> ruleName;
+			std::cout << "Enter Target File("<<i<<") Name:";
+			std::cin >> targFileName;
+			std::cout << "Enter Ouside Distance("<<i<<") value:";
+			std::cin >> outsideDistance;
+			std::cout << "Use Whole cell("<<i<<") ?:(1=True,else=False)";
+			std::cin >> useAllObj;
 			if(useAllObj == 1)
 			{
 				useAllObject = true;

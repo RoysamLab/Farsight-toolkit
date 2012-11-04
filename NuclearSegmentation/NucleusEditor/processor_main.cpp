@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
 	std::map< std::string, LabelImagePointer > myClassImageMap = pProc->GetClassImageMap();
 	std::map< std::string, vtkSmartPointer<vtkTable> > myClassCentroidMap = pProc->GetClassCentroidMap();
 	std::string myFilename = inputFilename;
-	string::iterator it;
+	std::string::iterator it;
 	it = myFilename.end() - 4;
 	myFilename.erase(it, it+4);
 

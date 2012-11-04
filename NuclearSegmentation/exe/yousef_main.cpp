@@ -86,10 +86,12 @@ int main(int argc, char* argv[])
 	NucleusSeg->runBinarization();
 	//2-Seeds Detection
 	//std::cout << "zackdebug: beginning seed detection" << std::endl;
-	try{
+	try
+	{
 		NucleusSeg->runSeedDetection();
 	}
-	catch( bad_alloc & excp ){
+	catch( std::bad_alloc & excp )
+	{
 		std::cout<<"You have requested more memory than "
 			 <<"what is currently available in this "
 			 <<"system, please try again with a smaller "

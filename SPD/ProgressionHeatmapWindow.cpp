@@ -145,7 +145,7 @@ void ProgressionHeatmap::creatDataForHeatmap(double powCof)
 {
 	this->scaleData();
 
-	vector<double > temp;
+	std::vector< double > temp;
 	temp.resize(num_features);
 
 	double** tempdata;
@@ -199,7 +199,7 @@ void ProgressionHeatmap::creatDataForHeatmap(double powCof)
 
 void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 {
-	vector<double > temp;
+	std::vector< double > temp;
 	temp.resize(num_features);
 	FILE *fp = fopen("progressionmapdata.txt","w");
 

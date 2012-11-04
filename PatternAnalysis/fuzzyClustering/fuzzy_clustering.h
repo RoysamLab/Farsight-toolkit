@@ -19,8 +19,6 @@ limitations under the License.
 #include <iostream>
 #include <vector>
 
-using namespace std;
-
 class FuzzyClustering
 {
 public:

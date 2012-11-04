@@ -149,7 +149,7 @@ void TableWindow::exportTable()
 	{	
 		QString QHeaders = this->tableView->model()->headerData(i,Qt::Horizontal).toString();
 		QHeaders.replace(" ", "_");
-		string SHeaders = QHeaders.toStdString();
+		std::string SHeaders = QHeaders.toStdString();
 		TableOutputStream << SHeaders.c_str() << "\t";
 	}
 

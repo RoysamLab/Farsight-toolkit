@@ -36,11 +36,11 @@ public:
 	
 	bool cyto_image;
 	typedef ftkgnt::RAGraph GraphType;
-	typedef graph_traits < GraphType >::vertex_descriptor graph_vertex;
-	graph_traits < GraphType >::vertex_iterator vi, vi_end;
-	graph_traits < GraphType >::adjacency_iterator ai, ai_end;
-	typedef property_map <GraphType, vertex_index_t >::type index_map_type;
-	typedef property_map <GraphType, vertex_name_t >::type name_map_type;
+	typedef boost::graph_traits < GraphType >::vertex_descriptor graph_vertex;
+	boost::graph_traits < GraphType >::vertex_iterator vi, vi_end;
+	boost::graph_traits < GraphType >::adjacency_iterator ai, ai_end;
+	typedef boost::property_map <GraphType, boost::vertex_index_t >::type index_map_type;
+	typedef boost::property_map <GraphType, boost::vertex_name_t >::type name_map_type;
 	typedef itk::Image<unsigned char,3> IntensityImageType;
     typedef itk::Image<unsigned short,3> LabelImageType;
 	typedef IntensityImageType InputImageType;

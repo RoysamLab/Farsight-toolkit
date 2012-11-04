@@ -26,8 +26,6 @@
 //#include "mex.h"
 #include "Multi_Color_Graph_Learning_2D.h"
 
-using namespace std;
-
 //A 2-D multivariate gaussian
 double Multivar_Norm(double X, double Y, double Ux, double Uy, double S00, double S01, double S11)
 {
@@ -298,11 +296,11 @@ float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, int r, in
                     V = MAP[(int)val][k]-1;
                     C = ColorOut[V];
                     P = /*P_I[V]*/Multivar_Norm(j, i, U[V][0], U[V][1], Segma[V][0][0], Segma[V][0][1], Segma[V][1][1]);//+F_H[intst];
-                    Pr[C+1] = max(Pr[C+1],P);
+                    Pr[C+1] = std::max(Pr[C+1],P);
                 }               
 			}
 			for(int cc=0; cc<ncolors+1; cc++)//[(x+y*width)*#labels + l]				
-				out[(j+i*c)*(ncolors+1) + cc] = (float)min(-log(Pr[cc]),100.0);     //I need to double check this line!!           
+				out[(j + i * c) * (ncolors + 1) + cc] = (float) std::min(-log(Pr[cc]), 100.0);     //I need to double check this line!!           
         }
     }
    

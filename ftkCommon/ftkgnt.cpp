@@ -44,7 +44,7 @@ ftkgnt::RAGraph ftkgnt::BuildRAG(unsigned short id)
 {
 	Initialize(id);
 	unsigned int counter = 0; 
-	property_map<RAGraph, vertex_name_t>::type node_name = get(vertex_name, this->RAG);
+	boost::property_map<RAGraph, boost::vertex_name_t>::type node_name = get(boost::vertex_name, this->RAG);
 	
 	while (counter != num_vertices(this->RAG))
 	{
@@ -68,7 +68,7 @@ ftkgnt::RAGraph ftkgnt::BuildRAG(unsigned short id)
 				}
 				bool bRet;
 				Edge e;
-				boost::tie(e,bRet) = edge(root,tail,this->RAG);
+				std::tr1::tie(e,bRet) = edge(root,tail,this->RAG);
 				if(!bRet)
 				{
 					add_edge(root,tail,this->RAG);
@@ -87,7 +87,7 @@ void ftkgnt::Initialize(unsigned short id)
 		//Clear all the edges and vertices of the graphs if present. 
 		this->RAG.clear();	
 		// Property accessors
-		node_name nodeName  = get(vertex_name,this->RAG);
+		node_name nodeName  = get(boost::vertex_name,this->RAG);
 		std::stringstream out;
 		out << id;
 		std::string s = out.str();
@@ -125,7 +125,7 @@ int ftkgnt::GetNodeIndex(unsigned short id,ftkgnt::RAGraph graph1)
 
 	int index;
 	int flag = -1;
-	property_map<ftkgnt::RAGraph, vertex_name_t>::type nodes = get(vertex_name, graph1);
+	boost::property_map<ftkgnt::RAGraph, boost::vertex_name_t>::type nodes = get(boost::vertex_name, graph1);
 	for ( unsigned int i = 0 ; i < num_vertices(graph1) ; ++i)
 	{
 		if(nodes[i]==id1)
@@ -201,7 +201,7 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 	std::set<int>::iterator volIterator;
 	std::set<int>::iterator nRPSIterator;
 	std::set<int>::iterator RPSIterator2;
-	property_map<ftkgnt::RAGraph,vertex_name_t>::type nodes = get(vertex_name, R1);
+	boost::property_map<ftkgnt::RAGraph, boost::vertex_name_t>::type nodes = get(boost::vertex_name, R1);
 	
 	//Start the loop here
 	
@@ -221,7 +221,7 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 		{	
 			int vertex_index = GetNodeIndex(static_cast<unsigned short>(*RPSIterator),R1);
 			ftkgnt::node v = vertex(vertex_index,R1);
-			boost::tie(avi, av_end)=adjacent_vertices(v,R1); 
+			std::tr1::tie(avi, av_end)=adjacent_vertices(v,R1); 
 			
 			for (avi=avi; avi < av_end ; ++avi)
 			{

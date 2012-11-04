@@ -36,8 +36,6 @@
 	#endif
 #endif
 
-using namespace std;
-
 void clustering_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
 extern "C" void initialClustering_CUDA (float* im_vals, unsigned short* local_max_vals, unsigned short* max_response_r, unsigned short* max_response_c, unsigned short* max_response_z , int r, int c, int z, int scale_xy, int scale_z);
 
@@ -92,7 +90,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 			}
 		}
 	}
-	std::cout << "max_nghbr_im initialized" << endl;
+	std::cout << "max_nghbr_im initialized" << std::endl;
 
 	//In this loop we look in a local region around each point and find the maximum value in the LoG image
 	//Set the value to the index of the local maximum, (so if I am a seed point do nothing).
@@ -242,12 +240,12 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
         {
 			for(int k=0; k<z; k++)
 			{        				
-				min_r = (int) max((double)(0.0),(double)(i-scale_xy));
-				min_c = (int) max((double)(0.0),(double)(j-scale_xy));
-				min_z = (int) max((double)(0.0),(double)(k-scale_z));
-				max_r = (int) min((double)(r-1),(double)(i+scale_xy));
-				max_c = (int) min((double)(c-1),(double)(j+scale_xy));                         
-				max_z = (int) min((double)(z-1),(double)(k+scale_z));
+				min_r = (int) std::max((double)(0.0),(double)(i-scale_xy));
+				min_c = (int) std::max((double)(0.0),(double)(j-scale_xy));
+				min_z = (int) std::max((double)(0.0),(double)(k-scale_z));
+				max_r = (int) std::min((double)(r-1),(double)(i+scale_xy));
+				max_c = (int) std::min((double)(c-1),(double)(j+scale_xy));                         
+				max_z = (int) std::min((double)(z-1),(double)(k+scale_z));
 
 				int R, C, Z;
 
@@ -271,7 +269,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 		cout << k << " " << max_response[k] << " " << max_response[k+1] << " " << max_response[k+2] << endl;*/
 
 
-	std::cout << "Max_response array done" << endl;
+	std::cout << "Max_response array done" << std::endl;
 
 	for(int i=0; i<r; i++)
     {
@@ -294,11 +292,11 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 	delete [] max_response_z;
 
 
-	cout << "Initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	std::cout << "Initial max_nghbr_im took " << (clock() - start_time_init_max_nghbr_im)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 	
     int change = 1;
     double LM;
-	std::cout << "Entering main Clustering Loop" << endl;
+	std::cout << "Entering main Clustering Loop" << std::endl;
 	//Now continue to update until no more changes occur, eventually will have clusters pointing to seeds	
 	int iterr = 0;
     while(change)	
@@ -338,7 +336,7 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 				}
             }
         }
-		std::cout<<"change="<<change<<endl;
+		std::cout<< "change=" << change << std::endl;
     }
     
 	//cerr << "Preparing Output" << endl;
@@ -387,6 +385,6 @@ void local_max_clust_3D(float* im_vals, unsigned short* local_max_vals, unsigned
 
 void clustering_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
-	cerr << errinfo << endl;
+	std::cerr << errinfo << std::endl;
 }
  

@@ -31,7 +31,6 @@
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 //////////////////////////////
 
-using namespace std;
 //A 3-D multivariate gaussian
 double Multivar_Norm(double X, double Y, double Z, double Ux, double Uy, double Uz, double S00, double S01, double S11, double S02, double S12, double S22)
 {

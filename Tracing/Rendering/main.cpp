@@ -74,7 +74,6 @@ limitations under the License.
 #include <vtkPointData.h>
 
 #include "TraceEdit/TraceObject.h"
-//using namespace std;
 
 //#pragma warning(disable:4996)
 //#pragma warning(disable:4101)

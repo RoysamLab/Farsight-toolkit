@@ -73,9 +73,6 @@ char* LocalMaximaKernel =
 ////
 #include "itkImageFileWriter.h"
 
-using namespace std;
-
-
 typedef    unsigned short     MyInputPixelType;
 typedef itk::Image< MyInputPixelType,  3 >   MyInputImageType;
 typedef itk::Image< MyInputPixelType,  2 >   MyInputImageType2D;
@@ -95,7 +92,7 @@ int computeMedian(std::vector< std::vector<unsigned short> > scales, int cntr);
 void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned short* distIm, double* minScale, double* maxScale, int r, int c, int z);
 int computeWeightedMedian(std::vector< std::vector<float> > scales, int cntr);
 void queryOpenCLProperties(float* IM, int r, int c, int z);
-string fileToString(string fileName);
+std::string fileToString(std::string fileName);
 void seed_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data);
 void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
 
@@ -208,7 +205,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		++iterator1; ++i;
 	}
 
-	cout << "About to enter Estimating parameters" << endl;
+	std::cout << "About to enter Estimating parameters" << std::endl;
 	//By Yousef (8/29/2009)
 	//Estimate the segmentation parameters
 	if(UseDistMap == 1 && paramEstimation)
@@ -216,7 +213,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		std::cout<<"Estimating parameters..."<<std::endl;
 		clock_t start_time_est_params = clock();
 		estimateMinMaxScalesV2(im, dImg, &sigma_min, &sigma_max, r, c, z);
-		cout << "Estimating parameters took " << (clock() - start_time_est_params)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+		std::cout << "Estimating parameters took " << (clock() - start_time_est_params)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 		//By Isaac (1/22/2010)
 		if( sigma_min < 1 ) sigma_min = 1;
 
@@ -290,7 +287,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 	}
 
 
-	cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	std::cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 
 	free(dImg);
 
@@ -321,7 +318,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 #else
 	Detect_Local_MaximaPoints_3D(IM_out[0], r, c, z, scale_xy, scale_z, IM_bin[0], bImg);
 #endif // OPENCL
-	cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << endl;
+	std::cout << "Local maxima point detection took " << (clock() - start_time_local_maxima)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 
 	std::cout << "done detecting seeds" << std::endl;
 
@@ -408,7 +405,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		int sigma = sigma_max - i;
 		#pragma omp critical (ProcessingScaleCout)
 		{
-			std::cout<<"Processing scale "<<sigma<<endl;
+			std::cout << "Processing scale " << sigma << std::endl;
 		}
 		//  The filter type is now instantiated using both the input image and the 
 		//  output image types.
@@ -567,12 +564,12 @@ void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double sc
 			for(int k=0; k<z; k++)
 			{									
 				//calculate bounds
-				min_r = (int) max(0.0,i-scale_xy);
-				min_c = (int) max(0.0,j-scale_xy);
-				min_z = (int) max(0.0,k-scale_z);
-				max_r = (int)min((double)r-1,i+scale_xy);
-				max_c = (int)min((double)c-1,j+scale_xy);                         
-				max_z = (int)min((double)z-1,k+scale_z);                         
+				min_r = (int) std::max(0.0,i-scale_xy);
+				min_c = (int) std::max(0.0,j-scale_xy);
+				min_z = (int) std::max(0.0,k-scale_z);
+				max_r = (int) std::min((double)r-1,i+scale_xy);
+				max_c = (int) std::min((double)c-1,j+scale_xy);                         
+				max_z = (int) std::min((double)z-1,k+scale_z);                         
 
 				//get the intensity maximum of the bounded im_vals
 				float mx = get_maximum_3D(im_vals, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
@@ -697,7 +694,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	//	double mean = 0.0;
 	//	double stdv = 0.0;
 	int cnt = 0;
-	ofstream p;
+	std::ofstream p;
 	//	int max_dist = 0;
 	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
@@ -707,12 +704,12 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 			//for(int k=1; k<z-1; k+=2)
 			for(int k=cent_slice; k<=cent_slice; k++)
 			{									
-				min_r = (int) max(0.0,(double)i-2);
-				min_c = (int) max(0.0,(double)j-2);
-				min_z = (int) max(0.0,(double)k);
-				max_r = (int)min((double)r-1,(double)i+2);
-				max_c = (int)min((double)c-1,(double)j+2);                         
-				max_z = (int)min((double)z-1,(double)k);                         
+				min_r = (int) std::max(0.0,(double)i-2);
+				min_c = (int) std::max(0.0,(double)j-2);
+				min_z = (int) std::max(0.0,(double)k);
+				max_r = (int) std::min((double)r-1,(double)i+2);
+				max_c = (int) std::min((double)c-1,(double)j+2);                         
+				max_z = (int) std::min((double)z-1,(double)k);                         
 				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
 
 				if(mx <= 100)
@@ -761,7 +758,7 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 	//p2<<"med-mad = "<<minScale[0]<<std::endl;
 	//p2<<"med+mad = "<<maxScale[0]<<std::endl;
 
-	ofstream p3;
+	std::ofstream p3;
 	p3.open("checkme3.txt");	
 	//For each local maximum point,try to find the best LoG scale
 	//To do that, suppose the distance at a given local maximum point is d, 
@@ -786,12 +783,12 @@ void estimateMinMaxScales(itk::SmartPointer<MyInputImageType> im, unsigned short
 		if(smin == 1)
 			smin++;
 		cnt2++;
-		min_r = (int) max(0.0,(double)i-mx);
-		min_c = (int) max(0.0,(double)j-mx);
-		min_z = (int) max(0.0,(double)k-mx);
-		max_r = (int)min((double)r-1,(double)i+mx);
-		max_c = (int)min((double)c-1,(double)j+mx);                         
-		max_z = (int)min((double)z-1,(double)k+mx);                         
+		min_r = (int) std::max(0.0,(double)i-mx);
+		min_c = (int) std::max(0.0,(double)j-mx);
+		min_z = (int) std::max(0.0,(double)k-mx);
+		max_r = (int) std::min((double)r-1,(double)i+mx);
+		max_c = (int) std::min((double)c-1,(double)j+mx);                         
+		max_z = (int) std::min((double)z-1,(double)k+mx);                         
 
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;
@@ -862,7 +859,7 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 	//double mean = 0.0;
 	//double stdv = 0.0;
 	int cnt = 0;
-	ofstream p;
+	std::ofstream p;
 	//int max_dist = 0;
 	//p.open("checkme.txt");
 	for(int i=1; i<r-1; i++)
@@ -872,12 +869,12 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 			//for(int k=1; k<z-1; k+=2)
 			for(int k=cent_slice; k<=cent_slice; k++)
 			{									
-				min_r = (int) max(0.0,(double)i-2);
-				min_c = (int) max(0.0,(double)j-2);
-				min_z = (int) max(0.0,(double)k);
-				max_r = (int)min((double)r-1,(double)i+2);
-				max_c = (int)min((double)c-1,(double)j+2);                         
-				max_z = (int)min((double)z-1,(double)k);                         
+				min_r = (int) std::max(0.0,(double)i-2);
+				min_c = (int) std::max(0.0,(double)j-2);
+				min_z = (int) std::max(0.0,(double)k);
+				max_r = (int) std::min((double)r-1,(double)i+2);
+				max_c = (int) std::min((double)c-1,(double)j+2);                         
+				max_z = (int) std::min((double)z-1,(double)k);                         
 				unsigned short mx = get_maximum_3D(distIm, min_r, max_r, min_c, max_c, min_z, max_z,r,c);
 
 				if(mx <= 100)
@@ -939,12 +936,12 @@ void estimateMinMaxScalesV2(itk::SmartPointer<MyInputImageType> im, unsigned sho
 		if(smin == 1)
 			smin++;
 		cnt2++;
-		min_r = (int) max(0.0,(double)i-mx);
-		min_c = (int) max(0.0,(double)j-mx);
-		min_z = (int) max(0.0,(double)k-mx);
-		max_r = (int)min((double)r-1,(double)i+mx);
-		max_c = (int)min((double)c-1,(double)j+mx);                         
-		max_z = (int)min((double)z-1,(double)k+mx);                         
+		min_r = (int) std::max(0.0,(double)i-mx);
+		min_c = (int) std::max(0.0,(double)j-mx);
+		min_z = (int) std::max(0.0,(double)k-mx);
+		max_r = (int) std::min((double)r-1,(double)i+mx);
+		max_c = (int) std::min((double)c-1,(double)j+mx);                         
+		max_z = (int) std::min((double)z-1,(double)k+mx);                         
 
 		int sub_r = i-min_r;
 		int sub_c = j-min_c;
@@ -1060,7 +1057,7 @@ int distMap(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, unsigne
 		dt_obj->Update() ;
 	}
 	catch( itk::ExceptionObject & err ){
-		std::cerr << "Error calculating distance transform: " << err << endl ;
+		std::cerr << "Error calculating distance transform: " << err << std::endl ;
 		return -1;
 	}
 
@@ -1111,7 +1108,7 @@ int distMap_SliceBySlice(itk::SmartPointer<MyInputImageType> im, int r, int c, i
 			dt_obj->Update() ;
 		}
 		catch( itk::ExceptionObject & err ) {
-			std::cerr << "Error calculating distance transform: " << err << endl ;
+			std::cerr << "Error calculating distance transform: " << err << std::endl ;
 			return -1;
 		}
 
@@ -1533,7 +1530,7 @@ void queryOpenCLProperties(float* IM, int r, int c, int z)
 
 void seed_pfn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
-	cerr << errinfo << endl;
+	std::cerr << errinfo << std::endl;
 }
 
 

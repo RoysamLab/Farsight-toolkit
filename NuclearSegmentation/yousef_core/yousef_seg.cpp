@@ -18,8 +18,6 @@
 #include "yousef_seg.h"
 #include <fstream>
 
-using namespace std;
-
 //Constructor
 yousef_nucleus_seg::yousef_nucleus_seg()
 {
@@ -1836,12 +1834,12 @@ ftk::Object::Point yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Obj
 		std::cerr<<"The two cells need to be adjacent in order to merge them"<<std::endl;
 	}
 	//Update the initial segmentation image	
-	int min_x = min(bBox1.x, bBox3.x);
-	int min_y = min(bBox1.y, bBox3.y);
-	int min_z = min(bBox1.z, bBox3.z);
-	int max_x = max(bBox2.x, bBox4.x);
-	int max_y = max(bBox2.y, bBox4.y);
-	int max_z = max(bBox2.z, bBox4.z);
+	int min_x = std::min(bBox1.x, bBox3.x);
+	int min_y = std::min(bBox1.y, bBox3.y);
+	int min_z = std::min(bBox1.z, bBox3.z);
+	int max_x = std::max(bBox2.x, bBox4.x);
+	int max_y = std::max(bBox2.y, bBox4.y);
+	int max_z = std::max(bBox2.z, bBox4.z);
 
 	std::vector <int> sz;
 	sz.push_back(max_x - min_x + 1);
@@ -1996,7 +1994,7 @@ ftk::Object::Point yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Obj
 	return new_seed;
 }
 
-vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
+std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
 {
 	//
 	//if no label (segmentation) or no data image is available then return

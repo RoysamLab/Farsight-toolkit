@@ -88,8 +88,6 @@
 #include "ftkGUI/ColorMap.h"
 #include "ftkGUI/SelectiveClustering.h"
 
-using namespace std;
-
 class HeatmapForNewSelection : public QMainWindow
 {
     Q_OBJECT;
@@ -171,8 +169,8 @@ public:
 	int*             Optimal_Leaf_Order1;
 	int*             Optimal_Leaf_Order2;
 	
-	vector<vector<double > > Processed_Coordinate_Data_Tree1;
-	vector<vector<double > > Processed_Coordinate_Data_Tree2;	
+	std::vector< std::vector<double > > Processed_Coordinate_Data_Tree1;
+	std::vector< std::vector<double > > Processed_Coordinate_Data_Tree2;	
 
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;

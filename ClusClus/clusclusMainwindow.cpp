@@ -6,8 +6,6 @@
 #include <fstream>
 #include <QMessageBox>
 
-using namespace std;
-
 ClusClusMainWindow::ClusClusMainWindow(QWidget *parent) :
     QWidget(parent)
 {
@@ -154,7 +152,7 @@ void ClusClusMainWindow::browse()
 
 void ClusClusMainWindow::load()
 {
-	string file = this->FileName.toStdString();
+	std::string file = this->FileName.toStdString();
 
 	this->cc1 = new clusclus();
 	this->cc1->ReadFile(file.c_str());
@@ -164,7 +162,7 @@ void ClusClusMainWindow::load()
 
 void ClusClusMainWindow::runcluster()
 {
-	string rnumgaps = this->rgapsNumBox->text().toStdString();
+	std::string rnumgaps = this->rgapsNumBox->text().toStdString();
 
 	if(rnumgaps.length()>0)
 		cc1->num_gaps = atoi(rnumgaps.c_str());
@@ -196,7 +194,7 @@ void ClusClusMainWindow::runbicluster()
 
 	cc2 = new clusclus(cc1->transposefeatures,cc1->num_features, cc1->num_samples);
 
-	string cnumgaps = this->cgapsNumBox->text().toStdString();
+	std::string cnumgaps = this->cgapsNumBox->text().toStdString();
 
 	if(cnumgaps.length()>0)
 		cc2->num_gaps = atoi(cnumgaps.c_str());
@@ -223,8 +221,8 @@ void ClusClusMainWindow::runbicluster()
 
 void ClusClusMainWindow::samplecomputegap()
 {
-	string rnumgaps = this->rgapsNumBox->text().toStdString();
-	string rnumtrials = this->rtrialsNumBox->text().toStdString();
+	std::string rnumgaps = this->rgapsNumBox->text().toStdString();
+	std::string rnumtrials = this->rtrialsNumBox->text().toStdString();
 
 	cg1 = new clusgap(cc1);
 
@@ -245,8 +243,8 @@ void ClusClusMainWindow::samplecomputegap()
 
 void ClusClusMainWindow::featurecomputegap()
 {
-	string cnumgaps = this->cgapsNumBox->text().toStdString();
-	string cnumtrials = this->ctrialsNumBox->text().toStdString();
+	std::string cnumgaps = this->cgapsNumBox->text().toStdString();
+	std::string cnumtrials = this->ctrialsNumBox->text().toStdString();
 
 	cg2 = new clusgap(cc2);
 

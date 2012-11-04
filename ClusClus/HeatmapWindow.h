@@ -87,7 +87,6 @@
 #include "ObjectSelection.h"
 #include "ftkGUI/ColorMap.h"
 
-using namespace std;
 
 class Heatmap : public QMainWindow
 {
@@ -178,9 +177,9 @@ public:
 	int*             Optimal_Leaf_Order1;
 	int*             Optimal_Leaf_Order2;
 	
-	vector<vector<vector<double > > > treesdata;
-	vector<vector<double > > Processed_Coordinate_Data_Tree1;
-	vector<vector<double > > Processed_Coordinate_Data_Tree2;	
+	std::vector< std::vector< std::vector< double > > > treesdata;
+	std::vector< std::vector< double > > Processed_Coordinate_Data_Tree1;
+	std::vector< std::vector<double > > Processed_Coordinate_Data_Tree2;	
 
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
@@ -238,7 +237,7 @@ private:
 	std::vector<int> priority_order;
 
 	int tree_num;
-	vector<int > treespoint;
+	std::vector<int > treespoint;
 
 	std::map<int, int> rowMapFromOriginalToReorder;
 	std::map<int, int> columnMapFromOriginalToReorder;

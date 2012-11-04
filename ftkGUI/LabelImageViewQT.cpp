@@ -19,7 +19,7 @@ limitations under the License.
 #include "LabelImageViewQT.h"
 
 LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QWidget *parent) 
-  : QWidget(parent)
+	: QWidget(parent)
 {
 	this->readSettings();
 	this->setupUI();
@@ -37,7 +37,7 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	bBoxMap = NULL;
 	NucTable = NULL;
 	CellTable = NULL;
-	
+
 	currentScale = 1;					//Image scaling and zooming variables:
 	ZoomInFactor = 1.25f;
 	ZoomOutFactor = 1 / ZoomInFactor;	
@@ -70,8 +70,8 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 void LabelImageViewQT::setupUI(void)
 {
 	//Setup Vertical slider widgets
-    vSlider = new QSlider();
-    vSlider->setOrientation(Qt::Vertical);
+	vSlider = new QSlider();
+	vSlider->setOrientation(Qt::Vertical);
 	vSlider->setDisabled(true);
 	vSlider->setRange(0,0);
 	vSlider->setValue(0);
@@ -91,8 +91,8 @@ void LabelImageViewQT::setupUI(void)
 	vsliderLayout->addWidget(vLabel,1,1,1,1);
 
 	//Setup Horizontal slider widgets
-    hSlider = new QSlider();
-    hSlider->setOrientation(Qt::Horizontal);
+	hSlider = new QSlider();
+	hSlider->setOrientation(Qt::Horizontal);
 	hSlider->setDisabled(true);
 	hSlider->setRange(0,0);
 	hSlider->setValue(0);
@@ -119,15 +119,15 @@ void LabelImageViewQT::setupUI(void)
 	scrollArea = new QScrollArea();
 	scrollArea->setMouseTracking(true);
 	scrollArea->setBackgroundRole(QPalette::Dark);
-    scrollArea->setWidget(imageLabel);
+	scrollArea->setWidget(imageLabel);
 	scrollArea->horizontalScrollBar()->setRange(0,0);
-    scrollArea->verticalScrollBar()->setRange(0,0);		
+	scrollArea->verticalScrollBar()->setRange(0,0);		
 	scrollArea->horizontalScrollBar()->setValue(0);
 	scrollArea->verticalScrollBar()->setValue(0);
 
 	QGridLayout *viewerLayout = new QGridLayout();
-    viewerLayout->addWidget(scrollArea, 0, 0);
-    viewerLayout->addLayout(vsliderLayout, 0, 1);
+	viewerLayout->addWidget(scrollArea, 0, 0);
+	viewerLayout->addLayout(vsliderLayout, 0, 1);
 	viewerLayout->addLayout(hsliderLayout, 1, 0);
 
 	QGridLayout *allLayout = new QGridLayout;
@@ -401,13 +401,13 @@ void LabelImageViewQT::SetBoundingBoxMapPointer(std::map<int, ftk::Object::Box> 
 void LabelImageViewQT::SetCenterMapfromVectorPointer(int time)
 {
 	centerMap = &(centerMapVector.at(time));
-//	SetCenterMapPointer(&(centerMapVector.at(time)));
+	//	SetCenterMapPointer(&(centerMapVector.at(time)));
 }
 
 void LabelImageViewQT::SetBoundingBoxMapfromVectorPointer(int time)
 {
 	bBoxMap = &(boxMapVector.at(time)) ;
-//	SetBoundingBoxMapPointer(&(boxMapVector.at(time)));
+	//	SetBoundingBoxMapPointer(&(boxMapVector.at(time)));
 }
 
 
@@ -422,7 +422,7 @@ void LabelImageViewQT::SetBoundingBoxMapVectorPointer(std::vector<std::map<int, 
 	boxMapVector.clear();
 	boxMapVector = vectorboxMap;
 	SetBoundingBoxMapfromVectorPointer(hSpin->value());
-		
+
 }
 void LabelImageViewQT::ClearGets(void)
 {
@@ -506,10 +506,10 @@ QImage LabelImageViewQT::getSnapshotforID_1(int id)
 
 	const ftk::Image::Info *info;
 	if(channelImg)    info = channelImg->GetImageInfo();	//Get info of new image	
-	
+
 	int h = (*info).numRows;
 	int w = (*info).numColumns;
-	
+
 	boundsImage = QImage(w, h, QImage::Format_ARGB32_Premultiplied);	
 	boundsImage.fill(qRgba(0,0,0,0));
 
@@ -706,7 +706,7 @@ void LabelImageViewQT::hspinChange(int v)
 		}
 	}
 	refreshBaseImage();		//Only need this in either slider or spin changes!!!
-//	refreshBoundsImage();
+	//	refreshBoundsImage();
 }
 
 
@@ -755,30 +755,30 @@ void LabelImageViewQT::moveEvent ( QMoveEvent * event )
 }
 
 void LabelImageViewQT::keyPressEvent(QKeyEvent *event)
- {
-	 int key = event->key();
-	 if(key == Qt::Key_Equal)
-	 {
-		 zoom(ZoomInFactor);
-	 }
-	 else if(key == Qt::Key_Minus)
-	 {
-		 zoom(ZoomOutFactor);
-	 }
-	 else if((key >= Qt::Key_0) && (key <= Qt::Key_9))
-	 {
+{
+	int key = event->key();
+	if(key == Qt::Key_Equal)
+	{
+		zoom(ZoomInFactor);
+	}
+	else if(key == Qt::Key_Minus)
+	{
+		zoom(ZoomOutFactor);
+	}
+	else if((key >= Qt::Key_0) && (key <= Qt::Key_9))
+	{
 		int num = key - 0x30;
 		if((int)channelFlags.size() > num)
 		{
 			channelFlags.at(num) = !channelFlags.at(num);
 			refreshBaseImage();
 		}
-	 }
-	 else
-	 {
-		 QWidget::keyPressEvent(event);
-	 }
- }
+	}
+	else
+	{
+		QWidget::keyPressEvent(event);
+	}
+}
 
 void LabelImageViewQT::mousePressEvent(QMouseEvent *event)
 {	
@@ -943,22 +943,22 @@ void LabelImageViewQT::mouseMoveEvent(QMouseEvent *event)
 	int totalWidth = (*info).numColumns;
 	int totalHeight = (*info).numRows;
 	int currentZ = vSpin->value();
-  int currentT = hSpin->value();
-  int numChannels = (*info).numChannels; 
-  list<int> pixelValues;
-  //pixelValues.resize(numChannels);
+	int currentT = hSpin->value();
+	int numChannels = (*info).numChannels; 
+	std::list<int> pixelValues;
+	//pixelValues.resize(numChannels);
 
-  for(int ch=0; ch < numChannels; ++ch)
-  {
-    if(labelImg)
-    {
-      pixelValues.push_back((int)labelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
-    }
-    else if(channelImg)
-    {
-      pixelValues.push_back((int)channelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
-    }
-  }
+	for(int ch=0; ch < numChannels; ++ch)
+	{
+		if(labelImg)
+		{
+			pixelValues.push_back((int)labelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
+		}
+		else if(channelImg)
+		{
+			pixelValues.push_back((int)channelImg->GetPixel(currentT,ch,currentZ,int(yy),int(xx)));
+		}
+	}
 
 	if( xx>=0 && xx<totalWidth && yy>=0 && yy<totalHeight )
 		emit mouseAt(xx, yy, currentZ, currentT, pixelValues);
@@ -1034,7 +1034,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 							//Erase last point:
 							roiPoints.erase(roiPoints.end()-1);
 							roiMode = false;
-							
+
 							createROIMask();	//This will call repaint
 							emit roiDrawn();
 							return;
@@ -1113,13 +1113,13 @@ void LabelImageViewQT::paintEvent(QPaintEvent * event)
 	QPainter painter(&displayImage);
 	//if(labelImg)
 	//{
-		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver); //Default
-		//painter.setCompositionMode(QPainter::CompositionMode_Overlay); //Only see overlay when color matches (almost none)
-		//painter.setCompositionMode(QPainter::CompositionMode_Plus); // Looked like SourceOver
-		//painter.setCompositionMode(QPainter::CompositionMode_Source); // Only shows source (alpha blending didn't seem to work)
-		//painter.setCompositionMode(QPainter::CompositionMode_DestinationOver); //Don't see overlay at all
-		//painter.setCompositionMode(QPainter::CompositionMode_Clear);  //Everything was white!
-		painter.drawImage(0,0,boundsImage);
+	//painter.setCompositionMode(QPainter::CompositionMode_SourceOver); //Default
+	//painter.setCompositionMode(QPainter::CompositionMode_Overlay); //Only see overlay when color matches (almost none)
+	//painter.setCompositionMode(QPainter::CompositionMode_Plus); // Looked like SourceOver
+	//painter.setCompositionMode(QPainter::CompositionMode_Source); // Only shows source (alpha blending didn't seem to work)
+	//painter.setCompositionMode(QPainter::CompositionMode_DestinationOver); //Don't see overlay at all
+	//painter.setCompositionMode(QPainter::CompositionMode_Clear);  //Everything was white!
+	painter.drawImage(0,0,boundsImage);
 	//}
 
 	if(pointsMode)
@@ -1304,7 +1304,7 @@ void LabelImageViewQT::refreshBoundsImage(void)
 	this->drawKNeighbors(&painter);
 	this->drawRadNeighbors(&painter);
 	this->repaint();
-	
+
 }
 
 void LabelImageViewQT::drawObjectBoundaries(QPainter *painter)
@@ -1380,7 +1380,7 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 	//	bBoxMap = &(boxMapVector.at(currentT)) ;
 	//}
 
-	
+
 	//Iterate through each object and write its id at its centroid.
 	std::map<int, ftk::Object::Point>::iterator it2;
 	for ( it2 = centerMap->begin() ; it2 != centerMap->end(); ++it2 )
@@ -1390,7 +1390,7 @@ void LabelImageViewQT::drawObjectIDs(QPainter *painter)
 
 		//if ( (currentZ == point.z) )
 		if(   ( currentZ >= ((*bBoxMap)[id]).min.z && currentZ <= ((*bBoxMap)[id]).max.z )
-		   || ( labImInfo->numZSlices == 1 ) )
+			|| ( labImInfo->numZSlices == 1 ) )
 		{
 			painter->setPen( (*colorItemsMap)["Object IDs"] );
 			painter->drawText(point.x + 2, point.y - 2, QString::number(id));
@@ -1423,12 +1423,12 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 
 		int numColors = (int)centroidColorTable.size();
 		QColor myColor1 = centroidColorTable.at( (cls1)%numColors );
-//		QColor myColor1 = centroidColorTable.at( (cls1-1)%numColors );
+		//		QColor myColor1 = centroidColorTable.at( (cls1-1)%numColors );
 		QColor myColor2, myColor3, myColor4;
 		painter->setPen(Qt::black);
 		painter->setBrush(myColor1);
 		//painter->setBrush(Qt::green);
-		
+
 		ftk::Object::Point point = (*it).second;
 		//if ( (currentZ == point.z) )
 		if ( (int)labelImg->GetPixel(0, 0, currentZ, int(point.y), int(point.x)) == id  )
@@ -1453,7 +1453,7 @@ void LabelImageViewQT::drawObjectCentroids(QPainter *painter)
 			painter->drawEllipse(point.x - 2, point.y - 2, 5, 5);
 		}
 	}
-	
+
 }
 
 void LabelImageViewQT::drawSelectionCrosshairs(QPainter *painter)
@@ -1490,9 +1490,9 @@ void LabelImageViewQT::drawKNeighbors(QPainter *painter)
 	if(labelImg) info = labelImg->GetImageInfo();
 	else return;
 	int num_slices = (*info).numZSlices;
-	
+
 	int currentZ = vSpin->value();
-		
+
 	for(int i=0; i<(int)kNeighborTable->GetNumberOfRows(); ++i )
 	{
 		int src_id = kNeighborTable->GetValue(i,0).ToInt();
@@ -1547,7 +1547,7 @@ void LabelImageViewQT::drawRadNeighbors(QPainter *painter)
 	int num_slices = (*info).numZSlices;
 
 	int currentZ = vSpin->value();
-		
+
 	for(int i=0; i<(int)radNeighborTable->GetNumberOfRows(); ++i )
 	{
 		int src_id = radNeighborTable->GetValue(i,0).ToInt();
@@ -1573,7 +1573,7 @@ void LabelImageViewQT::drawNucAdjacency(QPainter *painter)
 	if(!centerMap) return;
 
 	int currentZ = vSpin->value();
-		
+
 	for(int i=0; i<(int)NucTable->GetNumberOfRows(); ++i )
 	{
 		int src_id = NucTable->GetValue(i,0).ToInt();
@@ -1593,7 +1593,7 @@ void LabelImageViewQT::drawCellAdjacency(QPainter *painter)
 	if(!centerMap) return;
 
 	int currentZ = vSpin->value();
-	
+
 	for(int j=0; j<(int)CellTable->GetNumberOfRows(); ++j )
 	{
 		int src_id = CellTable->GetValue(j,0).ToInt();
@@ -1638,7 +1638,7 @@ void LabelImageViewQT::drawROI(QPainter *painter)
 QVector<QColor> LabelImageViewQT::CreateColorTable()
 {
 	QVector<QColor> colorTable;
-	
+
 	//Colors for 10 classes
 	colorTable.append(Qt::gray);
 	colorTable.append(Qt::cyan);
@@ -1684,12 +1684,12 @@ QString LabelImageViewQT::GetColorNameFromTable( int class_num ){
 
 float LabelImageViewQT::Distance(int x1, int y1, int x2, int y2)
 {  
-    int diffx = x1 - x2;
-    int diffy = y1 - y2;
-    int diffx_sqr = diffx * diffx;
-    int diffy_sqr = diffy * diffy;
+	int diffx = x1 - x2;
+	int diffy = y1 - y2;
+	int diffx_sqr = diffx * diffx;
+	int diffy_sqr = diffy * diffy;
 	int diff = diffx_sqr + diffy_sqr;
-    float distance = sqrt (static_cast<float>(diff) );
+	float distance = sqrt (static_cast<float>(diff) );
 	return distance;
 }
 
@@ -1709,43 +1709,43 @@ float LabelImageViewQT::perpDist(int x1, int y1, int x2, int y2, int x3, int y3)
 /*
 void LabelImageViewQT::refreshFeatures(void)
 {
-	if(!this->labelImg)
-		return;
+if(!this->labelImg)
+return;
 
-	labelGeometries.clear();
+labelGeometries.clear();
 
-	//Compute features:
-	typedef itk::Image<unsigned char, 3> ChannelImgType;
-	typedef itk::Image<unsigned short, 3> LabelImgType;
-	typedef itk::LabelGeometryImageFilter< LabelImgType, ChannelImgType > FeatureCalcType;
-	FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
-	labFilter->SetInput( labelImg->GetItkPtr<unsigned short>(0,0) );
-	labFilter->Update();
+//Compute features:
+typedef itk::Image<unsigned char, 3> ChannelImgType;
+typedef itk::Image<unsigned short, 3> LabelImgType;
+typedef itk::LabelGeometryImageFilter< LabelImgType, ChannelImgType > FeatureCalcType;
+FeatureCalcType::Pointer labFilter = FeatureCalcType::New();
+labFilter->SetInput( labelImg->GetItkPtr<unsigned short>(0,0) );
+labFilter->Update();
 
-	//Get the centroid and bounding box:
-	std::vector< FeatureCalcType::LabelPixelType > ls = labFilter->GetLabels();
-	for (int l = 0; l < (int)ls.size(); ++l)
-	{
-		int label = (int)ls.at(l);
-		LabelGeometry geo;
-		
-		FeatureCalcType::LabelPointType c = labFilter->GetCentroid( label );
-		for (unsigned int i = 0; i < 3; ++i)
-		{
-			geo.Centroid[i] = float( c[i] );
-		}
-		FeatureCalcType::BoundingBoxType bbox = labFilter->GetBoundingBox( label );
-		for (unsigned int i = 0; i < 3*2; ++i)
-		{
-			geo.BoundingBox[i] = float( bbox[i] );
-		}
-		labelGeometries[l] = geo; 
-	}
+//Get the centroid and bounding box:
+std::vector< FeatureCalcType::LabelPixelType > ls = labFilter->GetLabels();
+for (int l = 0; l < (int)ls.size(); ++l)
+{
+int label = (int)ls.at(l);
+LabelGeometry geo;
+
+FeatureCalcType::LabelPointType c = labFilter->GetCentroid( label );
+for (unsigned int i = 0; i < 3; ++i)
+{
+geo.Centroid[i] = float( c[i] );
+}
+FeatureCalcType::BoundingBoxType bbox = labFilter->GetBoundingBox( label );
+for (unsigned int i = 0; i < 3*2; ++i)
+{
+geo.BoundingBox[i] = float( bbox[i] );
+}
+labelGeometries[l] = geo; 
+}
 }
 */
 
 MyRubberBand::MyRubberBand(QWidget * p)
-: QWidget(p)
+	: QWidget(p)
 {
 	this->setWindowFlags( Qt::FramelessWindowHint | this->windowFlags() );
 	this->setMouseTracking(true);
@@ -1768,7 +1768,7 @@ void MyRubberBand::mouseMoveEvent(QMouseEvent * event)
 }
 
 IntensityDialog::IntensityDialog(int threshold, int offset, QWidget *parent)
-: QDialog(parent)
+	: QDialog(parent)
 {
 	QLabel * header = new QLabel(tr("Adjust values for Intensity shifting:"));
 	QLabel * label1 = new QLabel(tr("Threshold: "));

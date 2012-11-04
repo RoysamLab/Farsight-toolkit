@@ -4,8 +4,6 @@
 #ifndef _ftkgnt_H_
 #define _ftkgnt_H_
 
-
-
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -15,8 +13,6 @@
 #include <vcl_vector.h>
 #include <ftkFeatures/ftkLabelImageToFeatures.h>
 #include "itkImage.h"
-using namespace boost;
-
 
 		struct VP {
 		std::string label;
@@ -33,15 +29,15 @@ public:
   typedef itk::Image< unsigned short, 3> OutputImageType;
   typedef ftk::LabelImageToFeatures< unsigned char,  unsigned short, 3 > FeatureCalcType;
   // Graph typedefs
-  typedef property<vertex_name_t, std::string > VertexProperties;
-  typedef adjacency_list <vecS, vecS, undirectedS,VertexProperties> RAGraph;
-  typedef adjacency_list <vecS, vecS, undirectedS,VP> MTreeType;	
-  typedef graph_traits<RAGraph>::vertex_descriptor node;
-  typedef graph_traits<RAGraph>::edge_descriptor Edge;
-  typedef property_map<RAGraph, vertex_name_t>::type node_name;  
+  typedef boost::property<boost::vertex_name_t, std::string > VertexProperties;
+  typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::undirectedS,VertexProperties> RAGraph;
+  typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::undirectedS,VP> MTreeType;	
+  typedef boost::graph_traits<RAGraph>::vertex_descriptor node;
+  typedef boost::graph_traits<RAGraph>::edge_descriptor Edge;
+  typedef boost::property_map<RAGraph, boost::vertex_name_t>::type node_name;  
   typedef boost::graph_traits<RAGraph>::adjacency_iterator AdjVertIt;
-  typedef property_map<MTreeType,vertex_name_t>::type nodes_new; 
-  typedef graph_traits<MTreeType>::vertex_descriptor node_mt;
+  typedef boost::property_map<MTreeType,boost::vertex_name_t>::type nodes_new; 
+  typedef boost::graph_traits<MTreeType>::vertex_descriptor node_mt;
   typedef ftk::IntrinsicFeatures FeaturesType;	
 
     //: constructor

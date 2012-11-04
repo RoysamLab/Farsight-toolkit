@@ -59,7 +59,6 @@ limitations under the License.
 #include <QFile>
 #include <QCoreApplication>
 #include <QTextStream>
-using namespace std;
 
 class ChooseItemDialog;
 class ChooseItemsDialog;
