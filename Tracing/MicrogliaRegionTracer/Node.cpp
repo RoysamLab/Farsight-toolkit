@@ -1,7 +1,7 @@
 #include "Node.h"
 
 #include <algorithm>
-#include <cassert>
+#include <stdexcept>
 #include <iostream>
 #include <cstddef> // for NULL
 
@@ -42,7 +42,7 @@ Node::~Node()
     
     //Go to the parent (if it exist) and remove ourselves from their children
     Node* parent = this->GetParent();
-    std::vector<Node *>& parents_children = parent->GetChildren();   //the vector of all our parent's children, CAREFUL: Note the type, if you do not declare the type a reference, the '=' operator will just copy the pointers instead of referencing the original vector
+    std::vector<Node *>& parents_children = parent->GetChildren();   //the vector of all our parent's children, CAREFUL: Note the type, if you do not declare the type a reference, the operator= will just copy the pointers instead of referencing the original vector
     
 //    std::cerr << "Our ID: " << this->id << std::endl;
     if (parent != NULL)
@@ -76,7 +76,8 @@ Node::~Node()
                 break;
             }
         }
-        assert(erased); //Big problem if this assert fails since we couldn't find ourselves inside the parent's list of children
+        if (!erased)
+            throw std::runtime_error("Node destructor has problems since since it couldn't find itself inside its parent's list of children");
     }
     
     //The std::vector named children's destructor is implicitly called here and the destructors on its elements are also called.
