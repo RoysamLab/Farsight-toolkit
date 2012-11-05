@@ -230,7 +230,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
 		
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -251,7 +251,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -271,7 +271,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -303,7 +303,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=std::string::npos)
 	{
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -316,7 +316,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TOUTPUT::PixelType>::max();
 			}
 		}
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -330,7 +330,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 			}
 		}
 		
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -472,7 +472,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -492,7 +492,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -542,7 +542,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=std::string::npos)
 	{
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -555,7 +555,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -569,7 +569,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 			}
 		}
 		
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -738,7 +738,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 // 	std::cout << std::endl << "NOW IS GOING TO PROJECT"<<std::flush;
 	
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -759,7 +759,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -780,7 +780,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 		}
 	}
 	
-	#ifdef _MSC_VER 
+	#if _OPENMP < 200805L 
 		#pragma omp parallel for //collapse(2) //TEST
 	#else
 		#pragma omp parallel for collapse(2)
@@ -831,7 +831,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	int foundBin=projectOptions.find("BIN");
 	if (foundBin!=std::string::npos)
 	{
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -845,7 +845,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 					zProjectImageArray[(inputImage_row_size*y) + (x)] = std::numeric_limits<typename TINPUT::PixelType>::max();
 			}
 		}
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
@@ -859,7 +859,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 			}
 		}
 		
-		#ifdef _MSC_VER 
+		#if _OPENMP < 200805L 
 			#pragma omp parallel for //collapse(2) //TEST
 		#else
 			#pragma omp parallel for collapse(2)
