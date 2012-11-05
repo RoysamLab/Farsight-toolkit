@@ -180,7 +180,7 @@ void MicrogliaMovieSegTracer::GenerateSeedPointsForSoma(CharImageType::Pointer i
 		in_Image[ind]=(pix_buf.Get());
 	}
 
-	vector< Seed> seeds;
+	std::vector< Seed> seeds;
 	yousef_nucleus_seg *NucleusSeg = new yousef_nucleus_seg(); 
 	NucleusSeg->setParamsForSeedDetection( shift, scaleMin, scaleMax, regionXY, regionZ, useDistMap, sampling_ratio_XY_to_Z);
 	NucleusSeg->setDataImage(in_Image, size1, size2, size3, "");

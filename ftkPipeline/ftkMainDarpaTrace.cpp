@@ -473,9 +473,9 @@ void ftkMainDarpaTrace::runTracing()
 				MNT->RemoveSoma( img_soma );
 			}
 // 
-			x = min(_xTile/2, x);
-			y = min(_yTile/2, y);
-			z = min(_zTile/2, z);
+			x = std::min(_xTile/2, x);
+			y = std::min(_yTile/2, y);
+			z = std::min(_zTile/2, z);
 //
 			vtkSmartPointer< vtkTable > swcTable = MNT->GetSWCTable(0);
 			delete MNT;

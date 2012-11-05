@@ -317,7 +317,7 @@ void Image3DView::CreateLabelActor(int currentT)
 													// (double)(*cmap_iter).second.z+labeloffset);
 													 (double)((*cmap_iter).second.z*Z_SPACING+labeloffset));
 		//Labels:
-		stringstream time_id;
+		std::stringstream time_id;
 		time_id <<"("<<(*cmap_iter).first<<","<<currentT<<")";
 		labels->SetValue(return_id, time_id.str());
 		sizes->SetValue(return_id, (*cmap_iter).first);

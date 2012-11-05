@@ -518,7 +518,7 @@ vtkSmartPointer<vtkActor> TrackingKymoView::getTrackPoints(std::vector<TraceBit>
 		cells->InsertNextCell(1);
 		cells->InsertCellPoint(return_id);
 		//Labels:
-		stringstream strId;
+		std::stringstream strId;
 		strId <<"("<<vec[counter].id<<","<<vec[counter].time<<")";
 		labels->SetValue(return_id, strId.str());
 		sizes->SetValue(return_id, vec[counter].id);
@@ -1442,7 +1442,7 @@ void TrackingKymoView::UpdateLabels(void)
 			}
 			int return_id = points->InsertNextPoint(tbit_iter->x,tbit_iter->y,tbit_iter->z);
 			//Labels:
-			stringstream strId;
+			std::stringstream strId;
 			strId <<"("<<tbit_iter->id<<","<<tbit_iter->time<<")";
 			labels->InsertValue(return_id, strId.str());
 			sizes->InsertValue(return_id, tbit_iter->id);
