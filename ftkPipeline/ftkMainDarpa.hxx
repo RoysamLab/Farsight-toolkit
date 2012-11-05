@@ -60,7 +60,7 @@ void ftkMainDarpa::projectImageRGB( std::string inputImageNameGFP /*GFP*/, std::
 			typename RGBImageType::PixelType newPixel;
 			
 			int foundPro=NAME.find("GFP");
-			if (foundPro!=string::npos)
+			if (foundPro!=std::string::npos)
 			{
 				newPixel.SetRed( itinputImageGFP.Get() );
 				newPixel.SetGreen( itinputImageGFP.Get() );
@@ -71,7 +71,7 @@ void ftkMainDarpa::projectImageRGB( std::string inputImageNameGFP /*GFP*/, std::
 					newPixel.SetBlue( 0 );
 			}
 			foundPro=NAME.find("DAPI");
-			if (foundPro!=string::npos)
+			if (foundPro!=std::string::npos)
 			{
 // 				newPixel.SetBlue( itinputImageGFP.Get()*4 );
 // 				newPixel.SetRed( 0 );
@@ -90,7 +90,7 @@ void ftkMainDarpa::projectImageRGB( std::string inputImageNameGFP /*GFP*/, std::
 					newPixel.SetBlue( 0 );
 			}
 			foundPro=NAME.find("GF_PDAP_I");
-			if (foundPro!=string::npos)
+			if (foundPro!=std::string::npos)
 			{
 				newPixel.SetRed( itinputImageGFP.Get() );
 				newPixel.SetGreen( itinputImageGFP.Get() );
@@ -293,7 +293,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 
 
 	int foundPro=projectOptions.find("ORG");
-	if (foundPro!=string::npos)
+	if (foundPro!=std::string::npos)
 	{
 		vectorOut[0] = zProjectImage;
 		vectorOut[1] = yProjectImage;
@@ -301,7 +301,7 @@ std::vector< typename TOUTPUT::Pointer > ftkMainDarpa::getProjectImage( typename
 	}
 	
 	int foundBin=projectOptions.find("BIN");
-	if (foundBin!=string::npos)
+	if (foundBin!=std::string::npos)
 	{
 		#ifdef _MSC_VER 
 			#pragma omp parallel for //collapse(2) //TEST
@@ -359,12 +359,12 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	
 	std::string tipoImagen;
 	int foundType=imageType.find("TIFF");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".tif";
 	}
 	foundType=imageType.find("NRRD");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".nrrd";
 	}
@@ -514,7 +514,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 
 
 	int foundPro=projectOptions.find("ORG");
-	if (foundPro!=string::npos)
+	if (foundPro!=std::string::npos)
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zPro_Z"+tipoImagen;
 		writeImage< TINPUT >(zProjectImage,temp3.c_str());
@@ -527,7 +527,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	
 	}
 	int foundRes=projectOptions.find("RES");
-	if (foundRes!=string::npos)
+	if (foundRes!=std::string::npos)
 	{
 		std::string temp3a = outputPath + "/" + inputImageNameLocal + "zPro_Z_Re"+tipoImagen;
 		writeImageRescaled< TINPUT, TOUTPUT >(zProjectImage,temp3a.c_str());
@@ -540,7 +540,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	}
 		
 	int foundBin=projectOptions.find("BIN");
-	if (foundBin!=string::npos)
+	if (foundBin!=std::string::npos)
 	{
 		#ifdef _MSC_VER 
 			#pragma omp parallel for //collapse(2) //TEST
@@ -592,7 +592,7 @@ void ftkMainDarpa::projectImage( std::string inputImageName, std::string outputP
 	}
 	
 	int foundHisto=projectOptions.find("HISTO");
-	if (foundHisto!=string::npos)
+	if (foundHisto!=std::string::npos)
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
 		std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
@@ -642,12 +642,12 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 
 	std::string tipoImagen;
 	int foundType=imageType.find("TIFF");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".tif";
 	}
 	foundType=imageType.find("NRRD");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".nrrd";
 	}
@@ -803,7 +803,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 
 
 	int foundPro=projectOptions.find("ORG");
-	if (foundPro!=string::npos)
+	if (foundPro!=std::string::npos)
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zPro_Z"+tipoImagen;
 		writeImage< TINPUT >(zProjectImage,temp3.c_str());
@@ -816,7 +816,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	
 	}
 	int foundRes=projectOptions.find("RES");
-	if (foundRes!=string::npos)
+	if (foundRes!=std::string::npos)
 	{
 		std::string temp3a = outputPath + "/" + inputImageNameLocal + "zPro_Z_Re"+tipoImagen;
 		writeImageRescaled< TINPUT, TOUTPUT >(zProjectImage,temp3a.c_str());
@@ -829,7 +829,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	}
 		
 	int foundBin=projectOptions.find("BIN");
-	if (foundBin!=string::npos)
+	if (foundBin!=std::string::npos)
 	{
 		#ifdef _MSC_VER 
 			#pragma omp parallel for //collapse(2) //TEST
@@ -882,7 +882,7 @@ void ftkMainDarpa::projectImage( typename TINPUT::Pointer inputImage, std::strin
 	}
 	
 	int foundHisto=projectOptions.find("HISTO");
-	if (foundHisto!=string::npos)
+	if (foundHisto!=std::string::npos)
 	{
 		std::string temp3 = outputPath + "/" + inputImageNameLocal + "zHisto.txt";
 		std::vector< std::vector< unsigned long long > > histoGram(inputImage_sizez[2]);
@@ -930,12 +930,12 @@ void ftkMainDarpa::computeDistMap( std::string inputImageName, std::string outpu
 {
 	std::string tipoImagen;
 	int foundType=imageType.find("TIFF");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".tif";
 	}
 	foundType=imageType.find("NRRD");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".nrrd";
 	}
@@ -975,12 +975,12 @@ void ftkMainDarpa::computeMedianFilter( std::string inputImageName, std::string 
 {
 	std::string tipoImagen;
 	int foundType=imageType.find("TIFF");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".tif";
 	}
 	foundType=imageType.find("NRRD");
-	if (foundType!=string::npos)
+	if (foundType!=std::string::npos)
 	{
 		tipoImagen = ".nrrd";
 	}
