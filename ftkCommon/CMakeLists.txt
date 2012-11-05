@@ -4,7 +4,6 @@ SET( FTKCOMMON_SRCS
   ftkMultipleImageHandler.cpp
   ftkParameters.cpp
   ftkProjectManager.cxx
-ftkLaplacianOfGaussian3D.cpp
 )
 
 SET( FTKCOMMON_HDRS
@@ -13,7 +12,6 @@ SET( FTKCOMMON_HDRS
   ftkMultipleImageHandler.h
   ftkParameters.h
   ftkProjectManager.h
-  ftkLaplacianOfGaussian3D.h
 )
 
 if (BUILD_CUDA)
@@ -64,10 +62,6 @@ INSTALL( TARGETS block RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
 ADD_EXECUTABLE ( TIF16bitTo8bit TIF16bitTo8Bit.cpp )
 TARGET_LINK_LIBRARIES( TIF16bitTo8bit      ${ITK_LIBRARIES} )
 INSTALL( TARGETS TIF16bitTo8bit RUNTIME DESTINATION ${INSTALL_BIN_DIR} )
-
-#ADD_EXECUTABLE(ftkLoG3D_tester ftkLoG3D_tester.cpp)
-#TARGET_LINK_LIBRARIES(ftkLoG3D_tester ${ITK_LIBRARIES} ftkCommon)
-#INSTALL(TARGETS ftkLoG3D_tester RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 
 ADD_EXECUTABLE(itkRolloverOpenMPTest itkRolloverOpenMPTest.cpp)
 TARGET_LINK_LIBRARIES(itkRolloverOpenMPTest ${ITK_LIBRARIES})
