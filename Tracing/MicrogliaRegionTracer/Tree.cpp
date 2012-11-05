@@ -1,6 +1,7 @@
 #include "Tree.h"
 
 #include <iostream>
+#include <stdexcept>
 
 Tree::Tree()
 {
