@@ -1814,8 +1814,8 @@ SomaExtractor::UShortImageType::Pointer SomaExtractor::DevideAndScale(ProbImageT
 			{
 				oriImageIt.Set(0);
 			}
-			oriImageIt++;
-			imageIt++;
+			++oriImageIt;
+			++imageIt;
 		}
 	}
 
