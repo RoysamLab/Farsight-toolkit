@@ -1,5 +1,12 @@
 #include "Cell.h"
 
+#include "itkMaskNegatedImageFilter.h"
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkBinaryImageToLabelMapFilter.h"
+#include "itkLabelMapToLabelImageFilter.h"
+
+#include "itkImageRegionIterator.h"
+
 Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z)
 {
 	this->cell_x = cell_x;

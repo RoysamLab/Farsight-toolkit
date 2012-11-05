@@ -1,5 +1,8 @@
 #include "Node.h"
 
+#include <algorithm>
+#include <cassert>
+#include <iostream>
 #include <cstddef> // for NULL
 
 //Constructor

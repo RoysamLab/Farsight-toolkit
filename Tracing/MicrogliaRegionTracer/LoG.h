@@ -1,12 +1,6 @@
 #ifndef LoG_H
 #define LoG_H
 
-#include "itkLaplacianRecursiveGaussianImageFilter.h"
-#include "itkShiftScaleImageFilter.h"
-#include "itkImageFileWriter.h"
-#include "itkMedianImageFilter.h"
-#include "ftkTimeStampOverflowSafeUpdate.h"
-
 #include "Cell.h"
 
 class LoG

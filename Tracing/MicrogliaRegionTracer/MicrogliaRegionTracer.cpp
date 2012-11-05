@@ -1,5 +1,37 @@
 #include "MicrogliaRegionTracer.h"
 
+#include "itkImageDuplicator.h"
+#include "itkShiftScaleImageFilter.h"
+#include "itkGeodesicActiveContourLevelSetImageFilter.h"
+#include "itkMaximumEntropyThresholdImageFilter.h"
+#include "itkPowImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "InsightJournalFilters/MinimalPath/itkSpeedFunctionToPathFilter.h"
+#include "InsightJournalFilters/MinimalPath/itkImageToPathFilter.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkInvertIntensityImageFilter.h"
+#include "itkResampleImageFilter.h"
+#include "itkIdentityTransform.h"
+
+#include "itkVector.h"
+#include "itkPointSet.h"
+#include "itkBSplineScatteredDataPointSetToImageFilter.h"
+#include "itkBSplineControlPointImageFunction.h"
+#include "itkUnaryFunctorImageFilter.h"
+#include "itkLogImageFilter.h"
+
+#include "itkNeighborhoodIterator.h"
+#include "itkPathIterator.h"
+#include "itkPathConstIterator.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
+
+
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+
+#include <cmath>
+
 #define MASK 0
 #define PRINT_ALL_IMAGES 0  //UNSAFE TO TURN THIS ON WHEN TRACING MORE THAN 1 CELL
 #define PI (4.0*atan(1.0))

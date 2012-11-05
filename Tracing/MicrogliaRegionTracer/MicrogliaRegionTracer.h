@@ -1,49 +1,18 @@
 #ifndef MICROGLIAREGIONTRACER_H
 #define MICROGLIAREGIONTRACER_H
 
-#include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkNeighborhoodIterator.h"
-#include "itkPathIterator.h"
-#include "itkPathConstIterator.h"
-#include "itkHessian3DToVesselnessMeasureImageFilter.h"
-#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
-//#include "itkMinimumMaximumImageCalculator.h"
-#include "itkPolyLineParametricPath.h"
 #include "itkIntTypes.h"
-#include "itkImageDuplicator.h"
-#include "itkShiftScaleImageFilter.h"
-#include "itkGeodesicActiveContourLevelSetImageFilter.h"
-#include "itkMaximumEntropyThresholdImageFilter.h"
-#include "itkPowImageFilter.h"
-#include "itkSignedMaurerDistanceMapImageFilter.h"
-#include "InsightJournalFilters/MinimalPath/itkSpeedFunctionToPathFilter.h"
-#include "InsightJournalFilters/MinimalPath/itkImageToPathFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkInvertIntensityImageFilter.h"
-#include "itkResampleImageFilter.h"
-#include "itkIdentityTransform.h"
 
+#include "itkImage.h"
+#include "itkPolyLineParametricPath.h"
 
 #include <cstring>
 #include <vector>
-#include <cstddef>
-#include <cmath>
 
 #include "Cell.h"				//Simple class to hold seed coordinates
 #include "ROIGrabber.h"
 #include "LoG.h"
-
 #include "Tree.h"				
-#include "time.h"
-
-#include "itkVector.h"
-#include "itkPointSet.h"
-#include "itkBSplineScatteredDataPointSetToImageFilter.h"
-#include "itkBSplineControlPointImageFunction.h"
-#include "itkUnaryFunctorImageFilter.h"
-#include "itkLogImageFilter.h"
 
 #ifdef _OPENMP
 	#include "omp.h"

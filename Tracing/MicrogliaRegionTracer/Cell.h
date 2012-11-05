@@ -5,19 +5,9 @@
 
 #include "itkImage.h"
 #include "itkIntTypes.h"
-#include "itkImageRegionIterator.h"
 #include "itkImageFileReader.h"
 
 #include "fregl/fregl_roi.h"
-
-#include "itkMaskNegatedImageFilter.h"
-#include "itkMaximumEntropyThresholdImageFilter.h"
-#include "itkBinaryFillholeImageFilter.h"
-#include "itkBinaryThinningImageFilter3D.h"
-#include "itkShiftScaleImageFilter.h"
-#include "itkRegionOfInterestImageFilter.h"
-#include "itkBinaryImageToLabelMapFilter.h"
-#include "itkLabelMapToLabelImageFilter.h"
 
 #include <fstream>
 #include <cstring>

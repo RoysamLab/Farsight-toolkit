@@ -3,10 +3,6 @@
 
 #include "itkIntTypes.h"
 #include <vector>
-#include <cstddef>
-#include <algorithm>
-#include <cassert>
-#include <iostream>
 
 class Node
 {
