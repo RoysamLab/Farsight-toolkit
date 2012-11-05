@@ -502,7 +502,7 @@ vtkSmartPointer<vtkTable> kNearestObjects<num_dimensions>::vectorsToGraphTable(s
 template <int num_dimensions>
 typename kNearestObjects<num_dimensions>::NeighborGraph kNearestObjects<num_dimensions>::getNeighborGraph(std::vector< std::vector< std::pair<unsigned int, double> > > NeighborIDs)
 {
-	nodeName  = get(vertex_name, NG);	
+	nodeName  = get(boost::vertex_name, NG);	
 	allIds = 1;
 	for(unsigned int j=0 ; j<NeighborIDs.size() ; j++)
 	{
@@ -519,7 +519,7 @@ typename kNearestObjects<num_dimensions>::NeighborGraph kNearestObjects<num_dime
 	if(allIds == 0)
 	{
 		NG.clear();
-		nodeName  = get(vertex_name, NG);
+		nodeName  = get(boost::vertex_name, NG);
 	}
 
 	int src = GetNodeIndex(NeighborIds.at(0).first);
