@@ -1,4 +1,4 @@
-# include "ftkgnt.h"
+#include "ftkgnt.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // BUILD THE REGION ADJACENCY graph1 IN AN ADJACENCY_LIST 
@@ -68,7 +68,7 @@ ftkgnt::RAGraph ftkgnt::BuildRAG(unsigned short id)
 				}
 				bool bRet;
 				Edge e;
-				std::tr1::tie(e,bRet) = edge(root,tail,this->RAG);
+				boost::tie(e,bRet) = edge(root,tail,this->RAG);
 				if(!bRet)
 				{
 					add_edge(root,tail,this->RAG);
@@ -221,7 +221,7 @@ ftkgnt::MTreeType ftkgnt::BuildMergeTreeDcon(ftkgnt::RAGraph R1, unsigned short 
 		{	
 			int vertex_index = GetNodeIndex(static_cast<unsigned short>(*RPSIterator),R1);
 			ftkgnt::node v = vertex(vertex_index,R1);
-			std::tr1::tie(avi, av_end)=adjacent_vertices(v,R1); 
+			boost::tie(avi, av_end)=adjacent_vertices(v,R1); 
 			
 			for (avi=avi; avi < av_end ; ++avi)
 			{

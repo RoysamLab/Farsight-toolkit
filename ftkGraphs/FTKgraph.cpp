@@ -160,9 +160,9 @@ vtkSmartPointer<vtkTable> FTKgraph::constructGraphTable_ID(unsigned short id, In
 
 vtkSmartPointer<vtkTable> FTKgraph::BuildGraphTable( GraphType g, vtkSmartPointer<vtkTable> table)
 {
-   for (std::tr1::tie(vi,vi_end) = vertices(g) ; vi != vi_end ; ++vi)
+   for (boost::tie(vi,vi_end) = vertices(g) ; vi != vi_end ; ++vi)
    {
-	   for (std::tr1::tie(ai,ai_end) = adjacent_vertices(*vi, g) ; ai != ai_end ; ++ai)
+	   for (boost::tie(ai,ai_end) = adjacent_vertices(*vi, g) ; ai != ai_end ; ++ai)
 	   {
            flag = 1;
 	       for(int i=0; i<(int)table->GetNumberOfRows(); ++i)
