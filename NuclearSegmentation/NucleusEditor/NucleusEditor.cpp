@@ -977,23 +977,15 @@ bool NucleusEditor::saveSomaImage()
 	{
 		classMap[table->GetValue(row,0).ToUnsignedInt()] = table->GetValueByName( row, prediction_column.c_str() ).ToInt();
 	}
-#ifdef _OPENMP
-#ifdef _MSC_VER
+
 	#pragma omp parallel for
 	for(itk::IndexValueType i=0; i<im_size[2]; ++i)
-#else
-	#pragma omp parallel for
-	for(itk::SizeValueType i=0; i<im_size[2]; ++i)
-#endif
-#else
-	for(itk::SizeValueType i=0; i<im_size[2]; ++i)
-#endif
 	{
-		for(itk::SizeValueType j=0; j<im_size[1]; ++j)
+		for(itk::IndexValueType j=0; j<im_size[1]; ++j)
 		{
-			for(itk::SizeValueType k=0; k<im_size[0]; ++k)
+			for(itk::IndexValueType k=0; k<im_size[0]; ++k)
 			{
-				itk::SizeValueType offset = (i*sizeXY)+(j*sizeX)+k;
+				itk::IndexValueType offset = (i*sizeXY)+(j*sizeX)+k;
 				if( imageLabelArray[offset] != 0 )
 					if(classMap[imageLabelArray[offset]] == 1)
 						imageSomaArray[offset] = imageLabelArray[offset];
