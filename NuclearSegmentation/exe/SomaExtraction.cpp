@@ -1317,7 +1317,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GenerateSeedPoints(OutputIm
 		{
 			iterator1.Set(1);		
 		}
-		++iterator1;				
+		iterator1++;
 	}
 
 	writeImage("binarize_image.nrrd",binImagePtr);
