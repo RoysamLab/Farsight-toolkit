@@ -163,13 +163,13 @@ int main(int argc, char* argv[])
 		std::string InputFilename = std::string(argv[2]);
 		char * pch = argv[2];
 		std::string str;
-		char * token1 = strtok(pch,"\\");
-		char * token2 = strtok(NULL,"\\");
+		char * token1 = strtok(pch,"/");
+		char * token2 = strtok(NULL,"/");
 		while( token2 != NULL)
 		{
-			str += std::string(token1) + "\\";
+			str += std::string(token1) + "/";
 			token1 = token2;
-			token2 = strtok(NULL,"\\");
+			token2 = strtok(NULL,"/");
 		}
 		str += "statistics.txt";
 		std::cout<<str<<std::endl;
