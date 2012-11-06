@@ -255,6 +255,7 @@ protected slots:
 	void preprocessImage(void);
 	void unmixChannels(void);
 	void segmentNuclei(void);
+	void segmentByActiveContour();
 	void startEditing(void);
 	void stopEditing(void);
 	void startSVM();
@@ -367,6 +368,7 @@ protected:
 	QAction *preprocessAction;
 	QAction *unmixChannelsAction;
 	QAction *segmentNucleiAction;
+	QAction *activeContourAction;
 	QAction *editNucleiAction;
 	QAction *svmAction;		//Start the One-Class SVM outlier detecter
 	QAction *databaseAction;

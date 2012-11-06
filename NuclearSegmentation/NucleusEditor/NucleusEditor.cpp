@@ -23,8 +23,9 @@ Date:      $Date:  $
 Version:   $Revision: 0.00 $
 
 =========================================================================*/
-
+#include "../exe/SomaExtraction.h"
 #include "NucleusEditor.h"
+
 //*******************************************************************************
 // NucleusEditor
 //
@@ -538,6 +539,10 @@ void NucleusEditor::createMenus()
 	connect(databaseAction, SIGNAL(triggered()), this, SLOT(updateDatabase()));
 	toolMenu->addAction(databaseAction);
 
+	activeContourAction = new QAction(tr("Active Contour"), this);
+	activeContourAction->setObjectName("activeContourAction");
+	connect(activeContourAction, SIGNAL(triggered()), this, SLOT(segmentByActiveContour()));
+	toolMenu->addAction(activeContourAction);
 
 	activeMenu   = toolMenu->addMenu(tr("Active Learning"));
 	activeMenu->setObjectName("activeMenu");
@@ -4454,6 +4459,58 @@ void NucleusEditor::segmentNuclei()
 	}
 	delete dialog;
 
+}
+
+void NucleusEditor::segmentByActiveContour()
+{
+	if(!myImg) return;
+	editMenu->setEnabled(true);
+
+	SomaExtractor *Somas = new SomaExtractor();	
+
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Choose Param Files"),
+                                                    QDir::currentPath(), tr("Option files (*.opt)"));
+    if (!fileName.isEmpty())
+    {
+		Somas->LoadOptions( fileName.toStdString().c_str()); 
+    }
+	else
+	{
+		delete Somas;
+		return;
+	}
+	
+	std::vector< itk::SizeValueType > size = myImg->Size();
+	unsigned char* ucharImagePtr = static_cast<unsigned char*> (myImg->GetDataPtr(0,0));
+	
+	std::cout<< "Generating seeds and get binary image.  "<<std::endl;
+	std::cout<<(int)size[2]<<"\t"<<(int)size[3]<<"\t"<<(int)size[1]<<std::endl;
+
+	std::vector< itk::Index<3> > seedVector;
+	SomaExtractor::ProbImageType::Pointer binImagePtr = Somas->GenerateSeedPoints(ucharImagePtr, (int)size[2], (int)size[3], (int)size[1], seedVector);
+	std::cout<< "Segmenting..."<<std::endl;
+	/// SegmentSoma: Active Contour without GVF, eliminate small objects
+	SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(seedVector, binImagePtr);
+	if(segImage)
+	{
+		std::cout<< "Writing SomaLabeledImage.nrrd"<<std::endl;
+		Somas->writeImage("_somaLabeledImage.nrrd", segImage);
+		Somas->writeCentroids( "_somaCentroids.txt" ,seedVector);
+	}
+
+	labImg = ftk::Image::New();
+	if(!labImg->LoadFile(std::string("_somaLabeledImage.nrrd")))
+	{
+		labImg = NULL;
+	}
+	else
+	{
+		std::cout<< "Visualize labeled image"<<std::endl;
+		selection->clear();
+		segView->SetLabelImage(labImg, selection);
+		this->updateNucSeg();
+	}
+	delete Somas;
 }
 
 QVector<QString> NucleusEditor::getChannelStrings(void)

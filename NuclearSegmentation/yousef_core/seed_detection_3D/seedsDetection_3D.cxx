@@ -140,7 +140,7 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	try{
 		im->SetRegions( region );
-		im->SetSpacing(spacing);
+		//im->SetSpacing(spacing);
 		im->Allocate();
 		im->FillBuffer(0);
 		im->Update();

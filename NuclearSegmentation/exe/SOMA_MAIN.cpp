@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 		std::cout<< "Segmenting..."<<std::endl;
 
 		/// SegmentSoma1: Active Contour without GVF, eliminate small objects
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, seedVector, binImagePtr);
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(seedVector, binImagePtr);
 		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
 		/// Compute soma features and write new seeds back
@@ -161,8 +161,20 @@ int main(int argc, char* argv[])
 	else if( atoi(argv[1]) == 3 && argc == 3)   // print out mean and std and the ratio
 	{
 		std::string InputFilename = std::string(argv[2]);
-		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(argv[2]); 
-		Somas->CaculateMeanStd(InputFilename, image);
+		char * pch = argv[2];
+		std::string str;
+		char * token1 = strtok(pch,"\\");
+		char * token2 = strtok(NULL,"\\");
+		while( token2 != NULL)
+		{
+			str += std::string(token1) + "\\";
+			token1 = token2;
+			token2 = strtok(NULL,"\\");
+		}
+		str += "statistics.txt";
+		std::cout<<str<<std::endl;
+		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(InputFilename.c_str()); 
+		Somas->CaculateMeanStd(str, image);
 	}
 	else if( atoi(argv[1]) == 4 && argc == 6)  /// normalize the intensity: get background image
 	{
@@ -171,7 +183,7 @@ int main(int argc, char* argv[])
 		SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImageByFirstSlice(image, atof(argv[3]));
 		std::string imageName = InputFilename;
 		imageName.erase(imageName.length()-4,imageName.length());
-		imageName.append("_normalize.tif");
+		imageName.append("_a.tif");
 		SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]), atof(argv[5]));
 		Somas->writeImage(imageName.c_str(), rescaledImage);
 	}

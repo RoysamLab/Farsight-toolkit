@@ -145,7 +145,7 @@ public:
 	ProbImageType::Pointer SetInputImageFloat(const char *fileName);
 
 	/// return labeled image for somas
-	SegmentedImageType::Pointer SegmentSoma( OutputImageType::Pointer input, std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr);
+	SegmentedImageType::Pointer SegmentSoma( std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr);
 	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
 
 	void writeImage(const char* writeFileName, SegmentedImageType::Pointer image);
@@ -162,7 +162,8 @@ public:
 
 	// generate soma seed points for the input image
 	ProbImageType::Pointer GenerateSeedPoints(OutputImageType::Pointer inputImgPt, std::vector< itk::Index<3> > &somaCentroids);
- 
+ 	ProbImageType::Pointer GenerateSeedPoints( unsigned char* inputBuffer, int size1, int size2, int size3, std::vector< itk::Index<3> > &somaCentroids);
+	
 	ProbImageType2D::Pointer GetAverage(const char * channelName, int n, double sigma);
 	ProbImageType2D::Pointer GetBackgroundImage(ProbImageType::Pointer image, double sigma);
 	ProbImageType2D::Pointer GetBackgroundImageByFirstSlice(ProbImageType::Pointer image, double sigma);
@@ -219,9 +220,6 @@ private:
 	int sizeX;
 	int sizeY;
 	int sizeZ;
-
-	// for automatic soma seed detection
-	ProbImageType::Pointer binProbImagePtr;
 
 	int num_bins;
 	int shift;

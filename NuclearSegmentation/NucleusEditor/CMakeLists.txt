@@ -153,6 +153,7 @@ SET (NUCLEUSEDITOR_LIBRARIES
   diffusion_map
   libActiveValidation
   ${CLUSCLUS_LIBRARIES}
+  segment_soma
 )
 
 IF (USE_TRACKING)
