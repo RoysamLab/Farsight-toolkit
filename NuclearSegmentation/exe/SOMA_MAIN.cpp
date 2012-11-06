@@ -163,6 +163,7 @@ int main(int argc, char* argv[])
 		std::string InputFilename = std::string(argv[2]);
 		char * pch = argv[2];
 		std::string str;
+		str += "/";
 		char * token1 = strtok(pch,"/");
 		char * token2 = strtok(NULL,"/");
 		while( token2 != NULL)
@@ -182,8 +183,8 @@ int main(int argc, char* argv[])
 		SomaExtractor::ProbImageType::Pointer image = Somas->SetInputImage(InputFilename.c_str()); 
 		SomaExtractor::ProbImageType2D::Pointer backgroundImage = Somas->GetBackgroundImageByFirstSlice(image, atof(argv[3]));
 		std::string imageName = InputFilename;
-		imageName.erase(imageName.length()-4,imageName.length());
-		imageName.append("_a.tif");
+		imageName.erase(imageName.length()-7,imageName.length());
+		imageName.append("Ndsu.TIF");
 		SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]), atof(argv[5]));
 		Somas->writeImage(imageName.c_str(), rescaledImage);
 	}
