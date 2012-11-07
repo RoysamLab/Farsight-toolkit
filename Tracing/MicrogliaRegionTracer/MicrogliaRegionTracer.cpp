@@ -62,17 +62,23 @@ void MicrogliaRegionTracer::SetAnchorImage(const std::string & anchor_image_file
 	this->anchor_image_filename = anchor_image_filename;
 }
 
-void MicrogliaRegionTracer::LoadCellPoints(const std::string & seedpoints_filename)
+void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filename)
 {
 	std::ifstream seed_point_file;
 	seed_point_file.open(seedpoints_filename.c_str());
 
 	itk::uint64_t cellX, cellY, cellZ;
+	itk::uint64_t num_seed_points = 0;
 	while (seed_point_file >> cellX >> cellY >> cellZ)
 	{	
 		Cell* cell = new Cell(cellX, cellY, cellZ);
 		cells.push_back(cell);
+		++num_seed_points;
 	}
+	std::cout << "Number of seed points read: " << num_seed_points << std::endl;
+
+	if (num_seed_points == 0)
+		throw std::runtime_error("Error, you probably didn't supply a correct seed point file");
 }
 
 void MicrogliaRegionTracer::SetSomaImage(const std::string & soma_image_filename)
@@ -290,8 +296,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	}
 
 	cell->multiscale_LoG_image = resample_filter->GetOutput();
-    
-    
+        
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	cell->multiscale_LoG_image->SetSpacing(spacing);
