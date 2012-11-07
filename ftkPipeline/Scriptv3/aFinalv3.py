@@ -82,11 +82,11 @@ if len(sys.argv) == 2:
 #def main(DATA_FOLDER):
 
 # Parameters
-TRY = 102
+TRY = 104
 #DEBUG = 1
 #----------------------------------
-REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 1	# If 0 the results will be keep
+REMOVE_MONTAGES = 0	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
+MOVE_RESULTS = 0	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
@@ -99,26 +99,26 @@ MOVE_INTER_STEPS = 0
 
 SMALLIMAGE = '1'	# if the image is small
 
-runCopy = 0		# Flag to move images
-runCopy_db = 0
-runMake = 0		# Flag Make Farsight
+runCopy = 1		# Flag to move images
+runCopy_db = 1
+runMake = 1		# Flag Make Farsight
 runPreproc = 0
 runPreproc_db = 0
-runBack = 0		# Flag to run background substraction
-runBack_db = 0
+runBack = 1		# Flag to run background substraction
+runBack_db = 1
 
-runCurv = 0		# Flag to run Curvelets
-runCurv_db = 0
-runRescale = 0
-runRescale_db = 0
-runRescale_bit = 0
-runRescale_bit_db = 0
-runSegm = 0		# Flag to run Segmentation
-runSegm_db = 0
+runCurv = 1		# Flag to run Curvelets
+runCurv_db = 1
+runRescale = 1
+runRescale_db = 1
+runRescale_bit = 1
+runRescale_bit_db = 1
+runSegm = 1		# Flag to run Segmentation
+runSegm_db = 1
 runDistToDevice = 0		# Flag to run distance to device computation
 runDistToDevice_db = 0
-runTrac = 1		# Flag to run Tracing
-runTrac_db = 1
+runTrac = 0		# Flag to run Tracing
+runTrac_db = 0
 runAstroTrac = 0		# Flag to run Astrocyte Tracing
 runAstroTrac_db = 0
 
@@ -170,7 +170,7 @@ if( p2 == 'mmmegjha' ):
 
 #DATA_FOLDER_ALL = ['/0113_NRRD','/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD','/0323_NRRD','/0405_NRRD','/0409_NRRD','/0410_NRRD','/0412_NRRD','/1206_NRRD']
 
-DATA_FOLDER_ALL = ['/0131_test']
+DATA_FOLDER_ALL = ['/0507_NRRD']
 if( SERVER == 'far04' ):
 	#REMOVE_MONTAGES = 1
 	#DATA_FOLDER_ALL = ['/0113_NRRD_CROPPED','/0117_NRRD_CROPPED','/0120_NRRD_CROPPED','/0123_NRRD_CROPPED','/0128_NRRD_CROPPED','/0131_NRRD_CROPPED','/0323_NRRD_CROPPED','/0405_NRRD_CROPPED','/0409_NRRD_CROPPED','/0410_NRRD_CROPPED','/0412_NRRD_CROPPED','/1206_NRRD_CROPPED']
@@ -181,7 +181,7 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = ['/0117_NRRD','/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0120_NRRD','/0123_NRRD','/0128_NRRD','/0131_NRRD']
 	#DATA_FOLDER_ALL = ['/0113_NRRD']
-	DATA_FOLDER_ALL = ['/0410_NRRD']
+	DATA_FOLDER_ALL = ['/0507_NRRD']
 	#DATA_FOLDER_ALL = ['/0131_test2']
 	#DATA_FOLDER_ALL = ['/0131_test3']
 	#DATA_FOLDER_ALL = ['/0131_test4']

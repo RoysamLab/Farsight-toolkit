@@ -70,7 +70,7 @@ if( SERVER == 'far04' ):
 	#DATA_FOLDER_ALL = [('/0113_NRRD',4),('/0117_NRRD',4),('/0120_NRRD',4),('/0123_NRRD',4),('/0128_NRRD',4),('/0131_NRRD',4)]
 	#DATA_FOLDER_ALL = [('/0323_NRRD_CROPPED_M_1',2),('/0323_NRRD_CROPPED_M_2',2),('/0323_NRRD_CROPPED_M_3',2),('/0323_NRRD_CROPPED_M_4',2),('/0323_NRRD_CROPPED_M_5',2),('/0323_NRRD_CROPPED_M_6',2)]
 	#DATA_FOLDER_ALL = [('/0113_NRRD',4),('/0117_NRRD',4)]
-	DATA_FOLDER_ALL = [('/0131_NRRD',4)]
+	DATA_FOLDER_ALL = [('/0507_NRRD',4)]
 
 if( SERVER == 'far05' ):
 	REMOVE_MONTAGES = 1
@@ -117,6 +117,16 @@ for index, DATA_FOLDER in enumerate(DATA_FOLDER_ALL):
 		BACSUBFILE.write('close();\n')
 		BACSUBFILE.close()
 
+		BACSUBFILE = LOCAL_FOLDER_PARAMS+'/fijiMacroRescale.ijm'
+		BACSUBFILE = open(BACSUBFILE, 'w')
+		BACSUBFILE.write('file=getArgument();\n')
+		BACSUBFILE.write('run("Nrrd ...", "load="+file+".nrrd");\n')
+		BACSUBFILE.write('setSlice(5);\n')
+		BACSUBFILE.write('run("8 bit");\n')
+		BACSUBFILE.write('run("Nrrd ... ", "nrrd="+file+"_RE.nrrd");\n')
+		BACSUBFILE.write('close();\n')
+		BACSUBFILE.close()
+		
 		if DATA_FOLDER[1]==2:
 			MODEL_FILE = LOCAL_FOLDER_PARAMS+'/MG_model.txt'
 			MODEL_FILE_NAME = MODEL_FILE

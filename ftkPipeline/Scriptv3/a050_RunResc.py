@@ -18,8 +18,9 @@ def main( FARSIGHT_BIN_EXE, LOCAL_DATASET_PATH_PARAMETERS, OUTPUT, INPUT, runRes
 	else:
 		print "Rescale does not exist"
 		#runCopy_db_log = LOCAL_DATASET_PATH_LOG +'/runCopyProjections.log'
+		TEMP = '/data/research/Fiji.app/fiji-linux64 --headless -macro '+LOCAL_DATASET_PATH_PARAMETERS+'/fijiMacroRescale.ijm '+INPUT+' -batch'
 		#TEMP = FARSIGHT_BIN_EXE+'/ftkMainDarpa PROJECTION '+FILE_GFP+' '+LOCAL_DATASET_PATH_DATA_DEBUG+' > '+runCopy_db_log+' 2>&1'
-		TEMP = FARSIGHT_BIN_EXE+'/ftkMainDarpa RESCALE '+INPUT+'.nrrd '+OUTPUT+'.nrrd'+' >> '+runRescale_log+' 2>&1'
+		#TEMP = FARSIGHT_BIN_EXE+'/ftkMainDarpa RESCALE '+INPUT+'.nrrd '+OUTPUT+'.nrrd'+' >> '+runRescale_log+' 2>&1'
 		TEMP2 = subprocess.Popen(TEMP, shell=True)
 		print 'Rescale of '+INPUT
 		TEMP2.communicate()
