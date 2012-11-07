@@ -545,7 +545,7 @@ typename fregl_image_manager< TPixel >::ImageTypePointer fregl_image_manager< TP
     try {
         reader->Update();
     } catch (itk::ExceptionObject& e) {
-        std::cerr << "Cached image does not exist on disk, transforming a new one" << std::endl;
+        std::cerr << "Cached image does not exist on disk at " << name << ", transforming a new one" << std::endl;
         return NULL;
     }
     return reader->GetOutput();
