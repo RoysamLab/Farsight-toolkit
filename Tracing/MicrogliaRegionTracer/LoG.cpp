@@ -148,10 +148,5 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell* cell)
 		
 	}
 
-	std::ostringstream logimageFileNameStream;	
-
-	logimageFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_LoG.mhd";
-
-	//WriteLoGImage(logimageFileNameStream.str(), multiscale_LoG_image);
 	return multiscale_LoG_image;
 }

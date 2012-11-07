@@ -33,7 +33,6 @@
 #include <cmath>
 
 #define MASK 0
-#define PRINT_ALL_IMAGES 0  //UNSAFE TO TURN THIS ON WHEN TRACING MORE THAN 1 CELL
 #define PI (4.0*atan(1.0))
 
 MicrogliaRegionTracer::MicrogliaRegionTracer()
@@ -104,7 +103,7 @@ void MicrogliaRegionTracer::Trace()
     int num_groups = std::ceil(cells.size() / (double) num_threads);
 	std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
     std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
-    std::cerr << "Number of cells to process in the last group" << cells.size() % num_threads << std::endl;
+    std::cerr << "Number of cells to process in the last group: " << cells.size() % num_threads << std::endl;
     
     ROIGrabber roi_grabber(this->joint_transforms_filename, this->image_series_pathname, this->anchor_image_filename);
 
@@ -239,9 +238,11 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell* cell)
 
 	cell->isometric_image = resample_filter->GetOutput();
 	cell->isometric_image->DisconnectPipeline();
-#if PRINT_ALL_IMAGES
-	cell->WriteImage("isometric_image.mhd", cell->isometric_image);
-#endif
+
+	//Make the file name of the raw cell image
+	std::stringstream isometric_image_filename_stream;
+	isometric_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_isometric.nrrd";
+	cell->WriteImage(isometric_image_filename_stream.str(), cell->isometric_image);
 
 	
 	ImageType::SpacingType spacing;
@@ -265,9 +266,10 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
 	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
     delete log_obj;
     
-#if PRINT_ALL_IMAGES
-	cell->WriteImage("multiscaled_LoG_image.mhd", resampled_multiscale_LoG_image);
-#endif
+	//Make the file name of the raw cell image
+	std::stringstream multiscaled_LoG_image_filename_stream;
+	multiscaled_LoG_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_LoG.nrrd";
+	cell->WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
 
 	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
 
@@ -418,11 +420,9 @@ void MicrogliaRegionTracer::RidgeDetection( Cell* cell )
     
         
 
-	std::ostringstream criticalpointsFileNameStream;
-	criticalpointsFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.mhd";
-#if PRINT_ALL_IMAGES
-	cell->WriteImage(criticalpointsFileNameStream.str(), cell->critical_point_image);
-#endif
+	std::ostringstream critical_points_filename_stream;
+	critical_points_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_critical.nrrd";
+	cell->WriteImage(critical_points_filename_stream.str(), cell->critical_point_image);
 }
 
 /* This function calculates the Vesselness score */
@@ -457,8 +457,6 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
 	}
 
-	//cell->WriteImage("Resampled_vesselness.mhd", multiscale_hessian_filter->GetOutput());
-
 	//Unsample the image
 	ImageType::SizeType outputSize = cell->image->GetLargestPossibleRegion().GetSize();
 
@@ -491,12 +489,9 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell* cell)
 	spacing.Fill(1.0);
 	cell->vesselness_image->SetSpacing(spacing);
 	
-	std::ostringstream vesselnessFileNameStream;
-
-	vesselnessFileNameStream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.mhd";
-#if PRINT_ALL_IMAGES
-    cell->WriteImage(vesselnessFileNameStream.str(), cell->vesselness_image);
-#endif
+	std::ostringstream vesselness_filename_stream;
+	vesselness_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_vesselness.nrrd";
+    cell->WriteImage(vesselness_filename_stream.str(), cell->vesselness_image);
 }
 
 /* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
@@ -1030,9 +1025,9 @@ void MicrogliaRegionTracer::CreateSpeedImage(Cell* cell)
 
 	cell->speed_image = pow_image_filter->GetOutput();
 
-#if PRINT_ALL_IMAGES
-	cell->WriteImage("speed_image.mhd", cell->speed_image);
-#endif
+	std::stringstream speed_image_filename_stream;
+	speed_image_filename_stream << cell->getX() << "_" << cell->getY() << "_" << cell->getZ() << "_speed_image.nrrd";
+	cell->WriteImage(speed_image_filename_stream.str(), cell->speed_image);
 }
 
 /* Calculate the Euclidean Distance */

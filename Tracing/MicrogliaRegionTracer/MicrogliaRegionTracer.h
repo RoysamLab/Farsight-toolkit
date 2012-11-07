@@ -44,7 +44,7 @@ public:
 	void				SetJointTransformsFile(const std::string & joint_transforms_filename);
 	void				SetImageSeriesPath(const std::string & image_series_pathname);
 	void				SetAnchorImage(const std::string & anchor_image_filename);
-	void				LoadCellPoints(const std::string & seedpoints_filename);
+	void				LoadSeedPoints(const std::string & seedpoints_filename);
 	void				SetSomaImage(const std::string & soma_image_filename);
 	void				SetAspectRatio(const float & aspect_ratio);
 
