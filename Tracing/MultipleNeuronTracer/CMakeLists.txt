@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project( MultipleNeuronTracer )
 
-ADD_EXECUTABLE( MultipleNeuronTracer MNT_MAIN.cpp MultipleNeuronTracer.cpp PointOperation.cpp PointOperation.h itkHessianToObjectnessMeasureImageFilter.txx	
-	itkMultiScaleHessianBasedMeasureImageFilter.txx MultipleNeuronTracer.h itkHessianToObjectnessMeasureImageFilter.h
-	itkMultiScaleHessianBasedMeasureImageFilter.h)
+ADD_EXECUTABLE( MultipleNeuronTracer MNT_MAIN.cpp MultipleNeuronTracer.cpp PointOperation.cpp PointOperation.h	
+	MultipleNeuronTracer.h )
 TARGET_LINK_LIBRARIES(MultipleNeuronTracer
   ${ITK_LIBRARIES} ${VTK_LIBRARIES} )
   

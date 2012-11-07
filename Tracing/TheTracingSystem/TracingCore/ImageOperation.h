@@ -66,7 +66,7 @@ limitations under the License.
 
 #include "Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
-#include "Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkGradientImageFilter.h"

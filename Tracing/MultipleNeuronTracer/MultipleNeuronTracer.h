@@ -67,7 +67,7 @@
 
 #include "Vesselness/itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
-#include "Vesselness/itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkGradientImageFilter.h"
