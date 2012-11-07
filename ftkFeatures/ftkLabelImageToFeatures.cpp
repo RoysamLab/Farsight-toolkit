@@ -164,7 +164,7 @@ vtkSmartPointer<vtkTable> IntrinsicFeatureCalculator::Compute(void)
 		labFilter->SetImageInputs( intensityImage->GetItkPtr<IPixelT>(0,intensityChannel), labelImage->GetItkPtr<LPixelT>(0,labelChannel) );
 	}
 	//labFilter->SetLevel( needLevel() );
-	labFilter->SetLevel( 2); //////////////////////////modified by Yanbin from 3 to 2;
+	labFilter->SetLevel( 3); //////////////////////////modified by Yanbin from 3 to 2;
 	labFilter->ComputeSurfaceOn();
 	if( needHistogram() )
 		labFilter->ComputeHistogramOn();
@@ -371,7 +371,7 @@ void IntrinsicFeatureCalculator::Update(vtkSmartPointer<vtkTable> table, std::ma
 	}
 	else
 	{
-		labFilter->SetLevel(2);  //modified by yanbin from 2 to 3 ;
+		labFilter->SetLevel(3);  //modified by yanbin from 2 to 3 ;
 		labFilter->ComputeHistogramOff();
 		labFilter->ComputeTexturesOff();
 	}
