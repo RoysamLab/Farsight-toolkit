@@ -10,7 +10,6 @@ fregl_roi< TPixel >::fregl_roi(std::string joint_xforms_xml_file, std::string im
 	
 	this->region_montage->set_cache_buffer_count(cache_buffer_count);
 	this->region_montage->set_file_caching(true);
-	this->region_montage->set_file_cache_dir("./cache");
 }
 
 template < class TPixel >
