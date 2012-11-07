@@ -24,8 +24,8 @@ public:
 	typedef itk::Image< float, 3 >						LoGImageType;
 	typedef itk::Image< float, 3 >						VesselnessImageType;
 	typedef itk::Image< float, 3 >						DistanceImageType;
-	typedef itk::Image< unsigned char, 3 >				MaskImageType;
 	typedef itk::Image< unsigned char, 3 >				SomaImageType;
+	typedef SomaImageType								MaskImageType;
 	typedef itk::Image< unsigned short, 3 >				LabelImageType;
 	typedef itk::ImageFileReader < SomaImageType >		SomaReaderType;
 

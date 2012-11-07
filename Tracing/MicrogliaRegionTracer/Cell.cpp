@@ -88,7 +88,7 @@ void Cell::ComputeCriticalPointsVector(ImageType::Pointer critical_points_image)
 
 void Cell::GetMask(std::string soma_filename)
 {
-	typedef itk::ImageFileReader< MaskImageType > ReaderType;
+	typedef itk::ImageFileReader< SomaImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
 	reader->SetFileName(soma_filename);
 	
@@ -102,7 +102,7 @@ void Cell::GetMask(std::string soma_filename)
 	//	std::cerr << "reader Exception: " << err << std::endl;
 	//}
 
-	typedef itk::RegionOfInterestImageFilter< SomaImageType, ImageType > ROIFilterType;
+	typedef itk::RegionOfInterestImageFilter< SomaImageType, MaskImageType > ROIFilterType;
 	ROIFilterType::Pointer roi_filter = ROIFilterType::New();
 	
 	ImageType::IndexType start;
