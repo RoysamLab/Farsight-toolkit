@@ -196,8 +196,8 @@ public:
 	typedef itk::BinaryThresholdImageFilter <ImageType3D,ImageType3D>	BinaryThresholdImageFilterType;
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxImageCalculatorType;
 	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
-	typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
-	typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+	//typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
+	//typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
 	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;

@@ -742,27 +742,27 @@ void MultipleNeuronTracer::ComputeObjectnessImage(ObjectnessMeasures_micro obj_m
 
 	//int obj_dim = objectness_type; //1; //0: Blobness, 1: Vesselness, 2: Plateness
 
-	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
-	multi_scale_Hessian->SetInput(this->_PaddedCurvImage);
-	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
-	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
-	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
+	//////MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
+	//////multi_scale_Hessian->SetInput(this->_PaddedCurvImage);
+	//////multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
+	//////multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	//////multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
-	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
-	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
-	
-	objectness_filter->SetScaleObjectnessMeasure(false);
-	objectness_filter->SetBrightObject(true);
-	objectness_filter->SetAlpha(obj_measures.alpha);
-	objectness_filter->SetBeta(obj_measures.beta);
-	objectness_filter->SetGamma(obj_measures.gamma);
-	objectness_filter->SetObjectDimension(obj_measures.objectness_type);
-	
-	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
+	////////ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	//////ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	//////
+	//////objectness_filter->SetScaleObjectnessMeasure(false);
+	//////objectness_filter->SetBrightObject(true);
+	//////objectness_filter->SetAlpha(obj_measures.alpha);
+	//////objectness_filter->SetBeta(obj_measures.beta);
+	//////objectness_filter->SetGamma(obj_measures.gamma);
+	//////objectness_filter->SetObjectDimension(obj_measures.objectness_type);
+	//////
+	////////std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
 
-	multi_scale_Hessian->Update();
-	
-	this->ObjectnessImage = multi_scale_Hessian->GetOutput();
+	//////multi_scale_Hessian->Update();
+	//////
+	//////this->ObjectnessImage = multi_scale_Hessian->GetOutput();
 
 	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
 	ImageWriterType::Pointer image_writer = ImageWriterType::New();
