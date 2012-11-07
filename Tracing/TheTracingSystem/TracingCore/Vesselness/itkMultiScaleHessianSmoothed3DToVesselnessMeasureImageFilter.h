@@ -83,7 +83,7 @@ public:
 
   /** Image dimension = 3. */
   itkStaticConstMacro(ImageDimension, unsigned int,
-                   ::itk::GetImageDimension<InputImageType>::ImageDimension);
+                   TInputImage::ImageDimension);
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
