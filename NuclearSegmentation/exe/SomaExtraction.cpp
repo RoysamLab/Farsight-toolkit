@@ -69,7 +69,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::SetInputImage(const char * 
 	width = inputImage->GetLargestPossibleRegion().GetSize()[0];
 	height = inputImage->GetLargestPossibleRegion().GetSize()[1];
 	depth = inputImage->GetLargestPossibleRegion().GetSize()[2];
-	std::cout<<width<<"\t"<<height<<"\t"<<depth<<std::endl;
+	//std::cout<<width<<"\t"<<height<<"\t"<<depth<<std::endl;
 	return inputImage;
 }
 
@@ -1320,7 +1320,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::GenerateSeedPoints(OutputIm
 		++iterator1;
 	}
 
-	writeImage("binarize_image.nrrd",binImagePtr);
+	//writeImage("binarize_image.nrrd",binImagePtr);
 	delete NucleusSeg;
 	return binImagePtr;
 }
@@ -1557,7 +1557,7 @@ SomaExtractor::ProbImageType2D::Pointer SomaExtractor::GetBackgroundImageByFirst
 
 	ProbImageType2D::Pointer imagePt = gaussianFilter->GetOutput();
 
-	WriteFloat2DImage("BackgroundImage1.nrrd", imagePt);
+	//WriteFloat2DImage("BackgroundImage1.nrrd", imagePt);
 	return imagePt;
 }
 
@@ -1762,7 +1762,7 @@ SomaExtractor::UShortImageType::Pointer SomaExtractor::DevideAndScale(ProbImageT
 	}
 	else
 	{
-		std::cout<< "Input image and background image match!"<<std::endl;
+		//std::cout<< "Input image and background image match!"<<std::endl;
 	}
 
 	for(int i = 0; i < depth; i++)
@@ -1809,10 +1809,10 @@ SomaExtractor::UShortImageType::Pointer SomaExtractor::DevideAndScale(ProbImageT
 	itk::Index<2> index;
 	index[0] = width / 2;
 	index[1] = height / 2;
-	std::cout<< "Estimated Radius: "<<radius<<std::endl;
+	//std::cout<< "Estimated Radius: "<<radius<<std::endl;
 	medianImageFunction->SetNeighborhoodRadius(radius);
 	double median2 = medianImageFunction->EvaluateAtIndex(index);
-	std::cout<< "Multiply by "<< median / median2<<std::endl;
+	//std::cout<< "Multiply by "<< median / median2<<std::endl;
 
 	typedef itk::MultiplyImageFilter<ProbImageType, ProbImageType, ProbImageType> MultiplyImageFilterType;
 	MultiplyImageFilterType::Pointer multiplyImageFilter = MultiplyImageFilterType::New();
@@ -1823,7 +1823,7 @@ SomaExtractor::UShortImageType::Pointer SomaExtractor::DevideAndScale(ProbImageT
 
 	if( bAutoThreshold)
 	{
-		std::cout<< "AutoThreshold..."<<std::endl;
+		//std::cout<< "AutoThreshold..."<<std::endl;
 		ProbIteratorType oriImageIt( image, image->GetLargestPossibleRegion());
 		UcharIteratorType imageIt( BinarizeImagePtr, BinarizeImagePtr->GetLargestPossibleRegion());
 		while( !imageIt.IsAtEnd())
@@ -1874,7 +1874,7 @@ SomaExtractor::ProbImageType::Pointer SomaExtractor::RemoveImageBorderByPixel(Pr
 	int awidth = output->GetLargestPossibleRegion().GetSize()[0];
 	int aheight = output->GetLargestPossibleRegion().GetSize()[1];
 	int adepth = output->GetLargestPossibleRegion().GetSize()[2];
-	std::cout<<width<<"\t"<<awidth<<std::endl<<height<<"\t"<<aheight<<std::endl<<depth<<"\t"<<adepth<<std::endl;
+	//std::cout<<width<<"\t"<<awidth<<std::endl<<height<<"\t"<<aheight<<std::endl<<depth<<"\t"<<adepth<<std::endl;
 	return output;
 }
 

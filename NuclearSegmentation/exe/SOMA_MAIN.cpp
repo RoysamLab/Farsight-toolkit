@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 4)
+	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 5)
 	{
 		std::cout<<"Debris: SomaExtraction <0> <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 		bit8FileName.erase(bit8FileName.length()-4,bit8FileName.length());
 		bit8FileName.append("_8bit.tif");
 		Somas->writeImage(bit8FileName.c_str(), image);
-
+        
 		std::string somaImageName = InputFilename;
 		somaImageName.erase(somaImageName.length()-4,somaImageName.length());
 		somaImageName.append("_soma.mhd");
@@ -187,6 +187,18 @@ int main(int argc, char* argv[])
 		imageName.append("Ndsu.TIF");
 		SomaExtractor::UShortImageType::Pointer rescaledImage = Somas->DevideAndScale(image, backgroundImage, atof(argv[4]), atof(argv[5]));
 		Somas->writeImage(imageName.c_str(), rescaledImage);
+	}
+	else if( atoi( argv[1]) == 5)
+	{
+		SomaExtractor::ProbImageType::Pointer inputImage = Somas->SetInputImage8bit(argv[2]);
+		std::vector< itk::Index<3> > seedVector;
+		Somas->ReadSeedpoints(argv[3], seedVector, false);
+		Somas->LoadOptions( argv[4]); // Load params
+
+		/// SegmentSoma1: Active Contour without GVF, eliminate small objects
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(seedVector, inputImage);
+
+		Somas->writeImage("ActiveTracing.nrrd", segImage);
 	}
 
 	//else if( atoi(argv[1]) == 5 && argc == 5)  /// normalize by the input background
