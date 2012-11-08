@@ -282,7 +282,7 @@ mosaic_images_template(
     } else if (arg_blending() == 3) { // THIS IS A TEST FOR THE DARPA DATASETS
 		std::cout << std::endl << "FIXME2: this code is still under testing, this is for mosaic fast , also reduce the insane amount of memory used,  using max intensity, the spacing is sett up for the darpa project";
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
-        ImageType::Pointer image, xformed_image;
+        typename ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
         std::cout << "Composing the final image2 ..." << std::endl;
         
@@ -300,11 +300,11 @@ mosaic_images_template(
         for (unsigned int i = 1; i < image_names.size(); i++) {
 
 			std::string image_name2 = arg_img_path() + std::string("/") + image_names[i];
-			ImageType::Pointer image2;
+			typename ImageType::Pointer image2;
             image2 = fregl_util< InputPixelType >::fregl_util_read_image(image_name2, arg_channel.set(), arg_channel(), arg_denoise());
 			image2->SetSpacing( spacingImage );
 	    
-			ImageType::Pointer imageMontage;
+			typename ImageType::Pointer imageMontage;
 			ImageType::PointType offsetNew;
 			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn() );
             if (fail)
