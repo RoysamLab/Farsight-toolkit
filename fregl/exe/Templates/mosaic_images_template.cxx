@@ -84,6 +84,8 @@ mosaic_images_template(
             break;
         case 2: std::cout << "Blending with photopleaching weighting" << std::endl;
             break;
+        case 3: std::cout << "Blending maximum intensity values (this function is under testing), reduces memory, and is much faster" << std::endl;
+            break;
         default: std::cout << "No such scheme defined for blending!" << std::endl;
             return 1;
     }
@@ -233,7 +235,7 @@ mosaic_images_template(
               }
              */
         }
-    } else { //Taking the maximum
+    } else if (arg_blending() == 0) { //Taking the maximum
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
         typename ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
@@ -277,7 +279,84 @@ mosaic_images_template(
                 outputIt.Set(vnl_math_max(outputIt.Get(), inputIt.Get()));
             }
         }
+    } else if (arg_blending() == 3) { // THIS IS A TEST FOR THE DARPA DATASETS
+		std::cout << std::endl << "FIXME2: this code is still under testing, this is for mosaic fast , also reduce the insane amount of memory used,  using max intensity, the spacing is sett up for the darpa project";
+        std::string image_name = arg_img_path() + std::string("/") + image_names[0];
+        ImageType::Pointer image, xformed_image;
+        image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
+        std::cout << "Composing the final image2 ..." << std::endl;
+        
+	
+		ImageType::SpacingType spacingImage;
+		spacingImage[0] = 1;
+		spacingImage[1] = 1;
+		spacingImage[2] = 1.12359; // 0.3/0.267 FIXME this spacing is set up for the darpa project
+		space_transformer.set_spacing( spacingImage );
+	
+		image->SetSpacing( spacingImage );
+	
+		final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
+	
+        for (unsigned int i = 1; i < image_names.size(); i++) {
+
+			std::string image_name2 = arg_img_path() + std::string("/") + image_names[i];
+			ImageType::Pointer image2;
+            image2 = fregl_util< InputPixelType >::fregl_util_read_image(image_name2, arg_channel.set(), arg_channel(), arg_denoise());
+			image2->SetSpacing( spacingImage );
+	    
+			ImageType::Pointer imageMontage;
+			ImageType::PointType offsetNew;
+			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn() );
+            if (fail)
+                continue;
+
+			ImageType::SizeType image_size_fast = imageMontage->GetLargestPossibleRegion().GetSize();
+			ImageType::SizeType image_size_ = final_image->GetLargestPossibleRegion().GetSize();
+
+			unsigned long long sizeXY_small = image_size_fast[0]*image_size_fast[1];
+			unsigned long long sizeX_small = image_size_fast[0];
+			
+			unsigned long long sizeXY_big = image_size_[0]*image_size_[1];
+			unsigned long long sizeX_big = image_size_[0];
+	
+			ImageType::PixelType * imageMontageArray = imageMontage->GetBufferPointer();
+			ImageType::PixelType * imageResampleArray = final_image->GetBufferPointer();
+
+// #pragma omp critical
+// {
+#if _OPENMP >= 200805L
+	#pragma omp parallel for collapse(3)
+#else
+	#pragma omp parallel for
+#endif
+			for(int ii=0; ii<image_size_fast[2]; ++ii) // z
+			{
+					for(int j=0; j<image_size_fast[1]; ++j) // y
+					{
+							for(int k=0; k<image_size_fast[0]; ++k) // x
+							{
+								long long zz_big = ii + offsetNew[2];
+								long long yy_big = j + offsetNew[1];
+								long long xx_big = k + offsetNew[0];
+
+								long long xx_small = k;
+								long long yy_small = j;
+								long long zz_small = ii;
+					
+								if( 0<=xx_big  && xx_big < image_size_[0] && 0<=yy_big  && yy_big < image_size_[1] && 0<=zz_big && zz_big < image_size_[2] ) 
+								{
+									long long offsetSmall = (zz_small*sizeXY_small)+(yy_small*sizeX_small)+xx_small;
+									long long offsetBig = (zz_big*sizeXY_big)+(yy_big*sizeX_big)+xx_big;
+
+									imageResampleArray[offsetBig] = vnl_math_max(imageResampleArray[offsetBig],imageMontageArray[offsetSmall]);
+								}
+							}
+					}
+			}
+        }
     }
+	
+	
 
     // dump the 3d images as 2d slices in a directory
     std::string name_prefix = std::string("montage_") + vul_file::strip_extension(arg_anchor());
