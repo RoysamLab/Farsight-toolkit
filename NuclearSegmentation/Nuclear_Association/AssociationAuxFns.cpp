@@ -365,8 +365,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 					if( cur_in[0] >= sizee[0] || cur_in[1] >= sizee[1] || cur_in[2] >= sizee[2] ) continue;
 					iterator44.SetIndex( cur_in );
 					USImageType::PixelType pixel_intensity;
-					#pragma omp critical
-						pixel_intensity = iterator44.Get();
+					pixel_intensity = iterator44.Get();
 					if( pixel_intensity < thresh ) continue;
 
 					//The projection of the point on the plane formed by the fist two major axes
