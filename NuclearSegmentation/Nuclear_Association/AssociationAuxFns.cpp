@@ -209,6 +209,7 @@ std::vector<float> compute_ec_features( USImageType::Pointer input_image,  USIma
 		std::cout<<"Bounding boxes computed"<<std::endl;
 
 #ifdef _OPENMP
+itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1);
 #pragma omp parallel for
 #if _OPENMP < 200805L
 		for( int i=0; i<labelsList.size(); ++i )
