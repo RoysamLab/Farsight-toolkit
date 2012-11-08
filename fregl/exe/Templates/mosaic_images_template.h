@@ -16,6 +16,7 @@
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkImageSeriesWriter.h"
 #include "itkNumericSeriesFileNames.h"
+#include "itkMultiThreader.h"
 
 template <typename TPixel>
 int
