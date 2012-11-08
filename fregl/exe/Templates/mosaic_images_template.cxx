@@ -287,7 +287,7 @@ mosaic_images_template(
         std::cout << "Composing the final image2 ..." << std::endl;
         
 	
-		ImageType::SpacingType spacingImage;
+		typename ImageType::SpacingType spacingImage;
 		spacingImage[0] = 1;
 		spacingImage[1] = 1;
 		spacingImage[2] = 1.12359; // 0.3/0.267 FIXME this spacing is set up for the darpa project
@@ -305,13 +305,13 @@ mosaic_images_template(
 			image2->SetSpacing( spacingImage );
 	    
 			typename ImageType::Pointer imageMontage;
-			ImageType::PointType offsetNew;
+			typename ImageType::PointType offsetNew;
 			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn() );
             if (fail)
                 continue;
 
-			ImageType::SizeType image_size_fast = imageMontage->GetLargestPossibleRegion().GetSize();
-			ImageType::SizeType image_size_ = final_image->GetLargestPossibleRegion().GetSize();
+			typename ImageType::SizeType image_size_fast = imageMontage->GetLargestPossibleRegion().GetSize();
+			typename ImageType::SizeType image_size_ = final_image->GetLargestPossibleRegion().GetSize();
 
 			unsigned long long sizeXY_small = image_size_fast[0]*image_size_fast[1];
 			unsigned long long sizeX_small = image_size_fast[0];
@@ -319,8 +319,8 @@ mosaic_images_template(
 			unsigned long long sizeXY_big = image_size_[0]*image_size_[1];
 			unsigned long long sizeX_big = image_size_[0];
 	
-			ImageType::PixelType * imageMontageArray = imageMontage->GetBufferPointer();
-			ImageType::PixelType * imageResampleArray = final_image->GetBufferPointer();
+			typename ImageType::PixelType * imageMontageArray = imageMontage->GetBufferPointer();
+			typename ImageType::PixelType * imageResampleArray = final_image->GetBufferPointer();
 
 // #pragma omp critical
 // {
