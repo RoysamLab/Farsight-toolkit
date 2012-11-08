@@ -357,6 +357,9 @@ public:
 class AstroTracer
 {
 public:
+    
+    typedef itk::SymmetricSecondRankTensor<double, 3> HessianPixelType;
+    typedef itk::Image< HessianPixelType, 3 > HessianImageType3D;
 
 	typedef itk::Index<3> IndexType;
 	typedef itk::Offset<3> OffsetType;
@@ -374,8 +377,10 @@ public:
 	typedef itk::RegionOfInterestImageFilter<LabelImageType3D, LabelImageType3D> VolumeOfInterestFilterType_nuclei;
 	typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
 	typedef itk::SignedMaurerDistanceMapImageFilter<CharImageType3D, ImageType3D> SignedMaurerDistanceMapImageFilterType;
-	typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
-	typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+	
+    typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, HessianImageType3D > MultiScaleHessianFilterType;
+    typedef itk::HessianToObjectnessMeasureImageFilter<HessianImageType3D, ImageType3D > ObjectnessFilterType;
+
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 	typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilter;
 	typedef itk::AddImageFilter<ImageType3D> AddImageFilter;

@@ -3142,8 +3142,8 @@ void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 
 	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
 	multi_scale_Hessian->SetInput(this->PaddedCurvImage);
-	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
-	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	multi_scale_Hessian->SetSigmaMinimum(obj_measures.sigma_min);
+	multi_scale_Hessian->SetSigmaMaximum(obj_measures.sigma_max);
 	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
 	ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
@@ -3155,11 +3155,19 @@ void AstroTracer::ComputeObjectnessImage(ObjectnessMeasures obj_measures){
 	objectness_filter->SetBeta(obj_measures.beta);
 	objectness_filter->SetGamma(obj_measures.gamma);
 	objectness_filter->SetObjectDimension(obj_measures.objectness_type);
+    
+    multi_scale_Hessian->SetHessianToMeasureFilter(objectness_filter);
 	
 	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
 
-	multi_scale_Hessian->Update();
-	
+	try
+    {
+        multi_scale_Hessian->Update();
+	}
+    catch (itk::ExceptionObject &err)
+    {
+        std::cerr << "Error in multiscale Hessian filter" << std::endl;
+    }
 	this->ObjectnessImage = multi_scale_Hessian->GetOutput();
 
 	/*typedef itk::ImageFileWriter<ImageType3D> ImageWriterType;
