@@ -70,6 +70,15 @@ public:
 	//   "s_size" is the new roi size
 	void set_roi(PointType s_origin, SizeType s_size);
 
+	//: Set spacing.
+	//
+	//  spacing_ is updated accordingly
+	void set_spacing( SpacingType spacing ){
+		spacing_[0] = spacing[0];
+		spacing_[1] = spacing[1];
+		spacing_[2] = spacing[2];
+	};
+	
 	//: Determine if a point is in the image of given index
 	//
 	//  "loc" is the location of the point in the anchor image, and the
