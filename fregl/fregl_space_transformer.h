@@ -159,6 +159,12 @@ public:
 	//: Generate the transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
+	//  space defined by the anchor image. (much faster than transform_image)
+	int transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, PointType& offsetNew, int image_index, int background = 0, bool use_NN_interpolator = false ) const;
+	
+	//: Generate the transformed image using the given transformation
+	//
+	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image and the roi.
 	ImageTypePointer transform_image_roi(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
 
