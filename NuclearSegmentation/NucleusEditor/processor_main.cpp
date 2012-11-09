@@ -120,8 +120,9 @@ int main(int argc, char *argv[])
 	std::map< std::string, LabelImagePointer > myClassImageMap = pProc->GetClassImageMap();
 	std::map< std::string, vtkSmartPointer<vtkTable> > myClassCentroidMap = pProc->GetClassCentroidMap();
 	std::string myFilename = inputFilename;
+	unsigned extension = ftk::GetExtension(inputFilename).size()+1;
 	std::string::iterator it;
-	it = myFilename.end() - 4;
+	it = myFilename.end() - extension;
 	myFilename.erase(it, it+4);
 
 	//Save results:
