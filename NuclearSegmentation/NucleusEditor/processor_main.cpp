@@ -184,4 +184,4 @@ void usage(const char *funcName)
 	std::cout << "USAGE:\n";
 	std::cout << " " << funcName << " InputImage LabelImage Table ProcessDefinition \n";
 	std::cout << "  All four inputs are filenames\n";
-
+}
