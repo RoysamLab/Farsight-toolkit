@@ -17,14 +17,10 @@ ENDIF(VTK_FOUND AND VXL_FOUND AND ITK_FOUND)
 
 SET(AstroTracer_sources
 	AstroTracer.cxx
-    itkHessianToObjectnessMeasureImageFilter.txx	
-	itkMultiScaleHessianBasedMeasureImageFilter.txx
 )
 
 SET(AstroTracer_headers
 	AstroTracer.h
-	itkHessianToObjectnessMeasureImageFilter.h
-	itkMultiScaleHessianBasedMeasureImageFilter.h
 )
 
 ADD_LIBRARY( AstroTracerLib ${AstroTracer_sources} ${AstroTracer_headers} )
