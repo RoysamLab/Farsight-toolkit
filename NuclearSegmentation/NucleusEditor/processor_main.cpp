@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	unsigned extension = ftk::GetExtension(inputFilename).size()+1;
 	std::string::iterator it;
 	it = myFilename.end() - extension;
-	myFilename.erase(it, it+4);
+	myFilename.erase(it, it+extension);
 
 	//Save results:
 	if( ftk::GetExtension(labelFilename) == "xml" )
@@ -184,4 +184,4 @@ void usage(const char *funcName)
 	std::cout << "USAGE:\n";
 	std::cout << " " << funcName << " InputImage LabelImage Table ProcessDefinition \n";
 	std::cout << "  All four inputs are filenames\n";
-}
+
