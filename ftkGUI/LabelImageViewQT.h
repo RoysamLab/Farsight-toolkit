@@ -59,6 +59,7 @@ limitations under the License.
 #include "vtkSmartPointer.h"
 #include <iostream>
 #include <list>
+#include <set>
 #include <map>
 #include "math.h"
 #include "float.h"

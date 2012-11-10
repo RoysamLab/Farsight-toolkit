@@ -39,7 +39,7 @@ NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 
 	segView = new LabelImageViewQT(&colorItemsMap);
 	AL = new ALforNucEd();
-	connect(segView, SIGNAL(mouseAt(int,int,int, int,list<int>)), this, SLOT(setMouseStatus(int,int,int, int, list<int>)));
+	connect(segView, SIGNAL(mouseAt(int,int,int, int,std::list<int>)), this, SLOT(setMouseStatus(int,int,int, int, std::list<int>)));
 	connect(segView, SIGNAL(autoMerge()), this, SLOT(mergeCells()));
 	connect(segView, SIGNAL(emitTimeChanged()), this, SLOT(update5DTable()));
 	connect(AL, SIGNAL(Classification_Done()), this, SLOT(ExtractClassificationResult()));
