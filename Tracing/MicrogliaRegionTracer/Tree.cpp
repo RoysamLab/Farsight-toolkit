@@ -9,7 +9,7 @@ Tree::Tree()
 }
 
 //Copy constructors, for making deep copies
-Tree::Tree(const Tree& old_tree)
+Tree::Tree(const Tree & old_tree)
 {
 	Node* new_root = new Node(*(old_tree.root));	//Deep copy of node "root", see Node.h
 	this->root = new_root;
@@ -18,7 +18,7 @@ Tree::Tree(const Tree& old_tree)
 	CopyConstructorHelper(new_root, old_tree.root);
 }
 
-void Tree::CopyConstructorHelper(Node* const new_node, const Node* const old_node)
+void Tree::CopyConstructorHelper(Node * const new_node, const Node * const old_node)
 {
 	new_node->children.clear();
 	this->member_nodes.push_back(new_node);
@@ -44,14 +44,14 @@ Tree::~Tree()
     //vector and other things implicitly destroyed here
 }
 
-void Tree::TreeDestructorHelper(Node* node)
+void Tree::TreeDestructorHelper(Node * const node)
 {
     std::vector<Node*> children = node->GetChildren();
     std::vector<Node*>::iterator child_iter;
     
     for (child_iter = children.begin(); child_iter != children.end(); ++child_iter)
     {
-        Node* child = *child_iter;
+        Node * child = *child_iter;
         TreeDestructorHelper(child);
     }
     
@@ -59,13 +59,13 @@ void Tree::TreeDestructorHelper(Node* node)
     delete node;
 }
 
-void Tree::SetRoot(Node *root)
+void Tree::SetRoot(Node * const root)
 {
 	member_nodes.push_back(root);
 	this->root = root;
 }
 
-void Tree::AddNode(Node* node, Node* parent)
+void Tree::AddNode(Node * const node, const Node * const parent)
 {
 	//The node itself is responsible for keeping track of its parent, as well as the parent keeping track of the node
 	
@@ -75,17 +75,17 @@ void Tree::AddNode(Node* node, Node* parent)
 	member_nodes.push_back(node);
 }
 
-std::vector<Node*> Tree::GetMemberNodes()
+std::vector< Node * > Tree::GetMemberNodes() const //remember to change this function so that it doesn't return a member variable
 {
 	return member_nodes;
 }
 
-Node* Tree::GetRoot()
+Node * Tree::GetRoot() const //remember to change this function so that it doesn't return a member variable
 {
 	return root;
 }
 
-bool Tree::RemoveNode(Node* node)
+void Tree::RemoveNode(const Node * const node)
 {
 	std::vector< Node* >::iterator member_nodes_iter;
 	for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)
@@ -95,21 +95,21 @@ bool Tree::RemoveNode(Node* node)
 		if (member_node == node)
 		{
 			member_nodes.erase(member_nodes_iter);
-			return true;
+			return;
 		}
 	}
 
-	return false;
+    throw std::runtime_error("Error: Attemping to remove a node that does not exist");
 }
 
-void Tree::GetLeafNodes(std::vector<Node *> &leaf_nodes)
+void Tree::GetLeafNodes(std::vector< Node * > & leaf_nodes) const
 {
 	Node* root_node = GetRoot();
 
 	VisitChildrenForLeafNodes(root_node, leaf_nodes);
 }
 
-void Tree::VisitChildrenForLeafNodes(Node* node, std::vector<Node*> &leaf_nodes)
+void Tree::VisitChildrenForLeafNodes(Node * const node, std::vector< Node* > & leaf_nodes) const
 {
 	std::vector<Node*> children = node->GetChildren();
 

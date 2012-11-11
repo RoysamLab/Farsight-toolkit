@@ -94,7 +94,7 @@ void Node::SetParent(Node * const parent)
 	this->parent = parent;	//Set the new parent
 }
 
-std::vector<Node*>& Node::GetChildren()
+std::vector< Node * > & Node::GetChildren() //remember to change this function not to return member variables
 {
 	return children;
 }

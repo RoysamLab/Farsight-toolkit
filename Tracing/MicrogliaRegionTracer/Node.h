@@ -40,7 +40,7 @@ public:
 
 	void SetParent(Node * const parent);
 	
-	std::vector< Node* >& GetChildren();
+	std::vector< Node * > & GetChildren();
 
 	itk::uint64_t getID();
 	
