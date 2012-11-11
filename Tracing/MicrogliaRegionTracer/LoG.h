@@ -16,7 +16,7 @@ public:
     LoGImageType::Pointer RunLoG(ImageType::Pointer & image, float scale);
 	void WriteLoGImage(std::string filename, LoGImageType::Pointer &  image);
 
-    LoGImageType::Pointer RunMultiScaleLoG(Cell* cell);
+    LoGImageType::Pointer RunMultiScaleLoG(Cell& cell);
 };
 
 #endif

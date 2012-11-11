@@ -10,13 +10,13 @@ ROIGrabber::~ROIGrabber()
 {
 }
 
-ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell* cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
+ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell & cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
 {
 	ImageType::PointType roi_origin;
 
-	roi_origin[0] = (itk::int64_t)cell->getX() - (itk::int64_t)roi_size[0]/2;	//X,Y,Z coordinates are middle of the cell, so we have to subtract half the size to get the origin of the ROI
-	roi_origin[1] = (itk::int64_t)cell->getY() - (itk::int64_t)roi_size[1]/2;
-	roi_origin[2] = (itk::int64_t)cell->getZ() - (itk::int64_t)roi_size[2]/2;
+	roi_origin[0] = (itk::int64_t)cell.getX() - (itk::int64_t)roi_size[0]/2;	//X,Y,Z coordinates are middle of the cell, so we have to subtract half the size to get the origin of the ROI
+	roi_origin[1] = (itk::int64_t)cell.getY() - (itk::int64_t)roi_size[1]/2;
+	roi_origin[2] = (itk::int64_t)cell.getZ() - (itk::int64_t)roi_size[2]/2;
 
 	//Calculate how much of the left, top, and the top-of-stack got cut off by our size
 	if (roi_origin[0] < 0)	
