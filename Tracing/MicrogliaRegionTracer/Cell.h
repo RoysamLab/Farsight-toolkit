@@ -36,28 +36,29 @@ public:
 	itk::uint64_t getY() const;
 	itk::uint64_t getZ() const;
 
-	void SetSize(ImageType::SizeType roi_size);
-	ImageType::SizeType GetSize();
+	void SetSize(const ImageType::SizeType & roi_size);
+	ImageType::SizeType GetSize() const;
 
-	void SetOrigin(ImageType::PointType roi_origin);
-	ImageType::PointType GetOrigin();
+	void SetOrigin(const ImageType::PointType & roi_origin);
+	ImageType::PointType GetOrigin() const;
 
-	void setRequestedSize(ImageType::SizeType cell_requested_size);
-	ImageType::SizeType getRequestedSize();
+	void SetRequestedSize(const ImageType::SizeType & cell_requested_size);
+	
+    ImageType::SizeType GetRequestedSize() const;
 
-	void setShiftIndex(ImageType::IndexType shift_index);
-	ImageType::IndexType getShiftIndex();
+	void SetShiftIndex(ImageType::IndexType shift_index);
+	ImageType::IndexType GetShiftIndex() const;
 
-	void ComputeCriticalPointsVector(ImageType::Pointer critical_points_image);
+	void ComputeCriticalPointsVector(const ImageType::Pointer & critical_points_image);
 
 	//Various methods to perform filters on image
-	void GetMask(std::string soma_filename);
+	void GetMask(const std::string & soma_filename);
 	void ComputeMaskedImage();
 
 	//Writes various images
-	void WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image);
-	void WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image);
-	void WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image);
+	void WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image) const;
+	void WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image) const;
+	void WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image) const;
 	
 
 public:
@@ -85,9 +86,7 @@ private:
 	ImageType::SizeType roi_size;
 
 	ImageType::SizeType cell_requested_size;
-	ImageType::IndexType shift_index;
-
-	
+	ImageType::IndexType shift_index;	
 };
 
 #endif

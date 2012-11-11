@@ -31,47 +31,47 @@ itk::uint64_t Cell::getZ() const
 	return cell_z;
 }
 
-void Cell::SetSize(ImageType::SizeType roi_size)
+void Cell::SetSize(const ImageType::SizeType & roi_size)
 {
 	this->roi_size = roi_size;
 }
 
-Cell::ImageType::SizeType Cell::GetSize()
+Cell::ImageType::SizeType Cell::GetSize() const
 {
 	return roi_size;
 }
 
-void Cell::SetOrigin(ImageType::PointType roi_origin)
+void Cell::SetOrigin(const ImageType::PointType & roi_origin)
 {
 	this->roi_origin = roi_origin;
 }
 
-Cell::ImageType::PointType Cell::GetOrigin()
+Cell::ImageType::PointType Cell::GetOrigin() const
 {
 	return roi_origin;
 }
 
-void Cell::setRequestedSize(ImageType::SizeType cell_requested_size)
+void Cell::SetRequestedSize(const ImageType::SizeType & cell_requested_size)
 {
 	this->cell_requested_size = cell_requested_size;
 }
 
-Cell::ImageType::SizeType Cell::getRequestedSize()
+Cell::ImageType::SizeType Cell::GetRequestedSize() const
 {
 	return cell_requested_size;
 }
 
-void Cell::setShiftIndex(ImageType::IndexType shift_index)
+void Cell::SetShiftIndex(ImageType::IndexType shift_index)
 {
 	this->shift_index = shift_index;
 }
 
-Cell::ImageType::IndexType Cell::getShiftIndex()
+Cell::ImageType::IndexType Cell::GetShiftIndex() const
 {
 	return shift_index;
 }
 
-void Cell::ComputeCriticalPointsVector(ImageType::Pointer critical_points_image)
+void Cell::ComputeCriticalPointsVector(const ImageType::Pointer & critical_points_image)
 {
 	critical_points_queue.clear();
 	
@@ -86,7 +86,7 @@ void Cell::ComputeCriticalPointsVector(ImageType::Pointer critical_points_image)
 	}
 }
 
-void Cell::GetMask(std::string soma_filename)
+void Cell::GetMask(const std::string & soma_filename)
 {
 	typedef itk::ImageFileReader< SomaImageType > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
@@ -183,7 +183,7 @@ void Cell::GetMask(std::string soma_filename)
 	this->soma_label_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 }
 
-void Cell::ComputeMaskedImage()   
+void Cell::ComputeMaskedImage()
 {
 	typedef itk::MaskNegatedImageFilter< ImageType, MaskImageType, ImageType > MaskFilterType;
 	MaskFilterType::Pointer maskFilter = MaskFilterType::New();
@@ -210,7 +210,7 @@ void Cell::ComputeMaskedImage()
 	//WriteImage(masked_cell_filename_stream.str(), this->masked_image);
 }
 
-void Cell::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Pointer image)
+void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image) const
 {
 	typedef itk::ImageFileWriter< itk::Image< unsigned char, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -228,7 +228,7 @@ void Cell::WriteImage(std::string filename, itk::Image< unsigned char, 3>::Point
 	}
 }
 
-void Cell::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Pointer image)
+void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image) const
 {
 	typedef itk::ImageFileWriter< itk::Image< unsigned short, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -246,7 +246,7 @@ void Cell::WriteImage(std::string filename, itk::Image< unsigned short, 3>::Poin
 	}
 }
 
-void Cell::WriteImage(std::string filename, itk::Image< float , 3 >::Pointer image)
+void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image) const
 {
 	typedef itk::ImageFileWriter< itk::Image< float, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();

@@ -132,7 +132,7 @@ void MicrogliaRegionTracer::Trace()
             roi_size[1] = 200;
             roi_size[2] = 100;
             
-            cell.setRequestedSize(roi_size);
+            cell.SetRequestedSize(roi_size);
             
             //Grab the initial cellimage
             //std::cout << "Grabbing ROI for cell" << std::endl;
@@ -156,8 +156,8 @@ void MicrogliaRegionTracer::Trace()
             cell.image->DisconnectPipeline();
             
             //Shift_index is just to demonstrate how much the center point of the local point of the image if it got cropped by the left, top, closest point of the image
-            cell.setShiftIndex(shift_index);
-            //std::cout << cell.getShiftIndex()[0] << " " << cell.getShiftIndex()[1] << " " << cell.getShiftIndex()[2] << std::endl;
+            cell.SetShiftIndex(shift_index);
+            //std::cout << cell.GetShiftIndex()[0] << " " << cell.GetShiftIndex()[1] << " " << cell.GetShiftIndex()[2] << std::endl;
             
             //Make the file name of the raw cell image
             std::stringstream cell_filename_stream;
@@ -189,6 +189,7 @@ void MicrogliaRegionTracer::Trace()
             
             std::cout << "Tree Building" << std::endl;
             BuildTree(cell);
+
         }
     }
 }
@@ -252,9 +253,9 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell & cell)
 void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 {
 	//Add the seed to the critical points
-	itk::Index<3> seed_index = {{	cell.getRequestedSize()[0]/2 + cell.getShiftIndex()[0], 
-									cell.getRequestedSize()[1]/2 + cell.getShiftIndex()[1], 
-									cell.getRequestedSize()[2]/2 + cell.getShiftIndex()[2] }};
+	itk::Index<3> seed_index = {{	cell.GetRequestedSize()[0]/2 + cell.GetShiftIndex()[0], 
+									cell.GetRequestedSize()[1]/2 + cell.GetShiftIndex()[1], 
+									cell.GetRequestedSize()[2]/2 + cell.GetShiftIndex()[2] }};
 
 	cell.critical_points_queue.push_front(seed_index);
 	
@@ -689,9 +690,9 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell.critical_points_queue[minimum_connected_node_id][0] << " " << cell.critical_points_queue[minimum_connected_node_id][1] << " " << cell.critical_points_queue[minimum_connected_node_id][2] << " " << cell.critical_points_queue[minimum_node_index_to_id][0] << " " << cell.critical_points_queue[minimum_node_index_to_id][1] << " "  << cell.critical_points_queue[minimum_node_index_to_id][2] << " cost: " << minimum_node_cost << std::endl;
 
 		ImageType::IndexType point_index;
-		point_index[0] = cell.critical_points_queue[minimum_node_index_to_id][0] + cell.getX() - cell.getRequestedSize()[0]/2 - cell.getShiftIndex()[0];
-		point_index[1] = cell.critical_points_queue[minimum_node_index_to_id][1] + cell.getY() - cell.getRequestedSize()[1]/2 - cell.getShiftIndex()[1];
-		point_index[2] = cell.critical_points_queue[minimum_node_index_to_id][2] + cell.getZ() - cell.getRequestedSize()[2]/2 - cell.getShiftIndex()[2];
+		point_index[0] = cell.critical_points_queue[minimum_node_index_to_id][0] + cell.getX() - cell.GetRequestedSize()[0]/2 - cell.GetShiftIndex()[0];
+		point_index[1] = cell.critical_points_queue[minimum_node_index_to_id][1] + cell.getY() - cell.GetRequestedSize()[1]/2 - cell.GetShiftIndex()[1];
+		point_index[2] = cell.critical_points_queue[minimum_node_index_to_id][2] + cell.getZ() - cell.GetRequestedSize()[2]/2 - cell.GetShiftIndex()[2];
 		
 		ImageType::IndexType point_local_index;
 		point_local_index[0] = cell.critical_points_queue[minimum_node_index_to_id][0];
@@ -750,9 +751,9 @@ void MicrogliaRegionTracer::WriteLinkToParent(Cell & cell, Node* node, itk::uint
 	node_index_local[0] = node->x;
 	node_index_local[1] = node->y;
 	node_index_local[2] = node->z;
-	node_index[0] = node_index_local[0] + cell.getX() - cell.getRequestedSize()[0]/2 - cell.getShiftIndex()[0];
-	node_index[1] = node_index_local[1] + cell.getY() - cell.getRequestedSize()[1]/2 - cell.getShiftIndex()[1];
-	node_index[2] = node_index_local[2] + cell.getZ() - cell.getRequestedSize()[2]/2 - cell.getShiftIndex()[2];
+	node_index[0] = node_index_local[0] + cell.getX() - cell.GetRequestedSize()[0]/2 - cell.GetShiftIndex()[0];
+	node_index[1] = node_index_local[1] + cell.getY() - cell.GetRequestedSize()[1]/2 - cell.GetShiftIndex()[1];
+	node_index[2] = node_index_local[2] + cell.getZ() - cell.GetRequestedSize()[2]/2 - cell.GetShiftIndex()[2];
 
 	itk::int64_t parent_node_id;
 	if (node->GetParent() == NULL) 
