@@ -15,7 +15,7 @@ public:
 	double y;
 	double z;
 
-	std::vector<Node*> children;
+	std::vector< Node* > children;
 
 public:
 	//Default constructor
@@ -32,15 +32,15 @@ public:
     
 	//Adds the child
 	//Note: This does not make the child update its reference to the parent
-	void AddChild(Node *child);
+	void AddChild(Node * const child);
 	
 	//Removes the child from this node, also removing the child's link to the parent
 	//Returns true if the child was successfully removed, else returns false if the child to be removed was not found in the list of children
-	bool RemoveChild(Node* child_to_be_removed);
+	void RemoveChild(Node* child_to_be_removed);
 
-	void SetParent(Node *parent);
+	void SetParent(Node * const parent);
 	
-	std::vector<Node*>& GetChildren();
+	std::vector< Node* >& GetChildren();
 
 	itk::uint64_t getID();
 	

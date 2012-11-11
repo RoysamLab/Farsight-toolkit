@@ -84,12 +84,12 @@ Node::~Node()
     //However, since the vector holds pointers, the destructors for pointers do nothing and the children nodes are not destroyed.
 }
 
-void Node::AddChild(Node *child)
+void Node::AddChild(Node * const child)
 {
 	children.push_back(child);
 }
 
-void Node::SetParent(Node *parent)
+void Node::SetParent(Node * const parent)
 {
 	this->parent = parent;	//Set the new parent
 }
@@ -109,7 +109,7 @@ Node* Node::GetParent()
 	return parent;
 }
 
-bool Node::RemoveChild(Node* child_to_be_removed)
+void Node::RemoveChild(Node* child_to_be_removed)
 {
 	std::vector< Node* >::iterator children_iterator;
 	for (children_iterator = children.begin(); children_iterator != children.end(); ++children_iterator)
@@ -120,9 +120,9 @@ bool Node::RemoveChild(Node* child_to_be_removed)
 		{
 			child->parent = NULL;
 			children.erase(children_iterator);
-			return true;
+            return;
 		}
 	}
 
-	return false;
+    throw std::runtime_error("Error, trying to remove a child that does not exist");
 }
