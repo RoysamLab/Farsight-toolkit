@@ -15,7 +15,7 @@ public:
 	double y;
 	double z;
 
-	std::vector< Node* > children;
+	std::vector< Node * > children;
 
 public:
 	//Default constructor
@@ -25,7 +25,7 @@ public:
 	//Note: 
 	//parent is set to old_node parent, the tree copy constructor must take care to regenerate the links to any new parents
 	//children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
-	Node(const Node& old_node);
+	Node(const Node & old_node);
 	
     //Destructor
     ~Node();
@@ -36,15 +36,15 @@ public:
 	
 	//Removes the child from this node, also removing the child's link to the parent
 	//Returns true if the child was successfully removed, else returns false if the child to be removed was not found in the list of children
-	void RemoveChild(Node* child_to_be_removed);
+	void RemoveChild(Node * child_to_be_removed);
 
 	void SetParent(Node * const parent);
 	
 	std::vector< Node * > & GetChildren();
 
-	itk::uint64_t getID();
+	itk::uint64_t getID() const;
 	
-	Node* GetParent();
+	Node* GetParent() const;
 };
 
 #endif

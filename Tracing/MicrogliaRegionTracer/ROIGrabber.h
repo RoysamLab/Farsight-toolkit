@@ -12,10 +12,10 @@ public:
 	
 
 public:
-	explicit ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename);
+	explicit ROIGrabber(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename);
 	~ROIGrabber();
 	
-	ImageType::Pointer GetROI(Cell & cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index);
+	ImageType::Pointer GetROI(const Cell & cell, const ImageType::SizeType & roi_size, ImageType::IndexType & shift_index);
 
 private:
 	fregl_roi< InputPixelType > roi_filter;

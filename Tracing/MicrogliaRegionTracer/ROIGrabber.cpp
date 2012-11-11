@@ -1,7 +1,7 @@
 #include "ROIGrabber.h"
 
 //Constructor, important that you dont make a new fregl_roi for each new object you want to get, otherwise you will lose the in-memory cache
-ROIGrabber::ROIGrabber(std::string joint_transforms_filename, std::string img_path, std::string anchor_filename)
+ROIGrabber::ROIGrabber(const std::string & joint_transforms_filename, const std::string & img_path, const std::string & anchor_filename)
 	: roi_filter(fregl_roi< InputPixelType >(joint_transforms_filename, img_path, anchor_filename, true, 6))
 {
 }
@@ -10,7 +10,7 @@ ROIGrabber::~ROIGrabber()
 {
 }
 
-ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell & cell, ImageType::SizeType roi_size, ImageType::IndexType &shift_index)
+ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(const Cell & cell, const ImageType::SizeType & roi_size, ImageType::IndexType & shift_index)
 {
 	ImageType::PointType roi_origin;
 
@@ -21,7 +21,7 @@ ROIGrabber::ImageType::Pointer ROIGrabber::GetROI(Cell & cell, ImageType::SizeTy
 	//Calculate how much of the left, top, and the top-of-stack got cut off by our size
 	if (roi_origin[0] < 0)	
 		shift_index[0] = roi_origin[0]; 
-	else 
+	else
 		shift_index[0] = 0;
 	
 	if (roi_origin[1] < 0) 
