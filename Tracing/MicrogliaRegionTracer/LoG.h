@@ -13,10 +13,10 @@ public:
 	explicit LoG();
 	~LoG();
 
-    LoGImageType::Pointer RunLoG(ImageType::Pointer & image, float scale);
-	void WriteLoGImage(std::string filename, LoGImageType::Pointer &  image);
+    LoGImageType::Pointer RunLoG(const ImageType::Pointer & image, float scale) const;
+	void WriteLoGImage(const std::string & filename, const LoGImageType::Pointer & image) const;
 
-    LoGImageType::Pointer RunMultiScaleLoG(Cell& cell);
+    LoGImageType::Pointer RunMultiScaleLoG(const Cell & cell) const;
 };
 
 #endif

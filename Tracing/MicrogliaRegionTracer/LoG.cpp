@@ -14,7 +14,7 @@ LoG::~LoG()
 {
 }
 
-LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer & image, float scale)
+LoG::LoGImageType::Pointer LoG::RunLoG(const ImageType::Pointer & image, float scale) const
 {
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
@@ -68,7 +68,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(ImageType::Pointer & image, float scale)
 	return inverted_LoG_image;
 }
 
-void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer & image)
+void LoG::WriteLoGImage(const std::string & filename, const LoGImageType::Pointer & image) const
 {
 	typedef itk::ImageFileWriter< LoGImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -86,7 +86,7 @@ void LoG::WriteLoGImage(std::string filename, LoGImageType::Pointer & image)
 	}
 }
 
-LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(Cell& cell)
+LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell) const
 {
 	std::vector<LoGImageType::Pointer> LoG_vector;
 
