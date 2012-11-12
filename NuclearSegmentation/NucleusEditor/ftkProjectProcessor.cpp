@@ -50,6 +50,18 @@ ProjectProcessor::ProjectProcessor()
 	inputTypeNeeded = 0;
 	save_path = ".";
 	n_thr = 4;//Temporary number for number of omp threads
+	numThreadsSet = false;
+}
+
+void ProjectProcessor::SetNumThreads( int threads )
+{
+	numThreadsSet = true;
+	n_thr = threads;
+#ifdef _OPENMP
+	std::cout<<"Number of threads set to:"<<threads<<"\n";
+#else
+	std::cout<<"Number of threads set to:"<<threads<<" but openMP is not enabled\n";
+#endif
 }
 
 void ProjectProcessor::Initialize(void)

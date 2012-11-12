@@ -81,6 +81,7 @@ public:
 	bool DoneProcessing(void){ return (lastTask == numTasks-1); };
 	bool ReadyToEdit(void){ return resultIsEditable; };
 	int NeedInput(void){ return inputTypeNeeded; };	//Return non-zero value indicating type of input needed
+	void SetNumThreads( int threads );
 
 	//Outputs
 	ftk::Image::Pointer GetOutputImage(void){ return outputImage; };
@@ -124,6 +125,7 @@ private:
 	int numTasks;
 	int lastTask;
 	int n_thr;
+	bool numThreadsSet;
 	bool resultIsEditable;  //Only true when done nucleus segmentation!!
 	int inputTypeNeeded;
 	std::string save_path;

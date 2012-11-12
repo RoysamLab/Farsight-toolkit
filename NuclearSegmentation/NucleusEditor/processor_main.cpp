@@ -33,8 +33,10 @@ int main(int argc, char *argv[])
 	std::string labelFilename = argv[2];					// Name of the label image to apply
 	std::string tableFilename = argv[3];					// Name of the table file;
 	std::string definitionFilename = argv[4];				// Name of the process definition file
+	int numThreads = 0;
+	if( argc == 6 )
+		numThreads = atoi(argv[5]);					// Number of threads to run tasks built with openmp
 
-	
 	//Try to load the input image:
 	ftk::Image::Pointer myImg = NULL;
 	if( ftk::GetExtension(inputFilename) == "xml" )
@@ -99,6 +101,7 @@ int main(int argc, char *argv[])
 
 	//Do processing:
 	ftk::ProjectProcessor * pProc = new ftk::ProjectProcessor();
+	if( numThreads ) pProc->SetNumThreads( numThreads );
 	pProc->SetExecPath( ftk::GetFilePath( MyName ) );
 	std::cout<<"The executable says my path is: "<<ftk::GetFilePath( MyName )<<std::endl;
 	pProc->SetInputImage(myImg);
@@ -182,6 +185,6 @@ int main(int argc, char *argv[])
 void usage(const char *funcName)
 {
 	std::cout << "USAGE:\n";
-	std::cout << " " << funcName << " InputImage LabelImage Table ProcessDefinition \n";
-	std::cout << "  All four inputs are filenames\n";
+	std::cout << " " << funcName << " InputImage LabelImage Table ProcessDefinition (Optional)NumThreads\n";
+	std::cout << "  First four inputs are filenames\n";
 }

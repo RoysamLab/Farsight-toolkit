@@ -131,15 +131,15 @@ template <typename InputPixelType, typename LabelPixelType>  void
 
 #ifdef _OPENMP
 	//Use 95% of the cores by default n save a little for the OS
-	n_thr = 0.95*omp_get_max_threads();
+	if(!numThreadsSet) n_thr = 0.95*omp_get_max_threads();
 	itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
-	omp_set_max_active_levels(1);
 	std::cout<<"Using "<<n_thr<<" threads\n"<<std::flush;
 	#pragma omp parallel for num_threads(n_thr)
-#if _OPENMP < 200805L
-	for( itk::IndexValueType i=0; i<labelsList.size(); ++i )
-#else
+#if _OPENMP > 200805L
+	omp_set_max_active_levels(1);
 	for( LabelPixelType i=0; i<labelsList.size(); ++i )
+#else
+	for( itk::IndexValueType i=0; i<labelsList.size(); ++i )
 #endif
 #else
 	for( LabelPixelType i=0; i<labelsList.size(); ++i )
