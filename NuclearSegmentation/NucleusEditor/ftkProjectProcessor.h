@@ -33,7 +33,6 @@
 #include <ftkLabelImageToFeatures.h>
 #include <ftkImage.h>
 #include <ftkUtils.h>
-#include "itkImageFileWriter.h"
 #include "itkCastImageFilter.h"
 #include "itkExtractImageFilter.h"
 #include "ftkGUI/TrainingDialog.h"
@@ -43,6 +42,12 @@
 #include "PixelAnalysis/ftkPixelLevelAnalysis.h"
 #include "SQLite/NESqlite/NESqliteFactory.h"
 #include "PatternAnalysis/activeLearning/mclr.h"
+
+#include "itkIntTypes.h"
+#include "itkRegionOfInterestImageFilter.h"
+#include "itkLabelStatisticsImageFilter.h"
+#include "itkImageDuplicator.h"
+#include "itkMultiThreader.h"
 
 // MODEL_SEG is defined as a compiler option in the Nucleus Editor's CMakeLists
 #ifdef MODEL_SEG
@@ -90,7 +95,9 @@ protected:
 	bool PreprocessImage( void );
 	bool SegmentNuclei(int nucChannel);						//Segment nucChannel as Nuclei & Compute Intrinsic Features
 	void mmSegmentation(int intChannel, int labChannel);
-	bool ComputeFeatures(int nucChannel);  
+	bool ComputeFeatures(int nucChannel);
+	template <typename InputPixelType, typename LabelPixelType>
+			void ComputeMontageIntrinsicFeatures( int nucChannel );
 	bool SegmentCytoplasm(int cytChannel, int memChannel);	//Segment Cytoplasm Channel & Compute Intrinsic Features
 	bool ComputeAssociations(void);							//Compute Associative Measures
 	bool PixLevAnalysis(void);								//If you must with all this nice object level machinery available
@@ -116,6 +123,7 @@ private:
 	char* stringToChar(std::string str);
 	int numTasks;
 	int lastTask;
+	int n_thr;
 	bool resultIsEditable;  //Only true when done nucleus segmentation!!
 	int inputTypeNeeded;
 	std::string save_path;
@@ -123,5 +131,7 @@ private:
 };
 
 }  // end namespace ftk
+
+#include "ftkProjectProcessor.txx"
 
 #endif	// end __ftkProjectProcessor_h

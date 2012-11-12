@@ -49,6 +49,7 @@ ProjectProcessor::ProjectProcessor()
 	resultIsEditable = false;
 	inputTypeNeeded = 0;
 	save_path = ".";
+	n_thr = 4;//Temporary number for number of omp threads
 }
 
 void ProjectProcessor::Initialize(void)
@@ -153,7 +154,6 @@ void ProjectProcessor::ProcessNext(void)
 		lastTask++;
 	}
 }
-
 
 //***********************************************************************************************************
 //  PRE-PROCESSING
@@ -285,29 +285,18 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	if(info->numTSlices==1)
 	{
 		//Calc Features:
-		ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
-		iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
-		if(definition->intrinsicFeatures.size() > 0)
-			iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
-		//iCalc->SetFeaturePrefix("nuc_");
-		table = iCalc->Compute();									//Create a new table
-		delete iCalc;
-		std::cout << "Done: Instrinsic Nuclear Features\n";
-
-		//Add xml definitions or a Nucleus Editor button to build graphs when needed
-		/*
-		std::cout << "Computing Region adjacency graph\n";
-		FTKgraph* NucRAG = new FTKgraph();
-		NucAdjTable = NucRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,nucChannel), outputImage->GetItkPtr<LPixelT>(0,0));
-		std::cout << "Done: Region adjacency graph\n";
-		*/
-
+		ComputeFeatures( nucChannel );
 	}
 
 	resultIsEditable = true;
 	
 	return true;
 }
+
+//***********************************************************************************************************
+//  NUCLEAR SEGMENTATION FOR MONTAGES
+//***********************************************************************************************************
+
 
 
 //***********************************************************************************************************
@@ -428,18 +417,60 @@ char* ProjectProcessor::stringToChar(std::string str)
 //***********************************************************************************************************
 bool ProjectProcessor::ComputeFeatures(int nucChannel)
 {
+
+#ifdef _OPENMP
+	//Compute features in parallel instantiated for uchar and ushort intensity images
+	//and ushort and uint label images
+	if( inputImage->GetImageInfo()->dataType == itk::ImageIOBase::UCHAR )
+	{
+		if( outputImage->GetImageInfo()->dataType == itk::ImageIOBase::USHORT )
+			ComputeMontageIntrinsicFeatures
+				< unsigned char, unsigned short >( nucChannel );
+		else if( outputImage->GetImageInfo()->dataType == itk::ImageIOBase::UINT )
+			ComputeMontageIntrinsicFeatures
+				< unsigned char, unsigned int >( nucChannel );
+		else
+		{
+			std::cout<<"Feature computation can only handle ushort "
+				<<"and uint labels";
+			return false;
+		}
+	}
+	else if( inputImage->GetImageInfo()->dataType == itk::ImageIOBase::USHORT )
+	{
+		if( outputImage->GetImageInfo()->dataType == itk::ImageIOBase::USHORT )
+			ComputeMontageIntrinsicFeatures
+				< unsigned short, unsigned short >( nucChannel );
+		else if( outputImage->GetImageInfo()->dataType == itk::ImageIOBase::UINT )
+			ComputeMontageIntrinsicFeatures
+				< unsigned short, unsigned int >( nucChannel );
+		else
+		{
+			std::cout<<"Feature computation can only handle ushort "
+				<<"and uint labels";
+			return false;
+		}
+	}
+	else
+	{
+			std::cout<<"Feature computation can only handle uchar "
+				<<"and ushort images";
+			return false;
+	}
+
+#else
 	ftk::IntrinsicFeatureCalculator *iCalc = new ftk::IntrinsicFeatureCalculator();
 	iCalc->SetInputImages(inputImage,outputImage,nucChannel,0);
 	if(definition->intrinsicFeatures.size() > 0)
 		iCalc->SetFeaturesOn( GetOnIntrinsicFeatures() );
 	//iCalc->SetFeaturePrefix("nuc_");
-	table = iCalc->Compute();									//Create a new table
+	table = iCalc->Compute();							//Create a new table
 	delete iCalc;
 	std::cout << "Done: Instrinsic Nuclear Features\n";
+#endif
 	resultIsEditable = true;
 	return true;
 }
-
 
 //***********************************************************************************************************
 //  CYTOPLASM SEGMENTATION
