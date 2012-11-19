@@ -6,16 +6,18 @@
 
 class Node
 {
+public:
+    typedef std::vector< Node * >   NodeVectorType;
+
 private:
-	Node *parent;
+    Node *parent;
 	itk::uint64_t id;
+    NodeVectorType children;
 
 public:
 	double x;
 	double y;
 	double z;
-
-	std::vector< Node * > children;
 
 public:
 	//Default constructor
@@ -40,11 +42,15 @@ public:
 
 	void SetParent(Node * const parent);
 	
-	std::vector< Node * > & GetChildren();
+	const NodeVectorType & GetChildren() const;
 
 	itk::uint64_t getID() const;
 	
-	Node* GetParent() const;
+	Node * GetParent() const;
+    
+    void RemoveChild(const NodeVectorType::const_iterator & child_const_iter);
+    
+    void ClearChildren();
 };
 
 #endif

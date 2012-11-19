@@ -6,26 +6,24 @@
 #include <cstddef> // for NULL
 
 //Constructor
-Node::Node(double x, double y, double z, itk::uint64_t id)
+Node::Node(double x, double y, double z, itk::uint64_t id) :
+parent(NULL),
+id(id),
+x(x),
+y(y),
+z(z)
 {
-	this->x = x;
-	this->y = y;
-	this->z = z;
-	this->id = id;
-
-	this->parent = NULL;
 }
 
 //Copy Constructor
-Node::Node(const Node & old_node)
+Node::Node(const Node & old_node) :
+parent(old_node.parent), //parent is set to old_node parent, the tree copy constructor must take care to regenerate the links to any new parents
+id(old_node.id),
+children(old_node.children), //children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
+x(old_node.x),
+y(old_node.y),
+z(old_node.z)
 {
-	this->x = old_node.x;
-	this->y = old_node.y;
-	this->z = old_node.z;
-	this->id = old_node.id;
-
-	this->parent = old_node.parent;     //parent is set to old_node parent, the tree copy constructor must take care to regenerate the links to any new parents
-	this->children = old_node.children; //children is set to the old_node vector of children, the tree copy constructor must take care to regenerate the links to the children as well
 }	
 
 //Destructor
@@ -42,21 +40,20 @@ Node::~Node()
     
     //Go to the parent (if it exist) and remove ourselves from their children
     Node * parent = this->GetParent();
-    std::vector< Node * > & parents_children = parent->GetChildren();   //the vector of all our parent's children, CAREFUL: Note the type, if you do not declare the type a reference, the operator= will just copy the pointers instead of referencing the original vector
+    const NodeVectorType & parents_children = parent->GetChildren();   //the vector of all our parent's children, CAREFUL: Note the type, if you do not declare the type a reference, the operator= will just copy the pointers instead of referencing the original vector
     
     if (parent != NULL)
     {
-        std::vector< Node * >::iterator parents_children_iter;
+        NodeVectorType::const_iterator parents_children_iter;
         
         bool erased = false;
         for (parents_children_iter = parents_children.begin(); parents_children_iter != parents_children.end(); ++parents_children_iter)
         {
-            Node * parents_child = *parents_children_iter;
+            const Node * parents_child = *parents_children_iter;
 
             if (parents_child->getID() == this->id)
             {
-                parents_children.erase(parents_children_iter);
-                std::vector< Node * >::iterator remaining_children_iter;
+                parent->RemoveChild(parents_children_iter);
                 erased = true;
                 break;
             }
@@ -71,7 +68,7 @@ Node::~Node()
 
 void Node::AddChild(Node * const child)
 {
-	children.push_back(child);
+	this->children.push_back(child);
 }
 
 void Node::SetParent(Node * const parent)
@@ -79,19 +76,19 @@ void Node::SetParent(Node * const parent)
 	this->parent = parent;	//Set the new parent
 }
 
-std::vector< Node * > & Node::GetChildren() //remember to change this function not to return member variables
+const Node::NodeVectorType & Node::GetChildren() const //remember to change this function not to return member variables
 {
-	return children;
+	return this->children;
 }
 
 itk::uint64_t Node::getID() const
 {
-	return id;
+	return this->id;
 }
 
 Node * Node::GetParent() const
 {
-	return parent;
+	return this->parent;
 }
 
 void Node::RemoveChild(Node * child_to_be_removed)
@@ -110,4 +107,17 @@ void Node::RemoveChild(Node * child_to_be_removed)
 	}
 
     throw std::runtime_error("Error, trying to remove a child that does not exist");
+}
+
+void Node::RemoveChild(const NodeVectorType::const_iterator & child_const_iter)
+{
+    NodeVectorType::iterator child_iter(this->children.begin());
+    std::advance(child_iter, std::distance< NodeVectorType::const_iterator >(child_iter, child_const_iter));
+    
+    this->children.erase(child_iter);
+}
+
+void Node::ClearChildren()
+{
+    this->children.clear();
 }

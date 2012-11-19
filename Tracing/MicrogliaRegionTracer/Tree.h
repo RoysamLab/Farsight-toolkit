@@ -6,7 +6,9 @@
 class Tree
 {
 private:
-	Node *                  root;
+	typedef Node::NodeVectorType    NodeVectorType;
+    
+    Node *                  root;
 	std::vector<Node*>      member_nodes;
 
 public:
@@ -17,11 +19,11 @@ public:
 
 	void                    SetRoot(Node * const root);
 	void                    AddNode(Node * const node, const Node* parent);
-	std::vector< Node* >	GetMemberNodes() const;
+	NodeVectorType          GetMemberNodes() const;
 	Node *                  GetRoot() const;
 	void                    RemoveNode(const Node * const node);
-	void                    GetLeafNodes(std::vector< Node * > & leaf_nodes) const;
-	void                    VisitChildrenForLeafNodes(Node * node, std::vector< Node* > & leaf_nodes) const;
+	void                    GetLeafNodes(NodeVectorType & leaf_nodes) const;
+	void                    VisitChildrenForLeafNodes(Node * node, NodeVectorType & leaf_nodes) const;
 
 private:
 	void                    CopyConstructorHelper(Node * const new_node, const Node * const old_node);
