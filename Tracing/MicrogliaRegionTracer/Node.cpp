@@ -44,34 +44,19 @@ Node::~Node()
     Node * parent = this->GetParent();
     std::vector< Node * > & parents_children = parent->GetChildren();   //the vector of all our parent's children, CAREFUL: Note the type, if you do not declare the type a reference, the operator= will just copy the pointers instead of referencing the original vector
     
-//    std::cerr << "Our ID: " << this->id << std::endl;
     if (parent != NULL)
     {
-//        std::cerr << "Parent's ID: " << parent->getID() << std::endl;
         std::vector< Node * >::iterator parents_children_iter;
-        
-//        for (parents_children_iter = parents_children.begin(); parents_children_iter != parents_children.end(); ++parents_children_iter)
-//        {
-//            Node* parents_child = *parents_children_iter;
-//            std::cerr << "Parent's Child's ID: " << parents_child->getID() << std::endl;
-//        }
         
         bool erased = false;
         for (parents_children_iter = parents_children.begin(); parents_children_iter != parents_children.end(); ++parents_children_iter)
         {
             Node * parents_child = *parents_children_iter;
-//            std::cerr << "Testing Parent's Child's ID: " << parents_child->getID() << std::endl;
+
             if (parents_child->getID() == this->id)
             {
                 parents_children.erase(parents_children_iter);
-//                std::cerr << "Erasing ourselves from the parent's list of children" << std::endl;
                 std::vector< Node * >::iterator remaining_children_iter;
-                
-//                std::vector<Node*>& remaining_children = parent->GetChildren();
-//                for (remaining_children_iter = remaining_children.begin(); remaining_children_iter != remaining_children.end(); ++remaining_children_iter)
-//                {
-//                    std::cerr << "Remaining children: " << (*remaining_children_iter)->getID() << std::endl;
-//                }
                 erased = true;
                 break;
             }
