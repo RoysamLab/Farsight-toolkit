@@ -209,7 +209,76 @@ void ftkMainDarpaTrace::runPreprocesing()
 	std::cout << std::endl << "ACAASD: " << MontageGFP_Image->GetLargestPossibleRegion().GetSize();
 }
 
+void ftkMainDarpaTrace::computeTileGVFAndVesselness()
+{
+	std::cout<<"In Pre-Compute GVF and Vesselness"<<std::endl;
+	int num_iteration = 15;
+	int smoothing_scale = 1;
+	_GVF_ImagePREMNT = _outPathTemp+"/GFP_MNT_PRE_GVF_";
+	_Vesselness_ImagePREMNT = _outPathTemp+"/GFP_MNT_PRE_Vesselness_";
+	std::string str_bigTile;
+	computeSplitConst();
+	for( unsigned int bigTile = 0; bigTile<_numDivisionsInRowCEN ; ++bigTile )
+	{
+		std::cout<<std::endl<<"bigTile: "<<bigTile;
+		str_bigTile = boost::lexical_cast<string>( bigTile );
+		std::cout << std::endl << "_initialBigTileLOG: " << _initialBigTileLOG[bigTile][0] <<", "<<_initialBigTileLOG[bigTile][1] <<", "<<_initialBigTileLOG[bigTile][2];
+		std::cout << std::endl << "_sizeOfBigTilesLOG: " << _sizeOfBigTilesLOG[bigTile][0] <<", "<<_sizeOfBigTilesLOG[bigTile][1] <<", "<<_sizeOfBigTilesLOG[bigTile][2];
 
+		itk::Index<3> initialBigIndexLOG;
+		itk::Size<3> sizeOfTheRegionLOG;
+
+		initialBigIndexLOG[0] = _initialBigTileLOG[bigTile][0];
+		initialBigIndexLOG[1] = _initialBigTileLOG[bigTile][1];
+		initialBigIndexLOG[2] = _initialBigTileLOG[bigTile][2];
+
+		sizeOfTheRegionLOG[0] = _sizeOfBigTilesLOG[bigTile][0];
+		sizeOfTheRegionLOG[1] = _sizeOfBigTilesLOG[bigTile][1]+_sizeOfBigTilesLOG[bigTile+1][1];
+		sizeOfTheRegionLOG[2] = _sizeOfBigTilesLOG[bigTile][2];
+
+		std::cout << std::endl << "sizeOfTheRegionLOG: " << sizeOfTheRegionLOG[0] <<", "<<sizeOfTheRegionLOG[1] <<", "<<sizeOfTheRegionLOG[2];
+
+		// 		std::cout << std::endl << initialBigIndexLOG;
+		// 		std::cout << std::endl << "SIZE: " << sizeOfTheRegionLOG[1];
+
+		rawImageType_flo::RegionType desiredRegionBigTileLOG;
+		desiredRegionBigTileLOG.SetSize(sizeOfTheRegionLOG);
+		desiredRegionBigTileLOG.SetIndex(initialBigIndexLOG);
+
+		itk::Index<3> initialBigIndexCEN;
+		itk::Size<3> sizeOfTheRegionCEN;
+
+		initialBigIndexCEN[0] = _initialBigTileCEN[bigTile][0];
+		initialBigIndexCEN[1] = _initialBigTileCEN[bigTile][1];
+		initialBigIndexCEN[2] = _initialBigTileCEN[bigTile][2];
+		sizeOfTheRegionCEN[0] = _sizeOfBigTilesCEN[bigTile][0];
+		sizeOfTheRegionCEN[1] = _sizeOfBigTilesCEN[bigTile][1];
+		sizeOfTheRegionCEN[2] = _sizeOfBigTilesCEN[bigTile][2];
+		std::cout << std::endl << "_sizeOfBigTilesCEN: " << _sizeOfBigTilesCEN[bigTile][0] <<", "<<_sizeOfBigTilesCEN[bigTile][1] <<", "<<_sizeOfBigTilesCEN[bigTile][2];
+		std::cout << std::endl << desiredRegionBigTileLOG;
+		_img_traceDesiredRegion = readImageRegion< rawImageType_flo >( _GFP_ImagePREPMNT.c_str(), desiredRegionBigTileLOG );
+		std::cout<<"done Reading***********************************************************"<<std::endl;
+		
+		//Logic to compute the GVF and Vesselness
+		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
+		//this->computeGVF(100,num_iteration,smoothing_scale);
+		std::cout<<"compute GVF*******************"<<std::endl;
+		MNT->LoadCurvImage_2(_img_traceDesiredRegion);
+		MNT->computeGVF(100,num_iteration,smoothing_scale);
+		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile+".nrrd";
+		
+		writeImage< GradientImageType >( MNT->getGVFImage(), gvfPath.c_str());
+
+		std::cout<<"compute Vesselness******************"<<std::endl;
+		MNT->ComputeGVFVesselness();
+		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile+".nrrd";
+		writeImage< rawImageType_flo >( MNT->getVessleness(), vesselPath.c_str());
+		delete MNT;
+	}
+
+
+
+}
 void ftkMainDarpaTrace::runTracing()
 {
 	std::cout << std::endl << "LETS TRACE";
@@ -256,6 +325,8 @@ void ftkMainDarpaTrace::runTracing()
 // 			outfileDivided << "<?xml\tversion=\"1.0\"\t?>\n";
 // 			outfileDivided << "<Source>\n\n";
 
+
+		std::string str_bigTile = boost::lexical_cast<string>( bigTile );
 		itk::Index<3> initialBigIndexLOG;
 		itk::Size<3> sizeOfTheRegionLOG;
 		
@@ -272,9 +343,23 @@ void ftkMainDarpaTrace::runTracing()
 // 		std::cout << std::endl << initialBigIndexLOG;
 // 		std::cout << std::endl << "SIZE: " << sizeOfTheRegionLOG[1];
 		
+		itk::Index<3> initialBigIndexLOG_WithoutIndex;
+		initialBigIndexLOG_WithoutIndex[0] = 0;
+		initialBigIndexLOG_WithoutIndex[1] = 0;
+		initialBigIndexLOG_WithoutIndex[2] = 0;
+
 		rawImageType_flo::RegionType desiredRegionBigTileLOG;
+		rawImageType_flo::RegionType desiredRegionBigTileLOG_WithoutIndex;
+		GradientImageType::RegionType desiredRegionBigTileLOGGradient;
+
 		desiredRegionBigTileLOG.SetSize(sizeOfTheRegionLOG);
 		desiredRegionBigTileLOG.SetIndex(initialBigIndexLOG);
+
+		desiredRegionBigTileLOGGradient.SetSize(sizeOfTheRegionLOG);
+		desiredRegionBigTileLOGGradient.SetIndex(initialBigIndexLOG);
+
+		desiredRegionBigTileLOG_WithoutIndex.SetSize(sizeOfTheRegionLOG);
+		desiredRegionBigTileLOG_WithoutIndex.SetIndex(initialBigIndexLOG_WithoutIndex);
 		
 		itk::Index<3> initialBigIndexCEN;
 		itk::Size<3> sizeOfTheRegionCEN;
@@ -313,6 +398,17 @@ void ftkMainDarpaTrace::runTracing()
 		_img_traceDesiredRegion = readImageRegion< rawImageType_flo >( _GFP_ImagePREPMNT.c_str(), desiredRegionBigTileLOG );
 		_somaMontageDesiredRegion = readImageRegion< rawImageType_uint >( _Soma_MontageNRRD.c_str(), desiredRegionBigTileLOG );
 
+
+		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile+".nrrd";
+		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile+".nrrd";
+
+		//Load the pre-computed the GVF and Vesselness 
+		_img_GVFDesiredRegion = readImageRegion< GradientImageType >( gvfPath.c_str(), desiredRegionBigTileLOGGradient );
+		_img_VesselDesiredRegion = readImageRegion< rawImageType_flo >( vesselPath.c_str(), desiredRegionBigTileLOG_WithoutIndex );
+
+
+#pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
+		for(  long long a=0; a<centroid_list.size(); ++a )
                 if( _isSmall == 1 )
                 {
                         //itk::MultiThreader::SetGlobalDefaultNumberOfThreads(1); // This one can not be changed
@@ -419,12 +515,20 @@ void ftkMainDarpaTrace::runTracing()
 			//MNT->LoadCurvImage_1(img_trace, 0);
 			//std::cout << std::endl << "LAREGION ES: " << _img_traceDesiredRegion;
 			rawImageType_flo::Pointer img_trace;
-			#pragma omp critical
+			GradientImageType::Pointer img_gvf;
+			rawImageType_flo::Pointer img_vessel;
+
+#pragma omp critical
 			{
 				img_trace = cropImages< rawImageType_flo >( _img_traceDesiredRegion, x, y, z);
+				img_gvf = cropImages< GradientImageType >( _img_GVFDesiredRegion, x, y, z);;
+				img_vessel = cropImages< rawImageType_flo >( _img_VesselDesiredRegion, x, y, z);;
 				MNT->LoadCurvImage_2(img_trace);
+				MNT->setGVFImage(img_gvf);
+				MNT->setVesselImage(img_vessel);
 			}
-			MNT->RunMask();
+			
+			//MNT->RunMask();
 			/*MNT->LoadParameters_1(_traceParams.c_str(),5);*/
 			float calc_intensity_threshold = 0;
 			float calc_contrast_threshold = 0;
@@ -464,8 +568,9 @@ void ftkMainDarpaTrace::runTracing()
 			
 // 	// 			MNT->LoadSomaImage_1(img_soma_yan);
 			bool flagLog = false;
+			bool flagPreComputedGVFVessel = true;
 			MNT->setFlagOutLog(flagLog);
-			MNT->RunTracing();
+			MNT->RunGVFTracing(flagPreComputedGVFVessel);
 			
 			#pragma omp critical
 			{

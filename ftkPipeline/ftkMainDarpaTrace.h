@@ -34,6 +34,8 @@ public:
 	void calcLMeasures(int argc, char *argv[]);
 	float getCalcThreshold(std::vector<float> &features, std::string type);
 	std::vector<float> computeFeatures(rawImageType_flo::Pointer &image);
+	void computeTileGVFAndVesselness();
+	
 
 
 protected:
@@ -98,6 +100,8 @@ private:
 
 	// MNT
 	std::string _GFP_ImagePREPMNT;
+	std::string _GVF_ImagePREMNT;
+	std::string _Vesselness_ImagePREMNT;
 	
 	// Division
 	int _numDivisionsInRowCEN;
@@ -109,6 +113,9 @@ private:
 	// BIG IMAGES
 	rawImageType_flo::Pointer _img_traceDesiredRegion;
 	rawImageType_uint::Pointer _somaMontageDesiredRegion;
+	rawImageType_flo::Pointer _img_VesselDesiredRegion;
+	GradientImageType::Pointer _img_GVFDesiredRegion;
+
 };
 
 #include "ftkMainDarpaTrace.hxx"
