@@ -1,5 +1,11 @@
 #include "BoundingBox.h"
 
+BoundingBox::BoundingBox(itk::uint64_t minX, itk::uint64_t minY, itk::uint64_t minZ, itk::uint64_t maxX, itk::uint64_t maxY, itk::uint64_t maxZ) :
+minX(minX), minY(minY), minZ(minZ),
+maxX(maxX), maxY(maxY), maxZ(maxZ)
+{
+}
+
 itk::uint64_t BoundingBox::GetMinX()
 {
     return this->minX;

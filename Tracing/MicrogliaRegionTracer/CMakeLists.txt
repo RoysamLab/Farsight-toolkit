@@ -14,6 +14,7 @@ SET(MicrogliaRegionTracer_HDRS
 	Node.h
 	Tree.h
     BoundingBox.h
+    BoundingVolumeHierarchyNode.h
 )
 
 SET(MicrogliaRegionTracer_SRCS
@@ -25,6 +26,7 @@ SET(MicrogliaRegionTracer_SRCS
 	Node.cpp
 	Tree.cpp
     BoundingBox.cpp
+    BoundingVolumeHierarchyNode.cpp
 )
 
 ADD_EXECUTABLE(MicrogliaRegionTracer main.cpp ${MicrogliaRegionTracer_HDRS} ${MicrogliaRegionTracer_SRCS})

@@ -1,5 +1,5 @@
-#ifndef MICROGLIAREGIONTRACER_H
-#define MICROGLIAREGIONTRACER_H
+#ifndef MicrogliaRegionTracer_H
+#define MicrogliaRegionTracer_H
 
 #include "itkIntTypes.h"
 
