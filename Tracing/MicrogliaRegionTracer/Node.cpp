@@ -121,3 +121,19 @@ void Node::ClearChildren()
 {
     this->children.clear();
 }
+
+const itk::uint64_t Node::GetX()
+{
+    return this->x;
+}
+
+const itk::uint64_t Node::GetY()
+{
+    return this->y;
+}
+
+const itk::uint64_t Node::GetZ()
+{
+    return this->z;
+}
+

@@ -5,11 +5,12 @@
 
 class Tree
 {
-private:
+public:
 	typedef Node::NodeVectorType    NodeVectorType;
-    
+
+private:
     Node *                  root;
-	std::vector<Node*>      member_nodes;
+	std::vector< Node * >   member_nodes;
 
 public:
                             explicit Tree();
@@ -19,7 +20,7 @@ public:
 
 	void                    SetRoot(Node * const root);
 	void                    AddNode(Node * const node, const Node* parent);
-	NodeVectorType          GetMemberNodes() const;
+	const NodeVectorType &  GetMemberNodes() const;
 	Node *                  GetRoot() const;
 	void                    RemoveNode(const Node * const node);
 	void                    GetLeafNodes(NodeVectorType & leaf_nodes) const;

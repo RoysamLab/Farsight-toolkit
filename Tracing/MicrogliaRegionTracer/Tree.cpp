@@ -75,7 +75,7 @@ void Tree::AddNode(Node * const node, const Node * const parent)
 	member_nodes.push_back(node);
 }
 
-Tree::NodeVectorType Tree::GetMemberNodes() const //remember to change this function so that it doesn't return a member variable
+const Tree::NodeVectorType & Tree::GetMemberNodes() const //remember to change this function so that it doesn't return a member variable
 {
 	return member_nodes;
 }

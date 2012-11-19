@@ -7,7 +7,7 @@
 class Node
 {
 public:
-    typedef std::vector< Node * >   NodeVectorType;
+    typedef std::vector< Node * > NodeVectorType;
 
 private:
     Node *parent;
@@ -51,6 +51,12 @@ public:
     void RemoveChild(const NodeVectorType::const_iterator & child_const_iter);
     
     void ClearChildren();
+    
+    const itk::uint64_t GetX();
+    
+    const itk::uint64_t GetY();
+    
+    const itk::uint64_t GetZ();
 };
 
 #endif
