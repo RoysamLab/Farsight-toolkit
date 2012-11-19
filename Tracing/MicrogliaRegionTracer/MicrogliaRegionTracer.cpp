@@ -35,6 +35,10 @@
 #define MASK 0
 #define PI (4.0*atan(1.0))
 
+//Non-member function prototypes ( See Scott Meyer's article http://www.drdobbs.com/cpp/how-non-member-functions-improve-encapsu/184401197 )
+double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
+
+
 MicrogliaRegionTracer::MicrogliaRegionTracer()
 {
 #ifdef _OPENMP
@@ -71,7 +75,7 @@ void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filena
 	while (seed_point_file >> cellX >> cellY >> cellZ)
 	{	
 		Cell cell(cellX, cellY, cellZ);
-		cells.push_back(cell);
+		this->cells.push_back(cell);
 		++num_seed_points;
 	}
 	std::cout << "Number of seed points read: " << num_seed_points << std::endl;
@@ -169,9 +173,9 @@ void MicrogliaRegionTracer::Trace()
             roi_size = cell.image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
             cell.SetSize(roi_size);
         }
-        
-        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
+
         //Then we trace a group of cells using OpenMP
+        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
         #pragma omp parallel for
         for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
         {
@@ -510,9 +514,9 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 	swc_filename_stream_local << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_tree_local.swc";
 
 
-	WriteTreeToSWCFile(cell, tree, swc_filename_stream.str(), swc_filename_stream_local.str());
+	cell.WriteTreeToSWCFile(tree, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-	Tree* smoothed_tree = new Tree(*tree);
+	Tree* smoothed_tree = new Tree(*tree); //Copy the original tree into smoothed_tree
 	SmoothTree(cell, smoothed_tree);
 
 	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
@@ -520,7 +524,7 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 	swc_filename_stream_local_smoothed << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_tree_local_smoothed.swc";
 
 
-	WriteTreeToSWCFile(cell, smoothed_tree, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+	cell.WriteTreeToSWCFile(smoothed_tree, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
 
 	for (int k = 0; k < cell.critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];
@@ -589,7 +593,6 @@ double MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_
 	typedef itk::PathConstIterator< VesselnessImageType, PathType > PathIteratorType;
 	PathIteratorType path_iter(cell.vesselness_image, path);
 
-	double sum_of_vesselness_values = 0;
 	itk::uint64_t path_length = 0;
 	itk::uint64_t num_blank_pixels = 0;
 	
@@ -719,68 +722,6 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 	delete[] TreeAdjGraph;
     
 	return tree;
-}
-
-/*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
-*	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */ 
-void MicrogliaRegionTracer::WriteTreeToSWCFile(Cell & cell, Tree* tree, std::string filename, std::string filename_local)
-{
-	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
-	std::ofstream traceFile, traceFile_local;
-	
-	std::cout << "Opening " << filename << std::endl;
-	traceFile.open(filename.c_str());
-	std::cout << "Opening " << filename_local << std::endl;
-	traceFile_local.open(filename_local.c_str());
-	
-	Node* root = tree->GetRoot();
-
-	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
-	WriteLinkToParent(cell, root, tree_depth, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
-
-	traceFile.close();
-	traceFile_local.close();	
-}
-
-//This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
-//CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively or increase stack size if this is the case...
-void MicrogliaRegionTracer::WriteLinkToParent(Cell & cell, Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local)
-{
-	//Calculate some node indices
-	ImageType::PointType node_index, node_index_local;
-	node_index_local[0] = node->x;
-	node_index_local[1] = node->y;
-	node_index_local[2] = node->z;
-	node_index[0] = node_index_local[0] + cell.getX() - cell.GetRequestedSize()[0]/2 - cell.GetShiftIndex()[0];
-	node_index[1] = node_index_local[1] + cell.getY() - cell.GetRequestedSize()[1]/2 - cell.GetShiftIndex()[1];
-	node_index[2] = node_index_local[2] + cell.getZ() - cell.GetRequestedSize()[2]/2 - cell.GetShiftIndex()[2];
-
-	itk::int64_t parent_node_id;
-	if (node->GetParent() == NULL) 
-		parent_node_id = -1; //This node has no parent, so this is the root node, so parent ID is -1
-	else
-		parent_node_id = node->GetParent()->getID();
-
-	std::vector< Node* > children = node->GetChildren();
-	
-	if (tree_depth == 1 && children.size() == 0)
-		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
-
-	//Write out the SWC lines
-	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
-	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
-	
-	if (children.size() == 0) 
-		return;														//BASE CASE: No children, so don't visit them
-
-	std::vector< Node* >::iterator children_iter;
-	for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
-	{
-		Node* child_node = *children_iter;
-		WriteLinkToParent(cell, child_node, tree_depth+1, traceFile, traceFile_local);
-	}
-
-	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
 }
 
 /* This function smoothes a Tree structure */
@@ -914,14 +855,14 @@ MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell 
 	//std::cout << "Setting smoothing start index to: " << start << std::endl;
 	
 
-	const PathType::VertexListType *vertex_list = path->GetVertexList();
-
-	for (unsigned int i = 1; i < vertex_list->Size() - 1; ++i)
-	{
-		PathType::ContinuousIndexType vertex = vertex_list->GetElement(i);
-		//std::cout << "Adding smoothing waypoint index to: " << vertex << std::endl;
-		//info.AddWayPoint(vertex);
-	}
+//	const PathType::VertexListType *vertex_list = path->GetVertexList();
+//
+//	for (unsigned int i = 1; i < vertex_list->Size() - 1; ++i)
+//	{
+//		PathType::ContinuousIndexType vertex = vertex_list->GetElement(i);
+//		//std::cout << "Adding smoothing waypoint index to: " << vertex << std::endl;
+//		//info.AddWayPoint(vertex);
+//	}
 
 	SpeedPathFilterType::PointType end;
 	end[0] = end_node->x; end[1] = end_node->y; end[2] = end_node->z;
@@ -984,7 +925,7 @@ void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell & cell, Tree* smooth
 	end_node->SetParent(current_node);
 }
 
-/* The speed image for SmoothPath is created here */
+/* The speed image for SmoothPath is created here (cube root of the vesselness image) */
 void MicrogliaRegionTracer::CreateSpeedImage(Cell & cell)
 {
 	//Normalize vesselness image
@@ -1030,9 +971,9 @@ void MicrogliaRegionTracer::CreateSpeedImage(Cell & cell)
 }
 
 /* Calculate the Euclidean Distance */
-double MicrogliaRegionTracer::CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2)
+double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2)
 {
-	ImageType::IndexType trace_vector;
+    Cell::ImageType::IndexType trace_vector;
 	trace_vector[0] = node2[0] - node1[0];
 	trace_vector[1] = node2[1] - node1[1];
 	trace_vector[2] = node2[2] - node1[2];

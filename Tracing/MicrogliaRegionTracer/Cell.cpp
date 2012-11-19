@@ -263,3 +263,65 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 
 		std::cerr << writer << std::endl;
 	}
 }
+
+/*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
+ *	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */
+void Cell::WriteTreeToSWCFile(Tree * tree, std::string filename, std::string filename_local)
+{
+	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
+	std::ofstream traceFile, traceFile_local;
+	
+	std::cout << "Opening " << filename << std::endl;
+	traceFile.open(filename.c_str());
+	std::cout << "Opening " << filename_local << std::endl;
+	traceFile_local.open(filename_local.c_str());
+	
+	Node* root = tree->GetRoot();
+    
+	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
+	WriteLinkToParent(root, tree_depth, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
+    
+	traceFile.close();
+	traceFile_local.close();
+}
+
+//This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
+//CAREFUL: This function may overflow the stack due to recursion pushing parameters onto the stack and will crash if you have a tree deep enough. Rewrite iteratively or increase stack size if this is the case...
+void Cell::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local)
+{
+	//Calculate some node indices
+	ImageType::PointType node_index, node_index_local;
+	node_index_local[0] = node->x;
+	node_index_local[1] = node->y;
+	node_index_local[2] = node->z;
+	node_index[0] = node_index_local[0] + this->getX() - this->GetRequestedSize()[0]/2 - this->GetShiftIndex()[0];
+	node_index[1] = node_index_local[1] + this->getY() - this->GetRequestedSize()[1]/2 - this->GetShiftIndex()[1];
+	node_index[2] = node_index_local[2] + this->getZ() - this->GetRequestedSize()[2]/2 - this->GetShiftIndex()[2];
+    
+	itk::int64_t parent_node_id;
+	if (node->GetParent() == NULL)
+		parent_node_id = -1; //This node has no parent, so this is the root node, so parent ID is -1
+	else
+		parent_node_id = node->GetParent()->getID();
+    
+	std::vector< Node* > children = node->GetChildren();
+	
+	if (tree_depth == 1 && children.size() == 0)
+		return;														//BASE CASE: Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
+    
+	//Write out the SWC lines
+	traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
+	traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
+	
+	if (children.size() == 0)
+		return;														//BASE CASE: No children, so don't visit them
+    
+	std::vector< Node* >::iterator children_iter;
+	for (children_iter = children.begin(); children_iter != children.end(); ++children_iter)
+	{
+		Node* child_node = *children_iter;
+		WriteLinkToParent(child_node, tree_depth+1, traceFile, traceFile_local);
+	}
+    
+	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
+}

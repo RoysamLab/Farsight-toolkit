@@ -66,11 +66,6 @@ public:
 	PathType::Pointer	SmoothPath(Cell & cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
 	void				CreateSpeedImage(Cell & cell);
-
-	void				WriteTreeToSWCFile(Cell & cell, Tree* tree, std::string filename, std::string filename_local);	
-	void				WriteLinkToParent(Cell & cell, Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);
-	
-	double				CalculateEuclideanDistance(ImageType::IndexType node1, ImageType::IndexType node2);
 };
 
 #endif
