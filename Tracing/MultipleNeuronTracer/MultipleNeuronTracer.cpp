@@ -1262,12 +1262,12 @@ void MultipleNeuronTracer::RunTracing(void)
 	Run Tracing USING GVF seed detection technique
 **/
 
-void MultipleNeuronTracer::RunGVFTracing(void)
+void MultipleNeuronTracer::RunGVFTracing(bool preComputedGVF)
 {
 	if( _flagPipeline == false )
 	{
 		std::cout<<std::endl<<"FALSE PIPELINE";
-		UpdateNDXImage_GVF();			//Nice function here that is easy to miss....
+		UpdateNDXImage_GVF(preComputedGVF);			//Nice function here that is easy to miss....
 	}
 	bool yuWangTest = true;
 	//////////if(yuWangTest == true){
@@ -1580,7 +1580,7 @@ void MultipleNeuronTracer::RunGVFTracing(void)
 
 
 
-void MultipleNeuronTracer::UpdateNDXImage_GVF()
+void MultipleNeuronTracer::UpdateNDXImage_GVF(bool preComputedGVFAndVessel)
 {
 
 		int num_iteration = 15;
@@ -1635,14 +1635,13 @@ void MultipleNeuronTracer::UpdateNDXImage_GVF()
 		//ComputeMultiVesselness(sigma_min, sigma_max, sigma_step);
 		//WriteImage3D(std::string("multi_Vesselness_enhancement.tif"), _PaddedCurvImage);
 
-
-		std::cout<<"compute GVF"<<std::endl;
-		this->computeGVF(100,num_iteration,smoothing_scale);
+		if(!preComputedGVFAndVessel){
+			std::cout<<"compute GVF"<<std::endl;
+			this->computeGVF(100,num_iteration,smoothing_scale);
 		
-
-
-		std::cout<<"compute GVF Vesselness"<<std::endl;
-		this->ComputeGVFVesselness();
+			std::cout<<"compute GVF Vesselness"<<std::endl;
+			this->ComputeGVFVesselness();
+		}
 		//WriteImage3D(std::string("GVF_Vesselness_enhancement.tif"), _IVessel);
 		std::cout<<"compute seed Detection"<<std::endl;
 		v_threshold = 0.1;// this value is calculated in the computeGVFVesselness() function by 
@@ -1760,99 +1759,114 @@ void MultipleNeuronTracer::ComputeMultiVesselness(double sigma_min, double sigma
 
 void MultipleNeuronTracer::computeGVF(int noise_level, int num_iteration, int smoothing_scale)
 { 
-  if( smoothing_scale == 0 )
-  {
-	  typedef itk::GradientImageFilter<ImageType3D, float, float> GradientImageFilterType;
-   GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
+	if( smoothing_scale == 0 )
+	{
+		typedef itk::GradientImageFilter<ImageType3D, float, float> GradientImageFilterType;
+		GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
 
-   typedef itk::RescaleIntensityImageFilter< ImageType3D, ImageType3D> RescaleFilterType;
-   RescaleFilterType::Pointer rescale = RescaleFilterType::New();
-   rescale->SetInput( _PaddedCurvImage );
-   rescale->SetOutputMinimum( 0 );
-   rescale->SetOutputMaximum( 1 );
-   rescale->Update();
+		typedef itk::RescaleIntensityImageFilter< ImageType3D, ImageType3D> RescaleFilterType;
+		RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+		rescale->SetInput( _PaddedCurvImage );
+		rescale->SetOutputMinimum( 0 );
+		rescale->SetOutputMaximum( 1 );
+		rescale->Update();
 
-   gradientFilter->SetInput(rescale->GetOutput());
-   //gradientFilter->SetInput(I);
+		gradientFilter->SetInput(rescale->GetOutput());
+		//gradientFilter->SetInput(I);
 
-   try
-   {
-    gradientFilter->Update();
-   }
-   catch( itk::ExceptionObject & err )
-   {
-    std::cerr << "Exception caught: " << err << std::endl;
-   }
+		try
+		{
+			gradientFilter->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "Exception caught: " << err << std::endl;
+		}
 
-   //IG = gradientFilter->GetOutput();
-   if( num_iteration == 0 )
-   {
-     _IGVF = gradientFilter->GetOutput();
-   }
-   else
-   {
-    typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
-    GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
+		//IG = gradientFilter->GetOutput();
+		if( num_iteration == 0 )
+		{
+			_IGVF = gradientFilter->GetOutput();
+		}
+		else
+		{
+			typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
+			GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
 
-    GVFFilter->SetInput(gradientFilter->GetOutput());
-    GVFFilter->SetNoiseLevel(noise_level);
-    GVFFilter->SetIterationNum(num_iteration);
+			GVFFilter->SetInput(gradientFilter->GetOutput());
+			GVFFilter->SetNoiseLevel(noise_level);
+			GVFFilter->SetIterationNum(num_iteration);
 
-    try
-    {
-     GVFFilter->Update();
-    }
-    catch( itk::ExceptionObject & err )
-    {
-     std::cerr << "Exception caught: " << err << std::endl;
-    }
-    _IGVF = GVFFilter->GetOutput();
-   }
+			try
+			{
+				GVFFilter->Update();
+			}
+			catch( itk::ExceptionObject & err )
+			{
+				std::cerr << "Exception caught: " << err << std::endl;
+			}
+			_IGVF = GVFFilter->GetOutput();
+		}
 
-  }
-  else
-  {
-	  typedef itk::GradientRecursiveGaussianImageFilter<ImageType3D, GradientImageType> GradientImageFilterType;
-   GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
+	}
+	else
+	{
+		typedef itk::GradientRecursiveGaussianImageFilter<ImageType3D, GradientImageType> GradientImageFilterType;
+		GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
 
-   typedef itk::RescaleIntensityImageFilter< ImageType3D, ImageType3D> RescaleFilterType;
-   RescaleFilterType::Pointer rescale = RescaleFilterType::New();
-   rescale->SetInput( _PaddedCurvImage );
-   rescale->SetOutputMinimum( 0 );
-   rescale->SetOutputMaximum( 1 );
-   rescale->Update();
+		typedef itk::RescaleIntensityImageFilter< ImageType3D, ImageType3D> RescaleFilterType;
+		RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+		rescale->SetInput( _PaddedCurvImage );
+		rescale->SetOutputMinimum( 0 );
+		rescale->SetOutputMaximum( 1 );
+		rescale->Update();
 
-   gradientFilter->SetSigma(smoothing_scale);
-   gradientFilter->SetInput(rescale->GetOutput());
+		gradientFilter->SetSigma(smoothing_scale);
+		gradientFilter->SetInput(rescale->GetOutput());
 
-   try
-   {
-    gradientFilter->Update();
-   }
-   catch( itk::ExceptionObject & err )
-   {
-    std::cerr << "Exception caught: " << err << std::endl;
-   }
+		try
+		{
+			gradientFilter->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "Exception caught: " << err << std::endl;
+		}
 
-   //IG = gradientFilter->GetOutput();
+		//IG = gradientFilter->GetOutput();
 
-   typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
-   GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
+		typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
+		GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
 
-   GVFFilter->SetInput(gradientFilter->GetOutput());
-   GVFFilter->SetNoiseLevel(noise_level);
-   GVFFilter->SetIterationNum(num_iteration);
+		GVFFilter->SetInput(gradientFilter->GetOutput());
+		GVFFilter->SetNoiseLevel(noise_level);
+		GVFFilter->SetIterationNum(num_iteration);
 
-   try
-   {
-    GVFFilter->Update();
-   }
-   catch( itk::ExceptionObject & err )
-   {
-    std::cerr << "Exception caught: " << err << std::endl;
-   }
-   _IGVF = GVFFilter->GetOutput();
-  }
+		try
+		{
+			GVFFilter->Update();
+		}
+		catch( itk::ExceptionObject & err )
+		{
+			std::cerr << "Exception caught: " << err << std::endl;
+		}
+		_IGVF = GVFFilter->GetOutput();
+
+		/////// Write GVF Image////////
+		//typedef itk::ImageFileWriter<GradientImageType> ImageWriterType;
+		//ImageWriterType::Pointer image_writer = ImageWriterType::New();
+		//image_writer->SetFileName("D:\\Data\\FSData\\GVF_Test\\gvf_image.mhd");
+		//image_writer->SetInput(_IGVF);
+		//try
+		//{
+		//	image_writer->Update();
+		//}
+		//catch( itk::ExceptionObject & err )
+		//{
+		//	std::cerr << "Exception caught: " << err << std::endl;
+		//}
+	}
+
 
 }
 

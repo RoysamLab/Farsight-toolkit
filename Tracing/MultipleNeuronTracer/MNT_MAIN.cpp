@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
 	
 	clock_t RunTracing_start_time = clock();
-	MNT->RunGVFTracing();
+	MNT->RunGVFTracing(false);
 	std::cout << "RunTracing took: " << (clock() - RunTracing_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	MNT->WriteSWCFile(SWCFilename, 1);

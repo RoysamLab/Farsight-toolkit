@@ -226,7 +226,7 @@ public:
 	void LoadSomaImage(std::string somaFileName);
 	void LoadSomaImage_1(LabelImageType3D::Pointer image){ _SomaImage = image; };
 	void RunTracing();
-	void RunGVFTracing();
+	void RunGVFTracing(bool flagPreComputedGVFVessel);
 	void WriteMultipleSWCFiles(std::string fname, unsigned int );	
 	void WriteSWCFile(std::string , unsigned int );
 	vtkSmartPointer< vtkTable > GetSWCTable(unsigned int);
@@ -259,13 +259,18 @@ public:
 	void OptimizeCoverage(std::string, bool);
 	void ComputeObjectnessImage(ObjectnessMeasures_micro obj_measures);
 	void Set_isCoverageOptimized(bool);
+	void computeGVF(int mu, int ITER, int smoothing_scale);
+	void ComputeGVFVesselness();
+
+	GradientImageType::Pointer getGVFImage(){return _IGVF;};
+	ImageType3D::Pointer getVessleness(){return _IVessel;};
+	void setGVFImage(GradientImageType::Pointer &image){_IGVF = image;};
+	void setVesselImage(ImageType3D::Pointer &image){ _IVessel = image;};
 		
 protected:
 	void FeatureMain();
-	void UpdateNDXImage_GVF();
+	void UpdateNDXImage_GVF(bool flagPreComputedGVFVessel);
 	void ComputeMultiVesselness(double sigma_min, double sigma_max, int sigma_step);
-	void computeGVF(int mu, int ITER, int smoothing_scale);
-	void ComputeGVFVesselness();
 	void SeedDetection(float th, int detection_method, int radius);
 	void SeedAdjustment(int iter_num);
 	bool SeedSparsify(SamplePointer seeds_candidate, SeedType query_point, int radius);
