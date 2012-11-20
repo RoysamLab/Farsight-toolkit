@@ -216,12 +216,12 @@ void ftkMainDarpaTrace::computeTileGVFAndVesselness()
 	int smoothing_scale = 1;
 	_GVF_ImagePREMNT = _outPathTemp+"/GFP_MNT_PRE_GVF_";
 	_Vesselness_ImagePREMNT = _outPathTemp+"/GFP_MNT_PRE_Vesselness_";
-	std::string str_bigTile;
+	std::stringstream str_bigTile;
 	computeSplitConst();
 	for( unsigned int bigTile = 0; bigTile<_numDivisionsInRowCEN ; ++bigTile )
 	{
 		std::cout<<std::endl<<"bigTile: "<<bigTile;
-		str_bigTile = boost::lexical_cast<string>( bigTile );
+		str_bigTile << bigTile;
 		std::cout << std::endl << "_initialBigTileLOG: " << _initialBigTileLOG[bigTile][0] <<", "<<_initialBigTileLOG[bigTile][1] <<", "<<_initialBigTileLOG[bigTile][2];
 		std::cout << std::endl << "_sizeOfBigTilesLOG: " << _sizeOfBigTilesLOG[bigTile][0] <<", "<<_sizeOfBigTilesLOG[bigTile][1] <<", "<<_sizeOfBigTilesLOG[bigTile][2];
 
@@ -265,13 +265,13 @@ void ftkMainDarpaTrace::computeTileGVFAndVesselness()
 		std::cout<<"compute GVF*******************"<<std::endl;
 		MNT->LoadCurvImage_2(_img_traceDesiredRegion);
 		MNT->computeGVF(100,num_iteration,smoothing_scale);
-		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile+".nrrd";
+		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
 		
 		writeImage< GradientImageType >( MNT->getGVFImage(), gvfPath.c_str());
 
 		std::cout<<"compute Vesselness******************"<<std::endl;
 		MNT->ComputeGVFVesselness();
-		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile+".nrrd";
+		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile.str()+".nrrd";
 		writeImage< rawImageType_flo >( MNT->getVessleness(), vesselPath.c_str());
 		delete MNT;
 	}
@@ -326,7 +326,9 @@ void ftkMainDarpaTrace::runTracing()
 // 			outfileDivided << "<Source>\n\n";
 
 
-		std::string str_bigTile = boost::lexical_cast<string>( bigTile );
+		
+		std::stringstream str_bigTile;
+		str_bigTile << bigTile;
 		itk::Index<3> initialBigIndexLOG;
 		itk::Size<3> sizeOfTheRegionLOG;
 		
@@ -399,8 +401,8 @@ void ftkMainDarpaTrace::runTracing()
 		_somaMontageDesiredRegion = readImageRegion< rawImageType_uint >( _Soma_MontageNRRD.c_str(), desiredRegionBigTileLOG );
 
 
-		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile+".nrrd";
-		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile+".nrrd";
+		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile.str()+".nrrd";
+		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
 
 		//Load the pre-computed the GVF and Vesselness 
 		_img_GVFDesiredRegion = readImageRegion< GradientImageType >( gvfPath.c_str(), desiredRegionBigTileLOGGradient );
