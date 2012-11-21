@@ -6,32 +6,45 @@ maxX(maxX), maxY(maxY), maxZ(maxZ)
 {
 }
 
-itk::uint64_t BoundingBox::GetMinX()
+BoundingBox::~BoundingBox()
+{
+}
+
+itk::uint64_t BoundingBox::GetMinX() const
 {
     return this->minX;
 }
 
-itk::uint64_t BoundingBox::GetMinY()
+itk::uint64_t BoundingBox::GetMinY() const
 {
     return this->minY;
 }
 
-itk::uint64_t BoundingBox::GetMinZ()
+itk::uint64_t BoundingBox::GetMinZ() const
 {
     return this->minZ;
 }
 
-itk::uint64_t BoundingBox::GetMaxX()
+itk::uint64_t BoundingBox::GetMaxX() const
 {
     return this->maxX;
 }
 
-itk::uint64_t BoundingBox::GetMaxY()
+itk::uint64_t BoundingBox::GetMaxY() const
 {
     return this->maxY;
 }
 
-itk::uint64_t BoundingBox::GetMaxZ()
+itk::uint64_t BoundingBox::GetMaxZ() const
 {
     return this->maxZ;
+}
+
+std::ostream & operator<< (std::ostream & lhs, const BoundingBox & rhs)
+{
+    // Print the data members of rightOp using leftOp like you would using cout
+    
+    lhs << "X: [" << rhs.GetMinX() << ", " << rhs.GetMaxX() << " Y: [" << rhs.GetMinY() << ", " << rhs.GetMaxY() << " Z: [" << rhs.GetMinZ() << ", " << rhs.GetMaxZ() << "]";
+    
+    return lhs;
 }

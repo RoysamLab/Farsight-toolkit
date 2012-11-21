@@ -30,6 +30,8 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
+#include "BoundingBoxFromTraceCalculator.h"
+
 #include <cmath>
 
 #define MASK 0
@@ -99,9 +101,10 @@ void MicrogliaRegionTracer::Trace()
 {
 	//Create groups of n cells at a time (where n is the number of logical processors)
     //This is needed because OpenMP doesn't play well with ITK
-    int num_threads = 1;    //Default 1 thread in a group
 #ifdef _OPENMP
-    num_threads = omp_get_num_procs();
+    int num_threads = omp_get_num_procs();
+#else
+    int num_threads = 1;    //Default 1 thread in a group
 #endif
     
     int num_groups = std::ceil(cells.size() / (double) num_threads);
@@ -111,97 +114,104 @@ void MicrogliaRegionTracer::Trace()
     
     ROIGrabber roi_grabber(this->joint_transforms_filename, this->image_series_pathname, this->anchor_image_filename);
 
-    //The following for loops are to handle the case of parallelizing the processing of the
+    //This for loop are to handle the case of parallelizing the processing of the
     //microglia because the fregl_roi class does not like to be accessed by different OpenMP
     //threads even though if it guarded by a omp critical section.
-    //First we read num_thread number of cells sequentially, then we process in parallel.
+    //First we read num_thread number of cells sequentially, then we process the group in parallel.
     for (int group_num = 0; group_num < num_groups; group_num++)
     {
         
-        int num_local_threads = (cells.size() / ((group_num+1) * num_threads)) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
+        int num_cells_in_group = (cells.size() / ((group_num+1) * num_threads)) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
 
-        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Change default number of threads to 16 for ITK filters in fregl_roi
+        ReadAGroupOfROIs(num_cells_in_group, group_num, num_threads, roi_grabber);  //Read a bunch of cells without OpenMP        
+        TraceAGroupOfCells(num_cells_in_group, group_num, num_threads);             //Then we trace a group of cells using OpenMP
+    }
+}
+
+void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_threads, ROIGrabber & roi_grabber)
+{
+    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Change default number of threads to 16 for ITK filters in fregl_roi //REMINDER NOT TO HARDCODE 16
+    //In this for loop we read num_thread ROIs without OpenMP (see comment before outer for loop)
+    for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
+    {
+        int global_thread_num = group_num * num_threads + local_thread_num;
         
-        //In this for loop we read num_thread ROIs without OpenMP (see comment before outer for loop)
-        for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
-        {
-            int global_thread_num = group_num * num_threads + local_thread_num;
-            
-            Cell& cell = cells[global_thread_num];
-            std::cerr << "Reading cell #: " << global_thread_num << std::endl;
-                      
-            //Setup the size of the initial ROI
-            ImageType::SizeType roi_size;
-            roi_size[0] = 200;
-            roi_size[1] = 200;
-            roi_size[2] = 100;
-            
-            cell.SetRequestedSize(roi_size);
-            
-            //Grab the initial cellimage
-            //std::cout << "Grabbing ROI for cell" << std::endl;
-            ImageType::IndexType shift_index;
-            ImageType::Pointer temp_cell_image = roi_grabber.GetROI(cell, roi_size, shift_index);
-            
-            //Set the origin of the image to be {0, 0, 0}
-            ImageType::PointType origin = temp_cell_image->GetOrigin();
-            cell.SetOrigin(origin);
-            origin[0] = 0;
-            origin[1] = 0;
-            origin[2] = 0;
-            temp_cell_image->SetOrigin(origin);
-            
-            //Duplicate the image so that when roi_grabber gets destroyed the roi's dont get destroyed with it
-            typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-            DuplicatorType::Pointer duplicator = DuplicatorType::New();
-            duplicator->SetInputImage(temp_cell_image);
-            ftk::TimeStampOverflowSafeUpdate( duplicator.GetPointer() );
-            cell.image = duplicator->GetOutput();
-            cell.image->DisconnectPipeline();
-            
-            //Shift_index is just to demonstrate how much the center point of the local point of the image if it got cropped by the left, top, closest point of the image
-            cell.SetShiftIndex(shift_index);
-            //std::cout << cell.GetShiftIndex()[0] << " " << cell.GetShiftIndex()[1] << " " << cell.GetShiftIndex()[2] << std::endl;
-            
-            //Make the file name of the raw cell image
-            std::stringstream cell_filename_stream;
-            cell_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << ".TIF";	//X_Y_Z.TIF
-            
-            //Write the cell image
-            cell.WriteImage(cell_filename_stream.str(), cell.image);
-            
-            roi_size = cell.image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
-            cell.SetSize(roi_size);
-        }
+        Cell & cell = cells[global_thread_num];
+        std::cerr << "Reading cell #: " << global_thread_num << std::endl;
+        
+        //Setup the size of the initial ROI
+        ImageType::SizeType roi_size;
+        roi_size[0] = 200;
+        roi_size[1] = 200;
+        roi_size[2] = 100;
+        
+        cell.SetRequestedSize(roi_size);
+        
+        //Grab the initial cellimage
+        //std::cout << "Grabbing ROI for cell" << std::endl;
+        ImageType::IndexType shift_index;
+        ImageType::Pointer temp_cell_image = roi_grabber.GetROI(cell, roi_size, shift_index);
+        
+        //Set the origin of the image to be {0, 0, 0}
+        ImageType::PointType origin = temp_cell_image->GetOrigin();
+        cell.SetOrigin(origin);
+        origin[0] = 0;
+        origin[1] = 0;
+        origin[2] = 0;
+        temp_cell_image->SetOrigin(origin);
+        
+        //Duplicate the image so that when roi_grabber gets destroyed the roi's dont get destroyed with it
+        typedef itk::ImageDuplicator< ImageType > DuplicatorType;
+        DuplicatorType::Pointer duplicator = DuplicatorType::New();
+        duplicator->SetInputImage(temp_cell_image);
+        ftk::TimeStampOverflowSafeUpdate( duplicator.GetPointer() );
+        cell.image = duplicator->GetOutput();
+        cell.image->DisconnectPipeline();
+        
+        //Shift_index is just to demonstrate how much the center point of the local point of the image if it got cropped by the left, top, closest point of the image
+        cell.SetShiftIndex(shift_index);
+        //std::cout << cell.GetShiftIndex()[0] << " " << cell.GetShiftIndex()[1] << " " << cell.GetShiftIndex()[2] << std::endl;
+        
+        //Make the file name of the raw cell image
+        std::stringstream cell_filename_stream;
+        cell_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << ".TIF";	//X_Y_Z.TIF
+        
+        //Write the cell image
+        cell.WriteImage(cell_filename_stream.str(), cell.image);
+        
+        roi_size = cell.image->GetLargestPossibleRegion().GetSize();	//The size of the returned image may not be the size of the image that entered because clipping at edges
+        cell.SetSize(roi_size);
+    }
+}
 
-        //Then we trace a group of cells using OpenMP
-        itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
-        #pragma omp parallel for
-        for (int local_thread_num = 0; local_thread_num < num_local_threads; local_thread_num++)
-        {
-            int global_thread_num = group_num * num_threads + local_thread_num;
-            Cell & cell = cells[global_thread_num];
-            
-            //Get the mask
-        #if MASK	//development only
-            cell.GetMask(this->soma_filename);
-        #endif
-            std::cout << "Calculating candidate pixels for a new cell" << std::endl;
-            CalculateCandidatePixels(cell);
-            
-            std::cout << "Detected " << cell.critical_points_queue.size() << " critical points" << std::endl;
-            
-            std::cout << "Tree Building" << std::endl;
-            BuildTree(cell);
-
-        }
+void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_threads)
+{
+    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
+    
+    #pragma omp parallel for
+    for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
+    {
+        int global_thread_num = group_num * num_threads + local_thread_num;
+        Cell & cell = cells[global_thread_num];
+        
+        //Get the mask
+#if MASK	//development only
+        cell.GetMask(this->soma_filename);
+#endif
+        std::cout << "Calculating candidate pixels for a new cell" << std::endl;
+        CalculateCandidatePixels(cell);
+        
+        std::cout << "Detected " << cell.critical_points_queue.size() << " critical points" << std::endl;
+        
+        std::cout << "Tree Building" << std::endl;
+        BuildTree(cell);
     }
 }
 
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell & cell)
 {
-	CreateIsometricImage(cell);
+	CreateIsotropicImage(cell);
 	
 	std::cout << "VesselnessDetection" << std::endl;
 	VesselnessDetection(cell);
@@ -210,8 +220,8 @@ void MicrogliaRegionTracer::CalculateCandidatePixels(Cell & cell)
 	RidgeDetection(cell);
 }
 
-/* This function resamples the image and creates an "isometric" image according to the ratio set in the constructor */
-void MicrogliaRegionTracer::CreateIsometricImage(Cell & cell)
+/* This function resamples the image and creates an isotropic image according to the ratio set in the constructor */
+void MicrogliaRegionTracer::CreateIsotropicImage(Cell & cell)
 {
 	ImageType::SizeType inputSize = cell.image->GetLargestPossibleRegion().GetSize();
 	ImageType::SizeType outputSize = inputSize;
@@ -239,18 +249,18 @@ void MicrogliaRegionTracer::CreateIsometricImage(Cell & cell)
 		return;
 	}
 
-	cell.isometric_image = resample_filter->GetOutput();
-	cell.isometric_image->DisconnectPipeline();
+	cell.isotropic_image = resample_filter->GetOutput();
+	cell.isotropic_image->DisconnectPipeline();
 
 	//Make the file name of the raw cell image
 	std::stringstream isometric_image_filename_stream;
 	isometric_image_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_isometric.nrrd";
-	cell.WriteImage(isometric_image_filename_stream.str(), cell.isometric_image);
+	cell.WriteImage(isometric_image_filename_stream.str(), cell.isotropic_image);
 
 	
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
-	cell.isometric_image->SetSpacing(spacing);
+	cell.isotropic_image->SetSpacing(spacing);
 }
 
 /* This function does Ridge detection (Laplacian of Gaussian implementation) */
@@ -443,7 +453,7 @@ void MicrogliaRegionTracer::VesselnessDetection(Cell & cell)
 
 	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
 	//multiscale_hessian_filter->SetInput(cell.image);
-	multiscale_hessian_filter->SetInput(cell.isometric_image);
+	multiscale_hessian_filter->SetInput(cell.isotropic_image);
 	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
 	multiscale_hessian_filter->SetSigmaMinimum(1.0);
 	multiscale_hessian_filter->SetSigmaMaximum(10.0);
@@ -516,7 +526,7 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 
 	cell.WriteTreeToSWCFile(tree, swc_filename_stream.str(), swc_filename_stream_local.str());
 
-	Tree* smoothed_tree = new Tree(*tree); //Copy the original tree into smoothed_tree
+	Tree * smoothed_tree = new Tree(*tree); //Copy the original tree into smoothed_tree
 	SmoothTree(cell, smoothed_tree);
 
 	std::ostringstream swc_filename_stream_smoothed, swc_filename_stream_local_smoothed;
@@ -525,6 +535,9 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 
 
 	cell.WriteTreeToSWCFile(smoothed_tree, swc_filename_stream_smoothed.str(), swc_filename_stream_local_smoothed.str());
+    
+    BoundingBox bounding_box = BoundingBoxFromTraceCalculator::GetBoundingBoxFromTree(*smoothed_tree);
+    std::cout << bounding_box << std::endl;
 
 	for (int k = 0; k < cell.critical_points_queue.size(); k++)
 		delete[] AdjGraph[k];

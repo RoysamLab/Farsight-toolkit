@@ -97,12 +97,12 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell) const
 
 		try
 		{
-			LoGimage = RunLoG(cell.isometric_image, scale);
+			LoGimage = RunLoG(cell.isotropic_image, scale);
 		}
 		catch (itk::ExceptionObject &err)
 		{
-			ImageType::PointType origin = cell.isometric_image->GetOrigin();
-			ImageType::SizeType size = cell.isometric_image->GetLargestPossibleRegion().GetSize();
+			ImageType::PointType origin = cell.isotropic_image->GetOrigin();
+			ImageType::SizeType size = cell.isotropic_image->GetLargestPossibleRegion().GetSize();
 			
 			std::cerr << "RunMultiScaleLoG exception: " << std::endl;
 			std::cerr << "For cell: " << cell.getX() << ", " << cell.getY() << ", " << cell.getZ() << " at scale: " << scale << " Origin: " << origin << " Size: " << size << std::endl;
@@ -111,7 +111,7 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell) const
 		LoG_vector.push_back(LoGimage);
 	}
 
-	LoGImageType::SizeType size = cell.isometric_image->GetLargestPossibleRegion().GetSize();
+	LoGImageType::SizeType size = cell.isotropic_image->GetLargestPossibleRegion().GetSize();
 
 	//Make a new image to store the multiscale LoG image	
 	LoGImageType::Pointer multiscale_LoG_image = LoGImageType::New();
@@ -122,7 +122,7 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell) const
 	multiscale_LoG_image->SetRegions(region);
 	multiscale_LoG_image->Allocate();
 	multiscale_LoG_image->FillBuffer(0);
-	multiscale_LoG_image->SetSpacing(cell.isometric_image->GetSpacing());
+	multiscale_LoG_image->SetSpacing(cell.isotropic_image->GetSpacing());
 
 	itk::ImageRegionIterator<LoGImageType> multiscale_LoG_image_iter(multiscale_LoG_image, multiscale_LoG_image->GetLargestPossibleRegion());
 

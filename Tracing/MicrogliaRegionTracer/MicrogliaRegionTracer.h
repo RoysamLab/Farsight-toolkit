@@ -49,9 +49,12 @@ public:
 	void				SetAspectRatio(const float & aspect_ratio);
 
 	void				Trace();
+    
+    void                ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_threads, ROIGrabber & roi_grabber);
+    void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_threads);
 	
 	void				CalculateCandidatePixels(Cell & cell);
-	void				CreateIsometricImage(Cell & cell);
+	void				CreateIsotropicImage(Cell & cell);
 	void				RidgeDetection(Cell & cell);
 	void				VesselnessDetection(Cell & cell);
 
