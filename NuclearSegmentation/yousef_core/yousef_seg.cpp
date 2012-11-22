@@ -332,7 +332,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	//ushortToFloat(binImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
 
 	//allocate space for the laplacian of gaussian
-	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate stepsw
 	//logImagePtr = new float[numStacks*numRows*numColumns];
 	
 	//Now do seed detection
@@ -669,7 +669,7 @@ void yousef_nucleus_seg::ExtractSeeds()
 			}
 		}
 	}
-	std::cout << id-1 << " HERE: seeds were detected"<<std::endl;
+	std::cout << id-1 << " seeds were detected"<<std::endl;
 
 }
 
