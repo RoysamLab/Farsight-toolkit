@@ -58,9 +58,9 @@ public:
 	void                    ComputeMaskedImage();
     
 	//Writes various images
-	void                    WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image) const;
-	void                    WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image) const;
-	void                    WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image) const;
+	static void             WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image);
+	static void             WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image);
+	static void             WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image);
     
     void                    WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
 	void                    WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);

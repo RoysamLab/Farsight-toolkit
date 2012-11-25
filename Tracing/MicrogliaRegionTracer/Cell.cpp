@@ -210,7 +210,7 @@ void Cell::ComputeMaskedImage()
 	//WriteImage(masked_cell_filename_stream.str(), this->masked_image);
 }
 
-void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image) const
+void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image)
 {
 	typedef itk::ImageFileWriter< itk::Image< unsigned char, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -228,7 +228,7 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned c
 	}
 }
 
-void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image) const
+void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image)
 {
 	typedef itk::ImageFileWriter< itk::Image< unsigned short, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -246,7 +246,7 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned s
 	}
 }
 
-void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image) const
+void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image)
 {
 	typedef itk::ImageFileWriter< itk::Image< float, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
