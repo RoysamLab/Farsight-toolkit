@@ -32,7 +32,7 @@ public:
 	typedef itk::ImageFileReader < SomaImageType >		SomaReaderType;
     
 public:
-	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z);
+	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio);
 	
 	itk::uint64_t           getX() const;
 	itk::uint64_t           getY() const;
@@ -56,7 +56,12 @@ public:
 	//Various methods to perform filters on image
 	void                    GetMask(const std::string & soma_filename);
 	void                    ComputeMaskedImage();
-    
+	
+	void					CreateIsotropicImage();
+    void					CreateLoGImage();
+	void					CreateVesselnessImage();
+	void					CreateSpeedImage();
+
 	//Writes various images
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image);
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image);
@@ -87,6 +92,8 @@ private:
 	itk::uint64_t cell_y;
 	itk::uint64_t cell_z;
     
+	double aspect_ratio;
+
 	ImageType::PointType roi_origin;
 	ImageType::SizeType roi_size;
     

@@ -4,16 +4,22 @@
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkBinaryImageToLabelMapFilter.h"
 #include "itkLabelMapToLabelImageFilter.h"
-
+#include "itkIdentityTransform.h"
+#include "itkResampleImageFilter.h"
 #include "itkImageRegionIterator.h"
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
+#include "itkPowImageFilter.h"
 
-Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z)
+#include "LoG.h"
+
+Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio) :
+	cell_x(cell_x),
+	cell_y(cell_y),
+	cell_z(cell_z),
+	aspect_ratio(aspect_ratio),
+	next_available_ID(1)
 {
-	this->cell_x = cell_x;
-	this->cell_y = cell_y;
-	this->cell_z = cell_z;
-
-	this->next_available_ID = 1;
 }
 
 itk::uint64_t Cell::getX() const
@@ -324,4 +330,205 @@ void Cell::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream
 	}
     
 	return;															//BASE CASE: Finished visiting the entire subtree that is rooted at this node
+}
+
+/* This function resamples the image and creates an isotropic image according to the ratio set in the constructor */
+void Cell::CreateIsotropicImage()
+{
+	ImageType::SizeType inputSize = this->image->GetLargestPossibleRegion().GetSize();
+	ImageType::SizeType outputSize = inputSize;
+	outputSize[2] = outputSize[2] * 1/aspect_ratio;
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = aspect_ratio;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(this->image);
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << err << std::endl;
+		return;
+	}
+
+	this->isotropic_image = resample_filter->GetOutput();
+	this->isotropic_image->DisconnectPipeline();
+
+	//Make the file name of the raw cell image
+	std::stringstream isometric_image_filename_stream;
+	isometric_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isometric.nrrd";
+	WriteImage(isometric_image_filename_stream.str(), this->isotropic_image);
+
+	
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	this->isotropic_image->SetSpacing(spacing);
+}
+
+void Cell::CreateLoGImage()
+{
+	//Calculate the LoG on multiple scales and store into an image
+	LoG *log_obj = new LoG();
+	std::cout << "Calculating Multiscale LoG" << std::endl;
+	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(*this);
+    delete log_obj;
+
+	//Make the file name of the isotropic LoG image and write it out
+	std::stringstream multiscaled_LoG_image_filename_stream;
+	multiscaled_LoG_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_LoG.nrrd";
+	Cell::WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
+
+	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = 1/this->aspect_ratio;
+	//outputSpacing[2] = 1.0;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(resampled_multiscale_LoG_image);
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << err << std::endl;
+		return;
+	}
+
+	this->multiscale_LoG_image = resample_filter->GetOutput();
+
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	this->multiscale_LoG_image->SetSpacing(spacing);	//Convert back to the original spacing
+}
+
+void Cell::CreateVesselnessImage()
+{
+	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
+	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
+	vesselness_filter->SetAlpha1(0.5);
+	vesselness_filter->SetAlpha2(0.5);
+
+	typedef itk::SymmetricSecondRankTensor< double, 3 >	HessianTensorType;
+	typedef itk::Image< HessianTensorType, 3 >			HessianImageType;
+
+	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
+
+	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
+	//multiscale_hessian_filter->SetInput(this->image);
+	multiscale_hessian_filter->SetInput(this->isotropic_image);
+	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
+	multiscale_hessian_filter->SetSigmaMinimum(1.0);
+	multiscale_hessian_filter->SetSigmaMaximum(10.0);
+	multiscale_hessian_filter->SetNumberOfSigmaSteps(10);
+	multiscale_hessian_filter->SetNonNegativeHessianBasedMeasure(true);
+	multiscale_hessian_filter->SetHessianToMeasureFilter(vesselness_filter);
+
+	try
+	{
+		ftk::TimeStampOverflowSafeUpdate( multiscale_hessian_filter.GetPointer() );
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
+	}
+
+	//Unsample the image
+	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
+
+	ImageType::SpacingType outputSpacing;
+	outputSpacing[0] = 1.0;
+	outputSpacing[1] = 1.0;
+	outputSpacing[2] = 1/aspect_ratio;
+	//outputSpacing[2] = 1.0;
+
+	typedef itk::IdentityTransform< double, 3 > TransformType;
+	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
+	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	resample_filter->SetInput(multiscale_hessian_filter->GetOutput());
+	resample_filter->SetSize(outputSize);
+	resample_filter->SetOutputSpacing(outputSpacing);
+	resample_filter->SetTransform(TransformType::New());
+	try
+	{
+		resample_filter->UpdateLargestPossibleRegion();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "resample_filter exception: " << err << std::endl;
+		return;
+	}
+
+	this->vesselness_image = resample_filter->GetOutput();
+	this->vesselness_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
+	ImageType::SpacingType spacing;
+	spacing.Fill(1.0);
+	this->vesselness_image->SetSpacing(spacing);
+	
+	std::ostringstream vesselness_filename_stream;
+	vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_vesselness.nrrd";
+    Cell::WriteImage(vesselness_filename_stream.str(), this->vesselness_image);
+}
+
+void Cell::CreateSpeedImage()
+{
+	//Normalize vesselness image
+	typedef itk::RescaleIntensityImageFilter< DistanceImageType > RescaleIntensityFilterType;
+	RescaleIntensityFilterType::Pointer rescale_filter = RescaleIntensityFilterType::New();
+	rescale_filter->SetOutputMinimum(0.0);
+	rescale_filter->SetOutputMaximum(1.0);
+	rescale_filter->SetInput(this->vesselness_image);
+
+	try
+	{
+		rescale_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "rescale_filter exception: " << err << std::endl;
+		return;
+	}
+
+	//this->speed_image = rescale_filter->GetOutput();
+
+	//Raise normalized vesselness_image to third power
+	typedef itk::PowImageFilter< DistanceImageType > PowImageFilterType;
+	PowImageFilterType::Pointer pow_image_filter = PowImageFilterType::New();
+	pow_image_filter->SetInput1(rescale_filter->GetOutput());
+	pow_image_filter->SetConstant2( 0.33 );
+
+	try
+	{
+		pow_image_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "pow_image_filter exception: " << err << std::endl;
+		return;
+	}
+
+	this->speed_image = pow_image_filter->GetOutput();
+
+	std::stringstream speed_image_filename_stream;
+	speed_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_speed_image.nrrd";
+	Cell::WriteImage(speed_image_filename_stream.str(), this->speed_image);
 }

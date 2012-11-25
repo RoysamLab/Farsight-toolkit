@@ -11,7 +11,6 @@
 
 #include "Cell.h"				//Simple class to hold seed coordinates
 #include "ROIGrabber.h"
-#include "LoG.h"
 #include "Tree.h"				
 
 #ifdef _OPENMP
@@ -54,9 +53,7 @@ public:
     void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_threads);
 	
 	void				CalculateCandidatePixels(Cell & cell);
-	void				CreateIsotropicImage(Cell & cell);
 	void				RidgeDetection(Cell & cell);
-	void				VesselnessDetection(Cell & cell);
 
 	void				BuildTree(Cell & cell);
 	double**			BuildAdjacencyGraph(Cell & cell);

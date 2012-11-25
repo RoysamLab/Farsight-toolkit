@@ -1,31 +1,14 @@
 #include "MicrogliaRegionTracer.h"
 
 #include "itkImageDuplicator.h"
-#include "itkShiftScaleImageFilter.h"
-#include "itkGeodesicActiveContourLevelSetImageFilter.h"
-#include "itkMaximumEntropyThresholdImageFilter.h"
-#include "itkPowImageFilter.h"
-#include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "InsightJournalFilters/MinimalPath/itkSpeedFunctionToPathFilter.h"
 #include "InsightJournalFilters/MinimalPath/itkImageToPathFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkInvertIntensityImageFilter.h"
-#include "itkResampleImageFilter.h"
-#include "itkIdentityTransform.h"
-
-#include "itkVector.h"
-#include "itkPointSet.h"
-#include "itkBSplineScatteredDataPointSetToImageFilter.h"
-#include "itkBSplineControlPointImageFunction.h"
-#include "itkUnaryFunctorImageFilter.h"
-#include "itkLogImageFilter.h"
 
 #include "itkNeighborhoodIterator.h"
 #include "itkPathIterator.h"
 #include "itkPathConstIterator.h"
-#include "itkHessian3DToVesselnessMeasureImageFilter.h"
-#include "itkMultiScaleHessianBasedMeasureImageFilter.h"
-
+#include "itkIdentityTransform.h"
+#include "itkResampleImageFilter.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -76,7 +59,7 @@ void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filena
 	itk::uint64_t num_seed_points = 0;
 	while (seed_point_file >> cellX >> cellY >> cellZ)
 	{	
-		Cell cell(cellX, cellY, cellZ);
+		Cell cell(cellX, cellY, cellZ, aspect_ratio);
 		this->cells.push_back(cell);
 		++num_seed_points;
 	}
@@ -211,56 +194,12 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
 void MicrogliaRegionTracer::CalculateCandidatePixels(Cell & cell)
 {
-	CreateIsotropicImage(cell);
+	cell.CreateIsotropicImage();
+	cell.CreateVesselnessImage();
 	
-	std::cout << "VesselnessDetection" << std::endl;
-	VesselnessDetection(cell);
-
 	std::cout << "Ridge Detection" << std::endl;
+	cell.CreateLoGImage();
 	RidgeDetection(cell);
-}
-
-/* This function resamples the image and creates an isotropic image according to the ratio set in the constructor */
-void MicrogliaRegionTracer::CreateIsotropicImage(Cell & cell)
-{
-	ImageType::SizeType inputSize = cell.image->GetLargestPossibleRegion().GetSize();
-	ImageType::SizeType outputSize = inputSize;
-	outputSize[2] = outputSize[2] * 1/aspect_ratio;
-
-	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = aspect_ratio;
-
-	typedef itk::IdentityTransform< double, 3 > TransformType;
-	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
-	resample_filter->SetInput(cell.image);
-	resample_filter->SetSize(outputSize);
-	resample_filter->SetOutputSpacing(outputSpacing);
-	resample_filter->SetTransform(TransformType::New());
-	try
-	{
-		resample_filter->UpdateLargestPossibleRegion();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
-		return;
-	}
-
-	cell.isotropic_image = resample_filter->GetOutput();
-	cell.isotropic_image->DisconnectPipeline();
-
-	//Make the file name of the raw cell image
-	std::stringstream isometric_image_filename_stream;
-	isometric_image_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_isometric.nrrd";
-	Cell::WriteImage(isometric_image_filename_stream.str(), cell.isotropic_image);
-
-	
-	ImageType::SpacingType spacing;
-	spacing.Fill(1.0);
-	cell.isotropic_image->SetSpacing(spacing);
 }
 
 /* This function does Ridge detection (Laplacian of Gaussian implementation) */
@@ -272,49 +211,6 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 									cell.GetRequestedSize()[2]/2 + cell.GetShiftIndex()[2] }};
 
 	cell.critical_points_queue.push_front(seed_index);
-	
-	//Calculate the LoG on multiple scales and store into an image
-	LoG *log_obj = new LoG();
-	std::cout << "Calculating Multiscale LoG" << std::endl;
-	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(cell);
-    delete log_obj;
-    
-	//Make the file name of the raw cell image
-	std::stringstream multiscaled_LoG_image_filename_stream;
-	multiscaled_LoG_image_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_LoG.nrrd";
-	Cell::WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
-
-	ImageType::SizeType outputSize = cell.image->GetLargestPossibleRegion().GetSize();
-
-	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = 1/aspect_ratio;
-	//outputSpacing[2] = 1.0;
-
-	typedef itk::IdentityTransform< double, 3 > TransformType;
-	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
-	resample_filter->SetInput(resampled_multiscale_LoG_image);
-	resample_filter->SetSize(outputSize);
-	resample_filter->SetOutputSpacing(outputSpacing);
-	resample_filter->SetTransform(TransformType::New());
-
-	try
-	{
-		resample_filter->UpdateLargestPossibleRegion();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
-		return;
-	}
-
-	cell.multiscale_LoG_image = resample_filter->GetOutput();
-        
-	ImageType::SpacingType spacing;
-	spacing.Fill(1.0);
-	cell.multiscale_LoG_image->SetSpacing(spacing);
 	
 	//Make a new image to store the ridge pixels
 	ImageType::SizeType size = cell.multiscale_LoG_image->GetLargestPossibleRegion().GetSize();
@@ -430,81 +326,10 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 		++critical_point_img_iter;
 		++ridge_neighbor_iter;
 	}
-    
-        
 
 	std::ostringstream critical_points_filename_stream;
 	critical_points_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_critical.nrrd";
 	Cell::WriteImage(critical_points_filename_stream.str(), cell.critical_point_image);
-}
-
-/* This function calculates the Vesselness score */
-void MicrogliaRegionTracer::VesselnessDetection(Cell & cell)
-{
-	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
-	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
-	vesselness_filter->SetAlpha1(0.5);
-	vesselness_filter->SetAlpha2(0.5);
-
-	typedef itk::SymmetricSecondRankTensor< double, 3 >	HessianTensorType;
-	typedef itk::Image< HessianTensorType, 3 >			HessianImageType;
-
-	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
-
-	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
-	//multiscale_hessian_filter->SetInput(cell.image);
-	multiscale_hessian_filter->SetInput(cell.isotropic_image);
-	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
-	multiscale_hessian_filter->SetSigmaMinimum(1.0);
-	multiscale_hessian_filter->SetSigmaMaximum(10.0);
-	multiscale_hessian_filter->SetNumberOfSigmaSteps(10);
-	multiscale_hessian_filter->SetNonNegativeHessianBasedMeasure(true);
-	multiscale_hessian_filter->SetHessianToMeasureFilter(vesselness_filter);
-
-	try
-	{
-		ftk::TimeStampOverflowSafeUpdate( multiscale_hessian_filter.GetPointer() );
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
-	}
-
-	//Unsample the image
-	ImageType::SizeType outputSize = cell.image->GetLargestPossibleRegion().GetSize();
-
-	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = 1/aspect_ratio;
-	//outputSpacing[2] = 1.0;
-
-	typedef itk::IdentityTransform< double, 3 > TransformType;
-	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
-	resample_filter->SetInput(multiscale_hessian_filter->GetOutput());
-	resample_filter->SetSize(outputSize);
-	resample_filter->SetOutputSpacing(outputSpacing);
-	resample_filter->SetTransform(TransformType::New());
-	try
-	{
-		resample_filter->UpdateLargestPossibleRegion();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
-		return;
-	}
-
-	cell.vesselness_image = resample_filter->GetOutput();
-	cell.vesselness_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
-	ImageType::SpacingType spacing;
-	spacing.Fill(1.0);
-	cell.vesselness_image->SetSpacing(spacing);
-	
-	std::ostringstream vesselness_filename_stream;
-	vesselness_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_vesselness.nrrd";
-    Cell::WriteImage(vesselness_filename_stream.str(), cell.vesselness_image);
 }
 
 /* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
@@ -740,7 +565,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 /* This function smoothes a Tree structure */
 void MicrogliaRegionTracer::SmoothTree(Cell & cell, Tree* smoothed_tree)
 {
-	CreateSpeedImage(cell);
+	cell.CreateSpeedImage();
 
 	SmoothSegments(cell, smoothed_tree, smoothed_tree->GetRoot());
 }
@@ -936,51 +761,6 @@ void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell & cell, Tree* smooth
 	//std::cout << "Connecting last index: " << end_node->x << " " << end_node->y << " " << end_node->z << std::endl;
 	current_node->AddChild(end_node);
 	end_node->SetParent(current_node);
-}
-
-/* The speed image for SmoothPath is created here (cube root of the vesselness image) */
-void MicrogliaRegionTracer::CreateSpeedImage(Cell & cell)
-{
-	//Normalize vesselness image
-	typedef itk::RescaleIntensityImageFilter< DistanceImageType > RescaleIntensityFilterType;
-	RescaleIntensityFilterType::Pointer rescale_filter = RescaleIntensityFilterType::New();
-	rescale_filter->SetOutputMinimum(0.0);
-	rescale_filter->SetOutputMaximum(1.0);
-	rescale_filter->SetInput(cell.vesselness_image);
-
-	try
-	{
-		rescale_filter->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "rescale_filter exception: " << err << std::endl;
-		return;
-	}
-
-	//cell.speed_image = rescale_filter->GetOutput();
-
-	//Raise normalized vesselness_image to third power
-	typedef itk::PowImageFilter< DistanceImageType > PowImageFilterType;
-	PowImageFilterType::Pointer pow_image_filter = PowImageFilterType::New();
-	pow_image_filter->SetInput1(rescale_filter->GetOutput());
-	pow_image_filter->SetConstant2( 0.33 );
-
-	try
-	{
-		pow_image_filter->Update();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "pow_image_filter exception: " << err << std::endl;
-		return;
-	}
-
-	cell.speed_image = pow_image_filter->GetOutput();
-
-	std::stringstream speed_image_filename_stream;
-	speed_image_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_speed_image.nrrd";
-	Cell::WriteImage(speed_image_filename_stream.str(), cell.speed_image);
 }
 
 /* Calculate the Euclidean Distance */
