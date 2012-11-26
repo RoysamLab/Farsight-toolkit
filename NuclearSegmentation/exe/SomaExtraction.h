@@ -126,9 +126,10 @@ protected:
 
 public:
 	//: constructor
-	SomaExtractor();
+	explicit SomaExtractor();
  	//: destructor
-	virtual ~SomaExtractor();
+	~SomaExtractor();
+
 
 	ProbImageType::Pointer SetInputImage(const char * fileName);
 	ProbImageType::Pointer SetInputImage8bit(const char * fileName);
