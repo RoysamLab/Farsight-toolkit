@@ -262,17 +262,31 @@ void ftkMainDarpaTrace::computeTileGVFAndVesselness()
 		//Logic to compute the GVF and Vesselness
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		//this->computeGVF(100,num_iteration,smoothing_scale);
+		//MNT->LoadCurvImage_2(_img_traceDesiredRegion);
+		double origin_zero[3];
+		origin_zero[0] = 0.0; 
+		origin_zero[1] = 0.0; 
+		origin_zero[2] = 0.0;
+		_img_traceDesiredRegion->SetOrigin(origin_zero);
 		std::cout<<"compute GVF*******************"<<std::endl;
-		MNT->LoadCurvImage_2(_img_traceDesiredRegion);
-		MNT->computeGVF(100,num_iteration,smoothing_scale);
+		MNT->computeGVF_2(_img_traceDesiredRegion,100,num_iteration,smoothing_scale);
 		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
+		GradientImageType::Pointer gvfImage = MNT->getGVFImage();
+		double origin_indx[3];
+		origin_indx[0] = initialBigIndexLOG[0]; 
+		origin_indx[1] = initialBigIndexLOG[1]; 
+		origin_indx[2] = initialBigIndexLOG[2];
+		gvfImage->SetOrigin(origin_indx);
+		gvfImage->Update();
+		writeImage< GradientImageType >( gvfImage, gvfPath.c_str());
 		
-		writeImage< GradientImageType >( MNT->getGVFImage(), gvfPath.c_str());
-
 		std::cout<<"compute Vesselness******************"<<std::endl;
-		MNT->ComputeGVFVesselness();
+		MNT->ComputeGVFVesselness_2(_img_traceDesiredRegion);
+		ImageType3D::Pointer vesselImage = MNT->getVessleness();
+		vesselImage->SetOrigin(origin_indx);
+		vesselImage->Update();
 		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile.str()+".nrrd";
-		writeImage< rawImageType_flo >( MNT->getVessleness(), vesselPath.c_str());
+		writeImage< rawImageType_flo >( vesselImage, vesselPath.c_str());
 		delete MNT;
 	}
 
@@ -405,8 +419,8 @@ void ftkMainDarpaTrace::runTracing()
 		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
 
 		//Load the pre-computed the GVF and Vesselness 
-		_img_GVFDesiredRegion = readImageRegion< GradientImageType >( gvfPath.c_str(), desiredRegionBigTileLOGGradient );
-		_img_VesselDesiredRegion = readImageRegion< rawImageType_flo >( vesselPath.c_str(), desiredRegionBigTileLOG_WithoutIndex );
+		_img_GVFDesiredRegion = readImage< GradientImageType >( gvfPath.c_str());
+		_img_VesselDesiredRegion = readImage< rawImageType_flo >( vesselPath.c_str() );
 
 
 #pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
