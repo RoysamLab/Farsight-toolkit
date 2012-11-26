@@ -1678,6 +1678,18 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
   }
 
 
+  void MultipleNeuronTracer::computeGVF_2(ImageType3D::Pointer &image,int noise_level, int num_iteration, int smoothing_scale)
+  {
+		_PaddedCurvImage = image;
+		computeGVF(noise_level, num_iteration, smoothing_scale);
+  }
+  void MultipleNeuronTracer::ComputeGVFVesselness_2(ImageType3D::Pointer &image)
+  {
+		_PaddedCurvImage = image;
+		ComputeGVFVesselness();
+  }
+
+
 
 
 
@@ -1872,6 +1884,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
 
 
   }
+
 
 
   void MultipleNeuronTracer::ComputeGVFVesselness()

@@ -260,7 +260,9 @@ public:
 	void ComputeObjectnessImage(ObjectnessMeasures_micro obj_measures);
 	void Set_isCoverageOptimized(bool);
 	void computeGVF(int mu, int ITER, int smoothing_scale);
+	void computeGVF_2(ImageType3D::Pointer &image,int mu, int ITER, int smoothing_scale);
 	void ComputeGVFVesselness();
+	void ComputeGVFVesselness_2(ImageType3D::Pointer &image);
 
 	GradientImageType::Pointer getGVFImage(){return _IGVF;};
 	ImageType3D::Pointer getVessleness(){return _IVessel;};
