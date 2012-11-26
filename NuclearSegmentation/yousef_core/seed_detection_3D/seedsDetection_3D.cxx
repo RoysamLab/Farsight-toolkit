@@ -248,6 +248,11 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 
 	int min_x, min_y, max_x, max_y;
 
+
+#ifdef _OPENMP
+	omp_set_nested(1);	//This turns on nesting so the omp parallel inside the multiScaleLog can run in parallel. Without this, OpenMP only generates threads for the outermost omp parallel for construct. 
+						//It may make sense to turn this off if it causes too much thread contention. THINK CAREFULLY ABOUT IT.
+#endif
 	clock_t start_time_multiscale_log = clock();
 
 	#pragma omp parallel for private(min_x, min_y, max_x, max_y)
@@ -282,6 +287,9 @@ int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int 
 		}
 	}
 
+#ifdef _OPENMP
+	omp_set_nested(0);
+#endif
 
 	std::cout << "Multiscale Log took " << (clock() - start_time_multiscale_log)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
 
