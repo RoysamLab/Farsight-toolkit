@@ -22,7 +22,7 @@
 #include <iostream>
 #include <math.h>
 
-float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned short* color_im, int r, int c, int z, int *NC, int refinemetRange);
+float* multiColGraphLearning(float* X_vals, unsigned short* labs_vals, unsigned short* color_im, size_t r, size_t c, size_t z, int *NC, int refinemetRange);
 //added by Yousef on 11/3/2008
 void distToEdge(int *** edge_im, int R, int C, int Z);
 //////////////////////////////
