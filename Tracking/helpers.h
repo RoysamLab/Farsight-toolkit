@@ -51,6 +51,7 @@
 #include "itkApproximateSignedDistanceMapImageFilter.h"
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itkSignedDanielssonDistanceMapImageFilter.h>
+#include "itkSubtractImageFilter.h"
 
 //int npes,rank;
 #define PRINTF(...) PRINTF1(__VA_ARGS__,1)
@@ -82,15 +83,25 @@ namespace helpers{
 typedef unsigned char InputPixelType;
 typedef unsigned char OutputPixelType;
 
+typedef unsigned short InputPixelType16;
+typedef unsigned short OutputPixelType16;
+
 typedef itk::Vector<unsigned char, 3> VectorPixelType;
 typedef itk::Image<VectorPixelType, 3> ColorImageType;
 typedef itk::Image<VectorPixelType, 2> Color2DImageType;
 
+typedef itk::Image<InputPixelType16,3> InputImageType16;
+typedef itk::Image<InputPixelType16,2> Input2DImageType16;
+typedef itk::Image<InputPixelType16,3> OutputImageType16;
+typedef itk::Image<InputPixelType16,2> Output2DImageType16;
+
 typedef itk::Image<InputPixelType,3> InputImageType;
 typedef itk::Image<OutputPixelType,3> OutputImageType;
+
 typedef itk::Image<short int,3> LabelImageType;
 typedef itk::Image<short int,2> Label2DImageType;
 typedef itk::Image<float,3> FloatImageType;
+typedef itk::Image<float,2> Float2DImageType;
 
 
 typedef itk::Image<InputPixelType,2> Input2DImageType;
@@ -98,6 +109,11 @@ typedef itk::Image<InputPixelType,2> Output2DImageType;
 
 typedef itk::ImageRegionConstIterator<InputImageType> ConstIteratorType;
 typedef itk::ImageRegionIterator<InputImageType> IteratorType;
+
+typedef itk::ImageRegionIterator<FloatImageType> FloatIteratorType;
+typedef itk::ImageRegionIterator<Float2DImageType> Float2DIteratorType;
+typedef itk::ImageRegionIterator<InputImageType16> IteratorType16;
+typedef itk::ImageRegionIterator<Input2DImageType16> Iterator2DType16;
 
 typedef itk::ImageRegionConstIterator<LabelImageType> ConstLabelIteratorType;
 typedef itk::ImageRegionIterator<LabelImageType> LabelIteratorType;
