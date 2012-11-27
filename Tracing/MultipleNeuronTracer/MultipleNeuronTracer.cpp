@@ -1899,7 +1899,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
     double C = 2 * pow(FrangiC,2);
 
 	// This should be a duplicator
-    typedef itk::CastImageFilter<ImageType3D,ImageType3D> CasterType;*/
+    typedef itk::CastImageFilter<ImageType3D,ImageType3D> CasterType;
     CasterType::Pointer caster = CasterType::New();
     caster->SetInput(_PaddedCurvImage);
     caster->Update();
