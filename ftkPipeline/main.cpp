@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
 			objftkMainDarpaTrace_1->readParameters( segmentParams );
 			objftkMainDarpaTrace_1->runPreprocesing();
-			objftkMainDarpaTrace_1->computeTileGVFAndVesselness();
+			//objftkMainDarpaTrace_1->computeTileGVFAndVesselness();
 			objftkMainDarpaTrace_1->runTracing();
 			delete objftkMainDarpaTrace_1;
 			break;

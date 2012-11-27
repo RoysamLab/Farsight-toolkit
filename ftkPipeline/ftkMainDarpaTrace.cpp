@@ -417,10 +417,20 @@ void ftkMainDarpaTrace::runTracing()
 
 		std::string vesselPath = _Vesselness_ImagePREMNT+str_bigTile.str()+".nrrd";
 		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
+		
+		// Compute GVF and Vesselnes
+		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
+		MNT->computeGVF_2(_img_traceDesiredRegion,100,num_iteration,smoothing_scale);
+		_img_GVFDesiredRegion = MNT->getGVFImage();
+		
+		MNT->ComputeGVFVesselness_2(_img_traceDesiredRegion);
+		_img_VesselDesiredRegion = MNT->getVessleness();
+		
+		delete MNT;
 
 		//Load the pre-computed the GVF and Vesselness 
-		_img_GVFDesiredRegion = readImage< GradientImageType >( gvfPath.c_str());
-		_img_VesselDesiredRegion = readImage< rawImageType_flo >( vesselPath.c_str() );
+		//_img_GVFDesiredRegion = readImage< GradientImageType >( gvfPath.c_str());
+		//_img_VesselDesiredRegion = readImage< rawImageType_flo >( vesselPath.c_str() );
 
 
 #pragma omp parallel for num_threads(_num_threads) schedule(dynamic, 1)
