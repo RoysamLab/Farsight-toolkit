@@ -51,6 +51,14 @@
 #include "itkScalarConnectedComponentImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
 #include "itkBinaryMorphologicalClosingImageFilter.h"
+
+// FOR GMM ESTIMATION
+#include "itkVector.h"
+#include "itkListSample.h"
+#include "itkGaussianMixtureModelComponent.h"
+#include "itkExpectationMaximizationMixtureModelEstimator.h"
+#include "itkNormalVariateGenerator.h"
+
 //#include "tmp_itk_rev/itkBinaryMorphologicalClosingImageFilter.h"
 
 
@@ -78,6 +86,16 @@ struct ConnComp
 	int z2;
 };
 
+struct GMMParams
+{
+	double background_mean;
+	double background_stdev;
+	double foreground_mean;
+	double foreground_stdev;
+	double background_prior;
+	double foreground_prior;
+};
+
 class yousef_nucleus_seg 
 {
 public:
@@ -88,6 +106,8 @@ public:
 	~yousef_nucleus_seg();
 
 	void setDataImage(unsigned char* imgPtr, int x, int y, int z, const char* filename);	//The image is loaded elsewhere and passed here.  I do not delete the data.
+	void setDataImage(unsigned short* imgPtr, int x, int y, int z, const char* filename);	//The image is loaded elsewhere and passed here.  I do not delete the data.
+	void setInitialBinaryImage(unsigned short* imgPtr);	//The image is loaded elsewhere and passed here.  I do not delete the data.
 	void setParams(int *params);		//All parameters passed as integers, set the parameters accordingly
   	void setParamsForSeedDetection(int highsensitivity, double sMin, double sMax, double rXY,  double rZ, int usedistMap, int samplingRatio, int minSize = 50);
 	unsigned char* getDataImagePtr(){ return dataImagePtr; };								
@@ -105,16 +125,23 @@ public:
 
 	//sub-modules that can be executed
 	void runBinarization(unsigned short number_of_bins = 128);
+	bool runBinarization16();
 	void runSeedDetection();
+	void runSeedDetection16();
 	void runSeedDetection(int minScale,int maxScale); // Added by Raghav
 	void runClustering();
+	void runClustering16();
 	void runAlphaExpansion();
+	void runAlphaExpansion16();
 	void runAlphaExpansion3D();
 	void runAlphaExpansion2D();
+	void runAlphaExpansion2D16();
 	//added by Yousef on 9/14/2009
 	//void runGradWeightedDistance();
 	//added by Yousef on 11/11/2009
 	void runGradAnisDiffSmoothing();
+	bool EstimateGMMParameters();
+
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
 	void writeParametersToFile();
@@ -146,9 +173,9 @@ public:
 	bool DeleteInit(ftk::Object::Point P1);
 	int getMaxID(int);
 	//added by Yousef on 9/11/2009
-	int AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID);
+	int AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID);
 	//added by Yousef on 9/26/2009
-	int AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID);
+	int AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID);
 	
 
 private:	
@@ -171,6 +198,8 @@ private:
 
 	//Internal Image information
 	unsigned char* dataImagePtr;	//Created outside yousef_seg
+	unsigned short* dataImagePtr16;	//Created outside yousef_seg
+	unsigned short* initial_binaryImage;	//Created outside yousef_seg
 	std::string dataFilename;
 	unsigned short* binImagePtr;				//Created in yousef_seg
 	unsigned short* seedImagePtr;				//Created in yousef_seg
@@ -190,6 +219,7 @@ private:
 	int numObjects;
 
 	TParamsEntry* m_pData;
+	GMMParams gmm_params_;
 	
 	//parameters
 	int shift;

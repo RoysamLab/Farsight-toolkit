@@ -18,11 +18,19 @@
 #include "yousef_seg.h"
 #include <fstream>
 
+using namespace std;
+
 //Constructor
 yousef_nucleus_seg::yousef_nucleus_seg()
 {
 	dataImagePtr = NULL;
 	binImagePtr = NULL;
+
+	// Added for 16 Bit And GMM estimation:
+	dataImagePtr16 = NULL;
+	initial_binaryImage = NULL;
+
+
 	seedImagePtr = NULL;
 	logImagePtr = NULL;
 	clustImagePtr = NULL;
@@ -31,7 +39,7 @@ yousef_nucleus_seg::yousef_nucleus_seg()
 
 	myConnComp = NULL;
 	m_pData = NULL;
-
+	
 	//int numStacks = 0;
 	//int numRows = 0;
 	//int numColumns = 0;		
@@ -94,6 +102,19 @@ void yousef_nucleus_seg::setDataImage( unsigned char *imgPtr,  int x, int y, int
 	//delete[] dataImagePtr; I will never delete the dataImagePtr because it is created outside this class
 	dataImagePtr = imgPtr;
 }
+void yousef_nucleus_seg::setDataImage( unsigned short *imgPtr,  int x, int y, int z, const char *filename )
+{
+	numStacks = z;
+	numRows = y;//y();			//y-direction
+	numColumns = x; 		//x-direction
+
+	dataFilename = filename;
+	dataImagePtr16 = imgPtr;
+}
+void yousef_nucleus_seg::setInitialBinaryImage(unsigned short* imgPtr)
+{
+	initial_binaryImage = imgPtr;
+}
 
 //********************************************************************************************
 // get Functions
@@ -140,6 +161,174 @@ void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 		std::cout<<"failed!\n segmentation will be applied on the raw image\n";
 	}
 }
+bool yousef_nucleus_seg::EstimateGMMParameters()
+{
+
+	//if ( !dataImagePtr16 || !initial_binaryImage )
+	if ( !dataImagePtr16 )
+		return false;
+
+	gmm_params_.background_mean = 0.0;
+	gmm_params_.background_stdev = 0.0;
+	gmm_params_.foreground_mean = 0.0;
+	gmm_params_.foreground_stdev = 0.0;
+	gmm_params_.background_prior = 0.0;
+
+
+	//unsigned long long num_foreground_pix = 0;
+	//unsigned long long num_background_pix = 0;
+
+	//unsigned long long sum_foreground_intensity = 0;
+	//unsigned long long sum_background_intensity = 0;
+
+	//unsigned long long sum2_foreground_intensity = 0;
+	//unsigned long long sum2_background_intensity = 0;
+
+
+	//// Compute Mean and Std of the two Gaussians
+	//for(unsigned int index = 0; index < (numRows*numColumns*numStacks);++index)
+	//{
+	//	if(initial_binaryImage[index]>0)
+	//	{
+	//		num_foreground_pix +=1;
+	//		sum_foreground_intensity += (unsigned long long) dataImagePtr16[index];							// E{x}
+	//		sum2_foreground_intensity +=  (unsigned long long) dataImagePtr16[index]*dataImagePtr16[index];	// E{x^2}
+	//	}
+	//	else
+	//	{
+	//		sum_background_intensity += (unsigned long long) dataImagePtr16[index];							// E{x}
+	//		sum2_background_intensity +=  (unsigned long long) dataImagePtr16[index]*dataImagePtr16[index];	// E{x^2}
+	//	}
+	//}
+
+	//std::cout<< "sum_foreground_intensity:"<<sum_foreground_intensity<<std::endl;
+	//std::cout<< "sum2_foreground_intensity:"<<sum2_foreground_intensity<<std::endl;
+	//std::cout<< "sum_background_intensity:"<<sum_background_intensity<<std::endl;
+	//std::cout<< "sum2_background_intensity:"<<sum2_background_intensity<<std::endl;
+
+	//num_background_pix = (unsigned long long)(numRows*numColumns*numStacks) - num_foreground_pix;
+
+	//gmm_params_.foreground_mean = (double)sum_foreground_intensity/(double)num_foreground_pix;
+	//gmm_params_.foreground_stdev  = sqrt(((double)sum2_foreground_intensity/(double)num_foreground_pix) - (gmm_params_.foreground_mean*gmm_params_.foreground_mean));
+
+	//gmm_params_.background_mean = (double)sum_background_intensity/(double)num_background_pix;
+	//gmm_params_.background_stdev  = sqrt(((double)sum2_background_intensity/(double)num_background_pix) - (gmm_params_.background_mean*gmm_params_.background_mean));
+
+	//gmm_params_.foreground_prior = (double)num_foreground_pix/(double)(num_foreground_pix+num_background_pix);
+	//gmm_params_.background_prior = (double)num_background_pix/(double)(num_foreground_pix+num_background_pix);
+
+	//std::cout<< "fg_mean:"<<gmm_params_.foreground_mean<<std::endl;
+	//std::cout<< "fg_stdev:"<<gmm_params_.foreground_stdev<<std::endl;
+	//std::cout<< "fg_prior:"<<gmm_params_.foreground_prior<<std::endl;
+	//std::cout<< "\n";
+	//std::cout<< "bg_mean:"<<gmm_params_.background_mean<<std::endl;
+	//std::cout<< "bg_stdev:"<<gmm_params_.background_stdev<<std::endl;	
+	//std::cout<< "bg_prior:"<<gmm_params_.background_prior<<std::endl;
+
+	//if(gmm_params_.foreground_prior < 0.0005)
+	//{
+	//	std::cout<<"Check Initial Binarization Because the foreground prior is about:"<<gmm_params_.foreground_prior<<std::endl;
+	//	return false;
+	//}
+
+	/////////////// estimate using ITK EM://///////////
+	std::cout<<"Started GMM Parameter Estimation...\n";
+	unsigned int numberOfClasses = 2;
+	typedef itk::Vector< double, 1 > MeasurementVectorType;
+	typedef itk::Statistics::ListSample< MeasurementVectorType > SampleType;
+	SampleType::Pointer sample = SampleType::New();
+
+	for(unsigned int index = 0; index < (numRows*numColumns*numStacks);++index)
+	{
+		sample->PushBack( (double)dataImagePtr16[index]);
+	}
+
+	 
+  typedef itk::Array< double > ParametersType;
+  ParametersType params( 6 );
+ 
+  // Create the first set of initial parameters
+  std::vector< ParametersType > initialParameters( numberOfClasses );
+  params[0] = 10.0; // mean of background
+  params[1] = 1000.0; // variance of background
+  initialParameters[0] = params;
+ 
+  // Create the second set of initial parameters
+  params[0] = 500.0; // mean of foreground
+  params[1] = 1000.0; // mean of background
+  initialParameters[1] = params;
+
+  typedef itk::Statistics::GaussianMixtureModelComponent< SampleType >  ComponentType;
+   // Create the components
+  std::vector< ComponentType::Pointer > components;
+  for ( unsigned int i = 0 ; i < numberOfClasses ; i++ )
+    {
+    components.push_back( ComponentType::New() );
+    (components[i])->SetSample( sample );
+    (components[i])->SetParameters( initialParameters[i] );
+    }
+ 
+  typedef itk::Statistics::ExpectationMaximizationMixtureModelEstimator< SampleType > EstimatorType;
+  EstimatorType::Pointer estimator = EstimatorType::New();
+ 
+  estimator->SetSample( sample );
+  estimator->SetMaximumIteration( 200 );
+ 
+  itk::Array< double > initialProportions(numberOfClasses);
+  initialProportions[0] = 0.8;	// background prior
+  initialProportions[1] = 0.2;	// foreground prior
+ 
+  estimator->SetInitialProportions( initialProportions );
+ 
+  for ( unsigned int i = 0 ; i < numberOfClasses ; i++)
+    {
+    estimator->AddComponent( (ComponentType::Superclass*)(components[i]).GetPointer() );
+    }
+ 
+  estimator->Update();
+  // Output the results
+  //for ( unsigned int i = 0 ; i < numberOfClasses ; i++ )
+  //  {
+		//std::cout << "Cluster[" << i << "]" << std::endl;
+		//std::cout << "    Parameters:" << std::endl;
+		//std::cout << "         " << (components[i])->GetFullParameters()[1]
+		//		  << std::endl;
+		//std::cout << "    Proportion: ";
+		//std::cout << "         " << estimator->GetProportions()[i] << std::endl;
+  //  }
+   
+	gmm_params_.foreground_mean = (components[1])->GetFullParameters()[0];
+	gmm_params_.foreground_stdev  = sqrt((components[1])->GetFullParameters()[1]);
+
+	gmm_params_.background_mean = (components[0])->GetFullParameters()[0];
+	gmm_params_.background_stdev  = sqrt((components[0])->GetFullParameters()[1]);
+
+	gmm_params_.background_prior = estimator->GetProportions()[0];
+	gmm_params_.foreground_prior = estimator->GetProportions()[1];
+	
+
+	std::cout<< "fg_mean:"<<gmm_params_.foreground_mean<<std::endl;
+	std::cout<< "fg_stdev:"<<gmm_params_.foreground_stdev<<std::endl;
+	std::cout<< "fg_prior:"<<gmm_params_.foreground_prior<<std::endl;
+	std::cout<< "\n";
+	std::cout<< "bg_mean:"<<gmm_params_.background_mean<<std::endl;
+	std::cout<< "bg_stdev:"<<gmm_params_.background_stdev<<std::endl;	
+	std::cout<< "bg_prior:"<<gmm_params_.background_prior<<std::endl;
+
+	if(gmm_params_.foreground_prior < 0.00005)
+	{
+		std::cout<<"Check Initial Binarization Because the foreground prior is about:"<<gmm_params_.foreground_prior<<std::endl;
+		return false;
+	}
+	std::cout<<"Exiting GMM Parameter Estimation...\n";
+
+	//scanf("%*d");
+	return true;
+}
+
+
+
+
 void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 {
 	//std::cout<<std::endl<<"RECENT CHANGES: Min object size was hard coded to 50, now the size is correctly read from the project definition, so make sure to include this parameter. The minimum number of objects in an image is hard coded to 3, this to avoid spurious sedd detection results in noise tiles";
@@ -292,6 +481,68 @@ void yousef_nucleus_seg::runBinarization(unsigned short number_of_bins)
 
 	std::cout << "Bin Image written to binImage.tif" << endl;*/
 }
+bool yousef_nucleus_seg::runBinarization16()
+{
+	
+	//First check to be sure that we have a dataImage to use
+	if (!dataImagePtr16)
+	{
+		std::cout<<"There is no 16-bit input\n";
+		return false;
+	}	
+	//Now clear all subsequent variables (dependent upon this binary image
+	std::cout << "Clearing binarization stuff" << std::endl;
+	numConnComp = 0;
+	clearBinImagePtr();
+	clearSeedImagePtr();
+	clearLogImagePtr();
+	clearSegImagePtr();
+	clearClustImagePtr();
+	clearMyConnComp();
+	mySeeds.clear();
+	
+
+	std::cout << "Allocating " << numStacks*numRows*numColumns*sizeof(unsigned short) / (1024.0 * 1024) << " MB of memory for binImagePtr" << std::endl;
+	binImagePtr = new unsigned short[numStacks*numRows*numColumns];	
+
+	std::cout<<"Start Binarization ..."<<std::endl;
+	int ok = 0;
+
+	ok = Cell_Binarization_3D(dataImagePtr16,binImagePtr, numRows, numColumns, numStacks,\
+							  gmm_params_.background_mean,gmm_params_.background_stdev,gmm_params_.background_prior,\
+							  gmm_params_.foreground_mean,gmm_params_.foreground_stdev,gmm_params_.foreground_prior);
+
+
+
+	if(ok)
+	{
+		std::cout << "Entering getConnCompImage: HERE: min obj size: " <<minObjSize<< std::endl;
+		numConnComp = getConnCompImage(binImagePtr, 26, minObjSize, numRows, numColumns, numStacks,1);			//Find connected components
+		std::cout << "Entering getConnCompInfo3D" << std::endl;
+		getConnCompInfo3D();																			//Populate myConnComp
+		std::cout << "Cell Binarized.. with " << numConnComp << " connected components" << endl;	
+	}
+	else
+	{
+		cerr << "Binarization Failed!!" << endl;
+		return false;
+	}
+	std::cout<<"I'm done with cell binarization\n";
+	
+	//for(int i=0; i<512*512; i++)
+	//{		
+	//	if(binImagePtr[i]>200)
+	//	{
+	//		std::cout<<"yes it is\n";
+	//	}
+	//	else
+	//	{
+	//		std::cout<<"no it is not\n";
+	//	}
+	
+	//}
+	return true;
+}
 
 void yousef_nucleus_seg::setBinImage(unsigned short* ptr)
 {
@@ -332,7 +583,7 @@ void yousef_nucleus_seg::runSeedDetection()
 	//ushortToFloat(binImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
 
 	//allocate space for the laplacian of gaussian
-	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate stepsw
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
 	//logImagePtr = new float[numStacks*numRows*numColumns];
 	
 	//Now do seed detection
@@ -347,6 +598,69 @@ void yousef_nucleus_seg::runSeedDetection()
 	{	
 		minLoGImg = 10000;
 		ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
+	}		
+	delete [] imgPtr;	//cleanup
+	if(!ok)
+		cerr << "Seed detection Failed!!" << endl;
+	else
+		//Make sure all seeds are in foreground and extract vector of seeds
+    //cout << "zackdebug: extracing seeds" << endl;
+		ExtractSeeds();
+	//added by Yousef on 9/2/2009
+	//In case we did parameter estimation, write the parameters into a file
+	if(autoParamEstimation)
+	{
+		//Write the automatically estimated parameters into a file
+    //cout << "zackdebug: writing parameters to file" << endl;
+		//writeParametersToFile();
+	}
+}
+
+void yousef_nucleus_seg::runSeedDetection16()
+{
+	//Check for required images
+	if ( !dataImagePtr16 || !binImagePtr )
+		return;
+
+	std::cout<< scaleMin<<"\t"<< scaleMax<<"\t"<< regionXY <<"\t"<<regionZ<<std::endl;
+	std::cout<< numStacks<<"\t"<< numRows<<"\t"<< numColumns <<std::endl;
+	//Now clear all subsequent variables
+	clearSeedImagePtr();
+	clearLogImagePtr();
+	clearClustImagePtr();
+	clearSegImagePtr();
+	mySeeds.clear();
+
+	//allocate space for the binary image of seed points
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//seedImagePtr = 0;
+	//seedImagePtr = new unsigned short[numStacks*numRows*numColumns];
+	
+	//copy the binary image into the seeds image for now
+	//memcpy(seedImagePtr/*destination*/, binImagePtr/*source*/, numStacks*numRows*numColumns*sizeof(int)/*num bytes to move*/);
+
+	//need to pass a float pointer with input image in it, so create it here
+	float *imgPtr = new float[numStacks*numRows*numColumns];
+	//ucharToFloat(dataImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+	ushortToFloat(binImagePtr /*from*/, imgPtr /*to*/, numRows, numColumns, numStacks, 1 /*invert*/);
+
+	//allocate space for the laplacian of gaussian
+	//allocate inside the 3-D seeds detection function in order to save memory for the intermediate steps
+	//logImagePtr = new float[numStacks*numRows*numColumns];
+	
+	//Now do seed detection
+	int ok = 0;
+	if (numStacks == 1)
+	{		
+		seedImagePtr = new unsigned short[numStacks*numRows*numColumns];		
+		logImagePtr = new float[numStacks*numRows*numColumns];
+		ok = detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, &scaleMin, &scaleMax, &regionXY, binImagePtr, autoParamEstimation );		
+	}
+	else
+	{	
+		std::cout<<"seed detection is not supposed to work for 3-D images\n";
+		//minLoGImg = 10000;
+		//ok = Seeds_Detection_3D( imgPtr, &logImagePtr, &seedImagePtr, numRows, numColumns, numStacks, &scaleMin, &scaleMax, &regionXY, &regionZ, getSamplingRatio(), binImagePtr, useDistMap, &minLoGImg, autoParamEstimation );						
 	}		
 	delete [] imgPtr;	//cleanup
 	if(!ok)
@@ -452,6 +766,51 @@ void yousef_nucleus_seg::runClustering()
 
 	//Check for required images
 	if( !dataImagePtr || !logImagePtr || !seedImagePtr || !binImagePtr )
+		return;
+
+	//Now clear all subsequent variables				
+	clearSegImagePtr();
+	clearClustImagePtr();
+
+	//Allocate space
+	clustImagePtr = new unsigned short[numStacks*numRows*numColumns];
+
+	/*if (numStacks == 1)
+	{
+		std::cout << "Starting Initial Clustering" << std::endl;
+		//ExtractSeeds();
+		int *seed_xmclust, *seed_ymclust;
+		int numseedsmclust = (int)mySeeds.size();
+		seed_xmclust = (int *) malloc(mySeeds.size()*sizeof(int));
+		seed_ymclust = (int *) malloc(mySeeds.size()*sizeof(int));
+		for (int i=0; i<((int)mySeeds.size()); ++i)
+		{
+			seed_ymclust[i] = mySeeds[i].y();
+			seed_xmclust[i] = mySeeds[i].x();
+		}
+		local_max_clust_2D(logImagePtr, numRows, numColumns, regionXY, clustImagePtr, seed_xmclust, seed_ymclust, numseedsmclust, binImagePtr);
+		free( seed_xmclust );
+		free( seed_ymclust );
+	}
+	else
+	{*/
+		std::cout << "Starting Initial Clustering" << std::endl;
+		std::cout << "scale_xy = " << regionXY << std::endl;
+		std::cout << "scale_z = " << regionZ << std::endl;
+		local_max_clust_3D(logImagePtr/*LoG*/, seedImagePtr/*local max vals*/, binImagePtr/*binary mask*/,clustImagePtr/*output*/,numRows, numColumns, numStacks, regionXY, regionZ);		
+	//}	
+}
+
+void yousef_nucleus_seg::runClustering16()
+{
+	//fitMixGaussians();
+	//return;
+	
+	//runGradWeightedDistance();
+	//return;
+
+	//Check for required images
+	if( !dataImagePtr16 || !logImagePtr || !seedImagePtr || !binImagePtr )
 		return;
 
 	//Now clear all subsequent variables				
@@ -669,7 +1028,7 @@ void yousef_nucleus_seg::ExtractSeeds()
 			}
 		}
 	}
-	std::cout << id-1 << " seeds were detected"<<std::endl;
+	std::cout << id-1 << " HERE: seeds were detected"<<std::endl;
 
 }
 
@@ -893,6 +1252,142 @@ void yousef_nucleus_seg::runAlphaExpansion(){
 	}
 }
 
+void yousef_nucleus_seg::runAlphaExpansion16(){
+	if (numStacks == 1){
+		runAlphaExpansion2D16();
+	}
+	else{
+		std::cout<<"does not work for 3-D data\n";
+	}
+}
+void yousef_nucleus_seg::runAlphaExpansion2D16(){
+	//First check for necessary prerequisites
+	if( !dataImagePtr16 || !logImagePtr || !seedImagePtr || !binImagePtr || !myConnComp ){
+		return;
+	}
+
+	//Now clear all subsequent variables
+	clearSegImagePtr();
+
+	std::cout<<"Finalizing Segmentation"<<std::endl;
+
+	//Now, we apply the next steps into the connected components one by one
+	int ind, x_len, y_len, val;
+
+	segImagePtr = new unsigned short[numRows*numColumns];
+	memset(segImagePtr/*destination*/,0/*value*/,numStacks*numRows*numColumns*sizeof(unsigned short)/*num bytes to move*/);
+
+	for( int n=0; n<numConnComp; n++ )
+	{
+		std::cout<<"Processing Connected Component #"<<n+1<<"...";
+		//Now, get the subimages (the bounding box) for the current connected component
+		ind = 0;
+		x_len = myConnComp[n].x2 - myConnComp[n].x1 + 1;
+		y_len = myConnComp[n].y2 - myConnComp[n].y1 + 1;
+		float* sublogImg = new float[x_len*y_len];
+		unsigned short* subclustImg = new unsigned short[x_len*y_len];	
+		std::vector<int> labelsList;
+		
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){	
+				val = binImagePtr[(j*numColumns)+i];
+				//The bounding box could contain points from other neighbor connected components which need to be removed
+				if(val != (n+1)){
+					sublogImg[ind] = 0;
+					subclustImg[ind] = 0;
+				}
+				else{
+					//for now, write the value in the clustering image into the segmentation image
+					segImagePtr[(j*numColumns)+i] = clustImagePtr[(j*numColumns)+i];
+					subclustImg[ind] = clustImagePtr[(j*numColumns)+i];
+					//Do the same for the LoG image
+					sublogImg[ind] = logImagePtr[(j*numColumns)+i];
+					int found = 0;
+					for(unsigned int l=0; l<labelsList.size(); l++){
+						if(labelsList[l] == subclustImg[ind])
+							found = 1;
+					}
+					if(found == 0) //add the label of the cluster
+						labelsList.push_back(subclustImg[ind]);
+				}
+				++ind;
+			}
+		}
+		//Now, if this connected component has one cell (one label) only, 
+		//then take the clustering results of that connected as the final segmentation
+		if(labelsList.size() == 1){
+			std::cout<<"Done with only one object"<<std::endl;
+			delete[] sublogImg;
+			delete[] subclustImg;
+			continue;
+		}
+		std::cout<<std::endl<<"    "<<labelsList.size()<<" objects found"<<std::endl;
+		//If you reach here, it means that the current connected component contains two or more cells
+		//First, sort the labels list
+		std::cout<<"    "<<"sorting labels"<<std::endl;
+		for(unsigned int l1=0; l1<labelsList.size(); l1++){
+			for(unsigned int l2=l1+1; l2<labelsList.size(); l2++){
+				if(labelsList[l2]<labelsList[l1]){
+					int tmp = labelsList[l1];
+					labelsList[l1] = labelsList[l2];
+					labelsList[l2] = tmp;
+				}
+			}
+		}
+		
+
+		//Relabel the clustering sub-image starting from 1
+		//also get the original sub-image (bounding box) that will be used as the contrast term		
+		ind = -1;		
+		float* subDataImg = new float[x_len*y_len];
+
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++){
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++){
+				ind++;
+				subDataImg[ind] = (float)dataImagePtr16[(j*numColumns)+i];
+				val = binImagePtr[(j*numColumns)+i];
+				if(val != (n+1))
+					continue;
+				else{
+					for(unsigned int l=0; l<labelsList.size(); l++){
+						if(labelsList[l] == subclustImg[ind]){
+							subclustImg[ind] = l+1;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		
+		alpha_expansion_2d( subDataImg, sublogImg, subclustImg, x_len, y_len );
+
+		//relable and copy the output of the alpha expansion which is stored in the subclustImg to the final segmented image
+		ind = 0;		
+		for(int i=myConnComp[n].x1; i<=myConnComp[n].x2; i++)
+		{
+			for(int j=myConnComp[n].y1; j<=myConnComp[n].y2; j++)
+			{		
+				val = subclustImg[ind];
+				if(val>0)
+					segImagePtr[(j*numColumns)+i] = val;
+				
+				++ind;
+			}
+		}
+		//std::cerr<<"Done with "<<labelsList.size()<<" objects"<<std::endl;
+		std::cout<<"Done"<<std::endl;
+		delete [] sublogImg;
+		delete [] subclustImg;
+		delete [] subDataImg;
+	}
+	//relabel the cells
+	int numOfObjs = getRelabeledImage(segImagePtr, 8, minObjSize, numRows, numColumns,numStacks, 1);		
+    numOfObjs--;
+	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
+	std::cout << "Creating Final Label Image" << std::endl;	
+}
+
 void yousef_nucleus_seg::runAlphaExpansion2D(){
 	//First check for necessary prerequisites
 	if( !dataImagePtr || !logImagePtr || !seedImagePtr || !binImagePtr || !myConnComp ){
@@ -1020,7 +1515,6 @@ void yousef_nucleus_seg::runAlphaExpansion2D(){
 	std::cout << "done with " << numOfObjs<<" found"<<std::endl;
 	std::cout << "Creating Final Label Image" << std::endl;	
 }
-
 void yousef_nucleus_seg::runAlphaExpansion3D()
 {
 	//First check for necessary prerequisites
@@ -1397,7 +1891,7 @@ void yousef_nucleus_seg::readParametersFromFile(const char* pFname)
 	//added by yousef on 11/4/2008
 	params[10]=6;	//refinement range
 	//added by yousef on 12/5/2008
-	params[11]=100;	//min_object_size
+	params[11]=20;	//min_object_size
 	std::ifstream inFile(pFname);
 	if (! inFile)
 	{
@@ -1834,12 +2328,12 @@ ftk::Object::Point yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Obj
 		std::cerr<<"The two cells need to be adjacent in order to merge them"<<std::endl;
 	}
 	//Update the initial segmentation image	
-	int min_x = std::min(bBox1.x, bBox3.x);
-	int min_y = std::min(bBox1.y, bBox3.y);
-	int min_z = std::min(bBox1.z, bBox3.z);
-	int max_x = std::max(bBox2.x, bBox4.x);
-	int max_y = std::max(bBox2.y, bBox4.y);
-	int max_z = std::max(bBox2.z, bBox4.z);
+	int min_x = min(bBox1.x, bBox3.x);
+	int min_y = min(bBox1.y, bBox3.y);
+	int min_z = min(bBox1.z, bBox3.z);
+	int max_x = max(bBox2.x, bBox4.x);
+	int max_y = max(bBox2.y, bBox4.y);
+	int max_z = max(bBox2.z, bBox4.z);
 
 	std::vector <int> sz;
 	sz.push_back(max_x - min_x + 1);
@@ -1994,7 +2488,7 @@ ftk::Object::Point yousef_nucleus_seg::MergeInit(ftk::Object::Point P1, ftk::Obj
 	return new_seed;
 }
 
-std::vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
+vector< int > yousef_nucleus_seg::SplitInit(ftk::Object::Point P1, ftk::Object::Point P2)
 {
 	//
 	//if no label (segmentation) or no data image is available then return
@@ -2305,7 +2799,7 @@ int yousef_nucleus_seg::getMaxID(int Int_Fin)
 }
 
 //int yousef_nucleus_seg::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
-int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID)
+int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
 {		
 	//get the coordinates of the two points and the size of the box
 	int x1 = P1[0];
@@ -2500,7 +2994,7 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 }
 
 
-int yousef_nucleus_seg::AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<itk::SizeValueType> imSZ, int maxID)
+int yousef_nucleus_seg::AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
 {		
 	//get the coordinates of the two points and the size of the box
 	int x1 = P1[0];
