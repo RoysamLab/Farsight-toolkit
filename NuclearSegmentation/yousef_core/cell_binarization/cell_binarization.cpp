@@ -76,6 +76,9 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	//float aalpha_B, aalpha_F, aP_I;
 	//aalpha_B = aalpha_F = aP_I = 0;	
 	//CompMixPoss3D(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd);
+
+
+
 	if( alpha_B == 0 || alpha_F==0 || P_I==0 ){
 		std::cout << "Entering MinErrorThresholding" << std::endl;
 		MinErrorThresholding(imgIn, &alpha_B, &alpha_F, &P_I, R, C, Z, shd, imgOut, number_of_bins);
@@ -300,6 +303,149 @@ int Cell_Binarization_3D(unsigned char *imgIn, unsigned short* imgOut, int R, in
 	return 1;//num_objects;	
 }
 
+int Cell_Binarization_3D(unsigned short *imgIn, unsigned short* imgOut, int R, int C, int Z,double bg_mean,double bg_std ,double bg_prior,double fg_mean ,double fg_std, double fg_prior) //modifed by Yousef on 5-20-2008.. The first input change from uchar* to int*
+{			
+
+	uint64_t mem_size = (uint64_t)72 * 1024 * 1024 * 1024; //72 GB of memory, (uint64_t) is needed because otherwise C++ will represent all the constants as int which are 32-bits and wont autopromote to 64 bits. See: http://stackoverflow.com/questions/3542040/cannot-assign-a-value-to-64-bit-integer-on-32-bit-platform
+	std::cout << "mem_size: " << mem_size / (1024.0 * 1024 * 1024) << " GB" << std::endl;
+
+	uint64_t image_size = (uint64_t)R * C * Z;
+	std::cout << "image_size: " << image_size << std::endl;
+
+	uint64_t mem_needed = image_size * 512; //512 bytes per pixel needed for graph cuts (empirically determined)
+	std::cout << "mem_needed: " << mem_needed / (1024.0 * 1024 * 1024) << " GB" << std::endl;
+
+	unsigned int num_blocks_preferred=1;
+	if( image_size > (512.0*512.0) ) //Too many threads spawned when segmenting ccs in parallel
+		num_blocks_preferred = (mem_needed/mem_size + 1) * 16; //The "+1" is for rounding up, the "16" is so 16 threads will only chew up 1/16th of the memory each
+	std::cout << "num_blocks_preferred: " << num_blocks_preferred << std::endl;
+
+
+	double block_divisor = pow(num_blocks_preferred, 1.0/3.0);
+
+	std::cout << "block_divisor: " << block_divisor << std::endl;
+	
+	size_t num_pixels_per_block_R = std::max(R / block_divisor, 1.0);
+	size_t num_pixels_per_block_C = std::max(C / block_divisor, 1.0);
+	size_t num_pixels_per_block_Z = std::max(Z / block_divisor, 1.0);
+
+	size_t num_blocks_R = 0;				//num_blocks_R holds the number of blocks in the y-direction
+	for(int i=0; i<R; i+= num_pixels_per_block_R) 
+		num_blocks_R++;
+
+	size_t num_blocks_C = 0;				//num_blocks_C holds the number of blocks in the x-direction
+	for (int j=0; j<C; j+=num_pixels_per_block_C)
+		num_blocks_C++;
+
+	size_t num_blocks_Z = 0;				//num_blocks_Z holds the number of blocks in the z-direction;
+
+	for (int k=0; k<Z; k+=num_pixels_per_block_Z)
+		num_blocks_Z++;
+
+	int cntr = 0;						//cntr holds the total number of blocks (should be num_blocks_C * num_blocks_R)
+	for(int i=0; i<R; i += num_pixels_per_block_R)
+		for(int j=0; j<C; j += num_pixels_per_block_C)
+			for (int k = 0; k<Z; k += num_pixels_per_block_Z)
+				cntr++;
+
+	std::cout << "num_blocks_C: " << num_blocks_C << " num_blocks_R: " << num_blocks_R << " num_blocks_Z: " << num_blocks_Z << " cntr: " << cntr << std::endl;
+	std::cout << "num_pixels_per_block_R: " << num_pixels_per_block_R << " num_pixels_per_block_C: " << num_pixels_per_block_C << " num_pixels_per_block_Z: " << num_pixels_per_block_Z << std::endl;
+
+
+	std::cout<<"Total Blocks: "<<cntr<<std::endl;
+
+	int blk = 1;
+
+	clock_t start_time_cell_bin_alpha_exp = clock();
+
+	long long ****subImgBlockArray;
+	#pragma omp critical
+	{
+		//Allocate memory for matrix to hold dimensions of subImgBlock
+		subImgBlockArray = (long long ****) malloc(num_blocks_R * sizeof(long long ***));
+		for (int i = 0; i < num_blocks_R; i++)
+		{
+			subImgBlockArray[i] = (long long ***) malloc(num_blocks_C * sizeof(long long **));
+			for (int j = 0; j < num_blocks_C; j++) 
+			{
+				subImgBlockArray[i][j] = (long long **) malloc(Z * sizeof(long long *));
+				for (int k = 0; k < num_blocks_Z; k++)
+					subImgBlockArray[i][j][k] = (long long *) malloc (6 * sizeof(long long));
+			}
+		}
+	}
+
+
+
+	std::cout << "Image size: " << R << "x" <<  C << "x" << Z << std::endl;
+
+	for(int i=0; i < num_blocks_R; i++)
+	{			
+		for(int j=0; j < num_blocks_C; j++)
+		{				
+			for (int k = 0; k < num_blocks_Z; k++)
+			{
+				subImgBlockArray[i][j][k][0] = j * (long long)num_pixels_per_block_C - 1;
+				subImgBlockArray[i][j][k][1] = (j + 1) * (long long)num_pixels_per_block_C;
+				subImgBlockArray[i][j][k][2] = i * (long long)num_pixels_per_block_R - 1;
+				subImgBlockArray[i][j][k][3] = (i + 1) * (long long)num_pixels_per_block_R;
+				subImgBlockArray[i][j][k][4] = k * (long long)num_pixels_per_block_Z - 1;
+				subImgBlockArray[i][j][k][5] = (k + 1) * (long long)num_pixels_per_block_Z;
+
+				//bounds checking
+				if (subImgBlockArray[i][j][k][1] >= C)
+					subImgBlockArray[i][j][k][1] = C - 1;
+				if (subImgBlockArray[i][j][k][3] >= R)
+					subImgBlockArray[i][j][k][3] = R - 1;
+				if (subImgBlockArray[i][j][k][5] >= Z)
+					subImgBlockArray[i][j][k][5] = Z - 1;
+				if (subImgBlockArray[i][j][k][0] < 0)
+					subImgBlockArray[i][j][k][0] = 0;
+				if (subImgBlockArray[i][j][k][2] < 0)
+					subImgBlockArray[i][j][k][2] = 0;
+				if (subImgBlockArray[i][j][k][4] < 0)
+					subImgBlockArray[i][j][k][4] = 0;
+
+				//std::cout << "C: from " << subImgBlockArray[i][j][k][0] << " to " << subImgBlockArray[i][j][k][1] << " R: from " << subImgBlockArray[i][j][k][2] << " to " << subImgBlockArray[i][j][k][3] << " Z: from " << subImgBlockArray[i][j][k][4] << " to " << subImgBlockArray[i][j][k][5] << std::endl;
+			}
+		}
+	}
+
+	#pragma omp parallel for
+	for(int i=0; i< num_blocks_R; i++)			
+	{
+		for(int j = 0; j < num_blocks_C; j++)
+		{
+			for (int k = 0; k < num_blocks_Z; k++)
+			{
+				Seg_GC_Full_3D_Blocks(imgIn, R, C, Z, bg_mean, bg_std , bg_prior, fg_mean , fg_std,  fg_prior, imgOut, subImgBlockArray[i][j][k]); //imgIn is dataImagePtr, imgOut is binImagePtr
+				 
+			}
+		}
+	}
+
+	for(int i=0; i< num_blocks_R; i++)
+	{			
+		for(int j = 0; j < num_blocks_C; j++)
+		{
+			for (int k = 0; k < num_blocks_Z; k++)
+			{
+				free(subImgBlockArray[i][j][k]);
+			}
+			free(subImgBlockArray[i][j]);
+		}
+		free(subImgBlockArray[i]);
+	}
+	free(subImgBlockArray);
+
+	subImgBlockArray = NULL;
+
+
+	
+	std::cout << "Cell Binarization refinement by alpha expansion took " << (clock() - start_time_cell_bin_alpha_exp)/(float)CLOCKS_PER_SEC << " seconds" << std::endl;
+
+	return 1;//num_objects;	
+}
 
 double compute_poisson_prob(double intensity, double alpha)
 {
@@ -494,6 +640,7 @@ void Seg_GC_Full_3D(unsigned char* IM, size_t r, size_t c, size_t z, double alph
 	}
 	//std::cerr << "Poisson Probabilities Computed" << std::endl;
 
+
 	//Construct the graph
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
 
@@ -545,8 +692,11 @@ void Seg_GC_Full_3D(unsigned char* IM, size_t r, size_t c, size_t z, double alph
 	}
 
 	//std::cout << "First Loop Complete" << std::endl;
+	
 
-	sig = 30.0;
+
+	sig = 50.0;
+	std::cout<<"sig"<<P_I<<std::endl;
 	w=10.0;
 	for(size_t k=0; k<z; k++)
 	{		
@@ -873,6 +1023,17 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 	std::cout << "Number of nodes: " << num_nodes << std::endl;
 	std::cout << "Number of edges: " << num_edges << std::endl;*/
+	//std::cout<<"Previous P_I\n"<<P_I;
+	//
+	//P_I = 0.01;
+
+	//std::cout<<"New P_I\n"<<P_I;
+
+	std::cout<<"PI"<<P_I<<std::endl;
+	std::cout<<"alpha_F"<<alpha_F<<std::endl;
+	std::cout<<"alpha_B"<<alpha_B<<std::endl;
+	//alpha_F = 50;
+	//P_I = 0.9;
 
 	//Before entering the loop, compute the poisson probs    
 	//#pragma omp parallel for
@@ -889,6 +1050,9 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 	}
 	//std::cerr << "Poisson Probabilities Computed" << std::endl;
 
+	
+
+	//alpha_B
 	//Construct the graph
 	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
 
@@ -965,6 +1129,7 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 		//	std::cout <<std::endl<< "First Loop Complete"<<std::flush;
 		sig = 50.0;
+		std::cout<<"sig"<<sig<<std::endl;
 		w=10.0;
 
 
@@ -1076,7 +1241,186 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 	delete g;
 }
+void Seg_GC_Full_3D_Blocks(unsigned short* IM, size_t r, size_t c, size_t z, double bg_mean,double bg_std ,double bg_prior,double fg_mean ,double fg_std, double fg_prior, unsigned short* Seg_out, long long* imBlock)
+{   
+	size_t nbr_node;
+	double Dn, sig, w;
+	size_t num_nodes, num_edges;
+	typedef Graph_B<short,short,short> GraphType;  
 
+	//Set the number of edges and the number of nodes and open the files that
+	//will be used to save the weights	
+	num_nodes = (imBlock[1]-imBlock[0])*(imBlock[3]-imBlock[2])*(imBlock[5]-imBlock[4]);
+	if (imBlock[5]-imBlock[4] != 0)
+		num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*(imBlock[5]-imBlock[4]-1)*3;	//3D-case
+	else
+		num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*3;								//2D-case
+
+	//Construct the graph
+	GraphType *g = new GraphType(/*estimated # of nodes*/ num_nodes, /*estimated # of edges*/ num_edges); 
+
+		//Here is the main loop.. 
+		//For each point, compute the terminal and neighbor edge weights
+
+		// Loop constants
+
+		double fg_const1 = -log(sqrt(2*3.14159)*fg_std)+log(fg_prior);
+		double fg_const2 = 1/(2*fg_std*fg_std);
+
+		double bg_const1 = -log(sqrt(2*3.14159)*bg_std)+log(bg_prior);
+		double bg_const2 = 1/(2*bg_std*bg_std);
+
+
+		for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
+		{		       
+			/*if (omp_get_thread_num() == 0)
+			std::cout << "k-loop iteration " << k << " created " << omp_get_num_threads() << " threads to run" << std::endl;*/
+			for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
+			{			
+				for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
+				{
+					size_t IND = i - imBlock[0] + ((imBlock[1] - imBlock[0] + 1) * (j - imBlock[2])) + ((imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4]));
+
+					/*Get the terminal edges capacities and write them to a file
+					These capacities represent penalties of assigning each point to
+					either the fg or the bg. Now, I am using the distance of the point
+					to the fg and bg. Then a short distance between a point and a class (fg or bg)
+					means the penalty of the assignement is low and vice versa*/ 
+
+
+					//unsigned long int index = mxCalcSingleSubscript(prhs[0], nsubs, subs);
+					//intst = (mxGetPr(prhs[0]))[index];
+					// CHANGE BY ISAAC 4/14/08
+
+					//CHANGE BY ISAAC 4/17/08
+					//curr_node = (k*r*c)+(i*c)+j; 
+
+					size_t curr_node = (k*r*c)+(j*c)+i;
+
+					double pixel_value = (double) IM[curr_node];	//Changed 5/9/08
+					
+					//double Df = fg_const1 - ( pow((pixel_value - fg_mean),2)*fg_const2);              	
+					double Df = log(sqrt(2*3.14159)*fg_std) - log(fg_prior) + ( pow((pixel_value - fg_mean),2)/(2*fg_std*fg_std));              	
+					if(Df>1000.0)
+						Df = 1000;
+
+					//double Db = bg_const1 - ( pow((pixel_value - bg_mean),2)*bg_const2);              	
+					double Db = log(sqrt(2*3.14159)*bg_std) - log(bg_prior) + ( pow((pixel_value - bg_mean),2)/(2*bg_std*bg_std));              	
+					if(Db>1000.0)
+						Db=1000;
+
+
+					//if(pixel_value>300.0)
+					//{
+					//	std::cout<<"Df: "<<Df<<std::endl;
+					//	std::cout<<"Db: "<<Db<<std::endl;
+					//}
+					g -> add_node();
+					g -> add_tweights(IND,   /* capacities */ Df,Db);
+
+				}
+			}
+			//	std::cout<<std::endl;
+		}
+
+		sig = 50.0;
+		std::cout<<"sig: "<<sig<<std::endl;
+		w = 50.0;
+		std::cout<<"w: "<<w<<std::endl;
+
+		//std::cout<<std::endl;
+
+		for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
+		{		
+			for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
+			{			
+				//#pragma omp parallel for ordered
+				for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
+				{
+					size_t IND = i - imBlock[0] + (imBlock[1] - imBlock[0] + 1) * (j - imBlock[2]) + ((imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4])); //needed for threading correctness
+
+					/*get the neighbor edges capacities and write them to a file.
+					Now, each edge capacity between two neighbors p and q represent
+					the penalty for discontinuety. Since I am using the difference in
+					the intensities, I should take the inverse so that very similar
+					objects should have a large discontinuety penalty between them*/
+
+					//if(i>=imBlock[1]-1 || j>=imBlock[3]-1 || k>=imBlock[5]-1)
+					//	continue;
+
+					//Try this: Just define 3 edges to the neigbors				
+					size_t curr_node = (k*r*c)+(j*c)+i;
+					//double intst = (int) IM[curr_node];
+					double intst = (double) IM[curr_node];
+					size_t nbr_node;
+					double intst2;
+					//1.
+					if( i<imBlock[1])
+					{
+						nbr_node = (k*r*c)+(j*c)+(i+1);				
+
+						intst2 = (int) IM[nbr_node];
+						double Dn = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));				
+						g -> add_edge( IND, IND+1,    /* capacities */  Dn, Dn );
+					}
+
+					//2.				
+					if( j<imBlock[3] )
+					{
+						nbr_node = (k*r*c)+((j+1)*c)+i;
+
+						intst2 = (int) IM[nbr_node];
+						double Dn2 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));														
+						g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]+1),    /* capacities */  Dn2, Dn2 );
+					}
+
+					//3.				
+					if( k<imBlock[5] )
+					{
+						nbr_node = ((k+1)*r*c)+(j*c)+i;
+
+						intst2 = (int) IM[nbr_node];
+						double Dn3 = w*exp(-pow((double)intst-intst2,2)/(2*pow(sig,2)));		
+						g -> add_edge( IND, IND+(imBlock[1]-imBlock[0]+1)*(imBlock[3]-imBlock[2]+1),    /* capacities */  Dn3, Dn3 );
+					}
+
+				}
+			}
+		}    
+
+		//Compute the maximum flow:
+		g->maxflow();		//Alex DO NOT REMOVE
+
+	//#pragma omp parallel for
+	for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
+	{		
+		for(size_t j=imBlock[2]; j<=imBlock[3]; j++)
+		{			
+			for(size_t i=imBlock[0]; i<=imBlock[1]; i++)
+			{
+				size_t IND = i - imBlock[0] + (imBlock[1] - imBlock[0] + 1) * (j - imBlock[2]) + (imBlock[1] - imBlock[0] + 1) * (imBlock[3] - imBlock[2] + 1) * (k - imBlock[4]); //needed for threading correctness
+
+				//if( alpha_F>alpha_F_min)
+				//{
+					if(g->what_segment(IND) == GraphType::SOURCE)
+						Seg_out[(k*r*c)+(j*c)+i]=0;
+					else{
+						//Seg_out[(k*r*c)+(j*c)+i]=255; //seems incorrect, if Seg_out is unsigned short* then max value should be 65535?
+					    Seg_out[(k*r*c)+(j*c)+i]=65535;
+						//std::cout<<"2\n";
+					}
+				//}
+				//else
+				//{
+				//	Seg_out[(k*r*c)+(j*c)+i]=0;
+				//	//					std::cout<<"aca";
+				//}
+			}
+		}
+	}
+
+	delete g;
+}
 void threeLevelMinErrorThresh(unsigned char* im, float* Alpha1, float* Alpha2, float* Alpha3, float* P_I1, float* P_I2, size_t r, size_t c, size_t z)
 {
 	//create a normalized image histogram
