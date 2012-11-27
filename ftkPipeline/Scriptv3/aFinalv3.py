@@ -117,8 +117,8 @@ runSegm = 1		# Flag to run Segmentation
 runSegm_db = 1
 runDistToDevice = 0		# Flag to run distance to device computation
 runDistToDevice_db = 0
-runTrac = 0		# Flag to run Tracing
-runTrac_db = 0
+runTrac = 1		# Flag to run Tracing
+runTrac_db = 1
 runAstroTrac = 0		# Flag to run Astrocyte Tracing
 runAstroTrac_db = 0
 
@@ -798,7 +798,7 @@ for DATA_FOLDER in DATA_FOLDER_ALL:
 			TEMP_FILE.write('-xTile 600\n')
 			TEMP_FILE.write('-yTile 600\n')
 			TEMP_FILE.write('-zTile 300\n')
-		TEMP_FILE.write('-num_threads 80\n')
+		TEMP_FILE.write('-num_threads 75\n')
 		if haveCy5 == 1:
 			TEMP_FILE.write('-Cy5_Image '+FILE_Cy5_BS_RE_bit+'\n')
 		if haveTRT == 1:
