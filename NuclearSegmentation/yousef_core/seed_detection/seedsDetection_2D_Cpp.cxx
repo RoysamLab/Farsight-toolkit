@@ -57,7 +57,7 @@ InputImageType::Pointer extract2DImageRegion(itk::SmartPointer<InputImageType> i
 // detectSeeds2D( imgPtr, logImagePtr, seedImagePtr, numRows, numColumns, scaleMin, scaleMax, regionXY, binImagePtr );
 int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int c, double* sigma_min_in, double* sigma_max_in, double* scale_in, unsigned short* bImg, bool paramEstimation)
 {
-    //copu the the input parameters into local variables
+    //copy the the input parameters into local variables
 	double sigma_min = sigma_min_in[0];
 	double sigma_max = sigma_max_in[0];
 	double scale = scale_in[0];
@@ -89,15 +89,22 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	typedef itk::ImageRegionIteratorWithIndex< InputImageType > IteratorType;
 	IteratorType iterator1(im,im->GetRequestedRegion());
 	
+	// Copy the binary image array to an itk image:
 	for(int i=0; i<r*c; i++)
 	{		
 		if(bImg[i]>0)
-			iterator1.Set(255.0);
+		{
+			//iterator1.Set(255.0);
+			iterator1.Set(65535.0);
+			//std::cout<<"1\n";
+		}
 		else
 			iterator1.Set(0.0);
 		++iterator1;	
 	}
 	
+
+
 	//Compute Distance Map
 	float* dImg = (float *) malloc(r*c*sizeof(float));
 	distMap(im, r, c, dImg);
@@ -168,10 +175,8 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 	double sigma = sigma_min;
 	float *IMG_tmp = (float *) malloc(r*c*sizeof(float));	
 
-	//Detecting seeds at min scale
-	//IM_out = new float[r*c];
-	detect_seeds(im,r,c,sigma,IM_out);
-	
+
+
 	while(!conv)
 	{		
 		sigma = sigma+1;		
@@ -183,16 +188,19 @@ int detectSeeds2D( float* IM, float* IM_out, unsigned short* IM_bin, int r, int 
 
 		//Detecting seeds at next scale
 		detect_seeds(im,r,c,sigma,IMG_tmp);
+	//	detect_seeds(original_image,r,c,sigma,IM_out);	// change this back
+
 
 		for(int i=0; i<r*c; i++)
 		{
-			if(sigma<=dImg[i]*2)
+			//if(sigma<=dImg[i]*2)
 				IM_out[i] = (IM_out[i]>=IMG_tmp[i])? IM_out[i] : IMG_tmp[i];				
 		}		
 	}
 	free(IMG_tmp);
 	free(dImg);
 	
+
     //get seed points (local maxima points in the LoG response image
 	//IM_bin = new unsigned short[r*c];
 	Detect_Local_MaximaPoints(IM_out, r, c, scale, IM_bin);
@@ -398,7 +406,7 @@ void Detect_Local_MaximaPoints(float* im_vals, int r, int c, double scale, unsig
     {
         for(int j=0; j<c; j++)
         {					
-            min_r = (int) std::max(0.0,i-scale);
+			min_r = (int) std::max(0.0,i-scale);
             min_c = (int) std::max(0.0,j-scale);
             max_r = (int) std::min((double)r-1,i+scale);
             max_c = (int) std::min((double)c-1,j+scale);                         
@@ -444,7 +452,7 @@ int distMap(itk::SmartPointer<InputImageType> im, int r, int c, float* IMG)
 	 dt_obj->Update() ;
   }
   catch( itk::ExceptionObject & err ){
-	std::cerr << "Error calculating distance transform: " << err << std::endl ;
+	  std::cerr << "Error calculating distance transform: " << err << std::endl ;
     return -1;
   }
  

@@ -23,6 +23,8 @@
 #include <iostream>
 #include <algorithm>
 #include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
 #include "itkSimpleFilterWatcher.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
