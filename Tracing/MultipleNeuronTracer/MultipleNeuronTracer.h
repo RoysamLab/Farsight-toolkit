@@ -341,7 +341,7 @@ private:
 	bool _flagPipeline;
 	bool _flagOutLog;
 	bool _isCoverageOptimized;
-	float v_threshold; 
+	float _v_threshold; 
 
 };
 

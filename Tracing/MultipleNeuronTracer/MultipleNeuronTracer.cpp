@@ -1644,8 +1644,8 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
     }
     //WriteImage3D(std::string("GVF_Vesselness_enhancement.tif"), _IVessel);
     std::cout<<"compute seed Detection"<<std::endl;
-    v_threshold = 0.1;// this value is calculated in the computeGVFVesselness() function by 
-    this->SeedDetection(v_threshold,detection_method,radius);
+    _v_threshold = 0.1;// this value is calculated in the computeGVFVesselness() function by 
+    this->SeedDetection(_v_threshold,detection_method,radius);
     std::cout<<"compute seed Adjustment"<<std::endl;
     this->SeedAdjustment(iter_num);
 
@@ -1898,12 +1898,13 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
     double B = 2 * pow(FrangiBeta,2);
     double C = 2 * pow(FrangiC,2);
 
-    //typedef itk::CastImageFilter<ImageType3D,ImageType3D> CasterType;*/
-    //CasterType::Pointer caster = CasterType::New();
-    //caster->SetInput(_PaddedCurvImage);
-    //caster->Update();
-    //_IVessel = caster->GetOutput();
-    _IVessel = _PaddedCurvImage;
+	// This should be a duplicator
+    typedef itk::CastImageFilter<ImageType3D,ImageType3D> CasterType;*/
+    CasterType::Pointer caster = CasterType::New();
+    caster->SetInput(_PaddedCurvImage);
+    caster->Update();
+    _IVessel = caster->GetOutput();
+    //_IVessel = _PaddedCurvImage;
 
     /*CasterType::Pointer caster1 = CasterType::New();
       caster1->SetInput(I);
@@ -2159,18 +2160,18 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
     rescale->Update();
     _IVessel = rescale->GetOutput();
 
-    typedef itk::OtsuThresholdImageFilter<
-      ImageType3D, ImageType3D > TH_FilterType;
-    TH_FilterType::Pointer thresholder = TH_FilterType::New();
-    thresholder->SetInput( _IVessel );
-    thresholder->SetOutsideValue( 1 );
-    thresholder->SetInsideValue( 0 );
-    thresholder->SetNumberOfHistogramBins( 256 );
-    thresholder->Update();
+    //typedef itk::OtsuThresholdImageFilter<
+    //  ImageType3D, ImageType3D > TH_FilterType;
+    //TH_FilterType::Pointer thresholder = TH_FilterType::New();
+    //thresholder->SetInput( _IVessel );
+    //thresholder->SetOutsideValue( 1 );
+    //thresholder->SetInsideValue( 0 );
+    //thresholder->SetNumberOfHistogramBins( 256 );
+    //thresholder->Update();
 
-    v_threshold = thresholder->GetThreshold();
+    //v_threshold = thresholder->GetThreshold();
 
-    std::cout<<" - Selected Otsu Threshold:"<<v_threshold<<std::endl;
+    //std::cout<<" - Selected Otsu Threshold:"<<v_threshold<<std::endl;
 
 
 
