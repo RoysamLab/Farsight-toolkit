@@ -2799,7 +2799,8 @@ int yousef_nucleus_seg::getMaxID(int Int_Fin)
 }
 
 //int yousef_nucleus_seg::AddObject(ftk::Object::Point P1, ftk::Object::Point P2)
-int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
+int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2,
+					std::vector<itk::SizeValueType> imSZ, int maxID)
 {		
 	//get the coordinates of the two points and the size of the box
 	int x1 = P1[0];
@@ -2994,7 +2995,8 @@ int yousef_nucleus_seg::AddObject(unsigned char* inImage, unsigned short* lbImag
 }
 
 
-int yousef_nucleus_seg::AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2, std::vector<unsigned short> imSZ, int maxID)
+int yousef_nucleus_seg::AddObject2D(unsigned char* inImage, unsigned short* lbImage, std::vector<int> P1, std::vector<int> P2,
+					std::vector<itk::SizeValueType> imSZ, int maxID)
 {		
 	//get the coordinates of the two points and the size of the box
 	int x1 = P1[0];
