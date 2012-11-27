@@ -419,6 +419,8 @@ void ftkMainDarpaTrace::runTracing()
 		std::string gvfPath = _GVF_ImagePREMNT+str_bigTile.str()+".nrrd";
 		
 		// Compute GVF and Vesselnes
+		int num_iteration = 15;
+		int smoothing_scale = 1;
 		MultipleNeuronTracer * MNT = new MultipleNeuronTracer();
 		MNT->computeGVF_2(_img_traceDesiredRegion,100,num_iteration,smoothing_scale);
 		_img_GVFDesiredRegion = MNT->getGVFImage();
