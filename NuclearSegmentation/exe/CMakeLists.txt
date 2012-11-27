@@ -1,5 +1,7 @@
 ADD_EXECUTABLE( segment_nuclei yousef_main.cpp)
 
+ADD_EXECUTABLE( segment_nuclei_16 yousef_main16.cpp)
+
 ADD_EXECUTABLE( compute_nuclei_features compute_nuclei_features_main.cpp)
 
 ADD_EXECUTABLE( compute_associative_measures compute_associative_measures.cpp)
@@ -21,6 +23,8 @@ TARGET_LINK_LIBRARIES( SomaExtraction  segment_soma )
 INSTALL( TARGETS SomaExtraction DESTINATION ${INSTALL_BIN_DIR} )
 
 TARGET_LINK_LIBRARIES( segment_nuclei  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
+
+TARGET_LINK_LIBRARIES( segment_nuclei_16  Yousef_Nucleus_Seg     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
 TARGET_LINK_LIBRARIES( compute_nuclei_features NuclearSegmentation ftkCommon ftkFeatures     ${ITK_LIBRARIES} )#      ${ITK_LIBRARIES} )
 
@@ -44,6 +48,8 @@ ENDIF(BUILD_OPENCL)
 
 
 INSTALL( TARGETS segment_nuclei DESTINATION ${INSTALL_BIN_DIR} )
+
+INSTALL( TARGETS segment_nuclei_16 DESTINATION ${INSTALL_BIN_DIR} )
 
 INSTALL( TARGETS compute_nuclei_features DESTINATION ${INSTALL_BIN_DIR} )
 
