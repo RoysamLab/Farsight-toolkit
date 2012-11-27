@@ -48,7 +48,6 @@ int writeImage(typename T::Pointer im, const char* filename)
 }
 
 
-
 #define MAX_TIME 1000
 bool file_exists(char *filename)
 {
@@ -65,92 +64,104 @@ bool file_exists(char *filename)
 int main(int argc, char**argv)
 {
 	std::string input = argv[1];
-	std::string out = argv[3];
+	std::string outfname = argv[3];
 
-	if(!file_exists((char*)out.c_str())){
+	//if(!file_exists((char*)outfname.c_str()))
+	{
 
-	InputImageType::Pointer im = readImage<InputImageType>(input.c_str());
+	Input2DImageType16::Pointer input_image = readImage<Input2DImageType16>(input.c_str());
 	
-	InputImageType::SpacingType spacing;
+	Input2DImageType16::SpacingType spacing;
 	spacing[0] = 1;
 	spacing[1] = 1;
-	spacing[2] = 4.0;
-	im->SetSpacing(spacing);
-	typedef itk::SmoothingRecursiveGaussianImageFilter<InputImageType,InputImageType> FilterType;
+	input_image->SetSpacing(spacing);
+	typedef itk::SmoothingRecursiveGaussianImageFilter<Input2DImageType16,Input2DImageType16> FilterType;
 	FilterType::Pointer filter = FilterType::New();
-	filter->SetInput(im);
+	filter->SetInput(input_image);
 	filter->SetSigma(atof(argv[2]));
-	
-	
-	filter->Update();
-
-	InputImageType::Pointer outim = filter->GetOutput();
-
-	IteratorType it1(im,im->GetLargestPossibleRegion());
-	IteratorType it2(outim,outim->GetLargestPossibleRegion());
-	for(it1.GoToBegin(),it2.GoToBegin();!it1.IsAtEnd();++it1,++it2)
+	try
 	{
-		it2.Set(MIN(MAX(it1.Get()-it2.Get(),0),255));
+		filter->Update();
 	}
-	writeImage<InputImageType>(outim, out.c_str());
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+
+	Input2DImageType16::Pointer backg_image = filter->GetOutput();
+
+
+	typedef itk::SubtractImageFilter <Input2DImageType16, Input2DImageType16, Float2DImageType> SubtractImageFilterType;
+	SubtractImageFilterType::Pointer subtractFilter = SubtractImageFilterType::New ();
+	subtractFilter->SetInput1(input_image);
+	subtractFilter->SetInput2(backg_image);
+	try
+	{
+		subtractFilter->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	Float2DImageType::Pointer diff_image = subtractFilter->GetOutput();
+
+	//writeImage<Float2DImageType>(diff_image, "C:/Lab/AminFiles/Debug/SegmentationNavin/difference.nrrd");
+
+	Input2DImageType16::Pointer out_image = Input2DImageType16::New();	
+	Input2DImageType16::PointType origin;
+	origin[0] = 0; 
+	origin[1] = 0;    
+	out_image->SetOrigin( origin );
+	Input2DImageType16::IndexType start;
+	start[0] = 0;  // first index on X
+	start[1] = 0;  // first index on Y    
+	Input2DImageType16::SizeType  size = input_image->GetLargestPossibleRegion().GetSize();
+	Input2DImageType16::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	out_image->SetRegions( region );
+	out_image->Allocate();
+	out_image->FillBuffer(0);
+	try
+	{
+		out_image->Update();
+	}
+	catch(itk::ExceptionObject &err)
+	{
+		std::cerr << "ExceptionObject caught!" <<std::endl;
+		std::cerr << err << std::endl;
+	}
+	
+	
+	Float2DIteratorType diff_iter(diff_image,diff_image->GetLargestPossibleRegion());
+	float min_value = std::numeric_limits<float>::max();
+	for(diff_iter.GoToBegin();!diff_iter.IsAtEnd();++diff_iter)
+	{
+		min_value = MIN(min_value,diff_iter.Get());
+	}
+	std::cout<<"Found minimum value:\t"<<min_value<<std::endl;
+	Iterator2DType16 out_iter(out_image,out_image->GetLargestPossibleRegion());
+	if(min_value<0.0)
+	{
+		//std::cout<<"I am in negative loop\n"<<std::endl;
+		for(diff_iter.GoToBegin(),out_iter.GoToBegin();!diff_iter.IsAtEnd(),!out_iter.IsAtEnd();++diff_iter,++out_iter)
+		{
+			out_iter.Set((InputPixelType16)(diff_iter.Get()-min_value));
+			//std::cout<<(InputPixelType16)floor(diff_iter.Get()-min_value)<<std::endl;
+		}		
+	}
+	else
+	{
+		//std::cout<<"I am in positvie  loop\n"<<std::endl;
+		for(diff_iter.GoToBegin(),out_iter.GoToBegin();!diff_iter.IsAtEnd(),!out_iter.IsAtEnd();++diff_iter,++out_iter)
+		{
+			out_iter.Set((InputPixelType16)(diff_iter.Get()+min_value));
+		}
+	}
+		
+	writeImage<Input2DImageType16>(out_image, outfname.c_str());
 	}
 	return 0;
-}
-int main_old(int argc, char** argv)
-{
-	int num_t = (argc-1)/2;
-	InputImageType::Pointer input[MAX_TIME];
-	InputImageType::Pointer output = InputImageType::New();
-
-	if(num_t>MAX_TIME)
-	{
-		printf("Too many files\n");
-		return 0;
-	}
-	FloatImageType::Pointer mean_image = FloatImageType::New();
-	typedef itk::ImageRegionIterator<FloatImageType> FloatIteratorType;
-	for(int counter=0; counter< num_t; counter++)
-	{
-		input[counter] = readImage<InputImageType>(argv[counter+1]);
-		printf("Finished reading\n");
-		ConstIteratorType input_iter(input[counter],input[counter]->GetLargestPossibleRegion());
-		printf("entering if\n");
-		if(counter==0)
-		{
-			mean_image->SetRegions(input[counter]->GetLargestPossibleRegion());
-			mean_image->Allocate();
-			mean_image->FillBuffer(0);
-			printf("Allocated\n");
-		}
-		printf("before copy\n");
-		FloatIteratorType iter(mean_image,mean_image->GetLargestPossibleRegion());
-		for(iter.GoToBegin(),input_iter.GoToBegin();!iter.IsAtEnd(); ++iter,++input_iter)
-		{
-			iter.Set(iter.Get()+input_iter.Get()*1.0/num_t);
-		}
-	}
-	
-
-	output->SetRegions(mean_image->GetLargestPossibleRegion());
-	output->Allocate();
-	
-	for(int counter=0; counter<num_t; counter++)
-	{
-
-		typedef itk::ImageRegionConstIterator<FloatImageType> ConstFloatIteratorType;
-		ConstFloatIteratorType cfiter(mean_image, mean_image->GetLargestPossibleRegion());
-		ConstIteratorType input_iter(input[counter], input[counter]->GetLargestPossibleRegion());
-		IteratorType iter(output,output->GetLargestPossibleRegion());
-		iter.GoToBegin();
-		cfiter.GoToBegin();
-		input_iter.GoToBegin();
-		for(;!iter.IsAtEnd();++iter,++cfiter,++input_iter)
-		{
-			int value = input_iter.Get() - cfiter.Get();
-			if(value <0)
-				value = 0;
-			iter.Set(value);
-		}
-		writeImage<InputImageType>(output,argv[counter+num_t+1]);
-	}
 }
