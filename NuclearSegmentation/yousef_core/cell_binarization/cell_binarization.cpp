@@ -696,7 +696,6 @@ void Seg_GC_Full_3D(unsigned char* IM, size_t r, size_t c, size_t z, double alph
 
 
 	sig = 50.0;
-	std::cout<<"sig"<<P_I<<std::endl;
 	w=10.0;
 	for(size_t k=0; k<z; k++)
 	{		
@@ -1018,22 +1017,11 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 		num_edges = (imBlock[1]-imBlock[0]-1)*(imBlock[3]-imBlock[2]-1)*3;								//2D-case
 
 
-
 	/*std::cout << "imBlock[0] = " << imBlock[0] << " imBlock[1] = " << imBlock[1] << " imBlock[2] = " << imBlock[2] << " imBlock[3] = " << imBlock[3] << " imBlock[4] = " << imBlock[4] << " imBlock[5] = " << imBlock[5] << std::endl;
 
 	std::cout << "Number of nodes: " << num_nodes << std::endl;
 	std::cout << "Number of edges: " << num_edges << std::endl;*/
-	//std::cout<<"Previous P_I\n"<<P_I;
-	//
-	//P_I = 0.01;
 
-	//std::cout<<"New P_I\n"<<P_I;
-
-	std::cout<<"PI"<<P_I<<std::endl;
-	std::cout<<"alpha_F"<<alpha_F<<std::endl;
-	std::cout<<"alpha_B"<<alpha_B<<std::endl;
-	//alpha_F = 50;
-	//P_I = 0.9;
 
 	//Before entering the loop, compute the poisson probs    
 	//#pragma omp parallel for
@@ -1112,24 +1100,10 @@ void Seg_GC_Full_3D_Blocks(unsigned char* IM, size_t r, size_t c, size_t z, doub
 
 					g -> add_node();
 					g -> add_tweights(IND,   /* capacities */ Df,Db);
-					//				std::cout<<Df<<" "<<Db<<",";
-					//			std::cout<<intst;
-					//
-					//				std::cout<<std::endl<<k<<" "<<j<<" "<<i;
-
-					// Just to test
-					//				Seg_out[IND] = ++Seg_out[IND];
-					//
 				}
 			}
-			//	std::cout<<std::endl;
 		}
-
-		//	std::cout <<std::endl<< "First Loop Complete"<<std::flush;
-
-		//	std::cout <<std::endl<< "First Loop Complete"<<std::flush;
 		sig = 50.0;
-		std::cout<<"sig"<<sig<<std::endl;
 		w=10.0;
 
 
@@ -1324,11 +1298,7 @@ void Seg_GC_Full_3D_Blocks(unsigned short* IM, size_t r, size_t c, size_t z, dou
 		}
 
 		sig = 50.0;
-		std::cout<<"sig: "<<sig<<std::endl;
 		w = 50.0;
-		std::cout<<"w: "<<w<<std::endl;
-
-		//std::cout<<std::endl;
 
 		for(size_t k=imBlock[4]; k<=imBlock[5]; k++)
 		{		
