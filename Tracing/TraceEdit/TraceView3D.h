@@ -289,6 +289,7 @@ public slots:
 	void FocusOnCell(CellTrace* SelectedCell);
 
 	void SPDAnalysis();
+	void AddLabel();
 	void ClusclusAnalysis();
 	void Highlighted_selected();
 	void BiclusAnalysis();
@@ -472,6 +473,7 @@ private:
 	QAction *updateStatisticsAction;
 	QAction *SPDAction;
 	QAction *SPDAnalysisAction;
+	QAction *AddLabelAction;
 	QAction *ClusclusAction;
 	QAction *selectedAction;
 	QAction *BiClusAction;

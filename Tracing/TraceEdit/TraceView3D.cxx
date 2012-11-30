@@ -1717,6 +1717,9 @@ void View3D::CreateGUIObjects()
 	this->SPDAnalysisAction->setShortcut(Qt::CTRL + Qt::ALT + Qt::Key_S);
 	connect (this->SPDAnalysisAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
 
+	this->AddLabelAction = new QAction("Add Label", this->CentralWidget);
+	connect (this->AddLabelAction, SIGNAL(triggered()), this, SLOT(AddLabel()));
+
 	//this->ClusclusAction = new QAction("Clusclus Analysis", this->CentralWidget);
 	//connect (this->ClusclusAction, SIGNAL(triggered()), this, SLOT(ClusclusAnalysis()));
 
@@ -2140,6 +2143,7 @@ void View3D::CreateLayout()
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
 	//this->analysisViews->addAction(this->SPDAction);
 	this->analysisViews->addAction(this->SPDAnalysisAction);
+	this->analysisViews->addAction(this->AddLabelAction);
 	//this->analysisViews->addAction(this->ClusclusAction);
 	this->analysisViews->addAction(this->selectedAction);
 	this->analysisViews->addAction(this->BiClusAction);
@@ -6493,6 +6497,46 @@ void View3D::SPDAnalysis()
 		//this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}
 #endif
+}
+
+void View3D::AddLabel()
+{
+	std::cout<< "AddLabel."<<std::endl;
+	std::set<long int> IDs = this->CellModel->GetSelectedContinuousIDs();
+	std::cout<< IDs.size()<<std::endl;
+
+	if( IDs.size() <= 0)
+	{
+		return;
+	}
+
+	if( this->CellModel->getDataTable()->GetColumnByName("Label") == NULL)
+	{
+		std::cout<< "Adding label."<<std::endl;
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( "prediction");
+		for(vtkIdType id = 0; id < this->CellModel->getDataTable()->GetNumberOfRows(); id++)
+		{
+			column->InsertNextValue(0);
+		}
+		this->CellModel->getDataTable()->AddColumn(column);
+		std::cout<< "Adding label done."<<std::endl;
+	}
+
+	bool ok1;
+	int label = QInputDialog::getInt(this, tr("Label"),tr("Label:"), 1, 1, 100, 1, &ok1);
+	if(ok1)
+	{
+		std::cout<< "Set label."<<std::endl;
+		std::set<long int>::iterator iter = IDs.begin();
+		vtkIdType coln = this->CellModel->getDataTable()->GetNumberOfColumns();
+		while( iter != IDs.end())
+		{
+			this->CellModel->getDataTable()->SetValue((vtkIdType)*iter, coln - 1, label);	
+			iter++;
+		}
+	}
+	ftk::SaveTable( "LabeledTable.txt", this->CellModel->getDataTable());
 }
 
 void View3D::ClusclusAnalysis()

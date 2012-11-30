@@ -387,11 +387,14 @@ std::set<long int> CellTraceModel::GetSelectedContinuousIDs()
 	for (it = selected.begin(); it != selected.end(); ++it)
 	{
 		long int id = (long int) *it;
+
 		bool found = false;
 		long int j = 0;
-		while(!found && ( j < this->Cells.size()))
+
+		std::map< int ,CellTrace*>::iterator mapIter = this->Cells.begin();
+		while(!found && mapIter != this->Cells.end())
 		{
-			if (id == this->Cells[j]->rootID())
+			if (id == mapIter->first)
 			{
 				ids.insert(j);
 				found = true;
@@ -399,7 +402,9 @@ std::set<long int> CellTraceModel::GetSelectedContinuousIDs()
 			{
 				j++;
 			}
+			mapIter++;
 		}//end while !found
+
 	}//end for selected
 	return ids;
 }
