@@ -326,6 +326,8 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 		++critical_point_img_iter;
 		++ridge_neighbor_iter;
 	}
+    
+        
 
 	std::ostringstream critical_points_filename_stream;
 	critical_points_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_critical.nrrd";

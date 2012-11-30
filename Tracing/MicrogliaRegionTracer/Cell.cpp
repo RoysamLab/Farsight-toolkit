@@ -378,10 +378,8 @@ void Cell::CreateIsotropicImage()
 void Cell::CreateLoGImage()
 {
 	//Calculate the LoG on multiple scales and store into an image
-	LoG *log_obj = new LoG();
 	std::cout << "Calculating Multiscale LoG" << std::endl;
-	LoGImageType::Pointer resampled_multiscale_LoG_image = log_obj->RunMultiScaleLoG(*this);
-    delete log_obj;
+	LoGImageType::Pointer resampled_multiscale_LoG_image = LoG::RunMultiScaleLoG(*this);
 
 	//Make the file name of the isotropic LoG image and write it out
 	std::stringstream multiscaled_LoG_image_filename_stream;

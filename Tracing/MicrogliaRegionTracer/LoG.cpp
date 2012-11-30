@@ -6,15 +6,7 @@
 #include "itkMedianImageFilter.h"
 #include "ftkTimeStampOverflowSafeUpdate.h"
 
-LoG::LoG()
-{
-}
-
-LoG::~LoG()
-{
-}
-
-LoG::LoGImageType::Pointer LoG::RunLoG(const ImageType::Pointer & image, float scale) const
+LoG::LoGImageType::Pointer LoG::RunLoG(const ImageType::Pointer & image, float scale)
 {
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
@@ -68,7 +60,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(const ImageType::Pointer & image, float s
 	return inverted_LoG_image;
 }
 
-void LoG::WriteLoGImage(const std::string & filename, const LoGImageType::Pointer & image) const
+void LoG::WriteLoGImage(const std::string & filename, const LoGImageType::Pointer & image)
 {
 	typedef itk::ImageFileWriter< LoGImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
@@ -86,7 +78,7 @@ void LoG::WriteLoGImage(const std::string & filename, const LoGImageType::Pointe
 	}
 }
 
-LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell) const
+LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell)
 {
 	std::vector<LoGImageType::Pointer> LoG_vector;
 
