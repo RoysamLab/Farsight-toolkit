@@ -145,8 +145,9 @@ int main(int argc, char* argv[])
 	
 	if(!NucleusSeg->EstimateGMMParameters())
 	{
+		NucleusSeg->RunKmeansClustering();
 		//std::cout<<"Something is up with the initial binary image\n";
-		return 0;
+		//return 0;
 	}
 
 	unsigned short *output_img;
