@@ -68,9 +68,6 @@ char* LocalMaximaKernel =
 
 //added by Yousef on 8/26/2009
 #include "itkExtractImageFilter.h"
-
-
-////
 #include "itkImageFileWriter.h"
 
 typedef    unsigned short     MyInputPixelType;
@@ -79,7 +76,7 @@ typedef itk::Image< MyInputPixelType,  2 >   MyInputImageType2D;
 
 int detect_seeds(itk::SmartPointer<MyInputImageType>, int , int , int, const double, float*, int);
 //int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
-int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
+int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, size_t z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap);
 float get_maximum_3D(float* A, int r1, int r2, int c1, int c2, int z1, int z2, int R, int C);
 unsigned short get_maximum_3D(unsigned short* A, int r1, int r2, int c1, int c2, int z1, int z2,int R, int C);
 void Detect_Local_MaximaPoints_3D(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1, unsigned short* bImg);
@@ -100,7 +97,7 @@ void Detect_Local_MaximaPoints_3D_ocl(float* im_vals, int r, int c, int z, doubl
 extern "C" void Detect_Local_MaximaPoints_3D_CUDA(float* im_vals, int r, int c, int z, double scale_xy, double scale_z, unsigned short* out1);
 
 
-int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, int r, int c, int z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
+int Seeds_Detection_3D( float* IM, float** IM_out, unsigned short** IM_bin, size_t r, size_t c, size_t z, double *sigma_min_in, double *sigma_max_in, double *scale_xy_in, double *scale_z_in, int sampl_ratio, unsigned short* bImg, int UseDistMap, int* minIMout, bool paramEstimation)
 {	
 	// 	std::cout << std::endl << 
 	//queryOpenCLProperties(IM, r, c, z); //odd that the OpenCL code will crash the program if it is not part of a function and manually inlined here instead...
@@ -394,7 +391,7 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
 	return EXIT_SUCCESS;
 }
 
-int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, int unsigned short* dImg, int* minIMout, int UseDistMap)
+int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, size_t z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, unsigned short* dImg, int* minIMout, int UseDistMap)
 {
 
 	//  Types should be selected on the desired input and output pixel types.
@@ -403,7 +400,35 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 	typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 	bool failed = false;
 
-	#pragma omp parallel for firstprivate(im) ordered
+    //Initialize the max_log_response array
+    for(size_t k1=zmin; k1<=zmax; k1++)
+    {
+        for(size_t i1=rmin; i1<=rmax; i1++)
+        {
+            for(size_t j1=cmin; j1<=cmax; j1++)
+            {
+                size_t image_index = k1 * r * c + i1 * c + j1;
+                IMG[image_index] = -std::numeric_limits<float>::max();  //Initialize to the negative of the maximum value
+            }
+        }
+    }
+    
+	#ifdef _OPENMP
+		int num_procs = omp_get_num_procs();
+	#else
+		int num_procs = 1;
+	#endif
+
+	int num_scales = sigma_max - sigma_min + 1;
+	int num_openmp_threads = std::min(num_scales, num_procs);
+	int num_itk_threads = std::ceil((float)num_procs / num_openmp_threads);
+
+	std::cout << "Thread settings for multiScaleLog():" << std::endl;
+	std::cout << "Number of scales: " << num_scales << std::endl;
+	std::cout << "Number of OpenMP threads: " << num_openmp_threads << std::endl; 
+	std::cout << "Number of ITK threads " << num_itk_threads << std::endl;
+
+	#pragma omp parallel for firstprivate(im)
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
 	{
 		int sigma = sigma_max - i;
@@ -430,6 +455,10 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		//
 		laplacian->SetSigma(sigma);
 
+		//Set the number of itk threads based on the number of OpenMP threads
+		laplacian->SetNumberOfThreads(num_itk_threads);
+		std::cout << "Number of itk threads: " << laplacian->GetNumberOfThreads() << std::endl;
+		
 		//  Finally the pipeline is executed by invoking the \code{Update()} method.
 		//
 		try
@@ -444,57 +473,60 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, int r, int c, int z, i
 		} 
 
 		//   Copy the resulting image into the input array
-		typedef itk::ImageRegionIteratorWithIndex< OutputImageType > IteratorType;
+		typedef itk::ImageRegionConstIterator< OutputImageType > IteratorType;
 		IteratorType iterate(laplacian->GetOutput(),laplacian->GetOutput()->GetRequestedRegion());
 		iterate.GoToBegin();
-
-		unsigned long II;
-		
-		#pragma omp ordered
-		{
-			for(int k1=zmin; k1<=zmax; k1++)
-			{
-				for(int i1=rmin; i1<=rmax; i1++)	
-				{			
-					for(int j1=cmin; j1<=cmax; j1++)
-					{
-						II = (((unsigned long)k1)*((unsigned long)r)*((unsigned long)c))+(((unsigned long)i1)*((unsigned long)c))+((unsigned long)j1);
-						float lgrsp = iterate.Get();
-						//lgrsp /= sqrt((double)sigma);
-						if(sigma==sigma_min)
-						{
-							IMG[II] = lgrsp;			
-						}
-						else
-						{					
-							if(UseDistMap == 1)
-							{
-								if(sigma<=dImg[II]/100)
-								{
-									IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
-									if(IMG[II]<minIMout[0])
-										minIMout[0] = IMG[II];
-								}
-							}
-							else
-							{
-								IMG[II] = (IMG[II]>=lgrsp)? IMG[II] : lgrsp;				
-								if(IMG[II]<minIMout[0])
-									minIMout[0] = IMG[II];
-							}
-						}
-						if( iterate.IsAtEnd() ){
-							std::cerr<<"WARNING: Trying to access an out of bounds pixel in an ITK Image"
-								 <<"in function MultiScaleLOG in seed detection\n Max ind"
-								 <<((unsigned long)r)*((unsigned long)c)*((unsigned long)z)<<" ITK:"
-								 <<i<<std::endl;
-								 break;
-						}
-						++iterate;
-					}
-				}
-			}
- 		}
+        
+        if (UseDistMap)
+        {
+            for(size_t k1=zmin; k1<=zmax; k1++)
+            {
+                for(size_t i1=rmin; i1<=rmax; i1++)
+                {
+                    for(size_t j1=cmin; j1<=cmax; j1++)
+                    {
+                        assert(!iterate.IsAtEnd()); //We have a big problem if we are trying to access the end of the iterator
+                        
+                        size_t image_index = k1 * r * c + i1 * c + j1;
+                        float log_response = iterate.Get();
+                        
+                        if(sigma <= dImg[image_index] / 100)
+                        {
+                            #pragma omp critical
+                            {
+                                IMG[image_index] = std::max(IMG[image_index], log_response);
+                                *minIMout = std::min<float>(*minIMout, IMG[image_index]);
+                            }
+                            ++iterate;
+                        }
+                    }
+                }
+            }
+        }
+        else    //not UseDistMap
+        {
+            for(size_t k1=zmin; k1<=zmax; k1++)
+            {
+                for(size_t i1=rmin; i1<=rmax; i1++)
+                {
+                    for(size_t j1=cmin; j1<=cmax; j1++)
+                    {
+                        assert(!iterate.IsAtEnd()); //We have a big problem if we are trying to access the end of the iterator
+                        
+                        size_t image_index = k1 * r * c + i1 * c + j1;
+                        float log_response = iterate.Get();
+                        
+                        #pragma omp critical
+                        {
+                            IMG[image_index] = std::max(IMG[image_index], log_response);
+                            *minIMout = std::min<float>(*minIMout, IMG[image_index]);
+                        }
+                        
+                        ++iterate;
+                    }
+                }
+            }
+        }
 
 		std::cout<<"Scale " << sigma << " done"<<std::endl;
 	}
