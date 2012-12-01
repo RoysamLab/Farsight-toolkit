@@ -161,6 +161,134 @@ void yousef_nucleus_seg::runGradAnisDiffSmoothing()
 		std::cout<<"failed!\n segmentation will be applied on the raw image\n";
 	}
 }
+bool yousef_nucleus_seg::RunKmeansClustering()
+{
+	if ( !dataImagePtr16 )
+		return false;
+
+	gmm_params_.background_mean = 0.0;
+	gmm_params_.background_stdev = 0.0;
+	gmm_params_.foreground_mean = 0.0;
+	gmm_params_.foreground_stdev = 0.0;
+	gmm_params_.background_prior = 0.0;
+
+
+	// Setup Label Array for Class Labels
+	unsigned short *labelArray;
+	labelArray = (unsigned short *) malloc(numRows*numColumns*numStacks*sizeof(unsigned short));
+	std::cout<<"trying to allocate memory to Label Array..\n";
+	if( labelArray == NULL )
+	{
+		std::cout<<"Memory allocation for image failed\n";
+		return false;
+	}
+	memset(labelArray/*destination*/,0/*value*/,numRows*numColumns*numStacks*sizeof(unsigned short)/*num bytes to move*/);
+
+	// Start Kmeans:
+	float mean_bg = 10.0;
+	float mean_fg = 2000.0;
+
+	bool converged = false;
+	unsigned short num_iter = 0;
+	std::cout<<"About Start Kmeans Iteration\n";
+
+	while(!converged)
+	{
+		num_iter += 1; 
+		unsigned short numBackPix = 0;
+		unsigned short numForgPix = 0;
+		float sumBackPix = 0.0;
+		float sumForgPix = 0.0;
+
+		for(unsigned short index = 0; index < (numRows*numColumns*numStacks);++index)
+		{
+			float dist_to_bg =  fabs((float)dataImagePtr16[index] - mean_bg) ;
+			float dist_to_fg =  fabs((float)dataImagePtr16[index] - mean_fg) ;
+			if(dist_to_bg < dist_to_fg)
+			{
+				labelArray[index] = 1;			// pixel is background
+				numBackPix += 1;
+				sumBackPix += (float)dataImagePtr16[index];
+			}
+			else
+			{
+				labelArray[index] = 2;			// pixel is foreground
+				numForgPix +=1;
+				sumForgPix += (float)dataImagePtr16[index];
+			}
+		}
+		
+		// add checking for number of pixels later:
+
+		float updated_mean_bg = sumBackPix/numBackPix;
+		float updated_mean_fg = sumForgPix/numForgPix;
+
+		float changeBg = fabs(updated_mean_bg -mean_bg);
+		float changeFg = fabs(updated_mean_fg -mean_fg);
+
+		if(changeBg<0.02 || changeFg<0.02)
+		{
+			converged = true;
+		}
+		else
+		{
+			mean_bg = updated_mean_bg;
+			mean_fg = updated_mean_fg;
+		}
+	}
+	std::cout<<"Converged After: "<<num_iter<<" iterations\n";
+
+	// set mean parameters:
+	gmm_params_.background_mean = mean_bg;
+	gmm_params_.foreground_mean = mean_fg;
+
+	// compute the other parameters:
+	unsigned long long numForgPix = 0;
+	unsigned long long numBackPix = 0;
+
+	float intensityForgSum2 = 0.0;
+	float intensityBackSum2 = 0.0;
+
+	// Compute  Std of the two Gaussians
+	for(unsigned short index = 0; index < (numRows*numColumns*numStacks);++index)
+	{
+		if(labelArray[index]==2)
+		{
+			numForgPix +=1;
+			intensityForgSum2 +=  (float) dataImagePtr16[index]*dataImagePtr16[index];	// E{x^2}
+		}
+		else
+		{
+			intensityBackSum2 +=  (float) dataImagePtr16[index]*dataImagePtr16[index];	// E{x^2}
+		}
+	}
+
+	numBackPix = (unsigned long long)(numRows*numColumns*numStacks) - numForgPix;
+	gmm_params_.foreground_stdev  = sqrt(((double)intensityForgSum2/(double)numForgPix) - (gmm_params_.foreground_mean*gmm_params_.foreground_mean));
+	gmm_params_.background_stdev  = sqrt(((double)intensityBackSum2/(double)numBackPix) - (gmm_params_.background_mean*gmm_params_.background_mean));
+
+	gmm_params_.foreground_prior = (double)numForgPix/(double)(numForgPix+numBackPix);
+	gmm_params_.background_prior = (double)numBackPix/(double)(numForgPix+numBackPix);
+
+	std::cout<< "fg_mean:"<<gmm_params_.foreground_mean<<std::endl;
+	std::cout<< "fg_stdev:"<<gmm_params_.foreground_stdev<<std::endl;
+	std::cout<< "fg_prior:"<<gmm_params_.foreground_prior<<std::endl;
+	std::cout<< "\n";
+	std::cout<< "bg_mean:"<<gmm_params_.background_mean<<std::endl;
+	std::cout<< "bg_stdev:"<<gmm_params_.background_stdev<<std::endl;	
+	std::cout<< "bg_prior:"<<gmm_params_.background_prior<<std::endl;
+
+	if(gmm_params_.foreground_prior < 0.0005)
+	{
+		std::cout<<"Check Initial Binarization Because the foreground prior is about:"<<gmm_params_.foreground_prior<<std::endl;
+		return false;
+	}
+
+
+	delete labelArray;
+	return true;
+
+}
 bool yousef_nucleus_seg::EstimateGMMParameters()
 {
 
@@ -173,6 +301,7 @@ bool yousef_nucleus_seg::EstimateGMMParameters()
 	gmm_params_.foreground_mean = 0.0;
 	gmm_params_.foreground_stdev = 0.0;
 	gmm_params_.background_prior = 0.0;
+
 
 
 	//unsigned long long num_foreground_pix = 0;

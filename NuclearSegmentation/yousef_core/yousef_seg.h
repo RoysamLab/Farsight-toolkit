@@ -141,6 +141,7 @@ public:
 	//added by Yousef on 11/11/2009
 	void runGradAnisDiffSmoothing();
 	bool EstimateGMMParameters();
+	bool RunKmeansClustering();
 
 
 	void readParametersFromFile(const char* pFName);					//This function reads the parameters based on Yousef's parameter format
