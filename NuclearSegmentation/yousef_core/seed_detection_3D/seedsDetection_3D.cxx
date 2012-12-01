@@ -483,9 +483,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, si
                 for(size_t i1=rmin; i1<=rmax; i1++)
                 {
                     for(size_t j1=cmin; j1<=cmax; j1++)
-                    {
-                        assert(!iterate.IsAtEnd()); //We have a big problem if we are trying to access the end of the iterator
-                        
+                    {                        
                         size_t image_index = k1 * r * c + i1 * c + j1;
                         float log_response = iterate.Get();
                         
@@ -509,9 +507,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, si
                 for(size_t i1=rmin; i1<=rmax; i1++)
                 {
                     for(size_t j1=cmin; j1<=cmax; j1++)
-                    {
-                        assert(!iterate.IsAtEnd()); //We have a big problem if we are trying to access the end of the iterator
-                        
+                    {                
                         size_t image_index = k1 * r * c + i1 * c + j1;
                         float log_response = iterate.Get();
                         
