@@ -457,7 +457,6 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, si
 
 		//Set the number of itk threads based on the number of OpenMP threads
 		laplacian->SetNumberOfThreads(num_itk_threads);
-		std::cout << "Number of itk threads: " << laplacian->GetNumberOfThreads() << std::endl;
 		
 		//  Finally the pipeline is executed by invoking the \code{Update()} method.
 		//
