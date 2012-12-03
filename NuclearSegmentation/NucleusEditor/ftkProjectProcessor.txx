@@ -134,7 +134,9 @@ template <typename InputPixelType, typename LabelPixelType>  void
 	if(!numThreadsSet) n_thr = 0.95*omp_get_max_threads();
 	itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 	std::cout<<"Using "<<n_thr<<" threads\n"<<std::flush;
+#if _OPENMP > 200805L
 	omp_set_max_active_levels(1);
+#endif
 	#pragma omp parallel for num_threads(n_thr)
 #if _OPENMP > 200805L
 	for( LabelPixelType i=0; i<labelsList.size(); ++i )
