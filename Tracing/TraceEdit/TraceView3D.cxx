@@ -3306,7 +3306,7 @@ void View3D::createSomaSliders()
 	this->addToolBarBreak(Qt::BottomToolBarArea);
 	this->SomaOpacitySpin = new QSpinBox(this);
 	this->SomaOpacitySpin->setObjectName("SomaOpacitySpin");
-	this->SomaOpacitySpin->setRange(0,250);
+	this->SomaOpacitySpin->setRange(0,255);
 
 	this->SomaOpacityValueSpin = new QDoubleSpinBox(this);
 	this->SomaOpacityValueSpin->setObjectName("SomaOpacityValueSpin");
@@ -3318,7 +3318,7 @@ void View3D::createSomaSliders()
 
 	this->SomaOpacitySlider = new QSlider(Qt::Horizontal);
 	this->SomaOpacitySlider->setObjectName("SomaOpacitySlider");
-	this->SomaOpacitySlider->setRange(0,250);
+	this->SomaOpacitySlider->setRange(0,255);
 	this->SomaOpacitySlider->setSingleStep(1);
 	this->SomaOpacitySlider->setTickInterval(5);
 	this->SomaOpacitySlider->setTickPosition(QSlider::TicksAbove);
@@ -3331,7 +3331,7 @@ void View3D::createSomaSliders()
 	//functions to control soma Brightness
 	this->SomaBrightnessSpin = new QSpinBox(this);
 	this->SomaBrightnessSpin->setObjectName("SomaBrightnessSpin");
-	this->SomaBrightnessSpin->setRange(0,250);
+	this->SomaBrightnessSpin->setRange(0,255);
 
 	this->SomaBrightnessSlider = new QSlider(Qt::Horizontal);
 	this->SomaBrightnessSlider->setObjectName("SomaBrightnessSlider");
@@ -3386,7 +3386,7 @@ void View3D::createRayCastSliders()
 	//functions to control raycast opacity 
 	this->OpacitySpin = new QSpinBox(this);
 	this->OpacitySpin->setObjectName("OpacitySpin");
-	this->OpacitySpin->setRange(0,250);
+	this->OpacitySpin->setRange(0,255);
 
 	this->OpacityValueSpin = new QDoubleSpinBox(this);
 	this->OpacityValueSpin->setObjectName("OpacityValueSpin");
@@ -3398,7 +3398,7 @@ void View3D::createRayCastSliders()
 
 	this->OpacitySlider = new QSlider(Qt::Horizontal);
 	this->OpacitySlider->setObjectName("OpacitySlider");
-	this->OpacitySlider->setRange(0,250);
+	this->OpacitySlider->setRange(0,255);
 	this->OpacitySlider->setSingleStep(1);
 	this->OpacitySlider->setTickInterval(5);
 	this->OpacitySlider->setTickPosition(QSlider::TicksAbove);
@@ -3411,7 +3411,7 @@ void View3D::createRayCastSliders()
 	//functions to control raycast Brightness
 	this->BrightnessSpin = new QSpinBox(this);
 	this->BrightnessSpin->setObjectName("BrightnessSpin");
-	this->BrightnessSpin->setRange(0,250);
+	this->BrightnessSpin->setRange(0,255);
 
 	this->BrightnessSlider = new QSlider(Qt::Horizontal);
 	this->BrightnessSlider->setObjectName("BrightnessSlider");

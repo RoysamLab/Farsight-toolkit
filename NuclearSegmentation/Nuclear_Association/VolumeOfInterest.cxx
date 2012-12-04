@@ -124,7 +124,7 @@ void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 
 	vtkSmartPointer<vtkUnsignedCharArray> colorArray = vtkSmartPointer<vtkUnsignedCharArray>::New();
 	colorArray->SetNumberOfComponents(3);
-	unsigned char color[3] = {255,255,250};
+	unsigned char color[3] = {255,255,255};
 	ContourFilter->Update();
 	for (vtkIdType count = 0; count < ContourFilter->GetOutput()->GetNumberOfCells(); count++)
 	{

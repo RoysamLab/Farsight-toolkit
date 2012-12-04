@@ -289,15 +289,15 @@ void ImageRenderActors::syncSomaColorTransferFunction() //works when raycast mod
 	double r, g ,b;
 	if (somaColorValue < 0.5)
 	{
-		r = (1-(somaColorValue/0.5))*this->somaBrightness/250.0;
-		g = (somaColorValue/0.5)*this->somaBrightness/250.0;
+		r = (1-(somaColorValue/0.5))*this->somaBrightness/255.0;
+		g = (somaColorValue/0.5)*this->somaBrightness/255.0;
 		b = 0;
 	}
 	else
 	{
 		r = 0;
-		g = (1-(somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
-		b = ((somaColorValue-0.5)/0.5)*this->somaBrightness/250.0;
+		g = (1-(somaColorValue-0.5)/0.5)*this->somaBrightness/255.0;
+		b = ((somaColorValue-0.5)/0.5)*this->somaBrightness/255.0;
 	}
 	colorTransferFunctionSoma->AddRGBPoint(0, r, g, b);
 
