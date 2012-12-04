@@ -52,21 +52,31 @@ void MicrogliaRegionTracer::SetAnchorImage(const std::string & anchor_image_file
 
 void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filename)
 {
+	std::cout << "Opening centroid file named: " << seedpoints_filename << std::endl;
+
 	std::ifstream seed_point_file;
 	seed_point_file.open(seedpoints_filename.c_str());
 
-	itk::uint64_t cellX, cellY, cellZ;
+	float cellX, cellY, cellZ;
 	itk::uint64_t num_seed_points = 0;
-	while (seed_point_file >> cellX >> cellY >> cellZ)
-	{	
-		Cell cell(cellX, cellY, cellZ, aspect_ratio);
-		this->cells.push_back(cell);
-		++num_seed_points;
-	}
-	std::cout << "Number of seed points read: " << num_seed_points << std::endl;
+	if (seed_point_file.is_open())
+	{
+		while (seed_point_file >> cellX >> cellY >> cellZ)
+		{	
+			Cell cell(cellX, cellY, cellZ, aspect_ratio);
+			this->cells.push_back(cell);
+			++num_seed_points;
+		}
 
-	if (num_seed_points == 0)
-		throw std::runtime_error("Error, you probably didn't supply a correct seed point file");
+		if (num_seed_points == 0)
+			throw std::runtime_error("Error, you probably didn't supply a correct seed point file");
+
+		std::cout << "Number of seed points read: " << num_seed_points << std::endl;
+	}
+	else
+	{
+		std::cerr << "Error opening centroid file: " << seedpoints_filename << std::endl;
+	}	
 }
 
 void MicrogliaRegionTracer::SetSomaImage(const std::string & soma_image_filename)
@@ -171,7 +181,7 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
 {
     itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
     
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
     {
         int global_thread_num = group_num * num_threads + local_thread_num;
