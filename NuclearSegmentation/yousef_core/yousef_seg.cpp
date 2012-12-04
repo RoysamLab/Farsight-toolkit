@@ -43,6 +43,8 @@ yousef_nucleus_seg::yousef_nucleus_seg()
 	//int numStacks = 0;
 	//int numRows = 0;
 	//int numColumns = 0;		
+	
+	this->useDistMap = 0;	
 
 	autoParamEstimation = false;
 }
