@@ -10,7 +10,7 @@ LoG::LoGImageType::Pointer LoG::RunLoG(const ImageType::Pointer & image, float s
 {
 	
 	typedef itk::LaplacianRecursiveGaussianImageFilter< ImageType , LoGImageType> LoGFilterType;
-	LoGFilterType::Pointer LoGFilter = LoGFilterType::New();
+    LoGFilterType::Pointer LoGFilter = LoGFilterType::New();    
 	LoGFilter->SetInput( image );
 	LoGFilter->SetNormalizeAcrossScale(true);
 	LoGFilter->SetSigma( scale );

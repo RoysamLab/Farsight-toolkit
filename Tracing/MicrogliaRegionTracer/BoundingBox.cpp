@@ -44,7 +44,7 @@ std::ostream & operator<< (std::ostream & lhs, const BoundingBox & rhs)
 {
     // Print the data members of rightOp using leftOp like you would using cout
     
-    lhs << "X: [" << rhs.GetMinX() << ", " << rhs.GetMaxX() << " Y: [" << rhs.GetMinY() << ", " << rhs.GetMaxY() << " Z: [" << rhs.GetMinZ() << ", " << rhs.GetMaxZ() << "]";
+    lhs << "X: [" << rhs.GetMinX() << ", " << rhs.GetMaxX() << "] Y: [" << rhs.GetMinY() << ", " << rhs.GetMaxY() << "] Z: [" << rhs.GetMinZ() << ", " << rhs.GetMaxZ() << "]";
     
     return lhs;
 }

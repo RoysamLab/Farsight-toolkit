@@ -337,12 +337,12 @@ void Cell::CreateIsotropicImage()
 {
 	ImageType::SizeType inputSize = this->image->GetLargestPossibleRegion().GetSize();
 	ImageType::SizeType outputSize = inputSize;
-	outputSize[2] = outputSize[2] * 1/aspect_ratio;
+	outputSize[2] = outputSize[2] * 1/this->aspect_ratio;
 
 	ImageType::SpacingType outputSpacing;
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
-	outputSpacing[2] = aspect_ratio;
+	outputSpacing[2] = this->aspect_ratio;
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
@@ -357,7 +357,7 @@ void Cell::CreateIsotropicImage()
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
+		std::cerr << "CreateIsotropicImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
 
@@ -408,7 +408,7 @@ void Cell::CreateLoGImage()
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
+		std::cerr << "CreateLoGImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
 
@@ -472,7 +472,7 @@ void Cell::CreateVesselnessImage()
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "resample_filter exception: " << err << std::endl;
+		std::cerr << "CreateVesselnessImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
 

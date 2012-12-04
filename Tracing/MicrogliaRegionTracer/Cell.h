@@ -20,7 +20,7 @@
 class Cell
 {
 public:
-	typedef	unsigned char								InputPixelType;
+	typedef	unsigned short								InputPixelType;
 	typedef fregl_roi< InputPixelType >::ImageType		ImageType;
     
 	typedef itk::Image< float, 3 >						LoGImageType;

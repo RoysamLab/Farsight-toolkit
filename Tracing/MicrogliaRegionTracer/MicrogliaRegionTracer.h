@@ -35,6 +35,8 @@ private:
 	std::string anchor_image_filename;
 	std::string soma_image_filename;
 	double aspect_ratio;
+    
+    bool aspect_ratio_is_set;
 
 public:
 	explicit MicrogliaRegionTracer();
@@ -45,7 +47,7 @@ public:
 	void				SetAnchorImage(const std::string & anchor_image_filename);
 	void				LoadSeedPoints(const std::string & seedpoints_filename);
 	void				SetSomaImage(const std::string & soma_image_filename);
-	void				SetAspectRatio(const float & aspect_ratio);
+	void				SetAspectRatio(const float aspect_ratio);
 
 	void				Trace();
     

@@ -24,7 +24,8 @@
 double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
 
 
-MicrogliaRegionTracer::MicrogliaRegionTracer()
+MicrogliaRegionTracer::MicrogliaRegionTracer() :
+    aspect_ratio_is_set(false)
 {
 #ifdef _OPENMP
 	std::cerr << "OpenMP detected!" << std::endl;
@@ -52,7 +53,10 @@ void MicrogliaRegionTracer::SetAnchorImage(const std::string & anchor_image_file
 
 void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filename)
 {
-	std::cout << "Opening centroid file named: " << seedpoints_filename << std::endl;
+	if (!aspect_ratio_is_set)
+        throw std::runtime_error("The aspect ratio must be set before attemping to load the seed points");
+    
+    std::cout << "Opening centroid file named: " << seedpoints_filename << std::endl;
 
 	std::ifstream seed_point_file;
 	seed_point_file.open(seedpoints_filename.c_str());
@@ -84,9 +88,10 @@ void MicrogliaRegionTracer::SetSomaImage(const std::string & soma_image_filename
 	this->soma_image_filename = soma_image_filename;
 }
 
-void MicrogliaRegionTracer::SetAspectRatio(const float & aspect_ratio)
-{
-	this->aspect_ratio = aspect_ratio;
+void MicrogliaRegionTracer::SetAspectRatio(const float aspect_ratio)
+{	
+    this->aspect_ratio = aspect_ratio;
+    this->aspect_ratio_is_set = true;
 }
 
 /* This is the main loop where tracing takes place */

@@ -9,22 +9,24 @@ int main(int argc, char* argv[])
 	
 	if (argc == 1)	//Only for development purposes
 	{		
-		MRT.SetJointTransformsFile("E:/Farsight_Images/MicrogliaRegionTracer/GFP/joint_transforms.xml");
-		MRT.SetImageSeriesPath("E:/Farsight_Images/MicrogliaRegionTracer/GFP/");
-		MRT.SetAnchorImage("8bitkt06045_w311GFPdsu.TIF");
-		MRT.SetSomaImage("E:/Farsight_Images/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
-				
+		MRT.SetJointTransformsFile("/Users/hocheung20/MicrogliaRegionTracer/GFP/joint_transforms.xml");
+		MRT.SetImageSeriesPath("/Users/hocheung20/MicrogliaRegionTracer/GFP/");
+		MRT.SetAnchorImage("kt01348_w311GFPdsu.TIF");
+		//MRT.SetSomaImage("/Users/hocheung20/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+		MRT.SetAspectRatio(3.0);
+		
 		try
 		{
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-			MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
 			//MRT.LoadSeedPoints("E:/farsight_images/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
 			//MRT.LoadSeedPoints("E:/Farsight_Images/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
+            MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/DAPI/single_soma_centroid.txt");
 		}
 		catch (std::exception & e)
 		{
@@ -32,7 +34,6 @@ int main(int argc, char* argv[])
 			std::cerr << e.what() << std::endl;
 			return -1;
 		}
-		MRT.SetAspectRatio(3.0);
 	}
 	else if( argc < 6 )
 	{
