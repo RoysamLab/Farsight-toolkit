@@ -394,6 +394,7 @@ int detect_seeds(itk::SmartPointer<MyInputImageType> im, int r, int c, int z,con
 int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, size_t z, int rmin, int rmax, int cmin, int cmax, int zmin, int zmax,const double sigma_min, double sigma_max, float* IMG, int sampl_ratio, unsigned short* dImg, int* minIMout, int UseDistMap)
 {
 
+    std::cout << "UseDistMap: " << UseDistMap << std::endl;
 	//  Types should be selected on the desired input and output pixel types.
 	typedef    float     OutputPixelType;
 	//  The input and output image types are instantiated using the pixel types.
@@ -423,10 +424,10 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, si
 	int num_openmp_threads = std::min(num_scales, num_procs);
 	int num_itk_threads = std::ceil((float)num_procs / num_openmp_threads);
 
-	std::cout << "Thread settings for multiScaleLog():" << std::endl;
-	std::cout << "Number of scales: " << num_scales << std::endl;
-	std::cout << "Number of OpenMP threads: " << num_openmp_threads << std::endl; 
-	std::cout << "Number of ITK threads " << num_itk_threads << std::endl;
+	std::cout << "Thread settings for multiScaleLog()" << std::endl;
+	std::cout << "Number of scales: "			<< num_scales << std::endl;
+	std::cout << "Number of OpenMP threads: "	<< num_openmp_threads << std::endl; 
+	std::cout << "Number of ITK threads: "		<< num_itk_threads << std::endl;
 
 	#pragma omp parallel for firstprivate(im)
 	for(int i = sigma_max - sigma_min; i >= 0; i--)
@@ -487,7 +488,7 @@ int multiScaleLoG(itk::SmartPointer<MyInputImageType> im, size_t r, size_t c, si
                         size_t image_index = k1 * r * c + i1 * c + j1;
                         float log_response = iterate.Get();
                         
-                        if(sigma <= dImg[image_index] / 100)
+                        if (sigma == sigma_min || sigma <= dImg[image_index] / 100)
                         {
                             #pragma omp critical
                             {
