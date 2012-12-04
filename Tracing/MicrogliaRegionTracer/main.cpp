@@ -46,7 +46,17 @@ int main(int argc, char* argv[])
 			<< std::endl;
 		return 1;
 	}
-    else //( argc >= 6 )
+    else if ( argc == 6 )
+	{
+		std::string mask_image;
+        mask_image = argv[5];
+		MRT.SetJointTransformsFile(argv[1]);
+		MRT.SetImageSeriesPath(argv[2]);
+		MRT.SetAnchorImage(argv[3]);
+		MRT.LoadSeedPoints(argv[4]);
+		MRT.SetAspectRatio(atof(argv[5]));
+	}
+	else
 	{
 		std::string mask_image;
         mask_image = argv[5];
