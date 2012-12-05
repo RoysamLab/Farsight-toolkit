@@ -1681,9 +1681,9 @@ void NucleusEditor::loadProject()
 		this->updateNucSeg();
 		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
 		// this next 3 lines are temporary until we figure out how to remove compute all geometries from updateNucSeg
-		table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
-		CreateNewTableWindow();
-		CreateNewPlotWindow();
+		//table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+		//CreateNewTableWindow();
+		//CreateNewPlotWindow();
 	}
 
 	if(projectFiles.table != "" && projectFiles.type!="multi")

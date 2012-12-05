@@ -529,10 +529,6 @@ bool ProjectProcessor::SegmentCytoplasm(int cytChannel, int memChannel)
 		delete iCalc;
 	}
 
-	FTKgraph* CellRAG = new FTKgraph();
-	CellAdjTable = CellRAG->AdjacencyGraph_All(inputImage->GetItkPtr<IPixelT>(0,cytChannel), outputImage->GetItkPtr<LPixelT>(0,1), true);
-
-
 	std::cout << "Done: Intrisic features for the whole cell\n";
 
 	resultIsEditable = false;
