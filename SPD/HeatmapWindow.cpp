@@ -2681,6 +2681,7 @@ void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> sel
 	this->clusflag = true;
 	double** datas;
 	vtkVariant temp; 
+	int nFeature = selOrder.size() + unselOrder.size();
 
 	datas = new double*[this->table->GetNumberOfRows()];
 
@@ -2689,13 +2690,12 @@ void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> sel
 
 	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 	{
-		datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
-		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		datas[i] = new double[nFeature + 2 ];
+		for(int j = 1; j <= nFeature; j++)
 		{
 			vtkVariant temp = this->table->GetValue(i, j);
 			datas[i][j-1] = temp.ToDouble();
 		}
-
 	}
 
 	int* optimalleaforder1 = new int[this->table->GetNumberOfRows()];
@@ -2704,7 +2704,7 @@ void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> sel
 		optimalleaforder1[i] = sampleOrder[i];
 	}
 	
-	int* optimalleaforder2 = new int[this->table->GetNumberOfColumns() - 1];
+	int* optimalleaforder2 = new int[ nFeature];
 	int counter = 0;
 	for(int i = 0; i < selOrder.size(); i++)
 	{
@@ -2716,7 +2716,7 @@ void Heatmap::runClusforSPD(std::vector< int> sampleOrder, std::vector< int> sel
 		optimalleaforder2[i + counter] = unselOrder[i];
 	}
 
-	this->setDataForHeatmap( datas, optimalleaforder1, optimalleaforder2, this->table->GetNumberOfRows(), this->table->GetNumberOfColumns() - 1);
+	this->setDataForHeatmap( datas, optimalleaforder1, optimalleaforder2, this->table->GetNumberOfRows(), nFeature);
 	//this->setDataForDendrograms();
 	this->creatDataForHeatmap(POWER_PARAM);
 	

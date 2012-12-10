@@ -73,11 +73,12 @@ public:
 
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
+    vtkSmartPointer<vtkTable> GenerateSubGraph( vnl_matrix<double> &mat, std::vector< std::vector< long int> > &clusIndex, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
 	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void RunEMDAnalysis();
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
-	void GetClusClusData(clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
+	void GetClusClusData(clusclus* c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
@@ -102,7 +103,7 @@ public:
 	void GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold);
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
 	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
-				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
+				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder, int maxId);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
 	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 	vtkSmartPointer<vtkTable> GetTableForHist(std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
@@ -165,6 +166,7 @@ protected:
 
 	double ComputeModuleDistanceAndConnection(vnl_matrix<double> &mati, vnl_matrix<double> &matj, int &rowi, int &rowj);
 	void GetAverageVec(vnl_matrix<double> &mat, vnl_vector<double> &vec);
+        bool IsConnected(std::multimap<int, int> &neighborGraph, std::vector<long int> &index1, std::vector<long int> &index2);
 
 	/// for multi-level demo
 	bool RunSPDforFeatureDistributionTable(std::string fileName);

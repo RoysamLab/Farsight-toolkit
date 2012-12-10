@@ -70,19 +70,29 @@ ProgressionHeatmap::~ProgressionHeatmap()
 	}
 
 	if(this->Optimal_Leaf_Order1)
+	{
 		delete this->Optimal_Leaf_Order1;
+		this->Optimal_Leaf_Order1 = NULL;
+	}
 	if(this->Optimal_Leaf_Order2)
+	{
 		delete this->Optimal_Leaf_Order2;
+		this->Optimal_Leaf_Order2 = NULL;
+	}
 
 	if(this->connect_Data_Tree1)
-		for(int i = 0; i<this->num_samples - 1; i++)
-			delete this->connect_Data_Tree1[i];
-	delete this->connect_Data_Tree1;
+	{
+			for(int i = 0; i<this->num_samples - 1; i++)
+				delete this->connect_Data_Tree1[i];
+		delete this->connect_Data_Tree1;
+	}
 
 	if(this->connect_Data_Tree2)
-		for(int i = 0; i<this->num_features - 1; i++)
-			delete this->connect_Data_Tree2[i];
-	delete this->connect_Data_Tree2;
+	{
+			for(int i = 0; i<this->num_features - 1; i++)
+				delete this->connect_Data_Tree2[i];
+		delete this->connect_Data_Tree2;
+	}
 }
 
 void ProgressionHeatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
@@ -246,8 +256,8 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 
 void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap()
 {
-	//const char* filename = "heatmapdata.txt";
-	//FILE *fp = fopen(filename,"w");
+	const char* filename = "heatmapdata.txt";
+	FILE *fp = fopen(filename,"w");
 	//for(int i=0; i<this->num_samples; i++)
 	//{
 	//	for(int j=0; j<this->num_features; j++)
@@ -275,13 +285,13 @@ void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap()
 		mapdata[i] = tempdata[Optimal_Leaf_Order1[i]]; 
 	}
 
-	//for(int i=0; i<this->num_samples; i++)
-	//{
-	//	for(int j=0; j<this->num_features; j++)
-	//		fprintf(fp,"%.4f\t",mapdata[i][j]);
-	//	fprintf(fp,"\n");
-	//}
-	//fclose(fp);
+	for(int i=0; i<this->num_samples; i++)
+	{
+		for(int j=0; j<this->num_features; j++)
+			fprintf(fp,"%.4f\t",mapdata[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
 }
 
 void ProgressionHeatmap::scaleData()

@@ -705,25 +705,25 @@ void SPDWindowForNewSelection::regenerateProgressionTree()
 	SPDModel->GetPercentage(sampleIndex, sampleVec);
 	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, distanceThres->value());
 
-	std::vector<int> clusterNum;
+	//std::vector<int> clusterNum;
 	//this->HeatmapWin->GetSubTreeClusterNum(clusterNum);   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
-	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+	//vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
 
-	this->graph->setModels(averageClusterTable, ClusterSelections);
+	//this->graph->setModels(averageClusterTable, ClusterSelections);
 
-	std::vector<std::string> headers;
-	SPDModel->GetTableHeaders( headers);
-	this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sizeVec, &sampleVec, &percentVec);
+	//std::vector<std::string> headers;
+	//SPDModel->GetTableHeaders( headers);
+	//this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &sizeVec, &sampleVec, &percentVec);
 
-	try
-	{
-		this->graph->ShowGraphWindow();
-	}
-	catch(...)
-	{
-		std::cout<< "Graph window error!"<<endl;
-	}
+	//try
+	//{
+	//	this->graph->ShowGraphWindow();
+	//}
+	//catch(...)
+	//{
+	//	std::cout<< "Graph window error!"<<endl;
+	//}
 }
 
 void SPDWindowForNewSelection::ReColorProgressionTree(int nfeature)
@@ -810,9 +810,10 @@ void SPDWindowForNewSelection::showProgressionHeatmap()
 	}
 
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
+	int maxId = this->maxVetexIdEdit->value();
 
 	// module feature and percentage plot
-	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, sampleVec, percentVec, selOrder, unselOrder);
+	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, sampleVec, percentVec, selOrder, unselOrder, maxId);
 	if( plot)
 	{
 		delete plot;

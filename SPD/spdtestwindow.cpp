@@ -377,7 +377,7 @@ void SPDtestWindow::clusterFunction()
 	
 	try
 	{
-		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), atof(clusterCor.c_str()));
+		this->SPDModel->ClusterAgglomerate( atof(clusterCor.c_str()), 0.9);
 		//showHeatmapAfterFeatureClustering();
 	}
 	catch(...)
@@ -477,11 +477,12 @@ void SPDtestWindow::showPSM()
 
 	clusclus *clus1 = new clusclus();
 	clusclus *clus2 = new clusclus();
+
 	std::vector< unsigned int> moduleIDs;
 	if( SPDModel->GetProgressionType())
 	{
 //#if MSTSPD
-		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+		this->SPDModel->GetClusClusData(clus1, atof(emdThres.c_str()), &moduleIDs);
 //#else
 //		
 //		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
@@ -503,26 +504,23 @@ void SPDtestWindow::showPSM()
 	else
 	{
 //#if MSTSPD
-		this->SPDModel->GetClusClusData(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
+		this->SPDModel->GetClusClusData(clus1, atof(emdThres.c_str()), &moduleIDs);
 //#else
 //
 //		this->SPDModel->GetClusClusDataForCorMatrix(clus1, clus2, atof(emdThres.c_str()), &moduleIDs);
 //#endif
 		optimalleaforder.set_size(clus1->num_samples);
-
-
+		clus2->optimalleaforder = new int[clus1->num_samples];
+		clus2->num_samples = clus1->num_samples;
 		for( int i = 0; i < clus1->num_samples; i++)
 		{
 			optimalleaforder[i] = clus1->optimalleaforder[i];
+			clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
 		}
 
 		//for( int i = 0; i < clus1->num_samples; i++)
 		//{
 		//	clus1->optimalleaforder[i] = i;
-		//}
-		//for( int i = 0; i < clus2->num_samples; i++)
-		//{
-		//	clus2->optimalleaforder[i] = i;
 		//}
 
 		this->simHeatmap->setModels();
@@ -531,7 +529,6 @@ void SPDtestWindow::showPSM()
 		this->simHeatmap->showSimilarMatrixGraph();
 	}
 	delete clus1;
-	delete clus2;
 }
 
 void SPDtestWindow::viewProgression()
@@ -722,11 +719,13 @@ void SPDtestWindow::regenerateProgressionTree()
 		selection->clear();
 		std::vector< std::vector< long int> > sampleIndex;
 		selection->GetSampleIndex( sampleIndex);
-		
+        std::vector< std::vector< long int> > clusIndex;
+        selection->GetClusterIndex( clusIndex);
+
 		vnl_matrix<double> clusAverageMat;
 		std::vector< double> colorVec;
 		std::vector< double> percentVec;
-		SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
+        SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
 
 		int maxId = this->maxVetexIdEdit->value();
 		SPDModel->SetMaxVertexID(maxId);
@@ -738,6 +737,7 @@ void SPDtestWindow::regenerateProgressionTree()
 		this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
 		//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selFeatureID);
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+        //vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateSubGraph( clusAverageMat, clusIndex, selFeatureID, clusterNum);
 
 		/** graph window set models */
 		std::vector<int> index;
@@ -749,6 +749,7 @@ void SPDtestWindow::regenerateProgressionTree()
 		std::vector<std::string> headers;
 		SPDModel->GetTableHeaders( headers);
 		this->graph->SetTreeTable( newtable, headers[0], headers[1], headers[2], &colorVec, &percentVec);
+		//this->graph->SetGraphTableToPassThrough( newtable, sampleIndex.size(), headers[0], headers[1], headers[2], &colorVec, &percentVec);
 		try
 		{
 			this->graph->ShowGraphWindow();
@@ -880,8 +881,10 @@ void SPDtestWindow::showProgressionHeatmap()
 	std::string distanceThres = this->distanceThres->text().toStdString();
 	SPDModel->GetPercentage(sampleIndex, percentageOfSamples);
 	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentageOfNearDeviceSamples, atof(distanceThres.c_str()));
-	
-	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, percentageOfSamples, percentageOfNearDeviceSamples, selOrder, unselOrder);
+	int maxId = this->maxVetexIdEdit->value();
+	std::cout<< "Max Id: "<< maxId<<std::endl;
+
+	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, percentageOfSamples, percentageOfNearDeviceSamples, selOrder, unselOrder, maxId);
 	if( plot)
 	{
 		delete plot;
