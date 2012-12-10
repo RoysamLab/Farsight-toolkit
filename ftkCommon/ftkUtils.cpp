@@ -25,6 +25,7 @@ limitations under the License.
 #pragma warning(disable : 4996)
 #endif
 #include "ftkUtils.h"
+#include <sstream>
 
 namespace ftk
 {
@@ -164,6 +165,7 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	/**Creates the vtk table header information to reference the columns by*/
 	inFile.getline(line, MAXLINESIZE);
 	char * pch = strtok (line," \t");
+	int ct = 0;
 	//int i = 0;
 	//std::stringstream ss;
 	while (pch != NULL)
@@ -178,8 +180,10 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 		//column->SetName( ss.str().c_str());
 		//ss.str("");
 		table->AddColumn(column);
+		ct++;
 		pch = strtok (NULL, " \t");
 	}
+	std::cout<< "Column: "<<ct<<std::endl;
 
 	//!LOAD THE DATA:
 	/*!
@@ -201,6 +205,68 @@ vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 	}
 	inFile.close();
 	
+	return table;
+}
+
+vtkSmartPointer<vtkTable> LoadRotatedTable(std::string filename)
+{
+	/*!
+	*	Read a tab deliminated text file and create a vtkTable
+	*/
+	if( !FileExists(filename.c_str()) )
+		return NULL;
+
+	const int MAXLINESIZE = 102400;	//Numbers could be in scientific notation in this file
+	char line[MAXLINESIZE];
+
+	//Open the file:
+	ifstream inFile; 
+	inFile.open( filename.c_str());
+	if ( !inFile.is_open() )
+		return NULL;
+
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();	
+	int ct = 0;
+	while ( !inFile.eof() ) //Get all values
+	{
+		inFile.getline(line, MAXLINESIZE);
+		char * pch = strtok (line," \t");
+
+		if( pch != NULL)
+		{
+			vtkSmartPointer<vtkVariantArray> column = vtkSmartPointer<vtkVariantArray>::New();
+			std::string col_name = pch;
+			if( col_name == "#N/A" )
+			{
+				std::stringstream out;
+				out<< ct;
+				col_name += out.str();
+			}
+
+			column->SetName( col_name.c_str() );
+			pch = strtok (NULL, " \t");
+			while (pch != NULL)
+			{
+				column->InsertNextValue(vtkVariant( atof(pch)));
+				pch = strtok (NULL, " \t");
+			}
+
+			table->AddColumn(column);
+			ct++;
+
+			if( ct % 100 == 0)
+			{
+				std::cout<< ct<<"\t";
+			}
+		}
+		else
+		{
+			break;
+		}	
+	}
+
+	inFile.close();
+	std::cout<< std::endl<< "LoadRotatedTable: "<<table->GetNumberOfRows()<<"\t"<< table->GetNumberOfColumns()<<endl;
 	return table;
 }
 

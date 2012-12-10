@@ -52,6 +52,7 @@ bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image,std::
 bool SaveLabelSeries(std::string seriesfilename, ftk::Image::Pointer image,std::string path);
 
 vtkSmartPointer<vtkTable> LoadTable(std::string filename);
+vtkSmartPointer<vtkTable> LoadRotatedTable(std::string filename);
 vtkSmartPointer<vtkTable> LoadXYZTable(std::string filename);
 vtkSmartPointer<vtkTable> AppendLoadTable(std::string filename, vtkSmartPointer<vtkTable> table , double tx, double ty, double tz);
 bool SaveXMLImage(std::string filename, ftk::Image::Pointer image);
