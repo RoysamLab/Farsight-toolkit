@@ -20,6 +20,7 @@
 #include <vtkCellPicker.h>
 #include <vtkScalarBarActor.h>
 #include <vtkTextProperty.h>
+#include <vtkForceDirectedLayoutStrategy.h>
 #include <QMessageBox>
 #include <QInputDialog>
 #include <fstream>
@@ -38,6 +39,7 @@ static double selectColor[3]={0,1,0};
 static double progressionPathColor[3] = {1,0,0};
 static double edgeDefaultColor[3] = {0.6, 0.6, 0.6};
 
+#define ROUND(X)(int)(X+0.5)
 GraphWindow::GraphWindow(QWidget *parent)
 : QMainWindow(parent)
 {
@@ -588,6 +590,737 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	this->view->SetVertexLabelFontSize(15);
 }
 
+bool GraphWindow::FindCycle(vnl_matrix<unsigned char> &adjacent_matrix, std::vector< std::list<int> > &cycleList, std::vector<int> &seperatePts)  
+{  
+	bool bCycles = false;
+	cycleList.clear();
+	unsigned int maxNeighborNum = 0;
+	int startingnode = 0;
+	for( int i = 0; i < adjacent_matrix.rows(); i++)
+	{
+		vnl_vector< unsigned char> rowi = adjacent_matrix.get_row(i);
+		if( rowi.sum() > maxNeighborNum)
+		{
+			maxNeighborNum = rowi.sum();
+			startingnode = i;
+		}
+	}
+
+	std::vector< std::list<int> > cycleNodeLongest;
+	cycleNodeLongest.resize(adjacent_matrix.rows());
+
+	std::list<int> cycleNode;
+	cycleNode.push_back(startingnode); // starting point
+	std::set<int> path;
+	path.insert(startingnode);  // set node 0 as the starting point
+    SearchCycles(adjacent_matrix, cycleNode, startingnode, -1, path, cycleNodeLongest);
+
+	for( int i = 0; i < cycleNodeLongest.size(); i++)
+	{
+		if( cycleNodeLongest[i].size() > 0)
+		{  
+			bCycles = true;  
+			cycleList.push_back(cycleNodeLongest[i]);
+		}  
+		else
+		{
+			seperatePts.push_back(i);
+		}
+	}
+ 
+    return bCycles;  
+}  
+  
+void GraphWindow::SearchCycles(vnl_matrix<unsigned char> &adjacent_matrix, std::list<int> &cycleNode, int i, int preNode, std::set<int> &path, std::vector< std::list<int> >&cycleLongest)
+{  
+	if( cycleNode.size() <= 4)
+	{
+		std::list<int>::iterator iter = cycleNode.begin();
+		for(; iter != cycleNode.end(); iter++)
+		{
+			std::cout<< *iter<<"\t";
+		}
+		std::cout<< std::endl;
+	}
+
+    for (int j = 0; j < adjacent_matrix.rows(); ++j)   
+    {  
+        if ( adjacent_matrix[i][j] == 1 && j != preNode)  // not going backward or form small loop
+        {  
+			if( path.find(j) == path.end())  
+			{  
+				path.insert(j);
+				cycleNode.push_back(j);
+				SearchCycles(adjacent_matrix, cycleNode, j, i, path, cycleLongest);
+				std::set<int>::iterator iter = path.find(j);
+				path.erase(iter);
+				cycleNode.pop_back();
+			}  
+			else
+			{  
+				int cycleSize = path.size() + 1;
+				std::list<int>::iterator iter = cycleNode.begin();
+				int oriNode = *iter;
+				if( oriNode == j)  // the circle belongs to every node on the circle
+				{
+					for(; iter != cycleNode.end(); iter++)
+					{
+						int node = *iter;
+						if(cycleSize > cycleLongest[node].size())
+						{
+							cycleLongest[node].clear();
+							std::list<int>::iterator iter2 = cycleNode.begin();
+							for(; iter2 != cycleNode.end(); iter2++)
+							{
+								cycleLongest[node].push_back(*iter2);
+							}
+							cycleLongest[node].push_back(j);
+						}
+					}
+				}
+				else
+				{
+					for(iter = cycleNode.begin(); iter != cycleNode.end(); iter++)
+					{
+						if(cycleSize <= cycleLongest[j].size())
+						{
+							break;
+						}
+						if(*iter == j)
+						{
+							cycleLongest[j].clear();
+							for(; iter != cycleNode.end(); iter++)
+							{
+								cycleLongest[j].push_back(*iter);
+							}
+							cycleLongest[j].push_back(j);
+							break;
+						}
+						cycleSize--;
+					}
+				}
+			}  
+        }  
+    }  
+}  
+
+template<class T>
+vnl_vector< T > GraphWindow::VectorAnd(vnl_vector< T > const &v, vnl_vector< T > const &u)
+{
+	vnl_vector< T> vu(v.size());
+	for( unsigned int i = 0; i < v.size(); i++)
+	{
+		vu[i] = v[i] & u[i];
+	}
+	return vu;
+}
+
+template<class T>
+vnl_vector< T > GraphWindow::VectorOr(vnl_vector< T > const &v, vnl_vector< T > const &u)
+{
+	vnl_vector< T> vu(v.size());
+	for( unsigned int i = 0; i < v.size(); i++)
+	{
+		vu[i] = v[i] | u[i];
+	}
+	return vu;
+}
+
+void GraphWindow::MergeCircles(std::list<int> &circle1, std::list<int> &circle2, vnl_vector<int> &commonNode, std::vector< std::list<int> > &leftCycleList)
+{
+	std::vector< std::list<int> > circleLine1;
+	BreakCircles(circle1, commonNode, circleLine1);
+	std::vector< std::list<int> > circleLine2;
+	BreakCircles(circle2, commonNode, circleLine2);
+	circle1.clear();
+	
+	for(int i = 0; i < circleLine1.size(); i++)
+	{
+		if( circleLine1[i].size() >= circleLine2[i].size())
+		{
+			std::list<int> line = circleLine1[i];
+			std::list<int>::iterator lineIter = line.begin();
+			for(; lineIter != line.end(); lineIter++)
+			{
+				if( lineIter != line.end())
+				{
+					circle1.push_back(*lineIter);
+				}
+			}
+			leftCycleList.push_back(circleLine2[i]);
+		}
+		else
+		{
+			std::list<int> line = circleLine2[i];
+			std::list<int>::iterator lineIter = line.begin();
+			for(; lineIter != line.end(); lineIter++)
+			{
+				if( lineIter != line.end())
+				{
+					circle1.push_back(*lineIter);
+				}
+			}
+			leftCycleList.push_back(circleLine1[i]);
+		}
+	}
+}
+
+void GraphWindow::BreakCircles(std::list<int> &circle, vnl_vector<int> &commonNode, std::vector< std::list<int> > &lines)   // have more than 2 common nodes in the middle
+{
+	std::cout<< commonNode<<std::endl;
+	lines.clear();
+	std::list<int> beginLine;  // if 0, then save as beginLine
+	std::list<int>::iterator iter = circle.begin();
+	int node = *iter;
+	
+	if( iter != circle.end() && commonNode[node] == 0)
+	{
+		while( commonNode[node] == 0)
+		{
+			beginLine.push_back(node);
+			iter++;
+			node = *iter;
+		}
+		beginLine.push_back(node);   // end pt
+	}
+
+	while( commonNode[*iter] == 1) // iter pts to 0
+	{
+		node = *iter;
+		iter++;
+	}
+
+	while( iter != circle.end())
+	{
+		std::list< int> midLine;
+		midLine.push_back(node);
+		while( iter != circle.end() && commonNode[*iter] == 0)
+		{
+			midLine.push_back( *iter);
+			iter++;
+		}
+
+		if( iter != circle.end())
+		{
+			midLine.push_back( *iter);   // last 1
+		}
+
+		while( iter != circle.end() && commonNode[*iter] == 1)
+		{
+			node = *iter;   // first 1
+			iter++;
+		}
+		lines.push_back(midLine);
+	}
+
+	if( beginLine.size() > 0)
+	{
+		std::list<int>::iterator beginIter = beginLine.begin();
+		int endInd = lines.size() - 1;
+		for(beginIter++; beginIter != beginLine.end(); beginIter++)
+		{
+			lines[endInd].push_back(*beginIter);
+		}
+	}
+}
+
+void GraphWindow::GetConnectedLines(vnl_vector<int> &circle1, std::list<int> &circle2, vnl_vector<int> &commonNode, std::vector< std::list<int> > &lineList)
+{
+	std::vector< std::list<int> > circleLine2;
+	BreakCircles(circle2, commonNode, circleLine2);  // only save the lines that have non-common nodes
+	lineList.clear();
+	for(int i = 0; i < circleLine2.size(); i++)
+	{
+		std::list<int> line = circleLine2[i];
+		std::list<int>::iterator iter = line.begin();
+		//iter++;
+		//int node = *iter;
+		//if( circle1[node] == 0)
+		//{
+			lineList.push_back( line);
+		//}
+	}
+}
+
+int GraphWindow::MergeCyclesToSuperNodes(vnl_matrix<unsigned char> &adj_matrix, std::vector< std::list<int> > &cycleList, std::vector< std::vector<std::list<int> > >&superNodeList, vnl_matrix<int> &superNodeConnection)
+{
+	// order the cycles according to the size
+	for( int i = 0; i < cycleList.size(); i++)
+	{
+		for( int j = i + 1; j < cycleList.size(); j++)
+		{
+			if( cycleList[i].size() < cycleList[j].size())
+			{
+				std::list<int> tmp = cycleList[j];
+				cycleList[j] = cycleList[i];
+				cycleList[i] = tmp;
+			}
+		}
+	}
+
+	std::vector< std::vector<std::list<int> > > superNodeLineList;
+	vnl_vector<int> tag(cycleList.size());
+	vnl_vector<int> merged_tag(cycleList.size());
+	merged_tag.fill(0);
+	vnl_matrix< int> SuperNodesSet( cycleList.size(), adj_matrix.cols());   // nodes in the super-node, info about cycleList
+	SuperNodesSet.fill(0);
+	for( int i = 0; i < cycleList.size(); i++)
+	{
+		tag[i] = i;  // merge status
+		std::list<int> iCycle = cycleList[i];
+		std::list<int>::iterator iter = iCycle.begin();
+		for( ; iter != iCycle.end(); iter++)
+		{
+			SuperNodesSet(i, *iter) = 1;
+		}
+	}
+
+    // only consider the same circle and overlapping problem
+	for(unsigned int i = 0; i < SuperNodesSet.rows(); i++)
+	{
+		std::vector< std::list<int> > lines;
+		if( tag[i] == i)  // if this circle is included by other circles, it cannot include other circles itself.
+		{
+			vnl_vector<int> rowi = SuperNodesSet.get_row(i);
+
+			for( unsigned int j = i + 1; j < SuperNodesSet.rows(); j++)
+			{
+				if( tag[j] == j)    
+				{
+					vnl_vector<int> rowj = SuperNodesSet.get_row(j);
+					vnl_vector<int> commonVec = VectorAnd<int>(rowi, rowj);
+					if( commonVec.sum() == rowj.sum())
+					{
+						tag[j] = -1;
+					}
+					else if( commonVec.sum() >= 2 && commonVec.sum() < rowj.sum())  // have at least two common nodes
+					{
+						tag[j] = i;  
+						merged_tag[j] = 1;  // this circle is broken into lines, merged with other circle
+						vnl_vector<int> orVec = VectorOr<int>(rowi, rowj);
+						std::vector< std::list<int> > tmplines;
+						GetConnectedLines(rowi, cycleList[j], commonVec, tmplines);
+						for(int k = 0; k < tmplines.size(); k++)
+						{
+							lines.push_back(tmplines[k]);
+						}
+					}
+				}
+			}
+		}
+		superNodeLineList.push_back(lines);
+	}
+	
+    // now consider the circle connection
+	superNodeList.clear();
+    std::vector< std::list<int> > newcycleList;
+    int countCycles = 0;
+
+	vnl_vector<int> adjust_num(tag.size());   // save for the circle id adjust excluding the overlapped circles.
+	adjust_num.fill(0);
+	int negCount = 0;
+	for( int ind = 0; ind < tag.size(); ind++)
+	{
+		if( tag[ind] >= 0 && merged_tag[ind] == 0)
+		{
+			countCycles++;
+			newcycleList.push_back(cycleList[ind]);   // these are non-overlapping circles
+			superNodeList.push_back( superNodeLineList[ind]);
+			adjust_num[ind] = negCount;
+		}
+		else
+		{
+			negCount++;
+			adjust_num[ind] = negCount;
+		}
+	}
+	cycleList = newcycleList;
+
+	superNodeConnection.set_size(countCycles, countCycles);
+	superNodeConnection.fill(-1);
+	for( unsigned int i = 0; i < SuperNodesSet.rows(); i++)
+	{
+		if( tag[i] >= 0)
+		{
+			vnl_vector<int> rowi = SuperNodesSet.get_row(i);
+			for( unsigned int j = i + 1; j < SuperNodesSet.rows(); j++)    // have only one common node, supernode connection
+			{
+				if( tag[j] >= 0 )
+				{
+					vnl_vector<int> rowj = SuperNodesSet.get_row(j);
+					vnl_vector<int> commonVec = VectorAnd<int>(rowi, rowj);
+					if( commonVec.sum() == 1 )
+					{
+						for( unsigned int k = 0; k < commonVec.size(); k++)
+						{
+							if( commonVec[k] == 1)
+							{
+                                int indi = tag[i];
+                                int indj = tag[j];
+								indi = tag[i] - adjust_num[indi];
+								indj = tag[j] - adjust_num[indj];
+								superNodeConnection(indi, indj) = k;  // which node is connected
+								superNodeConnection(indj, indi) = k;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return countCycles;
+}
+
+long int GraphWindow::IsConnectedSuperNodeToNode(vnl_matrix<unsigned char> &adj_matrix, int node, std::list<int> &superNodePt)
+{
+    std::list<int>::iterator iter = superNodePt.begin();
+    long int rtn = 0;
+    for(; iter != superNodePt.end(); iter++)
+    {
+        int sn = *iter;
+        if( adj_matrix( node, sn) == 1)
+        {
+            rtn = 1;
+            break;
+        }
+    }
+    return rtn;
+}
+
+void GraphWindow::SetGraphTableToPassThrough(vtkSmartPointer<vtkTable> table, unsigned int nodesNumber, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec,
+							    std::vector<double> *disVec, std::set<long int>* colSels, QString filename)
+{
+	this->fileName = filename;
+	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
+	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
+
+	vnl_matrix<unsigned char> adj_matrix( nodesNumber, nodesNumber); // adjacent matrix
+	adj_matrix.fill(0);
+
+	for( int i = 0; i < table->GetNumberOfRows(); i++) 
+	{
+		double ver1 = arrayID1->GetVariantValue(i).ToDouble();
+		double ver2 = arrayID2->GetVariantValue(i).ToDouble();
+
+		int index1 = ROUND(ver1);
+		int index2 = ROUND(ver2);
+		adj_matrix( index1, index2) = 1;
+		adj_matrix( index2, index1) = 1;
+	}
+
+	//test
+	//vnl_matrix<unsigned char> adj_matrix( 15, 15); // adjacent matrix
+	//adj_matrix.fill(0);
+	//adj_matrix(0,1) = adj_matrix(1, 0) = 1;
+	//adj_matrix(0,4) = adj_matrix(4, 0) = 1;
+	//adj_matrix(2,1) = adj_matrix(1, 2) = 1;
+	//adj_matrix(14,1) = adj_matrix(1, 14) = 1;
+	//adj_matrix(14,5) = adj_matrix(5, 14) = 1;
+	//adj_matrix(3,2) = adj_matrix(2, 3) = 1;
+	//adj_matrix(6,2) = adj_matrix(2, 6) = 1;
+	//adj_matrix(3,7) = adj_matrix(7, 3) = 1;
+	//adj_matrix(3,8) = adj_matrix(8, 3) = 1;
+	//adj_matrix(3,9) = adj_matrix(9, 3) = 1;
+	//adj_matrix(8,9) = adj_matrix(9, 8) = 1;
+	//adj_matrix(10,9) = adj_matrix(9, 10) = 1;
+	//adj_matrix(4,5) = adj_matrix(5, 4) = 1;
+	//adj_matrix(6,5) = adj_matrix(5, 6) = 1;
+	//adj_matrix(6,7) = adj_matrix(7, 6) = 1;
+	//adj_matrix(11,7) = adj_matrix(7, 11) = 1;
+	//adj_matrix(12,7) = adj_matrix(7, 12) = 1;
+	//adj_matrix(11,12) = adj_matrix(12, 11) = 1;
+	//adj_matrix(11,13) = adj_matrix(13, 11) = 1;
+	std::ofstream ofs("CycleList.txt");
+	ofs<< adj_matrix<<std::endl;
+
+	std::vector< std::list<int> > cycleList;
+	std::vector< int> seperateNodes;
+	FindCycle(adj_matrix, cycleList, seperateNodes);
+	std::vector< std::vector<std::list<int> > > superNodeList;   // super-nodes for the progression tree, each supernode has a list of cycles, trees or nodes
+	vnl_matrix<int> connectionMatrix;
+	MergeCyclesToSuperNodes(adj_matrix, cycleList, superNodeList, connectionMatrix);
+
+	for( int i = 0; i < cycleList.size(); i++)
+	{
+		std::list<int> cycle = cycleList[i];
+		std::list<int>::iterator listIter = cycle.begin();
+		std::vector< std::list<int> > linesList = superNodeList[i];
+		ofs<< "CycleList:"<<std::endl;
+		ofs<<i<<std::endl;
+		for(; listIter != cycle.end(); listIter++)
+		{
+			ofs<< *listIter<<"\t";
+		}
+		ofs<<std::endl;
+		ofs<< "Lines:"<<std::endl;
+		for( int j = 0; j < linesList.size(); j++)
+		{
+			std::list<int> lines = linesList[j];
+			std::list<int>::iterator lineIter = lines.begin();
+			for(; lineIter != lines.end(); lineIter++)
+			{
+				ofs<< *lineIter<<"\t";
+			}
+			ofs<< std::endl;
+		}
+		ofs<<std::endl;
+	}
+	ofs<< connectionMatrix<<std::endl;
+	ofs<< "Seperate Nodes:"<<std::endl;
+	for(int i = 0; i < seperateNodes.size(); i++)
+	{
+		ofs<<seperateNodes[i]<<"\t";
+	}
+	ofs<<std::endl;
+	
+	std::vector< std::list<int> > superNodePtSet;
+	for( int i = 0; i < cycleList.size(); i++)
+	{
+        std::list<int> superNodePt;
+		std::list<int> cycle = cycleList[i];
+		std::list<int>::iterator listIter = cycle.begin();
+		listIter++;
+		std::vector< std::list<int> > linesList = superNodeList[i];
+		for(; listIter != cycle.end(); listIter++)
+		{
+			superNodePt.push_back(*listIter);
+		}
+		for( int j = 0; j < linesList.size(); j++)
+		{
+			std::list<int> lines = linesList[j];
+			std::list<int>::iterator lineIter = lines.begin();
+			lineIter++;
+			for(; lineIter != lines.end(); lineIter++)
+			{
+				superNodePt.push_back(*lineIter);
+			}
+			superNodePt.pop_back();
+		}
+		superNodePtSet.push_back(superNodePt);
+	}
+
+    // build tree for supernodes
+	int superNodeCount = connectionMatrix.rows();
+	std::vector<int> nodeIndex;  // supernode, normal node
+	std::map<int, int> nodeIndexMap;  // 
+	for(unsigned int index = 0; index < connectionMatrix.rows(); index++)
+	{
+        nodeIndex.push_back( index);  // supernode
+		nodeIndexMap.insert( std::pair<int, int>(index, index));
+	}
+	
+	for( unsigned int i = 0; i < seperateNodes.size(); i++) // normal node
+	{
+        nodeIndex.push_back( seperateNodes[i]);
+		nodeIndexMap.insert( std::pair<int, int>(seperateNodes[i], superNodeCount + i));
+	}
+	
+	unsigned int treeNodeSize = nodeIndex.size();
+	vnl_matrix<long int> adjacent_matrix(treeNodeSize, treeNodeSize);
+	adjacent_matrix.fill(0);
+
+	for(unsigned int i = 0; i < superNodeCount; i++)
+	{
+		for( unsigned int j = i + 1; j < superNodeCount; j++)
+		{
+			if( connectionMatrix(i,j) >= 0)
+			{
+				adjacent_matrix(j, i) = 1;
+				adjacent_matrix(i, j) = 1;
+			}
+		}
+		for( unsigned int j = superNodeCount; j < treeNodeSize; j++)
+		{
+            int node = nodeIndex[j];
+            adjacent_matrix(i, j) = IsConnectedSuperNodeToNode(adj_matrix, node, superNodePtSet[i]);  // watch for the case that within connected small circle.
+            adjacent_matrix(j, i) = adjacent_matrix(i, j);
+		}
+	}
+
+	for( unsigned int i = superNodeCount; i < treeNodeSize; i++)
+	{
+        int nodei = nodeIndex[i];
+        for( unsigned int j = i + 1; j < treeNodeSize; j++)
+        {
+            int nodej = nodeIndex[j];
+            adjacent_matrix(i, j) = adj_matrix(nodei, nodej);
+            adjacent_matrix(j, i) = adjacent_matrix(i,j);
+        }
+	}
+	
+	ofs<< adjacent_matrix<<std::endl;
+	ofs.close();
+
+	vtkSmartPointer<vtkStringArray> vertexLabel = vtkSmartPointer<vtkStringArray>::New();
+	vertexLabel->SetNumberOfComponents(1);
+	vertexLabel->SetName("vertexLabel");
+
+	// coordinates for the supernode and their connection
+	std::cout<< "construct graph"<<endl;
+	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	for( int i = 0; i < treeNodeSize; i++)
+	{
+		int vertexID = graph->AddVertex();
+		if( i < superNodePtSet.size())
+		{
+			//vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
+			QString str = QString::number(superNodePtSet[i].size());
+			vertexLabel->InsertNextValue( str.toUtf8().constData());
+		}
+		else
+		{
+            QString str = QString::number(1);
+            vertexLabel->InsertNextValue( str.toUtf8().constData());
+		}
+	}
+	
+	for( unsigned int i = 0; i < treeNodeSize; i++)
+	{
+        for( unsigned int j = i + 1; j < treeNodeSize; j++)
+        {
+            if( adjacent_matrix(i, j) == 1)
+            {
+                graph->AddEdge( i, j);
+            }
+        }
+	} 
+    std::cout<< "calculate coordinates for supernodes"<<endl;
+	std::vector<Point> pointList;
+	CalculateCoordinates(adjacent_matrix, pointList);
+
+	if( pointList.size() > 0)
+	{
+		std::cout<< pointList.size()<<endl;
+		for( int i = 0; i <  pointList.size(); i++)
+		{
+			points->InsertNextPoint(pointList[i].x, pointList[i].y, 0);
+		}
+	}
+
+	// coordinates for the circle
+	std::cout<< "calculate coordinates for cicles"<<endl;
+	double radius = 5;
+	for( int i = 0; i < superNodeCount; i++)
+	{
+		std::vector<Point> pointListSuperNode;
+		std::list<int> cycle = cycleList[i];
+		int nodesAdded = cycle.size() - 1;
+		cycle.pop_back();
+		std::list<int>::iterator cycleIter = cycle.begin();
+		int oriVertex = graph->AddVertex();
+		nodeIndex.push_back(*cycleIter);
+		QString str = QString::number(1);
+		vertexLabel->InsertNextValue( str.toUtf8().constData());
+
+		nodeIndexMap.insert( std::pair<int, int>(*cycleIter, oriVertex));
+
+		int preVertex = oriVertex;
+		for( cycleIter++; cycleIter != cycle.end(); cycleIter++)
+		{
+			int nextVertex = graph->AddVertex();
+			nodeIndex.push_back(*cycleIter);
+			QString str = QString::number(1);
+			vertexLabel->InsertNextValue( str.toUtf8().constData());
+			nodeIndexMap.insert( std::pair<int, int>(*cycleIter, nextVertex));
+
+			graph->AddEdge( preVertex, nextVertex);
+			preVertex = nextVertex;
+		}
+		graph->AddEdge( preVertex, oriVertex);
+
+		std::vector< std::list<int> > linesList = superNodeList[i];
+		for( int k = 0; k < linesList.size(); k++)
+		{
+			std::list<int> line = linesList[k];
+			nodesAdded += line.size() - 2;
+			std::list<int>::iterator lineIter = line.begin();
+			std::list<int>::iterator lineLastIter = line.end();
+			lineLastIter--;
+			int lastVertex = *lineLastIter;
+			line.pop_back();
+
+			int preVertex = *lineIter;
+			for( lineIter++; lineIter != line.end(); lineIter++)
+			{
+				int nextVertex = graph->AddVertex();
+				nodeIndex.push_back(*lineIter);
+				QString str = QString::number(1);
+				vertexLabel->InsertNextValue( str.toUtf8().constData());
+				nodeIndexMap.insert( std::pair<int, int>(*lineIter, nextVertex));
+				graph->AddEdge( preVertex, nextVertex);
+				preVertex = nextVertex;
+			}
+			graph->AddEdge( preVertex, lastVertex);
+		}
+
+		CalculateCoordinatesForCircle(cycleList[i], superNodeList[i], pointList[i], radius, pointListSuperNode);
+		if( pointListSuperNode.size() == nodesAdded)
+		{
+			for( int k = 0; k <  pointListSuperNode.size(); k++)
+			{
+				points->InsertNextPoint(pointListSuperNode[k].x, pointListSuperNode[k].y, 0);
+			}
+		}
+		else
+		{
+			std::cout<< "Error in circle layout "<< i<<std::endl;
+		}
+	}
+	
+	std::cout<< "Vertex Lable "<< vertexLabel->GetDataSize()<<std::endl;
+	std::cout<< "Points "<< points->GetNumberOfPoints()<<std::endl;
+	graph->GetVertexData()->AddArray(vertexLabel);
+	graph->SetPoints( points);
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
+	theme->SetLineWidth(3);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.8,0.8);
+	theme->SetPointSize(5);
+	theme->SetCellColor(0.6,0.6,0.6);
+	theme->SetSelectedCellColor(selectColor);
+	theme->SetSelectedPointColor(selectColor); 
+	theme->SetVertexLabelColor(0.3,0.3,0.3);
+	theme->SetBackgroundColor(1,1,1); 
+	theme->SetBackgroundColor2(1,1,1);
+
+	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	scalarbarLut->SetTableRange (0, 1);
+	scalarbarLut->SetNumberOfTableValues(COLOR_MAP2_SIZE);
+	for(int index = 0; index < COLOR_MAP2_SIZE; index++)
+	{
+		rgb rgbscalar = COLORMAP2[index];
+		scalarbarLut->SetTableValue(index, rgbscalar.r, rgbscalar.g, rgbscalar.b);
+	}
+	scalarbarLut->Build();
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(scalarbarLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(11);
+	scalarBar->GetTitleTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize(10);
+	scalarBar->GetLabelTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->SetMaximumHeightInPixels(1000);
+	scalarBar->SetMaximumWidthInPixels(100);
+
+	this->view->GetRenderer()->AddActor2D(scalarBar);
+
+	this->view->RemoveAllRepresentations();
+	this->view->SetRepresentationFromInput( graph);
+	this->view->SetVertexLabelVisibility(true);
+	this->view->SetVertexLabelArrayName("vertexLabel");
+	this->view->SetVertexLabelFontSize(5);
+
+	this->view->ApplyViewTheme(theme);
+
+    this->view->SetLayoutStrategyToPassThrough();
+	this->view->SetVertexLabelFontSize(15);
+}
+
 void GraphWindow::UpdateCoordinatesByEdgeWeights(std::vector<Point>& oldPointList, vnl_matrix<double>& vertexList, std::vector<Point>& newPointList)
 {
 	long int oldFirstIndex = backbones[0];
@@ -608,6 +1341,50 @@ void GraphWindow::UpdateCoordinatesByEdgeWeights(std::vector<Point>& oldPointLis
 		oldFirstIndex = oldSecondIndex;
 		UpdateChainPointList(oldSecondIndex, oldPointList, vertexList, newPointList);
 	}
+}
+
+void GraphWindow::CalculateCoordinatesForCircle(std::list<int> &circle, std::vector< std::list<int> > lineList, Point &center, double radius, std::vector<Point> &pointList)
+{
+    std::list<int>::iterator iter = circle.begin();
+    circle.pop_back();
+    int circleSize = circle.size();
+    double step = 2 * 3.1415926 / circleSize;
+    std::map<int, int> nodeMap;
+    for( int i = 0; i < circleSize; i++)
+    {
+        double angle = step * i;
+        Point pt;
+        pt.x = center.x + cos( angle);
+        pt.y = center.y + sin( angle);
+        pointList.push_back(pt);
+        nodeMap.insert(std::pair<int, int>( *iter, i));
+        iter++;
+    }
+    for( int i = 0; i < lineList.size(); i++)
+    {
+        std::list<int> line = lineList[i];
+        std::list<int>::iterator lineIter = line.begin();
+        std::list<int>::iterator lineIterEnd = line.end();
+        lineIterEnd--;
+        int startNode = *lineIter;
+        int endNode = *lineIterEnd;
+        int startIndex = nodeMap[ startNode];
+        Point startPt = pointList[ startIndex];
+        int endIndex = nodeMap[ endNode];
+        Point endPt = pointList[ endIndex];
+        line.pop_back();
+        double stepX = abs(endPt.x - startPt.x) / (double)line.size();
+        double stepY = abs(endPt.y - startPt.y) / (double)line.size();
+        int signX = endPt.x > startPt.x ? 1 : -1;
+        int signY = endPt.y > startPt.y ? 1 : -1;
+        for( int k = 1; k < line.size(); k++)
+        {
+            Point pt;
+            pt.x = startPt.x + k * signX * stepX;
+            pt.y = startPt.y + k * signY * stepY;
+            pointList.push_back(pt);
+        }
+    }
 }
 
 // attachnode's coordinate has been updated already in pointlist

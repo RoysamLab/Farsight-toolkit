@@ -60,6 +60,7 @@ public slots:
 	void SetColForX(int x);
 	void SetColForY(int y);
 	void SetColForColor(int c);
+	void windowChange();
 
 protected slots:
 

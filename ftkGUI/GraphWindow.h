@@ -50,12 +50,15 @@ public:
 	void SetGraphTable(vtkSmartPointer<vtkTable> table);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2);
 	void SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::string xCol, std::string yCol, std::string zCol);
-	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
+	void SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<double> *colorVec = NULL, 
+					std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
+	void SetGraphTableToPassThrough(vtkSmartPointer<vtkTable> table, unsigned int nodesNumber, std::string ID1, std::string ID2, std::string edgeLabel, 
+					std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 	void ColorTreeAccordingToFeatures(vnl_vector<double> &feature, const char *featureName);
-
+	
 protected:
 	void SetSelectedIds(std::set<long int>& IDs);
 	void SetSelectedIds2();
@@ -81,7 +84,18 @@ protected:
 	void ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color);
 	void RestoreLookupTable();
 
-protected slots:
+	bool FindCycle(vnl_matrix<unsigned char> &adjacent_matrix, std::vector< std::list<int> > &cycleList, std::vector<int> &seperatePts);
+	void SearchCycles(vnl_matrix<unsigned char> &adjacent_matrix, std::list<int> &cycleNode, int i, int preNode, std::set<int> &path, std::vector< std::list<int> >&cycleLongest);
+	int MergeCyclesToSuperNodes(vnl_matrix<unsigned char> &adj_matrix, std::vector< std::list<int> > &cycleList, std::vector< std::vector<std::list<int> > >&superNodeList, vnl_matrix<int> &superNodeConnection);
+	void MergeCircles(std::list<int> &circle1, std::list<int> &circle2, vnl_vector<int> &commonNode, std::vector< std::list<int> > &leftCycleList);
+	void BreakCircles(std::list<int> &circle, vnl_vector<int> &commonNode, std::vector< std::list<int> > &lines);
+	template<class T> vnl_vector<T> VectorAnd(vnl_vector< T > const &v, vnl_vector< T > const &u);
+	template<class T> vnl_vector<T> VectorOr(vnl_vector< T > const &v, vnl_vector< T > const &u);
+	void GetConnectedLines(vnl_vector<int> &circle1, std::list<int> &circle2, vnl_vector<int> &commonNode, std::vector< std::list<int> > &lineList);
+    long int IsConnectedSuperNodeToNode(vnl_matrix<unsigned char> &adj_matrix, int node, std::list<int> &superNodePt);
+    void CalculateCoordinatesForCircle(std::list<int> &circle, std::vector< std::list<int> > lineList, Point &center, double radius, std::vector<Point> &pointList);
+
+	protected slots:
 	static void SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData );
 	static void HandleKeyPress(vtkObject* caller, long unsigned eventId, void* clientData, void* callData );
 	void UpdateGraphView();

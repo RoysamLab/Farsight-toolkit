@@ -61,6 +61,7 @@ private:
 	QMenu *yMenu;				//Choose y column
 	QMenu *colorMenu;			//Choose color column
 	QAction *clearAction;		//clear selections
+	QAction *windowAction;		//set window size and interval
 
 	ScatterView *scatter;
 

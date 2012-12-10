@@ -15,6 +15,9 @@ limitations under the License.
 #include <math.h>
 
 #include "ScatterView.h"
+#include <vtkDoubleArray.h>
+#include <vtkVariantArray.h>
+#include <QInputDialog>
 
 ScatterView::ScatterView(QWidget *parent) : QWidget(parent)
 {
@@ -99,6 +102,60 @@ void ScatterView::SetColForColor(int c)
 	{
 		columnNumForColor = c;
 		this->update();
+	}
+}
+
+void ScatterView::windowChange()
+{
+	std::cout<< "WindowChange."<<std::endl;
+	bool ok1 = false;
+	int windowBin = QInputDialog::getInt(this, tr("Bin Size"),tr("Bin Size:"), 100, 0, 2147483647, 1, &ok1);
+	if( ok1)
+	{
+		int rows = table->GetNumberOfRows();
+		double yMin = this->mySettings->d_minY;
+		double yMax = this->mySettings->d_maxY;
+		int tagMax = 0;
+		vtkVariantArray *tagArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("Progression Tag"));
+		if(tagArray == NULL)
+		{
+			std::cout<< "\"Progression Tag\" not available in the table!"<<std::endl;
+			return;
+		}
+		else
+		{
+			for( int k = 0; k < rows; k++)
+			{
+				if(tagArray->GetValue(k).ToInt() > tagMax)
+				{
+					tagMax = tagArray->GetValue(k).ToInt();
+				}
+			}
+		}
+
+		double interval = (yMax - yMin) / windowBin;
+		
+		vnl_matrix<int> distribution(windowBin, tagMax + 1);
+		distribution.fill(0);
+
+		for (int row = 0; row < rows; row++) 
+		{	
+			double v = table->GetValue(row,columnNumForY).ToDouble();
+			if( v >= 0 && interval != 0)
+			{
+				int ibin = (int)floor((v - yMin) / interval);
+				if( ibin >= windowBin)
+				{
+					ibin = windowBin - 1;
+				}
+				int tag = tagArray->GetValue(row).ToInt();
+				distribution(ibin, tag)++;
+			}
+		}
+
+		std::ofstream ofs("SampleDistributionInWindow.txt");
+		ofs<< distribution<<std::endl;
+		ofs.close();
 	}
 }
 

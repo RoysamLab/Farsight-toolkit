@@ -75,6 +75,11 @@ void PlotWindow::setupUI(void)
 	connect(clearAction, SIGNAL(triggered()), scatter, SLOT(clearSelections()));
 	optionsMenu->addAction(clearAction);
 
+	windowAction = new QAction(tr("Window Operation"), this);
+	windowAction->setShortcut(tr("Ctrl+W"));
+	connect(windowAction, SIGNAL(triggered()), scatter, SLOT(windowChange()));
+	optionsMenu->addAction(windowAction);
+
 	setWindowTitle(tr("Scatter Plot"));
 	// If we do the following, the program crashes when we first close the scatterplot
 	// and then close the  image viewer. 
