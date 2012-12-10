@@ -128,6 +128,11 @@ void SampleEditor::createMenus()
 	connect(loadAction, SIGNAL(triggered()), this, SLOT(loadFile()));
 	fileMenu->addAction(loadAction);
 
+	loadRotateAction = new QAction(tr("Load Rotated Table..."), this);
+	loadRotateAction->setStatusTip(tr("Load to table from text file"));
+	connect(loadRotateAction, SIGNAL(triggered()), this, SLOT(loadRotateFile()));
+	fileMenu->addAction(loadRotateAction);
+
 	editMenu = menuBar()->addMenu(tr("&Edit"));
 	removeRowsAction = new QAction(tr("Remove Selected Rows"),this);
 	removeRowsAction->setStatusTip(tr("Remove selected rows from the table"));
@@ -221,6 +226,38 @@ void SampleEditor::createMenus()
 // Ask for the header file and the data file that define a table and load the data
 // into vtkTable, then show results.
 //********************************************************************************
+void SampleEditor::loadRotateFile()
+{
+	QString headername = QFileDialog::getOpenFileName(this,"Choose a Header File", lastPath, tr("TXT Files (*.txt)") );
+	if(headername == "") return;
+	lastPath = QFileInfo(headername).absolutePath();
+
+	/*QString dataname = QFileDialog::getOpenFileName(this,"Choose a Data File", lastPath, tr("TXT Files (*.txt)") );
+	if(dataname == "") return;
+	lastPath = QFileInfo(dataname).absolutePath();
+	
+	selection->clear();
+
+	ReadFiles(headername.toStdString(), dataname.toStdString());*/
+	this->data = ftk::LoadRotatedTable(headername.toStdString());
+	std::cout<< "Read table:"<<data->GetNumberOfRows()<<"\t"<< data->GetNumberOfColumns()<<endl;
+	table->setModels(data,selection,selection2);//////////////////////////////////////////////////////////////////////////
+	table->show();
+
+	//plot->setModels(data,selection);
+	//plot->show();
+	/*this->histo->setModels(data, selection);
+	this->histo->show();*/
+	//std::cout << "I reached here inside the sample editor"<<std::endl;
+	//this->graph->setModels(data, selection, selection2);
+	//this->dendro1->setModels(data,selection);
+	//this->dendro2->setModels(data,selection2);
+	//this->heatmap->setModels(data,selection,selection2);
+	//this->ClusterSelections->SetObjectTable(data);
+	//this->SampleClusterManager->setVisible(true);
+
+}
+
 void SampleEditor::loadFile()
 {
 	QString headername = QFileDialog::getOpenFileName(this,"Choose a Header File", lastPath, tr("TXT Files (*.txt)") );
@@ -235,11 +272,12 @@ void SampleEditor::loadFile()
 
 	ReadFiles(headername.toStdString(), dataname.toStdString());*/
 	this->data = ftk::LoadTable(headername.toStdString());
+	std::cout<< "Read table:"<<data->GetNumberOfRows()<<"\t"<< data->GetNumberOfColumns()<<endl;
 	table->setModels(data,selection,selection2);//////////////////////////////////////////////////////////////////////////
 	table->show();
 
-	plot->setModels(data,selection);
-	plot->show();
+	//plot->setModels(data,selection);
+	//plot->show();
 	/*this->histo->setModels(data, selection);
 	this->histo->show();*/
 	//std::cout << "I reached here inside the sample editor"<<std::endl;
@@ -247,7 +285,7 @@ void SampleEditor::loadFile()
 	//this->dendro1->setModels(data,selection);
 	//this->dendro2->setModels(data,selection2);
 	//this->heatmap->setModels(data,selection,selection2);
-	this->ClusterSelections->SetObjectTable(data);
+	//this->ClusterSelections->SetObjectTable(data);
 	//this->SampleClusterManager->setVisible(true);
 
 }

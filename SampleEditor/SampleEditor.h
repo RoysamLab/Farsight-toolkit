@@ -77,6 +77,7 @@ protected:
 
 private slots:
 	void loadFile(void);
+	void loadRotateFile(void);
 	void removeRows(void);
 	void addBlankRow(void);
 	void changeRowData(void);
@@ -106,6 +107,7 @@ private:
     QDockWidget *statisticsDockWidget;
 	QMenu *fileMenu;
 	QAction *loadAction;
+	QAction *loadRotateAction;
 	QMenu *editMenu;
 	QAction *removeRowsAction;
 	QAction *addBlankRowAction;
