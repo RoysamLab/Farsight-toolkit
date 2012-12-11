@@ -54,8 +54,8 @@ int main(int argc, char* argv[])
 		MRT.SetJointTransformsFile(argv[1]);
 		MRT.SetImageSeriesPath(argv[2]);
 		MRT.SetAnchorImage(argv[3]);
-		MRT.LoadSeedPoints(argv[4]);
 		MRT.SetAspectRatio(atof(argv[5]));
+		MRT.LoadSeedPoints(argv[4]);
 	}
 	else
 	{
@@ -64,8 +64,8 @@ int main(int argc, char* argv[])
 		MRT.SetJointTransformsFile(argv[1]);
 		MRT.SetImageSeriesPath(argv[2]);
 		MRT.SetAnchorImage(argv[3]);
-		MRT.LoadSeedPoints(argv[4]);
 		MRT.SetAspectRatio(atof(argv[5]));
+		MRT.LoadSeedPoints(argv[4]);
 		MRT.SetSomaImage(argv[6]);
 	}
 
