@@ -193,7 +193,7 @@ fregl_util< TPixel >::fregl_util_fast_max_projection(ImageTypePointer image)
 	image2D->SetRegions( region );
 	image2D->Allocate();
     image2D->FillBuffer(0);
-	typename ImageType2D::PixelType * image2DArray = image->GetBufferPointer();
+	typename ImageType2D::PixelType * image2DArray = image2D->GetBufferPointer();
 
 #if _OPENMP >= 200805L
     #pragma omp parallel for collapse(2)

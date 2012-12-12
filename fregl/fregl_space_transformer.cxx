@@ -557,7 +557,7 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	origin_fast[1] = origin_[1] - (int)oldOffset[1];
 	origin_fast[2] = origin_[2] - (int)oldOffset[2];
 	
- 	std::cout << std::endl << "ORIGIN FAST: " << origin_fast;
+ 	//std::cout << std::endl << "ORIGIN FAST: " << origin_fast;
 	
 	resampler->SetInput(in_image);
 	resampler->SetTransform( inverse_xform );
