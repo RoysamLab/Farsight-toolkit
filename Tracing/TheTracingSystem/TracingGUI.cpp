@@ -10285,7 +10285,7 @@ void QtTracer::surfaceRendering(bool rand_color, ImagePointer ID)
 
 	bool decimation = false;
 
-	typedef itk::ConnectedComponentImageFilter< ImageType, itk::Image<short int, 3>> LabelFilterType;
+	typedef itk::ConnectedComponentImageFilter< ImageType, itk::Image<short int, 3> > LabelFilterType;
 	LabelFilterType::Pointer labelFilter = LabelFilterType::New();
 	labelFilter->SetInput(ID);
 	labelFilter->Update();
