@@ -498,24 +498,6 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 		return 1;
 	}
 
-	/*
-	   ImageTypePointer image = ImageType::New();
-
-	   ImageType::IndexType start;
-	   start[0] = 0;
-	   start[1] = 0;
-	   start[2] = 0;
-
-	   ImageType::RegionType region;
-	   region.SetSize( image_size_ );
-	   region.SetIndex( start );
-
-	   image->SetRegions( region );
-	   image->Allocate();
-
-	   image->SetOrigin( origin );
-	   */
-
 	// Set the resampler to generate the transformed image
 	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
 	int index = image_id_indices_[image_index];
@@ -544,26 +526,41 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	}
 	
 	typename ImageType::SizeType image_size_fast;
-	itk::uint64_t maxsize = sqrt((in_image->GetLargestPossibleRegion().GetSize()[0])*(in_image->GetLargestPossibleRegion().GetSize()[0])+(in_image->GetLargestPossibleRegion().GetSize()[1]*in_image->GetLargestPossibleRegion().GetSize()[1])+(in_image->GetLargestPossibleRegion().GetSize()[2]*in_image->GetLargestPossibleRegion().GetSize()[2]))+10; // Nicolas: Not sure if this is the maximum size, I have to recheck this
-	image_size_fast[0] = maxsize*spacing_[0];
-	image_size_fast[1] = maxsize*spacing_[1];
-	image_size_fast[2] = maxsize*spacing_[2];
+	itk::uint64_t maxsize = sqrt(double((in_image->GetLargestPossibleRegion().GetSize()[0])*(in_image->GetLargestPossibleRegion().GetSize()[0])+(in_image->GetLargestPossibleRegion().GetSize()[1]*in_image->GetLargestPossibleRegion().GetSize()[1])+(in_image->GetLargestPossibleRegion().GetSize()[2]*in_image->GetLargestPossibleRegion().GetSize()[2])))+10; // Nicolas: Not sure if this is the maximum size, I have to recheck this
+	if( maxsize*spacing_[0] < 3000)
+	{
+		image_size_fast[0] = 3000;
+	}
+	else
+	{
+		image_size_fast[0] = maxsize*spacing_[0];
+	}
+	
+	if( image_size_fast[1] < 3000)
+	{
+		image_size_fast[1] = 3000;
+	}
+	else
+	{
+		image_size_fast[1] = maxsize*spacing_[1];
+	}
+
+	image_size_fast[2] = image_size_[2];//maxsize*spacing_[2];
 	
 	itk::Vector<double, 3> oldOffset = inverse_xform->GetOffset();
-	
-// 	std::cout << std::endl << "OFFFSET: " << oldOffset;
-// 	std::cout << std::endl << "ORIGIN: " << origin_;
+	//std::cout << std::endl << "IMAGE SIZE: " <<image_size_fast;
+ //	std::cout << std::endl << "OFFFSET: " << oldOffset;
+ //	std::cout << std::endl << "ORIGIN: " << origin_<<std::endl;
 	
 	PointType origin_fast;
 	origin_fast[0] = origin_[0] - (int)oldOffset[0];
 	origin_fast[1] = origin_[1] - (int)oldOffset[1];
 	origin_fast[2] = origin_[2] - (int)oldOffset[2];
 	
-// 	std::cout << std::endl << "OFFFSET: " << origin_fast;
+ 	std::cout << std::endl << "ORIGIN FAST: " << origin_fast;
 	
 	resampler->SetInput(in_image);
 	resampler->SetTransform( inverse_xform );
-// 	resampler->SetSize( image_size_ );
 	resampler->SetSize( image_size_fast );
 	resampler->SetOutputOrigin( origin_fast );
 	resampler->SetOutputSpacing(spacing_);
@@ -582,81 +579,11 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 // 		return NULL;
 	}
 	out_image = resampler->GetOutput();
-// 	typedef typename itk::ImageFileWriter< ImageType  > WriterType;
-// 	typename WriterType::Pointer writer = WriterType::New();
-// 	writer->SetFileName("/data/nicolas/test/testing_new.nrrd");
-// 	writer->SetInput(resampler->GetOutput());
-// 	writer->Update();
-	
-	
-	
-// 	typename ImageType::Pointer imageMontage = ImageType::New();
-// 	imageMontage->SetOrigin( origin_ );
-// 	typename ImageType::IndexType indexStich;
-// 	indexStich.Fill(0);
-// 	typename ImageType::RegionType regionz;
-// 	regionz.SetSize ( image_size_  );
-// 	regionz.SetIndex( indexStich );
-// 	imageMontage->SetRegions( regionz );
-// 	
-// 	try
-// 	{
-// 		imageMontage->Allocate();
-// 		imageMontage->Update();
-// 	}
-// 	catch(itk::ExceptionObject &err)
-// 	{
-// 		std::cerr << "ExceptionObject caught!" <<std::endl;
-// 		std::cerr << err << std::endl;
-// 	}
-// 	imageMontage->FillBuffer(0);
-	
-// 	unsigned long long sizeXY_small = image_size_fast[0]*image_size_fast[1];
-// 	unsigned long long sizeX_small = image_size_fast[0];
-// 	
-// 	unsigned long long sizeXY_big = image_size_[0]*image_size_[1];
-// 	unsigned long long sizeX_big = image_size_[0];
-// 	
-//         typename ImageType::PixelType * imageMontageArray = imageMontage->GetBufferPointer();
-//         typename ImageType::PixelType * imageResampleArray = resampler->GetOutput()->GetBufferPointer();
-// 	
-// 	PointType offsetNew;
+
 	offsetNew[0] = -(int)oldOffset[0];
 	offsetNew[1] = -(int)oldOffset[1];
 	offsetNew[2] = -(int)oldOffset[2];
-// 	
-// // 	std::cout << std::endl << "OFFFSETNEW: " << offsetNew;
-// 	
-// #if _OPENMP >= 200805L
-// 	#pragma omp parallel for collapse(3)
-// #else
-// 	#pragma omp parallel for
-// #endif
-//         for(int i=0; i<image_size_fast[2]; ++i) // z
-//         {
-//                 for(int j=0; j<image_size_fast[1]; ++j) // y
-//                 {
-//                         for(int k=0; k<image_size_fast[0]; ++k) // x
-//                         {
-// 				long long xx_big = k + offsetNew[0];
-// 				long long yy_big = j + offsetNew[1];
-// 				long long zz_big = i + offsetNew[2];
-// 
-// 				long long xx_small = k;
-// 				long long yy_small = j;
-// 				long long zz_small = i;
-// 				
-// 				if( 0<=xx_big  && xx_big < image_size_[0] && 0<=yy_big  && yy_big < image_size_[1] && 0<=zz_big && zz_big < image_size_[2] ) 
-// 				{
-// 					long long offsetSmall = (zz_small*sizeXY_small)+(yy_small*sizeX_small)+xx_small;
-// 					long long offsetBig = (zz_big*sizeXY_big)+(yy_big*sizeX_big)+xx_big;
-// 				
-// 					imageMontageArray[offsetBig] = imageResampleArray[offsetSmall];
-// 				}
-//                         }
-//                 }
-//         }
-        return 0;
+    return 0;
 }
 
 

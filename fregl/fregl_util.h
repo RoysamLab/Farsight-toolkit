@@ -73,6 +73,8 @@ public:
 
 	static ImageType2DPointer fregl_util_max_projection(ImageTypePointer image, float sigma = 0);
 
+	static ImageType2DPointer fregl_util_fast_max_projection(ImageTypePointer image);
+
 	//: Computer the ammount of overlap between two images given the transformation
 	static double fregl_util_overlap(TransformType::Pointer transform, itk::Size<3> size_from, itk::Size<3> size_to);
 

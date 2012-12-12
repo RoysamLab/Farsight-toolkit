@@ -172,6 +172,49 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 	return caster->GetOutput();
 }
 
+template < class TPixel >
+typename fregl_util< TPixel >::ImageType2DPointer
+fregl_util< TPixel >::fregl_util_fast_max_projection(ImageTypePointer image)
+{
+	typename ImageType::SizeType imageSize = image->GetRequestedRegion().GetSize();
+	typename ImageType::PixelType * imageArray = image->GetBufferPointer();
+
+	typename ImageType2D::RegionType region;
+	typename ImageType2D::RegionType::IndexType index;
+	typename ImageType2D::RegionType::SizeType size;
+	typename ImageType::RegionType requestedRegion = image->GetRequestedRegion();
+	index[ 0 ] = 0;
+	index[ 1 ] = 0;
+	size[ 0 ] = requestedRegion.GetSize()[ 0 ];
+	size[ 1 ] = requestedRegion.GetSize()[ 1 ];
+	region.SetSize( size );
+	region.SetIndex( index );
+	ImageType2DPointer image2D = ImageType2D::New();
+	image2D->SetRegions( region );
+	image2D->Allocate();
+    image2D->FillBuffer(0);
+	typename ImageType2D::PixelType * image2DArray = image->GetBufferPointer();
+
+#if _OPENMP >= 200805L
+    #pragma omp parallel for collapse(2)
+#endif
+    for( int ii=0; ii<imageSize[0]; ++ii )
+    {
+        for( int jj=0; jj<imageSize[1]; ++jj )
+        {
+			itk::Index<1> offset2;
+			offset2[0] = (jj * imageSize[0]) + ii;
+			for( int kk = 0; kk < imageSize[2]; ++kk )
+			{
+	    		itk::Index<1> offset;
+				offset[0] = ( kk * imageSize[0] * imageSize[1]) + (jj * imageSize[0]) + ii;
+				image2DArray[offset2[0]] = vnl_math_max( image2DArray[offset2[0]], imageArray[offset[0]]);
+			}
+		}
+	}
+	return image2D;
+}
+
 //: Determine the approximate amount of overlap between two images
 //
 //  Whether two images overlap is roughly determined by the

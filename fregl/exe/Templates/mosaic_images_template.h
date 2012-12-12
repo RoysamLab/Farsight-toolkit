@@ -33,7 +33,8 @@ mosaic_images_template(
 	vul_arg< bool > arg_overlap,
 	vul_arg< bool > arg_nn,
 	vul_arg< int > arg_blending,
-	vul_arg< bool > arg_denoise
+	vul_arg< bool > arg_denoise,
+	vul_arg< bool > arg_write_proj2d
 	);
 
 #endif

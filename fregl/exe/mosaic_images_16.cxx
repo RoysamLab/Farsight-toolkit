@@ -60,9 +60,9 @@ int main(int argc, char* argv[]) {
 		vul_arg< bool > arg_nn("-nn", "Use Nearest-Neighbor interpolation", false);
 		vul_arg< int > arg_blending("-blending", "0: max (default), 1: even weighted, 2: photopleaching weighted (the fanciest).", 0);
 		vul_arg< bool > arg_denoise("-denoise", "Making an attempt to remove noise of high frequencies", false);
-
+		vul_arg< bool > arg_write_proj2d("-debug", "Write 2d projection of the intermediate mosaic", false);
 		vul_arg_parse(argc, argv);
 
-		int retcode = mosaic_images_template<unsigned short>(arg_xml_file, arg_anchor, arg_channel, arg_img_path, arg_old_str, arg_new_str, arg_3d, arg_outfile, arg_in_anchor, arg_overlap, arg_nn, arg_blending, arg_denoise);
+		int retcode = mosaic_images_template<unsigned short>(arg_xml_file, arg_anchor, arg_channel, arg_img_path, arg_old_str, arg_new_str, arg_3d, arg_outfile, arg_in_anchor, arg_overlap, arg_nn, arg_blending, arg_denoise, arg_write_proj2d);
 		return retcode;
 }
