@@ -24,6 +24,7 @@ Version:   $Revision: 0.00 $
 
 #include "TracingGUI.h"
 #include "ftkUtils.h"
+#include "itkTimeProbe.h"
 
 QtTracer::QtTracer(QWidget * parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)
 {  
@@ -601,6 +602,9 @@ void QtTracer::createActions()
 	Segment_Soma = new QAction(tr("Segment Soma"),this);
 	connect(Segment_Soma,SIGNAL(triggered()), this, SLOT(segmentSoma()));
 
+	Load_Soma = new QAction(tr("Load Soma"),this);
+	connect(Load_Soma,SIGNAL(triggered()), this, SLOT(loadSoma()));
+
 	Clear_Segmentation = new QAction(tr("Clear Segmentation"),this);
 	connect(Clear_Segmentation,SIGNAL(triggered()), this, SLOT(clearSegmentation()));
 
@@ -730,6 +734,7 @@ void QtTracer::createMenus()
 	SomaMenu->addAction(Load_Soma_Seeds);
 	SomaMenu->addAction(Remove_Soma);
 	SomaMenu->addAction(Segment_Soma);
+	SomaMenu->addAction(Load_Soma);
 	SomaMenu->addAction(Clear_Segmentation);
 
 	PostSegMenu = menuBar()->addMenu(tr("&Segmentation"));
@@ -3540,19 +3545,22 @@ void QtTracer::loadSomaSeeds()
 	QString fileName = QFileDialog::getOpenFileName(this, tr("Load Soma Seeds file"),
 		".", tr("Text File (*.txt)"));
 
-	std::cout<< "Load Centroids Table"<<endl;
-	vtkSmartPointer<vtkTable> centroidsTable = ftk::LoadXYZTable( fileName.toStdString());
-
-	picked_pts.RemoveAllPts();
-	for( vtkIdType i = 0; i < centroidsTable->GetNumberOfRows(); i++)
+	if(!fileName.isEmpty())
 	{
-		float x = centroidsTable->GetValue( i, 0).ToDouble();
-		float y = centroidsTable->GetValue( i, 1).ToDouble();
-		float z = centroidsTable->GetValue( i, 2).ToDouble();
-		picked_pts.AddPt(x, y, z);
-	}
+		std::cout<< "Load Centroids Table"<<endl;
+		vtkSmartPointer<vtkTable> centroidsTable = ftk::LoadXYZTable( fileName.toStdString());
 
-	std::cout<<"Seeds Loaded:"<<picked_pts.NP<<std::endl;
+		picked_pts.RemoveAllPts();
+		for( vtkIdType i = 0; i < centroidsTable->GetNumberOfRows(); i++)
+		{
+			float x = centroidsTable->GetValue( i, 0).ToDouble();
+			float y = centroidsTable->GetValue( i, 1).ToDouble();
+			float z = centroidsTable->GetValue( i, 2).ToDouble();
+			picked_pts.AddPt(x, y, z);
+		}
+
+		std::cout<<"Seeds Loaded:"<<picked_pts.NP<<std::endl;
+	}
 }
 
 void QtTracer::pickSomaSeeds()
@@ -3654,6 +3662,22 @@ void QtTracer::segmentSoma()
 	}
 	this->QVTK->GetRenderWindow()->Render();
 	} */
+}
+
+void QtTracer::loadSoma()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Load Soma file"),
+		".", tr("Meta Image (*.mhd)"));
+
+	if(!fileName.isEmpty())
+	{
+		IM->ImReadSoma(fileName.toStdString().c_str());
+		//std::cout<<"surfaceRendering"<<std::endl;
+		surfaceRendering(false, IM->IMask);
+		std::cout<<"remove points"<<std::endl;
+		vtk_removePoint();
+		picked_pts.RemoveAllPts();
+	}
 }
 
 void QtTracer::clearSegmentation()
@@ -3822,13 +3846,20 @@ void QtTracer::Preprocess()
 	case 1:
 		{
 			std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
-			this->statusBar()->showMessage("Compute Gradient Vector Flow");
 
-			clock_t init_time1 = clock(); 
+			this->statusBar()->showMessage("Compute Gradient Vector Flow");
+			
+			itk::TimeProbe clock;
+			clock.Start();
+
+			//clock_t init_time1 = clock(); 
 			IM->computeGVF(1000,general_para12->getNumIteration(),general_para12->getSmoothingScale());
-			clock_t end_time1 = clock(); 
-			std::cout << end_time1-init_time1 << " CPU ITK: "  
-				<< (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl;
+			//clock_t end_time1 = clock(); 
+
+			clock.Stop();
+			std::cout << "Total: " << clock.GetTotal() << std::endl;
+			//std::cout << end_time1-init_time1 << " CPU ITK: "  
+			//	<< (float)(end_time1-init_time1)/CLOCKS_PER_SEC << " seconds." << std::endl;
 
 			progress++;
 			Progress->setValue(progress);
@@ -3881,9 +3912,9 @@ void QtTracer::Preprocess()
 			std::cout<<"Adjust Seed Points..."<<std::endl;
 			this->statusBar()->showMessage("Adjust Seed Points");
 			IM->SeedAdjustment(general_para12->getSeedAdjustment());
+			//IM->OutputSeeds();  // output seeds in 8 bit image
 
 			original_seed_num = IM->SeedPt.NP; //for seed testing
-
 			std::cout<<"Preprocessing Finished..."<<std::endl;
 			//send IM to tracing viewer
 			tracingViewer->setImage(IM);
@@ -8211,6 +8242,7 @@ void QtTracer::vtk_removePoint()
 
 void QtTracer::vtk_left_pick(vtkObject * obj)
 {
+	//std::cout<< "vtk_left_pick"<<std::endl;
 	vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::SafeDownCast(obj);
 	// get event location
 	iren->GetPicker()->Pick(iren->GetEventPosition()[0], 
@@ -8234,7 +8266,7 @@ void QtTracer::vtk_left_pick(vtkObject * obj)
 
 void QtTracer::vtk_right_pick(vtkObject * obj)
 {
-
+	//std::cout<< "vtk_right_pick"<<std::endl;
 	// get interactor
 	vtkRenderWindowInteractor* iren = vtkRenderWindowInteractor::SafeDownCast(obj);
 	// get event location
@@ -10253,12 +10285,12 @@ void QtTracer::surfaceRendering(bool rand_color, ImagePointer ID)
 
 	bool decimation = false;
 
-	typedef itk::CastImageFilter<ImageType,itk::Image<short int, 3> > CasterType;
-	CasterType::Pointer caster = CasterType::New();
-	caster->SetInput(ID);
-	caster->Update();
+	typedef itk::ConnectedComponentImageFilter< ImageType, itk::Image<short int, 3>> LabelFilterType;
+	LabelFilterType::Pointer labelFilter = LabelFilterType::New();
+	labelFilter->SetInput(ID);
+	labelFilter->Update();
 
-	std::vector<vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(caster->GetOutput());
+	std::vector<vtkSmartPointer<vtkPolyData> > aa = getVTKPolyDataPrecise(labelFilter->GetOutput());
 
 	for( int i = 0; i <aa.size(); i++ )
 	{

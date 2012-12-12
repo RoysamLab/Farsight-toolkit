@@ -138,6 +138,7 @@ public slots:
 	void loadSomaSeeds();
     void decimateSeeds();
 	void segmentSoma();
+	void loadSoma();
 	void clearSegmentation();
 	void saveSoma();
 	void saveSegmentation();
@@ -304,6 +305,7 @@ private:
 	QAction *Pick_Soma_Seeds;
 	QAction *Load_Soma_Seeds;
 	QAction *Segment_Soma;
+	QAction *Load_Soma;
 	QAction *Save_Soma;
 	QAction *Save_Segmentation;
 	QAction *Clear_Segmentation;

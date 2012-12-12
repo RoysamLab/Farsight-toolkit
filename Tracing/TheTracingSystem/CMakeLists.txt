@@ -55,6 +55,8 @@ SET(TracingCore
     TracingCore/SnakeOperation.cpp
     TracingCore/Montage/Register.h
     TracingCore/Montage/Register.cpp
+	OpenSnakeTracer.h
+	OpenSnakeTracer.cpp
     )
 
 ADD_LIBRARY( TraceCoreLibrary ${TracingCore} )

@@ -152,6 +152,9 @@ typedef RGBImageType2D::Pointer RGBImagePointer2D;
 typedef itk::Image<signed int, 3> ImageType;
 typedef ImageType::Pointer ImagePointer;
 
+typedef itk::Image<unsigned int, 3> SomaImageLabelType;
+typedef SomaImageLabelType::Pointer SomaImageLabelPointer;
+
 typedef itk::Image<signed int, 2 > ImageType2D;
 typedef ImageType2D::Pointer ImagePointer2D;
 
@@ -274,6 +277,7 @@ public:
 	IOImagePointer ImBkSub(IOImagePointer In);
 	void ImSeriesReadWrite(std::vector< std::string > filenames, const char *save_name, int shrink_factor, bool sixteen_bit);
 	void ImRead(const char *filename);
+	void ImReadSoma(const char *filename);
 	void ImRead_NoSmooth(const char *filename, int in);
 	void ImDisplayRead(const char *filename, int shrink_factor);
 	void ImWrite(const char *filename, ImagePointer ROI);
@@ -337,6 +341,7 @@ public:
 
 	void SeedDetection(float th, int detection_method, int radius);
 	void SeedAdjustment(int iter_num);
+	void OutputSeeds();
 	bool SeedSparsify(SamplePointer seeds_candidate, SeedType query_point, int radius);
 
     ImagePointer2D extract_one_slice_yz(ImagePointer I_input, int index);

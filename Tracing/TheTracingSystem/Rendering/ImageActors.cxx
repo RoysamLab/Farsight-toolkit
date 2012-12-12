@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 #include "ImageActors.h"
+#include <itkLabelGeometryImageFilter.h>
 
 ImageRenderActors::ImageRenderActors()
 {
@@ -491,43 +492,25 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::GetProjectionImage(int i)
 
 std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType::Pointer label)
 {
-	labelIteratorType liter = labelIteratorType(label,label->GetLargestPossibleRegion());
-	liter.GoToBegin();
+	typedef itk::LabelGeometryImageFilter< labelImageType > LabelGeometryType;
+	LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+	labelGeometryFilter->SetInput( label);
+	labelGeometryFilter->Update();
 
-	//find the maximum number of cells
-	unsigned short max1 = 0;
-	for(liter.GoToBegin();!liter.IsAtEnd();++liter)
-	{
-		max1 = MAX(max1,liter.Get());
-	}
+	int max1  = labelGeometryFilter->GetNumberOfLabels() - 1;  // number of cells
 
 	//find all the cubes in which cells lie
 	cubeCoord* carray = new cubeCoord[max1+1];
-	for(int counter=0; counter<=max1; counter++)
-	{
-		carray[counter].sx=6000;carray[counter].sy=6000;carray[counter].sz=6000;
-		carray[counter].ex=0;carray[counter].ey=0;carray[counter].ez=0;
-	}
 
-	//Declare label image iterators
-	typedef itk::ImageRegionConstIteratorWithIndex<labelImageType> ConstLabelIteratorWithIndex;
-	ConstLabelIteratorWithIndex cliter = ConstLabelIteratorWithIndex(label,label->GetLargestPossibleRegion());
-	inputImageType::IndexType index;
-
-	//Iterate through the label image
-	for(cliter.GoToBegin();!cliter.IsAtEnd();++cliter)
+	for(int counter = 1; counter <= max1; counter++)
 	{
-		int cur = cliter.Get();
-		if(cur!=0)
-		{
-			index = cliter.GetIndex();
-			carray[cur].sx= MIN(index[0],carray[cur].sx);
-			carray[cur].sy= MIN(index[1],carray[cur].sy);
-			carray[cur].sz= MIN(index[2],carray[cur].sz);
-			carray[cur].ex= MAX(index[0],carray[cur].ex);
-			carray[cur].ey= MAX(index[1],carray[cur].ey);
-			carray[cur].ez= MAX(index[2],carray[cur].ez);
-		}
+		LabelGeometryType::BoundingBoxType boundingbox = labelGeometryFilter->GetBoundingBox(counter);
+		carray[counter].sx=boundingbox[0];
+		carray[counter].sy=boundingbox[2];
+		carray[counter].sz=boundingbox[4];
+		carray[counter].ex=boundingbox[1];
+		carray[counter].ey=boundingbox[3];
+		carray[counter].ez=boundingbox[5];
 	}
 
 	//find the largest image size we need
@@ -571,7 +554,7 @@ std::vector< vtkSmartPointer<vtkPolyData> > getVTKPolyDataPrecise(labelImageType
 
 	vtkSmartPointer<vtkAppendPolyData> appendfilter = vtkSmartPointer<vtkAppendPolyData>::New();
 
-
+	inputImageType::IndexType index;
 	std::vector<vtkSmartPointer<vtkPolyData> > ALL_POLY;
 
 	//Generate empty image, and iterate through the cells, filling the image

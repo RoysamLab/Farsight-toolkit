@@ -27,6 +27,7 @@
 #include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
 #include "itkSigmoidImageFilter.h"
 #include "itkShapeDetectionLevelSetImageFilter.h"
+#include "itkTimeProbe.h"
 
 ImageOperation::ImageOperation()
 {
@@ -468,6 +469,73 @@ void ImageOperation::ImRead(const char *filename)
 	SM = I->GetLargestPossibleRegion().GetSize()[0];
     SN = I->GetLargestPossibleRegion().GetSize()[1];
     SZ = I->GetLargestPossibleRegion().GetSize()[2];
+}
+
+void ImageOperation::ImReadSoma(const char *filename)
+{
+	//IOImagePointer I;
+	std::cout<< "Load soma image file"<<std::endl;
+	typedef itk::ImageFileReader<SomaImageLabelType> ReaderType;
+	ReaderType::Pointer reader = ReaderType::New();
+    
+	reader->SetFileName(filename);
+	
+	std::cout<< "Creating Imask"<<std::endl;
+    typedef itk::BinaryThresholdImageFilter< SomaImageLabelType, ImageType> SomaMaskBinaryFilterType;
+    SomaMaskBinaryFilterType::Pointer thresholder = SomaMaskBinaryFilterType::New();
+	thresholder->SetLowerThreshold( 1);
+	thresholder->SetOutsideValue( 0);
+	thresholder->SetInsideValue(255);
+	thresholder->SetInput( reader->GetOutput());
+	thresholder->Update();
+	IMask = thresholder->GetOutput();
+
+	//typedef itk::ConnectedComponentImageFilter< ImageType, LabelImageType> LabelFilterType;
+	//typedef itk::RelabelComponentImageFilter< LabelImageType, LabelImageType> RelabelFilterType;
+
+	//LabelFilterType::Pointer labelFilter = LabelFilterType::New();
+	//labelFilter->SetInput(IMask);
+	//RelabelFilterType::Pointer relabelFilter = RelabelFilterType::New();
+	//relabelFilter->SetInput(labelFilter->GetOutput());
+	//relabelFilter->Update();
+	//ISoma = relabelFilter->GetOutput();
+
+	//std::cout<< "Soma features"<<std::endl;
+	//typedef itk::LabelGeometryImageFilter< LabelImageType > LabelGeometryType;
+	//LabelGeometryType::Pointer labelGeometryFilter = LabelGeometryType::New();
+	//labelGeometryFilter->SetInput( ISoma);
+	//labelGeometryFilter->Update();
+
+	//LabelGeometryType::LabelPointType index_temp;
+	//int labelValue = labelGeometryFilter->GetNumberOfLabels()-1;
+
+	//num_soma = labelValue;
+	//std::cout<< "Soma num:"<<num_soma<<std::endl;
+
+	////compute the centroids of soma
+	//Point3D temp;
+	////PointList3D new_SeedPt(labelValue+1);
+	//Centroid.RemoveAllPts();
+	//for( int i = 1; i <= labelValue; i++)
+	//{
+	//    index_temp = labelGeometryFilter->GetCentroid(i);
+	//    soma_size.push_back(labelGeometryFilter->GetVolume(i));
+	//    float temp_radius = labelGeometryFilter->GetMinorAxisLength(i)/2;
+	//    soma_radii.push_back(temp_radius);
+	//    temp.x = index_temp[0];
+	//    temp.y = index_temp[1];
+	//    temp.z = index_temp[2];
+	//    Centroid.AddPt(temp);
+	//}
+
+	//std::cout<< "voronoi map"<<std::endl;
+	////compute the voronoi map
+	//typedef itk::DanielssonDistanceMapImageFilter< LabelImageType, LabelImageType > DistanceMapFilterType;
+	//DistanceMapFilterType::Pointer DMfilter = DistanceMapFilterType::New();
+	//DMfilter->SetInput( ISoma);
+	//DMfilter->Update();
+	//IVoronoi = DMfilter->GetVoronoiMap();
+	//std::cout<< "voronoi map done"<<std::endl;
 }
 
 void ImageOperation::ImRead_NoSmooth(const char *filename, int in)
@@ -1858,6 +1926,8 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
         typedef itk::GradientImageFilter<ProbImageType, float, float> GradientImageFilterType;
         GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
         
+		itk::TimeProbe clock;
+		clock.Start();
         typedef itk::RescaleIntensityImageFilter< ImageType, ProbImageType> RescaleFilterType;
         RescaleFilterType::Pointer rescale = RescaleFilterType::New();
         rescale->SetInput( I );
@@ -1865,12 +1935,18 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
         rescale->SetOutputMaximum( 1 );
         rescale->Update();
         
+		clock.Stop();
+		std::cout << "Rescale Total: " << clock.GetTotal() << std::endl;
+
+		clock.Start();
         gradientFilter->SetInput(rescale->GetOutput());
         //gradientFilter->SetInput(I);
         
         try
         {
             gradientFilter->Update();
+			clock.Stop();
+			std::cout << "Gradient Total: " << clock.GetTotal() << std::endl;
         }
         catch( itk::ExceptionObject & err )
         {
@@ -1884,6 +1960,7 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
         }
         else
         {
+			clock.Start();
             typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GradientVectorFlowFilterType;
             GradientVectorFlowFilterType::Pointer GVFFilter = GradientVectorFlowFilterType::New();
             
@@ -1894,6 +1971,8 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
             try
             {
                 GVFFilter->Update();
+				clock.Stop();
+				std::cout << "Gradient Vector Flow Total: " << clock.GetTotal() << std::endl;
             }
             catch( itk::ExceptionObject & err )
             {
@@ -2172,9 +2251,54 @@ void ImageOperation::SeedAdjustment(int iter_num)
     //std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;
 }
 
+void ImageOperation::OutputSeeds()
+{
+	//Make a unsigned char image to print out the critical points image
+	typedef itk::Image< unsigned char, 3 > CriticalPointsImageType;
+	CriticalPointsImageType::Pointer critical_point_image = CriticalPointsImageType::New();
+	critical_point_image->SetRegions(I->GetLargestPossibleRegion());
+	critical_point_image->Allocate();
+	critical_point_image->FillBuffer(0);
+
+	for( unsigned long int i = 0; i < SeedPt.NP; i++)
+	{
+		itk::Index<3> index;
+		index[0] = SeedPt.Pt[i].x;
+		index[1] = SeedPt.Pt[i].y;
+		index[2] = SeedPt.Pt[i].z;
+		for(int k = -5; k <= 5; k++)
+		{
+			itk::Index<3> indexX;
+			itk::Index<3> indexY;
+
+			indexX[0] = index[0] + k;
+			indexX[1] = index[1];
+			indexX[2] = index[2];
+			if( indexX [0] >= 0 && indexX [0] <= SM)
+			{
+				critical_point_image->SetPixel(indexX, 255);
+			}
+
+			indexY[0] = index[0];
+			indexY[1] = index[1] + k;
+			indexY[2] = index[2];
+			if( indexY [1] >= 0 && indexY [1] <= SN)
+			{
+				critical_point_image->SetPixel(indexY, 255);
+			}
+		}
+	}
+
+	typedef itk::ImageFileWriter< CriticalPointsImageType > CriticalPointsWriterType;
+	CriticalPointsWriterType::Pointer crit_pts_writer = CriticalPointsWriterType::New();
+	crit_pts_writer->SetInput(critical_point_image);
+	crit_pts_writer->SetFileName("critical_point_image.tif");
+	crit_pts_writer->Update();
+}
+
 void ImageOperation::SeedDetection(float th, int detection_method, int seed_radius)
 {
-    
+	std::cout<< "Entering seed detection function."<<std::endl;
     SM = I->GetLargestPossibleRegion().GetSize()[0];
     SN = I->GetLargestPossibleRegion().GetSize()[1];
     SZ = I->GetLargestPossibleRegion().GetSize()[2];
@@ -2261,7 +2385,7 @@ void ImageOperation::SeedDetection(float th, int detection_method, int seed_radi
 	visit_label.fill(0);
     
 	//SeedPt_mg = SeedPt;
-    //std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;///
+    std::cout<<"Detected Seed Points:"<<SeedPt.NP<<std::endl;///
     
 }
 
@@ -2411,10 +2535,6 @@ void ImageOperation::seed_centroid()
         std::cerr << err << std::endl;
     }
     
-    
-    
-    
-    
     try
     {
         //std::cout<<"Before labelGeometryFilter->Update()"<< std::endl;
@@ -2448,6 +2568,7 @@ void ImageOperation::seed_centroid()
     std::cout<<"Seed Centroid End"<< std::endl;
     
 }
+
 void ImageOperation::SetCodingMethod(int in)
 {
     coding_method = in + 1;
