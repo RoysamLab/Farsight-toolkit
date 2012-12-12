@@ -2,7 +2,7 @@
 
 ConvexHull3D::ConvexHull3D()
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 11; i++)
 	{
 		convexHullValues[i] = -1;
 	}
@@ -235,12 +235,23 @@ void ConvexHull3D::calculateEllipsoid()
 
 	if (num_of_points != 0)
 	{
+		//length
 		convexHullValues[5] = eigenvalue_norm[max_index];
 		convexHullValues[6] = eigenvalue_norm[median_index];
 		convexHullValues[7] = eigenvalue_norm[min_index];
+		//azimuth
 		convexHullValues[8] = atan2(eigenVector_major.get(1),eigenVector_major.get(0)) * 180/PI;
+		if (convexHullValues[8] < 0)
+		{
+			convexHullValues[8] += 180;
+		}
+		//elevation
 		double hypothenuse = sqrt(pow(eigenVector_major.get(0),2) + pow(eigenVector_major.get(1),2));
 		convexHullValues[9] = atan2(eigenVector_major.get(2),hypothenuse) * 180/PI;
+
+		//eccentricity
+		convexHullValues[10] = sqrt(1.0-pow(convexHullValues[6],2.0)/pow(convexHullValues[5],2.0));
+
 	}
 	//std::cout << "Eigenvector (major axis): " << eigenVector_major.get(0) << " " << eigenVector_major.get(1) << " " << eigenVector_major.get(2) << std::endl;
 
@@ -293,6 +304,7 @@ std::vector<std::string> ConvexHull3D::getConvexHullHeaders()
 	headers.push_back("Ellipsoid normal length");
 	headers.push_back("Ellipsoid Major Azimuth");
 	headers.push_back("Ellipsoid Major Elevation");
+	headers.push_back("Ellipsoid Eccentricity");
 	return headers;
 }
 

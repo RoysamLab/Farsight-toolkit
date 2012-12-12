@@ -840,8 +840,9 @@ std::vector<TraceLine *> CellTrace::getSegments()
 	return this->segments;
 }
 
-void CellTrace::calculateConvexHull()
+std::vector<std::string> CellTrace::calculateConvexHull()
 {
+	std::vector<std::string> convexHullHeaders;
 	if(!delaunayCreated)
 	{
 		double point[3];
@@ -858,7 +859,7 @@ void CellTrace::calculateConvexHull()
 		delaunayActor = convexHull->getActor();
 		ellipsoidActor = convexHull->get3DEllipseActor();
 
-		std::vector<std::string> convexHullHeaders = convexHull->getConvexHullHeaders();
+		convexHullHeaders = convexHull->getConvexHullHeaders();
 		double* convexHullValues = convexHull->getConvexHullValues();
 		
 		int convexHullValueIndex = 0;
@@ -870,6 +871,7 @@ void CellTrace::calculateConvexHull()
 		}
 		delaunayCreated = true;
 	}
+	return convexHullHeaders;
 }
 
 vtkSmartPointer<vtkActor> CellTrace::GetDelaunayActor()

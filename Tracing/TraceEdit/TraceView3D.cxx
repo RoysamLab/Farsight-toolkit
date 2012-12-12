@@ -4841,22 +4841,23 @@ void View3D::updateNodeSelection()
 }
 void View3D::CalculateDelaunay3D()
 {
-	this->ShowCellAnalysis();
-	int convexHullMagnitudeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Magnitude");
-	int convexHullAzimuthIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Azimuth");
-	int convexHullElevationIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Elevation");
-	int convexHullSurfaceIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Surface Area");
-	int convexHullVolumeIndex = this->CellModel->AddNewFeatureHeader("Convex Hull Volume");
-	int ellipsoidMajorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid major length");
-	int ellipsoidMinorIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid minor length");
-	int ellipsoidNormalIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid normal length");
-	int ellipsoidMajorAzimuthIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid Major Azimuth");
-	int ellipsoidMajorElevationIndex = this->CellModel->AddNewFeatureHeader("Ellipsoid Major Elevation");
+	if(!this->FL_MeasureTable)
+	{
+		this->ShowCellAnalysis();
+	}
+
 	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
+	CellTrace* currCell = (*cellCount).second;
+	std::vector<std::string> convexHullHeaders = currCell->calculateConvexHull();
+	cellCount++;
 	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 	{
 		CellTrace* currCell = (*cellCount).second;
 		currCell->calculateConvexHull();
+	}
+	for (std::vector<std::string>::iterator iter = convexHullHeaders.begin(); iter != convexHullHeaders.end(); iter++)
+	{
+		this->CellModel->AddNewFeatureHeader(*iter);
 	}
 	this->ShowCellAnalysis();
 

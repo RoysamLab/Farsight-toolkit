@@ -71,6 +71,12 @@ TraceModel::~TraceModel()
 void TraceModel::stdHeaders()
 {
 	this->headers.push_back("ID");
+	this->headers.push_back("Level");
+	this->headers.push_back("Type");
+	this->headers.push_back("Root ID");
+	this->headers.push_back("Path To Root");
+	this->headers.push_back("Parent");
+	this->headers.push_back("D To Parent");
 	this->headers.push_back("# of Bits");
 	this->headers.push_back("Num Children");
 	this->headers.push_back("Path Length");
@@ -83,12 +89,6 @@ void TraceModel::stdHeaders()
 	this->headers.push_back("Surface Area");
 	this->headers.push_back("BurkTaper");
 	this->headers.push_back("HillmanTaper");
-	this->headers.push_back("Type");
-	this->headers.push_back("Parent");	
-	this->headers.push_back("Root ID");
-	this->headers.push_back("Level");
-	this->headers.push_back("D To Parent");
-	this->headers.push_back("Path To Root");
 	this->headers.push_back("Bif amp Local");
 	this->headers.push_back("Bif amp Remote");
 	this->headers.push_back("Bif tilt Local");
@@ -146,6 +146,12 @@ void TraceModel::SyncModel()
 		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
 		
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
+		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBranchPointer()->size());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLength());
@@ -158,12 +164,6 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSurfaceArea());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBurkTaper());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetHillmanTaper());
-		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplLocal());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifAmplRemote());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetBifTiltLocalAvg());

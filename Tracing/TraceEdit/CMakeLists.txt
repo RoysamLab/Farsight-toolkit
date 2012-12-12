@@ -21,7 +21,6 @@ set( TRACE_SRCS
   GridActors.h		GridActors.cxx
   VolumeOfInterest.h	VolumeOfInterest.cxx
   FeatureRelation.h	FeatureRelation.cxx
-  SuperEllipsoid.h	SuperEllipsoid.cxx
   ConvexHull3D.h	ConvexHull3D.cxx
   StructuredObject.h	StructuredObject.cxx
   PadImageFilter.h	PadImageFilter.cxx

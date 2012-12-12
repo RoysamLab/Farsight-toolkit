@@ -24,7 +24,6 @@ limitations under the License.
 #include <set>
 #include <sstream>
 #include <math.h>
-#include "SuperEllipsoid.h"
 #include "ConvexHull3D.h"
 class TraceBit;
 class TraceLine;
@@ -50,7 +49,7 @@ public:
 	void addNewFeature(std::string featureName, vtkVariant nextFeature);
 	vtkVariant getFeature(std::string featureName);
 	std::vector<TraceLine *> getSegments();
-	void calculateConvexHull();
+	std::vector<std::string> calculateConvexHull();
 	vtkSmartPointer<vtkActor> GetDelaunayActor();
 	vtkSmartPointer<vtkActor> GetEllipsoidActor();
 
