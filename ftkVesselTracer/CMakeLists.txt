@@ -15,4 +15,7 @@ SET(ftkVesselTracer_headers
 	)	
 
 ADD_EXECUTABLE ( ftkVesselTracer ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
+
+ADD_LIBRARY(VesselTracer_lib ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
+
 TARGET_LINK_LIBRARIES( ftkVesselTracer ${VTK_LIBRARIES} ${ITK_LIBRARIES} vcl vnl vnl_algo vnl_io rtvl)

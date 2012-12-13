@@ -1,4 +1,5 @@
-
+#ifndef _ftkVesselTracer_h_
+#define _ftkVesselTracer_h_
 
 #include <iostream>
 #include <vector>
@@ -13,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include <cmath>
 
 #include <omp.h>
 
@@ -60,6 +62,10 @@
 #include "vtkOutEdgeIterator.h"
 #include "vtkInEdgeIterator.h"
 #include "vtkTable.h"
+#include "vtkPolyDataToImageStencil.h"
+#include "vtkImageStencil.h"
+#include "vtkImageCanvasSource2D.h"
+#include "vtkTIFFWriter.h"
 
 #include "itkTimeProbe.h"
 #include "itkStatisticsImageFilter.h"
@@ -94,8 +100,13 @@
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_numeric_traits.h>
 #include <vnl/vnl_math.h>
+#include <vnl/algo/vnl_convolve.h>
+#include <vnl/algo/vnl_gaussian_kernel_1d.h>
 
 #include <vcl_complex.h>
+
+#include "boost/multi_array.hpp"
+#include "boost/lexical_cast.hpp"
 
 #include "Common.h"
 
@@ -137,14 +148,14 @@ typedef itk::ImageDuplicator<ImageType3D> DuplicatorType;
 typedef itk::MaximumProjectionImageFilter<RenderImageType3D, RenderImageType3D> MaxProjectionFilterType;
 typedef itk::MinimumProjectionImageFilter<RenderImageType3D, RenderImageType3D> MinProjectionFilterType;
 typedef itk::ShiftScaleImageFilter<ImageType3D,ImageType3D> ShiftScaleFilterType;
-typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType;
+typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VBTVolumeOfInterestFilterType;
 typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
 typedef itk::ImageFileWriter<RenderImageType3D> ImageWriter;
 typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
 typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
-typedef itk::AddImageFilter<ImageType3D> AddImageFilterType;
+typedef itk::AddImageFilter<ImageType3D> VBTAddImageFilterType;
 typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilterType;
 typedef itk::NormalizeImageFilter<ImageType3D, ImageType3D> NormalizeImageFilterType;
 typedef itk::BresenhamLine<3> LineType3D;
@@ -159,18 +170,26 @@ typedef std::vector<VectorType1D> VectorType2D;
 typedef std::vector<VectorType2D> VectorType3D;
 typedef std::pair<int, double> queue_element;
 
+typedef boost::multi_array<int, 3> ArrayType3D;
+
 struct SphericalBinInfo{
+
+	//USE BOOST 3D ARRAY TO IMPLEMENT THIS CLASS
 
 	//ArrayType3D BinIndex;
 	VectorType3D binIndexVec;
 	VectorType2D nbr;
+	VectorType3D nbr2D;
 	std::vector<std::vector<double> > binCenters;
+	vnl_matrix<double> gaussian_prior;
 	int indexLength;
 	int angleCount;
 	int angleInrement;
 	int nLastIndicesOfInterest;
 	double histSmoothingFactor;
 	double minSphHistCount;
+	double gaussian_sigma;
+	int gaussian_win;
 
 	void initByDefaultValues(void);
 };
@@ -265,6 +284,11 @@ struct NodeDetectionParameters{
 	double vesselnessThershold;
 	double vesselnessWeight;
 
+	double gaussianPriorSigma; // In angle units
+
+	double traceLengthCostRetracing;
+	double traceQualityThresholdRetracing;
+
 	void initByDefaultValues(void);
 };
 
@@ -310,14 +334,14 @@ struct AffinityEdge{
 	AffinityEdge(int, int, double);
 };
 
-struct Tree{
+struct VBTTree{
 
 	int ID;
 	int start;
 	int NNodes;
 
-	Tree();
-	Tree(int, int, int);
+	VBTTree();
+	VBTTree(int, int, int);
 };
 
 class SWCNodeVessel{
@@ -343,6 +367,7 @@ public:
 
 class VesselNetworkFeatures{
 
+public:
 	double totalVesselLength;
 	double totalVesselVolume;
 	double totalVesselness;
@@ -367,6 +392,43 @@ class VesselNetworkFeatures{
 	VesselNetworkFeatures();
 };
 
+class VesselSegmentFeatures{
+
+public:
+	double segmentLength;
+	double segmentVolume;
+	double segmentVesselness;
+	double meanRadius;
+	double meanVesselSize;
+	double meanVesselness;
+	double meanCurvature;
+	double totalTortuosity;
+	double meanTortuosity;
+
+	VesselSegmentFeatures();
+};
+
+class VesselNodeFeatures{
+
+public:
+	int ID;
+	itk::Index<3> position;
+	double scale;
+	double likelihood;
+	int forestLabel;
+	bool isLeaf;
+	bool isRoot;
+	bool isBifurgation;
+	bool isTrifurgation;
+	double traceQuality;
+	int nODFModes;
+	std::vector<double> ODFModesX;
+	std::vector<double> ODFModesY;
+	std::vector<double> ODFModesZ;
+	
+	VesselNodeFeatures();
+};
+
 struct Node{
 
 	double x;
@@ -375,6 +437,7 @@ struct Node{
 	PixelType intensity;
 	double scale;
 	double likelihood;
+	double vesselness_likelihood;
 	bool isValid;
 	double nHoodScale;
 	double vesselness;
@@ -392,11 +455,14 @@ struct Node{
 	std::vector<double> yNormalizedInBand;
 	std::vector<double> zNormalizedInBand;
 	std::vector<double> intensityInBand;
+	std::vector<double> vesselnessInBand;
 	std::vector<double> gxInBand;
 	std::vector<double> gyInBand;
 	std::vector<double> gzInBand;
 	PixelType meanForegroundIntensity;
 	PixelType meanBackgroundIntensity;
+	PixelType meanForegroundVesselness;
+	PixelType meanBackgroundVesselness;
 	int exitIter; // The number of iterations completed before exiting model fitting
 
 	double traceQuality; // Quality of the trace to which the node belongs (eq. 5.6 Amit thesis)
@@ -441,6 +507,12 @@ struct Node{
 	std::vector<int> parents;
 	int ODF_modes;
 
+	VesselNodeFeatures nodeFeatures;
+
+	itk::Index<3> gridNdx;
+
+	NodeDetectionParameters nodeDetectionParams;
+
 	Node();
 	Node(double, double, double, PixelType);
 
@@ -472,6 +544,7 @@ private:
 	 */
 	int comparisonType; 
 };
+
 typedef std::priority_queue<Node, std::vector<Node>, compareNodes> PriorityQueueType;
 
 class arrayElement{
@@ -576,15 +649,16 @@ class ftkVesselTracer{
 public:
 
 	ftkVesselTracer();
-	ftkVesselTracer(std::string, bool, bool, bool);
+	ftkVesselTracer(std::string, bool, bool, int);
+	ftkVesselTracer(std::string, ImageType3D::Pointer, bool, bool, int);
 	~ftkVesselTracer();
 
 	/** Preprocessing of data: 1. Reading the data from TIFF files 2. Median filtering 3. Edge enhancing
 	 * 4. GVF computations 5. Saving all data and GVF as MHD files
 	 * (data path with extension, empty data pointer)
 	 */
-	int PreprocessData(std::string, ImageType3D::Pointer&);
-	
+	int PreprocessData(std::string, ImageType3D::Pointer&, bool);
+
 	/** Load gx, gy, gz, data and oriBin for further processing.
 	 * (data path)
 	 */
@@ -611,11 +685,11 @@ public:
 	 */
 	void ComputeSeeds(void);
 
-	/** Fit a sphere at all nodes (seeda) using the energy minimization technique (Amit thesis pp. 112)
+	/** Fit a sphere at all nodes (seeds) using the energy minimization technique (Amit thesis pp. 112)
 	 * and sort nodes using the likelihood.
 	 */
 	void FitSphereAndSortNodes(void);
-	
+
 	/** Visualize nodes on the data 3D
 	 * (nodes vector, visualize nodes as a point?)
 	 */
@@ -633,6 +707,10 @@ public:
 	/* Compute all secondary nodes
 	 */
 	void ComputeAllSecondaryNodes2(void);
+
+	/* Compute all secondary nodes for retracing
+	 */
+	void ComputeAllSecondaryNodesRetracing(void);
 
 	/* Write a vector of nodes to a text file for further processing
 	 * (Vector of nodes to write, file path with extension)
@@ -668,7 +746,7 @@ public:
 	/* Fetch the tree at the given ID 
 	 * (ID, connected IDs vector)
 	 */
-	void GetTree(int, std::vector<int>&);
+	void GetVBTTree(int, std::vector<int>&);
 
 	/* Visualize Minimum spanning forest
 	 */
@@ -724,14 +802,22 @@ public:
 	 */
 	void WriteSkeletonImage(void);
 
+	/* Write vessel skeleton image to disk
+	 */
+	void WriteSkeletonImageFromVTK(void);
+
+
 	/* Write the segmentation mask to disk
 	 */
 	void WriteSegmentationMask(void);
 	
 	/* Write node properties to file
 	 */
-	void WriteNodePropertiesFile(void);
-
+	void WriteNodeFeaturesFile(void);
+	
+	/* Compute vessel network features
+	 */
+	void ComputeVesselNetworkFeatures(void);
 	
 private:
 
@@ -747,6 +833,7 @@ private:
 	ImageType3D::Pointer gy;
 	ImageType3D::Pointer gz;
 	ImageType3D::Pointer VesselnessImage;
+	ImageType3D::Pointer InputImageRetracing;
 
 	RenderImageType3D::Pointer originalDataForRendering;
 	RenderImageType3D::Pointer inputDataForRendering;
@@ -755,7 +842,7 @@ private:
 	RenderImageType3D::Pointer primaryNodesImage, secondaryNodesImage;
 	RenderImageType3D::Pointer retracingStartPointsImage;
 	RenderImageType3D::Pointer skeletonImage, segmentationMaskImage;
-	
+
 	std::vector<Node> initialSeeds;
 	std::vector<Node> primaryNodes;
 	std::vector<Node> primaryNodesAfterHitTest;
@@ -763,12 +850,20 @@ private:
 	std::vector<Node> allForestNodes;
 	std::vector<Node> retracingStartPoints;
 
+	//std::map<itk::Index<3>, Node, compareIndex> nodeGridMap;
+	//ArrayType3D nodeGridArray;
+
 	std::vector<AffinityEdge> edges;
 	std::vector<AffinityEdge> loops;
-	std::vector<Tree> forest;
+	std::vector<VBTTree> forest;
 	std::vector<SWCNodeVessel> SWCNodeVessel_vec;
 
-	bool useVesselness; 
+	// 0: Use vesselness in selecting primary seeds only
+	// 1: Use vesselness in case0 and tracing cost function
+	// 2: Use vesselness in case1 and sphere cost function
+	int useVesselness; 
+	
+	VesselNetworkFeatures networkFeatures;
 
 	/* Update the node appearance 
 	 * (Node object)
@@ -916,3 +1011,5 @@ private:
 	std::vector<NucleiObject_VT> nucleiObjects;
 	std::vector<Node> skeletonNodes;
 };
+
+#endif //_ftkVesselTracer_h

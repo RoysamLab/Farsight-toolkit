@@ -4,14 +4,14 @@
 ftkVesselTracer::ftkVesselTracer(){
 }
 
-ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false, bool use_vesselness = true){
+ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false, int use_vesselness = 1){
 
 	this->useVesselness = use_vesselness;
 
 	if(preprocess){
 		this->allParams.preProcessingParams.initByDefaultValues();
 		ImageType3D::Pointer tiff_data_ptr; //only required for preprocessing
-		this->PreprocessData(input_data_path, tiff_data_ptr); // ask user	
+		this->PreprocessData(input_data_path, tiff_data_ptr, true); // ask user	
 	}
 
 	//testing
@@ -64,15 +64,91 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->CreateMinimumSpanningForest();
 	}
 	
-	this->PopulateSWCNodeContainerAndComputeNodeFeatures();
-	this->WriteNodePropertiesFile();
-	this->WriteSWCFileVessel();
-	this->WriteSkeletonImage();
-	this->WriteSegmentationMask();
+	//this->PopulateSWCNodeContainerAndComputeNodeFeatures();
+	//this->WriteNodeFeaturesFile();
+	//this->WriteSWCFileVessel();
+	//this->WriteSegmentationMask();
+	//this->WriteSkeletonImageFromVTK();
+	//this->WriteSkeletonImage();
+	
 
 	// "Smart" retracing
-	this->SmartRetrace();
+	//this->SmartRetrace();
 }
+
+ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Pointer input_image, bool preprocess = false, bool start_with_mst = false, int use_vesselness = 1){
+
+	this->useVesselness = use_vesselness;
+
+	if(preprocess){
+		this->allParams.preProcessingParams.initByDefaultValues();
+		ImageType3D::Pointer tiff_data_ptr; //only required for preprocessing
+		this->PreprocessData(input_data_path, tiff_data_ptr, false); // ask user	
+	}
+
+	//testing
+	//this->PrintToySWCFile();
+
+	this->data_folder_path = input_data_path;
+	this->data_folder_path.erase(this->data_folder_path.length()-4, this->data_folder_path.length());
+	
+	// PIPELINE: AVOID WRITING ALL FILES AND READING THEM AGAIN
+	// Load preprocessed data
+	this->LoadPreprocessedData(input_data_path);
+
+	if(!start_with_mst){
+
+		this->allParams.oriBin.initByDefaultValues();
+		this->SphericalBinPreprocess();
+
+		// 3D rendering of original and preprocessed data
+		//Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
+		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);		
+		//std::cout << "Done with preparing data for rendering. " << std::endl; 
+		//Common::RenderImage3D(this->originalDataForRendering);
+		//Common::RenderImage3D(this->inputDataForRendering);
+		
+
+		// MIP computation
+		//this->ComputeIntensityProjectionImages();
+		//std::cout << "Done with preparing data for rendering. " << std::endl; 
+		//this->RenderMaximumProjectionImage();	
+
+		// Primary and secondary node detection
+		this->allParams.nodeDetectionParams.initByDefaultValues();
+		this->ComputeAllPrimaryNodes();
+		this->ComputeAllSecondaryNodes();
+
+		// MST and post processing
+		this->allParams.graphAndMSTParams.initByDefaultValues();
+		this->CreateMinimumSpanningForest();		
+	}
+	else{
+
+		//Common::RescaleDataForRendering(this->originalData, this->originalDataForRendering);
+		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
+		
+		// Reading secondary nodes from file for now
+		std::string filename = "AllNodes_grid10.txt";
+		this->ReadNodesFromTextFile(filename);
+		//this->ReadNodesFromTextFile(std::string("AllNodes_default.txt"));
+		
+		this->allParams.graphAndMSTParams.initByDefaultValues();
+		this->CreateMinimumSpanningForest();
+	}
+	
+	//this->PopulateSWCNodeContainerAndComputeNodeFeatures();
+	//this->WriteNodeFeaturesFile();
+	//this->WriteSWCFileVessel();
+	//this->WriteSegmentationMask();
+	//this->WriteSkeletonImageFromVTK();
+	//this->WriteSkeletonImage();
+	
+
+	// "Smart" retracing
+	//this->SmartRetrace();
+}
+
 ftkVesselTracer::~ftkVesselTracer(){
 }
 
@@ -142,9 +218,11 @@ void SphericalBinInfo::initByDefaultValues(void){
 	this->indexLength = 50;
 	this->angleCount = 182;
 	this->angleInrement = 10;
-	this->nLastIndicesOfInterest = 8;
+	this->nLastIndicesOfInterest = 8; // Should be 9?
 	this->histSmoothingFactor = 0.05;
 	this->minSphHistCount = 0.0001;
+	this->gaussian_sigma = 3.0;
+	this->gaussian_win = 3;
 }
 
 void NodeDetectionParameters::initByDefaultValues(void){
@@ -175,7 +253,7 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	
 	this->maxVesselWidth = 20;
 	this->minVesselWidth = 2; //1;
-	this->likelihoodThresholdPrimary = 0.04; //0.1; //0.01; //0.005;
+	this->likelihoodThresholdPrimary = 0.04; //0.01; //0.04; //0.1; //0.01; //0.005; // Vary according to the noise level in the data
 	this->distanceThresholdPrimary = 1.2;
 
 	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
@@ -204,6 +282,11 @@ void NodeDetectionParameters::initByDefaultValues(void){
 
 	this->vesselnessThershold = 0.001; //0.0001;
 	this->vesselnessWeight = 0.3;
+
+	this->gaussianPriorSigma = 10;
+	
+	this->traceLengthCostRetracing = 0.1;
+	this->traceQualityThresholdRetracing = 5.0;
 }
 
 VesselNetworkFeatures::VesselNetworkFeatures(){
@@ -225,6 +308,34 @@ VesselNetworkFeatures::VesselNetworkFeatures(){
 	this->meanLoopRadius = 0.0;
 }
 
+VesselSegmentFeatures::VesselSegmentFeatures(){
+
+	this->segmentLength = 0.0;
+	this->segmentVolume = 0.0;
+	this->segmentVesselness = 0.0;
+	this->meanRadius = 0.0;
+	this->meanVesselSize = 0.0;
+	this->meanVesselness = 0.0;
+	this->totalTortuosity = 0.0;
+	this->meanTortuosity = 0.0;
+	this->meanCurvature = 0.0;
+}
+
+VesselNodeFeatures::VesselNodeFeatures(){
+
+	this->ID = -1;
+	this->position.Fill(0);
+	this->scale = 0.0;
+	this->likelihood = 0.0;
+	this->forestLabel = -1;
+	this->isLeaf = false;
+	this->isRoot = false;
+	this->isBifurgation = false;
+	this->isTrifurgation = false;
+	this->traceQuality = 0.0;
+	this->nODFModes = 0;
+}
+
 void GraphAndMSTPartameters::initByDefaultValues(void){
 
 	this->affinityRadThresh = 2.0; //3.0; //2.5;
@@ -232,7 +343,7 @@ void GraphAndMSTPartameters::initByDefaultValues(void){
 	this->maxEdgeWeight = 99.0;
 	this->minBranchAngle = vnl_math::pi/8.0;
 	this->maxNBranches = 40; //25; //10; //5;
-	this->maxTreeNodes = 500; //100;
+	this->maxTreeNodes = 5000; //500; //100;
 }
 void AllParameters::initByDefaultValues(void){
 	
@@ -242,7 +353,7 @@ void AllParameters::initByDefaultValues(void){
 	this->graphAndMSTParams.initByDefaultValues();
 }
 
-int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer& data_ptr){
+int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer& data_ptr, bool readData=false){
 
 	itk::TimeProbe timer; // Timer for measuring the preprocessing time
 	timer.Start();
@@ -250,16 +361,18 @@ int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer&
 	std::string write_file_path = file_path.substr(0, file_path.find_last_of('.'));
 	std::string append_str = "_original.mhd";
 
-	try{
-		Common::ReadImage3D(file_path, data_ptr);
+	if(readData){
+		try{
+			Common::ReadImage3D(file_path, data_ptr);
 
-		//Common::WriteImage3D(write_file_path + std::string(append_str), data_ptr);
+			//Common::WriteImage3D(write_file_path + std::string(append_str), data_ptr);
+		}
+		catch(itk::ExceptionObject& e){
+			std::cout << e << std::endl;
+			return EXIT_FAILURE;
+		}
+		std::cout << "Done with reading input image. " << std::endl;
 	}
-	catch(itk::ExceptionObject& e){
-		std::cout << e << std::endl;
-		return EXIT_FAILURE;
-	}
-	std::cout << "Done with reading input image. " << std::endl;
 
 	//PARAMS: Make available outside function
 	int median_radius = this->allParams.preProcessingParams.medianFilterRadius;
@@ -527,7 +640,11 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	int t2 = test_vec[5][2][9];
 	*/
 
+#if _OPENMP < 200805L
 	#pragma omp parallel for 
+#else
+	#pragma omp parallel for collapse(3)
+#endif
 	for(int i1 = -indexLength; i1 <= indexLength; i1++){
 		for(int i2 = -indexLength; i2 <= indexLength; i2++){
 			for(int i3 = -indexLength; i3 <= indexLength; i3++){
@@ -560,9 +677,6 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 		}
 	}
 
-	int a1 = this->allParams.oriBin.binIndexVec[46][49][49];
-	int a2 = this->allParams.oriBin.binIndexVec[49][46][49];
-	
 	std::vector<std::vector<double> > bin_centers(3, std::vector<double>(x.size(), 0));
 	//bin_centers[0] = x;
 	//bin_centers[1] = y;
@@ -591,6 +705,7 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	// maintained after inserting in the map.
 	int n_index_of_interest = this->allParams.oriBin.nLastIndicesOfInterest;
 	VectorType2D nbr(angleCount, VectorType1D(n_index_of_interest, 0));
+	VectorType3D nbr2D(angleCount, VectorType2D(3, VectorType1D(3, 0.0)));
 
 	/*VectorType1D D_sorted_index, D_sorted_index_of_interest;
 	std::multimap<double, int> D_column_map;
@@ -612,7 +727,7 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	
 	std::vector<arrayElement> D_col_vec;
 	for(int i = 0; i < D.size(); i++){
-	
+
 		for(int j = 0; j < D[i].size(); j++)
 			D_col_vec.push_back(arrayElement(D[i][j], j));
 		
@@ -625,8 +740,32 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 		
 		D_col_vec.clear();
 	}
-
 	this->allParams.oriBin.nbr = nbr;	
+	
+	for(int i = 0; i < angleCount; i++){
+
+		VectorType2D D_local(3, VectorType1D(3, 0.0));
+		for(int j = 0; j < n_index_of_interest; j++){
+			
+			D_local[bin_centers[0][j]][bin_centers[1][j]] = nbr[i][j];
+		}
+		nbr2D[i] = D_local;
+	}
+	this->allParams.oriBin.nbr2D = nbr2D;
+
+	int nbr_indx = this->allParams.oriBin.gaussian_win;
+	double g_sigma = this->allParams.oriBin.gaussian_sigma;
+	double g_mean = 1.0;
+	double g_scalar2D = 1.0/(2.0*3.14159265359*g_sigma*g_sigma);
+		
+	vnl_matrix<double> gaussian_mat(nbr_indx, nbr_indx, 0.0);
+	for(int i = 0; i < gaussian_mat.rows(); i++){
+		for(int j = 0; j < gaussian_mat.cols(); j++){
+			gaussian_mat[i][j] = g_scalar2D*vcl_exp(-1.0*((((i-g_mean)*(i-g_mean)) + ((j-g_mean)*(j-g_mean)))/(2.0*g_sigma*g_sigma)));
+		}
+	}
+
+	this->allParams.oriBin.gaussian_prior = gaussian_mat;
 
 	std::cout << "SphericalBinInfo computed." << std::endl;
 }
@@ -647,15 +786,16 @@ void ftkVesselTracer::ComputeSeeds(void){
 
 	int grid_spacing = this->allParams.nodeDetectionParams.gridSpacing;
 
-	//VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
+	//VBTVolumeOfInterestFilterType::Pointer sub_volume_filter = VBTVolumeOfInterestFilterType::New();
 	//sub_volume_filter->SetInput(this->normalizedInputData);
 
 	StatisticsFilterType::Pointer stats_filter = StatisticsFilterType::New();
 
-	ImageType3D::IndexType starting_index, max_index, min_index;
+	ImageType3D::IndexType starting_index, max_index, max_index_2, min_index;
 	ImageType3D::SizeType sub_volume_size; //, size1;
 	ImageType3D::RegionType sub_volume_region;
 	ImageType3D::Pointer sub_volume;
+	ImageType3D::Pointer sub_volume_2;
 	//MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
 
 	
@@ -664,14 +804,38 @@ void ftkVesselTracer::ComputeSeeds(void){
 	//double max_val = 0, min_val = 0, pixel1 = 0, pixel2 = 0, pixel3 = 0;
 	int seed_count = 0;
 
-	#pragma omp parallel for private(starting_index, max_index, min_index, sub_volume_size, sub_volume_region, sub_volume) 
-	for(int i1 = 0; i1 < d1; i1 = i1 + grid_spacing){
-		for(int i2 = 0; i2 < d2; i2 = i2 + grid_spacing){
-			for(int i3 = 0; i3 < d3; i3 = i3 + grid_spacing){
-			
-				int j1 = std::min(i1 + grid_spacing - 1, d1);
-				int j2 = std::min(i2 + grid_spacing - 1, d2);
-				int j3 = std::min(i3 + grid_spacing - 1, d3);
+	unsigned long offset = 0;
+	int m3 = d3 - (d3%grid_spacing);
+	int m2 = d2 - (d2%grid_spacing);
+	int m1 = d1 - (d1%grid_spacing);
+	//std::cout << "(m1, m2, m3): " << m1 << ", " << m2 << ", " << m3 << std::endl;
+
+	int grid_slice_size = (m2/grid_spacing)*(m1/grid_spacing);
+	int grid_row_size = (m1/grid_spacing);
+	int grid_size = (m1/grid_spacing)*(m2/grid_spacing)*(m3/grid_spacing);
+
+	//std::cout << "Grid spacing: " << grid_spacing << " Grid slice size: " << grid_slice_size << std::endl;
+	//std::cout << "Grid row size: " << grid_row_size << " Grid size: " << grid_size << std::endl;
+	
+	this->initialSeeds.resize(grid_size);
+	
+
+#if _OPENMP < 200805L
+	#pragma omp parallel for private(offset, starting_index, max_index, max_index_2, min_index, sub_volume_size, sub_volume_region, sub_volume, sub_volume_2)
+#else
+	#pragma omp parallel for collapse(3) private(offset, starting_index, max_index, min_index, sub_volume_size, sub_volume_region, sub_volume)
+#endif
+	for(int i3 = 0; i3 < m3; i3 += grid_spacing){
+		for(int i2 = 0; i2 < m2; i2 += grid_spacing){
+			for(int i1 = 0; i1 < m1; i1 += grid_spacing){
+						
+				int k3 = i3/grid_spacing;
+				int k2 = i2/grid_spacing;
+				int k1 = i1/grid_spacing;
+
+				int j1 = std::min(i1 + grid_spacing - 1, m1);
+				int j2 = std::min(i2 + grid_spacing - 1, m2);
+				int j3 = std::min(i3 + grid_spacing - 1, m3);
 				
 				//starting_index[0] = i2; starting_index[1] = i1; starting_index[2] = i3;
 				//sub_volume_size[0] = j2 - i2; sub_volume_size[1] = j1 - i1; sub_volume_size[2] = j3 - i3;
@@ -681,11 +845,18 @@ void ftkVesselTracer::ComputeSeeds(void){
 				sub_volume_region.SetIndex(starting_index);
 				sub_volume_region.SetSize(sub_volume_size);
 				
-				VolumeOfInterestFilterType::Pointer sub_volume_filter = VolumeOfInterestFilterType::New();
-				sub_volume_filter->SetInput(this->normalizedInputData);
+				// Using intensity and vesselness image to initialize the seed points
+				VBTVolumeOfInterestFilterType::Pointer sub_volume_filter = VBTVolumeOfInterestFilterType::New();
+				sub_volume_filter->SetInput(this->VesselnessImage);
 				sub_volume_filter->SetRegionOfInterest(sub_volume_region);
 				sub_volume_filter->Update();
 				sub_volume = sub_volume_filter->GetOutput();
+				
+				VBTVolumeOfInterestFilterType::Pointer sub_volume_filter_2 = VBTVolumeOfInterestFilterType::New();
+				sub_volume_filter_2->SetInput(this->normalizedInputData);
+				sub_volume_filter_2->SetRegionOfInterest(sub_volume_region);
+				sub_volume_filter_2->Update();
+				sub_volume_2 = sub_volume_filter_2->GetOutput();
 				
 				// Node statistics can be computed here to reject some seeds which lie in the background
 				/*stats_filter->SetInput(sub_volume);
@@ -703,23 +874,57 @@ void ftkVesselTracer::ComputeSeeds(void){
 				MinMaxCalculatorType::Pointer min_max_calculator = MinMaxCalculatorType::New();
 				min_max_calculator->SetImage(sub_volume);
 				min_max_calculator->Compute();
-				
 				double max_val = min_max_calculator->GetMaximum();
-				double min_val = min_max_calculator->GetMinimum();
+				//double min_val = min_max_calculator->GetMinimum();
 				max_index = min_max_calculator->GetIndexOfMaximum();
-				min_index = min_max_calculator->GetIndexOfMinimum();
+				//min_index = min_max_calculator->GetIndexOfMinimum();
 
+				MinMaxCalculatorType::Pointer min_max_calculator_2 = MinMaxCalculatorType::New();
+				min_max_calculator_2->SetImage(sub_volume_2);
+				min_max_calculator_2->Compute();
+				double max_val_2 = min_max_calculator_2->GetMaximum();
+				max_index_2 = min_max_calculator_2->GetIndexOfMaximum();
+				
 				//this->initialSeeds[seed_count].x = max_index[0];
 				//this->initialSeeds[seed_count].y = max_index[1];
 				//this->initialSeeds[seed_count].z = max_index[2];
+				//max_index = min_index;
+			
+				if(this->useVesselness >= 0){
+					if(max_val < max_val_2){
+						max_val = max_val_2;
+						max_index = max_index_2;
+					}				
+				}
+				else{
+					max_val = max_val_2;
+					max_index = max_index_2;
+				}
+
+				offset = (k3*grid_slice_size) + (k2*grid_row_size) + k1;
 				
-				//max_index = min_index;	
+				//#pragma omp critical				
+				this->initialSeeds[offset] = Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
+	
+				//std::cout << offset << std::endl;
+
+				//itk::Index<3> grid_ndx;
+				///grid_ndx[0] = i1; grid_ndx[1] = i2; grid_ndx[2] = i3;
+				//this->initialSeeds[offset].gridNdx = grid_ndx;
 				
-				#pragma omp critical
-				this->initialSeeds.push_back(Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val));
+				//itk::Index<3> local_grid_ndx;
+				//local_grid_ndx[0] = k1; local_grid_ndx[1] = k2; local_grid_ndx[2] = k3;
+				//this->nodeGridMap[local_grid_ndx] = this->initialSeeds[offset];
+				//this->nodeGridArray
 				
 				//#pragma omp critical
-				//seed_count++;
+				//this->initialSeeds.push_back(Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val));
+				
+				//#pragma omp critical
+				//	seed_count++;
+				//	std::cout << seed_count << std::endl;
+				//	this->initialSeeds[seed_count] = Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
+					
 			}
 		}
 	}
@@ -727,6 +932,7 @@ void ftkVesselTracer::ComputeSeeds(void){
 	std::cout << "Seed points computed: " << this->initialSeeds.size() << std::endl;
 
 	//visualizing the seed nodes
+	//this->initialSeeds.erase(this->initialSeeds.begin()+500, this->initialSeeds.end());
 	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
 }
 
@@ -943,16 +1149,20 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 
 	std::vector<Node> filteredPrimaryNodes;
 	filteredPrimaryNodes.resize(this->initialSeeds.size());
+	
+	// Parallel implementation for fitting spheres at each detected node
 
-	//#pragma omp parallel for 
-	for(int i = 0; i < this->initialSeeds.size(); i++){
+	#pragma omp parallel for schedule(dynamic, 1)
+	for(int i = 0; i < 1000; i++){ //this->initialSeeds.size(); i++){
+
+		//std::cout << i << std::endl;
+		
 		this->FitSphereAtNode(this->initialSeeds[i]);
 		//std::cout << i << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << " Last iter: " << this->initialSeeds[i].exitIter << std::endl; 
 		
-		//#pragma omp critical
-			if((this->initialSeeds[i].isValid == true) && (this->initialSeeds[i].likelihood > this->allParams.nodeDetectionParams.likelihoodThresholdPrimary)){
-				//this->primaryNodes.push_back(this->initialSeeds[i]);
-				filteredPrimaryNodes[i] = this->initialSeeds[i];
+		if((this->initialSeeds[i].isValid == true) && (this->initialSeeds[i].likelihood > this->allParams.nodeDetectionParams.likelihoodThresholdPrimary)){
+			//this->primaryNodes.push_back(this->initialSeeds[i]);
+			filteredPrimaryNodes[i] = this->initialSeeds[i];
 
 				//std::cout << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << std::endl;
 			}
@@ -962,8 +1172,8 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 		if(filteredPrimaryNodes[i].likelihood > 0.0)
 			this->primaryNodes.push_back(filteredPrimaryNodes[i]);
 	}
-
-
+	
+	
 	//for testing
 	/*for(int i = 0; i < this->primaryNodes.size(); i++){
 		std::cout << this->primaryNodes[i].x << ", " << this->primaryNodes[i].y << ", " << this->primaryNodes[i].z << ", ";
@@ -975,11 +1185,13 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	//this->VisualizeNodesWithData3D(this->primaryNodes, false);
 
 	std::cout << "Primary nodes before hit test: " << this->primaryNodes.size() << std::endl;
-
-	this->SortAndFilterPrimaryNodes();
+	
+	// NOT USING FILTERING IS AN IMPORTANT CHANGE AND HAS NOT BEEN TESTED SO MUCH
+	//this->SortAndFilterPrimaryNodes();
+	this->primaryNodesAfterHitTest = this->primaryNodes;
 	
 	//final primary nodes
-	this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
 
 	RenderImageType3D::RegionType id_reg;
@@ -1050,9 +1262,10 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed){
 	
 	// Very important step!! 
 	//#pragma omp critical
-	this->allParams.nodeDetectionParams.initByDefaultValues();
+	//this->allParams.nodeDetectionParams.initByDefaultValues();
+	seed.nodeDetectionParams.initByDefaultValues();
 
-	int node_iter = this->allParams.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter = seed.nodeDetectionParams.iterNPrimaryNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1088,9 +1301,9 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr,
 	seed.InitDefaultParamsBeforeOptimization();
 		
 	// Very important step!! 
-	this->allParams.nodeDetectionParams.initByDefaultValues();
+	seed.nodeDetectionParams.initByDefaultValues();
 
-	int node_iter = this->allParams.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter = seed.nodeDetectionParams.iterNPrimaryNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1111,7 +1324,7 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr,
 void Node::InitDefaultParamsBeforeOptimization(){
 	
 	this->scale = (double)Node::DEFALUT_SCALE;
-	this->nHoodScale = 2 * this->scale;
+	this->nHoodScale = 2.0 * this->scale;
 	this->likelihood = (double)Node::MIN_LIKELIHOOD;
 }
 
@@ -1127,7 +1340,7 @@ void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& seconda
 	anchor_node.dirY.push_back(dir_vec[1]/anchor_dir_norm);	
 	anchor_node.dirZ.push_back(dir_vec[2]/anchor_dir_norm);
 
-	anchor_node.secondaryNodeSearchRad = this->allParams.nodeDetectionParams.primaryNodeSearchRadFactor * primary_node.scale;
+	anchor_node.secondaryNodeSearchRad = primary_node.nodeDetectionParams.primaryNodeSearchRadFactor * primary_node.scale;
 	
 	anchor_node.xInitSecondary = primary_node.x + anchor_node.dirX[0] * anchor_node.secondaryNodeSearchRad;
 	anchor_node.yInitSecondary = primary_node.y + anchor_node.dirY[0] * anchor_node.secondaryNodeSearchRad;
@@ -1148,15 +1361,15 @@ void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& seconda
 	secondary_node.likelihood = 0.0;
 	secondary_node.bandNhood = 0.5; // FUNCTION CALL REQUIRED
 	secondary_node.sphHistRegionBased = primary_node.sphHistRegionBased;
-
+	
 	//Very important step !!
-	this->allParams.nodeDetectionParams.initByDefaultValues();
-	this->allParams.nodeDetectionParams.dtX = this->allParams.nodeDetectionParams.dtXSecondary;
-	this->allParams.nodeDetectionParams.dtY = this->allParams.nodeDetectionParams.dtYSecondary;
-	this->allParams.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZSecondary;
-	this->allParams.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScaleSecondary;
+	secondary_node.nodeDetectionParams.initByDefaultValues();
+	secondary_node.nodeDetectionParams.dtX = this->allParams.nodeDetectionParams.dtXSecondary;
+	secondary_node.nodeDetectionParams.dtY = this->allParams.nodeDetectionParams.dtYSecondary;
+	secondary_node.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZSecondary;
+	secondary_node.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScaleSecondary;
 
-	int node_iter = this->allParams.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter =secondary_node.nodeDetectionParams.iterNPrimaryNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1203,7 +1416,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 
 	nhood_size[0] = 2.0*seed.nHoodScale; nhood_size[1] = 2.0*seed.nHoodScale; nhood_size[2] = 2.0*seed.nHoodScale;
 	
-	/*VolumeOfInterestFilterType::Pointer sub_vol_filter = VolumeOfInterestFilterType::New();
+	/*VBTVolumeOfInterestFilterType::Pointer sub_vol_filter = VBTVolumeOfInterestFilterType::New();
 	sub_vol_filter->SetInput(this->normalizedInputData);
 	sub_vol.SetIndex(nhood_start_index);
 	sub_vol.SetSize(nhood_size);
@@ -1216,6 +1429,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	seed.backgroundArea = 0;
 	seed.meanForegroundIntensity = 0.0;
 	seed.meanBackgroundIntensity = 0.0;
+	seed.meanForegroundVesselness = 0.0;
+	seed.meanBackgroundVesselness = 0.0;
 	seed.xNormalizedInBand.clear();
 	seed.yNormalizedInBand.clear();
 	seed.zNormalizedInBand.clear();
@@ -1228,7 +1443,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	PixelType x_normalized = 0.0, y_normalized = 0.0, z_normalized = 0.0, radial_dist = 0.0;
 	bool is_inside_volume = true, is_outside_volume = false, is_on_foreground = true, is_on_background = false, contributes_to_energy = true, energy_band_outside_volume = false;
 	int in_volume_count = 0, out_volume_count = 0;
-	std::vector<double> foreground_values, background_values;
+	std::vector<double> foreground_values, background_values, foreground_vesselness, background_vesselness;
 	
 	for(int k = nhood_start_index[2]; k <= nhood_end_index[2]; k++){
 		for(int i = nhood_start_index[0]; i <= nhood_end_index[0]; i++){
@@ -1279,6 +1494,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
 					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
 					seed.intensityInBand.push_back(this->normalizedInputData->GetPixel(current_index));
+					seed.vesselnessInBand.push_back(this->VesselnessImage->GetPixel(current_index));
 					seed.gxInBand.push_back(this->gx->GetPixel(current_index));
 					seed.gyInBand.push_back(this->gy->GetPixel(current_index));
 					seed.gzInBand.push_back(this->gz->GetPixel(current_index));
@@ -1291,6 +1507,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
 					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
 					seed.intensityInBand.push_back(0);
+					seed.vesselnessInBand.push_back(0);
 					seed.gxInBand.push_back(0);
 					seed.gyInBand.push_back(0);
 					seed.gzInBand.push_back(0);
@@ -1303,15 +1520,21 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 					//std::cout << "Position: " << i << ", " << j << ", " << k << " Value: " << this->normalizedInputData->GetPixel(current_index) << std::endl;
 					
 					foreground_values.push_back(this->normalizedInputData->GetPixel(current_index));
-					
+					foreground_vesselness.push_back(this->VesselnessImage->GetPixel(current_index));
+
 					seed.meanForegroundIntensity = seed.meanForegroundIntensity + this->normalizedInputData->GetPixel(current_index);
+					seed.meanForegroundVesselness = seed.meanForegroundVesselness + this->VesselnessImage->GetPixel(current_index);
+					
 					seed.foregroundArea++;
 				}
 				if(is_on_background == true){
 
 					background_values.push_back(this->normalizedInputData->GetPixel(current_index));
+					background_vesselness.push_back(this->VesselnessImage->GetPixel(current_index));
 
 					seed.meanBackgroundIntensity = seed.meanBackgroundIntensity + this->normalizedInputData->GetPixel(current_index);
+					seed.meanBackgroundVesselness = seed.meanBackgroundVesselness + this->VesselnessImage->GetPixel(current_index);
+
 					seed.backgroundArea++;
 				}
 
@@ -1324,27 +1547,43 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 		if(foreground_values.size() != 0){
 			// Calculate the median
 			std::sort(foreground_values.begin(), foreground_values.end());
+			std::sort(foreground_vesselness.begin(), foreground_vesselness.end());
 
 			seed.meanForegroundIntensity = *(foreground_values.begin() + (foreground_values.size()/2));
+			seed.meanForegroundVesselness = *(foreground_vesselness.begin() + (foreground_vesselness.size()/2));
 		}
-		else
+		else{
 			seed.meanForegroundIntensity = 0.0;
+			seed.meanForegroundVesselness = 0.0;
+		}
 
 		if(background_values.size() != 0){
 			std::sort(background_values.begin(), background_values.end());
+			std::sort(background_vesselness.begin(), background_vesselness.end());
+
 			seed.meanBackgroundIntensity = *(background_values.begin() + (background_values.size()/2));
+			seed.meanBackgroundVesselness = *(background_vesselness.begin() + (background_vesselness.size()/2));
 		}
-		else
+		else{
 			seed.meanBackgroundIntensity = 0.0;
+			seed.meanBackgroundVesselness = 0.0;
+		}
 	}
 	else{
 
 		// Calculate the mean
 		seed.meanForegroundIntensity = seed.meanForegroundIntensity / (float)seed.foregroundArea;
 		seed.meanBackgroundIntensity = seed.meanBackgroundIntensity / (float)seed.backgroundArea;
+
+		seed.meanForegroundVesselness = seed.meanForegroundVesselness / (float)seed.foregroundArea;
+		seed.meanBackgroundVesselness = seed.meanBackgroundVesselness / (float)seed.backgroundArea;
 	}
 
 	seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
+	seed.vesselness_likelihood = seed.meanForegroundVesselness - seed.meanBackgroundVesselness;
+	
+	if(this->useVesselness >= 2)
+		seed.likelihood = (seed.likelihood + seed.vesselness_likelihood)/2.0;
 
 	//testing
 	//std::cout << seed.foregroundArea << ", " << seed.backgroundArea << ", ";
@@ -1353,11 +1592,11 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	// If likelood is less than 0.001, do what? According to the thesis, the subvolume should be discarded. But here, the likelihood value is
 	// increased if it is less then 0.001
 	/*double mean_of_means = 0.0;
-	if(seed.isSecondary == true && seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
+	if(seed.isSecondary == true && seed.likelihood < seed.nodeDetectionParams.increaseLikelihoodThreshold){
 		
 		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
-		seed.meanForegroundIntensity = mean_of_means + this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
-		seed.meanBackgroundIntensity = mean_of_means - this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
 		if(seed.meanBackgroundIntensity < 0)
 			seed.meanBackgroundIntensity = 0;
 		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
@@ -1397,7 +1636,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointe
 
 	nhood_size[0] = 2*seed.nHoodScale; nhood_size[1] = 2*seed.nHoodScale; nhood_size[2] = 2*seed.nHoodScale;
 	
-	/*VolumeOfInterestFilterType::Pointer sub_vol_filter = VolumeOfInterestFilterType::New();
+	/*VBTVolumeOfInterestFilterType::Pointer sub_vol_filter = VBTVolumeOfInterestFilterType::New();
 	sub_vol_filter->SetInput(data_ptr);
 	sub_vol.SetIndex(nhood_start_index);
 	sub_vol.SetSize(nhood_size);
@@ -1543,11 +1782,11 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointe
 	// If likelood is less than 0.001, do what? According to the thesis, the subvolume should be discarded. But here, the likelihood value is
 	// increased if it is less then 0.001
 	/*double mean_of_means = 0.0;
-	if(seed.likelihood < this->allParams.nodeDetectionParams.increaseLikelihoodThreshold){
+	if(seed.likelihood < seed.nodeDetectionParams.increaseLikelihoodThreshold){
 		
 		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
-		seed.meanForegroundIntensity = mean_of_means + this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
-		seed.meanBackgroundIntensity = mean_of_means - this->allParams.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
 		if(seed.meanBackgroundIntensity < 0)
 			seed.meanBackgroundIntensity = 0;
 		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
@@ -1565,21 +1804,34 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
 
-	std::vector<double> inside_region_term, outside_region_term;
+	std::vector<double> inside_region_term, outside_region_term, inside_vesselness_term, outside_vesselness_term;
 	for(int i = 0; i < seed.intensityInBand.size(); i++){
-		inside_region_term.push_back(std::abs(seed.meanForegroundIntensity - seed.intensityInBand[i]));
+		inside_region_term.push_back(std::abs(PixelType(seed.meanForegroundIntensity - seed.intensityInBand[i])));
 		outside_region_term.push_back(std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i])));
+		
+		inside_vesselness_term.push_back(std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i])));
+		outside_vesselness_term.push_back(std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i])));
 	}
 	
-	std::vector<double> del_energy, region_based_term, gvf_based_term;
+	std::vector<double> del_energy, region_based_term, gvf_based_term, vesselness_based_term, region_based_only_term;
 	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
 	for(int i = 0; i < inside_region_term.size(); i++){
-		region_based_term.push_back(inside_region_term[i] - outside_region_term[i]);
+		region_based_only_term.push_back(inside_region_term[i] - outside_region_term[i]);
+		vesselness_based_term.push_back(inside_vesselness_term[i] - outside_vesselness_term[i]);
 	}
 	
-	double region_weight = this->allParams.nodeDetectionParams.regionBasedTermWeight;
-	double gvf_weight = this->allParams.nodeDetectionParams.edgeBasedTermWeight;
-	if(iter_number < this->allParams.nodeDetectionParams.iterNForOnlyRegionBasedTerm)
+	// VESSELNESS OPTION CHECK
+	if(this->useVesselness >=2){
+		for(int i = 0; i < inside_region_term.size(); i++)
+			region_based_term.push_back((region_based_only_term[i] + vesselness_based_term[i])/2.0);
+	}	
+	else
+		region_based_term = region_based_only_term;
+	
+	
+	double region_weight = seed.nodeDetectionParams.regionBasedTermWeight;
+	double gvf_weight = seed.nodeDetectionParams.edgeBasedTermWeight;
+	if(iter_number < seed.nodeDetectionParams.iterNForOnlyRegionBasedTerm)
 		del_energy = region_based_term;
 	else{
 		for(int i = 0; i < seed.bandArea; i++)
@@ -1604,10 +1856,10 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	dy = dy / (double)seed.bandArea;
 	dz = dz / (double)seed.bandArea;
 	
-	dscale = dscale * this->allParams.nodeDetectionParams.dtScale;
-	dx = dx * this->allParams.nodeDetectionParams.dtX;
-	dy = dy * this->allParams.nodeDetectionParams.dtY;
-	dz = dz * this->allParams.nodeDetectionParams.dtZ;
+	dscale = dscale * seed.nodeDetectionParams.dtScale;
+	dx = dx * seed.nodeDetectionParams.dtX;
+	dy = dy * seed.nodeDetectionParams.dtY;
+	dz = dz * seed.nodeDetectionParams.dtZ;
 
 	dscale = std::min(1.0, std::max(-1.0, dscale));
 	dx = std::min(1.0, std::max(-1.0, dx));
@@ -1619,32 +1871,32 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	seed.y = seed.y - dy;
 	seed.z = seed.z - dz;
 
-	if(seed.scale > (double)this->allParams.nodeDetectionParams.maxVesselWidth)
-		seed.scale = this->allParams.nodeDetectionParams.maxVesselWidth;
-	if(seed.scale < (double)this->allParams.nodeDetectionParams.minVesselWidth)
-		seed.scale = this->allParams.nodeDetectionParams.minVesselWidth;
+	if(seed.scale > (double)seed.nodeDetectionParams.maxVesselWidth)
+		seed.scale = seed.nodeDetectionParams.maxVesselWidth;
+	if(seed.scale < (double)seed.nodeDetectionParams.minVesselWidth)
+		seed.scale = seed.nodeDetectionParams.minVesselWidth;
 
-	if(this->GetSign(dx) != this->GetSign((double)this->allParams.nodeDetectionParams.dirX))
-		this->allParams.nodeDetectionParams.dtX = this->allParams.nodeDetectionParams.dtX * this->allParams.nodeDetectionParams.primaryReversePositionRate;
-	if(this->GetSign(dy) != this->GetSign((double)this->allParams.nodeDetectionParams.dirY))
-		this->allParams.nodeDetectionParams.dtY = this->allParams.nodeDetectionParams.dtY * this->allParams.nodeDetectionParams.primaryReversePositionRate;
-	if(this->GetSign(dz) != this->GetSign((double)this->allParams.nodeDetectionParams.dirZ))
-		this->allParams.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZ * this->allParams.nodeDetectionParams.primaryReversePositionRate;
+	if(this->GetSign(dx) != this->GetSign((double)seed.nodeDetectionParams.dirX))
+		seed.nodeDetectionParams.dtX = seed.nodeDetectionParams.dtX * seed.nodeDetectionParams.primaryReversePositionRate;
+	if(this->GetSign(dy) != this->GetSign((double)seed.nodeDetectionParams.dirY))
+		seed.nodeDetectionParams.dtY = seed.nodeDetectionParams.dtY * seed.nodeDetectionParams.primaryReversePositionRate;
+	if(this->GetSign(dz) != this->GetSign((double)seed.nodeDetectionParams.dirZ))
+		seed.nodeDetectionParams.dtZ = seed.nodeDetectionParams.dtZ * seed.nodeDetectionParams.primaryReversePositionRate;
 
-	this->allParams.nodeDetectionParams.dirX = this->GetSign(dx);
-	this->allParams.nodeDetectionParams.dirY = this->GetSign(dy);
-	this->allParams.nodeDetectionParams.dirZ = this->GetSign(dz);
+	seed.nodeDetectionParams.dirX = this->GetSign(dx);
+	seed.nodeDetectionParams.dirY = this->GetSign(dy);
+	seed.nodeDetectionParams.dirZ = this->GetSign(dz);
 
-	this->allParams.nodeDetectionParams.chX[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.x - last_x;
-	this->allParams.nodeDetectionParams.chY[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.y - last_y;
-	this->allParams.nodeDetectionParams.chZ[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
+	seed.nodeDetectionParams.chX[seed.nodeDetectionParams.currentMonitoredIter] = seed.x - last_x;
+	seed.nodeDetectionParams.chY[seed.nodeDetectionParams.currentMonitoredIter] = seed.y - last_y;
+	seed.nodeDetectionParams.chZ[seed.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
 
 	
-	if((dscale * (double)this->allParams.nodeDetectionParams.dirScale) <= 0.0)
-		this->allParams.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScale * this->allParams.nodeDetectionParams.primaryReverseScaleRate;
+	if((dscale * (double)seed.nodeDetectionParams.dirScale) <= 0.0)
+		seed.nodeDetectionParams.dtScale = seed.nodeDetectionParams.dtScale * seed.nodeDetectionParams.primaryReverseScaleRate;
 
-	this->allParams.nodeDetectionParams.dirScale = this->GetSign(dscale);
-	this->allParams.nodeDetectionParams.chScale[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
+	seed.nodeDetectionParams.dirScale = this->GetSign(dscale);
+	seed.nodeDetectionParams.chScale[seed.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
 }
 
 void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int iter_number){
@@ -1652,21 +1904,33 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
 	
-	std::vector<double> inside_region_term, outside_region_term;
+	std::vector<double> inside_region_term, outside_region_term, inside_vesselness_term, outside_vesselness_term;
 	for(int i = 0; i < seed.intensityInBand.size(); i++){
 		inside_region_term.push_back(std::abs(seed.meanForegroundIntensity - seed.intensityInBand[i]));
 		outside_region_term.push_back(std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i])));
+
+		inside_vesselness_term.push_back(std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i])));
+		outside_vesselness_term.push_back(std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i])));
 	}
 	
-	std::vector<double> del_energy, region_based_term, gvf_based_term;
+	std::vector<double> del_energy, region_based_only_term, gvf_based_term, vesselness_based_term, region_based_term;
 	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
 	for(int i = 0; i < inside_region_term.size(); i++){
-		region_based_term.push_back(inside_region_term[i] - outside_region_term[i]);
+		region_based_only_term.push_back(inside_region_term[i] - outside_region_term[i]);
+		vesselness_based_term.push_back(inside_vesselness_term[i] - outside_vesselness_term[i]);
 	}
 	
-	double region_weight = this->allParams.nodeDetectionParams.regionBasedTermWeightSecondary;
-	double gvf_weight = this->allParams.nodeDetectionParams.edgeBasedTermWeightSecondary;
-	if(iter_number < this->allParams.nodeDetectionParams.iterNForOnlyRegionBasedTerm)
+	// VESSELNESS OPTION CHECK
+	if(this->useVesselness >= 2){
+		for(int i = 0; i < inside_region_term.size(); i++)
+			region_based_term.push_back((region_based_only_term[i] + vesselness_based_term[i])/2.0);
+	}
+	else
+		region_based_term = region_based_only_term;
+	
+	double region_weight = seed.nodeDetectionParams.regionBasedTermWeightSecondary;
+	double gvf_weight = seed.nodeDetectionParams.edgeBasedTermWeightSecondary;
+	if(iter_number < seed.nodeDetectionParams.iterNForOnlyRegionBasedTerm)
 		del_energy = region_based_term;
 	else{
 		for(int i = 0; i < seed.bandArea; i++)
@@ -1691,10 +1955,10 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	dy = dy / (double)seed.bandArea;
 	dz = dz / (double)seed.bandArea;
 	
-	dscale = dscale * this->allParams.nodeDetectionParams.dtScale;
-	dx = dx * this->allParams.nodeDetectionParams.dtX;
-	dy = dy * this->allParams.nodeDetectionParams.dtY;
-	dz = dz * this->allParams.nodeDetectionParams.dtZ;
+	dscale = dscale * seed.nodeDetectionParams.dtScale;
+	dx = dx * seed.nodeDetectionParams.dtX;
+	dy = dy * seed.nodeDetectionParams.dtY;
+	dz = dz * seed.nodeDetectionParams.dtZ;
 
 	dscale = std::min(0.5, std::max(-0.5, dscale));
 	dx = std::min(0.5, std::max(-0.5, dx));
@@ -1708,10 +1972,10 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	seed.y = seed.y - dy + dc*anchor_node.dirY[0];
 	seed.z = seed.z - dz + dc*anchor_node.dirZ[0];
 
-	if(seed.scale > (double)this->allParams.nodeDetectionParams.maxVesselWidth)
-		seed.scale = this->allParams.nodeDetectionParams.maxVesselWidth;
-	if(seed.scale < (double)this->allParams.nodeDetectionParams.minVesselWidth)
-		seed.scale = this->allParams.nodeDetectionParams.minVesselWidth;
+	if(seed.scale > (double)seed.nodeDetectionParams.maxVesselWidth)
+		seed.scale = seed.nodeDetectionParams.maxVesselWidth;
+	if(seed.scale < (double)seed.nodeDetectionParams.minVesselWidth)
+		seed.scale = seed.nodeDetectionParams.minVesselWidth;
 
 	std::vector<double> ch_dir(3, 0.0), ch_dir_normalized(3, 0.0);
 	ch_dir[0] = seed.x - anchor_node.xInitSecondary;
@@ -1723,33 +1987,33 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	ch_dir_normalized[2] = ch_dir[2]/ch_norm;
 	
 	// Restrict the search space for secondary nodes
-	if(ch_norm > this->allParams.nodeDetectionParams.secondarySearchConstraint * seed.scale){	
-		seed.x = anchor_node.xInitSecondary + ch_dir[0] * (this->allParams.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
-		seed.y = anchor_node.yInitSecondary + ch_dir[1] * (this->allParams.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
-		seed.z = anchor_node.zInitSecondary + ch_dir[2] * (this->allParams.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
+	if(ch_norm > seed.nodeDetectionParams.secondarySearchConstraint * seed.scale){	
+		seed.x = anchor_node.xInitSecondary + ch_dir[0] * (seed.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
+		seed.y = anchor_node.yInitSecondary + ch_dir[1] * (seed.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
+		seed.z = anchor_node.zInitSecondary + ch_dir[2] * (seed.nodeDetectionParams.secondarySearchConstraint * seed.scale / ch_norm);
 	}
 
-	if(this->GetSign(dx) != this->GetSign(this->allParams.nodeDetectionParams.dirX))
-		this->allParams.nodeDetectionParams.dtX = this->allParams.nodeDetectionParams.dtX * this->allParams.nodeDetectionParams.secondaryReversePositionRate;
-	if(this->GetSign(dy) != this->GetSign(this->allParams.nodeDetectionParams.dirY))
-		this->allParams.nodeDetectionParams.dtY = this->allParams.nodeDetectionParams.dtY * this->allParams.nodeDetectionParams.secondaryReversePositionRate;
-	if(this->GetSign(dz) != this->GetSign(this->allParams.nodeDetectionParams.dirZ))
-		this->allParams.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZ * this->allParams.nodeDetectionParams.secondaryReversePositionRate;
+	if(this->GetSign(dx) != this->GetSign(seed.nodeDetectionParams.dirX))
+		seed.nodeDetectionParams.dtX = seed.nodeDetectionParams.dtX * seed.nodeDetectionParams.secondaryReversePositionRate;
+	if(this->GetSign(dy) != this->GetSign(seed.nodeDetectionParams.dirY))
+		seed.nodeDetectionParams.dtY = seed.nodeDetectionParams.dtY * seed.nodeDetectionParams.secondaryReversePositionRate;
+	if(this->GetSign(dz) != this->GetSign(seed.nodeDetectionParams.dirZ))
+		seed.nodeDetectionParams.dtZ = seed.nodeDetectionParams.dtZ * seed.nodeDetectionParams.secondaryReversePositionRate;
 
-	this->allParams.nodeDetectionParams.dirX = this->GetSign(dx);
-	this->allParams.nodeDetectionParams.dirY = this->GetSign(dy);
-	this->allParams.nodeDetectionParams.dirZ = this->GetSign(dz);
+	seed.nodeDetectionParams.dirX = this->GetSign(dx);
+	seed.nodeDetectionParams.dirY = this->GetSign(dy);
+	seed.nodeDetectionParams.dirZ = this->GetSign(dz);
 
-	this->allParams.nodeDetectionParams.chX[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.x - last_x;
-	this->allParams.nodeDetectionParams.chY[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.y - last_y;
-	this->allParams.nodeDetectionParams.chZ[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
+	seed.nodeDetectionParams.chX[seed.nodeDetectionParams.currentMonitoredIter] = seed.x - last_x;
+	seed.nodeDetectionParams.chY[seed.nodeDetectionParams.currentMonitoredIter] = seed.y - last_y;
+	seed.nodeDetectionParams.chZ[seed.nodeDetectionParams.currentMonitoredIter] = seed.z - last_z;
 
 	
-	if((dscale * (double)this->allParams.nodeDetectionParams.dirScale) <= 0.0)
-		this->allParams.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScale * this->allParams.nodeDetectionParams.secondaryReverseScaleRate;
+	if((dscale * (double)seed.nodeDetectionParams.dirScale) <= 0.0)
+		seed.nodeDetectionParams.dtScale = seed.nodeDetectionParams.dtScale * seed.nodeDetectionParams.secondaryReverseScaleRate;
 
-	this->allParams.nodeDetectionParams.dirScale = this->GetSign(dscale); // = dscale; // As given in Matlab code
-	this->allParams.nodeDetectionParams.chScale[this->allParams.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
+	seed.nodeDetectionParams.dirScale = this->GetSign(dscale);
+	seed.nodeDetectionParams.chScale[seed.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
 }
 
 int inline ftkVesselTracer::GetSign(double value){
@@ -1764,9 +2028,9 @@ int inline ftkVesselTracer::GetSign(double value){
 bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
 	
 	bool exit_fitting = false;
-	this->allParams.nodeDetectionParams.currentMonitoredIter = (iter_number % this->allParams.nodeDetectionParams.iterNMonitorParamChange); //+ 1;
+	seed.nodeDetectionParams.currentMonitoredIter = (iter_number % seed.nodeDetectionParams.iterNMonitorParamChange); //+ 1;
 	
-	if(seed.scale >= (double)this->allParams.nodeDetectionParams.maxVesselWidth){
+	if(seed.scale >= (double)seed.nodeDetectionParams.maxVesselWidth){
 		seed.exitIter = iter_number;
 		exit_fitting = true;
 	}
@@ -1774,25 +2038,25 @@ bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
 	double total_ch_scale = 0.0, total_ch_x = 0.0, total_ch_y = 0.0, total_ch_z = 0.0, total_ch_position = 0.0;
 	int iter_minimum = 0;
 	if(seed.isSecondary == true)
-		iter_minimum = this->allParams.nodeDetectionParams.iterNMinimumSecondary;
+		iter_minimum = seed.nodeDetectionParams.iterNMinimumSecondary;
 	else
-		iter_minimum = this->allParams.nodeDetectionParams.iterNMinimum;
+		iter_minimum = seed.nodeDetectionParams.iterNMinimum;
 
 	if(iter_number > iter_minimum){
-		for(int i = 0; i < this->allParams.nodeDetectionParams.iterNMonitorParamChange; i++){
-			total_ch_scale = total_ch_scale + (double)std::abs(this->allParams.nodeDetectionParams.chScale[i]);
-			total_ch_x = total_ch_x + (double)std::abs(this->allParams.nodeDetectionParams.chX[i]);
-			total_ch_y = total_ch_y + (double)std::abs(this->allParams.nodeDetectionParams.chY[i]);
-			total_ch_z = total_ch_z + (double)std::abs(this->allParams.nodeDetectionParams.chZ[i]);
+		for(int i = 0; i < seed.nodeDetectionParams.iterNMonitorParamChange; i++){
+			total_ch_scale = total_ch_scale + (double)std::abs(seed.nodeDetectionParams.chScale[i]);
+			total_ch_x = total_ch_x + (double)std::abs(seed.nodeDetectionParams.chX[i]);
+			total_ch_y = total_ch_y + (double)std::abs(seed.nodeDetectionParams.chY[i]);
+			total_ch_z = total_ch_z + (double)std::abs(seed.nodeDetectionParams.chZ[i]);
 		}
 		total_ch_position = total_ch_x + total_ch_y + total_ch_z;
 
-		if(total_ch_scale < this->allParams.nodeDetectionParams.minimumAccumulatedParamChange && total_ch_position < this->allParams.nodeDetectionParams.minimumAccumulatedParamChange){
+		if(total_ch_scale < seed.nodeDetectionParams.minimumAccumulatedParamChange && total_ch_position < seed.nodeDetectionParams.minimumAccumulatedParamChange){
 			seed.exitIter = iter_number;
 			exit_fitting = true;
 		}
 	}
-	if(iter_number == this->allParams.nodeDetectionParams.iterNPrimaryNode)
+	if(iter_number == seed.nodeDetectionParams.iterNPrimaryNode)
 		seed.exitIter = iter_number;
 	
 	return exit_fitting;
@@ -1836,6 +2100,8 @@ void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
 			if(norm < (this->allParams.nodeDetectionParams.distanceThresholdPrimary * (current_primary_node.scale + current_primary_node_final.scale))){
 				//std::cout << "Hit! norm: " << norm << " Sum of scales: " << (current_primary_node.scale + current_primary_node_final.scale) << std::endl;
 				hit = true;
+				//if(norm < (current_primary_node.scale + current_primary_node_final.scale))
+					//std::cout << "Overlap: " << norm << std::endl;
 				break;
 			}
 		}
@@ -1892,6 +2158,8 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	
 	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 
+	this->allParams.nodeDetectionParams.initByDefaultValues();
+
 	//PriorityQueueType node_queue(compareNodes(2));
 	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
@@ -1944,6 +2212,285 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			break;
 
 		current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
+
+		if(current_node.parentID[0] == -1)
+			current_node.isPrimary = true;
+		else
+			current_node.isPrimary = false;
+	
+		// If the quality of trace is above the threshold, these nodes have low quality (ignore them)
+		if(current_queue_element.second > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+		//if(current_node.traceQuality > this->allParams.nodeDetectionParams.traceQualityThreshold && current_node.isPrimary == false){
+			//std::cout << current_queue_element.second << std::endl;
+			continue;
+		}
+		
+		hit = this->TraceHitTest(current_node);
+
+		if(hit == 2 || (hit == 1 && current_node.isPrimary == true))
+			continue;
+
+		if(current_node.isPrimary == true && hit == 0)
+			primary_counter++;
+		
+		total_nodes_counter++;
+		this->allNodes.push_back(current_node);
+
+		//std::cout << total_nodes_counter << " " << this->allNodes.size() << std::endl;
+
+		if(hit == 1){
+
+			// These will be secondary nodes only
+			hit_counter++;
+
+			dir_hist = current_node.sphHistRegionBased;
+			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+
+			if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
+				this->allNodes[total_nodes_counter].dirX = current_node.dirX;
+				this->allNodes[total_nodes_counter].dirY = current_node.dirY;
+				this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+			}
+			else{
+				// if nowhere to go, all there dirs are zero
+				this->allNodes[total_nodes_counter].dirX.push_back(0.0);
+				this->allNodes[total_nodes_counter].dirY.push_back(0.0);
+				this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+			}
+			
+			continue;
+		}
+		
+		int p = current_node.parentID[0];
+		//if(current_node.isPrimary == true){
+		if(p == -1){	
+			dir_hist = std::vector<double>(this->allParams.oriBin.angleCount, 1.0/(double)this->allParams.oriBin.angleCount);
+			current_node.dirX.push_back(0.0);
+			current_node.dirY.push_back(0.0);
+			current_node.dirZ.push_back(0.0);
+		}
+		else{		
+			dirX = this->allNodes[current_node.parentID[0]].x - current_node.x;
+			dirY = this->allNodes[current_node.parentID[0]].y - current_node.y;
+			dirZ = this->allNodes[current_node.parentID[0]].z - current_node.z;
+			
+			dir_node = Node(dirX, dirY, dirZ, 0);
+			
+			norm = Node::ComputeNorm(dir_node);
+			dir_node = Node(dirX/norm, dirY/norm, dirZ/norm, 0);
+			dir_hist = current_node.sphHistRegionBased;
+
+			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+		}
+
+		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+		//std::cout << "111111111111... " << std::endl;
+		
+		if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
+			this->allNodes[total_nodes_counter].dirX = current_node.dirX;
+			this->allNodes[total_nodes_counter].dirY = current_node.dirY;
+			this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+		}
+		else{
+
+			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
+
+			// if nowhere to go, all there dirs are zero
+			this->allNodes[total_nodes_counter].dirX.push_back(0.0);
+			this->allNodes[total_nodes_counter].dirY.push_back(0.0);
+			this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+		}
+
+		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty()){
+			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
+			continue;
+		}
+
+		std::vector<double> current_dir(3, 0.0);
+		//Node secondary_node;
+		for(int i = 0; i < current_node.dirX.size(); i++){
+			
+			// Only branches less than maxBranchAngle are considered
+			if(((current_node.dirX[i]*dirX) + (current_node.dirY[i]*dirY) + (current_node.dirZ[i]*dirZ)) > std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0)){
+				//std::cout << std::cos(this->allParams.nodeDetectionParams.maxBranchAngle*vnl_math::pi/180.0) << std::endl;
+				continue;
+			}
+			
+			current_dir[0] = current_node.dirX[i];
+			current_dir[1] = current_node.dirY[i];
+			current_dir[2] = current_node.dirZ[i];
+			
+			Node secondary_node;
+			secondary_node.parentIDLength = current_node.parentIDLength;
+			secondary_node.parentID = std::vector<double>(current_node.parentIDLength, -1);
+			
+			this->FitSphereAtNodeSecondary(current_node, secondary_node, current_dir);			
+						
+			if(secondary_node.isValid == false){ // || secondary_node.likelihood <= 0){
+				badNodes.push_back(secondary_node);
+				quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
+				continue;
+			}
+			if(secondary_node.likelihood <= 0.0){
+				veryBadNodes.push_back(secondary_node);
+				quality_array.push_back(2.0 * this->allParams.nodeDetectionParams.maxTraceCost);
+				//continue;
+			}
+			
+			// Parent IDs of secondary node = circshift(parent IDs of current_node)
+			secondary_node.parentID[0] = current_node.parentID.back(); //*(current_node.parentID.begin() + current_node.parentID.size()-1);
+			for(int j = 1; j < current_node.parentID.size(); j++){
+				secondary_node.parentID[j] = current_node.parentID[j-1];
+			}
+			secondary_node.parentID[0] = total_nodes_counter;
+			
+			//queue_size++;
+			trace_quality = this->computeTraceQuality(secondary_node);
+
+			this->primaryNodesAfterHitTest.push_back(secondary_node);
+	
+			//std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
+			
+			//node_queue.push(current_node);
+			//node_queue.push(secondary_node);
+
+			quality_array.push_back(trace_quality);
+
+			light_node_queue[queue_size] = queue_element(queue_size, trace_quality);
+			queue_size++;
+		}
+		queue_iter++;
+		
+		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+		//this->VisualizeNodesWithData3D(this->allNodes, false);
+	}
+
+	stop_tracing_time = clock();
+	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
+
+	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
+	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
+
+	//Visualize all nodes
+	//this->VisualizeNodesWithData3D(this->allNodes, true);
+	//this->VisualizeNodesWithData3D(this->allNodes, false);
+
+
+	std::vector<Node> nodesWithNonPositiveLikelihood;
+	for(int i = 0; i < this->allNodes.size(); i++){
+		if(this->allNodes[i].likelihood <= 0.0)
+			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
+	}
+	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
+
+	//if(badNodes.empty() == false)
+	//	this->VisualizeNodesWithData3D(badNodes, false);
+
+	//Write tracing result to image
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->secondaryNodesImage = RenderImageType3D::New();
+	this->secondaryNodesImage->SetRegions(id_reg);
+	this->secondaryNodesImage->Allocate();
+	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->secondaryNodesImage->FillBuffer(0);
+
+	itk::Index<3> idx;
+	for(int i = 0; i < this->allNodes.size(); i++){
+		
+		idx[0] = this->allNodes[i].x;
+		idx[1] = this->allNodes[i].y;
+		idx[2] = this->allNodes[i].z;
+
+		this->secondaryNodesImage->SetPixel(idx, 255);
+	}
+	
+	std::string secondary_nodes_file_name = this->data_folder_path;
+	secondary_nodes_file_name.append("_SecondaryNodes.tif");
+
+	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
+	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
+	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
+	secondary_nodes_writer->Update();
+
+
+	//Write all nodes to a file
+	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
+
+	//write quality array
+	/*ofstream nodes_file_stream;
+	nodes_file_stream.open("QualityArray.txt", std::ios::out);
+
+	if(nodes_file_stream.is_open() == true){
+		for(int i = 0; i < quality_array.size(); i++)
+			nodes_file_stream << quality_array[i] << std::endl;
+		nodes_file_stream.close();
+	}
+	else
+		std::cout << "File cannot be opened. " << std::endl;
+		*/
+}
+
+void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
+
+	this->allParams.nodeDetectionParams.initByDefaultValues();
+
+	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
+	std::vector<double> quality_array;	
+
+	//Node a_node;
+	double trace_quality = 0.0;
+	for(int i = 0; i < this->retracingStartPoints.size(); i++){
+		//Node a_node = this->primaryNodesAfterHitTest[i];           
+
+		// Quality estimate for single nodes. Nodes with high likelihood get low quality, nodes with low likelihood get high quality
+		if(this->retracingStartPoints[i].likelihood <= 0){
+			this->retracingStartPoints[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
+			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
+			light_node_queue[i] = queue_element(i, this->allParams.nodeDetectionParams.maxTraceCost);
+		}
+		else{
+			trace_quality = -1.0 * std::log(this->retracingStartPoints[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCostRetracing;
+			this->retracingStartPoints[i].traceQuality = trace_quality;
+			quality_array.push_back(trace_quality);
+			light_node_queue[i] = queue_element(i, trace_quality);
+		}
+	
+		this->retracingStartPoints[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
+		//node_queue.push(this->primaryNodesAfterHitTest[i]);
+	}
+	
+	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
+	int queue_size = this->primaryNodesAfterHitTest.size();
+	Node current_node, dir_node;
+	double dirX = 0.0, dirY = 0.0, dirZ = 0.0, norm = 0.0;
+	std::vector<double> dir_hist; 
+	std::vector<Node> badNodes, veryBadNodes;
+	queue_element current_queue_element(0, 0.0);
+
+	while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
+		
+		//current_node = node_queue.top();
+		//node_queue.pop();
+		
+		this->GetBestTrace(light_node_queue, current_queue_element);
+
+		// Break if queue is empty
+		if(std::abs(current_queue_element.second - this->allParams.nodeDetectionParams.infTraceQuality) < 0.01)
+			break;
+
+		current_node = this->retracingStartPoints[current_queue_element.first];
 
 		if(current_node.parentID[0] == -1)
 			current_node.isPrimary = true;
@@ -2096,81 +2643,6 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
 		//this->VisualizeNodesWithData3D(this->allNodes, false);
 	}
-
-	stop_tracing_time = clock();
-	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
-
-	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
-	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
-
-	//Visualize all nodes
-	//this->VisualizeNodesWithData3D(this->allNodes, true);
-	this->VisualizeNodesWithData3D(this->allNodes, false);
-
-
-	std::vector<Node> nodesWithNonPositiveLikelihood;
-	for(int i = 0; i < this->allNodes.size(); i++){
-		if(this->allNodes[i].likelihood <= 0.0)
-			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
-	}
-	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
-
-	//if(badNodes.empty() == false)
-	//	this->VisualizeNodesWithData3D(badNodes, false);
-
-	//Write tracing result to image
-	RenderImageType3D::RegionType id_reg;
-	RenderImageType3D::IndexType id_st;
-	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
-
-	id_st[0] = 0;
-	id_st[1] = 0;
-	id_st[2] = 0;
-	
-	id_reg.SetSize(id_sz);
-	id_reg.SetIndex(id_st);
-	
-	this->secondaryNodesImage = RenderImageType3D::New();
-	this->secondaryNodesImage->SetRegions(id_reg);
-	this->secondaryNodesImage->Allocate();
-	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
-
-	this->secondaryNodesImage->FillBuffer(0);
-
-	itk::Index<3> idx;
-	for(int i = 0; i < this->allNodes.size(); i++){
-		
-		idx[0] = this->allNodes[i].x;
-		idx[1] = this->allNodes[i].y;
-		idx[2] = this->allNodes[i].z;
-
-		this->secondaryNodesImage->SetPixel(idx, 255);
-	}
-	
-	std::string secondary_nodes_file_name = this->data_folder_path;
-	secondary_nodes_file_name.append("_SecondaryNodes.tif");
-
-	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
-	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
-	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
-	secondary_nodes_writer->Update();
-
-
-	//Write all nodes to a file
-	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
-
-	//write quality array
-	/*ofstream nodes_file_stream;
-	nodes_file_stream.open("QualityArray.txt", std::ios::out);
-
-	if(nodes_file_stream.is_open() == true){
-		for(int i = 0; i < quality_array.size(); i++)
-			nodes_file_stream << quality_array[i] << std::endl;
-		nodes_file_stream.close();
-	}
-	else
-		std::cout << "File cannot be opened. " << std::endl;
-		*/
 }
 
 void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
@@ -2214,6 +2686,9 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
 	
 	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+
+	this->allParams.nodeDetectionParams.initByDefaultValues();
+
 
 	PriorityQueueType node_queue(compareNodes(2));
 	//std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
@@ -2391,7 +2866,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 
 	//Visualize all nodes
 	//this->VisualizeNodesWithData3D(this->allNodes, true);
-	this->VisualizeNodesWithData3D(this->allNodes, false);
+	//this->VisualizeNodesWithData3D(this->allNodes, false);
 
 
 	std::vector<Node> nodesWithNonPositiveLikelihood;
@@ -2500,7 +2975,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 			continue;
 
 		norm = Node::ComputeNorm(Node(this->allNodes[i].x - node.x, this->allNodes[i].y - node.y, this->allNodes[i].z - node.z, 0));
-		if(norm < this->allParams.nodeDetectionParams.distanceThresholdSecondary * (this->allNodes[i].scale + node.scale)){
+		if(norm <= this->allParams.nodeDetectionParams.distanceThresholdSecondary * (this->allNodes[i].scale + node.scale)){
 
 			parent_intersection = std::vector<double>(2 * node.parentIDLength, 0.0);
 			//std::set_intersection(this->allNodes[i].parentID.begin(), this->allNodes[i].parentID.end(), node.parentID.begin(), node.parentID.end(), parent_intersection.begin());
@@ -2583,7 +3058,8 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 			curr_idx[0] = this->allNodes[parent1].x; curr_idx[1] = this->allNodes[parent1].y; curr_idx[2] = this->allNodes[parent1].z;
 			curr_idx1[0] = this->allNodes[parent2].x; curr_idx1[1] = this->allNodes[parent2].y; curr_idx1[2] = this->allNodes[parent2].z;
 			
-			curr_vesselness = this->VesselnessImage->GetPixel(curr_idx);
+			// THIS IS AN IMPORTANT CHANGE AND HAS NOT BEEN TESTED SO MUCH
+			curr_vesselness = this->allNodes[parent1].vesselness_likelihood; //this->VesselnessImage->GetPixel(curr_idx);
 			curr_likelihood = this->allNodes[parent1].likelihood;
 		}
 		else{
@@ -2598,7 +3074,7 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 		
 
 		// Cost function is different than one given in thesis?
-		if(this->useVesselness){
+		if(this->useVesselness >= 1){
 
 			if(this->allNodes[parent1].likelihood <= 0.0 || curr_vesselness < this->allParams.nodeDetectionParams.vesselnessThershold)
 				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
@@ -2630,7 +3106,7 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 	double total_vesselness = std::accumulate(arr_vesselness.begin(), arr_vesselness.end(), 0.0);
 	double total_likelihood = std::accumulate(arr_likelihood.begin(), arr_likelihood.end(), 0.0);
 	
-	if(this->useVesselness)
+	if(this->useVesselness >= 1)
 		node.traceQuality = vesselnessWt*(1.0/(total_vesselness + total_likelihood)) + std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);	
 	else	
 		node.traceQuality = std_curvature + ((cost + this->allParams.nodeDetectionParams.traceLengthCost)/(double)count);
@@ -2682,7 +3158,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 				
 				//current_index_1[0] = j; current_index_1[1] = i; current_index_1[2] = k;
 				
-				if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index) == true){
+				if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(current_index)){
 					in_volume_count++;
 				
 					PixelType x_normalized = ((double)i - node.x)/node.scale;
@@ -2711,8 +3187,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 							
 							//int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[0] + sMaxBin][bin_index[1] + sMaxBin];
 							int hist_bin = this->allParams.oriBin.binIndexVec[bin_index[2] + sMaxBin][bin_index[1] + sMaxBin][bin_index[0] + sMaxBin];
-							
-							
+														
 							//int hist_bin3 = this->allParams.oriBin.binIndexVec[bin_index[0] + sMaxBin][bin_index[1] + sMaxBin][bin_index[2] + sMaxBin];
 							//hist_bin = this->allParams.oriBin.binIndexVec[bin_index[1] + sMaxBin][bin_index[0] + sMaxBin][bin_index[2] + sMaxBin];
 							
@@ -2722,7 +3197,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 							//double hist_val_region_based  = current_pixel;
 							double hist_val_region_based = std::abs(current_pixel - node.meanBackgroundIntensity) - std::abs(current_pixel - node.meanForegroundIntensity);
 							
-							sph_hist_region_based[hist_bin] = sph_hist_region_based[hist_bin] + hist_val_region_based;
+							sph_hist_region_based[hist_bin] += hist_val_region_based;
 							sph_hist_count[hist_bin]++;
 						}
 					}
@@ -2746,7 +3221,6 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		nodes_file_stream.close();
 	}*/
 
-	//#pragma omp parallel for
 	// Normalize sphrical histogram
 	for(int i = 0; i < sph_hist_region_based.size(); i++){
 		sph_hist_region_based[i] = sph_hist_region_based[i]/(sph_hist_count[i] + 0.001);		
@@ -2759,39 +3233,119 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
 	}
-	//#pragma omp parallel for
+	
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
-	// Obtain the smoothing prior - According to thesis, this should be a Gaussian transition prior
+
+	// ADD A GAUSSIAN TRANSITION PRIOR HERE
+
+	// Could not use this, creating a gaussian instead
+	//vnl_gaussian_kernel_1d kernel = vnl_gaussian_kernel_1d(2.3, 1.0); 
+//	vnl_vector<double> gaussian_prior(this->allParams.oriBin.nLastIndicesOfInterest, 0.0); //dir_vnl(this->allParams.oriBin.angleCount, 0.0);
+	//double g_sigma = 3.0; //this->allParams.oriBin.nLastIndicesOfInterest/2.0; //this->allParams.nodeDetectionParams.gaussianPriorSigma;
+	//double g_mean = 1.0; //this->allParams.oriBin.nLastIndicesOfInterest/2.0; //this->allParams.oriBin.angleCount/2.0;
+	//double g_scalar = 1.0/(g_sigma*vcl_sqrt(2.0*3.14159265359));
+	
+	/*for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		gaussian_prior[i] = g_scalar*vcl_exp(-1.0*((i - g_mean)*(i - g_mean))/(2.0*g_sigma*g_sigma));	
+		//dir_vnl[i] = dir_hist[i];
+		//std::cout << gaussian_prior[i] << std::endl;
+	}
+	gaussian_prior.normalize();*/
+	/*vnl_vector<double> smooth_prior = vnl_convolve_cyclic(dir_vnl, gaussian_prior, (double*)0);
+	//for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		//std::cout << dir_vnl[i] << ", " << smooth_prior[i] << std::endl;
+	//	dir_hist[i] = smooth_prior[i];
+	}*/
+	/*std::vector<double> smooth_hist_1(this->allParams.oriBin.angleCount, 0.0), smooth_hist_2(this->allParams.oriBin.angleCount, 0.0);
+	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		smooth_hist_1[i] = dir_hist[i];
+		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
+			smooth_hist_1[i] += (gaussian_prior[j] * dir_hist[this->allParams.oriBin.nbr[i][j]]);
+	}*/
+	
+	// Use a 2D Gaussian prior
+	
 	std::vector<double> smooth_hist_1(this->allParams.oriBin.angleCount, 0.0), smooth_hist_2(this->allParams.oriBin.angleCount, 0.0);
+	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		smooth_hist_1[i] = dir_hist[i];
+		for(int j = 0; j < 3; j++){
+			for(int k = 0; k < 3; k++){
+				smooth_hist_1[i] += this->allParams.oriBin.gaussian_prior[j][k] * dir_hist[this->allParams.oriBin.nbr2D[i][j][k]];
+			}
+		}
+	}
+	
+	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		smooth_hist_2[i] = smooth_hist_1[i];
+		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
+			smooth_hist_2[i] += (this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]]);
+	}
+	/*for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
+		dir_hist[i] = smooth_hist_2[i];
+		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
+			dir_hist[i] += (this->allParams.oriBin.histSmoothingFactor * smooth_hist_2[this->allParams.oriBin.nbr[i][j]]);
+	}*/
+
+	for(int i = 0; i < this->allParams.oriBin.angleCount; i++)
+		dir_hist[i] = smooth_hist_2[i];
+
+	/*for(int j = 0; j < 3; j++){
+		for(int k = 0; k < 3; k++)
+			std::cout << gaussian_mat[j][k] << "\t";
+		std::cout << std::endl;
+	}
+
+	Sleep(5000);
+
+	ofstream nodes_file_stream;
+	std::stringstream ss; 
+	ss << node.likelihood;
+	nodes_file_stream.open((std::string("SphHist_Cpp_")+ss.str()+std::string("_.txt")).c_str(), std::ios::out);
+
+	if(nodes_file_stream.is_open() == true){
+		for(int i = 0; i < dir_hist.size(); i++)
+			nodes_file_stream << dir_hist[i] << std::endl;
+		nodes_file_stream.close();
+	}
+	ofstream nodes_file_stream2;
+	nodes_file_stream2.open((std::string("SphHist_Cpp_sm_")+ss.str()+std::string("_.txt")).c_str(), std::ios::out);
+
+	if(nodes_file_stream2.is_open() == true){
+		for(int i = 0; i < smooth_hist_1.size(); i++)
+			nodes_file_stream2 << smooth_hist_1[i] << std::endl;
+		nodes_file_stream2.close();
+	}
+	*/
+
+	//std::cout << std::endl;
+	//Sleep(5000);
+	
+	// OLD CODE FOR ADDING A FLAT PRIOR
+	/*std::vector<double> smooth_hist_1(this->allParams.oriBin.angleCount, 0.0), smooth_hist_2(this->allParams.oriBin.angleCount, 0.0);
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
 		smooth_hist_1[i] = dir_hist[i];
 		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
 			smooth_hist_1[i] = smooth_hist_1[i] + (this->allParams.oriBin.histSmoothingFactor * dir_hist[this->allParams.oriBin.nbr[i][j]]);
 	}
 	for(int i = 0; i < this->allParams.oriBin.angleCount; i++){
-		//smooth_hist_2[i] = smooth_hist_1[i];
 		dir_hist[i] = smooth_hist_1[i];
-		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++){
-			//smooth_hist_2[i] = smooth_hist_2[i] + (this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]]);
+		for(int j = 0; j < this->allParams.oriBin.nLastIndicesOfInterest; j++)
 			dir_hist[i] = dir_hist[i] + (this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]]);
-		}
-	}
+	}*/
 	
-	//#pragma omp parallel for
-	for(int i = 0; i < sph_hist_region_based.size(); i++){
-		//sph_hist_region_based[i] = sph_hist_region_based[i] * smooth_hist_2[i];
+
+	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i] * dir_hist[i];
-	}
-	
+		
 	hist_sum = std::accumulate(sph_hist_region_based.begin(), sph_hist_region_based.end(), 0.0);
 	if(std::abs(hist_sum - 0.0) < 0.00001){
 		node.dirX.clear(); node.dirY.clear(); node.dirZ.clear();
 		node.sphHistRegionBased = sph_hist_region_based;
 		return;
 	}
-	//#pragma omp parallel for
+	
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i]/hist_sum;
 
@@ -2893,6 +3447,8 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	double branching_th = 0.0;
 	std::vector<double> dirX, dirY, dirZ;
 	if(mode_bins_sorted_1.size() > 2){
+
+		// THE BRANCHING THRESHOLD COULD BE LOWERED TO GET MORE BRANCHES IF NEEDED
 		branching_th = 0.5 * (mode_hist_val_sorted_1[0] + mode_hist_val_sorted_1[1]);
 
 		if(mode_hist_val_sorted_1[2] > this->allParams.nodeDetectionParams.branchingThreshold * branching_th){
@@ -3066,14 +3622,14 @@ bool CompareEdges(AffinityEdge e1, AffinityEdge e2){
 	return(e1.weight > e2.weight);
 }
 
-Tree::Tree(void){
+VBTTree::VBTTree(void){
 
 	this->ID = 0;
 	this->start = 0;
 	this->NNodes = 0;
 }
 
-Tree::Tree(int ID, int start, int NNodes){
+VBTTree::VBTTree(int ID, int start, int NNodes){
 
 	this->ID = ID;
 	this->start = start;
@@ -3181,7 +3737,7 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 
 	std::cout << "Done with computing affinity graph. " << std::endl;
 
-	this->VisualizeAffinityGraph(true);
+	//this->VisualizeAffinityGraph(true);
 
 
 
@@ -3532,7 +4088,7 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 			
 			label++;
 			
-			this->forest.push_back(Tree(label, from, 2));
+			this->forest.push_back(VBTTree(label, from, 2));
 
 			this->allForestNodes[from].ID = label;
 			this->allForestNodes[to].ID = label;
@@ -3622,7 +4178,7 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 	}
 	
 	//this->PrintForest();
-	this->VisualizeMinimumSpanningForest(true);
+	//this->VisualizeMinimumSpanningForest(true);
 
 	/*int count = -1;
 	for(int i = 0; i < label; i++){
@@ -3643,7 +4199,7 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 void ftkVesselTracer::RelabelForestNodes(int oldID, int newID){
 	
 	std::vector<int> connected_nodes;
-	this->GetTree(oldID, connected_nodes);
+	this->GetVBTTree(oldID, connected_nodes);
 
 	if(connected_nodes.empty() == false){
 		for(int i = 0; i < connected_nodes.size(); i++)
@@ -3651,7 +4207,7 @@ void ftkVesselTracer::RelabelForestNodes(int oldID, int newID){
 	}
 }
 
-void ftkVesselTracer::GetTree(int ID2, std::vector<int>& connected_nodes){
+void ftkVesselTracer::GetVBTTree(int ID2, std::vector<int>& connected_nodes){
 
 	int root = this->forest[ID2].start, ID = this->forest[ID2].ID, currentNNodes = 0, totalNNodes = 0, childNodeID = 0;
 	
@@ -3722,7 +4278,7 @@ void ftkVesselTracer::PrintForest(void){
 		if(connected_nodes.empty() == false)
 			connected_nodes.clear();
 		
-		this->GetTree(i, connected_nodes);
+		this->GetVBTTree(i, connected_nodes);
 
 		if(connected_nodes.empty() == false){
 			for(int j = 0; j < connected_nodes.size(); j++)
@@ -4428,6 +4984,27 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 		std::cout << std::endl;
 	}*/
 
+	
+	// Fill the node features structure (for fun!!)
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+
+		this->allForestNodes[i].nodeFeatures.ID = i;
+		this->allForestNodes[i].nodeFeatures.position[0] = this->allForestNodes[i].x;
+		this->allForestNodes[i].nodeFeatures.position[1] = this->allForestNodes[i].y;
+		this->allForestNodes[i].nodeFeatures.position[2] = this->allForestNodes[i].z;
+		this->allForestNodes[i].nodeFeatures.scale = this->allForestNodes[i].scale;
+		this->allForestNodes[i].nodeFeatures.likelihood = this->allForestNodes[i].likelihood;
+		this->allForestNodes[i].nodeFeatures.forestLabel = this->allForestNodes[i].forestLabel;
+		this->allForestNodes[i].nodeFeatures.isLeaf = this->allForestNodes[i].isLeaf;
+		this->allForestNodes[i].nodeFeatures.isBifurgation = this->allForestNodes[i].isBifurgation;
+		this->allForestNodes[i].nodeFeatures.isTrifurgation = this->allForestNodes[i].isTrifurgation;
+		this->allForestNodes[i].nodeFeatures.traceQuality = this->allForestNodes[i].traceQuality;
+		this->allForestNodes[i].nodeFeatures.nODFModes = this->allForestNodes[i].dirX.size();
+		this->allForestNodes[i].nodeFeatures.ODFModesX = this->allForestNodes[i].dirX;
+		this->allForestNodes[i].nodeFeatures.ODFModesY = this->allForestNodes[i].dirY;
+		this->allForestNodes[i].nodeFeatures.ODFModesZ = this->allForestNodes[i].dirZ;
+	}
+
 	std::cout << "Done with computing the SWC file structure. " << std::endl;
 }
 
@@ -4563,23 +5140,53 @@ void ftkVesselTracer::WriteSkeletonImage(void){
 
 				double euclid_distance = std::sqrt(std::pow((double)(pixel0[0] - pixel1[0]), 2) + std::pow((double)(pixel0[1] - pixel1[1]), 2) + std::pow((double)(pixel0[2] - pixel1[2]), 2));  
 
+				//std::cout << "delX: " << pixel0[0] - pixel1[0] << " delY: " << pixel0[1] - pixel1[1] << " delZ " << pixel0[2] - pixel1[2] << std::endl;
+				
+				/*if(std::abs((double)(pixel0[0] - pixel1[0])) < 0.0001)
+					pixel1[0] = pixel1[0] + 0.5;
+				if(std::abs((double)(pixel0[1] - pixel1[1])) < 0.0001)
+					pixel1[1] = pixel1[1] + 0.5;
+				if(std::abs((double)(pixel0[2] - pixel1[2])) < 0.0001)
+					pixel1[2] = pixel1[2] + 0.5;*/
+				
+				//std::cout << pixel0 << ", " << pixel1 << std::endl;
+
 				if(euclid_distance < 1.0){
 					//std::cout << "Distance between two nodes was less than 1 !! " << std::endl;
 					//std::cout << "Parent: " << i << " at: " << pixel0 << " Child: " << this->allForestNodes[i].children[j] << " at: " << pixel1 << std::endl;
 					this->skeletonImage->SetPixel(pixel0, 255);
 					continue;
 				}
+
 				
-				//std::cout << distance << std::endl;
+				//std::cout << euclid_distance << std::endl;
+				
+				std::vector<itk::Index<3> > line_pixels;
+				line_pixels = line.BuildLine(pixel0, pixel1);
+				
+				if(!line_pixels.empty()){
+					for(int k = 0; k < line_pixels.size(); k++){
 
-				std::vector<itk::Index<3> > line_pixels = line.BuildLine(pixel0, pixel1);
+						if(line_pixels[k][0] <= 0)
+							line_pixels[k][0] = 1;
+						if(line_pixels[k][1] <= 0)
+							line_pixels[k][1] = 1;
+						if(line_pixels[k][2] <= 0)
+							line_pixels[k][2] = 1;
+						if(line_pixels[k][0] >= id_sz[0])
+							line_pixels[k][0] = id_sz[0]-1;
+						if(line_pixels[k][1] >= id_sz[1])
+							line_pixels[k][1] = id_sz[1]-1;
+						if(line_pixels[k][2] >= id_sz[2])
+							line_pixels[k][2] = id_sz[2]-1;
 
-				for(int k = 0; k < line_pixels.size(); k++){
-				//	std::cout << line_pixels[k] << std::endl;
-					this->skeletonImage->SetPixel(line_pixels[k], 255);
+						//std::cout << line_pixels[k] << std::endl;
+						this->skeletonImage->SetPixel(line_pixels[k], 255);
+					}
+
+					//std::cout << std::endl;
+					line_pixels.clear();
 				}
-				//std::cout << std::endl;
-				//line_pixels.clear();
 
 				//LineIteratorType3D line_it(this->skeletonImage, pixel0, pixel1);
 				//line_it.GoToBegin();
@@ -4599,6 +5206,99 @@ void ftkVesselTracer::WriteSkeletonImage(void){
 	skeleton_writer->Update();
 
 	std::cout << "Done with writing the skeleton image: " << skeleton_file_name << std::endl;
+}
+
+void ftkVesselTracer::WriteSkeletonImageFromVTK(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Forest nodes container is empty. Returning." << std::endl;
+		return;
+	}
+
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
+	
+	int point_counter = -1;
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+		points->InsertNextPoint(this->allForestNodes[i].x, this->allForestNodes[i].y, this->allForestNodes[i].z);
+		point_counter++;
+
+		for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
+			points->InsertNextPoint(this->allForestNodes[this->allForestNodes[i].children[j]].x, 
+				this->allForestNodes[this->allForestNodes[i].children[j]].y, this->allForestNodes[this->allForestNodes[i].children[j]].z);			
+			point_counter++;
+		}
+		for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
+			vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+			line->GetPointIds()->SetId(0, point_counter - this->allForestNodes[i].children.size());
+			line->GetPointIds()->SetId(1, point_counter - j);
+			lines->InsertNextCell(line);
+		}
+	}
+	
+	unsigned char white[3] = {255, 255, 255};
+	vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+	colors->SetNumberOfComponents(3);
+	colors->InsertNextTupleValue(white);
+	
+	vtkSmartPointer<vtkPolyData> poly_data = vtkSmartPointer<vtkPolyData>::New();
+	poly_data->SetPoints(points);
+	poly_data->SetLines(lines);
+	poly_data->Update();
+
+	vtkSmartPointer<vtkPolyDataToImageStencil> poly_to_stencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
+	vtkSmartPointer<vtkImageStencil> img_stencil = vtkSmartPointer<vtkImageStencil>::New();
+	vtkSmartPointer<vtkImageData> img_data = vtkSmartPointer<vtkImageData>::New();
+	vtkSmartPointer<vtkImageData> img_out = vtkSmartPointer<vtkImageData>::New();
+
+	RenderImageType3D::RegionType id_reg;
+	RenderImageType3D::IndexType id_st;
+	RenderImageType3D::SizeType id_sz = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st[0] = 0;
+	id_st[1] = 0;
+	id_st[2] = 0;
+	
+	id_reg.SetSize(id_sz);
+	id_reg.SetIndex(id_st);
+	
+	this->skeletonImage = RenderImageType3D::New();
+	this->skeletonImage->SetRegions(id_reg);
+	this->skeletonImage->Allocate();
+	this->skeletonImage->SetSpacing(this->inputData->GetSpacing());
+
+	this->skeletonImage->FillBuffer(0);
+	
+	/*img_data->SetSpacing(1,1,1);
+	img_data->SetOrigin(0,0,0);
+	img_data->SetDimensions(xmax-xmin+1,ymax-ymin+1,zmax-zmin+1);
+	img_data->SetScalarTypeToInt();
+	img_data->SetNumberOfScalarComponents(1);
+	img_data->AllocateScalars();*/
+
+	ITKToVTKConnectorType::Pointer ITK_to_VTK_connector = ITKToVTKConnectorType::New();
+
+	ITK_to_VTK_connector->SetInput(this->skeletonImage);
+	ITK_to_VTK_connector->Update();
+
+	img_data = ITK_to_VTK_connector->GetOutput();
+
+	poly_to_stencil->SetInput(poly_data);
+	img_stencil->SetStencil(poly_to_stencil->GetOutput());
+	img_stencil->SetInput(img_data);
+	img_stencil->SetBackgroundValue(0.0);
+	img_stencil->Update();
+
+	img_out = img_stencil->GetOutput();
+
+	std::string skeleton_file_name = this->data_folder_path;
+	skeleton_file_name.append("_SkeletonImageFromVTK.tif");
+
+	vtkSmartPointer<vtkTIFFWriter> tiff_writer = vtkSmartPointer<vtkTIFFWriter>::New();
+	tiff_writer->SetInput(img_out);
+	tiff_writer->SetFileName(skeleton_file_name.c_str());
+	tiff_writer->Update();
+
 }
 
 void ftkVesselTracer::WriteSegmentationMask(void){
@@ -4682,7 +5382,7 @@ void ftkVesselTracer::WriteSegmentationMask(void){
 	std::cout << "Done with writing the segmentation mask image: " << mask_file_name << std::endl;
 }
 
-void ftkVesselTracer::WriteNodePropertiesFile(void){
+void ftkVesselTracer::WriteNodeFeaturesFile(void){
 
 	if(this->allForestNodes.empty()){
 		std::cout << "Node container is empty. Returning. " << std::endl;
@@ -4706,21 +5406,23 @@ void ftkVesselTracer::WriteNodePropertiesFile(void){
 		//std::cout << this->allForestNodes.size() << std::endl;
 
 		for(int i = 0; i < this->allForestNodes.size(); i++){
-						
-			file_stream << i << '\t' << this->allForestNodes[i].x << '\t' << this->allForestNodes[i].y << '\t' << this->allForestNodes[i].z << '\t';
-			file_stream << this->allForestNodes[i].scale << '\t' << this->allForestNodes[i].likelihood << '\t' << this->allForestNodes[i].forestLabel << '\t';
-			file_stream << this->allForestNodes[i].isLeaf << '\t' << this->allForestNodes[i].isRoot << '\t' << this->allForestNodes[i].isBifurgation << '\t';
-			file_stream << this->allForestNodes[i].isTrifurgation << '\t' << this->allForestNodes[i].traceQuality << '\t';
-			
-			file_stream << this->allForestNodes[i].dirX.size() << '\t' << this->allForestNodes[i].dirX[0] << '\t' << this->allForestNodes[i].dirY[0] << '\t' << this->allForestNodes[i].dirZ[0] << '\t';
 
-			if(this->allForestNodes[i].dirX.size() == 2){
-				file_stream << this->allForestNodes[i].dirX[1] << '\t' << this->allForestNodes[i].dirY[1] << '\t' << this->allForestNodes[i].dirZ[1] << '\t';
+			VesselNodeFeatures node_feat = this->allForestNodes[i].nodeFeatures;
+						
+			file_stream << node_feat.ID << '\t' << node_feat.position[0] << '\t' << node_feat.position[1] << '\t' << node_feat.position[2] << '\t';
+			file_stream << node_feat.scale << '\t' << node_feat.likelihood << '\t' << node_feat.forestLabel << '\t';
+			file_stream << node_feat.isLeaf << '\t' << node_feat.isRoot << '\t' << node_feat.isBifurgation << '\t';
+			file_stream << node_feat.isTrifurgation << '\t' << node_feat.traceQuality << '\t';
+			
+			file_stream << node_feat.nODFModes << '\t' << node_feat.ODFModesX[0] << '\t' << node_feat.ODFModesY[0] << '\t' << node_feat.ODFModesZ[0] << '\t';
+
+			if(node_feat.nODFModes == 2){
+				file_stream << node_feat.ODFModesX[1] << '\t' << node_feat.ODFModesY[1] << '\t' << node_feat.ODFModesZ[1] << '\t';
 				file_stream << 0.0 << '\t' << 0.0 << '\t' << 0.0 << '\t';
 			}
-			else if(this->allForestNodes[i].dirX.size() == 3){
-				file_stream << this->allForestNodes[i].dirX[1] << '\t' << this->allForestNodes[i].dirY[1] << '\t' << this->allForestNodes[i].dirZ[1] << '\t';
-				file_stream << this->allForestNodes[i].dirX[2] << '\t' << this->allForestNodes[i].dirY[2] << '\t' << this->allForestNodes[i].dirZ[2] << '\t';
+			else if(node_feat.nODFModes == 3){
+				file_stream << node_feat.ODFModesX[1] << '\t' << node_feat.ODFModesY[1] << '\t' << node_feat.ODFModesZ[1] << '\t';
+				file_stream << node_feat.ODFModesX[2] << '\t' << node_feat.ODFModesY[2] << '\t' << node_feat.ODFModesZ[2] << '\t';
 			}
 			else{
 				file_stream << 0.0 << '\t' << 0.0 << '\t' << 0.0 << '\t';
@@ -4740,6 +5442,18 @@ void ftkVesselTracer::WriteNodePropertiesFile(void){
 		std::cout << " Unable to open file for writing nodes: " << prop_file_name << std::endl;
 }
 
+void ftkVesselTracer::ComputeVesselNetworkFeatures(void){
+
+	if(this->allForestNodes.empty()){
+		std::cout << "Forest nodes container is emtpy. Returning. " << std::endl;
+		return;
+	}
+
+	for(int i = 0; i < this->allForestNodes.size(); i++){
+
+	}
+}
+
 void ftkVesselTracer::SmartRetrace(void){
 
 	this->ComputeRetracingStartPoints();
@@ -4757,17 +5471,10 @@ void ftkVesselTracer::ComputeRetracingStartPoints(void){
 	for(int i = 0; i < this->allForestNodes.size(); i++){
 		
 		if(this->allForestNodes[i].isLeaf || this->allForestNodes[i].isRoot || this->allForestNodes[i].isOrphan)
-			this->retracingStartPoints.push_back(this->allForestNodes[i]);
+			this->retracingStartPoints.push_back(this->allForestNodes[i]); 
 	}
 
-	std::cout << "Done with computing starting points for retracing: " << this->retracingStartPoints.size();
-
-	// Compute possible correction lines
-	int retrace_nhood = 100;
-	for(int i = 0; i < this->retracingStartPoints.size(); i++){
-		
-		
-	}
+	std::cout << "Done with computing starting points for retracing: " << this->retracingStartPoints.size() << std::endl;
 
 	// Write the retracing points image
 	RenderImageType3D::RegionType id_reg;
@@ -4804,6 +5511,107 @@ void ftkVesselTracer::ComputeRetracingStartPoints(void){
 	retracing_start_nodes_writer->SetInput(this->retracingStartPointsImage);
 	retracing_start_nodes_writer->Update();
 	
+	std::cout << "Done with writing retracing start points file: " << retracing_start_nodes_file_name << std::endl;
+	
+	// Compute possible correction lines
+	//int retrace_nhood = 100;
+	//for(int i = 0; i < this->retracingStartPoints.size(); i++)
+
+	// Retracing on the residue image
+
+	// Creating residue image
+	
+	ImageType3D::RegionType id_reg_1;
+	ImageType3D::IndexType id_st_1;
+	ImageType3D::SizeType id_sz_1 = this->inputData->GetBufferedRegion().GetSize();
+
+	id_st_1[0] = 0;
+	id_st_1[1] = 0;
+	id_st_1[2] = 0;
+	id_reg_1.SetSize(id_sz_1);
+	id_reg_1.SetIndex(id_st_1);
+
+	this->InputImageRetracing = ImageType3D::New();
+	this->InputImageRetracing->SetRegions(id_reg_1);
+	this->InputImageRetracing->Allocate();
+	this->InputImageRetracing->SetSpacing(this->inputData->GetSpacing());
+	this->InputImageRetracing->FillBuffer(0.0);
+
+
+	for(int i = 0; i < id_sz[0]; i++){
+		for(int j = 0; j < id_sz[1]; j++){
+			for(int k = 0; k < id_sz[2]; k++){
+
+				itk::Index<3> idx;
+				idx[0] = i; idx[1] = j; idx[2] = k;
+
+				if(!this->segmentationMaskImage->GetPixel(idx))
+					this->InputImageRetracing->SetPixel(idx, this->inputData->GetPixel(idx));
+					
+			}
+		}
+	}
+
+	
+	RenderImageType3D::IndexType starting_index, end_index;
+	RenderImageType3D::SizeType sub_volume_size;
+	RenderImageType3D::RegionType sub_volume_region;
+	RenderImageType3D::Pointer sub_volume;
+
+	for(int i = 0; i < this->retracingStartPoints.size(); i++){
+		
+		double rad = this->retracingStartPoints[i].scale;
+		itk::Index<3> idx;
+		idx[0] = this->retracingStartPoints[i].x; idx[1] = this->retracingStartPoints[i].y; idx[2] = this->retracingStartPoints[i].z;
+
+
+		starting_index[0] = idx[0] - rad; starting_index[1] = idx[1] - rad; starting_index[2] = idx[2] - rad;
+		end_index[0] = idx[0] + rad; end_index[1] = idx[1] + rad; end_index[2] = idx[2] + rad;
+	
+		if(starting_index[0] < 0)
+			starting_index[0] = 0;
+		if(starting_index[1] < 0)
+			starting_index[1] = 0;
+		if(starting_index[2] < 0)
+			starting_index[2] = 0;
+		if(end_index[0] > id_sz_1[0])
+			end_index[0] = id_sz_1[0];
+		if(end_index[1] > id_sz_1[1])
+			end_index[1] = id_sz_1[1];
+		if(end_index[2] > id_sz_1[2])
+			end_index[2] = id_sz_1[2];
+
+				
+		for(int k = starting_index[0]; k < end_index[0]; k++){
+			for(int l = starting_index[1]; l < end_index[1]; l++){
+				for(int m = starting_index[2]; m < end_index[2]; m++){
+
+					itk::Index<3> idx1;
+					idx1[0] = k; idx1[1] = l; idx1[2] = m;
+
+					//double euclid_distance = std::sqrt(std::pow((double)(idx[0] - idx1[0]), 2) + std::pow((double)(idx[1] - idx1[1]), 2) + std::pow((double)(idx[2] - idx1[2]), 2));  
+		
+					//if(euclid_distance <= rad)
+					
+					this->InputImageRetracing->SetPixel(idx1, this->inputData->GetPixel(idx1));
+				}
+			}
+		}
+	}
+	
+	std::string mask_file_name = this->data_folder_path;
+	mask_file_name.append("_MaskOverlayed.mhd");
+	Common::WriteImage3D(mask_file_name, this->InputImageRetracing);
+
+	//ImageWriter::Pointer mask_writer = ImageWriter::New();	
+	//mask_writer->SetFileName(mask_file_name);	
+	//mask_writer->SetInput(this->InputImageRetracing);
+	//mask_writer->Update();
+
+	std::cout << "Done with writing input image for retracing: " << mask_file_name << std::endl;
+
+	//this->ComputeAllSecondaryNodesRetracing();
+
 }
 
 IntrinsicFeatureVector_VT::IntrinsicFeatureVector_VT(){
@@ -5130,8 +5938,8 @@ void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
 	RenderImageType3D::RegionType sub_volume_region_nuclei, sub_volume_region_vessel;
 	RenderImageType3D::Pointer sub_volume_nuclei, sub_volume_vessel;
 
-	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VolumeOfInterestFilterType_nuclei;
-	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VolumeOfInterestFilterType_vessel;
+	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VBTVolumeOfInterestFilterType_nuclei;
+	typedef itk::RegionOfInterestImageFilter<RenderImageType3D, RenderImageType3D> VBTVolumeOfInterestFilterType_vessel;
 
 	for(int i = 0; i < this->nucleiObjects.size(); i++){
 	
@@ -5308,7 +6116,7 @@ void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
 		
 		//std::cout << starting_index_nuclei << ", " << end_index_nuclei << std::endl;
 		
-		VolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VolumeOfInterestFilterType_nuclei::New();
+		VBTVolumeOfInterestFilterType_nuclei::Pointer sub_volume_filter_nuclei = VBTVolumeOfInterestFilterType_nuclei::New();
 		sub_volume_filter_nuclei->SetInput(this->nucBinaryImage);
 		sub_volume_filter_nuclei->SetRegionOfInterest(sub_volume_region_nuclei);
 		sub_volume_filter_nuclei->Update();
@@ -5316,7 +6124,7 @@ void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
 		
 		//std::cout << "Nuclei: "  << i << " Scale: " << double_scale_nuclei << std::endl;	
 
-		VolumeOfInterestFilterType_vessel::Pointer sub_volume_filter_vessel = VolumeOfInterestFilterType_vessel::New();
+		VBTVolumeOfInterestFilterType_vessel::Pointer sub_volume_filter_vessel = VBTVolumeOfInterestFilterType_vessel::New();
 		sub_volume_filter_vessel->SetInput(this->vesselMaskImage);
 		sub_volume_filter_vessel->SetRegionOfInterest(sub_volume_region_vessel);
 		sub_volume_filter_vessel->Update();

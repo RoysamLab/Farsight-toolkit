@@ -27,9 +27,9 @@
 int main(int argc, char* argv[]){
 
 	if(argc < 2 || argc > 7){
-		std::cout << "ftkVesselTracer.exe <Step_no: 1. Tracing mode 2. Vessel features for nuclei> ";
+		std::cout << "ftkVesselTracer.exe <Mode_no: 1. Tracing mode 2. Vessel features for nuclei> ";
 		std::cout << " <(1)InputFileName, (2)NeucleiFeatureTable> <(1)preProcessData?, (2) SkeletonImage> ";
-		std::cout << " <(2)NodeFeaturesFile> <(2)NucleiLabelImage> <(2)VesselMaskImage>" << std::endl;
+		std::cout << " <(1)useVesselness?, (2)NodeFeaturesFile> <(2)NucleiLabelImage> <(2)VesselMaskImage>" << std::endl;
 		return -1;
 	}
 
@@ -46,6 +46,8 @@ int main(int argc, char* argv[]){
 		
 		std::string preprocess_str = argv[3];
 
+		std::string vesselness_str = argv[4];
+
 		/*if(strcmp(preprocess_str.c_str(), "0") != 0 || strcmp(preprocess_str.c_str(), "1") != 0){
 			std::cout << "Incorrect option for preprocessData, should be 0 or 1. " << std::endl;
 			return -1;
@@ -55,7 +57,16 @@ int main(int argc, char* argv[]){
 		if(strcmp(preprocess_str.c_str(), "1") == 0)
 			preprocess = true; 
 
-		bool useVesselness = true;
+		int useVesselness = 1;
+		if(strcmp(vesselness_str.c_str(), "0") == 0)
+			useVesselness = 0;
+		else if(strcmp(vesselness_str.c_str(), "1") == 0)
+			useVesselness = 1;
+		else if(strcmp(vesselness_str.c_str(), "2") == 0)
+			useVesselness = 2;
+		
+		std::cout << "Use vesselness: " << useVesselness << std::endl;
+
 		bool startWithMST = false; 
 		ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);
 	}

@@ -53,6 +53,7 @@
 #include "vtkImageCast.h"
 #include "vtkImageViewer2.h"
 
+
 typedef float PixelType;
 typedef unsigned char RenderPixelType;
 typedef unsigned short LabelPixelType;
@@ -61,7 +62,7 @@ typedef itk::Image<RenderPixelType, 3> RenderImageType3D;
 typedef itk::Image<LabelPixelType, 3> LabelImageType3D; 
 typedef itk::ImageToVTKImageFilter<RenderImageType3D> ITKToVTKConnectorType;
 typedef itk::ShiftScaleImageFilter<ImageType3D,ImageType3D> ShiftScaleFilterType;
-typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VolumeOfInterestFilterType;
+typedef itk::RegionOfInterestImageFilter<ImageType3D, ImageType3D> VBTVolumeOfInterestFilterType;
 typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::StatisticsImageFilter<ImageType3D> StatisticsFilterType;
