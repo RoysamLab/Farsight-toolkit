@@ -661,6 +661,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
 	std::vector<TraceBit> data(max_id+1);
 	int tcc =0;
+	//Third pass: Populate all the trace bits, and mark critical points.
 	while(!feof(fp))
 	{
 		tcc++;
@@ -718,6 +719,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		}
 	}
 	fclose(fp);
+
+	// Create tracelines from the tracebits.
 	//printf("about to create the data structure.. %d\n", (int)criticals.size());
 	std::set<int>::iterator iter = criticals.begin();
 	int global_id_number = this->getNewLineId(); //setting this does not append traces?
@@ -751,7 +754,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	//printf("Trace_lines size = %d\n",(int)trace_lines.size());
 
 	iter = criticals.begin();
-
+	// Set parents for tracelines.
 	while(iter!= criticals.end())
 	{
 		//printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
@@ -1333,7 +1336,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkF
 		line_cells->InsertCellPoint(return_id);
 		++iter;
 	}
-	// Recursive calls to the branches if they exist 
+	// Recursive calls to the branches if they exist: This will draw redundant connections between a branch and its parent?
 	for(unsigned int counter=0; counter<tline->GetBranchPointer()->size(); counter++)
 	{
 		//printf("I should be having children too! what am I doing here?\n");

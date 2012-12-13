@@ -2192,13 +2192,17 @@ void View3D::openTracingDialog()
 	QVBoxLayout *tracingLayout = new QVBoxLayout(this->tracingGui);
 	tracingLayout->addWidget(new QLabel("Choose tracing algorithm"));	
 	tracingLayout->setSizeConstraint(QLayout::SetMinimumSize);
-
+	
+	// Creating options
 	this->tracerCombo = new QComboBox;
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
+	this->tracerCombo->addItem("Vessel Ball Tracer (VBT)");
+	
 	tracingLayout->addWidget(this->tracerCombo);
 	connect(this->tracerCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(PickTracer(int)));
 
+	// Accepting parameters for MNT
 	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
 	QFormLayout *mntLayout = new QFormLayout();
 	this->mntCostThreshold = new QSpinBox;
@@ -2214,6 +2218,20 @@ void View3D::openTracingDialog()
 	this->mntBox->setLayout(mntLayout);
 	tracingLayout->addWidget(this->mntBox);
 	this->mntBox->setVisible(true);
+
+	// Accepting parameters for VBT: Vessel Ball Tracer
+	this->vbtBox = new QGroupBox("VBT Options", this->tracingGui);
+	this->vbtLayout = new QFormLayout(this->tracingGui);
+	this->vbtPreprocess = new QCheckBox("Do Preprocessing?", this->vbtBox);
+	this->vbtUseVesselness = new QSpinBox(this->vbtBox);
+	this->vbtUseVesselness->setRange(0, 3);
+	this->vbtUseVesselness->setSingleStep(1);
+	this->vbtUseVesselness->setValue(1);
+	this->vbtLayout->addRow(this->vbtPreprocess);
+	this->vbtLayout->addRow("Use Vesselness", this->vbtUseVesselness);
+	this->vbtBox->setLayout(this->vbtLayout);
+	tracingLayout->addWidget(this->vbtBox);
+	this->vbtBox->setVisible(true);
 
 	QPushButton * traceButton = new QPushButton("Run Tracer", this->tracingGui);
 	QPushButton * cancelButton = new QPushButton("Nevermind", this->tracingGui);
@@ -2247,12 +2265,17 @@ void View3D::PickTracer(int choice)
 {
 	//turn tracer guis off
 	this->mntBox->setVisible(false);
+	this->vbtBox->setVisible(false);
 
 	//turn selected one on
 	switch(choice)
 	{
 		case 0:
-			this->mntBox->setVisible(true); break;
+			this->mntBox->setVisible(true);
+			break;
+		case 2:
+			this->vbtBox->setVisible(true);
+			break;
 	}
 	this->tracingGui->resize(this->tracingGui->minimumSize());
 }
@@ -2263,7 +2286,11 @@ void View3D::RunTracer()
 	switch(this->tracerCombo->currentIndex())
 	{
 		case 0:
-			StartMNTracerAmit(this->mntCostThreshold->value()); break;
+			StartMNTracerAmit(this->mntCostThreshold->value()); 
+			break;
+		case 2:
+			this->StartVesselBallTracer();
+			break;
 	}
 }
 
@@ -2272,6 +2299,28 @@ void View3D::StartMNTracerAmit(int costThreshold)
 {
 	//Multiple Neuron Tracer, Amit's version
 	std::cout<<"Starting Amit's Tracer w threshold "<<costThreshold<<std::endl;
+}
+
+void View3D::StartVesselBallTracer(){
+
+	std::cout << "Starting with Ball tracer for vessels.. " << std::endl;
+	
+	
+	ImageType::Pointer inputImage = ImageType::New();
+	inputImage = this->ImageActors->getImageFileData(this->Image.at(0).toStdString(),"Image");
+	
+	ImageTypeFloat3D::Pointer inputImageFloat;
+	this->ImageActors->CastUCharToFloat(inputImage, inputImageFloat);
+	
+	std::cout << "Input image full path: " << this->Image.at(0).toStdString() << std::endl;
+	
+	try{
+		this->VBT = new ftkVesselTracer(this->Image.at(0).toStdString(), inputImageFloat,
+			this->vbtPreprocess->isChecked(), false, this->vbtUseVesselness->value());
+	}
+	catch(...){
+		qDebug() << "CRASH!!";
+	}
 }
 
 void View3D::ArunCenterline()

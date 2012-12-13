@@ -36,6 +36,7 @@ set( TRACE_LIBS
     ftkCommon
     ftkGraphs
     MCLR
+    VesselTracer_lib
     ${QT_LIBRARIES} )
 
 if( BUILD_SPD )	
