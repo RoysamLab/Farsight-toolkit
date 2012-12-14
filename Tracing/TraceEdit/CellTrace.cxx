@@ -779,8 +779,16 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		/*CellData->InsertNextValue(this->prediction);
 		CellData->InsertNextValue(this->confidence);*/
 		CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
-		CellData->InsertNextValue(this->segments[0]->GetAzimuthToROI());
-		CellData->InsertNextValue(this->segments[0]->GetElevationToROI());
+		if (this->segments[0]->GetDistanceToROI() == 0)
+		{
+			CellData->InsertNextValue(0);
+			CellData->InsertNextValue(0);
+		}
+		else
+		{
+			CellData->InsertNextValue(this->segments[0]->GetAzimuthToROI());
+			CellData->InsertNextValue(this->segments[0]->GetElevationToROI());
+		}
 		//std::cout << this->FileName << std::endl;
 		this->modified = false;
 	}
