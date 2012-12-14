@@ -43,8 +43,8 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 
 		// Primary and secondary node detection
 		this->allParams.nodeDetectionParams.initByDefaultValues();
-		this->ComputeAllPrimaryNodes();
-		this->ComputeAllSecondaryNodes();
+		this->ComputeAllPrimaryVBTNodes();
+		this->ComputeAllSecondaryVBTNodes();
 
 		// MST and post processing
 		this->allParams.graphAndMSTParams.initByDefaultValues();
@@ -56,16 +56,16 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
 		
 		// Reading secondary nodes from file for now
-		std::string filename = "AllNodes_grid10.txt";
-		this->ReadNodesFromTextFile(filename);
-		//this->ReadNodesFromTextFile(std::string("AllNodes_default.txt"));
+		std::string filename = "AllVBTNodes_grid10.txt";
+		this->ReadVBTNodesFromTextFile(filename);
+		//this->ReadVBTNodesFromTextFile(std::string("AllVBTNodes_default.txt"));
 		
 		this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 	}
 	
-	//this->PopulateSWCNodeContainerAndComputeNodeFeatures();
-	//this->WriteNodeFeaturesFile();
+	//this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
+	//this->WriteVBTNodeFeaturesFile();
 	//this->WriteSWCFileVessel();
 	//this->WriteSegmentationMask();
 	//this->WriteSkeletonImageFromVTK();
@@ -116,8 +116,8 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Point
 
 		// Primary and secondary node detection
 		this->allParams.nodeDetectionParams.initByDefaultValues();
-		this->ComputeAllPrimaryNodes();
-		this->ComputeAllSecondaryNodes();
+		this->ComputeAllPrimaryVBTNodes();
+		this->ComputeAllSecondaryVBTNodes();
 
 		// MST and post processing
 		this->allParams.graphAndMSTParams.initByDefaultValues();
@@ -129,16 +129,16 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Point
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
 		
 		// Reading secondary nodes from file for now
-		std::string filename = "AllNodes_grid10.txt";
-		this->ReadNodesFromTextFile(filename);
-		//this->ReadNodesFromTextFile(std::string("AllNodes_default.txt"));
+		std::string filename = "AllVBTNodes_grid10.txt";
+		this->ReadVBTNodesFromTextFile(filename);
+		//this->ReadVBTNodesFromTextFile(std::string("AllVBTNodes_default.txt"));
 		
 		this->allParams.graphAndMSTParams.initByDefaultValues();
 		this->CreateMinimumSpanningForest();
 	}
 	
-	//this->PopulateSWCNodeContainerAndComputeNodeFeatures();
-	//this->WriteNodeFeaturesFile();
+	//this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
+	//this->WriteVBTNodeFeaturesFile();
 	//this->WriteSWCFileVessel();
 	//this->WriteSegmentationMask();
 	//this->WriteSkeletonImageFromVTK();
@@ -225,13 +225,13 @@ void SphericalBinInfo::initByDefaultValues(void){
 	this->gaussian_win = 3;
 }
 
-void NodeDetectionParameters::initByDefaultValues(void){
+void VBTNodeDetectionParameters::initByDefaultValues(void){
 	
 	this->gridSpacing = 20; //30; //20; //30; //10; //15; //20; //15;
-	this->iterNPrimaryNode = 100;
+	this->iterNPrimaryVBTNode = 100;
 
 	this->increaseLikelihoodThreshold = 0.001;
-	this->discardNodeLikelihoodThreshold = 0.01; // 0.001 accroding to thesis
+	this->discardVBTNodeLikelihoodThreshold = 0.01; // 0.001 accroding to thesis
 	this->iterNForOnlyRegionBasedTerm = 15;
 	this->iterNMinimum = 10;
 	this->regionBasedTermWeight = 0.3; // 30%
@@ -278,7 +278,7 @@ void NodeDetectionParameters::initByDefaultValues(void){
 	this->infTraceQuality = 100.0;
 	this->maxQueueSize = 10000;
 	this->traceLengthCost = 0.5; //0.1; //0.5; //0.5; //1.0; //0.5; //1.0; //0.5; //0.0; // IMP PARAM
-	this->primaryNodeSearchRadFactor = 0.75; //1.0; //0.5; // IMP PARAM
+	this->primaryVBTNodeSearchRadFactor = 0.75; //1.0; //0.5; // IMP PARAM
 
 	this->vesselnessThershold = 0.001; //0.0001;
 	this->vesselnessWeight = 0.3;
@@ -321,7 +321,7 @@ VesselSegmentFeatures::VesselSegmentFeatures(){
 	this->meanCurvature = 0.0;
 }
 
-VesselNodeFeatures::VesselNodeFeatures(){
+VesselVBTNodeFeatures::VesselVBTNodeFeatures(){
 
 	this->ID = -1;
 	this->position.Fill(0);
@@ -343,7 +343,7 @@ void GraphAndMSTPartameters::initByDefaultValues(void){
 	this->maxEdgeWeight = 99.0;
 	this->minBranchAngle = vnl_math::pi/8.0;
 	this->maxNBranches = 40; //25; //10; //5;
-	this->maxTreeNodes = 5000; //500; //100;
+	this->maxTreeVBTNodes = 5000; //500; //100;
 }
 void AllParameters::initByDefaultValues(void){
 	
@@ -770,11 +770,11 @@ void ftkVesselTracer::SphericalBinPreprocess(void){
 	std::cout << "SphericalBinInfo computed." << std::endl;
 }
 
-void ftkVesselTracer::ComputeAllPrimaryNodes(void){
+void ftkVesselTracer::ComputeAllPrimaryVBTNodes(void){
 	
 	this->globalStatsInput.volumeMax = Common::NormalizeData(this->inputData, this->normalizedInputData);
 	this->ComputeSeeds();
-	this->FitSphereAndSortNodes();
+	this->FitSphereAndSortVBTNodes();
 }
 
 void ftkVesselTracer::ComputeSeeds(void){
@@ -858,7 +858,7 @@ void ftkVesselTracer::ComputeSeeds(void){
 				sub_volume_filter_2->Update();
 				sub_volume_2 = sub_volume_filter_2->GetOutput();
 				
-				// Node statistics can be computed here to reject some seeds which lie in the background
+				// VBTNode statistics can be computed here to reject some seeds which lie in the background
 				/*stats_filter->SetInput(sub_volume);
 				stats_filter->Update();
 				float mean = stats_filter->GetMean();
@@ -904,7 +904,7 @@ void ftkVesselTracer::ComputeSeeds(void){
 				offset = (k3*grid_slice_size) + (k2*grid_row_size) + k1;
 				
 				//#pragma omp critical				
-				this->initialSeeds[offset] = Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
+				this->initialSeeds[offset] = VBTNode(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
 	
 				//std::cout << offset << std::endl;
 
@@ -918,12 +918,12 @@ void ftkVesselTracer::ComputeSeeds(void){
 				//this->nodeGridArray
 				
 				//#pragma omp critical
-				//this->initialSeeds.push_back(Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val));
+				//this->initialSeeds.push_back(VBTNode(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val));
 				
 				//#pragma omp critical
 				//	seed_count++;
 				//	std::cout << seed_count << std::endl;
-				//	this->initialSeeds[seed_count] = Node(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
+				//	this->initialSeeds[seed_count] = VBTNode(max_index[0] + i1, max_index[1] + i2, max_index[2] + i3, max_val);
 					
 			}
 		}
@@ -933,10 +933,10 @@ void ftkVesselTracer::ComputeSeeds(void){
 
 	//visualizing the seed nodes
 	//this->initialSeeds.erase(this->initialSeeds.begin()+500, this->initialSeeds.end());
-	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
+	//this->VisualizeVBTNodesWithData3D(this->initialSeeds, false);
 }
 
-void ftkVesselTracer::VisualizeNodesWithData3D(std::vector<Node> node_vec, bool view_as_point){
+void ftkVesselTracer::VisualizeVBTNodesWithData3D(std::vector<VBTNode> node_vec, bool view_as_point){
 	
 	int n_seeds = node_vec.size();
 	
@@ -1037,7 +1037,7 @@ void ftkVesselTracer::VisualizeNodesWithData3D(std::vector<Node> node_vec, bool 
 	render_window_interactor->Start();
 }
 
-Node::Node(){
+VBTNode::VBTNode(){
 
 	this->x = 0;
 	this->y = 0;
@@ -1063,7 +1063,7 @@ Node::Node(){
 	this->nHoodSecondaryMultiplier = 0.0;
 	this->nHoodScaleSecondary = 0.0;
 	
-	this->secondaryNodeSearchRad = 0.0;
+	this->secondaryVBTNodeSearchRad = 0.0;
 	this->xInitSecondary = 0.0;
 	this->yInitSecondary = 0.0;
 	this->zInitSecondary = 0.0;
@@ -1081,7 +1081,7 @@ Node::Node(){
 	this->isOrphan = false;
 }
 
-Node::Node(double x, double y, double z, PixelType intensity){
+VBTNode::VBTNode(double x, double y, double z, PixelType intensity){
 
 	this->x = x;
 	this->y = y;
@@ -1108,7 +1108,7 @@ Node::Node(double x, double y, double z, PixelType intensity){
 	this->nHoodSecondaryMultiplier = 2.0;
 	this->nHoodScaleSecondary = this->nHoodSecondaryMultiplier * this->scale;
 	
-	this->secondaryNodeSearchRad = 0.0;
+	this->secondaryVBTNodeSearchRad = 0.0;
 	this->xInitSecondary = 0.0;
 	this->yInitSecondary = 0.0;
 	this->zInitSecondary = 0.0;
@@ -1127,28 +1127,28 @@ Node::Node(double x, double y, double z, PixelType intensity){
 	this->isOrphan = false;
 }
 
-bool compareNodesByLikelihood(Node n1, Node n2){	
+bool compareVBTNodesByLikelihood(VBTNode n1, VBTNode n2){	
 	return (n1.likelihood < n2.likelihood); 
 }
 
-inline double Node::ComputeNorm(Node n){
+inline double VBTNode::ComputeNorm(VBTNode n){
 
 	return(std::sqrt((n.x * n.x) + (n.y * n.y) + (n.z * n.z)));
 }
-void ftkVesselTracer::FitSphereAndSortNodes(void){
+void ftkVesselTracer::FitSphereAndSortVBTNodes(void){
 
 	std::cout << "Processing the seeds based on the model fits, likelihood and distance... " << std::endl;
 
 	//Testing a node
 	//this->initialSeeds.clear();
-	//Node ps_node(213, 16, 44, 100);
+	//VBTNode ps_node(213, 16, 44, 100);
 	//this->initialSeeds.push_back(ps_node);
 
 	//seeds before fitting
-	//this->VisualizeNodesWithData3D(this->initialSeeds, false);
+	//this->VisualizeVBTNodesWithData3D(this->initialSeeds, false);
 
-	std::vector<Node> filteredPrimaryNodes;
-	filteredPrimaryNodes.resize(this->initialSeeds.size());
+	std::vector<VBTNode> filteredPrimaryVBTNodes;
+	filteredPrimaryVBTNodes.resize(this->initialSeeds.size());
 	
 	// Parallel implementation for fitting spheres at each detected node
 
@@ -1157,41 +1157,41 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 
 		//std::cout << i << std::endl;
 		
-		this->FitSphereAtNode(this->initialSeeds[i]);
+		this->FitSphereAtVBTNode(this->initialSeeds[i]);
 		//std::cout << i << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << " Last iter: " << this->initialSeeds[i].exitIter << std::endl; 
 		
 		if((this->initialSeeds[i].isValid == true) && (this->initialSeeds[i].likelihood > this->allParams.nodeDetectionParams.likelihoodThresholdPrimary)){
-			//this->primaryNodes.push_back(this->initialSeeds[i]);
-			filteredPrimaryNodes[i] = this->initialSeeds[i];
+			//this->primaryVBTNodes.push_back(this->initialSeeds[i]);
+			filteredPrimaryVBTNodes[i] = this->initialSeeds[i];
 
 				//std::cout << " Scale: " << this->initialSeeds[i].scale << " Likelihood: " << this->initialSeeds[i].likelihood << std::endl;
 			}
 	}
 
-	for(int i = 0; i < filteredPrimaryNodes.size(); i++){
-		if(filteredPrimaryNodes[i].likelihood > 0.0)
-			this->primaryNodes.push_back(filteredPrimaryNodes[i]);
+	for(int i = 0; i < filteredPrimaryVBTNodes.size(); i++){
+		if(filteredPrimaryVBTNodes[i].likelihood > 0.0)
+			this->primaryVBTNodes.push_back(filteredPrimaryVBTNodes[i]);
 	}
 	
 	
 	//for testing
-	/*for(int i = 0; i < this->primaryNodes.size(); i++){
-		std::cout << this->primaryNodes[i].x << ", " << this->primaryNodes[i].y << ", " << this->primaryNodes[i].z << ", ";
-		std::cout << this->primaryNodes[i].likelihood << ", " << this->primaryNodes[i].scale << ", " << this->primaryNodes[i].meanForegroundIntensity << ", ";
-		std::cout << this->primaryNodes[i].meanBackgroundIntensity << std::endl;
+	/*for(int i = 0; i < this->primaryVBTNodes.size(); i++){
+		std::cout << this->primaryVBTNodes[i].x << ", " << this->primaryVBTNodes[i].y << ", " << this->primaryVBTNodes[i].z << ", ";
+		std::cout << this->primaryVBTNodes[i].likelihood << ", " << this->primaryVBTNodes[i].scale << ", " << this->primaryVBTNodes[i].meanForegroundIntensity << ", ";
+		std::cout << this->primaryVBTNodes[i].meanBackgroundIntensity << std::endl;
 	}*/
 
 	//visualize the fitted models and the filtered nodes
-	//this->VisualizeNodesWithData3D(this->primaryNodes, false);
+	//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodes, false);
 
-	std::cout << "Primary nodes before hit test: " << this->primaryNodes.size() << std::endl;
+	std::cout << "Primary nodes before hit test: " << this->primaryVBTNodes.size() << std::endl;
 	
 	// NOT USING FILTERING IS AN IMPORTANT CHANGE AND HAS NOT BEEN TESTED SO MUCH
-	//this->SortAndFilterPrimaryNodes();
-	this->primaryNodesAfterHitTest = this->primaryNodes;
+	//this->SortAndFilterPrimaryVBTNodes();
+	this->primaryVBTNodesAfterHitTest = this->primaryVBTNodes;
 	
 	//final primary nodes
-	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+	//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
 
 
 	RenderImageType3D::RegionType id_reg;
@@ -1205,47 +1205,47 @@ void ftkVesselTracer::FitSphereAndSortNodes(void){
 	id_reg.SetSize(id_sz);
 	id_reg.SetIndex(id_st);
 	
-	this->primaryNodesImage = RenderImageType3D::New();
-	this->primaryNodesImage->SetRegions(id_reg);
-	this->primaryNodesImage->Allocate();
-	this->primaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+	this->primaryVBTNodesImage = RenderImageType3D::New();
+	this->primaryVBTNodesImage->SetRegions(id_reg);
+	this->primaryVBTNodesImage->Allocate();
+	this->primaryVBTNodesImage->SetSpacing(this->inputData->GetSpacing());
 
-	this->primaryNodesImage->FillBuffer(0);
+	this->primaryVBTNodesImage->FillBuffer(0);
 
 	itk::Index<3> idx;
-	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++){
+	for(int i = 0; i < this->primaryVBTNodesAfterHitTest.size(); i++){
 		
-		idx[0] = this->primaryNodesAfterHitTest[i].x;
-		idx[1] = this->primaryNodesAfterHitTest[i].y;
-		idx[2] = this->primaryNodesAfterHitTest[i].z;
+		idx[0] = this->primaryVBTNodesAfterHitTest[i].x;
+		idx[1] = this->primaryVBTNodesAfterHitTest[i].y;
+		idx[2] = this->primaryVBTNodesAfterHitTest[i].z;
 
-		this->primaryNodesImage->SetPixel(idx, 255);
+		this->primaryVBTNodesImage->SetPixel(idx, 255);
 	}
 	
 	std::string primary_nodes_file_name = this->data_folder_path;
-	primary_nodes_file_name.append("_PrimaryNodes.tif");
+	primary_nodes_file_name.append("_PrimaryVBTNodes.tif");
 
 	ImageWriter::Pointer primary_nodes_writer = ImageWriter::New();	
 	primary_nodes_writer->SetFileName(primary_nodes_file_name);	
-	primary_nodes_writer->SetInput(this->primaryNodesImage);
+	primary_nodes_writer->SetInput(this->primaryVBTNodesImage);
 	primary_nodes_writer->Update();
 
 	std::cout << "Seed processing completed for primary nodes. " << std::endl;
-	std::cout << "Number of primary nodes after hit test: " << this->primaryNodesAfterHitTest.size() << std::endl;
+	std::cout << "Number of primary nodes after hit test: " << this->primaryVBTNodesAfterHitTest.size() << std::endl;
 	
 	// Testing the model fitting for specific seeds
-	//std::vector<Node> testing_seeds(this->initialSeeds.begin()+500, this->initialSeeds.begin()+510);
-	//std::vector<Node> testing_seeds(this->initialSeeds.begin()+292, this->initialSeeds.begin()+293);
-	/*std::vector<Node> testing_seeds(this->initialSeeds.begin()+200, this->initialSeeds.begin()+201);
-	this->VisualizeNodesWithData3D(testing_seeds, false);
+	//std::vector<VBTNode> testing_seeds(this->initialSeeds.begin()+500, this->initialSeeds.begin()+510);
+	//std::vector<VBTNode> testing_seeds(this->initialSeeds.begin()+292, this->initialSeeds.begin()+293);
+	/*std::vector<VBTNode> testing_seeds(this->initialSeeds.begin()+200, this->initialSeeds.begin()+201);
+	this->VisualizeVBTNodesWithData3D(testing_seeds, false);
 	for(int i = 0; i < testing_seeds.size(); i++)
-		this->FitSphereAtNode(testing_seeds[i]);
+		this->FitSphereAtVBTNode(testing_seeds[i]);
 	//std::cout << " Scale: " << testing_seeds[i].scale << " Likelihood: " << testing_seeds[i].likelihood << << " Position: " << seed.x << ", " << seed.y << ", " << seed.z " Last iter: " << testing_seeds[i].exitIter << std::endl; 
-	this->VisualizeNodesWithData3D(testing_seeds, false);
+	this->VisualizeVBTNodesWithData3D(testing_seeds, false);
 	*/	
 }
 
-void ftkVesselTracer::FitSphereAtNode(Node& seed){
+void ftkVesselTracer::FitSphereAtVBTNode(VBTNode& seed){
 
 	//testing on a pseudo node
 	// Same pixel apparently has different values in ITK and Matlab!!
@@ -1265,7 +1265,7 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed){
 	//this->allParams.nodeDetectionParams.initByDefaultValues();
 	seed.nodeDetectionParams.initByDefaultValues();
 
-	int node_iter = seed.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter = seed.nodeDetectionParams.iterNPrimaryVBTNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1285,7 +1285,7 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed){
 
 }
 
-void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
+void ftkVesselTracer::FitSphereAtVBTNode(VBTNode& seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
 
 	//testing on a pseudo node
 	// Same pixel apparently has different values in ITK and Matlab!!
@@ -1303,7 +1303,7 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr,
 	// Very important step!! 
 	seed.nodeDetectionParams.initByDefaultValues();
 
-	int node_iter = seed.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter = seed.nodeDetectionParams.iterNPrimaryVBTNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1321,30 +1321,30 @@ void ftkVesselTracer::FitSphereAtNode(Node& seed, ImageType3D::Pointer data_ptr,
 	}
 }
 
-void Node::InitDefaultParamsBeforeOptimization(){
+void VBTNode::InitDefaultParamsBeforeOptimization(){
 	
-	this->scale = (double)Node::DEFALUT_SCALE;
+	this->scale = (double)VBTNode::DEFALUT_SCALE;
 	this->nHoodScale = 2.0 * this->scale;
-	this->likelihood = (double)Node::MIN_LIKELIHOOD;
+	this->likelihood = (double)VBTNode::MIN_LIKELIHOOD;
 }
 
-void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& secondary_node, std::vector<double> dir_vec){
+void ftkVesselTracer::FitSphereAtVBTNodeSecondary(VBTNode& primary_node, VBTNode& secondary_node, std::vector<double> dir_vec){
 
-	Node anchor_node;
+	VBTNode anchor_node;
 	anchor_node.x = primary_node.x; 
 	anchor_node.y = primary_node.y; 
 	anchor_node.z = primary_node.z;
 	
-	double anchor_dir_norm = Node::ComputeNorm(Node(dir_vec[0], dir_vec[1], dir_vec[2], 0.0));
+	double anchor_dir_norm = VBTNode::ComputeNorm(VBTNode(dir_vec[0], dir_vec[1], dir_vec[2], 0.0));
 	anchor_node.dirX.push_back(dir_vec[0]/anchor_dir_norm);
 	anchor_node.dirY.push_back(dir_vec[1]/anchor_dir_norm);	
 	anchor_node.dirZ.push_back(dir_vec[2]/anchor_dir_norm);
 
-	anchor_node.secondaryNodeSearchRad = primary_node.nodeDetectionParams.primaryNodeSearchRadFactor * primary_node.scale;
+	anchor_node.secondaryVBTNodeSearchRad = primary_node.nodeDetectionParams.primaryVBTNodeSearchRadFactor * primary_node.scale;
 	
-	anchor_node.xInitSecondary = primary_node.x + anchor_node.dirX[0] * anchor_node.secondaryNodeSearchRad;
-	anchor_node.yInitSecondary = primary_node.y + anchor_node.dirY[0] * anchor_node.secondaryNodeSearchRad;
-	anchor_node.zInitSecondary = primary_node.z + anchor_node.dirZ[0] * anchor_node.secondaryNodeSearchRad;
+	anchor_node.xInitSecondary = primary_node.x + anchor_node.dirX[0] * anchor_node.secondaryVBTNodeSearchRad;
+	anchor_node.yInitSecondary = primary_node.y + anchor_node.dirY[0] * anchor_node.secondaryVBTNodeSearchRad;
+	anchor_node.zInitSecondary = primary_node.z + anchor_node.dirZ[0] * anchor_node.secondaryVBTNodeSearchRad;
 
 
 	secondary_node.isSecondary = true;
@@ -1369,7 +1369,7 @@ void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& seconda
 	secondary_node.nodeDetectionParams.dtZ = this->allParams.nodeDetectionParams.dtZSecondary;
 	secondary_node.nodeDetectionParams.dtScale = this->allParams.nodeDetectionParams.dtScaleSecondary;
 
-	int node_iter =secondary_node.nodeDetectionParams.iterNPrimaryNode;
+	int node_iter =secondary_node.nodeDetectionParams.iterNPrimaryVBTNode;
 
 	for(int i = 0; i < node_iter; i++){
 
@@ -1387,7 +1387,7 @@ void ftkVesselTracer::FitSphereAtNodeSecondary(Node& primary_node, Node& seconda
 	}
 }
 
-void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
+void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 	
 	ImageType3D::IndexType seed_index;
 	seed_index[0] = seed.x; seed_index[1] = seed.y; seed_index[2] = seed.z;
@@ -1595,8 +1595,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 	if(seed.isSecondary == true && seed.likelihood < seed.nodeDetectionParams.increaseLikelihoodThreshold){
 		
 		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
-		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
-		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardVBTNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardVBTNodeLikelihoodThreshold;
 		if(seed.meanBackgroundIntensity < 0)
 			seed.meanBackgroundIntensity = 0;
 		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
@@ -1609,7 +1609,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node& seed){
 		seed.isValid = true;	
 }
 
-void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
+void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode &seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
 		
 	ImageType3D::IndexType seed_index;
 	seed_index[0] = seed.x; seed_index[1] = seed.y; seed_index[2] = seed.z;
@@ -1785,8 +1785,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointe
 	if(seed.likelihood < seed.nodeDetectionParams.increaseLikelihoodThreshold){
 		
 		mean_of_means = (seed.meanForegroundIntensity + seed.meanBackgroundIntensity) / 2.0;
-		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
-		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardNodeLikelihoodThreshold;
+		seed.meanForegroundIntensity = mean_of_means + seed.nodeDetectionParams.discardVBTNodeLikelihoodThreshold;
+		seed.meanBackgroundIntensity = mean_of_means - seed.nodeDetectionParams.discardVBTNodeLikelihoodThreshold;
 		if(seed.meanBackgroundIntensity < 0)
 			seed.meanBackgroundIntensity = 0;
 		seed.likelihood = seed.meanForegroundIntensity - seed.meanBackgroundIntensity;
@@ -1799,7 +1799,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(Node &seed, ImageType3D::Pointe
 		seed.isValid = true;	
 }
 
-void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
+void ftkVesselTracer::UpdateModel(VBTNode& seed, int iter_number){
 
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
@@ -1899,7 +1899,7 @@ void ftkVesselTracer::UpdateModel(Node& seed, int iter_number){
 	seed.nodeDetectionParams.chScale[seed.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
 }
 
-void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int iter_number){
+void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, int iter_number){
 
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
@@ -1981,7 +1981,7 @@ void ftkVesselTracer::UpdateModelSecondary(Node& seed, Node& anchor_node, int it
 	ch_dir[0] = seed.x - anchor_node.xInitSecondary;
 	ch_dir[1] = seed.y - anchor_node.yInitSecondary;
 	ch_dir[2] = seed.z - anchor_node.zInitSecondary;
-	double ch_norm = Node::ComputeNorm(Node(ch_dir[0], ch_dir[1], ch_dir[2], 0));
+	double ch_norm = VBTNode::ComputeNorm(VBTNode(ch_dir[0], ch_dir[1], ch_dir[2], 0));
 	ch_dir_normalized[0] = ch_dir[0]/ch_norm;
 	ch_dir_normalized[1] = ch_dir[1]/ch_norm;
 	ch_dir_normalized[2] = ch_dir[2]/ch_norm;
@@ -2025,7 +2025,7 @@ int inline ftkVesselTracer::GetSign(double value){
 	return 0;
 }
 
-bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
+bool ftkVesselTracer::ExitModelFitting(VBTNode& seed, int iter_number){
 	
 	bool exit_fitting = false;
 	seed.nodeDetectionParams.currentMonitoredIter = (iter_number % seed.nodeDetectionParams.iterNMonitorParamChange); //+ 1;
@@ -2056,46 +2056,46 @@ bool ftkVesselTracer::ExitModelFitting(Node& seed, int iter_number){
 			exit_fitting = true;
 		}
 	}
-	if(iter_number == seed.nodeDetectionParams.iterNPrimaryNode)
+	if(iter_number == seed.nodeDetectionParams.iterNPrimaryVBTNode)
 		seed.exitIter = iter_number;
 	
 	return exit_fitting;
 }
 
-void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
+void ftkVesselTracer::SortAndFilterPrimaryVBTNodes(void){
 
 	// Remove nodes lying outside the image space
 	ImageType3D::IndexType index;
-	for(int i = 0; i < this->primaryNodes.size(); i++){
+	for(int i = 0; i < this->primaryVBTNodes.size(); i++){
 		
-		index[0] = this->primaryNodes[i].x; index[1] = this->primaryNodes[i].y; index[2] = this->primaryNodes[i].z;
+		index[0] = this->primaryVBTNodes[i].x; index[1] = this->primaryVBTNodes[i].y; index[2] = this->primaryVBTNodes[i].z;
 
 		if(this->normalizedInputData->GetLargestPossibleRegion().IsInside(index) == false){
-			this->primaryNodes.erase(this->primaryNodes.begin() + i);
+			this->primaryVBTNodes.erase(this->primaryVBTNodes.begin() + i);
 			std::cout << "Primary node out-of-bounds erased. " << std::endl;
 		}
 	}
 
 	// Sort the primary nodes in descending order of likelihood
-	std::sort(this->primaryNodes.begin(), this->primaryNodes.end(), compareNodesByLikelihood);
-	std::reverse(this->primaryNodes.begin(), this->primaryNodes.end());
+	std::sort(this->primaryVBTNodes.begin(), this->primaryVBTNodes.end(), compareVBTNodesByLikelihood);
+	std::reverse(this->primaryVBTNodes.begin(), this->primaryVBTNodes.end());
 
 	//for(int i = 0; i < 100; i++)
-	//	std::cout << i << ": " << this->primaryNodes[i].likelihood << ", " << this->primaryNodes[i].scale << std::endl;
+	//	std::cout << i << ": " << this->primaryVBTNodes[i].likelihood << ", " << this->primaryVBTNodes[i].scale << std::endl;
 
 	// Remove nodes which are very close to each other (node with higher likelihood remains)
-	this->primaryNodesAfterHitTest.push_back(this->primaryNodes[0]);
+	this->primaryVBTNodesAfterHitTest.push_back(this->primaryVBTNodes[0]);
 	double norm = 0.0;
 	bool hit = false;
 	
-	for(int i = 1; i < this->primaryNodes.size(); i++){		
+	for(int i = 1; i < this->primaryVBTNodes.size(); i++){		
 		
-		Node current_primary_node = this->primaryNodes[i];
+		VBTNode current_primary_node = this->primaryVBTNodes[i];
 		hit = false;
-		for(int j = 0; j < this->primaryNodesAfterHitTest.size(); j++){
+		for(int j = 0; j < this->primaryVBTNodesAfterHitTest.size(); j++){
 			
-			Node current_primary_node_final = this->primaryNodesAfterHitTest[j];
-			norm = Node::ComputeNorm(Node(current_primary_node.x - current_primary_node_final.x, current_primary_node.y - current_primary_node_final.y, 
+			VBTNode current_primary_node_final = this->primaryVBTNodesAfterHitTest[j];
+			norm = VBTNode::ComputeNorm(VBTNode(current_primary_node.x - current_primary_node_final.x, current_primary_node.y - current_primary_node_final.y, 
 				current_primary_node.z - current_primary_node_final.z, 0));
 			if(norm < (this->allParams.nodeDetectionParams.distanceThresholdPrimary * (current_primary_node.scale + current_primary_node_final.scale))){
 				//std::cout << "Hit! norm: " << norm << " Sum of scales: " << (current_primary_node.scale + current_primary_node_final.scale) << std::endl;
@@ -2106,15 +2106,15 @@ void ftkVesselTracer::SortAndFilterPrimaryNodes(void){
 			}
 		}
 		if(hit == false)
-			this->primaryNodesAfterHitTest.push_back(current_primary_node);
+			this->primaryVBTNodesAfterHitTest.push_back(current_primary_node);
 	}
 
-	//std::cout << "Final primary nodes: " << this->primaryNodesAfterHitTest.size() << std::endl;
-	//for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++)
-	//	std::cout << " Scale: " << this->primaryNodesAfterHitTest[i].scale << " Likelihood: " << this->primaryNodesAfterHitTest[i].likelihood << std::endl;
+	//std::cout << "Final primary nodes: " << this->primaryVBTNodesAfterHitTest.size() << std::endl;
+	//for(int i = 0; i < this->primaryVBTNodesAfterHitTest.size(); i++)
+	//	std::cout << " Scale: " << this->primaryVBTNodesAfterHitTest[i].scale << " Likelihood: " << this->primaryVBTNodesAfterHitTest[i].likelihood << std::endl;
 }
 
-void ftkVesselTracer::ComputeAllSecondaryNodes(void){
+void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 
 	//// For testing purposes
 	//ImageType3D::IndexType test_index, test_index1;
@@ -2123,12 +2123,12 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	//PixelType test_pixel = this->inputData->GetPixel(test_index);
 	//PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
 
-	////this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	////this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
 
 	//ImageType3D::IndexType test_index2;
-	//test_index2[0] = this->primaryNodesAfterHitTest[0].x; 
-	//test_index2[1] = this->primaryNodesAfterHitTest[0].y;
-	//test_index2[2] = this->primaryNodesAfterHitTest[0].z;
+	//test_index2[0] = this->primaryVBTNodesAfterHitTest[0].x; 
+	//test_index2[1] = this->primaryVBTNodesAfterHitTest[0].y;
+	//test_index2[2] = this->primaryVBTNodesAfterHitTest[0].z;
 	//PixelType test_pixel2 = this->inputData->GetPixel(test_index2);
 	//PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
 	
@@ -2141,7 +2141,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	std::cout << "Started with tracing... " << std::endl;
 	
 	// For testing
-	//Node a_node;
+	//VBTNode a_node;
 	//a_node.scale = 2.5;
 	//a_node.y = 57; //124.7428;
 	//a_node.x = 161; //64.4287;
@@ -2152,38 +2152,38 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	//a_node.parentIDLength = 4;
 	//this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
 	//a_node.nHoodSecondaryMultiplier = 2;
-	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
-	//this->primaryNodesAfterHitTest[0] = a_node; 
-	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	//this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
+	//this->primaryVBTNodesAfterHitTest[0] = a_node; 
+	//this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
 	
-	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+	//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
 
 	this->allParams.nodeDetectionParams.initByDefaultValues();
 
-	//PriorityQueueType node_queue(compareNodes(2));
+	//PriorityQueueType node_queue(compareVBTNodes(2));
 	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
 
-	//Node a_node;
+	//VBTNode a_node;
 	double trace_quality = 0.0;
-	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++){
-		//Node a_node = this->primaryNodesAfterHitTest[i];           
+	for(int i = 0; i < this->primaryVBTNodesAfterHitTest.size(); i++){
+		//VBTNode a_node = this->primaryVBTNodesAfterHitTest[i];           
 
-		// Quality estimate for single nodes. Nodes with high likelihood get low quality, nodes with low likelihood get high quality
-		if(this->primaryNodesAfterHitTest[i].likelihood <= 0){
-			this->primaryNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
+		// Quality estimate for single nodes. VBTNodes with high likelihood get low quality, nodes with low likelihood get high quality
+		if(this->primaryVBTNodesAfterHitTest[i].likelihood <= 0){
+			this->primaryVBTNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
 			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
 			light_node_queue[i] = queue_element(i, this->allParams.nodeDetectionParams.maxTraceCost);
 		}
 		else{
-			trace_quality = -1.0 * std::log(this->primaryNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
-			this->primaryNodesAfterHitTest[i].traceQuality = trace_quality;
+			trace_quality = -1.0 * std::log(this->primaryVBTNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
+			this->primaryVBTNodesAfterHitTest[i].traceQuality = trace_quality;
 			quality_array.push_back(trace_quality);
 			light_node_queue[i] = queue_element(i, trace_quality);
 		}
 	
-		this->primaryNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
-		//node_queue.push(this->primaryNodesAfterHitTest[i]);
+		this->primaryVBTNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryVBTNodesAfterHitTest[i].parentIDLength, -1);
+		//node_queue.push(this->primaryVBTNodesAfterHitTest[i]);
 	}
 
 	//std::cout << "Primary node trace quality.. " << std::endl;
@@ -2191,14 +2191,14 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	//	std::cout << quality_array[i] << std::endl;
 	
 	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
-	int queue_size = this->primaryNodesAfterHitTest.size();
-	Node current_node, dir_node;
+	int queue_size = this->primaryVBTNodesAfterHitTest.size();
+	VBTNode current_node, dir_node;
 	double dirX = 0.0, dirY = 0.0, dirZ = 0.0, norm = 0.0;
 	std::vector<double> dir_hist; 
-	std::vector<Node> badNodes, veryBadNodes;
+	std::vector<VBTNode> badVBTNodes, veryBadVBTNodes;
 	queue_element current_queue_element(0, 0.0);
 	
-	//while(queue_iter <= this->primaryNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
+	//while(queue_iter <= this->primaryVBTNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
 	//while(!node_queue.empty() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
 	while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
 		
@@ -2211,7 +2211,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		if(std::abs(current_queue_element.second - this->allParams.nodeDetectionParams.infTraceQuality) < 0.01)
 			break;
 
-		current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
+		current_node = this->primaryVBTNodesAfterHitTest[current_queue_element.first];
 
 		if(current_node.parentID[0] == -1)
 			current_node.isPrimary = true;
@@ -2234,9 +2234,9 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			primary_counter++;
 		
 		total_nodes_counter++;
-		this->allNodes.push_back(current_node);
+		this->allVBTNodes.push_back(current_node);
 
-		//std::cout << total_nodes_counter << " " << this->allNodes.size() << std::endl;
+		//std::cout << total_nodes_counter << " " << this->allVBTNodes.size() << std::endl;
 
 		if(hit == 1){
 
@@ -2244,19 +2244,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			hit_counter++;
 
 			dir_hist = current_node.sphHistRegionBased;
-			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
-			this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+			this->allVBTNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->ComputeSecondaryVBTNodeDirections(current_node, dir_hist);
 
 			if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
-				this->allNodes[total_nodes_counter].dirX = current_node.dirX;
-				this->allNodes[total_nodes_counter].dirY = current_node.dirY;
-				this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+				this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
+				this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
+				this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
 			}
 			else{
 				// if nowhere to go, all there dirs are zero
-				this->allNodes[total_nodes_counter].dirX.push_back(0.0);
-				this->allNodes[total_nodes_counter].dirY.push_back(0.0);
-				this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
 			}
 			
 			continue;
@@ -2271,35 +2271,35 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			current_node.dirZ.push_back(0.0);
 		}
 		else{		
-			dirX = this->allNodes[current_node.parentID[0]].x - current_node.x;
-			dirY = this->allNodes[current_node.parentID[0]].y - current_node.y;
-			dirZ = this->allNodes[current_node.parentID[0]].z - current_node.z;
+			dirX = this->allVBTNodes[current_node.parentID[0]].x - current_node.x;
+			dirY = this->allVBTNodes[current_node.parentID[0]].y - current_node.y;
+			dirZ = this->allVBTNodes[current_node.parentID[0]].z - current_node.z;
 			
-			dir_node = Node(dirX, dirY, dirZ, 0);
+			dir_node = VBTNode(dirX, dirY, dirZ, 0);
 			
-			norm = Node::ComputeNorm(dir_node);
-			dir_node = Node(dirX/norm, dirY/norm, dirZ/norm, 0);
+			norm = VBTNode::ComputeNorm(dir_node);
+			dir_node = VBTNode(dirX/norm, dirY/norm, dirZ/norm, 0);
 			dir_hist = current_node.sphHistRegionBased;
 
-			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->allVBTNodes[total_nodes_counter].sphHistRegionBased.clear();
 		}
 
-		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+		this->ComputeSecondaryVBTNodeDirections(current_node, dir_hist);
 		//std::cout << "111111111111... " << std::endl;
 		
 		if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
-			this->allNodes[total_nodes_counter].dirX = current_node.dirX;
-			this->allNodes[total_nodes_counter].dirY = current_node.dirY;
-			this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+			this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
+			this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
+			this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
 		}
 		else{
 
 			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
 
 			// if nowhere to go, all there dirs are zero
-			this->allNodes[total_nodes_counter].dirX.push_back(0.0);
-			this->allNodes[total_nodes_counter].dirY.push_back(0.0);
-			this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
 		}
 
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty()){
@@ -2308,7 +2308,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		}
 
 		std::vector<double> current_dir(3, 0.0);
-		//Node secondary_node;
+		//VBTNode secondary_node;
 		for(int i = 0; i < current_node.dirX.size(); i++){
 			
 			// Only branches less than maxBranchAngle are considered
@@ -2321,19 +2321,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			current_dir[1] = current_node.dirY[i];
 			current_dir[2] = current_node.dirZ[i];
 			
-			Node secondary_node;
+			VBTNode secondary_node;
 			secondary_node.parentIDLength = current_node.parentIDLength;
 			secondary_node.parentID = std::vector<double>(current_node.parentIDLength, -1);
 			
-			this->FitSphereAtNodeSecondary(current_node, secondary_node, current_dir);			
+			this->FitSphereAtVBTNodeSecondary(current_node, secondary_node, current_dir);			
 						
 			if(secondary_node.isValid == false){ // || secondary_node.likelihood <= 0){
-				badNodes.push_back(secondary_node);
+				badVBTNodes.push_back(secondary_node);
 				quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
 				continue;
 			}
 			if(secondary_node.likelihood <= 0.0){
-				veryBadNodes.push_back(secondary_node);
+				veryBadVBTNodes.push_back(secondary_node);
 				quality_array.push_back(2.0 * this->allParams.nodeDetectionParams.maxTraceCost);
 				//continue;
 			}
@@ -2348,7 +2348,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 			//queue_size++;
 			trace_quality = this->computeTraceQuality(secondary_node);
 
-			this->primaryNodesAfterHitTest.push_back(secondary_node);
+			this->primaryVBTNodesAfterHitTest.push_back(secondary_node);
 	
 			//std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
 			
@@ -2362,30 +2362,30 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		}
 		queue_iter++;
 		
-		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
-		//this->VisualizeNodesWithData3D(this->allNodes, false);
+		//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
+		//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 	}
 
 	stop_tracing_time = clock();
 	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
 
 	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
-	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
+	std::cout << "Total nodes: " << this->allVBTNodes.size() << std::endl;
 
 	//Visualize all nodes
-	//this->VisualizeNodesWithData3D(this->allNodes, true);
-	//this->VisualizeNodesWithData3D(this->allNodes, false);
+	//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, true);
+	//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 
 
-	std::vector<Node> nodesWithNonPositiveLikelihood;
-	for(int i = 0; i < this->allNodes.size(); i++){
-		if(this->allNodes[i].likelihood <= 0.0)
-			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
+	std::vector<VBTNode> nodesWithNonPositiveLikelihood;
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
+		if(this->allVBTNodes[i].likelihood <= 0.0)
+			nodesWithNonPositiveLikelihood.push_back(this->allVBTNodes[i]);
 	}
-	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
+	//this->VisualizeVBTNodesWithData3D(nodesWithNonPositiveLikelihood, false);
 
-	//if(badNodes.empty() == false)
-	//	this->VisualizeNodesWithData3D(badNodes, false);
+	//if(badVBTNodes.empty() == false)
+	//	this->VisualizeVBTNodesWithData3D(badVBTNodes, false);
 
 	//Write tracing result to image
 	RenderImageType3D::RegionType id_reg;
@@ -2399,34 +2399,34 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 	id_reg.SetSize(id_sz);
 	id_reg.SetIndex(id_st);
 	
-	this->secondaryNodesImage = RenderImageType3D::New();
-	this->secondaryNodesImage->SetRegions(id_reg);
-	this->secondaryNodesImage->Allocate();
-	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+	this->secondaryVBTNodesImage = RenderImageType3D::New();
+	this->secondaryVBTNodesImage->SetRegions(id_reg);
+	this->secondaryVBTNodesImage->Allocate();
+	this->secondaryVBTNodesImage->SetSpacing(this->inputData->GetSpacing());
 
-	this->secondaryNodesImage->FillBuffer(0);
+	this->secondaryVBTNodesImage->FillBuffer(0);
 
 	itk::Index<3> idx;
-	for(int i = 0; i < this->allNodes.size(); i++){
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
 		
-		idx[0] = this->allNodes[i].x;
-		idx[1] = this->allNodes[i].y;
-		idx[2] = this->allNodes[i].z;
+		idx[0] = this->allVBTNodes[i].x;
+		idx[1] = this->allVBTNodes[i].y;
+		idx[2] = this->allVBTNodes[i].z;
 
-		this->secondaryNodesImage->SetPixel(idx, 255);
+		this->secondaryVBTNodesImage->SetPixel(idx, 255);
 	}
 	
 	std::string secondary_nodes_file_name = this->data_folder_path;
-	secondary_nodes_file_name.append("_SecondaryNodes.tif");
+	secondary_nodes_file_name.append("_SecondaryVBTNodes.tif");
 
 	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
 	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
-	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
+	secondary_nodes_writer->SetInput(this->secondaryVBTNodesImage);
 	secondary_nodes_writer->Update();
 
 
 	//Write all nodes to a file
-	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
+	//this->writeVBTNodesToFile(this->allVBTNodes, std::string("AllVBTNodes.txt"));
 
 	//write quality array
 	/*ofstream nodes_file_stream;
@@ -2442,19 +2442,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodes(void){
 		*/
 }
 
-void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
+void ftkVesselTracer::ComputeAllSecondaryVBTNodesRetracing(void){
 
 	this->allParams.nodeDetectionParams.initByDefaultValues();
 
 	std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
 
-	//Node a_node;
+	//VBTNode a_node;
 	double trace_quality = 0.0;
 	for(int i = 0; i < this->retracingStartPoints.size(); i++){
-		//Node a_node = this->primaryNodesAfterHitTest[i];           
+		//VBTNode a_node = this->primaryVBTNodesAfterHitTest[i];           
 
-		// Quality estimate for single nodes. Nodes with high likelihood get low quality, nodes with low likelihood get high quality
+		// Quality estimate for single nodes. VBTNodes with high likelihood get low quality, nodes with low likelihood get high quality
 		if(this->retracingStartPoints[i].likelihood <= 0){
 			this->retracingStartPoints[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
 			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
@@ -2467,16 +2467,16 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			light_node_queue[i] = queue_element(i, trace_quality);
 		}
 	
-		this->retracingStartPoints[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
-		//node_queue.push(this->primaryNodesAfterHitTest[i]);
+		this->retracingStartPoints[i].parentID = std::vector<double>(this->primaryVBTNodesAfterHitTest[i].parentIDLength, -1);
+		//node_queue.push(this->primaryVBTNodesAfterHitTest[i]);
 	}
 	
 	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
-	int queue_size = this->primaryNodesAfterHitTest.size();
-	Node current_node, dir_node;
+	int queue_size = this->primaryVBTNodesAfterHitTest.size();
+	VBTNode current_node, dir_node;
 	double dirX = 0.0, dirY = 0.0, dirZ = 0.0, norm = 0.0;
 	std::vector<double> dir_hist; 
-	std::vector<Node> badNodes, veryBadNodes;
+	std::vector<VBTNode> badVBTNodes, veryBadVBTNodes;
 	queue_element current_queue_element(0, 0.0);
 
 	while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
@@ -2513,9 +2513,9 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			primary_counter++;
 		
 		total_nodes_counter++;
-		this->allNodes.push_back(current_node);
+		this->allVBTNodes.push_back(current_node);
 
-		//std::cout << total_nodes_counter << " " << this->allNodes.size() << std::endl;
+		//std::cout << total_nodes_counter << " " << this->allVBTNodes.size() << std::endl;
 
 		if(hit == 1){
 
@@ -2523,19 +2523,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			hit_counter++;
 
 			dir_hist = current_node.sphHistRegionBased;
-			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
-			this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+			this->allVBTNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->ComputeSecondaryVBTNodeDirections(current_node, dir_hist);
 
 			if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
-				this->allNodes[total_nodes_counter].dirX = current_node.dirX;
-				this->allNodes[total_nodes_counter].dirY = current_node.dirY;
-				this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+				this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
+				this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
+				this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
 			}
 			else{
 				// if nowhere to go, all there dirs are zero
-				this->allNodes[total_nodes_counter].dirX.push_back(0.0);
-				this->allNodes[total_nodes_counter].dirY.push_back(0.0);
-				this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
 			}
 			
 			continue;
@@ -2550,34 +2550,34 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			current_node.dirZ.push_back(0.0);
 		}
 		else{		
-			dirX = this->allNodes[current_node.parentID[0]].x - current_node.x;
-			dirY = this->allNodes[current_node.parentID[0]].y - current_node.y;
-			dirZ = this->allNodes[current_node.parentID[0]].z - current_node.z;
+			dirX = this->allVBTNodes[current_node.parentID[0]].x - current_node.x;
+			dirY = this->allVBTNodes[current_node.parentID[0]].y - current_node.y;
+			dirZ = this->allVBTNodes[current_node.parentID[0]].z - current_node.z;
 			
-			dir_node = Node(dirX, dirY, dirZ, 0);
+			dir_node = VBTNode(dirX, dirY, dirZ, 0);
 			
-			norm = Node::ComputeNorm(dir_node);
-			dir_node = Node(dirX/norm, dirY/norm, dirZ/norm, 0);
+			norm = VBTNode::ComputeNorm(dir_node);
+			dir_node = VBTNode(dirX/norm, dirY/norm, dirZ/norm, 0);
 			dir_hist = current_node.sphHistRegionBased;
 
-			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->allVBTNodes[total_nodes_counter].sphHistRegionBased.clear();
 		}
 
-		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+		this->ComputeSecondaryVBTNodeDirections(current_node, dir_hist);
 		
 		if(!current_node.dirX.empty() && !current_node.dirY.empty() && !current_node.dirZ.empty()){
-			this->allNodes[total_nodes_counter].dirX = current_node.dirX;
-			this->allNodes[total_nodes_counter].dirY = current_node.dirY;
-			this->allNodes[total_nodes_counter].dirZ = current_node.dirZ;
+			this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
+			this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
+			this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
 		}
 		else{
 
 			//std::cout << "Empty dir: " << total_nodes_counter << std::endl;
 
 			// if nowhere to go, all there dirs are zero
-			this->allNodes[total_nodes_counter].dirX.push_back(0.0);
-			this->allNodes[total_nodes_counter].dirY.push_back(0.0);
-			this->allNodes[total_nodes_counter].dirZ.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
 		}
 
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty()){
@@ -2586,7 +2586,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 		}
 
 		std::vector<double> current_dir(3, 0.0);
-		//Node secondary_node;
+		//VBTNode secondary_node;
 		for(int i = 0; i < current_node.dirX.size(); i++){
 			
 			// Only branches less than maxBranchAngle are considered
@@ -2599,19 +2599,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			current_dir[1] = current_node.dirY[i];
 			current_dir[2] = current_node.dirZ[i];
 			
-			Node secondary_node;
+			VBTNode secondary_node;
 			secondary_node.parentIDLength = current_node.parentIDLength;
 			secondary_node.parentID = std::vector<double>(current_node.parentIDLength, -1);
 
-			this->FitSphereAtNodeSecondary(current_node, secondary_node, current_dir);			
+			this->FitSphereAtVBTNodeSecondary(current_node, secondary_node, current_dir);			
 			
 			if(secondary_node.isValid == false){ // || secondary_node.likelihood <= 0){
-				badNodes.push_back(secondary_node);
+				badVBTNodes.push_back(secondary_node);
 				quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
 				continue;
 			}
 			if(secondary_node.likelihood <= 0.0){
-				veryBadNodes.push_back(secondary_node);
+				veryBadVBTNodes.push_back(secondary_node);
 				quality_array.push_back(2.0 * this->allParams.nodeDetectionParams.maxTraceCost);
 				//continue;
 			}
@@ -2626,7 +2626,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 			//queue_size++;
 			trace_quality = this->computeTraceQuality(secondary_node);
 
-			this->primaryNodesAfterHitTest.push_back(secondary_node);
+			this->primaryVBTNodesAfterHitTest.push_back(secondary_node);
 	
 			//std::cout << "Trace quality: " << trace_quality << " Scale: " << secondary_node.scale << std::endl;
 			
@@ -2640,12 +2640,12 @@ void ftkVesselTracer::ComputeAllSecondaryNodesRetracing(void){
 		}
 		queue_iter++;
 		
-		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
-		//this->VisualizeNodesWithData3D(this->allNodes, false);
+		//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
+		//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 	}
 }
 
-void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
+void ftkVesselTracer::ComputeAllSecondaryVBTNodes2(void){
 
 	//// For testing purposes
 	//ImageType3D::IndexType test_index, test_index1;
@@ -2654,12 +2654,12 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	//PixelType test_pixel = this->inputData->GetPixel(test_index);
 	//PixelType test_pixel1 = this->inputData->GetPixel(test_index1);
 
-	////this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	////this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
 
 	//ImageType3D::IndexType test_index2;
-	//test_index2[0] = this->primaryNodesAfterHitTest[0].x; 
-	//test_index2[1] = this->primaryNodesAfterHitTest[0].y;
-	//test_index2[2] = this->primaryNodesAfterHitTest[0].z;
+	//test_index2[0] = this->primaryVBTNodesAfterHitTest[0].x; 
+	//test_index2[1] = this->primaryVBTNodesAfterHitTest[0].y;
+	//test_index2[2] = this->primaryVBTNodesAfterHitTest[0].z;
 	//PixelType test_pixel2 = this->inputData->GetPixel(test_index2);
 	//PixelType test_pixel3 = this->normalizedInputData->GetPixel(test_index2);
 	
@@ -2670,7 +2670,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	assert((start_tracing_time = clock()) != -1);
 	
 	// For testing
-	//Node a_node;
+	//VBTNode a_node;
 	//a_node.scale = 2.5;
 	//a_node.y = 57; //124.7428;
 	//a_node.x = 161; //64.4287;
@@ -2681,39 +2681,39 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	//a_node.parentIDLength = 4;
 	//this->allParams.nodeDetectionParams.traceLengthCost = 0.5;
 	//a_node.nHoodSecondaryMultiplier = 2;
-	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
-	//this->primaryNodesAfterHitTest[0] = a_node; 
-	//this->primaryNodesAfterHitTest.erase(this->primaryNodesAfterHitTest.begin()+1, this->primaryNodesAfterHitTest.end());
+	//this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
+	//this->primaryVBTNodesAfterHitTest[0] = a_node; 
+	//this->primaryVBTNodesAfterHitTest.erase(this->primaryVBTNodesAfterHitTest.begin()+1, this->primaryVBTNodesAfterHitTest.end());
 	
-	//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
+	//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
 
 	this->allParams.nodeDetectionParams.initByDefaultValues();
 
 
-	PriorityQueueType node_queue(compareNodes(2));
+	PriorityQueueType node_queue(compareVBTNodes(2));
 	//std::vector<queue_element> light_node_queue(this->allParams.nodeDetectionParams.maxQueueSize, queue_element(0, this->allParams.nodeDetectionParams.infTraceQuality));
 	std::vector<double> quality_array;	
 
-	//Node a_node;
+	//VBTNode a_node;
 	double trace_quality = 0.0;
-	for(int i = 0; i < this->primaryNodesAfterHitTest.size(); i++){
-		//Node a_node = this->primaryNodesAfterHitTest[i];           
+	for(int i = 0; i < this->primaryVBTNodesAfterHitTest.size(); i++){
+		//VBTNode a_node = this->primaryVBTNodesAfterHitTest[i];           
 
-		// Quality estimate for single nodes. Nodes with high likelihood get low quality, nodes with low likelihood get high quality
-		if(this->primaryNodesAfterHitTest[i].likelihood <= 0){
-			this->primaryNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
+		// Quality estimate for single nodes. VBTNodes with high likelihood get low quality, nodes with low likelihood get high quality
+		if(this->primaryVBTNodesAfterHitTest[i].likelihood <= 0){
+			this->primaryVBTNodesAfterHitTest[i].traceQuality = this->allParams.nodeDetectionParams.maxTraceCost; //.traceQualityThreshold;
 			quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
 			//light_node_queue[i] = queue_element(i, this->allParams.nodeDetectionParams.maxTraceCost);
 		}
 		else{
-			trace_quality = -1.0 * std::log(this->primaryNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
-			this->primaryNodesAfterHitTest[i].traceQuality = trace_quality;
+			trace_quality = -1.0 * std::log(this->primaryVBTNodesAfterHitTest[i].likelihood) + this->allParams.nodeDetectionParams.traceLengthCost;
+			this->primaryVBTNodesAfterHitTest[i].traceQuality = trace_quality;
 			quality_array.push_back(trace_quality);
 			//light_node_queue[i] = queue_element(i, trace_quality);
 		}
 	
-		this->primaryNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryNodesAfterHitTest[i].parentIDLength, -1);
-		node_queue.push(this->primaryNodesAfterHitTest[i]);
+		this->primaryVBTNodesAfterHitTest[i].parentID = std::vector<double>(this->primaryVBTNodesAfterHitTest[i].parentIDLength, -1);
+		node_queue.push(this->primaryVBTNodesAfterHitTest[i]);
 	}
 
 	//std::cout << "Primary node trace quality.. " << std::endl;
@@ -2721,14 +2721,14 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	//	std::cout << quality_array[i] << std::endl;
 	
 	int total_nodes_counter = -1, hit = 0, primary_counter = 0, hit_counter = 0, queue_iter = -1;
-	int queue_size = this->primaryNodesAfterHitTest.size();
-	Node current_node, dir_node;
+	int queue_size = this->primaryVBTNodesAfterHitTest.size();
+	VBTNode current_node, dir_node;
 	double dirX = 0.0, dirY = 0.0, dirZ = 0.0, norm = 0.0;
 	std::vector<double> dir_hist; 
-	std::vector<Node> badNodes, veryBadNodes;
+	std::vector<VBTNode> badVBTNodes, veryBadVBTNodes;
 	queue_element current_queue_element(0, 0.0);
 	
-	//while(queue_iter <= this->primaryNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
+	//while(queue_iter <= this->primaryVBTNodesAfterHitTest.size() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter && !node_queue.empty()){
 	while(!node_queue.empty() && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
 	//while(queue_iter <= queue_size && queue_iter < this->allParams.nodeDetectionParams.maxQueueIter){
 		
@@ -2741,7 +2741,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 		//if(std::abs(current_queue_element.second - this->allParams.nodeDetectionParams.infTraceQuality) < 0.01)
 		//	break;
 
-		//current_node = this->primaryNodesAfterHitTest[current_queue_element.first];
+		//current_node = this->primaryVBTNodesAfterHitTest[current_queue_element.first];
 
 		if(current_node.parentID[0] == -1)
 			current_node.isPrimary = true;
@@ -2764,7 +2764,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 			primary_counter++;
 		
 		total_nodes_counter++;
-		this->allNodes.push_back(current_node);
+		this->allVBTNodes.push_back(current_node);
 
 		if(hit == 1){
 			hit_counter++;
@@ -2780,27 +2780,27 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 			current_node.dirZ.push_back(0.0);
 		}
 		else{		
-			dirX = this->allNodes[current_node.parentID[0]].x - current_node.x;
-			dirY = this->allNodes[current_node.parentID[0]].y - current_node.y;
-			dirZ = this->allNodes[current_node.parentID[0]].z - current_node.z;
+			dirX = this->allVBTNodes[current_node.parentID[0]].x - current_node.x;
+			dirY = this->allVBTNodes[current_node.parentID[0]].y - current_node.y;
+			dirZ = this->allVBTNodes[current_node.parentID[0]].z - current_node.z;
 			
-			dir_node = Node(dirX, dirY, dirZ, 0);
+			dir_node = VBTNode(dirX, dirY, dirZ, 0);
 			
-			norm = Node::ComputeNorm(dir_node);
-			dir_node = Node(dirX/norm, dirY/norm, dirZ/norm, 0);
+			norm = VBTNode::ComputeNorm(dir_node);
+			dir_node = VBTNode(dirX/norm, dirY/norm, dirZ/norm, 0);
 			dir_hist = current_node.sphHistRegionBased;
 
-			this->allNodes[total_nodes_counter].sphHistRegionBased.clear();
+			this->allVBTNodes[total_nodes_counter].sphHistRegionBased.clear();
 		}
 
-		this->ComputeSecondaryNodeDirections(current_node, dir_hist);
+		this->ComputeSecondaryVBTNodeDirections(current_node, dir_hist);
 
 
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty())
 			continue;
 
 		std::vector<double> current_dir(3, 0.0);
-		//Node secondary_node;
+		//VBTNode secondary_node;
 		for(int i = 0; i < current_node.dirX.size(); i++){
 			
 			// Only branches less than maxBranchAngle are considered
@@ -2813,19 +2813,19 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 			current_dir[1] = current_node.dirY[i];
 			current_dir[2] = current_node.dirZ[i];
 			
-			Node secondary_node;
+			VBTNode secondary_node;
 			secondary_node.parentIDLength = current_node.parentIDLength;
 			secondary_node.parentID = std::vector<double>(current_node.parentIDLength, -1);
 
-			this->FitSphereAtNodeSecondary(current_node, secondary_node, current_dir);			
+			this->FitSphereAtVBTNodeSecondary(current_node, secondary_node, current_dir);			
 			
 			if(secondary_node.isValid == false){ // || secondary_node.likelihood <= 0){
-				badNodes.push_back(secondary_node);
+				badVBTNodes.push_back(secondary_node);
 				quality_array.push_back(this->allParams.nodeDetectionParams.maxTraceCost);
 				continue;
 			}
 			if(secondary_node.likelihood <= 0.0){
-				veryBadNodes.push_back(secondary_node);
+				veryBadVBTNodes.push_back(secondary_node);
 				quality_array.push_back(2.0 * this->allParams.nodeDetectionParams.maxTraceCost);
 				//continue;
 			}
@@ -2838,7 +2838,7 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 			secondary_node.parentID[0] = total_nodes_counter;
 			
 			//queue_size++;
-			this->primaryNodesAfterHitTest.push_back(secondary_node);
+			this->primaryVBTNodesAfterHitTest.push_back(secondary_node);
 
 			trace_quality = this->computeTraceQuality(secondary_node);
 	
@@ -2854,30 +2854,30 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 		}
 		queue_iter++;
 		
-		//this->VisualizeNodesWithData3D(this->primaryNodesAfterHitTest, false);
-		//this->VisualizeNodesWithData3D(this->allNodes, false);
+		//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
+		//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 	}
 
 	stop_tracing_time = clock();
 	tracing_time = (double)(stop_tracing_time - start_tracing_time)/CLOCKS_PER_SEC;
 
 	std::cout << "Tracing took " << tracing_time << " seconds." << std::endl;
-	std::cout << "Total nodes: " << this->allNodes.size() << std::endl;
+	std::cout << "Total nodes: " << this->allVBTNodes.size() << std::endl;
 
 	//Visualize all nodes
-	//this->VisualizeNodesWithData3D(this->allNodes, true);
-	//this->VisualizeNodesWithData3D(this->allNodes, false);
+	//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, true);
+	//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 
 
-	std::vector<Node> nodesWithNonPositiveLikelihood;
-	for(int i = 0; i < this->allNodes.size(); i++){
-		if(this->allNodes[i].likelihood <= 0.0)
-			nodesWithNonPositiveLikelihood.push_back(this->allNodes[i]);
+	std::vector<VBTNode> nodesWithNonPositiveLikelihood;
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
+		if(this->allVBTNodes[i].likelihood <= 0.0)
+			nodesWithNonPositiveLikelihood.push_back(this->allVBTNodes[i]);
 	}
-	//this->VisualizeNodesWithData3D(nodesWithNonPositiveLikelihood, false);
+	//this->VisualizeVBTNodesWithData3D(nodesWithNonPositiveLikelihood, false);
 
-	//if(badNodes.empty() == false)
-	//	this->VisualizeNodesWithData3D(badNodes, false);
+	//if(badVBTNodes.empty() == false)
+	//	this->VisualizeVBTNodesWithData3D(badVBTNodes, false);
 
 	//Write tracing result to image
 	RenderImageType3D::RegionType id_reg;
@@ -2891,34 +2891,34 @@ void ftkVesselTracer::ComputeAllSecondaryNodes2(void){
 	id_reg.SetSize(id_sz);
 	id_reg.SetIndex(id_st);
 	
-	this->secondaryNodesImage = RenderImageType3D::New();
-	this->secondaryNodesImage->SetRegions(id_reg);
-	this->secondaryNodesImage->Allocate();
-	this->secondaryNodesImage->SetSpacing(this->inputData->GetSpacing());
+	this->secondaryVBTNodesImage = RenderImageType3D::New();
+	this->secondaryVBTNodesImage->SetRegions(id_reg);
+	this->secondaryVBTNodesImage->Allocate();
+	this->secondaryVBTNodesImage->SetSpacing(this->inputData->GetSpacing());
 
-	this->secondaryNodesImage->FillBuffer(0);
+	this->secondaryVBTNodesImage->FillBuffer(0);
 
 	itk::Index<3> idx;
-	for(int i = 0; i < this->allNodes.size(); i++){
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
 		
-		idx[0] = this->allNodes[i].x;
-		idx[1] = this->allNodes[i].y;
-		idx[2] = this->allNodes[i].z;
+		idx[0] = this->allVBTNodes[i].x;
+		idx[1] = this->allVBTNodes[i].y;
+		idx[2] = this->allVBTNodes[i].z;
 
-		this->secondaryNodesImage->SetPixel(idx, 255);
+		this->secondaryVBTNodesImage->SetPixel(idx, 255);
 	}
 	
 	std::string secondary_nodes_file_name = this->data_folder_path;
-	secondary_nodes_file_name.append("_SecondaryNodes.tif");
+	secondary_nodes_file_name.append("_SecondaryVBTNodes.tif");
 
 	ImageWriter::Pointer secondary_nodes_writer = ImageWriter::New();	
 	secondary_nodes_writer->SetFileName(secondary_nodes_file_name);	
-	secondary_nodes_writer->SetInput(this->secondaryNodesImage);
+	secondary_nodes_writer->SetInput(this->secondaryVBTNodesImage);
 	secondary_nodes_writer->Update();
 
 
 	//Write all nodes to a file
-	//this->writeNodesToFile(this->allNodes, std::string("AllNodes.txt"));
+	//this->writeVBTNodesToFile(this->allVBTNodes, std::string("AllVBTNodes.txt"));
 
 	//write quality array
 	/*ofstream nodes_file_stream;
@@ -2947,7 +2947,7 @@ void ftkVesselTracer::GetBestTrace(std::vector<queue_element>& queue, queue_elem
 	queue[0].second = this->allParams.nodeDetectionParams.infTraceQuality;
 }
 
-int ftkVesselTracer::TraceHitTest(Node node){
+int ftkVesselTracer::TraceHitTest(VBTNode node){
 
 	int hit = 0;
 
@@ -2962,7 +2962,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 	bool parent_node_hit = false, common_parents = false;
 	std::vector<double> parent_intersection(2 * node.parentIDLength, 0);
 	
-	for(int i = 0; i < this->allNodes.size(); i++){		
+	for(int i = 0; i < this->allVBTNodes.size(); i++){		
 		
 		parent_node_hit = false;
 		for(int j = 0; j < node.parentID.size(); j++){
@@ -2974,18 +2974,18 @@ int ftkVesselTracer::TraceHitTest(Node node){
 		if(parent_node_hit == true)
 			continue;
 
-		norm = Node::ComputeNorm(Node(this->allNodes[i].x - node.x, this->allNodes[i].y - node.y, this->allNodes[i].z - node.z, 0));
-		if(norm <= this->allParams.nodeDetectionParams.distanceThresholdSecondary * (this->allNodes[i].scale + node.scale)){
+		norm = VBTNode::ComputeNorm(VBTNode(this->allVBTNodes[i].x - node.x, this->allVBTNodes[i].y - node.y, this->allVBTNodes[i].z - node.z, 0));
+		if(norm <= this->allParams.nodeDetectionParams.distanceThresholdSecondary * (this->allVBTNodes[i].scale + node.scale)){
 
 			parent_intersection = std::vector<double>(2 * node.parentIDLength, 0.0);
-			//std::set_intersection(this->allNodes[i].parentID.begin(), this->allNodes[i].parentID.end(), node.parentID.begin(), node.parentID.end(), parent_intersection.begin());
-			//std::set_intersection(this->allNodes[i].parentID.begin(), this->allNodes[i].parentID.begin()+this->allNodes[i].parentID.size(), node.parentID.begin(), node.parentID.begin()+node.parentID.size(), parent_intersection.begin());
-			//std::set_intersection(this->allNodes[i].parentID, this->allNodes[i].parentID+this->allNodes[i].parentID.size(), node.parentID, node.parentID+node.parentID.size(), parent_intersection.begin());
+			//std::set_intersection(this->allVBTNodes[i].parentID.begin(), this->allVBTNodes[i].parentID.end(), node.parentID.begin(), node.parentID.end(), parent_intersection.begin());
+			//std::set_intersection(this->allVBTNodes[i].parentID.begin(), this->allVBTNodes[i].parentID.begin()+this->allVBTNodes[i].parentID.size(), node.parentID.begin(), node.parentID.begin()+node.parentID.size(), parent_intersection.begin());
+			//std::set_intersection(this->allVBTNodes[i].parentID, this->allVBTNodes[i].parentID+this->allVBTNodes[i].parentID.size(), node.parentID, node.parentID+node.parentID.size(), parent_intersection.begin());
 			
 			common_parents = false;
-			for(int j = 0; j < this->allNodes[i].parentID.size(); j++){
+			for(int j = 0; j < this->allVBTNodes[i].parentID.size(); j++){
 				for(int k = 0; k < node.parentID.size(); k++){
-					if(this->allNodes[i].parentID[j] == node.parentID[k]){
+					if(this->allVBTNodes[i].parentID[j] == node.parentID[k]){
 						common_parents = true;
 						break;
 					}
@@ -3005,7 +3005,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 			
 			hit = 1;
 			//std::cout << hit << std::endl;
-			if(norm < std::min(this->allNodes[i].scale, node.scale)){
+			if(norm < std::min(this->allVBTNodes[i].scale, node.scale)){
 				hit = 2;
 				//std::cout << hit << std::endl;
 			}
@@ -3016,7 +3016,7 @@ int ftkVesselTracer::TraceHitTest(Node node){
 	return hit;
 }
 
-double ftkVesselTracer::computeTraceQuality(Node& node){
+double ftkVesselTracer::computeTraceQuality(VBTNode& node){
 
 	double cost = 0.0; 
 	if(node.likelihood <= 0.0)
@@ -3026,10 +3026,10 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 
 	int parent1 = node.parentID[0], parent2 = 0;
 	std::vector<double> pos_diff(3, 0.0), pos_diff_last(3, 0.0);
-	pos_diff[0] = this->allNodes[parent1].x - node.x;
-	pos_diff[1] = this->allNodes[parent1].y - node.y;
-	pos_diff[2] = this->allNodes[parent1].z - node.z;
-	double pos_diff_norm = Node::ComputeNorm(Node(pos_diff[0], pos_diff[1], pos_diff[2], 0));
+	pos_diff[0] = this->allVBTNodes[parent1].x - node.x;
+	pos_diff[1] = this->allVBTNodes[parent1].y - node.y;
+	pos_diff[2] = this->allVBTNodes[parent1].z - node.z;
+	double pos_diff_norm = VBTNode::ComputeNorm(VBTNode(pos_diff[0], pos_diff[1], pos_diff[2], 0));
 	pos_diff[0] = pos_diff[0] / pos_diff_norm;
 	pos_diff[1] = pos_diff[1] / pos_diff_norm;
 	pos_diff[2] = pos_diff[2] / pos_diff_norm;
@@ -3045,22 +3045,22 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 
 		if(parent2 > -1){	
 			pos_diff_last = pos_diff;
-			pos_diff[0] = this->allNodes[parent2].x - this->allNodes[parent1].x;
-			pos_diff[1] = this->allNodes[parent2].y - this->allNodes[parent1].y;
-			pos_diff[2] = this->allNodes[parent2].z - this->allNodes[parent1].z;
-			pos_diff_norm = Node::ComputeNorm(Node(pos_diff[0], pos_diff[1], pos_diff[2], 0));
+			pos_diff[0] = this->allVBTNodes[parent2].x - this->allVBTNodes[parent1].x;
+			pos_diff[1] = this->allVBTNodes[parent2].y - this->allVBTNodes[parent1].y;
+			pos_diff[2] = this->allVBTNodes[parent2].z - this->allVBTNodes[parent1].z;
+			pos_diff_norm = VBTNode::ComputeNorm(VBTNode(pos_diff[0], pos_diff[1], pos_diff[2], 0));
 			pos_diff[0] = pos_diff[0] / pos_diff_norm;
 			pos_diff[1] = pos_diff[1] / pos_diff_norm;
 			pos_diff[2] = pos_diff[2] / pos_diff_norm;
 			
 			current_curvature = (pos_diff[0] * pos_diff_last[0]) + (pos_diff[1] * pos_diff_last[1]) + (pos_diff[2] * pos_diff_last[2]);
 
-			curr_idx[0] = this->allNodes[parent1].x; curr_idx[1] = this->allNodes[parent1].y; curr_idx[2] = this->allNodes[parent1].z;
-			curr_idx1[0] = this->allNodes[parent2].x; curr_idx1[1] = this->allNodes[parent2].y; curr_idx1[2] = this->allNodes[parent2].z;
+			curr_idx[0] = this->allVBTNodes[parent1].x; curr_idx[1] = this->allVBTNodes[parent1].y; curr_idx[2] = this->allVBTNodes[parent1].z;
+			curr_idx1[0] = this->allVBTNodes[parent2].x; curr_idx1[1] = this->allVBTNodes[parent2].y; curr_idx1[2] = this->allVBTNodes[parent2].z;
 			
 			// THIS IS AN IMPORTANT CHANGE AND HAS NOT BEEN TESTED SO MUCH
-			curr_vesselness = this->allNodes[parent1].vesselness_likelihood; //this->VesselnessImage->GetPixel(curr_idx);
-			curr_likelihood = this->allNodes[parent1].likelihood;
+			curr_vesselness = this->allVBTNodes[parent1].vesselness_likelihood; //this->VesselnessImage->GetPixel(curr_idx);
+			curr_likelihood = this->allVBTNodes[parent1].likelihood;
 		}
 		else{
 			current_curvature = 1.0;
@@ -3076,16 +3076,16 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 		// Cost function is different than one given in thesis?
 		if(this->useVesselness >= 1){
 
-			if(this->allNodes[parent1].likelihood <= 0.0 || curr_vesselness < this->allParams.nodeDetectionParams.vesselnessThershold)
+			if(this->allVBTNodes[parent1].likelihood <= 0.0 || curr_vesselness < this->allParams.nodeDetectionParams.vesselnessThershold)
 				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
 			else
-				cost = cost - std::log(this->allNodes[parent1].likelihood + curr_vesselness); //- std::log(curr_vesselness);
+				cost = cost - std::log(this->allVBTNodes[parent1].likelihood + curr_vesselness); //- std::log(curr_vesselness);
 		}
 		else{
-			if(this->allNodes[parent1].likelihood <= 0.0)
+			if(this->allVBTNodes[parent1].likelihood <= 0.0)
 				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
 			else
-				cost = cost - std::log(this->allNodes[parent1].likelihood);
+				cost = cost - std::log(this->allVBTNodes[parent1].likelihood);
 		}
 		
 		
@@ -3116,12 +3116,12 @@ double ftkVesselTracer::computeTraceQuality(Node& node){
 	return node.traceQuality;
 }
 
-void Node::InitDefaultParamsBeforeODFRecursion(){
+void VBTNode::InitDefaultParamsBeforeODFRecursion(){
 	this->nHoodSecondaryMultiplier = 2.0;
 	this->nHoodScaleSecondary = this->nHoodSecondaryMultiplier * this->scale;
 }
 
-void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<double>& dir_hist){
+void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vector<double>& dir_hist){
 	
 	node.InitDefaultParamsBeforeODFRecursion();
 
@@ -3502,7 +3502,7 @@ void ftkVesselTracer::ComputeSecondaryNodeDirections(Node& node, std::vector<dou
 	//}
 }
 
-void ftkVesselTracer::writeNodesToFile(std::vector<Node>& nodes, std::string file_path){
+void ftkVesselTracer::writeVBTNodesToFile(std::vector<VBTNode>& nodes, std::string file_path){
 
 	ofstream nodes_file_stream;
 	nodes_file_stream.open(file_path.c_str(), std::ios::out);
@@ -3523,10 +3523,10 @@ void ftkVesselTracer::writeNodesToFile(std::vector<Node>& nodes, std::string fil
 		std::cout << "Unable to open file for writing nodes: " << file_path.c_str() << std::endl;
 }
 
-void ftkVesselTracer::ReadNodesFromTextFile(const std::string& file_name){
+void ftkVesselTracer::ReadVBTNodesFromTextFile(const std::string& file_name){
 
-	if(this->allNodes.size() != 0)
-		this->allNodes.clear();
+	if(this->allVBTNodes.size() != 0)
+		this->allVBTNodes.clear();
 
 	ifstream nodes_file_stream;
 	nodes_file_stream.open(file_name.c_str(), std::ios::in);
@@ -3550,7 +3550,7 @@ void ftkVesselTracer::ReadNodesFromTextFile(const std::string& file_name){
 				node_str.push_back(str1);
 			}
 
-			Node n1;
+			VBTNode n1;
 			n1.x = atof(node_str[0].c_str());
 			n1.y = atof(node_str[1].c_str());
 			n1.z = atof(node_str[2].c_str());
@@ -3567,39 +3567,39 @@ void ftkVesselTracer::ReadNodesFromTextFile(const std::string& file_name){
 			n1.parentID[2] = atoi(node_str[9].c_str());
 			n1.parentID[3] = atoi(node_str[10].c_str());
 			
-			this->allNodes.push_back(n1);	
+			this->allVBTNodes.push_back(n1);	
 
 			node_str.clear();
 		}
-		//if(!this->allNodes.empty())
-			//this->VisualizeNodesWithData3D(this->allNodes, false);
+		//if(!this->allVBTNodes.empty())
+			//this->VisualizeVBTNodesWithData3D(this->allVBTNodes, false);
 	}
 	else
 		std::cout << "Unable to open the nodes file: " << file_name.c_str() << std::endl;
 }
 
-void Node::ComputeDistanceBetweenNodes(Node n1, Node n2, Node &nd){
+void VBTNode::ComputeDistanceBetweenVBTNodes(VBTNode n1, VBTNode n2, VBTNode &nd){
 
 	nd.x = n1.x - n2.x;
 	nd.y = n1.y - n2.y;
 	nd.z = n1.z - n2.z;
 }
 
-void Node::NormalizeNode(double norm_val){
+void VBTNode::NormalizeVBTNode(double norm_val){
 	
 	this->x = this->x / norm_val;
 	this->y = this->y / norm_val;
 	this->z = this->z / norm_val;
 }
 
-void Node::InvertNodeDir(void){
+void VBTNode::InvertVBTNodeDir(void){
 
 	this->x = -1 * this->x;
 	this->y = -1 * this->y;
 	this->z = -1 * this->z;
 }
 
-double Node::DotProduct(Node n1, Node n2){
+double VBTNode::DotProduct(VBTNode n1, VBTNode n2){
 
 	return(n1.x*n2.x + n1.y*n2.y + n1.z*n2.z);
 }
@@ -3626,14 +3626,14 @@ VBTTree::VBTTree(void){
 
 	this->ID = 0;
 	this->start = 0;
-	this->NNodes = 0;
+	this->NVBTNodes = 0;
 }
 
-VBTTree::VBTTree(int ID, int start, int NNodes){
+VBTTree::VBTTree(int ID, int start, int NVBTNodes){
 
 	this->ID = ID;
 	this->start = start;
-	this->NNodes = NNodes;
+	this->NVBTNodes = NVBTNodes;
 }
 
 void ftkVesselTracer::CreateMinimumSpanningForest(){
@@ -3645,92 +3645,92 @@ void ftkVesselTracer::CreateMinimumSpanningForest(){
 
 void ftkVesselTracer::CreateAffinityGraph(void){
 
-	//Node dir;
-	//double norm_dist = 0.0, existingNodeDist = 0.0;
+	//VBTNode dir;
+	//double norm_dist = 0.0, existingVBTNodeDist = 0.0;
 	//int angleBinLinear = 0;
 
 	std::cout << "Computing affinity graph.. " << std::endl;
 	
 	//allocate memory for the binned edges in every node
-	for(int i = 0; i < this->allNodes.size(); i++)
-		this->allNodes[i].connectedNodesBinned.resize(2 * this->allParams.graphAndMSTParams.NBinsAffinity, this->allParams.graphAndMSTParams.maxEdgeWeight+1);
+	for(int i = 0; i < this->allVBTNodes.size(); i++)
+		this->allVBTNodes[i].connectedVBTNodesBinned.resize(2 * this->allParams.graphAndMSTParams.NBinsAffinity, this->allParams.graphAndMSTParams.maxEdgeWeight+1);
 	
-	for(int i = 0; i < this->allNodes.size(); i++){
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
 		
 		#pragma omp parallel for
-		for(int j = i + 1; j < this->allNodes.size(); j++){
+		for(int j = i + 1; j < this->allVBTNodes.size(); j++){
 			
-			Node dir;
-			Node::ComputeDistanceBetweenNodes(this->allNodes[j], this->allNodes[i], dir);
-			double norm_dist = Node::ComputeNorm(dir);
-			dir.NormalizeNode(norm_dist);
+			VBTNode dir;
+			VBTNode::ComputeDistanceBetweenVBTNodes(this->allVBTNodes[j], this->allVBTNodes[i], dir);
+			double norm_dist = VBTNode::ComputeNorm(dir);
+			dir.NormalizeVBTNode(norm_dist);
 
-			if(norm_dist < this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allNodes[j].scale, this->allNodes[i].scale)){
+			if(norm_dist < this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allVBTNodes[j].scale, this->allVBTNodes[i].scale)){
 				
 				int angleBinLinear = this->ComputeAffinityBin(dir);
-				double existingNodeDist = this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1) + 1];
+				double existingVBTNodeDist = this->allVBTNodes[i].connectedVBTNodesBinned[2*(angleBinLinear - 1) + 1];
 
-				if(existingNodeDist > norm_dist){
-					this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1)] = j;
-					this->allNodes[i].connectedNodesBinned[2*(angleBinLinear - 1) + 1] = norm_dist;
+				if(existingVBTNodeDist > norm_dist){
+					this->allVBTNodes[i].connectedVBTNodesBinned[2*(angleBinLinear - 1)] = j;
+					this->allVBTNodes[i].connectedVBTNodesBinned[2*(angleBinLinear - 1) + 1] = norm_dist;
 				}
 				
-				dir.InvertNodeDir();
+				dir.InvertVBTNodeDir();
 
 				angleBinLinear = this->ComputeAffinityBin(dir);
-				existingNodeDist = this->allNodes[j].connectedNodesBinned[2*(angleBinLinear - 1) + 1];
+				existingVBTNodeDist = this->allVBTNodes[j].connectedVBTNodesBinned[2*(angleBinLinear - 1) + 1];
 				
-				if(existingNodeDist > norm_dist){
-					this->allNodes[j].connectedNodesBinned[2*(angleBinLinear - 1)] = i;
-					this->allNodes[j].connectedNodesBinned[2*(angleBinLinear - 1) + 1] = norm_dist;
+				if(existingVBTNodeDist > norm_dist){
+					this->allVBTNodes[j].connectedVBTNodesBinned[2*(angleBinLinear - 1)] = i;
+					this->allVBTNodes[j].connectedVBTNodesBinned[2*(angleBinLinear - 1) + 1] = norm_dist;
 				}				
 			}
 		}
 	}
 	
-	Node dir1, dir;
+	VBTNode dir1, dir;
 	double norm_dist1 = 0.0, edge_weight = 0.0;
-	double norm_dist = 0.0, existingNodeDist = 0.0;
-	for(int i = 0; i < this->allNodes.size(); i++){
+	double norm_dist = 0.0, existingVBTNodeDist = 0.0;
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
 		for(int j = 0; j < 2*this->allParams.graphAndMSTParams.NBinsAffinity; j = j+2){
-			if(this->allNodes[i].connectedNodesBinned[j+1] > this->allParams.graphAndMSTParams.maxEdgeWeight)
+			if(this->allVBTNodes[i].connectedVBTNodesBinned[j+1] > this->allParams.graphAndMSTParams.maxEdgeWeight)
 				continue;
 
-			Node::ComputeDistanceBetweenNodes(this->allNodes[i], this->allNodes[this->allNodes[i].connectedNodesBinned[j]], dir);
-			norm_dist = Node::ComputeNorm(dir);
-			dir.NormalizeNode(norm_dist);
+			VBTNode::ComputeDistanceBetweenVBTNodes(this->allVBTNodes[i], this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesBinned[j]], dir);
+			norm_dist = VBTNode::ComputeNorm(dir);
+			dir.NormalizeVBTNode(norm_dist);
 
 			for(int k = j+2; k < 2*this->allParams.graphAndMSTParams.NBinsAffinity; k = k+2){
-				if(this->allNodes[i].connectedNodesBinned[k+1] > this->allParams.graphAndMSTParams.maxEdgeWeight)
+				if(this->allVBTNodes[i].connectedVBTNodesBinned[k+1] > this->allParams.graphAndMSTParams.maxEdgeWeight)
 					continue;
 				
-				Node::ComputeDistanceBetweenNodes(this->allNodes[i], this->allNodes[this->allNodes[i].connectedNodesBinned[k]], dir1);
-				norm_dist1 = Node::ComputeNorm(dir1);
-				dir1.NormalizeNode(norm_dist1);
+				VBTNode::ComputeDistanceBetweenVBTNodes(this->allVBTNodes[i], this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesBinned[k]], dir1);
+				norm_dist1 = VBTNode::ComputeNorm(dir1);
+				dir1.NormalizeVBTNode(norm_dist1);
 				
-				if(Node::DotProduct(dir, dir1) > cos(this->allParams.graphAndMSTParams.minBranchAngle)){
-					if(this->allNodes[i].connectedNodesBinned[j+1] > this->allNodes[i].connectedNodesBinned[k+1])
-						this->allNodes[i].connectedNodesBinned[j+1] = this->allParams.graphAndMSTParams.maxEdgeWeight + 1.0;
+				if(VBTNode::DotProduct(dir, dir1) > cos(this->allParams.graphAndMSTParams.minBranchAngle)){
+					if(this->allVBTNodes[i].connectedVBTNodesBinned[j+1] > this->allVBTNodes[i].connectedVBTNodesBinned[k+1])
+						this->allVBTNodes[i].connectedVBTNodesBinned[j+1] = this->allParams.graphAndMSTParams.maxEdgeWeight + 1.0;
 					else
-						this->allNodes[i].connectedNodesBinned[k+1] = this->allParams.graphAndMSTParams.maxEdgeWeight + 1.0;
+						this->allVBTNodes[i].connectedVBTNodesBinned[k+1] = this->allParams.graphAndMSTParams.maxEdgeWeight + 1.0;
 				}
 			}
 		}
 
 		for(int j = 0; j < 2*this->allParams.graphAndMSTParams.NBinsAffinity; j = j+2){
-			if(this->allNodes[i].connectedNodesBinned[j+1] < this->allParams.graphAndMSTParams.maxEdgeWeight + 1){
+			if(this->allVBTNodes[i].connectedVBTNodesBinned[j+1] < this->allParams.graphAndMSTParams.maxEdgeWeight + 1){
 				
 				// Edge weights are not similar to those mentioned in thesis
 				// This edge weight is inverse of Amit's Matlab code - Higher weight would mean more likelihood of an edge being present
 				
-				Node n1 = this->allNodes[i], n2 = this->allNodes[this->allNodes[i].connectedNodesBinned[j]];
+				VBTNode n1 = this->allVBTNodes[i], n2 = this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesBinned[j]];
 
-				//edge_weight = std::min(n1.likelihood, n2.likelihood)/this->allNodes[i].connectedNodesBinned[j+1];
-				edge_weight = std::min(std::pow(n1.scale, 3) * n1.likelihood, std::pow(n2.scale, 3) * n2.likelihood) / this->allNodes[i].connectedNodesBinned[j+1];
+				//edge_weight = std::min(n1.likelihood, n2.likelihood)/this->allVBTNodes[i].connectedVBTNodesBinned[j+1];
+				edge_weight = std::min(std::pow(n1.scale, 3) * n1.likelihood, std::pow(n2.scale, 3) * n2.likelihood) / this->allVBTNodes[i].connectedVBTNodesBinned[j+1];
 				
-				this->allNodes[i].connectedNodesAffinity.push_back(std::pair<int, double>(this->allNodes[i].connectedNodesBinned[j], edge_weight));
+				this->allVBTNodes[i].connectedVBTNodesAffinity.push_back(std::pair<int, double>(this->allVBTNodes[i].connectedVBTNodesBinned[j], edge_weight));
 
-				this->edges.push_back(AffinityEdge(i, this->allNodes[i].connectedNodesBinned[j], edge_weight));
+				this->edges.push_back(AffinityEdge(i, this->allVBTNodes[i].connectedVBTNodesBinned[j], edge_weight));
 			}
 		}
 	}
@@ -3776,45 +3776,45 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 
 	// Initialize all forest nodes
 	itk::Index<3> node_idx;
-	this->allForestNodes = std::vector<Node>(this->allNodes.size());
-	for(int i = 0; i < this->allNodes.size(); i++){
-		this->allForestNodes[i].x = this->allNodes[i].x;
-		this->allForestNodes[i].y = this->allNodes[i].y;
-		this->allForestNodes[i].z = this->allNodes[i].z;
-		this->allForestNodes[i].likelihood = this->allNodes[i].likelihood;
-		this->allForestNodes[i].scale = this->allNodes[i].scale;
+	this->allForestVBTNodes = std::vector<VBTNode>(this->allVBTNodes.size());
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
+		this->allForestVBTNodes[i].x = this->allVBTNodes[i].x;
+		this->allForestVBTNodes[i].y = this->allVBTNodes[i].y;
+		this->allForestVBTNodes[i].z = this->allVBTNodes[i].z;
+		this->allForestVBTNodes[i].likelihood = this->allVBTNodes[i].likelihood;
+		this->allForestVBTNodes[i].scale = this->allVBTNodes[i].scale;
 
-		node_idx[0] = this->allNodes[i].x;
-		node_idx[1] = this->allNodes[i].y;
-		node_idx[2] = this->allNodes[i].z;
-		this->allForestNodes[i].vesselness = this->VesselnessImage->GetPixel(node_idx);
+		node_idx[0] = this->allVBTNodes[i].x;
+		node_idx[1] = this->allVBTNodes[i].y;
+		node_idx[2] = this->allVBTNodes[i].z;
+		this->allForestVBTNodes[i].vesselness = this->VesselnessImage->GetPixel(node_idx);
 
-		this->allForestNodes[i].ID = this->allNodes[i].ID;
-		this->allForestNodes[i].branchIDs = std::vector<int>(this->allParams.graphAndMSTParams.maxNBranches, -1);
-		this->allForestNodes[i].NBranches = this->allNodes[i].NBranches;
-		this->allForestNodes[i].traceQuality = this->allNodes[i].traceQuality;
+		this->allForestVBTNodes[i].ID = this->allVBTNodes[i].ID;
+		this->allForestVBTNodes[i].branchIDs = std::vector<int>(this->allParams.graphAndMSTParams.maxNBranches, -1);
+		this->allForestVBTNodes[i].NBranches = this->allVBTNodes[i].NBranches;
+		this->allForestVBTNodes[i].traceQuality = this->allVBTNodes[i].traceQuality;
 
-		if(this->allNodes[i].dirX.empty() || this->allNodes[i].dirY.empty() || this->allNodes[i].dirZ.empty()){
+		if(this->allVBTNodes[i].dirX.empty() || this->allVBTNodes[i].dirY.empty() || this->allVBTNodes[i].dirZ.empty()){
 			
 			std::cout << "Empty dir!!! : " << i << std::endl;
 
-			this->allForestNodes[i].dirX.push_back(0.0);
-			this->allForestNodes[i].dirY.push_back(0.0);
-			this->allForestNodes[i].dirZ.push_back(0.0);
+			this->allForestVBTNodes[i].dirX.push_back(0.0);
+			this->allForestVBTNodes[i].dirY.push_back(0.0);
+			this->allForestVBTNodes[i].dirZ.push_back(0.0);
 		}
 		else{
-			this->allForestNodes[i].dirX = this->allNodes[i].dirX;
-			this->allForestNodes[i].dirY = this->allNodes[i].dirY;
-			this->allForestNodes[i].dirZ = this->allNodes[i].dirZ;
+			this->allForestVBTNodes[i].dirX = this->allVBTNodes[i].dirX;
+			this->allForestVBTNodes[i].dirY = this->allVBTNodes[i].dirY;
+			this->allForestVBTNodes[i].dirZ = this->allVBTNodes[i].dirZ;
 		}
 
 	}
 
 	// Used no longer
-	//this->allNodes.clear();
+	//this->allVBTNodes.clear();
 }
 
-int ftkVesselTracer::ComputeAffinityBin(Node dir){
+int ftkVesselTracer::ComputeAffinityBin(VBTNode dir){
 
 	double phi = (atan2(dir.y, dir.x) / vnl_math::pi) + 1.0;
 	double theta = acos(dir.z) / vnl_math::pi; 
@@ -3896,18 +3896,18 @@ void ftkVesselTracer::VisualizeAffinityGraph(bool render_with_data = false){
 	vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
 	
 	int point_counter = -1;
-	for(int i = 0; i < this->allNodes.size(); i++){
-		points->InsertNextPoint(this->allNodes[i].x, this->allNodes[i].y, this->allNodes[i].z);
+	for(int i = 0; i < this->allVBTNodes.size(); i++){
+		points->InsertNextPoint(this->allVBTNodes[i].x, this->allVBTNodes[i].y, this->allVBTNodes[i].z);
 		point_counter++;
 
-		for(int j = 0; j < this->allNodes[i].connectedNodesAffinity.size(); j++){
-			points->InsertNextPoint(this->allNodes[this->allNodes[i].connectedNodesAffinity[j].first].x, 
-				this->allNodes[this->allNodes[i].connectedNodesAffinity[j].first].y, this->allNodes[this->allNodes[i].connectedNodesAffinity[j].first].z);			
+		for(int j = 0; j < this->allVBTNodes[i].connectedVBTNodesAffinity.size(); j++){
+			points->InsertNextPoint(this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesAffinity[j].first].x, 
+				this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesAffinity[j].first].y, this->allVBTNodes[this->allVBTNodes[i].connectedVBTNodesAffinity[j].first].z);			
 			point_counter++;
 		}
-		for(int j = 0; j < this->allNodes[i].connectedNodesAffinity.size(); j++){
+		for(int j = 0; j < this->allVBTNodes[i].connectedVBTNodesAffinity.size(); j++){
 			vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-			line->GetPointIds()->SetId(0, point_counter - this->allNodes[i].connectedNodesAffinity.size());
+			line->GetPointIds()->SetId(0, point_counter - this->allVBTNodes[i].connectedVBTNodesAffinity.size());
 			line->GetPointIds()->SetId(1, point_counter - j);
 			lines->InsertNextCell(line);
 		}
@@ -4010,18 +4010,18 @@ void ftkVesselTracer::VisualizeMinimumSpanningForest(bool render_with_data = fal
 	vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
 	
 	int point_counter = -1;
-	for(int i = 0; i < this->allForestNodes.size(); i++){
-		points->InsertNextPoint(this->allForestNodes[i].x, this->allForestNodes[i].y, this->allForestNodes[i].z);
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
+		points->InsertNextPoint(this->allForestVBTNodes[i].x, this->allForestVBTNodes[i].y, this->allForestVBTNodes[i].z);
 		point_counter++;
 
-		for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
-			points->InsertNextPoint(this->allForestNodes[this->allForestNodes[i].branchIDs[j]].x, 
-				this->allForestNodes[this->allForestNodes[i].branchIDs[j]].y, this->allForestNodes[this->allForestNodes[i].branchIDs[j]].z);			
+		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
+			points->InsertNextPoint(this->allForestVBTNodes[this->allForestVBTNodes[i].branchIDs[j]].x, 
+				this->allForestVBTNodes[this->allForestVBTNodes[i].branchIDs[j]].y, this->allForestVBTNodes[this->allForestVBTNodes[i].branchIDs[j]].z);			
 			point_counter++;
 		}
-		for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
+		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
 			vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-			line->GetPointIds()->SetId(0, point_counter - this->allForestNodes[i].branchIDs.size());
+			line->GetPointIds()->SetId(0, point_counter - this->allForestVBTNodes[i].branchIDs.size());
 			line->GetPointIds()->SetId(1, point_counter - j);
 			lines->InsertNextCell(line);
 		}
@@ -4052,7 +4052,7 @@ void ftkVesselTracer::VisualizeMinimumSpanningForest(bool render_with_data = fal
 	renderer->AddActor(poly_actor);
 
 	//Add text
-	/*for(int i = 0; i < this->allForestNodes.size(); i++){
+	/*for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 		vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor>::New();
 		vtkSmartPointer<vtkVectorText> text
 		//textActor->SetPosition(
@@ -4084,77 +4084,77 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 		
 		//std::cout << i << std::endl;
 
-		if(this->allForestNodes[from].ID  == -1 && this->allForestNodes[to].ID == -1){
+		if(this->allForestVBTNodes[from].ID  == -1 && this->allForestVBTNodes[to].ID == -1){
 			
 			label++;
 			
 			this->forest.push_back(VBTTree(label, from, 2));
 
-			this->allForestNodes[from].ID = label;
-			this->allForestNodes[to].ID = label;
+			this->allForestVBTNodes[from].ID = label;
+			this->allForestVBTNodes[to].ID = label;
 
-			this->allForestNodes[from].NBranches++;
-			this->allForestNodes[from].branchIDs[this->allForestNodes[from].NBranches - 1] = to;
+			this->allForestVBTNodes[from].NBranches++;
+			this->allForestVBTNodes[from].branchIDs[this->allForestVBTNodes[from].NBranches - 1] = to;
 
-			this->allForestNodes[to].NBranches++;
-			this->allForestNodes[to].branchIDs[this->allForestNodes[to].NBranches - 1] = from;
+			this->allForestVBTNodes[to].NBranches++;
+			this->allForestVBTNodes[to].branchIDs[this->allForestVBTNodes[to].NBranches - 1] = from;
 		}
-		else if(this->allForestNodes[from].ID == -1 && this->allForestNodes[to].ID != -1){
+		else if(this->allForestVBTNodes[from].ID == -1 && this->allForestVBTNodes[to].ID != -1){
 			
-			this->allForestNodes[from].ID = this->allForestNodes[to].ID;
+			this->allForestVBTNodes[from].ID = this->allForestVBTNodes[to].ID;
 			
-			this->allForestNodes[from].NBranches++;
-			this->allForestNodes[from].branchIDs[this->allForestNodes[from].NBranches - 1] = to;
+			this->allForestVBTNodes[from].NBranches++;
+			this->allForestVBTNodes[from].branchIDs[this->allForestVBTNodes[from].NBranches - 1] = to;
 
-			this->allForestNodes[to].NBranches++;
-			this->allForestNodes[to].branchIDs[this->allForestNodes[to].NBranches - 1] = from;
+			this->allForestVBTNodes[to].NBranches++;
+			this->allForestVBTNodes[to].branchIDs[this->allForestVBTNodes[to].NBranches - 1] = from;
 
-			this->forest[this->allForestNodes[to].ID].NNodes++;
+			this->forest[this->allForestVBTNodes[to].ID].NVBTNodes++;
 		}
-		else if(this->allForestNodes[from].ID != -1 && this->allForestNodes[to].ID == -1){
+		else if(this->allForestVBTNodes[from].ID != -1 && this->allForestVBTNodes[to].ID == -1){
 			
-			this->allForestNodes[to].ID = this->allForestNodes[from].ID;
+			this->allForestVBTNodes[to].ID = this->allForestVBTNodes[from].ID;
 			
-			this->allForestNodes[from].NBranches++;
-			this->allForestNodes[from].branchIDs[this->allForestNodes[from].NBranches - 1] = to;
+			this->allForestVBTNodes[from].NBranches++;
+			this->allForestVBTNodes[from].branchIDs[this->allForestVBTNodes[from].NBranches - 1] = to;
 
-			this->allForestNodes[to].NBranches++;
-			this->allForestNodes[to].branchIDs[this->allForestNodes[to].NBranches - 1] = from;
+			this->allForestVBTNodes[to].NBranches++;
+			this->allForestVBTNodes[to].branchIDs[this->allForestVBTNodes[to].NBranches - 1] = from;
 
-			this->forest[this->allForestNodes[from].ID].NNodes++;
+			this->forest[this->allForestVBTNodes[from].ID].NVBTNodes++;
 		}
 		else{
-			if(this->allForestNodes[to].ID < this->allForestNodes[from].ID){
+			if(this->allForestVBTNodes[to].ID < this->allForestVBTNodes[from].ID){
 				
-				oldID = this->allForestNodes[from].ID;
-				newID = this->allForestNodes[to].ID;
+				oldID = this->allForestVBTNodes[from].ID;
+				newID = this->allForestVBTNodes[to].ID;
 				
-				this->RelabelForestNodes(oldID, newID);
+				this->RelabelForestVBTNodes(oldID, newID);
 
-				this->forest[newID].NNodes = this->forest[newID].NNodes + this->forest[oldID].NNodes;
-				this->forest[oldID].NNodes = 0;
+				this->forest[newID].NVBTNodes = this->forest[newID].NVBTNodes + this->forest[oldID].NVBTNodes;
+				this->forest[oldID].NVBTNodes = 0;
 
-				this->allForestNodes[from].NBranches++;
-				this->allForestNodes[from].branchIDs[this->allForestNodes[from].NBranches - 1] = to;
+				this->allForestVBTNodes[from].NBranches++;
+				this->allForestVBTNodes[from].branchIDs[this->allForestVBTNodes[from].NBranches - 1] = to;
 
-				this->allForestNodes[to].NBranches++;
-				this->allForestNodes[to].branchIDs[this->allForestNodes[to].NBranches - 1] = from;
+				this->allForestVBTNodes[to].NBranches++;
+				this->allForestVBTNodes[to].branchIDs[this->allForestVBTNodes[to].NBranches - 1] = from;
 			}
-			else if(this->allForestNodes[to].ID > this->allForestNodes[from].ID){
+			else if(this->allForestVBTNodes[to].ID > this->allForestVBTNodes[from].ID){
 
-				oldID = this->allForestNodes[to].ID;
-				newID = this->allForestNodes[from].ID;
+				oldID = this->allForestVBTNodes[to].ID;
+				newID = this->allForestVBTNodes[from].ID;
 
-				this->RelabelForestNodes(oldID, newID);
+				this->RelabelForestVBTNodes(oldID, newID);
 
-				this->forest[newID].NNodes = this->forest[newID].NNodes + this->forest[oldID].NNodes;
-				this->forest[oldID].NNodes = 0;
+				this->forest[newID].NVBTNodes = this->forest[newID].NVBTNodes + this->forest[oldID].NVBTNodes;
+				this->forest[oldID].NVBTNodes = 0;
 				
-				this->allForestNodes[from].NBranches++;
-				this->allForestNodes[from].branchIDs[this->allForestNodes[from].NBranches - 1] = to;
+				this->allForestVBTNodes[from].NBranches++;
+				this->allForestVBTNodes[from].branchIDs[this->allForestVBTNodes[from].NBranches - 1] = to;
 
-				this->allForestNodes[to].NBranches++;
-				this->allForestNodes[to].branchIDs[this->allForestNodes[to].NBranches - 1] = from;
+				this->allForestVBTNodes[to].NBranches++;
+				this->allForestVBTNodes[to].branchIDs[this->allForestVBTNodes[to].NBranches - 1] = from;
 			}
 			else if(this->CheckNeighbors(from, to) == false){
 				loop_count++;
@@ -4168,10 +4168,10 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 	
 
 	//Removing redundant branches
-	for(int i = 0; i < this->allForestNodes.size(); i++){
-		for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
-			if(this->allForestNodes[i].branchIDs[j] == -1){
-				this->allForestNodes[i].branchIDs.erase(this->allForestNodes[i].branchIDs.begin() + j, this->allForestNodes[i].branchIDs.end());
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
+		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
+			if(this->allForestVBTNodes[i].branchIDs[j] == -1){
+				this->allForestVBTNodes[i].branchIDs.erase(this->allForestVBTNodes[i].branchIDs.begin() + j, this->allForestVBTNodes[i].branchIDs.end());
 				break;
 			}
 		}
@@ -4182,9 +4182,9 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 
 	/*int count = -1;
 	for(int i = 0; i < label; i++){
-		if(this->forest[i].NNodes > 0){
+		if(this->forest[i].NVBTNodes > 0){
 			count++;
-			this->forest[count].NNodes = this->forest[i].NNodes;
+			this->forest[count].NVBTNodes = this->forest[i].NVBTNodes;
 			this->forest[count].start = this->forest[i].start;
 
 			this->forest[count].ID = i;
@@ -4196,45 +4196,45 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 	this->VisualizeMinimumSpanningForest();*/
 }
 
-void ftkVesselTracer::RelabelForestNodes(int oldID, int newID){
+void ftkVesselTracer::RelabelForestVBTNodes(int oldID, int newID){
 	
 	std::vector<int> connected_nodes;
 	this->GetVBTTree(oldID, connected_nodes);
 
 	if(connected_nodes.empty() == false){
 		for(int i = 0; i < connected_nodes.size(); i++)
-			this->allForestNodes[connected_nodes[i]].ID = newID;
+			this->allForestVBTNodes[connected_nodes[i]].ID = newID;
 	}
 }
 
 void ftkVesselTracer::GetVBTTree(int ID2, std::vector<int>& connected_nodes){
 
-	int root = this->forest[ID2].start, ID = this->forest[ID2].ID, currentNNodes = 0, totalNNodes = 0, childNodeID = 0;
+	int root = this->forest[ID2].start, ID = this->forest[ID2].ID, currentNVBTNodes = 0, totalNVBTNodes = 0, childVBTNodeID = 0;
 	
-	if(this->allForestNodes[root].ID != ID)
+	if(this->allForestVBTNodes[root].ID != ID)
 		return;
 	
-	connected_nodes.resize(this->allParams.graphAndMSTParams.maxTreeNodes + 100, 0);
-	connected_nodes[currentNNodes] = root;
+	connected_nodes.resize(this->allParams.graphAndMSTParams.maxTreeVBTNodes + 100, 0);
+	connected_nodes[currentNVBTNodes] = root;
 
-	while(currentNNodes <= totalNNodes){
+	while(currentNVBTNodes <= totalNVBTNodes){
 		
-		for(int i = 0; i < this->allForestNodes[connected_nodes[currentNNodes]].NBranches; i++){
-			childNodeID = this->allForestNodes[connected_nodes[currentNNodes]].branchIDs[i];
+		for(int i = 0; i < this->allForestVBTNodes[connected_nodes[currentNVBTNodes]].NBranches; i++){
+			childVBTNodeID = this->allForestVBTNodes[connected_nodes[currentNVBTNodes]].branchIDs[i];
 			
-			//if(this->allForestNodes[childNodeID].ID == ID && std::find(connected_nodes.begin(), connected_nodes.begin() + totalNNodes, childNodeID) == connected_nodes.end()){
-			if(this->allForestNodes[childNodeID].ID == ID && ftkVesselTracer::IsInList(connected_nodes, totalNNodes, childNodeID) == false){
-				totalNNodes++;
-				connected_nodes[totalNNodes] = childNodeID;
+			//if(this->allForestVBTNodes[childVBTNodeID].ID == ID && std::find(connected_nodes.begin(), connected_nodes.begin() + totalNVBTNodes, childVBTNodeID) == connected_nodes.end()){
+			if(this->allForestVBTNodes[childVBTNodeID].ID == ID && ftkVesselTracer::IsInList(connected_nodes, totalNVBTNodes, childVBTNodeID) == false){
+				totalNVBTNodes++;
+				connected_nodes[totalNVBTNodes] = childVBTNodeID;
 			}
 		}
-		currentNNodes++;
+		currentNVBTNodes++;
 	}
 
-	connected_nodes.erase(connected_nodes.begin() + totalNNodes + 1, connected_nodes.end());
+	connected_nodes.erase(connected_nodes.begin() + totalNVBTNodes + 1, connected_nodes.end());
 
-	if(this->forest[ID2].NNodes != connected_nodes.size()){
-		std::cout << "Error in scanning tree ID = " << ID << " NNodes = " << this->forest[ID2].NNodes << " Connected nodes = ";
+	if(this->forest[ID2].NVBTNodes != connected_nodes.size()){
+		std::cout << "Error in scanning tree ID = " << ID << " NVBTNodes = " << this->forest[ID2].NVBTNodes << " Connected nodes = ";
 		for(int i = 0; i < connected_nodes.size(); i++)
 			std::cout << " " << connected_nodes[i];
 		std::cout << std::endl;
@@ -4245,13 +4245,13 @@ bool ftkVesselTracer::CheckNeighbors(int ID1, int ID2){
 
 	bool is_neighbor = false;
 	
-	for(int i = 0; i < this->allForestNodes[ID1].NBranches; i++){
-		if(this->allForestNodes[ID1].branchIDs[i] == ID2)
+	for(int i = 0; i < this->allForestVBTNodes[ID1].NBranches; i++){
+		if(this->allForestVBTNodes[ID1].branchIDs[i] == ID2)
 			is_neighbor = true;
 	}
 
-	for(int i = 0; i < this->allForestNodes[ID2].NBranches; i++){
-		if(this->allForestNodes[ID2].branchIDs[i] == ID1)
+	for(int i = 0; i < this->allForestVBTNodes[ID2].NBranches; i++){
+		if(this->allForestVBTNodes[ID2].branchIDs[i] == ID1)
 			is_neighbor = true;
 	}
 	return is_neighbor;
@@ -4273,7 +4273,7 @@ void ftkVesselTracer::PrintForest(void){
 	
 	std::vector<int> connected_nodes; 
 	for(int i = 0; i < this->forest.size(); i++){
-		std::cout << " Tree: " << i << " with " << this->forest[i].NNodes << " elements [";
+		std::cout << " Tree: " << i << " with " << this->forest[i].NVBTNodes << " elements [";
 		
 		if(connected_nodes.empty() == false)
 			connected_nodes.clear();
@@ -4290,13 +4290,13 @@ void ftkVesselTracer::PrintForest(void){
 	}
 }
 
-void ftkVesselTracer::InitNodeDetectionParamsDefault(void){
+void ftkVesselTracer::InitVBTNodeDetectionParamsDefault(void){
 	
 	this->allParams.nodeDetectionParams.initByDefaultValues();
 }
 
 
-SWCNodeVessel::SWCNodeVessel(){
+SWCVBTNodeVessel::SWCVBTNodeVessel(){
 	this->ID = -3;
 	this->scale = 0.0;
 	this->isLeaf = false;
@@ -4589,31 +4589,31 @@ void ftkVesselTracer::PrintToySWCFile(void){
 
 
 	// Constructing SWC nodes
-	SWCNodeVessel node_dummy;
-	SWCNodeVessel_vec.resize(toy_list.size(), node_dummy);
-	//SWCNodeVessel_vec.push_back(node_dummy);
-	SWCNodeVessel_vec[0] = node_dummy;
+	SWCVBTNodeVessel node_dummy;
+	SWCVBTNodeVessel_vec.resize(toy_list.size(), node_dummy);
+	//SWCVBTNodeVessel_vec.push_back(node_dummy);
+	SWCVBTNodeVessel_vec[0] = node_dummy;
 
 	for(int i = 1; i < toy_list.size(); i++){
 
 		//if(i == 1){
 		if(isRoot[i]){
 
-			SWCNodeVessel node;
+			SWCVBTNodeVessel node;
 			node.ID = i;
 			node.parents.push_back(-1);
 			node.isRoot = true;
-			//SWCNodeVessel_vec.push_back(node);
-			SWCNodeVessel_vec[i] = node;
+			//SWCVBTNodeVessel_vec.push_back(node);
+			SWCVBTNodeVessel_vec[i] = node;
 		}
 
 		std::vector<int> a_row = toy_list[i];
 		std::vector<int> isRelated(a_row.size(), false);
 		for(int j = 0; j < a_row.size(); j++){
 
-			if(!SWCNodeVessel_vec[i].children.empty()){
-				for(int k = 0; k < SWCNodeVessel_vec[i].children.size(); k++){
-					if(a_row[j] == SWCNodeVessel_vec[i].children[k]){
+			if(!SWCVBTNodeVessel_vec[i].children.empty()){
+				for(int k = 0; k < SWCVBTNodeVessel_vec[i].children.size(); k++){
+					if(a_row[j] == SWCVBTNodeVessel_vec[i].children[k]){
 						
 						//std::cout << "Related: " << i << " hasChild: " << a_row[j] << std::endl;
 
@@ -4622,9 +4622,9 @@ void ftkVesselTracer::PrintToySWCFile(void){
 					}
 				}
 			}
-			if(!SWCNodeVessel_vec[i].parents.empty()){
-				for(int k = 0; k < SWCNodeVessel_vec[i].parents.size(); k++){
-					if(a_row[j] == SWCNodeVessel_vec[i].parents[k]){
+			if(!SWCVBTNodeVessel_vec[i].parents.empty()){
+				for(int k = 0; k < SWCVBTNodeVessel_vec[i].parents.size(); k++){
+					if(a_row[j] == SWCVBTNodeVessel_vec[i].parents[k]){
 
 						//std::cout << "Related: " << i << " hasParent: " << a_row[j] << std::endl;
 
@@ -4641,51 +4641,51 @@ void ftkVesselTracer::PrintToySWCFile(void){
 				if(a_row[j] < 0)
 					continue;
 				
-				SWCNodeVessel node;
-				if(SWCNodeVessel_vec[a_row[j]].ID > 0) // Check if node already exists in the list
-					node = SWCNodeVessel_vec[a_row[j]];	
+				SWCVBTNodeVessel node;
+				if(SWCVBTNodeVessel_vec[a_row[j]].ID > 0) // Check if node already exists in the list
+					node = SWCVBTNodeVessel_vec[a_row[j]];	
 				
 				node.ID = a_row[j];
 				node.parents.push_back(i);
-				//SWCNodeVessel_vec.push_back(node);
-				SWCNodeVessel_vec[a_row[j]] = node;
+				//SWCVBTNodeVessel_vec.push_back(node);
+				SWCVBTNodeVessel_vec[a_row[j]] = node;
 
-				SWCNodeVessel_vec[i].children.push_back(a_row[j]);
+				SWCVBTNodeVessel_vec[i].children.push_back(a_row[j]);
 
 				//std::cout << i << " hasChild: " << a_row[j] << std::endl;
 
 			}
 		}
 		
-		//for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
-		//	std::cout << i << " hasChild: " << SWCNodeVessel_vec[i].children[j] << std::endl;
+		//for(int j = 0; j < SWCVBTNodeVessel_vec[i].children.size(); j++)
+		//	std::cout << i << " hasChild: " << SWCVBTNodeVessel_vec[i].children[j] << std::endl;
 	}
 	
 	std::cout << "SWC file: " << std::endl;
-	for(int i = 1; i < SWCNodeVessel_vec.size(); i++){
-		std::cout << "Node: " << std::endl;
-		std::cout << "	ID: " << SWCNodeVessel_vec[i].ID << std::endl;
+	for(int i = 1; i < SWCVBTNodeVessel_vec.size(); i++){
+		std::cout << "VBTNode: " << std::endl;
+		std::cout << "	ID: " << SWCVBTNodeVessel_vec[i].ID << std::endl;
 		std::cout << "	Parents: ";
-		for(int j = 0; j < SWCNodeVessel_vec[i].parents.size(); j++)
-			std::cout << SWCNodeVessel_vec[i].parents[j] << ", ";
+		for(int j = 0; j < SWCVBTNodeVessel_vec[i].parents.size(); j++)
+			std::cout << SWCVBTNodeVessel_vec[i].parents[j] << ", ";
 		std::cout << std::endl;
 		std::cout << "	Children: ";
-		for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
-			std::cout << SWCNodeVessel_vec[i].children[j] << ", ";
+		for(int j = 0; j < SWCVBTNodeVessel_vec[i].children.size(); j++)
+			std::cout << SWCVBTNodeVessel_vec[i].children[j] << ", ";
 		std::cout << std::endl;
 	}
 }
 
-void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
+void ftkVesselTracer::PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes are empty! Returning. " << std::endl;
 		return;
 	}
 
-	if(!this->SWCNodeVessel_vec.empty()){
+	if(!this->SWCVBTNodeVessel_vec.empty()){
 		std::cout << "SWC container is emptied! " << std::endl;
-		this->SWCNodeVessel_vec.clear();
+		this->SWCVBTNodeVessel_vec.clear();
 	}
 	
 	// Print the forest to a file
@@ -4693,10 +4693,10 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 	file_out.open("graph_file.txt", std::ios::out);
 	if(file_out.good()){
 
-		for(int i = 0; i < this->allForestNodes.size(); i++){
+		for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 			file_out << i << " -> ";
-			for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
-				file_out << this->allForestNodes[i].branchIDs[j] << ", ";
+			for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
+				file_out << this->allForestVBTNodes[i].branchIDs[j] << ", ";
 		}
 
 		file_out << std::endl;
@@ -4709,49 +4709,49 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 	*/
 	
 	//Labeling the forest
-	//this->allForestNodes.insert(this->allForestNodes.begin(), Node());
-	//this->allForestNodes[0].branchIDs.push_back(-2);
+	//this->allForestVBTNodes.insert(this->allForestVBTNodes.begin(), VBTNode());
+	//this->allForestVBTNodes[0].branchIDs.push_back(-2);
 
 
-	// Node-based features - Branching
-	for(int i = 0; i < this->allForestNodes.size(); i++){
-		if(this->allForestNodes[i].branchIDs.size() == 3)
-			this->allForestNodes[i].isBifurgation = true;
-		if(this->allForestNodes[i].branchIDs.size() == 4)
-			this->allForestNodes[i].isTrifurgation = true;
-		if(this->allForestNodes[i].branchIDs.size() > 4)
-			this->allForestNodes[i].isMultifurgation = true;
+	// VBTNode-based features - Branching
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
+		if(this->allForestVBTNodes[i].branchIDs.size() == 3)
+			this->allForestVBTNodes[i].isBifurgation = true;
+		if(this->allForestVBTNodes[i].branchIDs.size() == 4)
+			this->allForestVBTNodes[i].isTrifurgation = true;
+		if(this->allForestVBTNodes[i].branchIDs.size() > 4)
+			this->allForestVBTNodes[i].isMultifurgation = true;
 	}
 
 	std::cout << "Finding connected components of the network... " << std::endl;
 
-	std::vector<Node> dup_allForestNodes(this->allForestNodes);
+	std::vector<VBTNode> dup_allForestVBTNodes(this->allForestVBTNodes);
 	std::vector<std::vector<int> > connected_components;
 	std::queue<int> label_queue;
-	std::vector<bool> isRoot(this->allForestNodes.size(), false);
-	std::vector<bool> isLabeled(this->allForestNodes.size(), false); //isLabeled[0] = true;
+	std::vector<bool> isRoot(this->allForestVBTNodes.size(), false);
+	std::vector<bool> isLabeled(this->allForestVBTNodes.size(), false); //isLabeled[0] = true;
 	bool allLabeled = false;
 	int i = 0; //1;
 	int component_count = 0;
 
-	//for(int i = 1; i < dup_allForestNodes.size();){
+	//for(int i = 1; i < dup_allForestVBTNodes.size();){
 	while(!allLabeled){
 
 		std::vector<int> a_component; 
 		a_component.push_back(i);
 		isLabeled[i] = true;
 		component_count++;
-		this->allForestNodes[i].forestLabel = component_count;
+		this->allForestVBTNodes[i].forestLabel = component_count;
 
 		//std::cout << "Formed a new component.. " << component_count << std::endl;
 
-		//if(this->allForestNodes[i].branchIDs.empty()){
+		//if(this->allForestVBTNodes[i].branchIDs.empty()){
 			//std::cout << "Branch ids empty!! " << std::endl;
 			//continue;
 			//break;
 		//}
 
-		std::vector<int> connections = this->allForestNodes[i].branchIDs; //toy_list[i];
+		std::vector<int> connections = this->allForestVBTNodes[i].branchIDs; //toy_list[i];
 		//if(!connections.empty()){
 			for(int j = 0; j < connections.size(); j++)
 				label_queue.push(connections[j]);
@@ -4767,9 +4767,9 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 			
 			a_component.push_back(cur_label);
 			isLabeled[cur_label] = true;
-			this->allForestNodes[cur_label].forestLabel = component_count;
+			this->allForestVBTNodes[cur_label].forestLabel = component_count;
 
-			std::vector<int> neighbors = this->allForestNodes[cur_label].branchIDs; //toy_list[cur_label];
+			std::vector<int> neighbors = this->allForestVBTNodes[cur_label].branchIDs; //toy_list[cur_label];
 			std::vector<int>::iterator itr;	
 			for(int j = 0; j < neighbors.size(); j++){
 				if(std::find(a_component.begin(), a_component.end(), neighbors[j]) != a_component.end())
@@ -4780,7 +4780,7 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 		}
 		connected_components.push_back(a_component);
 		isRoot[a_component.front()] = true;
-		this->allForestNodes[a_component.front()].isRoot = true;
+		this->allForestVBTNodes[a_component.front()].isRoot = true;
 
 		//i = a_component.back();
 		//i++;
@@ -4794,9 +4794,9 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 		
 		int i_past = i;
 		bool unlabeled_found = false;
-		for(int j = 0; j < this->allForestNodes.size(); j++){
+		for(int j = 0; j < this->allForestVBTNodes.size(); j++){
 
-			if(j == this->allForestNodes.size()-1){
+			if(j == this->allForestVBTNodes.size()-1){
 				allLabeled = true;
 				break;
 			}
@@ -4818,7 +4818,7 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 			}
 
 			//if(i == i_past)
-			//if(j == this->allForestNodes.size())
+			//if(j == this->allForestVBTNodes.size())
 			//	allLabeled = true;
 		}
 
@@ -4827,55 +4827,55 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 
 	//Print the labeled graph
 	/*std::cout << "Labeled graph: " << std::endl;
-	for(int i = 1; i < this->allForestNodes.size(); i++){		
-		std::cout << i << " : " << this->allForestNodes[i].forestLabel << " -> ";
-		for(int j = 0; j < this->allForestNodes[i].branchIDs.size(); j++){
-			if(this->allForestNodes[i].branchIDs[j] < 0)
+	for(int i = 1; i < this->allForestVBTNodes.size(); i++){		
+		std::cout << i << " : " << this->allForestVBTNodes[i].forestLabel << " -> ";
+		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
+			if(this->allForestVBTNodes[i].branchIDs[j] < 0)
 				continue;
-			std::cout << this->allForestNodes[i].branchIDs[j] << " : " << this->allForestNodes[this->allForestNodes[i].branchIDs[j]].forestLabel << ", ";
+			std::cout << this->allForestVBTNodes[i].branchIDs[j] << " : " << this->allForestVBTNodes[this->allForestVBTNodes[i].branchIDs[j]].forestLabel << ", ";
 		}
 		std::cout << std::endl;
 	}
 	std::cout << "Roots: " << std::endl;
-	for(int i = 1; i < this->allForestNodes.size(); i++){
-		if(this->allForestNodes[i].isRoot)
+	for(int i = 1; i < this->allForestVBTNodes.size(); i++){
+		if(this->allForestVBTNodes[i].isRoot)
 			std::cout << i << std::endl;
 	}*/
 	
 	std::cout << "Converting the network to a directed graph... " << std::endl;
 
 	// Construct SWC nodes
-	SWCNodeVessel node_dummy;
-	std::vector<std::vector<SWCNodeVessel> > SWCNodeVec_byComponent;
+	SWCVBTNodeVessel node_dummy;
+	std::vector<std::vector<SWCVBTNodeVessel> > SWCVBTNodeVec_byComponent;
 	
 	for(int i = 0; i < connected_components.size(); i++){
 		
-		std::vector<SWCNodeVessel> node_vec_dummy, node_vec_component; 
-		node_vec_dummy.resize(this->allForestNodes.size(), node_dummy);
+		std::vector<SWCVBTNodeVessel> node_vec_dummy, node_vec_component; 
+		node_vec_dummy.resize(this->allForestVBTNodes.size(), node_dummy);
 		std::vector<int> curr_component = connected_components[i];
 		std::vector<int> curr_component_order;
 
 		for(int j = 0; j < curr_component.size(); j++){
 			
 			int curr_ID = curr_component[j];
-			if(this->allForestNodes[curr_ID].isRoot){
+			if(this->allForestVBTNodes[curr_ID].isRoot){
 
-				SWCNodeVessel node;
+				SWCVBTNodeVessel node;
 				node.ID = curr_ID;
 				node.parents.push_back(-1);
 				node.isRoot = true;
 
-				itk::Index<3> idx; idx[0] = this->allForestNodes[curr_ID].x; 
-				idx[1] = this->allForestNodes[curr_ID].y; idx[2] = this->allForestNodes[curr_ID].z; 
+				itk::Index<3> idx; idx[0] = this->allForestVBTNodes[curr_ID].x; 
+				idx[1] = this->allForestVBTNodes[curr_ID].y; idx[2] = this->allForestVBTNodes[curr_ID].z; 
 
 				node.position = idx;
-				node.scale = this->allForestNodes[curr_ID].scale;
+				node.scale = this->allForestVBTNodes[curr_ID].scale;
 
 				node_vec_dummy[curr_ID] = node;
 				curr_component_order.push_back(curr_ID);
 			}
 			
-			std::vector<int> curr_connections = this->allForestNodes[curr_ID].branchIDs;
+			std::vector<int> curr_connections = this->allForestVBTNodes[curr_ID].branchIDs;
 			std::vector<bool> isRelated(curr_connections.size(), false);
 
 			for(int k = 0; k < curr_connections.size(); k++){
@@ -4895,18 +4895,18 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 
 				if(!isRelated[k]){
 					
-					SWCNodeVessel node;
+					SWCVBTNodeVessel node;
 					if(node_vec_dummy[curr_connections[k]].ID >= 0)
 						node = node_vec_dummy[curr_connections[k]];
 
 					node.ID = curr_connections[k];
 					node.parents.push_back(curr_ID);
 
-					itk::Index<3> idx; idx[0] = this->allForestNodes[curr_connections[k]].x; 
-					idx[1] = this->allForestNodes[curr_connections[k]].y; idx[2] = this->allForestNodes[curr_connections[k]].z; 
+					itk::Index<3> idx; idx[0] = this->allForestVBTNodes[curr_connections[k]].x; 
+					idx[1] = this->allForestVBTNodes[curr_connections[k]].y; idx[2] = this->allForestVBTNodes[curr_connections[k]].z; 
 
 					node.position = idx;
-					node.scale = this->allForestNodes[curr_connections[k]].scale;
+					node.scale = this->allForestVBTNodes[curr_connections[k]].scale;
 
 					node_vec_dummy[curr_connections[k]] = node;
 					curr_component_order.push_back(curr_connections[k]);
@@ -4917,12 +4917,12 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 		}
 
 		for(int j = 0; j < curr_component_order.size(); j++){
-			this->SWCNodeVessel_vec.push_back(node_vec_dummy[curr_component_order[j]]);
+			this->SWCVBTNodeVessel_vec.push_back(node_vec_dummy[curr_component_order[j]]);
 			node_vec_component.push_back(node_vec_dummy[curr_component_order[j]]);
 		}
-		//SWCNodeVec_byComponent.push_back(node_vec_component);
+		//SWCVBTNodeVec_byComponent.push_back(node_vec_component);
 
-		// Node-based features - Identify leaf points and orphans
+		// VBTNode-based features - Identify leaf points and orphans
 		for(int j = 0; j < curr_component.size(); j++){
 			if(node_vec_component.size() > 1){	
 
@@ -4938,15 +4938,15 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 						break;
 				}
 				if(is_leaf)
-					this->allForestNodes[curr_component[j]].isLeaf = true;
+					this->allForestVBTNodes[curr_component[j]].isLeaf = true;
 			}
 			if(node_vec_component.size() == 1)
-				this->allForestNodes[curr_component[j]].isOrphan = true;
+				this->allForestVBTNodes[curr_component[j]].isOrphan = true;
 		}
 
 		for(int j = 0; j < node_vec_component.size(); j++){
-			this->allForestNodes[node_vec_component[j].ID].children = node_vec_component[j].children;
-			this->allForestNodes[node_vec_component[j].ID].parents = node_vec_component[j].parents;
+			this->allForestVBTNodes[node_vec_component[j].ID].children = node_vec_component[j].children;
+			this->allForestVBTNodes[node_vec_component[j].ID].parents = node_vec_component[j].parents;
 		}
 
 		node_vec_dummy.clear();
@@ -4957,52 +4957,52 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 
 
 	// Massage the SWC file
-	for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
+	for(int i = 0; i < this->SWCVBTNodeVessel_vec.size(); i++){
 		
-		this->SWCNodeVessel_vec[i].ID++;
+		this->SWCVBTNodeVessel_vec[i].ID++;
 		
-		for(int j = 0; j < this->SWCNodeVessel_vec[i].children.size(); j++)
-			this->SWCNodeVessel_vec[i].children[j]++;
-		for(int j = 0; j < this->SWCNodeVessel_vec[i].parents.size(); j++){
-			if(this->SWCNodeVessel_vec[i].parents[j] != -1)
-				this->SWCNodeVessel_vec[i].parents[j]++;
+		for(int j = 0; j < this->SWCVBTNodeVessel_vec[i].children.size(); j++)
+			this->SWCVBTNodeVessel_vec[i].children[j]++;
+		for(int j = 0; j < this->SWCVBTNodeVessel_vec[i].parents.size(); j++){
+			if(this->SWCVBTNodeVessel_vec[i].parents[j] != -1)
+				this->SWCVBTNodeVessel_vec[i].parents[j]++;
 		}
 	}
 	
 	// Printing the SWC file to cout
 	/*std::cout << "SWC file: " << std::endl;
-	for(int i = 0; i < SWCNodeVessel_vec.size(); i++){
-		std::cout << "Node: " << std::endl;
-		std::cout << "	ID: " << SWCNodeVessel_vec[i].ID << std::endl;
+	for(int i = 0; i < SWCVBTNodeVessel_vec.size(); i++){
+		std::cout << "VBTNode: " << std::endl;
+		std::cout << "	ID: " << SWCVBTNodeVessel_vec[i].ID << std::endl;
 		std::cout << "	Parents: ";
-		for(int j = 0; j < SWCNodeVessel_vec[i].parents.size(); j++)
-			std::cout << SWCNodeVessel_vec[i].parents[j] << ", ";
+		for(int j = 0; j < SWCVBTNodeVessel_vec[i].parents.size(); j++)
+			std::cout << SWCVBTNodeVessel_vec[i].parents[j] << ", ";
 		std::cout << std::endl;
 		std::cout << "	Children: ";
-		for(int j = 0; j < SWCNodeVessel_vec[i].children.size(); j++)
-			std::cout << SWCNodeVessel_vec[i].children[j] << ", ";
+		for(int j = 0; j < SWCVBTNodeVessel_vec[i].children.size(); j++)
+			std::cout << SWCVBTNodeVessel_vec[i].children[j] << ", ";
 		std::cout << std::endl;
 	}*/
 
 	
 	// Fill the node features structure (for fun!!)
-	for(int i = 0; i < this->allForestNodes.size(); i++){
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 
-		this->allForestNodes[i].nodeFeatures.ID = i;
-		this->allForestNodes[i].nodeFeatures.position[0] = this->allForestNodes[i].x;
-		this->allForestNodes[i].nodeFeatures.position[1] = this->allForestNodes[i].y;
-		this->allForestNodes[i].nodeFeatures.position[2] = this->allForestNodes[i].z;
-		this->allForestNodes[i].nodeFeatures.scale = this->allForestNodes[i].scale;
-		this->allForestNodes[i].nodeFeatures.likelihood = this->allForestNodes[i].likelihood;
-		this->allForestNodes[i].nodeFeatures.forestLabel = this->allForestNodes[i].forestLabel;
-		this->allForestNodes[i].nodeFeatures.isLeaf = this->allForestNodes[i].isLeaf;
-		this->allForestNodes[i].nodeFeatures.isBifurgation = this->allForestNodes[i].isBifurgation;
-		this->allForestNodes[i].nodeFeatures.isTrifurgation = this->allForestNodes[i].isTrifurgation;
-		this->allForestNodes[i].nodeFeatures.traceQuality = this->allForestNodes[i].traceQuality;
-		this->allForestNodes[i].nodeFeatures.nODFModes = this->allForestNodes[i].dirX.size();
-		this->allForestNodes[i].nodeFeatures.ODFModesX = this->allForestNodes[i].dirX;
-		this->allForestNodes[i].nodeFeatures.ODFModesY = this->allForestNodes[i].dirY;
-		this->allForestNodes[i].nodeFeatures.ODFModesZ = this->allForestNodes[i].dirZ;
+		this->allForestVBTNodes[i].nodeFeatures.ID = i;
+		this->allForestVBTNodes[i].nodeFeatures.position[0] = this->allForestVBTNodes[i].x;
+		this->allForestVBTNodes[i].nodeFeatures.position[1] = this->allForestVBTNodes[i].y;
+		this->allForestVBTNodes[i].nodeFeatures.position[2] = this->allForestVBTNodes[i].z;
+		this->allForestVBTNodes[i].nodeFeatures.scale = this->allForestVBTNodes[i].scale;
+		this->allForestVBTNodes[i].nodeFeatures.likelihood = this->allForestVBTNodes[i].likelihood;
+		this->allForestVBTNodes[i].nodeFeatures.forestLabel = this->allForestVBTNodes[i].forestLabel;
+		this->allForestVBTNodes[i].nodeFeatures.isLeaf = this->allForestVBTNodes[i].isLeaf;
+		this->allForestVBTNodes[i].nodeFeatures.isBifurgation = this->allForestVBTNodes[i].isBifurgation;
+		this->allForestVBTNodes[i].nodeFeatures.isTrifurgation = this->allForestVBTNodes[i].isTrifurgation;
+		this->allForestVBTNodes[i].nodeFeatures.traceQuality = this->allForestVBTNodes[i].traceQuality;
+		this->allForestVBTNodes[i].nodeFeatures.nODFModes = this->allForestVBTNodes[i].dirX.size();
+		this->allForestVBTNodes[i].nodeFeatures.ODFModesX = this->allForestVBTNodes[i].dirX;
+		this->allForestVBTNodes[i].nodeFeatures.ODFModesY = this->allForestVBTNodes[i].dirY;
+		this->allForestVBTNodes[i].nodeFeatures.ODFModesZ = this->allForestVBTNodes[i].dirZ;
 	}
 
 	std::cout << "Done with computing the SWC file structure. " << std::endl;
@@ -5010,8 +5010,8 @@ void ftkVesselTracer::PopulateSWCNodeContainerAndComputeNodeFeatures(void){
 
 void ftkVesselTracer::WriteSWCFileVessel(void){
 
-	if(this->SWCNodeVessel_vec.empty()){
-		std::cout << "SWCNode container is empty. Returning." << std::endl;
+	if(this->SWCVBTNodeVessel_vec.empty()){
+		std::cout << "SWCVBTNode container is empty. Returning." << std::endl;
 		return;
 	}
 
@@ -5023,12 +5023,12 @@ void ftkVesselTracer::WriteSWCFileVessel(void){
 	file_out.open(swc_file_name.c_str(), std::ios::out);
 	if(file_out.good()){
 
-		for(int i = 0; i < this->SWCNodeVessel_vec.size(); i++){
-			for(int j = 0; j < this->SWCNodeVessel_vec[i].parents.size(); j++){
+		for(int i = 0; i < this->SWCVBTNodeVessel_vec.size(); i++){
+			for(int j = 0; j < this->SWCVBTNodeVessel_vec[i].parents.size(); j++){
 				
-				file_out << this->SWCNodeVessel_vec[i].ID << " " << "7" << " " << this->SWCNodeVessel_vec[i].position[0] << " ";
-				file_out << this->SWCNodeVessel_vec[i].position[1] << " " << this->SWCNodeVessel_vec[i].position[2] << " ";
-				file_out << this->SWCNodeVessel_vec[i].scale << " " << this->SWCNodeVessel_vec[i].parents[j] << std::endl;
+				file_out << this->SWCVBTNodeVessel_vec[i].ID << " " << "7" << " " << this->SWCVBTNodeVessel_vec[i].position[0] << " ";
+				file_out << this->SWCVBTNodeVessel_vec[i].position[1] << " " << this->SWCVBTNodeVessel_vec[i].position[2] << " ";
+				file_out << this->SWCVBTNodeVessel_vec[i].scale << " " << this->SWCVBTNodeVessel_vec[i].parents[j] << std::endl;
 			}
 		}
 
@@ -5096,7 +5096,7 @@ void ftkVesselTracer::ComputeVesselnessImage(VesselnessMeasures& obj_measures, s
 
 void ftkVesselTracer::WriteSkeletonImage(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes container is empty. Returning." << std::endl;
 		return;
 	}
@@ -5119,24 +5119,24 @@ void ftkVesselTracer::WriteSkeletonImage(void){
 
 	this->skeletonImage->FillBuffer(0);
 
-	for(int i = 0; i < this->allForestNodes.size(); i++){
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 
 		itk::Index<3> pixel0;
-		pixel0[0] = this->allForestNodes[i].x;
-		pixel0[1] = this->allForestNodes[i].y;
-		pixel0[2] = this->allForestNodes[i].z;
+		pixel0[0] = this->allForestVBTNodes[i].x;
+		pixel0[1] = this->allForestVBTNodes[i].y;
+		pixel0[2] = this->allForestVBTNodes[i].z;
 
-		if(!this->allForestNodes[i].children.empty()){
+		if(!this->allForestVBTNodes[i].children.empty()){
 
-			for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
+			for(int j = 0; j < this->allForestVBTNodes[i].children.size(); j++){
 
-				//std::cout << this->SWCNodeVessel_vec[i].children[j] << std::endl;
+				//std::cout << this->SWCVBTNodeVessel_vec[i].children[j] << std::endl;
 				
 				LineType3D line;
 				itk::Index<3> pixel1;
-				pixel1[0] = this->allForestNodes[this->allForestNodes[i].children[j]].x;
-				pixel1[1] = this->allForestNodes[this->allForestNodes[i].children[j]].y;
-				pixel1[2] = this->allForestNodes[this->allForestNodes[i].children[j]].z;
+				pixel1[0] = this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].x;
+				pixel1[1] = this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].y;
+				pixel1[2] = this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].z;
 
 				double euclid_distance = std::sqrt(std::pow((double)(pixel0[0] - pixel1[0]), 2) + std::pow((double)(pixel0[1] - pixel1[1]), 2) + std::pow((double)(pixel0[2] - pixel1[2]), 2));  
 
@@ -5153,7 +5153,7 @@ void ftkVesselTracer::WriteSkeletonImage(void){
 
 				if(euclid_distance < 1.0){
 					//std::cout << "Distance between two nodes was less than 1 !! " << std::endl;
-					//std::cout << "Parent: " << i << " at: " << pixel0 << " Child: " << this->allForestNodes[i].children[j] << " at: " << pixel1 << std::endl;
+					//std::cout << "Parent: " << i << " at: " << pixel0 << " Child: " << this->allForestVBTNodes[i].children[j] << " at: " << pixel1 << std::endl;
 					this->skeletonImage->SetPixel(pixel0, 255);
 					continue;
 				}
@@ -5210,7 +5210,7 @@ void ftkVesselTracer::WriteSkeletonImage(void){
 
 void ftkVesselTracer::WriteSkeletonImageFromVTK(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes container is empty. Returning." << std::endl;
 		return;
 	}
@@ -5219,18 +5219,18 @@ void ftkVesselTracer::WriteSkeletonImageFromVTK(void){
 	vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
 	
 	int point_counter = -1;
-	for(int i = 0; i < this->allForestNodes.size(); i++){
-		points->InsertNextPoint(this->allForestNodes[i].x, this->allForestNodes[i].y, this->allForestNodes[i].z);
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
+		points->InsertNextPoint(this->allForestVBTNodes[i].x, this->allForestVBTNodes[i].y, this->allForestVBTNodes[i].z);
 		point_counter++;
 
-		for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
-			points->InsertNextPoint(this->allForestNodes[this->allForestNodes[i].children[j]].x, 
-				this->allForestNodes[this->allForestNodes[i].children[j]].y, this->allForestNodes[this->allForestNodes[i].children[j]].z);			
+		for(int j = 0; j < this->allForestVBTNodes[i].children.size(); j++){
+			points->InsertNextPoint(this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].x, 
+				this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].y, this->allForestVBTNodes[this->allForestVBTNodes[i].children[j]].z);			
 			point_counter++;
 		}
-		for(int j = 0; j < this->allForestNodes[i].children.size(); j++){
+		for(int j = 0; j < this->allForestVBTNodes[i].children.size(); j++){
 			vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-			line->GetPointIds()->SetId(0, point_counter - this->allForestNodes[i].children.size());
+			line->GetPointIds()->SetId(0, point_counter - this->allForestVBTNodes[i].children.size());
 			line->GetPointIds()->SetId(1, point_counter - j);
 			lines->InsertNextCell(line);
 		}
@@ -5303,7 +5303,7 @@ void ftkVesselTracer::WriteSkeletonImageFromVTK(void){
 
 void ftkVesselTracer::WriteSegmentationMask(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes container is empty. Returning." << std::endl;
 		return;
 	}
@@ -5326,11 +5326,11 @@ void ftkVesselTracer::WriteSegmentationMask(void){
 
 	this->segmentationMaskImage->FillBuffer(0);
 
-	for(int i = 0; i < this->allForestNodes.size(); i++){
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 
-		double rad = this->allForestNodes[i].scale;
+		double rad = this->allForestVBTNodes[i].scale;
 		itk::Index<3> idx;
-		idx[0] = this->allForestNodes[i].x; idx[1] = this->allForestNodes[i].y; idx[2] = this->allForestNodes[i].z;
+		idx[0] = this->allForestVBTNodes[i].x; idx[1] = this->allForestVBTNodes[i].y; idx[2] = this->allForestVBTNodes[i].z;
 
 		RenderImageType3D::IndexType starting_index, end_index;
 		RenderImageType3D::SizeType sub_volume_size;
@@ -5382,10 +5382,10 @@ void ftkVesselTracer::WriteSegmentationMask(void){
 	std::cout << "Done with writing the segmentation mask image: " << mask_file_name << std::endl;
 }
 
-void ftkVesselTracer::WriteNodeFeaturesFile(void){
+void ftkVesselTracer::WriteVBTNodeFeaturesFile(void){
 
-	if(this->allForestNodes.empty()){
-		std::cout << "Node container is empty. Returning. " << std::endl;
+	if(this->allForestVBTNodes.empty()){
+		std::cout << "VBTNode container is empty. Returning. " << std::endl;
 		return;
 	}
 	
@@ -5403,11 +5403,11 @@ void ftkVesselTracer::WriteNodeFeaturesFile(void){
 		file_stream << "ODF_mode_2_x" << '\t' << "ODF_mode_2_y" << '\t' << "ODF_mode_2_z" << '\t';
 		file_stream << std::endl;
 
-		//std::cout << this->allForestNodes.size() << std::endl;
+		//std::cout << this->allForestVBTNodes.size() << std::endl;
 
-		for(int i = 0; i < this->allForestNodes.size(); i++){
+		for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 
-			VesselNodeFeatures node_feat = this->allForestNodes[i].nodeFeatures;
+			VesselVBTNodeFeatures node_feat = this->allForestVBTNodes[i].nodeFeatures;
 						
 			file_stream << node_feat.ID << '\t' << node_feat.position[0] << '\t' << node_feat.position[1] << '\t' << node_feat.position[2] << '\t';
 			file_stream << node_feat.scale << '\t' << node_feat.likelihood << '\t' << node_feat.forestLabel << '\t';
@@ -5431,8 +5431,8 @@ void ftkVesselTracer::WriteNodeFeaturesFile(void){
 
 			file_stream << std::endl;
 
-			//for(int j = 0; j < this->allForestNodes[i].dirX.size(); j++)
-			//	nodes_file_stream << this->allForestNodes[i].dirX[j] << '\t';
+			//for(int j = 0; j < this->allForestVBTNodes[i].dirX.size(); j++)
+			//	nodes_file_stream << this->allForestVBTNodes[i].dirX[j] << '\t';
 		}
 		file_stream.close();
 
@@ -5444,12 +5444,12 @@ void ftkVesselTracer::WriteNodeFeaturesFile(void){
 
 void ftkVesselTracer::ComputeVesselNetworkFeatures(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes container is emtpy. Returning. " << std::endl;
 		return;
 	}
 
-	for(int i = 0; i < this->allForestNodes.size(); i++){
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 
 	}
 }
@@ -5461,17 +5461,17 @@ void ftkVesselTracer::SmartRetrace(void){
 
 void ftkVesselTracer::ComputeRetracingStartPoints(void){
 
-	if(this->allForestNodes.empty()){
+	if(this->allForestVBTNodes.empty()){
 		std::cout << "Forest nodes container is emtpy. Returning. " << std::endl;
 		return;
 	}
 
 
 	// Compute leaf and root points
-	for(int i = 0; i < this->allForestNodes.size(); i++){
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 		
-		if(this->allForestNodes[i].isLeaf || this->allForestNodes[i].isRoot || this->allForestNodes[i].isOrphan)
-			this->retracingStartPoints.push_back(this->allForestNodes[i]); 
+		if(this->allForestVBTNodes[i].isLeaf || this->allForestVBTNodes[i].isRoot || this->allForestVBTNodes[i].isOrphan)
+			this->retracingStartPoints.push_back(this->allForestVBTNodes[i]); 
 	}
 
 	std::cout << "Done with computing starting points for retracing: " << this->retracingStartPoints.size() << std::endl;
@@ -5610,7 +5610,7 @@ void ftkVesselTracer::ComputeRetracingStartPoints(void){
 
 	std::cout << "Done with writing input image for retracing: " << mask_file_name << std::endl;
 
-	//this->ComputeAllSecondaryNodesRetracing();
+	//this->ComputeAllSecondaryVBTNodesRetracing();
 
 }
 
@@ -5652,7 +5652,7 @@ VesselBasedNucleiFeatures::VesselBasedNucleiFeatures(const std::string nuc_table
 	
 	this->ReadNucleiFeatureTable(nuc_table_path);
 	this->ReadSkeletonImage(skeleton_img_path);
-	this->ReadNodePropertiesFile(node_prop_path);
+	this->ReadVBTNodePropertiesFile(node_prop_path);
 	this->ReadNucleiLabelImage(nuc_label_path);
 	this->ReadSegmentationMask(vessel_mask_path); 
 	
@@ -5773,7 +5773,7 @@ void VesselBasedNucleiFeatures::ReadSkeletonImage(const std::string file_path){
 	Common::ReadImage3DUChar(file_path, this->skeletonImage);
 } 
 
-void VesselBasedNucleiFeatures::ReadNodePropertiesFile(const std::string file_path){
+void VesselBasedNucleiFeatures::ReadVBTNodePropertiesFile(const std::string file_path){
 
 	std::ifstream nodePoints;
 	nodePoints.open(file_path.c_str(), std::ios::in); 
@@ -5784,7 +5784,7 @@ void VesselBasedNucleiFeatures::ReadNodePropertiesFile(const std::string file_pa
 	if(nodePoints.is_open()){
 		
 		unsigned short line_number = 0;
-		Node node_object;
+		VBTNode node_object;
 
 		while(nodePoints.good()){
 
@@ -5844,7 +5844,7 @@ void VesselBasedNucleiFeatures::ReadNodePropertiesFile(const std::string file_pa
 				node_object.dirZ.push_back(atof(str_vec[21].c_str()));
 			}
 
-			this->skeletonNodes.push_back(node_object);
+			this->skeletonVBTNodes.push_back(node_object);
 
 			str_vec.clear();
 		}
@@ -5855,11 +5855,11 @@ void VesselBasedNucleiFeatures::ReadNodePropertiesFile(const std::string file_pa
 		return;
 	}
 
-	if(this->skeletonNodes.empty()){
+	if(this->skeletonVBTNodes.empty()){
 		std::cout << " Empty vessel node features file. Quitting. " << std::endl;
 		return;
 	}
-	std::cout << "Vessel node features file read. " << this->skeletonNodes.size() << std::endl;
+	std::cout << "Vessel node features file read. " << this->skeletonVBTNodes.size() << std::endl;
 }
 
 void VesselBasedNucleiFeatures::ReadNucleiLabelImage(const std::string file_path){
@@ -6007,9 +6007,9 @@ void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
 		std::vector<double> dist_vec;
 		RenderImageType3D::IndexType curr_skeleton_idx, min_dist_idx, max_dist_idx;
 
-		for(int j = 0; j < this->skeletonNodes.size(); j++){
+		for(int j = 0; j < this->skeletonVBTNodes.size(); j++){
 		
-			curr_skeleton_idx[0] = this->skeletonNodes[j].x; curr_skeleton_idx[1] = this->skeletonNodes[j].y; curr_skeleton_idx[2] = this->skeletonNodes[j].z;
+			curr_skeleton_idx[0] = this->skeletonVBTNodes[j].x; curr_skeleton_idx[1] = this->skeletonVBTNodes[j].y; curr_skeleton_idx[2] = this->skeletonVBTNodes[j].z;
 
 			int offset = 1; //1;
 			if(curr_skeleton_idx[0] < starting_index_nuclei[0]+offset || curr_skeleton_idx[1] < starting_index_nuclei[1]+offset || curr_skeleton_idx[2] < starting_index_nuclei[2]+offset ||
@@ -6056,11 +6056,11 @@ void VesselBasedNucleiFeatures::ComputeVesselFeaturesForNuclei(void){
 			vnl_vector<double> largest_axis_dir = nuc_dir.get_column(arg_max_ev);
 			vnl_vector<double> abs_cos_vec(3, -1.0), ang_vec(3, 0.0);
 
-			for(int k = 0; k < this->skeletonNodes[min_lin_idx].ODF_modes; k++){
+			for(int k = 0; k < this->skeletonVBTNodes[min_lin_idx].ODF_modes; k++){
 
-				vessel_dir[0] = this->skeletonNodes[min_lin_idx].dirX[k];
-				vessel_dir[1] = this->skeletonNodes[min_lin_idx].dirY[k];
-				vessel_dir[2] = this->skeletonNodes[min_lin_idx].dirZ[k];
+				vessel_dir[0] = this->skeletonVBTNodes[min_lin_idx].dirX[k];
+				vessel_dir[1] = this->skeletonVBTNodes[min_lin_idx].dirY[k];
+				vessel_dir[2] = this->skeletonVBTNodes[min_lin_idx].dirZ[k];
 				//vessel_dir.normalize();
 				
 

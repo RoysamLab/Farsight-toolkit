@@ -228,14 +228,14 @@ struct PreprocessingParameters{
 	void initByDefaultValues(void);
 };
 
-struct NodeDetectionParameters{
+struct VBTNodeDetectionParameters{
 
 	int gridSpacing; // Spacing for uniform square grid 
 
-	int iterNPrimaryNode; // Number of iterations required for the the energy minimization
+	int iterNPrimaryVBTNode; // Number of iterations required for the the energy minimization
 
 	double increaseLikelihoodThreshold; // The likelhood of nodes less than this value is increased 
-	double discardNodeLikelihoodThreshold; // Nodes with likelihood less than this value are discarded
+	double discardVBTNodeLikelihoodThreshold; // VBTNodes with likelihood less than this value are discarded
 	// If the number of iterations (while fitting a sphere to the node) are below this value, only region based term is used to update the energy
 	int iterNForOnlyRegionBasedTerm;
 	int iterNMinimum; // Minimum number of iterations
@@ -251,7 +251,7 @@ struct NodeDetectionParameters{
 
 	int maxVesselWidth, minVesselWidth; // Bounds on the node scale (in pixels)
 
-	double likelihoodThresholdPrimary; // Nodes with likelihood less than this value will be discarded
+	double likelihoodThresholdPrimary; // VBTNodes with likelihood less than this value will be discarded
 	// A node will be discarded if its distance from any other node is lesser than this number times the distance between their centers
 	double distanceThresholdPrimary;
 	double distanceThresholdSecondary; // Same as distanceThresholdPrimary, but applied in the scheduling for secondary nodes
@@ -277,7 +277,7 @@ struct NodeDetectionParameters{
 	double secondaryReverseScaleRate;
 	double maxTraceCost;
 	double traceLengthCost;
-	double primaryNodeSearchRadFactor; // Defines the factor of primary node radius which contributes to the initial position of secondary nodes
+	double primaryVBTNodeSearchRadFactor; // Defines the factor of primary node radius which contributes to the initial position of secondary nodes
 	double infTraceQuality;
 	int maxQueueSize;
 
@@ -299,7 +299,7 @@ struct GraphAndMSTPartameters{
 	double maxEdgeWeight; 
 	double minBranchAngle; // minimum branching angle in radian
 	int maxNBranches; 
-	int maxTreeNodes;
+	int maxTreeVBTNodes;
 
 	void initByDefaultValues(void);
 };
@@ -309,7 +309,7 @@ struct AllParameters{
 	PreprocessingParameters preProcessingParams;
 	SphericalBinInfo oriBin;
 
-	NodeDetectionParameters nodeDetectionParams;
+	VBTNodeDetectionParameters nodeDetectionParams;
 
 	GraphAndMSTPartameters graphAndMSTParams;
 	
@@ -338,13 +338,13 @@ struct VBTTree{
 
 	int ID;
 	int start;
-	int NNodes;
+	int NVBTNodes;
 
 	VBTTree();
 	VBTTree(int, int, int);
 };
 
-class SWCNodeVessel{
+class SWCVBTNodeVessel{
 
 public:
 	int ID;
@@ -362,7 +362,7 @@ public:
 	std::vector<int> parents;
 	std::vector<int> children;
 
-	SWCNodeVessel();
+	SWCVBTNodeVessel();
 };
 
 class VesselNetworkFeatures{
@@ -408,7 +408,7 @@ public:
 	VesselSegmentFeatures();
 };
 
-class VesselNodeFeatures{
+class VesselVBTNodeFeatures{
 
 public:
 	int ID;
@@ -426,10 +426,10 @@ public:
 	std::vector<double> ODFModesY;
 	std::vector<double> ODFModesZ;
 	
-	VesselNodeFeatures();
+	VesselVBTNodeFeatures();
 };
 
-struct Node{
+struct VBTNode{
 
 	double x;
 	double y;
@@ -479,7 +479,7 @@ struct Node{
 	double nHoodSecondaryMultiplier;
 	double nHoodScaleSecondary; 
 
-	double secondaryNodeSearchRad; // Defines the radius for the search space of secondary nodes
+	double secondaryVBTNodeSearchRad; // Defines the radius for the search space of secondary nodes
 	// The coordinates at which the secondary node for this primary node will be initialized
 	double xInitSecondary;
 	double yInitSecondary;
@@ -487,10 +487,10 @@ struct Node{
 
 
 	// Stores the affinity connections for a node based on angular binning for neighbors (see Amit thesis pg. 126)
-	std::vector<double> connectedNodesBinned;
+	std::vector<double> connectedVBTNodesBinned;
 	
 	//Stores the filtered affinity connections for each node (affinity graph)
-	std::vector<std::pair<int, double> > connectedNodesAffinity;
+	std::vector<std::pair<int, double> > connectedVBTNodesAffinity;
 	
 	int ID; 
 	std::vector<int> branchIDs;
@@ -507,31 +507,31 @@ struct Node{
 	std::vector<int> parents;
 	int ODF_modes;
 
-	VesselNodeFeatures nodeFeatures;
+	VesselVBTNodeFeatures nodeFeatures;
 
 	itk::Index<3> gridNdx;
 
-	NodeDetectionParameters nodeDetectionParams;
+	VBTNodeDetectionParameters nodeDetectionParams;
 
-	Node();
-	Node(double, double, double, PixelType);
+	VBTNode();
+	VBTNode(double, double, double, PixelType);
 
-	static double ComputeNorm(Node);
-	static void ComputeDistanceBetweenNodes(Node, Node, Node&);
-	void NormalizeNode(double);
-	void InvertNodeDir(void);
-	static double DotProduct(Node, Node);
+	static double ComputeNorm(VBTNode);
+	static void ComputeDistanceBetweenVBTNodes(VBTNode, VBTNode, VBTNode&);
+	void NormalizeVBTNode(double);
+	void InvertVBTNodeDir(void);
+	static double DotProduct(VBTNode, VBTNode);
 	void InitDefaultParamsBeforeOptimization(void);
 	void InitDefaultParamsBeforeODFRecursion(void);
 };
 
-class compareNodes{
+class compareVBTNodes{
 
 public:
-	compareNodes(const int& type=2){
+	compareVBTNodes(const int& type=2){
 		this->comparisonType = type;
 	}
-	bool operator()(Node& n1, Node& n2){
+	bool operator()(VBTNode& n1, VBTNode& n2){
 		if(this->comparisonType == 1)
 			return (n1.likelihood > n2.likelihood);
 		if(this->comparisonType == 2)
@@ -545,7 +545,7 @@ private:
 	int comparisonType; 
 };
 
-typedef std::priority_queue<Node, std::vector<Node>, compareNodes> PriorityQueueType;
+typedef std::priority_queue<VBTNode, std::vector<VBTNode>, compareVBTNodes> PriorityQueueType;
 
 class arrayElement{
 
@@ -574,7 +574,7 @@ class IntrinsicFeatureVector_VT{
 public:
 
 	itk::Index<3> centroid;
-	//HeapNode_astro weightedCentroid;
+	//HeapVBTNode_astro weightedCentroid;
 	unsigned short int ID;
 	double volume;
 	double boundingBoxVolume;
@@ -679,7 +679,7 @@ public:
 
 	/** Compute all primary nodes
 	 */
-	void ComputeAllPrimaryNodes(void);
+	void ComputeAllPrimaryVBTNodes(void);
 
 	/** Compute seeds to initialize the tracing. This is done using a grid of a given spacing.
 	 */
@@ -688,12 +688,12 @@ public:
 	/** Fit a sphere at all nodes (seeds) using the energy minimization technique (Amit thesis pp. 112)
 	 * and sort nodes using the likelihood.
 	 */
-	void FitSphereAndSortNodes(void);
+	void FitSphereAndSortVBTNodes(void);
 
 	/** Visualize nodes on the data 3D
 	 * (nodes vector, visualize nodes as a point?)
 	 */
-	void VisualizeNodesWithData3D(std::vector<Node>, bool);
+	void VisualizeVBTNodesWithData3D(std::vector<VBTNode>, bool);
 
 	/** Return the sign of the value - THIS SHOULD MOVE TO COMMON
 	 * (value)
@@ -702,24 +702,24 @@ public:
 
 	/* Compute all secondary nodes
 	 */
-	void ComputeAllSecondaryNodes(void);
+	void ComputeAllSecondaryVBTNodes(void);
 
 	/* Compute all secondary nodes
 	 */
-	void ComputeAllSecondaryNodes2(void);
+	void ComputeAllSecondaryVBTNodes2(void);
 
 	/* Compute all secondary nodes for retracing
 	 */
-	void ComputeAllSecondaryNodesRetracing(void);
+	void ComputeAllSecondaryVBTNodesRetracing(void);
 
 	/* Write a vector of nodes to a text file for further processing
 	 * (Vector of nodes to write, file path with extension)
 	 */
-	static void writeNodesToFile(std::vector<Node>&, std::string);
+	static void writeVBTNodesToFile(std::vector<VBTNode>&, std::string);
 
 	/* Read nodes from text file 
 	 */
-	void ReadNodesFromTextFile(const std::string&);
+	void ReadVBTNodesFromTextFile(const std::string&);
 
 	/* Create MST 
 	 */
@@ -761,22 +761,22 @@ public:
 	void PrintForest(void);
 
 	/* Fit sphere at a single node
-	 * (Node object)	
+	 * (VBTNode object)	
 	 */
-	void FitSphereAtNode(Node&);
+	void FitSphereAtVBTNode(VBTNode&);
 
 	/* Fit sphere at a single node
-	 * (Node object, image_ptr, gx ptr, gy, ptr, gz ptr)	
+	 * (VBTNode object, image_ptr, gx ptr, gy, ptr, gz ptr)	
 	 */
-	void FitSphereAtNode(Node&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
+	void FitSphereAtVBTNode(VBTNode&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
 	
 	/* Internal function	
 	 */
-	void InitNodeDetectionParamsDefault(void);
+	void InitVBTNodeDetectionParamsDefault(void);
 
 	/* Generate a labelled, directed graph from the unlabelled graph. Also generates preliminary node-based features
 	 */
-	void PopulateSWCNodeContainerAndComputeNodeFeatures(void);
+	void PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures(void);
 
 	/* Write the SWC file to disk
 	 */
@@ -813,7 +813,7 @@ public:
 	
 	/* Write node properties to file
 	 */
-	void WriteNodeFeaturesFile(void);
+	void WriteVBTNodeFeaturesFile(void);
 	
 	/* Compute vessel network features
 	 */
@@ -839,24 +839,24 @@ private:
 	RenderImageType3D::Pointer inputDataForRendering;
 	RenderImageType3D::Pointer maximumProjectionImage;
 	RenderImageType3D::Pointer minimumProjectionImage;
-	RenderImageType3D::Pointer primaryNodesImage, secondaryNodesImage;
+	RenderImageType3D::Pointer primaryVBTNodesImage, secondaryVBTNodesImage;
 	RenderImageType3D::Pointer retracingStartPointsImage;
 	RenderImageType3D::Pointer skeletonImage, segmentationMaskImage;
 
-	std::vector<Node> initialSeeds;
-	std::vector<Node> primaryNodes;
-	std::vector<Node> primaryNodesAfterHitTest;
-	std::vector<Node> allNodes;
-	std::vector<Node> allForestNodes;
-	std::vector<Node> retracingStartPoints;
+	std::vector<VBTNode> initialSeeds;
+	std::vector<VBTNode> primaryVBTNodes;
+	std::vector<VBTNode> primaryVBTNodesAfterHitTest;
+	std::vector<VBTNode> allVBTNodes;
+	std::vector<VBTNode> allForestVBTNodes;
+	std::vector<VBTNode> retracingStartPoints;
 
-	//std::map<itk::Index<3>, Node, compareIndex> nodeGridMap;
+	//std::map<itk::Index<3>, VBTNode, compareIndex> nodeGridMap;
 	//ArrayType3D nodeGridArray;
 
 	std::vector<AffinityEdge> edges;
 	std::vector<AffinityEdge> loops;
 	std::vector<VBTTree> forest;
-	std::vector<SWCNodeVessel> SWCNodeVessel_vec;
+	std::vector<SWCVBTNodeVessel> SWCVBTNodeVessel_vec;
 
 	// 0: Use vesselness in selecting primary seeds only
 	// 1: Use vesselness in case0 and tracing cost function
@@ -866,65 +866,65 @@ private:
 	VesselNetworkFeatures networkFeatures;
 
 	/* Update the node appearance 
-	 * (Node object)
+	 * (VBTNode object)
 	 */
-	void UpdateAppearanceVectorized(Node&);
+	void UpdateAppearanceVectorized(VBTNode&);
 
 	/* Update the node appearance 
-	 * (Node object, image ptr, gx ptr, gy ptr, gz ptr)
+	 * (VBTNode object, image ptr, gx ptr, gy ptr, gz ptr)
 	 */
-	void UpdateAppearanceVectorized(Node&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
+	void UpdateAppearanceVectorized(VBTNode&, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer, ImageType3D::Pointer);
 
 	/* Update the node model
-	 * (Node object, iteration number)
+	 * (VBTNode object, iteration number)
 	 */
-	void UpdateModel(Node&, int);
+	void UpdateModel(VBTNode&, int);
 
 	/* Define the criteria for exiting the model fitting at seeds
-	 * (Node object, iteration number)
+	 * (VBTNode object, iteration number)
 	 */
-	bool ExitModelFitting(Node&, int);
+	bool ExitModelFitting(VBTNode&, int);
 
 	/* Sort the nodes based on likelihood and filter them based on 
 	 * Euclidian distance (nodes which are too close are filtered out)
 	 */
-	void SortAndFilterPrimaryNodes(void);
+	void SortAndFilterPrimaryVBTNodes(void);
 
 	/* While scheduling the tracer, determines wheather or not the image region is 
 	 * occupied by a current node
-	 * (Node object)
+	 * (VBTNode object)
 	 */
-	int TraceHitTest(Node); 
+	int TraceHitTest(VBTNode); 
 
 	/* Compute the directions for secondary nodes for a primary node
-	 * (Node ref, direction hist ref)
+	 * (VBTNode ref, direction hist ref)
 	 */
-	void ComputeSecondaryNodeDirections(Node&, std::vector<double>&);
+	void ComputeSecondaryVBTNodeDirections(VBTNode&, std::vector<double>&);
 	
 	/* Fit the model using additional constraints for secondary nodes for the given direction vector
 	 * (Primary/anchor node ref, Secondary node ref, direction vec)
 	 */
-	void FitSphereAtNodeSecondary(Node&, Node&, std::vector<double>);
+	void FitSphereAtVBTNodeSecondary(VBTNode&, VBTNode&, std::vector<double>);
 
 	/* Update the node model for secondary nodes
-	 * (Node ref, anchor node ref, iteration number)
+	 * (VBTNode ref, anchor node ref, iteration number)
 	 */
-	void UpdateModelSecondary(Node&, Node&, int);
+	void UpdateModelSecondary(VBTNode&, VBTNode&, int);
 
 	/* Compute the cost of the trace for the given node
-	 * (Node ref)
+	 * (VBTNode ref)
 	 */
-	double computeTraceQuality(Node&);
+	double computeTraceQuality(VBTNode&);
 
 	/* Compute the bin for affinity graph
 	 * (direction node)	
 	 */
-	int ComputeAffinityBin(Node);
+	int ComputeAffinityBin(VBTNode);
 
 	/* Relabel nodes when there is a collision in node IDs
 	 * (old ID, new ID)
 	 */
-	void RelabelForestNodes(int, int);
+	void RelabelForestVBTNodes(int, int);
 
 	/* Check if already labeled nodes are neighbors in the tree
 	 * (node 1 ID, node 2 ID)
@@ -991,7 +991,7 @@ public:
 	/* Read node properties from file
 	 * (file path)
 	 */
-	void ReadNodePropertiesFile(const std::string);
+	void ReadVBTNodePropertiesFile(const std::string);
 
 private:
 
@@ -1009,7 +1009,7 @@ private:
 	RenderImageType3D::RegionType insideRegion;
 
 	std::vector<NucleiObject_VT> nucleiObjects;
-	std::vector<Node> skeletonNodes;
+	std::vector<VBTNode> skeletonVBTNodes;
 };
 
 #endif //_ftkVesselTracer_h
