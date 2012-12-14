@@ -111,7 +111,7 @@ public:
 	double totalTipX, totalTipY, totalTipZ;
 	double tipMagnitude, tipAzimuth, tipElevation;
 
-	double DeviceDistance;
+	double DeviceDistance, DeviceAzimuth, DeviceElevation;
 	double prediction, confidence;
 
 	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;

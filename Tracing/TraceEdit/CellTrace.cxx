@@ -17,11 +17,6 @@ limitations under the License.
 #include "TraceLine.h"
 #include "CellTrace.h"
 
-static double DefaultValue[115] ={-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,0,0,0,0,100,0,0,100,0,0,
-0,0,1000,0,0,100,0,0,0,100,0,100,0,0,100,0,0,0,0,0,0,-PI,-PI,-PI,100,-PI,0,0,100,0,0,100,0,0,100,
-0,0,100,0,0,100,-1,-1,100,-1,-1,100,0,0,100,100,0,-PI,180,0,-PI,180,0,0,180,0,0,180,0,0,180,0,0,180,
-0,100,100,0,0,0,0,0,100,0,0,0,0,100,0,0,100,100,-PI,0,-1,-1};
-
 CellTrace::CellTrace()
 {
 	this->clearAll();
@@ -78,6 +73,8 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 	this->somaVolume = this->segments[0]->GetSomaVolume();
 	this->somaRadii = this->segments[0]->GetRadii();
 	this->DeviceDistance = this->segments[0]->GetDistanceToROI();
+	this->DeviceAzimuth = this->segments[0]->GetAzimuthToROI();
+	this->DeviceElevation = this->segments[0]->GetElevationToROI();
 
 	for(i = 1; i < this->segments.size(); i++)
 	{
@@ -165,8 +162,6 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(this->segments[i]->GetBifAmplLocal(), this->BifAmplLocal, this->BifAmplLocalMin, this->BifAmplLocalMax);
 			this->MaxMin(this->segments[i]->GetBifAmplRemote(), this->BifAmplRemote, this->BifAmplRemoteMin, this->BifAmplRemoteMax);
 			this->MaxMin(this->segments[i]->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax,this->BifTiltLocalCount);
-			//this->MaxMin(this->segments[i]->GetBranch1()->GetBifTiltLocal(), this->BifTiltLocal, this->BifTiltLocalMin, this->BifTiltLocalMax);
-			///this->MaxMin(this->segments[i]->GetBranch1()->GetBifTorqueLocal(), this->BifTorqueLocal, this->BifTorqueLocalMin, this->BifTorqueLocalMax);
 			if(this->segments[i]->isBranch())
 			{
 				this->MaxMin(this->segments[i]->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax,this->BifTiltRemoteCount);
@@ -175,9 +170,6 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 				{
 					this->MaxMin(this->segments[i]->GetBifTorqueRemote(),this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax, this->BifTorqueRemoteCount);
 				}
-
-			//this->MaxMin(this->segments[i]->GetBranch2()->GetBifTiltRemote(), this->BifTiltRemote, this->BifTiltRemoteMin, this->BifTiltRemoteMax);
-			//this->MaxMin(this->segments[i]->GetBranch2()->GetBifTorqueRemote(), this->BifTorqueRemote, this->BifTorqueRemoteMin, this->BifTorqueRemoteMax);
 			}//end if branch
 			if (this->segments[i]->GetLevel() == 1)
 			{
@@ -245,6 +237,19 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 	this->segments[0]->SetDistanceToROICoord_X(Coord_X);
 	this->segments[0]->SetDistanceToROICoord_Y(Coord_Y);
 	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
+
+	double delX, delY, delZ;
+	//delta x,y,z
+	delX = Coord_X-this->somaX;
+	delY = Coord_Y-this->somaY;
+	delZ = Coord_Z-this->somaZ;
+	double azimuthtoDevice = atan2(delY,delX)*180/PI;
+	double hypotenusetoDevice = sqrt(pow(delX,2) + pow(delY,2));
+	double elevationtoDevice = atan2(delZ,hypotenusetoDevice)*180/PI;
+	
+	this->segments[0]->SetDirectionToROIAzimuth(azimuthtoDevice);
+	this->segments[0]->SetDirectionToROIElevation(elevationtoDevice);
+
 	this->modified = true;
 }
 void CellTrace::SetClassification(int predicCol, double prediction, int confCol,double confidence)
@@ -457,6 +462,8 @@ void CellTrace::clearAll()
 	this->DeviceDistance = 0;
 	this->prediction = -PI;
 	this->confidence = -PI;
+	this->DeviceAzimuth = -1000;
+	this->DeviceElevation = -1000;
 
 	//change to -PI later
 	this->convexHullMagnitude = -1000;
@@ -772,6 +779,8 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		/*CellData->InsertNextValue(this->prediction);
 		CellData->InsertNextValue(this->confidence);*/
 		CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
+		CellData->InsertNextValue(this->segments[0]->GetAzimuthToROI());
+		CellData->InsertNextValue(this->segments[0]->GetElevationToROI());
 		//std::cout << this->FileName << std::endl;
 		this->modified = false;
 	}
