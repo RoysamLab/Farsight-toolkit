@@ -431,7 +431,7 @@ endif(BUILD_NUCLEI)
 
 if(BUILD_VESSEL_TRACING)
   set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
-  #add_subdirectory( VesselTracer )
+  add_subdirectory( ftkVesselTracer )
 endif(BUILD_VESSEL_TRACING)
 
 #if(BUILD_SuperEllipsoidTracer)
