@@ -374,7 +374,7 @@ void GVFDiffusion(float& smoothing_sigma, int& N_iter, const std::string& write_
 	//WriteImage3D(output_file, data_ptr);
 }
 
-void Common::GVFDiffusionFaster(float& smoothing_sigma, int& N_iter, const std::string& write_path, ImageType3D::Pointer& data_ptr){
+void GVFDiffusionFaster(float& smoothing_sigma, int& N_iter, const std::string& write_path, ImageType3D::Pointer& data_ptr){
 	
 	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
 	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();
@@ -547,7 +547,7 @@ void Common::GVFDiffusionFaster(float& smoothing_sigma, int& N_iter, const std::
 	WriteImage3D(output_file, data_ptr);
 }
 
-void Common::GVFDiffusion(float& smoothing_sigma, int& N_iter, ImageType3D::Pointer& data_ptr, ImageType3D::Pointer& gx, ImageType3D::Pointer& gy, ImageType3D::Pointer& gz){
+void GVFDiffusion(float& smoothing_sigma, int& N_iter, ImageType3D::Pointer& data_ptr, ImageType3D::Pointer& gx, ImageType3D::Pointer& gy, ImageType3D::Pointer& gz){
 
 	typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<ImageType3D, ImageType3D> SmoothingFilterType;
 	SmoothingFilterType::Pointer smoothing_filter = SmoothingFilterType::New();

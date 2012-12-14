@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+
 PROJECT (ftkVesselTracer)
 
 SET(ftkVesselTracer_sources
@@ -16,6 +18,9 @@ SET(ftkVesselTracer_headers
 
 ADD_EXECUTABLE ( ftkVesselTracer ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
 
+TARGET_LINK_LIBRARIES( ftkVesselTracer ${VTK_LIBRARIES} ${ITK_LIBRARIES} vcl vnl vnl_algo vnl_io rtvl)
+
 ADD_LIBRARY(VesselTracer_lib ${ftkVesselTracer_sources} ${ftkVesselTracer_headers} Tracer_main.cxx)
 
-TARGET_LINK_LIBRARIES( ftkVesselTracer ${VTK_LIBRARIES} ${ITK_LIBRARIES} vcl vnl vnl_algo vnl_io rtvl)
+TARGET_LINK_LIBRARIES(VesselTracer_lib ${ITK_LIBRARIES} ${VTK_LIBRARIES} vcl vnl vnl_algo vnl_io rtvl)
+
