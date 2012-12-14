@@ -73,7 +73,7 @@ public:
   typedef typename OutputImageType::PixelType OutputPixelType;
   
   /** Image dimension */
-  itkStaticConstMacro(ImageDimension, unsigned int, ::itk::GetImageDimension<InputImageType>::ImageDimension);
+  itkStaticConstMacro(ImageDimension, unsigned int, InputImageType::ImageDimension );
 
   typedef double EigenValueType;
   typedef itk::FixedArray< EigenValueType, InputPixelType::Dimension > EigenValueArrayType;

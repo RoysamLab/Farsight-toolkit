@@ -76,7 +76,7 @@ public:
   typedef typename TOutputImage::PixelType               OutputPixelType;
 
   /** Image dimension. */
-  itkStaticConstMacro(ImageDimension, unsigned int, ::itk::GetImageDimension<InputImageType>::ImageDimension);
+  itkStaticConstMacro(ImageDimension, unsigned int, InputImageType::ImageDimension);
  
   /** Hessian computation filter. */
   typedef HessianRecursiveGaussianImageFilter< InputImageType, typename HessianToMeasureFilterType::InputImageType > HessianFilterType;
