@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(TraceEdit)
 
-QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h NodeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h NodeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h
+	      OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED )
   
 set( TRACE_SRCS
   TraceBit.h		TraceBit.cxx
