@@ -20,8 +20,6 @@ limitations under the License.
 #include "itkAddImageFilter.h"
 #include "itkEuler3DTransform.h"
 #include "itkEllipseSpatialObject.h"
-//#include "itkFixedCenterOfRotationAffineTransform.h"
-//#include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
 #include "itkMaskImageFilter.h"
 #include "itkResampleImageFilter.h"
@@ -30,17 +28,13 @@ limitations under the License.
 #include "ImageActors.h"
 #include "itkImageFileWriter.h"
 
-//#include "QuickView.h"
-
 typedef itk::Euler3DTransform< double > TransformType;
-//typedef itk::FixedCenterOfRotationAffineTransform< double, Dimension > TransformType;
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
 typedef itk::EllipseSpatialObject< Dimension > EllipseType;
 typedef EllipseType::TransformType EllipseTransformType;
 typedef itk::SpatialObjectToImageFilter< EllipseType, ImageType >	SpatialObjectToImageFilterType;
 typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleFilterType;
 typedef itk::ImageRegionConstIterator< ImageType > ConstIteratorType;
-//typedef itk::ImageRegionIterator< ImageType > IteratorType;
 typedef itk::ImageFileWriter< ImageType > WriterType;
 typedef itk::AddImageFilter< ImageType, ImageType > AddImageFilterType;
 
@@ -50,9 +44,7 @@ public:
 	StructuredObject();
 	~StructuredObject();
 		
-	void sphereKernel(ImageType::Pointer input, ImageType::Pointer &mask, int radius);
 	void circleKernel(ImageType::Pointer input, ImageType::Pointer &mask, int centerVoxel[], double radius, double azimuth, double elevation);
-	void taperedCylinderMask(ImageType::Pointer image, ImageType::Pointer &mask, int firstBit[], double radius1, int secondBit[], double radius2);
 	
 private:
 
