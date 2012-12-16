@@ -140,6 +140,10 @@ typedef float PixelType;
 typedef unsigned char RenderPixelType;
 typedef unsigned short LabelPixelType;
 typedef itk::Image<PixelType, 3> ImageType3D;
+
+typedef itk::SymmetricSecondRankTensor<double, 3> HessianPixelType;
+typedef itk::Image< HessianPixelType, 3 > HessianImageType3D;
+
 typedef itk::Image<RenderPixelType, 3> RenderImageType3D;
 typedef itk::Image<LabelPixelType, 3> LabelImageType3D; 
 typedef itk::ImageToVTKImageFilter<RenderImageType3D> ITKToVTKConnectorType; 
@@ -153,8 +157,11 @@ typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxCalculatorType;
 typedef itk::DivideImageFilter<ImageType3D, ImageType3D, ImageType3D> DivideImageFilterType;
 typedef itk::InvertIntensityImageFilter<ImageType3D> InvertImageFilterType;
 typedef itk::ImageFileWriter<RenderImageType3D> ImageWriter;
-typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
-typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, ObjectnessFilterType> MultiScaleHessianFilterType;
+//typedef itk::HessianToObjectnessMeasureImageFilter<PixelType, 3> ObjectnessFilterType;
+typedef itk::MultiScaleHessianBasedMeasureImageFilter<ImageType3D, HessianImageType3D > MultiScaleHessianFilterType;
+typedef itk::HessianToObjectnessMeasureImageFilter<HessianImageType3D, ImageType3D > ObjectnessFilterType;
+
+
 typedef itk::AddImageFilter<ImageType3D> VBTAddImageFilterType;
 typedef itk::MultiplyImageFilter<ImageType3D> MultiplyImageFilterType;
 typedef itk::NormalizeImageFilter<ImageType3D, ImageType3D> NormalizeImageFilterType;

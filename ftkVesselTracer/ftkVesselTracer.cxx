@@ -5065,12 +5065,12 @@ void ftkVesselTracer::ComputeVesselnessImage(VesselnessMeasures& obj_measures, s
 
 	MultiScaleHessianFilterType::Pointer multi_scale_Hessian = MultiScaleHessianFilterType::New();
 	multi_scale_Hessian->SetInput(data_ptr);
-	multi_scale_Hessian->SetSigmaMin(obj_measures.sigma_min);
-	multi_scale_Hessian->SetSigmaMax(obj_measures.sigma_max);
+	multi_scale_Hessian->SetSigmaMinimum(obj_measures.sigma_min);
+	multi_scale_Hessian->SetSigmaMaximum(obj_measures.sigma_max);
 	multi_scale_Hessian->SetNumberOfSigmaSteps(obj_measures.sigma_intervals);
 
-	//ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
-	ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
+	ObjectnessFilterType::Pointer objectness_filter = ObjectnessFilterType::New();
+	//ObjectnessFilterType::Pointer objectness_filter = multi_scale_Hessian->GetHessianToMeasureFilter();
 	
 	objectness_filter->SetScaleObjectnessMeasure(false);
 	objectness_filter->SetBrightObject(true);
@@ -5079,9 +5079,17 @@ void ftkVesselTracer::ComputeVesselnessImage(VesselnessMeasures& obj_measures, s
 	objectness_filter->SetGamma(obj_measures.gamma);
 	objectness_filter->SetObjectDimension(obj_measures.vesselness_type);
 	
+	multi_scale_Hessian->SetHessianToMeasureFilter(objectness_filter);
 	//std::cout << obj_measures.alpha << std::endl << obj_measures.beta << std::endl << obj_measures.gamma << std::endl;
 
-	multi_scale_Hessian->Update();
+	try
+    {
+        multi_scale_Hessian->Update();
+	}
+    catch (itk::ExceptionObject &err)
+    {
+        std::cerr << "Error in multiscale Hessian filter" << std::endl;
+    }
 
 	Common::NormalizeData(multi_scale_Hessian->GetOutput(), this->VesselnessImage);
 	
