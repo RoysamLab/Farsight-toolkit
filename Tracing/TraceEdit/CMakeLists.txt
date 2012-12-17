@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(TraceEdit)
 
-QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h NodeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h
+QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h NodeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h RenderObject.h ImageViewer.h
 	      OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED )
   
 set( TRACE_SRCS
@@ -26,18 +26,23 @@ set( TRACE_SRCS
   StructuredObject.h	StructuredObject.cxx
   PadImageFilter.h	PadImageFilter.cxx
   NodeModel.h		NodeModel.cxx
+  RenderObject.h	RenderObject.cxx
+  ImageFeatureThreshold.h ImageFeatureThreshold.cxx
+  ImageViewer.h		ImageViewer.cxx
+  TraceView3DTemplates.h
   ${GUI_MOC_SRCS}
   ) 
 
 set( TRACE_LIBS
     tiff
+    MultipleNeuronTracerLib
+    VesselTracer_lib
     ${ITK_LIBRARIES}
     ${VTK_LIBRARIES}
     ftkGUI
     ftkCommon
     ftkGraphs
     MCLR
-    VesselTracer_lib
     ${QT_LIBRARIES} )
 
 if( BUILD_SPD )	

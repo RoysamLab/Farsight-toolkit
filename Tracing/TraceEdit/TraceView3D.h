@@ -128,7 +128,11 @@ limitations under the License.
 #include "NodeModel.h"
 
 #include "VolumeOfInterest.h"
-  
+#include "RenderObject.h"
+#include "ImageFeatureThreshold.h"
+#include "ImageViewer.h"
+#include "TraceView3DTemplates.h"
+
 #ifdef USE_QT_TESTING
 #include "GUITester.h"
 #endif
@@ -220,7 +224,7 @@ public slots:
 	//tracing gui slots
 	void PickTracer(int choice);
 	void RunTracer();
-	void StartMNTracerAmit(int costThreshold);
+	void StartMNTracerAmit(bool);
 	void StartVesselBallTracer();
 	void seedPointFileDialog();
 	void somaFileDialog();
@@ -302,6 +306,10 @@ public slots:
 	void NeighborsWithinRadiusAnalysis();
 	void SpectralCluserting();
 	void selectedFeaturesClustering();
+	void displayImageMNT(ImageFeatureThreshold *featureThreshold);
+	void saveImageFeatures(ImageFeatureThreshold *featureThreshold);
+	itk::Index<3> GetCentroid();
+
 
 //these are for bootloadfile
 	QString getTraceFile();
@@ -374,6 +382,10 @@ private:
 	QTime  Time;
 	QDockWidget *statisticsDockWidget;
 	int flag;
+	bool load16bit;
+	int _xTile;
+	int _yTile;
+	int _zTile;
 	
 //settings for display
 	int SmallLineLength, maxNumBits, maxPathLength, minDistToParent;
@@ -395,6 +407,13 @@ private:
 	QDialog *tracingGui;
 	QAction *aboutAction;
 	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SomaBar, *SlicerBar;
+	double widthx;
+	double widthy;
+	double widthz;
+
+	double startx;
+	double starty;
+	double startz;
 
   #ifdef USE_QT_TESTING
   //testing GUI elements
@@ -508,6 +527,7 @@ private:
 	StatisticsToolbar * statisticsToolbar;
 
 	bool bKeepSelectedTraces;   /// whether keep the last rendered traces
+	QThread *cThread;
 
 #ifdef USE_SPD
 	SPDtestWindow *SPDWin;
@@ -574,7 +594,13 @@ private:
 	//tracing gui widgets
 	QComboBox * tracerCombo;
 	QGroupBox * mntBox;
+	QGroupBox * gvfBox;
 	QSpinBox * mntCostThreshold;
+	QDoubleSpinBox * mntIntensityThreshold;
+	QDoubleSpinBox * mntContratstThreshold;
+	QDoubleSpinBox * mntDebrisThreshold;
+	QDoubleSpinBox * mntDeviceFlag;
+	QDoubleSpinBox * mntOffshoot;
 	QPushButton * mntSeedsButton;
 	QPushButton * mntSomaButton;
 	QString seedsFile;
