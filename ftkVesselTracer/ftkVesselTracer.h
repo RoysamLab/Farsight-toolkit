@@ -16,7 +16,9 @@
 #include <time.h>
 #include <cmath>
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "vtkSmartPointer.h"
 #include "vtkActor.h"

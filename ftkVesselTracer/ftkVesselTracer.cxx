@@ -819,6 +819,11 @@ void ftkVesselTracer::ComputeSeeds(void){
 	
 	this->initialSeeds.resize(grid_size);
 	
+	
+	int num_threads = omp_get_num_threads();
+	//std::cout << "NUMBER OF THREADS: " << num_threads << std::endl;
+
+	//omp_set_num_threads(10);
 
 #if _OPENMP < 200805L
 	#pragma omp parallel for private(offset, starting_index, max_index, max_index_2, min_index, sub_volume_size, sub_volume_region, sub_volume, sub_volume_2)
@@ -1283,6 +1288,17 @@ void ftkVesselTracer::FitSphereAtVBTNode(VBTNode& seed){
 			break;
 	}
 
+	// Clear some useless stuff
+	seed.xNormalizedInBand.clear();
+	seed.yNormalizedInBand.clear();
+	seed.zNormalizedInBand.clear();
+	seed.intensityInBand.clear();
+	seed.vesselnessInBand.clear();
+	seed.gxInBand.clear();
+	seed.gyInBand.clear();
+	seed.gzInBand.clear();
+
+
 }
 
 void ftkVesselTracer::FitSphereAtVBTNode(VBTNode& seed, ImageType3D::Pointer data_ptr, ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
@@ -1385,6 +1401,16 @@ void ftkVesselTracer::FitSphereAtVBTNodeSecondary(VBTNode& primary_node, VBTNode
 		if(this->ExitModelFitting(secondary_node, i) == true)
 			break;
 	}
+	
+	secondary_node.xNormalizedInBand.clear();
+        secondary_node.yNormalizedInBand.clear();
+        secondary_node.zNormalizedInBand.clear();
+        secondary_node.intensityInBand.clear();
+        secondary_node.vesselnessInBand.clear();
+        secondary_node.gxInBand.clear();
+        secondary_node.gyInBand.clear();
+        secondary_node.gzInBand.clear();
+
 }
 
 void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
@@ -1435,6 +1461,7 @@ void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 	seed.yNormalizedInBand.clear();
 	seed.zNormalizedInBand.clear();
 	seed.intensityInBand.clear();
+	seed.vesselnessInBand.clear();
 	seed.gxInBand.clear();
 	seed.gyInBand.clear();
 	seed.gzInBand.clear(); 
@@ -2235,6 +2262,7 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 		
 		total_nodes_counter++;
 		this->allVBTNodes.push_back(current_node);
+		std::cout << "Node id: " << total_nodes_counter << std::endl;
 
 		//std::cout << total_nodes_counter << " " << this->allVBTNodes.size() << std::endl;
 
