@@ -64,12 +64,12 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		this->CreateMinimumSpanningForest();
 	}
 	
-	//this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
-	//this->WriteVBTNodeFeaturesFile();
-	//this->WriteSWCFileVessel();
-	//this->WriteSegmentationMask();
+	this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
+	this->WriteVBTNodeFeaturesFile();
+	this->WriteSWCFileVessel();
+	this->WriteSegmentationMask();
 	//this->WriteSkeletonImageFromVTK();
-	//this->WriteSkeletonImage();
+	this->WriteSkeletonImage();
 	
 
 	// "Smart" retracing
@@ -253,7 +253,7 @@ void VBTNodeDetectionParameters::initByDefaultValues(void){
 	
 	this->maxVesselWidth = 20;
 	this->minVesselWidth = 2; //1;
-	this->likelihoodThresholdPrimary = 0.04; //0.01; //0.04; //0.1; //0.01; //0.005; // Vary according to the noise level in the data
+	this->likelihoodThresholdPrimary = 0.1; //0.04; //0.01; //0.04; //0.1; //0.01; //0.005; // Vary according to the noise level in the data
 	this->distanceThresholdPrimary = 1.2;
 
 	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
@@ -1153,7 +1153,7 @@ void ftkVesselTracer::FitSphereAndSortVBTNodes(void){
 	// Parallel implementation for fitting spheres at each detected node
 
 	#pragma omp parallel for schedule(dynamic, 1)
-	for(int i = 0; i < 1000; i++){ //this->initialSeeds.size(); i++){
+	for(int i = 0; i < this->initialSeeds.size(); i++){
 
 		//std::cout << i << std::endl;
 		
