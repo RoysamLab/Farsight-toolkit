@@ -123,7 +123,7 @@ static void tred2(double V[3][3], double d[3], double e[3]);
 static void tql2(double V[3][3], double d[3], double e[3]);
 void eigen_decomposition(double A[3][3], double V[3][3], double d[3]);
 void eigen_decomposition2D(double A[2][2], double V[2][2], double d[2]);
-double MAX(double a, double b);
+double MAX_1(double a, double b);
 static double hypot2(double x, double y);
 double absd(double val);
 

@@ -1016,7 +1016,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
       std::cout<<std::endl<<"FALSE PIPELINE";
       FeatureMain();			//Nice function here that is easy to miss....
     }
-
+	//WriteImage3D(std::string("D:\\Data\\GVF_Traces\\temp\\LOG_seedPoint_Image.mhd"), _NDXImage);
     _CurrentID = 1;
 
     //set up the connection image and swc image
@@ -1273,7 +1273,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
     //////////if(yuWangTest == true){
 
 
-
+	//WriteImage3D(std::string("D:\\Data\\GVF_Traces\\temp\\GVF_seedPoint_Image.mhd"), _NDXImage);
 
     //////////	//ReaderType::GlobalWarningDisplayOff();
     //////////	//ReaderType::Pointer reader = ReaderType::New();
@@ -3046,7 +3046,7 @@ static void tql2(double V[3][3], double d[3], double e[3]) {
 
     /* Find small subdiagonal element */
 
-    tst1 = MAX(tst1, fabs(d[l]) + fabs(e[l]));
+    tst1 = MAX_1(tst1, fabs(d[l]) + fabs(e[l]));
     m = l;
     while (m < n) {
       if (fabs(e[m]) <= eps*tst1) { break; }
@@ -3127,7 +3127,7 @@ static void tql2(double V[3][3], double d[3], double e[3]) {
 }
 
 
-double MAX(double a, double b)
+double MAX_1(double a, double b)
 {
   return ((a)>(b)?(a):(b));
 }
