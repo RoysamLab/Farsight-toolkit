@@ -110,12 +110,12 @@ public:
 	double GetDistanceToROI() {return DistanceToROI;}
 	double GetAzimuthToROI() {return ROIAzimuth;}
 	double GetElevationToROI() {return ROIElevation;}
+	double GetTipToROI() {return somaROIAngle;}
 	void SetDistanceToROI(double distance) {DistanceToROI = distance;}
 	void SetDistanceToROICoord_X(double coord) {ROICoord_X = coord;}
 	void SetDistanceToROICoord_Y(double coord) {ROICoord_Y = coord;}
 	void SetDistanceToROICoord_Z(double coord) {ROICoord_Z = coord;}
-	void SetDirectionToROIAzimuth(double azimuth) {ROIAzimuth = azimuth;} 
-	void SetDirectionToROIElevation(double elevation) {ROIElevation = elevation;}
+	void CalculateDirectionToROI(TraceBit tipsPt);
 
 	/*void SetClassification(double newPrediction, double newConfidence)
 	{
@@ -216,7 +216,7 @@ private:
 	double daughterLengthRatio;
 	bool actualBifurcation;
 	//cell level features 
-	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z, ROIAzimuth, ROIElevation;
+	double DistanceToROI, ROICoord_X, ROICoord_Y, ROICoord_Z, ROIAzimuth, ROIElevation, somaROIAngle;
 	/*double prediction, confidence;*/
 
 

@@ -3945,6 +3945,8 @@ void  View3D::WriteVOI()
 	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString somaFiles = QFileDialog::getSaveFileName(this, "Save Volume as" , traceDir, 
 		tr("VTK Data Format ( *vtp ) " ) );
+	
+	somaFiles = somaFiles % QString(".vtp");
 	if(!somaFiles.isEmpty())
 	{
 		this->VOIType->WriteVTPVOI(somaFiles.toStdString());
@@ -3972,11 +3974,30 @@ void  View3D::ToggleVOI()
 /////////////////////////////////
 void View3D::CalculateDistanceToDevice()
 {	
+	if (!this->FL_MeasureTable)
+	{
+		this->ShowCellAnalysis();
+	}
 	unsigned int cellCount= this->CellModel->getCellCount();
 	if (cellCount >= 1)
 	{
 		this->VOIType->CalculateCellDistanceToVOI(this->CellModel);
 		this->CellModel->SyncModel();
+
+		std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
+		CellTrace* currCell = (*cellCount).second;
+		std::vector<std::string> DeviceAngleHeaders = currCell->calculateAnglesToDevice();
+		cellCount++;
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+		{
+			CellTrace* currCell = (*cellCount).second;
+			currCell->calculateAnglesToDevice();
+		}
+		for (std::vector<std::string>::iterator iter = DeviceAngleHeaders.begin(); iter != DeviceAngleHeaders.end(); iter++)
+		{
+			this->CellModel->AddNewFeatureHeader(*iter);
+		}
+
 		this->ShowCellAnalysis();
 	}
 	//vtkIdType nucleiRowCount = this->nucleiTable->GetNumberOfRows();

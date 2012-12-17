@@ -77,6 +77,9 @@ TraceLine::TraceLine()
 	this->ROICoord_X = 0;
 	this->ROICoord_Y = 0;
 	this->ROICoord_Z = 0;
+	this->ROIAzimuth = -1;
+	this->ROIElevation = -1;
+	this->somaROIAngle = -1;
 
 	this->actualBifurcation = false;
 	this->TraceFeatures.clear();
@@ -1346,20 +1349,6 @@ double TraceLine::PlaneAngle(double *plane1, double *plane2)
 	return std::acos(top/bottom)*180/PI;
 }
 
-//void TraceLine::calculateAzimuthElevation()
-//{
-//	TraceBit P1 = this->GetParent()->GetTraceBitsPointer()->front();
-//	TraceBit D1 = this->GetTraceBitsPointer()->front();
-//	/*TraceBit Ref;
-//	
-//	Ref.x = D1.x;
-//	Ref.y = D1.y;
-//	Ref.z = P1.z;*/
-//	
-//	azimuthangle = this->Azimuth(P1,D1);
-//	elevationangle = this->Elevation(P1,D1);
-//}
-
 double TraceLine::GetCompartmentCurvature()
 {
 	double angle = 0;
@@ -1431,4 +1420,17 @@ double TraceLine::GetElevation()
 	{
 		return -1;
 	}
+}
+
+void TraceLine::CalculateDirectionToROI(TraceBit tipsPt)
+{
+	TraceBit somaPt = this->m_trace_bits.front();
+	TraceBit ROIpt;
+	ROIpt.x = this->ROICoord_X;
+	ROIpt.y = this->ROICoord_Y;
+	ROIpt.z = this->ROICoord_Z;
+
+	this->ROIAzimuth = AzimuthAngle(somaPt,ROIpt);
+	this->ROIElevation = ElevationAngle(somaPt,ROIpt);
+	this->somaROIAngle = Angle(ROIpt,somaPt,tipsPt);
 }

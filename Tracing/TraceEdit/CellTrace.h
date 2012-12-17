@@ -52,6 +52,7 @@ public:
 	std::vector<std::string> calculateConvexHull();
 	vtkSmartPointer<vtkActor> GetDelaunayActor();
 	vtkSmartPointer<vtkActor> GetEllipsoidActor();
+	std::vector<std::string> calculateAnglesToDevice();
 
 	bool modified; //check if data needs to update
 
@@ -111,7 +112,7 @@ public:
 	double totalTipX, totalTipY, totalTipZ;
 	double tipMagnitude, tipAzimuth, tipElevation;
 
-	double DeviceDistance, DeviceAzimuth, DeviceElevation;
+	double DeviceDistance, DeviceAzimuth, DeviceElevation, cellDirectiontoDevice;
 	double prediction, confidence;
 
 	double convexHullMagnitude, convexHullAzimuth, convexHullElevation, convexHullArea, convexHullVol;

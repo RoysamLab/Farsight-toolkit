@@ -238,17 +238,11 @@ void CellTrace::setDistanceToROI(double newDistance, double Coord_X , double Coo
 	this->segments[0]->SetDistanceToROICoord_Y(Coord_Y);
 	this->segments[0]->SetDistanceToROICoord_Z(Coord_Z);
 
-	double delX, delY, delZ;
-	//delta x,y,z
-	delX = Coord_X-this->somaX;
-	delY = Coord_Y-this->somaY;
-	delZ = Coord_Z-this->somaZ;
-	double azimuthtoDevice = atan2(delY,delX)*180/PI;
-	double hypotenusetoDevice = sqrt(pow(delX,2) + pow(delY,2));
-	double elevationtoDevice = atan2(delZ,hypotenusetoDevice)*180/PI;
-	
-	this->segments[0]->SetDirectionToROIAzimuth(azimuthtoDevice);
-	this->segments[0]->SetDirectionToROIElevation(elevationtoDevice);
+	TraceBit tip;
+	tip.x = this->totalTipX;
+	tip.y = this->totalTipY;
+	tip.z = this->totalTipZ;
+	this->segments[0]->CalculateDirectionToROI(tip);
 
 	this->modified = true;
 }
@@ -462,8 +456,9 @@ void CellTrace::clearAll()
 	this->DeviceDistance = 0;
 	this->prediction = -PI;
 	this->confidence = -PI;
-	this->DeviceAzimuth = -1000;
-	this->DeviceElevation = -1000;
+	this->DeviceAzimuth = 0;
+	this->DeviceElevation = 0;
+	this->cellDirectiontoDevice = 0;
 
 	//change to -PI later
 	this->convexHullMagnitude = -1000;
@@ -779,16 +774,6 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		/*CellData->InsertNextValue(this->prediction);
 		CellData->InsertNextValue(this->confidence);*/
 		CellData->InsertNextValue( this->segments[0]->GetDistanceToROI());
-		if (this->segments[0]->GetDistanceToROI() == 0)
-		{
-			CellData->InsertNextValue(0);
-			CellData->InsertNextValue(0);
-		}
-		else
-		{
-			CellData->InsertNextValue(this->segments[0]->GetAzimuthToROI());
-			CellData->InsertNextValue(this->segments[0]->GetElevationToROI());
-		}
 		//std::cout << this->FileName << std::endl;
 		this->modified = false;
 	}
@@ -907,4 +892,18 @@ vtkSmartPointer<vtkActor> CellTrace::GetEllipsoidActor()
 		this->calculateConvexHull();
 	}
 	return ellipsoidActor;
+}
+
+std::vector<std::string> CellTrace::calculateAnglesToDevice()
+{
+	std::vector<std::string> DeviceAngleHeaders;
+	DeviceAngleHeaders.push_back("Azimuth to Device");
+	DeviceAngleHeaders.push_back("Elevation to Device");
+	DeviceAngleHeaders.push_back("Cell Tips to Device Angle");
+	
+	this->addNewFeature(DeviceAngleHeaders[0],this->segments[0]->GetAzimuthToROI());
+	this->addNewFeature(DeviceAngleHeaders[1],this->segments[0]->GetElevationToROI());
+	this->addNewFeature(DeviceAngleHeaders[2],this->segments[0]->GetTipToROI());
+
+	return DeviceAngleHeaders;
 }
