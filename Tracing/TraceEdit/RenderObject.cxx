@@ -59,6 +59,8 @@ void RenderObject::runMNTTracer(){
 		MNT->device = _featureThreshold->getdevice();//this->device;
 		MNT->offshoot = _featureThreshold->getoffshoot();//this->offshoot;
 		MNT->debris_threshold = _featureThreshold->getDebrisThreshold();//this->debris_threshold;
+		MNT->mu = _featureThreshold->getNoiseLevel();
+		MNT->noOfIteration = _featureThreshold->getNumberOfIteration();
 		MNT->LoadCurvImage_1(inputImage, 1);
 		std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 		clock_t ReadStartPoints_start_time = clock();

@@ -595,12 +595,15 @@ private:
 	QComboBox * tracerCombo;
 	QGroupBox * mntBox;
 	QGroupBox * gvfBox;
+	QGroupBox * commonBox;
 	QSpinBox * mntCostThreshold;
 	QDoubleSpinBox * mntIntensityThreshold;
 	QDoubleSpinBox * mntContratstThreshold;
 	QDoubleSpinBox * mntDebrisThreshold;
 	QDoubleSpinBox * mntDeviceFlag;
 	QDoubleSpinBox * mntOffshoot;
+	QSpinBox * mntNoiseLevel;
+	QSpinBox * mntNumberOfIteration;
 	QPushButton * mntSeedsButton;
 	QPushButton * mntSomaButton;
 	QString seedsFile;
