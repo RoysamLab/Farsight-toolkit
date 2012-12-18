@@ -254,6 +254,9 @@ public:
 	float debris_threshold;
 	int offshoot;
 	int device;
+	float mu;
+	int tracing_type; // 1 for LOG; 2 for GVF - Default - GVF Tracing
+	int noOfIteration;
 	void RemoveSoma( LabelImageType3D::Pointer image2 );
 
 	void OptimizeCoverage(std::string, bool);

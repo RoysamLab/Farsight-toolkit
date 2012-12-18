@@ -69,13 +69,35 @@ void MultipleNeuronTracer::LoadParameters(const char* parametersFileName,int _ar
   else
   { this->device = 1; printf("Chose device = 0 as default\n"); }
 
+  mi = opts.find("-mu"); 
+  if(mi!=opts.end())
+  { std::istringstream ss((*mi).second); ss>>this->mu; }
+  else
+  { this->mu = 100; printf("Chose mu = 100 as default\n"); }
+
+  mi = opts.find("-no_of_iteration"); 
+  if(mi!=opts.end())
+  { std::istringstream ss((*mi).second); ss>>this->noOfIteration; }
+  else
+  { this->noOfIteration = 15; printf("Chose noOfIteration = 15 as default\n"); }
+
+  mi = opts.find("-tracing_type");  // 1 for LOG; 2 for GVF - Default - GVF Tracing
+  if(mi!=opts.end())
+  { std::istringstream ss((*mi).second); ss>>this->tracing_type; }
+  else
+  { this->tracing_type = 2; printf("Chose tracing_type = 2(GVF Tracing) as default\n"); }
+
   debug = true;
+  std::cout<<"tracing_type="<<this->tracing_type<<std::endl;
   std::cout<<"intensity_threshold="<<this->intensity_threshold<<std::endl;
   std::cout<<"contrast_threshold="<<this->contrast_threshold<<std::endl;
   std::cout<<"cost_threshold="<<this->cost_threshold<<std::endl;
   std::cout<<"debris_threshold="<<this->debris_threshold<<std::endl;
   std::cout<<"offshoot="<<this->offshoot<<std::endl;
   std::cout<<"device="<<this->device<<std::endl;
+  std::cout<<"mu="<<this->mu<<std::endl;
+  std::cout<<"no_of_iteration="<<this->noOfIteration<<std::endl;
+  
 
 }
 void MultipleNeuronTracer::LoadParameters_1(const char* parametersFileName,float intensityThreshold,float contrastThreshold,int costThreshold)
@@ -1583,7 +1605,11 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
   void MultipleNeuronTracer::UpdateNDXImage_GVF(bool preComputedGVFAndVessel)
   {
 
-    int num_iteration = 15;
+	// int num_iteration = 15;
+	// float noise_level = 100;
+	
+	int num_iteration = this->noOfIteration;
+	float noise_level = this->mu;
     int smoothing_scale = 1;
     int detection_method = 1;
     int radius = 0.1;
@@ -1637,7 +1663,7 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
 
     if(!preComputedGVFAndVessel){
       std::cout<<"compute GVF"<<std::endl;
-      this->computeGVF(100,num_iteration,smoothing_scale);
+      this->computeGVF(noise_level,num_iteration,smoothing_scale);
 
       std::cout<<"compute GVF Vesselness"<<std::endl;
       this->ComputeGVFVesselness();
@@ -1771,7 +1797,10 @@ void MultipleNeuronTracer::OptimizeCoverage(std::string coverageFileName, bool w
 
   void MultipleNeuronTracer::computeGVF(int noise_level, int num_iteration, int smoothing_scale)
   { 
-    if( smoothing_scale == 0 )
+    
+	  std::cout<<"noise_level	"<<noise_level<<std::endl;
+	  std::cout<<"num_iteration	"<<num_iteration<<std::endl;
+	if( smoothing_scale == 0 )
     {
       typedef itk::GradientImageFilter<ImageType3D, float, float> GradientImageFilterType;
       GradientImageFilterType::Pointer gradientFilter = GradientImageFilterType::New();
