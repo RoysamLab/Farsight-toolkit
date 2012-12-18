@@ -40,7 +40,7 @@ void RenderObject::runMNTTracer(){
 
 	std::cout<<"in RunMNT Tracer"<<std::endl;
 	char buffer [33];
-	itoa (cost_threshold,buffer,10);
+	sprintf(buffer,"%d",cost_threshold);
 	clock_t start_time = clock();
 	std::string InputFilename = std::string(imageFile);
 	std::string SWCFilename = InputFilename;
