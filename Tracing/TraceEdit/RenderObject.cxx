@@ -280,7 +280,7 @@ void RenderObject::sampleTraces(std::string thresholdVal)
 	FILE * fp = fopen(thresholdVal.c_str(), "r");
 	if(fp==NULL)
 	{
-		printf("Couldn't open file %s for parsing\n",thresholdVal);
+		printf("Couldn't open file %s for parsing\n",thresholdVal.c_str());
 		//	return false;
 	}
 	char buff[1024];
@@ -384,7 +384,7 @@ void RenderObject::getSWCPoints(std::string filePath, std::vector<IndexType> &sw
 	//this->ParseFileName(fileName.c_str());
 	if(fp==NULL)
 	{
-		printf("Couldn't open file %s for parsing\n",fileName);
+		printf("Couldn't open file %s for parsing\n",fileName.c_str());
 		//	return false;
 	}
 	char buff[1024];
