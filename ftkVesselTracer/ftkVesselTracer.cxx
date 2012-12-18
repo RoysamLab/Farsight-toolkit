@@ -819,8 +819,10 @@ void ftkVesselTracer::ComputeSeeds(void){
 	
 	this->initialSeeds.resize(grid_size);
 	
-	
-	int num_threads = omp_get_num_threads();
+	int num_threads = 1;
+#ifdef _OPENMP
+	num_threads = omp_get_num_threads();
+#endif
 	//std::cout << "NUMBER OF THREADS: " << num_threads << std::endl;
 
 	//omp_set_num_threads(10);
