@@ -339,11 +339,11 @@ VesselVBTNodeFeatures::VesselVBTNodeFeatures(){
 void GraphAndMSTPartameters::initByDefaultValues(void){
 
 	this->affinityRadThresh = 2.0; //3.0; //2.5;
-	this->NBinsAffinity = 32;
+	this->NBinsAffinity = 128; //32;
 	this->maxEdgeWeight = 99.0;
 	this->minBranchAngle = vnl_math::pi/8.0;
-	this->maxNBranches = 40; //25; //10; //5;
-	this->maxTreeVBTNodes = 5000; //500; //100;
+	this->maxNBranches = 100; //25; //10; //5;
+	this->maxTreeVBTNodes = 10000; //500; //100;
 }
 void AllParameters::initByDefaultValues(void){
 	
@@ -1059,7 +1059,9 @@ VBTNode::VBTNode(){
 	this->foregroundArea = 0;
 	this->backgroundArea = 0;
 	this->meanBackgroundIntensity = 0.0;
-	this->meanForegroundIntensity = 255.0;
+	this->meanForegroundIntensity = 1.0; //255.0;
+	this->meanBackgroundVesselness = 0.0;
+	this->meanForegroundVesselness = 1.0;
 	this->exitIter = 0;
 	this->vesselness = 0.0;
 
@@ -1104,7 +1106,9 @@ VBTNode::VBTNode(double x, double y, double z, PixelType intensity){
 	this->foregroundArea = 0;
 	this->backgroundArea = 0;
 	this->meanBackgroundIntensity = 0.0;
-	this->meanForegroundIntensity = 255.0;
+	this->meanForegroundIntensity = 1.0; //255.0;
+	this->meanBackgroundVesselness = 0.0;
+	this->meanForegroundVesselness = 1.0;
 	this->exitIter = 0;
 	this->vesselness = 0.0;
 
@@ -1405,13 +1409,13 @@ void ftkVesselTracer::FitSphereAtVBTNodeSecondary(VBTNode& primary_node, VBTNode
 	}
 	
 	secondary_node.xNormalizedInBand.clear();
-        secondary_node.yNormalizedInBand.clear();
-        secondary_node.zNormalizedInBand.clear();
-        secondary_node.intensityInBand.clear();
-        secondary_node.vesselnessInBand.clear();
-        secondary_node.gxInBand.clear();
-        secondary_node.gyInBand.clear();
-        secondary_node.gzInBand.clear();
+    secondary_node.yNormalizedInBand.clear();
+    secondary_node.zNormalizedInBand.clear();
+    secondary_node.intensityInBand.clear();
+    secondary_node.vesselnessInBand.clear();
+    secondary_node.gxInBand.clear();
+    secondary_node.gyInBand.clear();
+    secondary_node.gzInBand.clear();
 
 }
 
@@ -1833,26 +1837,28 @@ void ftkVesselTracer::UpdateModel(VBTNode& seed, int iter_number){
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
 
-	std::vector<double> inside_region_term, outside_region_term, inside_vesselness_term, outside_vesselness_term;
+	std::vector<double> inside_region_term(seed.intensityInBand.size()), outside_region_term(seed.intensityInBand.size());
+	std::vector<double> inside_vesselness_term(seed.intensityInBand.size()), outside_vesselness_term(seed.intensityInBand.size());
 	for(int i = 0; i < seed.intensityInBand.size(); i++){
-		inside_region_term.push_back(std::abs(PixelType(seed.meanForegroundIntensity - seed.intensityInBand[i])));
-		outside_region_term.push_back(std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i])));
+		inside_region_term[i] = std::abs(PixelType(seed.meanForegroundIntensity - seed.intensityInBand[i]));
+		outside_region_term[i] = std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i]));
 		
-		inside_vesselness_term.push_back(std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i])));
-		outside_vesselness_term.push_back(std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i])));
+		inside_vesselness_term[i] = std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i]));
+		outside_vesselness_term[i] = std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i]));
 	}
 	
-	std::vector<double> del_energy, region_based_term, gvf_based_term, vesselness_based_term, region_based_only_term;
+	std::vector<double> del_energy(inside_region_term.size()), region_based_term(inside_region_term.size());
+	std::vector<double> gvf_based_term(inside_region_term.size()), vesselness_based_term(inside_region_term.size()), region_based_only_term(inside_region_term.size());
 	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
 	for(int i = 0; i < inside_region_term.size(); i++){
-		region_based_only_term.push_back(inside_region_term[i] - outside_region_term[i]);
-		vesselness_based_term.push_back(inside_vesselness_term[i] - outside_vesselness_term[i]);
+		region_based_only_term[i] = inside_region_term[i] - outside_region_term[i];
+		vesselness_based_term[i] = inside_vesselness_term[i] - outside_vesselness_term[i];
 	}
 	
 	// VESSELNESS OPTION CHECK
 	if(this->useVesselness >=2){
 		for(int i = 0; i < inside_region_term.size(); i++)
-			region_based_term.push_back((region_based_only_term[i] + vesselness_based_term[i])/2.0);
+			region_based_term[i] = (region_based_only_term[i] + vesselness_based_term[i])/2.0;
 	}	
 	else
 		region_based_term = region_based_only_term;
@@ -1864,10 +1870,10 @@ void ftkVesselTracer::UpdateModel(VBTNode& seed, int iter_number){
 		del_energy = region_based_term;
 	else{
 		for(int i = 0; i < seed.bandArea; i++)
-			gvf_based_term.push_back(seed.xNormalizedInBand[i] * seed.gxInBand[i] + seed.yNormalizedInBand[i] * seed.gyInBand[i] + seed.zNormalizedInBand[i] * seed.gzInBand[i]);
+			gvf_based_term[i] = (seed.xNormalizedInBand[i]*seed.gxInBand[i]) + (seed.yNormalizedInBand[i]*seed.gyInBand[i]) + (seed.zNormalizedInBand[i]*seed.gzInBand[i]);
 		
 		for(int i = 0; i < seed.bandArea; i++)
-			del_energy.push_back(region_weight * region_based_term[i] - gvf_weight * gvf_based_term[i]);
+			del_energy[i] = (region_weight*region_based_term[i]) - (gvf_weight*gvf_based_term[i]);
 	}
 	
 	double acc_energy = std::accumulate(del_energy.begin(), del_energy.end(), 0.0);
@@ -1926,6 +1932,7 @@ void ftkVesselTracer::UpdateModel(VBTNode& seed, int iter_number){
 
 	seed.nodeDetectionParams.dirScale = this->GetSign(dscale);
 	seed.nodeDetectionParams.chScale[seed.nodeDetectionParams.currentMonitoredIter] = seed.scale - last_scale;
+
 }
 
 void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, int iter_number){
@@ -1933,26 +1940,28 @@ void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, 
 	double last_x = seed.x, last_y = seed.y, last_z = seed.z;
 	double last_scale = seed.scale;
 	
-	std::vector<double> inside_region_term, outside_region_term, inside_vesselness_term, outside_vesselness_term;
+	std::vector<double> inside_region_term(seed.intensityInBand.size()), outside_region_term(seed.intensityInBand.size());
+	std::vector<double> inside_vesselness_term(seed.intensityInBand.size()), outside_vesselness_term(seed.intensityInBand.size());
 	for(int i = 0; i < seed.intensityInBand.size(); i++){
-		inside_region_term.push_back(std::abs(seed.meanForegroundIntensity - seed.intensityInBand[i]));
-		outside_region_term.push_back(std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i])));
+		inside_region_term[i] = std::abs(PixelType(seed.meanForegroundIntensity - seed.intensityInBand[i]));
+		outside_region_term[i] = std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i]));
 
-		inside_vesselness_term.push_back(std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i])));
-		outside_vesselness_term.push_back(std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i])));
+		inside_vesselness_term[i] = std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i]));
+		outside_vesselness_term[i] = std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i]));
 	}
 	
-	std::vector<double> del_energy, region_based_only_term, gvf_based_term, vesselness_based_term, region_based_term;
+	std::vector<double> del_energy(inside_region_term.size()), region_based_only_term(inside_region_term.size());
+	std::vector<double> gvf_based_term(inside_region_term.size()), vesselness_based_term(inside_region_term.size()), region_based_term(inside_region_term.size());
 	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
 	for(int i = 0; i < inside_region_term.size(); i++){
-		region_based_only_term.push_back(inside_region_term[i] - outside_region_term[i]);
-		vesselness_based_term.push_back(inside_vesselness_term[i] - outside_vesselness_term[i]);
+		region_based_only_term[i] = inside_region_term[i] - outside_region_term[i];
+		vesselness_based_term[i] = inside_vesselness_term[i] - outside_vesselness_term[i];
 	}
 	
 	// VESSELNESS OPTION CHECK
 	if(this->useVesselness >= 2){
 		for(int i = 0; i < inside_region_term.size(); i++)
-			region_based_term.push_back((region_based_only_term[i] + vesselness_based_term[i])/2.0);
+			region_based_term[i] = (region_based_only_term[i] + vesselness_based_term[i])/2.0;
 	}
 	else
 		region_based_term = region_based_only_term;
@@ -1963,10 +1972,10 @@ void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, 
 		del_energy = region_based_term;
 	else{
 		for(int i = 0; i < seed.bandArea; i++)
-			gvf_based_term.push_back(seed.xNormalizedInBand[i] * seed.gxInBand[i] + seed.yNormalizedInBand[i] * seed.gyInBand[i] + seed.zNormalizedInBand[i] * seed.gzInBand[i]);
+			gvf_based_term[i] = (seed.xNormalizedInBand[i]*seed.gxInBand[i]) + (seed.yNormalizedInBand[i]*seed.gyInBand[i]) + (seed.zNormalizedInBand[i]*seed.gzInBand[i]);
 		
 		for(int i = 0; i < seed.bandArea; i++)
-			del_energy.push_back(region_weight * region_based_term[i] - gvf_weight * gvf_based_term[i]);
+			del_energy[i] = (region_weight*region_based_term[i]) - (gvf_weight*gvf_based_term[i]);
 	}
 
 	double acc_energy = std::accumulate(del_energy.begin(), del_energy.end(), 0.0);
@@ -2455,8 +2464,10 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 	secondary_nodes_writer->Update();
 
 
-	//Write all nodes to a file
-	//this->writeVBTNodesToFile(this->allVBTNodes, std::string("AllVBTNodes.txt"));
+	//Write all nodes info to a file
+	std::string nodes_out_file = this->data_folder_path;
+	nodes_out_file.append("_nodes_info.txt");
+	this->writeVBTNodesToFile(this->allVBTNodes, nodes_out_file);
 
 	//write quality array
 	/*ofstream nodes_file_stream;
@@ -3718,6 +3729,8 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 		}
 	}
 	
+	std::cout << "Filtering the affinity graph.. " << std::endl;
+
 	VBTNode dir1, dir;
 	double norm_dist1 = 0.0, edge_weight = 0.0;
 	double norm_dist = 0.0, existingVBTNodeDist = 0.0;

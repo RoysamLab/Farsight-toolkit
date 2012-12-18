@@ -17,7 +17,7 @@
 #include <cmath>
 
 #ifdef _OPENMP
-#include <omp.h>
+	#include <omp.h>
 #endif
 
 #include "vtkSmartPointer.h"
