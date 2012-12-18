@@ -128,10 +128,10 @@ limitations under the License.
 #include "NodeModel.h"
 
 #include "VolumeOfInterest.h"
-#include "RenderObject.h"
 #include "ImageFeatureThreshold.h"
 #include "ImageViewer.h"
 #include "TraceView3DTemplates.h"
+#include "RenderObject.h"
 
 #ifdef USE_QT_TESTING
 #include "GUITester.h"

@@ -9,7 +9,6 @@
 #include <itkRegionOfInterestImageFilter.h>
 #include <itkCastImageFilter.h>
 #include "itkImageFileWriter.h"
-#include "Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 #include "CellTraceModel.h"
 #include "CellTrace.h"
 #include <iostream>
@@ -22,25 +21,25 @@
 #include "vtkSmartVolumeMapper.h"
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-#include <vtkWindowToImageFilter.h>
-#include <vtkPNGWriter.h>
+#include "vtkWindowToImageFilter.h"
+#include "vtkPNGWriter.h"
 
 
 
 
 
 
-#include <vtkSmartPointer.h>
-#include <vtkCubeSource.h>
-#include <vtkPolyData.h>
-#include <vtkPoints.h>
-#include <vtkVertexGlyphFilter.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkActor2D.h>
-#include <vtkPolyDataMapper2D.h>
-#include <vtkProperty2D.h>
+#include "vtkSmartPointer.h"
+#include "vtkCubeSource.h"
+#include "vtkPolyData.h"
+#include "vtkPoints.h"
+#include "vtkVertexGlyphFilter.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkActor2D.h"
+#include "vtkPolyDataMapper2D.h"
+#include "vtkProperty2D.h"
 #include "itkImageToVTKImageFilter.h"
 #include "vtkActor.h"
 #include "vtkContourFilter.h"
@@ -65,8 +64,8 @@
 #include "itkGradientImageFilter.h"
  #include "itkSpatialObjectToImageFilter.h"
 #include "itkEllipseSpatialObject.h"
-#include <itkImageToVTKImageFilter.h>
-#include <itkChainCodePath.h>
+#include "itkImageToVTKImageFilter.h"
+
 
  
 #include "vtkPointData.h"
@@ -83,19 +82,19 @@
 #include "vtkArrowSource.h"
 
 #include "ImageActors.h"
-#include <QVTKWidget.h>
-#include <QMainWindow>
-#include <vtkSmartPointer.h>
-#include <vtkSphereSource.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkActor.h>
-#include <vtkImageViewer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkInteractorStyleImage.h>
-#include <vtkRenderer.h>
-#include <vtkJPEGReader.h>
+#include "QVTKWidget.h"
+#include "QMainWindow"
+#include "vtkSmartPointer.h"
+#include "vtkSphereSource.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkActor.h"
+#include "vtkImageViewer.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkInteractorStyleImage.h"
+#include "vtkRenderer.h"
+#include "vtkJPEGReader.h"
 #include "vtkTable.h"
-#include <QVTKWidget.h>
+#include "QVTKWidget.h"
 
 #include "TraceBit.h"
 #include "TraceGap.h"
@@ -104,9 +103,6 @@
 #include "TraceModel.h"
 #include "ImageFeatureThreshold.h"
 #include "itkStatisticsImageFilter.h"
-
-#include <itkPathToChainCodePathFilter.h>
-#include "itkPolyLineParametricPath.h"
 
 
 #include <qapplication.h>

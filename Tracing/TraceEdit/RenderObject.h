@@ -11,8 +11,6 @@
 #include "itkImageFileWriter.h"
 #include <itkLogImageFilter.h>
 
-#include "Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
-
 #include <iostream>
 #include "time.h"
 
@@ -111,11 +109,9 @@
 #include "itkMedianImageFilter.h"
 #include "itkAbsImageFilter.h"
 #include "ImageFeatureThreshold.h"
- 
-//#include "itkScaleInvariantFeatureImageFilter.h"
+#include "Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
 
 
-//typedef itk::ChainCodePath< 3 > ChainCodePath;
 
 class RenderObject : public QObject
  {

@@ -9,7 +9,7 @@
 #include <itkRegionOfInterestImageFilter.h>
 #include <itkCastImageFilter.h>
 #include "itkImageFileWriter.h"
-#include "Tracing/MultipleNeuronTracer/MultipleNeuronTracer.h"
+
 
 #include <iostream>
 #include "time.h"
@@ -91,8 +91,6 @@
 #include <vtkJPEGReader.h>
 #include "vtkTable.h"
 #include <QVTKWidget.h>
-
-
 
 
 //struct imageFeatureThreshold

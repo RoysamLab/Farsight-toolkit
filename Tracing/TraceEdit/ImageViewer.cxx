@@ -127,7 +127,7 @@ ImageViewer::ImageViewer(QWidget *parent)
 	this->LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 
 
-	Renderer->SetBackground(0.5,0.5,0.5);
+	Renderer->SetBackground(0,0,0);
 	QVTK->GetRenderWindow()->AddRenderer(Renderer);
 
 	//this->setCentralWidget(QVTK);

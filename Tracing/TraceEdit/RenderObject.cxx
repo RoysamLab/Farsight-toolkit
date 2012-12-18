@@ -1,5 +1,5 @@
-#include "RenderObject.h"
 #include "TraceView3D.h"
+#include "RenderObject.h"
 #include <stdio.h>
 #include <stdlib.h>
 
