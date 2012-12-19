@@ -33,7 +33,7 @@
 #include "itkImageRegionConstIterator.h"
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkStatisticsImageFilter.h"
-#include "itkHuangThresholdImageFilter.h"
+//#include "itkHuangThresholdImageFilter.h"
 #include "itkOtsuThresholdImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
@@ -191,7 +191,7 @@ public:
 	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
 	typedef LabelImageType3D::Pointer LabelImagePointer;
 	typedef LabelImageType3D::PixelType * LabelArrayType;
-	typedef itk::HuangThresholdImageFilter<ImageType3D,ImageType3D> HuangThresholdFilterType;
+	//typedef itk::HuangThresholdImageFilter<ImageType3D,ImageType3D> HuangThresholdFilterType;
 	typedef itk::OtsuThresholdImageFilter<ImageType3D,ImageType3D>  OtsuThresholdImageFilterType;
 	typedef itk::BinaryThresholdImageFilter <ImageType3D,ImageType3D>	BinaryThresholdImageFilterType;
 	typedef itk::MinimumMaximumImageCalculator<ImageType3D> MinMaxImageCalculatorType;
