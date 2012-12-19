@@ -497,11 +497,13 @@ void View3D::OkToBoot()
 		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
 		renderMode = PROJECTION;
+		SetProjection->setChecked(true);
 	}
 	else
 	{
 		this->chooseInteractorStyle(0);
 		renderMode = RAYCAST;
+		SetRaycast->setChecked(true);
 	}
 	if (!this->SomaFile.isEmpty())
 	{
@@ -662,6 +664,8 @@ void View3D::LoadImageData()
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
 			this->ImageActors->setRenderStatus(-1, true);
 			this->QVTK->GetRenderWindow()->Render();
+			this->chooseInteractorStyle(0);
+			setRaycastMode();
 		}
 		else
 		{
@@ -669,6 +673,7 @@ void View3D::LoadImageData()
 			//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 			this->ImageActors->setIs2D(-1, true);
 			this->chooseInteractorStyle(1);//set to image interactor
+			setProjectionMode();
 		}
 		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
@@ -3034,7 +3039,7 @@ void View3D::setRaycastMode()
 	 */
 
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	{  
+	{
 		ClearRenderer(i);			
 		//this->ImageActors->setIs2D(i, false); //this line incompatible with multiple mode renderer
 		if (projectFilesTableCreated)
@@ -3081,7 +3086,7 @@ void View3D::ClearRenderer(int i)
 	 * Remove all images.
 	 */
 
-	if (this->SlicerBar->isVisible())
+	if (SlicerBarCreated)
 		this->SlicerBar->hide();
 	Renderer->RemoveActor(ImageActors->GetImageSlice(i));
 	Renderer->RemoveActor(ImageActors->GetProjectionImage(i));
@@ -3294,34 +3299,6 @@ void View3D::setSlicerZValue(int value)
 	/*!
 	 * Select slice to view.
 	 */
-
-	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	//{
-	//	if(this->ImageActors->is2D(i))
-	//	{
-	//		std::cout << "setSlicerZValue called" << std::endl;
-	//		this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(i));
-	//		//this->Renderer->RemoveActor(this->ImageActors->GetImageSlice(i));
-	//		this->Renderer->RemoveViewProp(this->ImageActors->GetImageSlice(i));
-	//		//this->ImageActors->SetSliceNumber(i, value);
-	//		//this->Renderer->AddActor(this->ImageActors->GetImageSlice(i));
-	//		this->Renderer->AddViewProp(this->ImageActors->GetImageSlice(i));
-	//		vtkInteractorStyleImage * styleImage = vtkInteractorStyleImage::New();
-	//		styleImage->SetInteractionModeToImage3D();
-	//		this->Interactor->SetInteractorStyle(styleImage);
-	//	}
-	//}
-	//this->QVTK->GetRenderWindow()->Render();
-
-	//for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
-	//{
-	//	if(this->ImageActors->is2D(i))
-	//	{
-	//		this->Renderer->RemoveViewProp(this->ImageActors->GetImageSlice(i));
-	//		//this->Renderer->RemoveActor(ImageActors->GetImageSlice(i));
-	//		//this->Renderer->AddViewProp(ImageActors->GetImageSlice(i));
-	//	}
-	//}	
 	double* bounds = this->ImageActors->getSliceBounds();
 	double image_center_x, image_center_y, image_center_z;
 
