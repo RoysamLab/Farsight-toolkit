@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <omp.h>
+
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
