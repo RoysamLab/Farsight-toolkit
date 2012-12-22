@@ -25,7 +25,7 @@ double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageT
 
 
 MicrogliaRegionTracer::MicrogliaRegionTracer() :
-    aspect_ratio_is_set(false)
+    itk_default_num_threads(itk::MultiThreader::GetGlobalDefaultNumberOfThreads())
 {
 #ifdef _OPENMP
 	std::cerr << "OpenMP detected!" << std::endl;
@@ -100,15 +100,15 @@ void MicrogliaRegionTracer::Trace()
 	//Create groups of n cells at a time (where n is the number of logical processors)
     //This is needed because OpenMP doesn't play well with ITK
 #ifdef _OPENMP
-    int num_threads = omp_get_num_procs();
+    int num_openmp_threads = omp_get_num_procs();
 #else
-    int num_threads = 1;    //Default 1 thread in a group
+    int num_openmp_threads = 1;    //Default 1 thread in a group
 #endif
     
-    int num_groups = std::ceil(cells.size() / (double) num_threads);
+    int num_groups = std::ceil(cells.size() / (double) num_openmp_threads);
 	std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
-    std::cerr << "Number of cells in each group (except the last group): " << num_threads << std::endl;
-    std::cerr << "Number of cells to process in the last group: " << cells.size() % num_threads << std::endl;
+    std::cerr << "Number of cells in each group (except the last group): " << num_openmp_threads << std::endl;
+    std::cerr << "Number of cells to process in the last group: " << cells.size() % num_openmp_threads << std::endl;
     
     ROIGrabber roi_grabber(this->joint_transforms_filename, this->image_series_pathname, this->anchor_image_filename);
 
@@ -119,20 +119,22 @@ void MicrogliaRegionTracer::Trace()
     for (int group_num = 0; group_num < num_groups; group_num++)
     {
         
-        int num_cells_in_group = (cells.size() / ((group_num+1) * num_threads)) ? num_threads : cells.size() % num_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
+        int num_cells_in_group = (cells.size() / ((group_num+1) * num_openmp_threads)) ? num_openmp_threads : cells.size() % num_openmp_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
 
-        ReadAGroupOfROIs(num_cells_in_group, group_num, num_threads, roi_grabber);  //Read a bunch of cells without OpenMP        
-        TraceAGroupOfCells(num_cells_in_group, group_num, num_threads);             //Then we trace a group of cells using OpenMP
+        ReadAGroupOfROIs(num_cells_in_group, group_num, num_openmp_threads, roi_grabber);  //Read a bunch of cells without OpenMP        
+        TraceAGroupOfCells(num_cells_in_group, group_num, num_openmp_threads);             //Then we trace a group of cells using OpenMP
     }
 }
 
-void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_threads, ROIGrabber & roi_grabber)
+void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_openmp_threads, ROIGrabber & roi_grabber)
 {
-    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( 16 );	//Change default number of threads to 16 for ITK filters in fregl_roi //REMINDER NOT TO HARDCODE 16
+    
+    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( itk_default_num_threads );	//Change default number of threads to itk_default_num_threads for ITK filters in fregl_roi
+    
     //In this for loop we read num_thread ROIs without OpenMP (see comment before outer for loop)
     for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
     {
-        int global_thread_num = group_num * num_threads + local_thread_num;
+        int global_thread_num = group_num * num_openmp_threads + local_thread_num;
         
         Cell & cell = cells[global_thread_num];
         std::cerr << "Reading cell #: " << global_thread_num << std::endl;
@@ -182,14 +184,16 @@ void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_n
     }
 }
 
-void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_threads)
+void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_openmp_threads)
 {
-    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention
+#ifdef _OPENMP
+    itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_openmp_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention#
+#endif
     
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
     {
-        int global_thread_num = group_num * num_threads + local_thread_num;
+        int global_thread_num = group_num * num_openmp_threads + local_thread_num;
         Cell & cell = cells[global_thread_num];
         
         //Get the mask

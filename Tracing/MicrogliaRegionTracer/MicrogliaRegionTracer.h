@@ -9,9 +9,9 @@
 #include <cstring>
 #include <vector>
 
-#include "Cell.h"				//Simple class to hold seed coordinates
+#include "Cell.h"
 #include "ROIGrabber.h"
-#include "Tree.h"				
+#include "Tree.h"
 
 #ifdef _OPENMP
 	#include "omp.h"
@@ -36,23 +36,12 @@ private:
 	std::string soma_image_filename;
 	double aspect_ratio;
     
-    bool aspect_ratio_is_set;
-
-public:
-	explicit MicrogliaRegionTracer();
-	~MicrogliaRegionTracer();
-
-	void				SetJointTransformsFile(const std::string & joint_transforms_filename);
-	void				SetImageSeriesPath(const std::string & image_series_pathname);
-	void				SetAnchorImage(const std::string & anchor_image_filename);
-	void				LoadSeedPoints(const std::string & seedpoints_filename);
-	void				SetSomaImage(const std::string & soma_image_filename);
-	void				SetAspectRatio(const float aspect_ratio);
-
-	void				Trace();
+    bool aspect_ratio_is_set = false;
     
-    void                ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_threads, ROIGrabber & roi_grabber);
-    void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_threads);
+    const int itk_default_num_threads; //initialized in contructor
+private:
+    void                ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_openmp_threads, ROIGrabber & roi_grabber);
+    void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_openmp_threads);
 	
 	void				CalculateCandidatePixels(Cell & cell);
 	void				RidgeDetection(Cell & cell);
@@ -68,6 +57,19 @@ public:
 	PathType::Pointer	SmoothPath(Cell & cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path );
 
 	void				CreateSpeedImage(Cell & cell);
+    
+public:
+                        explicit MicrogliaRegionTracer();
+                        ~MicrogliaRegionTracer();
+    
+    void				Trace();
+    
+    void				SetJointTransformsFile(const std::string & joint_transforms_filename);
+	void				SetImageSeriesPath(const std::string & image_series_pathname);
+	void				SetAnchorImage(const std::string & anchor_image_filename);
+	void				LoadSeedPoints(const std::string & seedpoints_filename);
+	void				SetSomaImage(const std::string & soma_image_filename);
+	void				SetAspectRatio(const float aspect_ratio);
 };
 
 #endif

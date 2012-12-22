@@ -87,7 +87,7 @@ void Cell::ComputeCriticalPointsVector(const ImageType::Pointer & critical_point
 	{
 		if (critical_points_img_iter.Get() != 0)
 			critical_points_queue.push_back(critical_points_img_iter.GetIndex());
-
+        
 		++critical_points_img_iter;
 	}
 }
@@ -107,7 +107,7 @@ void Cell::GetMask(const std::string & soma_filename)
 	//{
 	//	std::cerr << "reader Exception: " << err << std::endl;
 	//}
-
+    
 	typedef itk::RegionOfInterestImageFilter< SomaImageType, MaskImageType > ROIFilterType;
 	ROIFilterType::Pointer roi_filter = ROIFilterType::New();
 	
@@ -115,16 +115,16 @@ void Cell::GetMask(const std::string & soma_filename)
 	start[0] = this->roi_origin[0];
 	start[1] = this->roi_origin[1];
 	start[2] = this->roi_origin[2];
-
+    
 	ImageType::SizeType size = this->roi_size;
 	
 	ImageType::RegionType desiredRegion;
 	desiredRegion.SetSize(size);
 	desiredRegion.SetIndex(start);
-
+    
 	roi_filter->SetRegionOfInterest(desiredRegion);
 	roi_filter->SetInput(reader->GetOutput());
-
+    
 	try
 	{
 		//roi_filter->Update();
@@ -134,23 +134,23 @@ void Cell::GetMask(const std::string & soma_filename)
 	{
 		std::cout << "roi_filter Exception: " << err << std::endl;
 	}
-
+    
 	this->mask = roi_filter->GetOutput();
 	this->mask->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
-
-	ImageType::PointType origin;   
+    
+	ImageType::PointType origin;
 	origin[0] = 0;
 	origin[1] = 0;
 	origin[2] = 0;
 	this->mask->SetOrigin(origin);
-
+    
 	//Make the file name of the mask image
 	std::stringstream mask_filename_stream;
 	mask_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_mask.TIF";	//X_Y_Z_masked.TIF
-
+    
 	//Write the masked cell image
 	//WriteImage(mask_filename_stream.str(), this->mask);
-
+    
 	//Get the label image from the binary image
 	typedef itk::BinaryImageToLabelMapFilter< MaskImageType > BinaryToLabelFilterType;
 	BinaryToLabelFilterType::Pointer labelMapFilter = BinaryToLabelFilterType::New();
@@ -168,10 +168,10 @@ void Cell::GetMask(const std::string & soma_filename)
 		std::cerr << this->mask << std::endl;
 		std::cerr << labelMapFilter << std::endl;
 	}
-
+    
 	BinaryToLabelFilterType::OutputImageType::Pointer label_map_image = labelMapFilter->GetOutput();
 	label_map_image->DisconnectPipeline();
-
+    
 	typedef itk::LabelMapToLabelImageFilter< BinaryToLabelFilterType::OutputImageType, LabelImageType > LabelMapToLabelImageFilterType;
 	LabelMapToLabelImageFilterType::Pointer labelImageFilter = LabelMapToLabelImageFilterType::New();
 	labelImageFilter->SetInput(label_map_image);
@@ -184,7 +184,7 @@ void Cell::GetMask(const std::string & soma_filename)
 	{
 		std::cerr << "labelImageFilter exception: " << err << std::endl;
 	}
-
+    
 	this->soma_label_image = labelImageFilter->GetOutput();
 	this->soma_label_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 }
@@ -204,14 +204,14 @@ void Cell::ComputeMaskedImage()
 	{
 		std::cerr << "maskFilter Exception: " << err << std::endl;
 	}
-
+    
 	this->masked_image = maskFilter->GetOutput();
 	this->masked_image->DisconnectPipeline();		//Disconnect pipeline so we don't propagate...
-
+    
 	//Make the file name of the masked cell image
 	std::stringstream masked_cell_filename_stream;
 	masked_cell_filename_stream << cell_x << "_" << cell_y << "_" << cell_z << "_masked.TIF";	//X_Y_Z_masked.TIF
-
+    
 	//Write the masked cell image
 	//WriteImage(masked_cell_filename_stream.str(), this->masked_image);
 }
@@ -338,12 +338,12 @@ void Cell::CreateIsotropicImage()
 	ImageType::SizeType inputSize = this->image->GetLargestPossibleRegion().GetSize();
 	ImageType::SizeType outputSize = inputSize;
 	outputSize[2] = outputSize[2] * 1/this->aspect_ratio;
-
+    
 	ImageType::SpacingType outputSpacing;
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
 	outputSpacing[2] = this->aspect_ratio;
-
+    
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
 	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
@@ -360,15 +360,15 @@ void Cell::CreateIsotropicImage()
 		std::cerr << "CreateIsotropicImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	this->isotropic_image = resample_filter->GetOutput();
 	this->isotropic_image->DisconnectPipeline();
-
+    
 	//Make the file name of the raw cell image
 	std::stringstream isometric_image_filename_stream;
 	isometric_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isometric.nrrd";
 	WriteImage(isometric_image_filename_stream.str(), this->isotropic_image);
-
+    
 	
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
@@ -380,20 +380,20 @@ void Cell::CreateLoGImage()
 	//Calculate the LoG on multiple scales and store into an image
 	std::cout << "Calculating Multiscale LoG" << std::endl;
 	LoGImageType::Pointer resampled_multiscale_LoG_image = LoG::RunMultiScaleLoG(*this);
-
+    
 	//Make the file name of the isotropic LoG image and write it out
 	std::stringstream multiscaled_LoG_image_filename_stream;
 	multiscaled_LoG_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_LoG.nrrd";
 	Cell::WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
-
+    
 	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
-
+    
 	ImageType::SpacingType outputSpacing;
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
 	outputSpacing[2] = 1/this->aspect_ratio;
 	//outputSpacing[2] = 1.0;
-
+    
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
 	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
@@ -401,7 +401,7 @@ void Cell::CreateLoGImage()
 	resample_filter->SetSize(outputSize);
 	resample_filter->SetOutputSpacing(outputSpacing);
 	resample_filter->SetTransform(TransformType::New());
-
+    
 	try
 	{
 		resample_filter->UpdateLargestPossibleRegion();
@@ -411,9 +411,9 @@ void Cell::CreateLoGImage()
 		std::cerr << "CreateLoGImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	this->multiscale_LoG_image = resample_filter->GetOutput();
-
+    
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	this->multiscale_LoG_image->SetSpacing(spacing);	//Convert back to the original spacing
@@ -425,12 +425,12 @@ void Cell::CreateVesselnessImage()
 	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
 	vesselness_filter->SetAlpha1(0.5);
 	vesselness_filter->SetAlpha2(0.5);
-
+    
 	typedef itk::SymmetricSecondRankTensor< double, 3 >	HessianTensorType;
 	typedef itk::Image< HessianTensorType, 3 >			HessianImageType;
-
+    
 	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
-
+    
 	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
 	//multiscale_hessian_filter->SetInput(this->image);
 	multiscale_hessian_filter->SetInput(this->isotropic_image);
@@ -440,7 +440,7 @@ void Cell::CreateVesselnessImage()
 	multiscale_hessian_filter->SetNumberOfSigmaSteps(10);
 	multiscale_hessian_filter->SetNonNegativeHessianBasedMeasure(true);
 	multiscale_hessian_filter->SetHessianToMeasureFilter(vesselness_filter);
-
+    
 	try
 	{
 		ftk::TimeStampOverflowSafeUpdate( multiscale_hessian_filter.GetPointer() );
@@ -449,16 +449,16 @@ void Cell::CreateVesselnessImage()
 	{
 		std::cerr << "multiscale_hessian_filter exception: " << err << std::endl;
 	}
-
+    
 	//Unsample the image
 	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
-
+    
 	ImageType::SpacingType outputSpacing;
 	outputSpacing[0] = 1.0;
 	outputSpacing[1] = 1.0;
 	outputSpacing[2] = 1/aspect_ratio;
 	//outputSpacing[2] = 1.0;
-
+    
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
 	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
@@ -475,7 +475,7 @@ void Cell::CreateVesselnessImage()
 		std::cerr << "CreateVesselnessImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	this->vesselness_image = resample_filter->GetOutput();
 	this->vesselness_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 	ImageType::SpacingType spacing;
@@ -495,7 +495,7 @@ void Cell::CreateSpeedImage()
 	rescale_filter->SetOutputMinimum(0.0);
 	rescale_filter->SetOutputMaximum(1.0);
 	rescale_filter->SetInput(this->vesselness_image);
-
+    
 	try
 	{
 		rescale_filter->Update();
@@ -505,15 +505,15 @@ void Cell::CreateSpeedImage()
 		std::cerr << "rescale_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	//this->speed_image = rescale_filter->GetOutput();
-
+    
 	//Raise normalized vesselness_image to third power
 	typedef itk::PowImageFilter< DistanceImageType > PowImageFilterType;
 	PowImageFilterType::Pointer pow_image_filter = PowImageFilterType::New();
 	pow_image_filter->SetInput1(rescale_filter->GetOutput());
 	pow_image_filter->SetConstant2( 0.33 );
-
+    
 	try
 	{
 		pow_image_filter->Update();
@@ -523,9 +523,9 @@ void Cell::CreateSpeedImage()
 		std::cerr << "pow_image_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	this->speed_image = pow_image_filter->GetOutput();
-
+    
 	std::stringstream speed_image_filename_stream;
 	speed_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_speed_image.nrrd";
 	Cell::WriteImage(speed_image_filename_stream.str(), this->speed_image);
