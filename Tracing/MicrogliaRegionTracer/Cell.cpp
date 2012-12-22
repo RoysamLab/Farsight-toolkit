@@ -14,11 +14,11 @@
 #include "LoG.h"
 
 Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio) :
-	cell_x(cell_x),
-	cell_y(cell_y),
-	cell_z(cell_z),
-	aspect_ratio(aspect_ratio),
-	next_available_ID(1)
+    next_available_ID(1),
+    cell_x(cell_x),
+    cell_y(cell_y),
+    cell_z(cell_z),
+    aspect_ratio(aspect_ratio)
 {
 }
 
