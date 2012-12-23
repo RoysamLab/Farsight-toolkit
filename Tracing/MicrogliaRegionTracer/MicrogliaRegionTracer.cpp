@@ -25,6 +25,7 @@ double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageT
 
 
 MicrogliaRegionTracer::MicrogliaRegionTracer() :
+    aspect_ratio_is_set(false),
     itk_default_num_threads(itk::MultiThreader::GetGlobalDefaultNumberOfThreads())
 {
 #ifdef _OPENMP

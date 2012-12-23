@@ -36,7 +36,7 @@ private:
 	std::string soma_image_filename;
 	double aspect_ratio;
     
-    bool aspect_ratio_is_set = false;
+    bool aspect_ratio_is_set;
     
     const int itk_default_num_threads; //initialized in contructor
 private:
