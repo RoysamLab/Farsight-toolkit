@@ -329,7 +329,7 @@ if(USE_KPLS)
       find_library(LIB_KPLS_RELEASE NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Release/VS10)
       find_library(LIB_KPLS_DEBUG NAMES libKPLS PATHS ${KPLS_LIB_DIR}/Debug/VS10)
     else(MSVC90)
-      message("Unsupported compiler for USE_KPLS ON.")
+      message(FATAL_ERROR "Unsupported compiler for USE_KPLS ON.")
     endif(MSVC90)
     set(LIB_KPLS
       debug ${LIB_KPLS_DEBUG}
