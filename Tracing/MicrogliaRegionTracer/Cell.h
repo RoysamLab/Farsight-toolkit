@@ -20,7 +20,7 @@
 class Cell
 {
 public:
-	typedef	unsigned short										InputPixelType;
+	typedef	unsigned char										InputPixelType;
 	typedef fregl_roi< InputPixelType >::ImageType				ImageType;
     
 	typedef itk::Image< float, 3 >								LoGImageType;
@@ -68,6 +68,7 @@ public:
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image);
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image);
 	static void             WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image);
+	static void				WriteImage(const std::string & filename, const itk::Image< itk::CovariantVector < float, 3 >, 3 >::Pointer & image);
     
     void                    WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
 	void                    WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);

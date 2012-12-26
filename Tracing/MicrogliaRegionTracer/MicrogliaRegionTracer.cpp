@@ -20,7 +20,7 @@
 #define MASK 0
 #define PI 3.1415926535897932384626433832795
 
-//Non-member function prototypes ( See Scott Meyer's article http://www.drdobbs.com/cpp/how-non-member-functions-improve-encapsu/184401197 )
+//Non-member function prototypes
 double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
 
 
@@ -214,7 +214,8 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
 void MicrogliaRegionTracer::CalculateSeedPoints(Cell & cell)
 {
-	cell.CreateIsotropicImage();	//Must be called before CreateVesselnessImage and CreateLoGImage
+	cell.CreateIsotropicImage();	//Must be called before CreateGVFImage, CreateVesselnessImage and CreateLoGImage
+	cell.CreateGVFImage(2000.0, 10);
 	cell.CreateVesselnessImage();
 	cell.CreateLoGImage();
 	

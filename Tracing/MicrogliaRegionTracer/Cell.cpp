@@ -226,8 +226,8 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned c
 	writer->SetFileName(filename);
 	try
 	{
-		//writer->Update();
-		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
+		writer->Update();
+		//ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -244,8 +244,8 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned s
 	writer->SetFileName(filename);
 	try
 	{
-		//writer->Update();
-		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
+		writer->Update();
+		//ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -262,8 +262,26 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 
 	writer->SetFileName(filename);
 	try
 	{
-		//writer->Update();
-		ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
+		writer->Update();
+		//ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << writer << std::endl;
+	}
+}
+
+void Cell::WriteImage(const std::string & filename, const itk::Image< itk::CovariantVector < float, 3 >, 3 >::Pointer & image)
+{
+	typedef itk::ImageFileWriter< itk::Image< itk::CovariantVector < float, 3 >, 3 > > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetInput(image);	//image is from function parameters!
+	writer->SetFileName(filename);
+	try
+	{
+		writer->Update();
+		//ftk::TimeStampOverflowSafeUpdate( writer.GetPointer() );
 	}
 	catch (itk::ExceptionObject &err)
 	{
@@ -412,6 +430,11 @@ void Cell::CreateGVFImage(float noise_level, int num_iterations)
 	}
 
 	this->gvf_image = gvf_filter->GetOutput();
+
+	//Make the file name of the GVF image
+	std::stringstream gvf_image_filename_stream;
+	gvf_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_gvf.mhd";
+	WriteImage(gvf_image_filename_stream.str(), gvf_image);
 }
 
 void Cell::CreateLoGImage()
@@ -423,7 +446,7 @@ void Cell::CreateLoGImage()
 	//Make the file name of the isotropic LoG image and write it out
 	std::stringstream multiscaled_LoG_image_filename_stream;
 	multiscaled_LoG_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_LoG.nrrd";
-	Cell::WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
+	WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
     
 	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
     
@@ -523,7 +546,7 @@ void Cell::CreateVesselnessImage()
 	
 	std::ostringstream vesselness_filename_stream;
 	vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_vesselness.nrrd";
-    Cell::WriteImage(vesselness_filename_stream.str(), this->vesselness_image);
+    WriteImage(vesselness_filename_stream.str(), this->vesselness_image);
 }
 
 void Cell::CreateSpeedImage()
@@ -567,5 +590,5 @@ void Cell::CreateSpeedImage()
     
 	std::stringstream speed_image_filename_stream;
 	speed_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_speed_image.nrrd";
-	Cell::WriteImage(speed_image_filename_stream.str(), this->speed_image);
+	WriteImage(speed_image_filename_stream.str(), this->speed_image);
 }
