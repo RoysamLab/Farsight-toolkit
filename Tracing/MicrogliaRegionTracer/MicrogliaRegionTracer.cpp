@@ -18,7 +18,7 @@
 #include <cmath>
 
 #define MASK 0
-#define PI (4.0*atan(1.0))
+#define PI 3.1415926535897932384626433832795
 
 //Non-member function prototypes ( See Scott Meyer's article http://www.drdobbs.com/cpp/how-non-member-functions-improve-encapsu/184401197 )
 double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
