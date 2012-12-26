@@ -10,6 +10,8 @@
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
 #include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 #include "itkPowImageFilter.h"
+#include "itkGradientImageFilter.h"
+#include "itkGradientVectorFlowImageFilter.h"
 
 #include "LoG.h"
 
@@ -373,6 +375,43 @@ void Cell::CreateIsotropicImage()
 	ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	this->isotropic_image->SetSpacing(spacing);
+}
+
+void Cell::CreateGVFImage(float noise_level, int num_iterations)
+{
+	//Gradient filter	
+	typedef itk::GradientImageFilter< ImageType > GradientImageFilterType;
+	GradientImageFilterType::Pointer gradient_filter = GradientImageFilterType::New();
+
+	gradient_filter->SetInput( this->isotropic_image );
+
+	try
+	{
+		gradient_filter->Update();
+	}
+	catch(itk::ExceptionObject & err)
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+
+	//Gradient Vector Flow filter
+	typedef itk::GradientVectorFlowImageFilter< GradientImageFilterType::OutputImageType , GradientImageFilterType::OutputImageType > GradientVectorFlowFilterType;
+	GradientVectorFlowFilterType::Pointer gvf_filter = GradientVectorFlowFilterType::New();
+	
+	gvf_filter->SetInput(gradient_filter->GetOutput());
+	gvf_filter->SetNoiseLevel(noise_level);
+	gvf_filter->SetIterationNum(num_iterations);
+
+	try
+	{
+		gvf_filter->Update();
+	}
+	catch(itk::ExceptionObject & err)
+	{
+		std::cerr << "Exception caught: " << err << std::endl;
+	}
+
+	this->gvf_image = gvf_filter->GetOutput();
 }
 
 void Cell::CreateLoGImage()

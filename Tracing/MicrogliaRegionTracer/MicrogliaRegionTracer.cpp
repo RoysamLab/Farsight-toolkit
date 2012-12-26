@@ -202,7 +202,7 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
         cell.GetMask(this->soma_filename);
 #endif
         std::cout << "Calculating candidate pixels for a new cell" << std::endl;
-        CalculateCandidatePixels(cell);
+        CalculateSeedPoints(cell);
         
         std::cout << "Detected " << cell.critical_points_queue.size() << " critical points" << std::endl;
         
@@ -212,13 +212,13 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
 }
 
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
-void MicrogliaRegionTracer::CalculateCandidatePixels(Cell & cell)
+void MicrogliaRegionTracer::CalculateSeedPoints(Cell & cell)
 {
-	cell.CreateIsotropicImage();
+	cell.CreateIsotropicImage();	//Must be called before CreateVesselnessImage and CreateLoGImage
 	cell.CreateVesselnessImage();
+	cell.CreateLoGImage();
 	
 	std::cout << "Ridge Detection" << std::endl;
-	cell.CreateLoGImage();
 	RidgeDetection(cell);
 }
 

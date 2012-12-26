@@ -20,16 +20,17 @@
 class Cell
 {
 public:
-	typedef	unsigned short								InputPixelType;
-	typedef fregl_roi< InputPixelType >::ImageType		ImageType;
+	typedef	unsigned short										InputPixelType;
+	typedef fregl_roi< InputPixelType >::ImageType				ImageType;
     
-	typedef itk::Image< float, 3 >						LoGImageType;
-	typedef itk::Image< float, 3 >						VesselnessImageType;
-	typedef itk::Image< float, 3 >						DistanceImageType;
-	typedef itk::Image< unsigned char, 3 >				SomaImageType;
-	typedef SomaImageType								MaskImageType;
-	typedef itk::Image< unsigned short, 3 >				LabelImageType;
-	typedef itk::ImageFileReader < SomaImageType >		SomaReaderType;
+	typedef itk::Image< float, 3 >								LoGImageType;
+	typedef itk::Image< float, 3 >								VesselnessImageType;
+	typedef itk::Image< float, 3 >								DistanceImageType;
+	typedef itk::Image< unsigned char, 3 >						SomaImageType;
+	typedef SomaImageType										MaskImageType;
+	typedef itk::Image< unsigned short, 3 >						LabelImageType;
+	typedef itk::ImageFileReader < SomaImageType >				SomaReaderType;
+	typedef	itk::Image< itk::CovariantVector < float, 3 >, 3 >	GVFImageType;
     
 public:
 	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio);
@@ -58,6 +59,7 @@ public:
 	void                    ComputeMaskedImage();
 	
 	void					CreateIsotropicImage();
+	void					CreateGVFImage(float noise_level, int num_iterations);
     void					CreateLoGImage();
 	void					CreateVesselnessImage();
 	void					CreateSpeedImage();
@@ -84,6 +86,7 @@ public:
 	LabelImageType::Pointer			soma_label_image;
 	DistanceImageType::Pointer		speed_image;
 	ImageType::Pointer				isotropic_image;
+	GVFImageType::Pointer			gvf_image;
     
 	itk::int64_t next_available_ID;
     

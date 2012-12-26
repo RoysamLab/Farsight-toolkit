@@ -43,7 +43,7 @@ private:
     void                ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_openmp_threads, ROIGrabber & roi_grabber);
     void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_openmp_threads);
 	
-	void				CalculateCandidatePixels(Cell & cell);
+	void				CalculateSeedPoints(Cell & cell);
 	void				RidgeDetection(Cell & cell);
 
 	void				BuildTree(Cell & cell);
