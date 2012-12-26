@@ -91,13 +91,14 @@ LoG::LoGImageType::Pointer LoG::RunMultiScaleLoG(const Cell & cell)
 		{
 			LoGimage = RunLoG(cell.isotropic_image, scale);
 		}
-		catch (itk::ExceptionObject &err)
+		catch (itk::ExceptionObject & err)
 		{
 			ImageType::PointType origin = cell.isotropic_image->GetOrigin();
 			ImageType::SizeType size = cell.isotropic_image->GetLargestPossibleRegion().GetSize();
 			
 			std::cerr << "RunMultiScaleLoG exception: " << std::endl;
 			std::cerr << "For cell: " << cell.getX() << ", " << cell.getY() << ", " << cell.getZ() << " at scale: " << scale << " Origin: " << origin << " Size: " << size << std::endl;
+			std::cerr << err << std::endl;
 		}
         
 		LoG_vector.push_back(LoGimage);
