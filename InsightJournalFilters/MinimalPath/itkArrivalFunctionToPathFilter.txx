@@ -65,7 +65,7 @@ ArrivalFunctionToPathFilter<TInputImage,TOutputPath>
  *
  */
 template<class TInputImage, class TOutputPath>
-unsigned int
+size_t
 ArrivalFunctionToPathFilter<TInputImage,TOutputPath>
 ::GetNumberOfPathsToExtract() const
 {
@@ -116,7 +116,7 @@ ArrivalFunctionToPathFilter<TInputImage,TOutputPath>
     }
 
   // Check the number of paths is not none
-  unsigned int numberOfOutputs = GetNumberOfPathsToExtract();
+  size_t numberOfOutputs = GetNumberOfPathsToExtract();
   if ( numberOfOutputs == 0 )
     {
     itkExceptionMacro( "At least one path must be specified for extraction" );

@@ -197,7 +197,7 @@ protected:
   void GenerateData( void );
 
   /** Get the number of paths which the user has instructed to extracted. */
-  virtual unsigned int GetNumberOfPathsToExtract( ) const;
+  virtual size_t GetNumberOfPathsToExtract( ) const;
 
   /** Compute the arrival function from which to extract the path. */
   virtual InputImageType * ComputeArrivalFunction( );

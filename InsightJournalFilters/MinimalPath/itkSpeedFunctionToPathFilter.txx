@@ -51,7 +51,7 @@ SpeedFunctionToPathFilter<TInputImage,TOutputPath>
  *
  */
 template<class TInputImage, class TOutputPath>
-unsigned int
+size_t
 SpeedFunctionToPathFilter<TInputImage,TOutputPath>
 ::GetNumberOfPathsToExtract() const
 {

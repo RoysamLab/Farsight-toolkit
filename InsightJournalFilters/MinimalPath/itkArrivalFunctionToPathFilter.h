@@ -222,7 +222,7 @@ protected:
   void GenerateData(void);
 
   /** Get the arrival function from which to extract the path. */
-  virtual unsigned int GetNumberOfPathsToExtract( ) const;
+  virtual size_t GetNumberOfPathsToExtract( ) const;
 
   /** Compute the arrival function from which to extract the path.
    *  In this case it is simply the filter input. */
