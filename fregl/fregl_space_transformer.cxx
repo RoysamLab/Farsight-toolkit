@@ -527,37 +527,21 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	
 	typename ImageType::SizeType image_size_fast;
 	itk::uint64_t maxsize = sqrt(double((in_image->GetLargestPossibleRegion().GetSize()[0])*(in_image->GetLargestPossibleRegion().GetSize()[0])+(in_image->GetLargestPossibleRegion().GetSize()[1]*in_image->GetLargestPossibleRegion().GetSize()[1])+(in_image->GetLargestPossibleRegion().GetSize()[2]*in_image->GetLargestPossibleRegion().GetSize()[2])))+10; // Nicolas: Not sure if this is the maximum size, I have to recheck this
-	if( maxsize*spacing_[0] < 3000)
-	{
-		image_size_fast[0] = 3000;
-	}
-	else
-	{
-		image_size_fast[0] = maxsize*spacing_[0];
-	}
-	
-	if( image_size_fast[1] < 3000)
-	{
-		image_size_fast[1] = 3000;
-	}
-	else
-	{
-		image_size_fast[1] = maxsize*spacing_[1];
-	}
-
-	image_size_fast[2] = image_size_[2];//maxsize*spacing_[2];
+	image_size_fast[0] = maxsize*spacing_[0];
+	image_size_fast[1] = maxsize*spacing_[1];
+	image_size_fast[2] = maxsize*spacing_[2];
 	
 	itk::Vector<double, 3> oldOffset = inverse_xform->GetOffset();
-	//std::cout << std::endl << "IMAGE SIZE: " <<image_size_fast;
- //	std::cout << std::endl << "OFFFSET: " << oldOffset;
- //	std::cout << std::endl << "ORIGIN: " << origin_<<std::endl;
+	std::cout <<  "IMAGE SIZE: " <<image_size_fast <<std::endl;
+ 	std::cout << "OFFFSET: " << oldOffset<< std::endl;
+ 	std::cout << "ORIGIN: " << origin_<<std::endl;
 	
 	PointType origin_fast;
-	origin_fast[0] = origin_[0] - (int)oldOffset[0];
-	origin_fast[1] = origin_[1] - (int)oldOffset[1];
-	origin_fast[2] = origin_[2] - (int)oldOffset[2];
+	origin_fast[0] = -(int)oldOffset[0];
+	origin_fast[1] = -(int)oldOffset[1];
+	origin_fast[2] = -(int)oldOffset[2];
 	
- 	//std::cout << std::endl << "ORIGIN FAST: " << origin_fast;
+ 	std::cout << "ORIGIN FAST: " << origin_fast<< std::endl;
 	
 	resampler->SetInput(in_image);
 	resampler->SetTransform( inverse_xform );
@@ -566,10 +550,6 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	resampler->SetOutputSpacing(spacing_);
 	resampler->SetDefaultPixelValue( background );
 	
-// 	std::cout << std::endl << "TRANSFORM: " << inverse_xform;
-// 	std::cout << std::endl << "SIZE: " << image_size_;
-// 	std::cout << std::endl << "ORIGIN: " << origin_;
-// 	std::cout << std::endl << "SPACING: " << spacing_;
 	
 	try {
 		resampler->Update();
@@ -580,9 +560,9 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	}
 	out_image = resampler->GetOutput();
 
-	offsetNew[0] = -(int)oldOffset[0];
-	offsetNew[1] = -(int)oldOffset[1];
-	offsetNew[2] = -(int)oldOffset[2];
+	offsetNew[0] = -origin_[0]-(int)oldOffset[0];
+	offsetNew[1] = -origin_[1]-(int)oldOffset[1];
+	offsetNew[2] = -origin_[2]-(int)oldOffset[2];
     return 0;
 }
 
