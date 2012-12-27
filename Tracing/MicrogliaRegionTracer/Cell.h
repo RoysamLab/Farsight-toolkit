@@ -60,6 +60,7 @@ public:
 	
 	void					CreateIsotropicImage();
 	void					CreateGVFImage(float noise_level, int num_iterations);
+	void					CreateGVFVesselnessImage();
     void					CreateLoGImage();
 	void					CreateVesselnessImage();
 	void					CreateSpeedImage();

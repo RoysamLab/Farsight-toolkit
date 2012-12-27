@@ -7,11 +7,13 @@
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageRegionConstIterator.h"
 #include "itkHessian3DToVesselnessMeasureImageFilter.h"
 #include "itkMultiScaleHessianBasedMeasureImageFilter.h"
 #include "itkPowImageFilter.h"
 #include "itkGradientImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
+#include "itkVectorImageToImageAdaptor.h"
 
 #include "LoG.h"
 
@@ -83,7 +85,7 @@ void Cell::ComputeCriticalPointsVector(const ImageType::Pointer & critical_point
 {
 	critical_points_queue.clear();
 	
-	itk::ImageRegionIterator<ImageType> critical_points_img_iter(critical_points_image, critical_points_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ImageType > critical_points_img_iter(critical_points_image, critical_points_image->GetLargestPossibleRegion());
 	critical_points_img_iter.GoToBegin();
 	while(!critical_points_img_iter.IsAtEnd())
 	{
@@ -435,6 +437,16 @@ void Cell::CreateGVFImage(float noise_level, int num_iterations)
 	std::stringstream gvf_image_filename_stream;
 	gvf_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_gvf.mhd";
 	WriteImage(gvf_image_filename_stream.str(), gvf_image);
+}
+
+void Cell::CreateGVFVesselnessImage()
+{
+	itk::ImageRegionConstIterator< GVFImageType > gvf_image_iterator(this->gvf_image, this->gvf_image->GetLargestPossibleRegion());
+
+	while (!gvf_image_iterator.IsAtEnd())
+	{
+		GVFImageType::PixelType vector = gvf_image_iterator.Get();
+	}
 }
 
 void Cell::CreateLoGImage()
