@@ -248,6 +248,8 @@ public slots:
 	void AutoCellExport();
 
 	void StartActiveLearning();
+	void ZoomInForAL(int);
+	void ExtractClassificationResult();
 
 	void setHighlightSettings(int value);
 	void chooseInteractorStyle(int iren);
@@ -539,6 +541,8 @@ private:
 	Heatmap *HeatmapWins;
 	BiHeatmap *Biheatmap;
 #endif
+
+	ALforTraceEd AL;
 
 	bool renderTraceBits;
 	bool projectLoadedState;
