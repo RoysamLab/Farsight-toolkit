@@ -441,11 +441,44 @@ void Cell::CreateGVFImage(float noise_level, int num_iterations)
 
 void Cell::CreateGVFVesselnessImage()
 {
-	itk::ImageRegionConstIterator< GVFImageType > gvf_image_iterator(this->gvf_image, this->gvf_image->GetLargestPossibleRegion());
-
-	while (!gvf_image_iterator.IsAtEnd())
+    //Separate the GVF image into Partial Derivatives
+    typedef itk::Image< float, 3 > PartialDerivativeImageType;
+    
+    PartialDerivativeImageType::Pointer Dx = PartialDerivativeImageType::New();
+    PartialDerivativeImageType::Pointer Dy = PartialDerivativeImageType::New();
+    PartialDerivativeImageType::Pointer Dz = PartialDerivativeImageType::New();
+    
+    PartialDerivativeImageType::SizeType size = this->gvf_image->GetLargestPossibleRegion().GetSize();
+    PartialDerivativeImageType::IndexType start;
+    start.Fill(0);
+    PartialDerivativeImageType::RegionType region(start, size);
+    
+    Dx->SetRegions(region);
+    Dy->SetRegions(region);
+    Dz->SetRegions(region);
+    
+    Dx->Allocate();
+    Dy->Allocate();
+    Dz->Allocate();
+    
+    
+    itk::ImageRegionConstIterator< GVFImageType > gvf_image_iter(this->gvf_image, this->gvf_image->GetLargestPossibleRegion());
+    itk::ImageRegionIterator< PartialDerivativeImageType > Dx_iter(Dx, Dx->GetLargestPossibleRegion());
+    itk::ImageRegionIterator< PartialDerivativeImageType > Dy_iter(Dy, Dy->GetLargestPossibleRegion());
+    itk::ImageRegionIterator< PartialDerivativeImageType > Dz_iter(Dz, Dz->GetLargestPossibleRegion());
+    
+	while (!gvf_image_iter.IsAtEnd())
 	{
-		GVFImageType::PixelType vector = gvf_image_iterator.Get();
+		GVFImageType::PixelType vector = gvf_image_iter.Get();
+        
+        Dx_iter.Set(vector[0]);
+        Dy_iter.Set(vector[1]);
+        Dz_iter.Set(vector[2]);
+        
+        ++gvf_image_iter;
+        ++Dx_iter;
+        ++Dy_iter;
+        ++Dz_iter;
 	}
 }
 
