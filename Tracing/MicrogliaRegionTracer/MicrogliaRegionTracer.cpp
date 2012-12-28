@@ -214,8 +214,7 @@ void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group
 /* This function determines the candidate pixels (pixels which we connect to form the tree) */
 void MicrogliaRegionTracer::CalculateSeedPoints(Cell & cell)
 {
-	cell.CreateIsotropicImage();	//Must be called before CreateGVFImage, CreateVesselnessImage and CreateLoGImage
-	cell.CreateGVFImage(2000.0, 10);
+	cell.CreateIsotropicImage();	//Must be called before CreateVesselnessImage and CreateLoGImage
 	cell.CreateVesselnessImage();
 	cell.CreateLoGImage();
 	

@@ -31,6 +31,10 @@ public:
 	typedef itk::Image< unsigned short, 3 >						LabelImageType;
 	typedef itk::ImageFileReader < SomaImageType >				SomaReaderType;
 	typedef	itk::Image< itk::CovariantVector < float, 3 >, 3 >	GVFImageType;
+	typedef GVFImageType										GradientImageType;
+
+private:
+	typedef itk::CovariantVector< float, 3 >					GradientVectorType;
     
 public:
 	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio);
@@ -59,8 +63,6 @@ public:
 	void                    ComputeMaskedImage();
 	
 	void					CreateIsotropicImage();
-	void					CreateGVFImage(float noise_level, int num_iterations);
-	void					CreateGVFVesselnessImage();
     void					CreateLoGImage();
 	void					CreateVesselnessImage();
 	void					CreateSpeedImage();
@@ -73,8 +75,14 @@ public:
     
     void                    WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
 	void                    WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);
-	
+
+private:
+	void					CreateGVFVesselnessImage(float noise_level, int num_iterations);
+	GVFImageType::Pointer	CreateGVFImage(float noise_level, int num_iterations);
+	float					GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector);
     
+	void					CreateHessianVesselnessImage();
+
 public:
 	std::deque< ImageType::IndexType > critical_points_queue; //deque is double-ended queue
 	
@@ -88,7 +96,6 @@ public:
 	LabelImageType::Pointer			soma_label_image;
 	DistanceImageType::Pointer		speed_image;
 	ImageType::Pointer				isotropic_image;
-	GVFImageType::Pointer			gvf_image;
     
 	itk::int64_t next_available_ID;
     

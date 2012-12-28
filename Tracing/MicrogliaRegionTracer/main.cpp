@@ -9,24 +9,24 @@ int main(int argc, char* argv[])
 	
 	if (argc == 1)	//Only for development purposes
 	{		
-		MRT.SetJointTransformsFile("D:/MicrogliaRegionTracer/GFP/8bit/8bit_joint_transforms.xml");
-		MRT.SetImageSeriesPath("D:/MicrogliaRegionTracer/GFP/8bit");
+		MRT.SetJointTransformsFile("C:/MicrogliaRegionTracer/GFP/8bit/8bit_joint_transforms.xml");
+		MRT.SetImageSeriesPath("C:/MicrogliaRegionTracer/GFP/8bit");
 		MRT.SetAnchorImage("8bit_kt01348_w311GFPdsu.TIF");
-		//MRT.SetSomaImage("D:/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+		//MRT.SetSomaImage("C:/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
 		MRT.SetAspectRatio(3.0);
 		
 		try
 		{
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
-			//MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
-            MRT.LoadSeedPoints("D:/MicrogliaRegionTracer/DAPI/single_soma_centroid.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/16seedpoints.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
+			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
+            MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/single_soma_centroid.txt");
 		}
 		catch (std::exception & e)
 		{
