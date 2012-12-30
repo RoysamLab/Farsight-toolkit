@@ -114,9 +114,11 @@ public:
 	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
     bool SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules);
 
+	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, unsigned int bdevide, vnl_vector<double> vec1, vnl_vector<double> vec2);
+
 protected:
 
-	void NormalizeData(vnl_matrix<double> &mat);
+	static void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
 	bool MergeMatrix( vnl_matrix<double> &firstMat, vnl_matrix<double> &secondMat, vnl_matrix<double> &combinedMat);
@@ -130,7 +132,7 @@ protected:
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, int nstart, int nrow, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
 	void GetCombinedMatrixByModuleId( vnl_matrix<double> &datamat, std::vector< std::vector< unsigned int> > &featureClusterIndex, std::vector< unsigned int> &selModuleIDs, vnl_matrix<double>& mat);
 	void GetCombinedInversedMatrix(vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleInversedId, vnl_matrix<double>& mat);
-	void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
+	static void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
 	void StandardizeIndex(vnl_vector<unsigned int>& index);
 	void EraseZeroCol(vnl_matrix<double>& mat);
 	void EraseCols(vnl_matrix<double>& mat, std::vector<unsigned int> vec);
@@ -138,26 +140,26 @@ protected:
 	void DeleteMatrixColumn( vnl_matrix<double>& mat, unsigned int col);
 	double CityBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	void CityBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
-	void EuclideanBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
-    void EuclideanBlockDist( vnl_vector<double>& vec, vnl_matrix<double>& matDis);
+	static void EuclideanBlockDist( vnl_matrix<double>& mat, vnl_matrix<double>& matDis);
+    static void EuclideanBlockDist( vnl_vector<double>& vec, vnl_matrix<double>& matDis);
 	double EuclideanBlockDist( vnl_vector<double>& vec1, vnl_vector<double>& vec2);
-	void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
-	void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
-	void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
+	static void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
+	static void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
+	static void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
 	int GetConnectedComponent(std::vector< unsigned int>& index, std::vector< int>& component, unsigned int kNeighbor);
-	double EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
+	static double EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	int GetSingleModuleSize( vnl_vector<unsigned int>& index, unsigned int ind);
 	void GetMatrixDistance( vnl_matrix<double>& data, vnl_vector<double>&distance, DISTANCE_TYPE type);
 	void GetMSTMatrixDistance( vnl_vector<double>& distance, std::vector< boost::graph_traits<Graph>::vertex_descriptor>& vertex, vnl_vector<double>& MSTdistance);
 	void Hist(vnl_vector<double>&distance, int num_bin, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
 	void Hist(vnl_vector<double>&distance, vnl_vector<double>& interval, vnl_vector<unsigned int>& histDis);
-	void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis, int num_bin);
-	void Hist(vnl_matrix<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis);
+	static void Hist(vnl_vector<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis, int num_bin);
+	static void Hist(vnl_matrix<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis, int num_bin);
 	double FindMinBetweenConnectComponent(vnl_matrix<double> &dis, std::vector<int> ver1, std::vector<int> ver2);
 	void GetComponentMinDistance(vnl_matrix<double> &distMat, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
 
 	//double Dist(int *first, int *second);
-	double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix);
+	static double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix, int num_bin);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
 	long int GetSelectedFeatures(vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs);
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);

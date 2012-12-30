@@ -2332,9 +2332,9 @@ void SPDAnalysisModel::Hist(vnl_vector<double>&distance, double interVal, double
 	}
 }
 
-void SPDAnalysisModel::Hist(vnl_matrix<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis)
+void SPDAnalysisModel::Hist(vnl_matrix<double>&distance, double interVal, double minVal, vnl_vector<unsigned int>& histDis, int num_bin = NUM_BIN)
 {
-	histDis.set_size( NUM_BIN);
+	histDis.set_size( num_bin);
 	histDis.fill(0);
 
 	if( interVal < 1e-9)
@@ -2349,9 +2349,9 @@ void SPDAnalysisModel::Hist(vnl_matrix<double>&distance, double interVal, double
 			int index = floor( (distance(i,j) - minVal) / interVal);
 			if( index >= 0)
 			{
-				if( index > NUM_BIN - 1)
+				if( index > num_bin - 1)
 				{
-					index = NUM_BIN - 1;
+					index = num_bin - 1;
 				}
 				histDis[index]++;
 			}
@@ -2373,7 +2373,7 @@ double Dist(int *first, int *second)
 }
 
 double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second,
-											vnl_matrix<double> &flowMatrix)
+											vnl_matrix<double> &flowMatrix, int num_bin = NUM_BIN)
 {
 	using namespace dt_simplex;
 	int *src = new int[first.size()];
@@ -2411,13 +2411,13 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	TsSignature<int> srcSig(first.size(), src, src_num);
 	TsSignature<int> snkSig(second.size(), snk, snk_num);
 
-	TsFlow flow[NUM_BIN * NUM_BIN];
+	TsFlow *flow = new TsFlow[num_bin * num_bin];
 	int flowVars = 0;
 	double result = transportSimplex(&srcSig, &snkSig, Dist, flow, &flowVars);
 	
-	for( int i = 0; i < NUM_BIN; i++)
+	for( int i = 0; i < num_bin; i++)
 	{
-		for( int j = 0; j < NUM_BIN; j++)
+		for( int j = 0; j < num_bin; j++)
 		{
 			flowMatrix( i, j) = 0;
 		}
@@ -2431,6 +2431,7 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	delete src_num;
 	delete snk;
 	delete snk_num;
+	delete flow;
 
 	return result;
 }
@@ -4266,4 +4267,93 @@ void SPDAnalysisModel::RunEMDAnalysis( vnl_vector<double> &moduleDistance, int i
 		}
 		std::cout<< "EMD matrix has been built successfully"<<endl;
 	}
+}
+
+// compute PS distance between two variables
+double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, unsigned int bdevide, vnl_vector<double> vec1, vnl_vector<double> vec2)
+{
+	//std::ofstream ofs("Debug.txt");
+	//vnl_matrix< double> comMat(vec1.size(), 2);
+	//comMat.set_column(0, vec1);
+	//comMat.set_column(1, vec2);
+	//NormalizeData(comMat);
+
+	//vnl_matrix< double> contextDis;
+	//EuclideanBlockDist(comMat, contextDis);
+	
+	vnl_matrix< double> contextDis;
+	EuclideanBlockDist(vec1, contextDis);
+
+	//ofs<< vec1<<std::endl<<std::endl;
+	//ofs<< dis1<<std::endl;
+	//ofs.close();
+	std::vector<unsigned int> nearIndex;
+	std::vector<unsigned int> farIndex;
+	vnl_vector<double> nearWeights;
+	vnl_vector<double> farWeights;
+	FindNearestKSample(contextDis, nearIndex, kNeighbor);
+	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
+	double min = contextDis.min_value();
+
+	for( int k = 0; k < contextDis.rows(); k++)
+	{
+		contextDis(k,k) = 0;
+	}
+
+	FindFarthestKSample(contextDis, farIndex, kNeighbor);
+	GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+	
+	double max = contextDis.max_value();
+	double interval = ( max - min) / nbins;
+	double range = 0;
+
+	vnl_vector<unsigned int> histMod, histNear, histFar;
+	if( interval > 1e-9)
+	{
+		//Hist(contextDis, interval, min, histMod, nbins);
+		Hist(nearWeights, interval, min, histNear, nbins);
+		Hist(farWeights, interval, min, histFar, nbins);
+		//ofs<< histMod<<std::endl;
+		//ofs<< histNear<<std::endl;
+		//ofs<< histFar<<std::endl;
+
+		vnl_matrix<double> flowMatrix( nbins, nbins);
+		range = EarthMoverDistance( histFar, histNear, flowMatrix, nbins);
+	}
+	else
+	{
+		return 0;
+	}
+
+	//vnl_matrix< double> dis1;
+	//std::vector<unsigned int> nearIndex1;
+	//vnl_vector<double> matchWeights1;
+	//vnl_vector<unsigned int> hist1;
+
+	//EuclideanBlockDist(vec1, dis1);
+	//FindNearestKSample(dis1, nearIndex1, kNeighbor);
+	//GetKWeights( contextDis, nearIndex1, matchWeights1, kNeighbor);
+	//Hist( matchWeights1, interval, min, hist1, nbins);
+	//ofs<< hist1<<std::endl;
+
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<unsigned int> hist2;
+
+	EuclideanBlockDist(vec2, dis2);
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	Hist( matchWeights2, interval, min, hist2, nbins);
+	//ofs<< hist2<<std::endl;
+
+	vnl_matrix<double> flowMatrix( nbins, nbins);
+	double movedEarth = EarthMoverDistance( hist2, histNear, flowMatrix, nbins);
+
+	//std::cout<< "Earth:"<<movedEarth<<std::endl;
+	//std::cout<< "Range:"<<range<<std::endl;
+	double ps = abs(1 - movedEarth / range * bdevide);
+	//ofs.close();
+	//std::cout<< "Progression similarity between the two variables: "<<ps<<std::endl;
+	return ps;
 }

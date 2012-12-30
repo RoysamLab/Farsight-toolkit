@@ -52,7 +52,6 @@ ProgressionHeatmap::ProgressionHeatmap(QWidget *parent)
 
 	this->mapdata = NULL;
 	this->Optimal_Leaf_Order1 = NULL;
-	this->Optimal_Leaf_Order2 = NULL;
 	this->connect_Data_Tree1 = NULL;
 	this->connect_Data_Tree2 = NULL;
 
@@ -73,11 +72,6 @@ ProgressionHeatmap::~ProgressionHeatmap()
 	{
 		delete this->Optimal_Leaf_Order1;
 		this->Optimal_Leaf_Order1 = NULL;
-	}
-	if(this->Optimal_Leaf_Order2)
-	{
-		delete this->Optimal_Leaf_Order2;
-		this->Optimal_Leaf_Order2 = NULL;
 	}
 
 	if(this->connect_Data_Tree1)
@@ -112,9 +106,9 @@ void ProgressionHeatmap::setDataForHeatmap(double** features, int* optimalleafor
 	for(int i=0; i<num_samples; i++)
 		this->Optimal_Leaf_Order1[i] = optimalleaforder1[i];
 
-	this->Optimal_Leaf_Order2 = new int[num_features];
+	this->Optimal_Leaf_Order1 = new int[num_features];
 	for(int i=0; i<num_features; i++)
-		this->Optimal_Leaf_Order2[i] = optimalleaforder2[i];
+		this->Optimal_Leaf_Order1[i] = optimalleaforder2[i];
 }
 
 void ProgressionHeatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
@@ -146,7 +140,6 @@ void ProgressionHeatmap::setDataForSimilarMatrixHeatmap(double** features, int* 
 
 	this->mapdata = features;
 	this->Optimal_Leaf_Order1 = optimalleaforder1;
-	this->Optimal_Leaf_Order2 = optimalleaforder2;
 	this->num_samples = num_samples;
 	this->num_features = num_features;
 }
@@ -170,7 +163,7 @@ void ProgressionHeatmap::creatDataForHeatmap(double powCof)
 		double sum = 0.0;
 		for(int j = 0; j < this->num_features; j++)
 		{
-			temp[j] = mapdata[i][Optimal_Leaf_Order2[j]];
+			temp[j] = mapdata[i][Optimal_Leaf_Order1[j]];
 			mean += temp[j];
 		}
 
@@ -222,7 +215,7 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 	{
 		for(int j = 0; j < this->num_features; j++)
 		{
-			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order2[j]];
+			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order1[j]];
 		}
 	}
 
@@ -277,7 +270,7 @@ void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap()
 	{
 		for(int j = 0; j < this->num_features; j++)
 		{
-			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order2[j]];
+			tempdata[i][j] = mapdata[i][Optimal_Leaf_Order1[j]];
 		}
 	}
 	for(int i = 0; i < this->num_samples; i++)
@@ -768,7 +761,7 @@ void ProgressionHeatmap::createDataForDendogram2(double powCof)
  
 		for(int k = 0; k < num_features; k++)
 		{
-			if(Optimal_Leaf_Order2[k] == i)
+			if(Optimal_Leaf_Order1[k] == i)
 			{
 				Processed_Coordinate_Data_Tree2[i][1] = (k+0.5)/(double)this->num_features - 0.5;
 			}
@@ -998,7 +991,7 @@ void ProgressionHeatmap::GetSelecectedIDs()
 
 		for(int i = 0; i<this->num_features; i++)
 		{
-			if(Optimal_Leaf_Order2[i] == index2)
+			if(Optimal_Leaf_Order1[i] == index2)
 			{
 				IDs2[count2++] = i;				
 				break;
@@ -1288,7 +1281,7 @@ void ProgressionHeatmap::drawPoints3()
 	for(unsigned int i = 0; i < max_table_values; i++)
 	{
 		orient->InsertNextValue(90.0);
-		//vtkIdType id = Optimal_Leaf_Order2[i];
+		//vtkIdType id = Optimal_Leaf_Order1[i];
 		label->InsertNextValue(this->table->GetColumn(i + 1)->GetName());   // discard the ID column
 	}	
 
@@ -1766,7 +1759,7 @@ void ProgressionHeatmap::setselectedCellIds()
 	}
 	for(int j = c1; j<=c2; j++)
 	{		
-		selectedIDs2.insert(this->Optimal_Leaf_Order2[j]);
+		selectedIDs2.insert(this->Optimal_Leaf_Order1[j]);
 	}
 	try
 	{

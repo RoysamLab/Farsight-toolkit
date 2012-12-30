@@ -36,5 +36,5 @@ ENDIF ( NOT BUILD_CLUSCLUS )
 	
 ADD_LIBRARY( SPD ${SPD_SRCS} ${GUI_MOC_SRCS})
 TARGET_LINK_LIBRARIES(SPD ${Libraries} ftkGUI ftkCommon ClusClus_lib)
-
-
+ADD_EXECUTABLE(PSC SPDAnalysisModel.cpp SPDAnalysisModel.h transportSimplex.h PSC.cpp)
+TARGET_LINK_LIBRARIES(PSC vnl mbl ${VTK_LIBRARIES} ftkCommon ClusClus_lib)
