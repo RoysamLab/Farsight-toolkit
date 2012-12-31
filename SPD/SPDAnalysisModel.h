@@ -114,7 +114,7 @@ public:
 	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
     bool SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules);
 
-	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, unsigned int bdevide, vnl_vector<double> vec1, vnl_vector<double> vec2);
+	static double CaculatePS(bool bnoise, unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> vec1, vnl_vector<double> vec2);
 
 protected:
 
@@ -176,7 +176,8 @@ protected:
 	void ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance);
 	bool GenerateMST( vnl_matrix<double> &mat, bool bfirst);
 	void RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind);
-
+	static double gaussrand(double exp, double std);
+	
 public:
 	std::vector< Tree> PublicTreeData;
 	std::vector< Tree> mstTreeList;

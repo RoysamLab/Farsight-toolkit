@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vtkVariant.h>
+#include <stdlib.h>
 #include <math.h>
 #include <mbl/mbl_stats_nd.h>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
@@ -4270,7 +4271,7 @@ void SPDAnalysisModel::RunEMDAnalysis( vnl_vector<double> &moduleDistance, int i
 }
 
 // compute PS distance between two variables
-double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, unsigned int bdevide, vnl_vector<double> vec1, vnl_vector<double> vec2)
+double SPDAnalysisModel::CaculatePS(bool bnoise, unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> vec1, vnl_vector<double> vec2)
 {
 	//std::ofstream ofs("Debug.txt");
 	//vnl_matrix< double> comMat(vec1.size(), 2);
@@ -4280,7 +4281,7 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 
 	//vnl_matrix< double> contextDis;
 	//EuclideanBlockDist(comMat, contextDis);
-	
+
 	vnl_matrix< double> contextDis;
 	EuclideanBlockDist(vec1, contextDis);
 
@@ -4288,9 +4289,7 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 	//ofs<< dis1<<std::endl;
 	//ofs.close();
 	std::vector<unsigned int> nearIndex;
-	std::vector<unsigned int> farIndex;
 	vnl_vector<double> nearWeights;
-	vnl_vector<double> farWeights;
 	FindNearestKSample(contextDis, nearIndex, kNeighbor);
 	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
 	double min = contextDis.min_value();
@@ -4300,30 +4299,98 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 		contextDis(k,k) = 0;
 	}
 
-	FindFarthestKSample(contextDis, farIndex, kNeighbor);
-	GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
-	
 	double max = contextDis.max_value();
 	double interval = ( max - min) / nbins;
 	double range = 0;
+	double rangeNoise = 0;
 
-	vnl_vector<unsigned int> histMod, histNear, histFar;
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<unsigned int> hist2;
+
+	EuclideanBlockDist(vec2, dis2);
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	Hist( matchWeights2, interval, min, hist2, nbins);
+	
+	vnl_matrix<double> flowMatrix( nbins, nbins);
+	double movedEarth = 0;
+	double ps = 0;
+
 	if( interval > 1e-9)
 	{
-		//Hist(contextDis, interval, min, histMod, nbins);
+		vnl_vector<unsigned int> histNear;
 		Hist(nearWeights, interval, min, histNear, nbins);
-		Hist(farWeights, interval, min, histFar, nbins);
-		//ofs<< histMod<<std::endl;
-		//ofs<< histNear<<std::endl;
-		//ofs<< histFar<<std::endl;
-
-		vnl_matrix<double> flowMatrix( nbins, nbins);
-		range = EarthMoverDistance( histFar, histNear, flowMatrix, nbins);
+		if( bnoise)
+		{
+			vnl_vector<double> noiseVec(vec1.size());
+			for( unsigned int i = 0; i < noiseVec.size(); i++)
+			{
+				noiseVec[i] = gaussrand(0,1);
+			}
+			vnl_matrix< double> noiseDis;
+			EuclideanBlockDist(noiseVec, noiseDis);
+			std::vector<unsigned int> noisenearIndex;
+			vnl_vector<double> noiseWeights;
+			vnl_vector<unsigned int> histNoise;
+			FindNearestKSample(noiseDis, noisenearIndex, kNeighbor);
+			GetKWeights(contextDis, noisenearIndex, noiseWeights, kNeighbor);
+			Hist(noiseWeights, interval, min, histNoise, nbins);
+			vnl_matrix<double> flowMatrix( nbins, nbins);
+			movedEarth = EarthMoverDistance( histNoise, hist2, flowMatrix, nbins);
+			double sum = 0;
+			for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+			{
+				for( unsigned int m = n + 1; m <= flowMatrix.cols(); m++)
+				{
+					if( flowMatrix(n,m) > 1e-6)
+					{
+						sum += flowMatrix(n,m);
+					}
+				}
+			}
+			std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
+			if( sum > 0.5)  // between k-NNG and noise-NNG
+			{
+				rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
+				ps = movedEarth / rangeNoise;
+			}
+			else  // between noise-NNG and k-FNG
+			{
+				std::vector<unsigned int> farIndex;
+				vnl_vector<double> farWeights;
+				vnl_vector<unsigned int> histFar;
+				FindFarthestKSample(contextDis, farIndex, kNeighbor);
+				GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+				Hist(farWeights, interval, min, histFar, nbins);
+				rangeNoise = EarthMoverDistance( histFar, histNoise, flowMatrix, nbins);
+				ps = movedEarth / rangeNoise;
+			}
+		}
+		else
+		{
+			std::vector<unsigned int> farIndex;
+			vnl_vector<double> farWeights;
+			vnl_vector<unsigned int> histFar;
+			FindFarthestKSample(contextDis, farIndex, kNeighbor);
+			GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+			Hist(farWeights, interval, min, histFar, nbins);
+			vnl_matrix<double> flowMatrix( nbins, nbins);
+			range = EarthMoverDistance( histFar, histNear, flowMatrix, nbins);
+			movedEarth = EarthMoverDistance( hist2, histNear, flowMatrix, nbins);
+			if( range > 1e-6)
+			{
+				ps = abs(1 - movedEarth / range * 3);
+			}
+		}
 	}
 	else
 	{
 		return 0;
 	}
+
+	return ps;
 
 	//vnl_matrix< double> dis1;
 	//std::vector<unsigned int> nearIndex1;
@@ -4336,24 +4403,38 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 	//Hist( matchWeights1, interval, min, hist1, nbins);
 	//ofs<< hist1<<std::endl;
 
-	vnl_matrix< double> dis2;
-	std::vector<unsigned int> nearIndex2;
-	vnl_vector<double> matchWeights2;
-	vnl_vector<unsigned int> hist2;
 
-	EuclideanBlockDist(vec2, dis2);
-	FindNearestKSample(dis2, nearIndex2, kNeighbor);
-	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
-	Hist( matchWeights2, interval, min, hist2, nbins);
 	//ofs<< hist2<<std::endl;
-
-	vnl_matrix<double> flowMatrix( nbins, nbins);
-	double movedEarth = EarthMoverDistance( hist2, histNear, flowMatrix, nbins);
 
 	//std::cout<< "Earth:"<<movedEarth<<std::endl;
 	//std::cout<< "Range:"<<range<<std::endl;
-	double ps = abs(1 - movedEarth / range * bdevide);
+	
 	//ofs.close();
 	//std::cout<< "Progression similarity between the two variables: "<<ps<<std::endl;
-	return ps;
+	
+}
+
+double SPDAnalysisModel::gaussrand(double exp, double std)
+{
+    static double V1, V2, S;
+    static int phase = 0;
+    double X;
+     
+    if ( phase == 0 ) {
+        do {
+            double U1 = (double)rand() / RAND_MAX;
+            double U2 = (double)rand() / RAND_MAX;
+             
+            V1 = 2 * U1 - 1;
+            V2 = 2 * U2 - 1;
+            S = V1 * V1 + V2 * V2;
+        } while(S >= 1 || S == 0);
+         
+        X = V1 * sqrt(-2 * log(S) / S);
+    } else
+        X = V2 * sqrt(-2 * log(S) / S);
+         
+    phase = 1 - phase;
+ 	X = X * std + exp;
+    return X;
 }
