@@ -359,15 +359,17 @@ void Cell::WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream
 /* This function resamples the image and creates an isotropic image according to the ratio set in the constructor */
 void Cell::CreateIsotropicImage()
 {
-	ImageType::SizeType inputSize = this->image->GetLargestPossibleRegion().GetSize();
+    std::cout << "Creating Isotropic Image" << std::endl;
+    ImageType::SizeType inputSize = this->image->GetLargestPossibleRegion().GetSize();
 	ImageType::SizeType outputSize = inputSize;
-	outputSize[2] = outputSize[2] * 1/this->aspect_ratio;
-
+    outputSize[0] = outputSize[0] * this->aspect_ratio;
+    outputSize[1] = outputSize[1] * this->aspect_ratio;
+    
 	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = this->aspect_ratio;
-
+	outputSpacing[0] = 1/this->aspect_ratio;
+	outputSpacing[1] = 1/this->aspect_ratio;
+	outputSpacing[2] = 1.0;
+    
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< ImageType, ImageType > ResampleImageFilterType;
 	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
@@ -384,24 +386,24 @@ void Cell::CreateIsotropicImage()
 		std::cerr << "CreateIsotropicImage() resample_filter exception: " << err << std::endl;
 		return;
 	}
-
+    
 	this->isotropic_image = resample_filter->GetOutput();
 	this->isotropic_image->DisconnectPipeline();
-
-	//Make the file name of the raw cell image
-	std::stringstream isometric_image_filename_stream;
-	isometric_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isometric.nrrd";
-	WriteImage(isometric_image_filename_stream.str(), this->isotropic_image);
-
-
-	ImageType::SpacingType spacing;
+    
+    ImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	this->isotropic_image->SetSpacing(spacing);
+    
+    
+    //Make the file name of the raw cell image
+	std::stringstream isotropic_image_filename_stream;
+	isotropic_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isotropic.nrrd";
+	WriteImage(isotropic_image_filename_stream.str(), this->isotropic_image);
 }
 
 Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iterations)
 {
-	//Gradient filter	
+	//Gradient filter
 	typedef itk::GradientImageFilter< ImageType > GradientImageFilterType;
 	GradientImageFilterType::Pointer gradient_filter = GradientImageFilterType::New();
 
@@ -691,8 +693,8 @@ void Cell::CreateLoGImage()
 
 void Cell::CreateVesselnessImage()
 {
-	CreateGVFVesselnessImage(2000.0, 10);
-	//CreateHessianVesselnessImage();
+	//CreateGVFVesselnessImage(5000.0, 10);
+	CreateHessianVesselnessImage();
 
 	std::ostringstream vesselness_filename_stream;
 	vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_vesselness.nrrd";
@@ -701,7 +703,9 @@ void Cell::CreateVesselnessImage()
 
 void Cell::CreateHessianVesselnessImage()
 {
-	typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
+    std::cout << "Creating Vesselness Image by Multiscale Hessian method" << std::endl;
+    
+    typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
 	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
 	vesselness_filter->SetAlpha1(0.5);
 	vesselness_filter->SetAlpha2(0.5);
@@ -734,10 +738,9 @@ void Cell::CreateHessianVesselnessImage()
 	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
 
 	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = 1/aspect_ratio;
-	//outputSpacing[2] = 1.0;
+	outputSpacing[0] = aspect_ratio;
+	outputSpacing[1] = aspect_ratio;
+	outputSpacing[2] = 1.0;
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;

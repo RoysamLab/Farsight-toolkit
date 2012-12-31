@@ -62,7 +62,7 @@ public:
 	void                    GetMask(const std::string & soma_filename);
 	void                    ComputeMaskedImage();
 	
-	void					CreateIsotropicImage();
+	void                    CreateIsotropicImage();
     void					CreateLoGImage();
 	void					CreateVesselnessImage();
 	void					CreateSpeedImage();
@@ -76,8 +76,8 @@ public:
     void                    WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
 	void                    WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);
 
-private:
-	void					CreateGVFVesselnessImage(float noise_level, int num_iterations);
+private:    
+    void					CreateGVFVesselnessImage(float noise_level, int num_iterations);
 	GVFImageType::Pointer	CreateGVFImage(float noise_level, int num_iterations);
 	float					GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector);
     
