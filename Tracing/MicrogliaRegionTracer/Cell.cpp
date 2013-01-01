@@ -488,6 +488,18 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 		++Dy_iter;
 		++Dz_iter;
 	}
+	
+	std::ostringstream Dx_filename_stream;
+	Dx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dx.nrrd";
+	WriteImage(Dx_filename_stream.str(), Dx);
+
+	std::ostringstream Dy_filename_stream;
+	Dy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dy.nrrd";
+	WriteImage(Dy_filename_stream.str(), Dy);
+
+	std::ostringstream Dz_filename_stream;
+	Dz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dz.nrrd";
+	WriteImage(Dz_filename_stream.str(), Dz);
 
 	//Calculate gradient of the GVF image
 	//Gradient of Dx
@@ -558,14 +570,17 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 		++grad_Dz_iter;
 	}
 
+	std::ostringstream isotropic_vesselness_filename_stream;
+	isotropic_vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isotropic_vesselness.nrrd";
+	WriteImage(isotropic_vesselness_filename_stream.str(), isotropic_vesselness_image);
+
 	//Unsample the image
 	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
 
 	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = 1/aspect_ratio;
-	//outputSpacing[2] = 1.0;
+	outputSpacing[0] = aspect_ratio;
+	outputSpacing[1] = aspect_ratio;
+	outputSpacing[2] = 1.0;
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< VesselnessImageType, VesselnessImageType > ResampleImageFilterType;
