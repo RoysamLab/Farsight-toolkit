@@ -56,7 +56,7 @@ option( BUILD_POWEROF2TILING "Build PowerOf2Tiling.exe which will take an image 
 option( BUILD_ROLLINGBALLFILTER "Build Rolling Ball Filter (aka Subtract Background)" OFF)
 option( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 option( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
-option( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" ON )
+option( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" OFF )
 option( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 option( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 option( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
