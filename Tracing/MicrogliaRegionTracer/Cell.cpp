@@ -447,6 +447,7 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 
 void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 {
+	std::cout << "Creating Vesselness image by Gradient Vector Flow" << std::endl;
 	GVFImageType::Pointer gvf_image = CreateGVFImage(noise_level, num_iterations);
 
 	//Separate the GVF image into Partial Derivatives
@@ -502,6 +503,7 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
 	GradientImageType::Pointer grad_Dx = gradient_filter->GetOutput();
+	grad_Dx->DisconnectPipeline();
 
 	//Gradient of Dy
 	gradient_filter->SetInput(Dy);
@@ -514,6 +516,7 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
 	GradientImageType::Pointer grad_Dy = gradient_filter->GetOutput();
+	grad_Dy->DisconnectPipeline();
 
 	//Gradient of Dz
 	gradient_filter->SetInput(Dz);
@@ -526,6 +529,7 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
 	GradientImageType::Pointer grad_Dz = gradient_filter->GetOutput();
+	grad_Dz->DisconnectPipeline();
 
 	//Calculate the vesselness value
 	itk::ImageRegionConstIterator< GradientImageType > grad_Dx_iter(grad_Dx, grad_Dx->GetLargestPossibleRegion());
@@ -693,8 +697,8 @@ void Cell::CreateLoGImage()
 
 void Cell::CreateVesselnessImage()
 {
-	//CreateGVFVesselnessImage(5000.0, 10);
-	CreateHessianVesselnessImage();
+	CreateGVFVesselnessImage(2000.0, 10);
+	//CreateHessianVesselnessImage();
 
 	std::ostringstream vesselness_filename_stream;
 	vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_vesselness.nrrd";

@@ -21,7 +21,7 @@
 #define PI 3.1415926535897932384626433832795
 
 //Non-member function prototypes
-double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
+float CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
 
 
 MicrogliaRegionTracer::MicrogliaRegionTracer() :
@@ -106,7 +106,7 @@ void MicrogliaRegionTracer::Trace()
     int num_openmp_threads = 1;    //Default 1 thread in a group
 #endif
     
-    int num_groups = std::ceil(cells.size() / (double) num_openmp_threads);
+    int num_groups = std::ceil(cells.size() / (float) num_openmp_threads);
 	std::cerr << "Number of groups of cells to process: " << num_groups << std::endl;
     std::cerr << "Number of cells in each group (except the last group): " << num_openmp_threads << std::endl;
     std::cerr << "Number of cells to process in the last group: " << cells.size() % num_openmp_threads << std::endl;
@@ -127,7 +127,7 @@ void MicrogliaRegionTracer::Trace()
     }
 }
 
-void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_openmp_threads, ROIGrabber & roi_grabber)
+void MicrogliaRegionTracer::ReadAGroupOfROIs(const int num_cells_in_group, const int group_num, const int num_openmp_threads, ROIGrabber & roi_grabber)
 {
     
     itk::MultiThreader::SetGlobalDefaultNumberOfThreads( itk_default_num_threads );	//Change default number of threads to itk_default_num_threads for ITK filters in fregl_roi
@@ -185,12 +185,14 @@ void MicrogliaRegionTracer::ReadAGroupOfROIs(int num_cells_in_group, int group_n
     }
 }
 
-void MicrogliaRegionTracer::TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_openmp_threads)
+void MicrogliaRegionTracer::TraceAGroupOfCells(const int num_cells_in_group, const int group_num, const int num_openmp_threads)
 {
 #ifdef _OPENMP
     itk::MultiThreader::SetGlobalDefaultNumberOfThreads( std::max<float>(1, num_openmp_threads / cells.size()));	//We trace multiple cells with OpenMP, so reduce the number of ITK threads so that we don't cause thread contention#
 #endif
     
+	std::cout << "Tracing a group of cells using " << itk::MultiThreader::GetGlobalDefaultNumberOfThreads() << " itk threads and " << num_cells_in_group << " openmp threads" << std::endl;
+
     #pragma omp parallel for
     for (int local_thread_num = 0; local_thread_num < num_cells_in_group; local_thread_num++)
     {
@@ -358,7 +360,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 void MicrogliaRegionTracer::BuildTree(Cell & cell)
 {
 	std::cerr << "Building Adjacency Graph" << std::endl;
-	double** AdjGraph = BuildAdjacencyGraph(cell);
+	float** AdjGraph = BuildAdjacencyGraph(cell);
 
 	//for (int k = 0; k < cell.critical_points_queue.size(); k++)
 	//	std::cout << AdjGraph[0][k] << std::endl;
@@ -395,13 +397,12 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 }
 
 /* This function generates a matrix of all possible pairs of candidate pixels */
-double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell & cell)
+float** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell & cell)
 {
-	double** AdjGraph = new double*[cell.critical_points_queue.size()];
+	float** AdjGraph = new float*[cell.critical_points_queue.size()];
 	for (int k = 0; k < cell.critical_points_queue.size(); k++)
-		AdjGraph[k] = new double[cell.critical_points_queue.size()];
+		AdjGraph[k] = new float[cell.critical_points_queue.size()];
 
-	#pragma omp parallel for
 	for (itk::int64_t k = 0; k < (itk::int64_t)cell.critical_points_queue.size(); k++)
 	{
 		//std::cout << "Calculating distance for node " << k << std::endl;
@@ -416,7 +417,7 @@ double** MicrogliaRegionTracer::BuildAdjacencyGraph(Cell & cell)
 }
 
 /* This is the distance part of the cost function */
-double MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_from, itk::uint64_t node_to)
+float MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_from, itk::uint64_t node_to)
 {
 	ImageType::IndexType node1 = cell.critical_points_queue[node_from];
 	ImageType::IndexType node2 = cell.critical_points_queue[node_to];
@@ -426,10 +427,10 @@ double MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_
 	trace_vector[1] = node2[1] - node1[1];
 	trace_vector[2] = node2[2] - node1[2];
 
-	double mag_trace_vector = sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
+	float mag_trace_vector = sqrt(pow(trace_vector[0], 2.0f) + pow(trace_vector[1], 2.0f) + pow(trace_vector[2], 2.0f));
 	
-	if ((node_from == node_to) || (mag_trace_vector < 0.0001))	//Very likely that these two points are equal so we shouldn't try to connect them
-		return std::numeric_limits< double >::max();
+	if ((node_from == node_to) || (mag_trace_vector < 0.0001f))	//Very likely that these two points are equal so we shouldn't try to connect them
+		return std::numeric_limits< float >::max();
 
 #if MASK
 	//If we are connecting from the root node
@@ -438,7 +439,7 @@ double MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_
 		if (cell.soma_label_image->GetPixel(node1) == cell.soma_label_image->GetPixel(node2)) //If it is inside the soma our centroid belongs to, we give it 0 weight
 			return 0;
 		else if (cell.soma_label_image->GetPixel(node2) != 0)											//We are trying to connect to a pixel in another soma, so we give it infinite weight
-			return std::numeric_limits< double >::max();	
+			return std::numeric_limits< float >::max();	
 	}
 #endif
 
@@ -467,30 +468,30 @@ double MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_
 	}
 	
 	if (num_blank_pixels >= 3)
-		return std::numeric_limits< double >::max();	//Thresholding based on jumping large gaps
+		return std::numeric_limits< float >::max();	//Thresholding based on jumping large gaps
 	else
 		return mag_trace_vector;
 }
 
 /* This function generates the minimum spanning tree (Prim's algorithm implementation, the output is a Tree structure */
-Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
+Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, float** AdjGraph)
 {	
 	Tree* tree = new Tree();
 	ImageType::IndexType root_index = cell.critical_points_queue.front();
 	tree->SetRoot(new Node(root_index[0], root_index[1], root_index[2], 1));
 
 	//Make a copy of the AdjGraph called TreeAdjGraph which we will use to build the MST (Important that we keep the original AdjGraph to measure tortuosity)
-	double** TreeAdjGraph = new double*[cell.critical_points_queue.size()];
+	float** TreeAdjGraph = new float*[cell.critical_points_queue.size()];
 	for (int k = 0; k < cell.critical_points_queue.size(); k++)
 	{
-		TreeAdjGraph[k] = new double[cell.critical_points_queue.size()];
+		TreeAdjGraph[k] = new float[cell.critical_points_queue.size()];
 		for (int l = 0; l < cell.critical_points_queue.size(); l++)
 			TreeAdjGraph[k][l] = AdjGraph[k][l];
 	}
 
 	//Root node should have infinite weights to connect to
 	for (int m = 0; m < cell.critical_points_queue.size(); m++)
-		TreeAdjGraph[m][0] = std::numeric_limits<double>::max();
+		TreeAdjGraph[m][0] = std::numeric_limits< float >::max();
 
 	//Prim's algorithm
 	//for each node but the last, find the minimum weight unconnected node and connect it to the tree
@@ -498,10 +499,10 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 	{
 		itk::uint64_t minimum_connected_node_id = 0;
 		itk::uint64_t minimum_node_index_to_id = 0;
-		double minimum_node_cost = std::numeric_limits<double>::max();
+		float minimum_node_cost = std::numeric_limits< float >::max();
 		Node* minimum_connected_node = NULL;
-		std::vector<Node*> member_nodes = tree->GetMemberNodes();
-		std::vector<Node*>::iterator member_nodes_iter;
+		std::vector< Node* > member_nodes = tree->GetMemberNodes();
+		std::vector< Node* >::iterator member_nodes_iter;
         
 		for (member_nodes_iter = member_nodes.begin(); member_nodes_iter != member_nodes.end(); ++member_nodes_iter)	//For each node that is already part of the Tree in Prim's algorithm
 		{
@@ -512,22 +513,22 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 				itk::uint64_t connected_node_id = connected_node->getID() - 1; //Node IDs are 1 greater than than vector indices, so we subtract 1 here
 				
                 //Weights for tortuosity and distance
-				double alpha = 0.5;			//this affects the cost weight for the angle
-				double beta = 1.0 - alpha;	//this affects the cost weight for the distance
+				float alpha = 0.5;			//this affects the cost weight for the angle
+				float beta = 1.0 - alpha;	//this affects the cost weight for the distance
 								
-				double node_to_candidate_length = TreeAdjGraph[connected_node_id][k];
+				float node_to_candidate_length = TreeAdjGraph[connected_node_id][k];
 				
-                double cost;
+                float cost;
 				if (connected_node->GetParent() != NULL)	//is not the root node (has a parent)
 				{
 					itk::uint64_t parent_id = connected_node->GetParent()->getID() - 1;
 
-					double parent_to_candidate_length = AdjGraph[parent_id][k];
-					double parent_to_node_length = AdjGraph[parent_id][connected_node_id];
+					float parent_to_candidate_length = AdjGraph[parent_id][k];
+					float parent_to_node_length = AdjGraph[parent_id][connected_node_id];
 					
 					//Law of cosines solved for the missing angle. PI then is subtracted from that, since it is deviation from a straight line.
 					//Theta ranges between 0 and PI with 0 being the least deviation from a straight-line with the parent trace
-					double theta = PI - acos((pow(parent_to_node_length, 2.0) + pow(node_to_candidate_length, 2.0) - pow(parent_to_candidate_length, 2.0)) / (2 * parent_to_node_length * node_to_candidate_length)); 
+					float theta = PI - acos((pow(parent_to_node_length, 2.0) + pow(node_to_candidate_length, 2.0) - pow(parent_to_candidate_length, 2.0)) / (2 * parent_to_node_length * node_to_candidate_length)); 
 					cost = node_to_candidate_length * (alpha * theta / PI + beta);
 				}
 				else	//is the root node (has no parent)
@@ -548,7 +549,7 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 		if (minimum_node_cost >= 200)
 			break;	//Minimum distance way too far
         
-        assert(minimum_node_cost < std::numeric_limits<double>::max() && minimum_connected_node != NULL);
+        assert(minimum_node_cost < std::numeric_limits< float >::max() && minimum_connected_node != NULL);
 		
 		std::cout << "Found new edge from " << minimum_connected_node_id << " to " << minimum_node_index_to_id << " Location: " << cell.critical_points_queue[minimum_connected_node_id][0] << " " << cell.critical_points_queue[minimum_connected_node_id][1] << " " << cell.critical_points_queue[minimum_connected_node_id][2] << " " << cell.critical_points_queue[minimum_node_index_to_id][0] << " " << cell.critical_points_queue[minimum_node_index_to_id][1] << " "  << cell.critical_points_queue[minimum_node_index_to_id][2] << " cost: " << minimum_node_cost << std::endl;
 
@@ -564,8 +565,8 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, double** AdjGraph)
 
 		
 		for (int m = 0; m < cell.critical_points_queue.size(); m++)
-			TreeAdjGraph[m][minimum_node_index_to_id] = std::numeric_limits<double>::max();						 //Node already has parents, we dont want it to have more parents
-		TreeAdjGraph[minimum_node_index_to_id][minimum_connected_node_id] = std::numeric_limits<double>::max(); //So the parent doesn't become the child of its child
+			TreeAdjGraph[m][minimum_node_index_to_id] = std::numeric_limits< float >::max();						 //Node already has parents, we dont want it to have more parents
+		TreeAdjGraph[minimum_node_index_to_id][minimum_connected_node_id] = std::numeric_limits< float >::max(); //So the parent doesn't become the child of its child
 
 		//Connect the unconnected point
 		Node* new_connected_node = new Node(point_local_index[0], point_local_index[1], point_local_index[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here
@@ -609,7 +610,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell & cell, Tree* smoothed_tree, Nod
 	std::vector< Node* >::iterator start_node_children_iter;
 	for (start_node_children_iter = start_node_children.begin(); start_node_children_iter != start_node_children.end(); ++start_node_children_iter)
 	{
-		double segment_length = 0.0;
+		float segment_length = 0.0;
 		
 		//Make a new path for each possible segment from this start_node
 		PathType::Pointer path = PathType::New();
@@ -786,12 +787,12 @@ void MicrogliaRegionTracer::ReplaceTreeSegmentWithPath(Cell & cell, Tree* smooth
 }
 
 /* Calculate the Euclidean Distance */
-double CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2)
+float CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2)
 {
     Cell::ImageType::IndexType trace_vector;
 	trace_vector[0] = node2[0] - node1[0];
 	trace_vector[1] = node2[1] - node1[1];
 	trace_vector[2] = node2[2] - node1[2];
 
-	return sqrt(pow(trace_vector[0], 2.0) + pow(trace_vector[1], 2.0) + pow(trace_vector[2], 2.0));
+	return sqrt(pow(trace_vector[0], 2.0f) + pow(trace_vector[1], 2.0f) + pow(trace_vector[2], 2.0f));
 }

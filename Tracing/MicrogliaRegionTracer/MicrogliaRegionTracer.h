@@ -40,16 +40,16 @@ private:
     
     const int itk_default_num_threads; //initialized in contructor
 private:
-    void                ReadAGroupOfROIs(int num_cells_in_group, int group_num, int num_openmp_threads, ROIGrabber & roi_grabber);
-    void                TraceAGroupOfCells(int num_cells_in_group, int group_num, int num_openmp_threads);
+    void                ReadAGroupOfROIs(const int num_cells_in_group, const int group_num, const int num_openmp_threads, ROIGrabber & roi_grabber);
+    void                TraceAGroupOfCells(const int num_cells_in_group, const int group_num, const int num_openmp_threads);
 	
 	void				CalculateSeedPoints(Cell & cell);
 	void				RidgeDetection(Cell & cell);
 
 	void				BuildTree(Cell & cell);
-	double**			BuildAdjacencyGraph(Cell & cell);
-	double				CalculateDistance(Cell & cell, itk::uint64_t k, itk::uint64_t l);	//THIS IS NOT THE EUCLIDEAN DISTANCE
-	Tree*				BuildMST1(Cell & cell, double** AdjGraph);
+	float**				BuildAdjacencyGraph(Cell & cell);
+	float				CalculateDistance(Cell & cell, itk::uint64_t k, itk::uint64_t l);	//THIS IS NOT THE EUCLIDEAN DISTANCE
+	Tree*				BuildMST1(Cell & cell, float** AdjGraph);
 
 	void				SmoothTree(Cell & cell, Tree* smoothed_tree);
 	void				SmoothSegments(Cell & cell, Tree* smoothed_tree, Node* start_node);
