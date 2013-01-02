@@ -102,7 +102,6 @@ limitations under the License.
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
 #endif
-#include "ftkVesselTracer/ftkVesselTracer.h"
 #include "branchPT.h"
 #include "CellTrace.h"
 #include "CellTraceModel.h"
@@ -221,7 +220,6 @@ public slots:
 	void PickTracer(int choice);
 	void RunTracer();
 	void StartMNTracerAmit(int costThreshold);
-	void StartVesselBallTracer();
 	void seedPointFileDialog();
 	void somaFileDialog();
 
@@ -579,18 +577,12 @@ private:
 	QPushButton * mntSomaButton;
 	QString seedsFile;
 	QString somaFile;
-	QGroupBox *vbtBox;
-	QCheckBox *vbtPreprocess;
-	QSpinBox *vbtUseVesselness;
-	QFormLayout *vbtLayout;
-	
+
+
 	//vessel segmentation
 	QWidget * vesselSegWidget;
 
-	// Vessel segmentation using ball tracing
-	ftkVesselTracer *VBT;
-
-	//ID numbers of the selected traces
+  //ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
 	std::map<int, int> indMapFromIndToVertex;
 
