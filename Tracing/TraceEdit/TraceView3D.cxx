@@ -11,7 +11,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
-=========================================================================*/ 
+=========================================================================*/
 
 /*
 Farsight ToolKit 3D Viewer: 
@@ -2201,10 +2201,8 @@ void View3D::openTracingDialog()
 	// Creating options
 	this->tracerCombo = new QComboBox;
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
-	this->tracerCombo->addItem("GVF Tracing");
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
 	this->tracerCombo->addItem("Vessel Ball Tracer (VBT)");
-
 	
 	tracingLayout->addWidget(this->tracerCombo);
 	connect(this->tracerCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(PickTracer(int)));
@@ -2212,71 +2210,19 @@ void View3D::openTracingDialog()
 	// Accepting parameters for MNT
 	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
 	QFormLayout *mntLayout = new QFormLayout();
-	QFormLayout *commonLayout = new QFormLayout();
-
 	this->mntCostThreshold = new QSpinBox;
-	this->mntCostThreshold->setRange(0,1500);
+	this->mntCostThreshold->setRange(100,1000);
 	this->mntCostThreshold->setSingleStep(10);
 	this->mntCostThreshold->setValue(700);
-	
-	this->mntIntensityThreshold = new QDoubleSpinBox;
-	this->mntIntensityThreshold->setDecimals ( 6 );
-	this->mntIntensityThreshold->setRange(0,10);
-	this->mntIntensityThreshold->setSingleStep(0.001);
-	this->mntIntensityThreshold->setValue(0.005);
-
-	this->mntContratstThreshold = new QDoubleSpinBox;
-	this->mntContratstThreshold->setDecimals ( 6 );
-	this->mntContratstThreshold->setRange(0,10);
-	this->mntContratstThreshold->setSingleStep(0.0001);
-	this->mntContratstThreshold->setValue(0.0003);
-
-	this->mntDebrisThreshold = new QDoubleSpinBox;
-	this->mntDebrisThreshold->setDecimals ( 3 );
-	this->mntDebrisThreshold->setRange(0,10); 
-	this->mntDebrisThreshold->setSingleStep(0.01);
-	this->mntDebrisThreshold->setValue(0.8);
-
-	this->mntDeviceFlag = new QDoubleSpinBox;
-	this->mntDeviceFlag->setDecimals ( 3 );
-	this->mntDeviceFlag->setRange(0,10);
-	this->mntDeviceFlag->setSingleStep(01);
-	this->mntDeviceFlag->setValue(0);
-
-	this->mntOffshoot = new QDoubleSpinBox;
-	this->mntOffshoot->setDecimals ( 3 );
-	this->mntOffshoot->setRange(0,10);
-	this->mntOffshoot->setSingleStep(0.1);
-	this->mntOffshoot->setValue(10);
-//add
-	mntLayout->addRow("Intensity Threshold",this->mntIntensityThreshold);
-	mntLayout->addRow("Contrast Threshold",this->mntContratstThreshold);
-	
-	commonLayout->addRow("Cost Threshold",this->mntCostThreshold);
-	commonLayout->addRow("Debris Threshold",this->mntDebrisThreshold );
-	commonLayout->addRow("Device Flag",this->mntDeviceFlag);
-	commonLayout->addRow("Offshoot",this->mntOffshoot);
-	
+	mntLayout->addRow("Cost Threshold",this->mntCostThreshold);
 	this->mntSeedsButton = new QPushButton("Seed Points",this->mntBox);
 	connect(this->mntSeedsButton, SIGNAL(clicked()), this, SLOT(seedPointFileDialog()));
 	this->mntSomaButton = new QPushButton("Soma Image",this->mntBox);
-	commonLayout->addRow(mntSeedsButton,mntSomaButton);
+	mntLayout->addRow(mntSeedsButton,mntSomaButton);
 	connect(this->mntSomaButton, SIGNAL(clicked()), this, SLOT(somaFileDialog()));
 	this->mntBox->setLayout(mntLayout);
-	//this->mntBox->setLayout(commonLayout);
 	tracingLayout->addWidget(this->mntBox);
 	this->mntBox->setVisible(true);
-
-	this->gvfBox = new QGroupBox("GVF Options",this->tracingGui);
-	//QFormLayout *GVFLayout = new QFormLayout();
-	//GVFLayout->addRow("Cost Threshold",this->mntCostThreshold);
-	//GVFLayout->addRow("Debris Threshold",this->mntDebrisThreshold );
-	//GVFLayout->addRow("Device Flag",this->mntDeviceFlag);
-	//GVFLayout->addRow("Offshoot",this->mntOffshoot);
-
-	this->gvfBox->setLayout(commonLayout);
-	tracingLayout->addWidget(this->gvfBox);
-	this->gvfBox->setVisible(true);
 
 	// Accepting parameters for VBT: Vessel Ball Tracer
 	this->vbtBox = new QGroupBox("VBT Options", this->tracingGui);
@@ -2290,10 +2236,10 @@ void View3D::openTracingDialog()
 	this->vbtLayout->addRow("Use Vesselness", this->vbtUseVesselness);
 	this->vbtBox->setLayout(this->vbtLayout);
 	tracingLayout->addWidget(this->vbtBox);
-	this->vbtBox->setVisible(false);
+	this->vbtBox->setVisible(true);
 
 	QPushButton * traceButton = new QPushButton("Run Tracer", this->tracingGui);
-	QPushButton * cancelButton = new QPushButton("Cancel", this->tracingGui);
+	QPushButton * cancelButton = new QPushButton("Nevermind", this->tracingGui);
 	tracingLayout->addWidget(traceButton);
 	tracingLayout->addWidget(cancelButton);
 	connect(traceButton, SIGNAL(clicked()), this->tracingGui, SLOT(accept()));
@@ -2325,19 +2271,14 @@ void View3D::PickTracer(int choice)
 	//turn tracer guis off
 	this->mntBox->setVisible(false);
 	this->vbtBox->setVisible(false);
-	this->gvfBox->setVisible(false);
 
 	//turn selected one on
 	switch(choice)
 	{
-		case 0: // MNT
+		case 0:
 			this->mntBox->setVisible(true);
-			this->gvfBox->setVisible(true);
 			break;
-		case 1: // GVF
-			this->gvfBox->setVisible(true);
-			break;
-		case 3: // Vessel
+		case 2:
 			this->vbtBox->setVisible(true);
 			break;
 	}
@@ -2349,217 +2290,21 @@ void View3D::RunTracer()
 	//start selected tracer
 	switch(this->tracerCombo->currentIndex())
 	{
-		case 0: // MNT
-			StartMNTracerAmit(false); 
+		case 0:
+			StartMNTracerAmit(this->mntCostThreshold->value()); 
 			break;
-		case 1: // GVF
-			this->StartMNTracerAmit(true); // true to indicate its GVF tracing
-			break;
-		case 3:
+		case 2:
 			this->StartVesselBallTracer();
 			break;
 	}
 }
 
 
-void View3D::StartMNTracerAmit(bool gvfTracing)
+void View3D::StartMNTracerAmit(int costThreshold)
 {
 	//Multiple Neuron Tracer, Amit's version
-	typedef float PixelType;
-	typedef itk::Image< PixelType, 3 >  ImageType3D;
-	typedef itk::Image< unsigned int, 3 > LabelImageType3D;
-	_xTile = 600;
-	_yTile = 600;
-	_zTile = 300;
-	std::cout<<"Starting Tracer "<<gvfTracing<<std::endl;
-	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
-	ImageFeatureThreshold *featureThreshold = new ImageFeatureThreshold();
-	featureThreshold->setDirPath(traceDir.toStdString());
-
-	ImageType::Pointer inputImage_ia;
-	ImageType::Pointer inputImage_ia_disp;
-	ImageType::Pointer somaImage_ia;
-	try
-	{
-		somaImage_ia = this->ImageActors->getImageFileData(this->SomaFile.at(0).toStdString(),"Soma");
-		inputImage_ia = this->ImageActors->getImageFileData(this->Image.at(0).toStdString(),"Image");
-		
-		int xSize = inputImage_ia->GetLargestPossibleRegion().GetSize()[0];
-		int ySize = inputImage_ia->GetLargestPossibleRegion().GetSize()[1];
-		int zSize = inputImage_ia->GetLargestPossibleRegion().GetSize()[2];
-		
-		itk::Index<3> cen = GetCentroid();
-		int centX  = cen[0];
-		int centY = cen[1];
-		int centZ = cen[2];
-
-        std::stringstream ssx_off, ssy_off, ssz_off;		
-        if(centX >= _xTile/2)
-          ssx_off << centX - _xTile/2;
-        else 
-          ssx_off << 0;
-		if(centY >= _yTile/2)
-          ssy_off << centY - _yTile/2;
-        else 
-          ssy_off << 0;
-        if(centZ >= _zTile/2)
-          ssz_off << centZ - _zTile/2;
-        else 
-          ssz_off << 0;
-		featureThreshold->setxoff(ssx_off.str());
-		featureThreshold->setyoff(ssy_off.str());
-		featureThreshold->setzoff(ssz_off.str());
-
-		std::cout<<"Centroid--------->"<<centX<<"	"<<centY<<"	"<<centZ<<std::endl;
-		ImageType::Pointer croppedImageRegion = cropImages< ImageType >( inputImage_ia, centX, centY, centZ,_xTile,_yTile,_zTile,xSize,ySize,zSize);
-		ImageType::Pointer croppedSomaRegion = cropImages< ImageType >( somaImage_ia, centX, centY, centZ,_xTile,_yTile,_zTile,xSize,ySize,zSize);
-		 //std::string cropImagePath = traceDir.toStdString().append("/CropImage.tiff");
-		 //std::string cropSomaPath = traceDir.toStdString().append("/CropSoma.tiff");
-		std::string cropImagePath = traceDir.toStdString().append("/CropImage_").append(ssx_off.str()).append("_").append(ssy_off.str()).append("_").append(ssz_off.str()).append("_.tiff");
-		std::string cropSomaPath = traceDir.toStdString().append("/CropSoma_").append(ssx_off.str()).append("_").append(ssy_off.str()).append("_").append(ssz_off.str()).append("_.tiff");
-		writeImage<ImageType>(croppedImageRegion,cropImagePath.c_str());
-		writeImage<ImageType>(croppedSomaRegion,cropSomaPath.c_str());
-
-		cThread = new QThread();
-		RenderObject *robj;
-		robj = new RenderObject;
-
-		robj->startx = centX;
-		robj->starty = centY;
-		robj->startz = centZ;
-		robj->widthx = xSize;
-		robj->widthy = ySize;
-		robj->widthz = zSize;
-		// convert char image to the unsinged short image as the MNT requires unsinged short for soma image
-		itk::CastImageFilter<ImageType, LabelImageType3D>::Pointer casterUnsigned = itk::CastImageFilter<ImageType, LabelImageType3D>::New();
-		casterUnsigned->SetInput(croppedSomaRegion);
-		casterUnsigned->Update();
-
-		itk::CastImageFilter<ImageType, ImageType3D>::Pointer casterUnsignedImage = itk::CastImageFilter<ImageType, ImageType3D>::New();
-		casterUnsignedImage->SetInput(croppedImageRegion);
-		casterUnsignedImage->Update();
-
-		// not required
-		robj->imageFile = cropImagePath;
-		robj->somaFile = cropImagePath;
-		robj->seedsFile = this->seedsFile.toStdString();
-		robj->inputImage = casterUnsignedImage->GetOutput();
-		robj->somaImage = casterUnsigned->GetOutput();
-		robj->cost_threshold = this->mntCostThreshold->value();
-		// set the start xyz and the width of xyz values for MNT to filter the seeds value based on the below values
-
-		featureThreshold->setCropImageFilePath(cropImagePath);
-		featureThreshold->setCropSomaImageFilePath(cropSomaPath);
-		featureThreshold->setGVFTracer(gvfTracing);
-		if(!gvfTracing){
-			featureThreshold->saveContrastThreshold(mntContratstThreshold->value());
-			featureThreshold->saveintensity_threshold(mntIntensityThreshold->value());
-		}else{
-			featureThreshold->saveContrastThreshold(0);
-			featureThreshold->saveContrastThreshold(0);
-		}
-		featureThreshold->saveCostThreshold(this->mntCostThreshold->value());
-		featureThreshold->saveDebrisThreshold(mntDebrisThreshold->value());
-		featureThreshold->savedevice(mntDeviceFlag->value());
-		featureThreshold->saveoffshoot(mntOffshoot->value());
-		featureThreshold->saveInputImage(robj->inputImage);
-		featureThreshold->saveSomaImage(robj->somaImage);
-		// save image feature threshold in robj, this will be used during tracing
-		robj->saveImageFeatures(featureThreshold);
-
-		// move the robject to the separate QThread to start a new thread.  
-		std::cout<<"call tracer"<<std::endl;
-		robj->moveToThread(cThread);
-		robj->connect(cThread,
-			SIGNAL(started()),
-			SLOT(runMNTTracer()));
-		cThread->connect(robj,
-			SIGNAL(finished()),
-			SLOT(quit()));
-		/*robj->connect(robj,
-			SIGNAL(finished()),
-			SLOT(displayImage()));*/
-		this->connect(robj,SIGNAL(finished(ImageFeatureThreshold*)), this, SLOT(displayImageMNT(ImageFeatureThreshold*)));
-		cThread->start();
-	}catch (std::exception &e)
-	{
-		std::cout << e.what() << std::endl;
-	}
-
+	std::cout<<"Starting Amit's Tracer w threshold "<<costThreshold<<std::endl;
 }
-itk::Index<3> View3D::GetCentroid(){
-
-	vtkSmartPointer<vtkTable> somaCentroidsTable = ftk::LoadTable(this->seedsFile.toStdString());
-	itk::Index<3>  pointer_loc;
-	pointer_loc[0] = this->posX->value();
-	pointer_loc[1] = this->posY->value();
-	pointer_loc[2] = this->posZ->value();
-	itk::Index<3> cen;
-	float dist = 10000000;
-	std::cout<<"Pointer Location	"<<pointer_loc[0]<<"	"<<pointer_loc[1]<<"	"<<pointer_loc[2]<<std::endl;
-	for(int r=0; r<(int)somaCentroidsTable->GetNumberOfRows(); ++r)
-	{
-		int cx = somaCentroidsTable->GetValue(r, 0).ToInt();
-		int cy = somaCentroidsTable->GetValue(r, 1).ToInt();
-		int cz = somaCentroidsTable->GetValue(r, 2).ToInt();
-		float tempDist = ((pointer_loc[0]-cx)*(pointer_loc[0]-cx))+((pointer_loc[1]-cy)*(pointer_loc[1]-cy))+((pointer_loc[2]-cz)*(pointer_loc[2]-cz));
-		if(tempDist < dist){
-			dist = tempDist;
-			cen[0] = cx; cen[1] = cy; cen[2] = cz; 	
-		}
-	}
-	return cen;
-}
-void View3D::displayImageMNT(ImageFeatureThreshold* featureThreshold){
-	
-	std::cout<<"in ImageFeature CostThreshold  ---->"<<featureThreshold->getCostThreshold()<<std::endl;
-	std::cout<<"in ImageFeature intensity_threshold ----> "<<featureThreshold->getintensity_threshold()<<std::endl;
-	ImageViewer *imageView = new ImageViewer();
-	//imageView->setImageFeatureThreshold(featureThreshold);
-	imageView->setImageFeatureThreshold(featureThreshold);
-	imageView->show();
-	imageView->showImage();
-	vtkSmartPointer< vtkTable > swcTable = featureThreshold->getTraces();
-	if(swcTable->GetNumberOfRows() != 0 ){
-		imageView->showTraces();
-	}
-	connect(imageView,
-	SIGNAL(acceptImage(ImageFeatureThreshold*)),
-	SLOT(saveImageFeatures(ImageFeatureThreshold*)));
-}
-
-void View3D::saveImageFeatures(ImageFeatureThreshold* featurethreshold){
-	std::cout<<"Save Image Features"<<std::endl;
-	//std::string SWCFilename = ;
-	std::string dir = featurethreshold->getDir();
-	std::string SWCFilename = dir + "/Temp_OnlySWC.xml";
-	std::ofstream outSWCFile;
-	std::string ssx_off = featurethreshold->getxoff();
-	std::string ssy_off = featurethreshold->getyoff();
-	std::string ssz_off = featurethreshold->getzoff();
-	outSWCFile.open(SWCFilename.c_str());
-	outSWCFile << "<?xml\tversion=\"1.0\"\t?>\n";
-	outSWCFile << "<Source>\n\n";
-	outSWCFile << "\t<File\tFileName=\"" << featurethreshold->getSWCFilePath() <<  "\"\tType=\"Trace\"\ttX=\"" << ssx_off << "\"\ttY=\"" << ssy_off << "\"\ttZ=\"" << ssz_off << "\"/>\n";
-	//this->tobj->ReadFromRPIXMLFile((char*)SWCFilename.c_str());
-	
-	
-	this->tobj->SetTraceOffset(atof(ssx_off.c_str()),atof(ssy_off.c_str()),atof(ssz_off.c_str()));
-	this->tobj->ReadFromSWCFile((char*)featurethreshold->getSWCFilePath().c_str());
-	//QString qstr = QString::fromStdString(SWCFilename);
-	//this->projectLoadedState = this->readProject(qstr);
-	
-	this->TreeModel->scaleFactor = this->uMperVoxel;
-	this->ShowTreeData();
-	this->UpdateLineActor();
-	this->UpdateBranchActor();
-	this->QVTK->GetRenderWindow()->Render();
-	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
-	this->tobj->SetTraceOffset(0,0,0);
-	//this->OkToBoot();
-	/*(char*)nextFile.toStdString().c_str());*/
-}
-
 
 void View3D::StartVesselBallTracer(){
 
