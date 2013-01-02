@@ -2213,24 +2213,12 @@ void View3D::openTracingDialog()
 	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
 	QFormLayout *mntLayout = new QFormLayout();
 	QFormLayout *commonLayout = new QFormLayout();
-	QFormLayout *gvfLayout = new QFormLayout();
-	
 
 	this->mntCostThreshold = new QSpinBox;
 	this->mntCostThreshold->setRange(0,1500);
 	this->mntCostThreshold->setSingleStep(10);
 	this->mntCostThreshold->setValue(700);
 	
-	this->mntNoiseLevel = new QSpinBox;
-	this->mntNoiseLevel->setRange(0,1500);
-	this->mntNoiseLevel->setSingleStep(1);
-	this->mntNoiseLevel->setValue(100);
-
-	this->mntNumberOfIteration = new QSpinBox;
-	this->mntNumberOfIteration->setRange(0,1000);
-	this->mntNumberOfIteration->setSingleStep(1);
-	this->mntNumberOfIteration->setValue(15);
-
 	this->mntIntensityThreshold = new QDoubleSpinBox;
 	this->mntIntensityThreshold->setDecimals ( 6 );
 	this->mntIntensityThreshold->setRange(0,10);
@@ -2263,10 +2251,6 @@ void View3D::openTracingDialog()
 //add
 	mntLayout->addRow("Intensity Threshold",this->mntIntensityThreshold);
 	mntLayout->addRow("Contrast Threshold",this->mntContratstThreshold);
-
-	gvfLayout->addRow("Noise Level",this->mntNoiseLevel);
-	gvfLayout->addRow("Number Of Iteration",this->mntNumberOfIteration);
-	
 	
 	commonLayout->addRow("Cost Threshold",this->mntCostThreshold);
 	commonLayout->addRow("Debris Threshold",this->mntDebrisThreshold );
@@ -2280,20 +2264,19 @@ void View3D::openTracingDialog()
 	connect(this->mntSomaButton, SIGNAL(clicked()), this, SLOT(somaFileDialog()));
 	this->mntBox->setLayout(mntLayout);
 	//this->mntBox->setLayout(commonLayout);
-	this->mntBox->setVisible(true);
-	this->commonBox = new QGroupBox("Common Options",this->tracingGui);
-	this->commonBox->setLayout(commonLayout);
-	
-	this->gvfBox = new QGroupBox("GVF Options",this->tracingGui);
-	this->gvfBox->setLayout(gvfLayout);
-
-
 	tracingLayout->addWidget(this->mntBox);
-	tracingLayout->addWidget(this->gvfBox);
-	tracingLayout->addWidget(this->commonBox);
-	this->commonBox->setVisible(true);
-	this->gvfBox->setVisible(false);
+	this->mntBox->setVisible(true);
 
+	this->gvfBox = new QGroupBox("GVF Options",this->tracingGui);
+	//QFormLayout *GVFLayout = new QFormLayout();
+	//GVFLayout->addRow("Cost Threshold",this->mntCostThreshold);
+	//GVFLayout->addRow("Debris Threshold",this->mntDebrisThreshold );
+	//GVFLayout->addRow("Device Flag",this->mntDeviceFlag);
+	//GVFLayout->addRow("Offshoot",this->mntOffshoot);
+
+	this->gvfBox->setLayout(commonLayout);
+	tracingLayout->addWidget(this->gvfBox);
+	this->gvfBox->setVisible(true);
 
 	// Accepting parameters for VBT: Vessel Ball Tracer
 	this->vbtBox = new QGroupBox("VBT Options", this->tracingGui);
@@ -2343,18 +2326,16 @@ void View3D::PickTracer(int choice)
 	this->mntBox->setVisible(false);
 	this->vbtBox->setVisible(false);
 	this->gvfBox->setVisible(false);
-	this->commonBox->setVisible(false);
 
 	//turn selected one on
 	switch(choice)
 	{
 		case 0: // MNT
-			this->commonBox->setVisible(true);
 			this->mntBox->setVisible(true);
+			this->gvfBox->setVisible(true);
 			break;
 		case 1: // GVF
 			this->gvfBox->setVisible(true);
-			this->commonBox->setVisible(true);
 			break;
 		case 3: // Vessel
 			this->vbtBox->setVisible(true);
@@ -2473,14 +2454,9 @@ void View3D::StartMNTracerAmit(bool gvfTracing)
 		if(!gvfTracing){
 			featureThreshold->saveContrastThreshold(mntContratstThreshold->value());
 			featureThreshold->saveintensity_threshold(mntIntensityThreshold->value());
-			featureThreshold->settNumberOfIteration(0);
-			featureThreshold->setNoiseLevel(0);
-
 		}else{
 			featureThreshold->saveContrastThreshold(0);
 			featureThreshold->saveContrastThreshold(0);
-			featureThreshold->settNumberOfIteration(mntNumberOfIteration->value());
-			featureThreshold->setNoiseLevel(mntNoiseLevel->value());
 		}
 		featureThreshold->saveCostThreshold(this->mntCostThreshold->value());
 		featureThreshold->saveDebrisThreshold(mntDebrisThreshold->value());

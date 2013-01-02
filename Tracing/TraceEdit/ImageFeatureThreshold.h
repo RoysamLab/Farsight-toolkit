@@ -142,10 +142,6 @@
 	void setxoff(std::string ssx_off){_ssx_off = ssx_off;};
 	void setyoff(std::string ssy_off){_ssy_off = ssy_off;};
 	void setzoff(std::string ssz_off){_ssz_off = ssz_off;};
-	void settNumberOfIteration(int numberOfIteration){_numberOfIteration = numberOfIteration;};
-	void setNoiseLevel(int noise_level){_noise_level=noise_level;};
-
-	
 	ImageType3D::Pointer getInputImage(){return _InputImage;};
 	LabelImageType3D::Pointer getSomaImage(){return _SomaImage;};
 	void getFeatures(){/*return _Features;*/};
@@ -157,9 +153,6 @@
 	int getoffshoot(){return _offshoot;};
 	int getdevice(){return _device;};
 	bool isGVFTracer(){return _gvfTracing;};
-	int getNumberOfIteration(){return _numberOfIteration;};
-	int getNoiseLevel(){return _noise_level;};
-
 	std::string getUserInput(){return _userInput;};
 	std::string getSWCFilePath(){return _filePath;};
 	std::string getDir(){return _dirLocation;};
@@ -196,8 +189,6 @@
 	std::string _ssx_off;
 	std::string _ssy_off;
 	std::string _ssz_off;
-	int _numberOfIteration;
-	int _noise_level;
  };
 
 
