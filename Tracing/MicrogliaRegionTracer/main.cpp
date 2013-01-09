@@ -1,5 +1,5 @@
 #include "MicrogliaRegionTracer.h"
-#include "time.h"
+#include "itkTimeProbe.h"
 #include "itkMultiThreader.h"
 #include <cstdlib>
 
@@ -71,7 +71,8 @@ int main(int argc, char* argv[])
 
 	
 
-	clock_t start_time = clock();
+	itk::TimeProbe clock;
+	clock.Start();
 	std::cout << "Entering Trace" << std::endl;
 	try
 	{
@@ -82,8 +83,9 @@ int main(int argc, char* argv[])
 		std::cerr << "Error: " << e.what() << std::endl;
 		return 1;
 	}
+	clock.Stop();
 
-	std::cout << "Total time for MicrogliaRegionTracing is: " << (clock() - start_time) / CLOCKS_PER_SEC << " seconds" << std::endl;
+	std::cout << "Total time for MicrogliaRegionTracing is: " << clock.GetTotal() << " seconds" << std::endl;
 
 	return 0;
 }
