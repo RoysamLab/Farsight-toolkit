@@ -15,7 +15,8 @@
 #include "ftkTimeStampOverflowSafeUpdate.h"
 
 #include "Cell.h"
-#include "Tree.h" 
+#include "Tree.h"
+#include "AspectRatioResampler.h"
 
 class Cell
 {
@@ -110,7 +111,9 @@ private:
 	ImageType::SizeType roi_size;
     
 	ImageType::SizeType cell_requested_size;
-	ImageType::IndexType shift_index;	
+	ImageType::IndexType shift_index;
+
+	AspectRatioResampler::SamplingType sampling_type;
 };
 
 #endif
