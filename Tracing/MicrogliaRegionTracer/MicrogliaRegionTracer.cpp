@@ -68,7 +68,7 @@ void MicrogliaRegionTracer::LoadSeedPoints(const std::string & seedpoints_filena
 	{
 		while (seed_point_file >> cellX >> cellY >> cellZ)
 		{	
-			Cell cell(cellX, cellY, cellZ, aspect_ratio);
+			Cell cell(cellX, cellY, cellZ, this->aspect_ratio);
 			this->cells.push_back(cell);
 			++num_seed_points;
 		}
