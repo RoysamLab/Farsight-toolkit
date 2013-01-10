@@ -14,6 +14,7 @@
 #include "itkGradientImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkVectorImageToImageAdaptor.h"
+#include "AspectRatioResampler.h"
 
 #include "EigenAnalysis.h"
 
@@ -25,7 +26,7 @@ Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, dou
 	cell_y(cell_y),
 	cell_z(cell_z),
 	aspect_ratio(aspect_ratio),
-	sampling_type(AspectRatioResampler::SamplingType::DownSample)
+    sampling_type(AspectRatioResampler::DownSample)
 {
 }
 

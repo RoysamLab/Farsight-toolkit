@@ -1,15 +1,17 @@
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
 
+#include "AspectRatioResampler.h"
+
 template< typename TImageType>
 typename TImageType::Pointer AspectRatioResampler::ResampleImage(typename TImageType::Pointer image, const float aspect_ratio, SamplingType sampling_type)
 {
 	std::cout << "Resampling Image" << std::endl;
-	TImageType::SizeType inputSize = image->GetLargestPossibleRegion().GetSize();
+	typename TImageType::SizeType inputSize = image->GetLargestPossibleRegion().GetSize();
 	
-	TImageType::SizeType outputSize;
-	TImageType::SpacingType outputSpacing;
-	if (sampling_type == SamplingType::UpSample)
+	typename TImageType::SizeType outputSize;
+	typename TImageType::SpacingType outputSpacing;
+	if (sampling_type == UpSample)
 	{
 		outputSize[0] = inputSize[0] * aspect_ratio;
 		outputSize[1] = inputSize[1] * aspect_ratio;
@@ -32,7 +34,7 @@ typename TImageType::Pointer AspectRatioResampler::ResampleImage(typename TImage
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< TImageType, TImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	typename ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
 	resample_filter->SetInput(image);
 	resample_filter->SetSize(outputSize);
 	resample_filter->SetOutputSpacing(outputSpacing);
@@ -45,11 +47,11 @@ typename TImageType::Pointer AspectRatioResampler::ResampleImage(typename TImage
 	{
 		std::cerr << "ResampleImage() resample_filter exception: " << err << std::endl;
 	}
-	TImageType::Pointer resampled_image = resample_filter->GetOutput();
+	typename TImageType::Pointer resampled_image = resample_filter->GetOutput();
 	resampled_image->DisconnectPipeline();
 
 	//Set the spacing so that 1 unit in physical space is 1 pixel
-	TImageType::SpacingType spacing;
+	typename TImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	resampled_image->SetSpacing(spacing);
 
@@ -59,12 +61,12 @@ typename TImageType::Pointer AspectRatioResampler::ResampleImage(typename TImage
 template< typename TImageType>
 typename TImageType::Pointer AspectRatioResampler::UnsampleImage(typename TImageType::Pointer image, const float aspect_ratio, SamplingType sampling_type)
 {
-	TImageType::SizeType inputSize = image->GetLargestPossibleRegion().GetSize();
+	typename TImageType::SizeType inputSize = image->GetLargestPossibleRegion().GetSize();
 	
-	TImageType::SizeType outputSize;
-	TImageType::SpacingType outputSpacing;
+	typename TImageType::SizeType outputSize;
+	typename TImageType::SpacingType outputSpacing;
 	
-	if (sampling_type == SamplingType::UpSample)
+	if (sampling_type == UpSample)
 	{
 		outputSize[0] = inputSize[0] / aspect_ratio;
 		outputSize[1] = inputSize[1] / aspect_ratio;
@@ -87,7 +89,7 @@ typename TImageType::Pointer AspectRatioResampler::UnsampleImage(typename TImage
 
 	typedef itk::IdentityTransform< double, 3 > TransformType;
 	typedef itk::ResampleImageFilter< TImageType, TImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
+	typename ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
 	resample_filter->SetInput(image);
 	resample_filter->SetSize(outputSize);
 	resample_filter->SetOutputSpacing(outputSpacing);
@@ -104,7 +106,7 @@ typename TImageType::Pointer AspectRatioResampler::UnsampleImage(typename TImage
 	typename TImageType::Pointer unsampled_image = resample_filter->GetOutput();
 	unsampled_image->DisconnectPipeline();	//Disconnect pipeline so we don't propagate...
 	
-	TImageType::SpacingType spacing;
+	typename TImageType::SpacingType spacing;
 	spacing.Fill(1.0);
 	unsampled_image->SetSpacing(spacing);
 
