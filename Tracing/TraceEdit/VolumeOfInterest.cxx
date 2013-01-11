@@ -1,4 +1,9 @@
 #include "VolumeOfInterest.h"
+
+#define X_PRECISION 0.267
+#define Y_PRECISION 0.267
+#define Z_PRECISION 0.3
+
 VolumeOfInterest::VolumeOfInterest()
 {
 	this->VOIPolyData.clear();// =  std::vector<vtkPolyData*>;
@@ -90,7 +95,8 @@ void VolumeOfInterest::CalculateCellDistanceToVOI(CellTraceModel *CellModel)
 		vtkIdType cellId; //the cell id of the cell containing the closest point will be returned here
 		int subId; //this is rarely used (in triangle strips only, I believe)
 		cellLocator->FindClosestPoint(somaPoint, closestPoint, cellId, subId, closestPointDist2);
-		currCell->setDistanceToROI( std::sqrt(closestPointDist2), closestPoint[0], closestPoint[1], closestPoint[2]);
+		closestPointDist2 = std::sqrt( pow((closestPoint[0] - somaPoint[0]) * X_PRECISION,2) + pow((closestPoint[1] - somaPoint[1]) * Y_PRECISION,2) + pow((closestPoint[2] - somaPoint[2]) * Z_PRECISION,2));
+		currCell->setDistanceToROI( closestPointDist2, closestPoint[0], closestPoint[1], closestPoint[2]);
 	}//end for cell count
 }
 

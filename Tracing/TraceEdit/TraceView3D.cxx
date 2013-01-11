@@ -6504,7 +6504,7 @@ void View3D::AddLabel()
 		return;
 	}
 
-	if( this->CellModel->getDataTable()->GetColumnByName("Label") == NULL)
+	if( this->CellModel->getDataTable()->GetColumnByName("prediction") == NULL)
 	{
 		std::cout<< "Adding label."<<std::endl;
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
