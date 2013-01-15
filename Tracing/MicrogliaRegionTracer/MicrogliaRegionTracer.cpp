@@ -218,14 +218,20 @@ void MicrogliaRegionTracer::CalculateSeedPoints(Cell & cell)
 {
 	cell.CreateIsotropicImage();	//Must be called before CreateVesselnessImage and CreateLoGImage
 	cell.CreateVesselnessImage();
-	cell.CreateLoGImage();
 	
-	std::cout << "Ridge Detection" << std::endl;
-	RidgeDetection(cell);
+	cell.CreateLoGImage();
+	std::cout << "Ridge Detection By LoG" << std::endl;
+	RidgeDetectionByLoG(cell);
+
+	//SeedDetectionByVesselness(cell);
+
+	std::ostringstream critical_points_filename_stream;
+	critical_points_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_critical.nrrd";
+	Cell::WriteImage(critical_points_filename_stream.str(), cell.critical_point_image);
 }
 
 /* This function does Ridge detection (Laplacian of Gaussian implementation) */
-void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
+void MicrogliaRegionTracer::RidgeDetectionByLoG( Cell & cell )
 {
 	//Add the seed to the critical points
 	itk::Index<3> seed_index = {{	cell.GetRequestedSize()[0]/2 + cell.GetShiftIndex()[0], 
@@ -254,7 +260,7 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 	{
         LoGImageType::PixelType a = LoG_neighbor_iter.GetPixel(4);
 		
-		if (a > 0.01) //Ignore pixels less than 1% response
+		if (a > 0.01) //Ignore pixels less than 1.0 % response
 		{
 			bool isInBounds;
 			LoGImageType::PixelType a1 = LoG_neighbor_iter.GetPixel(0, isInBounds);
@@ -348,12 +354,11 @@ void MicrogliaRegionTracer::RidgeDetection( Cell & cell )
 		++critical_point_img_iter;
 		++ridge_neighbor_iter;
 	}
-    
-        
+}
 
-	std::ostringstream critical_points_filename_stream;
-	critical_points_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_critical.nrrd";
-	Cell::WriteImage(critical_points_filename_stream.str(), cell.critical_point_image);
+void MicrogliaRegionTracer::SeedDetectionByVesselness(Cell & cell)
+{
+	//Sort by saliency and threshold?
 }
 
 /* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
@@ -371,7 +376,6 @@ void MicrogliaRegionTracer::BuildTree(Cell & cell)
 	std::ostringstream swc_filename_stream, swc_filename_stream_local;
 	swc_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_tree.swc";
 	swc_filename_stream_local << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_tree_local.swc";
-
 
 	cell.WriteTreeToSWCFile(tree, swc_filename_stream.str(), swc_filename_stream_local.str());
 
@@ -443,10 +447,14 @@ float MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_f
 	}
 #endif
 
+	//Filter out the path between the pair of nodes if there are too many low-valued pixels in between
 	PathType::Pointer path = PathType::New();
 	path->Initialize();
 
 	//std::cout << "Start Index: " << node1 << " " << "End Index: " << node2 << std::endl;
+	
+	//Get the minimum vesselness value at either the start or end point
+	VesselnessImageType::PixelType minPixelValue = std::max< VesselnessImageType::PixelType >(cell.vesselness_image->GetPixel(node1), cell.vesselness_image->GetPixel(node2));
 
 	path->AddVertex(node1);
 	path->AddVertex(node2);
@@ -461,14 +469,17 @@ float MicrogliaRegionTracer::CalculateDistance(Cell & cell, itk::uint64_t node_f
 	{
 		//std::cout << "Path iterator position: " << path_iter.GetPathPosition() << std::endl;
 		//std::cout << "Path iterator index: " << path_iter.GetIndex() << std::endl;
-		if (path_iter.Get() < 1.0)
+		if (path_iter.Get() < (0.1 * minPixelValue))	//If the pixel on the path is less than 50% of the minimum of the start or end node, then it is a blank pixel
 			++num_blank_pixels;
 		++path_iter;
 		++path_length;
 	}
 	
 	if (num_blank_pixels >= 3)
+	{
+		//std::cerr << "Rejected a path" << std::endl;
 		return std::numeric_limits< float >::max();	//Thresholding based on jumping large gaps
+	}
 	else
 		return mag_trace_vector;
 }
@@ -565,8 +576,8 @@ Tree* MicrogliaRegionTracer::BuildMST1(Cell & cell, float** AdjGraph)
 
 		
 		for (int m = 0; m < cell.critical_points_queue.size(); m++)
-			TreeAdjGraph[m][minimum_node_index_to_id] = std::numeric_limits< float >::max();						 //Node already has parents, we dont want it to have more parents
-		TreeAdjGraph[minimum_node_index_to_id][minimum_connected_node_id] = std::numeric_limits< float >::max(); //So the parent doesn't become the child of its child
+			TreeAdjGraph[m][minimum_node_index_to_id] = std::numeric_limits< float >::max();						//Node already has parents, we dont want it to have more parents
+		TreeAdjGraph[minimum_node_index_to_id][minimum_connected_node_id] = std::numeric_limits< float >::max();	//So the parent doesn't become the child of its child
 
 		//Connect the unconnected point
 		Node* new_connected_node = new Node(point_local_index[0], point_local_index[1], point_local_index[2], minimum_node_index_to_id + 1); //vector indices are 1 less than SWC IDs, so we add one here

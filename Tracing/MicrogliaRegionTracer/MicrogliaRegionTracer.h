@@ -44,7 +44,8 @@ private:
     void                TraceAGroupOfCells(const int num_cells_in_group, const int group_num, const int num_openmp_threads);
 	
 	void				CalculateSeedPoints(Cell & cell);
-	void				RidgeDetection(Cell & cell);
+	void				RidgeDetectionByLoG(Cell & cell);
+	void				SeedDetectionByVesselness(Cell & cell);
 
 	void				BuildTree(Cell & cell);
 	float**				BuildAdjacencyGraph(Cell & cell);
