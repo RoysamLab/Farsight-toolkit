@@ -237,7 +237,7 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned c
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << "writer Exception: " << filename << " " << err << std::endl;
 		std::cerr << writer << std::endl;
 	}
 }
@@ -255,13 +255,14 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned s
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << "writer Exception: " << filename << " " << err << std::endl;
 		std::cerr << writer << std::endl;
 	}
 }
 
 void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image)
 {
+	std::cout << "Writing " << filename << std::endl;
 	typedef itk::ImageFileWriter< itk::Image< float, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(image);	//image is from function parameters!
@@ -273,7 +274,7 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << "writer Exception: " << filename << " " << err << std::endl;
 		std::cerr << writer << std::endl;
 	}
 }
@@ -291,8 +292,47 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< itk::Covar
 	}
 	catch (itk::ExceptionObject &err)
 	{
-		std::cerr << "writer Exception: " << err << std::endl;
+		std::cerr << "writer Exception: " << filename << " " << err << std::endl;
 		std::cerr << writer << std::endl;
+	}
+}
+
+void Cell::SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< float, 3 >, 3 >::Pointer & covar_image, itk::Image< float, 3>::Pointer & x_image, itk::Image< float, 3>::Pointer & y_image, itk::Image< float, 3>::Pointer & z_image)
+{
+	//Separate the covar image into its components
+	typedef itk::Image< itk::CovariantVector< float, 3 >, 3 > CovarVectorImageType;
+	typedef itk::Image< float, 3 > ComponentImageType;
+
+	ComponentImageType::SizeType size = covar_image->GetLargestPossibleRegion().GetSize();
+	ComponentImageType::IndexType start;
+	start.Fill(0);
+	ComponentImageType::RegionType region(start, size);
+
+	x_image->SetRegions(region);
+	y_image->SetRegions(region);
+	z_image->SetRegions(region);
+
+	x_image->Allocate();
+	y_image->Allocate();
+	z_image->Allocate();
+
+	itk::ImageRegionConstIterator< CovarVectorImageType > covar_image_iter(covar_image, covar_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ComponentImageType > x_image_iter(x_image, x_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ComponentImageType > y_image_iter(y_image, y_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ComponentImageType > z_image_iter(z_image, z_image->GetLargestPossibleRegion());
+
+	while (!covar_image_iter.IsAtEnd())
+	{
+		CovarVectorImageType::PixelType vector = covar_image_iter.Get();
+
+		x_image_iter.Set(vector[0]);
+		y_image_iter.Set(vector[1]);
+		z_image_iter.Set(vector[2]);
+
+		++covar_image_iter;
+		++x_image_iter;
+		++y_image_iter;
+		++z_image_iter;
 	}
 }
 
@@ -372,11 +412,20 @@ void Cell::CreateIsotropicImage()
 
 Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iterations)
 {
+	/*//Gaussian filter
+	typedef itk::RecursiveGaussianImageFilter< ImageType > GaussianFilterType;
+	GaussianFilterType::Pointer gauss_filter = GaussianFilterType::New();
+
+	gauss_filter->SetInput(this->isotropic_image);
+	gauss_filter->SetSigma(1.0);
+	gauss_filter->Update();*/
+	
 	//Gradient filter
 	typedef itk::GradientImageFilter< ImageType > GradientImageFilterType;
 	GradientImageFilterType::Pointer gradient_filter = GradientImageFilterType::New();
 
 	gradient_filter->SetInput(this->isotropic_image);
+	//gradient_filter->SetInput(gauss_filter->GetOutput());
 
 	try
 	{
@@ -387,8 +436,10 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
 
+	//GVFImageType::Pointer gvf_image = gradient_filter->GetOutput();	//Test
+
 	//Gradient Vector Flow filter
-	typedef itk::GradientVectorFlowImageFilter< GradientImageFilterType::OutputImageType, GradientImageFilterType::OutputImageType > GradientVectorFlowFilterType;
+	typedef itk::GradientVectorFlowImageFilter< GradientImageFilterType::OutputImageType, GradientImageFilterType::OutputImageType, float > GradientVectorFlowFilterType;
 	GradientVectorFlowFilterType::Pointer gvf_filter = GradientVectorFlowFilterType::New();
 
 	gvf_filter->SetInput(gradient_filter->GetOutput());
@@ -406,9 +457,9 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 
 	GVFImageType::Pointer gvf_image = gvf_filter->GetOutput();
 
-	//Make the file name of the GVF image
-	std::stringstream gvf_image_filename_stream;
-	gvf_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_gvf.mhd";
+	////Make the file name of the GVF image
+	//std::stringstream gvf_image_filename_stream;
+	//gvf_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_gvf.mhd";
 	//WriteImage(gvf_image_filename_stream.str(), gvf_image);
 
 	return gvf_image;
@@ -426,49 +477,19 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 	PartialDerivativeImageType::Pointer Dy = PartialDerivativeImageType::New();
 	PartialDerivativeImageType::Pointer Dz = PartialDerivativeImageType::New();
 
-	PartialDerivativeImageType::SizeType size = gvf_image->GetLargestPossibleRegion().GetSize();
-	PartialDerivativeImageType::IndexType start;
-	start.Fill(0);
-	PartialDerivativeImageType::RegionType region(start, size);
+	SplitITKCovariantVectorImage(gvf_image, Dx, Dy, Dz);
 
-	Dx->SetRegions(region);
-	Dy->SetRegions(region);
-	Dz->SetRegions(region);
-
-	Dx->Allocate();
-	Dy->Allocate();
-	Dz->Allocate();
-
-	itk::ImageRegionConstIterator< GVFImageType > gvf_image_iter(gvf_image, gvf_image->GetLargestPossibleRegion());
-	itk::ImageRegionIterator< PartialDerivativeImageType > Dx_iter(Dx, Dx->GetLargestPossibleRegion());
-	itk::ImageRegionIterator< PartialDerivativeImageType > Dy_iter(Dy, Dy->GetLargestPossibleRegion());
-	itk::ImageRegionIterator< PartialDerivativeImageType > Dz_iter(Dz, Dz->GetLargestPossibleRegion());
-
-	while (!gvf_image_iter.IsAtEnd())
-	{
-		GVFImageType::PixelType vector = gvf_image_iter.Get();
-
-		Dx_iter.Set(vector[0]);
-		Dy_iter.Set(vector[1]);
-		Dz_iter.Set(vector[2]);
-
-		++gvf_image_iter;
-		++Dx_iter;
-		++Dy_iter;
-		++Dz_iter;
-	}
-	
 	std::ostringstream Dx_filename_stream;
 	Dx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dx.nrrd";
-	//WriteImage(Dx_filename_stream.str(), Dx);
+	WriteImage(Dx_filename_stream.str(), Dx);
 
 	std::ostringstream Dy_filename_stream;
 	Dy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dy.nrrd";
-	//WriteImage(Dy_filename_stream.str(), Dy);
+	WriteImage(Dy_filename_stream.str(), Dy);
 
 	std::ostringstream Dz_filename_stream;
 	Dz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dz.nrrd";
-	//WriteImage(Dz_filename_stream.str(), Dz);
+	WriteImage(Dz_filename_stream.str(), Dz);
 
 	//Calculate gradient of the GVF image
 	//Gradient of Dx
@@ -486,6 +507,24 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 	GradientImageType::Pointer grad_Dx = gradient_filter->GetOutput();
 	grad_Dx->DisconnectPipeline();
 
+	PartialDerivativeImageType::Pointer Dxx = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dxy = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dxz = PartialDerivativeImageType::New();
+
+	SplitITKCovariantVectorImage(grad_Dx, Dxx, Dxy, Dxz);
+
+	std::ostringstream Dxx_filename_stream;
+	Dxx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxx.nrrd";
+	WriteImage(Dxx_filename_stream.str(), Dxx);
+
+	std::ostringstream Dxy_filename_stream;
+	Dxy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxy.nrrd";
+	WriteImage(Dxy_filename_stream.str(), Dxy);
+
+	std::ostringstream Dxz_filename_stream;
+	Dxz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxz.nrrd";
+	WriteImage(Dxz_filename_stream.str(), Dxz);
+
 	//Gradient of Dy
 	gradient_filter->SetInput(Dy);
 	try
@@ -496,8 +535,27 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 	{
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
+
 	GradientImageType::Pointer grad_Dy = gradient_filter->GetOutput();
 	grad_Dy->DisconnectPipeline();
+
+	PartialDerivativeImageType::Pointer Dyx = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dyy = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dyz = PartialDerivativeImageType::New();
+
+	SplitITKCovariantVectorImage(grad_Dy, Dyx, Dyy, Dyz);
+
+	std::ostringstream Dyx_filename_stream;
+	Dyx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyx.nrrd";
+	WriteImage(Dyx_filename_stream.str(), Dyx);
+
+	std::ostringstream Dyy_filename_stream;
+	Dyy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyy.nrrd";
+	WriteImage(Dyy_filename_stream.str(), Dyy);
+
+	std::ostringstream Dyz_filename_stream;
+	Dyz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyz.nrrd";
+	WriteImage(Dyz_filename_stream.str(), Dyz);
 
 	//Gradient of Dz
 	gradient_filter->SetInput(Dz);
@@ -512,12 +570,30 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 	GradientImageType::Pointer grad_Dz = gradient_filter->GetOutput();
 	grad_Dz->DisconnectPipeline();
 
+	PartialDerivativeImageType::Pointer Dzx = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dzy = PartialDerivativeImageType::New();
+	PartialDerivativeImageType::Pointer Dzz = PartialDerivativeImageType::New();
+
+	SplitITKCovariantVectorImage(grad_Dz, Dzx, Dzy, Dzz);
+
+	std::ostringstream Dzx_filename_stream;
+	Dzx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzx.nrrd";
+	WriteImage(Dzx_filename_stream.str(), Dzx);
+
+	std::ostringstream Dzy_filename_stream;
+	Dzy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzy.nrrd";
+	WriteImage(Dzy_filename_stream.str(), Dzy);
+
+	std::ostringstream Dzz_filename_stream;
+	Dzz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzz.nrrd";
+	WriteImage(Dzz_filename_stream.str(), Dzz);
+
 	//Calculate the vesselness value
 	itk::ImageRegionConstIterator< GradientImageType > grad_Dx_iter(grad_Dx, grad_Dx->GetLargestPossibleRegion());
 	itk::ImageRegionConstIterator< GradientImageType > grad_Dy_iter(grad_Dy, grad_Dy->GetLargestPossibleRegion());
 	itk::ImageRegionConstIterator< GradientImageType > grad_Dz_iter(grad_Dz, grad_Dz->GetLargestPossibleRegion());
 
-	//GradientImageType::RegionType region = grad_Dx->GetLargestPossibleRegion();
+	GradientImageType::RegionType region = grad_Dx->GetLargestPossibleRegion();
 
 	VesselnessImageType::Pointer isotropic_vesselness_image = VesselnessImageType::New();
 	isotropic_vesselness_image->SetRegions(region);
@@ -541,7 +617,7 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	std::ostringstream isotropic_vesselness_filename_stream;
 	isotropic_vesselness_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_isotropic_vesselness.nrrd";
-	//WriteImage(isotropic_vesselness_filename_stream.str(), isotropic_vesselness_image);
+	WriteImage(isotropic_vesselness_filename_stream.str(), isotropic_vesselness_image);
 
 	this->vesselness_image = AspectRatioResampler::UnsampleImage< VesselnessImageType >(isotropic_vesselness_image, this->aspect_ratio, this->sampling_type);
 }
@@ -652,7 +728,7 @@ void Cell::CreateLoGImage()
 
 void Cell::CreateVesselnessImage()
 {
-	CreateGVFVesselnessImage(2000.0, 10);
+	CreateGVFVesselnessImage(1000.0, 20);
 	//CreateHessianVesselnessImage();
 
 	std::ostringstream vesselness_filename_stream;

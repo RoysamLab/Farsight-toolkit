@@ -20,6 +20,9 @@
 
 class Cell
 {
+private:
+	typedef itk::CovariantVector< float, 3 >					GradientVectorType;
+
 public:
 	typedef	unsigned char										InputPixelType;
 	typedef fregl_roi< InputPixelType >::ImageType				ImageType;
@@ -31,11 +34,8 @@ public:
 	typedef SomaImageType										MaskImageType;
 	typedef itk::Image< unsigned short, 3 >						LabelImageType;
 	typedef itk::ImageFileReader < SomaImageType >				SomaReaderType;
-	typedef	itk::Image< itk::CovariantVector < float, 3 >, 3 >	GVFImageType;
+	typedef	itk::Image< GradientVectorType, 3 >	GVFImageType;
 	typedef GVFImageType										GradientImageType;
-
-private:
-	typedef itk::CovariantVector< float, 3 >					GradientVectorType;
     
 public:
 	explicit Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio);
@@ -83,6 +83,8 @@ private:
 	float					GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector);
     
 	void					CreateHessianVesselnessImage();
+
+	void					SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< float, 3 >, 3 >::Pointer & covar_image, itk::Image< float, 3>::Pointer & x_image, itk::Image< float, 3>::Pointer & y_image, itk::Image< float, 3>::Pointer & z_image);
 
 public:
 	std::deque< ImageType::IndexType > critical_points_queue; //deque is double-ended queue
