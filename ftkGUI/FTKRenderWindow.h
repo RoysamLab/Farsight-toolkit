@@ -123,6 +123,7 @@ private slots:
 	void setupUI(void);	//for initial setup
 	void selectFeature(QAction *action);
 	void selectColorCode(QAction *action);
+	void setSphereRadius();
 	void createDiscreteColorMap(void);
     
 private:
@@ -134,13 +135,16 @@ private:
 
 	QMenu *featureMenu;
 	QMenu *colorMenu;	
+	QMenu *settingMenu;
 	QVTKWidget *QVTK;
+	QAction *radiusAction;
 	DataNetwork *data_network;
 
 	vtkSmartPointer<vtkTable> table;
 	ObjectSelection * selection;
 	int selectedFeature;
 	int selectedColorCode;
+	double radius;
 	std::map< int, std::string > classColorMap;
 	std::map< std::string, std::vector< double > > discreteColorMap;
 

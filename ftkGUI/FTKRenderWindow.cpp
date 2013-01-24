@@ -1,5 +1,6 @@
 
 #include "FTKRenderWindow.h"
+#include <QInputDialog>
 
 FTKRenderWindow::FTKRenderWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -9,6 +10,7 @@ FTKRenderWindow::FTKRenderWindow(QWidget *parent)
 	selection = NULL;
 	selectedFeature = 1;
 	selectedColorCode = 1;
+	radius = 30;
 	discreteColorMap.clear();	
 	this->setupUI();
 	createDiscreteColorMap();
@@ -33,6 +35,13 @@ void FTKRenderWindow::setupUI(void)
 	colorMenu = new QMenu(tr("Select Color Code"));
 	connect(colorMenu, SIGNAL(triggered(QAction *)), this, SLOT(selectColorCode(QAction *)));
 	menuBar()->addMenu(colorMenu);
+
+	settingMenu = new QMenu(tr("Settings"));
+	menuBar()->addMenu(settingMenu);
+	radiusAction = new QAction("Set Sphere Radius", this);
+	connect (radiusAction, SIGNAL(triggered()), this, SLOT(setSphereRadius()));
+	settingMenu->addAction(radiusAction);
+
 	setupColorCodeMenu();
 
 	QVTK = new QVTKWidget(this);
@@ -76,6 +85,7 @@ void FTKRenderWindow::selectFeature(QAction *action)
 	{
 		selectedFeature = action->toolTip().toInt();
 		action->setChecked(true);
+		selectedColorCode = 1;
 		updateRenderView();
 	}
 }
@@ -132,6 +142,20 @@ void FTKRenderWindow::selectColorCode(QAction *action)
 		updateRenderView();
 }
 
+void FTKRenderWindow::setSphereRadius()
+{
+	bool ok1;
+	double tmp = QInputDialog::getDouble(this, tr("Sphere Radius"),tr("Sphere Radius:"), this->radius, 1, 1000, 1, &ok1);
+	if(ok1)
+	{
+		if( abs(this->radius - tmp) > 1e-6)
+		{
+			this->radius = tmp;
+			updateRenderView();
+		}
+	}
+}
+
 void FTKRenderWindow::updateRenderView(void)
 {
 	vnl_vector<double> feat_col((int)table->GetNumberOfRows());
@@ -163,7 +187,7 @@ void FTKRenderWindow::updateRenderView(void)
 	std::set<long int> sels = selection->getSelections();
 	std::vector<int> ids(sels.begin(), sels.end());
 
-
+	Renderer->RemoveAllViewProps();
 	for(int row=0; row<(int)table->GetNumberOfRows(); row++)
 	{
 		//std::cout << "myCentroid : " << row <<"\r";
@@ -176,7 +200,7 @@ void FTKRenderWindow::updateRenderView(void)
 		}
 
 		vtkSmartPointer<vtkSphereSource> centroidSphere =  vtkSmartPointer<vtkSphereSource>::New();
-		centroidSphere->SetRadius(30);	
+		centroidSphere->SetRadius(this->radius);	
 		vtkSmartPointer<vtkPolyDataMapper> centroidMapper =  vtkSmartPointer<vtkPolyDataMapper>::New();
 		centroidMapper->SetInputConnection(centroidSphere->GetOutputPort()); 
 		vtkSmartPointer<vtkActor> centroidactor = vtkSmartPointer<vtkActor>::New();
@@ -187,7 +211,7 @@ void FTKRenderWindow::updateRenderView(void)
 		centroidactor->SetPosition(table->GetValue(row, 1).ToDouble(),table->GetValue(row, 2).ToDouble(),table->GetValue(row, 3).ToDouble());
 		Renderer->AddActor(centroidactor);
 	}
-	
+	 
 	QVTK->GetRenderWindow()->Render();
 	//Interactor->Start();
 	
