@@ -123,6 +123,11 @@ if( BUILD_SPD )
   include_directories( ${PROJECT_SOURCE_DIR}/SPD )
 endif()
 
+if( BUILD_VESSEL_TRACING )
+  add_definitions( -DUSE_BALL_TRACER )
+  include_directories( ${PROJECT_SOURCE_DIR}/ftkVesselTracer )
+endif()
+
 
 #####################################################################################
 # CPACK SETUP FOR BUILDING INSTALLERS
