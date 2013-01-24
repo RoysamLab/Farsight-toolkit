@@ -497,11 +497,13 @@ void View3D::OkToBoot()
 		this->RaycastBar->toggleViewAction()->setDisabled(1);
 		this->chooseInteractorStyle(1);
 		renderMode = PROJECTION;
+		SetProjection->setChecked(true);
 	}
 	else
 	{
 		this->chooseInteractorStyle(0);
 		renderMode = RAYCAST;
+		SetRaycast->setChecked(true);
 	}
 	if (!this->SomaFile.isEmpty())
 	{
@@ -662,6 +664,8 @@ void View3D::LoadImageData()
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(-1));
 			this->ImageActors->setRenderStatus(-1, true);
 			this->QVTK->GetRenderWindow()->Render();
+			this->chooseInteractorStyle(0);
+			setRaycastMode();
 		}
 		else
 		{
@@ -669,6 +673,7 @@ void View3D::LoadImageData()
 			//this->Renderer->AddViewProp(this->ImageActors->CreateImageSlice(-1));
 			this->ImageActors->setIs2D(-1, true);
 			this->chooseInteractorStyle(1);//set to image interactor
+			setProjectionMode();
 		}
 		//this->Rerender();
 		this->statusBar()->showMessage("Image File Rendered");
@@ -1902,7 +1907,7 @@ void View3D::CreateLayout()
 
 	
 	//vessel segmentation toolbar
-	this->vesselSegDock = new QDockWidget("Segment Vessels",this);
+	this->vesselSegDock = new QDockWidget("Segment Vessels Hollow",this);
 	QVBoxLayout * VesselSegDockLayout = new QVBoxLayout(this->vesselSegWidget);
 	VesselSegDockLayout->addWidget(this->ArunVesselTracingButton);
 	this->vesselSegWidget->setMaximumSize(256,500);
@@ -1925,7 +1930,7 @@ void View3D::CreateLayout()
 	this->BranchToolBar->hide();
 
 	//processingmenu
-	QAction *startTracingGui = new QAction("Trace...",this);
+	QAction *startTracingGui = new QAction("Tracing Options",this);
 	connect(startTracingGui,SIGNAL(triggered()),this,SLOT(openTracingDialog()));
 	this->processingMenu->addAction(startTracingGui);
 
@@ -2188,17 +2193,26 @@ void View3D::CreateLayout()
 void View3D::openTracingDialog()
 {
 	this->tracingGui = new QDialog(this);
-	this->tracingGui->setWindowTitle("Trace...");
+	this->tracingGui->setWindowTitle("Tracing Options");
 	QVBoxLayout *tracingLayout = new QVBoxLayout(this->tracingGui);
 	tracingLayout->addWidget(new QLabel("Choose tracing algorithm"));	
 	tracingLayout->setSizeConstraint(QLayout::SetMinimumSize);
-
+	
+	// Creating options
 	this->tracerCombo = new QComboBox;
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
+	
+#ifdef USE_BALL_TRACER	
+	this->tracerCombo->addItem("Vessel Ball Tracer (VBT)");
+#else
+	this->tracerCombo->addItem("VESSEL BALL TRACER not built!");
+#endif
+
 	tracingLayout->addWidget(this->tracerCombo);
 	connect(this->tracerCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(PickTracer(int)));
 
+	// Accepting parameters for MNT
 	this->mntBox = new QGroupBox("MNT Options",this->tracingGui);
 	QFormLayout *mntLayout = new QFormLayout();
 	this->mntCostThreshold = new QSpinBox;
@@ -2214,6 +2228,22 @@ void View3D::openTracingDialog()
 	this->mntBox->setLayout(mntLayout);
 	tracingLayout->addWidget(this->mntBox);
 	this->mntBox->setVisible(true);
+
+#ifdef USE_BALL_TRACER
+	// Accepting parameters for VBT: Vessel Ball Tracer
+	this->vbtBox = new QGroupBox("VBT Options", this->tracingGui);
+	this->vbtLayout = new QFormLayout(this->tracingGui);
+	this->vbtPreprocess = new QCheckBox("Do Preprocessing?", this->vbtBox);
+	this->vbtUseVesselness = new QSpinBox(this->vbtBox);
+	this->vbtUseVesselness->setRange(0, 3);
+	this->vbtUseVesselness->setSingleStep(1);
+	this->vbtUseVesselness->setValue(1);
+	this->vbtLayout->addRow(this->vbtPreprocess);
+	this->vbtLayout->addRow("Use Vesselness", this->vbtUseVesselness);
+	this->vbtBox->setLayout(this->vbtLayout);
+	tracingLayout->addWidget(this->vbtBox);
+	this->vbtBox->setVisible(true);
+#endif 
 
 	QPushButton * traceButton = new QPushButton("Run Tracer", this->tracingGui);
 	QPushButton * cancelButton = new QPushButton("Nevermind", this->tracingGui);
@@ -2248,11 +2278,21 @@ void View3D::PickTracer(int choice)
 	//turn tracer guis off
 	this->mntBox->setVisible(false);
 
+#ifdef USE_BALL_TRACER
+	this->vbtBox->setVisible(false);
+#endif
+
 	//turn selected one on
 	switch(choice)
 	{
 		case 0:
-			this->mntBox->setVisible(true); break;
+			this->mntBox->setVisible(true);
+			break;
+		case 2:
+#ifdef USE_BALL_TRACER
+			this->vbtBox->setVisible(true);
+#endif
+			break;
 	}
 	this->tracingGui->resize(this->tracingGui->minimumSize());
 }
@@ -2263,7 +2303,11 @@ void View3D::RunTracer()
 	switch(this->tracerCombo->currentIndex())
 	{
 		case 0:
-			StartMNTracerAmit(this->mntCostThreshold->value()); break;
+			StartMNTracerAmit(this->mntCostThreshold->value()); 
+			break;
+		case 2:
+			this->StartVesselBallTracer();
+			break;
 	}
 }
 
@@ -2272,6 +2316,38 @@ void View3D::StartMNTracerAmit(int costThreshold)
 {
 	//Multiple Neuron Tracer, Amit's version
 	std::cout<<"Starting Amit's Tracer w threshold "<<costThreshold<<std::endl;
+}
+
+void View3D::StartVesselBallTracer(){
+
+#ifdef USE_BALL_TRACER
+	std::cout << "Starting with Ball tracer for vessels.. " << std::endl;
+	
+	
+	ImageType::Pointer inputImage = ImageType::New();
+	inputImage = this->ImageActors->getImageFileData(this->Image.at(0).toStdString(),"Image");
+	
+	ImageTypeFloat3D::Pointer inputImageFloat;
+	this->ImageActors->CastUCharToFloat(inputImage, inputImageFloat);
+	
+	std::cout << "Vessel tracing options.. " << std::endl;
+	std::cout << "Input image full path: " << this->Image.at(0).toStdString() << std::endl;
+	std::cout << "Preprocess: " << this->vbtPreprocess->isChecked() << std::endl;
+	std::cout << "Use vesselnesS: " << this->vbtUseVesselness->value() << std::endl;
+
+	if(inputImageFloat.IsNull()){
+		std::cout << "ERROR!! NULL input image. " << std::endl; 
+		return;
+	}
+	
+	try{
+		this->VBT = new ftkVesselTracer(this->Image.at(0).toStdString(), inputImageFloat,
+			this->vbtPreprocess->isChecked(), false, this->vbtUseVesselness->value());
+	}
+	catch(...){
+		qDebug() << "CRASH!!";
+	}
+#endif
 }
 
 void View3D::ArunCenterline()
@@ -6504,7 +6580,7 @@ void View3D::AddLabel()
 		return;
 	}
 
-	if( this->CellModel->getDataTable()->GetColumnByName("prediction") == NULL)
+	if( this->CellModel->getDataTable()->GetColumnByName("Label") == NULL)
 	{
 		std::cout<< "Adding label."<<std::endl;
 		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();

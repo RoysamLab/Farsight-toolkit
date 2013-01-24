@@ -41,6 +41,8 @@ limitations under the License.
 #include "vtkImagePlaneWidget.h"
 #include "vtkImageReslice.h"
 #include "itkPermuteAxesImageFilter.h"
+#include "itkCastImageFilter.h"
+
 
 //slicer
 #include "vtkImageResliceMapper.h"
@@ -60,9 +62,9 @@ limitations under the License.
 const unsigned int Dimension = 3;
 
 /** Standard class typedefs. */
-
 typedef unsigned char  ImageActorPixelType;
 typedef itk::Image< ImageActorPixelType, Dimension >   ImageType;
+typedef itk::Image<float, Dimension> ImageTypeFloat3D;
 typedef itk::Image< ImageActorPixelType, 2 >   ImageType2D;
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
@@ -75,6 +77,7 @@ typedef vtkSmartPointer<vtkImageActor> ImageActorPointerType;
 //typedef vtkSmartPointer<vtkImageResliceMapper> ImageResliceMapper;
 typedef itk::PermuteAxesImageFilter<ImageType> itkPermuteFilterType;
 typedef vtkSmartPointer<vtkImageSlice> ImageSlicePointerType;
+typedef itk::CastImageFilter<ImageType, ImageTypeFloat3D> UCharToFloatCastImageFilterType;
 
 /** \struct imageFileHandle
  * \brief Basic data structure for the ImageActors class that holds different data elements used to handle the image
@@ -191,6 +194,7 @@ public:
         void setProgressBar( QProgressBar * progressBar );
         void setProgressTextWidget( QLabel * progressTextWidget );
 	ImageType::Pointer getImageFileData(std::string sourceName, std::string  tag);
+	void CastUCharToFloat(ImageType::Pointer, ImageTypeFloat3D::Pointer&);
 
 	struct ColorType
 	{

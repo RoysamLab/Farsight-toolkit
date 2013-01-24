@@ -47,6 +47,10 @@ if(BUILD_CLUSCLUS)
   list( APPEND TRACE_LIBS ClusClus_lib )
 endif(BUILD_CLUSCLUS)
 
+if(BUILD_VESSEL_TRACING)
+	list(APPEND TRACE_LIBS VesselTracer_lib)
+endif(BUILD_VESSEL_TRACING)
+
 if(QtTestingFound)
   link_directories( ${QtTesting_LIBRARY_DIR} )
   add_definitions(-DUSE_QT_TESTING)

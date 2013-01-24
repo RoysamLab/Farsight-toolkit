@@ -1092,3 +1092,12 @@ ImageType::Pointer ImageRenderActors::getImageFileData(std::string sourceName,st
 	}
 
 }
+
+void ImageRenderActors::CastUCharToFloat(ImageType::Pointer UCharImage, ImageTypeFloat3D::Pointer& FloatImage){
+
+	UCharToFloatCastImageFilterType::Pointer cast_filter = UCharToFloatCastImageFilterType::New();
+	cast_filter->SetInput(UCharImage);
+	cast_filter->Update();
+
+	FloatImage = cast_filter->GetOutput();
+}
