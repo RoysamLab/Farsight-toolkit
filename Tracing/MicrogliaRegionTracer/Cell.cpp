@@ -26,7 +26,7 @@ Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, dou
 	cell_y(cell_y),
 	cell_z(cell_z),
 	aspect_ratio(aspect_ratio),
-    sampling_type(AspectRatioResampler::DownSample)
+    sampling_type(AspectRatioResampler::UpSample)
 {
 }
 
@@ -226,6 +226,7 @@ void Cell::ComputeMaskedImage()
 
 void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image)
 {
+	std::cout << "Writing " << filename << std::endl;
 	typedef itk::ImageFileWriter< itk::Image< unsigned char, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(image);	//image is from function parameters!
@@ -244,6 +245,7 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned c
 
 void Cell::WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image)
 {
+	std::cout << "Writing " << filename << std::endl;
 	typedef itk::ImageFileWriter< itk::Image< unsigned short, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(image);	//image is from function parameters!
@@ -481,15 +483,15 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	std::ostringstream Dx_filename_stream;
 	Dx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dx.nrrd";
-	WriteImage(Dx_filename_stream.str(), Dx);
+	//WriteImage(Dx_filename_stream.str(), Dx);
 
 	std::ostringstream Dy_filename_stream;
 	Dy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dy.nrrd";
-	WriteImage(Dy_filename_stream.str(), Dy);
+	//WriteImage(Dy_filename_stream.str(), Dy);
 
 	std::ostringstream Dz_filename_stream;
 	Dz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dz.nrrd";
-	WriteImage(Dz_filename_stream.str(), Dz);
+	//WriteImage(Dz_filename_stream.str(), Dz);
 
 	//Calculate gradient of the GVF image
 	//Gradient of Dx
@@ -515,15 +517,15 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	std::ostringstream Dxx_filename_stream;
 	Dxx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxx.nrrd";
-	WriteImage(Dxx_filename_stream.str(), Dxx);
+	//WriteImage(Dxx_filename_stream.str(), Dxx);
 
 	std::ostringstream Dxy_filename_stream;
 	Dxy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxy.nrrd";
-	WriteImage(Dxy_filename_stream.str(), Dxy);
+	///WriteImage(Dxy_filename_stream.str(), Dxy);
 
 	std::ostringstream Dxz_filename_stream;
 	Dxz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dxz.nrrd";
-	WriteImage(Dxz_filename_stream.str(), Dxz);
+	///WriteImage(Dxz_filename_stream.str(), Dxz);
 
 	//Gradient of Dy
 	gradient_filter->SetInput(Dy);
@@ -547,15 +549,15 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	std::ostringstream Dyx_filename_stream;
 	Dyx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyx.nrrd";
-	WriteImage(Dyx_filename_stream.str(), Dyx);
+	//WriteImage(Dyx_filename_stream.str(), Dyx);
 
 	std::ostringstream Dyy_filename_stream;
 	Dyy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyy.nrrd";
-	WriteImage(Dyy_filename_stream.str(), Dyy);
+	//WriteImage(Dyy_filename_stream.str(), Dyy);
 
 	std::ostringstream Dyz_filename_stream;
 	Dyz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dyz.nrrd";
-	WriteImage(Dyz_filename_stream.str(), Dyz);
+	//WriteImage(Dyz_filename_stream.str(), Dyz);
 
 	//Gradient of Dz
 	gradient_filter->SetInput(Dz);
@@ -578,15 +580,15 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	std::ostringstream Dzx_filename_stream;
 	Dzx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzx.nrrd";
-	WriteImage(Dzx_filename_stream.str(), Dzx);
+	//WriteImage(Dzx_filename_stream.str(), Dzx);
 
 	std::ostringstream Dzy_filename_stream;
 	Dzy_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzy.nrrd";
-	WriteImage(Dzy_filename_stream.str(), Dzy);
+	//WriteImage(Dzy_filename_stream.str(), Dzy);
 
 	std::ostringstream Dzz_filename_stream;
 	Dzz_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dzz.nrrd";
-	WriteImage(Dzz_filename_stream.str(), Dzz);
+	//WriteImage(Dzz_filename_stream.str(), Dzz);
 
 	//Calculate the vesselness value
 	itk::ImageRegionConstIterator< GradientImageType > grad_Dx_iter(grad_Dx, grad_Dx->GetLargestPossibleRegion());
@@ -728,7 +730,7 @@ void Cell::CreateLoGImage()
 
 void Cell::CreateVesselnessImage()
 {
-	CreateGVFVesselnessImage(1000.0, 20);
+	CreateGVFVesselnessImage(10000.0, 20);
 	//CreateHessianVesselnessImage();
 
 	std::ostringstream vesselness_filename_stream;

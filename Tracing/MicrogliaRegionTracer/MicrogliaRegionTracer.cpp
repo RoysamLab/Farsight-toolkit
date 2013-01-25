@@ -9,6 +9,12 @@
 #include "itkPathConstIterator.h"
 #include "itkIdentityTransform.h"
 #include "itkResampleImageFilter.h"
+#include "itkOtsuMultipleThresholdsImageFilter.h"
+#include "itkInvertIntensityImageFilter.h"
+#include "itkIntensityWindowingImageFilter.h"
+#include "itkLogImageFilter.h"
+#include "itkMaskImageFilter.h"
+#include "itkShiftScaleImageFilter.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -16,13 +22,23 @@
 #include "BoundingBoxFromTraceCalculator.h"
 
 #include <cmath>
+#include <algorithm>
 
 #define MASK 0
 #define PI 3.1415926535897932384626433832795
 
+//typedefs
+typedef struct
+{
+	unsigned int x;
+	unsigned int y;
+	unsigned int z;
+	double saliency;
+} VesselnessPointType;
+
 //Non-member function prototypes
 float CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
-
+bool VesselnessPointTypeComparator(VesselnessPointType first_pt, VesselnessPointType second_pt);
 
 MicrogliaRegionTracer::MicrogliaRegionTracer() :
     aspect_ratio_is_set(false),
@@ -122,7 +138,7 @@ void MicrogliaRegionTracer::Trace()
         
         int num_cells_in_group = (cells.size() / ((group_num+1) * num_openmp_threads)) ? num_openmp_threads : cells.size() % num_openmp_threads; //sets num_local_threads to the number of threads if we are not on the last group, otherwise set it to the number of remaining threads
 
-        ReadAGroupOfROIs(num_cells_in_group, group_num, num_openmp_threads, roi_grabber);  //Read a bunch of cells without OpenMP        
+        ReadAGroupOfROIs(num_cells_in_group, group_num, num_openmp_threads, roi_grabber);  //Read a bunch of cells WITHOUT OpenMP        
         TraceAGroupOfCells(num_cells_in_group, group_num, num_openmp_threads);             //Then we trace a group of cells using OpenMP
     }
 }
@@ -219,11 +235,11 @@ void MicrogliaRegionTracer::CalculateSeedPoints(Cell & cell)
 	cell.CreateIsotropicImage();	//Must be called before CreateVesselnessImage and CreateLoGImage
 	cell.CreateVesselnessImage();
 	
-	cell.CreateLoGImage();
-	std::cout << "Ridge Detection By LoG" << std::endl;
-	RidgeDetectionByLoG(cell);
+	//cell.CreateLoGImage();
+	//std::cout << "Ridge Detection By LoG" << std::endl;
+	//RidgeDetectionByLoG(cell);
 
-	//SeedDetectionByVesselness(cell);
+	SeedDetectionByVesselness(cell);
 
 	std::ostringstream critical_points_filename_stream;
 	critical_points_filename_stream << cell.getX() << "_" << cell.getY() << "_" << cell.getZ() << "_critical.nrrd";
@@ -359,6 +375,176 @@ void MicrogliaRegionTracer::RidgeDetectionByLoG( Cell & cell )
 void MicrogliaRegionTracer::SeedDetectionByVesselness(Cell & cell)
 {
 	//Sort by saliency and threshold?
+	
+	//Move the seeds along GVF until convergence happens?
+
+	//Take the log() of the vesselness
+	typedef itk::LogImageFilter< VesselnessImageType, VesselnessImageType > LogImageFilterType;
+	LogImageFilterType::Pointer log_image_filter = LogImageFilterType::New();
+	log_image_filter->SetInput(cell.vesselness_image);
+
+	try
+	{
+		log_image_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Exception in log_image_filter in SeedDetectionByVesselness(): " << err << std::endl;
+	}
+
+	VesselnessImageType::Pointer log_vesselness_img = log_image_filter->GetOutput();
+	
+	Cell::WriteImage("log_vesselness.nrrd", log_vesselness_img);
+
+	//Clamp the pixel values
+	itk::ImageRegionIterator< VesselnessImageType > log_vesselness_iter(log_vesselness_img, log_vesselness_img->GetLargestPossibleRegion());
+
+	while (!log_vesselness_iter.IsAtEnd())
+	{
+		VesselnessImageType::PixelType value = log_vesselness_iter.Get();
+
+		if (value <= -20.0 ) //pixel value is less than -20
+			log_vesselness_iter.Set( -20.0 ); //HACK!: Set it to -20.0 so that we can actually do image processing without running into FP maximum range problems
+
+		++log_vesselness_iter;
+	}
+
+
+	Cell::WriteImage("clamped_log_vesselness.nrrd", log_vesselness_img);
+
+	//Rescale the intensity of the log vesselness image since it can become negative
+	typedef itk::RescaleIntensityImageFilter< VesselnessImageType, VesselnessImageType > RescaleIntensityImageFilterType;
+	RescaleIntensityImageFilterType::Pointer rescaleFilter = RescaleIntensityImageFilterType::New();
+	rescaleFilter->SetInput(log_vesselness_img);
+	rescaleFilter->SetOutputMinimum(0.0);
+	rescaleFilter->SetOutputMaximum(65535.0);
+
+	try
+	{
+		rescaleFilter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Exception in rescaleFilter in SeedDetectionByVesselness(): " << err << std::endl;
+	}
+
+	Cell::WriteImage("rescaled_log_vesselness.nrrd", rescaleFilter->GetOutput());
+	
+	//Threshold the image to get rid of BG pixels
+	typedef itk::OtsuMultipleThresholdsImageFilter< VesselnessImageType, ImageType > ThresholdFilterType;
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetInput(log_vesselness_img);
+	threshold_filter->SetNumberOfThresholds(2);
+	threshold_filter->SetNumberOfHistogramBins(1024);
+	try
+	{
+		threshold_filter->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "Exception in threshold_filter in SeedDetectionByVesselness(): " << err << std::endl;
+	}
+
+	ImageType::Pointer threshold_label_mask = threshold_filter->GetOutput();
+	Cell::WriteImage("threshold_label_mask.nrrd", threshold_label_mask);
+
+	
+	//Prune the label image to only take the pixels with label "2" (foreground)
+	//Make an image to hold the foreground pixels
+	ImageType::Pointer foreground_vesselness_mask = ImageType::New();
+	foreground_vesselness_mask->SetRegions(threshold_label_mask->GetLargestPossibleRegion());
+	foreground_vesselness_mask->Allocate();
+	foreground_vesselness_mask->FillBuffer(0);
+
+	itk::ImageRegionConstIterator< ImageType > threshold_label_img_iter(threshold_label_mask, threshold_label_mask->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ImageType > foreground_vesselness_mask_iter(foreground_vesselness_mask, foreground_vesselness_mask->GetLargestPossibleRegion());
+
+	while (!threshold_label_img_iter.IsAtEnd())
+	{
+		ImageType::PixelType label = threshold_label_img_iter.Get();
+
+		if (label == 2)
+			foreground_vesselness_mask_iter.Set(255);
+		
+		++threshold_label_img_iter;
+		++foreground_vesselness_mask_iter;
+	}
+
+	Cell::WriteImage("foreground_vesselness_mask.nrrd", foreground_vesselness_mask);	
+
+	//Use the mask to get the thresholded vesselness image
+	typedef itk::MaskImageFilter< VesselnessImageType, ImageType > MaskImageFilterType;
+	MaskImageFilterType::Pointer mask_image_filter = MaskImageFilterType::New();
+	mask_image_filter->SetInput(cell.vesselness_image);
+	mask_image_filter->SetMaskImage(foreground_vesselness_mask);
+
+	try
+	{
+		mask_image_filter->Update();
+	}
+	catch (itk::ExceptionObject & err)
+	{
+		std::cerr << "Exception in mask_image_filter in SeedDetectionByVesselness(): " << err << std::endl;
+	}
+
+	VesselnessImageType::Pointer thresholded_grayscale_image = mask_image_filter->GetOutput();
+
+	Cell::WriteImage("thresholded_grayscale_image.nrrd", thresholded_grayscale_image);
+
+	//Non-maximal suppression
+	VesselnessImageType::Pointer non_maximal_vesselness_img = VesselnessImageType::New();
+	non_maximal_vesselness_img->SetRegions(cell.vesselness_image->GetLargestPossibleRegion());
+	non_maximal_vesselness_img->Allocate();
+	non_maximal_vesselness_img->FillBuffer(0);
+
+	cell.critical_point_image = ImageType::New();
+	cell.critical_point_image->SetRegions(cell.vesselness_image->GetLargestPossibleRegion());
+	cell.critical_point_image->Allocate();
+	cell.critical_point_image->FillBuffer(0);
+		
+	itk::Size< 3 > rad = {{1, 1, 1}};
+	itk::ConstNeighborhoodIterator< VesselnessImageType > vesselness_img_iter(rad, thresholded_grayscale_image, thresholded_grayscale_image->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< VesselnessImageType> non_maximal_vesselness_img_iter(non_maximal_vesselness_img, non_maximal_vesselness_img->GetLargestPossibleRegion());
+	itk::ImageRegionIterator< ImageType > critical_point_img_iter(cell.critical_point_image, cell.critical_point_image->GetLargestPossibleRegion());
+		
+	//Make a iterator for the image and a neighborhood around the current point we are visiting
+	while (!vesselness_img_iter.IsAtEnd())
+	{
+		unsigned int neighborhood_size = (rad[0] * 2 + 1) * (rad[1] * 2 + 1) * (rad[2] * 2 + 1);
+		unsigned int center_pixel_offset_index = neighborhood_size / 2;
+
+		VesselnessImageType::PixelType center_pixel_intensity = vesselness_img_iter.GetPixel(center_pixel_offset_index);
+
+		bool local_maximum = true;
+		for (unsigned int neighborhood_index = 0; neighborhood_index < neighborhood_size; ++neighborhood_index)
+		{
+			if (neighborhood_index != center_pixel_offset_index)
+			{
+				bool isInBounds; //true if the pixel is in bounds
+				VesselnessImageType::PixelType neighbor_pixel_log_intensity = vesselness_img_iter.GetPixel(neighborhood_index, isInBounds);
+
+				if (isInBounds && neighbor_pixel_log_intensity >= center_pixel_intensity)
+					local_maximum = false;
+			}
+		}
+
+		if (local_maximum)
+		{
+			non_maximal_vesselness_img_iter.Set(center_pixel_intensity);
+			critical_point_img_iter.Set(255);
+			cell.critical_points_queue.push_back(non_maximal_vesselness_img_iter.GetIndex());
+		}
+		
+		++critical_point_img_iter;
+		++vesselness_img_iter;
+		++non_maximal_vesselness_img_iter;
+	}
+	Cell::WriteImage("non_maximal.nrrd", non_maximal_vesselness_img);
+}
+
+bool VesselnessPointTypeComparator(VesselnessPointType first_pt, VesselnessPointType second_pt)
+{
+	return (first_pt.saliency > second_pt.saliency);	
 }
 
 /* After the candidates pixels are calculated, this function connects all the candidate pixels into a minimum spanning tree based on a cost function */
