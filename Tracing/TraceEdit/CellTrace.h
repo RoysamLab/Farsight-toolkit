@@ -25,6 +25,9 @@ limitations under the License.
 #include <sstream>
 #include <math.h>
 #include "ConvexHull3D.h"
+
+typedef itk::Image< float, 3> FloatImageType;
+
 class TraceBit;
 class TraceLine;
 class CellTrace
@@ -53,6 +56,7 @@ public:
 	vtkSmartPointer<vtkActor> GetDelaunayActor();
 	vtkSmartPointer<vtkActor> GetEllipsoidActor();
 	std::vector<std::string> calculateAnglesToDevice();
+	std::string calculateDistanceToVessel(FloatImageType::Pointer distanceMap);
 
 	bool modified; //check if data needs to update
 

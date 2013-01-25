@@ -237,6 +237,7 @@ public slots:
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
+	void LoadVesselMaskFile();
 	void LoadProject();
 	void SetTraceType(int newType);
 	void ReloadState();
@@ -280,6 +281,7 @@ public slots:
 	void WriteVOI();
 	void ToggleVOI();
 	void CalculateDistanceToDevice();
+	void CalculateDistanceToVessel();
 
 	void CalculateCellToCellDistanceGraph();
 	void readNucleiTable();
@@ -309,6 +311,7 @@ public slots:
 	QString getTraceFile();
 	QString getImageFile();
 	QString getSomaFile();
+	//QString getVesselMaskFile();
 	void OkToBoot();
 	void EditHelp();
 	void About();
@@ -362,6 +365,7 @@ private:
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
+	QPushButton * BootVesselMask;
 	QPushButton * BootProject;
 	QPushButton * okBoot;
 	QPushButton * Reload;
@@ -427,6 +431,7 @@ private:
 	QPushButton *ArunVesselTracingButton;
 	QAction *ColorByTreesAction;
 	QAction *loadSoma;
+	QAction *loadVesselMask;
 	QAction *ListButton;
 	QAction *ClearButton;
 	QAction *SelectTreeAction;

@@ -69,9 +69,9 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 
 	tips.push_back(rootBit);
 
+	this->somaRadii = this->segments[0]->GetRadii();
 	this->somaSurface = this->segments[0]->GetSomaSurfaceArea();
 	this->somaVolume = this->segments[0]->GetSomaVolume();
-	this->somaRadii = this->segments[0]->GetRadii();
 	this->DeviceDistance = this->segments[0]->GetDistanceToROI();
 	this->DeviceAzimuth = this->segments[0]->GetAzimuthToROI();
 	this->DeviceElevation = this->segments[0]->GetElevationToROI();
@@ -906,4 +906,18 @@ std::vector<std::string> CellTrace::calculateAnglesToDevice()
 	this->addNewFeature(DeviceAngleHeaders[2],this->segments[0]->GetTipToROI());
 
 	return DeviceAngleHeaders;
+}
+
+std::string CellTrace::calculateDistanceToVessel(FloatImageType::Pointer distanceMap)
+{
+	itk::Index<3> somaIndex;
+	somaIndex[0] = this->somaX;
+	somaIndex[1] = this->somaY;
+	somaIndex[2] = this->somaZ;
+
+	distanceMap->GetPixel(somaIndex);
+	std::string vesselHeader = "Distance to Vessel";
+	this->addNewFeature(vesselHeader,distanceMap->GetPixel(somaIndex));
+	
+	return vesselHeader;
 }

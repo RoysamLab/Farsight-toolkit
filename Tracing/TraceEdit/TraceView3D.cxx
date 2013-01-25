@@ -193,6 +193,7 @@ View3D::View3D(QWidget *parent)
       this->TraceEditSettings.setValue("traceDir", nextFile);
       this->TraceEditSettings.setValue("imageDir", nextFile);
       this->TraceEditSettings.setValue("projectDir", nextFile);
+	  this->TraceEditSettings.setValue("vesselDir", nextFile);
     }
     else if (nextFile.endsWith("reload"))
     {
@@ -699,6 +700,26 @@ void View3D::LoadSomaFile()
 	}
 }
 
+void View3D::LoadVesselMaskFile()
+{
+	QString vesselDir = this->TraceEditSettings.value("vesselDir", ".").toString();
+	QString vesselMaskFile = QFileDialog::getOpenFileName(this , "Load Vessel Mask", vesselDir,
+		tr("Vessel Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!vesselMaskFile.isEmpty())
+	{
+		//std::string vesselMaskFile = "C:\\Lab\\Data\\Prathamesh\\Microglia_Control\\kt10013_w227_TRITC_Prior_DSU_pre_crop_SegmentationMaskImage_label.tif";
+		this->TraceEditSettings.setValue("vesselDir", vesselDir);
+		std::cout << "Reading vessel mask..." << std::endl;
+		this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
+		std::cout << "Reading done" << std::endl;
+		std::cout << "Calculating distance map..." << std::endl;
+		CalculateDistanceToVessel();
+		std::cout << "Finished" << std::endl;
+		//QString vesselMaskFile = this->getVesselMaskFile();
+		this->statusBar()->showMessage("Vessel Mask Rendered");
+	}
+}
+
 void View3D::LoadProject()
 {
 	QString projectDir = this->TraceEditSettings.value("projectDir", ".").toString();
@@ -706,6 +727,7 @@ void View3D::LoadProject()
 		tr("project ( *.xml" ));
 	if (!projectFile.isEmpty())
 	{
+		this->bootLoadFiles->setEnabled(false);
 		projectDir = QFileInfo(projectFile).absolutePath();
 		this->TraceEditSettings.setValue("projectDir", projectDir);
 		this->projectLoadedState = this->readProject(projectFile);
@@ -1226,6 +1248,11 @@ void View3D::CreateGUIObjects()
 	this->loadSoma->setObjectName(tr("loadSoma"));
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
+
+	this->loadVesselMask = new QAction("Load Vessel Mask", this->CentralWidget);
+	this->loadVesselMask->setObjectName(tr("loadVesselMask"));
+	connect(this->loadVesselMask, SIGNAL(triggered()), this, SLOT(LoadVesselMaskFile()));
+	this->loadVesselMask->setStatusTip("Load vessel mask");
 
 	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
 	this->ScreenshotAction->setObjectName(tr("ScreenshotAction"));
@@ -1822,6 +1849,7 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
+	this->fileMenu->addAction(this->loadVesselMask);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
 	this->fileMenu->addAction(this->LoadDebrisTable);
@@ -3968,6 +3996,27 @@ void  View3D::ToggleVOI()
 		
 		this->QVTK->GetRenderWindow()->Render();
 	}
+}
+
+void View3D::CalculateDistanceToVessel()
+{
+	if (!this->FL_MeasureTable)
+	{
+		this->ShowCellAnalysis();
+	}
+	
+	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
+	CellTrace* currCell = (*cellCount).second;
+	std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+	cellCount++;
+	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+	{
+		CellTrace* currCell = (*cellCount).second;
+		currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+	}
+	this->CellModel->AddNewFeatureHeader(DistanceToVesselHeader);
+
+	this->ShowCellAnalysis();
 }
 
 /////////////////////////////////
@@ -6230,7 +6279,7 @@ void View3D::AutoCellExport()
 					}
 					else
 					{
-						cellName = tr("cell_") + QString("%1").arg(cellNum);
+						cellName = tr("cell_") + QString("%1_%2_%3").arg(currCell->somaX).arg(currCell->somaY).arg(currCell->somaZ);
 					}
 				}
 				this->FocusOnCell(currCell);

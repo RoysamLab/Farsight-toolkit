@@ -33,7 +33,7 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	swcextension = new QWidget;
 	originalswcfileNameButton = new QRadioButton(tr("Keep original filename"), swcextension);
 	originalswcfileNameButton->setChecked(true);
-	renumberswcfileNameButton = new QRadioButton(tr("Label files: (cell_1, cell_2,...,etc)"), swcextension);
+	renumberswcfileNameButton = new QRadioButton(tr("Label files by xyz: (ex. cell_20_32_3)"), swcextension);
 	renameswcfileNameButton = new QRadioButton(tr("Rename and auto-assign number to swc files"), swcextension);
 	QLabel *swcLineEditLabel = new QLabel(tr("Custom name:"));
 	nameswcfileNameLine = new QLineEdit(swcextension);
@@ -44,7 +44,7 @@ SaveCellExportDialog::SaveCellExportDialog(QWidget* parent, QString curdirectory
 	jpgextension = new QWidget;
 	originaljpgfileNameButton = new QRadioButton(tr("Keep original filename"), jpgextension);
 	originaljpgfileNameButton->setChecked(true);
-	renumberjpgfileNameButton = new QRadioButton(tr("Label files: (cell_1, cell_2,...,etc)"), jpgextension);
+	renumberjpgfileNameButton = new QRadioButton(tr("Label files by xyz: (ex. cell_20_32_3)"), jpgextension);
 	renamejpgfileNameButton = new QRadioButton(tr("Rename and auto-assign number to jpg files"), jpgextension);
 	QLabel *jpgLineEditLabel = new QLabel(tr("Custom name:"));
 	namejpgfileNameLine = new QLineEdit(jpgextension);

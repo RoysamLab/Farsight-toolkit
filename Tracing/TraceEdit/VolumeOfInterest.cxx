@@ -120,6 +120,45 @@ float* VolumeOfInterest::CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable
 	return dist_object;
 }
 
+void VolumeOfInterest::ReadVesselDistanceMap(std::string fileName)
+{
+	ReaderType::Pointer vesselMaskReader = ReaderType::New();
+	vesselMaskReader->SetFileName(fileName.c_str());	
+	try
+	{
+		vesselMaskReader->Update();
+	}
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while reading the input file " << std::endl;
+		std::cerr << exp << std::endl;
+		//return EXIT_FAILURE;
+	}
+	vesselMaskImage = vesselMaskReader->GetOutput();
+
+}
+
+FloatImageType::Pointer VolumeOfInterest::GetVesselMaskDistanceMap()
+{
+	typedef itk::BinaryThresholdImageFilter<ImageType, ImageType> ThresholdFilterType;
+	ThresholdFilterType::Pointer threshold_filter = ThresholdFilterType::New();
+	threshold_filter->SetLowerThreshold(1);
+	threshold_filter->SetInsideValue(255);
+	threshold_filter->SetOutsideValue(0);
+	threshold_filter->SetInput(this->vesselMaskImage);
+	//threshold_filter->Update();
+
+	SignedMaurerDistanceMapImageFilterType::Pointer MaurerFilter = SignedMaurerDistanceMapImageFilterType::New();
+	MaurerFilter->SetInput(threshold_filter->GetOutput());
+	MaurerFilter->SetSquaredDistance(false);
+	MaurerFilter->SetUseImageSpacing(false);
+	MaurerFilter->SetInsideIsPositive(false);
+	MaurerFilter->Update();
+   
+	FloatImageType::Pointer distance_Map = MaurerFilter->GetOutput();
+	return distance_Map;
+}
+
 void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 {
 	ReaderType::Pointer contourReader = ReaderType::New();

@@ -15,6 +15,8 @@
 
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkSignedMaurerDistanceMapImageFilter.h"
 
 #include "vtkContourFilter.h"
 #include "vtkMarchingCubes.h"
@@ -37,10 +39,13 @@
 #include "CellTrace.h"
 #include "CellTraceModel.h"
 
+
 typedef itk::Image< unsigned char, 3 >   ImageType;
+typedef itk::Image< float, 3> FloatImageType;
 
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
+typedef itk::SignedMaurerDistanceMapImageFilter<ImageType, FloatImageType> SignedMaurerDistanceMapImageFilterType;
 
 class VolumeOfInterest
 {
@@ -51,12 +56,16 @@ public:
 	vtkSmartPointer<vtkQuadricLODActor> GetActor();
 	void CalculateCellDistanceToVOI(CellTraceModel *CellModel);
 	float* CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable> tbl);
+	FloatImageType::Pointer GetVesselMaskDistanceMap();
+	void ReadVesselDistanceMap(std::string fileName);
 	void ReadBinaryVOI(std::string filename);
 	void ReadVTPVOI(std::string filename);
 	void ReadOBJVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
+	
 private:
 	std::vector< double * > ROIPoints;
 	std::vector< vtkSmartPointer<vtkPolyData > > VOIPolyData;
+	ImageType::Pointer vesselMaskImage;
 };
 #endif
