@@ -9,24 +9,24 @@ int main(int argc, char* argv[])
 	
 	if (argc == 1)	//Only for development purposes
 	{		
-		MRT.SetJointTransformsFile("C:/MicrogliaRegionTracer/GFP/8bit/8bit_joint_transforms.xml");
-		MRT.SetImageSeriesPath("C:/MicrogliaRegionTracer/GFP/8bit");
-		MRT.SetAnchorImage("8bit_kt01348_w311GFPdsu.TIF");
-		//MRT.SetSomaImage("C:/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
+		MRT.SetJointTransformsFile("/Users/hocheung20/MicrogliaRegionTracer/joint_transforms.xml");
+		MRT.SetImageSeriesPath("/Users/hocheung20/MicrogliaRegionTracer/GFP/");
+		MRT.SetAnchorImage("8bitkt06041_w311GFPdsu.TIF");
+		//MRT.SetSomaImage("/Users/hocheung20/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
 		MRT.SetAspectRatio(3.0);
 		
 		try
 		{
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/16seedpoints.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
-			//MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
-            MRT.LoadSeedPoints("C:/MicrogliaRegionTracer/DAPI/single_soma_centroid.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/bottomleftseedpoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/16seedpoints.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/DAPI/SomaCentroids.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/763_690_19_seedPoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/850_444_36_seedpoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/726_78_238_seedpoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/140_1559_164_seedpoint.txt");
+			//MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/DAPI/20seedpoint.txt");
+            MRT.LoadSeedPoints("/Users/hocheung20/MicrogliaRegionTracer/GFP/singleseedpoint.txt");
 		}
 		catch (std::exception & e)
 		{
