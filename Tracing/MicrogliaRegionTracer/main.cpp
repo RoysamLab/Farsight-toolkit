@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 	
 	if (argc == 1)	//Only for development purposes
 	{		
-		MRT.SetJointTransformsFile("/Users/hocheung20/MicrogliaRegionTracer/joint_transforms.xml");
+		MRT.SetJointTransformsFile("/Users/hocheung20/MicrogliaRegionTracer/GFP/joint_transforms.xml");
 		MRT.SetImageSeriesPath("/Users/hocheung20/MicrogliaRegionTracer/GFP/");
 		MRT.SetAnchorImage("8bitkt06041_w311GFPdsu.TIF");
 		//MRT.SetSomaImage("/Users/hocheung20/MicrogliaRegionTracer/DAPI/montage_8bitkt06045_w410DAPIdsu_soma.mhd");
