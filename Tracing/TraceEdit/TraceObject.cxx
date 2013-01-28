@@ -1728,7 +1728,7 @@ void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkP
 		//printf("I should not have a parent at all! why did I come here?\n");
 			if(tline->GetParent(i)->GetTraceBitsPointer()->size()>0)
 			{
-				cell_id = line_cells->InsertNextCell(2);
+				cell_id  = line_cells->InsertNextCell(2);
 				cell_id_array->push_back(cell_id);
 				hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
 				line_cells->InsertCellPoint((--(tline->GetParent(i)->GetTraceBitIteratorEnd()))->marker);
