@@ -1422,6 +1422,12 @@ bool NucleusEditor::saveImage()
 	QString fullname = QString::fromStdString( projectFiles.GetFullInput() );
 	QString ext = QFileInfo(fullname).suffix();
 
+	if(ext == "lsm")
+	{
+		std::cerr<<"Lsm files cannot be written. Skipping save image\n";
+		return false;
+	}
+
 	bool ok;
 	if(myImg->GetImageInfo()->numTSlices == 1)
 	{
