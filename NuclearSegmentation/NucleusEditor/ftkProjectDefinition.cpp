@@ -758,6 +758,10 @@ int ProjectDefinition::FindInputChannel(std::string name)
 {
 	int retval = -1;
 
+	std::cout<<"The input channels are\n";
+	for(int i=0; i<(int)inputs.size(); ++i)
+		std::cout<<inputs.at(i).type<<std::endl;
+
 	//First look for the Nuclear Segmentation
 	for(int i=0; i<(int)inputs.size(); ++i)
 	{
