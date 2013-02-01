@@ -686,7 +686,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 
 	rewind(fp);			//done till here
 	unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
-	std::vector<TraceBit> data(1+totallines);	//the no. of tracebits to be made is the no. of unique ids, need a paas to find it, since totallines includes repeated ids.	
+	//std::vector<TraceBit> data(1+totallines);	//the no. of tracebits to be made is the no. of unique ids, need a paas to find it, since totallines includes repeated ids.	
+	std::vector<TraceBit> data(1+max_id);
 	int tcc =0;
 	while(!feof(fp))	
 	{
