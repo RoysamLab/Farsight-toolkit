@@ -161,7 +161,6 @@ View3D::View3D(QWidget *parent)
 				this->TestInputFile = nextFile;
 #endif
 			}
-
 			else if(nextFile.contains("project_",Qt::CaseInsensitive))
 			{
 				this->projectLoadedState = this->readProject(nextFile);
@@ -199,6 +198,7 @@ View3D::View3D(QWidget *parent)
 			this->TraceEditSettings.setValue("imageDir", nextFile);
 			this->TraceEditSettings.setValue("projectDir", nextFile);
 			this->TraceEditSettings.setValue("vesselDir", nextFile);
+			this->TraceEditSettings.setValue("labelDir", nextFile);
 		}
 		else if (nextFile.endsWith("reload"))
 		{
@@ -344,7 +344,7 @@ void View3D::CreateBootLoader()
 	LoadLayout->addRow(tr("Trace Files"), this->BootTrace);
 	LoadLayout->addRow(tr("Image File"), this->BootImage);
 	LoadLayout->addRow(tr("Somas File"), this->BootSoma);
-	LoadLayout->addRow(tr("Project"), this->BootProject); 
+	LoadLayout->addRow(tr("Project"), this->BootProject);
 	frame = new QFrame(this);
 	frame->setFrameShape( QFrame::HLine );
 	frame->setFrameShadow( QFrame::Sunken );
@@ -353,8 +353,7 @@ void View3D::CreateBootLoader()
 	//---
 	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
-
-	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload); 
+	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload);
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	this->BootDock = new QDockWidget(tr("Start Trace Editor"), this);
 	this->BootDock->setAllowedAreas(Qt::LeftDockWidgetArea |
@@ -622,7 +621,6 @@ QString View3D::getTraceFile()
 				{
 					this->tobj->AutoSolveBranchOrder = false;
 				}
-
 				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 				if (this->tobj->AutoSolveBranchOrder)
 				{
@@ -751,26 +749,6 @@ void View3D::LoadSomaFile()
 		this->EditLogDisplay->append("Soma file: \t" + this->SomaFile.last());
 		this->statusBar()->showMessage("Contour Somas Rendered");
 		soma_sub_menu->setEnabled(true);
-	}
-}
-
-void View3D::LoadVesselMaskFile()
-{
-	QString vesselDir = this->TraceEditSettings.value("vesselDir", ".").toString();
-	QString vesselMaskFile = QFileDialog::getOpenFileName(this , "Load Vessel Mask", vesselDir,
-		tr("Vessel Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
-	if (!vesselMaskFile.isEmpty())
-	{
-		//std::string vesselMaskFile = "C:\\Lab\\Data\\Prathamesh\\Microglia_Control\\kt10013_w227_TRITC_Prior_DSU_pre_crop_SegmentationMaskImage_label.tif";
-		this->TraceEditSettings.setValue("vesselDir", vesselDir);
-		std::cout << "Reading vessel mask..." << std::endl;
-		this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
-		std::cout << "Reading done" << std::endl;
-		std::cout << "Calculating distance map..." << std::endl;
-		CalculateDistanceToVessel();
-		std::cout << "Finished" << std::endl;
-		//QString vesselMaskFile = this->getVesselMaskFile();
-		this->statusBar()->showMessage("Vessel Mask Rendered");
 	}
 }
 
@@ -1222,7 +1200,6 @@ void View3D::setupLinkedSpace()
 	this->tobj->Gaps.clear();
 	this->MergeGaps = new MergeModel(this->tobj->Gaps);
 	this->MergeGaps->setParent(this);
-
 	if (this->tobj->FeatureHeaders.size() >=1)
 	{
 		this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
@@ -1232,17 +1209,14 @@ void View3D::setupLinkedSpace()
 		this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
 	}
 	this->TreeModel->setParent(this);
-
 	this->connect(this->MergeGaps->GetObjectSelection(), SIGNAL(changed()), 
 		this,SLOT(updateSelectionHighlights()));
-
 	this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
 		this, SLOT(updateTraceSelectionHighlights()));
 	this->CellModel = new CellTraceModel();
 	this->CellModel->setParent(this);
 	this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
 		this, SLOT(updateSelectionFromCell()));
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	this->connect(this->CellModel->GetObjectSelectionColumn(), SIGNAL(changed()), 
 		this, SLOT(selectedFeaturesClustering()));
@@ -1306,11 +1280,6 @@ void View3D::CreateGUIObjects()
 	this->loadSoma->setObjectName(tr("loadSoma"));
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
-
-	this->loadVesselMask = new QAction("Load Vessel Mask", this->CentralWidget);
-	this->loadVesselMask->setObjectName(tr("loadVesselMask"));
-	connect(this->loadVesselMask, SIGNAL(triggered()), this, SLOT(LoadVesselMaskFile()));
-	this->loadVesselMask->setStatusTip("Load vessel mask");
 
 	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
 	this->ScreenshotAction->setObjectName(tr("ScreenshotAction"));
@@ -1602,6 +1571,11 @@ void View3D::CreateGUIObjects()
 	this->ConvexHullAction = new QAction("Convex Hull", this->CentralWidget);
 	this->ConvexHullAction->setObjectName(tr("convexHullAction"));
 	connect(this->ConvexHullAction, SIGNAL(triggered()), this, SLOT(CalculateDelaunay3D()));
+
+	this->VesselMaskAction = new QAction("Nearest Vessel", this->CentralWidget);
+	this->VesselMaskAction->setObjectName(tr("VesselMask"));
+	connect(this->VesselMaskAction, SIGNAL(triggered()), this, SLOT(CalculateDistanceToVessel()));
+	this->VesselMaskAction->setStatusTip("Running cell-vessel distance");
 
 	this->ellipsoid = new QCheckBox("Ellipsoid",this->SettingsWidget);
 	this->ellipsoid->setObjectName("ellipsoid");
@@ -1925,13 +1899,13 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceAction);
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
-	this->fileMenu->addAction(this->loadVesselMask);
+	//this->fileMenu->addAction(this->loadVesselMask);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
 	this->fileMenu->addAction(this->LoadDebrisTable);
 	this->fileMenu->addSeparator();
 	this->fileMenu->addAction(this->saveAction);
-	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction); 
+	this->fileMenu->addAction(this->SaveComputedCellFeaturesTableAction);
 	this->fileMenu->addAction(this->saveSelectedAction);
 	this->fileMenu->addAction(this->saveProjectAction);
 	this->fileMenu->addSeparator();
@@ -2254,6 +2228,7 @@ void View3D::CreateLayout()
 	QMenu *calculations_sub_menu = this->analysisViews->addMenu(tr("Calculate"));
 	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
 	calculations_sub_menu->addAction(this->ConvexHullAction);
+	calculations_sub_menu->addAction(this->VesselMaskAction);
 
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
@@ -3915,7 +3890,6 @@ void View3D::pointer3DLocation(double pos[])
 	this->posZ->blockSignals(0);
 }
 
-
 void View3D::setPTtoSoma()
 {
 	if(this->stems.size() <2)
@@ -3936,7 +3910,6 @@ void View3D::setPTtoSoma()
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}
-
 }
 
 void View3D::setUsePointer(int i)
@@ -3977,7 +3950,7 @@ void View3D::createNewTraceBit()
 		}//end extend trace
 		else if(this->stems.size() > 1)
 		{
-			this->setPTtoSoma(); 
+			this->setPTtoSoma();
 			this->stems.clear();
 		}//end create soma
 		this->Rerender();
@@ -4109,23 +4082,38 @@ void  View3D::ToggleVOI()
 
 void View3D::CalculateDistanceToVessel()
 {
-	if (!this->FL_MeasureTable)
+	QString vesselDir = this->TraceEditSettings.value("vesselDir", ".").toString();
+	QString vesselMaskFile = QFileDialog::getOpenFileName(this , "Load Vessel Mask", vesselDir,
+		tr("Vessel Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!vesselMaskFile.isEmpty())
 	{
-		this->ShowCellAnalysis();
-	}
+		//std::string vesselMaskFile = "C:\\Lab\\Data\\Prathamesh\\Microglia_Control\\kt10013_w227_TRITC_Prior_DSU_pre_crop_SegmentationMaskImage_label.tif";
+		this->TraceEditSettings.setValue("vesselDir", vesselDir);
+		std::cout << "Reading vessel mask..." << std::endl;
+		this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
+		std::cout << "Reading done" << std::endl;
+		std::cout << "Calculating distance map..." << std::endl;
 
-	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
-	CellTrace* currCell = (*cellCount).second;
-	std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
-	cellCount++;
-	for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
-	{
+		if (!this->FL_MeasureTable)
+		{
+			this->ShowCellAnalysis();
+		}
+
+		std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
 		CellTrace* currCell = (*cellCount).second;
-		currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
-	}
-	this->CellModel->AddNewFeatureHeader(DistanceToVesselHeader);
+		std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+		cellCount++;
+		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
+		{
+			CellTrace* currCell = (*cellCount).second;
+			currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+		}
+		this->CellModel->AddNewFeatureHeader(DistanceToVesselHeader);
 
-	this->ShowCellAnalysis();
+		this->ShowCellAnalysis();
+		std::cout << "Finished" << std::endl;
+		this->statusBar()->showMessage("Vessel Mask Done");
+	}
 }
 
 /////////////////////////////////
@@ -4505,7 +4493,6 @@ void View3D::Rerender()
 		this->TreePlot->update();
 	}
 	this->SplitLabel->setText(QString::number(this->numSplit));
-
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
@@ -4529,7 +4516,7 @@ void View3D::Rerender()
 		this->FL_histo->update();
 		}*/
 	}//end if has cell calculations
-	this->statusBar()->showMessage(tr("Finished Rerendering Image")); 
+	this->statusBar()->showMessage(tr("Finished Rerendering Image"));
 }
 
 void View3D::UpdateLineActor()
@@ -4792,7 +4779,6 @@ void View3D::FakeBridges(double d)
 	this->TreeModel->SelectByIDs(this->tobj->FalseBridges);
 }
 
-
 void View3D::HalfBridges(double d)
 {
 	int numLines;
@@ -4974,7 +4960,7 @@ void View3D::ClearSelection()
 	//printf("About to rerender\n");
 	this->Rerender();
 	//printf("Finished rerendering\n");
-	this->statusBar()->showMessage("All Clear", 4000); 
+	this->statusBar()->showMessage("All Clear", 4000);
 
 	//cout << this->TreePlot->pos().x() << ", " << this->TreePlot->pos().y() << endl;
 }
@@ -5173,7 +5159,7 @@ void View3D::DeleteTraces()
 	* if removing parent children become roots
 	*/
 	SelectedTraceIDs.clear();
-	statusBar()->showMessage(tr("Deleting")); 
+	statusBar()->showMessage(tr("Deleting"));
 	std::vector<TraceLine*> traceList;
 	traceList = this->CellModel->GetSelectedTraces(); 
 	if (traceList.size() == 0)
@@ -5244,15 +5230,15 @@ void View3D::DeleteTraces()
 		}
 		numDeleted += (int) traceList.size();
 		ClearSelection();
-		statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces")); 
+		statusBar()->showMessage(tr("Deleted\t") + QString::number(traceList.size()) + tr("\ttraces"));
 	}
 	else
 	{
-		statusBar()->showMessage(tr("Nothing to Delete \n")); 
+		statusBar()->showMessage(tr("Nothing to Delete \n"));
 	}
 }
 
-void View3D::DeleteTrace(TraceLine *tline) 
+void View3D::DeleteTrace(TraceLine *tline)
 {
 	std::vector<TraceLine*> *children = tline->GetBranchPointer();
 	if(children->size()!=0)
@@ -5562,7 +5548,6 @@ void View3D::MergeTraces()
 		this->QVTK->GetRenderWindow()->Render();
 	}//end else size
 }
-
 
 void View3D::ShowMergeStats()
 {
@@ -6003,7 +5988,6 @@ void View3D::updateSelectionHighlights()
 	this->QVTK->GetRenderWindow()->Render();
 	this->statusBar()->showMessage(tr("Done"));
 }
-
 void View3D::MergeSelectedTraces()
 {
 	this->statusBar()->showMessage(tr("Merging"));
@@ -6103,7 +6087,6 @@ void View3D::MergeSelectedTraces()
 	this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	this->statusBar()->showMessage(tr("Done With Merge"));
 }
-
 /*  other trace modifiers */
 void View3D::SplitTraces()
 {
@@ -6123,7 +6106,7 @@ void View3D::SplitTraces()
 		//printf("About to clear selection\n");
 		this->ClearSelection();
 		//printf("about to update status bar\n");
-		this->statusBar()->showMessage(tr("Update Tree Plots")); 
+		this->statusBar()->showMessage(tr("Update Tree Plots"));
 		//printf("about to set tree model\n");
 		//this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}
@@ -6409,7 +6392,6 @@ void View3D::SaveScreenShot()
 	delete savescreenshotDialog;
 	savescreenshotDialog = NULL;
 }
-
 void View3D::AutoCellExport()
 {
 	bool reNameCell= false;
@@ -6555,7 +6537,6 @@ void View3D::closeEvent(QCloseEvent *event)
 
 	event->accept();
 }
-
 
 void View3D::CropBorderCells()
 {
@@ -6734,7 +6715,6 @@ void View3D::CropBorderCells()
 	DeleteTraces();
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
-
 }                                                                                                                                                                                                                                      
 
 
@@ -7460,6 +7440,24 @@ void View3D::selectedFeaturesClustering()
 #endif
 }
 
+void View3D::ComputeVoronoi()
+{
+	QString labelDir = this->TraceEditSettings.value("labelDir", ".").toString();
+	QString labelFile = QFileDialog::getOpenFileName(this , "Load Label Image", labelDir,
+		tr("Label Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!labelFile.isEmpty())
+	{
+		this->TraceEditSettings.setValue("labelDir", labelDir);
+		std::cout << "Reading label image..." << std::endl;
+		//this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
+		std::cout << "Reading done" << std::endl;
+		//std::cout << "Calculating distance map..." << std::endl;
+		////CalculateDistanceToVessel();
+		//std::cout << "Finished" << std::endl;
+		////QString vesselMaskFile = this->getVesselMaskFile();
+		//this->statusBar()->showMessage("Vessel Mask Rendered");
+	}
+}
 int View3D::runTests()
 {
 #ifdef USE_QT_TESTING

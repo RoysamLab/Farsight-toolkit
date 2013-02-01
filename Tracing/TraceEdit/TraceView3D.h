@@ -211,10 +211,10 @@ public slots:
 	void AddLines();
 	void AddEndLines();
 
-	void FlipTraces(); 
+	void FlipTraces();
 	void SaveToFile();
 	void SaveProjectFile();
-	void SaveSelected(); 
+	void SaveSelected();
 	void CalculateDelaunay3D();
 	void ShowDelaunay3D();
 	void ShowEllipsoid();
@@ -228,6 +228,7 @@ public slots:
 	void ApplyNewSettings();
 	void AutomaticEdits();
 	void ShowAutomatedEdits();
+	void ComputeVoronoi();
 
 	void IntensityFeature();
 	void IntensityWeightedFeature();
@@ -243,21 +244,20 @@ public slots:
 	void SLine(double d);
 	void FakeSpines(double d);
 	void FakeBridges(double d);
-	void HalfBridges(double d);  
+	void HalfBridges(double d);
 
 	void openTracingDialog();
 
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
-	void LoadVesselMaskFile();
 	void LoadProject();
 	void SetTraceType(int newType);
-	void ReloadState(); 
+	void ReloadState();
 	void SetImgInt();
 	void SetImgWeightInt();
 	void SaveScreenShot();
-	void AutoCellExport(); 
+	void AutoCellExport();
 
 	void StartActiveLearning();
 
@@ -283,7 +283,7 @@ public slots:
 	void SomaColorValueChanged(double value);
 	void showPTin3D(double value);
 	void getPosPTin3D();
-	void setPTtoSoma();   
+	void setPTtoSoma();
 	void ArunCenterline();
 	void setUsePointer(int i);
 	void createNewTraceBit();
@@ -293,11 +293,11 @@ public slots:
 	void ReadVOI();
 	void WriteVOI();
 	void ToggleVOI();
-	void CalculateDistanceToDevice();  
+	void CalculateDistanceToDevice();
 	void CalculateDistanceToVessel();
 
 	void CalculateCellToCellDistanceGraph();
-	void readNucleiTable();   
+	void readNucleiTable();
 	void AssociateNeuronToNuclei();
 	void ShowSeedPoints();
 
@@ -324,7 +324,6 @@ public slots:
 	QString getTraceFile();
 	QString getImageFile();
 	QString getSomaFile();
-	//QString getVesselMaskFile();
 	void OkToBoot();
 	void EditHelp();
 	void About();
@@ -341,7 +340,7 @@ protected slots:
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
 	void updateNodeSelection();
-	void CropBorderCells(); 
+	void CropBorderCells();
 	void SaveComputedCellFeaturesTable();
 
 	void setSlicerMode();
@@ -378,7 +377,6 @@ private:
 	QPushButton * BootTrace;
 	QPushButton * BootSoma;
 	QPushButton * BootImage;
-	QPushButton * BootVesselMask;
 	QPushButton * BootProject;
 	QPushButton * okBoot;
 	QPushButton * Reload;
@@ -414,7 +412,7 @@ private:
 	QMenu *help;
 	QDialog *tracingGui;
 	QAction *aboutAction;
-	QToolBar *EditsToolBar, *RaycastBar, *SomaBar, *SlicerBar, *BranchToolBar; 
+	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SomaBar, *SlicerBar;
 
   #ifdef USE_QT_TESTING
   //testing GUI elements
@@ -444,8 +442,9 @@ private:
 
 	QPushButton *ArunVesselTracingButton;
 	QAction *ColorByTreesAction;
+	QAction *ConvexHullAction;
+	QAction *VesselMaskAction;
 	QAction *loadSoma;
-	QAction *loadVesselMask;
 	QAction *ListButton;
 	QAction *ClearButton;
 	QAction *SelectTreeAction;
@@ -488,7 +487,6 @@ private:
 	QAction *LoadSeedPointsAsGlyphs;
 
 	QAction *LoadDebrisTable;
-	QAction *ConvexHullAction;
 
 	QAction *FocusAction;
 	QAction *AutoCellExportAction;
