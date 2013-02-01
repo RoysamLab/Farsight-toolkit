@@ -153,17 +153,11 @@ public:
 	void UpdateLineActor();
 	void UpdateBranchActor();
 	void CreateSphereActor();
-
-	struct pickPosition
-	{
-		double picked[3];
-	};
 	
 	void AddPointsAsPoints (std::vector<TraceBit> vec);
 	void AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable);// shown as big yellow cubes
 	
 	static void PickCell(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
-	static void PickPoint(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata); 
 	static void HandleKeyPress(vtkObject* caller, unsigned long event, void* clientdata, void* callerdata);
 	void pointer3DLocation(double pos[]);
 	void saveRenderWindow(const char *filename);
@@ -189,7 +183,6 @@ public:
 	vtkSmartPointer<vtkActor> BranchActor;
 	void ShowProjectTable();
 	void AssociateDebrisToNuclei( vtkSmartPointer<vtkTable> debrisTable);
-	void ConfigureLayoutByGenericTraceType(int traceTypeGeneric);
 
 public slots:
 	void choosetoRender(int row, int col);
@@ -198,23 +191,17 @@ public slots:
 	void ClearSelection();
 	void FastClearSelection();
 	void SelectTrees();
-	void DeleteTree();
 	void DeleteTraces();
-	
 	void SetRoots();
 	void AddNewBranches();
 	void ExplodeTree();
 	void BreakBranch();
 	void MergeTraces();
-	
 	void SplitTraces();
-	void AddLines();
-	void AddEndLines();
-
-	void FlipTraces(); 
+	void FlipTraces();
 	void SaveToFile();
 	void SaveProjectFile();
-	void SaveSelected(); 
+	void SaveSelected();
 	void CalculateDelaunay3D();
 	void ShowDelaunay3D();
 	void ShowEllipsoid();
@@ -243,7 +230,7 @@ public slots:
 	void SLine(double d);
 	void FakeSpines(double d);
 	void FakeBridges(double d);
-	void HalfBridges(double d);  
+	void HalfBridges(double d);
 
 	void openTracingDialog();
 
@@ -253,11 +240,11 @@ public slots:
 	void LoadVesselMaskFile();
 	void LoadProject();
 	void SetTraceType(int newType);
-	void ReloadState(); 
+	void ReloadState();
 	void SetImgInt();
 	void SetImgWeightInt();
 	void SaveScreenShot();
-	void AutoCellExport(); 
+	void AutoCellExport();
 
 	void StartActiveLearning();
 
@@ -283,7 +270,7 @@ public slots:
 	void SomaColorValueChanged(double value);
 	void showPTin3D(double value);
 	void getPosPTin3D();
-	void setPTtoSoma();   
+	void setPTtoSoma();
 	void ArunCenterline();
 	void setUsePointer(int i);
 	void createNewTraceBit();
@@ -293,11 +280,11 @@ public slots:
 	void ReadVOI();
 	void WriteVOI();
 	void ToggleVOI();
-	void CalculateDistanceToDevice();  
+	void CalculateDistanceToDevice();
 	void CalculateDistanceToVessel();
 
 	void CalculateCellToCellDistanceGraph();
-	void readNucleiTable();   
+	void readNucleiTable();
 	void AssociateNeuronToNuclei();
 	void ShowSeedPoints();
 
@@ -341,7 +328,7 @@ protected slots:
 	void updateSelectionHighlights();
 	void updateTraceSelectionHighlights();
 	void updateNodeSelection();
-	void CropBorderCells(); 
+	void CropBorderCells();
 	void SaveComputedCellFeaturesTable();
 
 	void setSlicerMode();
@@ -384,7 +371,6 @@ private:
 	QPushButton * Reload;
 	QDoubleSpinBox *scale;
 	QComboBox * GetAUserName, *GetLab, *GetProject;
-	QComboBox *GetTraceType;
 	QGroupBox * ImageListBox;
 	QListView * ImageListView; 
 	QCheckBox * Use2DSlicer;
@@ -414,7 +400,7 @@ private:
 	QMenu *help;
 	QDialog *tracingGui;
 	QAction *aboutAction;
-	QToolBar *EditsToolBar, *RaycastBar, *SomaBar, *SlicerBar, *BranchToolBar; 
+	QToolBar *EditsToolBar, *BranchToolBar, *RaycastBar, *SomaBar, *SlicerBar;
 
   #ifdef USE_QT_TESTING
   //testing GUI elements
@@ -449,7 +435,6 @@ private:
 	QAction *ListButton;
 	QAction *ClearButton;
 	QAction *SelectTreeAction;
-	QAction *DeleteTreeAction;
 	QAction *DeleteButton;
 	QAction *MergeButton;
 	QAction *BranchButton;
@@ -458,16 +443,13 @@ private:
 	QAction *WriteButton;
 	QAction *ScreenshotAction;
 	QAction *SettingsButton;
-	//QPushButton *AutomateButton;
-	QAction *AutomateButton;
+	QPushButton *AutomateButton;
 	QAction *BreakButton;
 	QAction *explodeTree;
 	QAction *root;
 	QAction *ImageIntensity;
 	QAction *ImageWeightedIntensity;
 	QAction *GridAction;
-	QAction *AddButton;
-	QAction *AddEndButton;
 
 	QPushButton *MoveSphere;
 	QPushButton *updatePT3D;
@@ -580,7 +562,6 @@ private:
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
-	vtkSmartPointer<vtkRenderWindowInteractor> Interactor2;
 	vtkSmartPointer<vtkActor> LineActor;
 	vtkSmartPointer<vtkActor> PointsActor;
 	vtkSmartPointer<vtkActor> CentroidsActor;
@@ -594,7 +575,6 @@ private:
     //interactor variables and point picking
 	QWidget * CursorActionsWidget;
 	vtkSmartPointer<vtkCallbackCommand> isPicked;
-	vtkSmartPointer<vtkCallbackCommand> PointPicked;
 	vtkSmartPointer<vtkCallbackCommand> keyPress;
 	vtkSmartPointer<vtkCellPicker> CellPicker;
 
@@ -621,8 +601,6 @@ private:
 
 	//ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;
-	std::vector<pickPosition>SelectedTraceBits; 
-
 	std::map<int, int> indMapFromIndToVertex;
 
 	// for nucleus

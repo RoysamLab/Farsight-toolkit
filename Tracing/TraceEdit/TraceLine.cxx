@@ -26,7 +26,7 @@ limitations under the License.
 ///////////////////////////////////////////////////////////////////////////////
 TraceLine::TraceLine()
 {
-	this->m_parent.clear();
+	this->m_parent = NULL;
 	this->root= -1;
 	this->level = 0;
 	this->m_id = -(1<<30);
@@ -96,26 +96,15 @@ TraceLine::~TraceLine()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::vector<TraceLine*> TraceLine::GetParents()
+TraceLine* TraceLine::GetParent()
 {
-	return this->m_parent;
+  return this->m_parent;
 }
-
-TraceLine* TraceLine::GetParent(int i)
+unsigned int TraceLine::GetParentID()
 {
-	return this->m_parent.at(i);
-}
-
-int TraceLine::ParentSize()
-{
-	return this->m_parent.size();
-}
-
-unsigned int TraceLine::GetParentID(int i)
-{
-	if (!this->isParentLess())
+	if (this->m_parent)
 	{
-		return this->m_parent.at(i)->GetId();
+		return this->m_parent->GetId();
 	}
 	else 
 	{
@@ -123,62 +112,11 @@ unsigned int TraceLine::GetParentID(int i)
 	}
 }
 
-bool TraceLine::isParentLess()
-{
-	return (this->m_parent.empty()||this->m_parent.at(0)==NULL);
-}
-
-bool TraceLine::isMarked()
-{
-	return this->marked;
-}
-
-void TraceLine::MarkLine()
-{
-	this->marked = true;
-}
-
-void TraceLine::UnmarkLine()
-{
-	this->marked = false;
-}
-
-void TraceLine::RemoveParents()
-{
-	this->m_parent.clear();
-	this->SetParent(NULL);
-}
-
-void TraceLine::RemoveParent(int i)
-{
-	this->m_parent.erase(m_parent.begin()+i);
-}
-
-int TraceLine::GetParentNumber(TraceLine* p)
-{
-	int number = 0;
-	for(int i = 0; i < this->ParentSize(); i++)
-	{
-		if(m_parent.at(i) == p)
-		{
-			number = i;
-			break;
-		}
-	}
-	return number;
-}
-
+///////////////////////////////////////////////////////////////////////////////
 void TraceLine::SetParent(TraceLine* p)
 {
-	if(this->ParentSize()>0 && this->GetParent(this->ParentSize()-1)==NULL)
-	{
-		this->RemoveParent(this->ParentSize()-1);
-		this->m_parent.push_back(p);
-	}
-	else
-		this->m_parent.push_back(p);
+  this->m_parent = p;
 }
-///////////////////////////////////////////////////////////////////////////////
 int TraceLine::GetRootID()
 {
 	return this->root;
@@ -204,7 +142,7 @@ bool TraceLine::isLeaf()
 }
 bool TraceLine::isRoot()
 {
-	if (this->isParentLess())
+	if (!this->m_parent)
 	{
 		return true;
 	}
@@ -248,10 +186,6 @@ void TraceLine::setRoot(int RootID, int traceLevel, double parentPath)
 	this->root = RootID;
 	this->level = traceLevel;
 	this->PathLength = parentPath + this->GetLength();
-}
-void TraceLine::setRoot(int RootID)
-{
-	this->root = RootID;
 }
 void TraceLine::calculateVol()
 {
@@ -728,10 +662,10 @@ double TraceLine::GetBitDensity()
 }
 double TraceLine::GetDistToParent()
 {
-	if (!this->isParentLess())
+	if (this->m_parent)
 	{
 		this->DistToParent = this->Euclidean(this->m_trace_bits.front(), //
-			this->m_parent.at(0)->m_trace_bits.back());
+			this->m_parent->m_trace_bits.back());
 		if (this->m_trace_bits.size()>1)
 		{
 			double Leading = 0;//, dist =0;
@@ -1004,7 +938,7 @@ TraceLine::TraceLine(const TraceLine &t)
   this->m_id = t.m_id;
   this->m_markers = t.m_markers;
   this->m_type = t.m_type;
-  this->m_parent.clear();
+  this->m_parent = NULL;
   modified = true;
   for(unsigned int counter=0; counter< t.m_branches.size(); counter++)
   {
@@ -1229,7 +1163,7 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
 		//std::cout <<"FF\n";
 	if (this->m_branches.size() > 0 && Trace2->m_branches.size()> 0)
 		{return false;}
-	if(this->GetParentID(0)!=-1 || Trace2->GetParentID(0)!=-1)
+	if(this->GetParentID()!=-1 || Trace2->GetParentID()!=-1)
 	{return false;}
     dist = distances[0];
     dir1= m_trace_bits.front().marker;
@@ -1242,7 +1176,7 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
   else if (mark ==1)
     {//1 F-B
 		//std::cout <<"FB\n";
-	if ((this->GetParentID(0) != -1)||!Trace2->isLeaf())
+	if ((this->GetParentID() != -1)||!Trace2->isLeaf())
 		{return false;}
     dist = distances[1];
     dir1= m_trace_bits.front().marker;
@@ -1254,7 +1188,7 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
   else if (mark ==2)
     {//2 B-F
 		//std::cout <<"BF\n";
-		if (!this->isLeaf() || (Trace2->GetParentID(0)!=-1))
+		if (!this->isLeaf() || (Trace2->GetParentID()!=-1))
 		{return false;}
     dist = distances[2];
     dir1= m_trace_bits.back().marker;
@@ -1373,12 +1307,7 @@ std::string TraceLine::stats()
 	thisStats << "\t";
 	thisStats << this->GetFragmentationSmoothness() ;
 	thisStats << "\t";
-	for(int i = 0; i<this->ParentSize();i++)
-	{
-		thisStats << "\t";	
-		thisStats << this->GetParentID(i);
-		
-	}
+	thisStats << this->GetParentID();
 	return thisStats.str();
 }
 std::string TraceLine::RootCoord()
@@ -1423,7 +1352,7 @@ double TraceLine::PlaneAngle(double *plane1, double *plane2)
 double TraceLine::GetCompartmentCurvature()
 {
 	double angle = 0;
-	if (!this->m_parent.empty())
+	if (this->m_parent)
 	{
 		if (this->m_trace_bits.size()>2)
 		{
@@ -1445,7 +1374,7 @@ double TraceLine::GetCompartmentCurvature()
 double TraceLine::GetAzimuth()
 {
 	double newAzimuthAngle = 0;
-	if (!this->m_parent.empty())
+	if (this->m_parent)
 	{
 		if (this->m_trace_bits.size()>1)
 		{
@@ -1470,7 +1399,7 @@ double TraceLine::GetAzimuth()
 double TraceLine::GetElevation()
 {
 	double newElevationAngle = 0;
-	if (!this->m_parent.empty())
+	if (this->m_parent)
 	{
 		if (this->m_trace_bits.size()>1)
 		{

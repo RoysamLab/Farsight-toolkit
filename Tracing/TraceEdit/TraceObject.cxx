@@ -67,7 +67,6 @@ TraceObject::TraceObject()
 	this->tz = 0;
 	this->ColorByTrees = false;
 	this->ParsedName.clear();
-	this->TraceTypeGeneric = TRACE_TYPE_TREE;
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -261,17 +260,15 @@ int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tra
 	int terminalDegree = 0;
 	tline->modified = false;
 	tline->calculateVol();	//this call should go somewhere else in the pipeline
-	if (tline->GetParentID(0) == -1)
+	if (tline->GetParentID() == -1)
 	{//if no parent this thile is the root
 		tline->setRoot( tline->GetId(), 0, 0);
 	}
 	else
 	{ //not the root, so +1 from parent
-
-		TraceLine *parent = tline->GetParent(0);
-		tline->setRoot(parent->GetRootID());
-		//tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, 
-		//	parent->GetPathLength()+tline->GetDistToParent());
+		TraceLine *parent = tline->GetParent();
+		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, 
+			parent->GetPathLength()+tline->GetDistToParent());
 	}
 	allLine.push_back(tline);
 	if (tline->GetBranchPointer()->size()== 0)
@@ -359,26 +356,6 @@ void TraceObject::ImageWeightedIntensity(ImageType::Pointer intensityImage)
 	}//end of set
 }
 /*I/O Functions */
-void TraceObject::SetTraceTypeGeneric(int type){
-		
-	this->TraceTypeGeneric = type;
-};
-
-void TraceObject::SetTraceTypeGeneric(std::string type){
-	
-	if(type.compare("Trees") == 0)
-		this->TraceTypeGeneric = TRACE_TYPE_TREE;
-	else if(type.compare("Graphs") == 0)
-		this->TraceTypeGeneric = TRACE_TYPE_GRAPH;
-	else
-		std::cout << "Invalid generic trace type set! " << std::endl;
-}
-
-int TraceObject::GetTraceTypeGeneric(){
-
-	return this->TraceTypeGeneric;
-};
-
 void TraceObject::SetTraceOffset(double ntx, double nty, double ntz)
 {
 	this->tx = ntx;
@@ -599,7 +576,7 @@ bool TraceObject::ReadFromRPIXMLFile(char * filename)
 bool TraceObject::ReadFromSWCFile(char * filename)
 {
 	FILE * fp = fopen(filename, "r");
-	this->ParseFileName(filename);
+	std::string traceFileName = this->ParseFileName(filename);
 	if(fp==NULL)
 	{
 		printf("Couldn't open file %s for parsing\n",filename);
@@ -610,7 +587,6 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	//make an initial pass through the file to figure out how many points
 	//we're dealing with
 	int numPoints = 1;
-	int totallines = 0;
 	while(!feof(fp))
 	{
 		if(fgets(buff,1024,fp)==NULL)
@@ -628,21 +604,20 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 		}
 		int temp_id;
 		sscanf(buff,"%d %*d %*f %*f %*f %*f %*d",&temp_id);
-		numPoints = (numPoints>temp_id)?numPoints:temp_id;	//this gives info about the maximum id in the given system. Ok	
-		totallines++;		//this is the total number of lines in the swc file.
+		numPoints = (numPoints>temp_id)?numPoints:temp_id;
 	}
 	numPoints++; // set it to 1 + maximum id in the file
 	rewind(fp);
 
-	unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(char));// we create an array which is of the size equal to max value, but later will identify the relevant entries.
-	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1 or multiple parent
+	unsigned char *child_count = (unsigned char *)malloc(numPoints * sizeof(unsigned char));
+	std::set<int> criticals; // store all points who have parent = -1 or child_count[parent] > 1
 
-	vtksys::hash_map<unsigned int,int> hash_type; 
-	std::multimap<unsigned int,int> multimap_parent;	// using a multimap instead of hash function
-	
+	vtksys::hash_map<unsigned int,int> hash_type; // smaller hash functions only for the critical points.. saves us memory and time
+	vtksys::hash_map<unsigned int,int> hash_parent;
+
 	//memset(child_count,0,sizeof(unsigned char)*100000);
 
-	for(int counter=0; counter < numPoints; counter++)		
+	for(int counter=0; counter < numPoints; counter++)
 	{
 		child_count[counter]=0;
 	}
@@ -680,15 +655,14 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			child_count[parent]++;
 		}
 		hash_type[id] = type;
-		multimap_parent.insert(std::pair<unsigned int, int>(id,parent));
-		//multimap_parent.insert(pair<unsigned int, int>(id,parent)); //map id to parent for all points
 	}
 
-	rewind(fp);			//done till here
+	rewind(fp);
 	unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
-	std::vector<TraceBit> data(1+totallines);	//the no. of tracebits to be made is the no. of unique ids, need a paas to find it, since totallines includes repeated ids.	
+	std::vector<TraceBit> data(max_id+1);
 	int tcc =0;
-	while(!feof(fp))	
+	//Third pass: Populate all the trace bits, and mark critical points.
+	while(!feof(fp))
 	{
 		tcc++;
 		//printf("Done %d\n",tcc);
@@ -706,72 +680,61 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			continue;
 		}
 		sscanf(buff,"%d %d %lf %lf %lf %lf %d",&id,&type,&x,&y,&z,&r,&parent);
-		
-		//if the given id is occupied, then new tracebit should not be created
-		///////////////////////////// CHANGED HERE //////////////////////////////////////////
-		//if(!data[id].modified)		//check tht is not operated earlier
-		if(true)
+		TraceBit tbit;	// the fabs is for assumtion of no neg coord
+		tbit.x = x + this->tx;//(double) fabs(x);
+		tbit.y = y + this->ty;//(double) fabs(y);
+		tbit.z = z + this->tz;//(double) fabs(z);
+		tbit.id=id;
+		if (!(r>0))
 		{
-			TraceBit tbit;	// the fabs is for assumtion of no neg coord
-			tbit.x = x + this->tx;//(double) fabs(x);
-			tbit.y = y + this->ty;//(double) fabs(y);
-			tbit.z = z + this->tz;//(double) fabs(z);
-			tbit.id=id;
-			//tbit.modified = true;
-			if (!(r>0))
-			{
-				r = 1;
-			}
-			tbit.r =r;
-			data[id] = tbit;
-		
-			if(parent!=-1)			//need to be checked for overwritten
-			{
-				child_id[parent] = id;
-			}
-			if(parent == -1)
+			r = 1;
+		}
+		tbit.r =r;
+		data[id] = tbit;
+
+		if(parent!=-1)
+		{
+			child_id[parent] = id;
+		}
+		if(parent == -1)
+		{
+			criticals.insert(id);
+			hash_parent[id] = -1;
+			//printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
+		}
+		else
+		{
+			//the logic in here is screwy, shouldn't it be child_count[id] > 1?
+			if(child_count[parent]>1)
 			{
 				criticals.insert(id);
-				//multimap_parent(pair<unsigned int,int>(id,parent) = -1;
-				//printf("hash_parent[%d] = %d\n",id,hash_parent[id]);
+				hash_parent[id] = parent;
+				//printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
 			}
-			else
+			else if(hash_type[id] != hash_type[parent])
 			{
-				if(child_count[parent]>1)
-				{
-					criticals.insert(id);
-					//hash_parent[id] = parent;
-					//printf("hash_parent[%d] = %d\n", id, hash_parent[id]);
-				}
-				else if((int)multimap_parent.count(id)>1)
-				{
-					criticals.insert(id); //all points which have more than one 								     //parent are made criticals
-				}
-				else if(hash_type[id] != hash_type[parent]) //just in case, the types 										   //doesn't match
-				{
-					criticals.insert(id);
-					//hash_parent[id] = parent;
-				}
+				criticals.insert(id);
+				hash_parent[id] = parent;
 			}
 		}
-		
-		
 	}
-	//std::cout<<"criticals inserted"<<endl;
 	fclose(fp);
+
+	// Create tracelines from the tracebits.
 	//printf("about to create the data structure.. %d\n", (int)criticals.size());
 	std::set<int>::iterator iter = criticals.begin();
-	int global_id_number = this->getNewLineId(); //this gives a unique line number
+	int global_id_number = this->getNewLineId(); //setting this does not append traces?
 	int pc = (int)trace_lines.size();
 	while(iter != criticals.end())
 	{
 		TraceLine * ttemp = new TraceLine();
+		ttemp->SetFileName(&traceFileName[0]);
 		ttemp->SetId(global_id_number++);
 		ttemp->SetType(hash_type[*iter]);
 		ttemp->setTraceColor( GetTraceLUT( ttemp ));
 		ttemp->AddTraceBit(data[*iter]);
 		int id_counter = *iter;
-		while(child_count[id_counter]==1 && multimap_parent.count(child_id[id_counter])<2)
+		while(child_count[id_counter]==1)
 		{
 			if(hash_type[id_counter] == hash_type[child_id[id_counter]])
 			{
@@ -782,33 +745,24 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			{
 				break;
 			}
-		}	
+		}
 		hash_load[id_counter] = reinterpret_cast<unsigned long long int>(ttemp); 
 		// Important: We're storing TraceLine* for points in the end of segments only.
-		trace_lines.push_back(ttemp);		
+		trace_lines.push_back(ttemp);
 		iter++;
 	}
 	//printf("Trace_lines size = %d\n",(int)trace_lines.size());
-	//std::cout<<"Trace Lines entered"<<endl;
-	iter = criticals.begin();
 
+	iter = criticals.begin();
+	// Set parents for tracelines.
 	while(iter!= criticals.end())
 	{
 		//printf("trace_lines[%d] = %p\n",pc,trace_lines[pc]);
-		//if(hash_parent[*iter]>0)
-		//{
+		if(hash_parent[*iter]>0)
+		{
 			//printf("hash_parent %d *iter %d hash_load %p\n",hash_parent[*iter],*iter,reinterpret_cast<void*>(hash_load[hash_parent[*iter]]));
-		std::multimap<unsigned int, int>::iterator finding;	//check for correctness
-		std::multimap<unsigned int, int>::iterator lastElement;
-		finding = multimap_parent.find(*iter);
-		lastElement = multimap_parent.upper_bound(*iter);
-		//multimap_parent::iterator finding = multimap.find(*iter); //TODO, refer the *iter pointer
-		if(finding->second>0)
-		{
-		for(;finding != lastElement;++finding)		//this finds all the parents of a given traceline
-		{
-			TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[finding->second]);
-			trace_lines[pc]->SetParent(t);		
+			TraceLine * t = reinterpret_cast<TraceLine*>(hash_load[hash_parent[*iter]]);
+			trace_lines[pc]->SetParent(t);
 			//t->AddBranch(trace_lines[pc]);
 			t->GetBranchPointer()->push_back(trace_lines[pc]);
 			//if(t->GetBranchPointer()->size()>2)
@@ -816,23 +770,18 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 			//  printf("here is the error\n");
 			//}
 		}
-		}
 		else
 		{
-			trace_lines[pc]->SetParent(NULL);	
-			this->RootIDs.push_back(pc);
-			
+			trace_lines[pc]->SetParent(NULL);
 		}
-		
 		pc++;
 		++iter;
 	}
-	//std::cout<<"Data entry done" <<endl;
 	std::vector<TraceLine*>::iterator cleaniter = trace_lines.end();
 	cleaniter--;
 	for(;cleaniter!=trace_lines.begin(); cleaniter--)
 	{
-		if((*cleaniter)->GetParent(0)!= NULL)
+		if((*cleaniter)->GetParent()!=NULL)
 			cleaniter=trace_lines.erase(cleaniter);
 	}
 	//printf("Finished loading\n");
@@ -841,12 +790,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	free(child_count);
 	free(child_id);
 	return true;
-
-	//if any vtkLines slipped through the cracks and still aren't represented in
-	//the TraceObject, we'll add them here.
 }
-
-void TraceObject::ParseFileName(char * fullName)
+std::string TraceObject::ParseFileName(char * fullName)
 {
 	std::vector<char * > parsedFileName;
 	char * pch;
@@ -859,9 +804,9 @@ void TraceObject::ParseFileName(char * fullName)
 	}
 	std::string newName = parsedFileName[parsedFileName.size() -2];
 	this->ParsedName.push_back(newName);
+	return newName;
 	//std::cout<< this->ParsedName.back() << " at "<<this->ParsedName.size() << std::endl;
 }
-
 void TraceObject::ReadFromVTKFile(char * filename)
 {
 	VTK_CREATE(vtkPolyDataReader, polyReader);
@@ -902,244 +847,8 @@ void TraceObject::ConvertVTKDataToTraceLines()
 	}
 
 	//if any vtkLines slipped through the cracks and still aren't represented in
-	//the GTraceObject, we'll add them here.
+	//the TraceObject, we'll add them here.
 }
-
-void TraceObject::AddTraceLine(int selectedCellId1, int selectedCellId2)			//code for adding traceline between two selected lines
-{
-	TraceLine *selectedLine1 = reinterpret_cast<TraceLine*>(this->hashc[selectedCellId1]);
-	TraceLine *selectedLine2 = reinterpret_cast<TraceLine*>(this->hashc[selectedCellId2]);
-	//first it splits the two lines at the point selected
-	TraceLine *newLine1 = new TraceLine();
-	newLine1->SetType(selectedLine1->GetType());
-	int newId1 = this->getNewLineId();
-	newLine1->SetId(newId1++); // Why is the id incremented each time?
-	addTrace(newLine1);
-
-	TraceLine *newLine2 = new TraceLine();
-	newLine2->SetType(selectedLine2->GetType());
-	int newId2 = this->getNewLineId();
-	newLine2->SetId(newId2++);
-	addTrace(newLine2);
-
-	std::list<TraceBit>::iterator bitItr1 = selectedLine1->GetTraceBitIteratorBegin();
-	std::vector<unsigned int>::iterator markerItr1 = selectedLine1->GetMarkers()->begin(); 
-	
-	std::list<TraceBit>::iterator bitItr2 =	selectedLine2->GetTraceBitIteratorBegin();
-	std::vector<unsigned int>::iterator markerItr2 = selectedLine2->GetMarkers()->begin(); 
-	
-	//bitItr1->Print(std::cout);
-	//std::cout<<"marker enter"<<endl;
-
-	//for(int i = 0; i < (*selectedLine1->GetMarkers()).size(); i++)
-	//	std::cout << (*selectedLine1->GetMarkers())[i] << std::endl;
-	
-	bool id_found = false;
-	for(; markerItr1 != selectedLine1->GetMarkers()->end() && bitItr1 != selectedLine1->GetTraceBitIteratorEnd(); markerItr1++)
-	{
-		if(*markerItr1 == (unsigned int)selectedCellId1)
-		{
-			id_found = true;
-			break;
-		}
-		bitItr1++;
-	}
-	for(; markerItr2 != selectedLine2->GetMarkers()->end() && bitItr2 != selectedLine2->GetTraceBitIteratorEnd(); markerItr2++)
-	{
-		if(*markerItr2 == (unsigned int)selectedCellId2)
-		{
-			break;
-		}
-		bitItr2++;
-	}
-	if(!id_found)
-		std::cout << "ID not found. Will break now... " << selectedCellId1 << std::endl;
-	//bitItr1->Print(std::cout);
-	//std::cout<<"marking error"<<endl;
-
-	// This part is not clear: What is the difference between marker and bitItr? What is marker for?
-	//printf("stage 1\n"); 
-	//some TraceLines have an equal number of cells and markers, whereas
-	//other lines have one extra cell.  We have to treat these cases separately
-	//to achieve consistent results.
-	if((unsigned int)selectedLine1->GetSize() > selectedLine1->GetMarkers()->size())
-	{
-		bitItr1++;
-	}
-	if((unsigned int)selectedLine2->GetSize() > selectedLine2->GetMarkers()->size())
-	{
-		bitItr2++;
-	}
-	
-	newLine1->GetTraceBitsPointer()->splice(newLine1->GetTraceBitIteratorBegin(), *selectedLine1->GetTraceBitsPointer(), bitItr1, selectedLine1->GetTraceBitIteratorEnd());
-	newLine2->GetTraceBitsPointer()->splice(newLine2->GetTraceBitIteratorBegin(), *selectedLine2->GetTraceBitsPointer(), bitItr2, selectedLine2->GetTraceBitIteratorEnd());
-	
-	//bitItr1->Print(std::cout);
-	//std::cout<<"splice"<<endl;
-	
-	if(selectedLine1->GetBranchPointer()->size() != 0)
-	{
-		*(newLine1->GetBranchPointer()) = *(selectedLine1->GetBranchPointer());
-		std::vector<TraceLine*> * bp = newLine1->GetBranchPointer();
-		for(unsigned int counter=0; counter< bp->size(); counter++)
-		{
-			(*bp)[counter]->RemoveParent((*bp)[counter]->GetParentNumber(selectedLine1));
-			(*bp)[counter]->SetParent(newLine1);	
-		}
-		selectedLine1->GetBranchPointer()->clear();
-	}
-	if(selectedLine2->GetBranchPointer()->size() != 0)
-	{
-		*(newLine2->GetBranchPointer()) = *(selectedLine2->GetBranchPointer());
-		std::vector<TraceLine*> * bp = newLine2->GetBranchPointer();
-		for(unsigned int counter=0; counter< bp->size(); counter++)
-		{
-			(*bp)[counter]->RemoveParent((*bp)[counter]->GetParentNumber(selectedLine2));
-			(*bp)[counter]->SetParent(newLine2);	
-		}
-		selectedLine2->GetBranchPointer()->clear();
-	}
-	//std::cout<<"branch point"<<endl;
-	
-	//ADD: For the new trace line, the radius should be equal to mean radius of the parent (or similar logic) and 
-	// the type should be set to parent type. Right now this has problems (see swc files). Same applies to other add functions.
-
-	//now creating a new traceline
-	TraceLine* newtline = new TraceLine();
-	int global_id_number = this->getNewLineId();
-	newtline->SetId(global_id_number++);
-	//std::cout << "1111" << std::endl;
-	newtline->SetType(selectedLine1->GetType());
-	//std::cout << "1111" << std::endl;
-	//newtline->setTraceColor( GetTraceLUT(newtline));
-	
-	//bitItr1->Print(std::cout);
-	//std::cout << std::endl;
-	//bitItr2->Print(std::cout);
-	//std::cout << std::endl;
-
-	newtline->AddTraceBit(*bitItr1);
-	//std::cout<<"tracebit adding"<<endl;
-	
-	double linex = (bitItr2->GetCoordinateByRef(0)-bitItr1->GetCoordinateByRef(0))*0.1f;
-	double liney = (bitItr2->GetCoordinateByRef(1)-bitItr1->GetCoordinateByRef(1))*0.1f;
-	double linez = (bitItr2->GetCoordinateByRef(2)-bitItr1->GetCoordinateByRef(2))*0.1f;
-	for (int i = 1; i<11;i++)
-	{
-		TraceBit newbit;	
-		newbit.x = bitItr1->GetCoordinateByRef(0) + i*linex;
-		newbit.y = bitItr1->GetCoordinateByRef(1) + i*liney;
-		newbit.z = bitItr1->GetCoordinateByRef(2) + i*linez;
-		
-		//newbit.id = 10000+i;
-		//newbit.marker = newbit.id;
-		//newbit.r = 1.0;
-		//get other features as well
-		//std::cout << newbit.marker << ", "  << newbit.r << std::endl;
-		newtline->AddTraceBit(newbit);
-	}
-	this->addTrace(newtline);
-
-	newtline->RemoveParents();
-	newtline->SetParent(selectedLine1);
-	selectedLine1->AddBranch(newtline);
-	
-	newLine1->SetParent(selectedLine1);
-	selectedLine1->AddBranch(newLine1);
-	newLine2->SetParent(selectedLine2);
-	selectedLine2->AddBranch(newLine2);
-	
-	//newtline->SetParent(selectedLine2);
-	selectedLine2->AddBranch(newtline);
-
-	//std::cout << "1111" << std::endl;
-}
-void TraceObject::AddEndTraceLine(int selectedCellId1, int selectedCellId2)		//at the ends of a traceline, lines are added
-{
-	TraceLine *selectedLine1 = reinterpret_cast<TraceLine*>(this->hashc[selectedCellId1]);
-	TraceLine *selectedLine2 = reinterpret_cast<TraceLine*>(this->hashc[selectedCellId2]);
-	TraceLine* newtline = new TraceLine();
-	int global_id_number = this->getNewLineId();
-	//std::cout<<"global id "<<global_id_number<<endl;
-	newtline->SetId(global_id_number++);
-	//newtline->setTraceColor(GetTraceLUT(newtline));
- 	std::list<TraceBit>::iterator bitItr1 = selectedLine1->GetTraceBitIteratorEnd();
-	bitItr1--;
-	std::list<TraceBit>::iterator bitItr2 = selectedLine2->GetTraceBitIteratorEnd();
-	bitItr2--;
-	newtline->AddTraceBit(*bitItr1);
-	double linex = (bitItr2->GetCoordinateByRef(0)-bitItr1->GetCoordinateByRef(0))*0.1f;
- 	double liney = (bitItr2->GetCoordinateByRef(1)-bitItr1->GetCoordinateByRef(1))*0.1f;
-	double linez = (bitItr2->GetCoordinateByRef(2)-bitItr1->GetCoordinateByRef(2))*0.1f;
-	for (int i = 1; i<11;i++)
-	{
-		TraceBit newbit;	
-		newbit.x = bitItr1->GetCoordinateByRef(0) + i*linex;
-		newbit.y = bitItr1->GetCoordinateByRef(1) + i*liney;
- 		newbit.z = bitItr1->GetCoordinateByRef(2) + i*linez;
-		 //get other features as well
- 		newtline->AddTraceBit(newbit);
-	 }
-	this->addTrace(newtline);
-	newtline->RemoveParents();
-	newtline->SetParent(selectedLine1);
-	selectedLine1->AddBranch(newtline);
-	//newtline->SetParent(selectedLine2);		//change - need to analyse why one parent to be there or two parents
-	selectedLine2->AddBranch(newtline);
- 	//std::cout<<"Parent size : "<<newtline->ParentSize()<<endl;
-}
-
-void TraceObject::AddTraceLine(double p1[], double p2[])		//this adds line between two random points in the workspace
-{
-	TraceLine* newtline = new TraceLine();
-	int global_id_number = this->getNewLineId();
-	//std::cout<<"x co-ordinate "<<p1[0]<<endl;
-	//std::cout<<"x co-ordinate "<<p2[0]<<endl;
-	newtline->SetId(global_id_number++);
-	//newtline->SetType(selectedLine1->GetType());
-	//newtline->setTraceColor( GetTraceLUT(newtline));
-	//newtline->AddTraceBit(*tbit1);
-	double linex = (p2[0]-p1[0])*0.1f;
-	double liney = (p2[1]-p1[1])*0.1f;
-	double linez = (p2[2]-p1[2])*0.1f;
-	for (int i = 0; i<11;i++)
-	{
-		TraceBit newbit;	
-		newbit.x = p1[0] + i*linex;
-		newbit.y = p1[1] + i*liney;
-		newbit.z = p1[2] + i*linez;
-		//newbit.id = 1000+i;
-		//get other features as well
-		newtline->AddTraceBit(newbit);
-	}
-	this->addTrace(newtline);
-	newtline->RemoveParents();
-	this->RootIDs.push_back(newtline->GetId());
-}
-
-void TraceObject::AddExtensionToTraceLine(int selectedCellID, double point[]){
-
-	// This code is only for extending a trace line from its end point. More code needed for adding a branch line.
-
-	TraceLine *selectedLine = reinterpret_cast<TraceLine*>(this->hashc[selectedCellID]);
-	std::list<TraceBit>::iterator bitItr = selectedLine->GetTraceBitIteratorEnd();
-	bitItr--;
-	
-	double linex = (bitItr->GetCoordinateByRef(0) - point[0])*0.1f;
-	double liney = (bitItr->GetCoordinateByRef(1) - point[1])*0.1f;
-	double linez = (bitItr->GetCoordinateByRef(2) - point[2])*0.1f;
-	for(int i = 1; i < 11; i++){
-		
-		TraceBit newBit;
-		newBit.x = point[0] + i*linex;
-		newBit.y = point[1] + i*liney;
-		newBit.z = point[2] + i*linez;
-		
-		selectedLine->AddTraceBit(newBit);
-	}	
-	
-}
-
 
 void TraceObject::FindVTKTraceEnds()
 {
@@ -1265,8 +974,6 @@ int TraceObject::VTKLineContainsPoint(int cellID, double point[3])
 	return -1;
 }
 
-
-////////////// PK_CHANGES - MAY NOT WORK SEE GTRACEOBJECT.CPP
 void TraceObject::ConvertVTKLineToTrace(int cellID, int parentTraceLineID,
 										double *endPoint)
 {
@@ -1482,7 +1189,6 @@ bool TraceObject::WriteToSWCFile(const char *filename)
 	{
 		q.push(trace_lines[counter]);
 	}
-	int multiple_parent_count = 0;
 	while(!q.empty())
 	{
 		TraceLine *t = q.front();
@@ -1490,19 +1196,13 @@ bool TraceObject::WriteToSWCFile(const char *filename)
 		TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
 		TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
 		hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
-		if(t->isParentLess())
+		if(t->GetParent()==NULL)
 		{
 			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
 		}
 		else
 		{
-			for(int i = 0; i < t->ParentSize(); i++)
-				fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent(i))]);
-			
-			if(t->ParentSize() > 1){
-				multiple_parent_count++;
-				//std::cout << multiple_parent_count << std::endl;
-			}
+			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
 		}
 		iter++;
 		while(iter!=iterend)
@@ -1519,9 +1219,6 @@ bool TraceObject::WriteToSWCFile(const char *filename)
 	fclose(fp);
 	return true;
 }
-
-
-
 bool TraceObject::WriteToSWCFile(std::vector<TraceLine*> selectedLines, const char * filename)
 {
 	FILE * fp = fopen(filename,"w");
@@ -1544,13 +1241,13 @@ bool TraceObject::WriteToSWCFile(std::vector<TraceLine*> selectedLines, const ch
 		TraceLine::TraceBitsType::iterator iter = t->GetTraceBitIteratorBegin();
 		TraceLine::TraceBitsType::iterator iterend = t->GetTraceBitIteratorEnd();
 		hash_dump[reinterpret_cast<unsigned long long int>(t)]=cur_id+t->GetTraceBitsPointer()->size()-1;
-		if(t->isParentLess())
+		if(t->GetParent()==NULL)
 		{
 			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,-1);
 		}
 		else
 		{
-			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent(0))]);
+			fprintf(fp,"%d %d %0.2lf %0.2lf %0.2lf %0.2lf %d\n",cur_id++,t->GetType(),iter->x,iter->y,iter->z,iter->r,hash_dump[reinterpret_cast<unsigned long long int>(t->GetParent())]);
 		}
 		iter++;
 		while(iter!=iterend)
@@ -1576,181 +1273,132 @@ void TraceObject::WriteToVTKFile(const char *filename)
 	writer->Update();
 }
 /* end of I/O functions */
-
-void TraceObject::UnmarkLines(TraceLine* tline)		//function used to mark lines if their process is done
-{
-	TraceLine* line;
-	std::queue<TraceLine*> markingqueue;
-	markingqueue.push(tline);
-	while(!markingqueue.empty())
-	{
-		line = markingqueue.front();
-		markingqueue.pop();
-		line->UnmarkLine();
-		for(unsigned int count=0; count<line->GetBranchPointer()->size(); count++)
-		{
-			markingqueue.push((*line->GetBranchPointer())[count]);
-		}
-	}
-}
-
 void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, 
 										  vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells)
 {
-	TraceLine* presentline;
-	std::queue<TraceLine*> linequeue;
-	linequeue.push(tline);
-	while(!linequeue.empty())
-	{
-		presentline = linequeue.front();
-		linequeue.pop();
-		//gtline->Print(std::cout);
-		//scanf("%*c");
-		//printf("Entering recursive call %d\n");
-		//gtline->Print(std::cout,0);
-		if(!presentline->isMarked())
-		{
-			TraceLine::TraceBitsType tbits;
-			TraceLine::TraceBitsType::iterator iter = presentline->GetTraceBitIteratorBegin();
-			double point[3];
-			unsigned int return_id;
-			unsigned int cell_id;
-			unsigned int old_id;
-			std::vector<unsigned int>* cell_id_array=presentline->GetMarkers();
-			cell_id_array->clear();
-			//std::cout<<"gtline data recursive : "<<presentline->GetId()<<" " <<presentline->isMarked()<<endl;
-
-			point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
-			//std::cout<<"Point "<<iter->x<<","<<iter->y<<","<<iter->z<<endl;
-			return_id = line_points->InsertNextPoint(point);
-			hashp[return_id]=(unsigned long long int)presentline;
-	
-			iter->marker = return_id;
-
-			if(this->ColorByTrees)
-			{
-				point_scalars->InsertNextTuple1(presentline->getTraceColor());
-			}
-			else
-			{
-				point_scalars->InsertNextTuple1(.5-presentline->getTraceColor());
-			}
-	
-			//To add a line between parent line's last point and the first point in the current line
-			if(!presentline->isParentLess())
-			{
-				for(int i = 0; i<presentline->ParentSize();i++)
-				{
-					//printf("I should not have a parent at all! why did I come here?\n");
-					if(presentline->GetParent(i)->GetTraceBitsPointer()->size()>0 && presentline->GetParent(i)->isMarked())
-					{
-						cell_id = line_cells->InsertNextCell(2);
-						cell_id_array->push_back(cell_id);
-						hashc[cell_id] = reinterpret_cast<unsigned long long int>(presentline);
-						line_cells->InsertCellPoint((--(presentline->GetParent(i)->GetTraceBitIteratorEnd()))->marker);
-						line_cells->InsertCellPoint(return_id);						
-					}
-				}
-			
-			}
-	
-	
-			// Rest of the lines for the current gtline 
-			iter++;
-			while(iter!=presentline->GetTraceBitIteratorEnd())
-			{
-				//printf("in loop %d\n",++pc);
-				old_id = return_id;
-				point[0] = iter->x; point[1] = iter->y; point[2] = iter->z;
-				return_id = line_points->InsertNextPoint(point);
-				hashp[return_id]=(unsigned long long int)presentline;
-				iter->marker = return_id;
-				point_scalars->InsertNextTuple1(presentline->getTraceColor());
-				cell_id = line_cells->InsertNextCell(2);
-				//std::cout<<"cell id : "<<cell_id<<endl;
-				cell_id_array->push_back(cell_id);
-				hashc[cell_id]=reinterpret_cast<unsigned long long int>(presentline);
-				line_cells->InsertCellPoint(old_id);
-				line_cells->InsertCellPoint(return_id);
-		
-				++iter;
-			}
-			presentline->MarkLine();
-			// Recursive calls to the branches if they exist 
-			for(unsigned int counter=0; counter<presentline->GetBranchPointer()->size(); counter++)
-			{
-				//printf("I should be having children too! what am I doing here?\n");
-				if(!((*presentline->GetBranchPointer())[counter]->isMarked()))
-				{
-					//std::cout<<"here "<<(*presentline->GetBranchPointer())[counter]->GetId()<<endl;
-					linequeue.push((*presentline->GetBranchPointer())[counter]);
-					//CreatePolyDataRecursive((*gtline->GetParent(0)->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
-				}
-			}
-		
-		}
-		//printf("leaving recursive call\n");
-	}
-}
-
-void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkPoints> line_points, vtkSmartPointer<vtkCellArray> line_cells)
-{
+	//tline->Print(std::cout);
+	//scanf("%*c");
+	//printf("Entering recursive call %d\n");
+	//tline->Print(std::cout,0);
 	TraceLine::TraceBitsType tbits;
-	TraceLine::TraceBitsType::iterator iter = tline->GetTraceBitIteratorBegin();
+	TraceLine::TraceBitsType::iterator iter=tline->GetTraceBitIteratorBegin();
 	double point[3];
 	unsigned int return_id;
 	unsigned int cell_id;
 	unsigned int old_id;
 
-	std::vector<unsigned int>* cell_id_array = tline->GetMarkers();
+	std::vector<unsigned int>* cell_id_array=tline->GetMarkers();
 	cell_id_array->clear();
 
-	point[0] = iter->x; point[1] = iter->y; point[2] = iter->z;
+	point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
 	return_id = line_points->InsertNextPoint(point);
-	//hashp[return_id]=(unsigned long long int)gtline;
+	hashp[return_id]=(unsigned long long int)tline;
+	iter->marker = return_id;
+
+	if(this->ColorByTrees)
+	{
+		point_scalars->InsertNextTuple1(tline->getTraceColor());
+	}
+	else
+	{
+		point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
+	}
+
+	//To add a line between parent line's last point and the first point in the current line
+	if(tline->GetParent() != NULL)
+	{
+		//printf("I should not have a parent at all! why did I come here?\n");
+		if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
+		{
+			cell_id = line_cells->InsertNextCell(2);
+			cell_id_array->push_back(cell_id);
+			hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
+			line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
+			line_cells->InsertCellPoint(return_id);
+		}
+	}
+	// Rest of the lines for the current tline 
+	iter++;
+	while(iter!=tline->GetTraceBitIteratorEnd())
+	{
+		//printf("in loop %d\n",++pc);
+		old_id = return_id;
+		point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
+		return_id = line_points->InsertNextPoint(point);
+		hashp[return_id]=(unsigned long long int)tline;
+		iter->marker = return_id;
+
+		point_scalars->InsertNextTuple1(tline->getTraceColor());
+		cell_id = line_cells->InsertNextCell(2);
+		cell_id_array->push_back(cell_id);
+		hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
+		line_cells->InsertCellPoint(old_id);
+		line_cells->InsertCellPoint(return_id);
+		++iter;
+	}
+	// Recursive calls to the branches if they exist: This will draw redundant connections between a branch and its parent?
+	for(unsigned int counter=0; counter<tline->GetBranchPointer()->size(); counter++)
+	{
+		//printf("I should be having children too! what am I doing here?\n");
+		CreatePolyDataRecursive((*tline->GetBranchPointer())[counter],point_scalars,line_points,line_cells);
+	}
+	//printf("leaving recursive call\n");
+}
+
+void TraceObject::CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkPoints> line_points, vtkSmartPointer<vtkCellArray> line_cells)
+{
+	TraceLine::TraceBitsType tbits;
+	TraceLine::TraceBitsType::iterator iter=tline->GetTraceBitIteratorBegin();
+	double point[3];
+	unsigned int return_id;
+	unsigned int cell_id;
+	unsigned int old_id;
+
+	std::vector<unsigned int>* cell_id_array=tline->GetMarkers();
+	cell_id_array->clear();
+
+	point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
+	return_id = line_points->InsertNextPoint(point);
+	//hashp[return_id]=(unsigned long long int)tline;
 	iter->marker = return_id;
 
 	//if(this->ColorByTrees)
 	//{
-	//	point_scalars->InsertNextTuple1(gtline->getTraceColor());
+	//	point_scalars->InsertNextTuple1(tline->getTraceColor());
 	//}
 	//else
 	//{
-	//	point_scalars->InsertNextTuple1(.5-gtline->getTraceColor());
+	//	point_scalars->InsertNextTuple1(.5-tline->getTraceColor());
 	//}
 
 	//To add a line between parent line's last point and the first point in the current line
-	if(!tline->isParentLess())
+	if(tline->GetParent() != NULL)
 	{
 		//printf("I should not have a parent at all! why did I come here?\n");
-		for(int i =0;i<tline->ParentSize();i++)
+		if(tline->GetParent()->GetTraceBitsPointer()->size()>0)
 		{
-		//printf("I should not have a parent at all! why did I come here?\n");
-			if(tline->GetParent(i)->GetTraceBitsPointer()->size()>0)
-			{
-				cell_id  = line_cells->InsertNextCell(2);
-				cell_id_array->push_back(cell_id);
-				hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
-				line_cells->InsertCellPoint((--(tline->GetParent(i)->GetTraceBitIteratorEnd()))->marker);
-				line_cells->InsertCellPoint(return_id);
-			}
+			cell_id = line_cells->InsertNextCell(2);
+			cell_id_array->push_back(cell_id);
+			//hashc[cell_id] = reinterpret_cast<unsigned long long int>(tline);
+			line_cells->InsertCellPoint((--(tline->GetParent()->GetTraceBitIteratorEnd()))->marker);
+			line_cells->InsertCellPoint(return_id);
 		}
 	}
-	// Rest of the lines for the current gtline 
+	// Rest of the lines for the current tline 
 	iter++;
-	while(iter != tline->GetTraceBitIteratorEnd())
+	while(iter!=tline->GetTraceBitIteratorEnd())
 	{
 		//printf("in loop %d\n",++pc);
 		old_id = return_id;
-		point[0] = iter->x; point[1] = iter->y; point[2] = iter->z;
+		point[0] = iter->x;point[1]=iter->y;point[2]=iter->z;
 		return_id = line_points->InsertNextPoint(point);
-		//hashp[return_id]=(unsigned long long int)gtline;
+		//hashp[return_id]=(unsigned long long int)tline;
 		iter->marker = return_id;
 
-		//point_scalars->InsertNextTuple1(gtline->getTraceColor());
+		//point_scalars->InsertNextTuple1(tline->getTraceColor());
 		cell_id = line_cells->InsertNextCell(2);
 		cell_id_array->push_back(cell_id);
-		//hashc[cell_id]=reinterpret_cast<unsigned long long int>(gtline);
+		//hashc[cell_id]=reinterpret_cast<unsigned long long int>(tline);
 		line_cells->InsertCellPoint(old_id);
 		line_cells->InsertCellPoint(return_id);
 		++iter;
@@ -1801,7 +1449,6 @@ vtkSmartPointer<vtkPolyData> TraceObject::GetVTKPolyData(bool bSetScalar)
 	vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
 	for(unsigned int counter=0; counter<trace_lines.size(); counter++)
 	{
-		UnmarkLines(trace_lines[counter]);
 		CreatePolyDataRecursive(trace_lines[counter],point_scalars,line_points,line_cells);
 	}
 	this->PolyTraces->SetPoints(line_points);
@@ -1961,7 +1608,7 @@ void TraceObject::splitTrace(int selectedCellId)
 	bool deleteSelectedLine = false;
 	bool deleteSelectedLineOnly = false;
 	if( bitItr == selectedLine->GetTraceBitIteratorBegin() &&
-		!selectedLine->isParentLess() )
+		selectedLine->GetParent() != NULL )
 	{
 		//printf("I did come here\n");
 		//we want to do the actual removal after the splice, but we need to detect
@@ -2001,15 +1648,12 @@ void TraceObject::splitTrace(int selectedCellId)
 	//printf("stage 3\n");
 	if(deleteSelectedLine)
 	{
-		for(int i = 0; i < selectedLine->ParentSize(); i++)
-		{
-			std::vector<TraceLine*>::iterator tlitr = 
-				find(selectedLine->GetParent(i)->GetBranchPointer()->begin(),
-				selectedLine->GetParent(i)->GetBranchPointer()->end(),
-				selectedLine);
-			selectedLine->GetParent(i)->GetBranchPointer()->erase(tlitr);
-			delete selectedLine;
-		}
+		std::vector<TraceLine*>::iterator tlitr = 
+			find(selectedLine->GetParent()->GetBranchPointer()->begin(),
+			selectedLine->GetParent()->GetBranchPointer()->end(),
+			selectedLine);
+		selectedLine->GetParent()->GetBranchPointer()->erase(tlitr);
+		delete selectedLine;
 	}
 	if(deleteSelectedLineOnly)
 	{
@@ -2020,12 +1664,11 @@ void TraceObject::splitTrace(int selectedCellId)
 	//printf("Leaving\n");
 }
 
-
 //This function assumes that the TraceLine does not have either parent or
 //children. One end must be open 
 void TraceObject::ReverseSegment(TraceLine *tline)
 {
-	if(tline->isParentLess())
+	if(tline->GetParent()==NULL)
 	{
 		if(tline->GetBranchPointer()->size()==0)
 		{
@@ -2051,11 +1694,11 @@ void TraceObject::ReverseSegment(TraceLine *tline)
 	}
 	else if(tline->GetBranchPointer()->size()==0)
 	{
-		TraceLine * temp1 = tline->GetParent(0);
-		TraceLine * temp2 = tline->GetParent(0)->GetBranch1();
+		TraceLine * temp1 = tline->GetParent();
+		TraceLine * temp2 = tline->GetParent()->GetBranch1();
 		if(temp2 == tline || temp2 == 0)
 		{
-			temp2 = tline->GetParent(0)->GetBranch2();
+			temp2 = tline->GetParent()->GetBranch2();
 		}
 		tline->GetTraceBitsPointer()->reverse();
 		reverse(tline->GetMarkers()->begin(),tline->GetMarkers()->end());
@@ -2164,7 +1807,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	}
 	else if (slocation == 0 && elocation ==0)
 	{
-		if(tmarker->GetBranchPointer()->size()==0 && tmarker->isParentLess()) 
+		if(tmarker->GetBranchPointer()->size()==0 && tmarker->GetParent()==NULL) 
 		{
 			TraceLine *tttemp = tmarker;
 			tmarker = tother;
@@ -2174,7 +1817,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			eMarker = sMarker;
 			sMarker = ttemarker;
 		}
-		else if(tother->GetBranchPointer()->size()==0 && tother->isParentLess()) 
+		else if(tother->GetBranchPointer()->size()==0 && tother->GetParent()==NULL) 
 		{
 		}
 		else
@@ -2196,7 +1839,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 	}
 	else if (slocation == 1 && elocation ==1)
 	{
-		if(tmarker->GetBranchPointer()->size()==0 && tmarker->isParentLess()) 
+		if(tmarker->GetBranchPointer()->size()==0 && tmarker->GetParent()==NULL) 
 		{
 			ReverseSegment(tmarker);
 			TraceLine *tttemp = tmarker;
@@ -2207,7 +1850,7 @@ void TraceObject::mergeTraces(unsigned long long int eMarker, unsigned long long
 			eMarker = sMarker;
 			sMarker = ttemarker;
 		}
-		else if(tother->GetBranchPointer()->size()==0 && tother->isParentLess()) 
+		else if(tother->GetBranchPointer()->size()==0 && tother->GetParent()==NULL) 
 		{
 			ReverseSegment(tother);
 		}
@@ -2332,14 +1975,14 @@ void TraceObject::CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, 
 
 	if(tline->GetTraceBitsPointer()->size()==1)
 	{
-		if(!tline->isParentLess())
+		if(tline->GetParent()!=NULL)
 		{
-			loc[0] = (tline->GetTraceBitsPointer()->back().x + tline->GetParent(0)->GetTraceBitsPointer()->back().x)/2.0;
-			loc[1] = (tline->GetTraceBitsPointer()->back().y + tline->GetParent(0)->GetTraceBitsPointer()->back().y)/2.0;
-			loc[2] = (tline->GetTraceBitsPointer()->back().z + tline->GetParent(0)->GetTraceBitsPointer()->back().z)/2.0;
-			dir[0] = tline->GetParent(0)->GetTraceBitsPointer()->back().x-loc[0];
-			dir[1] = tline->GetParent(0)->GetTraceBitsPointer()->back().y-loc[1];
-			dir[2] = tline->GetParent(0)->GetTraceBitsPointer()->back().z-loc[2];
+			loc[0] = (tline->GetTraceBitsPointer()->back().x + tline->GetParent()->GetTraceBitsPointer()->back().x)/2.0;
+			loc[1] = (tline->GetTraceBitsPointer()->back().y + tline->GetParent()->GetTraceBitsPointer()->back().y)/2.0;
+			loc[2] = (tline->GetTraceBitsPointer()->back().z + tline->GetParent()->GetTraceBitsPointer()->back().z)/2.0;
+			dir[0] = tline->GetParent()->GetTraceBitsPointer()->back().x-loc[0];
+			dir[1] = tline->GetParent()->GetTraceBitsPointer()->back().y-loc[1];
+			dir[2] = tline->GetParent()->GetTraceBitsPointer()->back().z-loc[2];
 		}
 	}
 	vtkIdType id = p->InsertNextPoint(loc);
@@ -2643,7 +2286,6 @@ void TraceObject::SetBranchPoints(std::vector<branchPT*> Branches)
 	this->BranchPoints = Branches;
 	this->unsolvedBranches = (int) this->BranchPoints.size();
 }
-
 int TraceObject::solveParents(std::vector<int> ids)
 {
 	unsigned int i;
@@ -2713,7 +2355,7 @@ void TraceObject::cleanTree()
 	std::vector<TraceLine*> TempTraceLines;
 	for (unsigned int i = 0; i < this->trace_lines.size(); i++)
 	{
-		if (this->trace_lines.at(i)->GetParentID(0) == -1)
+		if (this->trace_lines.at(i)->GetParentID() == -1)
 		{
 			TempTraceLines.push_back(this->trace_lines.at(i));
 		}
@@ -2721,7 +2363,6 @@ void TraceObject::cleanTree()
 	this->trace_lines.clear();
 	this->trace_lines = TempTraceLines;
 }
-
 void TraceObject::Shave(TraceLine *starting, int smallerThan)
 {
 	if (!starting->isLeaf())
@@ -2734,18 +2375,16 @@ void TraceObject::Shave(TraceLine *starting, int smallerThan)
 }
 bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 {
-	if (branch->GetParentID(0) == -1)
+	if (branch->GetParentID() == -1)
 	{
 		return false; 
 	}
-
-	//// PK_CHANGES - WORKING FOR ONLY ONE PARENT NOW. SEE ORIGINAL CODE.
-	std::vector<TraceLine*>* siblings = branch->GetParent(0)->GetBranchPointer();
+	std::vector<TraceLine*>* siblings = branch->GetParent()->GetBranchPointer();
 	if(siblings->size()==2)
 	{
 		markRootAsModified(branch->GetRootID());
 		// its not a branch point anymore
-		/*TraceLine *tother1;
+		TraceLine *tother1;
 		if(branch==(*siblings)[0])
 		{ 
 			tother1 = (*siblings)[1];
@@ -2769,11 +2408,9 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		{
 			this->addTrace(tother1);
 			std::cout<< "failed to merge parent/child\n";
-		}*/
-		
-		std::vector<TraceLine*>::iterator iter = siblings->begin();
-		std::vector<TraceLine*>::iterator iterend = siblings->end();
-		branch->RemoveParents();
+		}
+
+		branch->SetParent(NULL);
 		if ((keep)&&(branch->GetSize()>3))
 		{//wont keep anything too small to work on
 			//if 
@@ -2782,38 +2419,17 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 		}//end branch->GetSize()>3  
 		else 
 		{
-			/////////// PK_CHANGES - MIGHT CRASH HERE
 			if (branch->GetBranchPointer()->size() >1)
 			{
 				std::vector<TraceLine*> children = (*branch->GetBranchPointer());
 				for (unsigned int k = 0; k < children.size(); k++)
 				{
-					if(children[k]->ParentSize()==1)
-					{
-						children[k]->RemoveParents();
-						this->addTrace(children[k]);
-					}
-					else if(children[k]->ParentSize()>1)
-					{
-						children[k]->RemoveParent(children[k]->GetParentNumber(branch));
-					}
-					
-					/////////////////// PK_CHANGES - ORIGINAL CODE IN THIS BLOCK
-					//children[k]->SetParent(NULL);
-					//this->addTrace(children[k]);
+					children[k]->SetParent(NULL);
+					this->addTrace(children[k]);
 				}
 			}
 			delete branch;
 		}//end else children
-		while(iter != iterend)
-		{
-			if(*iter == branch)
-			{
-				siblings->erase(iter);
-				break;
-			}
-			++iter;
-		}//end while
 		this->GetTraceLines();
 		return true;
 	}//end siblings->size()==2
@@ -2835,19 +2451,8 @@ bool TraceObject::BreakOffBranch(TraceLine *branch, bool keep)
 				std::vector<TraceLine*> children = (*branch->GetBranchPointer());
 				for (unsigned int k = 0; k < children.size(); k++)
 				{
-					if(children[k]->ParentSize()==1)
-					{
-						children[k]->RemoveParents();
-						this->addTrace(children[k]);
-					}
-					else if(children[k]->ParentSize()>1)
-					{
-						children[k]->RemoveParent(children[k]->GetParentNumber(branch));
-					}
-					
-					/////////////////// PK_CHANGES - ORIGINAL CODE IN THIS BLOCK
-					//children[k]->SetParent(NULL);
-					//this->addTrace(children[k]);
+					children[k]->SetParent(NULL);
+					this->addTrace(children[k]);
 				}
 			}
 			delete branch;
@@ -2906,7 +2511,7 @@ void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
 	int newId = this->getNewLineId();
 	soma->SetId(newId);
 	this->trace_lines.push_back(soma);*/
-	/*TraceBit tbit= this->CreateBitAtCoord(pt);
+	TraceBit tbit= this->CreateBitAtCoord(pt);
 	TraceLine *soma = this->CreateTraceFromBit(tbit);
 	soma->SetType(1); //makes it a soma type
 	unsigned int i = 0;
@@ -2929,7 +2534,7 @@ void TraceObject::createSomaFromPT(double pt[], std::vector<TraceLine*> stems)
 		stems[i]->SetParent(soma);
 		soma->AddBranch(stems[i]);
 	}//end loop through stems
-	this->cleanTree();*/
+	this->cleanTree();
 }
 TraceBit TraceObject::CreateBitAtCoord(double pt[])
 {
