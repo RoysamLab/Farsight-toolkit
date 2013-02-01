@@ -29,16 +29,16 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 	//this->TraceClusterManager->setObjectSelection(this->Selection);
 	//this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
 
-//standard headers	
+	//standard headers	
 	this->stdHeaders();
 	this->additionalFeatureHeaders.clear();
 	//RPI xml currently unused
 	/*if (FeatureHeaders.size() >=1)
 	{
-		for (int i = 0; i< (int)FeatureHeaders.size(); i++)
-		{
-			this->headers.push_back(FeatureHeaders[i].c_str());
-		}
+	for (int i = 0; i< (int)FeatureHeaders.size(); i++)
+	{
+	this->headers.push_back(FeatureHeaders[i].c_str());
+	}
 	}*/
 	this->NumFeatures = (int)this->headers.size();
 	this->SetupHeaders();
@@ -47,17 +47,17 @@ TraceModel::TraceModel(std::vector<TraceLine*> trace_lines, std::vector<std::str
 
 TraceModel::TraceModel(std::vector<TraceLine*> trace_lines)
 {	this->DataTable = vtkSmartPointer<vtkTable>::New();	
-	this->Selection = new ObjectSelection();
-	this->TraceClusterSelection = new SelectiveClustering();
-	//this->TraceClusterManager = new ClusterManager();
-	//this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
-	//this->TraceClusterManager->setObjectSelection(this->Selection);
-	//this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
+this->Selection = new ObjectSelection();
+this->TraceClusterSelection = new SelectiveClustering();
+//this->TraceClusterManager = new ClusterManager();
+//this->TraceClusterManager->setClusteringModel(this->TraceClusterSelection );
+//this->TraceClusterManager->setObjectSelection(this->Selection);
+//this->TraceClusterManager->setManagerTitle("Trace Cluster Manager");
 //standard headers	
-	this->additionalFeatureHeaders.clear();
-	this->stdHeaders();
-	this->NumFeatures = (int)this->headers.size();
-	this->SetTraces(trace_lines);
+this->additionalFeatureHeaders.clear();
+this->stdHeaders();
+this->NumFeatures = (int)this->headers.size();
+this->SetTraces(trace_lines);
 }
 
 TraceModel::~TraceModel()
@@ -71,10 +71,10 @@ TraceModel::~TraceModel()
 void TraceModel::stdHeaders()
 {
 	this->headers.push_back("ID");
-	this->headers.push_back("Level"); 
+	this->headers.push_back("Level");
 	this->headers.push_back("Type");
 	this->headers.push_back("Root ID");
-	this->headers.push_back("Path To Root");   
+	this->headers.push_back("Path To Root");
 	this->headers.push_back("Parent");
 	this->headers.push_back("D To Parent");
 	this->headers.push_back("# of Bits");
@@ -121,11 +121,11 @@ void TraceModel::SetupHeaders()
 	int numHeaders = (int)this->headers.size();
 	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
 	for(int i=0; i < numHeaders; ++i)
-    {		
+	{		
 		column = vtkSmartPointer<vtkDoubleArray>::New();
 		column->SetName( this->headers.at(i).toStdString().c_str() );
 		this->DataTable->AddColumn(column);
-    }
+	}
 }
 ObjectSelection * TraceModel::GetObjectSelection()
 {
@@ -144,12 +144,12 @@ void TraceModel::SyncModel()
 	for (int i = 0; i < (int)this->TraceLines.size(); ++i)
 	{
 		vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-		
+
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetId());
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->GetType());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());  
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetLevel());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetRootID());
-		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength()); 
+		DataRow->InsertNextValue(this->TraceLines.at(i)->GetPathLength());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetParentID(0));
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetDistToParent());
 		DataRow->InsertNextValue(this->TraceLines.at(i)->GetSize());
@@ -176,7 +176,7 @@ void TraceModel::SyncModel()
 		DataRow->InsertNextValue((int)this->TraceLines.at(i)->isLeaf());
 		/*for (int j = 0; j < (int)this->TraceLines.at(i)->Features.size(); ++j)
 		{
-			DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
+		DataRow->InsertNextValue(this->TraceLines.at(i)->Features.at(j));
 		}*/
 		if (this->additionalFeatureHeaders.size() > 0)
 		{
@@ -249,13 +249,13 @@ std::vector<TraceLine*> TraceModel::GetSelectedTraces()
 {
 	std::vector<TraceLine*> selectedTrace;
 	std::vector<int> IDList = this->GetSelectedIDs();
-	
+
 	//For printing out all the traces selected to the console
 	//std::cout << "TraceModel IDs selected: ";
 	//for (int i = 0; i < IDList.size(); i++)
 	//	std::cout << IDList[i] << " ";
 	//std::cout << std::endl;
-	
+
 	//Search for traces
 	for ( unsigned int i = 0; i< IDList.size(); i++)
 	{

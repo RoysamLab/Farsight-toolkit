@@ -36,7 +36,7 @@ v7: new GUI and file control
 #include <boost/math/special_functions/fpclassify.hpp> // isnan
 
 #ifdef _OPENMP
-    #include "omp.h"
+#include "omp.h"
 #endif
 
 View3D::View3D(QWidget *parent)
@@ -66,18 +66,18 @@ View3D::View3D(QWidget *parent)
 #ifdef USE_SPD
 	this->SPDWin = NULL;
 #endif
-	
+
 #ifdef USE_Clusclus
 	this->HeatmapWin = NULL;
-    this->Biheatmap = NULL;
+	this->Biheatmap = NULL;
 #endif
 
-  this->SaveSettingsOnExit = true;
+	this->SaveSettingsOnExit = true;
 
-	#ifdef USE_QT_TESTING
+#ifdef USE_QT_TESTING
 	this->TestInputFile = "";
 	this->TestBaselineImageFileName = "";
-	#endif
+#endif
 
 	this->tobj = new TraceObject;
 	//int num_loaded = 0;
@@ -128,9 +128,9 @@ View3D::View3D(QWidget *parent)
 	this->InformationDisplays->setWidget(this->EditLogDisplay);
 	this->addDockWidget(Qt::LeftDockWidgetArea, this->InformationDisplays);
 
-  #ifdef USE_QT_TESTING
-  this->Tester = new GUITester(this);
-  #endif
+#ifdef USE_QT_TESTING
+	this->Tester = new GUITester(this);
+#endif
 
 	//Set up the main window's central widget
 	this->CentralWidget = new QWidget(this);
@@ -154,25 +154,25 @@ View3D::View3D(QWidget *parent)
 			this->tobj->ReadFromSWCFile((char*)nextFile.toStdString().c_str());
 		}
 		else if(nextFile.endsWith("xml",Qt::CaseInsensitive))
-    {
-      if(nextFile.contains("test_",Qt::CaseInsensitive))
-      {
-	#ifdef USE_QT_TESTING
-	this->TestInputFile = nextFile;
-	#endif
-      }
+		{
+			if(nextFile.contains("test_",Qt::CaseInsensitive))
+			{
+#ifdef USE_QT_TESTING
+				this->TestInputFile = nextFile;
+#endif
+			}
 
-      else if(nextFile.contains("project_",Qt::CaseInsensitive))
-      {
-		  this->projectLoadedState = this->readProject(nextFile);
-      }
-      else
-      {
-        this->EditLogDisplay->append("Trace file: \t" + nextFile);
-        this->TraceFiles.append( nextFile);
-        this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
-      }
-    }
+			else if(nextFile.contains("project_",Qt::CaseInsensitive))
+			{
+				this->projectLoadedState = this->readProject(nextFile);
+			}
+			else
+			{
+				this->EditLogDisplay->append("Trace file: \t" + nextFile);
+				this->TraceFiles.append( nextFile);
+				this->tobj->ReadFromRPIXMLFile((char*)nextFile.toStdString().c_str());
+			}
+		}
 		else if (nextFile.endsWith("vtk"))
 		{
 			this->EditLogDisplay->append("Trace file: \t" + nextFile);
@@ -185,26 +185,26 @@ View3D::View3D(QWidget *parent)
 			this->EditLogDisplay->append("Image file: \t" + nextFile);
 			this->ImageActors->loadImage(nextFile.toStdString(), "Image");
 		}
-    else if(nextFile.contains("baseline"))
-    {
-	#ifdef USE_QT_TESTING
-        this->TestBaselineImageFileName = nextFile;
-	#endif
-    }
-    else if (nextFile.endsWith("/") || nextFile.endsWith("\\"))
-    {
-      //set default directory to load input files from
-      this->TraceEditSettings.setValue("somaDir", nextFile);
-      this->TraceEditSettings.setValue("traceDir", nextFile);
-      this->TraceEditSettings.setValue("imageDir", nextFile);
-      this->TraceEditSettings.setValue("projectDir", nextFile);
-	  this->TraceEditSettings.setValue("vesselDir", nextFile);
-    }
-    else if (nextFile.endsWith("reload"))
-    {
-		this->ReloadState(); 
-	    return;
-    }
+		else if(nextFile.contains("baseline"))
+		{
+#ifdef USE_QT_TESTING
+			this->TestBaselineImageFileName = nextFile;
+#endif
+		}
+		else if (nextFile.endsWith("/") || nextFile.endsWith("\\"))
+		{
+			//set default directory to load input files from
+			this->TraceEditSettings.setValue("somaDir", nextFile);
+			this->TraceEditSettings.setValue("traceDir", nextFile);
+			this->TraceEditSettings.setValue("imageDir", nextFile);
+			this->TraceEditSettings.setValue("projectDir", nextFile);
+			this->TraceEditSettings.setValue("vesselDir", nextFile);
+		}
+		else if (nextFile.endsWith("reload"))
+		{
+			this->ReloadState(); 
+			return;
+		}
 	}//end of arg 
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
@@ -262,21 +262,21 @@ View3D::~View3D()
 	{
 		delete this->GapsTableView;
 	}
-  if(this->TreeModel)
-  {
-    delete this->TreeModel;
-  }
-  if(this->statisticsDockWidget)
-  {
-    delete this->statisticsDockWidget;
-  }
+	if(this->TreeModel)
+	{
+		delete this->TreeModel;
+	}
+	if(this->statisticsDockWidget)
+	{
+		delete this->statisticsDockWidget;
+	}
 #ifdef USE_SPD
-  	if(this->SPDWin)
+	if(this->SPDWin)
 	{
 		delete this->SPDWin;
 	}
 #endif
-	
+
 #ifdef USE_Clusclus
 	if(this->HeatmapWin)
 	{
@@ -287,7 +287,7 @@ View3D::~View3D()
 	delete this->ImageActors;
 	delete this->Gridlines;
 	delete this->VOIType;
-	
+
 }
 /*! determine if you can start trace edit*/
 void View3D::CreateBootLoader()
@@ -321,12 +321,12 @@ void View3D::CreateBootLoader()
 	this->scale->setSingleStep(.01);*/
 	this->okBoot = new QPushButton("Start",this->bootLoadFiles);
 	connect(this->okBoot, SIGNAL(clicked()), this, SLOT(OkToBoot()));
-	
+
 	this->Reload = new QPushButton("Reload", this->bootLoadFiles);
 	connect(this->Reload, SIGNAL(clicked()), this, SLOT(ReloadState()));
 	this->BootProject = new QPushButton("Project", this->bootLoadFiles);
 	connect(this->BootProject, SIGNAL(clicked()), this, SLOT(LoadProject()));
-	
+
 	this->Use2DSlicer = new QCheckBox;
 	this->Use2DSlicer->setChecked(this->viewIn2D);
 	QFormLayout *LoadLayout = new QFormLayout(this->bootLoadFiles);
@@ -353,7 +353,7 @@ void View3D::CreateBootLoader()
 	//---
 	LoadLayout->addRow(tr("Default Use Slicer"), this->Use2DSlicer);
 	//LoadLayout->addRow(tr("uM Per Voxel"), this->scale);
-	
+
 	LoadLayout->addRow(tr("Reload Previous Session"), this->Reload); 
 	LoadLayout->addRow(tr("Run Trace Editor"), this->okBoot);
 	this->BootDock = new QDockWidget(tr("Start Trace Editor"), this);
@@ -402,7 +402,7 @@ void View3D::ReloadState()
 					QMessageBox::warning(this, "Error Reading File", QString("Could not open file %1 for reading").arg(temp),QMessageBox::Ok, QMessageBox::Ok);
 					//error could not open
 				}
-				}
+			}
 			else
 			{
 				this->TraceFiles.append( this->tempTraceFile.last());
@@ -460,10 +460,10 @@ void View3D::OkToBoot()
 	if(!this->TraceFiles.isEmpty() || !this->Image.isEmpty() || !this->SomaFile.isEmpty())
 	{
 		this->tobj->SetTraceTypeGeneric(this->GetTraceType->currentText().toStdString());
-		
+
 		//Enable/disable options depending on generic trace type
 		this->ConfigureLayoutByGenericTraceType(this->tobj->GetTraceTypeGeneric());
-		
+
 		this->BootDock->hide();
 		this->InformationDisplays->hide();
 		this->menuBar()->show();
@@ -472,8 +472,8 @@ void View3D::OkToBoot()
 		//std::cout << "Generic trace type is set to: " << this->tobj->GetTraceTypeGeneric() << std::endl;
 
 		this->BranchToolBar->show();  
-		
-		
+
+
 		this->viewIn2D = this->Use2DSlicer->isChecked();
 
 		this->resize(this->TraceEditSettings.value("mainWin/size",QSize(850, 480)).toSize());
@@ -503,9 +503,9 @@ void View3D::OkToBoot()
 		//this->Rerender();
 		bool unsolvedBranches = (this->tobj->BranchPoints.size() >1);
 
-		#ifdef USE_QT_TESTING
+#ifdef USE_QT_TESTING
 		unsolvedBranches = (this->tobj->BranchPoints.size() >1 && this->TestInputFile == "");
-		#endif
+#endif
 
 		if (unsolvedBranches)
 		{
@@ -562,7 +562,7 @@ void View3D::ConfigureLayoutByGenericTraceType(int traceTypeGeneric){
 		this->SomaBar->setEnabled(false);
 		this->soma_sub_menu->setEnabled(false);
 	}
-	
+
 }
 
 //!Dialogs to Find File Names
@@ -622,7 +622,7 @@ QString View3D::getTraceFile()
 				{
 					this->tobj->AutoSolveBranchOrder = false;
 				}
-				
+
 				this->tobj->ReadFromVTKFile((char*)traceFile.c_str());
 				if (this->tobj->AutoSolveBranchOrder)
 				{
@@ -833,7 +833,7 @@ bool View3D::readProject(QString projectFile)
 				newtypeItem->setFlags(newtypeItem->flags() & (~Qt::ItemIsEditable));
 				projectFilesTable->setItem(i,1,newtypeItem);*/
 
- 				if ((type == "Image")||(type == "Soma"))
+				if ((type == "Image")||(type == "Soma"))
 				{
 					if (type == "Image")
 					{
@@ -970,7 +970,7 @@ void View3D::ShowProjectTable()
 			{
 				found = true;
 			}
-			
+
 			if (found && (type == "Image" || type == "Soma"))
 			{
 				//1st column of table
@@ -1024,7 +1024,7 @@ void View3D::choosetoRender(int row, int col)
 			//std::cout << this->projectFilesTable->item(rowselected,2) << std::endl;
 			this->projectFilesTable->setItem(row,2,offItem);
 			//this->ImageActors->setRenderStatus(row, false);
-			
+
 			//remove all actors
 			this->Renderer->RemoveActor(this->ImageActors->GetProjectionImage(row));
 			this->Renderer->RemoveVolume(this->ImageActors->GetRayCastVolume(row));
@@ -1039,19 +1039,19 @@ void View3D::choosetoRender(int row, int col)
 			//this->ImageActors->setRenderStatus(row, true);
 			//if (this->ImageActors->isRayCast(row))
 			//{
-				if (this->projectFilesTable->item(row,3)->text() == "3d")
-				{
-					this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
-					this->ImageActors->setRenderStatus(row, true);
-					this->ImageActors->setIs2D(row, false);
-					this->RaycastBar->show();
-				}else if (this->projectFilesTable->item(row,3)->text() == "2d")
-				{
-					//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(row));
-					this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle,this->projection_axis));
-					this->ImageActors->setIs2D(row, true);
-					//this->SlicerBar->show();
-				}
+			if (this->projectFilesTable->item(row,3)->text() == "3d")
+			{
+				this->Renderer->AddVolume(this->ImageActors->RayCastVolume(row));
+				this->ImageActors->setRenderStatus(row, true);
+				this->ImageActors->setIs2D(row, false);
+				this->RaycastBar->show();
+			}else if (this->projectFilesTable->item(row,3)->text() == "2d")
+			{
+				//this->Renderer->AddActor(this->ImageActors->CreateImageSlice(row));
+				this->Renderer->AddActor(this->ImageActors->createProjection(row, this->projectionStyle,this->projection_axis));
+				this->ImageActors->setIs2D(row, true);
+				//this->SlicerBar->show();
+			}
 			//}
 			else
 			{
@@ -1165,7 +1165,7 @@ void View3D::SetImgWeightInt()
 		}
 	}
 }
- 
+
 void View3D::TraceBitImageIntensity(int ImgID)
 {
 	if (this->ImageActors->NumberOfImages()>=1)
@@ -1222,7 +1222,7 @@ void View3D::setupLinkedSpace()
 	this->tobj->Gaps.clear();
 	this->MergeGaps = new MergeModel(this->tobj->Gaps);
 	this->MergeGaps->setParent(this);
-	
+
 	if (this->tobj->FeatureHeaders.size() >=1)
 	{
 		this->TreeModel = new TraceModel(this->tobj->GetTraceLines(), this->tobj->FeatureHeaders);
@@ -1232,17 +1232,17 @@ void View3D::setupLinkedSpace()
 		this->TreeModel = new TraceModel(this->tobj->GetTraceLines());
 	}
 	this->TreeModel->setParent(this);
-	
+
 	this->connect(this->MergeGaps->GetObjectSelection(), SIGNAL(changed()), 
 		this,SLOT(updateSelectionHighlights()));
-		
+
 	this->connect(this->TreeModel->GetObjectSelection(), SIGNAL(changed()), 
 		this, SLOT(updateTraceSelectionHighlights()));
 	this->CellModel = new CellTraceModel();
 	this->CellModel->setParent(this);
 	this->connect(this->CellModel->GetObjectSelection(), SIGNAL(changed()), 
 		this, SLOT(updateSelectionFromCell()));
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 	this->connect(this->CellModel->GetObjectSelectionColumn(), SIGNAL(changed()), 
 		this, SLOT(selectedFeaturesClustering()));
@@ -1274,7 +1274,7 @@ void View3D::CreateGUIObjects()
 	this->saveSelectedAction->setObjectName(tr("saveSelectedAction"));
 	connect(this->saveSelectedAction, SIGNAL(triggered()), this, SLOT(SaveSelected()));
 	this->saveSelectedAction->setStatusTip("Save Selected tree structures to seperate file");
-	
+
 	this->saveProjectAction = new QAction(tr("Save Project"), this->CentralWidget);
 	this->saveProjectAction->setObjectName(tr("saveProjectAction"));
 	connect(this->saveProjectAction, SIGNAL(triggered()), this, SLOT(SaveProjectFile()));
@@ -1351,7 +1351,7 @@ void View3D::CreateGUIObjects()
 	connect(this->AddButton, SIGNAL(triggered()), this, SLOT(AddLines()));
 	this->AddButton->setStatusTip("Used for adding lines");
 	this->AddButton->setShortcut(QKeySequence(Qt::Key_V));
-	
+
 	this->AddEndButton = new QAction("Add End", this->CentralWidget);
 	this->AddEndButton->setObjectName(tr("AddEndButton"));
 	connect(this->AddEndButton, SIGNAL(triggered()), this, SLOT(AddEndLines()));
@@ -1377,7 +1377,7 @@ void View3D::CreateGUIObjects()
 	/*this->AutomateButton = new QPushButton("Automatic Edits", this->CentralWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
 	this->AutomateButton->setStatusTip("Automatic selection of all small lines");*/
-	
+
 	//Branching tools
 	this->root = new QAction("Set Root", this->CentralWidget);
 	this->root->setObjectName(tr("root"));
@@ -1414,12 +1414,12 @@ void View3D::CreateGUIObjects()
 	this->ImageIntensity->setObjectName(tr("ImageIntensity"));
 	this->ImageIntensity->setStatusTip("Calculates intensity of trace bits from one image");
 	connect(this->ImageIntensity, SIGNAL(triggered()), this, SLOT(SetImgInt()));
-	
+
 	this->ImageWeightedIntensity = new QAction("Weighted Intensity", this->CentralWidget);
 	this->ImageWeightedIntensity->setObjectName(tr("ImageWeightedIntensity"));
 	this->ImageWeightedIntensity->setStatusTip("Calculates intensity of trace bits from one image using a circle kernel");
 	connect(this->ImageWeightedIntensity, SIGNAL(triggered()), this, SLOT(SetImgWeightInt()));
-	 
+
 	this->SetSlicer = new QAction("Set Slicer", this->CentralWidget);
 	this->SetSlicer->setObjectName(tr("SetSlicer"));
 	this->SetSlicer->setCheckable(true);
@@ -1602,7 +1602,7 @@ void View3D::CreateGUIObjects()
 	this->ConvexHullAction = new QAction("Convex Hull", this->CentralWidget);
 	this->ConvexHullAction->setObjectName(tr("convexHullAction"));
 	connect(this->ConvexHullAction, SIGNAL(triggered()), this, SLOT(CalculateDelaunay3D()));
-	
+
 	this->ellipsoid = new QCheckBox("Ellipsoid",this->SettingsWidget);
 	this->ellipsoid->setObjectName("ellipsoid");
 	this->ellipsoid->setHidden(true);
@@ -1670,13 +1670,13 @@ void View3D::CreateGUIObjects()
 	this->GridRSlider->setRange(0,255);
 	this->GridRSlider->setValue(255);
 	connect(this->GridRSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
-	
+
 	this->GridGSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
 	this->GridGSlider->setObjectName("GridGSlider");
 	this->GridGSlider->setRange(0,255);
 	this->GridGSlider->setValue(255);
 	connect(this->GridGSlider, SIGNAL(sliderMoved(int)), this, SLOT(AdjustGridlines(int)));
-	
+
 	this->GridBSlider = new QSlider(Qt::Horizontal,this->SettingsWidget);
 	this->GridBSlider->setObjectName("GridBSlider");
 	this->GridBSlider->setRange(0,255);
@@ -1744,7 +1744,7 @@ void View3D::CreateGUIObjects()
 	this->RotateImageUpCombo->setObjectName("RotateImageUpCombo");
 	this->RotateImageUpCombo->addItems(AxisList);
 	connect(this->RotateImageUpCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(rotateImage(int)));
-	
+
 	this->aboutAction = new QAction("About", this->CentralWidget);
 	this->aboutAction->setObjectName(tr("aboutAction"));
 	this->aboutAction->setStatusTip("About Trace Edit");
@@ -1896,26 +1896,26 @@ void View3D::CreateGUIObjects()
 	CropBorderCellsButton = new QPushButton("Crop border cells");
 	connect(CropBorderCellsButton, SIGNAL(clicked()), this, SLOT(CropBorderCells()));
 
-  //Testing menu actions
-  #ifdef USE_QT_TESTING
-  this->recordAction = new QAction("Record Test", this->CentralWidget);
-  this->recordAction->setStatusTip("Record a test to a .xml file");
-  connect(this->recordAction, SIGNAL(triggered()), this, SLOT(recordTest()));
+	//Testing menu actions
+#ifdef USE_QT_TESTING
+	this->recordAction = new QAction("Record Test", this->CentralWidget);
+	this->recordAction->setStatusTip("Record a test to a .xml file");
+	connect(this->recordAction, SIGNAL(triggered()), this, SLOT(recordTest()));
 
-  this->playAction = new QAction("Play Test", this->CentralWidget);
-  this->playAction->setStatusTip("Run a previously recorded test");
-  connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
-  
-  this->clearAction = new QAction("Clear QSettings", this->CentralWidget);
-  this->clearAction->setObjectName(tr("clearAction"));
-  this->clearAction->setStatusTip("Revert all QSettings to their default values");
-  connect(this->clearAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
-  
-  this->resizeAction = new QAction("Resize Window", this->CentralWidget);
-  this->resizeAction->setObjectName(tr("resizeAction"));
-  this->resizeAction->setStatusTip("Resize TraceEdit to match default testing screenshot size");
-  connect(this->resizeAction, SIGNAL(triggered()), this, SLOT(resizeForTesting()));
-  #endif
+	this->playAction = new QAction("Play Test", this->CentralWidget);
+	this->playAction->setStatusTip("Run a previously recorded test");
+	connect(this->playAction, SIGNAL(triggered()), this->Tester, SLOT(play()));
+
+	this->clearAction = new QAction("Clear QSettings", this->CentralWidget);
+	this->clearAction->setObjectName(tr("clearAction"));
+	this->clearAction->setStatusTip("Revert all QSettings to their default values");
+	connect(this->clearAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
+
+	this->resizeAction = new QAction("Resize Window", this->CentralWidget);
+	this->resizeAction->setObjectName(tr("resizeAction"));
+	this->resizeAction->setStatusTip("Resize TraceEdit to match default testing screenshot size");
+	connect(this->resizeAction, SIGNAL(triggered()), this, SLOT(resizeForTesting()));
+#endif
 }
 
 void View3D::CreateLayout()
@@ -1961,7 +1961,7 @@ void View3D::CreateLayout()
 	this->EditsToolBar->addAction(this->DeleteTreeAction);
 	this->EditsToolBar->addSeparator();
 	this->EditsToolBar->addAction(this->DeleteButton);
-	
+
 	this->EditsToolBar->addAction(this->AddButton);
 	this->EditsToolBar->addAction(this->AddEndButton);
 	this->EditsToolBar->addAction(this->MergeButton); 
@@ -2000,7 +2000,7 @@ void View3D::CreateLayout()
 	this->ToggleBinaryVOIButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
 	this->WriteVOIButton->setEnabled(false);
-	
+
 	CursorROILayout->addWidget(this->CalculateDistanceToDeviceButton);
 	this->CalculateDistanceToDeviceButton->setEnabled(false);
 	CursorROIBox->setLayout(CursorROILayout);
@@ -2014,7 +2014,7 @@ void View3D::CreateLayout()
 	this->ShowToolBars->addAction(this->cursor3DDock->toggleViewAction());
 	this->cursor3DDock->hide();
 
-	
+
 	//vessel segmentation toolbar
 	this->vesselSegDock = new QDockWidget("Segment Vessels Hollow",this);
 	QVBoxLayout * VesselSegDockLayout = new QVBoxLayout(this->vesselSegWidget);
@@ -2191,7 +2191,7 @@ void View3D::CreateLayout()
 	HalfBridgesLayout->addRow("Distance From Parent", this->MinDistanceToParent);
 	AutomationDockLayout->addWidget(this->HalfBridgeGroup);
 	//AutomationDockLayout->addWidget(this->AutomateButton);
-	
+
 	//Select border cells
 	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
 	BorderCellsCroppingGroup->setObjectName("BorderCellsCroppingGroup");
@@ -2210,7 +2210,7 @@ void View3D::CreateLayout()
 	// Status Bar //
 	////////////////
 
-        QStatusBar * statusBar = this->statusBar();
+	QStatusBar * statusBar = this->statusBar();
 	statusBar->addPermanentWidget(new QLabel("Statistics: Split: ", this));
 	statusBar->addPermanentWidget(this->SplitLabel,0);
 
@@ -2218,12 +2218,12 @@ void View3D::CreateLayout()
 	statusBar->addPermanentWidget(this->MergeLabel,0);
 	statusBar->addPermanentWidget(new QLabel(" Deleted: ", this));
 	statusBar->addPermanentWidget(this->DeleteLabel,0);
-        this->ProgressBar = new QProgressBar(this);
-        statusBar->addWidget(this->ProgressBar);
-        this->ProgressDescription = new QLabel("", this);
-        statusBar->addWidget(this->ProgressDescription);
-        this->ImageActors->setProgressBar( this->ProgressBar );
-        this->ImageActors->setProgressTextWidget( this->ProgressDescription );
+	this->ProgressBar = new QProgressBar(this);
+	statusBar->addWidget(this->ProgressBar);
+	this->ProgressDescription = new QLabel("", this);
+	statusBar->addWidget(this->ProgressDescription);
+	this->ImageActors->setProgressBar( this->ProgressBar );
+	this->ImageActors->setProgressTextWidget( this->ProgressDescription );
 
 	//Visualization Bar
 	QMenu *renderer_sub_menu = this->DataViews->addMenu(tr("Renderer Mode"));
@@ -2270,7 +2270,7 @@ void View3D::CreateLayout()
 	spatial_stats_sub_menu->setObjectName(tr("spatial_stats_sub_menu"));
 	spatial_stats_sub_menu->addAction(this->KNearestAction);
 	spatial_stats_sub_menu->addAction(this->InRadiusAction);
-	
+
 	this->createRayCastSliders();
 	this->createSomaSliders();
 
@@ -2279,15 +2279,15 @@ void View3D::CreateLayout()
 	this->help->setObjectName(tr("help"));
 	this->help->addAction(this->aboutAction);
 
-  //Testing menu
-  #ifdef USE_QT_TESTING
-  this->testingMenu = this->menuBar()->addMenu("Testing");
-  this->testingMenu->setObjectName(tr("testingMenu"));
-  this->testingMenu->addAction(this->recordAction);
-  this->testingMenu->addAction(this->playAction);
-  this->testingMenu->addAction(this->clearAction);
-  this->testingMenu->addAction(this->resizeAction);
-  #endif
+	//Testing menu
+#ifdef USE_QT_TESTING
+	this->testingMenu = this->menuBar()->addMenu("Testing");
+	this->testingMenu->setObjectName(tr("testingMenu"));
+	this->testingMenu->addAction(this->recordAction);
+	this->testingMenu->addAction(this->playAction);
+	this->testingMenu->addAction(this->clearAction);
+	this->testingMenu->addAction(this->resizeAction);
+#endif
 
 	this->menuBar()->hide();
 
@@ -2308,12 +2308,12 @@ void View3D::openTracingDialog()
 	QVBoxLayout *tracingLayout = new QVBoxLayout(this->tracingGui);
 	tracingLayout->addWidget(new QLabel("Choose tracing algorithm"));	
 	tracingLayout->setSizeConstraint(QLayout::SetMinimumSize);
-	
+
 	// Creating options
 	this->tracerCombo = new QComboBox;
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Amit)");
 	this->tracerCombo->addItem("Multiple Neuron Tracer (a la Zack)");
-	
+
 #ifdef USE_BALL_TRACER	
 	this->tracerCombo->addItem("Vessel Ball Tracer (VBT)");
 #else
@@ -2367,7 +2367,7 @@ void View3D::openTracingDialog()
 	//this->tracingGui->setWindowModality();	
 	this->tracingGui->exec();
 
-	
+
 }
 
 void View3D::seedPointFileDialog()
@@ -2396,17 +2396,17 @@ void View3D::PickTracer(int choice)
 	//turn selected one on
 	switch(choice)
 	{
-		case 0:
-			this->mntBox->setVisible(true);
-			break;
-		case 1:
-			std::cout << "This is not a working option!! " << std::endl;
-			break;
-		case 2:
+	case 0:
+		this->mntBox->setVisible(true);
+		break;
+	case 1:
+		std::cout << "This is not a working option!! " << std::endl;
+		break;
+	case 2:
 #ifdef USE_BALL_TRACER
-			this->vbtBox->setVisible(true);
+		this->vbtBox->setVisible(true);
 #endif
-			break;
+		break;
 	}
 	this->tracingGui->resize(this->tracingGui->minimumSize());
 }
@@ -2416,12 +2416,12 @@ void View3D::RunTracer()
 	//start selected tracer
 	switch(this->tracerCombo->currentIndex())
 	{
-		case 0:
-			StartMNTracerAmit(this->mntCostThreshold->value()); 
-			break;
-		case 2:
-			this->StartVesselBallTracer();
-			break;
+	case 0:
+		StartMNTracerAmit(this->mntCostThreshold->value()); 
+		break;
+	case 2:
+		this->StartVesselBallTracer();
+		break;
 	}
 }
 
@@ -2436,14 +2436,14 @@ void View3D::StartVesselBallTracer(){
 
 #ifdef USE_BALL_TRACER
 	std::cout << "Starting with Ball tracer for vessels.. " << std::endl;
-	
-	
+
+
 	ImageType::Pointer inputImage = ImageType::New();
 	inputImage = this->ImageActors->getImageFileData(this->Image.at(0).toStdString(),"Image");
-	
+
 	ImageTypeFloat3D::Pointer inputImageFloat;
 	this->ImageActors->CastUCharToFloat(inputImage, inputImageFloat);
-	
+
 	std::cout << "Vessel tracing options.. " << std::endl;
 	std::cout << "Input image full path: " << this->Image.at(0).toStdString() << std::endl;
 	std::cout << "Preprocess: " << this->vbtPreprocess->isChecked() << std::endl;
@@ -2453,7 +2453,7 @@ void View3D::StartVesselBallTracer(){
 		std::cout << "ERROR!! NULL input image. " << std::endl; 
 		return;
 	}
-	
+
 	try{
 		this->VBT = new ftkVesselTracer(this->Image.at(0).toStdString(), inputImageFloat,
 			this->vbtPreprocess->isChecked(), false, this->vbtUseVesselness->value());
@@ -2564,8 +2564,8 @@ void View3D::CreateInteractorStyle()
 void View3D::chooseInteractorStyle(int iren)
 {
 	/*!
-	 * Mouse events: Select plain, trackball, rubber band zoom, or slicer interactor.
-	 */
+	* Mouse events: Select plain, trackball, rubber band zoom, or slicer interactor.
+	*/
 
 	if (iren== 1)
 	{
@@ -2618,19 +2618,19 @@ void View3D::rotateImage(int axis)
 
 	switch(axis)
 	{
-		case 0: //xy
-			projection_axis = 2;
-			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = 0;		break; // x-y plane; z projection
-		case 1: //xz
-			cam->Elevation(90);	
-			cam->OrthogonalizeViewUp();
-			projection_axis = 1; 
-			projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = -90;	break; // x-z plane; y projection
-		case 2: //yz
-			cam->Azimuth(90); cam->Roll(-90);
-			projection_axis = 0;
-			projection_base.roll = -90; projection_base.azimuth = 90; projection_base.elevation = 0;	break; // y-z plane; x projection
-		default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
+	case 0: //xy
+		projection_axis = 2;
+		projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = 0;		break; // x-y plane; z projection
+	case 1: //xz
+		cam->Elevation(90);	
+		cam->OrthogonalizeViewUp();
+		projection_axis = 1; 
+		projection_base.roll = 0; projection_base.azimuth = 0;   projection_base.elevation = -90;	break; // x-z plane; y projection
+	case 2: //yz
+		cam->Azimuth(90); cam->Roll(-90);
+		projection_axis = 0;
+		projection_base.roll = -90; projection_base.azimuth = 90; projection_base.elevation = 0;	break; // y-z plane; x projection
+	default: std::cerr << "View3D::rotateImage cannot handle axis = " << axis << ". Defaulting to y-axis" << std::endl;
 	}
 	this->projection_axis = projection_axis;
 	this->SetProjectionMethod(projectionStyle); //for projection and slicer mode
@@ -2659,8 +2659,8 @@ void View3D::rotateImage(int axis)
 void View3D::rotationOptions()
 {
 	/*!
-	 * Set the azimuth, elevation, and roll of the image.
-	 */
+	* Set the azimuth, elevation, and roll of the image.
+	*/
 
 	vtkCamera *cam = this->Renderer->GetActiveCamera();
 	cam->SetFocalPoint(0,0,0);
@@ -2686,8 +2686,8 @@ void View3D::rotationOptions()
 void View3D::SetProjectionMethod(int style)
 {
 	/*!
-	 * 
-	 */
+	* 
+	*/
 
 	if (renderMode == PROJECTION)
 	{
@@ -2724,7 +2724,7 @@ void View3D::CreateActors()
 	this->LineActor->SetPickable(1);
 	this->Renderer->AddActor(this->LineActor);
 
-	
+
 	if (this->renderTraceBits)
 	{	
 		this->UpdateBranchActor();
@@ -2809,8 +2809,8 @@ void View3D::removeImageActors()
 void View3D::setSlicerMode()
 {
 	/*!
-	 * 2D slicer mode.
-	 */
+	* 2D slicer mode.
+	*/
 
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
@@ -2851,8 +2851,8 @@ void View3D::setSlicerMode()
 void View3D::setProjectionMode()
 {
 	/*!
-	 * 2D image mode.
-	 */
+	* 2D image mode.
+	*/
 
 	/*feature = new FeatureRelation;
 	feature->FeatureGraph();*/
@@ -2872,7 +2872,7 @@ void View3D::setProjectionMode()
 			if (this->projectFilesTable->item(i,1)->text() == "Image")
 			{
 				this->projectFilesTable->setItem(i,3,Item2D);
-			//std::cout << "i: " << i << "make 2D." << std::endl;
+				//std::cout << "i: " << i << "make 2D." << std::endl;
 			}
 			/***************************************************************/
 		}
@@ -2896,8 +2896,8 @@ void View3D::setProjectionMode()
 void View3D::setRaycastMode()
 {
 	/*!
-	 * 3D image mode.
-	 */
+	* 3D image mode.
+	*/
 
 	for (unsigned int i = 0; i < this->ImageActors->NumberOfImages(); i++)
 	{
@@ -2924,7 +2924,7 @@ void View3D::setRaycastMode()
 		}
 		else
 			this->Renderer->AddVolume(this->ImageActors->RayCastVolume(i));
-			
+
 		this->ImageActors->setRenderStatus(i, true);
 
 	}
@@ -2934,7 +2934,7 @@ void View3D::setRaycastMode()
 	this->chooseInteractorStyle(0);
 	this->viewIn2D = false;
 	//std::cout << "Setting mode raycast" << std::endl;
-	
+
 	renderMode = RAYCAST;
 	SetSlicer->setChecked(false);
 	SetProjection->setChecked(false);
@@ -2944,8 +2944,8 @@ void View3D::setRaycastMode()
 void View3D::ClearRenderer(int i)
 {
 	/*!
-	 * Remove all images.
-	 */
+	* Remove all images.
+	*/
 
 	if (SlicerBarCreated)
 		this->SlicerBar->hide();
@@ -2972,7 +2972,7 @@ void View3D::setContourMode()
 			if (this->projectFilesTable->item(i,1)->text() == "Soma")
 			{
 				this->projectFilesTable->setItem(i,3,Item2D);
-			//std::cout << "i: " << i << "make 2D." << std::endl;
+				//std::cout << "i: " << i << "make 2D." << std::endl;
 			}
 		}
 		else
@@ -2986,7 +2986,7 @@ void View3D::setContourMode()
 	SetContour->setEnabled(false);
 	SetSomaRaycast->setChecked(false);
 	SetSomaRaycast->setEnabled(true);
-	
+
 	this->SomaBar->hide();
 }
 void View3D::setRaycastSomaMode() //Is soma volume already shown? No
@@ -3030,7 +3030,7 @@ void View3D::focusOn()
 	std::vector<TraceLine*> traceSelected = this->TreeModel->GetSelectedTraces();
 	//////////////////////////////////////
 
-	
+
 	if (cellsSelected.size() >=1)
 	{
 		this->FocusOnCell(cellsSelected.back());
@@ -3100,10 +3100,10 @@ void View3D::createSlicerSlider()
 	double upperBound;
 	switch (this->projection_axis)
 	{
-		case 0: upperBound = bounds[1]-(bounds[0]+1);	break;
-		case 1: upperBound = bounds[3]-(bounds[2]+1);	break;
-		case 2: upperBound = bounds[5]-(bounds[4]+1);	break;
-		default: std::cerr << "View3D::createSlicerSlider error with projection axis" << std::endl;
+	case 0: upperBound = bounds[1]-(bounds[0]+1);	break;
+	case 1: upperBound = bounds[3]-(bounds[2]+1);	break;
+	case 2: upperBound = bounds[5]-(bounds[4]+1);	break;
+	default: std::cerr << "View3D::createSlicerSlider error with projection axis" << std::endl;
 	}
 	//std::cout << "upper slice bound: " << upperBound << std::endl;
 
@@ -3158,8 +3158,8 @@ void View3D::createSlicerSlider()
 void View3D::setSlicerZValue(int value)
 {
 	/*!
-	 * Select slice to view.
-	 */
+	* Select slice to view.
+	*/
 	double* bounds = this->ImageActors->getSliceBounds();
 	double image_center_x, image_center_y, image_center_z;
 
@@ -3172,34 +3172,34 @@ void View3D::setSlicerZValue(int value)
 
 	switch (this->projection_axis)
 	{
-		case 0: 
-			image_center_x = bounds[1]-abs(value);
-			image_center_y = (bounds[2]+bounds[3])/2;
-			image_center_z = (bounds[4]+bounds[5])/2;
-			focalPoint[0] = image_center_x;
-			focalPoint[1] = prevFocalPoint[1];
-			focalPoint[2] = prevFocalPoint[2];
-			//std::cout<<"X axis projection"<<std::endl;
-			break;
-		case 1:
-			image_center_x = (bounds[0]+bounds[1])/2;
-			image_center_y = bounds[3]-abs(value);
-			image_center_z = (bounds[4]+bounds[5])/2;
-			focalPoint[0] = prevFocalPoint[0];
-			focalPoint[1] = image_center_y;
-			focalPoint[2] = prevFocalPoint[2];
-			//std::cout<<"Y axis projection"<<std::endl;
-			break;
-		case 2:
-			image_center_x = (bounds[0]+bounds[1])/2;
-			image_center_y = (bounds[2]+bounds[3])/2;
-			image_center_z = bounds[5]-abs(value);
-			focalPoint[0] = prevFocalPoint[0];
-			focalPoint[1] = prevFocalPoint[1];
-			focalPoint[2] = image_center_z;
-			//std::cout<<"Z axis projection"<<std::endl;
-			break;
-		default: std::cerr << "Invalid slice plane" << std::endl;
+	case 0: 
+		image_center_x = bounds[1]-abs(value);
+		image_center_y = (bounds[2]+bounds[3])/2;
+		image_center_z = (bounds[4]+bounds[5])/2;
+		focalPoint[0] = image_center_x;
+		focalPoint[1] = prevFocalPoint[1];
+		focalPoint[2] = prevFocalPoint[2];
+		//std::cout<<"X axis projection"<<std::endl;
+		break;
+	case 1:
+		image_center_x = (bounds[0]+bounds[1])/2;
+		image_center_y = bounds[3]-abs(value);
+		image_center_z = (bounds[4]+bounds[5])/2;
+		focalPoint[0] = prevFocalPoint[0];
+		focalPoint[1] = image_center_y;
+		focalPoint[2] = prevFocalPoint[2];
+		//std::cout<<"Y axis projection"<<std::endl;
+		break;
+	case 2:
+		image_center_x = (bounds[0]+bounds[1])/2;
+		image_center_y = (bounds[2]+bounds[3])/2;
+		image_center_z = bounds[5]-abs(value);
+		focalPoint[0] = prevFocalPoint[0];
+		focalPoint[1] = prevFocalPoint[1];
+		focalPoint[2] = image_center_z;
+		//std::cout<<"Z axis projection"<<std::endl;
+		break;
+	default: std::cerr << "Invalid slice plane" << std::endl;
 	}
 
 	//std::cout << "Z Value: " << value << std::endl;
@@ -3247,8 +3247,8 @@ void View3D::setSlicerZValue(int value)
 void View3D::setSliceThickness(int sliceThickness)
 {
 	/*!
-	 *  Control slice thickness
-	 */
+	*  Control slice thickness
+	*/
 	this->ImageActors->SetSliceThickness(sliceThickness - 1);
 }
 void View3D::setSliceWindowLevel(int value)
@@ -3259,8 +3259,8 @@ void View3D::setSliceWindowLevel(int value)
 void View3D::ToggleColorByTrees()
 {
 	/*!
-	 *  On/off function for coloring trees
-	 */
+	*  On/off function for coloring trees
+	*/
 	bool colorByTrees = !this->tobj->GetColorByTrees();
 	//this->lineWidth = (float)this->LineWidthField->value();
 	this->tobj->SetColorByTrees(colorByTrees);
@@ -3276,8 +3276,8 @@ void View3D::ToggleColorByTrees()
 void View3D::ToggleGridlines() //2D gridlines
 {
 	/*!
-	 * On/off function for gridlines
-	 */
+	* On/off function for gridlines
+	*/
 
 	int num_lines = this->Gridlines->NumberOfLines();
 	int height_spacing = this->HeightSpaceBox->value();
@@ -3304,7 +3304,7 @@ void View3D::ToggleGridlines() //2D gridlines
 		else if (renderMode == PROJECTION)
 		{
 			if (this->projection_axis == 2)
-					Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
+				Gridlines->createGridxy(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 			else if (this->projection_axis == 1)
 				Gridlines->createGridxz(sceneBounds,height_spacing,width_spacing, line_width, line_r, line_g, line_b, line_opacity, grid_z_plane);
 			else
@@ -3365,8 +3365,8 @@ void View3D::ToggleGridlines() //2D gridlines
 void View3D::AdjustGridlines(int value)
 {
 	/*!
-	 * Control height spacing, width spacing, depth spacing, color, and opacity.
-	 */
+	* Control height spacing, width spacing, depth spacing, color, and opacity.
+	*/
 
 	//Remove actors
 	int num_horizontal_lines = this->Gridlines->NumberOfHorizontalLines();
@@ -3460,8 +3460,8 @@ void View3D::CreateSphereActor()
 void View3D::createSomaSliders()
 {
 	/*!
-	 * Control soma color, brightness, and opacity.
-	 */
+	* Control soma color, brightness, and opacity.
+	*/
 
 	this->SomaBar = new QToolBar("Soma Tools", this);
 	this->SomaBar->setObjectName("SomaBar");
@@ -3539,8 +3539,8 @@ void View3D::createSomaSliders()
 void View3D::createRayCastSliders()
 {
 	/*!
-	 * Control image brightness and opacity.
-	 */
+	* Control image brightness and opacity.
+	*/
 
 	this->RaycastBar = new QToolBar("RayCast Tools", this);
 	this->RaycastBar->setObjectName("RaycastBar");
@@ -3801,7 +3801,7 @@ void View3D::PickCell(vtkObject* caller, unsigned long event, void* clientdata, 
 	if (cell_picker->GetCellId() == -1) 
 	{
 		view->SphereActor->VisibilityOff();     //not working quite yet but sphere will move
-		
+
 		pickPosition pointpicker;		
 		cell_picker->GetPickPosition(pointpicker.picked);
 		//std::cout << "Picked value: " << pointpicker.picked[0] << " " << pointpicker.picked[1] << " " << pointpicker.picked[2] <<endl;
@@ -3844,8 +3844,8 @@ void View3D::PickPoint(vtkObject* caller, unsigned long event, void* clientdata,
 	int *pointpos = view->Interactor2->GetEventPosition();
 	view->Interactor2->GetPicker()->Pick(pointpos[0],pointpos[1],0.0,view->Interactor2->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
 	double picked[3];
-    view->Interactor2->GetPicker()->GetPickPosition(picked);
-    //std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
+	view->Interactor2->GetPicker()->GetPickPosition(picked);
+	//std::cout << "Picked value: " << picked[0] << " " << picked[1] << " " << picked[2] << std::endl;
 	view->QVTK->GetRenderWindow()->Render();
 }
 
@@ -3936,7 +3936,7 @@ void View3D::setPTtoSoma()
 		this->Rerender();
 		this->TreeModel->SetTraces(this->tobj->GetTraceLines());
 	}
-	
+
 }
 
 void View3D::setUsePointer(int i)
@@ -4033,7 +4033,7 @@ void View3D::DrawROI()
 	//ROIactor->SetMapper(ROImapper);
 	//this->Renderer->AddActor(ROIactor);
 	this->Renderer->AddActor(this->VOIType->GetActor());
-	
+
 	this->QVTK->GetRenderWindow()->Render();
 	this->createNewROIPointButton->setEnabled(false);
 	this->ExtrudeROIButton->setEnabled(false);
@@ -4044,7 +4044,7 @@ void View3D::DrawROI()
 /////////////Trac's//////////////
 void View3D::ReadVOI()
 {
-//QDialogue to read tiff or mhd image here
+	//QDialogue to read tiff or mhd image here
 	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString somaFiles = QFileDialog::getOpenFileName(this , "Choose a Soma file to load", traceDir, 
 		tr(" OBJ VTP ( *.obj *.vtp ) ;; Image File ( *.tiff *.tif *.pic *.PIC *.mhd ) " ));
@@ -4063,10 +4063,10 @@ void View3D::ReadVOI()
 		{
 			this->VOIType->ReadBinaryVOI(somaFiles.toStdString());
 		}	
-		
+
 		this->ROIactor = this->VOIType->GetActor();
 		this->Renderer->AddActor( this->ROIactor);
-		
+
 		this->QVTK->GetRenderWindow()->Render();
 		this->createNewROIPointButton->setEnabled(false);
 		this->ExtrudeROIButton->setEnabled(false);
@@ -4081,7 +4081,7 @@ void  View3D::WriteVOI()
 	QString traceDir = this->TraceEditSettings.value("traceDir", ".").toString();
 	QString somaFiles = QFileDialog::getSaveFileName(this, "Save Volume as" , traceDir, 
 		tr("VTK Data Format ( *vtp ) " ) );
-	
+
 	somaFiles = somaFiles % QString(".vtp");
 	if(!somaFiles.isEmpty())
 	{
@@ -4102,7 +4102,7 @@ void  View3D::ToggleVOI()
 			this->Renderer->AddActor( this->ROIactor);
 		}
 		bshowDevice = !bshowDevice;
-		
+
 		this->QVTK->GetRenderWindow()->Render();
 	}
 }
@@ -4113,7 +4113,7 @@ void View3D::CalculateDistanceToVessel()
 	{
 		this->ShowCellAnalysis();
 	}
-	
+
 	std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
 	CellTrace* currCell = (*cellCount).second;
 	std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
@@ -4192,15 +4192,15 @@ void View3D::readNucleiTable()
 	/*QString fileName = QFileDialog::getOpenFileName(this, "Open Nuclei Table", "",tr("project ( *.xml *.txt )"));
 	if (!fileName.isEmpty())
 	{
-		if (fileName.endsWith("xml"))
-		{
-			this->readProject(fileName);
-		}
-		else
-		{
-			this->nucleiTable = ftk::LoadTable(fileName.toStdString());
-		}
-		std::cout << "loading table \n";
+	if (fileName.endsWith("xml"))
+	{
+	this->readProject(fileName);
+	}
+	else
+	{
+	this->nucleiTable = ftk::LoadTable(fileName.toStdString());
+	}
+	std::cout << "loading table \n";
 	}
 	this->AssociateCellToNucleiAction->setDisabled(false);*/
 }
@@ -4275,7 +4275,7 @@ void View3D::AssociateNeuronToNuclei()
 void View3D::readDebrisTable()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open Debris Table", "",tr("project ( *.xml *.txt )"));
-	
+
 	if (!fileName.isEmpty())
 	{
 		vtkSmartPointer<vtkTable> debrisTable = ftk::LoadTable(fileName.toStdString());
@@ -4368,7 +4368,7 @@ void View3D::setHighlightSettings(int value)
 		highlightMode = TREE;
 
 	this->updateTraceSelectionHighlights();
-	
+
 }
 void View3D::updateTraceSelectionHighlights()
 {
@@ -4396,7 +4396,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 	{
 		color = tline->getTraceColor();
 	}
-	
+
 	iter++; // skip recoloring of soma
 
 	if (highlightMode == SEGMENT)
@@ -4410,7 +4410,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 		//while (color > 0.75 && color < 0.9) //avoid red (<0.1) and blue(0.85-1.0)
 		//	color += 0.1;
 		//color_choice[0] = color; // initial color value
-		
+
 		//for (int i = 1; i < 8; i++)
 		//{
 		//	color_choice[i] = color;
@@ -4437,7 +4437,7 @@ void View3D::HighlightSelected(TraceLine* tline, double color)
 			}
 			else
 				poly_line_data->GetPointData()->GetScalars()->SetTuple1(iter->marker,color);
-			
+
 			++iter;
 		}
 	}
@@ -4458,7 +4458,7 @@ void View3D::Rerender()
 	//this->tobj->cleanTree();
 	this->SphereActor->VisibilityOff();
 	this->SelectedTraceIDs.clear();
-	
+
 	//////////// PK_CHANGE - FUNCTION DOES NOT EXIST IN MERGE MODEL
 	//if(this->tobj->GetTraceTypeGeneric() == TRACE_TYPE_TREE)
 	//	this->MergeGaps->GetSelectionModel()->clearSelection();
@@ -4505,7 +4505,7 @@ void View3D::Rerender()
 		this->TreePlot->update();
 	}
 	this->SplitLabel->setText(QString::number(this->numSplit));
-	
+
 	this->MergeLabel->setText(QString::number(this->numMerged));
 	this->DeleteLabel->setText(QString::number(this->numDeleted));
 	this->BranchesLabel->setText(QString::number(this->tobj->BranchPoints.size()));
@@ -4525,8 +4525,8 @@ void View3D::Rerender()
 		}
 		/*if (this->FL_histo)
 		{
-			this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-			this->FL_histo->update();
+		this->FL_histo->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+		this->FL_histo->update();
 		}*/
 	}//end if has cell calculations
 	this->statusBar()->showMessage(tr("Finished Rerendering Image")); 
@@ -4677,7 +4677,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		//  view->DeleteTraces();
 		//  break;
 
-	/*case 'm':
+		/*case 'm':
 		view->MergeTraces();
 		break;*/
 
@@ -4685,7 +4685,7 @@ void View3D::HandleKeyPress(vtkObject* caller, unsigned long event,
 		view->SplitTraces();
 		break;
 
-	/*case 'f':
+		/*case 'f':
 		view->FlipTraces();
 		break;*/
 
@@ -5015,17 +5015,17 @@ void View3D::SelectTrees()
 	}//end root size
 }
 void View3D::DeleteTree(){
-	
+
 	// Always select the tree before pressing this button! There is no hard check.
 
 	std::vector<TraceLine*> selectedLines = this->TreeModel->GetSelectedTraces();
-	
+
 	// ADD: Check if the selectedTraces actually contain a root. 
 	if(!selectedLines.empty()){
 		for(int i = 0; i < selectedLines.size(); i++){
 			this->tobj->RemoveTraceLine(selectedLines[i]);
 		}
-		
+
 		this->ClearSelection();
 	}
 	else
@@ -5084,8 +5084,8 @@ void View3D::updateSelectionFromCell()
 
 	this->poly_line_data->Modified();
 	this->QVTK->GetRenderWindow()->Render();/*
-	this->statusBar()->showMessage(tr("Selected\t")
-		+ QString::number(limit) +tr("\tCells"));*/
+											this->statusBar()->showMessage(tr("Selected\t")
+											+ QString::number(limit) +tr("\tCells"));*/
 }
 void View3D::updateNodeSelection()
 {
@@ -5223,12 +5223,12 @@ void View3D::DeleteTraces()
 							///////// PK_CHANGE - COMMENT
 							/*if (siblings.size() == 1)
 							{
-								TraceLine *tother1 =siblings[0];
-								TraceLine::TraceBitsType::iterator iter1,iter2;
-								iter1= parent->GetTraceBitIteratorEnd();
-								iter2 = tother1->GetTraceBitIteratorBegin();
-								iter1--;
-								tobj->mergeTraces((*iter1).marker,(*iter2).marker);
+							TraceLine *tother1 =siblings[0];
+							TraceLine::TraceBitsType::iterator iter1,iter2;
+							iter1= parent->GetTraceBitIteratorEnd();
+							iter2 = tother1->GetTraceBitIteratorBegin();
+							iter1--;
+							tobj->mergeTraces((*iter1).marker,(*iter2).marker);
 							}//end sibling size*/
 						}//end branch pointer
 					}//end parent id
@@ -5660,7 +5660,7 @@ void View3D::StartActiveLearning()
 	featureTable = this->CellModel->getDataTable();
 	featureTable->RemoveColumnByName("Trace File");
 	if(!featureTable) return;
-//run training dialoge for sample selection
+	//run training dialoge for sample selection
 	TrainingDialog *Training = new TrainingDialog(featureTable, "train","active",featureTable->GetNumberOfRows() ,this);
 	Training->exec();
 
@@ -5717,7 +5717,7 @@ void View3D::StartActiveLearning()
 			bool user_stop_dialog_flag = false;
 			bool loop_termination_condition = true;
 
-			
+
 
 			/////////////////////////////////////////////////////////////////////////
 			// Querying starts now
@@ -5741,7 +5741,7 @@ void View3D::StartActiveLearning()
 				}
 				CellTrace* currCell = this->CellModel->GetCell(zoomID);
 				this->FocusOnCell(currCell);
-									
+
 				ALDialog =  new GenericALDialog(mclr->test_table, this->mclr->no_of_classes, active_query, this->mclr->top_features);
 				ALDialog->setWindowTitle(QString("Active Learning Window: Specify Class for Cell %1").arg(mclr->id_time_val.at(active_query).first));
 				ALDialog->exec();	 
@@ -5764,7 +5764,7 @@ void View3D::StartActiveLearning()
 
 				// Update the data & refresh the training model and refresh the Training ALDialog 		
 				mclr->Update_Train_Data(active_query, ALDialog->class_selected);
-				
+
 				if(ALDialog->class_selected == 0)
 				{
 					mclr->Get_Training_Model();
@@ -5830,7 +5830,7 @@ void View3D::StartActiveLearning()
 
 			vnl_matrix<double> currprob;
 			currprob = this->mclr->Test_Current_Model(data_classify);
-			
+
 			int predictionIndex = this->CellModel->AddNewFeatureHeader("Prediction");
 			int confIndex = this->CellModel->AddNewFeatureHeader("Confidence");
 			//std::cout << "debug prediction: "<< predictionIndex << "confidence" << confIndex << std::endl;
@@ -5874,59 +5874,59 @@ QImage View3D::Get_AL_Snapshot(CellTrace* currentCell)
 
 QImage View3D::vtkImageDataToQImage(vtkImageData * imageData)
 {
-    int dim[3];
-    imageData->GetDimensions(dim);
-    if(dim[0]*dim[1]*dim[2] == 0)
-        return QImage();
+	int dim[3];
+	imageData->GetDimensions(dim);
+	if(dim[0]*dim[1]*dim[2] == 0)
+		return QImage();
 
 	int x_min=dim[0], x_max=0, y_min=dim[1], y_max=0;
-	
-    vtkUnsignedCharArray* scalars 
-        = vtkUnsignedCharArray::SafeDownCast(imageData->GetPointData()->GetScalars());
-    if(!scalars)
-        return QImage();
 
-    QImage qImage(dim[0], dim[1], QImage::Format_ARGB32);
-    vtkIdType tupleIndex=0;
-   
-    for(int j=0; j<dim[1]; j++)
-    {
-        for(int i=0; i<dim[0]; i++)
-        {
+	vtkUnsignedCharArray* scalars 
+		= vtkUnsignedCharArray::SafeDownCast(imageData->GetPointData()->GetScalars());
+	if(!scalars)
+		return QImage();
+
+	QImage qImage(dim[0], dim[1], QImage::Format_ARGB32);
+	vtkIdType tupleIndex=0;
+
+	for(int j=0; j<dim[1]; j++)
+	{
+		for(int i=0; i<dim[0]; i++)
+		{
 			unsigned char tuple[] = {0, 0, 0, 0};
-            int r=0, g=0, b=0, a=0;
-            scalars->GetTupleValue(tupleIndex+(j*dim[0])+i, tuple);
+			int r=0, g=0, b=0, a=0;
+			scalars->GetTupleValue(tupleIndex+(j*dim[0])+i, tuple);
 
-            switch(scalars->GetNumberOfComponents())
-            {
-            case 1: 
-                r = g = b = tuple[0];
-                a = 255;
-                break;
-            case 2:
-                r = g = b = tuple[0];
-                a = tuple[1];
-                break;
-            case 3:
-                r = tuple[0];
-                g = tuple[1];
-                b = tuple[2];
-                a = 255;
-                break;
-            case 4:
-                r = tuple[0];
-                g = tuple[1];
-                b = tuple[2];
-                a = tuple[3];
-                break;
-            }
+			switch(scalars->GetNumberOfComponents())
+			{
+			case 1: 
+				r = g = b = tuple[0];
+				a = 255;
+				break;
+			case 2:
+				r = g = b = tuple[0];
+				a = tuple[1];
+				break;
+			case 3:
+				r = tuple[0];
+				g = tuple[1];
+				b = tuple[2];
+				a = 255;
+				break;
+			case 4:
+				r = tuple[0];
+				g = tuple[1];
+				b = tuple[2];
+				a = tuple[3];
+				break;
+			}
 
 			//to get the bounds of the orange traces
 			if(r>100 && g>80 && g<100 && b<10)
 			{
 				r = 0;
-                g = 255;
-                b = 255;
+				g = 255;
+				b = 255;
 				if(i < x_min)
 					x_min = i;
 				if(i > x_max)
@@ -5938,10 +5938,10 @@ QImage View3D::vtkImageDataToQImage(vtkImageData * imageData)
 
 			}
 			////////////////////////////////////////
-            QRgb color = qRgba(r, g, b, a);
-            qImage.setPixel(i, j, color);
-        }
-    }
+			QRgb color = qRgba(r, g, b, a);
+			qImage.setPixel(i, j, color);
+		}
+	}
 	if((x_max - x_min) > (y_max - y_min))
 	{
 		y_min = y_min - (((x_max - x_min)-(y_max - y_min))/2);
@@ -5954,7 +5954,7 @@ QImage View3D::vtkImageDataToQImage(vtkImageData * imageData)
 	}
 	QImage q_Image;
 	//if((x_max - x_min) > 256)
-		q_Image = qImage.copy(x_min - 20, y_min - 20, x_max - x_min + 40, y_max - y_min + 40).scaledToHeight(256);	
+	q_Image = qImage.copy(x_min - 20, y_min - 20, x_max - x_min + 40, y_max - y_min + 40).scaledToHeight(256);	
 	//else
 	//{
 	//	x_min = x_min - ((256 - (x_max - x_min))/2);
@@ -5963,7 +5963,7 @@ QImage View3D::vtkImageDataToQImage(vtkImageData * imageData)
 	//	y_max = y_max + ((256 - (y_max - y_min))/2);
 	//	q_Image = qImage.copy(x_min - 10, y_min - 10, x_max - x_min + 20, y_max - y_min + 20);
 	//}
- 
+
 	return q_Image;
 }
 
@@ -6152,14 +6152,14 @@ void View3D::AddLines()
 
 	}
 	else if(this->SelectedTraceIDs.size() == 1 && this->SelectedTraceBits.size() == 1){
-		
+
 		double point[3] = {this->SelectedTraceBits[0].picked[0],this->SelectedTraceBits[0].picked[1],this->SelectedTraceBits[0].picked[2]};
 
 		//std::cout << "Adding an extension to a trace line. " << std::endl;
 		this->tobj->AddExtensionToTraceLine(this->SelectedTraceIDs[0], point);
 	}
 
-	
+
 	this->SelectedTraceBits.clear();
 	this->ClearSelection();
 
@@ -6374,12 +6374,12 @@ void View3D::saveRenderWindow(const char *filename)
 {
 	this->WindowToImage = vtkSmartPointer<vtkWindowToImageFilter>::New();
 	this->WindowToImage->SetInput(this->QVTK->GetRenderWindow());
-	
+
 	if (savescreenshotDialog) //only if savescreenshotDialog is constructed
 		this->WindowToImage->SetMagnification(this->savescreenshotDialog->getMagnification()); //save this for presentations
 	else
 		this->WindowToImage->SetMagnification(1);
-	
+
 	this->PNGWriter = vtkSmartPointer<vtkPNGWriter>::New();
 	this->PNGWriter->SetInput(this->WindowToImage->GetOutput());
 	this->PNGWriter->SetFileName(filename);
@@ -6394,13 +6394,13 @@ void View3D::SaveScreenShot()
 	filePath = savescreenshotDialog->getDir();
 	fileName = savescreenshotDialog->getfileName();
 	QString fullFileName = filePath % "/" % fileName % QString(".png");
-	#ifdef USE_QT_TESTING
+#ifdef USE_QT_TESTING
 	if(savescreenshotDialog->getBaseline())
 	{
 		//resize render window to default baseline size
 		this->resizeForTesting();
 	}
-	#endif
+#endif
 	if (!fullFileName.isEmpty())
 	{
 		this->saveRenderWindow(fullFileName.toStdString().c_str());
@@ -6431,7 +6431,7 @@ void View3D::AutoCellExport()
 		jpgfileName = cellexportDialog->getJPGfileName();
 		changeswcfileName = cellexportDialog->differentSWCfileName();
 		changejpgfileName = cellexportDialog->differentJPGfileName();
-		
+
 		if (cellexportDialog->getSave())
 		{
 			QProgressDialog progress("Finding Cells", "Abort", 0, cellCount, this);
@@ -6504,17 +6504,17 @@ void View3D::AutoCellExport()
 
 void View3D::closeEvent(QCloseEvent *event)
 {	
-  if(this->SaveSettingsOnExit)
-  {
-    this->TraceEditSettings.setValue("mainWin/size", this->size());
-    this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
-    this->TraceEditSettings.setValue("mainWin/use2d", this->viewIn2D);
-    this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
-    this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
-    this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
-    this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
-    this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
-  }
+	if(this->SaveSettingsOnExit)
+	{
+		this->TraceEditSettings.setValue("mainWin/size", this->size());
+		this->TraceEditSettings.setValue("mainWin/pos",	this->pos());
+		this->TraceEditSettings.setValue("mainWin/use2d", this->viewIn2D);
+		this->TraceEditSettings.setValue("lastOpen/Project",this->ProjectName);
+		this->TraceEditSettings.setValue("lastOpen/Image", this->Image);
+		this->TraceEditSettings.setValue("lastOpen/Trace",this->TraceFiles);
+		this->TraceEditSettings.setValue("lastOpen/Soma", this->SomaFile);
+		this->TraceEditSettings.setValue("lastOpen/Temp", this->tempTraceFile);
+	}
 	this->CloseTreePlots();
 	this->CloseNodePlots();
 	this->HideCellAnalysis();
@@ -6541,7 +6541,7 @@ void View3D::closeEvent(QCloseEvent *event)
 		this->SPDWin->close();
 	}
 #endif
-	
+
 #ifdef USE_Clusclus
 	if (this->HeatmapWin)
 	{
@@ -6578,10 +6578,10 @@ void View3D::CropBorderCells()
 	std::vector<CellTrace*>::iterator cells_list_iter;
 
 	float sum_of_skewness_X = 0;
-	float sum_of_skewness_Y = 0; 
+	float sum_of_skewness_Y = 0;
 	float sum_of_skewness_Z = 0;
 	float sum_of_height = 0;
-	float sum_of_width = 0; 
+	float sum_of_width = 0;
 	float sum_of_depth = 0;
 	float max_skewness_X = 0;
 	float max_skewness_Y = 0;
@@ -6616,7 +6616,7 @@ void View3D::CropBorderCells()
 				max_skewness_Y = abs(cell->skewnessY);
 			if (abs(cell->skewnessZ) > max_skewness_Z)
 				max_skewness_Z = abs(cell->skewnessZ);
-			
+
 			num_cells++;
 		}
 		else
@@ -6656,7 +6656,7 @@ void View3D::CropBorderCells()
 	std::cout << std::endl;
 
 	//Go through cells list again and only calculate average dimensions on cells with within 80% of the max skewness in each dimension (x, y, z)
-	
+
 	double sum_of_pruned_skewness_X = 0;
 	double sum_of_pruned_skewness_Y = 0;
 	double sum_of_pruned_skewness_Z = 0;
@@ -6695,7 +6695,7 @@ void View3D::CropBorderCells()
 	std::cout << "Average Pruned Skewness X: " << average_pruned_skewness_X << std::endl;
 	std::cout << "Average Pruned Skewness Y: " << average_pruned_skewness_Y << std::endl;
 	std::cout << "Average Pruned Skewness Z: " << average_pruned_skewness_Z << std::endl;
-	
+
 	std::cout << "Average Pruned Width: " << average_pruned_width << std::endl;
 	std::cout << "Average Pruned Height: " << average_pruned_height << std::endl;
 	std::cout << "Average Pruned Depth: " << average_pruned_depth << std::endl;
@@ -6729,17 +6729,17 @@ void View3D::CropBorderCells()
 			cropped_cells_root.push_back(cell->rootID());
 		}
 	}
-	
+
 	CellModel->SelectByIDs(cropped_cells_root);
 	DeleteTraces();
 	CellModel->SelectByRootTrace(roots);
 	cells_list = CellModel->GetSelectedCells();
-	
+
 }                                                                                                                                                                                                                                      
 
 
 
- /// modified to table with null
+/// modified to table with null
 void View3D::SaveComputedCellFeaturesTable()  
 {
 	if (CellModel->getCellCount() == 0)	//Need to calculate cell features before we can write them!
@@ -6750,13 +6750,13 @@ void View3D::SaveComputedCellFeaturesTable()
 			this->CellModel->setCells(NewCells);
 		}
 	}
-	
+
 	ofstream myfile;
 	myfile.open("L-Measures.txt");
-	
+
 	vtkSmartPointer<vtkTable> table = CellModel->getDataTable();
 	//table->Dump(1);
-	
+
 	//Dump out headers
 	for(vtkIdType columnIndex = 0; columnIndex < table->GetNumberOfColumns(); columnIndex++ )
 	{	
@@ -6875,11 +6875,11 @@ void View3D::ClusclusAnalysis()
 		featureTable = this->CellModel->getDataTable();
 		cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
 		featureTable->RemoveColumnByName("Trace File");
-		
+
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
-		
+
 		featureTable->RemoveColumnByName("Total Segment Section Area");
 		featureTable->RemoveColumnByName("Min Segment Section Area");
 		featureTable->RemoveColumnByName("Max Segment Section Area");
@@ -6940,7 +6940,7 @@ void View3D::BiclusAnalysis()
 		featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(0));
 		for(int col=4; col<(int)this->CellModel->getDataTable()->GetNumberOfColumns(); ++col)
 			featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(col));
-		
+
 		//vtkSmartPointer<vtkTable> featureTable = this->CellModel->getDataTable();
 		featureTable->RemoveColumnByName("Trace File");	
 		featureTable->RemoveColumnByName("Soma X Pos");
@@ -6958,11 +6958,11 @@ void View3D::BiclusAnalysis()
 			for(int j = 1; j < featureTable->GetNumberOfColumns(); j++)
 			{
 				double var = featureTable->GetValue(i, j).ToDouble();
-				#ifdef _MSC_VER
-					const bool isnan = _isnan(var);
-				#else
+#ifdef _MSC_VER
+				const bool isnan = _isnan(var);
+#else
 				const bool isnan = boost::math::isnan(var);
-				#endif
+#endif
 				if( isnan )
 				{				
 					var = 0;
@@ -6978,7 +6978,7 @@ void View3D::BiclusAnalysis()
 					std::cout<<"value is too negative, modified during analysis in entry "<<i<<"and "<<j<< std::endl;
 					var = -1E10;
 				}
-			points[i].push_back(var);
+				points[i].push_back(var);
 			}
 		}
 
@@ -7032,7 +7032,7 @@ void View3D::BiclusAnalysis()
 			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
 			this->FL_MeasureTable->update();
 		}
-		
+
 
 		delete bicluster;
 	}
@@ -7059,21 +7059,21 @@ void View3D::Highlighted_selected()
 		int c = fgetc(fp);
 		switch(c)
 		{
-			case '\n':				
-				(num_samples)++;	
-				n++;
-				if(num_features == 0)num_features = n;
-				break;	
-			case '\t':
-				n++;
-				break;
-			case EOF:
-				goto out;
-			default:
-				;
+		case '\n':				
+			(num_samples)++;	
+			n++;
+			if(num_features == 0)num_features = n;
+			break;	
+		case '\t':
+			n++;
+			break;
+		case EOF:
+			goto out;
+		default:
+			;
 		}
 	}
-	out:
+out:
 	rewind(fp);
 	for(int i=0; i<num_samples; i++)
 	{
@@ -7139,7 +7139,7 @@ void View3D::KNearestNeighborAnalysis()
 		mes.setText("Please compute cell features first!");
 		mes.exec();
 	}
-	
+
 	vtkSmartPointer<vtkTable> cellFeatureTable = this->CellModel->getDataTable();
 	std::vector<unsigned int> IDs;
 	unsigned int k;
@@ -7164,7 +7164,7 @@ void View3D::KNearestNeighborAnalysis()
 
 	for(int i=0; i<max_class; ++i)
 		classes.push_back(QString::number(i+1));
-	
+
 
 	QueryDialog *dialog = new QueryDialog(1, classes, false, this);
 	if( dialog->exec() )
@@ -7246,9 +7246,9 @@ void View3D::KNearestNeighborAnalysis()
 
 	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
 
-	#ifdef USE_QT_TESTING
+#ifdef USE_QT_TESTING
 	std::cout << kNeighborTable->GetNumberOfRows() << " neighbors potentially connected" << std::endl;
-	#endif
+#endif
 
 	delete KNObj;
 	KNObj = NULL;
@@ -7273,7 +7273,7 @@ void View3D::NeighborsWithinRadiusAnalysis()
 		mes.setText("Please compute cell features first!");
 		mes.exec();
 	}
-	
+
 	vtkSmartPointer<vtkTable> cellFeatureTable = this->CellModel->getDataTable();
 	std::vector<unsigned int> IDs;
 	double radius;
@@ -7377,9 +7377,9 @@ void View3D::NeighborsWithinRadiusAnalysis()
 
 	vtkSmartPointer<vtkTable> radNeighborTable = KNObj->vectorsToGraphTable(radNeighborIDs);	
 
-	#ifdef USE_QT_TESTING
+#ifdef USE_QT_TESTING
 	std::cout << radNeighborTable->GetNumberOfRows() << " neighbors in radius" << std::endl;
-	#endif
+#endif
 	delete KNObj;
 
 }
@@ -7446,11 +7446,11 @@ void View3D::selectedFeaturesClustering()
 	std::set<long int>::iterator it = selectedIDs2.begin();
 
 	while(it != selectedIDs2.end())
-		{
-			int index = *it;
-			featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(index));
-			it++;
-		}
+	{
+		int index = *it;
+		featureTable->AddColumn(this->CellModel->getDataTable()->GetColumn(index));
+		it++;
+	}
 
 	cout<<"==============================="<<featureTable->GetNumberOfColumns()<<endl;
 	this->HeatmapWins->setModels(featureTable,this->CellModel->GetObjectSelection());
@@ -7462,79 +7462,79 @@ void View3D::selectedFeaturesClustering()
 
 int View3D::runTests()
 {
-  #ifdef USE_QT_TESTING
-  if( this->TestInputFile == "" )
-    {
-    return -1;
-    }
+#ifdef USE_QT_TESTING
+	if( this->TestInputFile == "" )
+	{
+		return -1;
+	}
 
-  //setup test utility
-  this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );  
-	
-  //resize QVTK to match dimensions of recorded screenshots
-  this->resizeForTesting();
-  
-  //playback the test recording
-  this->Tester->playTestFile( this->TestInputFile );
-  
-  //if this is an image comparison test, compare render window to
-  //screenshot of baseline  
-  if( this->TestBaselineImageFileName != "" )
-    {
-    this->Tester->SetBaselineImage(
-      this->TestBaselineImageFileName.toStdString().c_str() );
-      this->Renderer->GetActiveCamera()->PrintSelf(std::cout, vtkIndent());
-    if(this->Tester->compareResults() == false)
-      {
-      std::cout << "ERROR: test failed" << std::endl;
-      return 1;
-      }
-    else
-      {
-      std::cout << "test passed" << std::endl;
-      }
-    }
-  return 0;
-  #endif
-  return -1;
+	//setup test utility
+	this->Tester->SetRenderWindow( this->QVTK->GetRenderWindow() );  
+
+	//resize QVTK to match dimensions of recorded screenshots
+	this->resizeForTesting();
+
+	//playback the test recording
+	this->Tester->playTestFile( this->TestInputFile );
+
+	//if this is an image comparison test, compare render window to
+	//screenshot of baseline  
+	if( this->TestBaselineImageFileName != "" )
+	{
+		this->Tester->SetBaselineImage(
+			this->TestBaselineImageFileName.toStdString().c_str() );
+		this->Renderer->GetActiveCamera()->PrintSelf(std::cout, vtkIndent());
+		if(this->Tester->compareResults() == false)
+		{
+			std::cout << "ERROR: test failed" << std::endl;
+			return 1;
+		}
+		else
+		{
+			std::cout << "test passed" << std::endl;
+		}
+	}
+	return 0;
+#endif
+	return -1;
 }
 
 void View3D::clearSettings()
 {
-  int reply = QMessageBox::question(this, tr("Clear settings"), 
-    "This action will delete all custom Trace Editor settings, reverting them back\nto their default values.  Are you sure you'd like to do this?",
-    QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
+	int reply = QMessageBox::question(this, tr("Clear settings"), 
+		"This action will delete all custom Trace Editor settings, reverting them back\nto their default values.  Are you sure you'd like to do this?",
+		QMessageBox::Yes |QMessageBox::No, QMessageBox::No);
 
-  if (reply == QMessageBox::Yes)
-  {
-	  this->TraceEditSettings.clear();
-    this->SaveSettingsOnExit = false;
-    
-    QMessageBox::information(this, "Settings cleared!",
-      "All QSettings have been reverted to their default values",
-      QMessageBox::Ok, QMessageBox::Ok);
-  }
+	if (reply == QMessageBox::Yes)
+	{
+		this->TraceEditSettings.clear();
+		this->SaveSettingsOnExit = false;
 
-  //for testing
-  std::cout << "All QSettings have been reverted to their default values" << std::endl;
+		QMessageBox::information(this, "Settings cleared!",
+			"All QSettings have been reverted to their default values",
+			QMessageBox::Ok, QMessageBox::Ok);
+	}
+
+	//for testing
+	std::cout << "All QSettings have been reverted to their default values" << std::endl;
 }
 
 void View3D::recordTest()
 {
-  //force render window to a specific size
-  //this makes image comparison much easier
+	//force render window to a specific size
+	//this makes image comparison much easier
 	this->resizeForTesting();
-	#ifdef USE_QT_TESTING
-    this->Tester->record();
-	#endif
+#ifdef USE_QT_TESTING
+	this->Tester->record();
+#endif
 }
 
 void View3D::resizeForTesting()
 {
-  this->resize(1000, 900);
-  this->QVTK->resize(600, 500);
-  this->update();
-  this->Renderer->ResetCamera();
+	this->resize(1000, 900);
+	this->QVTK->resize(600, 500);
+	this->update();
+	this->Renderer->ResetCamera();
 }
 
 //#######################################################################
@@ -7590,7 +7590,7 @@ QueryDialog::QueryDialog(int QueryType, QVector<QString> classes, bool diffusion
 		classLayout1->addWidget(classLabel1);
 		classLayout1->addWidget(classCombo1);
 		layout->addLayout(classLayout1);
-		
+
 		classLabel2 = new QLabel("Choose Destination Class: ");
 		classCombo2 = new QComboBox();
 		classCombo2->addItem("All");

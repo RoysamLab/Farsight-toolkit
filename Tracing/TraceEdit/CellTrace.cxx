@@ -552,7 +552,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->somaX);
 		CellData->InsertNextValue(this->somaY);
 		CellData->InsertNextValue(this->somaZ);
-		
+
 		CellData->InsertNextValue(this->maxX - this->minX);//Width
 		CellData->InsertNextValue(this->maxY - this->minY);//Length
 		CellData->InsertNextValue(this->maxZ - this->minZ);//Height		
@@ -863,7 +863,7 @@ std::vector<std::string> CellTrace::calculateConvexHull()
 
 		convexHullHeaders = convexHull->getConvexHullHeaders();
 		double* convexHullValues = convexHull->getConvexHullValues();
-		
+
 		int convexHullValueIndex = 0;
 		std::vector<std::string>::iterator headerIter;
 		for (headerIter = convexHullHeaders.begin(); headerIter != convexHullHeaders.end(); headerIter++)
@@ -900,7 +900,7 @@ std::vector<std::string> CellTrace::calculateAnglesToDevice()
 	DeviceAngleHeaders.push_back("Azimuth to Device");
 	DeviceAngleHeaders.push_back("Elevation to Device");
 	DeviceAngleHeaders.push_back("Cell Tips to Device Angle");
-	
+
 	this->addNewFeature(DeviceAngleHeaders[0],this->segments[0]->GetAzimuthToROI());
 	this->addNewFeature(DeviceAngleHeaders[1],this->segments[0]->GetElevationToROI());
 	this->addNewFeature(DeviceAngleHeaders[2],this->segments[0]->GetTipToROI());
@@ -918,6 +918,6 @@ std::string CellTrace::calculateDistanceToVessel(FloatImageType::Pointer distanc
 	distanceMap->GetPixel(somaIndex);
 	std::string vesselHeader = "Distance to Vessel";
 	this->addNewFeature(vesselHeader,distanceMap->GetPixel(somaIndex));
-	
+
 	return vesselHeader;
 }
