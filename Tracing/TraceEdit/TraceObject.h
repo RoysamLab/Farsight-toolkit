@@ -47,6 +47,10 @@ class vtkPolyData;
 class vtkCellArray;
 class vtkFloatArray;
 
+#define TRACE_TYPE_TREE 1
+#define TRACE_TYPE_GRAPH 2
+#define TRACE_TYPE_BOTH 3 // For future use
+
 typedef itk::Image< unsigned char, 3 >   ImageType;
 
 //needed because gcc doesn't have a built-in method to hash unsigned long long ints
@@ -90,6 +94,7 @@ public:
 	{
 		this->falseLineColor=set;
 	};
+
 	void setLUT(int num);
 	double GetTraceLUT(TraceLine *line);
 	double GetNodeTypeLUT(unsigned char type);
@@ -107,6 +112,11 @@ public:
 	void WriteToVTKFile(const char * filename);
 	void SetBranchPoints(std::vector<branchPT*> Branches);
 	void SetTraceOffset(double ntx, double nty, double ntz);
+	
+	void AddTraceLine(int selectedCellId1, int selectedCellId2);
+	void AddTraceLine(double p1[],double p2[]);
+	void AddEndTraceLine(int selectedCellId1, int selectedCellId2);
+	void AddExtensionToTraceLine(int selectedCellID, double point[]);
 
 	void addTrace(TraceLine* traceToAdd);
 	bool removeTrace(TraceLine* traceToRemove);
@@ -122,6 +132,7 @@ public:
 	void RemoveTraceLine(TraceLine* tline);
 	void FixPointMarkers(TraceLine* tline);
 	void mergeTraces(unsigned long long int eMarker, unsigned long long int sMarker);
+	void UnmarkLines(TraceLine* gtline);
 	void CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkFloatArray> point_scalars, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells);
 	void CreatePolyDataRecursive(TraceLine* tline, vtkSmartPointer<vtkPoints> line_points,vtkSmartPointer<vtkCellArray> line_cells);
 	void FindMinLines(int smallSize);
@@ -158,6 +169,7 @@ public:
 	std::set<long int> FalseBridges;
 	std::set<long int> HalfBridges;
 	std::vector<TraceGap*> Gaps;
+	std::vector<unsigned int>RootIDs;
 	std::vector<branchPT*> BranchPoints;
 	std::vector<std::string> FeatureHeaders;
 	vtksys::hash_map<unsigned int, unsigned long long int> hash_load;
@@ -177,6 +189,10 @@ public:
 	void RecolorTraces();
 	void RecolorTrace(TraceLine *line);
 
+	void SetTraceTypeGeneric(int type);
+	void SetTraceTypeGeneric(std::string type);
+	int GetTraceTypeGeneric();
+
 private:
 	std::vector<TraceLine*> trace_lines;
 	std::map< int ,CellTrace*> Cells;
@@ -190,7 +206,7 @@ private:
 	void CollectBranchPointsRecursive(vtkSmartPointer<vtkPoints> p, vtkSmartPointer<vtkCellArray> cells,TraceLine *tline);
 	void CollectSegmentMidPointsRecursive(vtkSmartPointer<vtkPoints>p, vtkSmartPointer<vtkCellArray> cells, vtkSmartPointer<vtkFloatArray> da,TraceLine* tline);
 
-	std::string ParseFileName(char* fullName);
+	void ParseFileName(char* fullName);
 	std::vector<std::string> ParsedName;
 	//helper functions & objects for converting .vtk polydata into a TraceObject
 	void ConvertVTKDataToTraceLines();
@@ -209,6 +225,7 @@ private:
 	//used for "color by trees" mode
 	bool ColorByTrees;
 	std::map<int, int> RootToTree;
+	int TraceTypeGeneric;
 };
 
 #endif

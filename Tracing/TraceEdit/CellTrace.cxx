@@ -106,7 +106,7 @@ void CellTrace::setTraces(std::vector<TraceLine*> Segments)
 			this->MaxMin(tipEucDistanceToSoma, this->TipToSomaEucDisTotal, this->TipToSomaEucDisMin, this->TipToSomaEucDisMax);
 			if(!this->segments[i]->isRoot())
 			{
-				TraceBit parentBit = this->segments[i]->GetParent()->GetTraceBitsPointer()->back();
+				TraceBit parentBit = this->segments[i]->GetParent(0)->GetTraceBitsPointer()->back();
 				double parentDiam = 2*parentBit.r;
 				this->TotalLastParentDiam += parentDiam;
 				if (this->LastParentDiamMax < parentDiam)

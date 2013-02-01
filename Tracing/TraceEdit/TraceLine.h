@@ -50,11 +50,22 @@ public:
   typedef std::list<TraceBit> TraceBitsType;
 	TraceLine();
 	TraceLine(const TraceLine &t);
-  ~TraceLine();
+	~TraceLine();
 	bool modified;
-	TraceLine *GetParent();
-	unsigned int GetParentID();
+
+	TraceLine *GetParent(int i);
+	std::vector<TraceLine*> GetParents();
+	int ParentSize();
+	unsigned int GetParentID(int i);
+	bool isParentLess();
+	bool isMarked();
+	void MarkLine();
+	void UnmarkLine();
 	void SetParent(TraceLine* p);
+	void RemoveParents();
+	void RemoveParent(int i);
+	int GetParentNumber(TraceLine* p);
+
 	int GetRootID();
 	int GetLevel();
 	int GetTerminalDegree() {return terminalDegree;}
@@ -132,6 +143,7 @@ public:
 	}*/
 
 	void setRoot(int RootID, int traceLevel, double parentPath);
+	void setRoot(int RootID);
 	void AddBranch(TraceLine* b);
 	TraceLine *GetBranch1();
 	void SetBranch1(TraceLine* b0);
@@ -225,7 +237,10 @@ private:
 	int level, terminalDegree;
 	std::vector<unsigned int> m_markers;
 	unsigned char m_type;
-	TraceLine *m_parent;
+	
+	std::vector<TraceLine* >m_parent; 
+	bool marked;
+
 	std::vector<TraceLine* >m_branches;
 	TraceBitsType m_trace_bits;
 
