@@ -62,10 +62,12 @@ public:
 	void ReadVTPVOI(std::string filename);
 	void ReadOBJVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
+	ImageType::RegionType GetVesselImageRegion() {return vesselImageRegion;}
 	
 private:
 	std::vector< double * > ROIPoints;
 	std::vector< vtkSmartPointer<vtkPolyData > > VOIPolyData;
 	ImageType::Pointer vesselMaskImage;
+	ImageType::RegionType vesselImageRegion;
 };
 #endif

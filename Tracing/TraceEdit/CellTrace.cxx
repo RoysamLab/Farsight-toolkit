@@ -908,16 +908,24 @@ std::vector<std::string> CellTrace::calculateAnglesToDevice()
 	return DeviceAngleHeaders;
 }
 
-std::string CellTrace::calculateDistanceToVessel(FloatImageType::Pointer distanceMap)
+std::string CellTrace::calculateDistanceToVessel(FloatImageType::Pointer distanceMap, ImageType::RegionType region)
 {
 	itk::Index<3> somaIndex;
 	somaIndex[0] = this->somaX;
 	somaIndex[1] = this->somaY;
 	somaIndex[2] = this->somaZ;
 
-	distanceMap->GetPixel(somaIndex);
 	std::string vesselHeader = "Distance to Vessel";
-	this->addNewFeature(vesselHeader,distanceMap->GetPixel(somaIndex));
+	if (region.IsInside(somaIndex))
+	{
+		distanceMap->GetPixel(somaIndex);
+		this->addNewFeature(vesselHeader,distanceMap->GetPixel(somaIndex));
+	}
+	else
+	{
+		std::cout << this->somaX << "," << this->somaY << "," << this->somaZ << " Cell is outside of the vessel image... skipped" << std::endl;
+		this->addNewFeature(vesselHeader,-1);
+	}
 
 	return vesselHeader;
 }

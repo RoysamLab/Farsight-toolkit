@@ -135,7 +135,10 @@ void VolumeOfInterest::ReadVesselDistanceMap(std::string fileName)
 		//return EXIT_FAILURE;
 	}
 	vesselMaskImage = vesselMaskReader->GetOutput();
-
+	
+	this->vesselImageRegion = vesselMaskImage->GetLargestPossibleRegion();
+	ImageType::SizeType size = this->vesselImageRegion.GetSize();
+	std::cout << "Vessel image size: " << size << std::endl;
 }
 
 FloatImageType::Pointer VolumeOfInterest::GetVesselMaskDistanceMap()

@@ -4101,12 +4101,12 @@ void View3D::CalculateDistanceToVessel()
 
 		std::map< int ,CellTrace* >::iterator cellCount = CellModel->GetCelliterator();
 		CellTrace* currCell = (*cellCount).second;
-		std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+		std::string DistanceToVesselHeader = currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap(),this->VOIType->GetVesselImageRegion());
 		cellCount++;
 		for (; cellCount != CellModel->GetCelliteratorEnd(); cellCount++)
 		{
 			CellTrace* currCell = (*cellCount).second;
-			currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap());
+			currCell->calculateDistanceToVessel(this->VOIType->GetVesselMaskDistanceMap(),this->VOIType->GetVesselImageRegion());
 		}
 		this->CellModel->AddNewFeatureHeader(DistanceToVesselHeader);
 
