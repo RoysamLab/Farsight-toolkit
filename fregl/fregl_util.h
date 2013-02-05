@@ -58,6 +58,9 @@ public:
 
 	typedef itk::Image< GDBICPPixelType, 2 >	GDBICPImageType;
 	typedef itk::Image< float, 2 >			FloatImageType2D;
+	typedef typename FloatImageType2D::Pointer		FloatImageType2DPointer;
+	typedef itk::Image< float, 3 >			FloatImageType;
+	typedef typename FloatImageType::Pointer		FloatImageTypePointer;
 	typedef itk::RGBPixel< unsigned char >		ColorPixelType;
 	typedef itk::Image< ColorPixelType, 3 >		ColorImageType;
 	typedef itk::Image< ColorPixelType, 2 >		ColorImageType2D;
@@ -72,6 +75,8 @@ public:
 	static ImageTypePointer fregl_util_read_image( std::string const & file_name, bool channel_set = false, int channel = 0, bool denoise = false);
 
 	static ImageType2DPointer fregl_util_max_projection(ImageTypePointer image, float sigma = 0);
+
+	static FloatImageType2DPointer fregl_util_min_projection(FloatImageTypePointer image, float sigma = 0);
 
 	static ImageType2DPointer fregl_util_fast_max_projection(ImageTypePointer image);
 

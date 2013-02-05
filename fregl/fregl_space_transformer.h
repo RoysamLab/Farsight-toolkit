@@ -55,6 +55,9 @@ public:
 	typedef typename ImageType::SpacingType							SpacingType;
 	typedef typename ImageType::IndexType							IndexType;
 	typedef itk::Image< float, 2 >									FloatImageType2D;
+	typedef typename FloatImageType2D::Pointer						FloatImageType2DPointer;
+	typedef itk::Image< float, 3 >									FloatImageType;
+	typedef typename FloatImageType::Pointer						FloatImageTypePointer;
 
 	fregl_space_transformer();
 	fregl_space_transformer( typename fregl_joint_register< TPixel>::Pointer joint_reg );
@@ -154,14 +157,16 @@ public:
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image.
-	ImageTypePointer transform_image(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false) const;
+	ImageTypePointer transform_image(ImageTypePointer in_image, int image_index, int background = 0, bool use_NN_interpolator = false, bool normalizeImage = false, ImageTypePointer background_image = NULL, double sigma = 50, double median = 1000);
 
 	//: Generate the transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
 	//  space defined by the anchor image. (much faster than transform_image)
-	int transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, PointType& offsetNew, int image_index, int background = 0, bool use_NN_interpolator = false ) const;
-	
+	int transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, PointType& offsetNew, int image_index, int background = 0, bool use_NN_interpolator = false, bool normalizeImage = false, ImageTypePointer background_image = NULL, double sigma = 50, double median = 1000);
+	bool intensity_normalize(ImageTypePointer in_image, ImageTypePointer& out_image, double sigma, double median);
+	bool intensity_normalize(ImageTypePointer in_image, ImageTypePointer background_image, ImageTypePointer& out_image, double sigma, double magnify);
+
 	//: Generate the transformed image using the given transformation
 	//
 	//  The given image is transformed to the image space of the global
@@ -256,6 +261,7 @@ public:
 
 private:
 	ImageType2DPointer max_projection(ImageTypePointer image, float sigma = 0) const;
+	FloatImageType2DPointer ExtractSlice(FloatImageTypePointer image, int sliceId);
 
 private: 
 	typename fregl_joint_register< TPixel >::Pointer joint_register_;

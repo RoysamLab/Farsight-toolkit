@@ -173,6 +173,67 @@ fregl_util< TPixel >::fregl_util_max_projection(ImageTypePointer image, float si
 }
 
 template < class TPixel >
+typename fregl_util< TPixel >::FloatImageType2DPointer
+fregl_util< TPixel >::fregl_util_min_projection(FloatImageTypePointer image, float sigma)
+{
+	typedef itk::ImageLinearIteratorWithIndex< FloatImageType2D > LinearIteratorType;
+	typedef itk::ImageSliceIteratorWithIndex< FloatImageType > SliceIteratorType;
+	typedef itk::DiscreteGaussianImageFilter< FloatImageType2D,FloatImageType2D > SmoothingFilterType;
+	typename FloatImageType2D::RegionType region;
+	typename FloatImageType2D::RegionType::IndexType index;
+	typename FloatImageType2D::RegionType::SizeType size;
+	typename FloatImageType::RegionType requestedRegion = image->GetRequestedRegion();
+	int depth = requestedRegion.GetSize()[2];
+	index[ 0 ] = 0;
+	index[ 1 ] = 0;
+	size[ 0 ] = requestedRegion.GetSize()[0];
+	size[ 1 ] = requestedRegion.GetSize()[1];
+	region.SetSize( size );
+	region.SetIndex( index );
+	FloatImageType2DPointer image2D = FloatImageType2D::New();
+	image2D->SetRegions( region );
+	image2D->Allocate();
+    image2D->FillBuffer(1e6);
+
+	typename FloatImageType::PixelType * imageArray = image->GetBufferPointer();
+	typename FloatImageType2D::PixelType * image2DArray = image2D->GetBufferPointer();
+
+#if _OPENMP >= 200805L
+    #pragma omp parallel for collapse(2)
+#endif
+    for( int ii=0; ii<size[0]; ++ii )
+    {
+        for( int jj=0; jj<size[1]; ++jj )
+        {
+			itk::Index<1> offset2;
+			offset2[0] = (jj * size[0]) + ii;
+			for( int kk = 0; kk < depth; ++kk )
+			{
+	    		itk::Index<1> offset;
+				offset[0] = ( kk * size[0] * size[1]) + (jj * size[0]) + ii;
+				image2DArray[offset2[0]] = vnl_math_min( image2DArray[offset2[0]], imageArray[offset[0]]);
+			}
+		}
+	}
+
+	if (sigma <= 0) return image2D;
+
+	// Perform Gaussian smoothing if the 
+	//std::cout << std::endl << "FIXME Im smoothing the image in min projection";
+	typename SmoothingFilterType::Pointer smoother = SmoothingFilterType::New();
+	smoother->SetInput( image2D);
+	smoother->SetVariance(sigma);
+	try {
+		smoother->Update();
+	}
+	catch(itk::ExceptionObject& e) {
+		vcl_cout << e << vcl_endl;
+	}
+
+	return smoother->GetOutput();
+}
+
+template < class TPixel >
 typename fregl_util< TPixel >::ImageType2DPointer
 fregl_util< TPixel >::fregl_util_fast_max_projection(ImageTypePointer image)
 {

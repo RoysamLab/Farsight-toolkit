@@ -52,6 +52,10 @@ int mosaic_images_template(
 	vul_arg< bool > arg_in_anchor,
 	vul_arg< bool > arg_overlap,
 	vul_arg< bool > arg_nn,
+	vul_arg< bool > arg_normalize, 
+	vul_arg< vcl_string > arg_background,
+	vul_arg< double > arg_sigma, 
+	vul_arg< double > arg_median,
 	vul_arg< int > arg_blending,
 	vul_arg< bool > arg_denoise,
 	vul_arg< bool > arg_write_interproj_image)
@@ -295,9 +299,9 @@ int mosaic_images_template(
 				strm << i;
 				strm >> num;
 
-				typename ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_fast_max_projection(final_image);
+				typename ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_fast_max_projection(xformed_image);
 				typename WriterType2D::Pointer writer2D = WriterType2D::New();
-				std::string name_2d =  arg_img_path() + std::string("/") + num + std::string("_2d_proj.png");
+				std::string name_2d =  arg_img_path() + std::string("/") + num + std::string("_2d_tile.png");
 				writer2D->SetFileName(name_2d);
 				writer2D->SetInput(image_2d);
 				writer2D->Update();
@@ -309,9 +313,17 @@ int mosaic_images_template(
 		std::cout << std::endl << "FIXME2: this code is still under testing, this is for mosaic fast , also reduce the insane amount of memory used,  using max intensity, the spacing is sett up for the darpa project\n";
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
         typename ImageType::Pointer image, xformed_image;
+		
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
         std::cout << "Composing the final image arg_blending 3 ..." << image->GetLargestPossibleRegion().GetSize()[0]<< std::endl;
-	
+		
+		typename ImageType::Pointer background_image = NULL;
+		if(arg_background().length() > 0)
+		{
+			std::string backgroundimage_name = arg_img_path() + std::string("/") + arg_background();
+			background_image = fregl_util< InputPixelType >::fregl_util_read_image(backgroundimage_name);
+		}
+
 		typename ImageType::SpacingType spacingImage;
 		spacingImage[0] = 1;
 		spacingImage[1] = 1;
@@ -320,7 +332,7 @@ int mosaic_images_template(
 	
 		image->SetSpacing( spacingImage );
 	
-		final_image = space_transformer.transform_image(image, 0, 0, arg_nn());
+		final_image = space_transformer.transform_image(image, 0, 0, arg_nn(), arg_normalize(), background_image, arg_sigma(), arg_median());
 	
 		if( arg_write_interproj_image())
 		{
@@ -343,7 +355,7 @@ int mosaic_images_template(
 	    
 			typename ImageType::Pointer imageMontage;
 			typename ImageType::PointType offsetNew;
-			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn() );
+			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn(), arg_normalize(), background_image, arg_sigma(), arg_median());
             if (fail)
                 continue;
 
@@ -352,7 +364,7 @@ int mosaic_images_template(
 			strm << i;
 			strm >> num;
 			
-			if( arg_write_interproj_image())
+			if( arg_write_interproj_image() || i == 1)
 			{
                 std::cout<< " 2d projection before fuse."<<std::endl;
                 typename ImageType2D::Pointer image_2d = fregl_util< InputPixelType >::fregl_util_fast_max_projection(imageMontage);
@@ -414,7 +426,7 @@ int mosaic_images_template(
 					}
 			}
             
-			if( arg_write_interproj_image())
+			if( arg_write_interproj_image() || i == 1)
 			{
 				std::cout<< "2d projection after fuse."<<std::endl;
 	                      
@@ -433,7 +445,7 @@ int mosaic_images_template(
         std::string image_name = arg_img_path() + std::string("/") + image_names[0];
         typename ImageType::Pointer image, xformed_image;
         image = fregl_util< InputPixelType >::fregl_util_read_image(image_name, arg_channel.set(), arg_channel(), arg_denoise());
-	
+
 		typename ImageType::SpacingType spacingImage;
 		spacingImage[0] = 1;
 		spacingImage[1] = 1;
@@ -453,7 +465,7 @@ int mosaic_images_template(
 	    
 			typename ImageType::Pointer imageMontage;
 			typename ImageType::PointType offsetNew;
-			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn() );
+			int fail = space_transformer.transform_image_fast(image2, imageMontage, offsetNew, i, 0, arg_nn());
             if (fail)
                 continue;
 
@@ -580,6 +592,10 @@ template int mosaic_images_template<unsigned char>(
 	vul_arg< bool > arg_in_anchor,
 	vul_arg< bool > arg_overlap,
 	vul_arg< bool > arg_nn,
+	vul_arg< bool > arg_normalize, 
+	vul_arg< vcl_string > arg_background,
+	vul_arg< double > arg_sigma, 
+	vul_arg< double > arg_median,
 	vul_arg< int > arg_blending,
 	vul_arg< bool > arg_denoise,
 	vul_arg< bool > arg_write_interproj_image
@@ -597,6 +613,10 @@ template int mosaic_images_template<unsigned short>(
 	vul_arg< bool > arg_in_anchor,
 	vul_arg< bool > arg_overlap,
 	vul_arg< bool > arg_nn,
+	vul_arg< bool > arg_normalize, 
+	vul_arg< vcl_string > arg_background,
+	vul_arg< double > arg_sigma, 
+	vul_arg< double > arg_median,
 	vul_arg< int > arg_blending,
 	vul_arg< bool > arg_denoise,
 	vul_arg< bool > arg_write_interproj_image

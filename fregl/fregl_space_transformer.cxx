@@ -22,8 +22,14 @@ limitations under the License.
 #include "itkImageLinearIteratorWithIndex.h"
 #include "itkCastImageFilter.h"
 #include "itkDiscreteGaussianImageFilter.h"
-
+#include <itkDivideImageFilter.h>
+#include <itkAddImageFilter.h>
+#include <itkMultiplyImageFilter.h>
+#include <itkStatisticsImageFilter.h>
+#include "itkImageRegionIterator.h"
 #include <tinyxml/tinyxml.h>
+#include <itkExtractImageFilter.h>
+#include "itkMedianImageFunction.h"
 
 static std::string ToString(double val);
 
@@ -423,13 +429,27 @@ in_anchor(vnl_vector_fixed< float, 3 > loc, int image_index,
 template <class TPixel>
 typename fregl_space_transformer< TPixel >::ImageTypePointer 
 fregl_space_transformer< TPixel >::
-transform_image(ImageTypePointer in_image, int image_index, int background, bool use_NN_interpolator ) const
+transform_image(ImageTypePointer in_image, int image_index, int background, bool use_NN_interpolator, bool normalizeImage, ImageTypePointer background_image, double sigma, double median)
 {
 	if (!anchor_set_) {
 		std::cerr<<"Set anchor first"<<std::endl;
 		return NULL;
 	}
 
+	ImageTypePointer normalize_image = NULL;
+	if(normalizeImage)
+	{
+		if(background_image)
+		{
+			std::cout<< "Use background image."<<std::endl;
+			intensity_normalize(in_image, background_image, normalize_image,  sigma, median);
+		}
+		else
+		{
+			std::cout<< "Generate background image."<<std::endl;
+			intensity_normalize(in_image, normalize_image, sigma, median);
+		}
+	}
 	/*
 	   ImageTypePointer image = ImageType::New();
 
@@ -471,7 +491,15 @@ transform_image(ImageTypePointer in_image, int image_index, int background, bool
 		typename NNInterpoType::Pointer nn_interpolator = NNInterpoType::New();
 		resampler->SetInterpolator(nn_interpolator);
 	}
-	resampler->SetInput(in_image);
+	if(normalize_image)
+	{
+		std::cout<< "Set normalized image!"<<std::endl;
+		resampler->SetInput(normalize_image);
+	}
+	else
+	{
+		resampler->SetInput(in_image);
+	}
 	resampler->SetTransform( inverse_xform );
 	resampler->SetSize( image_size_ );
 	resampler->SetOutputOrigin( origin_ );
@@ -491,13 +519,27 @@ transform_image(ImageTypePointer in_image, int image_index, int background, bool
 template <class TPixel>
 int
 fregl_space_transformer< TPixel >::
-transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, PointType& offsetNew, int image_index, int background, bool use_NN_interpolator ) const
+transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, PointType& offsetNew, int image_index, int background, bool use_NN_interpolator, bool normalizeImage, ImageTypePointer background_image, double sigma, double median)
 {
 	if (!anchor_set_) {
 		std::cerr<<"Set anchor first"<<std::endl;
 		return 1;
 	}
 
+	ImageTypePointer normalize_image = NULL;
+	if(normalizeImage)
+	{
+		if(background_image)
+		{
+			std::cout<< "Use background image."<<std::endl;
+			intensity_normalize(in_image, background_image, normalize_image, sigma, median);
+		}
+		else
+		{
+			std::cout<< "Generate background image."<<std::endl;
+			intensity_normalize(in_image, normalize_image, sigma, median);
+		}
+	}
 	// Set the resampler to generate the transformed image
 	typedef itk::ResampleImageFilter<ImageType, ImageType> ResamplerType;
 	int index = image_id_indices_[image_index];
@@ -543,13 +585,20 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
 	
  	std::cout << "ORIGIN FAST: " << origin_fast<< std::endl;
 	
-	resampler->SetInput(in_image);
+	if(normalize_image)
+	{
+		std::cout<< "Set normalized image!"<<std::endl;
+		resampler->SetInput(normalize_image);
+	}
+	else
+	{
+		resampler->SetInput(in_image);
+	}
 	resampler->SetTransform( inverse_xform );
 	resampler->SetSize( image_size_fast );
 	resampler->SetOutputOrigin( origin_fast );
 	resampler->SetOutputSpacing(spacing_);
 	resampler->SetDefaultPixelValue( background );
-	
 	
 	try {
 		resampler->Update();
@@ -566,6 +615,263 @@ transform_image_fast(ImageTypePointer in_image, ImageTypePointer& out_image, Poi
     return 0;
 }
 
+template <class TPixel>
+bool fregl_space_transformer< TPixel >::
+intensity_normalize(ImageTypePointer in_image, ImageTypePointer& out_image, double sigma, double median)
+{
+	std::cout<< "Intensity normalizing 1..."<<std::endl;
+	int width = in_image->GetLargestPossibleRegion().GetSize()[0];
+	int height = in_image->GetLargestPossibleRegion().GetSize()[1];
+	int depth = in_image->GetLargestPossibleRegion().GetSize()[2];
+
+	typedef itk::CastImageFilter<ImageType, FloatImageType> CasterImageToFloatFilter;
+	typename CasterImageToFloatFilter::Pointer castFilter = CasterImageToFloatFilter::New();
+	castFilter->SetInput(in_image);
+	try
+	{
+		castFilter->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in CasterImageToFloatFilter: " << err << std::endl; 
+		return false;
+	}
+	FloatImageTypePointer image = castFilter->GetOutput();
+	FloatImageType2DPointer backgroundImage = fregl_util< InputPixelType >::fregl_util_min_projection(image, sigma);
+	
+	//FloatImageType2DPointer probImage1 = ExtractSlice(image, depth - 1);
+	//FloatImageType2DPointer probImage2 = ExtractSlice(image, depth - 2);
+
+	//typedef itk::AddImageFilter< FloatImageType2D, FloatImageType2D, FloatImageType2D> AddImageFilterType;
+	//typename AddImageFilterType::Pointer addFilter = AddImageFilterType::New();
+	//addFilter->SetInput1(probImage1);
+	//addFilter->SetInput2(probImage2);
+
+	//typedef itk::DivideImageFilter <FloatImageType2D, FloatImageType2D, FloatImageType2D> DivideImageFilterType;
+	//typename DivideImageFilterType::Pointer divideImageFilter = DivideImageFilterType::New();
+	//divideImageFilter->SetInput1(addFilter->GetOutput());
+	//divideImageFilter->SetConstant2(2);
+
+	//typedef itk::DiscreteGaussianImageFilter< FloatImageType2D, FloatImageType2D >  GaussinafilterType;
+	//typename GaussinafilterType::Pointer gaussianFilter = GaussinafilterType::New();
+	//gaussianFilter->SetInput( divideImageFilter->GetOutput());
+	//gaussianFilter->SetVariance(sigma);
+	//try
+	//{
+	//	gaussianFilter->Update();
+	//}
+	//catch( itk::ExceptionObject &err)
+	//{
+	//	std::cout << "Error in DiscreteGaussianImageFilter: " << err << std::endl; 
+	//	return false;
+	//}
+
+	typedef itk::ImageRegionConstIterator< FloatImageType2D > Prob2DConstIteratorType;
+	typedef itk::ImageRegionIterator< FloatImageType>  ProbIteratorType;
+
+	for(int i = 0; i < depth; i++)
+	{
+		Prob2DConstIteratorType backgroundIt( backgroundImage, backgroundImage->GetLargestPossibleRegion());
+		backgroundIt.GoToBegin();
+		typename FloatImageType::IndexType desiredStart;
+		desiredStart[0] = 0;
+		desiredStart[1] = 0;
+		desiredStart[2] = i;
+ 
+		typename FloatImageType::SizeType desiredSize;
+		desiredSize[0] = width;
+		desiredSize[1] = height;
+		desiredSize[2] = 1;
+ 
+		typename FloatImageType::RegionType desiredRegion(desiredStart, desiredSize);
+		ProbIteratorType imageIt( image, desiredRegion);
+		imageIt.GoToBegin();
+		
+		while( !backgroundIt.IsAtEnd() && !imageIt.IsAtEnd())
+		{
+			double val = (double)imageIt.Get() - (double)backgroundIt.Get();
+			if( val < 1e-6)
+			{
+				val = 0;
+			}
+			imageIt.Set( val);
+			++imageIt;
+			++backgroundIt;
+		}
+	}
+
+	FloatImageType2DPointer minprojAfterImage = fregl_util< InputPixelType >::fregl_util_min_projection(image, 0);
+	// rescale
+	typedef itk::StatisticsImageFilter<FloatImageType2D> StatisticsImageFilterType;
+	typename StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New();
+	statisticsImageFilter->SetInput(minprojAfterImage);
+	statisticsImageFilter->Update();
+	double meanAfterDevide = statisticsImageFilter->GetMean();
+
+	typedef itk::MultiplyImageFilter<FloatImageType, FloatImageType> MultiplyImageFilterType;
+	typename MultiplyImageFilterType::Pointer multiplyImageFilter = MultiplyImageFilterType::New();
+	multiplyImageFilter->SetInput(image);
+	multiplyImageFilter->SetConstant(median / meanAfterDevide);
+	std::cout<< "Multiply by: "<<median / meanAfterDevide<<std::endl;
+	
+	typedef itk::CastImageFilter<FloatImageType, ImageType> CasterFloatToImageFilter;
+	typename CasterFloatToImageFilter::Pointer castFilter2 = CasterFloatToImageFilter::New();
+	castFilter2->SetInput(multiplyImageFilter->GetOutput());
+	try
+	{
+		castFilter2->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in CasterFloatToImageFilter: " << err << std::endl; 
+		return false;
+	}
+	out_image = castFilter2->GetOutput();
+	return true;
+}
+
+template <class TPixel>
+bool fregl_space_transformer< TPixel >::
+intensity_normalize(ImageTypePointer in_image, ImageTypePointer background_image, ImageTypePointer& out_image, double sigma, double magnify)
+{
+	std::cout<< "Intensity normalizing 2..."<<std::endl;
+	int width = in_image->GetLargestPossibleRegion().GetSize()[0];
+	int height = in_image->GetLargestPossibleRegion().GetSize()[1];
+	int depth = in_image->GetLargestPossibleRegion().GetSize()[2];
+
+	typedef itk::CastImageFilter<ImageType, FloatImageType> CasterImageToFloatFilter;
+	typename CasterImageToFloatFilter::Pointer castFilter = CasterImageToFloatFilter::New();
+	castFilter->SetInput(in_image);
+	try
+	{
+		castFilter->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in CasterImageToFloatFilter: " << err << std::endl; 
+		return false;
+	}
+	FloatImageTypePointer image = castFilter->GetOutput();
+
+	typename CasterImageToFloatFilter::Pointer castFilter1 = CasterImageToFloatFilter::New();
+	castFilter1->SetInput(background_image);
+	try
+	{
+		castFilter1->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in CasterImageToFloatFilter: " << err << std::endl; 
+		return false;
+	}
+	FloatImageTypePointer backimage = castFilter1->GetOutput();
+	FloatImageType2DPointer backimage2D = ExtractSlice(backimage, 0);
+
+	typedef itk::DiscreteGaussianImageFilter< FloatImageType2D, FloatImageType2D >  GaussinafilterType;
+	typename GaussinafilterType::Pointer gaussianFilter = GaussinafilterType::New();
+	gaussianFilter->SetInput( backimage2D);
+	gaussianFilter->SetVariance(sigma);
+	try
+	{
+		gaussianFilter->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in DiscreteGaussianImageFilter: " << err << std::endl; 
+		return false;
+	}
+
+	FloatImageType2DPointer backgroundImage = gaussianFilter->GetOutput();
+
+	typedef itk::ImageRegionConstIterator< FloatImageType2D > Prob2DConstIteratorType;
+	typedef itk::ImageRegionIterator< FloatImageType>  ProbIteratorType;
+
+	for(int i = 0; i < depth; i++)
+	{
+		Prob2DConstIteratorType backgroundIt( backgroundImage, backgroundImage->GetLargestPossibleRegion());
+		backgroundIt.GoToBegin();
+		typename FloatImageType::IndexType desiredStart;
+		desiredStart[0] = 0;
+		desiredStart[1] = 0;
+		desiredStart[2] = i;
+ 
+		typename FloatImageType::SizeType desiredSize;
+		desiredSize[0] = width;
+		desiredSize[1] = height;
+		desiredSize[2] = 1;
+ 
+		typename FloatImageType::RegionType desiredRegion(desiredStart, desiredSize);
+		ProbIteratorType imageIt( image, desiredRegion);
+		imageIt.GoToBegin();
+		
+		while( !backgroundIt.IsAtEnd() && !imageIt.IsAtEnd())
+		{
+			double val = imageIt.Get();
+			if( backgroundIt.Get() > 1e-6)
+			{
+				val = (double)imageIt.Get() / (double)backgroundIt.Get();
+			}
+			else
+			{
+				val = 1;
+			}
+			imageIt.Set( val);
+			++imageIt;
+			++backgroundIt;
+		}
+	}
+
+	FloatImageType2DPointer probImageAfterDevide = ExtractSlice(image, depth - 1);
+
+	typedef itk::MultiplyImageFilter<FloatImageType, FloatImageType> MultiplyImageFilterType;
+	typename MultiplyImageFilterType::Pointer multiplyImageFilter = MultiplyImageFilterType::New();
+	multiplyImageFilter->SetInput(image);
+	multiplyImageFilter->SetConstant(magnify);
+	
+	typedef itk::CastImageFilter<FloatImageType, ImageType> CasterFloatToImageFilter;
+	typename CasterFloatToImageFilter::Pointer castFilter2 = CasterFloatToImageFilter::New();
+	castFilter2->SetInput(multiplyImageFilter->GetOutput());
+	try
+	{
+		castFilter2->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in CasterFloatToImageFilter: " << err << std::endl; 
+		return false;
+	}
+	out_image = castFilter2->GetOutput();
+	return true;
+}
+
+template <class TPixel>
+typename fregl_space_transformer< TPixel >::FloatImageType2DPointer 
+fregl_space_transformer< TPixel >::
+ExtractSlice(FloatImageTypePointer image, int sliceId)
+{
+	typename FloatImageType::IndexType start;
+	start[0] = 0;
+	start[1] = 0;
+	start[2] = sliceId;
+	typename FloatImageType::SizeType size;
+	size[0] = image->GetLargestPossibleRegion().GetSize()[0];
+	size[1] = image->GetLargestPossibleRegion().GetSize()[1];
+	size[2] = 0;
+	typename FloatImageType::RegionType desiredRegion;
+	desiredRegion.SetSize(size);
+	desiredRegion.SetIndex(start);
+
+	typedef itk::ExtractImageFilter< FloatImageType, FloatImageType2D> ExtractFilterType2D;
+	typename ExtractFilterType2D::Pointer extractFilter = ExtractFilterType2D::New();
+	extractFilter->SetInput(image);
+	extractFilter->SetExtractionRegion(desiredRegion);
+#if ITK_VERSION_MAJOR >= 4
+	extractFilter->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+	extractFilter->Update();
+	FloatImageType2DPointer slice = extractFilter->GetOutput();
+	return slice;
+}
 
 template <class TPixel>
 typename fregl_space_transformer< TPixel >::ImageTypePointer 

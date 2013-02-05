@@ -32,6 +32,10 @@ mosaic_images_template(
 	vul_arg< bool > arg_in_anchor,
 	vul_arg< bool > arg_overlap,
 	vul_arg< bool > arg_nn,
+	vul_arg< bool > arg_normalize, 
+	vul_arg< vcl_string > arg_background,
+	vul_arg< double > arg_sigma, 
+	vul_arg< double > arg_median,
 	vul_arg< int > arg_blending,
 	vul_arg< bool > arg_denoise,
 	vul_arg< bool > arg_write_proj2d
