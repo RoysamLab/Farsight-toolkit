@@ -230,7 +230,10 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	theme->SetCellAlphaRange(0.8,0.8);
 	theme->SetPointSize(8);
 	theme->SetSelectedCellColor(1,0,0);
-	theme->SetSelectedPointColor(1,0,0); 
+	theme->SetSelectedPointColor(1,0,0);
+	theme->SetVertexLabelColor(1,1,1);
+	theme->SetBackgroundColor(0,0,0); 
+	theme->SetBackgroundColor2(0,0,0);
 
 	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
 	vertexColors->SetNumberOfComponents(1);
@@ -260,7 +263,6 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 	this->view->SetVertexColorArrayName("Color");
 
     theme->SetPointLookupTable(lookupTable);
-    theme->SetBackgroundColor(0,0,0); 
 	this->view->ApplyViewTheme(theme);
 
 	this->view->SetEdgeLabelArrayName("edgeLabel");
