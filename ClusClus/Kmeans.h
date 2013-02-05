@@ -22,6 +22,7 @@ public:
 	std::vector<int > getPointsToClusters();
 	std::vector<std::set<int > > getClustersToPoints();
 	std::vector<std::vector<int > > getClustersToPointsvector();
+	std::vector<std::vector<double > > getClusterCenters();
 
 	int num_clusters;
 	int num_iterations;

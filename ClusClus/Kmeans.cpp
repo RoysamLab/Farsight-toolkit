@@ -248,6 +248,11 @@ std::vector<std::set<int > > Kmeans::getClustersToPoints()
 {
 	return this->clustersToPoints;
 }
+
+std::vector<std::vector<double > > Kmeans::getClusterCenters()
+{
+	return this->centroids;
+}
 std::vector<std::vector<int > > Kmeans::getClustersToPointsvector()
 {
 	this->clustersToPointsvector.clear();
