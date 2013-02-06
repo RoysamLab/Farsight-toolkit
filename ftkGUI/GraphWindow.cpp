@@ -2385,6 +2385,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	//}
 
 	/// cacluate the branch backbone nodes position
+	//std::ofstream ofs("force.txt");
 	for( long int i = 0; i < chainList.size(); i++)
 	{
 		if( i % 100 == 0)
@@ -2393,10 +2394,12 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 		}
 		std::pair< long int, std::vector<long int> > branch = chainList[i];
 		long int attachNode = branch.first;
+		
 		std::vector< long int> branchNode = branch.second;
 		for( long int j = 0; j < branchNode.size(); j++)
 		{
 			long int newNode = branchNode[j];
+
 			double bestR = 0.3;
 			double bestTheta = 0;
 
@@ -2409,7 +2412,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 			vnl_vector< double> mintheta( (int)((rend - rbeg) / rInter + 1));
 			minForce.fill(1e9);
 			mintheta.fill(0);
-
+	
 			for( double r = rbeg; r <= rend; r = r + rInter, count++)
 			{	
 				bool bfirst = true;
@@ -2423,6 +2426,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 
 					newNodePoint.x = nodePos( 0, attachNode) + r * cos( theta);
 					newNodePoint.y = nodePos( 1, attachNode) + r * sin( theta);
+
 					for( long int k = 0; k < repel_mat.cols(); k++)
 					{
 						repel_mat(0, k) = newNodePoint.x - repel_mat( 0, k);
@@ -2445,6 +2449,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 
 					double cosalfa = (repel_force[0] * cos( theta) + repel_force[1] * sin( theta)) / repel_force.two_norm();
 					double sinalfa = sqrt( 1 - pow( cosalfa, 2));
+
+					//std::cout<< cosalfa<<std::endl;
 		
 					if( bfirst)
 					{
@@ -2467,6 +2473,8 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 					}
 				}
 			}
+			//ofs << minForce <<std::endl;
+			//ofs << mintheta <<std::endl<<std::endl;
 
 			int min = minForce.arg_min();
 			bestR = rbeg + rInter * min;
@@ -2478,6 +2486,7 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 			attachNode = newNode;
 		}
 	}
+	//ofs.close();
 
 	double medianX = Median( nodePos.get_row(0));
 	double medianY = Median( nodePos.get_row(1));
@@ -2564,7 +2573,7 @@ void GraphWindow::GetElementsIndexInMatrix(vnl_matrix<long int>& mat, long int r
 	std::vector< long int> index;
 	for( long int i = 0; i < mat.cols(); i++)
 	{
-		if( mat( rownum, i) < max && tag[i] == 1)
+		if( tag[i] == 1)
 		{
 			index.push_back( i);
 		}
