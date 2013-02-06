@@ -37,7 +37,7 @@
 
 static double selectColor[3]={0,1,0};
 static double progressionPathColor[3] = {1,0,0};
-static double edgeDefaultColor[3] = {0.6, 0.6, 0.6};
+static double edgeDefaultColor[3] = {0, 0, 0};
 
 #define ROUND(X)(int)(X+0.5)
 GraphWindow::GraphWindow(QWidget *parent)
@@ -471,9 +471,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		vertextList( i, 2) = edgeWeights[i];
 	}
 
-	//std::ofstream verofs("vertextList.txt");
-	//verofs<< vertextList<<endl;
-	//verofs.close();
+	std::ofstream verofs("adjmatrix.txt");
+	verofs<< adj_matrix<<endl;
+	verofs.close();
 
 	std::cout<< "calculate coordinates"<<endl;
 	std::vector<Point> oldPointList;
@@ -484,6 +484,310 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	//std::vector<Point> newPointList;
 	//CalculateCoordinates(adj_matrix, newPointList);
+
+	if( newPointList.size() > 0)
+	{
+		std::ofstream ofs("Coordinates.txt");
+		ofs<< "3\t5"<<std::endl;
+		std::cout<< newPointList.size()<<endl;
+		for( int i = 0; i <  newPointList.size(); i++)
+		{
+			ofs<<newPointList[i].x<<"\t"<<newPointList[i].y<<std::endl;
+			points->InsertNextPoint(newPointList[i].x, newPointList[i].y, 0);
+		}
+		graph->SetPoints( points);
+		ofs.close();
+	}
+	else
+	{	
+		QMessageBox msg;
+		msg.setText("No coordinates Input!");
+		msg.exec();
+		exit(-2);
+	}
+
+	vtkSmartPointer<vtkIntArray> vertexColors = vtkSmartPointer<vtkIntArray>::New();
+	vertexColors->SetNumberOfComponents(1);
+	vertexColors->SetName("Color");
+	this->lookupTable->SetNumberOfTableValues( table->GetNumberOfRows() + 1);
+
+	for( vtkIdType i = 0; i < table->GetNumberOfRows() + 1; i++)               
+	{             
+		vertexColors->InsertNextValue( i);
+		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
+		if( k >= COLOR_MAP2_SIZE)
+		{
+			k = COLOR_MAP2_SIZE - 1;
+		}
+		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
+	}
+	lookupTable->Build();
+
+	vtkSmartPointer<vtkIntArray> edgeColors = vtkSmartPointer<vtkIntArray>::New();
+
+	edgeColors->SetNumberOfComponents(1);
+	edgeColors->SetName("EdgeColor");
+	this->edgeLookupTable->SetNumberOfTableValues( table->GetNumberOfRows());
+	for( vtkIdType i = 0; i < table->GetNumberOfRows(); i++)               
+	{ 
+		edgeColors->InsertNextValue(i); // color the edges by default color
+		this->edgeLookupTable->SetTableValue(i, edgeDefaultColor[0], edgeDefaultColor[1], edgeDefaultColor[2]);
+	}
+
+	graph->GetVertexData()->AddArray(vertexColors);
+	graph->GetVertexData()->AddArray(vertexIDarrays);
+	graph->GetVertexData()->AddArray(vertexLabel);
+	graph->GetEdgeData()->AddArray(weights);
+	graph->GetEdgeData()->AddArray(edgeColors);
+	
+	//theme.TakeReference(vtkViewTheme::CreateMellowTheme());
+	theme->SetLineWidth(3);
+	theme->SetCellOpacity(0.9);
+	theme->SetCellAlphaRange(0.8,0.8);
+	theme->SetPointSize(5);
+	//theme->SetCellColor(0.6,0.6,0.6);
+	theme->SetSelectedCellColor(selectColor);
+	theme->SetSelectedPointColor(selectColor); 
+	theme->SetVertexLabelColor(0.3,0.3,0.3);
+	theme->SetBackgroundColor(1,1,1); 
+	theme->SetBackgroundColor2(1,1,1);
+
+	vtkSmartPointer<vtkLookupTable> scalarbarLut = vtkSmartPointer<vtkLookupTable>::New();
+	scalarbarLut->SetTableRange (0, 1);
+	scalarbarLut->SetNumberOfTableValues(COLOR_MAP2_SIZE);
+	for(int index = 0; index < COLOR_MAP2_SIZE; index++)
+	{
+		rgb rgbscalar = COLORMAP2[index];
+		scalarbarLut->SetTableValue(index, rgbscalar.r, rgbscalar.g, rgbscalar.b);
+	}
+	scalarbarLut->Build();
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(scalarbarLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(11);
+	scalarBar->GetTitleTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize(10);
+	scalarBar->GetLabelTextProperty()->SetColor(0,0,0);
+	scalarBar->GetTitleTextProperty()->SetFontSize (10);
+	scalarBar->SetMaximumHeightInPixels(1000);
+	scalarBar->SetMaximumWidthInPixels(100);
+
+	this->view->GetRenderer()->AddActor2D(scalarBar);
+
+	this->view->RemoveAllRepresentations();
+	this->view->SetRepresentationFromInput( graph);
+	this->view->SetEdgeLabelVisibility(true);
+	this->view->SetColorVertices(true); 
+	this->view->SetColorEdges(true);
+	this->view->SetVertexLabelVisibility(true);
+
+	this->view->SetVertexColorArrayName("Color");
+	this->view->SetEdgeColorArrayName("EdgeColor");
+	this->view->SetEdgeLabelArrayName("edgeLabel");
+	this->view->SetVertexLabelArrayName("vertexLabel");
+	this->view->SetVertexLabelFontSize(5);
+
+    theme->SetPointLookupTable(lookupTable);
+	theme->SetCellLookupTable(edgeLookupTable);
+	this->view->ApplyViewTheme(theme);
+
+	this->view->SetLayoutStrategyToPassThrough();
+	this->view->SetVertexLabelFontSize(15);
+}
+
+void GraphWindow::AdjustedLayout(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<long int> *treeOrder, std::vector<double> *colorVec, std::vector<double> *disVec)
+{
+	std::vector<Point> newPointList;
+	std::ifstream file("Coordinates.txt");
+	double x = 0;
+	double y = 0;
+	int linewidth = 3;
+	int pointSize = 5;
+	file >> linewidth;
+	file >> pointSize;
+
+	while(!file.eof())
+    {
+        file >> x;
+        file >> y;
+        Point pt(x,y);
+		newPointList.push_back(pt);
+    }
+	newPointList.pop_back();
+
+	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
+	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
+
+	vnl_vector<int> label;
+	if(treeOrder)
+	{
+		label.set_size(treeOrder->size());
+		for( int i = 0; i < treeOrder->size(); i++)
+		{
+			label[(*treeOrder)[i]] = i;
+		}
+	}
+
+	if( colorVec)
+	{
+		colorVector.set_size(colorVec->size());
+		for( int i = 0; i < colorVec->size(); i++)
+		{
+			double color = (*colorVec)[i];
+			colorVector[i] = color;
+		}
+	}
+	else
+	{
+		colorVector.set_size(table->GetNumberOfRows() + 1);
+		for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			colorVector[i] = 1;
+		}
+	}
+	featureColorVector = colorVector;
+
+
+	vnl_vector<double> distanceVec;
+	if(disVec) 
+	{
+		distanceVec.set_size( disVec->size());
+		for( int i = 0; i < disVec->size(); i++)
+		{
+			distanceVec[i] = (*disVec)[i];
+		}
+	}
+	else
+	{
+		distanceVec.set_size(table->GetNumberOfRows() + 1);
+		for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
+		{
+			distanceVec[i] = -1;
+		}
+	}
+
+	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	
+
+	vtkSmartPointer<vtkIntArray> vertexIDarrays = vtkSmartPointer<vtkIntArray>::New();
+	vertexIDarrays->SetNumberOfComponents(1);
+	vertexIDarrays->SetName("vertexIDarrays");
+
+	vtkSmartPointer<vtkStringArray> vertexLabel = vtkSmartPointer<vtkStringArray>::New();
+	vertexLabel->SetNumberOfComponents(1);
+	vertexLabel->SetName("vertexLabel");
+
+	// Create the edge weight array
+	vtkSmartPointer<vtkDoubleArray> weights = vtkSmartPointer<vtkDoubleArray>::New();
+	weights->SetNumberOfComponents(1);
+	weights->SetName("edgeLabel");
+
+	std::cout<< "construct graph"<<endl;
+	vtkSmartPointer<vtkMutableUndirectedGraph> graph = vtkMutableUndirectedGraph::New();
+	vnl_matrix<long int> adj_matrix( table->GetNumberOfRows() + 1, table->GetNumberOfRows() + 1);
+	
+	vertextList.set_size( table->GetNumberOfRows(), 3);
+	edgeWeights.set_size( table->GetNumberOfRows());
+
+	double minPer = colorVector.min_value();
+	double maxDisper = distanceVec.max_value();
+
+	for( int i = 0; i < table->GetNumberOfRows() + 1; i++)
+	{
+		int vertexID = graph->AddVertex();
+		if (this->indMapFromClusIndToVertex.size() <= 0)
+		{
+			vertexIDarrays->InsertNextValue( this->indMapFromIndToVertex[i]);
+			QString str = QString::number(this->indMapFromIndToVertex[i]);
+			vertexLabel->InsertNextValue( str.toUtf8().constData());
+		}
+		else
+		{
+			vertexIDarrays->InsertNextValue( this->indMapFromClusIndToVertex[i].size());   // which should be the cluster index
+			int per = colorVector[i] * 100 + 0.5;
+			int disper = distanceVec[i] * 100 + 0.5;
+			QString strPercent;
+			QString strDisPercent;
+
+			if(  minPer < 1 - 1e-5)
+			{
+				if( per > 100)
+				{
+					per = 100;
+				}
+				strPercent= QString::number(per);
+			}
+
+			if( maxDisper > 1e-5)
+			{
+				if( disper > 100)
+				{
+					disper = 100;
+				}
+				strDisPercent = QString::number(disper);
+			}
+
+			if( strPercent.length() > 0 )
+			{
+				if( strDisPercent.length() > 0)
+				{
+					strPercent = "(" + strPercent + "%," + strDisPercent + "%)";
+				}
+				else
+				{
+					strPercent = "(" + strPercent + "%)";
+				}
+			}
+			else if( strDisPercent.length() > 0)
+			{
+				strPercent = "( ," + strDisPercent + "%)";
+			}
+			
+			QString str;
+			if(label.size() > 0)
+			{
+				str = "C"+QString::number(label[i])+": "+QString::number(this->indMapFromClusIndToVertex[i].size()) + strPercent;
+			}
+			else
+			{
+				str = QString::number(this->indMapFromClusIndToVertex[i].size()) + strPercent;
+			}
+			vertexLabel->InsertNextValue(str.toUtf8().constData());
+		}
+	}
+
+	edgeMapping.clear();
+
+	for( int i = 0; i < table->GetNumberOfRows(); i++) 
+	{
+
+		long int ver1 = arrayID1->GetVariantValue(i).ToLong();
+		long int ver2 = arrayID2->GetVariantValue(i).ToLong();
+
+		long int index1 = ver1;
+		long int index2 = ver2;
+		graph->AddEdge( index1, index2);
+
+		std::pair< long int, long int> pair1 = std::pair< long int, long int>( index1, index2);
+		std::pair< long int, long int> pair2 = std::pair< long int, long int>( index2, index1);
+		edgeMapping.insert( std::pair< std::pair< long int, long int>, long int>(pair1, i));
+		edgeMapping.insert( std::pair< std::pair< long int, long int>, long int>(pair2, i));
+
+		adj_matrix( index1, index2) = 1;
+		adj_matrix( index2, index1) = 1;
+		vertextList( i, 0) = index1;
+		vertextList( i, 1) = index2;
+		edgeWeights[i] = table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble();
+		weights->InsertNextValue(table->GetValueByName(vtkIdType(i), edgeLabel.c_str()).ToDouble());
+	}
+
+	edgeWeights = edgeWeights / edgeWeights.max_value() * 5;
+	for(int i = 0; i < vertextList.rows(); i++)
+	{
+		vertextList( i, 2) = edgeWeights[i];
+	}
 
 	if( newPointList.size() > 0)
 	{
@@ -537,10 +841,10 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 	graph->GetEdgeData()->AddArray(edgeColors);
 	
 	//theme.TakeReference(vtkViewTheme::CreateMellowTheme());
-	theme->SetLineWidth(3);
+	theme->SetLineWidth(linewidth);
 	theme->SetCellOpacity(0.9);
 	theme->SetCellAlphaRange(0.8,0.8);
-	theme->SetPointSize(5);
+	theme->SetPointSize(pointSize);
 	//theme->SetCellColor(0.6,0.6,0.6);
 	theme->SetSelectedCellColor(selectColor);
 	theme->SetSelectedPointColor(selectColor); 
@@ -2040,25 +2344,45 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 	double powy = pow( cos(backboneAngle[1]) - cos(backboneAngle[0]), 2);
 	double norm = sqrt( powx + powy);
 
-	if( backbones.size() > 500)
-	{
-		long int size = backbones.size();
-		for( long int i = 0; i < backbones.size(); i++)
-		{
-			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm * 500 / size;
-			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm * 500 / size;
-			nodePosAssigned[ backbones[i]] = 1;
-		}
-	}
-	else
-	{
+	//if( backbones.size() > 500)
+	//{
+	//	long int size = backbones.size();
+	//	for( long int i = 0; i < backbones.size(); i++)
+	//	{
+	//		nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm * 500 / size;
+	//		nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm * 500 / size;
+	//		nodePosAssigned[ backbones[i]] = 1;
+	//	}
+	//}
+	//else
+	//{
 		for( long int i = 0; i < backbones.size(); i++)
 		{
 			nodePos(0, backbones[i]) = sin( backboneAngle[i]) / norm;
 			nodePos(1, backbones[i]) = -cos( backboneAngle[i]) / norm;
 			nodePosAssigned[ backbones[i]] = 1;
 		}
-	}
+	//}
+
+	//if( backbones.size() > 500)
+	//{
+	//	long int size = backbones.size();
+	//	for( long int i = 0; i < backbones.size(); i++)
+	//	{
+	//		nodePos(0, backbones[i]) = backboneAngle[i] * 500 / size;
+	//		nodePos(1, backbones[i]) = 0;
+	//		nodePosAssigned[ backbones[i]] = 1;
+	//	}
+	//}
+	//else
+	//{
+	//	for( long int i = 0; i < backbones.size(); i++)
+	//	{
+	//		nodePos(0, backbones[i]) = backboneAngle[i];
+	//		nodePos(1, backbones[i]) = 0;
+	//		nodePosAssigned[ backbones[i]] = 1;
+	//	}
+	//}
 
 	/// cacluate the branch backbone nodes position
 	for( long int i = 0; i < chainList.size(); i++)
@@ -2075,17 +2399,23 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 			long int newNode = branchNode[j];
 			double bestR = 0.3;
 			double bestTheta = 0;
-			vnl_vector< double> minForce( 7);
-			vnl_vector< double> mintheta( 7);
-			minForce.fill(0);
+
+			double rbeg = 0.3;
+			double rend = 0.9;
+			double rInter = 0.04;
+			int count = 0;
+
+			vnl_vector< double> minForce( (int)((rend - rbeg) / rInter + 1));
+			vnl_vector< double> mintheta( (int)((rend - rbeg) / rInter + 1));
+			minForce.fill(1e9);
 			mintheta.fill(0);
 
-			int count = 0;
-			for( double r = 0.3; r <= 0.9; r = r + 0.1, count++)
-			{
+			for( double r = rbeg; r <= rend; r = r + rInter, count++)
+			{	
 				bool bfirst = true;
 				double minVar = 0;
-				for( double theta = 0; theta <= 2 * pi; theta += 2 * pi / ANGLE_STEP)
+
+				for( double theta = 0; theta <= 2 * pi; theta += 2 * pi / 90)
 				{
 					Point newNodePoint;
 					vnl_matrix<double> repel_mat;
@@ -2113,33 +2443,33 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 					repel_force[ 0] = repel_tmp_xvector.sum();
 					repel_force[ 1] = repel_tmp_yvector.sum();
 
-					double cosalfa = (repel_force[0] * cos( theta) + repel_force[1] * sin( theta)) / repel_force.magnitude();
+					double cosalfa = (repel_force[0] * cos( theta) + repel_force[1] * sin( theta)) / repel_force.two_norm();
 					double sinalfa = sqrt( 1 - pow( cosalfa, 2));
 		
 					if( bfirst)
 					{
-						if( repel_force.magnitude() * cosalfa >= 0)
+						if( repel_force.two_norm() * cosalfa >= 0)
 						{
-							minForce[ count] = repel_force.magnitude() * cosalfa;
+							minForce[ count] = repel_force.two_norm() * cosalfa;
 							mintheta[ count] = theta;
-							minVar = repel_force.magnitude() * sinalfa;
+							minVar = repel_force.two_norm() * sinalfa;
 							bfirst = false;
 						}
 					}
 					else
 					{
-						if( repel_force.magnitude() * cosalfa >= 0 && repel_force.magnitude() * sinalfa < minVar )
+						if( repel_force.two_norm() * cosalfa >= 0 && repel_force.two_norm() * sinalfa < minVar )
 						{
-							minForce[ count] = repel_force.magnitude() * cosalfa;
+							minForce[ count] = repel_force.two_norm() * cosalfa;
 							mintheta[ count] = theta;
-							minVar = repel_force.magnitude() * sinalfa;
+							minVar = repel_force.two_norm() * sinalfa;
 						}
 					}
 				}
 			}
-			
+
 			int min = minForce.arg_min();
-			bestR = 0.3 + 0.1 * min;
+			bestR = rbeg + rInter * min;
 			bestTheta = mintheta[ min];
 
 			nodePos(0, newNode) = nodePos(0, attachNode) + bestR * cos( bestTheta);
@@ -2162,7 +2492,10 @@ void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::ve
 			tmp[j] = abs( tmp[j]);
 		}
 		
-		tmpNodePos = tmpNodePos / tmp.max_value() * 50;
+		if( tmp.max_value() > 1e-6)
+		{
+			tmpNodePos = tmpNodePos / tmp.max_value() * 50;
+		}
 		nodePos.set_row(i, tmpNodePos);
 	}
 

@@ -54,6 +54,7 @@ public:
 					std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
 	void SetGraphTableToPassThrough(vtkSmartPointer<vtkTable> table, unsigned int nodesNumber, std::string ID1, std::string ID2, std::string edgeLabel, 
 					std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL, std::set<long int>* colSels = NULL, QString filename = "");
+	void AdjustedLayout(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<long int> *treeOrder = NULL, std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL);
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
