@@ -221,3 +221,44 @@ void VolumeOfInterest::WriteVTPVOI(std::string filename)
 	writer->SetInput(this->VOIPolyData.back());
 	writer->Write();
 }
+
+//Voronoi
+void VolumeOfInterest::ReadNucleiLabelImage(std::string filename)
+{
+	ReaderType::Pointer labelImageReader = ReaderType::New();
+	labelImageReader->SetFileName(filename.c_str());	
+	try
+	{
+		labelImageReader->Update();
+	}
+	catch( itk::ExceptionObject & exp )
+	{
+		std::cerr << "Exception thrown while reading the input file " << std::endl;
+		std::cerr << exp << std::endl;
+		//return EXIT_FAILURE;
+	}
+	nucleiLabelImage = labelImageReader->GetOutput();
+}
+void VolumeOfInterest::CalculateVoronoiLabelImage()
+{
+	VoronoiImageFilterType::Pointer voronoiFilter = VoronoiImageFilterType::New();
+	voronoiFilter->SetInput(nucleiLabelImage);
+	voronoiFilter->Update();
+	voronoiImage = voronoiFilter->GetVoronoiMap();
+}
+void VolumeOfInterest::WriteVoronoiLabelImage(std::string filename)
+{
+	WriterType::Pointer voronoiImageWriter = WriterType::New();
+	voronoiImageWriter->SetFileName(filename);
+	std::cout << "Set input..." << std::endl;
+	voronoiImageWriter->SetInput( voronoiImage );
+	
+	std::cout << "Update writer" << std::endl;
+	try {
+		voronoiImageWriter->Update();
+	}
+	catch (itk::ExceptionObject & excp )
+    {
+		std::cerr << excp << std::endl;
+    }
+}

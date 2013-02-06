@@ -14,9 +14,11 @@
 #include "vtkCellData.h"
 
 #include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkSignedMaurerDistanceMapImageFilter.h"
+#include "itkDanielssonDistanceMapImageFilter.h"
 
 #include "vtkContourFilter.h"
 #include "vtkMarchingCubes.h"
@@ -44,8 +46,10 @@ typedef itk::Image< unsigned char, 3 >   ImageType;
 typedef itk::Image< float, 3> FloatImageType;
 
 typedef itk::ImageFileReader< ImageType >    ReaderType;
+typedef itk::ImageFileWriter< ImageType >    WriterType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
 typedef itk::SignedMaurerDistanceMapImageFilter<ImageType, FloatImageType> SignedMaurerDistanceMapImageFilterType;
+typedef itk::DanielssonDistanceMapImageFilter<ImageType, FloatImageType, ImageType> VoronoiImageFilterType;
 
 class VolumeOfInterest
 {
@@ -62,6 +66,10 @@ public:
 	void ReadVTPVOI(std::string filename);
 	void ReadOBJVOI(std::string filename);
 	void WriteVTPVOI(std::string filename);
+	void ReadNucleiLabelImage(std::string filename);
+	void CalculateVoronoiLabelImage();
+	void WriteVoronoiLabelImage(std::string filename);
+
 	ImageType::RegionType GetVesselImageRegion() {return vesselImageRegion;}
 	
 private:
@@ -69,5 +77,8 @@ private:
 	std::vector< vtkSmartPointer<vtkPolyData > > VOIPolyData;
 	ImageType::Pointer vesselMaskImage;
 	ImageType::RegionType vesselImageRegion;
+
+	ImageType::Pointer nucleiLabelImage;
+	ImageType::Pointer voronoiImage;
 };
 #endif

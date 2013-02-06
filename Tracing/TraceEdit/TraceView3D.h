@@ -229,6 +229,7 @@ public slots:
 	void AutomaticEdits();
 	void ShowAutomatedEdits();
 	void ComputeVoronoi();
+	void ShowKMutualGraph(unsigned int k);
 
 	void IntensityFeature();
 	void IntensityWeightedFeature();
@@ -444,6 +445,7 @@ private:
 	QAction *ColorByTreesAction;
 	QAction *ConvexHullAction;
 	QAction *VesselMaskAction;
+	QAction *VoronoiAction;
 	QAction *loadSoma;
 	QAction *ListButton;
 	QAction *ClearButton;

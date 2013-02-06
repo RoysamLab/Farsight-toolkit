@@ -197,8 +197,6 @@ View3D::View3D(QWidget *parent)
 			this->TraceEditSettings.setValue("traceDir", nextFile);
 			this->TraceEditSettings.setValue("imageDir", nextFile);
 			this->TraceEditSettings.setValue("projectDir", nextFile);
-			this->TraceEditSettings.setValue("vesselDir", nextFile);
-			this->TraceEditSettings.setValue("labelDir", nextFile);
 		}
 		else if (nextFile.endsWith("reload"))
 		{
@@ -1577,6 +1575,11 @@ void View3D::CreateGUIObjects()
 	connect(this->VesselMaskAction, SIGNAL(triggered()), this, SLOT(CalculateDistanceToVessel()));
 	this->VesselMaskAction->setStatusTip("Running cell-vessel distance");
 
+	this->VoronoiAction = new QAction("Voronoi cells", this->CentralWidget);
+	this->VoronoiAction->setObjectName(tr("VoronoiAction"));
+	connect(this->VoronoiAction, SIGNAL(triggered()), this, SLOT(ComputeVoronoi()));
+	this->VoronoiAction->setStatusTip("Calculating voronoi");
+
 	this->ellipsoid = new QCheckBox("Ellipsoid",this->SettingsWidget);
 	this->ellipsoid->setObjectName("ellipsoid");
 	this->ellipsoid->setHidden(true);
@@ -2229,6 +2232,7 @@ void View3D::CreateLayout()
 	calculations_sub_menu->setObjectName(tr("calculations_sub_menu"));
 	calculations_sub_menu->addAction(this->ConvexHullAction);
 	calculations_sub_menu->addAction(this->VesselMaskAction);
+	calculations_sub_menu->addAction(this->VoronoiAction);
 
 	this->analysisViews->addAction(this->StartActiveLearningAction);
 	this->analysisViews->addAction(this->AssociateCellToNucleiAction);
@@ -4082,13 +4086,11 @@ void  View3D::ToggleVOI()
 
 void View3D::CalculateDistanceToVessel()
 {
-	QString vesselDir = this->TraceEditSettings.value("vesselDir", ".").toString();
-	QString vesselMaskFile = QFileDialog::getOpenFileName(this , "Load Vessel Mask", vesselDir,
+	QString vesselDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString vesselMaskFile = QFileDialog::getOpenFileName(this, "Load Vessel Mask", vesselDir,
 		tr("Vessel Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!vesselMaskFile.isEmpty())
 	{
-		//std::string vesselMaskFile = "C:\\Lab\\Data\\Prathamesh\\Microglia_Control\\kt10013_w227_TRITC_Prior_DSU_pre_crop_SegmentationMaskImage_label.tif";
-		this->TraceEditSettings.setValue("vesselDir", vesselDir);
 		std::cout << "Reading vessel mask..." << std::endl;
 		this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
 		std::cout << "Reading done" << std::endl;
@@ -7122,9 +7124,9 @@ void View3D::KNearestNeighborAnalysis()
 
 	vtkSmartPointer<vtkTable> cellFeatureTable = this->CellModel->getDataTable();
 	std::vector<unsigned int> IDs;
-	unsigned int k;
+	unsigned int k = 0;
 	unsigned short Class_dest, Class_src = 0;
-	bool k_mutual;
+	bool k_mutual = false;
 
 	QVector<QString> classes;
 	int max_class = 0;
@@ -7158,73 +7160,81 @@ void View3D::KNearestNeighborAnalysis()
 	}
 	delete dialog;
 
-	std::map< unsigned int, std::vector<double> > centroidMap;
-	for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
+	if (k_mutual)
 	{
-		unsigned int id = cellFeatureTable->GetValue(row,0).ToUnsignedInt();
-		std::vector<double> c;
-		c.push_back(cellFeatureTable->GetValue(row,1).ToDouble());
-		c.push_back(cellFeatureTable->GetValue(row,2).ToDouble());
-		c.push_back(cellFeatureTable->GetValue(row,3).ToDouble());
-		centroidMap[id] = c;				
+		this->ShowKMutualGraph(k);
 	}
 
-	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
-	KNObj->setFeatureTable(cellFeatureTable);
-	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
-	if(IDs.at(0) == 0)
-		kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
-	else
-		kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
-
-	std::string full_string;
-	std::stringstream ss1;
-	ss1 << k;
-	if(Class_dest == 0)
+	if (k > 0)
 	{
-		full_string = "D_k=" + ss1.str() + "_class=all_" ;
-	}
-	else
-	{
-		std::stringstream ss2;
-		ss2 << Class_dest;
-		full_string = "D_k=" + ss1.str() + "_class=" + ss2.str() + "_";
-	}
-	cellFeatureTable->RemoveColumnByName(full_string.c_str());
-	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-	column->SetName(full_string.c_str());
-	column->SetNumberOfValues((int)cellFeatureTable->GetNumberOfRows());
-	cellFeatureTable->AddColumn(column);
-	for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
-	{
-		cellFeatureTable->SetValueByName(row, full_string.c_str(), 0);
-	}
-	for(int i=0; i < (int)kNeighborIDs.size(); ++i)
-	{
-		int Id = kNeighborIDs.at(i).at(0).first;
-		double avg_dist = ComputeAverageDistance(kNeighborIDs.at(i));
+		std::map< unsigned int, std::vector<double> > centroidMap;
 		for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
 		{
-			if(cellFeatureTable->GetValue(row,0).ToInt() == Id)
+			unsigned int id = cellFeatureTable->GetValue(row,0).ToUnsignedInt();
+			std::vector<double> c;
+			c.push_back(cellFeatureTable->GetValue(row,1).ToDouble());
+			c.push_back(cellFeatureTable->GetValue(row,2).ToDouble());
+			c.push_back(cellFeatureTable->GetValue(row,3).ToDouble());
+			centroidMap[id] = c;				
+		}
+
+		kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
+		KNObj->setFeatureTable(cellFeatureTable);
+		std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
+		if(IDs.at(0) == 0)
+			kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
+		else
+			kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
+
+		std::string full_string;
+		std::stringstream ss1;
+		ss1 << k;
+		if(Class_dest == 0)
+		{
+			full_string = "D_k=" + ss1.str() + "_class=all_" ;
+		}
+		else
+		{
+			std::stringstream ss2;
+			ss2 << Class_dest;
+			full_string = "D_k=" + ss1.str() + "_class=" + ss2.str() + "_";
+		}
+		cellFeatureTable->RemoveColumnByName(full_string.c_str());
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName(full_string.c_str());
+		column->SetNumberOfValues((int)cellFeatureTable->GetNumberOfRows());
+		cellFeatureTable->AddColumn(column);
+		for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
+		{
+			cellFeatureTable->SetValueByName(row, full_string.c_str(), 0);
+		}
+		for(int i=0; i < (int)kNeighborIDs.size(); ++i)
+		{
+			int Id = kNeighborIDs.at(i).at(0).first;
+			double avg_dist = ComputeAverageDistance(kNeighborIDs.at(i));
+			for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
 			{
-				cellFeatureTable->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
-				break;
+				if(cellFeatureTable->GetValue(row,0).ToInt() == Id)
+				{
+					cellFeatureTable->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+					break;
+				}
 			}
 		}
-	}
-	this->CellModel->setDataTable(cellFeatureTable);
-	if(this->FL_MeasurePlot)
-	{
-		this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-		this->FL_MeasurePlot->update();
-	}
-	if (this->FL_MeasureTable)
-	{
-		this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
-		this->FL_MeasureTable->update();
-	}
+		this->CellModel->setDataTable(cellFeatureTable);
+		if(this->FL_MeasurePlot)
+		{
+			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+			this->FL_MeasurePlot->update();
+		}
+		if (this->FL_MeasureTable)
+		{
+			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+			this->FL_MeasureTable->update();
+		}
 
-	vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
+		vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
+	
 
 #ifdef USE_QT_TESTING
 	std::cout << kNeighborTable->GetNumberOfRows() << " neighbors potentially connected" << std::endl;
@@ -7232,6 +7242,7 @@ void View3D::KNearestNeighborAnalysis()
 
 	delete KNObj;
 	KNObj = NULL;
+	}
 }
 
 double View3D::ComputeAverageDistance(std::vector< std::pair<unsigned int, double> > ID)
@@ -7364,6 +7375,140 @@ void View3D::NeighborsWithinRadiusAnalysis()
 
 }
 
+void View3D::ShowKMutualGraph(unsigned int k)
+{
+	vtkSmartPointer<vtkTable> table = this->CellModel->getDataTable();
+	std::map< unsigned int, std::vector<double> > centroidMap;
+	for ( int row=0; row<(int)table->GetNumberOfRows(); ++row )
+	{
+		unsigned int id = table->GetValue(row,0).ToUnsignedInt();
+		std::vector<double> c;
+		c.push_back(table->GetValue(row,1).ToDouble());
+		c.push_back(table->GetValue(row,2).ToDouble());
+		c.push_back(table->GetValue(row,3).ToDouble());
+		centroidMap[id] = c;
+	}
+
+	kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
+	KNObj->setFeatureTable(table);
+	std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
+	//if(IDs.at(0) == 0)
+	kNeighborIDs = KNObj->k_nearest_neighbors_All(k, 0, 0);
+	//else
+	//	kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
+
+	for(int row=0; row<(int)table->GetNumberOfRows(); row++)
+	{
+		//std::cout << "myCentroid : " << row <<"\r";
+		//if(ids.size() == 0);
+		//else
+		//{
+		//	std::vector<int>::iterator posn1 = std::find(ids.begin(), ids.end(), table->GetValue(row, 0).ToInt());
+		//	if(posn1 == ids.end())
+		//		return;
+		//}
+
+		//vtkSmartPointer<vtkSphereSource> centroidSphere =  vtkSmartPointer<vtkSphereSource>::New();
+		//centroidSphere->SetRadius(15);	
+		//vtkSmartPointer<vtkPolyDataMapper> centroidMapper =  vtkSmartPointer<vtkPolyDataMapper>::New();
+		//centroidMapper->SetInputConnection(centroidSphere->GetOutputPort()); 
+		//vtkSmartPointer<vtkActor> centroidactor = vtkSmartPointer<vtkActor>::New();
+		//centroidactor->SetMapper(centroidMapper);
+		//centroidactor->GetProperty()->SetOpacity(1);
+		////r_g_b rgbscalar = GetRGBValue(feat_col[row]);
+		////centroidactor->GetProperty()->SetColor(rgbscalar.r, rgbscalar.g, rgbscalar.b);
+		//centroidactor->GetProperty()->SetColor(0.8, 0, 0);
+		//centroidactor->SetPosition(table->GetValue(row, 1).ToDouble(),table->GetValue(row, 2).ToDouble(),table->GetValue(row, 3).ToDouble());
+		//Renderer->AddActor(centroidactor);
+	}
+
+	if(kNeighborIDs.size() != 0)
+	{
+		vtkSmartPointer<vtkPolyData> point_poly = vtkSmartPointer<vtkPolyData>::New();
+		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+		vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
+
+		printf("Started creating vtkPolyData for rendering purposes ... ");
+		vtkSmartPointer<vtkPolyData> poly_traces=vtkSmartPointer<vtkPolyData>::New();		
+		vtkSmartPointer<vtkUnsignedCharArray> point_scalars = vtkSmartPointer<vtkUnsignedCharArray>::New();	
+		point_scalars->SetNumberOfComponents(3);
+		point_scalars->SetName("colors");
+		vtkSmartPointer<vtkPoints> line_points=vtkSmartPointer<vtkPoints>::New();
+		line_points->SetDataTypeToDouble();
+		vtkSmartPointer<vtkCellArray> line_cells=vtkSmartPointer<vtkCellArray>::New();
+		unsigned char color[3];
+		color[0]=255;
+		color[1]=255;
+		color[2]=255;
+		/*color[0]=238;
+		color[1]=184;
+		color[2]=50;*/
+
+		for(int i=0; i<kNeighborIDs.size(); ++i)
+		{
+			int src = kNeighborIDs[i][0].first;
+			std::vector<double> cen_src = centroidMap[src];
+			//std::cout << "Edges for ID : " << i <<"\r";
+			for(int j=1; j<kNeighborIDs[i].size(); ++j)
+			{	
+				int trg = kNeighborIDs[i][j].first;
+				std::vector<double> cen_trg = centroidMap[trg];
+				point_scalars->InsertNextTupleValue(color);
+				double point[3];
+				point[0] = cen_src[0];
+				point[1]= cen_src[1];
+				point[2]= cen_src[2];	
+				unsigned int id1 = line_points->InsertNextPoint(point);
+				point[0] = cen_trg[0];
+				point[1]= cen_trg[1];
+				point[2]= cen_trg[2];	
+				unsigned int id2 = line_points->InsertNextPoint(point);
+
+				line_cells->InsertNextCell(2);
+				line_cells->InsertCellPoint(id1);
+				line_cells->InsertCellPoint(id2);
+
+			}
+		}
+
+		poly_traces->SetPoints(line_points);
+		poly_traces->SetLines(line_cells);
+		poly_traces->GetCellData()->SetScalars(point_scalars);
+
+		vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
+		cubemap->SetInput(poly_traces);
+		cubemap->GlobalImmediateModeRenderingOn();
+		// Actor(OpenGL):
+		vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
+		cubeact->SetMapper(cubemap);
+		//cubeact->SetPickable(0);
+		cubeact->PickableOff();
+		cubeact->GetProperty()->SetOpacity(.5);
+		cubeact->GetProperty()->SetLineWidth(4);
+		this->Renderer->AddActor(cubeact);
+		this->QVTK->GetRenderWindow()->Render();
+	}
+
+}
+void View3D::ComputeVoronoi()
+{
+	QString labelDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString labelFile = QFileDialog::getOpenFileName(this, "Load Label Image", labelDir,
+		tr("Label Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
+	if (!labelFile.isEmpty())
+	{
+		std::cout << "Reading label image..." << std::endl;
+		this->VOIType->ReadNucleiLabelImage(labelFile.toStdString());
+		std::cout << "Reading done" << std::endl;
+		std::cout << "Calculating voronoi..." << std::endl;
+		this->VOIType->CalculateVoronoiLabelImage();
+		std::cout << "Writing to file..." << std::endl;
+		std::string file = labelFile.toStdString();
+		std::string saveVoronoiFile = file.substr(0, file.size()-4)+"_voronoi.tif";
+		this->VOIType->WriteVoronoiLabelImage(saveVoronoiFile);
+		std::cout << "Finished" << std::endl;
+	}
+}
 void View3D::SpectralCluserting()
 {
 #ifdef USE_Clusclus
@@ -7440,24 +7585,6 @@ void View3D::selectedFeaturesClustering()
 #endif
 }
 
-void View3D::ComputeVoronoi()
-{
-	QString labelDir = this->TraceEditSettings.value("labelDir", ".").toString();
-	QString labelFile = QFileDialog::getOpenFileName(this , "Load Label Image", labelDir,
-		tr("Label Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
-	if (!labelFile.isEmpty())
-	{
-		this->TraceEditSettings.setValue("labelDir", labelDir);
-		std::cout << "Reading label image..." << std::endl;
-		//this->VOIType->ReadVesselDistanceMap(vesselMaskFile.toStdString());
-		std::cout << "Reading done" << std::endl;
-		//std::cout << "Calculating distance map..." << std::endl;
-		////CalculateDistanceToVessel();
-		//std::cout << "Finished" << std::endl;
-		////QString vesselMaskFile = this->getVesselMaskFile();
-		//this->statusBar()->showMessage("Vessel Mask Rendered");
-	}
-}
 int View3D::runTests()
 {
 #ifdef USE_QT_TESTING
