@@ -691,6 +691,8 @@ private:
 //!Feature Graph
 	FeatureRelation * feature;
 
+	vtkSmartPointer<vtkActor> cubeact;
+
 //!ROI data objects
 	std::vector<double*> ROIPoints;
 	//vtkSmartPointer<vtkPolyData> ROIExtrudedpolydata;	

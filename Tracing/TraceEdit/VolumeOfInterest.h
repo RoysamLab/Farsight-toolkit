@@ -19,6 +19,7 @@
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkSignedMaurerDistanceMapImageFilter.h"
 #include "itkDanielssonDistanceMapImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
 
 #include "vtkContourFilter.h"
 #include "vtkMarchingCubes.h"
@@ -47,9 +48,11 @@ typedef itk::Image< float, 3> FloatImageType;
 
 typedef itk::ImageFileReader< ImageType >    ReaderType;
 typedef itk::ImageFileWriter< ImageType >    WriterType;
+typedef itk::ImageFileWriter< FloatImageType > FloatWriterType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
-typedef itk::SignedMaurerDistanceMapImageFilter<ImageType, FloatImageType> SignedMaurerDistanceMapImageFilterType;
+typedef itk::SignedMaurerDistanceMapImageFilter<ImageType, FloatImageType>			SignedMaurerDistanceMapImageFilterType;
 typedef itk::DanielssonDistanceMapImageFilter<ImageType, FloatImageType, ImageType> VoronoiImageFilterType;
+typedef itk::LabelGeometryImageFilter< ImageType >	LabelGeometryImageFilterType;
 
 class VolumeOfInterest
 {
@@ -68,6 +71,7 @@ public:
 	void WriteVTPVOI(std::string filename);
 	void ReadNucleiLabelImage(std::string filename);
 	void CalculateVoronoiLabelImage();
+	void GetVoronoiBoundingBox();
 	void WriteVoronoiLabelImage(std::string filename);
 
 	ImageType::RegionType GetVesselImageRegion() {return vesselImageRegion;}
@@ -80,5 +84,6 @@ private:
 
 	ImageType::Pointer nucleiLabelImage;
 	ImageType::Pointer voronoiImage;
+	FloatImageType::Pointer voronoiDistMapImage;
 };
 #endif

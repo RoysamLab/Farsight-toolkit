@@ -225,6 +225,7 @@ void VolumeOfInterest::WriteVTPVOI(std::string filename)
 //Voronoi
 void VolumeOfInterest::ReadNucleiLabelImage(std::string filename)
 {
+	//! Read the label image
 	ReaderType::Pointer labelImageReader = ReaderType::New();
 	labelImageReader->SetFileName(filename.c_str());	
 	try
@@ -241,15 +242,61 @@ void VolumeOfInterest::ReadNucleiLabelImage(std::string filename)
 }
 void VolumeOfInterest::CalculateVoronoiLabelImage()
 {
+	//! Calculates the voronoi and its distance map
 	VoronoiImageFilterType::Pointer voronoiFilter = VoronoiImageFilterType::New();
 	voronoiFilter->SetInput(nucleiLabelImage);
 	voronoiFilter->Update();
 	voronoiImage = voronoiFilter->GetVoronoiMap();
+	voronoiDistMapImage = voronoiFilter->GetDistanceMap();
+}
+void VolumeOfInterest::GetVoronoiBoundingBox()
+{
+	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
+	labelGeometryImageFilter->SetInput( voronoiImage );
+	labelGeometryImageFilter->CalculateOrientedBoundingBoxOn();
+	labelGeometryImageFilter->Update();
+
+	LabelGeometryImageFilterType::LabelsType allLabels = labelGeometryImageFilter->GetLabels();
+	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt;
+	std::cout << "Number of labels: " << labelGeometryImageFilter->GetNumberOfLabels() << std::endl;
+	std::cout << std::endl;
+
+	for( allLabelsIt = allLabels.begin(); allLabelsIt != allLabels.end(); allLabelsIt++ )
+	{
+		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
+		std::cout << "\tCentroid: " << labelGeometryImageFilter->GetOrientedBoundingBoxOrigin(labelValue) << std::endl;
+		std::cout << "\tSize: " << labelGeometryImageFilter->GetOrientedBoundingBoxSize(labelValue) << std::endl;
+		std::cout << "\tVertices 1: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[0] << std::endl;
+		std::cout << "\tVertices 2: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[1] << std::endl;
+		std::cout << "\tVertices 3: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[2] << std::endl;
+		std::cout << "\tVertices 4: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[3] << std::endl;
+		std::cout << "\tVolume: " << labelGeometryImageFilter->GetOrientedBoundingBoxVolume(labelValue) << std::endl;
+		std::cout << "\tRegion: " << labelGeometryImageFilter->GetOrientedLabelImage(labelValue) << std::endl;
+
+		//std::cout << "\tVolume: " << labelGeometryImageFilter->GetVolume(labelValue) << std::endl;
+		//std::cout << "\tIntegrated Intensity: " << labelGeometryImageFilter->GetIntegratedIntensity(labelValue) << std::endl;
+		//std::cout << "\tCentroid: " << labelGeometryImageFilter->GetCentroid(labelValue) << std::endl;
+		//std::cout << "\tWeighted Centroid: " << labelGeometryImageFilter->GetWeightedCentroid(labelValue) << std::endl;
+		//std::cout << "\tAxes Length: " << labelGeometryImageFilter->GetAxesLength(labelValue) << std::endl;
+		//std::cout << "\tMajorAxisLength: " << labelGeometryImageFilter->GetMajorAxisLength(labelValue) << std::endl;
+		//std::cout << "\tMinorAxisLength: " << labelGeometryImageFilter->GetMinorAxisLength(labelValue) << std::endl;
+		//std::cout << "\tEccentricity: " << labelGeometryImageFilter->GetEccentricity(labelValue) << std::endl;
+		//std::cout << "\tElongation: " << labelGeometryImageFilter->GetElongation(labelValue) << std::endl;
+		//std::cout << "\tOrientation: " << labelGeometryImageFilter->GetOrientation(labelValue) << std::endl;
+		//std::cout << "\tBounding box: " << labelGeometryImageFilter->GetBoundingBox(labelValue) << std::endl;
+
+		std::cout << std::endl << std::endl;
+
+	}
 }
 void VolumeOfInterest::WriteVoronoiLabelImage(std::string filename)
 {
+	//! Writes the voronoi label image and the distance map to file
+	//Voronoi
+	std::string saveVoronoiFile = filename.substr(0, filename.size()-4)+"_voronoi.tif";
+
 	WriterType::Pointer voronoiImageWriter = WriterType::New();
-	voronoiImageWriter->SetFileName(filename);
+	voronoiImageWriter->SetFileName(saveVoronoiFile);
 	std::cout << "Set input..." << std::endl;
 	voronoiImageWriter->SetInput( voronoiImage );
 	
@@ -258,7 +305,25 @@ void VolumeOfInterest::WriteVoronoiLabelImage(std::string filename)
 		voronoiImageWriter->Update();
 	}
 	catch (itk::ExceptionObject & excp )
-    {
+	{
 		std::cerr << excp << std::endl;
-    }
+	}
+
+	//Distance Map
+	//tif does not support float values
+	std::string saveVoronoiDistMapFile = filename.substr(0, filename.size()-4)+"_voronoiDistMap.mhd";
+
+	FloatWriterType::Pointer voronoiDistMapImageWriter = FloatWriterType::New();
+	voronoiDistMapImageWriter->SetFileName(saveVoronoiDistMapFile);
+	std::cout << "Set input..." << std::endl;
+	voronoiDistMapImageWriter->SetInput( voronoiDistMapImage );
+	
+	std::cout << "Update writer" << std::endl;
+	try {
+		voronoiDistMapImageWriter->Update();
+	}
+	catch (itk::ExceptionObject & excp )
+	{
+		std::cerr << excp << std::endl;
+	}
 }

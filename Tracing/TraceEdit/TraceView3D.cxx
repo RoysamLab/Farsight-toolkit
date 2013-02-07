@@ -117,6 +117,7 @@ View3D::View3D(QWidget *parent)
 	this->VOIType= new VolumeOfInterest();
 
 	this->Gridlines = new GridlineActors();
+	this->cubeact = vtkSmartPointer<vtkActor>::New(); 
 	this->EditLogDisplay = new QTextEdit();
 	this->EditLogDisplay->setObjectName(tr("EditLogDisplay"));
 	this->EditLogDisplay->setReadOnly(true);
@@ -7117,9 +7118,10 @@ void View3D::KNearestNeighborAnalysis()
 {
 	if( this->CellModel->getDataTable()->GetNumberOfRows() <= 0)
 	{
-		QMessageBox mes;
-		mes.setText("Please compute cell features first!");
-		mes.exec();
+		this->ShowCellAnalysis();
+		//QMessageBox mes;
+		//mes.setText("Please compute cell features first!");
+		//mes.exec();
 	}
 
 	vtkSmartPointer<vtkTable> cellFeatureTable = this->CellModel->getDataTable();
@@ -7160,88 +7162,97 @@ void View3D::KNearestNeighborAnalysis()
 	}
 	delete dialog;
 
-	if (k_mutual)
+	if (k >= this->CellModel->getDataTable()->GetNumberOfRows()-1)
 	{
-		this->ShowKMutualGraph(k);
+		QMessageBox mes;
+		mes.setText("There are not enough neighbors!");
+		mes.exec();
 	}
-
-	if (k > 0)
+	else
 	{
-		std::map< unsigned int, std::vector<double> > centroidMap;
-		for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
+		if (k_mutual)
 		{
-			unsigned int id = cellFeatureTable->GetValue(row,0).ToUnsignedInt();
-			std::vector<double> c;
-			c.push_back(cellFeatureTable->GetValue(row,1).ToDouble());
-			c.push_back(cellFeatureTable->GetValue(row,2).ToDouble());
-			c.push_back(cellFeatureTable->GetValue(row,3).ToDouble());
-			centroidMap[id] = c;				
+			this->ShowKMutualGraph(k);
 		}
 
-		kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
-		KNObj->setFeatureTable(cellFeatureTable);
-		std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
-		if(IDs.at(0) == 0)
-			kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
-		else
-			kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
-
-		std::string full_string;
-		std::stringstream ss1;
-		ss1 << k;
-		if(Class_dest == 0)
+		if (k > 0)
 		{
-			full_string = "D_k=" + ss1.str() + "_class=all_" ;
-		}
-		else
-		{
-			std::stringstream ss2;
-			ss2 << Class_dest;
-			full_string = "D_k=" + ss1.str() + "_class=" + ss2.str() + "_";
-		}
-		cellFeatureTable->RemoveColumnByName(full_string.c_str());
-		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
-		column->SetName(full_string.c_str());
-		column->SetNumberOfValues((int)cellFeatureTable->GetNumberOfRows());
-		cellFeatureTable->AddColumn(column);
-		for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
-		{
-			cellFeatureTable->SetValueByName(row, full_string.c_str(), 0);
-		}
-		for(int i=0; i < (int)kNeighborIDs.size(); ++i)
-		{
-			int Id = kNeighborIDs.at(i).at(0).first;
-			double avg_dist = ComputeAverageDistance(kNeighborIDs.at(i));
+			std::map< unsigned int, std::vector<double> > centroidMap;
 			for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
 			{
-				if(cellFeatureTable->GetValue(row,0).ToInt() == Id)
+				unsigned int id = cellFeatureTable->GetValue(row,0).ToUnsignedInt();
+				std::vector<double> c;
+				c.push_back(cellFeatureTable->GetValue(row,1).ToDouble());
+				c.push_back(cellFeatureTable->GetValue(row,2).ToDouble());
+				c.push_back(cellFeatureTable->GetValue(row,3).ToDouble());
+				centroidMap[id] = c;				
+			}
+
+			kNearestObjects<3>* KNObj = new kNearestObjects<3>(centroidMap);
+			KNObj->setFeatureTable(cellFeatureTable);
+			std::vector<std::vector< std::pair<unsigned int, double> > > kNeighborIDs;
+			if(IDs.at(0) == 0)
+				kNeighborIDs = KNObj->k_nearest_neighbors_All(k, Class_dest, Class_src);
+			else
+				kNeighborIDs = KNObj->k_nearest_neighbors_IDs(IDs, k, Class_dest);
+
+			std::string full_string;
+			std::stringstream ss1;
+			ss1 << k;
+			if(Class_dest == 0)
+			{
+				full_string = "D_k=" + ss1.str() + "_class=all_" ;
+			}
+			else
+			{
+				std::stringstream ss2;
+				ss2 << Class_dest;
+				full_string = "D_k=" + ss1.str() + "_class=" + ss2.str() + "_";
+			}
+			cellFeatureTable->RemoveColumnByName(full_string.c_str());
+			vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+			column->SetName(full_string.c_str());
+			column->SetNumberOfValues((int)cellFeatureTable->GetNumberOfRows());
+			cellFeatureTable->AddColumn(column);
+			for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
+			{
+				cellFeatureTable->SetValueByName(row, full_string.c_str(), 0);
+			}
+			for(int i=0; i < (int)kNeighborIDs.size(); ++i)
+			{
+				int Id = kNeighborIDs.at(i).at(0).first;
+				double avg_dist = ComputeAverageDistance(kNeighborIDs.at(i));
+				for(int row=0; row<(int)cellFeatureTable->GetNumberOfRows(); ++row)
 				{
-					cellFeatureTable->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
-					break;
+					if(cellFeatureTable->GetValue(row,0).ToInt() == Id)
+					{
+						cellFeatureTable->SetValueByName(row, full_string.c_str(), vtkVariant(avg_dist));
+						break;
+					}
 				}
 			}
-		}
-		this->CellModel->setDataTable(cellFeatureTable);
-		if(this->FL_MeasurePlot)
-		{
-			this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
-			this->FL_MeasurePlot->update();
-		}
-		if (this->FL_MeasureTable)
-		{
-			this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
-			this->FL_MeasureTable->update();
-		}
+			this->CellModel->setDataTable(cellFeatureTable);
+			if(this->FL_MeasurePlot)
+			{
+				this->FL_MeasurePlot->setModels(this->CellModel->getDataTable(), this->CellModel->GetObjectSelection());
+				this->FL_MeasurePlot->update();
+			}
+			if (this->FL_MeasureTable)
+			{
+				this->FL_MeasureTable->setModels( this->CellModel->getDataTable(), this->CellModel->GetObjectSelection(),this->CellModel->GetObjectSelectionColumn());
+				this->FL_MeasureTable->update();
+			}
 
-		vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
-	
+			vtkSmartPointer<vtkTable> kNeighborTable = KNObj->vectorsToGraphTable(kNeighborIDs);
+		
 
-#ifdef USE_QT_TESTING
-	std::cout << kNeighborTable->GetNumberOfRows() << " neighbors potentially connected" << std::endl;
-#endif
+	#ifdef USE_QT_TESTING
+		std::cout << kNeighborTable->GetNumberOfRows() << " neighbors potentially connected" << std::endl;
+	#endif
 
-	delete KNObj;
-	KNObj = NULL;
+			delete KNObj;
+			KNObj = NULL;
+		}
 	}
 }
 
@@ -7479,13 +7490,14 @@ void View3D::ShowKMutualGraph(unsigned int k)
 		cubemap->SetInput(poly_traces);
 		cubemap->GlobalImmediateModeRenderingOn();
 		// Actor(OpenGL):
-		vtkSmartPointer<vtkActor> cubeact = vtkSmartPointer<vtkActor>::New();
-		cubeact->SetMapper(cubemap);
+
+		this->Renderer->RemoveActor(this->cubeact);
+		this->cubeact->SetMapper(cubemap);
 		//cubeact->SetPickable(0);
-		cubeact->PickableOff();
-		cubeact->GetProperty()->SetOpacity(.5);
-		cubeact->GetProperty()->SetLineWidth(4);
-		this->Renderer->AddActor(cubeact);
+		this->cubeact->PickableOff();
+		this->cubeact->GetProperty()->SetOpacity(.5);
+		this->cubeact->GetProperty()->SetLineWidth(4);
+		this->Renderer->AddActor(this->cubeact);
 		this->QVTK->GetRenderWindow()->Render();
 	}
 
@@ -7502,10 +7514,9 @@ void View3D::ComputeVoronoi()
 		std::cout << "Reading done" << std::endl;
 		std::cout << "Calculating voronoi..." << std::endl;
 		this->VOIType->CalculateVoronoiLabelImage();
-		std::cout << "Writing to file..." << std::endl;
-		std::string file = labelFile.toStdString();
-		std::string saveVoronoiFile = file.substr(0, file.size()-4)+"_voronoi.tif";
-		this->VOIType->WriteVoronoiLabelImage(saveVoronoiFile);
+		this->VOIType->GetVoronoiBoundingBox();
+		//std::cout << "Writing to file..." << std::endl;
+		//this->VOIType->WriteVoronoiLabelImage(labelFile.toStdString());
 		std::cout << "Finished" << std::endl;
 	}
 }
