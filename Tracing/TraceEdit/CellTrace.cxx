@@ -572,55 +572,60 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->branchPoints);
 		CellData->InsertNextValue(this->actualBifurcations);
 		CellData->InsertNextValue(this->terminalTips);
-		if (this->NumSegments == 0)
+
+		//protect from divide by zero
+		int tempNumSegments = 1;
+		if (this->NumSegments != 0)
 		{
-			this->NumSegments = 1;
+			tempNumSegments = this->NumSegments;
 		}
-		if (this->branchPoints == 0) 
+		int tempBranchPoints = 1;
+		if (this->branchPoints != 0)
 		{
-			this->branchPoints = 1;
-		}//protect from divide by zero
-		if (this->actualBifurcations == 0)
+			tempBranchPoints = this->branchPoints;
+		}
+		int tempActualBifurcations = 1;
+		if (this->actualBifurcations != 0)
 		{
-			this->actualBifurcations = 1;
+			tempActualBifurcations = this->actualBifurcations;
 		}
 
 		CellData->InsertNextValue(this->DiameterMin);
-		CellData->InsertNextValue(this->DiameterTotal / this->NumSegments);
+		CellData->InsertNextValue(this->DiameterTotal / tempNumSegments);
 		CellData->InsertNextValue(this->DiameterMax);
 
 		CellData->InsertNextValue(this->DiameterPowerMin);
-		CellData->InsertNextValue(this->DiameterPowerTotal / this->NumSegments);
+		CellData->InsertNextValue(this->DiameterPowerTotal / tempNumSegments);
 		CellData->InsertNextValue(this->DiameterPowerMax);
 
 		CellData->InsertNextValue(this->TotalVolume);
 		CellData->InsertNextValue(this->SegmentVolumeMin);
-		CellData->InsertNextValue(this->TotalVolume/this->NumSegments);////average segment Volume
+		CellData->InsertNextValue(this->TotalVolume/tempNumSegments);////average segment Volume
 		CellData->InsertNextValue(this->SegmentVolumeMax);
 		CellData->InsertNextValue(this->surfaceAreaTotal);
 		CellData->InsertNextValue(this->SurfaceAreaMin);
-		CellData->InsertNextValue(this->surfaceAreaTotal/this->NumSegments);
+		CellData->InsertNextValue(this->surfaceAreaTotal/tempNumSegments);
 		CellData->InsertNextValue(this->SurfaceAreaMax);
 		//CellData->InsertNextValue(this->sectionAreaTotal);
 		CellData->InsertNextValue(this->SectionAreaMin);
-		CellData->InsertNextValue(this->sectionAreaTotal/this->NumSegments);
+		CellData->InsertNextValue(this->sectionAreaTotal/tempNumSegments);
 		CellData->InsertNextValue(this->SectionAreaMax);
 
 		//CellData->InsertNextValue(this->BurkTaperTotal);
 		CellData->InsertNextValue(this->BurkTaperMin);
-		CellData->InsertNextValue(this->BurkTaperTotal / (this->actualBifurcations*2));
+		CellData->InsertNextValue(this->BurkTaperTotal / (tempActualBifurcations*2));
 		CellData->InsertNextValue(this->BurkTaperMax);
 
 		//CellData->InsertNextValue(this->HillmanTaperTotal);
 		CellData->InsertNextValue(this->HillmanTaperMin);
-		CellData->InsertNextValue(this->HillmanTaperTotal / (this->actualBifurcations*2));
+		CellData->InsertNextValue(this->HillmanTaperTotal / (tempActualBifurcations*2));
 		CellData->InsertNextValue(this->HillmanTaperMax);
 
 		CellData->InsertNextValue(this->TotalEuclideanPath);
-		CellData->InsertNextValue(this->TotalEuclideanPath/this->NumSegments);//average segment euclidean length
+		CellData->InsertNextValue(this->TotalEuclideanPath/tempNumSegments);//average segment euclidean length
 		CellData->InsertNextValue(this->PathLengthTotal);
 		CellData->InsertNextValue(this->PathLengthMin);
-		CellData->InsertNextValue(this->PathLengthTotal/this->NumSegments);//average segment length
+		CellData->InsertNextValue(this->PathLengthTotal/tempNumSegments);//average segment length
 		CellData->InsertNextValue(this->PathLengthMax);
 
 		CellData->InsertNextValue(this->MinStemDistance);
@@ -628,7 +633,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->MaxStemDistance);
 
 		CellData->InsertNextValue(this->ContractionMin);
-		double aveContraction = this->ContractionTotal / this->NumSegments;
+		double aveContraction = this->ContractionTotal / tempNumSegments;
 		if (aveContraction != aveContraction)
 		{
 			CellData->InsertNextValue(-PI);
@@ -641,39 +646,39 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 
 		CellData->InsertNextValue(this->FragmentationTotal);
 		CellData->InsertNextValue(this->FragmentationMin);
-		CellData->InsertNextValue((int) floor((double) this->FragmentationTotal / this->NumSegments + 0.5));
+		CellData->InsertNextValue((int) floor((double) this->FragmentationTotal / tempNumSegments + 0.5));
 		CellData->InsertNextValue(this->FragmentationMax);
 
 		CellData->InsertNextValue(this->daughterRatioMin);
-		CellData->InsertNextValue(this->daughterRatio / this->actualBifurcations);
+		CellData->InsertNextValue(this->daughterRatio / tempActualBifurcations);
 		CellData->InsertNextValue(this->daughterRatioMax);
 
 		CellData->InsertNextValue(this->parentDaughterRatioMin);
-		CellData->InsertNextValue(this->parentDaughterRatio/ this->actualBifurcations);
+		CellData->InsertNextValue(this->parentDaughterRatio/ tempActualBifurcations);
 		CellData->InsertNextValue(this->parentDaughterRatioMax);
 
 		CellData->InsertNextValue(this->daughterLengthRatioMin);
-		CellData->InsertNextValue(this->daughterLengthRatio/ this->actualBifurcations);
+		CellData->InsertNextValue(this->daughterLengthRatio/ tempActualBifurcations);
 		CellData->InsertNextValue(this->daughterLengthRatioMax);
 
 		CellData->InsertNextValue(this->partitionAsymmetryMin);
-		CellData->InsertNextValue(this->partitionAsymmetry / this->actualBifurcations);
+		CellData->InsertNextValue(this->partitionAsymmetry / tempActualBifurcations);
 		CellData->InsertNextValue(this->partitionAsymmetryMax);
 
 		CellData->InsertNextValue(this->rallPowerMin);
-		CellData->InsertNextValue(this->rallPower / this->actualBifurcations);
+		CellData->InsertNextValue(this->rallPower / tempActualBifurcations);
 		CellData->InsertNextValue(this->rallPowerMax);
 
 		CellData->InsertNextValue(this->PkMin);
-		CellData->InsertNextValue(this->Pk / this->actualBifurcations);
+		CellData->InsertNextValue(this->Pk / tempActualBifurcations);
 		CellData->InsertNextValue(this->PkMax);
 
 		CellData->InsertNextValue(this->Pk_classicMin);
-		CellData->InsertNextValue(this->Pk_classic / this->actualBifurcations);
+		CellData->InsertNextValue(this->Pk_classic / tempActualBifurcations);
 		CellData->InsertNextValue(this->Pk_classicMax);
 
 		CellData->InsertNextValue(this->Pk_2Min);
-		CellData->InsertNextValue(this->Pk_2 / this->actualBifurcations);
+		CellData->InsertNextValue(this->Pk_2 / tempActualBifurcations);
 		CellData->InsertNextValue(this->Pk_2Max);
 
 		double AveAzimuth = -PI;
@@ -707,7 +712,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 			this->BifTiltRemoteCount = 1;
 		}
 		CellData->InsertNextValue(this->BifAmplLocalMin);
-		CellData->InsertNextValue(this->BifAmplLocal / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifAmplLocal / tempActualBifurcations);
 		CellData->InsertNextValue(this->BifAmplLocalMax);
 		CellData->InsertNextValue(this->BifTiltLocalMin);
 		CellData->InsertNextValue(this->BifTiltLocal / this->BifTiltLocalCount);
@@ -717,7 +722,7 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->BifTorqueLocalMax);
 
 		CellData->InsertNextValue(this->BifAmplRemoteMin);
-		CellData->InsertNextValue(this->BifAmplRemote / this->actualBifurcations);
+		CellData->InsertNextValue(this->BifAmplRemote / tempActualBifurcations);
 		CellData->InsertNextValue(this->BifAmplRemoteMax);
 		CellData->InsertNextValue(this->BifTiltRemoteMin);
 		CellData->InsertNextValue(this->BifTiltRemote / this->BifTiltRemoteCount);
@@ -726,27 +731,28 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->BifTorqueRemote/ this->BifTorqueRemoteCount);
 		CellData->InsertNextValue(this->BifTorqueRemoteMax);
 
-		if (this->terminalTips == 0)
+		int tempTerminalTips = 1;
+		if (this->terminalTips != 0)
 		{
-			this->terminalTips = 1;
+			tempTerminalTips = this->terminalTips;
 		}
 		CellData->InsertNextValue(this->MinTerminalLevel);
 		CellData->InsertNextValue(this->TerminalPathLengthMin);
-		CellData->InsertNextValue(this->SumTerminalLevel /this->terminalTips);//average terminal level
-		CellData->InsertNextValue(this->TerminalPathLength/this->terminalTips);//now average path to end
+		CellData->InsertNextValue(this->SumTerminalLevel /tempTerminalTips);//average terminal level
+		CellData->InsertNextValue(this->TerminalPathLength/tempTerminalTips);//now average path to end
 		CellData->InsertNextValue(this->MaxTerminalLevel);
 		CellData->InsertNextValue(this->TerminalPathLengthMax);
 
 		CellData->InsertNextValue(this->TerminalSegmentTotal);
 		CellData->InsertNextValue(this->TerminalSegmentMin);
-		CellData->InsertNextValue(this->TerminalSegmentTotal / this->terminalTips); //average
+		CellData->InsertNextValue(this->TerminalSegmentTotal / tempTerminalTips); //average
 		CellData->InsertNextValue(this->TerminalSegmentMax);
 
 		CellData->InsertNextValue(this->DiamThresholdMin);
-		CellData->InsertNextValue(this->DiamThresholdTotal/this->terminalTips);
+		CellData->InsertNextValue(this->DiamThresholdTotal/tempTerminalTips);
 		CellData->InsertNextValue(this->DiamThresholdMax);
 		CellData->InsertNextValue(this->LastParentDiamMin);
-		CellData->InsertNextValue(this->TotalLastParentDiam/this->terminalTips);
+		CellData->InsertNextValue(this->TotalLastParentDiam/tempTerminalTips);
 		CellData->InsertNextValue(this->LastParentDiamMax);
 
 		CellData->InsertNextValue(this->HillmanThreshMin); 
@@ -760,10 +766,10 @@ vtkSmartPointer<vtkVariantArray> CellTrace::DataRow()
 		CellData->InsertNextValue(this->HillmanThreshMax);
 
 		CellData->InsertNextValue(this->BranchPtToSomaEucDisMin);
-		CellData->InsertNextValue(this->BranchPtToSomaEucDisTotal/this->branchPoints);
+		CellData->InsertNextValue(this->BranchPtToSomaEucDisTotal/tempBranchPoints);
 		CellData->InsertNextValue(this->BranchPtToSomaEucDisMax);
 		CellData->InsertNextValue(this->TipToSomaEucDisMin);
-		CellData->InsertNextValue(this->TipToSomaEucDisTotal/this->terminalTips);
+		CellData->InsertNextValue(this->TipToSomaEucDisTotal/tempTerminalTips);
 		CellData->InsertNextValue(this->TipToSomaEucDisMax);
 
 		CellData->InsertNextValue(this->tipMagnitude);
