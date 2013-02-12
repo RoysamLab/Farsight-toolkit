@@ -2,6 +2,9 @@
 #include "ftkVesselTracer.h"
 
 ftkVesselTracer::ftkVesselTracer(){
+
+	this->allParams.initByDefaultValues();
+	//this->SphericalBinPreprocess();
 }
 
 ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false, int use_vesselness = 1){
@@ -56,8 +59,10 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 		Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);
 		
 		// Reading secondary nodes from file for now
-		std::string filename = "AllVBTNodes_grid10.txt";
-		this->ReadVBTNodesFromTextFile(filename);
+		//std::string filename = "F://LeasurePilotExp//Control//kt10012_w227_TRITC_Prior_DSU_pre_crop_crop_nodes_info.txt";
+		std::string nodes_out_file = this->data_folder_path;
+		nodes_out_file.append("_nodes_info.txt");
+		this->ReadVBTNodesFromTextFile(nodes_out_file);
 		//this->ReadVBTNodesFromTextFile(std::string("AllVBTNodes_default.txt"));
 		
 		this->allParams.graphAndMSTParams.initByDefaultValues();
@@ -73,7 +78,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 	
 
 	// "Smart" retracing
-	//this->SmartRetrace();
+	this->SmartRetrace();
 }
 
 ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Pointer input_image, bool preprocess = false, bool start_with_mst = false, int use_vesselness = 1){
@@ -137,12 +142,12 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Point
 		this->CreateMinimumSpanningForest();
 	}
 	
-	//this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
+	this->PopulateSWCVBTNodeContainerAndComputeVBTNodeFeatures();
 	//this->WriteVBTNodeFeaturesFile();
-	//this->WriteSWCFileVessel();
-	//this->WriteSegmentationMask();
+	this->WriteSWCFileVessel();
+	this->WriteSegmentationMask();
 	//this->WriteSkeletonImageFromVTK();
-	//this->WriteSkeletonImage();
+	this->WriteSkeletonImage();
 	
 
 	// "Smart" retracing
@@ -253,7 +258,7 @@ void VBTNodeDetectionParameters::initByDefaultValues(void){
 	
 	this->maxVesselWidth = 20;
 	this->minVesselWidth = 2; //1;
-	this->likelihoodThresholdPrimary = 0.1; //0.04; //0.01; //0.04; //0.1; //0.01; //0.005; // Vary according to the noise level in the data
+	this->likelihoodThresholdPrimary = 0.06; //0.1; //0.04; //0.01; //0.005; // Vary according to the noise level in the data
 	this->distanceThresholdPrimary = 1.2;
 
 	this->traceQualityThreshold = 4.0; //3.0; //4.0; //5.0; // IMP PARAM
@@ -339,10 +344,10 @@ VesselVBTNodeFeatures::VesselVBTNodeFeatures(){
 void GraphAndMSTPartameters::initByDefaultValues(void){
 
 	this->affinityRadThresh = 2.0; //3.0; //2.5;
-	this->NBinsAffinity = 128; //32;
+	this->NBinsAffinity = 32; //128; //32;
 	this->maxEdgeWeight = 99.0;
 	this->minBranchAngle = vnl_math::pi/8.0;
-	this->maxNBranches = 100; //25; //10; //5;
+	this->maxNBranches = 25; //100; //25; //10; //5;
 	this->maxTreeVBTNodes = 10000; //500; //100;
 }
 void AllParameters::initByDefaultValues(void){
@@ -1198,8 +1203,8 @@ void ftkVesselTracer::FitSphereAndSortVBTNodes(void){
 	std::cout << "Primary nodes before hit test: " << this->primaryVBTNodes.size() << std::endl;
 	
 	// NOT USING FILTERING IS AN IMPORTANT CHANGE AND HAS NOT BEEN TESTED SO MUCH
-	//this->SortAndFilterPrimaryVBTNodes();
-	this->primaryVBTNodesAfterHitTest = this->primaryVBTNodes;
+	this->SortAndFilterPrimaryVBTNodes();
+	//this->primaryVBTNodesAfterHitTest = this->primaryVBTNodes;
 	
 	//final primary nodes
 	//this->VisualizeVBTNodesWithData3D(this->primaryVBTNodesAfterHitTest, false);
@@ -1527,6 +1532,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
 					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
 					seed.intensityInBand.push_back(this->normalizedInputData->GetPixel(current_index));
+					
+					// The vesselnessImage may not exist!
 					seed.vesselnessInBand.push_back(this->VesselnessImage->GetPixel(current_index));
 					seed.gxInBand.push_back(this->gx->GetPixel(current_index));
 					seed.gyInBand.push_back(this->gy->GetPixel(current_index));
@@ -1539,11 +1546,11 @@ void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 					seed.xNormalizedInBand.push_back(x_normalized/radial_dist);
 					seed.yNormalizedInBand.push_back(y_normalized/radial_dist);
 					seed.zNormalizedInBand.push_back(z_normalized/radial_dist);
-					seed.intensityInBand.push_back(0);
-					seed.vesselnessInBand.push_back(0);
-					seed.gxInBand.push_back(0);
-					seed.gyInBand.push_back(0);
-					seed.gzInBand.push_back(0);
+					seed.intensityInBand.push_back(0.0);
+					seed.vesselnessInBand.push_back(0.0);
+					seed.gxInBand.push_back(0.0);
+					seed.gyInBand.push_back(0.0);
+					seed.gzInBand.push_back(0.0);
 					
 					seed.bandArea++;
 				}
@@ -1582,8 +1589,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 			std::sort(foreground_values.begin(), foreground_values.end());
 			std::sort(foreground_vesselness.begin(), foreground_vesselness.end());
 
-			seed.meanForegroundIntensity = *(foreground_values.begin() + (foreground_values.size()/2));
-			seed.meanForegroundVesselness = *(foreground_vesselness.begin() + (foreground_vesselness.size()/2));
+			seed.meanForegroundIntensity = *(foreground_values.begin() + (foreground_values.size()/2.0));
+			seed.meanForegroundVesselness = *(foreground_vesselness.begin() + (foreground_vesselness.size()/2.0));
 		}
 		else{
 			seed.meanForegroundIntensity = 0.0;
@@ -1594,8 +1601,8 @@ void ftkVesselTracer::UpdateAppearanceVectorized(VBTNode& seed){
 			std::sort(background_values.begin(), background_values.end());
 			std::sort(background_vesselness.begin(), background_vesselness.end());
 
-			seed.meanBackgroundIntensity = *(background_values.begin() + (background_values.size()/2));
-			seed.meanBackgroundVesselness = *(background_vesselness.begin() + (background_vesselness.size()/2));
+			seed.meanBackgroundIntensity = *(background_values.begin() + (background_values.size()/2.0));
+			seed.meanBackgroundVesselness = *(background_vesselness.begin() + (background_vesselness.size()/2.0));
 		}
 		else{
 			seed.meanBackgroundIntensity = 0.0;
@@ -1944,10 +1951,14 @@ void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, 
 	std::vector<double> inside_vesselness_term(seed.intensityInBand.size()), outside_vesselness_term(seed.intensityInBand.size());
 	for(int i = 0; i < seed.intensityInBand.size(); i++){
 		inside_region_term[i] = std::abs(PixelType(seed.meanForegroundIntensity - seed.intensityInBand[i]));
-		outside_region_term[i] = std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i]));
-
-		inside_vesselness_term[i] = std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i]));
-		outside_vesselness_term[i] = std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i]));
+		outside_region_term[i] = std::abs(PixelType(seed.meanBackgroundIntensity - seed.intensityInBand[i]));	
+	}
+	
+	if(this->useVesselness >= 2){
+		for(int i = 0; i < seed.intensityInBand.size(); i++){
+			inside_vesselness_term[i] = std::abs(PixelType(seed.meanForegroundVesselness - seed.vesselnessInBand[i]));
+			outside_vesselness_term[i] = std::abs(PixelType(seed.meanBackgroundVesselness - seed.vesselnessInBand[i]));
+		}
 	}
 	
 	std::vector<double> del_energy(inside_region_term.size()), region_based_only_term(inside_region_term.size());
@@ -1955,7 +1966,11 @@ void ftkVesselTracer::UpdateModelSecondary(VBTNode& seed, VBTNode& anchor_node, 
 	//std::transform(inside_region_term.begin(), inside_region_term.end(), outside_region_term.begin(), del_energy.begin(), std::minus<double>());
 	for(int i = 0; i < inside_region_term.size(); i++){
 		region_based_only_term[i] = inside_region_term[i] - outside_region_term[i];
-		vesselness_based_term[i] = inside_vesselness_term[i] - outside_vesselness_term[i];
+	}
+
+	if(this->useVesselness >= 2){
+		for(int i = 0; i < inside_region_term.size(); i++)
+			vesselness_based_term[i] = inside_vesselness_term[i] - outside_vesselness_term[i];	
 	}
 	
 	// VESSELNESS OPTION CHECK
@@ -2273,7 +2288,7 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 		
 		total_nodes_counter++;
 		this->allVBTNodes.push_back(current_node);
-		std::cout << "Node id: " << total_nodes_counter << std::endl;
+		//std::cout << "Node id: " << total_nodes_counter << std::endl;
 
 		//std::cout << total_nodes_counter << " " << this->allVBTNodes.size() << std::endl;
 
@@ -3118,13 +3133,13 @@ double ftkVesselTracer::computeTraceQuality(VBTNode& node){
 		if(this->useVesselness >= 1){
 
 			if(this->allVBTNodes[parent1].likelihood <= 0.0 || curr_vesselness < this->allParams.nodeDetectionParams.vesselnessThershold)
-				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
+				cost = cost + this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
 			else
 				cost = cost - std::log(this->allVBTNodes[parent1].likelihood + curr_vesselness); //- std::log(curr_vesselness);
 		}
 		else{
 			if(this->allVBTNodes[parent1].likelihood <= 0.0)
-				cost = this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
+				cost = cost + this->allParams.nodeDetectionParams.traceQualityThreshold; //.maxTraceCost; //.traceQualityThreshold;
 			else
 				cost = cost - std::log(this->allVBTNodes[parent1].likelihood);
 		}
@@ -3696,7 +3711,11 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 	for(int i = 0; i < this->allVBTNodes.size(); i++)
 		this->allVBTNodes[i].connectedVBTNodesBinned.resize(2 * this->allParams.graphAndMSTParams.NBinsAffinity, this->allParams.graphAndMSTParams.maxEdgeWeight+1);
 	
+	//std::cout << "Done with resizing affinity graph, total nodes: " << this->allVBTNodes.size() << std::endl;  
+
 	for(int i = 0; i < this->allVBTNodes.size(); i++){
+
+		//std::cout << "Node: " << i << std::endl;
 		
 		#pragma omp parallel for
 		for(int j = i + 1; j < this->allVBTNodes.size(); j++){
@@ -3706,8 +3725,8 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 			double norm_dist = VBTNode::ComputeNorm(dir);
 			dir.NormalizeVBTNode(norm_dist);
 
-			if(norm_dist < this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allVBTNodes[j].scale, this->allVBTNodes[i].scale)){
-				
+			//if(norm_dist > std::min(this->allVBTNodes[i].scale, this->allVBTNodes[j].scale) && norm_dist < this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allVBTNodes[j].scale, this->allVBTNodes[i].scale)){
+			if(norm_dist < this->allParams.graphAndMSTParams.affinityRadThresh * std::max(this->allVBTNodes[j].scale, this->allVBTNodes[i].scale)){	
 				int angleBinLinear = this->ComputeAffinityBin(dir);
 				double existingVBTNodeDist = this->allVBTNodes[i].connectedVBTNodesBinned[2*(angleBinLinear - 1) + 1];
 
@@ -3839,7 +3858,7 @@ void ftkVesselTracer::CreateAffinityGraph(void){
 
 		if(this->allVBTNodes[i].dirX.empty() || this->allVBTNodes[i].dirY.empty() || this->allVBTNodes[i].dirZ.empty()){
 			
-			std::cout << "Empty dir!!! : " << i << std::endl;
+			//std::cout << "Empty dir!!! : " << i << std::endl;
 
 			this->allForestVBTNodes[i].dirX.push_back(0.0);
 			this->allForestVBTNodes[i].dirY.push_back(0.0);
@@ -4213,12 +4232,32 @@ void ftkVesselTracer::ComputeMinimumSpanningForestWithLoopDetection(void){
 	//Removing redundant branches
 	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
 		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
+			
+			// Can have upto 3 branches. NEED TO ADD A PARAMETER.
+			if(j < 3)
+				continue;
+
+			if(this->allForestVBTNodes[i].branchIDs[j] != -1){
+				int id_to_find = this->allForestVBTNodes[i].branchIDs[j];
+
+				this->allForestVBTNodes[i].branchIDs[j] = -1;
+
+				for(int k = 0; k < this->allForestVBTNodes[id_to_find].branchIDs.size(); k++)
+					if(this->allForestVBTNodes[id_to_find].branchIDs[k] == i)
+						this->allForestVBTNodes[id_to_find].branchIDs[k] = -1;
+			}
+		}
+	}
+
+	for(int i = 0; i < this->allForestVBTNodes.size(); i++){
+		for(int j = 0; j < this->allForestVBTNodes[i].branchIDs.size(); j++){
 			if(this->allForestVBTNodes[i].branchIDs[j] == -1){
 				this->allForestVBTNodes[i].branchIDs.erase(this->allForestVBTNodes[i].branchIDs.begin() + j, this->allForestVBTNodes[i].branchIDs.end());
 				break;
 			}
-		}
+		}		
 	}
+
 	
 	//this->PrintForest();
 	//this->VisualizeMinimumSpanningForest(true);
@@ -5421,16 +5460,22 @@ void ftkVesselTracer::WriteSegmentationMask(void){
 		}
 	}
 
+	ConnectedComponentFilterType::Pointer label_filter = ConnectedComponentFilterType::New();
+	label_filter->SetInput(this->segmentationMaskImage);
+	label_filter->FullyConnectedOn();
+	label_filter->Update();
+
 	std::string mask_file_name = this->data_folder_path;
-	mask_file_name.append("_SegmentationMaskImage.tif");
+	mask_file_name.append("_SegmentationMaskLabelImage.tif");
 	//std::cout << mask_file_name << std::endl;
 
 	ImageWriter::Pointer mask_writer = ImageWriter::New();	
 	mask_writer->SetFileName(mask_file_name);	
-	mask_writer->SetInput(this->segmentationMaskImage);
+	//mask_writer->SetInput(this->segmentationMaskImage);
+	mask_writer->SetInput(label_filter->GetOutput());
 	mask_writer->Update();
 
-	std::cout << "Done with writing the segmentation mask image: " << mask_file_name << std::endl;
+	std::cout << "Done with writing the segmentation mask label image: " << mask_file_name << std::endl;
 }
 
 void ftkVesselTracer::WriteVBTNodeFeaturesFile(void){
@@ -5596,7 +5641,7 @@ void ftkVesselTracer::ComputeRetracingStartPoints(void){
 				itk::Index<3> idx;
 				idx[0] = i; idx[1] = j; idx[2] = k;
 
-				if(!this->segmentationMaskImage->GetPixel(idx))
+				if(this->segmentationMaskImage->GetPixel(idx) == 0)
 					this->InputImageRetracing->SetPixel(idx, this->inputData->GetPixel(idx));
 					
 			}
@@ -5663,6 +5708,164 @@ void ftkVesselTracer::ComputeRetracingStartPoints(void){
 
 	//this->ComputeAllSecondaryVBTNodesRetracing();
 
+}
+
+void VBTNode::SetLocationFromArray(double p[]){
+	this->x = p[0];
+	this->y = p[1];
+	this->z = p[2];
+}
+
+itk::Index<3> VBTNode::GetLocationAsITKIndex(){
+
+	itk::Index<3> idx;
+	idx[0] = this->x;
+	idx[1] = this->y;
+	idx[2] = this->z;
+
+	return idx;
+}
+bool ftkVesselTracer::ComputeTracingCosts(double p1[], double p2[], double& tracing_cost, double& vesselness_cost, double& scale_var, double& vesselness_var){
+	
+	if(this->inputData.IsNull() || this->gx.IsNull() || this->gy.IsNull() || this->gz.IsNull() || this->VesselnessImage.IsNull()){
+		std::cout << "Cannot fit spheres when data is empty!! " << std::endl;
+		return 0;
+	}
+
+	std::vector<VBTNode> nodes = this->FitSpheresOnTraceLine(p1, p2);
+
+	int max_var = 100;
+	if(nodes.empty()){
+		tracing_cost = this->allParams.nodeDetectionParams.traceQualityThreshold;
+		vesselness_cost = this->allParams.nodeDetectionParams.traceQualityThreshold;
+		scale_var = max_var;
+		vesselness_var = max_var;
+		return 1;
+	}
+	
+	vnl_vector<double> r_vec(nodes.size(), 0), v_vec(nodes.size(), 0);
+	double t_cost = 0, v_cost = 0;
+	for(int i = 0; i < nodes.size(); i++){
+
+		if(!nodes[i].isValid || nodes[i].likelihood < 0.0 || nodes[i].vesselness_likelihood < 0.0){
+			t_cost = t_cost + this->allParams.nodeDetectionParams.traceQualityThreshold;
+			v_cost = v_cost + this->allParams.nodeDetectionParams.traceQualityThreshold;
+		}
+		else{
+			t_cost = t_cost - std::log(nodes[i].likelihood);		
+			v_cost = v_cost - std::log(nodes[i].vesselness_likelihood);		
+		}
+		
+		r_vec[i] = nodes[i].scale;
+		if(this->VesselnessImage->GetBufferedRegion().IsInside(nodes[i].GetLocationAsITKIndex()))
+			v_vec[i] = this->VesselnessImage->GetPixel(nodes[i].GetLocationAsITKIndex());
+	}
+
+	double r_mean = r_vec.mean();
+	double v_mean = v_vec.mean();
+	double r_var = 0, v_var = 0;
+	for(int i = 0; i < nodes.size(); i++){
+		r_var = r_var + std::pow(r_vec[i] - r_mean, 2);
+		v_var = v_var + std::pow(v_vec[i] - v_mean, 2);
+	}
+	r_var = std::sqrt(r_var / (double)r_vec.size());
+	v_var = std::sqrt(v_var / (double)v_vec.size());
+
+	t_cost = t_cost/(double)nodes.size();
+	v_cost = v_cost/(double)nodes.size();
+
+	tracing_cost = t_cost;
+	vesselness_cost = v_cost;
+	scale_var = r_var;
+	vesselness_var = v_var;
+
+	/*std::cout << nodes.size() << std::endl;
+	for(int i = 0; i < nodes.size(); i++){
+		std::cout << nodes[i].x << '\t' << nodes[i].y << '\t' << nodes[i].z << '\t' << nodes[i].likelihood << '\t' << nodes[i].scale << '\t';
+		std::cout << nodes[i].vesselness_likelihood << std::endl;
+	}
+	std::cout << tracing_cost << '\t' << vesselness_cost << '\t' << scale_var << '\t' << vesselness_var << std::endl;
+	
+	this->VisualizeVBTNodesWithData3D(node_vec, false);*/
+
+	return 1;
+}
+
+std::vector<VBTNode> ftkVesselTracer::FitSpheresOnTraceLine(double p1[], double p2[]){
+
+	// Do this somewhere else!
+	Common::NormalizeData(this->inputData, this->normalizedInputData);
+	Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);	
+	this->useVesselness = 1;
+
+	std::vector<VBTNode> nodes;
+	VBTNode n1, n2, n_dist;
+	int nodes_count = 0;
+	double node_dist = 0.0, node_center_dist = 0.0;
+	n1.SetLocationFromArray(p1);
+	n2.SetLocationFromArray(p2);
+
+	//std::cout << "End points: " << p1[0] << ", " << p1[1] << ", " <<p1[2] << " AND ";
+	//std::cout << p2[0] << ", " << p2[1] << ", " << p2[2] << std::endl;
+	
+	this->FitSphereAtVBTNode(n1);
+	this->FitSphereAtVBTNode(n2);
+	
+	if(!n1.isValid || !n2.isValid || n1.likelihood < 0.0 || n2.likelihood < 0.0 || n1.vesselness_likelihood < 0.0 || n2.vesselness_likelihood < 0.0)		
+		return nodes;
+	
+	nodes.push_back(n1);
+	nodes.push_back(n2);
+	nodes_count+=2;
+
+	// If the distance between them is not enough to fit another sphere, return
+	VBTNode::ComputeDistanceBetweenVBTNodes(n1, n2, n_dist); 
+	node_center_dist = VBTNode::ComputeNorm(n_dist);
+	node_dist = node_center_dist - n1.scale - n2.scale;
+	
+	//std::cout << "scales: " << n1.scale << ", " << n2.scale << std::endl;
+	//std::cout << "node_dist: " << node_dist << std::endl;
+
+	if(node_dist < std::max(n1.scale, n2.scale))
+		return nodes;
+		
+	// There is space, fit more spheres on the line 
+	double divide_unit = std::max(n1.scale, n2.scale) + std::max(n1.scale, n2.scale)*0.5;
+	int n_intervals = ceil(node_center_dist/divide_unit);
+	double linex = (p2[0]-p1[0]) / n_intervals;
+	double liney = (p2[1]-p1[1]) / n_intervals;
+	double linez = (p2[2]-p1[2]) / n_intervals;
+
+	//std::cout << "node_center_dist: " << node_center_dist << std::endl;
+	//std::cout << "divide_unit: " << divide_unit << " n_intervals: " << n_intervals << std::endl;
+	
+	for (int i = 0; i < n_intervals-2; i++)
+	{
+		VBTNode newNode;
+		newNode.x = p1[0] + (double)i * linex;
+		newNode.y = p1[1] + (double)i * liney;
+		newNode.z = p1[2] + (double)i * linez;
+		
+		this->FitSphereAtVBTNode(newNode);
+		
+		nodes.push_back(newNode);
+		nodes_count++;
+	}
+	return nodes;
+}
+
+void ftkVesselTracer::SetInputImage(ImageType3D::Pointer input_img){
+	this->inputData = input_img;
+}
+
+void ftkVesselTracer::SetGVFImages(ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz){
+	this->gx = gx;
+	this->gy = gy;
+	this->gz = gz;
+}
+
+void ftkVesselTracer::SetVesselnessImage(ImageType3D::Pointer vesselness_img){
+	this->VesselnessImage = vesselness_img;
 }
 
 IntrinsicFeatureVector_VT::IntrinsicFeatureVector_VT(){

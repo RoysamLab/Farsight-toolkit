@@ -96,6 +96,7 @@
 #include "itkLabelGeometryImageFilter.h"
 #include "itkLabelOverlapMeasuresImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
+#include "itkConnectedComponentImageFilter.h"
 
 #include <vnl/vnl_vector_fixed.h>
 #include <vnl/vnl_vector.h>
@@ -106,6 +107,7 @@
 #include <vnl/algo/vnl_gaussian_kernel_1d.h>
 
 #include <vcl_complex.h>
+//#include <contrib/mul/mbl/mbl_stats_nd.h>
 
 #include "boost/multi_array.hpp"
 #include "boost/lexical_cast.hpp"
@@ -173,6 +175,7 @@ typedef itk::SignedMaurerDistanceMapImageFilter<RenderImageType3D, ImageType3D> 
 typedef itk::BinaryThresholdImageFilter<LabelImageType3D, RenderImageType3D> ThresholdFilterType;
 typedef itk::LabelGeometryImageFilter<LabelImageType3D, RenderImageType3D> LabelGeometryFilterType;
 typedef itk::LabelOverlapMeasuresImageFilter<RenderImageType3D> LabelOverlapFilterType;
+typedef itk::ConnectedComponentImageFilter<RenderImageType3D, RenderImageType3D> ConnectedComponentFilterType;
 
 typedef std::vector<int> VectorType1D;
 typedef std::vector<VectorType1D> VectorType2D;
@@ -532,6 +535,8 @@ struct VBTNode{
 	static double DotProduct(VBTNode, VBTNode);
 	void InitDefaultParamsBeforeOptimization(void);
 	void InitDefaultParamsBeforeODFRecursion(void);
+	void SetLocationFromArray(double p[]);
+	itk::Index<3> GetLocationAsITKIndex(void);
 };
 
 class compareVBTNodes{
@@ -815,8 +820,7 @@ public:
 	 */
 	void WriteSkeletonImageFromVTK(void);
 
-
-	/* Write the segmentation mask to disk
+	/* Write the segmentation mask to disk as a label image
 	 */
 	void WriteSegmentationMask(void);
 	
@@ -827,7 +831,19 @@ public:
 	/* Compute vessel network features
 	 */
 	void ComputeVesselNetworkFeatures(void);
-	
+
+	/* Fit spheres along given line and return the cost of tracing
+	 */
+	std::vector<VBTNode> FitSpheresOnTraceLine(double p1[], double p2[]);
+
+	/* Return the costs for tracing given nodes
+	 */
+	bool ComputeTracingCosts(double p1[], double p2[], double& tracing_cost, double& vesselness_cost, double& scale_var, double& vesselness_var);
+
+	void SetInputImage(ImageType3D::Pointer input_img);
+	void SetGVFImages(ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz);
+	void SetVesselnessImage(ImageType3D::Pointer vesselness_img);
+
 private:
 
 	AllParameters allParams;

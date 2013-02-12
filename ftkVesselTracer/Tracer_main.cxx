@@ -10,11 +10,11 @@
 /* To do:
  . Test preprocessing with itk-only filters. This might be faster.
  . Use vesselness-enhanced diffusion filter for preprocessing http://www.insight-journal.org/browse/publication/163
- . Add vesselness to the likelihood or to the optimization http://www.insight-journal.org/browse/publication/175
+ . Add vesselness to the likelihood or to the optimization http://www.insight-journal.org/browse/publication/175 (DONE - not much improvement)
  . Switch back to the old priority_queue structure to compare performance (DONE - makes no difference)
- . Compare the code performance with Amit's 
+ . Compare the code performance with Amit's (DONE)
  . Implement pruning on the MSF and loop completion
- . Get a binary mask for the final segmentation
+ . Get a binary mask for the final segmentation (DONE)
  . Retrace for filling tracing gaps
  . Add coverage idea to the cost function  
  . Add smart editing capabilities (game theoretic/tensor voting)
@@ -22,6 +22,7 @@
  . Compute vessel network features (Read papers from Audrey. To be computed after final editing. Get branch-based features from TraceEditor.)
  . Classify networks
  . Set inside region for vessel tracing and improve vessel mask by using spheres
+ . Write label segmentation mask image as output
  */
 
 int main(int argc, char* argv[]){
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]){
 		std::cout << "Use vesselness: " << useVesselness << std::endl;
 
 		bool startWithMST = false; 
-		ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);
+		ftkVesselTracer *Tracer = new ftkVesselTracer(input_data_path, preprocess, startWithMST, useVesselness);	
 	}
 
 	if(step_no == 2){
