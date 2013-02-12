@@ -68,6 +68,14 @@ TraceObject::TraceObject()
 	this->ColorByTrees = false;
 	this->ParsedName.clear();
 	this->TraceTypeGeneric = TRACE_TYPE_TREE;
+
+#ifdef USE_BALL_TRACER
+	this->VBT = new ftkVesselTracer;
+#endif
+
+#ifdef USE_GT_CLUSTERING
+	this->GTCluster = new ftkGTClustering;
+#endif
 }
 
 TraceObject::TraceObject(const TraceObject &T)
@@ -687,7 +695,8 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	rewind(fp);			//done till here
 	unsigned int *child_id = (unsigned int *)malloc(numPoints * sizeof(unsigned int));
 	//std::vector<TraceBit> data(1+totallines);	//the no. of tracebits to be made is the no. of unique ids, need a paas to find it, since totallines includes repeated ids.	
-	std::vector<TraceBit> data(1+max_id);
+	
+	std::vector<TraceBit> data(1+max_id);	//the no. of tracebits to be made is the no. of unique ids, need a paas to find it, since totallines includes repeated ids.	
 	int tcc =0;
 	while(!feof(fp))	
 	{
@@ -766,7 +775,7 @@ bool TraceObject::ReadFromSWCFile(char * filename)
 	int pc = (int)trace_lines.size();
 	while(iter != criticals.end())
 	{
-		TraceLine * ttemp = new TraceLine();
+		TraceLine * ttemp = new TraceLine(); 
 		ttemp->SetId(global_id_number++);
 		ttemp->SetType(hash_type[*iter]);
 		ttemp->setTraceColor( GetTraceLUT( ttemp ));
@@ -1090,13 +1099,15 @@ void TraceObject::AddEndTraceLine(int selectedCellId1, int selectedCellId2)		//a
  	//std::cout<<"Parent size : "<<newtline->ParentSize()<<endl;
 }
 
-void TraceObject::AddTraceLine(double p1[], double p2[])		//this adds line between two random points in the workspace
+TraceLine* TraceObject::AddTraceLine(double p1[], double p2[], double color = 0.25)		//this adds line between two random points in the workspace
 {
 	TraceLine* newtline = new TraceLine();
 	int global_id_number = this->getNewLineId();
 	//std::cout<<"x co-ordinate "<<p1[0]<<endl;
 	//std::cout<<"x co-ordinate "<<p2[0]<<endl;
 	newtline->SetId(global_id_number++);
+	newtline->setTraceColor(color);
+
 	//newtline->SetType(selectedLine1->GetType());
 	//newtline->setTraceColor( GetTraceLUT(newtline));
 	//newtline->AddTraceBit(*tbit1);
@@ -1116,6 +1127,8 @@ void TraceObject::AddTraceLine(double p1[], double p2[])		//this adds line betwe
 	this->addTrace(newtline);
 	newtline->RemoveParents();
 	this->RootIDs.push_back(newtline->GetId());
+
+	return newtline;
 }
 
 void TraceObject::AddExtensionToTraceLine(int selectedCellID, double point[]){
@@ -2433,12 +2446,272 @@ void TraceObject::FindMinLines(int smallSize)
 	while(iter!=this->trace_lines.end())
 	{
 		tline=*iter;
-		if((smallSize >= tline->GetSize())&& (tline->GetBranchPointer()->size()==0))
-		{
-			this->SmallLines.insert( (long) tline->GetId());
-		}
+		if((smallSize >= tline->GetSize()) && (tline->GetBranchPointer()->size()==0)) 
+			this->SmallLines.insert( (long) tline->GetId()); 
 		++iter;
 	}
+
+	/*std::vector<TraceLine *> allLines;
+	allLines = this->GetTraceLines();
+	for (unsigned int i = 0; i < allLines.size(); i++)
+	{
+		//tline=*iter;
+		tline= allLines.at(i);
+		if(tline->GetPathLength() <= smallSize)
+			this->SmallLines.insert((long)tline->GetId()); 		
+	}*/
+
+}
+
+void TraceObject::SetGVFImagesVBT(){
+
+	this->VBT->SetGVFImages(this->gx, this->gy, this->gz);
+}
+
+void TraceObject::SetVesselnessImageVBT(){
+
+	this->VBT->SetVesselnessImage(this->vesselnessImg);
+}
+
+void TraceObject::SetInputImageVBT(){
+	this->VBT->SetInputImage(this->inputImageVBT);
+}
+
+void TraceObject::DetectCandidateGapsVBT(){
+
+	// Check weather inputs are set here.
+		
+	// Collect trace lines corresponding to roots and leafs
+	int leaf_tlines = 0;
+	TraceLine *tline;
+	this->SmallLines.clear();
+	std::vector<TraceLine *> leafLines;
+	std::vector<TraceLine *> allLines;
+	allLines = this->GetTraceLines();
+	for (unsigned int i = 0; i < allLines.size(); i++){
+
+		tline= allLines.at(i); 
+		if(tline->isLeaf() || tline->isRoot() || tline->isParentLess()){
+			this->SmallLines.insert((long)tline->GetId());
+			leafLines.push_back(tline);
+			leaf_tlines++;
+		}	
+	}
+	
+	// Create list of possible merges - similar to createGapLists()
+	int num_lines_added = 0, XBits = 10;
+	TraceLine *addedTline;
+	TraceBit startBit_old, endBit_old;
+	double point1[3], point2[3], angle_deg = 0, angle_withOld = 0, tracingCost = 0, vesselnessCost = 0, scale_var = 0, vesselness_var = 0;
+	double angle_withOldTh = this->minGapMutualAngle; //10; //15;//5;
+	double tracingCost_th = 3.9; //5.0; //4.0;
+	double scaleVar_th = 50.0;
+	bool first_line = true;
+	for(int i = 0; i < leafLines.size(); i++){
+
+		first_line = true;
+		angle_withOld = 0.0;
+		for(int j = i+1; j < leafLines.size(); j++){
+
+			// Do not merge with own parent
+			if(leafLines[j]->GetParentNumber(leafLines[i]) != 0 || leafLines[i]->GetParentNumber(leafLines[j]) != 0)
+				continue;
+
+			TraceGap *newGap = new TraceGap;
+			newGap->Trace1 = leafLines[i];
+			newGap->Trace2 = leafLines[j];
+
+			newGap->Trace1->EndPtDistVessel(newGap->Trace2, newGap->startBit, newGap->endBit, 
+				newGap->dist, newGap->maxdist, newGap->angle);
+
+			angle_deg = newGap->angle * 180.0 / PI;	
+			newGap->length = newGap->dist;
+			newGap->smoothness = newGap->length / newGap->maxdist;
+			newGap->cost = newGap->angle*(newGap->dist/gapMax)*newGap->smoothness;
+
+			if(newGap->dist <= this->maxGapLength && angle_deg > this->minGapAngle){ 
+
+				point1[0] = newGap->startBit.GetCoordinateByRef(0);
+				point1[1] = newGap->startBit.GetCoordinateByRef(1);
+				point1[2] = newGap->startBit.GetCoordinateByRef(2);
+
+				point2[0] = newGap->endBit.GetCoordinateByRef(0);
+				point2[1] = newGap->endBit.GetCoordinateByRef(1);
+				point2[2] = newGap->endBit.GetCoordinateByRef(2);
+
+				// Avoid adding very close lines originating from the same point					
+				angle_withOld = addedTline->GetAngle(newGap->startBit, newGap->endBit, startBit_old, endBit_old) * 180.0 / PI;
+				//std::cout << "Angle with old line: " << angle_withOld << std::endl;
+
+				if(!first_line && angle_withOld < angle_withOldTh)
+					continue;
+
+				this->VBT->ComputeTracingCosts(point1, point2, tracingCost, vesselnessCost, scale_var, vesselness_var);
+				newGap->tracingCosts.tracingCost = tracingCost;
+				newGap->tracingCosts.vesselnessCost = vesselnessCost;
+				newGap->tracingCosts.scaleVar = scale_var;
+				newGap->tracingCosts.vesselnessVar = vesselness_var;
+
+				//std::cout << tracingCost << std::endl;
+				//std::cout << newGap->tracingCosts.tracingCost << std::endl;
+
+				//if(newGap->tracingCosts.tracingCost > tracingCost_th || newGap->tracingCosts.scaleVar > scaleVar_th)
+				if(newGap->tracingCosts.tracingCost > tracingCost_th)
+					continue;
+
+				CandidateGaps.push_back(newGap);
+
+				addedTline = this->AddTraceLine(point1, point2);
+				first_line = false;
+				this->CandidateTLines.push_back(addedTline);
+
+				//std::cout << "Added line! " << angle_withOld << std::endl;
+
+				startBit_old = addedTline->GetTraceBitsPointer()->front();
+				endBit_old = addedTline->GetTraceBitsPointer()->back();
+
+				num_lines_added++;
+			}
+		}
+	}
+
+
+	std::cout << "Number of candidate gaps: " << num_lines_added << std::endl;
+
+	// Print the candidate gaps
+	/*for(int i = 0; i < CandidateGaps.size(); i++){
+		std::cout << CandidateGaps[i]->angle << ", " << CandidateGaps[i]->dist << ", " << CandidateGaps[i]->cost << ", ";
+		std::cout << CandidateGaps[i]->tracingCosts.tracingCost << std::endl;
+	}*/
+
+	//Write the gaps to a file: for now
+	/*std::ofstream myfile;
+	myfile.open("F:\\LeasureBinge\\81\\kt10081_w227_TRITC_Prior_DSU_pre_crop_gaps.txt");
+	
+	for(int i = 0; i < CandidateGaps.size(); i++){
+		myfile << i << '\t' << CandidateGaps[i]->startBit.GetCoordinateByRef(0) << '\t' << CandidateGaps[i]->startBit.GetCoordinateByRef(1) << '\t';
+		myfile << CandidateGaps[i]->startBit.GetCoordinateByRef(2) << '\t' << CandidateGaps[i]->endBit.GetCoordinateByRef(0)<< '\t'; 
+		myfile << CandidateGaps[i]->endBit.GetCoordinateByRef(1) << '\t' << CandidateGaps[i]->endBit.GetCoordinateByRef(2) <<  '\t'; 
+		myfile << i << '\t' << CandidateGaps[i]->angle << '\t' << CandidateGaps[i]->dist << '\t' << CandidateGaps[i]->cost << '\t';
+		myfile << CandidateGaps[i]->tracingCosts.tracingCost << '\t' << CandidateGaps[i]->tracingCosts.vesselnessCost << '\t';
+		myfile << CandidateGaps[i]->tracingCosts.scaleVar << '\t' << CandidateGaps[i]->tracingCosts.vesselnessVar << std::endl;
+	}
+	myfile.close();*/
+
+}
+
+void TraceObject::RemoveCandidateAndClusteredTraceLines(){
+
+	for(int i = 0; i < this->CandidateTLines.size(); i++)
+		this->removeTrace(this->CandidateTLines[i]);
+	for(int i = 0; i < this->ClusteredTLines.size(); i++)
+		this->removeTrace(this->ClusteredTLines[i]);
+}
+
+void TraceObject::RunClusteringGTRepDyn(){
+
+	/*std::ifstream in_file;
+	//in_file.open("F:\\LeasureBinge\\81\\kt10081_w227_TRITC_Prior_DSU_pre_crop_gaps.txt", std::ios::in);
+	in_file.open("F:\\5ChannelExpTile2\\kt06039_w327_TRITC_Prior_DSU_pre_crop_tile_candidate_gaps.txt", std::ios::in);
+	if(in_file.is_open()){
+		this->CandidateGaps.clear();
+		int id1, id2, x1, y1, z1, x2, y2, z2, label;
+		double angle, dist, cost, tracingCost, v_cost = 0, s_var = 0, v_var = 0; 
+		while(in_file >> id1 >> x1 >> y1 >> z1 >> x2 >> y2 >> z2 >> id2 >> angle >> dist >>
+			cost >> tracingCost >> v_cost >> s_var >> v_var){ //>> label){
+				//while(in_file >> id1 >> x1 >> y1 >> z1 >> x2 >> y2 >> z2 >> id2 >> angle >> dist >>
+				//	cost >> tracingCost >> label){
+
+				TraceGap *gap = new TraceGap;
+				gap->startBit.setCoordinateByRef(0, x1);
+				gap->startBit.setCoordinateByRef(1, y1);
+				gap->startBit.setCoordinateByRef(2, z1);
+				gap->endBit.setCoordinateByRef(0, x2);
+				gap->endBit.setCoordinateByRef(1, y2);
+				gap->endBit.setCoordinateByRef(2, z2);
+				gap->angle = angle;
+				gap->dist = dist;
+				gap->cost = cost;
+				gap->tracingCosts.tracingCost = tracingCost;
+				gap->tracingCosts.vesselnessCost = v_cost;
+				gap->tracingCosts.scaleVar = s_var;
+				gap->tracingCosts.vesselnessVar = v_var;
+				gap->gap_label = label;
+
+				CandidateGaps.push_back(gap);				
+		}
+		in_file.close();
+	}
+	else
+		std::cout << " Could not open gap features file. Exiting now. " << std::endl;*/
+
+#ifdef USE_GT_CLUSTERING
+
+	int n_features = 2;
+	vnl_vector<double> gap_row(2, 0);
+	vnl_matrix<double> feature_mat(this->CandidateGaps.size(), gap_row.size());
+	for(unsigned int i = 0; i < this->CandidateGaps.size(); i++){
+		
+		gap_row(0) = this->CandidateGaps[i]->tracingCosts.tracingCost;
+		gap_row(1) = this->CandidateGaps[i]->tracingCosts.scaleVar;
+		feature_mat.set_row(i, gap_row);
+		
+	}
+	
+	//feature_mat.print(std::cout);
+	std::cout << "Computed feature matrix: " << feature_mat.rows() << std::endl;
+	std::cout << "Alpha: " << this->alphaForClustering << std::endl;
+
+	this->GTCluster->set_repAlpha(this->alphaForClustering);
+	this->GTCluster->set_featureMatrix(feature_mat);
+	this->GTCluster->NormalizeFeatures();
+	this->GTCluster->ComputeCostMatrix();
+	this->GTCluster->RunReplicatorDynamics();
+	this->GTCluster->ApplySurvivalThreshold();
+	std::vector<bool> cluster_flag = this->GTCluster->get_repEvolvedStrategiesFlag();
+
+	this->ClusteredGaps.clear();
+	for(int i = 0; i < cluster_flag.size(); i++){
+		if(!cluster_flag[i]){
+			this->ClusteredGaps.push_back(this->CandidateGaps[i]);
+		}
+	}
+
+	/*vnl_vector<double> final_pop = this->GTCluster->get_repFinalPopulation();
+	for(int i = 0; i < final_pop.size(); i++)
+		std::cout << final_pop[i] << std::endl;*/
+
+	std::cout << "Done with rep dynamics: " <<  this->ClusteredGaps.size() << std::endl;
+
+	double point1[3], point2[3];
+	TraceGap* newGap;
+	TraceLine* addedTline;
+	for(int i = 0; i < ClusteredGaps.size(); i++){
+
+		newGap = ClusteredGaps[i];
+
+		point1[0] = newGap->startBit.GetCoordinateByRef(0);
+		point1[1] = newGap->startBit.GetCoordinateByRef(1);
+		point1[2] = newGap->startBit.GetCoordinateByRef(2);
+
+		point2[0] = newGap->endBit.GetCoordinateByRef(0);
+		point2[1] = newGap->endBit.GetCoordinateByRef(1);
+		point2[2] = newGap->endBit.GetCoordinateByRef(2);
+
+		addedTline = this->AddTraceLine(point1, point2, 0.25); 
+		
+		this->ClusteredTLines.push_back(addedTline);
+
+		/*if(newGap->gap_label == 0)
+			this->AddTraceLine(point1, point2, .1); // black??
+		if(newGap->gap_label == 1)
+			this->AddTraceLine(point1, point2, 0.25); // yellow
+		if(newGap->gap_label == 2)
+			this->AddTraceLine(point1, point2, 0.75); // cyan
+		if(newGap->gap_label == 3)
+			this->AddTraceLine(point1, point2, 0.5); // green*/
+	}
+#endif
 }
 
 void TraceObject::FindFalseSpines(int maxBit, int maxLength)
@@ -2485,8 +2758,6 @@ void TraceObject::FindFalseBridges(int maxBit)
 	}
 }
 
-
-
 void TraceObject::FindHalfBridges(int maxBit, int DtoParent)
 {
 	TraceLine *tline;
@@ -2509,9 +2780,6 @@ void TraceObject::FindHalfBridges(int maxBit, int DtoParent)
 		//++iter;
 	}
 }
-
-
-
 
 int TraceObject::createGapLists(std::vector<TraceLine*> traceList)
 { 

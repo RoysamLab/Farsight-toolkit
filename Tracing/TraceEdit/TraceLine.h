@@ -50,7 +50,7 @@ public:
   typedef std::list<TraceBit> TraceBitsType;
 	TraceLine();
 	TraceLine(const TraceLine &t);
-	~TraceLine();
+  ~TraceLine();
 	bool modified;
 
 	TraceLine *GetParent(int i);
@@ -190,6 +190,8 @@ public:
 	void Getstats();
 	bool EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
                  double &maxdist, double &angle);
+	void EndPtDistVessel(TraceLine *Trace2, TraceBit &dir1, TraceBit &dir2, double &dist,
+                 double &maxdist, double &angle);
 	double CalculatePk(double Dp, double Da, double Db, double n);
 	bool Orient(TraceLine * Trunk);
 	bool Orient(TraceBit bit);
@@ -202,6 +204,7 @@ public:
 
 	double GetAzimuth();
 	double GetElevation();
+	double GetAngle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b);
 
 	//Compartment Level Features
 	double GetCompartmentCurvature();

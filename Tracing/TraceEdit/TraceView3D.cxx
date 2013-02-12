@@ -541,24 +541,27 @@ void View3D::OkToBoot()
 void View3D::ConfigureLayoutByGenericTraceType(int traceTypeGeneric){
 
 	if(this->tobj->GetTraceTypeGeneric() == TRACE_TYPE_TREE){
-		this->DeleteTreeAction->setEnabled(false);
-		this->AddButton->setEnabled(false);
-		this->AddEndButton->setEnabled(false);
+		this->DeleteTreeAction->setEnabled(0);
+		this->AddButton->setEnabled(0);
+		this->AddEndButton->setEnabled(0);
+		this->MergeGapsGroup->setEnabled(0);
+		this->loadGVFImagesAction->setEnabled(0);
+		this->loadVesselnessImagesAction->setEnabled(0);
 	}
 	else if(this->tobj->GetTraceTypeGeneric() == TRACE_TYPE_GRAPH){
-		this->MergeButton->setEnabled(false);
-		this->FlipButton->setEnabled(false);
-		this->BreakButton->setEnabled(false);
-		this->explodeTree->setEnabled(false);
-		this->BranchButton->setEnabled(false);
-		this->setSoma->setEnabled(false);
-		this->loadSoma->setEnabled(false);
-		this->LoadNucleiTable->setEnabled(false);
-		this->LoadDebrisTable->setEnabled(false);
-		this->saveSelectedAction->setEnabled(false);
-		this->AutoCellExportAction->setEnabled(false);
-		this->SomaBar->setEnabled(false);
-		this->soma_sub_menu->setEnabled(false);
+		this->MergeButton->setEnabled(0); 
+		this->FlipButton->setEnabled(0);
+		this->BreakButton->setEnabled(0);
+		this->explodeTree->setEnabled(0);
+		this->BranchButton->setEnabled(0);
+		this->setSoma->setEnabled(0);
+		this->loadSoma->setEnabled(0);
+		this->LoadNucleiTable->setEnabled(0);
+		this->LoadDebrisTable->setEnabled(0);
+		this->saveSelectedAction->setEnabled(0);
+		this->AutoCellExportAction->setEnabled(0);
+		this->SomaBar->setEnabled(0);
+		this->soma_sub_menu->setEnabled(0);
 	}
 
 }
@@ -749,6 +752,47 @@ void View3D::LoadSomaFile()
 		this->statusBar()->showMessage("Contour Somas Rendered");
 		soma_sub_menu->setEnabled(true);
 	}
+}
+
+void View3D::LoadGVFImages(){
+
+	QString GVFDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QStringList FileNames = QFileDialog::getOpenFileNames(this, "Load GVF Images (file names MUST contain _gx _gy _gz)",
+		GVFDir, tr("GVF Images (*.nrrd *.mhd" ));
+	
+	if(!FileNames.isEmpty() && FileNames.size() == 3 && !FileNames.filter("_gx").isEmpty()
+		&& !FileNames.filter("_gy").isEmpty() && !FileNames.filter("_gz").isEmpty())
+	{
+		QString gx_file = FileNames.filter("_gx").at(0);
+		QString gy_file = FileNames.filter("_gy").at(0);
+		QString gz_file = FileNames.filter("_gz").at(0);
+
+		this->VOIType->ReadImageTypeFloat3D(gx_file.toStdString(), this->tobj->gx);
+		this->VOIType->ReadImageTypeFloat3D(gy_file.toStdString(), this->tobj->gy);
+		this->VOIType->ReadImageTypeFloat3D(gz_file.toStdString(), this->tobj->gz);
+		
+		this->tobj->SetGVFImagesVBT();
+
+		std::cout << "Done with reading GVF images. " << std::endl;
+	}
+	else
+		std::cout << "Please select at least 3 files containing _gx, _gy, _gz respectively. " << std::endl;
+}
+
+void View3D::LoadVesselnessImage(){
+
+	QString VesselnessDir = this->TraceEditSettings.value("imageDir", ".").toString();
+	QString FileName = QFileDialog::getOpenFileName(this, "Load Vesselness Image",
+		VesselnessDir, tr("Vesselness Image (*.nrrd *.mhd" ));
+	
+	if(!FileName.isEmpty()){
+		this->VOIType->ReadImageTypeFloat3D(FileName.toStdString(), this->tobj->vesselnessImg);
+		this->tobj->SetVesselnessImageVBT();
+
+		std::cout << "Done with setting vesselness image. " << std::endl;
+	}
+	else
+		std::cout << "Vesselness image is not selected. " << std::endl;
 }
 
 void View3D::LoadProject()
@@ -1280,6 +1324,16 @@ void View3D::CreateGUIObjects()
 	connect(this->loadSoma, SIGNAL(triggered()), this, SLOT(LoadSomaFile()));
 	this->loadSoma->setStatusTip("Load image file to Contour rendering");
 
+	this->loadGVFImagesAction = new QAction("Load GVF Images", this->CentralWidget);
+	this->loadGVFImagesAction->setObjectName(tr("LoadGVFImages"));
+	connect(this->loadGVFImagesAction, SIGNAL(triggered()), this, SLOT(LoadGVFImages()));
+	this->loadGVFImagesAction->setStatusTip("Load GVF Images");
+
+	this->loadVesselnessImagesAction = new QAction("Load Vesselness Image", this->CentralWidget);
+	this->loadVesselnessImagesAction->setObjectName(tr("LoadVesselnessImage"));
+	connect(this->loadVesselnessImagesAction, SIGNAL(triggered()), this, SLOT(LoadVesselnessImage()));
+	this->loadVesselnessImagesAction->setStatusTip("Load Vesselness Image");
+
 	this->ScreenshotAction = new QAction("Screen Shot", this->CentralWidget);
 	this->ScreenshotAction->setObjectName(tr("ScreenshotAction"));
 	connect(this->ScreenshotAction, SIGNAL(triggered()), this, SLOT(SaveScreenShot()));
@@ -1329,6 +1383,7 @@ void View3D::CreateGUIObjects()
 	this->MergeButton = new QAction("Merge", this->CentralWidget);
 	this->MergeButton->setObjectName(tr("MergeButton"));
 	connect(this->MergeButton, SIGNAL(triggered()), this, SLOT(MergeTraces()));
+	
 	this->MergeButton->setStatusTip("Start Merge on selected traces");
 	this->MergeButton->setShortcut(QKeySequence(Qt::Key_M));
 
@@ -1539,6 +1594,12 @@ void View3D::CreateGUIObjects()
 	this->GapToleranceField->setSingleStep(.1);
 	connect(this->GapToleranceField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
 
+	this->GapAngleToleranceField = new QDoubleSpinBox(this->SettingsWidget);
+	this->GapAngleToleranceField->setObjectName("GapAngleToleranceField");
+	this->GapAngleToleranceField->setRange(0,180);
+	this->GapAngleToleranceField->setSingleStep(1);
+	connect(this->GapAngleToleranceField, SIGNAL(valueChanged(double)), this, SLOT(activateSaveAllButton()));
+
 	this->ColorValueField = new QDoubleSpinBox(this->SettingsWidget);
 	this->ColorValueField->setObjectName("ColorValueField");
 	this->ColorValueField->setRange(0,1);
@@ -1673,14 +1734,50 @@ void View3D::CreateGUIObjects()
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
+	this->GapLengthThField = new QDoubleSpinBox(this->AutomationWidget);
+	this->GapLengthThField->setRange(1, 300);
+	this->GapLengthThField->setSingleStep(1);
+	this->GapLengthThField->setValue(150); 
+	connect(this->GapLengthThField, SIGNAL(valueChanged(double)), this, SLOT(AcceptAutoMergingInputs(void)));
+	
+	this->GapAngleThField = new QDoubleSpinBox(this->AutomationWidget);
+	this->GapAngleThField->setRange(0, 360);
+	this->GapAngleThField->setSingleStep(.5);
+	this->GapAngleThField->setValue(0);
+	connect(this->GapAngleThField, SIGNAL(valueChanged(double)), this, SLOT(AcceptAutoMergingInputs(void)));
+
+	this->GapMutualAngleThField = new QDoubleSpinBox(this->AutomationWidget);
+	this->GapMutualAngleThField->setRange(0, 360);
+	this->GapMutualAngleThField->setSingleStep(.5);
+	this->GapMutualAngleThField->setValue(5);
+	connect(this->GapMutualAngleThField, SIGNAL(valueChanged(double)), this, SLOT(AcceptAutoMergingInputs(void)));
+
+	this->AlphaForClusteringField = new QDoubleSpinBox(this->AutomationWidget);
+	this->AlphaForClusteringField->setRange(.001, 1);
+	this->AlphaForClusteringField->setSingleStep(.01);
+	this->AlphaForClusteringField->setValue(.01);
+	connect(this->AlphaForClusteringField, SIGNAL(valueChanged(double)), this, SLOT(AcceptAutoMergingInputs(void)));
+
 	this->tobj->gapTol = this->TraceEditSettings.value("mainWin/gapTol", .5).toDouble();
-	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 10).toInt();
+	this->tobj->gapAngleTol = this->TraceEditSettings.value("mainWin/gapAngleTol", 20).toDouble();
+	this->tobj->gapMax = this->TraceEditSettings.value("mainWin/gapMax", 50).toInt();
+	this->tobj->maxGapLength = this->TraceEditSettings.value("mainWin/maxGapLength", 150).toDouble();
+	this->tobj->minGapAngle = this->TraceEditSettings.value("mainWin/minGapAngle", 0).toDouble();
+	this->tobj->minGapMutualAngle = this->TraceEditSettings.value("mainWin/minGapMutualAngle", 5).toDouble();
+	this->tobj->alphaForClustering = this->TraceEditSettings.value("mainWin/alphaForClustering", .01).toDouble();
+	
 	this->SmallLineLength = this->TraceEditSettings.value("mainWin/smallLine", 10).toDouble();
 	this->SelectColor = this->TraceEditSettings.value("mainWin/selectColor", .1).toDouble();
 	this->SelectTipColor = this->TraceEditSettings.value("mainWin/selectTipColor", .5).toDouble();
 	this->lineWidth= this->TraceEditSettings.value("mainWin/LineWidth", 2).toDouble();
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
+	this->GapAngleToleranceField->setValue(this->tobj->gapAngleTol);
+	this->GapLengthThField->setValue(this->tobj->maxGapLength);
+	this->GapAngleThField->setValue(this->tobj->minGapAngle);
+	this->GapMutualAngleThField->setValue(this->tobj->minGapMutualAngle);
+	this->AlphaForClusteringField->setValue(this->tobj->alphaForClustering);
+	
 	this->ColorValueField->setValue(this->SelectColor);
 	this->TipColor->setValue(this->SelectTipColor);
 	this->LineWidthField->setValue(this->lineWidth);
@@ -1749,6 +1846,8 @@ void View3D::CreateGUIObjects()
 	connect(this->FalseBridgesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
 	this->HalfBridgesButton = new QRadioButton(tr("Half Bridges"));
 	connect(this->HalfBridgesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
+	this->AutoMergeGapsButton = new QRadioButton(tr("Merge Gaps"));
+	connect(this->AutoMergeGapsButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
 
 	this->LineLengthField = new QDoubleSpinBox(this->SettingsWidget);
 	this->LineLengthField->setRange(0,1000);
@@ -1787,6 +1886,12 @@ void View3D::CreateGUIObjects()
 	this->MinDistanceToParent->setSingleStep(.01);
 	this->MinDistanceToParent->setValue(6);
 	connect(this->MinDistanceToParent, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
+
+	this->DetectCandidateGapsButton = new QPushButton("Detect Candidate Gaps", this->MergeGapsGroup);
+	connect(this->DetectCandidateGapsButton, SIGNAL(clicked()), this, SLOT(DetectCandidateGaps()));
+
+	this->RunClusteringButton = new QPushButton("Cluster Gaps", this->MergeGapsGroup);
+	connect(this->RunClusteringButton, SIGNAL(clicked()), this, SLOT(RunClusteringOnGaps()));
 
 	this->AutomateButton = new QAction("Automate Correction",this->AutomationWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
@@ -1904,6 +2009,8 @@ void View3D::CreateLayout()
 	this->fileMenu->addAction(this->loadTraceImage);
 	this->fileMenu->addAction(this->loadSoma);
 	//this->fileMenu->addAction(this->loadVesselMask);
+	this->fileMenu->addAction(this->loadGVFImagesAction);
+	this->fileMenu->addAction(this->loadVesselnessImagesAction);
 	this->fileMenu->addAction(this->LoadNucleiTable);
 	this->fileMenu->addAction(this->LoadSeedPointsAsGlyphs);
 	this->fileMenu->addAction(this->LoadDebrisTable);
@@ -2030,6 +2137,7 @@ void View3D::CreateLayout()
 	settingsLayout->setObjectName("settingsLayout");
 	settingsLayout->addRow(tr("Maximum gap length:"), this->MaxGapField);
 	settingsLayout->addRow(tr("Gap length tolerance:"),this->GapToleranceField);
+	settingsLayout->addRow(tr("Gap angle tolerance:"), this->GapAngleToleranceField);
 	QWidget * selectionTab = new QWidget;
 	selectionTab->setLayout(settingsLayout);
 	//settingsLayout->addRow(tr("Small line length:"),this->LineLengthField);
@@ -2133,6 +2241,7 @@ void View3D::CreateLayout()
 	SelectedErrorLayout->addWidget( this->FalseSpinesButton, 0, 1);
 	SelectedErrorLayout->addWidget( this->FalseBridgesButton, 1, 0);
 	SelectedErrorLayout->addWidget( this->HalfBridgesButton, 1, 1);
+	SelectedErrorLayout->addWidget(this->AutoMergeGapsButton, 2, 0);
 	AutomationDockLayout->addWidget(SelectedErrorGroup);
 
 	this->SmallLinesGroup = new QGroupBox("Detect Small Lines");
@@ -2170,6 +2279,19 @@ void View3D::CreateLayout()
 	AutomationDockLayout->addWidget(this->HalfBridgeGroup);
 	//AutomationDockLayout->addWidget(this->AutomateButton);
 
+	this->MergeGapsGroup = new QGroupBox("Merge Gaps");
+	this->MergeGapsGroup->setObjectName("MergeGapsGroup");
+	this->MergeGapsGroup->setEnabled(0);
+	QFormLayout *MergeGapsGroupLayout = new QFormLayout(this->MergeGapsGroup);
+	MergeGapsGroupLayout->setObjectName("MergeGapsGroupLayout");
+	MergeGapsGroupLayout->addRow(tr("Max gap length:"), this->GapLengthThField);
+	MergeGapsGroupLayout->addRow(tr("Max gap angle:"), this->GapAngleThField);
+	MergeGapsGroupLayout->addRow(tr("Min mutual gap angle:"), this->GapMutualAngleThField);
+	MergeGapsGroupLayout->addWidget(this->DetectCandidateGapsButton);
+	MergeGapsGroupLayout->addRow(tr("Alpha for clustering:"), this->AlphaForClusteringField);
+	MergeGapsGroupLayout->addWidget(this->RunClusteringButton);
+	AutomationDockLayout->addWidget(this->MergeGapsGroup);
+	
 	//Select border cells
 	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
 	BorderCellsCroppingGroup->setObjectName("BorderCellsCroppingGroup");
@@ -2178,6 +2300,7 @@ void View3D::CreateLayout()
 	BorderCellsCroppingLayout->addWidget(CropBorderCellsButton);
 	AutomationDockLayout->addWidget(BorderCellsCroppingGroup);
 	AutomationDockLayout->addStretch();
+	
 
 	this->AutomationDock->setWidget(this->AutomationWidget);
 	this->addDockWidget(Qt::RightDockWidgetArea, this->AutomationDock);
@@ -2188,7 +2311,7 @@ void View3D::CreateLayout()
 	// Status Bar //
 	////////////////
 
-	QStatusBar * statusBar = this->statusBar();
+    QStatusBar * statusBar = this->statusBar();
 	statusBar->addPermanentWidget(new QLabel("Statistics: Split: ", this));
 	statusBar->addPermanentWidget(this->SplitLabel,0);
 
@@ -2435,8 +2558,9 @@ void View3D::StartVesselBallTracer(){
 	}
 
 	try{
-		this->VBT = new ftkVesselTracer(this->Image.at(0).toStdString(), inputImageFloat,
-			this->vbtPreprocess->isChecked(), false, this->vbtUseVesselness->value());
+		// Need to define a caller function here
+		//this->tobj->VBT = new ftkVesselTracer(this->Image.at(0).toStdString(), inputImageFloat,
+			//this->vbtPreprocess->isChecked(), false, this->vbtUseVesselness->value());
 	}
 	catch(...){
 		qDebug() << "CRASH!!";
@@ -2483,6 +2607,8 @@ void View3D::ShowAutomatedEdits()
 	this->FakeSpinesGroup->setEnabled(0);
 	this->FakeBridgeGroup->setEnabled(0);
 	this->HalfBridgeGroup->setEnabled(0);
+	this->MergeGapsGroup->setEnabled(0);
+
 	if (this->SmallLinesButton->isChecked())
 	{
 		//this->TreeModel->GetObjectSelection()->clear();
@@ -2506,6 +2632,16 @@ void View3D::ShowAutomatedEdits()
 		//this->TreeModel->GetObjectSelection()->clear();
 		this->HalfBridgeGroup->setEnabled(1);
 		this->HalfBridges(1);
+	}
+	else if(this->AutoMergeGapsButton->isChecked()){
+
+#ifdef USE_BALL_TRACER
+		//this->TreeModel->GetObjectSelection()->clear();
+		this->MergeGapsGroup->setEnabled(1);
+		this->AcceptAutoMergingInputs();
+#else
+		std::cout << "Merge gaps option requires ftkVesselTracer to be built. " << std::endl;
+#endif
 	}
 }
 
@@ -3700,6 +3836,12 @@ void View3D::ShowSettingsWindow()
 	//make sure the values in the input fields are up-to-date
 	this->MaxGapField->setValue(this->tobj->gapMax);
 	this->GapToleranceField->setValue(this->tobj->gapTol);
+	this->GapAngleToleranceField->setValue(this->tobj->gapAngleTol);
+	this->GapLengthThField->setValue(this->tobj->maxGapLength);
+	this->GapAngleThField->setValue(this->tobj->minGapAngle);
+	this->GapMutualAngleThField->setValue(this->tobj->minGapMutualAngle);
+	this->AlphaForClusteringField->setValue(this->tobj->alphaForClustering);
+	
 	this->LineLengthField->setValue(this->SmallLineLength);
 	this->ColorValueField->setValue(this->SelectColor);
 	this->TipColor->setValue(this->SelectTipColor);
@@ -3721,6 +3863,12 @@ void View3D::ApplyNewSettings()
 	this->ApplySettingsButton->setEnabled(false);
 	this->tobj->gapMax = this->MaxGapField->text().toInt();
 	this->tobj->gapTol = this->GapToleranceField->value();
+	this->tobj->gapAngleTol = this->GapAngleToleranceField->value();
+	this->tobj->maxGapLength = this->GapLengthThField->value();
+	this->tobj->minGapAngle = this->GapAngleThField->value();
+	this->tobj->minGapMutualAngle = this->GapMutualAngleThField->value();
+	this->tobj->alphaForClustering = this->AlphaForClusteringField->value();
+
 	this->SmallLineLength = (float)this->LineLengthField->value();
 	this->SelectColor = this->ColorValueField->value();
 	this->SelectTipColor = this->TipColor->value();
@@ -3731,7 +3879,13 @@ void View3D::ApplyNewSettings()
 	this->Renderer->SetBackground(this->backColorR,this->backColorG,this->backColorB);
 	this->statusBar()->showMessage(tr("Applying new settings"),3000);
 	this->TraceEditSettings.setValue("mainWin/gapTol", this->tobj->gapTol );
+	this->TraceEditSettings.setValue("mainWin/gapAngleTol", this->tobj->gapAngleTol );
 	this->TraceEditSettings.setValue("mainWin/gapMax", this->tobj->gapMax);
+	this->TraceEditSettings.setValue("mainWin/maxGapLength", this->tobj->maxGapLength);
+	this->TraceEditSettings.setValue("mainWin/minGapAngle", this->tobj->minGapAngle);
+	this->TraceEditSettings.setValue("mainWin/minGapMutualAngle", this->tobj->minGapMutualAngle);
+	this->TraceEditSettings.setValue("mainWin/alphaForClustering", this->tobj->alphaForClustering);
+	
 	this->TraceEditSettings.setValue("mainWin/smallLine", this->SmallLineLength);
 	this->TraceEditSettings.setValue("mainWin/selectColor", this->SelectColor);
 	this->TraceEditSettings.setValue("mainWin/selectTipColor", this->SelectTipColor);
@@ -4740,6 +4894,40 @@ void View3D::SLine(double d)
 		numLines= (int) this->tobj->SmallLines.size();
 	}
 	this->TreeModel->SelectByIDs(this->tobj->SmallLines);
+}
+
+void View3D::AcceptAutoMergingInputs(){
+
+	this->tobj->maxGapLength = this->GapLengthThField->value();
+	this->tobj->minGapAngle = this->GapAngleThField->value();
+	this->tobj->minGapMutualAngle = this->GapMutualAngleThField->value();
+	this->tobj->alphaForClustering = this->AlphaForClusteringField->value();
+}
+
+void View3D::DetectCandidateGaps(){
+
+#ifdef USE_BALL_TRACER
+
+	ImageType::Pointer inputImage = ImageType::New();
+	inputImage = this->ImageActors->getImageFileData(this->Image.at(0).toStdString(),"Image");
+		
+	this->ImageActors->CastUCharToFloat(inputImage, this->tobj->inputImageVBT);
+	this->tobj->SetInputImageVBT();
+	
+	std::cout << "Input image set. " << std::endl;
+
+	this->tobj->DetectCandidateGapsVBT();
+	this->ClearSelection();
+#endif
+}
+
+void View3D::RunClusteringOnGaps(){
+
+	this->tobj->RemoveCandidateAndClusteredTraceLines();
+	this->ClearSelection();
+
+	this->tobj->RunClusteringGTRepDyn();
+	this->ClearSelection();
 }
 
 void View3D::FakeSpines(double d)
@@ -6134,7 +6322,7 @@ void View3D::AddLines()
 		double point2[3] = {this->SelectedTraceBits[1].picked[0],this->SelectedTraceBits[1].picked[1],this->SelectedTraceBits[1].picked[2]};
 
 		//std::cout << "Adding trace lines between 2 trace bits. " << std::endl;
-		this->tobj->AddTraceLine(point1,point2);
+		this->tobj->AddTraceLine(point1,point2, .25);
 
 	}
 	else if(this->SelectedTraceIDs.size() == 1 && this->SelectedTraceBits.size() == 1){
