@@ -2464,17 +2464,21 @@ void TraceObject::FindMinLines(int smallSize)
 }
 
 void TraceObject::SetGVFImagesVBT(){
-
+#ifdef USE_BALL_TRACER
 	this->VBT->SetGVFImages(this->gx, this->gy, this->gz);
+#endif
 }
 
 void TraceObject::SetVesselnessImageVBT(){
-
+#ifdef USE_BALL_TRACER
 	this->VBT->SetVesselnessImage(this->vesselnessImg);
+#endif
 }
 
 void TraceObject::SetInputImageVBT(){
+#ifdef USE_BALL_TRACER
 	this->VBT->SetInputImage(this->inputImageVBT);
+#endif
 }
 
 void TraceObject::DetectCandidateGapsVBT(){
