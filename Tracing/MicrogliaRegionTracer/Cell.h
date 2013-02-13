@@ -21,20 +21,20 @@
 class Cell
 {
 private:
-	typedef itk::CovariantVector< float, 3 >					GradientVectorType;
+	typedef itk::CovariantVector< double, 3 >					GradientVectorType;
 
 public:
 	typedef	unsigned char										InputPixelType;
 	typedef fregl_roi< InputPixelType >::ImageType				ImageType;
     
-	typedef itk::Image< float, 3 >								LoGImageType;
-	typedef itk::Image< float, 3 >								VesselnessImageType;
-	typedef itk::Image< float, 3 >								DistanceImageType;
+	typedef itk::Image< double, 3 >								LoGImageType;
+	typedef itk::Image< double, 3 >								VesselnessImageType;
+	typedef itk::Image< double, 3 >								DistanceImageType;
 	typedef itk::Image< unsigned char, 3 >						SomaImageType;
 	typedef SomaImageType										MaskImageType;
 	typedef itk::Image< unsigned short, 3 >						LabelImageType;
 	typedef itk::ImageFileReader < SomaImageType >				SomaReaderType;
-	typedef	itk::Image< GradientVectorType, 3 >	GVFImageType;
+	typedef	itk::Image< GradientVectorType, 3 >					GVFImageType;
 	typedef GVFImageType										GradientImageType;
     
 public:
@@ -72,19 +72,21 @@ public:
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned char, 3>::Pointer & image);
 	static void             WriteImage(const std::string & filename, const itk::Image< unsigned short, 3>::Pointer & image);
 	static void             WriteImage(const std::string & filename, const itk::Image< float , 3 >::Pointer & image);
-	static void				WriteImage(const std::string & filename, const itk::Image< itk::CovariantVector < float, 3 >, 3 >::Pointer & image);
+	static void             WriteImage(const std::string & filename, const itk::Image< double , 3 >::Pointer & image);
     
-    void                    WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
+	void					WriteTreeToSWCFile(Tree* tree, std::string filename, std::string filename_local);
+    void                    WriteTreeToSWCFileDepthFirst(Tree* tree, std::ofstream &traceFile, std::ofstream &traceFile_local);
+	void					WriteTreeToSWCFileBreadthFirst(Tree* tree, std::ofstream &traceFile, std::ofstream &traceFile_local);
 	void                    WriteLinkToParent(Node* node, itk::uint64_t tree_depth, std::ofstream &traceFile, std::ofstream &traceFile_local);
 
 private:    
     void					CreateGVFVesselnessImage(float noise_level, int num_iterations);
-	GVFImageType::Pointer	CreateGVFImage(float noise_level, int num_iterations);
-	float					GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector);
+	void					CreateGVFImage(float noise_level, int num_iterations);
+	double					GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector);
     
 	void					CreateHessianVesselnessImage();
 
-	void					SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< float, 3 >, 3 >::Pointer & covar_image, itk::Image< float, 3>::Pointer & x_image, itk::Image< float, 3>::Pointer & y_image, itk::Image< float, 3>::Pointer & z_image);
+	void					SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< double, 3 >, 3 >::Pointer & covar_image, itk::Image< double, 3>::Pointer & x_image, itk::Image< double, 3>::Pointer & y_image, itk::Image< double, 3>::Pointer & z_image);
 
 public:
 	std::deque< ImageType::IndexType > critical_points_queue; //deque is double-ended queue
@@ -99,6 +101,9 @@ public:
 	LabelImageType::Pointer			soma_label_image;
 	DistanceImageType::Pointer		speed_image;
 	ImageType::Pointer				isotropic_image;
+	GVFImageType::Pointer			gvf_image;
+	VesselnessImageType::Pointer	adjusted_seed_img;
+	ImageType::Pointer				threshold_label_mask;
     
 	itk::int64_t next_available_ID;
     

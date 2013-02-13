@@ -52,11 +52,11 @@ public:
     
     void ClearChildren();
     
-    const itk::uint64_t GetX();
+    const double GetX();
     
-    const itk::uint64_t GetY();
+    const double GetY();
     
-    const itk::uint64_t GetZ();
+    const double GetZ();
 };
 
 #endif

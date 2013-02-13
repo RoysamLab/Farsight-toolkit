@@ -14,11 +14,12 @@
 #include "itkGradientImageFilter.h"
 #include "itkGradientVectorFlowImageFilter.h"
 #include "itkVectorImageToImageAdaptor.h"
+
 #include "AspectRatioResampler.h"
-
 #include "EigenAnalysis.h"
-
 #include "LoG.h"
+
+#include <list>
 
 Cell::Cell(itk::uint64_t cell_x, itk::uint64_t cell_y, itk::uint64_t cell_z, double aspect_ratio) :
 	next_available_ID(1),
@@ -281,9 +282,10 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< float , 3 
 	}
 }
 
-void Cell::WriteImage(const std::string & filename, const itk::Image< itk::CovariantVector < float, 3 >, 3 >::Pointer & image)
+void Cell::WriteImage(const std::string & filename, const itk::Image< double , 3 >::Pointer & image)
 {
-	typedef itk::ImageFileWriter< itk::Image< itk::CovariantVector < float, 3 >, 3 > > WriterType;
+	std::cout << "Writing " << filename << std::endl;
+	typedef itk::ImageFileWriter< itk::Image< double, 3 > > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetInput(image);	//image is from function parameters!
 	writer->SetFileName(filename);
@@ -299,11 +301,11 @@ void Cell::WriteImage(const std::string & filename, const itk::Image< itk::Covar
 	}
 }
 
-void Cell::SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< float, 3 >, 3 >::Pointer & covar_image, itk::Image< float, 3>::Pointer & x_image, itk::Image< float, 3>::Pointer & y_image, itk::Image< float, 3>::Pointer & z_image)
+void Cell::SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< double, 3 >, 3 >::Pointer & covar_image, itk::Image< double, 3>::Pointer & x_image, itk::Image< double, 3>::Pointer & y_image, itk::Image< double, 3>::Pointer & z_image)
 {
 	//Separate the covar image into its components
-	typedef itk::Image< itk::CovariantVector< float, 3 >, 3 > CovarVectorImageType;
-	typedef itk::Image< float, 3 > ComponentImageType;
+	typedef itk::Image< itk::CovariantVector< double, 3 >, 3 > CovarVectorImageType;
+	typedef itk::Image< double, 3 > ComponentImageType;
 
 	ComponentImageType::SizeType size = covar_image->GetLargestPossibleRegion().GetSize();
 	ComponentImageType::IndexType start;
@@ -338,8 +340,6 @@ void Cell::SplitITKCovariantVectorImage(const itk::Image< itk::CovariantVector< 
 	}
 }
 
-/*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
-*	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */
 void Cell::WriteTreeToSWCFile(Tree * tree, std::string filename, std::string filename_local)
 {
 	std::cout << "Entering WriteTreeToSWCFile" << std::endl;
@@ -349,14 +349,69 @@ void Cell::WriteTreeToSWCFile(Tree * tree, std::string filename, std::string fil
 	traceFile.open(filename.c_str());
 	std::cout << "Opening " << filename_local << std::endl;
 	traceFile_local.open(filename_local.c_str());
+	
+	//this->WriteTreeToSWCFileDepthFirst(tree, filename, filename_local);
+	this->WriteTreeToSWCFileBreadthFirst(tree, traceFile, traceFile_local);
+	
+	traceFile.close();
+	traceFile_local.close();
+}
 
+/*	This function will take a tree structure and write out the "local" and "global" SWC file corresponding to that tree structure.
+*	Local here means an SWC file that will fit into the region of interest we are interested in and global means that it will fit into the montage */
+void Cell::WriteTreeToSWCFileDepthFirst(Tree * tree, std::ofstream &traceFile, std::ofstream &traceFile_local)
+{
 	Node* root = tree->GetRoot();
 
 	itk::uint64_t tree_depth = 0; //root node is defined as tree depth 0
 	WriteLinkToParent(root, tree_depth, traceFile, traceFile_local);	//Recursive function that does the actual tree traversal and writing the SWC lines
+}
 
-	traceFile.close();
-	traceFile_local.close();
+void Cell::WriteTreeToSWCFileBreadthFirst(Tree * tree, std::ofstream &traceFile, std::ofstream &traceFile_local)
+{
+	std::list< Node * > queue;
+	
+	queue.push_back(tree->GetRoot());
+	while (!queue.empty())
+	{
+		//Pop the front of the queue
+		Node* node = queue.front();
+		queue.pop_front();
+
+		//Get the children
+		typedef Node::NodeVectorType NodeVectorType;
+		NodeVectorType children_nodes = node->GetChildren();
+
+		//Enqueue the children
+		for (NodeVectorType::iterator children_iter = children_nodes.begin(); children_iter != children_nodes.end(); ++children_iter)
+		{
+			 queue.push_back(*children_iter);
+		}
+
+		//Write the link to the parent
+		ImageType::PointType node_index, node_index_local;
+		node_index_local[0] = node->x;
+		node_index_local[1] = node->y;
+		node_index_local[2] = node->z;
+		node_index[0] = node_index_local[0] + this->getX() - this->GetRequestedSize()[0]/2 - this->GetShiftIndex()[0];
+		node_index[1] = node_index_local[1] + this->getY() - this->GetRequestedSize()[1]/2 - this->GetShiftIndex()[1];
+		node_index[2] = node_index_local[2] + this->getZ() - this->GetRequestedSize()[2]/2 - this->GetShiftIndex()[2];
+
+		itk::int64_t parent_node_id;
+		if (node->GetParent() == NULL)
+			parent_node_id = -1; //This node has no parent, so this is the root node, so parent ID is -1
+		else
+			parent_node_id = node->GetParent()->getID();
+
+		std::vector< Node* > children = node->GetChildren();
+
+		/*if (tree_depth == 1 && children.size() == 0)
+			return;*/														//Don't write out a trace if we are at depth one and have no children because we are a trace to the edge of the soma
+
+		//Write out the SWC lines
+		traceFile		<< node->getID() << " 3 " << node_index[0]			<< " " << node_index[1]			<< " "  << node_index[2]		<< " 1 " << parent_node_id << std::endl;
+		traceFile_local << node->getID() << " 3 " << node_index_local[0]	<< " " << node_index_local[1]	<< " "  << node_index_local[2]	<< " 1 " << parent_node_id << std::endl;
+	}
 }
 
 //This function does a depth-first traversal of the tree, maybe it makes sense to do a breadth-first traversal for some uses?
@@ -412,7 +467,7 @@ void Cell::CreateIsotropicImage()
 	WriteImage(isotropic_image_filename_stream.str(), this->isotropic_image);
 }
 
-Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iterations)
+void Cell::CreateGVFImage(float noise_level, int num_iterations)
 {
 	/*//Gaussian filter
 	typedef itk::RecursiveGaussianImageFilter< ImageType > GaussianFilterType;
@@ -423,7 +478,7 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 	gauss_filter->Update();*/
 	
 	//Gradient filter
-	typedef itk::GradientImageFilter< ImageType > GradientImageFilterType;
+	typedef itk::GradientImageFilter< ImageType, double, double > GradientImageFilterType;
 	GradientImageFilterType::Pointer gradient_filter = GradientImageFilterType::New();
 
 	gradient_filter->SetInput(this->isotropic_image);
@@ -441,7 +496,7 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 	//GVFImageType::Pointer gvf_image = gradient_filter->GetOutput();	//Test
 
 	//Gradient Vector Flow filter
-	typedef itk::GradientVectorFlowImageFilter< GradientImageFilterType::OutputImageType, GradientImageFilterType::OutputImageType, float > GradientVectorFlowFilterType;
+	typedef itk::GradientVectorFlowImageFilter< GradientImageFilterType::OutputImageType, GradientImageFilterType::OutputImageType, double > GradientVectorFlowFilterType;
 	GradientVectorFlowFilterType::Pointer gvf_filter = GradientVectorFlowFilterType::New();
 
 	gvf_filter->SetInput(gradient_filter->GetOutput());
@@ -457,29 +512,27 @@ Cell::GVFImageType::Pointer Cell::CreateGVFImage(float noise_level, int num_iter
 		std::cerr << "Exception caught: " << err << std::endl;
 	}
 
-	GVFImageType::Pointer gvf_image = gvf_filter->GetOutput();
+	this->gvf_image = gvf_filter->GetOutput();
 
 	////Make the file name of the GVF image
 	//std::stringstream gvf_image_filename_stream;
 	//gvf_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_gvf.mhd";
-	//WriteImage(gvf_image_filename_stream.str(), gvf_image);
-
-	return gvf_image;
+	//WriteImage(gvf_image_filename_stream.str(), this->gvf_image);
 }
 
 void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 {
 	std::cout << "Creating Vesselness image by Gradient Vector Flow" << std::endl;
-	GVFImageType::Pointer gvf_image = CreateGVFImage(noise_level, num_iterations);
+	CreateGVFImage(noise_level, num_iterations);
 
 	//Separate the GVF image into Partial Derivatives
-	typedef itk::Image< float, 3 > PartialDerivativeImageType;
+	typedef itk::Image< double, 3 > PartialDerivativeImageType;
 
 	PartialDerivativeImageType::Pointer Dx = PartialDerivativeImageType::New();
 	PartialDerivativeImageType::Pointer Dy = PartialDerivativeImageType::New();
 	PartialDerivativeImageType::Pointer Dz = PartialDerivativeImageType::New();
 
-	SplitITKCovariantVectorImage(gvf_image, Dx, Dy, Dz);
+	SplitITKCovariantVectorImage(this->gvf_image, Dx, Dy, Dz);
 
 	std::ostringstream Dx_filename_stream;
 	Dx_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_Dx.nrrd";
@@ -495,7 +548,7 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 
 	//Calculate gradient of the GVF image
 	//Gradient of Dx
-	typedef itk::GradientImageFilter< PartialDerivativeImageType > GradientImageFilterType;
+	typedef itk::GradientImageFilter< PartialDerivativeImageType, double, double > GradientImageFilterType;
 	GradientImageFilterType::Pointer gradient_filter = GradientImageFilterType::New();
 	gradient_filter->SetInput(Dx);
 	try
@@ -624,17 +677,17 @@ void Cell::CreateGVFVesselnessImage(float noise_level, int num_iterations)
 	this->vesselness_image = AspectRatioResampler::UnsampleImage< VesselnessImageType >(isotropic_vesselness_image, this->aspect_ratio, this->sampling_type);
 }
 
-float Cell::GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector)
+double Cell::GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const GradientVectorType & grad_Dy_vector, const GradientVectorType & grad_Dz_vector)
 {
-	float Dxx = grad_Dx_vector[0];
-	float Dxy = grad_Dx_vector[1];
-	float Dxz = grad_Dx_vector[2];
-	float Dyx = grad_Dy_vector[0];
-	float Dyy = grad_Dy_vector[1];
-	float Dyz = grad_Dy_vector[2];
-	float Dzx = grad_Dz_vector[0];
-	float Dzy = grad_Dz_vector[1];
-	float Dzz = grad_Dz_vector[2];
+	double Dxx = grad_Dx_vector[0];
+	double Dxy = grad_Dx_vector[1];
+	double Dxz = grad_Dx_vector[2];
+	double Dyx = grad_Dy_vector[0];
+	double Dyy = grad_Dy_vector[1];
+	double Dyz = grad_Dy_vector[2];
+	double Dzx = grad_Dz_vector[0];
+	double Dzy = grad_Dz_vector[1];
+	double Dzz = grad_Dz_vector[2];
 
 	double grad_GVF_matrix[3][3];
 	grad_GVF_matrix[0][0] = Dxx;
@@ -664,21 +717,21 @@ float Cell::GetVesselnessValue(const GradientVectorType & grad_Dx_vector, const 
 	{
 		static const double FrangiAlpha = 0.5;
 		static const double FrangiBeta = 0.5;
-		static const double FrangiC = 10;
+		static const double FrangiC = 100.0;
 
 		const double A = 2 * pow(FrangiAlpha,2);
 		const double B = 2 * pow(FrangiBeta,2);
 		const double C = 2 * pow(FrangiC,2);
 
-		double Ra  = Lambda2 / Lambda3; 
-		double Rb  = Lambda1 / vcl_sqrt ( vnl_math_abs( Lambda2 * Lambda3 )); 
-		double S  = vcl_sqrt( pow(Lambda1,2) + pow(Lambda2,2) + pow(Lambda3,2));
+		const double Ra  = Lambda2 / Lambda3; 
+		const double Rb  = Lambda1 / vcl_sqrt ( vnl_math_abs( Lambda2 * Lambda3 )); 
+		const double S  = vcl_sqrt( pow(Lambda1,2) + pow(Lambda2,2) + pow(Lambda3,2));
 
-		double vesMeasure_1  = ( 1 - vcl_exp(-1.0*(( vnl_math_sqr( Ra ) ) / ( A ))) );
-		double vesMeasure_2  = vcl_exp ( -1.0 * ((vnl_math_sqr( Rb )) /  ( B )));
-		double vesMeasure_3  = ( 1 - vcl_exp( -1.0 * (( vnl_math_sqr( S )) / ( C ))) );
+		const double vesMeasure_1  = ( 1 - vcl_exp(-1.0*(( vnl_math_sqr( Ra ) ) / ( A ))) );
+		const double vesMeasure_2  = vcl_exp ( -1.0 * ((vnl_math_sqr( Rb )) /  ( B )));
+		const double vesMeasure_3  = ( 1 - vcl_exp( -1.0 * (( vnl_math_sqr( S )) / ( C ))) );
 
-		float V_Saliency = vesMeasure_1 * vesMeasure_2 * vesMeasure_3;
+		const double V_Saliency = vesMeasure_1 * vesMeasure_2 * vesMeasure_3;
 
 		return V_Saliency;
 	}
@@ -688,49 +741,14 @@ void Cell::CreateLoGImage()
 {
 	//Calculate the LoG on multiple scales and store into an image
 	std::cout << "Calculating Multiscale LoG" << std::endl;
-	LoGImageType::Pointer resampled_multiscale_LoG_image = LoG::RunMultiScaleLoG(*this);
+	this->multiscale_LoG_image = LoG::RunMultiScaleLoG(*this);
 
-	//Make the file name of the isotropic LoG image and write it out
-	std::stringstream multiscaled_LoG_image_filename_stream;
-	multiscaled_LoG_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_LoG.nrrd";
-	WriteImage(multiscaled_LoG_image_filename_stream.str(), resampled_multiscale_LoG_image);
-
-	ImageType::SizeType outputSize = this->image->GetLargestPossibleRegion().GetSize();
-
-	ImageType::SpacingType outputSpacing;
-	outputSpacing[0] = 1.0;
-	outputSpacing[1] = 1.0;
-	outputSpacing[2] = 1/this->aspect_ratio;
-	//outputSpacing[2] = 1.0;
-
-	typedef itk::IdentityTransform< double, 3 > TransformType;
-	typedef itk::ResampleImageFilter< LoGImageType, LoGImageType > ResampleImageFilterType;
-	ResampleImageFilterType::Pointer resample_filter = ResampleImageFilterType::New();
-	resample_filter->SetInput(resampled_multiscale_LoG_image);
-	resample_filter->SetSize(outputSize);
-	resample_filter->SetOutputSpacing(outputSpacing);
-	resample_filter->SetTransform(TransformType::New());
-
-	try
-	{
-		resample_filter->UpdateLargestPossibleRegion();
-	}
-	catch (itk::ExceptionObject &err)
-	{
-		std::cerr << "CreateLoGImage() resample_filter exception: " << err << std::endl;
-		return;
-	}
-
-	this->multiscale_LoG_image = resample_filter->GetOutput();
-
-	ImageType::SpacingType spacing;
-	spacing.Fill(1.0);
-	this->multiscale_LoG_image->SetSpacing(spacing);	//Convert back to the original spacing
+	WriteImage("LoG.nrrd" , this->multiscale_LoG_image);
 }
 
 void Cell::CreateVesselnessImage()
 {
-	CreateGVFVesselnessImage(10000.0, 20);
+	CreateGVFVesselnessImage(1000.0, 20);
 	//CreateHessianVesselnessImage();
 
 	std::ostringstream vesselness_filename_stream;
@@ -742,7 +760,7 @@ void Cell::CreateHessianVesselnessImage()
 {
     std::cout << "Creating Vesselness Image by Multiscale Hessian method" << std::endl;
     
-    typedef itk::Hessian3DToVesselnessMeasureImageFilter< float > VesselnessFilterType;
+    typedef itk::Hessian3DToVesselnessMeasureImageFilter< double > VesselnessFilterType;
 	VesselnessFilterType::Pointer vesselness_filter = VesselnessFilterType::New();
 	vesselness_filter->SetAlpha1(0.5);
 	vesselness_filter->SetAlpha2(0.5);
@@ -753,7 +771,6 @@ void Cell::CreateHessianVesselnessImage()
 	typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, VesselnessImageType > MultiscaleHessianFilterType;
 
 	MultiscaleHessianFilterType::Pointer multiscale_hessian_filter = MultiscaleHessianFilterType::New();
-	//multiscale_hessian_filter->SetInput(this->image);
 	multiscale_hessian_filter->SetInput(this->isotropic_image);
 	multiscale_hessian_filter->SetSigmaStepMethodToEquispaced();
 	multiscale_hessian_filter->SetSigmaMinimum(1.0);
@@ -781,7 +798,7 @@ void Cell::CreateSpeedImage()
 	RescaleIntensityFilterType::Pointer rescale_filter = RescaleIntensityFilterType::New();
 	rescale_filter->SetOutputMinimum(0.0);
 	rescale_filter->SetOutputMaximum(1.0);
-	rescale_filter->SetInput(this->vesselness_image);
+	rescale_filter->SetInput(this->multiscale_LoG_image);
 
 	try
 	{
@@ -799,7 +816,7 @@ void Cell::CreateSpeedImage()
 	typedef itk::PowImageFilter< DistanceImageType > PowImageFilterType;
 	PowImageFilterType::Pointer pow_image_filter = PowImageFilterType::New();
 	pow_image_filter->SetInput1(rescale_filter->GetOutput());
-	pow_image_filter->SetConstant2( 0.33 );
+	pow_image_filter->SetConstant2( 1.00 );
 
 	try
 	{
@@ -811,7 +828,23 @@ void Cell::CreateSpeedImage()
 		return;
 	}
 
-	this->speed_image = pow_image_filter->GetOutput();
+	//Make it so that the image has some minimum speed
+	RescaleIntensityFilterType::Pointer rescale_filter2 = RescaleIntensityFilterType::New();
+	rescale_filter2->SetOutputMinimum(0.00);
+	rescale_filter2->SetOutputMaximum(1.0);
+	rescale_filter2->SetInput(pow_image_filter->GetOutput());
+
+	try
+	{
+		//rescale_filter2->Update();
+	}
+	catch (itk::ExceptionObject &err)
+	{
+		std::cerr << "rescale_filter2 exception: " << err << std::endl;
+		return;
+	}
+
+	this->speed_image = rescale_filter2->GetOutput();
 
 	std::stringstream speed_image_filename_stream;
 	speed_image_filename_stream << this->getX() << "_" << this->getY() << "_" << this->getZ() << "_speed_image.nrrd";

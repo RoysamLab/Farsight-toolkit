@@ -19,7 +19,7 @@ public:
     void                    TreeDestructorHelper(Node * const node);
 
 	void                    SetRoot(Node * const root);
-	void                    AddNode(Node * const node, const Node* parent);
+	void                    AddNode(Node * const node);
 	const NodeVectorType &  GetMemberNodes() const;
 	Node *                  GetRoot() const;
 	void                    RemoveNode(const Node * const node);

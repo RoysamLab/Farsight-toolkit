@@ -65,13 +65,9 @@ void Tree::SetRoot(Node * const root)
 	this->root = root;
 }
 
-void Tree::AddNode(Node * const node, const Node * const parent)
+void Tree::AddNode(Node * const node)
 {
 	//The node itself is responsible for keeping track of its parent, as well as the parent keeping track of the node
-	
-	if (parent == NULL)
-		throw std::runtime_error("AddNode needs a parent");
-
 	member_nodes.push_back(node);
 }
 
@@ -98,7 +94,7 @@ void Tree::RemoveNode(const Node * const node)
 			return;
 		}
 	}
-
+	std::cerr << "Error trying to remove node " << node->getID() << "from the tree which does not exist" << std::endl;
     throw std::runtime_error("Error: Attemping to remove a node that does not exist");
 }
 

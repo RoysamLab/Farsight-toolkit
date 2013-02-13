@@ -25,6 +25,7 @@ private:
 	typedef Cell::VesselnessImageType										VesselnessImageType;
 	typedef Cell::DistanceImageType											DistanceImageType;
 	typedef itk::Image< unsigned char, 3 >									MaskedImageType;
+	typedef Cell::GVFImageType												GVFImageType;
 
 	typedef itk::PolyLineParametricPath< 3 >								PathType;
 
@@ -46,16 +47,21 @@ private:
 	void				CalculateSeedPoints(Cell & cell);
 	void				RidgeDetectionByLoG(Cell & cell);
 	void				SeedDetectionByVesselness(Cell & cell);
+	void				SeedAdjustment(Cell & cell, const VesselnessImageType::Pointer & thresholded_vesselness_img);
 
 	void				BuildTree(Cell & cell);
 	float**				BuildAdjacencyGraph(Cell & cell);
-	float				CalculateDistance(Cell & cell, itk::uint64_t k, itk::uint64_t l);	//THIS IS NOT THE EUCLIDEAN DISTANCE
+	float				CalculateDistance(Cell & cell, itk::uint64_t k, itk::uint64_t l);
 	Tree*				BuildMST1(Cell & cell, float** AdjGraph);
 
 	void				SmoothTree(Cell & cell, Tree* smoothed_tree);
 	void				SmoothSegments(Cell & cell, Tree* smoothed_tree, Node* start_node);
 	void				ReplaceTreeSegmentWithPath(Cell & cell, Tree* smoothed_tree, PathType::Pointer speed_path, Node* start_node, Node* end_node);
 	PathType::Pointer	SmoothPath(Cell & cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path );
+
+	void				PruneTree(Cell & cell, Tree* smoothed_tree);
+	void				CheckSegment(Cell & cell, Node* start_node, Tree * smoothed_tree);
+	bool				ShouldPruneSegment(Cell & cell, PathType::Pointer path);
 
 	void				CreateSpeedImage(Cell & cell);
     

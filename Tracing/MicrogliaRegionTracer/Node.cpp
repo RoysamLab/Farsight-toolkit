@@ -122,17 +122,17 @@ void Node::ClearChildren()
     this->children.clear();
 }
 
-const itk::uint64_t Node::GetX()
+const double Node::GetX()
 {
     return this->x;
 }
 
-const itk::uint64_t Node::GetY()
+const double Node::GetY()
 {
     return this->y;
 }
 
-const itk::uint64_t Node::GetZ()
+const double Node::GetZ()
 {
     return this->z;
 }
