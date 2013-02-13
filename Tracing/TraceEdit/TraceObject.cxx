@@ -2483,6 +2483,7 @@ void TraceObject::SetInputImageVBT(){
 
 void TraceObject::DetectCandidateGapsVBT(){
 
+#ifdef USE_BALL_TRACER
 	// Check weather inputs are set here.
 		
 	// Collect trace lines corresponding to roots and leafs
@@ -2601,7 +2602,7 @@ void TraceObject::DetectCandidateGapsVBT(){
 		myfile << CandidateGaps[i]->tracingCosts.scaleVar << '\t' << CandidateGaps[i]->tracingCosts.vesselnessVar << std::endl;
 	}
 	myfile.close();*/
-
+#endif 
 }
 
 void TraceObject::RemoveCandidateAndClusteredTraceLines(){
