@@ -41,6 +41,7 @@ ProjectProcessor::ProjectProcessor()
 	tasks.clear();
 	classImageMap.clear();
 	classCentroidMap.clear();
+	original_image_map.clear();
 	table = NULL;
 	NucAdjTable = NULL;
 	CellAdjTable = NULL;
@@ -50,7 +51,7 @@ ProjectProcessor::ProjectProcessor()
 	inputTypeNeeded = 0;
 	save_path = ".";
 	n_thr = 4;//Temporary number for number of omp threads
-	numThreadsSet = false;
+	numThreadsSet = false;	
 }
 
 void ProjectProcessor::SetNumThreads( int threads )
@@ -170,8 +171,8 @@ void ProjectProcessor::ProcessNext(void)
 //***********************************************************************************************************
 //  PRE-PROCESSING
 //***********************************************************************************************************
-bool ProjectProcessor::PreprocessImage(){
-
+bool ProjectProcessor::PreprocessImage()
+{
 	if(!inputImage)
 		return false;
 
@@ -187,6 +188,9 @@ bool ProjectProcessor::PreprocessImage(){
 			std::cerr<<"ERROR: Cannot find the channel "<<ppit->channelName<<" for preprocessing\n";
 			continue;
 		}
+
+		original_image_map[chNum] = inputImage->GetItkPtr<unsigned char>(0,chNum);
+
 		ftk::Preprocess *prep = new ftk::Preprocess( inputImage->GetItkPtr<unsigned char>(0,chNum) );
 		TiXmlDocument tempXML;   
 		TiXmlElement *genericName = new TiXmlElement( "Preprocess" );
@@ -286,9 +290,20 @@ bool ProjectProcessor::SegmentNuclei(int nucChannel)
 	}
 
 	if((int)definition->mmSegFiles.size() != 0)
-	{
+	{		
 		mmSegmentation(nucChannel, 0);
 	}
+
+	const ftk::Image::Info * image_info = inputImage->GetImageInfo();
+	int byte_to_cpy = image_info->numZSlices * image_info->numRows * image_info->numColumns * image_info->bytesPerPix;
+	std::map<int, InputImageType::Pointer>::iterator it;
+	for ( it = original_image_map.begin() ; it != original_image_map.end(); ++it )
+	{
+		int chNum = (*it).first;
+		memcpy( inputImage->GetDataPtr(0,chNum), ((*it).second)->GetBufferPointer(), byte_to_cpy );
+	}
+	original_image_map.clear();
+
 
 	delete nucSeg;
 	cout << "Total time to segmentation is : " << (clock() - start_time)/(float) CLOCKS_PER_SEC << endl;

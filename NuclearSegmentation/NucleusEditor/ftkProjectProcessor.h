@@ -64,6 +64,7 @@ public:
 
 	typedef unsigned char IPixelT;
 	typedef unsigned short LPixelT;
+	typedef itk::Image<unsigned char, 3> InputImageType;
 	typedef itk::Image<unsigned short, 3> LabelImageType;
 
 	typedef struct { ftk::ProjectDefinition::TaskType type; int inputChannel1; int inputChannel2; int inputChannel3; bool done; } Task;
@@ -114,6 +115,7 @@ protected:
 	ftk::Image::Pointer outputImage;
 	std::map< std::string, LabelImageType::Pointer > classImageMap;
 	std::map< std::string, vtkSmartPointer<vtkTable> > classCentroidMap;
+	std::map<int, InputImageType::Pointer> original_image_map;
 	ftk::ProjectDefinition * definition;
 	std::vector<Task> tasks;
 	vtkSmartPointer<vtkTable> table;
