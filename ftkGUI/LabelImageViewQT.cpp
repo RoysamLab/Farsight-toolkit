@@ -1754,7 +1754,7 @@ MyRubberBand::MyRubberBand(QWidget * p)
 void MyRubberBand::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
-	painter.setPen(Qt::blue);
+	painter.setPen(Qt::yellow);
 	painter.setBrush(Qt::NoBrush);
 	QRect r = this->rect();
 	r.setWidth(r.width()-1);
