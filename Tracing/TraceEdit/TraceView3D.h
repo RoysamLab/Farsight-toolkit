@@ -102,6 +102,9 @@ limitations under the License.
 #include "ClusClus/HeatmapWindow.h"
 #include "ClusClus/Heatmap.h"
 #endif
+#ifdef USE_BALL_TRACER
+#include "ftkVesselTracer/ftkVesselTracer.h"
+#endif
 #include "branchPT.h"
 #include "CellTrace.h"
 #include "CellTraceModel.h"
@@ -203,10 +206,7 @@ public slots:
 	void ExplodeTree();
 	void BreakBranch();
 	void MergeTraces();
-	void AcceptAutoMergingInputs();
-	void DetectCandidateGaps();
-	void RunClusteringOnGaps();
-
+	
 	void SplitTraces();
 	void AddLines();
 	void AddEndLines();
@@ -252,8 +252,6 @@ public slots:
 	void LoadTraces();
 	void LoadImageData();
 	void LoadSomaFile();
-	void LoadGVFImages();
-	void LoadVesselnessImage();
 	void LoadProject();
 	void SetTraceType(int newType);
 	void ReloadState();
@@ -449,8 +447,6 @@ private:
 	QAction *VesselMaskAction;
 	QAction *VoronoiAction;
 	QAction *loadSoma;
-	QAction *loadGVFImagesAction;
-	QAction *loadVesselnessImagesAction;
 	QAction *ListButton;
 	QAction *ClearButton;
 	QAction *SelectTreeAction;
@@ -556,8 +552,6 @@ private:
 	QToolBox *SettingsToolBox;
 	QSpinBox *MaxGapField;
 	QDoubleSpinBox *GapToleranceField;
-	QDoubleSpinBox *GapAngleToleranceField;
-
 	//QSpinBox *LineLengthField;
 	QDoubleSpinBox *ColorValueField;
 	QDoubleSpinBox *TipColor;
@@ -583,11 +577,6 @@ private:
 	QRadioButton *SmallLinesButton, *FalseSpinesButton, *FalseBridgesButton, *HalfBridgesButton;
 	QGroupBox *SmallLinesGroup, *FakeSpinesGroup, *FakeBridgeGroup, *HalfBridgeGroup, *BorderCellsCroppingGroup;
 	QPushButton *CropBorderCellsButton;
-	QGroupBox *MergeGapsGroup;
-	QRadioButton *AutoMergeGapsButton;
-	QPushButton *DetectCandidateGapsButton, *RunClusteringButton;
-	QDoubleSpinBox *GapLengthThField, *GapAngleThField, *GapMutualAngleThField, *AlphaForClusteringField;
-
 	//stuff for tol and selection
     //general render window variables
 	vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
@@ -624,6 +613,11 @@ private:
 	
 	//vessel segmentation
 	QWidget * vesselSegWidget;
+
+	// Vessel segmentation using ball tracing
+#ifdef USE_BALL_TRACER
+	ftkVesselTracer *VBT;
+#endif
 
 	//ID numbers of the selected traces
 	std::vector<int> SelectedTraceIDs;

@@ -37,10 +37,7 @@ set( TRACE_LIBS
     ftkCommon
     ftkGraphs
     MCLR
-    vnl
     ${QT_LIBRARIES} )
-  
-INCLUDE_DIRECTORIES(${VXL_MUL_INCLUDE_DIR}) 
 
 if( BUILD_SPD )	
   list( APPEND TRACE_LIBS SPD ) 
@@ -53,10 +50,6 @@ endif(BUILD_CLUSCLUS)
 if(BUILD_VESSEL_TRACING)
 	list(APPEND TRACE_LIBS VesselTracer_lib)
 endif(BUILD_VESSEL_TRACING)
-
-if(BUILD_GT_CLUSTERING)
-	list(APPEND TRACE_LIBS ftkGTClustering_lib)
-endif(BUILD_GT_CLUSTERING)
 
 if(QtTestingFound)
   link_directories( ${QtTesting_LIBRARY_DIR} )

@@ -47,7 +47,6 @@ typedef itk::Image< unsigned char, 3 >   ImageType;
 typedef itk::Image< float, 3> FloatImageType;
 
 typedef itk::ImageFileReader< ImageType >    ReaderType;
-typedef itk::ImageFileReader<FloatImageType> ReaderTypeFloat;
 typedef itk::ImageFileWriter< ImageType >    WriterType;
 typedef itk::ImageFileWriter< FloatImageType > FloatWriterType;
 typedef itk::ImageToVTKImageFilter<ImageType> ConnectorType;
@@ -66,7 +65,6 @@ public:
 	float* CalculateCentroidDistanceToVOI(vtkSmartPointer<vtkTable> tbl);
 	FloatImageType::Pointer GetVesselMaskDistanceMap();
 	void ReadVesselDistanceMap(std::string fileName);
-	void ReadImageTypeFloat3D(std::string fileName, FloatImageType::Pointer& data_ptr);
 	void ReadBinaryVOI(std::string filename);
 	void ReadVTPVOI(std::string filename);
 	void ReadOBJVOI(std::string filename);

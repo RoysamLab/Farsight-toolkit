@@ -36,17 +36,6 @@ limitations under the License.
 
 #include "itkImage.h"
 
-#include <vnl/vnl_matrix.h>
-#include <vnl/vnl_vector.h>
-
-#ifdef USE_BALL_TRACER
-#include "ftkVesselTracer/ftkVesselTracer.h"
-#endif
-
-#ifdef USE_GT_CLUSTERING
-#include "ftkGTClustering/ftkGTClustering.h"
-#endif
-
 class TraceBit;
 class TraceLine;
 class TraceGap;
@@ -63,7 +52,6 @@ class vtkFloatArray;
 #define TRACE_TYPE_BOTH 3 // For future use
 
 typedef itk::Image< unsigned char, 3 >   ImageType;
-typedef itk::Image< float, 3> FloatImageType;
 
 //needed because gcc doesn't have a built-in method to hash unsigned long long ints
 struct hashulli
@@ -126,7 +114,7 @@ public:
 	void SetTraceOffset(double ntx, double nty, double ntz);
 	
 	void AddTraceLine(int selectedCellId1, int selectedCellId2);
-	TraceLine* AddTraceLine(double p1[],double p2[], double color);
+	void AddTraceLine(double p1[],double p2[]);
 	void AddEndTraceLine(int selectedCellId1, int selectedCellId2);
 	void AddExtensionToTraceLine(int selectedCellID, double point[]);
 
@@ -151,8 +139,6 @@ public:
 	void FindFalseSpines(int maxBit, int maxLength);
 	void FindFalseBridges(int maxBit);
 	void FindHalfBridges(int maxBit, int DtoParent);
-	void DetectCandidateGapsVBT();
-	void RunClusteringGTRepDyn();
 	void cleanTree();
 	void Shave(TraceLine* starting, int smallerThan);
 	bool BreakOffBranch(TraceLine* branch, bool keep);
@@ -182,8 +168,6 @@ public:
 	std::set<long int> FalseSpines;
 	std::set<long int> FalseBridges;
 	std::set<long int> HalfBridges;
-	std::set<long int> RetracingLines;
-	std::map<unsigned int, TraceBit> RetracingPoints;
 	std::vector<TraceGap*> Gaps;
 	std::vector<unsigned int>RootIDs;
 	std::vector<branchPT*> BranchPoints;
@@ -191,16 +175,8 @@ public:
 	vtksys::hash_map<unsigned int, unsigned long long int> hash_load;
 
 	double gapTol;
-	double gapAngleTol;
 	int gapMax;
 	bool AutoSolveBranchOrder;
-
-	double maxGapLength;
-	double minGapAngle;
-	double minGapMutualAngle;
-	double alphaForClustering;
-
-	FloatImageType::Pointer gx, gy, gz, vesselnessImg, inputImageVBT;
 
 	vtksys::hash_map< unsigned int, unsigned long long int > hashp;
 	vtksys::hash_map< unsigned int, unsigned long long int > hashc;
@@ -216,10 +192,6 @@ public:
 	void SetTraceTypeGeneric(int type);
 	void SetTraceTypeGeneric(std::string type);
 	int GetTraceTypeGeneric();
-	void SetGVFImagesVBT(); 
-	void SetVesselnessImageVBT();
-	void SetInputImageVBT();
-	void RemoveCandidateAndClusteredTraceLines();
 
 private:
 	std::vector<TraceLine*> trace_lines;
@@ -253,20 +225,7 @@ private:
 	//used for "color by trees" mode
 	bool ColorByTrees;
 	std::map<int, int> RootToTree;
-	
 	int TraceTypeGeneric;
-	std::vector<TraceGap*> CandidateGaps;
-	std::vector<TraceGap*> ClusteredGaps;
-	std::vector<TraceLine*> CandidateTLines;
-	std::vector<TraceLine*> ClusteredTLines;
-	
-#ifdef USE_BALL_TRACER
-	ftkVesselTracer *VBT;
-#endif
-
-#ifdef USE_GT_CLUSTERING
-	ftkGTClustering *GTCluster;
-#endif
 };
 
 #endif

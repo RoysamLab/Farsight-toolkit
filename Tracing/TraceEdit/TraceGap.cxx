@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 =========================================================================*/
 
+#include "TraceLine.h"
 #include "TraceGap.h"
 
 TraceGap::TraceGap()
@@ -28,11 +29,10 @@ std::string TraceGap::stats()
 	thisStats << this->compID << "\t" << this->Trace1->GetId()
 		<< "\t" << this->Trace2->GetId() << "\t" << this->angle  
 		<< "\t" << this->dist << "\t" << this->maxdist
-		<< "\t" << this->length << "\t" << this->smoothness	<<"\t" << this->cost
-		<< "\t" << this->tracingCosts.tracingCost;
+		<< "\t" << this->length << "\t" << this->smoothness	<<"\t" << this->cost;
 	return thisStats.str();
 }
 std::string TraceGap::GapStatHeaders()
 {
-	return std::string( "Gap:\t Trace:\t to:\t Angle:\t Distance:\t Maximum Distance:\t Length:\t Smoothness:\t cost:\t TracingCost\t");
+	return std::string( "Gap:\t Trace:\t to:\t Angle:\t Distance:\t Maximum Distance:\t Length:\t Smoothness:\t cost\t");
 }
