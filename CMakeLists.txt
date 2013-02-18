@@ -5,26 +5,6 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0005 OLD)
 endif(COMMAND CMAKE_POLICY)
 
-#########################################################################################
-# Set compiler when in OSX to use GCC instead of Clang which is the default in OSX10.8+. 
-# THIS BLOCK OF CODE MUST HAPPEN BEFORE THE project() DEFINITION
-#########################################################################################
-if (APPLE)
-  if (NOT APPLE_USE_CLANG)
-    MESSAGE (AUTHOR_WARNING "Mac OS X detected, setting GCC to default compilers. Define APPLE_USE_CLANG:BOOL=ON BEFORE configuring for the first time to use Clang")
-    SET(CMAKE_C_COMPILER "/usr/bin/gcc")
-    SET(CMAKE_CXX_COMPILER "/usr/bin/g++")
-  else (NOT APPLE_USE_CLANG)
-    MESSAGE (AUTHOR_WARNING "Using clang on Apple platform")
-    SET(CMAKE_C_COMPILER "/usr/bin/clang")
-    SET(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-  endif (NOT APPLE_USE_CLANG)
-else (APPLE)
-  if (DEFINED APPLE_USE_CLANG)  
-    MESSAGE (FATAL_ERROR "You appear to have defined APPLE_USE_CLANG but you are not on an Apple platform")
-  endif (DEFINED APPLE_USE_CLANG)
-endif (APPLE)
-
 ###################################
 # set project's name
 ###################################
