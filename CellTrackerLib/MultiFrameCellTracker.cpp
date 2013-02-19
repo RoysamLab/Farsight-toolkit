@@ -2,13 +2,13 @@
 
 //---------------------------------------------------------------------------------------------------------------------
 // 
-MultiFrameCellTracker::MultiFrameCellTracker()
+ultiFrameCellTracker::MultiFrameCellTracker()
 {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 // 
-MultiFrameCellTracker::~MultiFrameCellTracker()
+ultiFrameCellTracker::~MultiFrameCellTracker()
 {
 }
 
@@ -3183,7 +3183,7 @@ bool MultiFrameCellTracker::is_simple_node(MultiFrameCellTracker::TGraph::vertex
 
 //---------------------------------------------------------------------------------------------------------------------
 // 
-MultiFrameCellTracker::TGraph::vertex_descriptor MultiFrameCellTracker::get_parent(MultiFrameCellTracker::TGraph::vertex_descriptor vd)
+ultiFrameCellTracker::TGraph::vertex_descriptor MultiFrameCellTracker::get_parent(MultiFrameCellTracker::TGraph::vertex_descriptor vd)
 {
   if(in_degree(vd,g)>1)
   {
@@ -3199,7 +3199,7 @@ MultiFrameCellTracker::TGraph::vertex_descriptor MultiFrameCellTracker::get_pare
 
 //---------------------------------------------------------------------------------------------------------------------
 // 
-MultiFrameCellTracker::TGraph::vertex_descriptor MultiFrameCellTracker::get_child(MultiFrameCellTracker::TGraph::vertex_descriptor vd)
+ultiFrameCellTracker::TGraph::vertex_descriptor MultiFrameCellTracker::get_child(MultiFrameCellTracker::TGraph::vertex_descriptor vd)
 {
   if(out_degree(vd,g)>1)
   {

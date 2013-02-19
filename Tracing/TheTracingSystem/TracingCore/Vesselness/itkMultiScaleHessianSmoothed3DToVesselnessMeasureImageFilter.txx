@@ -31,7 +31,7 @@ namespace itk
  * Constructor
  */
 template <typename TInputImage, typename TOutputImage >
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter()
 {
@@ -53,7 +53,7 @@ MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 
 template <typename TInputImage, typename TOutputImage >
 void
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::AllocateUpdateBuffer()
 {
@@ -73,7 +73,7 @@ MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 
 template <typename TInputImage, typename TOutputImage >
 void
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::GenerateData()
 {
@@ -132,7 +132,7 @@ MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 
 template <typename TInputImage, typename TOutputImage >
 void
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::UpdateMaximumResponse()
 {
@@ -164,7 +164,7 @@ MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 
 template <typename TInputImage, typename TOutputImage >
 double
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::ComputeSigmaValue( int ScaleLevel )
 {
@@ -181,7 +181,7 @@ MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 
 template <typename TInputImage, typename TOutputImage >
 void
-MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
+ultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter
 <TInputImage,TOutputImage>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {

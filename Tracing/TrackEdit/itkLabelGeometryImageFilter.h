@@ -16,7 +16,7 @@ limitations under the License.
 /*=========================================================================
 
 Program:   Insight Segmentation & Registration Toolkit
-Module:    $RCSfile: itkLabelGeometryImageFilter.h,v $
+odule:    $RCSfile: itkLabelGeometryImageFilter.h,v $
 Language:  C++
 Date:      $Date: 2008/08/14 18:22:17 $
 Version:   $Revision: 1.3 $

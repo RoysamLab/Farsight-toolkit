@@ -1,5 +1,5 @@
 The parallel implementation in this directory use two extra packages:
-MPI and PETSc. A free MPI implementation can be found at
+PI and PETSc. A free MPI implementation can be found at
 http://www-unix.mcs.anl.gov/mpi/, while PetSc can be downloaded at
 http://www-unix.mcs.anl.gov/petsc/petsc-2/.
 

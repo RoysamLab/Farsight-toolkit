@@ -318,7 +318,7 @@ CVpe=CV;
 IMGpe=img;
 CVIpe=CVi;
 maxiterinit=50000; %any large-enough number
-MU     = [CVpe.Segments(:).mu];
+U     = [CVpe.Segments(:).mu];
 
 spnum  = length(DendSp);
 spgpp  = cell(1, spnum);

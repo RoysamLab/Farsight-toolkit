@@ -113,7 +113,7 @@ Output formats (may be combined; if none, produces a summary to stdout):\n\
 \n\
 ";
 char qh_promptd[]= "\
-More formats:\n\
+ore formats:\n\
     Fa   - area for each Delaunay region\n\
     FA   - compute total area for option 's'\n\
     Fc   - count plus coincident points for each Delaunay region\n\

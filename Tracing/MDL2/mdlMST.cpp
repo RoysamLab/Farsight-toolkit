@@ -23,7 +23,7 @@ namespace mdl
 {
 
 //Constructor
-MST::MST(ImageType::Pointer inImage)
+ST::MST(ImageType::Pointer inImage)
 {
 	m_inputImage = inImage;
 
@@ -58,7 +58,7 @@ MST::MST(ImageType::Pointer inImage)
 
 
 
-MST::~MST()
+ST::~MST()
 {
 	m_inputImage=NULL;
 	skeletonPoints=NULL;

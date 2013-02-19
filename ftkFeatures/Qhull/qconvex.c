@@ -119,7 +119,7 @@ Output formats (may be combined; if none, produces a summary to stdout):\n\
 \n\
 ";
 char qh_promptd[]= "\
-More formats:\n\
+ore formats:\n\
     Fa   - area for each facet\n\
     FA   - compute total area and volume for option 's'\n\
     Fc   - count plus coplanar points for each facet\n\

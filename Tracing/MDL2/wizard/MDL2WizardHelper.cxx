@@ -16,7 +16,7 @@ limitations under the License.
 #include "MDL2WizardHelper.h"
 
 //-----------------------------------------------------------------------------
-MDL2WizardHelper::MDL2WizardHelper()
+DL2WizardHelper::MDL2WizardHelper()
 {
   this->VolProc = 0; 
   this->Skel = 0;
@@ -28,7 +28,7 @@ MDL2WizardHelper::MDL2WizardHelper()
 }
 
 //-----------------------------------------------------------------------------
-MDL2WizardHelper::~MDL2WizardHelper()
+DL2WizardHelper::~MDL2WizardHelper()
 {
   if(this->VolProc)
     {

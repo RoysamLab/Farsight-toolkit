@@ -297,7 +297,7 @@ double transportSimplex(TsSignature<TF> *signature1, TsSignature<TF> *signature2
 }
 
 /*
-Main pivot loop. 
+ain pivot loop. 
 Pivots until the system is optimal and return the optimal transportation cost. 
 */
 double _pivot(TsBasic * basics, TsBasic ** srcBasics, TsBasic ** snkBasics, bool ** isBasic, int n1, int n2, double **_tsC, double _tsMaxC)  {

@@ -18,7 +18,7 @@ SET(CTEST_INITIAL_CACHE "
 SITE:STRING=farsight-vista64
 BUILDNAME:STRING=vs8-64-dbg-static
 CMAKE_GENERATOR:INTERNAL=Visual Studio 8 2005 Win64
-MAKECOMMAND:STRING=C:/PROGRA~2/MICROS~4/Common7/IDE/devenv.com Farsight.sln /build Debug /project ALL_BUILD
+AKECOMMAND:STRING=C:/PROGRA~2/MICROS~4/Common7/IDE/devenv.com Farsight.sln /build Debug /project ALL_BUILD
 BUILD_SHARED_LIBS:BOOL=OFF
 ITK_DIR:PATH=C:/Dashboards/Dependencies/ITK-3.16.0-static
 VTK_DIR:PATH=C:/Dashboards/Dependencies/VTK-5.4.2-static

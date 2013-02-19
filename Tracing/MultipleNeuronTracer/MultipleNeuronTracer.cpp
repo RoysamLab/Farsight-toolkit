@@ -5,11 +5,11 @@
 #include "omp.h"
 #endif
 
-MultipleNeuronTracer::MultipleNeuronTracer()
+ultipleNeuronTracer::MultipleNeuronTracer()
 {
 }
 
-MultipleNeuronTracer::~MultipleNeuronTracer()
+ultipleNeuronTracer::~MultipleNeuronTracer()
 {
 }
 

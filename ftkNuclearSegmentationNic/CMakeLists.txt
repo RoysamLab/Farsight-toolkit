@@ -29,7 +29,7 @@ BinarizeMixPoisson/graph.h
 SeedDetection/SeedDetectionLoG.h
 SeedDetection/itklaplacianrecursivegaussianimagefilternew.h
 
-MaxClustering/MaxClustering.h
+axClustering/MaxClustering.h
  
 )
 

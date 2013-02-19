@@ -23,7 +23,7 @@ limitations under the License.
 #include "MergeModel.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-MergeModel::MergeModel(std::vector<TraceGap*> gaps)
+ergeModel::MergeModel(std::vector<TraceGap*> gaps)
 {
 	this->DataTable = vtkSmartPointer<vtkTable>::New();
 	this->Selection = new ObjectSelection();
@@ -31,7 +31,7 @@ MergeModel::MergeModel(std::vector<TraceGap*> gaps)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-MergeModel::~MergeModel()
+ergeModel::~MergeModel()
 {
   //explicit deletion isn't necessary because Qt objects take care of killing
   //their own children

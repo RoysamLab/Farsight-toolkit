@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-MAIN_DATA_FOLDER = '/data/nicolas/dataNew'
+AIN_DATA_FOLDER = '/data/nicolas/dataNew'
 
 SERVER = 'none'
 p = os.uname()

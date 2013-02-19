@@ -3,13 +3,13 @@ if nargin == 1
     F = 'min';
 end
 [d1,d2,d3] = size(Vol);
-Myx = feval(F,Vol,[],3);
-Mxz = feval(F,Vol,[],1);
-Mxz = reshape(Mxz,d2,d3);
-Myz = feval(F,Vol,[],2);
-Myz = reshape(Myz,d1,d3);
+yx = feval(F,Vol,[],3);
+xz = feval(F,Vol,[],1);
+xz = reshape(Mxz,d2,d3);
+yz = feval(F,Vol,[],2);
+yz = reshape(Myz,d1,d3);
 % M = [imrotate(mat2gray(Myz),90) zeros(d3,d3); mat2gray(Mxy) (mat2gray(Mxz))];
-M = [Myx, Myz ; Mxz', zeros(d3,d3) ];
+ = [Myx, Myz ; Mxz', zeros(d3,d3) ];
 % Vol = Vol(Vol>0);
 %Vol = Vol(Vol<255);
 maxVol = max(Vol(:));

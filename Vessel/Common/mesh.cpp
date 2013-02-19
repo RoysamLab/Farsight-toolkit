@@ -35,7 +35,7 @@ limitations under the License.
 // CONSTRUCTORS & DESTRUCTORS
 // =======================================================================
 
-Mesh::Mesh() {
+esh::Mesh() {
 	
   vertices = new Array<Vertex*>(INITIAL_VERTEX);
   edges = new Bag<Edge*>(INITIAL_EDGE,Edge::extract_func);
@@ -44,7 +44,7 @@ Mesh::Mesh() {
   bbox = NULL;
 }
 
-Mesh::~Mesh() {
+esh::~Mesh() {
   delete vertices;  
   vertices = NULL;
   delete edges;

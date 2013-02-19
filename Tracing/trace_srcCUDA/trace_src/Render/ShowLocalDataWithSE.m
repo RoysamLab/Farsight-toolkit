@@ -18,6 +18,6 @@ for x=Bl(1):Bh(1)
     end
 end
 
-MIPshow(v,'min');title(tle);
+IPshow(v,'min');title(tle);
 s.mu = s.mu - [Bl(1) Bl(2) Bl(3)]';
 renderSEonMIPs(1,s,2*b+1,2*b+1,2*b+1);

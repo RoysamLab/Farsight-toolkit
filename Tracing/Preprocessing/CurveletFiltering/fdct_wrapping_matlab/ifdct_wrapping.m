@@ -32,8 +32,8 @@ else
     N2 = N;
 end;
 
-M1 = N1/3;
-M2 = N2/3;
+1 = N1/3;
+2 = N2/3;
 
 if finest == 1;
     
@@ -315,16 +315,16 @@ if is_real
 end
     
 % Coarsest wavelet level
-M1 = M1/2;
-M2 = M2/2;
+1 = M1/2;
+2 = M2/2;
 Xj = fftshift(fft2(ifftshift(C{1}{1})))/sqrt(prod(size(C{1}{1})));
 loc_1 = Xj_topleft_1 + (0:(2*floor(4*M1)));
 loc_2 = Xj_topleft_2 + (0:(2*floor(4*M2)));
 X(loc_1,loc_2) = X(loc_1,loc_2) + Xj .* lowpass;
 
 % Finest level
-M1 = N1/3;
-M2 = N2/3;
+1 = N1/3;
+2 = N2/3;
 if finest == 1,
 
     % Folding back onto N1-by-N2 matrix

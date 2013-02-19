@@ -1,7 +1,7 @@
 #include "MDL2PreprocessingPage.h"
 #include "MDL2Wizard.h"
 
-MDL2PreprocessingPage::MDL2PreprocessingPage(QWidget *parent)
+DL2PreprocessingPage::MDL2PreprocessingPage(QWidget *parent)
 {
 }
 

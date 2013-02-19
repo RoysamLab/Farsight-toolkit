@@ -43,7 +43,7 @@ using std::endl;
 #include <QVTKWidget.h>
 
 //-----------------------------------------------------------------------------
-MDLWizard::MDLWizard()
+DLWizard::MDLWizard()
 {
   //create QProcesses which do the actual work 
   this->VolumeProcess = new QProcess(this);
@@ -102,7 +102,7 @@ MDLWizard::MDLWizard()
 }
 
 //-----------------------------------------------------------------------------
-MDLWizard::~MDLWizard()
+DLWizard::~MDLWizard()
 {
   delete this->OutputWindow;
   this->OutputWindow = 0;

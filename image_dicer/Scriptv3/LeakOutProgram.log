@@ -89,7 +89,7 @@ Processing scale 10
 Scale 10 done
 Processing scale 11
 Scale 11 done
-Multiscale Log took 1914.54 seconds
+ultiscale Log took 1914.54 seconds
 Detecting Seeds
 Local maxima point detection took 371.03 seconds
 done detecting seeds
@@ -99,7 +99,7 @@ done detecting seeds
 scale_xy = 3
 scale_z = 2
 max_nghbr_im initialized
-Max_response array done
+ax_response array done
 Initial max_nghbr_im took 433.4 seconds
 Entering main Clustering Loop
 change=34990250

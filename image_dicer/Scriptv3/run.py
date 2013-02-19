@@ -53,12 +53,12 @@ TRY = 01
 #DEBUG = 1
 #----------------------------------
 REMOVE_MONTAGES = 1	# This flag is set in case we want the montages to be removed after the process is done, especially when running many montages in serial we want to make sure not to
-MOVE_RESULTS = 1	# If 0 the results will be keep
+OVE_RESULTS = 1	# If 0 the results will be keep
 			# if 1 the results will be moved
 			# if 2 the results will be copied (keep and copy to FSDATA)
 			# if 3 move everysingle file, exept the folder, which are copied
 #----------------------------------
-MOVE_INTER_STEPS = 0
+OVE_INTER_STEPS = 0
 
 SMALLIMAGE = '1'	# if the image is small
 

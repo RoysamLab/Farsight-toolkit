@@ -55,8 +55,8 @@ for j = 1:nbscales
 end;
 
 % Loop: pyramidal scale decomposition
-M1 = N1/3;
-M2 = N2/3;
+1 = N1/3;
+2 = N2/3;
 if finest == 1,
 
     % Initialization: smooth periodic extension of high frequencies

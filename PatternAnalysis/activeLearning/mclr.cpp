@@ -4,14 +4,14 @@
 #include "omp.h"
 #endif
 
-MCLR::MCLR()
+CLR::MCLR()
 {
 	current_label = -1; // keeps a track of the current label
 	confidence_threshold = 0.5;
 	model k;
 }
 
-MCLR::~MCLR()
+CLR::~MCLR()
 {
 
 }
@@ -768,7 +768,7 @@ std::vector<int> MCLR::Get_Feature_Order()
 	return indices;
 }
 
-MCLR::model MCLR::Get_Training_Model()
+CLR::model MCLR::Get_Training_Model()
 {	
 	// Set the z matrix 
 	z.set_size(numberOfClasses,x.cols());// Used in gradient computation
@@ -1025,7 +1025,7 @@ std::vector<int> MCLR::ALAMO(int activeQuery)
 }
 
 
-MCLR::model MCLR::Get_Temp_Training_Model(int query,int label)
+CLR::model MCLR::Get_Temp_Training_Model(int query,int label)
 {	
 	current_label = label;
 	vnl_vector<double> queried_sample = testData.get_row(query);

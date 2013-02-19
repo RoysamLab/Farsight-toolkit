@@ -6,7 +6,7 @@ LIB_OBJ = 	$(LIB_SRC:.cpp=.o)
 
 TST_SRC = 	test.cpp
 
-MEX_SRC =	fdct_wrapping_mex.cpp	ifdct_wrapping_mex.cpp	fdct_wrapping_param_mex.cpp
+EX_SRC =	fdct_wrapping_mex.cpp	ifdct_wrapping_mex.cpp	fdct_wrapping_param_mex.cpp
 
 DEP     = 	$(LIB_SRC:.cpp=.d) $(TST_SRC:.cpp=.d)
 

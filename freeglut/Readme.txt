@@ -90,7 +90,7 @@ Changelog
     each other (and other builds) using Windows Explorer.
 
 
-Martin Payne
+artin Payne
 2010–01–22
 
 http://www.transmissionzero.co.uk/

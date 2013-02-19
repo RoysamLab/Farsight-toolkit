@@ -5,7 +5,7 @@
 using std::cout;
 using std::endl;
 
-MDLIntroPage::MDLIntroPage(QWidget *parent)
+DLIntroPage::MDLIntroPage(QWidget *parent)
 {
 }
 

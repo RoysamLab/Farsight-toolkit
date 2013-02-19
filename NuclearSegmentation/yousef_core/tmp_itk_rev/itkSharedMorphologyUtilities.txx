@@ -282,7 +282,7 @@ void CopyLineToImage(const typename TImage::Pointer output,
 
 template <class TInputImage, class TLine>
 typename TInputImage::RegionType
-MakeEnlargedFace(const typename TInputImage::ConstPointer itkNotUsed( input ),
+akeEnlargedFace(const typename TInputImage::ConstPointer itkNotUsed( input ),
                const typename TInputImage::RegionType AllImage,
                const TLine line)
 {

@@ -2,7 +2,7 @@ function steerableTVbasis = expandVF
 
 %%%%%%%%%%%%%%%%% compute basic 2d-voting field
 
-M = 30; %% size of orig vf
+ = 30; %% size of orig vf
 figure(1);
 sig = 0.15;
 sig2 = sig*3.0;

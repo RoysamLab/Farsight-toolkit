@@ -1,6 +1,6 @@
 #include "MontagingToTraceEditorXMLConverter.h"
 
-MontagingToTraceEditorXMLConverter::MontagingToTraceEditorXMLConverter(std::string fileName)
+ontagingToTraceEditorXMLConverter::MontagingToTraceEditorXMLConverter(std::string fileName)
 {
 	this->fileName = fileName;
 }

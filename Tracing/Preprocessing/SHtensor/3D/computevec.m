@@ -46,9 +46,9 @@ x = (-nn:nn)/N;
 [Y,X] = meshgrid(x,x);
 
 % rotate the grid to align v to [1;0], ie. multiply by [v,w]'
-M = [X(:),Y(:)]';
+ = [X(:),Y(:)]';
 A = [v,w];
-M = A'*M;
+ = A'*M;
 X = reshape( M(1,:), [n,n] );
 Y = reshape( M(2,:), [n,n] );
 

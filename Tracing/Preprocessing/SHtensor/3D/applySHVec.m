@@ -115,7 +115,7 @@ recon3dY = -reshape(result(end-2,:,:,:),szinput)*sqrt(2);
 recon3dX = -reshape(result(end-3,:,:,:),szinput)*sqrt(2);
 
 figure(9);
-Mag = sqrt(recon3dZ.^2 + recon3dX.^2 + recon3dY.^2 );
+ag = sqrt(recon3dZ.^2 + recon3dX.^2 + recon3dY.^2 );
 %clf; slice(double(Mag),q2,q2,q2);
 subplot(2,1,1);
 clf; orthoview(Mag/max(Mag(:)));

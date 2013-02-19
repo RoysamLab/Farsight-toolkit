@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Insight Segmentation & Registration Toolkit
-Module:    $RCSfile: itkLabelGeometryImageFilter.txx,v $
+odule:    $RCSfile: itkLabelGeometryImageFilter.txx,v $
 Language:  C++
 Date:      $Date: 2008/09/05 21:32:36 $
 Version:   $Revision: 1.6 $

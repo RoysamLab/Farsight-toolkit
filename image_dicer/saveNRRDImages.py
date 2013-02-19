@@ -7,10 +7,10 @@ import os
 import subprocess
 import os.path
 
-MAIN_PATH = '/FSdata/data/DARPA_MOSAICS'
+AIN_PATH = '/FSdata/data/DARPA_MOSAICS'
 DATA_FOLDER = ['/0113','/0117','/0120','/0123','/0128','/0131','/0323','/0405','/0409','/0410','/0412','/1206']
 
-MACRO_PATH = ''
+ACRO_PATH = ''
 
 print "# Create Folder"
 

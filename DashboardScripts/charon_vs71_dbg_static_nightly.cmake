@@ -18,7 +18,7 @@ SET(CTEST_INITIAL_CACHE "
 SITE:STRING=charon.kitware
 BUILDNAME:STRING=vs71-32-dbg-static
 CMAKE_GENERATOR:INTERNAL=Visual Studio 7 .NET 2003
-MAKECOMMAND:STRING=\"c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.com\" Farsight.sln /build Debug /project ALL_BUILD
+AKECOMMAND:STRING=\"c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.com\" Farsight.sln /build Debug /project ALL_BUILD
 BUILD_SHARED_LIBS:BOOL=OFF
 ITK_DIR:PATH=c:/projects/ITK-3.12.0-shared
 VTK_DIR:PATH=c:/projects/VTK-CVS-static

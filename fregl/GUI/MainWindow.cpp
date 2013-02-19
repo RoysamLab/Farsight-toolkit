@@ -28,7 +28,7 @@ GNRCImageDialog *MainWindow::createGNRCImage( )
   return idlg;
 }
 
-MainWindow::MainWindow()
+ainWindow::MainWindow()
 {
   workspace = new QWorkspace;
   setCentralWidget(workspace);

@@ -3,7 +3,7 @@ steerableTVbasis = [];
 
 %%%%%%%%%%%%%%%%% compute basic 2d-voting field
 
-M = 20; %% size of orig vf
+ = 20; %% size of orig vf
 figure(1);
 sig = 0.3;
 %sig = 0.2;
