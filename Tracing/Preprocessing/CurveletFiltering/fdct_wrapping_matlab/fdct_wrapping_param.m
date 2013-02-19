@@ -44,8 +44,8 @@ for j = 1:nbscales
     [X_rows{j},X_cols{j},F_rows{j},F_cols{j},N_rows{j},N_cols{j}] = deal(cell(1,nbangles(j)));
 end;
 
-1 = N1/3;
-2 = N2/3;
+M1 = N1/3;
+M2 = N2/3;
 
 if finest == 1,
     scales = nbscales:-1:2;
@@ -199,8 +199,8 @@ for j = scales,
 end;    % for j
 
 % Coarsest wavelet level
-1 = M1/2;
-2 = M2/2;
+M1 = M1/2;
+M2 = M2/2;
 [len, width] = size(C{1}{1});
 F_rows{1}{1} = 0;
 F_cols{1}{1} = 0;

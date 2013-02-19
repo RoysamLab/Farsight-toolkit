@@ -43,7 +43,7 @@ using std::endl;
 #include <QVTKWidget.h>
 
 //-----------------------------------------------------------------------------
-DL2Wizard::MDL2Wizard()
+MDL2Wizard::MDL2Wizard()
 {
   //create a helper, which does most of the actual work
   this->Helper = new MDL2WizardHelper();
@@ -62,7 +62,7 @@ DL2Wizard::MDL2Wizard()
 }
 
 //-----------------------------------------------------------------------------
-DL2Wizard::~MDL2Wizard()
+MDL2Wizard::~MDL2Wizard()
 {
   delete this->OutputWindow;
   this->OutputWindow = 0;

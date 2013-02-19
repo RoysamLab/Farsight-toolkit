@@ -54,7 +54,7 @@ option( BUILD_PIPELINE "Build program to dice an image based on a text file cent
 option( BUILD_CURVELETS "Build the curvelts based preprocessing executables" OFF)
 
 # Make sure OPENCL AND CUDA ARE NOT BOTH ENABLED
-option( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF)
+option( BUILD_OPENCL "Build with OpenCL support (VS 2008 only at the moment)" OFF) 
 option(	BUILD_CUDA "Build with CUDA support" OFF)
 if( BUILD_CUDA AND BUILD_OPENCL )
   message( SEND_ERROR "Both BUILD_CUDA and BUILD_OPENCL cannot be enabled at the
@@ -134,7 +134,7 @@ add_definitions(-DCPACK_PACKAGE_VERSION_PATCH=${CPACK_PACKAGE_VERSION_PATCH})
 set(CPACK_RESOURCE_FILE_WELCOME "${Farsight_SOURCE_DIR}/welcome.txt")
 #second screen?
 set(CPACK_RESOURCE_FILE_README "${Farsight_SOURCE_DIR}/readme.txt")
-set(CPACK_RESOURCE_FILE_LICENSE "${Farsight_SOURCE_DIR}/license.txt")
+set(CPACK_RESOURCE_FILE_LICENSE "${Farsight_SOURCE_DIR}/license.txt") 
 
 set(CPACK_NSIS_MENU_LINKS "http://www.farsight-toolkit.org" "Farsight Online Help")
 
@@ -333,7 +333,7 @@ if(USE_KPLS)
     if(UNIX)
       if(APPLE)
         set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/osx")
-
+        
       else(APPLE)
         set(KPLS_LIB_DIR "${PROJECT_SOURCE_DIR}/PatternAnalysis/embrex/unix")
       endif()

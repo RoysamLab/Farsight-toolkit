@@ -1744,7 +1744,7 @@ labelGeometries[l] = geo;
 }
 */
 
-yRubberBand::MyRubberBand(QWidget * p)
+MyRubberBand::MyRubberBand(QWidget * p)
 	: QWidget(p)
 {
 	this->setWindowFlags( Qt::FramelessWindowHint | this->windowFlags() );

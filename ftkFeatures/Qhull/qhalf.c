@@ -116,7 +116,7 @@ Output formats (may be combined; if none, produces a summary to stdout):\n\
 \n\
 ";
 char qh_promptd[]= "\
-ore formats:\n\
+More formats:\n\
     Fc   - count plus redundant halfspaces for each intersection\n\
          -   Qc (default) for coplanar and Qi for other redundant\n\
     Fd   - use cdd format for input (homogeneous with offset first)\n\

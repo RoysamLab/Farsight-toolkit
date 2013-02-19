@@ -51,7 +51,7 @@
 namespace itk {
 
 template <class TInputImage, class TLabelImage>
-orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
+MorphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 ::MorphologicalWatershedFromMarkersImageFilter()
 {
   this->SetNumberOfRequiredInputs(2);
@@ -62,7 +62,7 @@ orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 
 template <class TInputImage, class TLabelImage>
 void 
-orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
+MorphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 ::GenerateInputRequestedRegion()
 {
   // call the superclass' implementation of this method
@@ -88,7 +88,7 @@ orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 
 template <class TInputImage, class TLabelImage>
 void 
-orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
+MorphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 ::EnlargeOutputRequestedRegion(DataObject *)
 {
   this->GetOutput()->SetRequestedRegion(
@@ -98,7 +98,7 @@ orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 
 template<class TInputImage, class TLabelImage>
 void
-orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
+MorphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 ::GenerateData()
 {
   // there is 2 possible cases: with or without watershed lines.
@@ -466,7 +466,7 @@ orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 
 template<class TInputImage, class TLabelImage>
 void
-orphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
+MorphologicalWatershedFromMarkersImageFilter<TInputImage, TLabelImage>
 ::PrintSelf(std::ostream &os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);

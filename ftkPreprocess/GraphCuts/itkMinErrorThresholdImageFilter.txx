@@ -42,7 +42,7 @@
 namespace itk {
 
 template<class TInputImage, class TOutputImage>
-inErrorThresholdImageFilter<TInputImage, TOutputImage>
+MinErrorThresholdImageFilter<TInputImage, TOutputImage>
 ::MinErrorThresholdImageFilter()
 {
   m_OutsideValue   = NumericTraits<OutputPixelType>::max();
@@ -58,7 +58,7 @@ inErrorThresholdImageFilter<TInputImage, TOutputImage>
 
 template<class TInputImage, class TOutputImage>
 void
-inErrorThresholdImageFilter<TInputImage, TOutputImage>
+MinErrorThresholdImageFilter<TInputImage, TOutputImage>
 ::GenerateData()
 {
   typename ProgressAccumulator::Pointer progress = ProgressAccumulator::New();
@@ -105,7 +105,7 @@ inErrorThresholdImageFilter<TInputImage, TOutputImage>
 
 template<class TInputImage, class TOutputImage>
 void
-inErrorThresholdImageFilter<TInputImage, TOutputImage>
+MinErrorThresholdImageFilter<TInputImage, TOutputImage>
 ::GenerateInputRequestedRegion()
 {
   TInputImage * input = const_cast<TInputImage *>(this->GetInput());
@@ -117,7 +117,7 @@ inErrorThresholdImageFilter<TInputImage, TOutputImage>
 
 template<class TInputImage, class TOutputImage>
 void 
-inErrorThresholdImageFilter<TInputImage,TOutputImage>
+MinErrorThresholdImageFilter<TInputImage,TOutputImage>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   //Superclass::PrintSelf(os,indent);  

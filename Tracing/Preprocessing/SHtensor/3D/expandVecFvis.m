@@ -3,7 +3,7 @@ steerableTVbasis = [];
 
 %%%%%%%%%%%%%%%%% compute basic 2d-voting field
 
- = 48; %% size of orig vf
+M = 48; %% size of orig vf
 figure(1);
 sig = 0.2;
 %sig = 0.2;
@@ -183,7 +183,7 @@ Z = Z(cu,cu,cu);
 
 figure(9);
 clf
-ag = sqrt(recon3dZ.^2 + recon3dX.^2 + recon3dY.^2 );
+Mag = sqrt(recon3dZ.^2 + recon3dX.^2 + recon3dY.^2 );
 [dummy idx] = sort(Mag(:),'descend');
 %idx = idx(1:500);
 %quiver3(X(idx),Y(idx),Z(idx),recon3dX(idx),recon3dY(idx),recon3dZ(idx));
@@ -220,7 +220,7 @@ return;
 
 figure(10);
 clf;
-ag = Mag / max(Mag(:));
+Mag = Mag / max(Mag(:));
 imagesc(reshape(Mag(:,25,:),[49 49]));
 hold on;
 X2 = meshgrid(1:2:49);

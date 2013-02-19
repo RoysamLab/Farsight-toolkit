@@ -1,9 +1,9 @@
 # ----------------------------machine dependent file
-ODE = optim
+MODE = optim
 
 # extern library and program variables
 FFTW_DIR = 	/home/lexing/pkge/fftw-2.1.5
-EX 		=	mex
+MEX 		=	mex
 
 #include ${PETSC_DIR}/bmake/variables
 include ${PETSC_DIR}/bmake/common/variables

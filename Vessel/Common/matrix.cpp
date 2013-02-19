@@ -40,14 +40,14 @@ float det2x2(float a, float b,
 // ===================================================================
 // COPY CONSTRUCTOR
 
-atrix::Matrix(const Matrix& m) {
+Matrix::Matrix(const Matrix& m) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       data[y][x] = m.data[y][x]; }
   }
 }
 
-atrix::Matrix(const float *m) {
+Matrix::Matrix(const float *m) {
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
       data[y][x] = m[4*y+x]; }
@@ -158,7 +158,7 @@ float det2x2(float a, float b,
 // ===================================================================
 // OVERLOADED OPERATORS
 
-atrix& Matrix::operator=(const Matrix& m) {
+Matrix& Matrix::operator=(const Matrix& m) {
   for (int y=0; y<4; y++) {
     for (int x=0; x<4; x++) {
       data[y][x] = m.data[y][x]; 
@@ -178,7 +178,7 @@ int Matrix::operator==(const Matrix& m) const {
   return 1; 
 }
 
-atrix operator+(const Matrix& m1, const Matrix& m2) {
+Matrix operator+(const Matrix& m1, const Matrix& m2) {
   Matrix answer;
   for (int y=0; y<4; y++) {
     for (int x=0; x<4; x++) {
@@ -188,7 +188,7 @@ atrix operator+(const Matrix& m1, const Matrix& m2) {
   return answer; 
 }
 
-atrix operator-(const Matrix& m1, const Matrix& m2) {
+Matrix operator-(const Matrix& m1, const Matrix& m2) {
   Matrix answer;
   for (int y=0; y<4; y++) {
     for (int x=0; x<4; x++) {
@@ -198,7 +198,7 @@ atrix operator-(const Matrix& m1, const Matrix& m2) {
   return answer; 
 }
 
-atrix operator*(const Matrix& m1, const Matrix& m2) {
+Matrix operator*(const Matrix& m1, const Matrix& m2) {
   Matrix answer;
   for (int y=0; y<4; y++) {
     for (int x=0; x<4; x++) {
@@ -211,7 +211,7 @@ atrix operator*(const Matrix& m1, const Matrix& m2) {
   return answer;
 }
 
-atrix operator*(const Matrix& m, float f) {
+Matrix operator*(const Matrix& m, float f) {
   Matrix answer;
   for (int y=0; y<4; y++) {
     for (int x=0; x<4; x++) {
@@ -225,7 +225,7 @@ atrix operator*(const Matrix& m, float f) {
 // ====================================================================
 // TRANSFORMATIONS
 
-atrix Matrix::MakeTranslation(const Vec3f &v) {
+Matrix Matrix::MakeTranslation(const Vec3f &v) {
   Matrix t;
   t.SetToIdentity();
   t.data[0][3] = v.x();
@@ -234,7 +234,7 @@ atrix Matrix::MakeTranslation(const Vec3f &v) {
   return t;
 }
 
-atrix Matrix::MakeScale(const Vec3f &v) {
+Matrix Matrix::MakeScale(const Vec3f &v) {
   Matrix s; 
   s.SetToIdentity();
   s.data[0][0] = v.x();
@@ -244,7 +244,7 @@ atrix Matrix::MakeScale(const Vec3f &v) {
   return s;
 }
 
-atrix Matrix::MakeXRotation(float theta) {
+Matrix Matrix::MakeXRotation(float theta) {
   Matrix rx;
   rx.SetToIdentity();
   rx.data[1][1]= (float)cos((float)theta);
@@ -254,7 +254,7 @@ atrix Matrix::MakeXRotation(float theta) {
   return rx;
 }
 
-atrix Matrix::MakeYRotation(float theta) {
+Matrix Matrix::MakeYRotation(float theta) {
   Matrix ry;
   ry.SetToIdentity();
   ry.data[0][0]= (float)cos((float)theta);
@@ -264,7 +264,7 @@ atrix Matrix::MakeYRotation(float theta) {
   return ry;
 }
 
-atrix Matrix::MakeZRotation(float theta) {
+Matrix Matrix::MakeZRotation(float theta) {
   Matrix rz;
   rz.SetToIdentity();
   rz.data[0][0]= (float)cos((float)theta);
@@ -274,7 +274,7 @@ atrix Matrix::MakeZRotation(float theta) {
   return rz;
 }
 
-atrix Matrix::MakeAxisRotation(const Vec3f &v, float theta) {
+Matrix Matrix::MakeAxisRotation(const Vec3f &v, float theta) {
   Matrix r;
   r.SetToIdentity();
 

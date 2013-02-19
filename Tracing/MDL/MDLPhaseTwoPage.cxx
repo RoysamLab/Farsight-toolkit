@@ -1,7 +1,7 @@
 #include "MDLPhaseTwoPage.h"
 #include "MDLWizard.h"
 
-DLPhaseTwoPage::MDLPhaseTwoPage(QWidget *parent)
+MDLPhaseTwoPage::MDLPhaseTwoPage(QWidget *parent)
 {
 }
 

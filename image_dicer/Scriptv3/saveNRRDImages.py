@@ -8,7 +8,7 @@ import subprocess
 import os.path
 import time
 
-AIN_PATH = '/FSdata/data/DARPA_MOSAICS'
+MAIN_PATH = '/FSdata/data/DARPA_MOSAICS'
 #DATA_FOLDER = ['/0131','/0113','/0117','/0120','/0123','/0128','/0323','/0405'] # With fiji
 DATA_FOLDER = ['/0409','/0410','/0412','/1206'] # With c++
 #DATA_FOLDER = ['/0117_test']

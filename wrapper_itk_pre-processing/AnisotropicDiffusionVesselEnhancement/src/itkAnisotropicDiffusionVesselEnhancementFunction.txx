@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Insight Segmentation & Registration Toolkit
-odule:    $RCSfile: itkAnisotropicDiffusionVesselEnhancementFunction.txx,v $
+Module:    $RCSfile: itkAnisotropicDiffusionVesselEnhancementFunction.txx,v $
 Language:  C++
 Date:      $Date: 2007/06/20 16:03:23 $
 Version:   $Revision: 1.14 $

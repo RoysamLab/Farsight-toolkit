@@ -6,7 +6,7 @@ in a text file (neighborimage.txt)
 
 #include "window.h"
 
-ainWindow::MainWindow()
+MainWindow::MainWindow()
 {
 	status = statusBar();
 	status->showMessage(tr("Ready"));

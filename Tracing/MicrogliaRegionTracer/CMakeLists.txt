@@ -45,7 +45,7 @@ SET(MicrogliaRegionTracer_TEST_DATA_PATH "" CACHE
   FILEPATH "Path to the MicrogliaRegionTracer test data.")
 SET(RUN_MicrogliaRegionTracer_TESTS OFF CACHE
   BOOL "Run the MicrogliaRegionTracer test.")
-ARK_AS_ADVANCED(MicrogliaRegionTracer_TEST_DATA_PATH
+MARK_AS_ADVANCED(MicrogliaRegionTracer_TEST_DATA_PATH
   RUN_MicrogliaRegionTracer_TESTS)
 IF(BUILD_TESTING AND RUN_MicrogliaRegionTracer_TESTS)
   IF(NOT EXISTS ${MicrogliaRegionTracer_TEST_DATA_PATH})

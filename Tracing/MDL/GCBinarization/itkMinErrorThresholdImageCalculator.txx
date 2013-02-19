@@ -48,7 +48,7 @@ namespace itk
  * Constructor
  */
 template<class TInputImage>
-inErrorThresholdImageCalculator<TInputImage>
+MinErrorThresholdImageCalculator<TInputImage>
 ::MinErrorThresholdImageCalculator()
 {
   m_Image = NULL;
@@ -71,7 +71,7 @@ inErrorThresholdImageCalculator<TInputImage>
  */
 template<class TInputImage>
 void
-inErrorThresholdImageCalculator<TInputImage>
+MinErrorThresholdImageCalculator<TInputImage>
 ::UseGaussianMixture(bool TYPE)
 {
   if(TYPE)
@@ -91,7 +91,7 @@ inErrorThresholdImageCalculator<TInputImage>
  */
 template<class TInputImage>
 void
-inErrorThresholdImageCalculator<TInputImage>
+MinErrorThresholdImageCalculator<TInputImage>
 ::Compute(void)
 {
 
@@ -295,7 +295,7 @@ inErrorThresholdImageCalculator<TInputImage>
 
 template<class TInputImage>
 void
-inErrorThresholdImageCalculator<TInputImage>
+MinErrorThresholdImageCalculator<TInputImage>
 ::SetRegion( const RegionType & region )
 {
   m_Region = region;
@@ -305,7 +305,7 @@ inErrorThresholdImageCalculator<TInputImage>
   
 template<class TInputImage>
 void
-inErrorThresholdImageCalculator<TInputImage>
+MinErrorThresholdImageCalculator<TInputImage>
 ::PrintSelf( std::ostream& os, Indent indent ) const
 {
   Superclass::PrintSelf(os,indent);

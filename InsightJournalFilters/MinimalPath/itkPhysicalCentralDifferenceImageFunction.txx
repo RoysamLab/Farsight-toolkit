@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Insight Segmentation & Registration Toolkit
-odule:    $RCSfile: itkPhysicalCentralDifferenceImageFunction.txx,v $
+Module:    $RCSfile: itkPhysicalCentralDifferenceImageFunction.txx,v $
 Language:  C++
 Date:      $Date$
 Version:   $Revision$

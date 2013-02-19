@@ -42,7 +42,7 @@ typedef struct
 float CalculateEuclideanDistance(Cell::ImageType::IndexType node1, Cell::ImageType::IndexType node2);
 bool VesselnessPointTypeComparator(VesselnessPointType first_pt, VesselnessPointType second_pt);
 
-icrogliaRegionTracer::MicrogliaRegionTracer() :
+MicrogliaRegionTracer::MicrogliaRegionTracer() :
     aspect_ratio_is_set(false),
     itk_default_num_threads(itk::MultiThreader::GetGlobalDefaultNumberOfThreads())
 {
@@ -51,7 +51,7 @@ icrogliaRegionTracer::MicrogliaRegionTracer() :
 #endif
 }
 
-icrogliaRegionTracer::~MicrogliaRegionTracer()
+MicrogliaRegionTracer::~MicrogliaRegionTracer()
 {
 }
 
@@ -994,7 +994,7 @@ void MicrogliaRegionTracer::SmoothSegments(Cell & cell, Tree* smoothed_tree, Nod
 }
 
 /* This function takes takes in start_node and end_node and a path in between and returns the smoothed path */
-icrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell & cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path )
+MicrogliaRegionTracer::PathType::Pointer MicrogliaRegionTracer::SmoothPath(Cell & cell, Tree* smoothed_tree, Node* start_node, Node* end_node, PathType::Pointer path )
 {
 	//Extract path from speed image (the cubed distance map)
 	// Create interpolator

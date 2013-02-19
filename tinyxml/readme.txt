@@ -353,7 +353,7 @@ techniques.
 
 The Linux makefile is very generic and runs on many systems - it 
 is currently tested on mingw and
-acOSX. You do not need to run 'make depend'. The dependecies have been
+MacOSX. You do not need to run 'make depend'. The dependecies have been
 hard coded.
 
 <h3>Windows project file for VC6</h3>

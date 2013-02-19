@@ -1,4 +1,4 @@
-DL Skeletonization Code Instructions:
+MDL Skeletonization Code Instructions:
 
 Xiaosong Yuan
 11/12/2008
@@ -51,7 +51,7 @@ Compute the gradient vector field of any 3D density map
 Input : 3D volume density map with any sizes.
 Output: ASCII file with vector 3 components for all object voxels
 
-inSpanTree
+MinSpanTree
 Generate graph structure from a list of 3D points
 Input format: .skel  (3D points)
 Output format: .vtk  (3D graph format)

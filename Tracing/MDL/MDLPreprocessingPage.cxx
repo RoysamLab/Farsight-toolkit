@@ -1,7 +1,7 @@
 #include "MDLPreprocessingPage.h"
 #include "MDLWizard.h"
 
-DLPreprocessingPage::MDLPreprocessingPage(QWidget *parent)
+MDLPreprocessingPage::MDLPreprocessingPage(QWidget *parent)
 {
 }
 

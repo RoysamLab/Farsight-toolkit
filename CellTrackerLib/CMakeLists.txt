@@ -1,6 +1,6 @@
 
 SET(cellTracker_SRCS 
-ultiFrameCellTracker.cpp
+MultiFrameCellTracker.cpp
 helpers.cpp
 ftkTrackFeatures.cpp
 #TrackVoting.cpp
@@ -9,7 +9,7 @@ ftkTrackFeatures.cpp
 SET(cellTracker_HDRS 
 helpers.h 
 ftkTrackFeatures.h 
-ultiFrameCellTracker.h
+MultiFrameCellTracker.h
 itkBinaryThinningImageFilter3D.h
 itkBinaryThinningImageFilter3D.txx
 itkBinaryThinningImageFilter3D.h

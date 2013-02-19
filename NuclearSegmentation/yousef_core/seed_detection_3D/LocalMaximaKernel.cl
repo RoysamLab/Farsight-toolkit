@@ -2,7 +2,7 @@
 #define MSTRINGIFY(A) A
 #endif
 
-STRINGIFY(
+MSTRINGIFY(
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable \n //note that \n is needed because stringification converts all whitespace into a single space and C preprocessor expects newline after macro to delimit the macro
 

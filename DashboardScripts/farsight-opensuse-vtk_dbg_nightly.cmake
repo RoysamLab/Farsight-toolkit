@@ -18,7 +18,7 @@ SET(CTEST_INITIAL_CACHE "
 SITE:STRING=farsight-opensuse
 BUILDNAME:STRING=gcc45-x86_64-use-boost-svn
 CMAKE_GENERATOR:INTERNAL=Unix Makefiles
-AKECOMMAND:STRING=/usr/bin/make -i -j16
+MAKECOMMAND:STRING=/usr/bin/make -i -j16
 CMAKE_BUILD_TYPE:STRING=Debug
 VXL_DIR:STRING=/home/gramak/dashboard/vxl-nightly-dbg
 BUILD_SHARED_LIBS:BOOL=OFF

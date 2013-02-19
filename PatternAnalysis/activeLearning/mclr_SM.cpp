@@ -1,13 +1,13 @@
 #include "mclr_SM.h"
 
 
-CLR_SM::MCLR_SM()
+MCLR_SM::MCLR_SM()
 {
 	current_label = -1; // keeps a track of the current label
 	confidence_threshold = 0.7;
 }
 
-CLR_SM::~MCLR_SM()
+MCLR_SM::~MCLR_SM()
 {
 
 }
@@ -771,7 +771,7 @@ std::vector<int> MCLR_SM::Get_Top_Features()
 
 
 
-CLR_SM::model MCLR_SM::Get_Training_Model()
+MCLR_SM::model MCLR_SM::Get_Training_Model()
 {	
 	// Set the z matrix 
 	z.set_size(no_of_classes,x.cols());// Used in gradient computation

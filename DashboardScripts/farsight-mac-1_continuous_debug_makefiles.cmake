@@ -20,7 +20,7 @@ SET(CTEST_INITIAL_CACHE "
 SITE:STRING=farsight-mac-1
 BUILDNAME:STRING=continuous-debug-makefiles
 CMAKE_GENERATOR:INTERNAL=Unix Makefiles
-AKECOMMAND:STRING=/usr/bin/make -j9 -i
+MAKECOMMAND:STRING=/usr/bin/make -j9 -i
 CMAKE_BUILD_TYPE:STRING=Debug
 BUILD_SHARED_LIBS:BOOL=OFF
 ITK_DIR:PATH=/projects/Dashboards/ITK-3.16.0-static

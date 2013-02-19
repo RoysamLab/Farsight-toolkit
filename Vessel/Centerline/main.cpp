@@ -133,7 +133,7 @@ void sleep(double delay1)
 	}
 }
 double mratio = 0.5;
-esh *m;        
+Mesh *m;        
 int minx,miny,minz,maxx,maxy,maxz;
 
 void CollectFaces(Vertex *have, Face *f, Array<Face*> *array) {

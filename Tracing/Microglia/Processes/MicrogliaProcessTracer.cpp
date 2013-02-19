@@ -17,7 +17,7 @@ Node::Node()
 	this->type = 3;
 }
 
-icrogliaProcessTracer::MicrogliaProcessTracer()
+MicrogliaProcessTracer::MicrogliaProcessTracer()
 {
 	this->NodeCounter = 1;
 	this->Padding = 1;
@@ -33,7 +33,7 @@ icrogliaProcessTracer::MicrogliaProcessTracer()
   this->Spacing[2] = 1;
 }
 
-icrogliaProcessTracer::~MicrogliaProcessTracer()
+MicrogliaProcessTracer::~MicrogliaProcessTracer()
 {
 	std::vector< Node * >::iterator nodeItr;
 	for(nodeItr = this->Open.begin(); nodeItr != this->Open.end(); ++nodeItr)

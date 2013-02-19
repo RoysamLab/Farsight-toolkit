@@ -19,7 +19,7 @@ namespace ftk
 {
 
 //constructor
-ultipleImageHandler::MultipleImageHandler()
+MultipleImageHandler::MultipleImageHandler()
 {
 	outputDirectory = "";
 	outputBaseString = "b";
@@ -130,7 +130,7 @@ void MultipleImageHandler::SeriesToBlocks(StrVector inFiles, int dx, int dy, int
 	std::cerr << std::endl << "...Done" << std::endl;
 }
 
-ultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegion
+MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegion
 	(StrVector inFiles, UCharImageType3D::RegionType region, bool rescale, std::string fname)
 {
 	UCharImageType3D::Pointer img = NULL;
@@ -211,7 +211,7 @@ ultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegi
 }
 
 //Extract a region from a series of color images:
-ultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegionColor
+MultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegionColor
 	(StrVector inFiles, UCharImageType3D::RegionType region, int color, std::string fname)
 {
 		typedef itk::ImageSeriesReader< RGBImageType3D > SeriesReaderType;
@@ -316,7 +316,7 @@ ultipleImageHandler::UCharImageType3D::Pointer MultipleImageHandler::ExtractRegi
 }
 
 
-ultipleImageHandler::UCharImageType3D::RegionType MultipleImageHandler::CreateRegion(PairType xPair, PairType yPair, PairType zPair)
+MultipleImageHandler::UCharImageType3D::RegionType MultipleImageHandler::CreateRegion(PairType xPair, PairType yPair, PairType zPair)
 {
 	//Create output region:
 	UCharImageType3D::RegionType block;
@@ -331,7 +331,7 @@ ultipleImageHandler::UCharImageType3D::RegionType MultipleImageHandler::CreateRe
 	return block;
 }
 
-ultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int size, int divs)
+MultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int size, int divs)
 {
 	int maxPerBlock = (int)ceil( (double)size / (double)divs );
 
@@ -354,7 +354,7 @@ ultipleImageHandler::PairVector MultipleImageHandler::CreateOutputRegions(int si
 //to use multiple threads and it does not only load up 1 slice at a time.
 //If we need this capability on large images we should re-implement it to 
 //just load up on image at a time and compare it to the output image pixel by pixel
-ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName)
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(std::string seriesFormat, int startIndex, int endIndex, std::string outName)
 {
 	typedef itk::NumericSeriesFileNames NameGeneratorType;
 	NameGeneratorType::Pointer nameGenerator = NameGeneratorType::New();
@@ -366,7 +366,7 @@ ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProje
 	return this->SeriesProjection( nameGenerator->GetFileNames(), outName );
 }
 
-ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(StrVector inFiles, std::string outName)
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProjection(StrVector inFiles, std::string outName)
 {
 	typedef itk::ImageSeriesReader< UCharImageType3D > SeriesReaderType;
 	SeriesReaderType::Pointer reader = SeriesReaderType::New();
@@ -412,7 +412,7 @@ ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::SeriesProje
 	return img;
 }
 
-ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ImageProjection(std::string inFile, std::string outName)
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ImageProjection(std::string inFile, std::string outName)
 {
 	typedef itk::ImageFileReader< UCharImageType3D > ReaderType;
 	ReaderType::Pointer reader = ReaderType::New();
@@ -459,7 +459,7 @@ ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ImageProjec
 }
 
 
-ultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ReadImage2D(std::string filename)
+MultipleImageHandler::UCharImageType2D::Pointer MultipleImageHandler::ReadImage2D(std::string filename)
 {
 
 	typedef itk::ImageFileReader< UShortImageType2D > ReaderType;

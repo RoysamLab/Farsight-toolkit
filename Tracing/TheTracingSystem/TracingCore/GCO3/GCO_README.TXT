@@ -103,7 +103,7 @@ This software is for minimizing sums of three types of terms:
 
    E(labeling) = DataCosts(labeling) + SmoothCosts(labeling) + LabelCosts(labeling).
 
-ore specifically,
+More specifically,
    
    DataCosts(l)   = sum_p  D_p(l_p)      where l_p is a potential label for site p,
                                          and D_p is the cost of assigning l_p,

@@ -1,6 +1,6 @@
 function OverLayTraceFromFiles(Vol, nodefile, linkfile)
 
-IPshow(Vol, 'min');
+MIPshow(Vol, 'min');
 [d1,d2,d3] = size(Vol);
 Seg = ReadSegment(nodefile);
 mu = [Seg.mu];

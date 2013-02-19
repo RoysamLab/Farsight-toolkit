@@ -111,7 +111,7 @@ Output formats (may be combined; if none, produces a summary to stdout):\n\
 \n\
 ";
 char qh_promptd[]= "\
-ore formats:\n\
+More formats:\n\
     Fc   - count plus coincident points (by Voronoi vertex)\n\
     Fd   - use cdd format for input (homogeneous with offset first)\n\
     FD   - use cdd format for output (offset first)\n\

@@ -49,7 +49,7 @@ RAGraph RAG;
 RAGraph BuildRAG(unsigned short id);
 //RAGraph BuildRAG(unsigned short id,InputImageType::Pointer input,OutputImageType::Pointer output);
 int GetNodeIndex(unsigned short id,RAGraph graph1);	
-TreeType BuildMergeTreeDcon(RAGraph R1, unsigned short id,std::vector< std::set<int> > hypothesis);
+MTreeType BuildMergeTreeDcon(RAGraph R1, unsigned short id,std::vector< std::set<int> > hypothesis);
 std::string convert2string(unsigned short id);
 void Initialize(unsigned short id);
 void runLabFilter(InputImageType::Pointer input, OutputImageType::Pointer output, bool CytoImage = false);

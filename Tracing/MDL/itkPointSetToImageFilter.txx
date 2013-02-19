@@ -1,7 +1,7 @@
 /*=========================================================================
 
 Program:   Insight Segmentation & Registration Toolkit
-odule:    $RCSfile: itkPointSetToImageFilter.txx,v $
+Module:    $RCSfile: itkPointSetToImageFilter.txx,v $
 Language:  C++
 Date:      $Date: 2005/07/27 15:21:11 $
 Version:   $Revision: 1.11 $

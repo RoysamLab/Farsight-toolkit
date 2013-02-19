@@ -181,7 +181,7 @@ for xshift = 1:nshifts
   end
 end
 
-SE = sum(sum((img-restored_img).^2))/N^2;
+MSE = sum(sum((img-restored_img).^2))/N^2;
 PSNR = 20*log10(255/sqrt(MSE));
 disp(['PSNR = ',num2str(PSNR)]);
 disp(['Time elapsed = ',num2str(toc)]);
