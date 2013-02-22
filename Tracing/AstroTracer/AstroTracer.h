@@ -67,12 +67,13 @@
 #include "vtkVariantArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkSmartPointer.h"
-
+#include "vtkDelimitedTextWriter.h"
 
 #include "vnl/vnl_math.h"
 
 #include <ftkUtils.h>
 #include "PatternAnalysis/activeLearning/mclr.h"
+#include "ftkVesselTracer/ftkVesselTracer.h"
 
 #include <queue>
 #include <algorithm>
@@ -84,6 +85,10 @@
 #include <sstream>
 #include <numeric>
 #include <math.h>
+
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
 #define MAXVAL 100000.0f
 
@@ -105,112 +110,6 @@ public:
 	HeapNode_astro();
 	bool operator==(const HeapNode_astro&);
 };
-
-struct NodeDetectionParameters_astro{
-
-	int gridSpacing; // Spacing for uniform square grid 
-
-	int iterNPrimaryNode; // Number of iterations required for the the energy minimization
-
-	double increaseLikelihoodThreshold; // The likelhood of nodes less than this value is increased 
-	double discardNodeLikelihoodThreshold; // Nodes with likelihood less than this value are discarded
-	// If the number of iterations (while fitting a sphere to the node) are below this value, only region based term is used to update the energy
-	int iterNForOnlyRegionBasedTerm;
-	int iterNMinimum; // Minimum number of iterations
-	double regionBasedTermWeight;
-	double edgeBasedTermWeight;
-	double minimumAccumulatedParamChange; // If the change in parameters falls below this value, exit model fitting
-	int iterNMonitorParamChange; // The number of iterations for which the chnages in parameters are monitored and accumulated 
-	
-	double dtX, dtY, dtZ, dtScale; // The rate of change of node parameters
-	int dirX, dirY, dirZ, dirScale; // The direction of change of the node parameters (positive, negetive or zero)
-	std::vector<double> chX, chY, chZ, chScale; // The magnitude of change of the node parameters
-	int currentMonitoredIter; // The current iteration for which the changes in parameters is recorded. Ranges from 1 to itetNMonitorParamChange 
-
-	int maxVesselWidth, minVesselWidth; // Bounds on the node scale (in pixels)
-
-	double likelihoodThresholdPrimary; // Nodes with likelihood less than this value will be discarded
-	// A node will be discarded if its distance from any other node is lesser than this number times the distance between their centers
-	double distanceThresholdPrimary;
-	double distanceThresholdSecondary; // Same as distanceThresholdPrimary, but applied in the scheduling for secondary nodes
-
-	double traceQualityThreshold;
-	int maxQueueIter;
-	double maxBranchAngle; // Maximum angle between branches of any two vessels
-	double branchingThreshold;
-	// Rate of change of secondary parameters
-	double secondaryParamRateReduction;
-	double dtXSecondary;
-	double dtYSecondary;
-	double dtZSecondary;
-	double dtScaleSecondary;
-	int iterNMinimumSecondary;
-	double regionBasedTermWeightSecondary;
-	double edgeBasedTermWeightSecondary;
-	double secondarySearchConstraint;
-	// Rates at which the direction of model fitting is reversed if energy and parameters point in opposite directions
-	double primaryReversePositionRate;
-	double primaryReverseScaleRate;
-	double secondaryReversePositionRate;
-	double secondaryReverseScaleRate;
-	double maxTraceCost;
-	double traceLengthCost;
-	double primaryNodeSearchRadFactor; // Defines the factor of primary node radius which contributes to the initial position of secondary nodes
-	double infTraceQuality;
-	int maxQueueSize;
-
-	double vesselnessThershold;
-	double vesselnessWeight;
-
-	double traceLengthCostRetracing;
-	double traceQualityThresholdRetracing;
-
-	void initByDefaultValues(void);
-};
-
-class VesselNode_astro{
-
-public:
-
-	double x;
-	double y;
-	double z;
-	PixelType intensity;
-	double scale;
-	double likelihood;
-	bool isValid;
-	double nHoodScale;
-	double vesselness;
-
-	static const int DEFALUT_SCALE = 4.0;
-	static const int MIN_LIKELIHOOD = 0;
-	
-	// The surrounding (and inclusive) region of a node which contributes to the energy functional. 
-	// This region is like a band around the sphere's circumference.
-	double bandNhood;
-	int bandArea;
-	int foregroundArea;
-	int backgroundArea;
-	std::vector<double> xNormalizedInBand;
-	std::vector<double> yNormalizedInBand;
-	std::vector<double> zNormalizedInBand;
-	std::vector<double> intensityInBand;
-	std::vector<double> gxInBand;
-	std::vector<double> gyInBand;
-	std::vector<double> gzInBand;
-	PixelType meanForegroundIntensity;
-	PixelType meanBackgroundIntensity;
-	int exitIter; // The number of iterations completed before exiting model fitting
-
-	bool isPrimary; 
-	bool isSecondary;
-	
-	VesselNode_astro();
-	VesselNode_astro(double, double, double, PixelType);
-	void InitDefaultParamsBeforeOptimization(void);
-	
-};
-
 
 class Comparison_astro
 {
@@ -434,23 +333,18 @@ public:
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
 	void ComputeFTKObjectnessImage(void);
-	void OptimizeCoverage(std::string, bool);
+	void OptimizeCoverage(bool);
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 	void Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&, std::vector< LabelImageType3D::Pointer >&, std::string, std::string, std::string, const bool, bool normalize_from_model = false);
 	
 	void Set_DistanceMapImage(ImageType3D::Pointer distance_map_image);
 	void Set_NucleiLabelImage(LabelImageType3D::Pointer nuc_label_image);
-	double inline EpsilonClip(double, double);
-	void ApplyCurvatureAnisotropicDiffusion(int, float);
-	void ComputeGVF(float, int, bool);
-	void FitSphereAtNode(VesselNode_astro&);
-	void UpdateAppearanceVectorized(VesselNode_astro&);
-	void UpdateModel(VesselNode_astro&, int);
-	bool ExitModelFitting(VesselNode_astro&, int);
-	int inline GetSign(double);
+	
 	void DoPreprocessing(void);
 	void LoadPreprocessingResults(void);
+	void ComputeSomaDistanceMap(void);
+	void ComputeRootPointFeatures();
 	
 	//external parameters
 	float intensity_threshold;
@@ -478,6 +372,8 @@ protected:
 	void RemoveIntraSomaNodes();	
 	float getRadius(itk::Vector<float,3> & pos);
 	float getRadiusAndLikelihood(itk::Vector<float,3> & pos, float& likelihood);
+	void getHessianEigenFeatures(itk::Index<3> current_idx, double img_max_val, float& ballness, float& plateness, float& vesselness, float& noiseness);
+	bool getLocalIntensityFeatures(itk::Index<3> current_idx, itk::Size<3> sz, float radius, float& max_intensity, float& min_intensity, float& mean_intensity, float& var_intensity);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
 	float GetCostLocal2(SWCNode_astro*, itk::Index<3>&);
@@ -527,9 +423,9 @@ private:
 	std::vector<double> CentroidScales;
 	std::vector<HeapNode_astro> DensityFilteredCentroidListForTracing;
 
-	NodeDetectionParameters_astro NodeDetectionParams;
-
 	std::string InputDataPath;
+
+	ftkVesselTracer *VBT;
 };
 
 ///////////////////////////////////////////////////////////////

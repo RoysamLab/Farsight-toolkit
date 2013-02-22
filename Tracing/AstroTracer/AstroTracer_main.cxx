@@ -1,16 +1,10 @@
+
 #include "AstroTracer.h"
 #include "time.h"
 
 int main(int argc, char* argv[]){	
     
-	/*argv[1] = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\_CROPPED_montage_kt01341_w212TRITCdsu-2_pre.tif";
-	argv[6] = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\idealRoots.txt";
-	
-	argv[2] = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\nuc_labels.tif";*/
-
-
-	if(argc < 2 || argc > 8)
-	{
+	if(argc < 2 || argc > 8){
 		std::cout << "AstroTracer.exe <InputFileName> <SomaImageFile> <DoPreprocessing?> <Step_no: 0: Optimize coverage 1:Compute root features, 2:Compute nuclei features";
 		std::cout << " 3:Generate centroids for tracing and run tracing 4. Only run tracing (like MNT)> <OptionsFileName> <RootPointsFileName>";
 		std::cout << " <NucleiFeaturesFileName>" << std::endl;
@@ -31,21 +25,9 @@ int main(int argc, char* argv[]){
 
 	std::string InputFilename = std::string(argv[1]);
 	
-	std::string featureVectorFileName = InputFilename;
-	featureVectorFileName.erase(featureVectorFileName.length()-4, featureVectorFileName.length());
-	featureVectorFileName.append("_feature_vector_roots.txt");
-	
-	std::string IDImageFileName = InputFilename;
-	IDImageFileName.erase(IDImageFileName.length()-4, IDImageFileName.length());
-	IDImageFileName.append("_RootsImage.tif");
-
 	std::string nucleiFeaturesAppendedFileName = InputFilename;
 	nucleiFeaturesAppendedFileName.erase(nucleiFeaturesAppendedFileName.length()-4, nucleiFeaturesAppendedFileName.length());
 	nucleiFeaturesAppendedFileName.append("_nuc_features_all.txt");
-
-	std::string coverageFileName = InputFilename;
-	coverageFileName.erase(coverageFileName.length()-4, coverageFileName.length());
-	coverageFileName.append("_coverage.txt");
 
 	std::string centroidsForTracingFileName = InputFilename;
 	centroidsForTracingFileName.erase(centroidsForTracingFileName.length()-4, centroidsForTracingFileName.length());
@@ -57,36 +39,21 @@ int main(int argc, char* argv[]){
 
 	std::string SWCFilename = InputFilename;
 	SWCFilename.erase(SWCFilename.length()-4, SWCFilename.length());
-	SWCFilename.append("_traces.swc");
+	SWCFilename.append("_AstroTraces.swc");
 	
-	
-	//std::string featureVectorFileName = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Training\\feature_vector_roots.txt";
-	//std::string IDImageFileName = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\RootsImage.tif";
-	
-	//std::string rootPointsFileName = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\feature_vector_roots_classified.txt"; //argv[4]
-	//std::string nucleiFeaturesFileName = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\nuc_intrinsic_asso_table.txt"; //argv[5]
-	//std::string nucleiFeaturesAppendedFileName = "C:\\Prathamesh\\Astrocytes\\ControlExp\\Testing\\nuc_features_all.txt";
-	
-	//std::string finalNucleiTableFileName, finalIDImageFileName;
-	//std::string centroidsForTracingFileName = "C:\\Users\\msavelon\\Desktop\Astro\\IdealRootExperiment\\centroids.txt";
-	
-	//const char* optionsFileName = "C:\\Prathamesh\\Astrocytes\\TestPipelineExp1\\data\\options_mnt";
-	
-
 	AstroTracer * AT = new AstroTracer();
 
 	AT->SetInputDataPath(InputFilename.erase(InputFilename.length()-4, InputFilename.length()));
 
 	clock_t LoadCurvImage_start_time = clock();
-	AT->LoadCurvImageFromPath(std::string(argv[1]), 0);////
+	AT->LoadCurvImageFromPath(std::string(argv[1]), 0);
 	std::cout << "LoadCurvImage took: " << (clock() - LoadCurvImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
 	clock_t LoadSomaImage_start_time = clock();
 	AT->LoadSomaImage(std::string(argv[2]));
 	std::cout << "LoadSomaImage took: " << (clock() - LoadSomaImage_start_time)/(float) CLOCKS_PER_SEC << std::endl;
 
-
-	if(do_preprocessing == 1){
+	if(do_preprocessing){
 
 		clock_t preprocessing_start_time = clock();
 		AT->DoPreprocessing();
@@ -95,16 +62,12 @@ int main(int argc, char* argv[]){
 	else{
 
 		std::cout << "No preprocessing. Loading from disk. " << std::endl;
-		//AT->LoadPreprocessingResults();
+		AT->LoadPreprocessingResults();
 	}
 
 	// step 0 is for testing whatever you want
 	if(step_no == 0){
-
-		//ObjectnessMeasures obj_measures;
-		//AT->ComputeObjectnessImage(obj_measures);
-		AT->OptimizeCoverage(coverageFileName, true);	
-
+		AT->OptimizeCoverage(true);	
 		std::cout << std::endl << "Done with step 0. " << std::endl;
 	}
 
@@ -114,7 +77,7 @@ int main(int argc, char* argv[]){
 		AT->LoadParameters(argv[5]);	
 		AT->SetScaleRange(4, 4); //(2, 5); //(2, 2)
 		AT->CallFeatureMainExternal();
-		AT->ComputeAstroFeatures(featureVectorFileName, IDImageFileName, 0, std::string("LOG"));
+		AT->ComputeRootPointFeatures();
 		std::cout << "Done with computing root-based features. " << std::endl;
 	}
 	if(step_no == 2){
