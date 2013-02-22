@@ -16,12 +16,26 @@ limitations under the License.
 #ifndef TRACEGAP_H_
 #define TRACEGAP_H_
 
-class TraceLine;
+
+#include "TraceLine.h"
+#include "TraceBit.h"
+
+//class TraceLine;
+//class TraceBit;
 
 /**
  * A TraceGap is a simple object that represents the space between two
  * TraceLines
  **/
+
+class VBTTracingCosts{
+
+public:
+	double tracingCost;
+	double vesselnessCost;
+	double scaleVar;
+	double vesselnessVar;
+};
 
 class TraceGap
 {
@@ -34,11 +48,14 @@ public:
 	TraceLine *Trace1;
 	TraceLine *Trace2;
 	int endPT1, endPT2;
+	TraceBit startBit, endBit;
 	double angle;
 	double dist; 
 	double maxdist;
 	double length;
 	double smoothness;
 	double cost;
+	int gap_label;
+	VBTTracingCosts tracingCosts;
 };
 #endif

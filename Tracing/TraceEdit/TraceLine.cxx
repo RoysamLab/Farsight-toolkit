@@ -1278,6 +1278,100 @@ bool TraceLine::EndPtDist(TraceLine *Trace2, int &dir1, int &dir2, double &dist,
     }
   return true;
 }
+
+void TraceLine::EndPtDistVessel(TraceLine *Trace2, TraceBit &dir1, TraceBit &dir2, double &dist, double &maxdist, double &angle){
+
+#ifdef USE_BALL_TRACER
+
+  //int center1=this->GetSize()/2, center2=Trace2->GetSize()/2;
+  double min, distances[4];
+
+  int Xbits = 10; //small step from end to determine 
+  //compute the endpt distances
+  distances[0]=Euclidean(m_trace_bits.front(), Trace2->m_trace_bits.front());//0 F-F
+  distances[1]=Euclidean(m_trace_bits.front(), Trace2->m_trace_bits.back());//1 F-B
+  distances[2]=Euclidean(m_trace_bits.back(), Trace2->m_trace_bits.front());//2 B-F
+  distances[3]=Euclidean(m_trace_bits.back(), Trace2->m_trace_bits.back());//3 B-B
+
+  //determine minimum spacing
+  min = distances[0];
+  int i, mark=0;
+  for (i = 1; i<4; i++)
+  {
+    if (min > distances[i])
+    {
+      min = distances[i];
+      mark = i;
+    }
+  } 
+  
+  // std::cout << mark << "=mark\n";
+  // from min determine orientation and return distance
+  if (mark ==0)
+    {//F-F
+		//std::cout <<"FF\n";
+	if (this->m_branches.size() > 0 && Trace2->m_branches.size()> 0)
+		{//return false;
+	}
+	if(this->GetParentID(0)!=-1 || Trace2->GetParentID(0)!=-1)
+	{//return false;
+	}
+    
+	dist = distances[0];
+    dir1 = m_trace_bits.front(); //.marker;
+    dir2 = Trace2->m_trace_bits.front(); //.marker; 
+	angle = Angle(m_trace_bits.front(),this->GetBitXFromBegin(Xbits), 
+		Trace2->m_trace_bits.front(),Trace2->GetBitXFromBegin(Xbits));
+    //angle=PI-angle;
+    maxdist= distances[3];
+    }
+  else if (mark ==1)
+    {//1 F-B
+		//std::cout <<"FB\n";
+	if ((this->GetParentID(0) != -1)||!Trace2->isLeaf())
+	{//return false;
+	}
+
+    dist = distances[1];
+    dir1 = m_trace_bits.front(); //.marker;
+    dir2 = Trace2->m_trace_bits.back(); //.marker; 
+	angle = Angle(m_trace_bits.front(),this->GetBitXFromBegin(Xbits), 
+		Trace2->GetBitXFromEnd(Xbits),Trace2->m_trace_bits.back());
+    maxdist= distances[2];
+    }
+  else if (mark ==2)
+    {//2 B-F
+		//std::cout <<"BF\n";
+		if (!this->isLeaf() || (Trace2->GetParentID(0)!=-1))
+		{//return false;
+		}
+    dist = distances[2];
+    dir1 = m_trace_bits.back(); //.marker;
+    dir2 = Trace2->m_trace_bits.front(); //.marker; 
+	angle = Angle(this->GetBitXFromEnd(Xbits),m_trace_bits.back(), 
+		Trace2->m_trace_bits.front(),Trace2->GetBitXFromBegin(Xbits));
+    maxdist= distances[1];
+    }
+  else
+    {//3 B-B
+		//std::cout <<"BB\n";
+	if (!this->isLeaf() || !Trace2->isLeaf()) 
+	{//return false;
+	}
+
+    dist = distances[3];
+    dir1 = m_trace_bits.back(); //.marker;
+    dir2 = Trace2->m_trace_bits.back(); //.marker;
+	angle = Angle(this->GetBitXFromEnd(Xbits),m_trace_bits.back(), 
+		Trace2->GetBitXFromEnd(Xbits),Trace2->m_trace_bits.back());
+    //angle=PI-angle;
+    maxdist= distances[0];
+    }
+  //return true;
+
+#endif 
+}
+
 double TraceLine::CalculatePk(double Dp, double Da, double Db, double n)
 {
 	return (pow(Da, n) + pow(Db, n))/pow(Dp, n);
@@ -1491,6 +1585,11 @@ double TraceLine::GetElevation()
 	{
 		return -1;
 	}
+}
+
+double TraceLine::GetAngle(TraceBit bit1f, TraceBit bit1b, TraceBit bit2f, TraceBit bit2b){
+
+	return Angle(bit1f, bit1b, bit2f, bit2b);
 }
 
 void TraceLine::CalculateDirectionToROI(TraceBit tipsPt)

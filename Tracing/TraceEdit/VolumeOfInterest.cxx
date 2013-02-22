@@ -141,6 +141,23 @@ void VolumeOfInterest::ReadVesselDistanceMap(std::string fileName)
 	std::cout << "Vessel image size: " << size << std::endl;
 }
 
+void VolumeOfInterest::ReadImageTypeFloat3D(std::string fileName, FloatImageType::Pointer& data_ptr){
+
+	ReaderTypeFloat::Pointer image_reader = ReaderTypeFloat::New();
+	image_reader->SetFileName(fileName);
+
+	try{
+		image_reader->Update();
+	}
+	catch( itk::ExceptionObject & exp ){
+		std::cerr << "Exception thrown while reading the input file " << std::endl;
+		std::cerr << exp << std::endl;
+		//return EXIT_FAILURE;
+	}
+	
+	data_ptr = image_reader->GetOutput();
+}
+
 FloatImageType::Pointer VolumeOfInterest::GetVesselMaskDistanceMap()
 {
 	typedef itk::BinaryThresholdImageFilter<ImageType, ImageType> ThresholdFilterType;
