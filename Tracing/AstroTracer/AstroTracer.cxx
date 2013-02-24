@@ -127,7 +127,7 @@ void AstroTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)
 
 void AstroTracer::DoPreprocessing(void){
 	
-	//this->VBT->PreprocessData();
+	this->VBT->PreprocessData(this->InputDataPath, this->PaddedCurvImage, false);
 }
 
 void AstroTracer::LoadPreprocessingResults(){
@@ -135,24 +135,27 @@ void AstroTracer::LoadPreprocessingResults(){
 	typedef itk::ImageFileReader<ImageType3D> ReaderType;
 	
 	ReaderType::Pointer reader1 = ReaderType::New();
-	reader1->SetFileName(this->InputDataPath + "_AnisotropicDiffused.mhd");
+	reader1->SetFileName(this->InputDataPath + "_pre.mhd");
 	reader1->Update();
-	this->AnisotropicDiffusedImage = reader1->GetOutput();
+	this->PaddedCurvImage = reader1->GetOutput();
+	this->VBT->SetInputImage(this->PaddedCurvImage);
 
 	ReaderType::Pointer reader2 = ReaderType::New();
 	reader2->SetFileName(this->InputDataPath + "_gx.mhd");
 	reader2->Update();
-	this->AnisotropicDiffusedImage = reader2->GetOutput();
-
+	this->gx = reader2->GetOutput();
+	
 	ReaderType::Pointer reader3 = ReaderType::New();
 	reader3->SetFileName(this->InputDataPath + "_gy.mhd");
 	reader3->Update();
-	this->AnisotropicDiffusedImage = reader3->GetOutput();
+	this->gy = reader3->GetOutput();
 
 	ReaderType::Pointer reader4 = ReaderType::New();
 	reader4->SetFileName(this->InputDataPath + "_gz.mhd");
 	reader4->Update();
-	this->AnisotropicDiffusedImage = reader4->GetOutput();
+	this->gz = reader4->GetOutput();
+
+	this->VBT->SetGVFImages(gx, gy, gz);
 }
 
 void AstroTracer::ReadStartPointsFromPath(std::string fname, unsigned int pad) 

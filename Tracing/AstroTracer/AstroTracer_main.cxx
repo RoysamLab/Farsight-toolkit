@@ -59,11 +59,10 @@ int main(int argc, char* argv[]){
 		AT->DoPreprocessing();
 		std::cout << "Anisotropic diffusion and GVF took: " << (clock() - preprocessing_start_time)/(float) CLOCKS_PER_SEC << std::endl;	
 	}
-	else{
-
-		std::cout << "No preprocessing. Loading from disk. " << std::endl;
-		AT->LoadPreprocessingResults();
-	}
+	
+	std::cout << "No preprocessing. Loading from disk. " << std::endl;
+	AT->LoadPreprocessingResults();
+	
 
 	// step 0 is for testing whatever you want
 	if(step_no == 0){
