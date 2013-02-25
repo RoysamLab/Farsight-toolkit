@@ -1734,6 +1734,9 @@ void View3D::CreateGUIObjects()
 	connect(this->ApplySettingsButton, SIGNAL(accepted()), this, SLOT(ApplyNewSettings()));
 	connect(this->ApplySettingsButton, SIGNAL(rejected()), this, SLOT(HideSettingsWindow()));
 
+	//Automation widget setup
+	this->AutomationWidget = new QWidget(this);
+
 	this->GapLengthThField = new QDoubleSpinBox(this->AutomationWidget);
 	this->GapLengthThField->setRange(1, 300);
 	this->GapLengthThField->setSingleStep(1);
@@ -1835,9 +1838,6 @@ void View3D::CreateGUIObjects()
 	this->ShowNodePlots->isCheckable();
 	connect (this->ShowNodePlots, SIGNAL(triggered()), this, SLOT(ShowNodeData()));
 
-	//Automation widget setup
-	this->AutomationWidget = new QWidget(this);
-
 	this->SmallLinesButton = new QRadioButton(tr("Small Lines"));
 	connect(this->SmallLinesButton, SIGNAL(clicked()), this, SLOT(ShowAutomatedEdits()));
 	this->FalseSpinesButton = new QRadioButton(tr("False Spines"));
@@ -1886,6 +1886,12 @@ void View3D::CreateGUIObjects()
 	this->MinDistanceToParent->setSingleStep(.01);
 	this->MinDistanceToParent->setValue(6);
 	connect(this->MinDistanceToParent, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
+
+	this->DetectCandidateGapsButton = new QPushButton("Detect Candidate Gaps", this->MergeGapsGroup);
+	connect(this->DetectCandidateGapsButton, SIGNAL(clicked()), this, SLOT(DetectCandidateGaps()));
+
+	this->RunClusteringButton = new QPushButton("Cluster Gaps", this->MergeGapsGroup);
+	connect(this->RunClusteringButton, SIGNAL(clicked()), this, SLOT(RunClusteringOnGaps()));
 
 	this->AutomateButton = new QAction("Automate Correction",this->AutomationWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
@@ -2276,13 +2282,6 @@ void View3D::CreateLayout()
 	this->MergeGapsGroup = new QGroupBox("Merge Gaps");
 	this->MergeGapsGroup->setObjectName("MergeGapsGroup");
 	this->MergeGapsGroup->setEnabled(0);
-	
-	this->DetectCandidateGapsButton = new QPushButton("Detect Candidate Gaps", this->MergeGapsGroup);
-	connect(this->DetectCandidateGapsButton, SIGNAL(clicked()), this, SLOT(DetectCandidateGaps()));
-
-	this->RunClusteringButton = new QPushButton("Cluster Gaps", this->MergeGapsGroup);
-	connect(this->RunClusteringButton, SIGNAL(clicked()), this, SLOT(RunClusteringOnGaps()));
-	
 	QFormLayout *MergeGapsGroupLayout = new QFormLayout(this->MergeGapsGroup);
 	MergeGapsGroupLayout->setObjectName("MergeGapsGroupLayout");
 	MergeGapsGroupLayout->addRow(tr("Max gap length:"), this->GapLengthThField);
@@ -2292,7 +2291,7 @@ void View3D::CreateLayout()
 	MergeGapsGroupLayout->addRow(tr("Alpha for clustering:"), this->AlphaForClusteringField);
 	MergeGapsGroupLayout->addWidget(this->RunClusteringButton);
 	AutomationDockLayout->addWidget(this->MergeGapsGroup);
-
+	
 	//Select border cells
 	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
 	BorderCellsCroppingGroup->setObjectName("BorderCellsCroppingGroup");
