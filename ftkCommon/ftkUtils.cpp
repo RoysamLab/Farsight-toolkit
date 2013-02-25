@@ -142,6 +142,45 @@ bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table)
 	return true;
 }
 
+bool SaveTableAppend(std::string filename, vtkSmartPointer<vtkTable> table, int id)
+{	
+	/*!
+	* Write a VTK Table to a file
+	*/
+	if(!table)
+		return false;
+
+	if(filename == "")
+		return false;
+
+	//This function writes the features to a text file
+	ofstream outFile; 
+	outFile.open(filename.c_str(), ios::out | ios::app );
+	if ( !outFile.is_open() )
+	{
+		std::cerr << "Failed to Load Document: " << outFile << std::endl;
+		return false;
+	}
+	//Write the headers:
+	//for(int c=0; c<table->GetNumberOfColumns(); ++c)
+	//{
+	//	outFile << table->GetColumnName(c) << "\t";
+	//}
+	//outFile << "\n";
+	//Write out the features:
+	for(int row = 0; row < table->GetNumberOfRows(); ++row)
+	{
+		outFile << id<<"\t";
+		for(int c=1; c < table->GetNumberOfColumns(); ++c)
+		{
+			outFile << ftk::NumToString( table->GetValue(row,c).ToFloat() ) << "\t";
+		}
+		outFile << "\n";
+	}
+	outFile.close();
+	return true;
+}
+
 vtkSmartPointer<vtkTable> LoadTable(std::string filename)
 {
 	/*!

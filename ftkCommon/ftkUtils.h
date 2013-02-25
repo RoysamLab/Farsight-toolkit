@@ -47,6 +47,7 @@ std::vector<Channel> ReadChannels(TiXmlElement * inputElement);
 bool FileExists(std::string filename);
 bool AppendTextFile(std::string filename, std::string text);			//Add new line to the file with the given text
 bool SaveTable(std::string filename, vtkSmartPointer<vtkTable> table);
+bool SaveTableAppend(std::string filename, vtkSmartPointer<vtkTable> table, int id);
 bool SaveTableSeries(std::string filename,std::vector< vtkSmartPointer<vtkTable> >  table4DImage,std::string path);
 bool SaveImageSeries(std::string seriesfilename, ftk::Image::Pointer image,std::string path);
 bool SaveLabelSeries(std::string seriesfilename, ftk::Image::Pointer image,std::string path);
