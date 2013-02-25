@@ -541,7 +541,7 @@ void View3D::OkToBoot()
 void View3D::ConfigureLayoutByGenericTraceType(int traceTypeGeneric){
 
 	if(this->tobj->GetTraceTypeGeneric() == TRACE_TYPE_TREE){
-		this->DeleteTreeAction->setEnabled(0);
+		//this->DeleteTreeAction->setEnabled(0);
 		this->AddButton->setEnabled(0);
 		this->AddEndButton->setEnabled(0);
 		this->MergeGapsGroup->setEnabled(0);
@@ -1887,12 +1887,6 @@ void View3D::CreateGUIObjects()
 	this->MinDistanceToParent->setValue(6);
 	connect(this->MinDistanceToParent, SIGNAL(valueChanged(double)), this, SLOT( HalfBridges(double)));
 
-	this->DetectCandidateGapsButton = new QPushButton("Detect Candidate Gaps", this->MergeGapsGroup);
-	connect(this->DetectCandidateGapsButton, SIGNAL(clicked()), this, SLOT(DetectCandidateGaps()));
-
-	this->RunClusteringButton = new QPushButton("Cluster Gaps", this->MergeGapsGroup);
-	connect(this->RunClusteringButton, SIGNAL(clicked()), this, SLOT(RunClusteringOnGaps()));
-
 	this->AutomateButton = new QAction("Automate Correction",this->AutomationWidget);
 	connect(this->AutomateButton, SIGNAL(triggered()), this, SLOT(AutomaticEdits()));
 	this->AutomateButton->setShortcut(QKeySequence(Qt::Key_A));
@@ -2282,6 +2276,13 @@ void View3D::CreateLayout()
 	this->MergeGapsGroup = new QGroupBox("Merge Gaps");
 	this->MergeGapsGroup->setObjectName("MergeGapsGroup");
 	this->MergeGapsGroup->setEnabled(0);
+
+	this->DetectCandidateGapsButton = new QPushButton("Detect Candidate Gaps", this->MergeGapsGroup);
+	connect(this->DetectCandidateGapsButton, SIGNAL(clicked()), this, SLOT(DetectCandidateGaps()));
+
+	this->RunClusteringButton = new QPushButton("Cluster Gaps", this->MergeGapsGroup);
+	connect(this->RunClusteringButton, SIGNAL(clicked()), this, SLOT(RunClusteringOnGaps()));
+
 	QFormLayout *MergeGapsGroupLayout = new QFormLayout(this->MergeGapsGroup);
 	MergeGapsGroupLayout->setObjectName("MergeGapsGroupLayout");
 	MergeGapsGroupLayout->addRow(tr("Max gap length:"), this->GapLengthThField);
@@ -2291,6 +2292,7 @@ void View3D::CreateLayout()
 	MergeGapsGroupLayout->addRow(tr("Alpha for clustering:"), this->AlphaForClusteringField);
 	MergeGapsGroupLayout->addWidget(this->RunClusteringButton);
 	AutomationDockLayout->addWidget(this->MergeGapsGroup);
+
 	
 	//Select border cells
 	BorderCellsCroppingGroup = new QGroupBox("Border Cells Cropping");
