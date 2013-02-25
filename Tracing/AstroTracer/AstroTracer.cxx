@@ -663,12 +663,9 @@ void AstroTracer::FeatureMainExternal(void)
 }
 
 
-void AstroTracer::OptimizeCoverage(bool writeResult){
+void AstroTracer::OptimizeCoverage(std::string coverageFileName, bool writeResult){
 
 	std::cout << std::endl<< "Optimizing feature coverage for the image." << std::endl;
-
-	std::string coverageFileName = this->InputDataPath;
-	coverageFileName.append("_coverage.txt");
 
 	// Optimizing coverage at single scale	
 	float sigma = 5.6569f;

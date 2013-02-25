@@ -333,7 +333,7 @@ public:
 	void ReadFinalNucleiTable(std::string);
 	void ComputeObjectnessImage(ObjectnessMeasures obj_measures);
 	void ComputeFTKObjectnessImage(void);
-	void OptimizeCoverage(bool);
+	void OptimizeCoverage(std::string coverageFileName, bool);
 	void ReadStartPointsInternal(void);
 	int optionsCreate(const char* optfile, std::map<std::string,std::string>& options);
 	void Classification_Roots(std::vector< vtkSmartPointer<vtkTable> >&, std::vector< LabelImageType3D::Pointer >&, std::string, std::string, std::string, const bool, bool normalize_from_model = false);

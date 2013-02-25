@@ -24,7 +24,11 @@ int main(int argc, char* argv[]){
 	bool doTracing = false;
 
 	std::string InputFilename = std::string(argv[1]);
-	
+
+	std::string coverageFileName = InputFilename;
+	coverageFileName.erase(coverageFileName.length()-4, coverageFileName.length());
+	coverageFileName.append("_coverage.txt");
+
 	std::string nucleiFeaturesAppendedFileName = InputFilename;
 	nucleiFeaturesAppendedFileName.erase(nucleiFeaturesAppendedFileName.length()-4, nucleiFeaturesAppendedFileName.length());
 	nucleiFeaturesAppendedFileName.append("_nuc_features_all.txt");
@@ -66,7 +70,7 @@ int main(int argc, char* argv[]){
 
 	// step 0 is for testing whatever you want
 	if(step_no == 0){
-		AT->OptimizeCoverage(true);	
+		AT->OptimizeCoverage(coverageFileName, true);	
 		std::cout << std::endl << "Done with step 0. " << std::endl;
 	}
 
