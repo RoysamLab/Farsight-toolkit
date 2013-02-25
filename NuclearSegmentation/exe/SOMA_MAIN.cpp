@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 5)
+	if( argc < 2  || atoi(argv[1]) < 0 || atoi(argv[1]) > 6)
 	{
 		std::cout<<"Debris: SomaExtraction <0> <IntensityImage> <DebrisImage> <SomaSeeds.txt>"<<std::endl;
 		//std::cout<<"Derbis: SomaExtraction <InputImageFileName> <Centroids.txt> <DiceWidth (typically 100)> <hole filling (typically 10)>\n";
@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 
 		std::vector< itk::Index<3> > seedVector;
 		/// SegmentSoma2: GVF Active Contour
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(image, initialContourImage, seedVector);
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSomaUsingGradient(image, initialContourImage, seedVector);
 		std::cout << "Total time for SomaExtraction is: " << (clock() - SomaExtraction_start_time) / (float) CLOCKS_PER_SEC << std::endl;
 
 		/// Compute soma features and write new seeds back
@@ -119,14 +119,14 @@ int main(int argc, char* argv[])
 		SomaExtractor::OutputImageType::Pointer image = Somas->Read16BitImage(argv[2]); // Load microglia image 16bit	
 		
 		std::string InputFilename = std::string(argv[2]);
-		std::string bit8FileName = InputFilename;
-		bit8FileName.erase(bit8FileName.length()-4,bit8FileName.length());
-		bit8FileName.append("_8bit.tif");
-		Somas->writeImage(bit8FileName.c_str(), image);
+		//std::string bit8FileName = InputFilename;
+		//bit8FileName.erase(bit8FileName.length()-4,bit8FileName.length());
+		//bit8FileName.append("_8bit.tif");
+		//Somas->writeImage(bit8FileName.c_str(), image);
         
 		std::string somaImageName = InputFilename;
 		somaImageName.erase(somaImageName.length()-4,somaImageName.length());
-		somaImageName.append("_soma.mhd");
+		somaImageName.append("_soma.nrrd");
 		std::string somaCentroidName = InputFilename;
 		somaCentroidName.erase(somaCentroidName.length()-4,somaCentroidName.length());
 		somaCentroidName.append("_centroids.txt");
@@ -191,16 +191,38 @@ int main(int argc, char* argv[])
 	else if( atoi( argv[1]) == 5)
 	{
 		SomaExtractor::ProbImageType::Pointer inputImage = Somas->SetInputImage8bit(argv[2]);
-		std::vector< itk::Index<3> > seedVector;
-		Somas->ReadSeedpoints(argv[3], seedVector, false);
+		//std::vector< itk::Index<3> > seedVector;
+		//Somas->ReadSeedpoints(argv[3], seedVector, true);
 		Somas->LoadOptions( argv[4]); // Load params
 
-		/// SegmentSoma1: Active Contour without GVF, eliminate small objects
-		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentSoma(seedVector, inputImage);
+		vnl_vector<int> seperator(4);
 
-		Somas->writeImage("ActiveTracing.nrrd", segImage);
+		seperator[0] = 16;
+		seperator[1] = 23;
+		seperator[2] = 30;
+		seperator[3] = 49;
+		vnl_vector<double> curvature(4);
+		curvature[0] = 0.5;
+		curvature[1] = 0.45;
+		curvature[2] = 0.4;
+		curvature[3] = 0.45;
+		SomaExtractor::SegmentedImageType::Pointer segImage = Somas->SegmentHeart(argv[2], argv[3], inputImage, seperator, curvature);
+		if( segImage)
+		{
+			std::string inputName = std::string(argv[2]);
+			std::string somaImageName = inputName;
+			somaImageName.erase(somaImageName.length()-4,somaImageName.length());
+			somaImageName.append("_seg.mhd");
+			Somas->writeImage(somaImageName.c_str(), segImage);
+
+			//Somas->writeCentroids( argv[3],seedVector);
+			inputName.erase(inputName.length()-4,inputName.length());
+			inputName.erase(inputName.begin());
+			int id = atoi(inputName.c_str());
+			vtkSmartPointer<vtkTable> table = Somas->ComputeHeartFeatures(segImage);
+			ftk::SaveTableAppend("features.txt", table, id);
+		}
 	}
-
 	//else if( atoi(argv[1]) == 5 && argc == 5)  /// normalize by the input background
 	//{
 	//	std::string InputFilename = std::string(argv[2]);

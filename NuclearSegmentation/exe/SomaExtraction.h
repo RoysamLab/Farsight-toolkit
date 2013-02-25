@@ -43,6 +43,7 @@
 #include <itkStatisticsImageFilter.h>
 #include <itkThresholdImageFilter.h>
 #include "itkMedianImageFilter.h"
+#include <itkOtsuThresholdImageFilter.h>
 
 class SomaExtractor
 {
@@ -100,6 +101,7 @@ protected:
 	typedef itk::Image<GradientType, Dim>   GradientImageType;
 	typedef itk::ImageFileWriter< GradientImageType>  VectorImageWriterType;
 	typedef itk::GradientImageFilter<ProbImageType, float, float> GradientIFilterType;
+
 	typedef itk::GradientVectorFlowImageFilter<GradientImageType, GradientImageType> GVFFilterType;
 	typedef itk::GeodesicActiveContourLevelSetImageFilter< ProbImageType, ProbImageType > GeodesicActiveContourFilterType;
 	typedef GeodesicActiveContourFilterType::VectorImageType  AdvectionImageType;
@@ -123,6 +125,8 @@ protected:
 	typedef itk::StatisticsImageFilter<ProbImageType2D> StatisticsImageFilterType2D;
 	typedef itk::ThresholdImageFilter< ProbImageType2D> ThresholdImageFilterType;
 	typedef itk::MedianImageFilter<ProbImageType2D, ProbImageType2D> MedianFilterType;
+	typedef itk::MedianImageFilter<SegmentedImageType, SegmentedImageType> SegMedianFilterType;
+	typedef itk::OtsuThresholdImageFilter <OutputImageType, ProbImageType> OtsuThresholdImageFilterType;
 
 public:
 	//: constructor
@@ -147,8 +151,10 @@ public:
 
 	/// return labeled image for somas
 	SegmentedImageType::Pointer SegmentSoma( std::vector< itk::Index<3> > &somaCentroids, ProbImageType::Pointer binImagePtr);
-	SegmentedImageType::Pointer SegmentSoma( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
+	SegmentedImageType::Pointer SegmentSomaUsingGradient( ProbImageType::Pointer input, SegmentedImageType::Pointer initialContour, std::vector< itk::Index<3> > &somaCentroids);
+	SegmentedImageType::Pointer SegmentHeart(const char *imageName, const char *fileName, ProbImageType::Pointer inputImage, vnl_vector<int> &seperator, vnl_vector<double> &curvature);
 
+	ProbImageType::Pointer OtsuThresholdImage(OutputImageType::Pointer image);
 	void writeImage(const char* writeFileName, SegmentedImageType::Pointer image);
 	void writeImage(const char* writeFileName, OutputImageType::Pointer image);
 	void writeImage(const char* writeFileName, ProbImageType::Pointer image, bool bscale = false);
@@ -158,6 +164,7 @@ public:
 	void writeCentroids(const char* writeFileName, std::vector< itk::Index<3> > &seedVec);
 	
 	vtkSmartPointer<vtkTable> ComputeSomaFeatures(SegmentedImageType::Pointer inputImage);
+	vtkSmartPointer<vtkTable> ComputeHeartFeatures(SegmentedImageType::Pointer inputImage);
 	void GetDebrisCentroids( OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &debrisSeeds);
 	void AssociateDebris(OutputImageType::Pointer inputImage, std::vector< itk::Index<3> > &somaCentroids, std::vector< itk::Index<3> > &debrisSeeds);
 
@@ -176,6 +183,7 @@ public:
 	void writeUnshort2D(const char *fileName, UShortImageType2D::Pointer image);
 	void GetSeedpointsInRegion(std::vector< itk::Index<3> > &seedVec, std::vector< itk::Index<3> > &seedInRegion, int startX, int startY, int width, int height);
 	void CaculateMeanStd(std::string fileName, ProbImageType::Pointer image);
+	ProbImageType::Pointer diffusionsmoothing(ProbImageType::Pointer image);
 
 protected:
 	template <class T> bool SetParamValue(std::map<std::string,std::string> &opts, std::string str, T &value, T defVal);
@@ -198,6 +206,8 @@ private:
 	// speed image
 	double alfa;
 	double beta;
+	double open_radius;
+	double fill_radius;
 	// for initial contour
 	int timethreshold; 
 	double seedValue;
@@ -213,7 +223,8 @@ private:
 	unsigned int numberOfIterations; 
 	double noiseLevel;
 	double outlierExpandValue;
-	
+	unsigned int smoothIteration;
+	double conductance;
 	// read portion of image
 	int startX;
 	int startY;
@@ -231,6 +242,7 @@ private:
 	int useDistMap;
 	int sampling_ratio_XY_to_Z;
 	int radius;
+	int brerun;
 };
 
 #endif
