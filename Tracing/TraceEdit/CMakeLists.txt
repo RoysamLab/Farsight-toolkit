@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-project(TraceEdit)
-
 QT4_WRAP_CPP( GUI_MOC_SRCS TraceView3D.h MergeModel.h NodeModel.h TraceModel.h CellTraceModel.h cellexport.h screenshot.h
 	      OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED )
   
@@ -40,8 +37,6 @@ set( TRACE_LIBS
     vnl
     ${QT_LIBRARIES} )
   
-INCLUDE_DIRECTORIES(${VXL_MUL_INCLUDE_DIR}) 
-
 if( BUILD_SPD )	
   list( APPEND TRACE_LIBS SPD ) 
 endif(BUILD_SPD)

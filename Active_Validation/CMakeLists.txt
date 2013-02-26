@@ -1,14 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-
-PROJECT(ActiveValidation)
-
-################################################################################
-# THESE ARE ITK, VTK, VXL, QT, and 
-# WE MAKE SURE THEY ARE PRESENT HERE
-################################################################################
-FIND_PACKAGE(VTK)
-FIND_PACKAGE(VXL)
-
 SET(ActiveValidation_SRCS
   ActiveValidation.cpp
   ActiveValidationWizard.cpp

@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-PROJECT(SPD)
-
-INCLUDE_DIRECTORIES(${VXL_MUL_INCLUDE_DIR}) 
-
 SET( Libraries
     ${VXL_LIBRARIES}
     ${VTK_LIBRARIES}
