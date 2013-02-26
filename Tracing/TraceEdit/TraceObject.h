@@ -40,11 +40,11 @@ limitations under the License.
 #include <vnl/vnl_vector.h>
 
 #ifdef USE_BALL_TRACER
-#include "Tracing/ftkVesselTracer/ftkVesselTracer.h"
+#include "ftkVesselTracer/ftkVesselTracer.h"
 #endif
 
 #ifdef USE_GT_CLUSTERING
-#include "PatternAnalysis/ftkGTClustering/ftkGTClustering.h"
+#include "ftkGTClustering/ftkGTClustering.h"
 #endif
 
 class TraceBit;

@@ -36,6 +36,8 @@ option( BUILD_POWEROF2TILING "Build PowerOf2Tiling.exe which will take an image 
 option( BUILD_ROLLINGBALLFILTER "Build Rolling Ball Filter (aka Subtract Background)" OFF)
 option( BUILD_IMAGE_MANAGER  "Manage Image File Conversions and Directories" OFF)
 option( USE_TRACKING "Use Tracking module with nucleus editor" OFF)
+option( BUILD_VESSEL_TRACING "Build Ball Tracing for Vessels" OFF )
+option( BUILD_GT_CLUSTERING "Build GT clustering" OFF )
 option( BUILD_MODEL_SEG "Build Statistical_Model_Segmentation (Note that it has dependency on glpk library)" OFF)
 option( BUILD_ZERNIKE  " Build zernike_moments_calculation " OFF)
 option( BUILD_HARALICK "Biild Haralick_features_calculation" OFF)
@@ -101,6 +103,17 @@ if( BUILD_SPD )
   add_definitions( -DUSE_SPD )
   include_directories( ${PROJECT_SOURCE_DIR}/SPD )
 endif()
+
+if( BUILD_VESSEL_TRACING )
+  add_definitions( -DUSE_BALL_TRACER )
+  include_directories( ${PROJECT_SOURCE_DIR}/ftkVesselTracer )
+endif()
+
+if( BUILD_GT_CLUSTERING )
+	add_definitions( -DUSE_GT_CLUSTERING )
+	include_directories( ${PROJECT_SOURCE_DIR}/ftkGTClustering )
+endif()
+
 
 #####################################################################################
 # CPACK SETUP FOR BUILDING INSTALLERS
@@ -410,6 +423,16 @@ if(BUILD_NUCLEI)
   add_subdirectory( NuclearSegmentation )
   set(CPACK_PACKAGE_EXECUTABLES "NucleusEditor" "Nucleus Editor" ${CPACK_PACKAGE_EXECUTABLES})
 endif(BUILD_NUCLEI)
+
+if(BUILD_VESSEL_TRACING)
+  set(CPACK_PACKAGE_EXECUTABLES "ftkVesselTracer" "Vessel Tracer" ${CPACK_PACKAGE_EXECUTABLES})
+  add_subdirectory( ftkVesselTracer )
+endif(BUILD_VESSEL_TRACING)
+
+if(BUILD_GT_CLUSTERING)
+  set(CPACK_PACKAGE_EXECUTABLES "ftkGTClustering" "GT Clustering" ${CPACK_PACKAGE_EXECUTABLES})
+  add_subdirectory( ftkGTClustering )
+endif(BUILD_GT_CLUSTERING)
 
 #if(BUILD_SuperEllipsoidTracer)
  # 	set(CPACK_PACKAGE_EXECUTABLES "Trace3D" "Super" ${CPACK_PACKAGE_EXECUTABLES})

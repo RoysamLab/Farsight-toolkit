@@ -73,7 +73,7 @@
 
 #include <ftkUtils.h>
 #include "PatternAnalysis/activeLearning/mclr.h"
-#include "Tracing/ftkVesselTracer/ftkVesselTracer.h"
+#include "ftkVesselTracer/ftkVesselTracer.h"
 
 #include <queue>
 #include <algorithm>
