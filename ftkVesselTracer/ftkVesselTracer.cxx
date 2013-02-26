@@ -2,9 +2,7 @@
 #include "ftkVesselTracer.h"
 
 ftkVesselTracer::ftkVesselTracer(){
-
 	this->allParams.initByDefaultValues();
-	//this->SphericalBinPreprocess();
 }
 
 ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = false, bool start_with_mst = false, int use_vesselness = 1){
@@ -14,7 +12,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, bool preprocess = 
 	if(preprocess){
 		this->allParams.preProcessingParams.initByDefaultValues();
 		ImageType3D::Pointer tiff_data_ptr; //only required for preprocessing
-		this->PreprocessData(input_data_path, tiff_data_ptr, true); // ask user	
+		this->PreprocessData(input_data_path, tiff_data_ptr, true, true); // ask user	
 	}
 
 	//testing
@@ -88,7 +86,7 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Point
 	if(preprocess){
 		this->allParams.preProcessingParams.initByDefaultValues();
 		ImageType3D::Pointer tiff_data_ptr; //only required for preprocessing
-		this->PreprocessData(input_data_path, tiff_data_ptr, false); // ask user	
+		this->PreprocessData(input_data_path, tiff_data_ptr, false, true); // ask user	
 	}
 
 	//testing
@@ -155,6 +153,10 @@ ftkVesselTracer::ftkVesselTracer(std::string input_data_path, ImageType3D::Point
 }
 
 ftkVesselTracer::~ftkVesselTracer(){
+}
+
+void ftkVesselTracer::Set_useVesselness(int value){
+	this->useVesselness = value;
 }
 
 void PreprocessingParameters::initByDefaultValues(void){
@@ -358,7 +360,7 @@ void AllParameters::initByDefaultValues(void){
 	this->graphAndMSTParams.initByDefaultValues();
 }
 
-int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer& data_ptr, bool readData=false){
+int ftkVesselTracer::PreprocessData(std::string file_path, ImageType3D::Pointer& data_ptr, bool readData=false, bool runMedian=false){
 
 	itk::TimeProbe timer; // Timer for measuring the preprocessing time
 	timer.Start();
@@ -2305,12 +2307,14 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 				this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
 				this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
 				this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
+				this->allVBTNodes[total_nodes_counter].odfFeatures.ODFModeVals = current_node.odfFeatures.ODFModeVals;
 			}
 			else{
 				// if nowhere to go, all there dirs are zero
 				this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
 				this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
 				this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
+				this->allVBTNodes[total_nodes_counter].odfFeatures.ODFModeVals.push_back(0.0);
 			}
 			
 			continue;
@@ -2323,6 +2327,7 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 			current_node.dirX.push_back(0.0);
 			current_node.dirY.push_back(0.0);
 			current_node.dirZ.push_back(0.0);
+			current_node.odfFeatures.ODFModeVals.push_back(0.0);
 		}
 		else{		
 			dirX = this->allVBTNodes[current_node.parentID[0]].x - current_node.x;
@@ -2345,6 +2350,7 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 			this->allVBTNodes[total_nodes_counter].dirX = current_node.dirX;
 			this->allVBTNodes[total_nodes_counter].dirY = current_node.dirY;
 			this->allVBTNodes[total_nodes_counter].dirZ = current_node.dirZ;
+			this->allVBTNodes[total_nodes_counter].odfFeatures.ODFModeVals = current_node.odfFeatures.ODFModeVals;
 		}
 		else{
 
@@ -2354,6 +2360,7 @@ void ftkVesselTracer::ComputeAllSecondaryVBTNodes(void){
 			this->allVBTNodes[total_nodes_counter].dirX.push_back(0.0);
 			this->allVBTNodes[total_nodes_counter].dirY.push_back(0.0);
 			this->allVBTNodes[total_nodes_counter].dirZ.push_back(0.0);
+			this->allVBTNodes[total_nodes_counter].odfFeatures.ODFModeVals.push_back(0.0);
 		}
 
 		if(current_node.dirX.empty() || current_node.dirY.empty() || current_node.dirZ.empty()){
@@ -3391,7 +3398,6 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 			dir_hist[i] = dir_hist[i] + (this->allParams.oriBin.histSmoothingFactor * smooth_hist_1[this->allParams.oriBin.nbr[i][j]]);
 	}*/
 	
-
 	for(int i = 0; i < sph_hist_region_based.size(); i++)
 		sph_hist_region_based[i] = sph_hist_region_based[i] * dir_hist[i];
 		
@@ -3501,7 +3507,7 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 	std::reverse(mode_bins_sorted_1.begin(), mode_bins_sorted_1.end());
 	
 	double branching_th = 0.0;
-	std::vector<double> dirX, dirY, dirZ;
+	std::vector<double> dirX, dirY, dirZ, ODFModeVals;
 	if(mode_bins_sorted_1.size() > 2){
 
 		// THE BRANCHING THRESHOLD COULD BE LOWERED TO GET MORE BRANCHES IF NEEDED
@@ -3512,6 +3518,7 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 				dirX.push_back(mode_bins_sorted_1[i][0]);
 				dirY.push_back(mode_bins_sorted_1[i][1]);
 				dirZ.push_back(mode_bins_sorted_1[i][2]);
+				ODFModeVals.push_back(mode_hist_val_sorted_1[i]);
 			}
 		}
 		else{
@@ -3519,6 +3526,7 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 				dirX.push_back(mode_bins_sorted_1[i][0]);
 				dirY.push_back(mode_bins_sorted_1[i][1]);
 				dirZ.push_back(mode_bins_sorted_1[i][2]);
+				ODFModeVals.push_back(mode_hist_val_sorted_1[i]);
 			}
 		}
 	}
@@ -3527,14 +3535,16 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 			dirX.push_back(mode_bins_sorted_1[i][0]);
 			dirY.push_back(mode_bins_sorted_1[i][1]);
 			dirZ.push_back(mode_bins_sorted_1[i][2]);
+			ODFModeVals.push_back(mode_hist_val_sorted_1[i]);
 		}
 	}
 	if(dirX.size() < 2){
 		dirX.push_back(-1.0 * dirX[0]);
 		dirY.push_back(-1.0 * dirY[0]);
 		dirZ.push_back(-1.0 * dirZ[0]);
+		ODFModeVals.push_back(ODFModeVals[0]);
 	}
-
+	
 	for(int i = 0; i < dirX.size(); i++){
 		
 		if(std::abs(dirX[i] - 0.0) < 0.000000001)
@@ -3545,11 +3555,15 @@ void ftkVesselTracer::ComputeSecondaryVBTNodeDirections(VBTNode& node, std::vect
 		
 		if(std::abs(dirZ[i] - 0.0) < 0.000000001)
 			dirZ[i] = 0.0;
+		
+		if(dirX[i] == 0 && dirY[i] == 0 && dirZ[i] == 0)
+			ODFModeVals[i] = 0;
 	}
 
 	node.dirX = dirX;
 	node.dirY = dirY;
 	node.dirZ = dirZ;
+	node.odfFeatures.ODFModeVals = ODFModeVals;
 	node.sphHistRegionBased = sph_hist_region_based;
 
 	// Print the detected maximal modes
@@ -5725,6 +5739,13 @@ itk::Index<3> VBTNode::GetLocationAsITKIndex(){
 
 	return idx;
 }
+
+void VBTNode::SetLocationFromITKIndex(itk::Index<3> idx){
+	this->x = idx[0];
+	this->y = idx[1];
+	this->z = idx[2];
+}
+
 bool ftkVesselTracer::ComputeTracingCosts(double p1[], double p2[], double& tracing_cost, double& vesselness_cost, double& scale_var, double& vesselness_var){
 	
 	if(this->inputData.IsNull() || this->gx.IsNull() || this->gy.IsNull() || this->gz.IsNull() || this->VesselnessImage.IsNull()){
@@ -5789,6 +5810,11 @@ bool ftkVesselTracer::ComputeTracingCosts(double p1[], double p2[], double& trac
 	this->VisualizeVBTNodesWithData3D(node_vec, false);*/
 
 	return 1;
+}
+
+void ftkVesselTracer::NormalizeAndRescaleData(){
+	Common::NormalizeData(this->inputData, this->normalizedInputData);
+	Common::RescaleDataForRendering(this->inputData, this->inputDataForRendering);	
 }
 
 std::vector<VBTNode> ftkVesselTracer::FitSpheresOnTraceLine(double p1[], double p2[]){
@@ -5866,6 +5892,39 @@ void ftkVesselTracer::SetGVFImages(ImageType3D::Pointer gx, ImageType3D::Pointer
 
 void ftkVesselTracer::SetVesselnessImage(ImageType3D::Pointer vesselness_img){
 	this->VesselnessImage = vesselness_img;
+}
+
+void ftkVesselTracer::ComputeODFNoPrior(VBTNode& node){
+	
+	std::vector<double> dir_hist(this->allParams.oriBin.angleCount, 1.0/(double)this->allParams.oriBin.angleCount);
+	node.dirX.push_back(0.0);
+	node.dirY.push_back(0.0);
+	node.dirZ.push_back(0.0);
+	node.odfFeatures.ODFModeVals.push_back(0.0);
+	
+	this->ComputeSecondaryVBTNodeDirections(node, dir_hist);
+}
+
+void ftkVesselTracer::ComputeODFFeatures(VBTNode& node){
+	
+	if(node.dirX.empty() || node.dirY.empty() || node.dirZ.empty())
+		node.odfFeatures.nModes = 0;	
+	else
+		node.odfFeatures.nModes = node.dirX.size();
+
+	//node.odfFeatures.ODFModeVals: Already computed when computing the node directions
+
+	mbl_stats_nd stats;
+	vnl_vector<double> odf_vec(node.sphHistRegionBased.size(), 0);
+	for(int i = 0; i < node.sphHistRegionBased.size(); i++)
+		odf_vec[i] = node.sphHistRegionBased[i];
+	
+	odf_vec.normalize();
+	stats.obs(odf_vec);
+	vnl_vector<double> std_vec = stats.sd();
+	node.odfFeatures.std = std_vec[0];	
+	node.odfFeatures.mean = odf_vec.mean();
+	node.odfFeatures.energy = odf_vec.one_norm();
 }
 
 IntrinsicFeatureVector_VT::IntrinsicFeatureVector_VT(){

@@ -127,7 +127,7 @@ void AstroTracer::LoadCurvImage(ImageType3D::Pointer &image, unsigned int pad)
 
 void AstroTracer::DoPreprocessing(void){
 	
-	this->VBT->PreprocessData(this->InputDataPath, this->PaddedCurvImage, false);
+	this->VBT->PreprocessData(this->InputDataPath, this->PaddedCurvImage, false, false);
 }
 
 void AstroTracer::LoadPreprocessingResults(){
@@ -154,8 +154,18 @@ void AstroTracer::LoadPreprocessingResults(){
 	reader4->SetFileName(this->InputDataPath + "_gz.mhd");
 	reader4->Update();
 	this->gz = reader4->GetOutput();
-
+	
 	this->VBT->SetGVFImages(gx, gy, gz);
+
+	ReaderType::Pointer reader5 = ReaderType::New();
+	reader5->SetFileName(this->InputDataPath + "_vesselness.mhd");
+	reader5->Update();
+	this->VesselnessImage = reader5->GetOutput();
+	this->VBT->SetVesselnessImage(this->VesselnessImage);
+
+	this->VBT->NormalizeAndRescaleData();
+	this->VBT->SphericalBinPreprocess();
+	this->VBT->Set_useVesselness(1);
 }
 
 void AstroTracer::ReadStartPointsFromPath(std::string fname, unsigned int pad) 
@@ -4055,6 +4065,18 @@ void AstroTracer::ComputeRootPointFeatures(){
 	ftk::SaveTable(featureVectorFileName, feature_tables[0]);
 }
 
+VBTNode AstroTracer::getVBTFeatures(itk::Index<3> current_idx){
+
+	VBTNode node;
+	node.SetLocationFromITKIndex(current_idx);
+	
+	this->VBT->FitSphereAtVBTNode(node);
+	this->VBT->ComputeODFNoPrior(node);
+	this->VBT->ComputeODFFeatures(node);
+	
+	return node;
+}
+
 bool AstroTracer::getLocalIntensityFeatures(itk::Index<3> current_idx, itk::Size<3> sz, float radius, float& max_intensity, float& min_intensity, float& mean_intensity, float& var_intensity){
 
 	float double_scale = 2.0 * radius; 
@@ -4323,7 +4345,15 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 	col_names.push_back("mx_int");
 	col_names.push_back("mn_int");
 	col_names.push_back("nucl_dist");
-	
+	col_names.push_back("radius_VBT");
+	col_names.push_back("likelihood_VBT");
+	col_names.push_back("odf_std");
+	col_names.push_back("odf_mean");
+	col_names.push_back("odf_energy");
+	col_names.push_back("odf_val1");
+	col_names.push_back("odf_val2");
+	col_names.push_back("odf_val3");
+			
 	this->features_table = vtkSmartPointer<vtkTable>::New();
 	this->features_table->Initialize();
 
@@ -4340,29 +4370,29 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 #pragma omp parallel for
 	for(int i = 0; i < points_list.size(); i++){
 
-		//std::cout << " LoG point index: " << IDIndex << std::endl;
-
-		////////////////// Code for scale features /////////////////////////
+		// current_idx has to be local to the current tile (PaddedCurvImage)
 		itk::Vector<float, 3> pos;
 		pos[0] = points_list[i].ndx[0];
 		pos[1] = points_list[i].ndx[1];
 		pos[2] = points_list[i].ndx[2];
+		
+		ImageType3D::IndexType current_idx;
+		current_idx[0] = pos[0];
+		current_idx[1] = pos[1];
+		current_idx[2] = pos[2]-padz; // PADZ???
 
+
+		////////// Code for features from ODFs ////////////////////
+		VBTNode node = this->getVBTFeatures(current_idx);
+		
+		////////////////// Code for scale features /////////////////////////
 		float likelihood = 0.0;
 		float radius = getRadiusAndLikelihood(pos, likelihood);
 
 		double radiusThresh = 2.0;
 		if(radius < radiusThresh)
 			continue;
-
-		// current_idx has to be local to the current tile (PaddedCurvImage)
-		ImageType3D::IndexType current_idx;
-		current_idx[0] = pos[0];
-		current_idx[1] = pos[1];
-		current_idx[2] = pos[2]-padz; // PADZ???
-		//std::cout << "After current_ide set, LoG_vector_size="<< this->LoG_Vector.size() << std::endl;
-		//std::cout << "Current Indices:"<<current_idx[0]<<" "<<current_idx[1]<<" "<<current_idx[2]<<" "<<std::endl;
-
+		
 		////////////////// Code for nearest nuiclei /////////////////////////
 		float double_scale_nuclei = 20;
 		double nucleus_distance = 0.0;
@@ -4403,6 +4433,20 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 			a_root.featureVector.nucleusDistance = nucleus_distance;
 			a_root.featureVector.vesselness = vesselness;
 
+			a_root.featureVector.radiusVBT = node.scale;
+			a_root.featureVector.likelihoodVBT = node.likelihood;
+			a_root.featureVector.odfFeatures.std = node.odfFeatures.std;
+			a_root.featureVector.odfFeatures.mean = node.odfFeatures.mean;
+			a_root.featureVector.odfFeatures.energy = node.odfFeatures.energy;
+			
+			a_root.featureVector.odfFeatures.ODFModeVals = node.odfFeatures.ODFModeVals;
+			if(node.odfFeatures.ODFModeVals.size() == 1){		
+				a_root.featureVector.odfFeatures.ODFModeVals.push_back(0);
+				a_root.featureVector.odfFeatures.ODFModeVals.push_back(0);
+			}
+			else if(node.odfFeatures.ODFModeVals.size() == 2)
+				a_root.featureVector.odfFeatures.ODFModeVals.push_back(0);
+
 			root_points[i] = a_root;
 
 			//IDIndex++;			
@@ -4441,6 +4485,15 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.maxIntensity));
 		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.minIntensity));
 		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.nucleusDistance));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.radiusVBT));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.likelihoodVBT));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.std));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.mean));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.energy));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.ODFModeVals[0]));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.ODFModeVals[1]));
+		table_row->InsertNextValue(vtkVariant(this->AllRootPoints[i].featureVector.odfFeatures.ODFModeVals[2]));
+
 
 		features_table->InsertNextRow(table_row);
 	}

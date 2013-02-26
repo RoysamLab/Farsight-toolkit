@@ -136,6 +136,9 @@ public:
 	PixelType minIntensity;
 	PixelType maxIntensity;
 	double nucleusDistance;
+	double radiusVBT;
+	double likelihoodVBT;
+	ODFFeatures odfFeatures;
 
 	RootPointFeatureVector();
 };
@@ -374,6 +377,7 @@ protected:
 	float getRadiusAndLikelihood(itk::Vector<float,3> & pos, float& likelihood);
 	void getHessianEigenFeatures(itk::Index<3> current_idx, double img_max_val, float& ballness, float& plateness, float& vesselness, float& noiseness);
 	bool getLocalIntensityFeatures(itk::Index<3> current_idx, itk::Size<3> sz, float radius, float& max_intensity, float& min_intensity, float& mean_intensity, float& var_intensity);
+	VBTNode getVBTFeatures(itk::Index<3> current_idx);
 	void WriteImage3D(std::string , ImageType3D::Pointer );
 	void BlackOut(itk::Index<3> &ndx );
 	float GetCostLocal2(SWCNode_astro*, itk::Index<3>&);
@@ -393,7 +397,7 @@ private:
 	ImageType3D::Pointer ObjectnessImage;
 	ImageType3D::Pointer ObjectnessHybridImage;
 	ImageType3D::Pointer SomaDistanceMapImage;
-	ImageType3D::Pointer AnisotropicDiffusedImage, gx, gy, gz;
+	ImageType3D::Pointer AnisotropicDiffusedImage, gx, gy, gz, VesselnessImage;
 	LabelImageType3D::Pointer IDImage, FinalRootsImage;	
 	LabelImageType3D::Pointer RefinedRootImage;
 	LabelImageType3D::Pointer NucleiLabelImage;

@@ -107,7 +107,7 @@
 #include <vnl/algo/vnl_gaussian_kernel_1d.h>
 
 #include <vcl_complex.h>
-//#include <contrib/mul/mbl/mbl_stats_nd.h>
+#include <mbl/mbl_stats_nd.h>
 
 #include "boost/multi_array.hpp"
 #include "boost/lexical_cast.hpp"
@@ -377,6 +377,7 @@ public:
 	SWCVBTNodeVessel();
 };
 
+// THIS COUPLE OF NEXT CLASSES TO BE MODIFIED AND TRANSFERRED TO TRACE EDITOR
 class VesselNetworkFeatures{
 
 public:
@@ -439,6 +440,16 @@ public:
 	std::vector<double> ODFModesZ;
 	
 	VesselVBTNodeFeatures();
+};
+
+class ODFFeatures{
+
+public:
+	int nModes;
+	std::vector<double> ODFModeVals;
+	double std;
+	double mean;
+	double energy;
 };
 
 struct VBTNode{
@@ -520,6 +531,7 @@ struct VBTNode{
 	int ODF_modes;
 
 	VesselVBTNodeFeatures nodeFeatures;
+	ODFFeatures odfFeatures;
 
 	itk::Index<3> gridNdx;
 
@@ -537,6 +549,7 @@ struct VBTNode{
 	void InitDefaultParamsBeforeODFRecursion(void);
 	void SetLocationFromArray(double p[]);
 	itk::Index<3> GetLocationAsITKIndex(void);
+	void SetLocationFromITKIndex(itk::Index<3> idx);
 };
 
 class compareVBTNodes{
@@ -671,7 +684,7 @@ public:
 	 * 4. GVF computations 5. Saving all data and GVF as MHD files
 	 * (data path with extension, empty data pointer)
 	 */
-	int PreprocessData(std::string, ImageType3D::Pointer&, bool);
+	int PreprocessData(std::string, ImageType3D::Pointer&, bool, bool);
 
 	/** Load gx, gy, gz, data and oriBin for further processing.
 	 * (data path)
@@ -840,9 +853,22 @@ public:
 	 */
 	bool ComputeTracingCosts(double p1[], double p2[], double& tracing_cost, double& vesselness_cost, double& scale_var, double& vesselness_var);
 
+	/* Call this function before calling any other processing function in this class
+	*/
+	void NormalizeAndRescaleData();
+
+	/* Compute ODF on an isolated node
+	*/
+	void ComputeODFNoPrior(VBTNode& node);
+
+	/* Compute some features from ODFs
+	*/
+	void ComputeODFFeatures(VBTNode& node);
+
 	void SetInputImage(ImageType3D::Pointer input_img);
 	void SetGVFImages(ImageType3D::Pointer gx, ImageType3D::Pointer gy, ImageType3D::Pointer gz);
 	void SetVesselnessImage(ImageType3D::Pointer vesselness_img);
+	void Set_useVesselness(int value);
 
 private:
 

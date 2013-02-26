@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-PROJECT( AstroTracer )
-
 if(NOT BUILD_VESSEL_TRACING)
   message(FATAL_ERROR "AstroTracer requires ftkVesselTracer.  Turn on BUILD_VESSEL_TRACING")
 endif()
