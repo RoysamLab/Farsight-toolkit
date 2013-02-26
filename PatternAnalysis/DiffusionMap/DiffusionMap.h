@@ -7,7 +7,7 @@
 #include "vnl/vnl_vector.h"
 #include "vnl/vnl_real.h"
 #include "vnl/algo/vnl_real_eigensystem.h"
-#include "../activeLearning/mbl_stats_nd.h"
+#include "mbl/mbl_stats_nd.h"
 #include "ftkGraphs/kNearestObjects.h"
 
 #include <vtkSmartPointer.h>

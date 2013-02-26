@@ -16,6 +16,7 @@
 #include "vnl/vnl_vector.h"
 #include "vnl/algo/vnl_real_eigensystem.h"
 #include "vnl/algo/vnl_symmetric_eigensystem.h"
+#include "mbl/mbl_stats_nd.h"
 
 //vtk_include
 #include <vtkSmartPointer.h>
@@ -27,7 +28,6 @@
 
 //ftk_include
 #include "ftkGraphs/kNearestObjects.h"
-#include "PatternAnalysis/activeLearning/mbl_stats_nd.h"
 
 
 class LocalGeometryRef
