@@ -5916,11 +5916,15 @@ void ftkVesselTracer::ComputeODFFeatures(VBTNode& node){
 
 	mbl_stats_nd stats;
 	vnl_vector<double> odf_vec(node.sphHistRegionBased.size(), 0);
-	for(int i = 0; i < node.sphHistRegionBased.size(); i++)
+	vnl_vector<double> temp_vec(1, 0);
+	for(int i = 0; i < node.sphHistRegionBased.size(); i++){
 		odf_vec[i] = node.sphHistRegionBased[i];
+		temp_vec[0] = odf_vec[i];
+		stats.obs(temp_vec);
+	}
 	
 	odf_vec.normalize();
-	stats.obs(odf_vec);
+	//stats.obs(odf_vec);
 	vnl_vector<double> std_vec = stats.sd();
 	node.odfFeatures.std = std_vec[0];	
 	node.odfFeatures.mean = odf_vec.mean();

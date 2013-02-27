@@ -4392,6 +4392,8 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		double radiusThresh = 2.0;
 		if(radius < radiusThresh)
 			continue;
+
+		//std::cout << i << std::endl;
 		
 		////////////////// Code for nearest nuiclei /////////////////////////
 		float double_scale_nuclei = 20;
@@ -4416,7 +4418,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		if(IDImage->GetPixel(current_idx) == 0){
 
 			//IDImage->SetPixel(current_idx, IDIndex+1);
-			IDImage->SetPixel(current_idx, i);
+			//IDImage->SetPixel(current_idx, i);
 
 			CandidateRootPoint a_root;
 			a_root.featureVector.node = HeapNode_astro(points_list[i]);
@@ -4450,6 +4452,8 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 			root_points[i] = a_root;
 
 			//IDIndex++;			
+			
+			//std::cout << node.odfFeatures.ODFModeVals[0] << ", " << node.odfFeatures.energy << "," << node.scale <<std::endl;
 		}
 	}
 
@@ -4464,7 +4468,7 @@ void AstroTracer::ComputeAstroFeaturesPipeline(std::string outputFname, std::str
 		}
 	}
 
-	std::cout << "Done with computing root point features. " << std::endl;
+	std::cout << "Done with computing root point features: " << this->AllRootPoints.size() << std::endl;
 
 	for(int i = 0; i < this->AllRootPoints.size(); i++){
 		
