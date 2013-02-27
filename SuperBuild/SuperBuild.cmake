@@ -69,8 +69,8 @@ endif()
 # VXL
 #
 ExternalProject_Add(VXL
-  SVN_REPOSITORY "https://vxl.svn.sourceforge.net/svnroot/vxl/trunk"
-  SVN_REVISION -r "34816"
+  SVN_REPOSITORY "http://svn.code.sf.net/p/vxl/svn/trunk"
+  SVN_REVISION -r "36611"
   SVN_TRUST_CERT 1
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
@@ -133,8 +133,8 @@ if(APPLE)
 endif()
 message(STATUS "check: ${VTK_PATCH_COMMAND}")
 ExternalProject_Add(VTK
-  URL http://www.vtk.org/files/release/5.10/vtk-5.10.0.tar.gz
-  URL_MD5 a0363f78910f466ba8f1bd5ab5437cb9
+  URL http://www.vtk.org/files/release/5.10/vtk-5.10.1.tar.gz
+  URL_MD5 264b0052e65bd6571a84727113508789
   PATCH_COMMAND ${VTK_PATCH_COMMAND}
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
@@ -179,8 +179,8 @@ endif()
 # ITK
 #
 ExternalProject_Add(ITK
-  URL http://dl.dropbox.com/u/26629462/ITK-4.2.tar.gz
-  URL_MD5 4263cb3772692adf0952dacef377f5eb
+  URL http://dl.dropbox.com/u/26629462/InsightToolkit-4.3.1.tar.gz
+  URL_MD5 de443086f1f5dd27c3639644cebe488c
   DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
   SOURCE_DIR ${ITK_SOURCE_DIR}
   BINARY_DIR ${ITK_BINARY_DIR}
