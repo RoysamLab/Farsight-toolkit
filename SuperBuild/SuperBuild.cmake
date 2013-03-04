@@ -89,6 +89,7 @@ ExternalProject_Add(VXL
     -DBUILD_RPL_RGTL:BOOL=ON
     -DBUILD_RPL_RTVL:BOOL=ON
     -DBUILD_TESTING:BOOL=${testing}
+    -DVNL_CONFIG_LEGACY_METHODS:BOOL=ON
     ${mac_args}
     ${png_arg}
     ${VXL_EXTRA_SUPERBUILD_CMAKE_ARGS}
