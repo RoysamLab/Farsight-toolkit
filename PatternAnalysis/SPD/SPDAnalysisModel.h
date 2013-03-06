@@ -76,6 +76,8 @@ public:
     vtkSmartPointer<vtkTable> GenerateSubGraph( vnl_matrix<double> &mat, std::vector< std::vector< long int> > &clusIndex, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
 	void GenerateDistanceMST();
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
+	void WriteGraphToGDF( std::vector< unsigned int> &selFeatures);
+
 	void RunEMDAnalysis();
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
 	void GetClusClusData(clusclus* c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
@@ -113,9 +115,13 @@ public:
 	void BuildMSTForConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component, int connectedNum);
 	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
     bool SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules);
+	void WriteKNNGConnectionMatrix(const char *filename, std::vector< unsigned int> selFeatureID);
 
-	static double CaculatePS(bool bnoise, unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> vec1, vnl_vector<double> vec2);
-
+	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+	static double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+    static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
+	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
 protected:
 
 	static void NormalizeData(vnl_matrix<double> &mat);
@@ -146,6 +152,7 @@ protected:
 	static void FindNearestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	static void FindFarthestKSample(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, unsigned int kNeighbor);
 	static void GetKWeights(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weights, unsigned int kNeighbor);
+	static void GetKWeightsComplement(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, vnl_vector<double>& weightsComplement, unsigned int kNeighbor);
 	int GetConnectedComponent(std::vector< unsigned int>& index, std::vector< int>& component, unsigned int kNeighbor);
 	static double EuclideanBlockDist( vnl_matrix<double>& mat, unsigned int ind1, unsigned int ind2);
 	int GetSingleModuleSize( vnl_vector<unsigned int>& index, unsigned int ind);
@@ -168,16 +175,21 @@ protected:
 
 	double ComputeModuleDistanceAndConnection(vnl_matrix<double> &mati, vnl_matrix<double> &matj, int &rowi, int &rowj);
 	void GetAverageVec(vnl_matrix<double> &mat, vnl_vector<double> &vec);
-        bool IsConnected(std::multimap<int, int> &neighborGraph, std::vector<long int> &index1, std::vector<long int> &index2);
-
+    bool IsConnected(std::multimap<int, int> &neighborGraph, std::vector<long int> &index1, std::vector<long int> &index2);
+	
+	static double gaussrand(double exp, double std);
+	static void quickSort(double *arr, int left, int right);
+	static void AvarageBinHistogram(vnl_matrix<double> &disMetric, int nbins, vnl_vector<double> &binInterval);
+	static void AverageHist(vnl_vector<double>&distance, vnl_vector<double>& binInterval, vnl_vector<unsigned int>& histDis);
+	static bool GetKDistanceMetricRatio(vnl_vector<double> &vec1, vnl_vector<double> &vec2, vnl_matrix<double> &shortestPath, unsigned int kNeighbor);
+	
 	/// for multi-level demo
 	bool RunSPDforFeatureDistributionTable(std::string fileName);
 	void ComputeDistributionDistance( vnl_matrix<unsigned int> &mat, vnl_matrix<double> &dismat);
 	void ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance);
 	bool GenerateMST( vnl_matrix<double> &mat, bool bfirst);
 	void RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind);
-	static double gaussrand(double exp, double std);
-	
+
 public:
 	std::vector< Tree> PublicTreeData;
 	std::vector< Tree> mstTreeList;

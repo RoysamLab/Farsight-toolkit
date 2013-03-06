@@ -448,10 +448,6 @@ if(BUILD_DENDROGRAM)
   add_subdirectory(Dendrogram)
 endif(BUILD_DENDROGRAM)
 
-if(BUILD_SPD)
-  add_subdirectory(SPD)
-endif(BUILD_SPD)
-
 if(BUILD_XML_GENERATOR)
   add_subdirectory( Xml_Generator )
 endif(BUILD_XML_GENERATOR)

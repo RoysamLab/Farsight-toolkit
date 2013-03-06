@@ -8,6 +8,7 @@
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
@@ -1825,6 +1826,41 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 	return table;
 }
 
+void SPDAnalysisModel::WriteGraphToGDF( std::vector< unsigned int> &selFeatures)
+{
+	std::ofstream ofs("test.gdf");
+	ofs<<"nodedef> name\n";
+	int num_nodes = MatrixAfterCellCluster.rows();
+	for( int i = 0; i < num_nodes; i++)
+	{
+		ofs<<i<<std::endl;
+	}
+	ofs<<"edgedef> node1,node2,weight DOUBLE\n";
+
+	vnl_matrix<double> clusterAllMat;
+    GetCombinedMatrix( MatrixAfterCellCluster, 0, num_nodes, selFeatures, clusterAllMat);
+	std::vector<unsigned int> nearIndex;
+	FindNearestKSample(clusterAllMat, nearIndex, m_kNeighbor);
+	vnl_matrix<unsigned char> kNearMat(num_nodes, num_nodes);
+	kNearMat.fill(0);
+	for( int ind = 0; ind < num_nodes; ind++)
+	{
+		for( int k = 0; k < m_kNeighbor; k++)
+		{
+			int neighborIndex = ind * m_kNeighbor + k;
+			neighborIndex = nearIndex[neighborIndex];
+			if( kNearMat(ind, neighborIndex) == 0)
+			{
+				kNearMat(ind, neighborIndex) = 1;
+				kNearMat(neighborIndex, ind) = 1;
+				double dist = EuclideanBlockDist( clusterAllMat, ind, neighborIndex);
+				ofs<<ind<<","<<neighborIndex<<","<<dist<<"\n";
+			}
+		}
+	}
+	ofs.close();
+}
+
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateSubGraph( vnl_matrix<double> &mat, std::vector< std::vector< long int> > &clusIndex, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum)
 {
 	std::vector<int> nstartRow;
@@ -1894,7 +1930,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateSubGraph( vnl_matrix<double>
         }
 	}
 
-	ftk::SaveTable("NearestGraph1.txt", table);
+	//ftk::SaveTable("NearestGraph1.txt", table);
 
 	/// build MST for the modules based on their center distance
 	Graph globe_graph(clusterNum.size());
@@ -1946,7 +1982,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateSubGraph( vnl_matrix<double>
 		}
 	}
 	
-    ftk::SaveTable("NearestGraph.txt", table);
+    //ftk::SaveTable("NearestGraph.txt", table);
 	return table;
 }
 
@@ -3427,6 +3463,39 @@ void SPDAnalysisModel::GetKWeights(vnl_matrix< double> &modDist, std::vector< un
 	}
 }
 
+void SPDAnalysisModel::GetKWeightsComplement(vnl_matrix< double> &modDist, std::vector< unsigned int>& index, 
+										vnl_vector<double>& weightsComplement, unsigned int kNeighbor)
+{
+	vnl_matrix< unsigned char> tagConnected(modDist.rows(), modDist.cols());
+	tagConnected.fill(0);
+
+	//#pragma omp parallel for
+	for( int i = 0; i < index.size(); i++)
+	{
+		unsigned int nrow = i / kNeighbor;
+		unsigned int indexi = index[i];
+		tagConnected(nrow, indexi) = 1;
+		tagConnected(indexi, nrow) = 1;
+	}
+	
+	std::vector<double> weights;
+	for( unsigned int i = 0; i < modDist.rows(); i++)
+	{
+		for( unsigned int j = i + 1; j < modDist.cols(); j++)
+		{
+			if( tagConnected(i,j) == 0)
+			{
+				weights.push_back(modDist(i,j));
+			}
+		}
+	}
+	weightsComplement.set_size( weights.size());
+	for( int i = 0; i < weights.size(); i++)
+	{
+		weightsComplement[i] = weights[i];
+	}
+}
+
 int SPDAnalysisModel::GetConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component)
 {
 	vnl_matrix<double> selMat;
@@ -3439,6 +3508,39 @@ int SPDAnalysisModel::GetConnectedComponent(std::vector< unsigned int> &selFeatu
 	component.clear();
 	int connectedNum = GetConnectedComponent(nearIndex, component, m_kNeighbor);
 	return connectedNum;
+}
+
+void SPDAnalysisModel::WriteKNNGConnectionMatrix(const char *filename, std::vector< unsigned int> selFeatureID)
+{
+	vnl_matrix<double> selMat;
+	GetCombinedMatrix( this->MatrixAfterCellCluster, 0, this->MatrixAfterCellCluster.rows(), selFeatureID, selMat);
+	/*vnl_matrix< double> distMat;
+	EuclideanBlockDist(selMat, distMat);
+	std::vector<unsigned int> nearIndex;
+	FindNearestKSample(distMat, nearIndex, m_kNeighbor);
+	vnl_matrix<int> connectedMatrix(this->MatrixAfterCellCluster.rows(),this->MatrixAfterCellCluster.rows());
+	connectedMatrix.fill(0);
+	for( int i = 0; i < nearIndex.size() / m_kNeighbor; i++)
+	{
+		for(int j = 0; j < m_kNeighbor; j++)
+		{
+			int index = nearIndex[i * m_kNeighbor + j];
+			connectedMatrix(i,index) = 1;
+			connectedMatrix(index,i) = 1;
+		}
+	}*/
+
+	std::ofstream ofs(filename);
+	unsigned int lastCol = selMat.cols() - 1;
+	for( unsigned int i = 0; i < selMat.rows(); i++)
+	{
+		for( unsigned int j = 0; j < selMat.cols() - 1; j++)
+		{
+			ofs<< selMat(i,j)<<",";
+		}
+		ofs<< selMat(i,lastCol)<<std::endl;
+	}	
+	ofs.close();
 }
 
 void SPDAnalysisModel::BuildMSTForConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component, int connectedNum)
@@ -4271,23 +4373,16 @@ void SPDAnalysisModel::RunEMDAnalysis( vnl_vector<double> &moduleDistance, int i
 }
 
 // compute PS distance between two variables
-double SPDAnalysisModel::CaculatePS(bool bnoise, unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> vec1, vnl_vector<double> vec2)
+double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
 {
-	//std::ofstream ofs("Debug.txt");
-	//vnl_matrix< double> comMat(vec1.size(), 2);
-	//comMat.set_column(0, vec1);
-	//comMat.set_column(1, vec2);
-	//NormalizeData(comMat);
-
-	//vnl_matrix< double> contextDis;
-	//EuclideanBlockDist(comMat, contextDis);
+	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
+	{
+		return 0;
+	}
 
 	vnl_matrix< double> contextDis;
 	EuclideanBlockDist(vec1, contextDis);
 
-	//ofs<< vec1<<std::endl<<std::endl;
-	//ofs<< dis1<<std::endl;
-	//ofs.close();
 	std::vector<unsigned int> nearIndex;
 	vnl_vector<double> nearWeights;
 	FindNearestKSample(contextDis, nearIndex, kNeighbor);
@@ -4314,75 +4409,80 @@ double SPDAnalysisModel::CaculatePS(bool bnoise, unsigned int kNeighbor, unsigne
 	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
 	Hist( matchWeights2, interval, min, hist2, nbins);
 	
-	vnl_matrix<double> flowMatrix( nbins, nbins);
 	double movedEarth = 0;
 	double ps = 0;
 
-	if( interval > 1e-9)
+	if( interval > 1e-6)
 	{
 		vnl_vector<unsigned int> histNear;
+		vnl_vector<unsigned int> histFar;
 		Hist(nearWeights, interval, min, histNear, nbins);
-		if( bnoise)
+
+		vnl_vector<double> noiseVec(vec1.size());
+		for( unsigned int i = 0; i < noiseVec.size(); i++)
 		{
-			vnl_vector<double> noiseVec(vec1.size());
-			for( unsigned int i = 0; i < noiseVec.size(); i++)
+			noiseVec[i] = gaussrand(0,1);
+		}
+		vnl_matrix< double> noiseDis;
+		EuclideanBlockDist(noiseVec, noiseDis);
+		std::vector<unsigned int> noisenearIndex;
+		vnl_vector<double> noiseWeights;
+		vnl_vector<unsigned int> histNoise;
+		FindNearestKSample(noiseDis, noisenearIndex, kNeighbor);
+		GetKWeights(contextDis, noisenearIndex, noiseWeights, kNeighbor);
+		Hist(noiseWeights, interval, min, histNoise, nbins);
+		std::vector<unsigned int> farIndex;
+		vnl_vector<double> farWeights;
+		FindFarthestKSample(contextDis, farIndex, kNeighbor);
+		GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+		Hist(farWeights, interval, min, histFar, nbins);
+
+		vnl_matrix<double> flowMatrix( nbins, nbins);
+		movedEarth = EarthMoverDistance( histNoise, hist2, flowMatrix, nbins);
+		double sum = 0;
+		for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+		{
+			for( unsigned int m = n + 1; m < flowMatrix.cols(); m++)
 			{
-				noiseVec[i] = gaussrand(0,1);
-			}
-			vnl_matrix< double> noiseDis;
-			EuclideanBlockDist(noiseVec, noiseDis);
-			std::vector<unsigned int> noisenearIndex;
-			vnl_vector<double> noiseWeights;
-			vnl_vector<unsigned int> histNoise;
-			FindNearestKSample(noiseDis, noisenearIndex, kNeighbor);
-			GetKWeights(contextDis, noisenearIndex, noiseWeights, kNeighbor);
-			Hist(noiseWeights, interval, min, histNoise, nbins);
-			vnl_matrix<double> flowMatrix( nbins, nbins);
-			movedEarth = EarthMoverDistance( histNoise, hist2, flowMatrix, nbins);
-			double sum = 0;
-			for( unsigned int n = 0; n < flowMatrix.rows(); n++)
-			{
-				for( unsigned int m = n + 1; m <= flowMatrix.cols(); m++)
+				if( flowMatrix(n,m) > 1e-6)
 				{
-					if( flowMatrix(n,m) > 1e-6)
-					{
-						sum += flowMatrix(n,m);
-					}
+					sum += flowMatrix(n,m);
 				}
 			}
-			std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
-			if( sum > 0.5)  // between k-NNG and noise-NNG
-			{
-				rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
-				ps = movedEarth / rangeNoise;
-			}
-			else  // between noise-NNG and k-FNG
-			{
-				std::vector<unsigned int> farIndex;
-				vnl_vector<double> farWeights;
-				vnl_vector<unsigned int> histFar;
-				FindFarthestKSample(contextDis, farIndex, kNeighbor);
-				GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
-				Hist(farWeights, interval, min, histFar, nbins);
-				rangeNoise = EarthMoverDistance( histFar, histNoise, flowMatrix, nbins);
-				ps = movedEarth / rangeNoise;
-			}
 		}
-		else
+		std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
+		if( sum >= 0.5)  // between k-NNG and noise-NNG
 		{
-			std::vector<unsigned int> farIndex;
-			vnl_vector<double> farWeights;
-			vnl_vector<unsigned int> histFar;
-			FindFarthestKSample(contextDis, farIndex, kNeighbor);
-			GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
-			Hist(farWeights, interval, min, histFar, nbins);
-			vnl_matrix<double> flowMatrix( nbins, nbins);
-			range = EarthMoverDistance( histFar, histNear, flowMatrix, nbins);
-			movedEarth = EarthMoverDistance( hist2, histNear, flowMatrix, nbins);
-			if( range > 1e-6)
+			rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+		else  // between noise-NNG and k-FNG
+		{
+			rangeNoise = EarthMoverDistance( histFar, histNoise, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+		if(debug)
+		{
+			std::ofstream ofs("debug.txt",std::ios_base::app);
+			ofs<< "kNNG1:"<<std::endl;
+			ofs<< histNear<<std::endl;
+			ofs<< "kFNG1:"<<std::endl;
+			ofs<< histFar<<std::endl;
+			ofs<< "kNNGn:"<<std::endl;
+			ofs<<histNoise<<std::endl;
+			ofs<< "kNNG2:"<<std::endl;
+			ofs<<hist2<<std::endl;
+			if( sum >= 0.5)
 			{
-				ps = abs(1 - movedEarth / range * 3);
+				ofs<< "PS(Between kNNG1 and kNNGn):"<<std::endl;
 			}
+			else
+			{
+				ofs<< "PS(Between kFNG1 and kNNGn):"<<std::endl;
+				
+			}
+			ofs<<ps<<std::endl<<std::endl;
+			ofs.close();
 		}
 	}
 	else
@@ -4391,27 +4491,402 @@ double SPDAnalysisModel::CaculatePS(bool bnoise, unsigned int kNeighbor, unsigne
 	}
 
 	return ps;
+}
 
-	//vnl_matrix< double> dis1;
-	//std::vector<unsigned int> nearIndex1;
-	//vnl_vector<double> matchWeights1;
-	//vnl_vector<unsigned int> hist1;
+double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+{
+	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
+	{
+		return 0;
+	}
 
-	//EuclideanBlockDist(vec1, dis1);
-	//FindNearestKSample(dis1, nearIndex1, kNeighbor);
-	//GetKWeights( contextDis, nearIndex1, matchWeights1, kNeighbor);
-	//Hist( matchWeights1, interval, min, hist1, nbins);
-	//ofs<< hist1<<std::endl;
+	vnl_matrix< double> contextDis;
+	EuclideanBlockDist(vec1, contextDis);
 
-
-	//ofs<< hist2<<std::endl;
-
-	//std::cout<< "Earth:"<<movedEarth<<std::endl;
-	//std::cout<< "Range:"<<range<<std::endl;
+	std::vector<unsigned int> nearIndex;
+	vnl_vector<double> nearWeights;
+	vnl_vector<double> nearWeightsComplement;
 	
+	FindNearestKSample(contextDis, nearIndex, kNeighbor);
+	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
+	GetKWeightsComplement( contextDis, nearIndex, nearWeightsComplement, kNeighbor);
+	
+	double min = contextDis.min_value();
+
+	for( int k = 0; k < contextDis.rows(); k++)
+	{
+		contextDis(k,k) = 0;
+	}
+	
+	double max = contextDis.max_value();
+	double interval = ( max - min) / nbins;
+
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<double> matchWeights2Complement;
+	vnl_vector<unsigned int> hist2;
+	vnl_vector<unsigned int> hist2Complement;
+	vnl_vector<unsigned int> histNear;
+	vnl_vector<unsigned int> histComplement;
+	
+	EuclideanBlockDist(vec2, dis2);
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	GetKWeightsComplement( contextDis, nearIndex2, matchWeights2Complement, kNeighbor);
+	Hist( matchWeights2, interval, min, hist2, nbins);
+	Hist( matchWeights2Complement,  interval, min, hist2Complement, nbins);
+	Hist(nearWeights, interval, min, histNear, nbins);
+	Hist(nearWeightsComplement, interval, min, histComplement, nbins);
+	
+	double ps = 0;
+	vnl_matrix<double> flowMatrix( nbins, nbins);
+	flowMatrix.fill(0);
+	double range = EarthMoverDistance( histComplement, histNear, flowMatrix, nbins);
+	double movedEarth = EarthMoverDistance( hist2Complement, hist2, flowMatrix, nbins);
+	double sum = 0;
+	
+	for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+	{
+		for( unsigned int m = n; m < flowMatrix.cols(); m++)
+		{
+			if( flowMatrix(n,m) > 1e-6)
+			{
+				sum += flowMatrix(n,m);
+			}
+		}
+	}
+	std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
+	if( sum >= 0.5)  
+	{
+		ps = movedEarth / range;
+	}
+	else  
+	{
+		ps = -movedEarth / range;
+	}
+	
+	if(debug)
+	{
+		std::ofstream ofs("debug.txt",std::ios_base::app);
+		ofs<< "kNNG1:"<<std::endl;
+		ofs<< histNear<<std::endl;
+		ofs<< "kNNG1Complement:"<<std::endl;
+		ofs<< histComplement<<std::endl;
+		ofs<< "kNNG2:"<<std::endl;
+		ofs<< hist2<<std::endl;
+		ofs<< "kNNG2Complement:"<<std::endl;
+		ofs<< hist2Complement<<std::endl;
+		ofs<<ps<<std::endl<<std::endl;
+		ofs.close();
+	}
+
+	return ps;
+}
+
+double SPDAnalysisModel::CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio, bool debug)
+{
+	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
+	{
+		return 0;
+	}
+	
+	vnl_matrix<double> shortestPathDisRatio;
+	bool bstate = GetKDistanceMetricRatio(vec1, vec2, shortestPathDisRatio, vec1.size() * 0.1);
+	
+	if( !bstate)
+	{
+		std::cout<<"Failed to build shortest path"<<std::endl;
+		return 0;
+	}
+	//ofs<< shortestPathDisRatio<<std::endl<<std::endl;
+
+	vnl_matrix< double> contextDis;
+	EuclideanBlockDist(vec1, contextDis);
+
+	std::vector<unsigned int> nearIndex;
+	vnl_vector<double> nearWeights;
+	vnl_vector<double> nearWeightsComplement;
+	
+	FindNearestKSample(contextDis, nearIndex, kNeighbor);
+	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
+	GetKWeightsComplement( contextDis, nearIndex, nearWeightsComplement, kNeighbor);
+	
+	double min = contextDis.min_value();
+
+	for( int k = 0; k < contextDis.rows(); k++)
+	{
+		contextDis(k,k) = 0;
+	}
+	
+	double max = contextDis.max_value();
+	double interval = ( max - min) / nbins;
+
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<double> matchWeights2Complement;
+	vnl_vector<unsigned int> hist2;
+	vnl_vector<unsigned int> hist2Complement;
+	vnl_vector<unsigned int> histNear;
+	vnl_vector<unsigned int> histComplement;
+	
+	EuclideanBlockDist(vec2, dis2);
+	//ofs<<dis2<<std::endl<<std::endl;
+	for( unsigned int i = 0; i < dis2.rows(); i++)
+	{
+		for( unsigned int j = i + 1; j < dis2.cols(); j++)
+		{
+			if( shortestPathDisRatio( i, j) > ratio)
+			{
+				dis2(i,j) = 1e6;
+				dis2(j,i) = 1e6;
+			}
+		}
+	}
+	//ofs<<dis2<<std::endl<<std::endl;
+
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	GetKWeightsComplement( contextDis, nearIndex2, matchWeights2Complement, kNeighbor);
+	Hist( matchWeights2, interval, min, hist2, nbins);
+	Hist( matchWeights2Complement,  interval, min, hist2Complement, nbins);
+	Hist(nearWeights, interval, min, histNear, nbins);
+	Hist(nearWeightsComplement, interval, min, histComplement, nbins);
+	
+	double ps = 0;
+	vnl_matrix<double> flowMatrix( nbins, nbins);
+	flowMatrix.fill(0);
+	double range = EarthMoverDistance( histComplement, histNear, flowMatrix, nbins);
+	double movedEarth = EarthMoverDistance( hist2Complement, hist2, flowMatrix, nbins);
+	double sum = 0;
+	
+	for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+	{
+		for( unsigned int m = n; m < flowMatrix.cols(); m++)
+		{
+			if( flowMatrix(n,m) > 1e-6)
+			{
+				sum += flowMatrix(n,m);
+			}
+		}
+	}
+	std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
+	if( sum >= 0.5)  
+	{
+		ps = movedEarth / range;
+	}
+	else  
+	{
+		ps = -movedEarth / range;
+	}
+	
+	if(debug)
+	{
+		std::ofstream ofs("debug.txt");
+		ofs<< "kNNG1:"<<std::endl;
+		ofs<< histNear<<std::endl;
+		ofs<< "kNNG1Complement:"<<std::endl;
+		ofs<< histComplement<<std::endl;
+		ofs<< "kNNG2:"<<std::endl;
+		ofs<< hist2<<std::endl;
+		ofs<< "kNNG2Complement:"<<std::endl;
+		ofs<< hist2Complement<<std::endl;
+		ofs<<ps<<std::endl<<std::endl;
+		ofs.close();
+	}
+
+	return ps;
+}
+
+bool SPDAnalysisModel::GetKDistanceMetricRatio(vnl_vector<double> &vec1, vnl_vector<double> &vec2, vnl_matrix<double> &shortestPath, unsigned int kNeighbor)
+{	
+	//std::ofstream ofs("dis.txt");
+	int num_nodes = vec1.size();
+	vnl_matrix<double> combMat(num_nodes,2);
+	vnl_matrix<double> disMat;
+	combMat.set_column(0, vec1);
+	combMat.set_column(1, vec2);
+	EuclideanBlockDist(combMat, disMat);
+	//ofs<< disMat<<std::endl;
+	
+	std::vector<unsigned int> nearIndex;
+	FindNearestKSample(disMat, nearIndex, kNeighbor);
+	
+	double **distance = new double *[num_nodes];
+	for( unsigned i = 0; i < num_nodes; i++)
+	{
+		distance[i] = new double[num_nodes];
+	}
+	
+	Graph graph(num_nodes);
+
+	for( unsigned int k = 0; k < nearIndex.size(); k++)
+	{
+		unsigned int ind1 = k / kNeighbor;
+		unsigned int ind2 = nearIndex[k];
+		boost::add_edge(ind1, ind2, disMat(ind1,ind2), graph);
+	}
+
+	bool breturn = false;
+	try
+	{
+		breturn = boost::johnson_all_pairs_shortest_paths(graph, distance);
+	}
+	catch(...)
+	{
+		std::cout<< "GetKDistanceMetric failed!"<<endl;
+		exit(111);
+	}
+	
+	if( breturn)
+	{
+		shortestPath.set_size(num_nodes, num_nodes);
+		shortestPath.fill(1e6);
+		for( unsigned int i = 0; i < num_nodes; i++)
+		{
+			for( unsigned int j = i + 1; j < num_nodes; j++)
+			{
+				//ofs<< distance[i][j]<<"\t";
+				if( disMat(i,j) > 1e-6)
+				{
+					shortestPath(i,j) = distance[i][j] / disMat(i,j);
+					shortestPath(j,i) = distance[j][i] / disMat(j,i);
+				}
+				else
+				{
+					shortestPath(i,j) = 0;
+					shortestPath(j,i) = 0;
+				}
+			}
+			//ofs<< std::endl;
+		}
+	}
 	//ofs.close();
-	//std::cout<< "Progression similarity between the two variables: "<<ps<<std::endl;
+
+	for( unsigned i = 0; i < num_nodes; i++)
+	{
+		delete distance[i];
+	}
+	delete distance;
+	return breturn;
+}
+
+double SPDAnalysisModel::CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+{
+	vnl_matrix< double> contextDis;
+	vnl_vector<double> binInterval;
+	EuclideanBlockDist(vec1, contextDis);
+	AvarageBinHistogram(contextDis, nbins, binInterval);
+
+	std::vector<unsigned int> nearIndex;
+	vnl_vector<double> nearWeights;
+	FindNearestKSample(contextDis, nearIndex, kNeighbor);
+	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
+	double min = contextDis.min_value();
+
+	for( int k = 0; k < contextDis.rows(); k++)
+	{
+		contextDis(k,k) = 0;
+	}
+
+	double max = contextDis.max_value();
+	double interval = ( max - min) / nbins;
+	double range = 0;
+	double rangeNoise = 0;
+
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<unsigned int> hist2;
+
+	EuclideanBlockDist(vec2, dis2);
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	AverageHist( matchWeights2, binInterval, hist2);
 	
+	double movedEarth = 0;
+	double ps = 0;
+
+	if( interval > 1e-6)
+	{
+		vnl_vector<unsigned int> histNear;
+		vnl_vector<unsigned int> histFar;
+		AverageHist( nearWeights, binInterval, histNear);
+
+		vnl_vector<double> noiseVec(vec1.size());
+		for( unsigned int i = 0; i < noiseVec.size(); i++)
+		{
+			noiseVec[i] = gaussrand(0,1);
+		}
+		vnl_matrix< double> noiseDis;
+		EuclideanBlockDist(noiseVec, noiseDis);
+		std::vector<unsigned int> noisenearIndex;
+		vnl_vector<double> noiseWeights;
+		vnl_vector<unsigned int> histNoise;
+		FindNearestKSample(noiseDis, noisenearIndex, kNeighbor);
+		GetKWeights(contextDis, noisenearIndex, noiseWeights, kNeighbor);
+		AverageHist( noiseWeights, binInterval, histNoise);
+		std::vector<unsigned int> farIndex;
+		vnl_vector<double> farWeights;
+		FindFarthestKSample(contextDis, farIndex, kNeighbor);
+		GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+		AverageHist( farWeights, binInterval, histFar);
+
+		vnl_matrix<double> flowMatrix( nbins, nbins);
+		movedEarth = EarthMoverDistance( histNoise, hist2, flowMatrix, nbins);
+		double sum = 0;
+		for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+		{
+			for( unsigned int m = n + 1; m < flowMatrix.cols(); m++)
+			{
+				if( flowMatrix(n,m) > 1e-6)
+				{
+					sum += flowMatrix(n,m);
+				}
+			}
+		}
+		std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
+		if( sum >= 0.5)  // between k-NNG and noise-NNG
+		{
+			rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+		else  // between noise-NNG and k-FNG
+		{
+			rangeNoise = EarthMoverDistance( histFar, histNoise, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+		if(debug)
+		{
+			std::ofstream ofs("debug.txt", std::ios_base::app);
+			ofs<< "kNNG1:"<<std::endl;
+			ofs<< histNear<<std::endl;
+			ofs<< "kFNG1:"<<std::endl;
+			ofs<< histFar<<std::endl;
+			ofs<< "kNNGn:"<<std::endl;
+			ofs<<histNoise<<std::endl;
+			ofs<< "kNNG2:"<<std::endl;
+			ofs<<hist2<<std::endl;
+			if( sum >= 0.5)
+			{
+				ofs<< "PS(Between kNNG1 and kNNGn):"<<std::endl;
+			}
+			else
+			{
+				ofs<< "PS(Between kFNG1 and kNNGn):"<<std::endl;
+				
+			}
+			ofs<<ps<<std::endl<<std::endl;
+			ofs.close();
+		}
+	}
+	else
+	{
+		return 0;
+	}
+
+	return ps;
 }
 
 double SPDAnalysisModel::gaussrand(double exp, double std)
@@ -4437,4 +4912,238 @@ double SPDAnalysisModel::gaussrand(double exp, double std)
     phase = 1 - phase;
  	X = X * std + exp;
     return X;
+}
+
+void SPDAnalysisModel::AvarageBinHistogram(vnl_matrix<double> &disMetric, int nbins, vnl_vector<double> &binInterval)
+{
+	unsigned int rown = disMetric.rows();
+	unsigned int coln = disMetric.cols();
+	int edgeNum = rown * (coln - 1);
+	double *distance = new double[edgeNum];
+	int k = 0;
+	for( unsigned int i = 0; i < rown; i++)
+	{
+		for( unsigned int j = 0; j < coln; j++)
+		{
+			if( i != j)
+			{
+				distance[k++] = disMetric(i,j);
+			}
+		}
+	}
+	quickSort( distance, 0, edgeNum - 1);
+
+	int num = ceil(double(edgeNum) / nbins);
+	int binnum = ceil(double(edgeNum) / num);
+	binInterval.set_size( binnum + 1);
+	int count = 0;
+	for( int i = 0; i < edgeNum; i++)
+	{
+		if( i % num == 0)
+		{
+			binInterval[count++] = distance[i];
+		}
+	}
+	if( count == binnum)
+	{
+		binInterval[count] = distance[edgeNum - 1];
+	}
+	delete distance;
+}
+
+void SPDAnalysisModel::AverageHist(vnl_vector<double>&distance, vnl_vector<double>& binInterval, vnl_vector<unsigned int>& histDis)
+{
+	histDis.set_size(binInterval.size() - 1);
+	histDis.fill(0);
+	for( unsigned int i = 0; i < distance.size(); i++)
+	{
+		for( unsigned int j = 0; j < binInterval.size() - 1; j++)
+		{
+			if( distance[i] >= binInterval[j] && distance[i] < binInterval[j + 1])
+			{
+				histDis[j]++;
+			}
+		}
+	}
+}
+
+void SPDAnalysisModel::quickSort(double *arr, int left, int right) {
+      int i = left;
+	  int j = right;
+      double tmp = 0;
+      double pivot = arr[(left + right) / 2];
+ 
+      /* partition */
+      while (i <= j) {
+            while (arr[i] < pivot)
+                  i++;
+            while (arr[j] > pivot)
+                  j--;
+            if (i <= j) {
+                  tmp = arr[i];
+                  arr[i] = arr[j];
+                  arr[j] = tmp;
+                  i++;
+                  j--;
+            }
+      }
+ 
+      /* recursion */
+      if (left < j)
+            quickSort(arr, left, j);
+      if (i < right)
+            quickSort(arr, i, right);
+}
+
+double SPDAnalysisModel::SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+{
+	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6)
+	{
+		return 0;
+	}
+
+	vnl_matrix< double> contextDis;
+	EuclideanBlockDist(vec1, contextDis);
+
+	std::vector<unsigned int> nearIndex;
+	vnl_vector<double> nearWeights;
+	FindNearestKSample(contextDis, nearIndex, kNeighbor);
+	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
+	double min = contextDis.min_value();
+
+	for( int k = 0; k < contextDis.rows(); k++)
+	{
+		contextDis(k,k) = 0;
+	}
+
+	double max = contextDis.max_value();
+	double interval = ( max - min) / nbins;
+	double range = 0;
+	double rangeNoise = 0;
+	
+	double movedEarth = 0;
+	double ps = 0;
+
+	if( interval > 1e-6)
+	{
+		vnl_vector<unsigned int> histNear;
+		vnl_vector<unsigned int> histFar;
+		Hist(nearWeights, interval, min, histNear, nbins);
+
+		vnl_vector<double> noiseVec(vec1.size());
+		for( unsigned int i = 0; i < noiseVec.size(); i++)
+		{
+			noiseVec[i] = gaussrand(0,1);
+		}
+		vnl_matrix< double> noiseDis;
+		EuclideanBlockDist(noiseVec, noiseDis);
+		std::vector<unsigned int> noisenearIndex;
+		vnl_vector<double> noiseWeights;
+		vnl_vector<unsigned int> histNoise;
+		FindNearestKSample(noiseDis, noisenearIndex, kNeighbor);
+		GetKWeights(contextDis, noisenearIndex, noiseWeights, kNeighbor);
+		Hist(noiseWeights, interval, min, histNoise, nbins);
+		std::vector<unsigned int> farIndex;
+		vnl_vector<double> farWeights;
+		FindFarthestKSample(contextDis, farIndex, kNeighbor);
+		GetKWeights(contextDis, farIndex, farWeights, kNeighbor);
+		Hist(farWeights, interval, min, histFar, nbins);
+
+		vnl_vector<double> newY(vec1.size());
+		newY.fill(-1);
+		double yNum = 0.5;
+		for( unsigned int i = 0; i < vec1.size(); i++)
+		{
+			bool bfind = false;
+			double yN = yNum;
+			for( unsigned int k = 0; k < kNeighbor;k++)
+			{
+				unsigned int ind = i * kNeighbor + k;
+				unsigned int fN = farIndex[ind];
+				if( newY[i] > 0)
+				{
+					bfind = true;
+					yN = newY[i];
+                    break;
+				}
+				else if( newY[fN] > 0)
+				{
+                    bfind = true;
+                    yN = newY[fN];
+                    break;
+				}
+			}
+            if( bfind)
+            {
+				newY[i] = yN;
+                for( unsigned int k = 0; k < kNeighbor;k++)
+                {
+                        unsigned int ind = i * kNeighbor + k;
+                        unsigned int fN = farIndex[ind];
+                        newY[fN]=yN;
+                }
+            }
+            else
+            {
+				newY[i] = yN;
+                for( unsigned int k = 0; k < kNeighbor;k++)
+                {
+                        unsigned int ind = i * kNeighbor + k;
+                        unsigned int fN = farIndex[ind];
+                        newY[fN]=yN;
+                }
+                yNum += 0.5;
+            }
+		}
+
+	vnl_matrix< double> dis2;
+	std::vector<unsigned int> nearIndex2;
+	vnl_vector<double> matchWeights2;
+	vnl_vector<unsigned int> hist2;
+
+	EuclideanBlockDist(newY, dis2);
+	FindNearestKSample(dis2, nearIndex2, kNeighbor);
+	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
+	Hist( matchWeights2, interval, min, hist2, nbins);
+
+		vnl_matrix<double> flowMatrix( nbins, nbins);
+		movedEarth = EarthMoverDistance( histNoise, hist2, flowMatrix, nbins);
+		double sum = 0;
+		for( unsigned int n = 0; n < flowMatrix.rows(); n++)
+		{
+			for( unsigned int m = n + 1; m < flowMatrix.cols(); m++)
+			{
+				if( flowMatrix(n,m) > 1e-6)
+				{
+					sum += flowMatrix(n,m);
+				}
+			}
+		}
+		std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
+		if( sum >= 0.5)  // between k-NNG and noise-NNG
+		{
+			rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+		else  // between noise-NNG and k-FNG
+		{
+			rangeNoise = EarthMoverDistance( histFar, histNoise, flowMatrix, nbins);
+			ps = movedEarth / rangeNoise;
+		}
+
+                if(debug)
+                {
+                    std::ofstream ofs("newY.txt");
+                    ofs<< "x:"<<std::endl;
+                    ofs<< vec1<<std::endl;
+                    ofs<< "y:"<<std::endl;
+                    ofs<< newY<<std::endl;
+                }
+	}
+	else
+	{
+		return 0;
+	}
+
+	return ps;
 }

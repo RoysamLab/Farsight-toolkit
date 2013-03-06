@@ -109,6 +109,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
     psdtButton = new QPushButton(tr("View Progression"), this);
 	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
 	heatmapButton = new QPushButton(tr("Heatmap"), this);
+	newLayoutButton = new QPushButton(tr("New Layout"), this);
 
 	distanceLabel = new QLabel(tr("Distance Threshold:"), this);
 	distanceThres = new QDoubleSpinBox(this);
@@ -134,6 +135,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	connect( updateConnectedNumButton, SIGNAL(clicked()), this, SLOT(UpdateConnectedNum()));
 	//connect( searchSubsetsButton, SIGNAL(clicked()), this, SLOT(searchSubsetsOfFeatures()));
 	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
+	connect(newLayoutButton, SIGNAL(clicked()), this, SLOT(AdjustLayout()));
 
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
@@ -202,6 +204,7 @@ SPDtestWindow::SPDtestWindow(QWidget *parent) :
 	mainLayout->addWidget(psdtButton, 13, 2);
 
 	mainLayout->addWidget(heatmapLabel, 14, 0);
+	mainLayout->addWidget(newLayoutButton, 14, 1);
 	mainLayout->addWidget(heatmapButton, 14, 2);
 
 
@@ -563,7 +566,11 @@ void SPDtestWindow::viewProgression()
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
-	//SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
+
+	// write graph to gdf file.
+	//SPDModel->WriteGraphToGDF(selFeatureID);
+	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
+	SPDModel->WriteKNNGConnectionMatrix( "kNNGC.txt", selFeatureID);
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
@@ -758,6 +765,54 @@ void SPDtestWindow::regenerateProgressionTree()
 		{
 			std::cout<< "Graph window error!"<<endl;
 		}
+	}
+}
+
+void SPDtestWindow::AdjustLayout()
+{
+	std::cout<< "Adjust Layout"<<endl;
+	selection->clear();
+	std::vector< std::vector< long int> > sampleIndex;
+	selection->GetSampleIndex( sampleIndex);
+    std::vector< std::vector< long int> > clusIndex;
+    selection->GetClusterIndex( clusIndex);
+
+	vnl_matrix<double> clusAverageMat;
+	std::vector< double> colorVec;
+	std::vector< double> percentVec;
+    SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
+
+	int maxId = this->maxVetexIdEdit->value();
+	SPDModel->SetMaxVertexID(maxId);
+	SPDModel->GetPercentage(sampleIndex, colorVec);
+	std::string distanceThres = this->distanceThres->text().toStdString();
+	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
+
+	std::vector<int> clusterNum;
+	this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
+	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+
+	std::vector<long int> TreeOrder;
+	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
+
+	/** graph window set models */
+	std::vector<int> index;
+	SPDModel->GetSingleLinkageClusterMapping(sampleIndex, index);
+	vtkSmartPointer<vtkTable> dataTable = vtkSmartPointer<vtkTable>::New();
+	SPDModel->GetCombinedDataTable(dataTable);
+	this->graph->setModels(dataTable, selection, &index);
+
+	std::vector<std::string> headers;
+	SPDModel->GetTableHeaders( headers);
+	this->graph->AdjustedLayout( newtable, headers[0], headers[1], headers[2], &TreeOrder, &colorVec, &percentVec);
+	//this->graph->SetGraphTableToPassThrough( newtable, sampleIndex.size(), headers[0], headers[1], headers[2], &colorVec, &percentVec);
+	try
+	{
+		this->graph->ShowGraphWindow();
+	}
+	catch(...)
+	{
+		std::cout<< "Graph window error!"<<endl;
 	}
 }
 
