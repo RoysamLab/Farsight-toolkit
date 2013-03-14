@@ -12,13 +12,14 @@
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
+#include <limits>
 #ifdef _OPENMP
 #include "omp.h"
 #endif
 #define NUM_THREAD 4
 #define NUM_BIN 30
 #define DISTANCE_PRECISION 10
-#define LMEASURETABLE 1
+#define LMEASURETABLE 0
 
 SPDAnalysisModel::SPDAnalysisModel()
 {
@@ -909,9 +910,9 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 	this->ClusterIndex = clusterIndex;
 	this->ModuleMean = moduleMean;
 
-#if LMEASURETABLE == 0
 	ClusterMerge(cor, mer);
-#endif
+
+	ofs << this->ClusterIndex <<std::endl;
 
 	for( unsigned int i = 0; i <= this->ClusterIndex.max_value(); i++)
 	{
@@ -926,8 +927,8 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 			}
 		}
 	}
-	ofs.close();
 
+	ofs.close();
 	std::cout<<"The cluster size after cluster: "<<this->ClusterIndex.max_value() + 1<<endl;
 	//std::cout<<clusterIndex<<endl;
 
@@ -940,6 +941,11 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 	vnl_vector<int> moduleSize = GetModuleSize(index);
 	vnl_vector<int> isActiveModule;
 	vnl_vector<double> moduleCenter;
+	vnl_vector<unsigned int> indexmap(moduleSize.size());
+	for( unsigned int i = 0; i < indexmap.size(); i++)
+	{
+		indexmap[i] = i;
+	}
 	int newIndex = TreeIndex.max_value() + 1;
 
 	isActiveModule.set_size( moduleSize.size());
@@ -960,27 +966,20 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 	//ofs<< mean<<endl;
 	std::vector<unsigned int> delColsVec;
 	vnl_vector<int> tmp(moduleSize.size());
-	while( isActiveModule.sum() > 1)
+	unsigned int activeModuleNum = isActiveModule.size();
+	while( activeModuleNum > 1)
 	{
+		if( activeModuleNum % 1000 == 0)
+		{
+			std::cout<< activeModuleNum << "\t/"<<isActiveModule.size()<<"\n";
+		}
 		vnl_matrix<double> newModule;
 		vnl_vector<double> newModuleMeans;
 		vnl_vector<double> newModuleStd;
 		vnl_vector<double> newModuleCor;
 		vnl_vector<double> moduleCor; 
 
-		for( i = 0; i < moduleSize.size(); i++)
-		{
-			if( moduleSize[i] == 0 || isActiveModule[i] == 0)
-			{
-				tmp[i] = moduleSize.max_value() + 1;
-			}
-			else
-			{
-				tmp[i] = moduleSize[i];
-			}
-		}
-
-		unsigned int moduleId = tmp.arg_min();
+		unsigned int moduleId = moduleSize.arg_min();
 		moduleCenter = mean.get_column(moduleId);
 		moduleCor.set_size( mean.cols());
 		moduleCor = moduleCenter * mean;
@@ -993,7 +992,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 
 		if( moduleToDeleteId != moduleId && isActiveModule[moduleToDeleteId] == 1)
 		{
-			GetCombinedMatrix( mainmatrix, index, moduleId, moduleToDeleteId, newModule);   
+			GetCombinedMatrix( mainmatrix, index, moduleId, moduleToDeleteId, newModule, &indexmap);   
 			newModule.normalize_columns();
 
 			vnl_matrix<double> mat = newModule.transpose();
@@ -1006,21 +1005,16 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 			if( newCor > cor)
 			{
 				isActiveModule[moduleToDeleteId] = 0;
+				activeModuleNum--;
 				moduleSize[moduleId] += moduleSize[moduleToDeleteId];
-				moduleSize[moduleToDeleteId] = 0;
+				moduleSize[moduleToDeleteId] = std::numeric_limits<int>::max();
 
 				mean.set_column(moduleId, newModuleMeans);
 				mean.set_column(moduleToDeleteId, zeroCol);
 				
 				delColsVec.push_back(moduleToDeleteId);
 				
-				for( unsigned int j = 0; j < index.size(); j++)
-				{
-					if( index[j] == moduleToDeleteId)
-					{
-						index[j] = moduleId;
-					}
-				}
+				indexmap[moduleToDeleteId] = moduleId;
 
 				Tree tr( TreeIndex[moduleId], TreeIndex[moduleToDeleteId], newCor, newIndex);
 				TreeIndex[moduleId] = newIndex;
@@ -1031,9 +1025,11 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 		}
 
 		isActiveModule[moduleId] = 0;
+		activeModuleNum--;
+		moduleSize[moduleId] = std::numeric_limits<int>::max();
 	}
 
-	StandardizeIndex(index);
+	StandardizeIndex(index, indexmap);
 	EraseCols( mean, delColsVec);
 
     vnl_vector<int> newTreeIndex(index.max_value() + 1);
@@ -1051,16 +1047,30 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 }
 
 void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, 
-										 vnl_matrix<double>& mat)
+										 vnl_matrix<double>& mat, vnl_vector<unsigned int>* indexMap)
 {
-	unsigned int i = 0;
 	unsigned int ind = 0;
-
-	for( i = 0; i < index.size(); i++)
+	if(indexMap == NULL)
 	{
-		if( index[i] == moduleId || index[i] == moduleDeleteId)
+		for(unsigned int i = 0; i < index.size(); i++)
 		{
-			mat.set_column( ind++, datamat.get_column(i));
+			if( index[i] == moduleId || index[i]== moduleDeleteId)
+			{
+
+				mat.set_column( ind++, datamat.get_column(i));
+			}
+		}
+	}
+	else
+	{
+		for(unsigned int i = 0; i < index.size(); i++)
+		{
+			unsigned int k = index[i];
+			if( (*indexMap)[k] == moduleId || (*indexMap)[k] == moduleDeleteId)
+			{
+
+				mat.set_column( ind++, datamat.get_column(i));
+			}
 		}
 	}
 }
@@ -1069,6 +1079,7 @@ vnl_vector<int> SPDAnalysisModel::GetModuleSize(vnl_vector<unsigned int>& index)
 {
 	vnl_vector<int> moduleSize;
 	moduleSize.set_size(index.max_value() + 1);
+	moduleSize.fill(0);
 	for( unsigned int i = 0; i < index.size(); i++)
 	{
 		moduleSize[index[i]]++;
@@ -1108,8 +1119,14 @@ void SPDAnalysisModel::GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<d
 	}
 }
 
-void SPDAnalysisModel::StandardizeIndex(vnl_vector<unsigned int>& index)
+void SPDAnalysisModel::StandardizeIndex(vnl_vector<unsigned int>& index, vnl_vector<unsigned int> &indexmap)
 {
+	for(unsigned int i = 0; i < index.size(); i++)
+	{
+		unsigned int k = index[i];
+		index[i] = indexmap[k];
+	}
+
 	vnl_vector<unsigned int> newIndex = index;
 	vnl_vector<unsigned int> sortY( index.size());
 	vnl_vector<unsigned int> sortI( index.size());
@@ -1773,52 +1790,56 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat
 	}
 
 	/// build MST for the modules based on their center distance
-	Graph globe_graph(clusterNum.size());
-	vnl_matrix< double> dist(clusterNum.size(), clusterNum.size());
-	vnl_matrix< int> rowi(clusterNum.size(), clusterNum.size());
-	vnl_matrix< int> rowj(clusterNum.size(), clusterNum.size());
-	for( int i = 0; i < clusterNum.size(); i++)
+	if(clusterNum.size() > 1)
 	{
-		vnl_matrix<double> clusterMati;
-		GetCombinedMatrix( mat, nstartRow[i], clusterNum[i], selFeatures, clusterMati);
-		for( int j = i + 1; j < clusterNum.size(); j++)
+		std::cout<< "Build MST for modules"<<std::endl;
+		Graph globe_graph(clusterNum.size());
+		vnl_matrix< double> dist(clusterNum.size(), clusterNum.size());
+		vnl_matrix< int> rowi(clusterNum.size(), clusterNum.size());
+		vnl_matrix< int> rowj(clusterNum.size(), clusterNum.size());
+		for( int i = 0; i < clusterNum.size(); i++)
 		{
-			vnl_matrix<double> clusterMatj;
-			GetCombinedMatrix( mat, nstartRow[j], clusterNum[j], selFeatures, clusterMatj);
-			dist(i,j) = ComputeModuleDistanceAndConnection(clusterMati, clusterMatj, rowi(i,j), rowj(i,j));
-			dist(j,i) = dist(i,j);
-			rowi(j,i) = rowi(i,j);
-			rowj(j,i) = rowj(i,j);
-			boost::add_edge(i, j, dist(i,j), globe_graph);
+			vnl_matrix<double> clusterMati;
+			GetCombinedMatrix( mat, nstartRow[i], clusterNum[i], selFeatures, clusterMati);
+			for( int j = i + 1; j < clusterNum.size(); j++)
+			{
+				vnl_matrix<double> clusterMatj;
+				GetCombinedMatrix( mat, nstartRow[j], clusterNum[j], selFeatures, clusterMatj);
+				dist(i,j) = ComputeModuleDistanceAndConnection(clusterMati, clusterMatj, rowi(i,j), rowj(i,j));
+				dist(j,i) = dist(i,j);
+				rowi(j,i) = rowi(i,j);
+				rowj(j,i) = rowj(i,j);
+				boost::add_edge(i, j, dist(i,j), globe_graph);
+			}
 		}
-	}
 
-	std::vector< boost::graph_traits< Graph>::vertex_descriptor> global_vertex( clusterNum.size());
-	try
-	{
-		boost::prim_minimum_spanning_tree(globe_graph, &global_vertex[0]);
-	}
-	catch(...)
-	{
-		std::cout<< "MST construction failure!"<<endl;
-		exit(111);
-	}
-	for( int i = 0; i < global_vertex.size(); i++)
-	{
-		if( i != global_vertex[i])
+		std::vector< boost::graph_traits< Graph>::vertex_descriptor> global_vertex( clusterNum.size());
+		try
 		{
-			int j = global_vertex[i];
-			int min = i < j ? i : j;
-			int max = i > j ? i : j;
+			boost::prim_minimum_spanning_tree(globe_graph, &global_vertex[0]);
+		}
+		catch(...)
+		{
+			std::cout<< "MST construction failure!"<<endl;
+			exit(111);
+		}
+		for( int i = 0; i < global_vertex.size(); i++)
+		{
+			if( i != global_vertex[i])
+			{
+				int j = global_vertex[i];
+				int min = i < j ? i : j;
+				int max = i > j ? i : j;
 
-			int modulei = rowi(min, max);
-			int modulej = rowj(min, max);
-			
-			vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
-			DataRow->InsertNextValue( modulei + nstartRow[min]);
-			DataRow->InsertNextValue( modulej + nstartRow[max]);
-			DataRow->InsertNextValue(dist(i,j));
-			table->InsertNextRow(DataRow);
+				int modulei = rowi(min, max);
+				int modulej = rowj(min, max);
+				
+				vtkSmartPointer<vtkVariantArray> DataRow = vtkSmartPointer<vtkVariantArray>::New();
+				DataRow->InsertNextValue( modulei + nstartRow[min]);
+				DataRow->InsertNextValue( modulej + nstartRow[max]);
+				DataRow->InsertNextValue(dist(i,j));
+				table->InsertNextRow(DataRow);
+			}
 		}
 	}
 	
@@ -2398,19 +2419,23 @@ void SPDAnalysisModel::Hist(vnl_matrix<double>&distance, double interVal, double
 
 double Dist(int *first, int *second)
 {
-	//if( *first > *second)
-	//{
-		//return *first - *second;
-	//}
-	//else
-	//{
-	//	return 0;
-	//}
 	return abs(*first - *second);
 }
 
+double OnedirectDist(int *first, int *second)
+{
+	if( *first > *second)
+	{
+		return *first - *second;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second,
-											vnl_matrix<double> &flowMatrix, int num_bin = NUM_BIN)
+											vnl_matrix<double> &flowMatrix, int num_bin = NUM_BIN, bool bOneDirection)
 {
 	using namespace dt_simplex;
 	int *src = new int[first.size()];
@@ -2450,7 +2475,16 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 
 	TsFlow *flow = new TsFlow[num_bin * num_bin];
 	int flowVars = 0;
-	double result = transportSimplex(&srcSig, &snkSig, Dist, flow, &flowVars);
+
+	double result = 0;
+	if(bOneDirection)
+	{
+		result = transportSimplex(&srcSig, &snkSig, OnedirectDist, flow, &flowVars);
+	}
+	else
+	{
+		result = transportSimplex(&srcSig, &snkSig, Dist, flow, &flowVars);
+	}
 	
 	for( int i = 0; i < num_bin; i++)
 	{
@@ -2473,18 +2507,15 @@ double SPDAnalysisModel::EarthMoverDistance(vnl_vector<unsigned int>& first, vnl
 	return result;
 }
 
-void SPDAnalysisModel::RunEMDAnalysis()
+void SPDAnalysisModel::RunEMDAnalysis(int numBin)
 {
+	std::ofstream ofs("EMD.txt");
+	ofs.precision(4);
 	vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
 
 	/** Generating the distance vector for module data and its MST data */
 	std::vector<vnl_vector<double> > moduleDistance;
 	moduleDistance.resize( this->ModuleMST.size());
-
-	#ifdef _OPENMP
-		omp_lock_t lock;
-		omp_init_lock(&lock);
-	#endif
 
 	#pragma omp parallel for
 	for( int i = 0; i <= this->ClusterIndex.max_value(); i++)
@@ -2494,71 +2525,106 @@ void SPDAnalysisModel::RunEMDAnalysis()
 		vnl_matrix<double> clusterData( this->MatrixAfterCellCluster.rows(), moduleSize[i]);
 		GetCombinedMatrix( this->MatrixAfterCellCluster, this->ClusterIndex, i, i, clusterData);    /// Get the module data for cluster i
 		GetMatrixDistance( clusterData, distance, CITY_BLOCK);
-		#ifdef _OPENMP
-			omp_set_lock(&lock);
-		#endif
-			moduleDistance[i] = distance;
-		#ifdef _OPENMP
-			omp_unset_lock(&lock);
-		#endif
+		moduleDistance[i] = distance;
 	}
-	#ifdef _OPENMP
-		omp_destroy_lock(&lock);
-	#endif
 
 	this->EMDMatrix.set_size( this->ClusterIndex.max_value() + 1, this->ClusterIndex.max_value() + 1);
 	this->EMDMatrix.fill(0);
 	this->DistanceEMDVector.set_size( this->ClusterIndex.max_value() + 1);
 	this->DistanceEMDVector.fill(0);
 
-	//#pragma omp parallel for
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
+		std::cout<< "matching module " << i<<endl;
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist;
-		Hist( moduleDistance[i], NUM_BIN, hist_interval, moduleHist);
+		Hist( moduleDistance[i], numBin, hist_interval, moduleHist);
+		ofs<< moduleHist<< endl;
 
-		for( int j = 0; j < moduleDistance.size(); j++)
-		{	
-			std::cout<< "matching module " << i<< " with MST " << j<<endl;
-
-			vnl_vector<double> mstDistance; 
-			GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
-			vnl_vector<unsigned int> mstHist;
-			Hist( mstDistance, hist_interval, mstHist); 
-
-			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
-			this->EMDMatrix( i, j) = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
-		}
-
-		/// matching with distance to device
-		if( disCor != 0)
+		bool bMatch = true;
+		unsigned int sumHist = moduleHist.sum();
+		for(unsigned int k = 0; k < moduleHist.size(); k++)
 		{
-			std::cout<< "matching module " << i<< " with distance MST "<<endl;
-			vnl_vector<double> mstDistance; 
-			GetMSTMatrixDistance( moduleDistance[i], this->DistanceMST, mstDistance);  // get mst j distance from module i's distance matrix
-			vnl_vector<unsigned int> mstHist;    
-			Hist( mstDistance, hist_interval, mstHist); 
-			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
-			this->DistanceEMDVector[ i] = EarthMoverDistance( moduleHist, mstHist, flowMatrix);
-		}
-	}
-
-	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
-	{
-		double max = this->EMDMatrix.get_row(i).max_value();
-		for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
-		{
-			if( max != 0)
+			if(moduleHist[k] >= sumHist * 0.9)
 			{
-				this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+				bMatch = false;
+				std::cout<< "Remove module "<<i<<std::endl;
+				break;
 			}
 		}
-		if( max != 0)
+
+		if( bMatch)
 		{
-			this->DistanceEMDVector[ i] = this->DistanceEMDVector[ i] / max;
+			#pragma omp parallel for
+			for( int j = 0; j < moduleDistance.size(); j++)
+			{	
+				vnl_vector<double> mstDistance; 
+				GetMSTMatrixDistance( moduleDistance[i], this->ModuleMST[j], mstDistance);  // get mst j distance from module i's distance matrix
+				vnl_vector<unsigned int> mstHist;
+				Hist( mstDistance, hist_interval, mstHist); 
+
+				ofs<< mstHist<< endl;
+
+				vnl_matrix<double> flowMatrix( numBin, numBin);
+				double earth = EarthMoverDistance( moduleHist, mstHist, flowMatrix, numBin);
+				this->EMDMatrix( i, j) = earth > 0 ? earth : 0;
+			}
+
+			///// matching with distance to device
+			//if( disCor != 0)
+			//{
+			//	std::cout<< "matching module " << i<< " with distance MST "<<endl;
+			//	vnl_vector<double> mstDistance; 
+			//	GetMSTMatrixDistance( moduleDistance[i], this->DistanceMST, mstDistance);  // get mst j distance from module i's distance matrix
+			//	vnl_vector<unsigned int> mstHist;    
+			//	Hist( mstDistance, hist_interval, mstHist); 
+			//	vnl_matrix<double> flowMatrix( numBin, numBin);
+			//	this->DistanceEMDVector[ i] = EarthMoverDistance( moduleHist, mstHist, flowMatrix, numBin);
+			//}
 		}
 	}
+
+	moduleForSelection.clear();
+	for( int i = 0; i < EMDMatrix.rows(); i++)
+	{
+		if( EMDMatrix(i,0) > -1e-9)
+		{
+			moduleForSelection.push_back(i);
+		}
+	}
+
+	for(int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		this->EMDMatrix(i,i) = 1;
+		for( int j = 0; j < this->EMDMatrix.rows(); j++)
+		{
+			if( j != i)
+			{
+				double max = this->EMDMatrix(i,j) > this->EMDMatrix(j,i) ? this->EMDMatrix(i,j) : this->EMDMatrix(j,i);
+				this->EMDMatrix(i,j) = max;
+				this->EMDMatrix(j,i) = max;
+			}
+		}
+	}
+	this->EMDMatrix = this->EMDMatrix / this->EMDMatrix.max_value();
+
+	ofs<< this->EMDMatrix<< std::endl;
+	ofs.close();
+	//for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	//{
+	//	double max = this->EMDMatrix.get_row(i).max_value();
+	//	for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
+	//	{
+	//		if( max != 0)
+	//		{
+	//			this->EMDMatrix( i, j) = this->EMDMatrix( i, j) / max;
+	//		}
+	//	}
+	//	if( max != 0)
+	//	{
+	//		this->DistanceEMDVector[ i] = this->DistanceEMDVector[ i] / max;
+	//	}
+	//}
 	std::cout<< "EMD matrix has been built successfully"<<endl;
 }
 
@@ -2630,7 +2696,7 @@ void SPDAnalysisModel::GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix)
 //	ofSimatrix.close();	
 //}
 
-void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, std::vector< unsigned int> *disModIndex)
+void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
 {
 	QString filenameSM = this->filename + "similarity_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
@@ -2655,14 +2721,14 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, std::vect
 	else
 	{
 		//ofSimatrix<< "Overal Progression"<<endl;
-		vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
+		//vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
 		for( unsigned int i = 0; i < moduleForSelection.size(); i++)
 		{
 			int moduleI = moduleForSelection[i];
 			//ofSimatrix <<"MST "<<moduleI<<endl;
 			for( unsigned int j = 0; j < moduleForSelection.size(); j++)
 			{
-				if( this->EMDMatrix( moduleI, moduleForSelection[j]) <= threshold)     // find the modules that support common mst    change to smaller than
+				if( this->EMDMatrix( moduleI, moduleForSelection[j]) >= threshold)     // find the modules that support common mst    change to smaller than
 				{
 					simModIndex.push_back(moduleForSelection[j]);
 					//ofSimatrix << moduleForSelection[j] <<"\t";
@@ -2676,20 +2742,153 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, std::vect
 				{
 					for( unsigned int k = j + 1; k < simModIndex.size(); k++)
 					{
-						this->heatmapMatrix( simModIndex[j], simModIndex[k]) = heatmapMatrix( simModIndex[j], simModIndex[k]) + moduleSize[moduleI];
-						this->heatmapMatrix( simModIndex[k], simModIndex[j]) = heatmapMatrix( simModIndex[k], simModIndex[j]) + moduleSize[moduleI];
+						this->heatmapMatrix( simModIndex[j], simModIndex[k]) = heatmapMatrix( simModIndex[j], simModIndex[k]) + 1;//moduleSize[moduleI];
+						this->heatmapMatrix( simModIndex[k], simModIndex[j]) = heatmapMatrix( simModIndex[k], simModIndex[j]) + 1;//moduleSize[moduleI];
 					}
-					this->heatmapMatrix(simModIndex[j], simModIndex[j]) = this->heatmapMatrix(simModIndex[j], simModIndex[j]) + moduleSize[moduleI];
+					this->heatmapMatrix(simModIndex[j], simModIndex[j]) = this->heatmapMatrix(simModIndex[j], simModIndex[j]) + 1;//moduleSize[moduleI];
 				}
 			}
 			simModIndex.clear();
 		}
 
-		c1->Initialize( heatmapMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+		c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 		c1->RunClusClus();
+	}
+
+	unsigned int nrows = this->EMDMatrix.rows();
+	vnl_matrix<double> EMDMat(nrows, nrows);
+	vnl_matrix<double> IterMat(nrows, nrows);
+	vnl_vector<int> order(nrows);
+
+	for( unsigned int i = 0; i < nrows; i++)
+	{
+		order[i] = c1->optimalleaforder[i];
+	}
+
+	vnl_vector<double> vec;
+	bool iterate = true;
+	int count = 0;
+	while(iterate)
+	{
+		for(int i = 0; i < nrows; i++)
+		{
+			for(int j = 0; j < nrows; j++)
+			{
+				EMDMat(i,j) = EMDMatrix(order[i],order[j]);
+			}
+		}
+		iterate = DiagnalIteration(EMDMat, order, vec);
+
+		count++;
+		if(count >= 10)
+		{
+			break;
+		}
+	}
+	std::cout<<"Converge after "<<count<<std::endl;
+
+	for(unsigned int i = 0; i < nrows; i++)
+	{
+		c1->optimalleaforder[i] = order[i];
+	}
+	if(diagVec)
+	{
+		diagVec->set_size(nrows);
+		for(unsigned int i = 0; i < nrows; i++)
+		{
+			(*diagVec)[i] = vec(i);
+		}
 	}
 	ofSimatrix << this->heatmapMatrix<< std::endl;
 	ofSimatrix.close();	
+}
+
+bool SPDAnalysisModel::DiagnalIteration(vnl_matrix<double> &mat, vnl_vector<int> &order, vnl_vector<double> &vec)
+{
+	unsigned int nrows = mat.rows();
+	vec.set_size(nrows);
+	for( unsigned int i = 0; i < nrows; i++)
+	{
+		if( i == 0 )
+		{
+			mat(0,0) = mat(1,0);
+		}
+		else if( i == nrows - 1)
+		{
+			mat(nrows - 1, nrows - 1) = mat(nrows - 1, nrows - 2);
+		}
+		else
+		{
+			mat(i,i) = mat(i,i+1) > mat(i-1,i) ? mat(i,i+1) : mat(i-1,i);
+		}
+		vec[i] = mat(i,i);
+	}
+
+	bool bstate = false;
+	for( unsigned int i = 0; i < vec.size(); i++)
+	{
+		for( unsigned int j = i + 1; j < vec.size(); j++)
+		{
+			if( vec[i] < vec[j])
+			{
+				std::swap(vec[i],vec[j]);
+				std::swap(order[i],order[j]);
+				bstate = true;
+			}
+		}
+	}
+	return bstate;
+}
+
+void SPDAnalysisModel::GetClusClusPSCWithoutIterData(clusclus* c1, double threshold)
+{
+	QString filenameSM = this->filename + "similarity_matrix.txt";
+	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
+	ofSimatrix.precision(4);
+
+	this->heatmapMatrix.set_size( this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	this->heatmapMatrix.fill(0);
+
+	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		std::vector< unsigned int> simModIndex;
+		for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
+		{
+			if( this->EMDMatrix( i, j) >= threshold)
+			{
+				simModIndex.push_back(j);
+			}
+		}
+		//ofSimatrix <<endl;
+
+		if( simModIndex.size() > 1)   // not only include itself
+		{
+			for( unsigned int j = 0; j < simModIndex.size(); j++)
+			{
+				for( unsigned int k = j + 1; k < simModIndex.size(); k++)
+				{
+					this->heatmapMatrix( simModIndex[j], simModIndex[k]) = heatmapMatrix( simModIndex[j], simModIndex[k]) + 1;
+					this->heatmapMatrix( simModIndex[k], simModIndex[j]) = heatmapMatrix( simModIndex[k], simModIndex[j]) + 1;
+				}
+				this->heatmapMatrix(simModIndex[j], simModIndex[j]) = this->heatmapMatrix(simModIndex[j], simModIndex[j]) + 1;
+			}
+		}
+	}
+
+	c1->Initialize( EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	c1->RunClusClus();
+
+	ofSimatrix << this->EMDMatrix<< std::endl;
+	ofSimatrix.close();	
+}
+
+void SPDAnalysisModel::GetClusClusPSCData(clusclus* c1)
+{
+	if(c1)
+	{
+		c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+		c1->RunClusClus();
+	}
 }
 
 void SPDAnalysisModel::GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int> & index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat)
@@ -2899,7 +3098,7 @@ double SPDAnalysisModel::GetEMDSelectedPercentage(double thres)
 		{
 			for( unsigned int j = 0; j < this->EMDMatrix.cols(); j++)
 			{
-				if( this->EMDMatrix( i, j) <= thres && this->EMDMatrix( i, j) > 0)     // find the modules that support common mst
+				if( this->EMDMatrix( i, j) >= thres && this->EMDMatrix( i, j) > 0)     // find the modules that support common mst
 				{
 					count++;
 				}
@@ -3063,7 +3262,7 @@ unsigned int SPDAnalysisModel::GetKNeighborNum()
 	return m_kNeighbor;
 }
 
-void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
+void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int nbins)
 {
 	m_kNeighbor = kNeighbor;
 	std::cout<< m_kNeighbor<<std::endl;
@@ -3077,15 +3276,15 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		featureClusterIndex[index].push_back(i);
 	}
 	this->EMDMatrix.set_size( featureClusterIndex.size(),  featureClusterIndex.size());
-	this->EMDMatrix.fill(0);
+	this->EMDMatrix.fill(-1);
 
 	std::vector< std::vector< unsigned int> > kNearIndex;
 	std::vector< vnl_matrix< double> > disMatrixPtList;
-	vnl_vector< double> disScale;
+	//vnl_vector< double> disScale;
 
 	disMatrixPtList.resize(featureClusterIndex.size());
 	kNearIndex.resize(featureClusterIndex.size());
-	disScale.set_size(featureClusterIndex.size());
+	//disScale.set_size(featureClusterIndex.size());
 
 	#pragma omp parallel for
 	for( int i = 0; i < featureClusterIndex.size(); i++)
@@ -3102,36 +3301,30 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 		vnl_vector<double> farWeights;
 		FindNearestKSample(modDisti, nearIndex, kNeighbor);
 		GetKWeights( modDisti, nearIndex, nearWeights, kNeighbor);
-		double min = modDisti.min_value();
 
+		double min = modDisti.min_value();
 		for( int k = 0; k < modDisti.rows(); k++)
 		{
 			modDisti(k,k) = 0;
 		}
 
-		FindFarthestKSample(modDisti, farIndex, kNeighbor);
-		GetKWeights(modDisti, farIndex, farWeights, kNeighbor);
-		
-		double max = modDisti.max_value();
-		double interval = ( max - min) / NUM_BIN;
-		//ofs<< min<<"\t"<<interval<<std::endl;
-		if( interval > 1e-9)
-		{
-			vnl_vector<unsigned int> histMod, histNear, histFar;
-			Hist(modDisti, interval, min, histMod);
-			Hist(nearWeights, interval, min, histNear);
-			Hist(farWeights, interval, min, histFar);
-			//ofs<< histMod<<std::endl;
-			//ofs<< histNear<<std::endl;
-			//ofs<< histFar<<std::endl;
-			vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
-			disScale[i] = EarthMoverDistance( histFar, histNear, flowMatrix);
-			//ofs<< disScale[i]<<std::endl;
-		}
-		else
-		{
-			disScale[i] = 0;
-		}
+		//if( interval > 1e-9)
+		//{
+		//	vnl_vector<unsigned int> histMod, histNear, histFar;
+		//	Hist(modDisti, interval, min, histMod);
+		//	Hist(nearWeights, interval, min, histNear);
+		//	Hist(farWeights, interval, min, histFar);
+		//	//ofs<< histMod<<std::endl;
+		//	//ofs<< histNear<<std::endl;
+		//	//ofs<< histFar<<std::endl;
+		//	vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
+		//	disScale[i] = EarthMoverDistance( histFar, histNear, flowMatrix);
+		//	//ofs<< disScale[i]<<std::endl;
+		//}
+		//else
+		//{
+		//	disScale[i] = 0;
+		//}
 		disMatrixPtList[i] = modDisti;
 		kNearIndex[i] = nearIndex;
 	}
@@ -3173,76 +3366,49 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 	//ofs<< disScale<<std::endl<<std::endl;
 
 	/// k nearest neighbor graph match process
-	#pragma omp parallel for
 	for( int i = 0; i < featureClusterIndex.size(); i++)
 	{
+		std::cout<< "Matching module "<<i<<std::endl; 
 		double min = disMatrixPtList[i].min_value();
 		double max = disMatrixPtList[i].max_value();
-		double interval = ( max - min) / NUM_BIN;
+		double interval = ( max - min) / nbins;
 
-		vnl_vector< double> row;
-		row.set_size(featureClusterIndex.size());
-		row.fill(0);
 		if( interval > 1e-9)
 		{
-			
 			vnl_vector<unsigned int> histModi;			
-			Hist(disMatrixPtList[i], interval, min, histModi);		
+			Hist(disMatrixPtList[i], interval, min, histModi, nbins);		
 			unsigned int maxHisti = (unsigned int)(histModi.sum() * 0.9);   // if the module's full graph edge distribution highly agglomerate at one bin, then discard this module.
+			bool bstate = true;
 			for( int id = 0; id < histModi.size(); id++) 
 			{
 				if(histModi[id] > maxHisti)
 				{
-					std::cout<< i<<"\t"<<histModi[id]<<"\t"<<maxHisti<<std::endl;
-					row.fill(-10);
+					std::cout<< "Remove module "<<i<<std::endl;
+					bstate = false;
 					break;
 				}
 			}
-
-			if(row[0] == 0)  // bin more averagely 
+			if(bstate) 
 			{
-				vnl_vector<unsigned int> histi;
-				vnl_vector<double> weights;
-				GetKWeights( disMatrixPtList[i], kNearIndex[i], weights, kNeighbor);
-				Hist(weights, interval, min, histi);
-
-				//vnl_vector<double> weights2;
-				//vnl_vector<unsigned int> hist2;
-				//GetKWeights( disMatrixPtList[i], distancekNearIndex, weights2, kNeighbor);
-				//Hist(weights2, interval, min, hist2);
-				//vnl_matrix<double> flowMatrix2( NUM_BIN, NUM_BIN);
-				//double movedEarth2 = EarthMoverDistance( hist2, histi, flowMatrix2);
-				//emdDis2[i] = movedEarth2 / disScale[i];
-
+				vnl_vector< double> row;
+				row.set_size(featureClusterIndex.size());
+				row.fill(0);
+				#pragma omp parallel for
 				for( int j = 0; j < featureClusterIndex.size(); j++)
 				{
+					//std::cout<<j<<"\t";
 					vnl_vector<double> matchWeights;
 					vnl_vector<unsigned int> histj;
 					
 					GetKWeights( disMatrixPtList[i], kNearIndex[j], matchWeights, kNeighbor);
-					Hist( matchWeights, interval, min, histj);
-					//ofs<< i<<"\t"<<j<<std::endl;
-					//ofs<< histj<<std::endl;
-
-					vnl_matrix<double> flowMatrix( NUM_BIN, NUM_BIN);
-
-					double movedEarth = EarthMoverDistance( histj, histi, flowMatrix);
-					//ofs<< movedEarth<<std::endl;
-					row[j] = movedEarth;
+					Hist( matchWeights, interval, min, histj, nbins);
+					vnl_matrix<double> flowMatrix( nbins, nbins);
+					double earth = EarthMoverDistance( histModi, histj, flowMatrix, nbins, true);
+					row[j] = earth > 0 ? earth : 0;
 				}
+				this->EMDMatrix.set_row(i, row);
+				//std::cout<<"\n";
 			}
-			//ofs<< row<<std::endl;
-			//vnl_vector< double> nrow = row - row.mean();
-			//double var = nrow.squared_magnitude() / nrow.size();
-			//var = sqrt(var);
-
-			row = row / disScale[i];
-			this->EMDMatrix.set_row(i, row);
-		}
-		else
-		{
-			row.fill(-10);
-			this->EMDMatrix.set_row(i, row);
 		}
 	}
 
@@ -3253,17 +3419,31 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor)
 	moduleForSelection.clear();
 	for( int i = 0; i < EMDMatrix.rows(); i++)
 	{
-		if( EMDMatrix(i,0) > -1e-9)
+		if( EMDMatrix(i,0) == -1)
+		{
+			this->EMDMatrix.set_row(i,(double)0);
+			this->EMDMatrix.set_column(i,(double)0);
+		}
+		else
 		{
 			moduleForSelection.push_back(i);
 		}
 	}
 
-	double max1 = this->EMDMatrix.max_value();
-	if( max1 > 1e-9)
+	for(int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
-		this->EMDMatrix = this->EMDMatrix / max1;
+		this->EMDMatrix(i,i) = 1;
+		for( int j = 0; j < this->EMDMatrix.rows(); j++)
+		{
+			if( j != i)
+			{
+				double max = this->EMDMatrix(i,j) > this->EMDMatrix(j,i) ? this->EMDMatrix(i,j) : this->EMDMatrix(j,i);
+				this->EMDMatrix(i,j) = max;
+				this->EMDMatrix(j,i) = max;
+			}
+		}
 	}
+	this->EMDMatrix = this->EMDMatrix / this->EMDMatrix.max_value();
 
 	//ofs<< kNeighbor<<"\t"<<max1<<std::endl;
 
@@ -3999,33 +4179,9 @@ void SPDAnalysisModel::GetClusterFeatureValue(std::vector< std::vector< long int
 	featureName = "Colored by " + std::string(name);
 }
 
-vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
-				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder, int maxId)
+vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder)
 {
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	//vnl_matrix<double> averFeatureModule( clusIndex.size(), UNMatrixAfterCellCluster.cols());
-	//for( int i = 0; i < clusIndex.size(); i++)
-	//{
-	//	vnl_vector<double> tmp( UNMatrixAfterCellCluster.cols());
-	//	tmp.fill(0);
-	//	for( int j = 0; j < clusIndex[i].size(); j++)
-	//	{
-	//		vnl_vector<double> row = UNMatrixAfterCellCluster.get_row(clusIndex[i][j]);
-	//		tmp += row;
-	//	}
-	//	tmp /= clusIndex[i].size();
-	//	averFeatureModule.set_row(i, tmp);
-	//}
-
-	//std::ofstream ofs("averFeatureModule.txt");
-	//ofs<< averFeatureModule<<endl;
-	//vnl_vector<long int> order( TreeOrder.size());
-	//for( int i = 0; i < TreeOrder.size(); i++)
-	//{
-	//	order[ TreeOrder[i]] = i;
-	//}
-	//ofs<< order<<endl;
-	//ofs.close();
 
 	vtkSmartPointer<vtkVariantArray> column;
 	column = vtkSmartPointer<vtkVariantArray>::New();
@@ -4038,11 +4194,6 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 	column->SetName( "Progression Tag");
 	table->AddColumn(column);
 	column = vtkSmartPointer<vtkVariantArray>::New();
-	column->SetName( "Device Sample Percentage");
-	table->AddColumn(column);
-	column = vtkSmartPointer<vtkVariantArray>::New();
-	column->SetName( "Distance To Device");
-	table->AddColumn(column);
 	
 	for(int i = 0; i < selFeatureOrder.size(); i++)
 	{		
@@ -4068,15 +4219,6 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 			DataRow->InsertNextValue( indMapFromIndToVertex[id]);
 			DataRow->InsertNextValue( count);
 			DataRow->InsertNextValue( i);
-			DataRow->InsertNextValue( percentageOfSamples[i]);
-			if( indMapFromIndToVertex[id] < maxId)
-			{
-				DataRow->InsertNextValue( UNDistanceToDevice[id]);
-			}
-			else
-			{
-				DataRow->InsertNextValue( -1); 
-			}
 
 			for( int k = 0; k < selFeatureOrder.size(); k++)
 			{
@@ -4092,7 +4234,7 @@ vtkSmartPointer<vtkTable> SPDAnalysisModel::GetAverModuleTable(std::vector< std:
 		}
 	}
 
-	ftk::SaveTable("AverTable.txt",table);
+	//ftk::SaveTable("AverTable.txt",table);
 	return table;
 }
 
@@ -4450,7 +4592,7 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 				}
 			}
 		}
-		std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
+		//std::cout<< "Movied earth from upper bins to lower bins:"<<sum<<std::endl;
 		if( sum >= 0.5)  // between k-NNG and noise-NNG
 		{
 			rangeNoise = EarthMoverDistance( histNoise, histNear, flowMatrix, nbins);
@@ -4493,23 +4635,212 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 	return ps;
 }
 
-double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+void SPDAnalysisModel::ModuleCorrelationPSC(unsigned int kNeighbor, int nbins)
 {
-	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
+	m_kNeighbor = kNeighbor;
+	std::cout<< "K equals: "<< m_kNeighbor<<std::endl;
+
+	vnl_vector<int> moduleSize = GetModuleSize( this->ClusterIndex);
+
+	this->EMDMatrix.set_size( moduleSize.size(),  moduleSize.size());
+	this->EMDMatrix.fill(0);
+
+	std::vector< std::vector< unsigned int> > kNearIndex;
+	std::vector< vnl_matrix< double> > disMatrixPtList;
+	vnl_vector<double> disScale;
+	disMatrixPtList.resize(moduleSize.size());
+	kNearIndex.resize(moduleSize.size());
+	disScale.set_size(moduleSize.size());
+	disScale.fill(0);
+
+	#pragma omp parallel for
+	for( int i = 0; i < moduleSize.size(); i++)
+	{
+		std::cout<< i<<std::endl;
+		vnl_matrix< double> modulei(this->MatrixAfterCellCluster.rows(), moduleSize[i]);
+		GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, i, modulei);
+		vnl_matrix< double> modDisti;
+		EuclideanBlockDist(modulei, modDisti);
+
+		std::vector<unsigned int> nearIndex;
+		vnl_vector<double> nearWeights;
+
+		FindNearestKSample(modDisti, nearIndex, kNeighbor);
+		GetKWeights( modDisti, nearIndex, nearWeights, kNeighbor);
+		double min = modDisti.min_value();
+
+		for( int k = 0; k < modDisti.rows(); k++)
+		{
+			modDisti(k,k) = 0;
+		}
+		
+		double max = modDisti.max_value();
+		double interval = ( max - min) / nbins;
+
+		if( interval > 1e-9)
+		{
+			vnl_vector<unsigned int> histMod, histNear, histComplement;
+			Hist(modDisti, interval, min, histMod, nbins);
+			unsigned int maxHist = (unsigned int)(histMod.sum() * 0.9);   // if the module's full graph edge distribution highly agglomerate at one bin, then discard this module.
+			bool bmatch = true;
+			for( int id = 0; id < histMod.size(); id++) 
+			{
+				if(histMod[id] > maxHist)
+				{
+					std::cout<<"Remove "<< i<<std::endl;
+					bmatch = false;
+					break;
+				}
+			}
+			if(bmatch)
+			{
+				Hist(nearWeights, interval, min, histNear, nbins);
+				histComplement = histMod - histNear;
+				vnl_matrix<double> flowMatrix( nbins, nbins);
+				disScale[i] = EarthMoverDistance( histComplement, histNear, flowMatrix, nbins);
+			}
+		}
+
+		disMatrixPtList[i] = modDisti;
+		kNearIndex[i] = nearIndex;
+	}
+
+	//std::ofstream ofs1("match.txt");
+	/// k nearest neighbor graph match process
+	for( int i = 0; i < moduleSize.size(); i++)
+	{
+		//std::cout<< "Matching module "<< i<<std::endl;
+		double min = disMatrixPtList[i].min_value();
+		double max = disMatrixPtList[i].max_value();
+		double interval = ( max - min) / nbins;
+
+		vnl_vector< double> row;
+		row.set_size(moduleSize.size());
+		row.fill(0);
+		if( abs(disScale[i]) > 1e-9)
+		{
+			vnl_vector<unsigned int> histModi;
+			Hist(disMatrixPtList[i], interval, min, histModi, nbins);
+
+			//#pragma omp parallel for
+			for( int j = 0; j < moduleSize.size(); j++)
+			{
+				//std::cout<< j<< "\t";
+				if( abs(disScale[j]) > 1e-9)
+				{
+					vnl_vector<double> matchWeights;
+					vnl_vector<unsigned int> histj;
+					vnl_vector<unsigned int> histjComplement;
+					GetKWeights( disMatrixPtList[i], kNearIndex[j], matchWeights, kNeighbor);
+					Hist( matchWeights, interval, min, histj, nbins);
+					histjComplement = histModi - histj;
+
+					//ofs1 << i<<"\t"<<j<< std::endl;
+					//ofs1 << histjComplement<<std::endl;
+					//ofs1 << histj<<std::endl;
+					vnl_matrix<double> flowMatrix( nbins, nbins);
+					double movedEarth = EarthMoverDistance( histjComplement, histj, flowMatrix, nbins);
+					row[j] = movedEarth > 0 ? movedEarth : 0;
+				}
+			}
+			std::cout<< "\n";
+		}
+	}
+	//ofs1.close();
+
+	for(int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		this->EMDMatrix(i,i) = 0;
+		for( int j = 0; j < this->EMDMatrix.rows(); j++)
+		{
+			if( j != i)
+			{
+				double max = this->EMDMatrix(i,j) > this->EMDMatrix(j,i) ? this->EMDMatrix(i,j) : this->EMDMatrix(j,i);
+				this->EMDMatrix(i,j) = max;
+				this->EMDMatrix(j,i) = max;
+			}
+		}
+	}
+	this->EMDMatrix = this->EMDMatrix / this->EMDMatrix.max_value();
+
+	std::cout<< "EMD matrix has been built successfully."<<endl;
+
+	std::ofstream ofs("PSCEMD.txt");
+	ofs<< EMDMatrix<<std::endl<<std::endl;
+	ofs.close();
+}
+
+void SPDAnalysisModel::EMDMatrixIteration()
+{
+	std::cout<< "Begin PSC iterations."<<endl;
+	vnl_matrix< double> newMatrix;
+	bool changed = true;
+	int count = 0;
+	while(changed)
+	{
+		changed = PSCIterationRadius2(EMDMatrix, newMatrix);
+		count++;
+		EMDMatrix = newMatrix;
+		if( count >= 1000)
+		{
+			std::cout<< "Not able to converge"<<std::endl;
+			break;
+		}
+	}
+	std::cout<< "Converged after "<<count<<" iterations."<<std::endl;
+	std::ofstream ofs("PSCEMDIter.txt");
+	ofs<< EMDMatrix<<std::endl<<std::endl;
+	ofs.close();
+}
+
+bool SPDAnalysisModel::PSCIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output)
+{
+	bool bchanged = false;
+	output.set_size(input.rows(), input.cols());
+	output.fill(0);
+	for( unsigned int i = 0; i < output.rows(); i++)
+	{
+		output(i,i) = input(i,i);
+	}
+	for( unsigned int i = 0; i < output.rows(); i++)
+	{
+		for( unsigned int j = i + 1; j < output.cols(); j++)
+		{
+			double val = input(i,j);
+			for( unsigned int k = 0; k < output.rows(); k++)
+			{
+				if( k != i && k != j)
+				{
+					double min = input(i,k) > input(k,j) ? input(k,j) : input(i,k);
+					if(min > val)
+					{
+						bchanged = true;
+						val = min;
+					}
+				}
+			}
+			output(i,j) = val;
+			output(j,i) = val;
+		}
+	}
+	return bchanged;
+}
+
+double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_matrix<double> &mat1, vnl_matrix<double> &mat2, bool debug)
+{
+	if( abs(mat1.max_value() - mat1.min_value()) < 1e-6 ||  abs(mat2.max_value() - mat2.min_value()) < 1e-6)
 	{
 		return 0;
 	}
 
 	vnl_matrix< double> contextDis;
-	EuclideanBlockDist(vec1, contextDis);
+	EuclideanBlockDist(mat1, contextDis);
 
 	std::vector<unsigned int> nearIndex;
 	vnl_vector<double> nearWeights;
-	vnl_vector<double> nearWeightsComplement;
 	
 	FindNearestKSample(contextDis, nearIndex, kNeighbor);
 	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
-	GetKWeightsComplement( contextDis, nearIndex, nearWeightsComplement, kNeighbor);
 	
 	double min = contextDis.min_value();
 
@@ -4521,23 +4852,40 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 	double max = contextDis.max_value();
 	double interval = ( max - min) / nbins;
 
+	vnl_vector<unsigned int> histContext;
+	vnl_vector<unsigned int> histNear;
+	vnl_vector<unsigned int> histComplement;
+	Hist(contextDis, interval, min, histContext, nbins);
+	Hist(nearWeights, interval, min, histNear, nbins);
+	histComplement = histContext - histNear;
+	
 	vnl_matrix< double> dis2;
 	std::vector<unsigned int> nearIndex2;
 	vnl_vector<double> matchWeights2;
-	vnl_vector<double> matchWeights2Complement;
+	
 	vnl_vector<unsigned int> hist2;
 	vnl_vector<unsigned int> hist2Complement;
-	vnl_vector<unsigned int> histNear;
-	vnl_vector<unsigned int> histComplement;
-	
-	EuclideanBlockDist(vec2, dis2);
+	EuclideanBlockDist(mat2, dis2);
 	FindNearestKSample(dis2, nearIndex2, kNeighbor);
 	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
-	GetKWeightsComplement( contextDis, nearIndex2, matchWeights2Complement, kNeighbor);
 	Hist( matchWeights2, interval, min, hist2, nbins);
-	Hist( matchWeights2Complement,  interval, min, hist2Complement, nbins);
-	Hist(nearWeights, interval, min, histNear, nbins);
-	Hist(nearWeightsComplement, interval, min, histComplement, nbins);
+	hist2Complement = histContext - hist2;
+
+	bool bstate = false;
+	unsigned int maxHist = (unsigned int)(histContext.sum() * 0.9);   // if the module's full graph edge distribution highly agglomerate at one bin, then discard this module.
+	for( int id = 0; id < histContext.size(); id++) 
+	{
+		if(histContext[id] > maxHist)
+		{	
+			bstate = true;
+			break;
+		}
+	}
+
+	if(bstate)
+	{
+		return 0;
+	}
 	
 	double ps = 0;
 	vnl_matrix<double> flowMatrix( nbins, nbins);
@@ -4556,7 +4904,7 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 			}
 		}
 	}
-	std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
+	//std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
 	if( sum >= 0.5)  
 	{
 		ps = movedEarth / range;

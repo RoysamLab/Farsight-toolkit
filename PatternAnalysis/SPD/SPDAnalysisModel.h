@@ -78,9 +78,11 @@ public:
 	vtkSmartPointer<vtkTable> GetMSTTable( int MSTIndex);
 	void WriteGraphToGDF( std::vector< unsigned int> &selFeatures);
 
-	void RunEMDAnalysis();
+	void RunEMDAnalysis(int numBin);
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
-	void GetClusClusData(clusclus* c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
+	void GetClusClusData(clusclus* c1, double threshold, vnl_vector<double> *diagnalVec = NULL, std::vector< unsigned int> *disModIndex = NULL);
+	void GetClusClusPSCWithoutIterData(clusclus* c1, double threshold);
+	void GetClusClusPSCData(clusclus* c1);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
@@ -95,7 +97,9 @@ public:
 	void GetClusterOrder(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &treeOrder, std::vector< int> &clusterOrder);
 
 	void ModuleCoherenceMatchAnalysis();
-	void ModuleCorrelationMatrixMatch(unsigned int kNeighbor);
+	void ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int nbins);
+	void ModuleCorrelationPSC(unsigned int kNeighbor, int nbins);
+	void EMDMatrixIteration();
 
 	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	double GetCorMatSelectedPercentage(double thres);
@@ -104,8 +108,7 @@ public:
 	void GetPercentage(std::vector< std::vector< long int> > &clusIndex, std::vector< double> &colorVec);
 	void GetCloseToDevicePercentage( std::vector< std::vector< long int> > &clusIndex, std::vector< double> &disPer, double disThreshold);
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
-	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< double> &percentageOfSamples,
-				    std::vector< double> &percentageOfNearDeviceSamples, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder, int maxId);
+	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
 	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 	vtkSmartPointer<vtkTable> GetTableForHist(std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
@@ -119,11 +122,11 @@ public:
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
-	static double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+	double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_matrix<double> &mat1, vnl_matrix<double> &mat2, bool debug = false);
     static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
 	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
 protected:
-
+	bool DiagnalIteration(vnl_matrix<double> &mat, vnl_vector<int> &order, vnl_vector<double> &vec);
 	static void NormalizeData(vnl_matrix<double> &mat);
 	void split( std::string& s, char delim,std::vector< std::string >* ret);
 	int LineNum( const char* fileName);
@@ -133,13 +136,13 @@ protected:
 	void GetAverageModule( vnl_matrix<double> &mat, vnl_vector<double> &distance, std::vector< std::vector<int> > &index, vnl_matrix<double> &averageMat, vnl_vector<double> &averageDistance);
 	int ClusterAggFeatures( vnl_matrix<double>& mainmatrix, vnl_vector<unsigned int>& index, vnl_matrix<double>& mean, double cor);
 	vnl_vector<int> GetModuleSize( vnl_vector<unsigned int>& index);
-	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat);
+	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleDeleteId, vnl_matrix<double>& mat, vnl_vector<unsigned int>* indexMap = NULL);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, vnl_vector< unsigned int>& index, std::vector< unsigned int> moduleID, vnl_matrix<double>& mat);
 	void GetCombinedMatrix( vnl_matrix<double> &datamat, int nstart, int nrow, std::vector< unsigned int> selFeatureIDs, vnl_matrix<double>& mat);
 	void GetCombinedMatrixByModuleId( vnl_matrix<double> &datamat, std::vector< std::vector< unsigned int> > &featureClusterIndex, std::vector< unsigned int> &selModuleIDs, vnl_matrix<double>& mat);
 	void GetCombinedInversedMatrix(vnl_matrix<double> &datamat, vnl_vector<unsigned int>& index, unsigned int moduleId, unsigned int moduleInversedId, vnl_matrix<double>& mat);
 	static void GetMatrixRowMeanStd(vnl_matrix<double>& mat, vnl_vector<double>& mean, vnl_vector<double>& std);
-	void StandardizeIndex(vnl_vector<unsigned int>& index);
+	void StandardizeIndex(vnl_vector<unsigned int>& index, vnl_vector<unsigned int> &indexmap);
 	void EraseZeroCol(vnl_matrix<double>& mat);
 	void EraseCols(vnl_matrix<double>& mat, std::vector<unsigned int> vec);
 	void SubstitudeVectorElement( vnl_vector<unsigned int>& vector, unsigned int ori, unsigned int newValue);
@@ -166,7 +169,7 @@ protected:
 	void GetComponentMinDistance(vnl_matrix<double> &distMat, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
 
 	//double Dist(int *first, int *second);
-	static double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix, int num_bin);
+	static double EarthMoverDistance(vnl_vector<unsigned int>& first, vnl_vector<unsigned int>& second, vnl_matrix<double> &flowMatrix, int num_bin, bool bOneDirection = false);
 	bool IsExist(std::vector<unsigned int> vec, unsigned int value);
 	long int GetSelectedFeatures(vnl_vector< unsigned int> & index, std::vector<unsigned int> moduleID, std::set<long int>& featureSelectedIDs);
 	double VnlVecMultiply(vnl_vector<double> const &vec1, vnl_vector<double> const &vec2);
@@ -182,7 +185,8 @@ protected:
 	static void AvarageBinHistogram(vnl_matrix<double> &disMetric, int nbins, vnl_vector<double> &binInterval);
 	static void AverageHist(vnl_vector<double>&distance, vnl_vector<double>& binInterval, vnl_vector<unsigned int>& histDis);
 	static bool GetKDistanceMetricRatio(vnl_vector<double> &vec1, vnl_vector<double> &vec2, vnl_matrix<double> &shortestPath, unsigned int kNeighbor);
-	
+	bool PSCIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output);
+
 	/// for multi-level demo
 	bool RunSPDforFeatureDistributionTable(std::string fileName);
 	void ComputeDistributionDistance( vnl_matrix<unsigned int> &mat, vnl_matrix<double> &dismat);

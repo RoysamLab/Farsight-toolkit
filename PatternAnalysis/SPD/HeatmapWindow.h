@@ -107,6 +107,7 @@ public:
 	inline void setPriority(std::vector<int> order){ priority_order = order; };
 	inline void closeWindow(){ close(); };
 	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder, int numberofcomponents, vnl_matrix<double> &subTreeDistance);
+	void runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder);
 	void runClusforSPD(std::vector< int> sampleOrder, std::vector< int> selOrder, std::vector< int> unselOrder);
 	void showGraph();
 	void showGraphforSPD( int selCol = 0, int unselCol = 0, bool bprogressionHeatmap = false);

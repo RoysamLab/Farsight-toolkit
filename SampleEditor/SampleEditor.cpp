@@ -32,7 +32,8 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	dendro2 = new Dendrogram(this);
 	heatmap = new Heatmap(this);
 	biheatmap = new BiHeatmap(this);
-	spdTestWin = NULL;
+	spdMSTWin = NULL;
+	spdkNNGWin = NULL;
 	//progressionheatmap = new ProgressionHeatmap(this);
 
 	this->cc1 = NULL;
@@ -45,7 +46,6 @@ SampleEditor::SampleEditor(QWidget * parent, Qt::WindowFlags flags)
 	selection2 = new ObjectSelection();
 
 	lastPath = ".";
-	
 
 	createMenus();
 	createStatusBar();
@@ -158,30 +158,16 @@ void SampleEditor::createMenus()
 	connect(changeRowDataAction, SIGNAL(triggered()), this, SLOT(changeRowData()));
 	editMenu->addAction(changeRowDataAction);
 
-	//SPDAction = new QAction(tr("SPD"), this);
-	//SPDAction->setStatusTip(tr("SPD Analysis for the data"));
-	//connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDAnalysis()));
-	//SPDMenu->addAction(SPDAction);
+	SPDMenu = editMenu->addMenu(tr("&SPD"));
+	SPDAction1 = new QAction(tr("SPD using MST"), this);
+	SPDAction1->setStatusTip(tr("SPD using MST matching with module"));
+	connect(SPDAction1, SIGNAL(triggered()), this, SLOT(SPDMSTAnalysis()));
+	SPDMenu->addAction(SPDAction1);
 
-	SPDAction = new QAction(tr("SPD"), this);
-	SPDAction->setStatusTip(tr("SPD Analysis for the data"));
-	connect(SPDAction, SIGNAL(triggered()), this, SLOT(SPDTestAnalysis()));
-	editMenu->addAction(SPDAction);
-
-	//spdSampleDendroAction = new QAction(tr("SampleDendrogram"), this);
-	//spdSampleDendroAction->setStatusTip(tr("SampleDandrogram"));
-	//connect(spdSampleDendroAction, SIGNAL(triggered()), this, SLOT(spdSampledendrogram()));
-	//SPDMenu->addAction(spdSampleDendroAction);
-
-	//spdFeatureDendroAction = new QAction(tr("FeatureDendrogram"), this);
-	//spdFeatureDendroAction->setStatusTip(tr("FeatureDandrogram"));
-	//connect(spdFeatureDendroAction, SIGNAL(triggered()), this, SLOT(spdFeatureDendroram()));
-	//SPDMenu->addAction(spdFeatureDendroAction);
-
-	//spdHeatmapAction = new QAction(tr("Heatmap"), this);
-	//spdHeatmapAction->setStatusTip(tr("Heatmap"));
-	//connect(spdHeatmapAction, SIGNAL(triggered()), this, SLOT(spdShowHeatmap()));
-	//SPDMenu->addAction(spdHeatmapAction);
+	SPDAction2 = new QAction(tr("SPD using kNNG"), this);
+	SPDAction2->setStatusTip(tr("SPD using kNNG matching with module"));
+	connect(SPDAction2, SIGNAL(triggered()), this, SLOT(SPDkNNGAnalysis()));
+	SPDMenu->addAction(SPDAction2);
 
 	ClusClusMenu = editMenu->addMenu(tr("&ClusClus"));
 	sampleDendroAction = new QAction(tr("SampleDendrogram"), this);
@@ -527,23 +513,40 @@ void SampleEditor::updateStatistics(void)
 //	//}
 //}
 
-void SampleEditor::SPDTestAnalysis()
+void SampleEditor::SPDMSTAnalysis()
 {
-	if( spdTestWin)
+	if( spdMSTWin)
 	{
-		delete spdTestWin;
+		delete spdMSTWin;
 	}
-	spdTestWin = new SPDtestWindow();
+	spdMSTWin = new SPDMSTModuleMatch();
 	if( this->data->GetNumberOfRows() <= 0)
 	{
-		spdTestWin->setModels();
+		spdMSTWin->setModels();
 	}
 	else
 	{
-		spdTestWin->setModels( this->data, selection);
+		spdMSTWin->setModels( this->data, selection);
 	}
+	spdMSTWin->show();
+}
 
-	spdTestWin->show();
+void SampleEditor::SPDkNNGAnalysis()
+{
+	if( spdkNNGWin)
+	{
+		delete spdkNNGWin;
+	}
+	spdkNNGWin = new SPDkNNGModuleMatch();
+	if( this->data->GetNumberOfRows() <= 0)
+	{
+		spdkNNGWin->setModels();
+	}
+	else
+	{
+		spdkNNGWin->setModels( this->data, selection);
+	}
+	spdkNNGWin->show();
 }
 
 void SampleEditor::sampledendrogram()

@@ -2166,11 +2166,13 @@ void Heatmap::addDragLineforSPD(double* worldPosition)
 void Heatmap::selectClustersforSPD(double* worldPosition)
 {
 	reselectedClusterSPD.clear();
+
 	clusterNumVec.set_size(parentIndex.size());
 	for( int i = 0; i < clusterNumVec.size(); i++)
 	{
 		clusterNumVec[i] = 0;
 	}
+
 	std::set<long int> selectedClusterSPD;
 	for( long int index = 0; index < 2 * this->num_samples - 1; index++)
 	{
@@ -2204,19 +2206,22 @@ void Heatmap::selectClustersforSPD(double* worldPosition)
 			num = 0;
 		}
 
-		if( id <= parentIndex[0])
+		if( parentIndex.size() > 0)
 		{
-			clusterNumVec[0] += num;
-		}
-		else
-		{
-			for( int j = 0; j < parentIndex.size() - 1; j++)
+			if( id <= parentIndex[0])
 			{
-				if( id > parentIndex[j] && id <= parentIndex[j+1])
+				clusterNumVec[0] += num;
+			}
+			else
+			{
+				for( int j = 0; j < parentIndex.size() - 1; j++)
 				{
-					
-					clusterNumVec[j+1] += num;
-					break;
+					if( id > parentIndex[j] && id <= parentIndex[j+1])
+					{
+						
+						clusterNumVec[j+1] += num;
+						break;
+					}
 				}
 			}
 		}
@@ -2384,7 +2389,7 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 
 	this->indMapFromVertexToInd.clear();
 	this->indMapFromIndToVertex.clear();
-	std::cout<< this->table->GetNumberOfRows()<<"\t"<<this->table->GetNumberOfColumns()<<std::endl;
+	std::cout<< "Heatmap input table: "<<this->table->GetNumberOfRows()<<"\t"<<this->table->GetNumberOfColumns()<<std::endl;
 	if( indexCluster) 
 	{
 		indMapFromVertexToInd = *indexCluster;
@@ -2417,13 +2422,16 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	{
 		selectedFeatureIDs.insert( selOrder[i]);
 	}
-	std::cout<< selectedFeatureIDs.size()<<std::endl;
-	//connect(Selection, SIGNAL(thresChanged()), this, SLOT(GetSelecectedIDsforSPD()));
+	std::cout<< "Heatmap input selected features: "<<selectedFeatureIDs.size()<<std::endl;
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDsForSPD()));
 
 	if( subTreeDistance != NULL && numOfComponenets >= 1)
 	{
 		this->runClusforSPD(selOrder, unselOrder, numOfComponenets, *subTreeDistance);
+	}
+	else
+	{
+		this->runClusforSPD(selOrder, unselOrder);
 	}
 }
 
@@ -2465,6 +2473,61 @@ void Heatmap::setModelsforSPD(vtkSmartPointer<vtkTable> table, ObjectSelection *
 	this->runClusforSPD( sampleOrder, selOrder, unselOrder);
 }
 
+void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder)
+{
+	this->clusflag = true;
+	clock_t start_time = clock();
+	double** datas = new double*[this->table->GetNumberOfRows()];
+	double** datasforclus = new double*[this->table->GetNumberOfRows()];
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		datas[i] = new double[this->table->GetNumberOfColumns() - 1];
+		datasforclus[i] = new double[selOrder.size()];
+		for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
+		{
+			vtkVariant temp = this->table->GetValue(i, j);
+			datas[i][j-1] = temp.ToDouble();
+		}
+
+		for(int j = 0; j < selOrder.size(); j++)
+		{
+			int coln = selOrder[j];
+			datasforclus[i][j] = datas[i][coln];
+		}
+	}
+
+	clusclus *cc = new clusclus(datasforclus, this->table->GetNumberOfRows(), (int)selOrder.size());
+	cc->RunClusClus();
+
+	int featureNum = selOrder.size() + unselOrder.size();
+	int* optimalleaforder2 = new int[featureNum];
+	int counter = 0;
+	for(int i = 0; i < selOrder.size(); i++)
+	{
+		optimalleaforder2[i] = selOrder[i];
+		counter++;
+	}
+	for(int i = 0; i < unselOrder.size(); i++)
+	{
+		optimalleaforder2[i + counter] = unselOrder[i];
+	}
+
+	this->setDataForHeatmap( datas, cc->optimalleaforder, optimalleaforder2, this->table->GetNumberOfRows(), featureNum);
+	this->setDataForDendrograms(cc->treedata);
+	this->creatDataForHeatmap(POWER_PARAM);
+
+	for (int i = 0; i < this->table->GetNumberOfRows(); i++)
+	{
+		delete datas[i];
+		delete datasforclus[i];
+	}
+	delete datas;
+	delete datasforclus;
+	delete cc;
+
+	std::cout << "Total time to generate progression heatmap is: " << (clock() - start_time) / (float) CLOCKS_PER_SEC << std::endl;
+}
+
 void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselOrder, int numberofcomponents, vnl_matrix<double> &subTreeDistance)
 {
 	this->clusflag = true;
@@ -2485,7 +2548,7 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		
 		for (int i = 0; i < this->table->GetNumberOfRows(); i++)
 		{
-			datas[i] = new double[this->table->GetNumberOfColumns() - 1 + 2 ];
+			datas[i] = new double[this->table->GetNumberOfColumns() - 1];
 			for(int j = 1; j < this->table->GetNumberOfColumns(); j++)
 			{
 				vtkVariant temp = this->table->GetValue(i, j);
@@ -2502,7 +2565,7 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 			double** datasforclus = new double*[graphVertex[i].size()];
 			for (int j = 0; j < graphVertex[i].size(); j++)
 			{
-				datasforclus[j] = new double[selOrder.size() + 2 ];
+				datasforclus[j] = new double[selOrder.size()];
 			}
 
 			int index = 0;

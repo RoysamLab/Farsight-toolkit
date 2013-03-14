@@ -56,7 +56,8 @@ limitations under the License.
 #include "ClusClus/LocalGeometryRef.h"
 //#include "SPD/ProgressionHeatmapWindow.h"
 //#include "SPD/spdmainwindow.h"
-#include "SPD/spdtestwindow.h"
+#include "SPD/SPDMSTModuleMatch.h"
+#include "SPD/SPDkNNGModuleMatch.h"
 #include <vector>
 #include <string>
 
@@ -84,7 +85,8 @@ private slots:
 	void showStatistics(void);
 	void updateStatistics(void);
 	//void SPDAnalysis();
-	void SPDTestAnalysis();
+	void SPDMSTAnalysis();
+	void SPDkNNGAnalysis();
 	//void spdSampledendrogram();
 	//void spdFeatureDendroram();
 	//void spdShowHeatmap();
@@ -115,8 +117,7 @@ private:
 	QAction *showStatisticsAction;
 	QAction *updateStatisticsAction;
 
-	QMenu *SPDMenu;
-	QAction *SPDAction;
+
 	//QAction *spdSampleDendroAction;
 	//QAction *spdFeatureDendroAction;
 	//QAction *spdHeatmapAction;
@@ -147,7 +148,11 @@ private:
 	//ProgressionHeatmap *progressionheatmap;
 
 	//SPDMainWindow *spdWin;
-	SPDtestWindow *spdTestWin;
+	QMenu *SPDMenu;
+	QAction *SPDAction1;
+	QAction *SPDAction2;
+	SPDMSTModuleMatch *spdMSTWin;
+	SPDkNNGModuleMatch *spdkNNGWin;
 	int flag;
 
 	vtkSmartPointer<vtkTable> data;

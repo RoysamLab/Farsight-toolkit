@@ -137,7 +137,7 @@ public:
 	void setDataForDendrograms(double** treedata1, double** treedata2);
 	void creatDataForHeatmap(double powCof);
 	void creatDataForProgressionHeatmap(double powCof);
-	void creatDataForSimilarMatrixHeatmap();
+	void creatDataForSimilarMatrixHeatmap(double *diagonal = NULL);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
 	void showGraph();

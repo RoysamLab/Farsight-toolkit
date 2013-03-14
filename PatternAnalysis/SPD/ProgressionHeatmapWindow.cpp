@@ -247,7 +247,7 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 	}
 }
 
-void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap()
+void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
 {
 	const char* filename = "heatmapdata.txt";
 	FILE *fp = fopen(filename,"w");
@@ -276,6 +276,14 @@ void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap()
 	for(int i = 0; i < this->num_samples; i++)
 	{
 		mapdata[i] = tempdata[Optimal_Leaf_Order1[i]]; 
+	}
+
+	if(diagonal != NULL)
+	{
+		for(int i = 0; i < this->num_samples; i++)
+		{
+			mapdata[i][i] = diagonal[i];
+		}
 	}
 
 	for(int i=0; i<this->num_samples; i++)

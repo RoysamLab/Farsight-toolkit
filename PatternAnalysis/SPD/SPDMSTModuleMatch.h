@@ -1,5 +1,5 @@
-#ifndef SPDTESTWINDOW_H
-#define SPDTESTWINDOW_H
+#ifndef SPDMSTMODULEMATCH_H
+#define SPDMSTMODULEMATCH_H
 
 #include <QWidget>
 #include <QLineEdit>
@@ -16,14 +16,14 @@
 #include "ProgressionHeatmapWindow.h"
 #include "HeatmapWindow.h"
 
-class SPDtestWindow : public QWidget
+class SPDMSTModuleMatch : public QWidget
 {
     Q_OBJECT
 
 public:
-    SPDtestWindow(QWidget *parent = 0);
+    SPDMSTModuleMatch(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
-    ~SPDtestWindow();
+    ~SPDMSTModuleMatch();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 	vtkSmartPointer<vtkTable> NormalizeTable(vtkSmartPointer<vtkTable> table);
 
@@ -45,17 +45,12 @@ protected slots:
 	void emdFunction();
 	void showPSM();
 	void viewProgression();
-	//void saveSelectedFeatures();
 	void updateSelMod();
 	void editThreshold();
-	//void editPercentage();
-	void editNearestNeighbor();
 	void showProgressionHeatmap();
 	void regenerateProgressionTree();
-	//void updateProgressionType();
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
-	void UpdateConnectedNum();
 	void searchSubsetsOfFeatures();
 	void AdjustLayout();
 
@@ -75,8 +70,8 @@ private:
 
     QLabel *clusterCoherenceLabel;
     QDoubleSpinBox *clusterCoherenceBox;
-    QLabel *kNearestNeighborLabel;
-    QSpinBox *kNearestNeighborBox;
+	QLabel *nBinLabel;
+    QSpinBox *nBinBox;
     //QPushButton *clusterButton;
 
 	QLabel *emdLabel;
@@ -97,9 +92,6 @@ private:
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
 	QLabel *distanceLabel;
 	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
-	QLabel *connectedGraphLabel;
-	QLineEdit *connectedGraphEdit;
-	QPushButton *updateConnectedNumButton;  // update connected component number
 	QPushButton *searchSubsetsButton;  // search subsets of features to best fit distance 
 	QPushButton *newLayoutButton;  // search subsets of features to best fit distance 
 	
@@ -130,4 +122,4 @@ private:
 	bool bconnected;
 };
 
-#endif // SPDTESTWINDOW_H
+#endif // SPDMSTMODULEMATCH_H
