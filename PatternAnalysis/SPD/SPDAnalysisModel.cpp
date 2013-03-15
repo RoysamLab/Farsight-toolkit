@@ -20,7 +20,7 @@
 #define NUM_BIN 30
 #define DISTANCE_PRECISION 10
 #define LMEASURETABLE 0
-#define INT_MAX 102400
+#define MYINTMAX 10240000
 
 SPDAnalysisModel::SPDAnalysisModel()
 {
@@ -1009,7 +1009,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 				isActiveModule[moduleToDeleteId] = 0;
 				activeModuleNum--;
 				moduleSize[moduleId] += moduleSize[moduleToDeleteId];
-				moduleSize[moduleToDeleteId] = INT_MAX;
+				moduleSize[moduleToDeleteId] = MYINTMAX;
 
 				mean.set_column(moduleId, newModuleMeans);
 				mean.set_column(moduleToDeleteId, zeroCol);
@@ -1028,7 +1028,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 
 		isActiveModule[moduleId] = 0;
 		activeModuleNum--;
-		moduleSize[moduleId] = INT_MAX;
+		moduleSize[moduleId] = MYINTMAX;
 	}
 
 	StandardizeIndex(index, indexmap);
