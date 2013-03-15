@@ -294,7 +294,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 	table->RemoveColumnByName("Soma_X_Pos");
 	table->RemoveColumnByName("Soma_Y_Pos");
 	table->RemoveColumnByName("Soma_Z_Pos");
-
+	table->RemoveColumnByName("Distance_to_Device");
 	//for( long int i = 0; i < table->GetNumberOfRows(); i++)
 	//{
 	//	long int var = table->GetValue( i, 0).ToLong();
@@ -349,7 +349,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 		}
 
 #else 
-		std::cout<< "Layer Data"<<std::endl;
+		//std::cout<< "Layer Data"<<std::endl;
 		ConvertTableToMatrixForLayerData(this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, clusNo);
 #endif
 		UNMatrixAfterCellCluster = this->DataMatrix;
@@ -3380,6 +3380,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 	//ofs<< disScale<<std::endl<<std::endl;
 
 	/// k nearest neighbor graph match process
+	#pragma omp parallel for
 	for( int i = 0; i < featureClusterIndex.size(); i++)
 	{
 		std::cout<< "Matching module "<<i<<std::endl; 
@@ -3407,7 +3408,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 				vnl_vector< double> row;
 				row.set_size(featureClusterIndex.size());
 				row.fill(0);
-				#pragma omp parallel for
+				
 				for( int j = 0; j < featureClusterIndex.size(); j++)
 				{
 					//std::cout<<j<<"\t";
