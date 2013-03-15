@@ -51,8 +51,6 @@ protected slots:
 	void regenerateProgressionTree();
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
-	void searchSubsetsOfFeatures();
-	void AdjustLayout();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -85,16 +83,10 @@ private:
     QPushButton *psmButton;
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
-	QLabel *maxVetexIdLabel;  // max id to seperate the data
-	QSpinBox *maxVetexIdEdit; // max id
     QPushButton *psdtButton;
-	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
-	QLabel *distanceLabel;
-	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
-	QPushButton *searchSubsetsButton;  // search subsets of features to best fit distance 
-	QPushButton *newLayoutButton;  // search subsets of features to best fit distance 
-	
+	QLabel *continSelectLabel;   
+	QCheckBox *continSelectCheck;
 	QString FileName;
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
@@ -118,8 +110,8 @@ private:
 	std::map< int, int> indexMap;
 	std::vector<int> connectedComponent;
 	int connectedNum;
-	std::set<unsigned int> m_selModuleID;
 	bool bconnected;
+	std::set<unsigned int> selMod;
 };
 
 #endif // SPDMSTMODULEMATCH_H

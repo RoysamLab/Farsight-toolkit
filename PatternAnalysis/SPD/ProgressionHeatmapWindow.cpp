@@ -249,8 +249,8 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 
 void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
 {
-	const char* filename = "heatmapdata.txt";
-	FILE *fp = fopen(filename,"w");
+	//const char* filename = "heatmapdata.txt";
+	//FILE *fp = fopen(filename,"w");
 	//for(int i=0; i<this->num_samples; i++)
 	//{
 	//	for(int j=0; j<this->num_features; j++)
@@ -286,13 +286,13 @@ void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
 		}
 	}
 
-	for(int i=0; i<this->num_samples; i++)
-	{
-		for(int j=0; j<this->num_features; j++)
-			fprintf(fp,"%.4f\t",mapdata[i][j]);
-		fprintf(fp,"\n");
-	}
-	fclose(fp);
+	//for(int i=0; i<this->num_samples; i++)
+	//{
+	//	for(int j=0; j<this->num_features; j++)
+	//		fprintf(fp,"%.4f\t",mapdata[i][j]);
+	//	fprintf(fp,"\n");
+	//}
+	//fclose(fp);
 }
 
 void ProgressionHeatmap::scaleData()
@@ -1470,7 +1470,7 @@ void ProgressionHeatmap::SelectionCallbackFunction3(vtkObject* caller, long unsi
 	int* pos = heatmapWin->view->GetInteractor()->GetEventPosition();
 
 	vtkCellPicker *cell_picker = (vtkCellPicker *)heatmapWin->view->GetInteractor()->GetPicker();
- 
+
 	// Pick from this location.
 	cell_picker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
 	double* worldPosition = cell_picker->GetPickPosition();
@@ -1479,21 +1479,21 @@ void ProgressionHeatmap::SelectionCallbackFunction3(vtkObject* caller, long unsi
 	{
 		vtkSmartPointer<vtkCellPicker> cellpicker = vtkSmartPointer<vtkCellPicker>::New();
 		cellpicker->SetTolerance(0.0005);
- 
+
 		// Pick from this location.
 		cellpicker->Pick(pos[0], pos[1], 0, heatmapWin->view->GetRenderer());
- 
+
 		double* worldPosition = cellpicker->GetPickPosition();
 		if(cellpicker->GetCellId() != -1)
 		{
 			try
 			{
-			heatmapWin->id2 = cellpicker->GetCellId();
-			heatmapWin->ids = vtkSmartPointer<vtkIdTypeArray>::New();
-			heatmapWin->ids->SetNumberOfComponents(1);
-			heatmapWin->computeselectedcells();
-			heatmapWin->setselectedCellIds();
-			emit heatmapWin->SelChanged();
+				heatmapWin->id2 = cellpicker->GetCellId();
+				heatmapWin->ids = vtkSmartPointer<vtkIdTypeArray>::New();
+				heatmapWin->ids->SetNumberOfComponents(1);
+				heatmapWin->computeselectedcells();
+				heatmapWin->setselectedCellIds();
+				emit heatmapWin->SelChanged();
 			}
 			catch(...)
 			{

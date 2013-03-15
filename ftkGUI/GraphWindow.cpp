@@ -363,47 +363,55 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		else
 		{
 			vertexIDarrays->InsertNextValue( this->indMapFromClusIndToVertex[i].size());   // which should be the cluster index
-			int per = colorVector[i] * 100 + 0.5;
-			int disper = distanceVec[i] * 100 + 0.5;
-			QString strPercent;
-			QString strDisPercent;
+			//int per = colorVector[i] * 100 + 0.5;
+			//int disper = distanceVec[i] * 100 + 0.5;
+			//QString strPercent;
+			//QString strDisPercent;
 
-			if(  minPer < 1 - 1e-5)
-			{
-				if( per > 100)
-				{
-					per = 100;
-				}
-				strPercent= QString::number(per);
-			}
+			//if(  minPer < 1 - 1e-5)
+			//{
+			//	if( per > 100)
+			//	{
+			//		per = 100;
+			//	}
+			//	strPercent= QString::number(per);
+			//}
 
-			if( maxDisper > 1e-5)
-			{
-				if( disper > 100)
-				{
-					disper = 100;
-				}
-				strDisPercent = QString::number(disper);
-			}
+			//if( maxDisper > 1e-5)
+			//{
+			//	if( disper > 100)
+			//	{
+			//		disper = 100;
+			//	}
+			//	strDisPercent = QString::number(disper);
+			//}
 
-			if( strPercent.length() > 0 )
-			{
-				if( strDisPercent.length() > 0)
-				{
-					strPercent = "(" + strPercent + "%," + strDisPercent + "%)";
-				}
-				else
-				{
-					strPercent = "(" + strPercent + "%)";
-				}
-			}
-			else if( strDisPercent.length() > 0)
-			{
-				strPercent = "( ," + strDisPercent + "%)";
-			}
+			//if( strPercent.length() > 0 )
+			//{
+			//	if( strDisPercent.length() > 0)
+			//	{
+			//		strPercent = "(" + strPercent + "%," + strDisPercent + "%)";
+			//	}
+			//	else
+			//	{
+			//		strPercent = "(" + strPercent + "%)";
+			//	}
+			//}
+			//else if( strDisPercent.length() > 0)
+			//{
+			//	strPercent = "( ," + strDisPercent + "%)";
+			//}
 			
-			QString str = QString::number(this->indMapFromClusIndToVertex[i].size()) + strPercent;
-			vertexLabel->InsertNextValue(str.toUtf8().constData());
+			if( this->indMapFromClusIndToVertex[i].size() == 1)
+			{
+				QString str = QString::number(this->indMapFromIndToVertex[i]);
+				vertexLabel->InsertNextValue(str.toUtf8().constData());
+			}
+			else
+			{
+				QString str = QString::number(this->indMapFromClusIndToVertex[i].size());
+				vertexLabel->InsertNextValue(str.toUtf8().constData());
+			}
 		}
 	}
 
@@ -471,9 +479,9 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 		vertextList( i, 2) = edgeWeights[i];
 	}
 
-	std::ofstream verofs("adjmatrix.txt");
-	verofs<< adj_matrix<<endl;
-	verofs.close();
+	//std::ofstream verofs("adjmatrix.txt");
+	//verofs<< adj_matrix<<endl;
+	//verofs.close();
 
 	std::cout<< "calculate coordinates"<<endl;
 	std::vector<Point> oldPointList;
@@ -487,16 +495,16 @@ void GraphWindow::SetTreeTable(vtkSmartPointer<vtkTable> table, std::string ID1,
 
 	if( newPointList.size() > 0)
 	{
-		std::ofstream ofs("Coordinates.txt");
-		ofs<< "3\t5"<<std::endl;
+		//std::ofstream ofs("Coordinates.txt");
+		//ofs<< "3\t5"<<std::endl;
 		std::cout<< newPointList.size()<<endl;
 		for( int i = 0; i <  newPointList.size(); i++)
 		{
-			ofs<<newPointList[i].x<<"\t"<<newPointList[i].y<<std::endl;
+			//ofs<<newPointList[i].x<<"\t"<<newPointList[i].y<<std::endl;
 			points->InsertNextPoint(newPointList[i].x, newPointList[i].y, 0);
 		}
 		graph->SetPoints( points);
-		ofs.close();
+		//ofs.close();
 	}
 	else
 	{	

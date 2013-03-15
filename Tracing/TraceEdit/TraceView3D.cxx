@@ -6968,7 +6968,7 @@ void View3D::SPDAnalysis()
 		{
 			delete this->SPDWin;
 		}
-		this->SPDWin = new SPDtestWindow();
+		this->SPDWin = new SPDkNNGModuleMatch();
 
 		vtkSmartPointer<vtkTable> featureTable;
 		featureTable = this->CellModel->getDataTable();
@@ -6976,13 +6976,15 @@ void View3D::SPDAnalysis()
 		featureTable->RemoveColumnByName("Soma X Pos");
 		featureTable->RemoveColumnByName("Soma Y Pos");
 		featureTable->RemoveColumnByName("Soma Z Pos");
+		featureTable->RemoveColumnByName("Distance to Device");
 		//featureTable->RemoveColumnByName("Soma Volume");
 		//featureTable->RemoveColumnByName("Soma Surface Area");
 		//featureTable->RemoveColumnByName("Soma Radii");
 
-		featureTable->RemoveColumnByName("centroid_x");
-		featureTable->RemoveColumnByName("centroid_y");
-		featureTable->RemoveColumnByName("centroid_z");
+		//featureTable->RemoveColumnByName("centroid_x");
+		//featureTable->RemoveColumnByName("centroid_y");
+		//featureTable->RemoveColumnByName("centroid_z");
+		//featureTable->RemoveColumnByName("Distance_to_Device");
 
 		this->SPDWin->setModels( featureTable,this->CellModel->GetObjectSelection());	
 		this->SPDWin->show();

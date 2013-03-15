@@ -47,7 +47,7 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
 
     clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
     clusterCoherenceBox = new QDoubleSpinBox(this);
-	clusterCoherenceBox->setValue(0.95);
+	clusterCoherenceBox->setValue(0.8);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
@@ -77,24 +77,14 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
 
 	psdtLable = new QLabel(tr("Input hand-picked modules(seperate by comma):"), this);
 	psdModuleSelectBox = new QLineEdit(this);
-	maxVetexIdLabel = new QLabel(tr("Id to seperate:"), this);
-	maxVetexIdEdit = new QSpinBox(this);
-	maxVetexIdEdit->setRange(0,1000000);
-	maxVetexIdEdit->setSingleStep(100);
-	maxVetexIdEdit->setValue(4500);
+
+	continSelectLabel = new QLabel(tr("Continous selections:"), this);
+	continSelectCheck = new QCheckBox(this);
 
 	//searchSubsetsButton = new QPushButton(tr("Search subsets"), this);
 	
     psdtButton = new QPushButton(tr("View Progression"), this);
-	heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
 	heatmapButton = new QPushButton(tr("Heatmap"), this);
-	newLayoutButton = new QPushButton(tr("New Layout"), this);
-
-	distanceLabel = new QLabel(tr("Distance Threshold:"), this);
-	distanceThres = new QDoubleSpinBox(this);
-	distanceThres->setRange(0,2000);
-	distanceThres->setSingleStep(0.1);
-	distanceThres->setValue(700.0);
 	
 	emdButton->setEnabled(TRUE);
 	psmButton->setEnabled(FALSE);
@@ -104,7 +94,6 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
 	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
-	connect(newLayoutButton, SIGNAL(clicked()), this, SLOT(AdjustLayout()));
 
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
@@ -150,20 +139,13 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
 
 	mainLayout->addWidget(psmPerLable, 7, 0);
 	mainLayout->addWidget(emdPercentageBox, 7, 1);
-	
-	mainLayout->addWidget(distanceLabel, 8, 0);
-	mainLayout->addWidget(distanceThres, 8, 1);
 	mainLayout->addWidget(psmButton, 7, 2);
-
+	mainLayout->addWidget(continSelectLabel, 8, 0);
+	mainLayout->addWidget(continSelectCheck, 8, 1);
 	mainLayout->addWidget(psdtLable, 9, 0);
 	mainLayout->addWidget(psdModuleSelectBox, 10, 0, 1, 2);
 
-	mainLayout->addWidget(maxVetexIdLabel, 11, 0);
-	mainLayout->addWidget(maxVetexIdEdit, 11, 1);
-	mainLayout->addWidget(psdtButton, 11, 2);
-
-	mainLayout->addWidget(heatmapLabel, 12, 0);
-	mainLayout->addWidget(newLayoutButton, 12, 1);
+	mainLayout->addWidget(psdtButton, 12, 1);
 	mainLayout->addWidget(heatmapButton, 12, 2);
 
     setLayout(mainLayout);
@@ -429,7 +411,7 @@ void SPDMSTModuleMatch::showPSM()
 	//}
 	//else
 	//{
-		this->SPDModel->GetClusClusData(clus1, atof(emdThres.c_str()));
+		this->SPDModel->GetClusClusDataMST(clus1, atof(emdThres.c_str()));
 
 		optimalleaforder.set_size(clus1->num_samples);
 		clus2->optimalleaforder = new int[clus1->num_samples];
@@ -488,21 +470,6 @@ void SPDMSTModuleMatch::viewProgression()
 
 	this->HeatmapWin->setModelsforSPD( tableAfterCellCluster, selection, selOrder, unselOrder, &indexMap);
 	this->HeatmapWin->showGraphforSPD( selOrder.size(), unselOrder.size());
-}
-
-
-void SPDMSTModuleMatch::searchSubsetsOfFeatures()
-{
-	//std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
-	std::vector< unsigned int> selModuleID;
-	//split( selectModulesID, ',', selModuleID);
-	bool bstate = SPDModel->SearchSubsetsOfFeatures(selModuleID);
-	if( false == bstate)
-	{
-		QMessageBox mes;
-		mes.setText("Distance not available, target unclear.");
-		mes.exec();
-	}
 }
 
 void SPDMSTModuleMatch::split(std::string& s, char delim, std::vector< unsigned int>& indexVec)
@@ -638,54 +605,6 @@ void SPDMSTModuleMatch::regenerateProgressionTree()
 	}
 }
 
-void SPDMSTModuleMatch::AdjustLayout()
-{
-	std::cout<< "Adjust Layout"<<endl;
-	selection->clear();
-	std::vector< std::vector< long int> > sampleIndex;
-	selection->GetSampleIndex( sampleIndex);
-    std::vector< std::vector< long int> > clusIndex;
-    selection->GetClusterIndex( clusIndex);
-
-	vnl_matrix<double> clusAverageMat;
-	std::vector< double> colorVec;
-	std::vector< double> percentVec;
-    SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
-
-	int maxId = this->maxVetexIdEdit->value();
-	SPDModel->SetMaxVertexID(maxId);
-	SPDModel->GetPercentage(sampleIndex, colorVec);
-	std::string distanceThres = this->distanceThres->text().toStdString();
-	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentVec, atof(distanceThres.c_str()));
-
-	std::vector<int> clusterNum;
-	this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
-	vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
-
-	std::vector<long int> TreeOrder;
-	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
-
-	/** graph window set models */
-	std::vector<int> index;
-	SPDModel->GetSingleLinkageClusterMapping(sampleIndex, index);
-	vtkSmartPointer<vtkTable> dataTable = vtkSmartPointer<vtkTable>::New();
-	SPDModel->GetCombinedDataTable(dataTable);
-	this->graph->setModels(dataTable, selection, &index);
-
-	std::vector<std::string> headers;
-	SPDModel->GetTableHeaders( headers);
-	this->graph->AdjustedLayout( newtable, headers[0], headers[1], headers[2], &TreeOrder, &colorVec, &percentVec);
-	//this->graph->SetGraphTableToPassThrough( newtable, sampleIndex.size(), headers[0], headers[1], headers[2], &colorVec, &percentVec);
-	try
-	{
-		this->graph->ShowGraphWindow();
-	}
-	catch(...)
-	{
-		std::cout<< "Graph window error!"<<endl;
-	}
-}
-
 void SPDMSTModuleMatch::ReColorProgressionTree(int nfeature)
 {
 	if( this->graph)
@@ -713,25 +632,26 @@ void SPDMSTModuleMatch::updateSelMod()
 	int num = abs(r1 - r2) + 1;
 	int max = r1 > r2 ? r1 : r2;
 
-	std::vector<unsigned int> selMod;
 	if( num <= size)   
 	{
-		selMod.resize(num);
-		QString str;
-		
+		if(!continSelectCheck->isChecked())
+		{
+			selMod.clear();
+		}
 		for( int i = 0; i < num; i++)
 		{
 			int index = size - 1 - max + i;
 			if( index >= 0 && index < size)
 			{
-				selMod[i] = optimalleaforder[index];
-				if( i != num - 1)
-				{
-					str += QString::number(selMod[i])+",";
-				}
+				selMod.insert(optimalleaforder[index]);
 			}
 		}
-		str += QString::number(selMod[num - 1]);
+		QString str;
+		std::set<unsigned int>::iterator iter = selMod.begin();
+		for(; iter != selMod.end(); iter++)
+		{
+			str += QString::number(*iter)+",";
+		}
 		psdModuleSelectBox->setText(str);
 		psdtButton->setEnabled(TRUE);
 		heatmapButton->setEnabled(FALSE);
@@ -768,39 +688,6 @@ void SPDMSTModuleMatch::showProgressionHeatmap()
 	std::vector< int> clusterOrder;
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
 
-	// module feature and percentage plot
-	std::vector< double> percentageOfSamples;
-	std::vector< double> percentageOfNearDeviceSamples;
-	std::string distanceThres = this->distanceThres->text().toStdString();
-	SPDModel->GetPercentage(sampleIndex, percentageOfSamples);
-	SPDModel->GetCloseToDevicePercentage(sampleIndex, percentageOfNearDeviceSamples, atof(distanceThres.c_str()));
-	int maxId = this->maxVetexIdEdit->value();
-	std::cout<< "Max Id: "<< maxId<<std::endl;
-
-	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, selOrder, unselOrder);
-	if( plot)
-	{
-		delete plot;
-	}
-	plot = new PlotWindow(this);
-	plot->setModels(tableForAverModulePlot, selection);
-	plot->show();
-
-	std::vector< std::vector< long int> > clusIndexByTreeOrder;
-	for( int i = 0; i < TreeOrder.size(); i++)
-	{
-		clusIndexByTreeOrder.push_back(clusIndex[ TreeOrder[i] ]);
-	}
-
-	//vtkSmartPointer<vtkTable> tableForHistPlot = SPDModel->GetTableForHist(selOrder, unselOrder);
-	//if( histo)
-	//{
-	//	delete histo;
-	//}
-	//histo = new HistoWindow(this);
-	//histo->setModels(tableForHistPlot, selection, &clusIndexByTreeOrder);
-	//histo->show();
-
 	// progression heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
@@ -813,6 +700,11 @@ void SPDMSTModuleMatch::showProgressionHeatmap()
 void SPDMSTModuleMatch::closeEvent(QCloseEvent *event)
 {
 	closeSubWindows();
+	if(SPDModel)
+	{
+		delete SPDModel;
+		SPDModel = NULL;
+	}
 	event->accept();
 }
 

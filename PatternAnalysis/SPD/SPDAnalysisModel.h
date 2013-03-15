@@ -80,7 +80,8 @@ public:
 
 	void RunEMDAnalysis(int numBin);
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
-	void GetClusClusData(clusclus* c1, double threshold, vnl_vector<double> *diagnalVec = NULL, std::vector< unsigned int> *disModIndex = NULL);
+	void GetClusClusDataMST(clusclus *c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
+	void GetClusClusDataKNNG(clusclus *c1, vnl_vector<double> *diagVec = NULL, std::vector< unsigned int> *disModIndex = NULL);
 	void GetClusClusPSCWithoutIterData(clusclus* c1, double threshold);
 	void GetClusClusPSCData(clusclus* c1);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);

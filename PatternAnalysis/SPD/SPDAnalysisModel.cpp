@@ -12,7 +12,7 @@
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
-#include <limits>
+
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -20,6 +20,7 @@
 #define NUM_BIN 30
 #define DISTANCE_PRECISION 10
 #define LMEASURETABLE 0
+#define INT_MAX 102400
 
 SPDAnalysisModel::SPDAnalysisModel()
 {
@@ -894,7 +895,7 @@ int SPDAnalysisModel::ClusterAgglomerate(double cor, double mer)
 
 	int old_cluster_num = MatrixAfterCellCluster.cols();
 	int new_cluster_num = MatrixAfterCellCluster.cols();
-
+	std::cout<< "Start Clustering:" <<std::endl;
 	ofs<<"Left cluster number:"<<endl;
 	do
 	{
@@ -969,6 +970,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 	unsigned int activeModuleNum = isActiveModule.size();
 	while( activeModuleNum > 1)
 	{
+		//std::cout<< activeModuleNum<<"\t";
 		if( activeModuleNum % 1000 == 0)
 		{
 			std::cout<< activeModuleNum << "\t/"<<isActiveModule.size()<<"\n";
@@ -1007,7 +1009,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 				isActiveModule[moduleToDeleteId] = 0;
 				activeModuleNum--;
 				moduleSize[moduleId] += moduleSize[moduleToDeleteId];
-				moduleSize[moduleToDeleteId] = std::numeric_limits<int>::max();
+				moduleSize[moduleToDeleteId] = INT_MAX;
 
 				mean.set_column(moduleId, newModuleMeans);
 				mean.set_column(moduleToDeleteId, zeroCol);
@@ -1026,7 +1028,7 @@ int SPDAnalysisModel::ClusterAggFeatures(vnl_matrix<double>& mainmatrix, vnl_vec
 
 		isActiveModule[moduleId] = 0;
 		activeModuleNum--;
-		moduleSize[moduleId] = std::numeric_limits<int>::max();
+		moduleSize[moduleId] = INT_MAX;
 	}
 
 	StandardizeIndex(index, indexmap);
@@ -2696,7 +2698,7 @@ void SPDAnalysisModel::GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix)
 //	ofSimatrix.close();	
 //}
 
-void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
+void SPDAnalysisModel::GetClusClusDataMST(clusclus *c1, double threshold, std::vector< unsigned int> *disModIndex)
 {
 	QString filenameSM = this->filename + "similarity_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
@@ -2751,13 +2753,25 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, vnl_vecto
 			simModIndex.clear();
 		}
 
-		c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+		c1->Initialize( this->heatmapMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 		c1->RunClusClus();
 	}
 
+	ofSimatrix << this->heatmapMatrix<< std::endl;
+	ofSimatrix.close();	
+}
+
+void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
+{
+	QString filenameSM = this->filename + "similarity_matrix.txt";
+	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
+	ofSimatrix.precision(4);
+
+	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	c1->RunClusClus();
+
 	unsigned int nrows = this->EMDMatrix.rows();
 	vnl_matrix<double> EMDMat(nrows, nrows);
-	vnl_matrix<double> IterMat(nrows, nrows);
 	vnl_vector<int> order(nrows);
 
 	for( unsigned int i = 0; i < nrows; i++)
@@ -2799,7 +2813,7 @@ void SPDAnalysisModel::GetClusClusData(clusclus *c1, double threshold, vnl_vecto
 			(*diagVec)[i] = vec(i);
 		}
 	}
-	ofSimatrix << this->heatmapMatrix<< std::endl;
+	ofSimatrix << EMDMat<< std::endl;
 	ofSimatrix.close();	
 }
 

@@ -95,7 +95,7 @@ limitations under the License.
 #include "ftkGUI/TrainingDialog.h"
 #include "ftkGUI/PatternAnalysisWizard.h"
 #ifdef USE_SPD
-#include "SPD/spdtestwindow.h"
+#include "SPD/SPDkNNGModuleMatch.h"
 //#include "SPD/spdtestwindowForNewSelection.h"
 #endif
 #ifdef USE_Clusclus
@@ -539,7 +539,7 @@ private:
 	bool bKeepSelectedTraces;   /// whether keep the last rendered traces
 
 #ifdef USE_SPD
-	SPDtestWindow *SPDWin;
+	SPDkNNGModuleMatch *SPDWin;
 	//SPDWindowForNewSelection *SPDWin;
 #endif
 

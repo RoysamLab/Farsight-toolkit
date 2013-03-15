@@ -42,22 +42,15 @@ protected slots:
 	void loadContrastData();
 	void showOriginalHeatmap();
     void clusterFunction();
-	void emdFunction();
 	void showPSM();
 	void viewProgression();
-	//void saveSelectedFeatures();
 	void updateSelMod();
-	void editThreshold();
-	//void editPercentage();
 	void editNearestNeighbor();
 	void showProgressionHeatmap();
 	void regenerateProgressionTree();
-	//void updateProgressionType();
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
 	void UpdateConnectedNum();
-	void searchSubsetsOfFeatures();
-	void AdjustLayout();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -79,31 +72,21 @@ private:
     QSpinBox *kNearestNeighborBox;
 	QLabel *nBinLabel;
     QSpinBox *nBinBox;
-    //QPushButton *clusterButton;
-
-	QLabel *emdLabel;
-	//QLabel *progressionOverDistance;
-	//QCheckBox *bcheckBox;   // progression overall or over distance to device
-	QPushButton *emdButton;
-	QDoubleSpinBox *emdThresBox;
-	QLineEdit *emdPercentageBox;
-	QLabel *psmLable;
-	QLabel *psmPerLable;
     QPushButton *psmButton;
+
+	QLabel *continSelectLabel;   
+	QCheckBox *continSelectCheck;
+
 	QLabel *psdtLable;   // progression sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
-	QLabel *maxVetexIdLabel;  // max id to seperate the data
-	QSpinBox *maxVetexIdEdit; // max id
+
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
-	QLabel *distanceLabel;
-	QDoubleSpinBox *distanceThres;  // distance threshold for calculating percentage
+
 	QLabel *connectedGraphLabel;
 	QLineEdit *connectedGraphEdit;
 	QPushButton *updateConnectedNumButton;  // update connected component number
-	QPushButton *searchSubsetsButton;  // search subsets of features to best fit distance 
-	QPushButton *newLayoutButton;  // search subsets of features to best fit distance 
 	
 	QString FileName;
 	GraphWindow *graph;
@@ -128,8 +111,8 @@ private:
 	std::map< int, int> indexMap;
 	std::vector<int> connectedComponent;
 	int connectedNum;
-	std::set<unsigned int> m_selModuleID;
 	bool bconnected;
+	std::set<unsigned int> selMod;
 };
 
 #endif // SPDKNNGMODULEMATCH_H
