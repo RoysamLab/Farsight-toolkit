@@ -31,7 +31,7 @@ ADD_LIBRARY(trackingHelpers helpers.cpp helpers.h)
 ADD_LIBRARY(ftkTrackFeatures ftkTrackFeatures.h ftkTrackFeatures.cpp)
 
 ADD_EXECUTABLE(unmix unmix.cpp helpers.h)
-ADD_EXECUTABLE(unmixt unmix_threshold.cpp helpers.h)
+#ADD_EXECUTABLE(unmixt unmix_threshold.cpp helpers.h)
 ADD_EXECUTABLE(segmentation segmentation.cpp helpers.h)
 ADD_EXECUTABLE(threshold_segmentation threshold_segmentation.cpp helpers.h)
 ADD_EXECUTABLE(compute_extra_associations compute_extra_associations.cpp helpers.h)
@@ -52,7 +52,7 @@ ADD_EXECUTABLE(render_tracks render_tracks.cpp helpers.h)
 
 TARGET_LINK_LIBRARIES(trackingHelpers    ftkFeatures     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(unmix   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
-TARGET_LINK_LIBRARIES(unmixt   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
+#TARGET_LINK_LIBRARIES(unmixt   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(segmentation   Yousef_Nucleus_Seg  trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(threshold_segmentation    trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(compute_extra_associations    trackingHelpers  ftkCommon ${ITK_LIBRARIES} )
@@ -76,7 +76,7 @@ TARGET_LINK_LIBRARIES(render_tracks     trackingHelpers vtkVolumeRendering vtkRe
 
 
 INSTALL(TARGETS unmix RUNTIME DESTINATION ${INSTALL_BIN_DIR})
-INSTALL(TARGETS unmixt RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+#INSTALL(TARGETS unmixt RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 INSTALL(TARGETS segmentation RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 INSTALL(TARGETS threshold_segmentation RUNTIME DESTINATION ${INSTALL_BIN_DIR})
 INSTALL(TARGETS compute_extra_associations RUNTIME DESTINATION ${INSTALL_BIN_DIR})
