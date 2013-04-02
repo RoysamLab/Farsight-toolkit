@@ -385,10 +385,6 @@ if(BUILD_MODEL_SEG)
   find_package_handle_standard_args(FINDGLPK DEFAULT_MSG LIB_GLPK)
 endif(BUILD_MODEL_SEG)
 
-if(USE_TRACKING)
-  add_subdirectory( CellTrackerLib )
-endif(USE_TRACKING)
-
 ####################################################################################
 ####################################################################################
 # NOW WE CAN INCLUDE THE MODULES ACCORDING TO THE OPTIONS SELECTED ABOVE:
@@ -402,16 +398,20 @@ if(BUILD_TRACING)
   endif()
 endif(BUILD_TRACING)
 
-if(BUILD_TRACKER)
-  add_subdirectory(Tracking)
-endif(BUILD_TRACKER)
-
 if(BUILD_NUCLEI)
   add_subdirectory( SQLite )
   add_subdirectory( SQLite/NESqlite )
   add_subdirectory( NuclearSegmentation )
   set(CPACK_PACKAGE_EXECUTABLES "NucleusEditor" "Nucleus Editor" ${CPACK_PACKAGE_EXECUTABLES})
 endif(BUILD_NUCLEI)
+
+if(BUILD_TRACKER)
+  add_subdirectory(Tracking)
+endif(BUILD_TRACKER)
+
+if(USE_TRACKING)
+  add_subdirectory( CellTrackerLib )
+endif(USE_TRACKING)
 
 #if(BUILD_SuperEllipsoidTracer)
  # 	set(CPACK_PACKAGE_EXECUTABLES "Trace3D" "Super" ${CPACK_PACKAGE_EXECUTABLES})
