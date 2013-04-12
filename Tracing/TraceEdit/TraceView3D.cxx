@@ -62,7 +62,7 @@ View3D::View3D(QWidget *parent)
 	this->NodeTable = NULL;
 	this->NodePlot = NULL;
 	this->FeatDistWin = NULL;
-
+	this->imageId = -1;
 #ifdef USE_SPD
 	this->SPDWin = NULL;
 #endif
@@ -1026,6 +1026,31 @@ void View3D::ShowProjectTable()
 	this->projectFilesTableCreated = true;
 	this->ShowToolBars->addAction(this->projectFilesDock->toggleViewAction());
 }
+
+void View3D::imageSelected(int row, int col)
+{
+	std::cout<< "row "<<row<<" selected."<<std::endl;
+	if( row >= 0)  // if some images have been chosen
+	{
+		imageId = row;
+
+		this->BrightnessSpin->blockSignals( true);
+		this->ColorProfileCombo->blockSignals( true);
+		this->BrightnessSlider->blockSignals( true);
+		this->BrightnessSpin->setValue(this->ImageActors->getBrightness(imageId));
+		this->BrightnessSlider->setValue(this->ImageActors->getBrightness(imageId));
+		this->ColorProfileCombo->setCurrentIndex(this->ImageActors->getColorValues(imageId));
+
+		this->BrightnessSpin->blockSignals( false);
+		this->ColorProfileCombo->blockSignals( false);
+		this->BrightnessSlider->blockSignals( false);
+	}
+	else
+	{
+		imageId = -1;
+	}
+}
+
 //! 2-D projection and raycast (no slice image)
 void View3D::choosetoRender(int row, int col)
 {
@@ -1348,10 +1373,10 @@ void View3D::CreateGUIObjects()
 	connect(this->ListButton, SIGNAL(triggered()), this, SLOT(ListSelections()));
 	this->ListButton->setStatusTip("List all selections");
 
-	this->ClearButton = new QAction("Clear", this->CentralWidget); 
-	this->ClearButton->setObjectName(tr("ClearButton"));
+	this->ClearButton = new QAction("Reset", this->CentralWidget); 
+	this->ClearButton->setObjectName(tr("Reset Button"));
 	connect(this->ClearButton, SIGNAL(triggered()), this, SLOT(FastClearSelection()));
-	this->ClearButton->setStatusTip("Clear all selections");
+	this->ClearButton->setStatusTip("Clear all selections (traces and table items)");
 
 	this->SelectTreeAction = new QAction("Select Tree", this->CentralWidget); 
 	this->SelectTreeAction->setObjectName(tr("SelectTreeAction"));
@@ -1953,6 +1978,7 @@ void View3D::CreateGUIObjects()
 	this->projectFilesTable->setColumnWidth(2,75);
 	this->projectFilesTable->setColumnWidth(3,35);
 
+	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(imageSelected(int,int)));
 	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(choosetoRender(int,int)));
 	QObject::connect(this->projectFilesTable, SIGNAL(cellClicked(int,int)), this, SLOT(changeDimension(int,int)));
 	this->projectFilesTable->setHorizontalHeaderLabels(projecttableHeaders);
@@ -3737,28 +3763,28 @@ void View3D::createRayCastSliders()
 
 void View3D::RayCastBrightnessChanged(int value)
 {
-	this->ImageActors->setBrightness(value);
+	this->ImageActors->setBrightness(value, imageId);
 	this->TraceEditSettings.setValue("RayCast/Brightness", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::RayCastOpacityChanged(int value)
 {
-	this->ImageActors->setOpacity(value);
+	this->ImageActors->setOpacity(value, -1);
 	this->TraceEditSettings.setValue("RayCast/Opacity", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::RayCastOpacityValueChanged(double value)
 {
-	this->ImageActors->setOpacityValue(value);
+	this->ImageActors->setOpacityValue(value, -1);
 	this->TraceEditSettings.setValue("RayCast/OpacityValue", value);
 	this->QVTK->GetRenderWindow()->Render();
 }
 
 void View3D::RayCastColorValueChanged(int value)
 {
-	this->ImageActors->setColorValues(value);
+	this->ImageActors->setColorValues(value, imageId);
 	this->QVTK->GetRenderWindow()->Render();
 }
 
@@ -5159,6 +5185,7 @@ void View3D::ClearSelection()
 }
 void View3D::FastClearSelection()
 {
+	this->imageId = -1;
 	if( bKeepSelectedTraces)
 	{
 		this->poly_line_data = this->tobj->GetVTKPolyData(true); //restore the color to the original state
@@ -6181,6 +6208,7 @@ void View3D::updateSelectionHighlights()
 	this->QVTK->GetRenderWindow()->Render();
 	this->statusBar()->showMessage(tr("Done"));
 }
+
 void View3D::MergeSelectedTraces()
 {
 	this->statusBar()->showMessage(tr("Merging"));
@@ -6991,6 +7019,23 @@ void View3D::SPDAnalysis()
 		//this->SPDWin->setModels( featureTable, NULL, this->CellModel->GetCellSelectiveClustering());
 	}
 #endif
+}
+
+void View3D::RandomPickSamplesFromSelection()
+{
+	bool ok1;
+	int nsample = QInputDialog::getInt(this, tr("Randomly picked sample size"),tr("Size:"), 1, 1, 1000, 1, &ok1);
+	if(ok1)
+	{
+		ObjectSelection *selection = this->CellModel->GetObjectSelection();
+		std::set<long int> ids = selection->getSelections();
+		std::set<long int>::iterator iter = ids.begin();
+		std::vector<long int> idVec(ids.size());
+		for(; iter != ids.end(); iter++)
+		{
+			idVec.push_back(*iter);
+		}
+	} 
 }
 
 void View3D::AddLabel()

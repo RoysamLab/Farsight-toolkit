@@ -90,9 +90,16 @@ typedef itk::CastImageFilter<ImageType, ImageTypeFloat3D> UCharToFloatCastImageF
 struct imageFileHandle
 {
 	/** A tag for the image. */
+	imageFileHandle()
+	{
+		colorValue = 0;
+		opacity1 = 50;
+		opacity1Value = 0.1;
+		brightness = 150;
+		this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+	}
+
 	std::string tag;
-	
-	
 	std::string filename;
 	bool renderStatus;
 	bool ren2d;
@@ -108,6 +115,8 @@ struct imageFileHandle
 	IntensityRescaleType::Pointer Rescale;
 	itkPermuteFilterType::Pointer itkPermute;
 	double x,y,z;
+	double colorValue, r,g,b,opacity1, opacity1Value, brightness;
+
 //!Contour Filter pointers
 	vtkSmartPointer<vtkContourFilter> ContourFilter;
 	vtkSmartPointer<vtkPolyDataMapper> ContourMapper;
@@ -124,6 +133,8 @@ struct imageFileHandle
 	vtkSmartPointer<vtkVolume> somaVolume;
 
         ProcessObjectProgressUpdater::Pointer processObjectProgressUpdater;
+
+	vtkSmartPointer<vtkColorTransferFunction> colorTransferFunction;
 };
 class  ImageRenderActors
 {
@@ -166,20 +177,21 @@ public:
 	void SetSliceNumber(int i, int num);
 	vtkSmartPointer<vtkImageData> GetImageData(int i);
 	ImageType::Pointer GetitkImageData(int i);
-	std::vector<double> getColorValues();
-	void setColorValues(double r, double g, double b);
-	void setColorValues(int i, double value);
-	void setBrightness(int value);
-	int getBrightness();
-	void setOpacity(int value);//this is the threshold
-	int getOpacity();
+	//std::vector<double> getColorValues(int i = -1);
+	void setColorValues(double r, double g, double b, int i = -1);
+	void setColorValues(int i, double value, int id = -1);
+	void setBrightness(int value, int i = -1);
+	int getBrightness(int i = -1);
+	void setOpacity(int value, int i = -1);//this is the threshold
+	int getOpacity(int i = -1);
 	void setOpacityMax(int value);//this is the threshold
 	int getOpacityMax();
-	void setOpacityValue(double opacity);
-	double getOpacityValue();
+	void setOpacityValue(double opacity, int i = -1);
+	double getOpacityValue(int i = -1);
 	void setOpacityValueMax(double opacity);
 	double getOpacityValueMax();
-	void setColorValues(int value);
+	int getColorValues(int i = -1);
+	void setColorValues(int value, int i = -1);
 	void getImageBounds(double bounds[]);
 	void setImageBounds(double bounds[]);
 	double* getSliceBounds();
@@ -203,8 +215,8 @@ public:
 		double blue;
 	};
 private:
-	void syncColorTransferFunction();
-	void syncOpacityTransferFunction();
+	void syncColorTransferFunction(int id = -1);
+	void syncOpacityTransferFunction(int id = -1);
 	void syncSomaColorTransferFunction();
 	void syncSomaOpacityTransferFunction();
 	vtkSmartPointer<vtkPiecewiseFunction> opacityTransferFunction;
