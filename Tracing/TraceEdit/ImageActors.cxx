@@ -30,7 +30,7 @@ ImageRenderActors::ImageRenderActors()
 	this->somaOpacity = 50;
 	this->somaOpacityValue = .1;
 
-	this->colorValue = 0;
+	this->colorValue = 4;
 	this->somaColorValue = 0;
 	this->somaBrightness = 150;
 	this->sliceBrightness = 500;
@@ -39,7 +39,7 @@ ImageRenderActors::ImageRenderActors()
 	this->syncOpacityTransferFunction();
 	this->colorTransferFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
 	this->colorTransferFunctionSoma = vtkSmartPointer<vtkColorTransferFunction>::New();
-	this->syncColorTransferFunction();
+	this->syncColorTransferFunction(-1);
 	this->TotalImageSize.clear();
 	for (int i = 0; i <6; i++)
 	{
@@ -220,7 +220,7 @@ vtkSmartPointer<vtkVolume> ImageRenderActors::RayCastVolume(int i)
 	}
 	else
 	{
-		this->LoadedImages[i]->volumeProperty->SetColor(this->colorTransferFunction);
+		this->LoadedImages[i]->volumeProperty->SetColor(this->LoadedImages[i]->colorTransferFunction);
 	}//Image
 	this->LoadedImages[i]->volumeProperty->SetScalarOpacity(this->opacityTransferFunction);
 	this->LoadedImages[i]->volumeProperty->SetInterpolationTypeToLinear();
@@ -438,73 +438,180 @@ ImageType::Pointer ImageRenderActors::GetitkImageData(int i)
 	}
 	return this->LoadedImages[i]->itkImageData;
 }
-std::vector<double> ImageRenderActors::getColorValues()
-{
-	std::vector<double> rgb;
-	rgb.push_back(this->r);
-	rgb.push_back(this->g);
-	rgb.push_back(this->b);
-	return rgb;
-}
-void ImageRenderActors::setColorValues(double r, double g, double b)
+//std::vector<double> ImageRenderActors::getColorValues( int i)
+//{
+//	std::vector<double> rgb;
+//	if( i >= 0)
+//	{
+//		rgb.push_back(this->LoadedImages[i]->r);
+//		rgb.push_back(this->LoadedImages[i]->g);
+//		rgb.push_back(this->LoadedImages[i]->b);
+//	}
+//	else
+//	{
+//		rgb.push_back(this->r);
+//		rgb.push_back(this->g);
+//		rgb.push_back(this->b);
+//	}
+//	return rgb;
+//}
+void ImageRenderActors::setColorValues( double r, double g, double b, int i)
 {
 	this->r = r;
 	this->g = g;
 	this->b = b;
-	this->syncColorTransferFunction();
-}
-void ImageRenderActors::setColorValues(int i, double value)
-{
-	if (i==1)
+	if( i >= 0)
 	{
-		this->r = value;
-	}
-	else if(i ==2)
-	{
-		this->g = value;
+		this->LoadedImages[i]->r = r;
+		this->LoadedImages[i]->g = g;
+		this->LoadedImages[i]->b = b;
+		this->syncColorTransferFunction(i);
 	}
 	else
 	{
-		this->b = value;
+		this->syncColorTransferFunction(-1);
 	}
-	this->syncColorTransferFunction();
 }
-void ImageRenderActors::setBrightness(int value)
+void ImageRenderActors::setColorValues(int i, double value, int id)
 {
+	if( id >= 0)
+	{
+		if (i==1)
+		{
+			this->LoadedImages[i]->r = value;
+		}
+		else if(i ==2)
+		{
+			this->LoadedImages[i]->g = value;
+		}
+		else
+		{
+			this->LoadedImages[i]->b = value;
+		}
+	}
+	else
+	{
+		if (i==1)
+		{
+			this->r = value;
+		}
+		else if(i ==2)
+		{
+			this->g = value;
+		}
+		else
+		{
+			this->b = value;
+		}
+	}
+	this->syncColorTransferFunction(id);
+}
+void ImageRenderActors::setBrightness(int value, int i)
+{
+	if( i >= 0)
+	{
+		this->LoadedImages[i]->brightness = (double)value;
+	}
 	this->brightness = (double)value;
-	this->syncColorTransferFunction();
+	this->syncColorTransferFunction(i);
 }
-int ImageRenderActors::getBrightness()
+int ImageRenderActors::getBrightness(int i)
 {
-	return (int) this->brightness;
+	if( i == -1)
+	{
+		return (int) this->brightness;
+	}
+	else
+	{
+		return (int) this->LoadedImages[i]->brightness;
+	}
 }
-void ImageRenderActors::setOpacity(int value)
+void ImageRenderActors::setOpacity(int value, int i)
 {
+	if( i >= 0)
+	{
+		this->LoadedImages[i]->opacity1 = (double)value;
+	}
 	this->opacity1 = (double) value;
-	this->syncOpacityTransferFunction();
+	this->syncOpacityTransferFunction(i);
 }
-int ImageRenderActors::getOpacity()
+int ImageRenderActors::getOpacity(int i)
 {
-	return (int) this->opacity1;
+	if( i == -1)
+	{
+		return (int) this->opacity1;
+	}
+	else
+	{
+		return (int) this->LoadedImages[i]->opacity1;
+	}
 }
-void ImageRenderActors::setOpacityValue(double opacity)
+void ImageRenderActors::setOpacityValue(double opacity, int i)
 {
+	if( i >= 0)
+	{
+		this->LoadedImages[i]->opacity1Value = (double)opacity;
+	}
 	this->opacity1Value = opacity;
-	this->syncOpacityTransferFunction();
+	this->syncOpacityTransferFunction(i);
 }
-double ImageRenderActors::getOpacityValue()
+double ImageRenderActors::getOpacityValue( int i)
 {
-	return this->opacity1Value;
+	if( i == -1)
+	{
+		return (int) this->opacity1Value;
+	}
+	else
+	{
+		return (int) this->LoadedImages[i]->opacity1Value;
+	}
 }
-void ImageRenderActors::setColorValues(int value)
+
+int ImageRenderActors::getColorValues(int i)
 {
+	if( i >= 0)
+	{
+		return this->LoadedImages[i]->colorValue;
+	}
+	else
+	{
+		return this->colorValue;
+	}
+}
+
+void ImageRenderActors::setColorValues(int value, int i)
+{
+	if( i >= 0)
+	{
+		this->LoadedImages[i]->colorValue = value;
+	}
+	else
+	{
+		for (unsigned int k = 0; k< this->LoadedImages.size(); k++)
+		{
+			this->LoadedImages[k]->colorValue = value;
+		}
+	}
 	this->colorValue = value;
-	this->syncColorTransferFunction();
+	this->syncColorTransferFunction(i);
 }
-void ImageRenderActors::syncColorTransferFunction()
+
+void ImageRenderActors::syncColorTransferFunction(int id)
 {
-	this->colorTransferFunction->RemoveAllPoints();
-	this->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+	if( id >= 0)
+	{
+		this->LoadedImages[id]->colorTransferFunction->RemoveAllPoints();
+		this->LoadedImages[id]->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+		colorValue = this->LoadedImages[id]->colorValue;
+	}
+	else
+	{
+		for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+		{
+			this->LoadedImages[i]->colorTransferFunction->RemoveAllPoints();
+			this->LoadedImages[i]->colorTransferFunction->AddRGBPoint(0.0, 0.0, 0.0, 0.0);
+		}
+	}
 
 	ColorType colorPoint1, colorPoint2, colorPoint3;
 	
@@ -539,28 +646,50 @@ void ImageRenderActors::syncColorTransferFunction()
 	}
 	
 	//Add those 3 points into the color transformer
-	this->colorTransferFunction->AddRGBPoint((this->b*this->brightness)/100, colorPoint1.red, colorPoint1.green, colorPoint1.blue);
-	this->colorTransferFunction->AddRGBPoint((this->g*this->brightness)/100, colorPoint2.red, colorPoint2.green, colorPoint2.blue);
-	this->colorTransferFunction->AddRGBPoint((this->r*this->brightness)/100, colorPoint3.red, colorPoint3.green, colorPoint3.blue);
 
-	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+	if(id >= 0)
 	{
-		if (this->LoadedImages[i]->volume != 0)
-			this->LoadedImages[i]->volume->Update();
+		this->LoadedImages[id]->colorTransferFunction->AddRGBPoint((this->b*this->LoadedImages[id]->brightness)/100, colorPoint1.red, colorPoint1.green, colorPoint1.blue);
+		this->LoadedImages[id]->colorTransferFunction->AddRGBPoint((this->g*this->LoadedImages[id]->brightness)/100, colorPoint2.red, colorPoint2.green, colorPoint2.blue);
+		this->LoadedImages[id]->colorTransferFunction->AddRGBPoint((this->r*this->LoadedImages[id]->brightness)/100, colorPoint3.red, colorPoint3.green, colorPoint3.blue);
+
+		if( this->LoadedImages[id]->volume != 0)
+		{
+			this->LoadedImages[id]->volume->Update();
+		}
+	}
+	else
+	{
+		for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+		{
+			this->LoadedImages[i]->colorTransferFunction->AddRGBPoint((this->b*this->LoadedImages[i]->brightness)/100, colorPoint1.red, colorPoint1.green, colorPoint1.blue);
+			this->LoadedImages[i]->colorTransferFunction->AddRGBPoint((this->g*this->LoadedImages[i]->brightness)/100, colorPoint2.red, colorPoint2.green, colorPoint2.blue);
+			this->LoadedImages[i]->colorTransferFunction->AddRGBPoint((this->r*this->LoadedImages[i]->brightness)/100, colorPoint3.red, colorPoint3.green, colorPoint3.blue);
+			if ( this->LoadedImages[i]->volume != 0)
+				this->LoadedImages[i]->volume->Update();
+		}
 	}
 }
-void ImageRenderActors::syncOpacityTransferFunction()
+void ImageRenderActors::syncOpacityTransferFunction(int id)
 {
 	this->opacityTransferFunction->RemoveAllPoints();
 	this->opacityTransferFunction->AddPoint(2,0.0);
 	this->opacityTransferFunction->AddPoint(this->opacity1,this->opacity1Value);
 	//this->opacityTransferFunction->AddPoint(this->opacity2,this->opacity2Value);
-	for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
+
+	if(id == -1)
 	{
-    if(this->LoadedImages[i]->volume)
+		for (unsigned int i = 0; i< this->LoadedImages.size(); i++)
 		{
-		this->LoadedImages[i]->volume->Update();
+		if(this->LoadedImages[i]->volume)
+			{
+			this->LoadedImages[i]->volume->Update();
+			}
 		}
+	}
+	else
+	{
+		this->LoadedImages[id]->volume->Update();
 	}
 }
 void ImageRenderActors::CreateImageResliceMapper(int i)

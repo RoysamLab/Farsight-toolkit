@@ -189,6 +189,7 @@ public:
 	void ConfigureLayoutByGenericTraceType(int traceTypeGeneric);
 
 public slots:
+	void imageSelected(int row, int col);
 	void choosetoRender(int row, int col);
 	void changeDimension(int row, int col);
 	void ListSelections();
@@ -358,6 +359,7 @@ protected slots:
 	void recordTest();
 	void resizeForTesting();
 	void UpdateKeepSelectedTraces();
+	void RandomPickSamplesFromSelection();
 
 protected:
 	void closeEvent(QCloseEvent *event);
@@ -690,6 +692,7 @@ private:
 	QSpinBox * HeightSpaceBox, * WidthSpaceBox, * DepthSpaceBox, * LineWidthBox;
 	QSlider * GridRSlider, * GridGSlider, * GridBSlider;
 	QSlider * GridOpacitySlider;
+	int imageId;
 //!Delaunay triangulation - 3D convex hull using terminal tips
 	std::vector<CellTrace*> delaunayCellsSelected;
 	std::vector<CellTrace*> ellipsoidCellsSelected;
