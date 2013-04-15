@@ -277,9 +277,9 @@ int TraceObject::LinearTraceLinesRecursive(std::vector<TraceLine*> &allLine, Tra
 	{ //not the root, so +1 from parent
 
 		TraceLine *parent = tline->GetParent(0);
-		tline->setRoot(parent->GetRootID());
-		//tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, 
-		//	parent->GetPathLength()+tline->GetDistToParent());
+		//tline->setRoot(parent->GetRootID());
+		tline->setRoot(parent->GetRootID(), parent->GetLevel() +1, 
+			parent->GetPathLength()+tline->GetDistToParent());
 	}
 	allLine.push_back(tline);
 	if (tline->GetBranchPointer()->size()== 0)

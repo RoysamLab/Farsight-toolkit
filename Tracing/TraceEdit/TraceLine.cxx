@@ -46,6 +46,7 @@ TraceLine::TraceLine()
 
 	this->daughterRatio = 0;
 	this->parentDaughterRatio = 0;
+	this->daughterLengthRatio = 0;
 	this->partitionAsymmetry = 0;
 
 	this->rallPower = 0;
@@ -349,8 +350,8 @@ void TraceLine::calculateBifFeatures()
 		this->partitionAsymmetry = 1;
 	}
 
-	double daughter1pathLength = this->GetBranch1()->GetPathLength();
-	double daughter2pathLength = this->GetBranch2()->GetPathLength();
+	double daughter1pathLength = this->GetBranch1()->GetLength();
+	double daughter2pathLength = this->GetBranch2()->GetLength();
 	if (daughter1pathLength <= daughter2pathLength)
 	{
 		if (daughter2pathLength != 0)
