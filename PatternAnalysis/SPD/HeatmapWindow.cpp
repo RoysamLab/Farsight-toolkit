@@ -2632,6 +2632,10 @@ void Heatmap::runClusforSPD(std::vector< int> selOrder, std::vector< int> unselO
 		//}
 
 		/// construct the overal tree and the overal order
+		if( maxdis <= 1e-6)
+		{
+			maxdis = 1;
+		}
 		std::vector< ClusterTree> overallTree;
 		while(overallTree.size() < numberofcomponents - 1)  
 		{

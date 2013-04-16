@@ -361,6 +361,8 @@ void SPDkNNGModuleMatch::showPSM()
 		optimalleaforder[i] = clus1->optimalleaforder[i];
 		clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
 	}
+	std::cout<< "Optimal order:"<<std::endl;
+	std::cout<< optimalleaforder<<std::endl;
 
 	this->simHeatmap->setModels();
 	this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
@@ -400,6 +402,11 @@ void SPDkNNGModuleMatch::viewProgression()
 	unselOrder.clear();
 
 	split( selectModulesID, ',', selModuleID);
+	for( size_t i = 0; i < selModuleID.size(); i++)
+	{
+		std::cout<< selModuleID[i]<< "\t";
+	}
+	std::cout<<std::endl;
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
@@ -443,8 +450,11 @@ void SPDkNNGModuleMatch::split(std::string& s, char delim, std::vector< unsigned
 
 	for( int i = 0; i < stringVec.size(); i++)
 	{
-		unsigned int index = atoi( stringVec[i].c_str());
-		indexVec.push_back( index);
+		if( stringVec[i].length() > 0)
+		{
+			unsigned int index = atoi( stringVec[i].c_str());
+			indexVec.push_back( index);
+		}
 	}
 } 
 
@@ -529,8 +539,11 @@ void SPDkNNGModuleMatch::regenerateProgressionTree()
 		selection->clear();
 		std::vector< std::vector< long int> > sampleIndex;
 		selection->GetSampleIndex( sampleIndex);
-        std::vector< std::vector< long int> > clusIndex;
-        selection->GetClusterIndex( clusIndex);
+        //std::vector< std::vector< long int> > clusIndex;
+        //selection->GetClusterIndex( clusIndex);
+
+		double homogeneity = SPDModel->GetANOVA(sampleIndex, selFeatureID);
+		std::cout<< "Homogeneity evaluation: "<< homogeneity<<std::endl;
 
 		vnl_matrix<double> clusAverageMat;
 		std::vector< double> colorVec;
@@ -622,6 +635,7 @@ void SPDkNNGModuleMatch::UpdateConnectedNum()
 {
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	std::vector< unsigned int> selModuleID;
+	split( selectModulesID, ',', selModuleID);
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
