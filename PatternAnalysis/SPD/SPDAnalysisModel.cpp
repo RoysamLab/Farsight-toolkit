@@ -2844,9 +2844,9 @@ void SPDAnalysisModel::GetClusClusDataMST(clusclus *c1, double threshold, std::v
 
 void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
 {
-	QString filenameSM = this->filename + "similarity_matrix.txt";
-	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
-	ofSimatrix.precision(4);
+	//QString filenameSM = this->filename + "similarity_matrix.txt";
+	//std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
+	//ofSimatrix.precision(4);
 
 	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 	c1->RunClusClus();
@@ -2882,10 +2882,40 @@ void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diag
 	}
 	std::cout<<"Converge after "<<count<<std::endl;
 
+	// arrange according to the first row
+	for(int i = 0; i < nrows; i++)
+	{
+		for(int j = 0; j < nrows; j++)
+		{
+			EMDMat(i,j) = EMDMatrix(order[i],order[j]);
+		}
+	}
+	for( unsigned int i = 0; i < order.size(); i++)
+	{
+		for( unsigned int j = i + 1; j < order.size(); j++)
+		{
+			if( EMDMat(0,i) < EMDMat(0,j))
+			{
+				std::swap(vec[i],vec[j]);
+				std::swap(order[i],order[j]);
+				std::swap(EMDMat(0,i), EMDMat(0,j));
+			}
+		}
+	}
+	//for(int i = 0; i < nrows; i++)
+	//{
+	//	for(int j = 0; j < nrows; j++)
+	//	{
+	//		EMDMat(i,j) = EMDMatrix(order[i],order[j]);
+	//	}
+	//}
+
+	// save the order
 	for(unsigned int i = 0; i < nrows; i++)
 	{
 		c1->optimalleaforder[i] = order[i];
 	}
+
 	if(diagVec)
 	{
 		diagVec->set_size(nrows);
@@ -2894,8 +2924,8 @@ void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diag
 			(*diagVec)[i] = vec(i);
 		}
 	}
-	ofSimatrix << EMDMat<< std::endl;
-	ofSimatrix.close();	
+	//ofSimatrix << EMDMat<< std::endl;
+	//ofSimatrix.close();	
 }
 
 bool SPDAnalysisModel::DiagnalIteration(vnl_matrix<double> &mat, vnl_vector<int> &order, vnl_vector<double> &vec)
@@ -3423,13 +3453,13 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			bool bstate = true;
 			vnl_vector<unsigned int> histMean;
 			unsigned int binTest = meanVec.size();
-			if( binTest * 0.1 > 30)
+			if( binTest * 0.1 > 10)
 			{
-				binTest = 30;
+				binTest = 10;
 			}
-			else if( binTest * 0.1 < 5)
+			else if( binTest * 0.1 < 3)
 			{
-				binTest = 5;
+				binTest = 3;
 			}
 			double minterval = (mmax - mmin) / binTest;
 			Hist(meanVec, minterval, mmin, histMean, binTest);
@@ -4945,15 +4975,15 @@ bool SPDAnalysisModel::PSCIterationRadius2(vnl_matrix< double> &input, vnl_matri
 	return bchanged;
 }
 
-double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_matrix<double> &mat1, vnl_matrix<double> &mat2, bool debug)
+double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
 {
-	if( abs(mat1.max_value() - mat1.min_value()) < 1e-6 ||  abs(mat2.max_value() - mat2.min_value()) < 1e-6)
+	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
 	{
 		return 0;
 	}
 
 	vnl_matrix< double> contextDis;
-	EuclideanBlockDist(mat1, contextDis);
+	EuclideanBlockDist(vec1, contextDis);
 
 	std::vector<unsigned int> nearIndex;
 	vnl_vector<double> nearWeights;
@@ -4973,22 +5003,19 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 
 	vnl_vector<unsigned int> histContext;
 	vnl_vector<unsigned int> histNear;
-	vnl_vector<unsigned int> histComplement;
+
 	Hist(contextDis, interval, min, histContext, nbins);
 	Hist(nearWeights, interval, min, histNear, nbins);
-	histComplement = histContext - histNear;
-	
+
 	vnl_matrix< double> dis2;
 	std::vector<unsigned int> nearIndex2;
 	vnl_vector<double> matchWeights2;
 	
 	vnl_vector<unsigned int> hist2;
-	vnl_vector<unsigned int> hist2Complement;
-	EuclideanBlockDist(mat2, dis2);
+	EuclideanBlockDist(vec2, dis2);
 	FindNearestKSample(dis2, nearIndex2, kNeighbor);
 	GetKWeights( contextDis, nearIndex2, matchWeights2, kNeighbor);
 	Hist( matchWeights2, interval, min, hist2, nbins);
-	hist2Complement = histContext - hist2;
 
 	bool bstate = false;
 	unsigned int maxHist = (unsigned int)(histContext.sum() * 0.9);   // if the module's full graph edge distribution highly agglomerate at one bin, then discard this module.
@@ -5009,8 +5036,8 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 	double ps = 0;
 	vnl_matrix<double> flowMatrix( nbins, nbins);
 	flowMatrix.fill(0);
-	double range = EarthMoverDistance( histComplement, histNear, flowMatrix, nbins);
-	double movedEarth = EarthMoverDistance( hist2Complement, hist2, flowMatrix, nbins);
+	double range = EarthMoverDistance( histContext, histNear, flowMatrix, nbins);
+	double movedEarth = EarthMoverDistance( histContext, hist2, flowMatrix, nbins);
 	double sum = 0;
 	
 	for( unsigned int n = 0; n < flowMatrix.rows(); n++)
@@ -5038,12 +5065,10 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 		std::ofstream ofs("debug.txt",std::ios_base::app);
 		ofs<< "kNNG1:"<<std::endl;
 		ofs<< histNear<<std::endl;
-		ofs<< "kNNG1Complement:"<<std::endl;
-		ofs<< histComplement<<std::endl;
+		ofs<< "full graph:"<<std::endl;
+		ofs<< histContext<<std::endl;
 		ofs<< "kNNG2:"<<std::endl;
 		ofs<< hist2<<std::endl;
-		ofs<< "kNNG2Complement:"<<std::endl;
-		ofs<< hist2Complement<<std::endl;
 		ofs<<ps<<std::endl<<std::endl;
 		ofs.close();
 	}

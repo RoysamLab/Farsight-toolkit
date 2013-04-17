@@ -6,11 +6,8 @@
 int main(int argc, char* argv[])
 {
 	vul_arg< vcl_string > arg_file(0, "A file containing x and y with headers(x,y), seperated by','");
-	vul_arg< bool > arg_average("-average", "Averagely bin the histogram of full graph distance metric", false);
-	vul_arg< bool > arg_complement("-complement", "Using complement strategy", false);
 	vul_arg< int > arg_bin("-bin", "bin size for the histogram of the full graph distance metric", 20);
 	vul_arg< int > arg_k("-neighbor", "k for k-NNG", 3);
-	vul_arg< double > arg_ratio("-ratio", "ratio for shortest path distance", 1.2);
 	vul_arg< bool > arg_debug("-debug", "Print out the histgram information", false);
 	vul_arg_parse(argc, argv);
 
@@ -55,23 +52,9 @@ int main(int argc, char* argv[])
 	double ps = 0;
 	double ps2 = 0;
 
-	if(arg_average())
-	{
-		std::cout<< "-average"<<std::endl;
-		ps = SPDAnalysisModel::CaculatePSAveragebin(arg_k(), arg_bin(),vecx, vecy, arg_debug());
-		ps2 = SPDAnalysisModel::CaculatePSAveragebin(arg_k(), arg_bin(), vecy, vecx, arg_debug());
-	}
-	else if(arg_complement())
-	{
-		std::cout<<"-complement"<<std::endl;
-		ps = SPDAnalysisModel::CaculatePSComplementUsingShortestPath(arg_k(), arg_bin(),vecx, vecy, arg_ratio(),arg_debug());
-		ps2 = SPDAnalysisModel::CaculatePSComplementUsingShortestPath(arg_k(), arg_bin(), vecy, vecx,  arg_ratio(), arg_debug());
-	}
-	else
-	{
-		ps = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecx, vecy, arg_debug());
-		ps2 = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecy, vecx, arg_debug());
-	}
+	ps = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecx, vecy, arg_debug());
+	ps2 = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecy, vecx, arg_debug());
+
 	std::ofstream ofs("PSC-result.csv");
 	ofs<< ps<<","<<ps2<<std::endl;
 	ofs.close();
