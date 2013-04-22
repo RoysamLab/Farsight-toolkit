@@ -3592,6 +3592,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			}
 		}
 	}
+
 	//this->EMDMatrix = this->EMDMatrix / this->EMDMatrix.max_value();
 
 	//ofs<< kNeighbor<<"\t"<<max1<<std::endl;

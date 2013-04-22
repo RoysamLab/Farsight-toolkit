@@ -52,8 +52,8 @@ int main(int argc, char* argv[])
 	double ps = 0;
 	double ps2 = 0;
 
-	ps = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecx, vecy, arg_debug());
-	ps2 = SPDAnalysisModel::CaculatePS(arg_k(), arg_bin(),vecy, vecx, arg_debug());
+	ps = SPDAnalysisModel::CaculatePSComplement(arg_k(), arg_bin(),vecx, vecy, arg_debug());
+	ps2 = SPDAnalysisModel::CaculatePSComplement(arg_k(), arg_bin(),vecy, vecx, arg_debug());
 
 	std::ofstream ofs("PSC-result.csv");
 	ofs<< ps<<","<<ps2<<std::endl;

@@ -37,7 +37,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"), this);
     loadButton = new QPushButton(tr("Load"), this);
-	//loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
+	loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
 
     featureNumLabel = new QLabel(tr("Feature size:"), this);
     featureNum = new QLabel(this);
@@ -48,13 +48,13 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
     clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
     clusterCoherenceBox = new QDoubleSpinBox(this);
-	clusterCoherenceBox->setValue(0.8);
+	clusterCoherenceBox->setValue(0.95);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
     kNearestNeighborLabel = new QLabel(tr("Nearest Neighbor Number:"), this);
     kNearestNeighborBox = new QSpinBox(this);
-	kNearestNeighborBox->setValue(2);
+	kNearestNeighborBox->setValue(5);
 	kNearestNeighborBox->setMinimum (0);
 	kNearestNeighborBox->setSingleStep(1);
 
@@ -183,7 +183,6 @@ void SPDkNNGModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 	{
 		browseButton->setEnabled(TRUE);
 		loadButton->setEnabled(TRUE);
-		//loadTestButton->setEnabled(TRUE);
 	}
 	else
 	{
@@ -194,7 +193,6 @@ void SPDkNNGModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
-		//loadTestButton->setEnabled(TRUE);
 	}
 
 	if(this->simHeatmap)
@@ -267,7 +265,7 @@ void SPDkNNGModuleMatch::showOriginalHeatmap()
 		sampleOrder.push_back(i);
 	}
 	std::vector< int> selOrder;
-	for( int i = 0; i < tableAfterCellCluster->GetNumberOfColumns(); i++)
+	for( int i = 0; i < tableAfterCellCluster->GetNumberOfColumns() - 1; i++)
 	{
 		selOrder.push_back(i);
 	}
@@ -342,7 +340,6 @@ void SPDkNNGModuleMatch::editNearestNeighbor()
 void SPDkNNGModuleMatch::showPSM()
 {
 	clusterFunction();
-
 	std::string kNeighbor = this->kNearestNeighborBox->text().toStdString();
 	std::string nBin = this->nBinBox->text().toStdString();
 	this->SPDModel->ModuleCorrelationMatrixMatch(atoi(kNeighbor.c_str()), atoi(nBin.c_str()));
