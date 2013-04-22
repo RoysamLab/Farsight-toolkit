@@ -1676,29 +1676,35 @@ void NucleusEditor::loadProject()
 		segView->SetChannelImage(myImg);
 	}
 
-	if(projectFiles.output != "" && projectFiles.type!="multi")
+	if(projectFiles.output != "" )
 	{
-		this->loadResult( QString::fromStdString(projectFiles.GetFullOutput()) );
-	}
-	else
-	{
-		labImg = ftk::LoadImageSeriesLabels(projectFiles.GetFullOutput());
-		segView->SetLabelImage(labImg, selection);
-		this->updateNucSeg();
-		nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
-		// this next 3 lines are temporary until we figure out how to remove compute all geometries from updateNucSeg
-		//table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
-		//CreateNewTableWindow();
-		//CreateNewPlotWindow();
+		if(projectFiles.type!="multi")
+		{
+			this->loadResult( QString::fromStdString(projectFiles.GetFullOutput()) );
+		}
+		else
+		{
+			labImg = ftk::LoadImageSeriesLabels(projectFiles.GetFullOutput());
+			segView->SetLabelImage(labImg, selection);
+			this->updateNucSeg();
+			nucSeg->SetCurrentbBox(nucSeg->bBoxMap4DImage.at(segView->GetCurrentTimeVal()));
+			// this next 3 lines are temporary until we figure out how to remove compute all geometries from updateNucSeg
+			//table = nucSeg->table4DImage.at(segView->GetCurrentTimeVal());
+			//CreateNewTableWindow();
+			//CreateNewPlotWindow();
+		}
 	}
 
-	if(projectFiles.table != "" && projectFiles.type!="multi")
+	if(projectFiles.table != "")
 	{
-		this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
-	}
-	else
-	{
-		this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
+		if(projectFiles.type!="multi")
+		{
+			this->loadTable( QString::fromStdString(projectFiles.GetFullTable()) );
+		}
+		else
+		{
+			this->loadTableSeries( QString::fromStdString(projectFiles.GetFullTable()) );		
+		}
 	}
 
 	if(projectFiles.log == "")	//Not opposite boolean here
