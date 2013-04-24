@@ -65,6 +65,7 @@ class PixelLevelAnalysis{
 		bool RunAnalysis1();
 		bool RunAnalysis2();
 		bool RunAnalysis3();
+		bool RunAnalysis4();
 
 	private:
 		std::string       ROIImageName;
