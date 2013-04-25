@@ -85,6 +85,7 @@ void ftk::PixelLevelAnalysis::SetInputs( std::string ROIImageNames, std::string 
     	return;
 	}
 	ROIBinImageName    = ROIImageName.substr(0,idx1)    + "_bin.tif";
+	ROIColImageName    = ROIImageName.substr(0,idx1)    + "_col_bin.tif";
 	TargetBinImageName = TargetImageName.substr(0,idx2) + "_bin.tif";
 }
 
@@ -103,6 +104,14 @@ void ftk::PixelLevelAnalysis::WriteInitialOutputs(){
 
 void ftk::PixelLevelAnalysis::WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr){
 	typedef itk::ImageFileWriter< UShortImageType > WriterType;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( OutName.c_str() );
+	writer->SetInput( OutPtr );
+	writer->Update();
+}
+
+void ftk::PixelLevelAnalysis::WriteOutputColorImage(std::string OutName, RGBImageType::Pointer OutPtr){
+	typedef itk::ImageFileWriter< RGBImageType > WriterType;
 	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( OutName.c_str() );
 	writer->SetInput( OutPtr );
@@ -617,38 +626,48 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 	//Create an image with the atoms set as bright pixels
 	UShortImageType::Pointer roi_bin    = UShortImageType::New();
 	UShortImageType::Pointer target_bin = UShortImageType::New();
+	RGBImageType::Pointer roi_col       = RGBImageType::New();
+
 	UShortImageType::PointType origin1;
 	origin1[0] = 0;
 	origin1[1] = 0;
 	origin1[2] = 0;
 	roi_bin    ->SetOrigin(origin1);
 	target_bin ->SetOrigin(origin1);
+	roi_col    ->SetOrigin(origin1);
 
 	UShortImageType::SizeType size1,size2; 
-	size1[0] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[0];
-	size1[1] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[1];
-	size1[2] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[2];
+	RGBImageType::SizeType size3;
+	size3[0] = size1[0] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[0];
+	size3[1] = size1[1] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[1];
+	size3[2] = size1[2] = ROIImagePtr   ->GetLargestPossibleRegion().GetSize()[2];
 	size2[0] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[0];
 	size2[1] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[1];
 	size2[2] = TargetImagePtr->GetLargestPossibleRegion().GetSize()[2];
 
 	UShortImageType::IndexType start;
-	start[0] = 0; // first index on X
-	start[1] = 0; // first index on Y
-	start[2] = 0; // first index on Z
+	RGBImageType::IndexType start1;
+	start1[0] = start[0] = 0; // first index on X
+	start1[1] = start[1] = 0; // first index on Y
+	start1[2] = start[2] = 0; // first index on Z
 	UShortImageType::RegionType region1,region2;
-	region1.SetSize(size1);
-	region1.SetIndex(start);
+	RGBImageType::RegionType region3;
+	region1.SetSize(size1); region3.SetSize(size3);
+	region1.SetIndex(start); region3.SetIndex(start1);
 	region2.SetSize(size2);
 	region2.SetIndex(start);
 
-	roi_bin   ->SetRegions(region1);
+	roi_bin   ->SetRegions(region1); roi_col->SetRegions(region3);
 	target_bin->SetRegions(region2);
-	roi_bin   ->Allocate();
+	roi_bin   ->Allocate(); roi_col->Allocate();
 	target_bin->Allocate();
-	roi_bin   ->FillBuffer(0);
+	RGBPixelType zeroPix; zeroPix[0] = 0; zeroPix[1] = 0; zeroPix[2] = 0;
+	RGBPixelType redPix;  redPix[0] = 255; redPix[1] = 0;  redPix[2] = 0;
+	RGBPixelType greenPix; greenPix[0] = 0; greenPix[1] = 255; greenPix[2] = 0;
+	RGBPixelType yellowPix; yellowPix[0] = 255; yellowPix[1] = 255; yellowPix[2] = 0;
+	roi_bin   ->FillBuffer(0); roi_col->FillBuffer(zeroPix);
 	target_bin->FillBuffer(0);
-	roi_bin   ->Update();
+	roi_bin   ->Update(); roi_col->Update();
 	target_bin->Update();
 
 	double roi_count, target_count, independent_target_count;
@@ -656,56 +675,173 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 
 	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
 	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< RGBImageType > RGBIteratorType;
+	RGBIteratorType   pix_buf_roi_col( roi_col,               roi_col->GetRequestedRegion() );
 	IteratorType	  pix_buf_roi_bin( roi_bin,               roi_bin->GetRequestedRegion() );
 	IteratorType	  pix_buf_tar_bin( target_bin,         target_bin->GetRequestedRegion() );
 	ConstIteratorType pix_buf_roi_im ( ROIImagePtr,       ROIImagePtr->GetRequestedRegion() );
 	ConstIteratorType pix_buf_tar_im ( TargetImagePtr, TargetImagePtr->GetRequestedRegion() );
 	pix_buf_roi_bin.GoToBegin(); pix_buf_tar_bin.GoToBegin(); pix_buf_roi_im.GoToBegin(); pix_buf_tar_im.GoToBegin();
+	pix_buf_roi_col.GoToBegin();
 
-	for ( ; !(pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd());
-			++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im )
+	for ( ; !( pix_buf_roi_bin.IsAtEnd() || pix_buf_tar_bin.IsAtEnd() || pix_buf_roi_im.IsAtEnd() || pix_buf_tar_im.IsAtEnd() || 
+		pix_buf_roi_col.IsAtEnd() ); ++pix_buf_roi_bin, ++pix_buf_tar_bin, ++pix_buf_roi_im, ++pix_buf_tar_im, ++pix_buf_roi_col )
 	{
 		if( pix_buf_roi_im.Get() >= thresh_roi )
 		{
-			++roi_count;
 			if( pix_buf_tar_im.Get() >= thresh_target )
 			{
-				++target_count;
 				pix_buf_roi_bin.Set( uns_max );
 				pix_buf_tar_bin.Set( uns_max );
 			}
 			else
 			{
 				pix_buf_roi_bin.Set( uns_max );
-				pix_buf_tar_bin.Set( uns_zero);
+				pix_buf_tar_bin.Set( uns_zero );
 			}
 		}
 		else
 		{
 			if( pix_buf_tar_im.Get() >= thresh_target )
 			{
-				pix_buf_roi_bin.Set( uns_zero);
+				pix_buf_roi_bin.Set( uns_zero );
 				pix_buf_tar_bin.Set( uns_max );
 			}
 			else
 			{
-				pix_buf_roi_bin.Set( uns_zero);
-				pix_buf_tar_bin.Set( uns_zero);
+				pix_buf_roi_bin.Set( uns_zero );
+				pix_buf_tar_bin.Set( uns_zero );
 			}
 		}
 		if( pix_buf_tar_im.Get() >= thresh_target )
+		{
 			++independent_target_count;
+			pix_buf_roi_col.Set( redPix );
+		}
+		else pix_buf_roi_col.Set( zeroPix );
 	}
 
+	this->CleanImage( roi_bin );
+	this->CleanImage( target_bin );
+
+	typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
+	typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
+	DilateFilterType::Pointer shell_image_filter = DilateFilterType::New();
+	StructuringElementType shell_individual;
+	shell_individual.SetRadius( pixel_distance ); //radius shell
+	shell_individual.CreateStructuringElement();
+	shell_image_filter->SetKernel( shell_individual );
+	shell_image_filter->SetDilateValue( uns_max );
+	shell_image_filter->SetInput( target_bin );
+
+	typedef itk::ImageFileWriter< UShortImageType > WriterType;
+	WriterType::Pointer writer1 = WriterType::New();
+	writer1->SetFileName( "bin_info1.tif" );
+	writer1->SetInput( shell_image_filter->GetOutput() );
+
+	try
+	{
+		writer1->Update();
+	}
+	catch( itk::ExceptionObject & excep )
+	{
+		std::cerr << "ITK exception caught: " << excep << std::endl;
+		return false;
+	}
+	UShortImageType::Pointer target_bin_dial = shell_image_filter->GetOutput();
+
+	ConstIteratorType pixBufRoiClean   ( roi_bin,         roi_bin    ->GetLargestPossibleRegion()    );
+	ConstIteratorType pixBufTargDial   ( target_bin_dial, target_bin_dial->GetLargestPossibleRegion());
+
+	pixBufRoiClean.GoToBegin(); pixBufTargDial.GoToBegin(); pix_buf_roi_col.GoToBegin();
+	roi_count = 0; target_count = 0;
+	for( ; !pixBufRoiClean.IsAtEnd(); ++pixBufRoiClean, ++pixBufTargDial, ++pix_buf_roi_col )
+	{
+			if( pixBufRoiClean.Get() && pixBufTargDial.Get() )
+			{
+				++target_count;
+				pix_buf_roi_col.Set( yellowPix );
+			}
+			if( pixBufRoiClean.Get() )
+			{
+				++roi_count;
+				if(!pixBufTargDial.Get())
+					pix_buf_roi_col.Set( greenPix );
+			}
+	}
+
+	std::string csvString = "csv";
+	size_t found;
+	found=OutputFilename.find(csvString );
+
+	if (found!=std::string::npos){
+		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
+		output_txt_file	<< ftk::GetFilePath( ROIBinImageName ) << ",";
+		long double percentage_of_pixels;
+		percentage_of_pixels = (long double)size1[0] * (long double)size1[1] * (long double)size1[2];
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";
+		percentage_of_pixels = roi_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";
+
+		percentage_of_pixels = independent_target_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";
+
+		percentage_of_pixels = target_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << ",";
+
+		percentage_of_pixels = target_count/roi_count*100.0;
+		output_txt_file << setprecision (5);
+		output_txt_file << percentage_of_pixels << std::endl;
+		output_txt_file.close();
+	}
+	else{
+		this->WriteInitialOutputs();
+		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
+		output_txt_file	<< std::endl;
+		long double percentage_of_pixels;
+		output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
+		percentage_of_pixels = 100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+
+		output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
+		percentage_of_pixels = 100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+
+		output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
+		percentage_of_pixels = 100.0 * (long double)target_count / (long double)roi_count;
+		output_txt_file	<< setprecision (5);
+		output_txt_file	<< percentage_of_pixels << std::endl;
+		output_txt_file.close();
+	}
+
+	WriteOutputImage(ROIBinImageName, roi_bin);
+	WriteOutputImage(TargetBinImageName, target_bin);
+	WriteOutputColorImage(ROIColImageName, roi_col);
+
+	return true;
+}
+
+
+void ftk::PixelLevelAnalysis::CleanImage( UShortImageType::Pointer& binary )
+{
 	//In this mode we erode by erodeRadius and then if the connected component still exists then
 	//it is a mature vessel else it is noise/non-specific CD34 staining
 	typedef itk::BinaryBallStructuringElement< UShortImageType::PixelType, 3 > StructuringElementType;
 	typedef itk::BinaryErodeImageFilter< UShortImageType, UShortImageType, StructuringElementType > ErodeFilterType;
 	typedef itk::ConnectedComponentImageFilter< UShortImageType, UShortImageType > LabelFilterType;
 	typedef itk::LabelStatisticsImageFilter< UShortImageType,UShortImageType > StatisticsFilterType;
+	typedef itk::ImageFileWriter< UShortImageType > WriterType;
+	typedef itk::ImageRegionConstIterator< UShortImageType > ConstIteratorType;
+	typedef itk::ImageRegionIteratorWithIndex< UShortImageType > IteratorType;
 
 	LabelFilterType::Pointer initialLabelsFilter = LabelFilterType::New();
-	initialLabelsFilter->SetInput( roi_bin );
+	initialLabelsFilter->SetInput( binary );
 
 	initialLabelsFilter->FullyConnectedOff();
 
@@ -720,11 +856,10 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 	ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
 	erodeFilter->SetKernel( shellElement );
 	erodeFilter->SetErodeValue( uns_max );
-	erodeFilter->SetInput( roi_bin );
+	erodeFilter->SetInput( binary );
 	std::cout<<"Computing labels and eroding binary.\n";
 
-	typedef itk::ImageFileWriter< UShortImageType > WriterType;
-            WriterType::Pointer writer = WriterType::New();
+	WriterType::Pointer writer = WriterType::New();
 	writer->SetFileName( "bin_info.tif" );
 	writer->SetInput( erodeFilter->GetOutput() );//RescaleIntIO1--finalO/P
 
@@ -735,7 +870,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 	}
 	catch( itk::ExceptionObject & excep ){
 		std::cerr << "ITK exception caught: " << excep << std::endl;
-		return false;
+		return;
 	}
 
 	//Get rid of regions that are thinner than a specific pixel radius by erosion
@@ -782,7 +917,7 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 		CroppedRegion.SetSize ( Size  );
 		CroppedRegion.SetIndex( Start );
 
-		IteratorType pixBufBin( roi_bin, CroppedRegion );
+		IteratorType pixBufBin( binary, CroppedRegion );
 		ConstIteratorType pixBufInitLabels( initialLabelsFilter->GetOutput(), CroppedRegion );
 
 		pixBufInitLabels.GoToBegin();
@@ -790,89 +925,4 @@ bool ftk::PixelLevelAnalysis::RunAnalysis4(){
 			if( pixBufInitLabels.Get()==deleteLabels.at(i) )
 				pixBufBin.Set(0);
 	}
-	typedef itk::BinaryDilateImageFilter < UShortImageType, UShortImageType, StructuringElementType > DilateFilterType;
-	DilateFilterType::Pointer shell_image_filter = DilateFilterType::New();
-	StructuringElementType shell_individual;
-	shell_individual.SetRadius( pixel_distance ); //radius shell
-	shell_individual.CreateStructuringElement();
-	shell_image_filter->SetKernel( shell_individual );
-	shell_image_filter->SetDilateValue( uns_max );
-	shell_image_filter->SetInput( target_bin );
-
-	WriterType::Pointer writer1 = WriterType::New();
-	writer1->SetFileName( "bin_info1.tif" );
-	writer1->SetInput( shell_image_filter->GetOutput() );
-
-	try
-	{
-		writer1->Update();
-	}
-	catch( itk::ExceptionObject & excep )
-	{
-		std::cerr << "ITK exception caught: " << excep << std::endl;
-		return false;
-	}
-	UShortImageType::Pointer target_bin_dial = shell_image_filter->GetOutput();
-
-	ConstIteratorType pixBufRoiClean   ( roi_bin,         roi_bin    ->GetLargestPossibleRegion()    );
-	ConstIteratorType pixBufTargDial   ( target_bin_dial, target_bin_dial->GetLargestPossibleRegion());
-
-	pixBufRoiClean.GoToBegin(); pixBufTargDial.GoToBegin();
-	roi_count = 0; target_count = 0;
-	for( ; !pixBufRoiClean.IsAtEnd(); ++pixBufRoiClean, ++pixBufTargDial )
-	{
-			if( pixBufRoiClean.Get() && pixBufTargDial.Get() ) ++target_count;
-			if( pixBufRoiClean.Get() ) ++roi_count;
-	}
-
-	std::string csvString = "csv";
-	size_t found;
-	found=OutputFilename.find(csvString );
-
-	if (found!=std::string::npos){
-		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
-		output_txt_file	<< ftk::GetFilePath( ROIBinImageName ) << ",";
-		long double percentage_of_pixels;
-		percentage_of_pixels = (long double)size1[0] * (long double)size1[1] * (long double)size1[2];
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << ",";
-		percentage_of_pixels = roi_count;
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << ",";
-
-		percentage_of_pixels = independent_target_count;
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << ",";
-
-		percentage_of_pixels = target_count;
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << std::endl;
-		output_txt_file.close();
-	}
-	else{
-		this->WriteInitialOutputs();
-		std::ofstream output_txt_file( OutputFilename.c_str(), ios::app );
-		output_txt_file	<< std::endl;
-		long double percentage_of_pixels;
-		output_txt_file	<< "The percentage of pixels that are positive in the ROI image is:\n";
-		percentage_of_pixels = 100.0 * (long double)roi_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << std::endl;
-
-		output_txt_file	<< "The percentage of pixels that are positive in the Target image is:\n";
-		percentage_of_pixels = 100.0 * (long double)independent_target_count / ( (long double)size1[0] * (long double)size1[1] * (long double)size1[2] );
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << std::endl;
-
-		output_txt_file	<< "The percentage of pixels that are positive in the ROI image\nthat are also positive in the target image is:\n";
-		percentage_of_pixels = 100.0 * (long double)target_count / (long double)roi_count;
-		output_txt_file	<< setprecision (5);
-		output_txt_file	<< percentage_of_pixels << std::endl;
-		output_txt_file.close();
-	}
-
-	WriteOutputImage(ROIBinImageName, roi_bin);
-	WriteOutputImage(TargetBinImageName, target_bin);
-
-	return true;
 }

@@ -47,11 +47,14 @@
 #include "itkConnectedComponentImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkLabelStatisticsImageFilter.h"
+#include "itkRGBPixel.h"
 
 namespace ftk
 {
 
 typedef itk::Image< unsigned short, 3 > UShortImageType;
+typedef itk::RGBPixel< unsigned char >    RGBPixelType;
+typedef itk::Image< RGBPixelType, 3 > RGBImageType;
 
 class PixelLevelAnalysis{
 	public:
@@ -70,6 +73,7 @@ class PixelLevelAnalysis{
 	private:
 		std::string       ROIImageName;
 		std::string    ROIBinImageName;
+		std::string    ROIColImageName;
 		std::string    TargetImageName;
 		std::string TargetBinImageName;
 		std::string  	OutputFilename;
@@ -77,7 +81,8 @@ class PixelLevelAnalysis{
 		UShortImageType::Pointer TargetImagePtr;
 		void WriteInitialOutputs();
 		void WriteOutputImage(std::string OutName, UShortImageType::Pointer OutPtr);
-		void CleanUpSaltNPepperNThinStructs( UShortImageType::Pointer InputImage );
+		void WriteOutputColorImage(std::string OutName, RGBImageType::Pointer OutPtr);
+		void CleanImage( UShortImageType::Pointer& binary );
 		unsigned short uns_zero, uns_max;
 		int pixel_distance;
 		int pixelMode;
