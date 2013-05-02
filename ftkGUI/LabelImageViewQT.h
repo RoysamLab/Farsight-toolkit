@@ -148,6 +148,8 @@ public slots:
 	void GetBox(void);
 	void Get2Points(void);
 	void GetROI(void);
+	void SetROICircleRadius(double r);
+	bool GetCircleROI();
 	void update();
 	void goToSelection(void);
 	int GetCurrentZ(void){ return vSpin->value(); };
@@ -284,6 +286,8 @@ protected:
 	//For collecting two points:
 	bool pointsMode;
 	bool roiMode;
+	bool roiCircleMode;
+	double radius;
 	std::vector<int> origin3;	//a 3D origin for points mode!!
 	std::vector< ftk::Object::Point > roiPoints;
 	QImage roiImage;					//Image containing ROI (2D)

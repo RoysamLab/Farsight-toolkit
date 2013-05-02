@@ -59,6 +59,8 @@ LabelImageViewQT::LabelImageViewQT(QMap<QString, QColor> * new_colorItemsMap, QW
 	rubberBand = NULL;					//For drawing a box!!
 	pointsMode = false;					//For collecting points
 	roiMode = false;					//For drawing Region of Interest (ROI)
+	roiCircleMode = false;               //For drawing circle region
+	radius = 5;
 	showKNeighbors = false;
 	showRadNeighbors = false;
 	showNucAdj = false;
@@ -468,6 +470,24 @@ void LabelImageViewQT::GetROI(void)
 	roiMode = true;
 }
 
+bool LabelImageViewQT::GetCircleROI(void)
+{
+	if(false == roiCircleMode)
+	{
+		roiCircleMode = true;
+		roiMode = false;
+	}
+	else
+	{
+		roiCircleMode = false;
+	}
+	return roiCircleMode;
+}
+
+void LabelImageViewQT::SetROICircleRadius(double r)
+{
+	this->radius = r;
+}
 
 void LabelImageViewQT::getSnapshots()
 {
@@ -966,7 +986,7 @@ void LabelImageViewQT::mouseMoveEvent(QMouseEvent *event)
 
 void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 {
-	if(rubberBand || pointsMode || roiMode)
+	if(rubberBand || pointsMode || roiMode || roiCircleMode)
 	{
 		QPoint corner = scrollArea->pos();
 		QPoint pos = event->pos() - corner;		// This is a local position (in viewport coordinates)
@@ -1035,7 +1055,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 							roiPoints.erase(roiPoints.end()-1);
 							roiMode = false;
 
-							createROIMask();	//This will call repaint
+							createROIMask();	//This will call repaint, close the region
 							emit roiDrawn();
 							return;
 						}
@@ -1043,6 +1063,38 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 					this->repaint();
 				}
 			}
+		}
+		if( roiCircleMode)
+		{
+			roiPoints.clear();
+			int circlediv = (int)floor(2 * radius); 
+			double angle = 2 * 3.1415926 / circlediv;
+			ftk::Object::Point prePt;
+			for( int i = 0; i < circlediv; i++)
+			{
+				ftk::Object::Point currentPt;
+				currentPt.t = hSpin->value();
+				currentPt.x = x2 + radius * cos( angle * i);
+				currentPt.y = y2 + radius * sin( angle * i);
+				currentPt.z = currentZ;
+
+				if( i >= 1)
+				{
+					if( abs(currentPt.x - prePt.x) >= 1 || abs(currentPt.y - prePt.y) >= 1)
+					{
+						roiPoints.push_back(currentPt);
+						prePt = currentPt;
+					}
+				}
+				else
+				{
+					prePt = currentPt;
+				}
+			}
+
+			createROIMask();	//This will call repaint, close the region
+			emit roiDrawn();
+			return;
 		}
 	}
 }

@@ -246,6 +246,8 @@ protected slots:
 	//For Tools menu
 	void getCentroids(void);
 	void startROI(void);
+	void startCircleROI();
+	void setROICircleRadius();
 	void endROI(void);
 	void updateROIinTable(void);
 	void loadROI(void);
@@ -361,6 +363,8 @@ protected:
 	QAction *getCentroidAction;
 	QMenu *roiMenu;
 	QAction *drawROIAction;
+	QAction *drawCircleROIAction;
+	QAction *setRadiusAction;
 	QAction *loadROIAction;
 	QAction *saveROIAction;
 	QAction *clearROIAction;

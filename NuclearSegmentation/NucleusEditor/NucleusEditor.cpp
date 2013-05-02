@@ -489,6 +489,17 @@ void NucleusEditor::createMenus()
 	connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
 	roiMenu->addAction(drawROIAction);
 
+	drawCircleROIAction = new QAction(tr("Draw Circle ROI"), this);
+	drawCircleROIAction->setCheckable(true);
+	drawCircleROIAction->setObjectName("drawCircleROIAction");
+	connect(drawCircleROIAction, SIGNAL(triggered()), this, SLOT(startCircleROI()));
+	roiMenu->addAction(drawCircleROIAction);
+
+	setRadiusAction = new QAction(tr("Set Radius"), this);
+	setRadiusAction->setObjectName("setRadiusAction");
+	connect(setRadiusAction, SIGNAL(triggered()), this, SLOT(setROICircleRadius()));
+	roiMenu->addAction(setRadiusAction);
+
 	clearROIAction = new QAction(tr("Clear ROI"), this);
 	clearROIAction->setObjectName("clearROIAction");
 	connect(clearROIAction, SIGNAL(triggered()), this, SLOT(clearROI()));
@@ -2363,6 +2374,22 @@ void NucleusEditor::startROI(void)
 	connect(segView, SIGNAL(roiDrawn()), this, SLOT(endROI()));
 }
 
+void NucleusEditor::startCircleROI(void)
+{
+	bool bchecked = segView->GetCircleROI();
+	drawCircleROIAction->setChecked(bchecked);
+}
+
+void NucleusEditor::setROICircleRadius(void)
+{
+	bool ok;
+	int radius = QInputDialog::getInt(this, tr("Radius"),tr("Radius:"), 5, 1, 10000, 1, &ok);
+	if( ok)
+	{
+		segView->SetROICircleRadius((double)radius);
+	}
+}
+
 void NucleusEditor::endROI()
 {
 	segView->ClearGets();
@@ -2408,9 +2435,12 @@ void NucleusEditor::clearROI(void)
 {
 	const char * columnForROI = "roi";
 
-	segView->GetROIMaskImage()->fill(Qt::white);
-	segView->SetROIVisible(false);
-
+	if( segView->GetROIMaskImage()) 
+	{
+		segView->GetROIMaskImage()->fill(Qt::white);
+		segView->SetROIVisible(false);
+	}
+	
 	if(table)
 	{
 		table->RemoveColumnByName(columnForROI);
