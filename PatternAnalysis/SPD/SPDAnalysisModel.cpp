@@ -2883,25 +2883,25 @@ void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diag
 	std::cout<<"Converge after "<<count<<std::endl;
 
 	// arrange according to the first row
-	for(int i = 0; i < nrows; i++)
-	{
-		for(int j = 0; j < nrows; j++)
-		{
-			EMDMat(i,j) = EMDMatrix(order[i],order[j]);
-		}
-	}
-	for( unsigned int i = 0; i < order.size(); i++)
-	{
-		for( unsigned int j = i + 1; j < order.size(); j++)
-		{
-			if( EMDMat(0,i) < EMDMat(0,j))
-			{
-				std::swap(vec[i],vec[j]);
-				std::swap(order[i],order[j]);
-				std::swap(EMDMat(0,i), EMDMat(0,j));
-			}
-		}
-	}
+	//for(int i = 0; i < nrows; i++)
+	//{
+	//	for(int j = 0; j < nrows; j++)
+	//	{
+	//		EMDMat(i,j) = EMDMatrix(order[i],order[j]);
+	//	}
+	//}
+	//for( unsigned int i = 0; i < order.size(); i++)
+	//{
+	//	for( unsigned int j = i + 1; j < order.size(); j++)
+	//	{
+	//		if( EMDMat(0,i) < EMDMat(0,j))
+	//		{
+	//			std::swap(vec[i],vec[j]);
+	//			std::swap(order[i],order[j]);
+	//			std::swap(EMDMat(0,i), EMDMat(0,j));
+	//		}
+	//	}
+	//}
 	//for(int i = 0; i < nrows; i++)
 	//{
 	//	for(int j = 0; j < nrows; j++)
@@ -3592,6 +3592,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			}
 		}
 	}
+
 	//this->EMDMatrix = this->EMDMatrix / this->EMDMatrix.max_value();
 
 	//ofs<< kNeighbor<<"\t"<<max1<<std::endl;
