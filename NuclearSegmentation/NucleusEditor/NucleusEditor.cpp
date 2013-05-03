@@ -35,7 +35,7 @@ Version:   $Revision: 0.00 $
 NucleusEditor::NucleusEditor(QWidget * parent, Qt::WindowFlags flags)
 : QMainWindow(parent,flags)
 {
-	chSignalMapper = NULL;
+	imSignalMapper = NULL;
 
 	segView = new LabelImageViewQT(&colorItemsMap);
 	AL = new ALforNucEd();
@@ -426,9 +426,9 @@ void NucleusEditor::createMenus()
 	connect(zoomOutAction, SIGNAL(triggered()), segView, SLOT(zoomOut()));
 	zoomMenu->addAction(zoomOutAction);
 
-	displayChannelMenu = viewMenu->addMenu(tr("Display Channel"));
-	displayChannelMenu->setObjectName("displayChannelMenu");
-	connect(displayChannelMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayChannelsMenu()));
+	displayImageMenu = viewMenu->addMenu(tr("Display Image"));
+	displayImageMenu->setObjectName("displayImageMenu");
+	connect(displayImageMenu, SIGNAL(aboutToShow()), this, SLOT(DisplayImagesMenu()));
 
 	viewMenu->addSeparator();
 
@@ -484,10 +484,10 @@ void NucleusEditor::createMenus()
 	roiMenu = toolMenu->addMenu(tr("Region Of Interest"));
 	roiMenu->setObjectName("roiMenu");
 
-	drawROIAction = new QAction(tr("Draw ROI"), this);
-	drawROIAction->setObjectName("drawROIAction");
-	connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
-	roiMenu->addAction(drawROIAction);
+	//drawROIAction = new QAction(tr("Draw ROI"), this);
+	//drawROIAction->setObjectName("drawROIAction");
+	//connect(drawROIAction, SIGNAL(triggered()), this, SLOT(startROI()));
+	//roiMenu->addAction(drawROIAction);
 
 	drawCircleROIAction = new QAction(tr("Draw Circle ROI"), this);
 	drawCircleROIAction->setCheckable(true);
@@ -497,6 +497,7 @@ void NucleusEditor::createMenus()
 
 	setRadiusAction = new QAction(tr("Set Radius"), this);
 	setRadiusAction->setObjectName("setRadiusAction");
+	setRadiusAction->setShortcut(Qt::ControlModifier + Qt::Key_R);
 	connect(setRadiusAction, SIGNAL(triggered()), this, SLOT(setROICircleRadius()));
 	roiMenu->addAction(setRadiusAction);
 
@@ -1741,6 +1742,7 @@ void NucleusEditor::loadProject()
 	}
 	#endif
 	this->startEditing();
+	DisplayImagesMenu();
 }
 
 
@@ -2049,7 +2051,8 @@ void NucleusEditor::load5DImage(std::vector<QStringList> filesChannTimeList, int
 	//ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
 
 	load5DLabelImageAction->setEnabled(true);
-	DisplayChannelsMenu();
+	//DisplayChannelsMenu();
+	DisplayImagesMenu();
 }
 
 
@@ -2235,6 +2238,7 @@ void NucleusEditor::loadImage(QString fileName)
 	projectFiles.input = name.toStdString();
 	projectFiles.inputSaved = true;
 	this->setEditsEnabled(false);
+	DisplayImagesMenu();
 }
 
 
@@ -2302,7 +2306,7 @@ void NucleusEditor::loadROI(void)
 {
 	QString fileName  = QFileDialog::getOpenFileName(this, tr("Load ROI Mask Image"), lastPath, standardImageTypes);
 	if(fileName == "") return;
-
+	clearROI();
 	lastPath = QFileInfo(fileName).absolutePath() + QDir::separator();
 
 	segView->GetROIMaskImage()->load(fileName);
@@ -2378,6 +2382,82 @@ void NucleusEditor::startCircleROI(void)
 {
 	bool bchecked = segView->GetCircleROI();
 	drawCircleROIAction->setChecked(bchecked);
+	connect(segView, SIGNAL(roiStatisticsChanged(int)), this, SLOT(updateCircleROIStatistics(int)));
+}
+
+void NucleusEditor::updateCircleROIStatistics(int time)
+{
+	std::cout<< "updateCircleROIStatistics: "<< time<<std::endl;
+	QImage * t_img = segView->GetROIMaskImage();
+	if(t_img == NULL)
+		return;
+
+	typedef itk::Image<unsigned char, 3> ImageType;
+	typedef itk::LabelStatisticsImageFilter< ImageType , ImageType > LabelStatisticsType;
+
+	//Change QImage into ITK IMAGE:
+	ImageType::Pointer roiImg = ImageType::New();
+	ImageType::PointType origin;
+	origin[0] = 0; 
+	origin[1] = 0;
+	origin[2] = 0;
+	roiImg->SetOrigin( origin );
+	ImageType::IndexType start = {{ 0,0,0 }};    
+	ImageType::SizeType size = {{ t_img->width(), t_img->height(), myImg->GetImageInfo()->numZSlices }};
+	ImageType::RegionType region;
+	region.SetSize( size );
+	region.SetIndex( start );
+	roiImg->SetRegions( region );
+	roiImg->Allocate();
+	roiImg->FillBuffer(0);
+	for(int i=0; i<t_img->width(); ++i)
+	{
+		for(int j=0; j<t_img->height(); ++j)
+		{
+			ImageType::IndexType ind = {{ i,j, segView->GetCurrentZ() }};
+			roiImg->SetPixel(ind, t_img->pixelIndex( i, j ) );
+		}
+	}
+
+	if( myImg->backgroundValues.size() != myImg->GetImageInfo()->numTSlices)
+	{
+		myImg->backgroundValues.resize(myImg->GetImageInfo()->numTSlices);
+		for(unsigned int i = 0; i < myImg->backgroundValues.size(); i++)
+		{
+			myImg->backgroundValues[i].resize(myImg->GetImageInfo()->numChannels);
+			for( size_t j = 0; j < myImg->backgroundValues[i].size(); j++)
+			{
+				myImg->backgroundValues[i][j] = 0;
+			}
+		}
+	}
+
+	//iterate through each channel and compute the statistics
+	for(int c=0; c < myImg->GetImageInfo()->numChannels; ++c)
+	{
+		ImageType::Pointer chImg = myImg->GetItkPtr<unsigned char>(time, c);
+
+		LabelStatisticsType::Pointer labelStatisticsFilter = LabelStatisticsType::New();	//ITK label statistics filter
+		labelStatisticsFilter->SetInput( chImg );
+		labelStatisticsFilter->SetLabelInput( roiImg );
+		labelStatisticsFilter->UseHistogramsOff();
+
+		std::cout << "Calculating Measures for channel # " << c << std::endl;
+		try
+		{
+			labelStatisticsFilter->Update();
+		}
+		catch (itk::ExceptionObject & e) 
+		{
+			std::cerr << "Exception in ITK Label Statistics Filter: " << e << std::endl;
+			continue;
+		}
+
+		int label = 1;
+		double mean = (double)labelStatisticsFilter->GetMean(label);
+		std::cout << "mean:"<< mean << std::endl;
+		myImg->backgroundValues[time][c] = mean;
+	}
 }
 
 void NucleusEditor::setROICircleRadius(void)
@@ -2438,6 +2518,7 @@ void NucleusEditor::clearROI(void)
 	if( segView->GetROIMaskImage()) 
 	{
 		segView->GetROIMaskImage()->fill(Qt::white);
+		segView->ClearROIPoints();
 		segView->SetROIVisible(false);
 	}
 	
@@ -3872,45 +3953,43 @@ void NucleusEditor::toggleCellAdjacency(void)
 		segView->SetCellAdjVisible(false);
 }
 
-void NucleusEditor::DisplayChannelsMenu()
+void NucleusEditor::DisplayImagesMenu()
 {
 	if( !myImg )
 		return;
 
-	std::vector<std::string> channel_names = myImg->GetChannelNames();
-	std::vector<bool> channel_status = segView->GetChannelFlags();
+	std::vector<std::string> image_names = segView->GetImageNames();
+	std::vector<bool> image_status = segView->GetImageFlags();
+	std::vector<bool> im_stats = segView->GetImageFlags();
 
-	//remove all existing actions;
-	for(int i=0; i<(int)displayChannelAction.size(); ++i)
-	{
-		delete displayChannelAction.at(i);
-	}
-	displayChannelMenu->clear();
-	displayChannelAction.clear();
+	displayImageMenu->clear();
 
-	if(chSignalMapper)
-		delete chSignalMapper;
-	chSignalMapper = new QSignalMapper(this);
-	for(int i=0; i<(int)channel_names.size(); ++i)
+	if(imSignalMapper)
+		delete imSignalMapper;
+	imSignalMapper = new QSignalMapper(this);
+	for(int i=0; i<(int)image_names.size(); ++i)
 	{
-		QAction * action = new QAction( tr(channel_names.at(i).c_str()), this );
-		action->setObjectName(tr(channel_names.at(i).c_str()));
+		QAction * action = new QAction( tr(image_names.at(i).c_str()), this );
+		action->setObjectName(tr(image_names[i].c_str()));
 		action->setCheckable(true);
-		action->setChecked( channel_status.at(i) );
-		action->setStatusTip( tr("Turn on/off this channel") );
+		action->setChecked( im_stats[i]);
+		action->setStatusTip( tr("Turn on/off this image") );
 		action->setShortcut( QString::number(i) );
-		connect(action, SIGNAL(triggered()), chSignalMapper, SLOT(map()));
-		chSignalMapper->setMapping( action, i );
-		displayChannelMenu->addAction(action);
+		connect(action, SIGNAL(triggered()), imSignalMapper, SLOT(map()));
+		imSignalMapper->setMapping( action, i );
+		displayImageMenu->addAction(action);
 	}
-	connect(chSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleChannel(int)));
+	connect(imSignalMapper, SIGNAL(mapped(int)), this, SLOT(toggleImage(int)));
 }
 
-void NucleusEditor::toggleChannel( int chNum )
+void NucleusEditor::toggleImage( int imNum)
 {
-	std::vector<bool> ch_stats = segView->GetChannelFlags();
-	ch_stats[chNum] = !ch_stats[chNum];
-	segView->SetChannelFlags( ch_stats );
+	std::vector<bool> im_stats = segView->GetImageFlags();
+	if( imNum < im_stats.size())
+	{
+		im_stats[imNum] = !im_stats[imNum];
+		segView->SetImageFlags( im_stats);
+	}
 }
 //******************************************************************************************
 //******************************************************************************************

@@ -228,6 +228,7 @@ void LabelImageViewQT::SetChannelImage(ftk::Image::Pointer img)
 		updateHSlider();
 	}
 
+	initImageFlags();	
 	initChannelFlags();
 	refreshBaseImage();
 }
@@ -682,6 +683,50 @@ void LabelImageViewQT::updateHSlider(void)
 	}
 }
 
+void LabelImageViewQT::initImageFlags()
+{
+	imageFlags.clear();
+	channelToImageFlag.clear();
+	std::vector<std::string> image_names = GetImageNames();
+
+	for (int im=0; im<(int)image_names.size(); ++im)
+	{
+		imageFlags.push_back(true);
+	}
+}
+
+std::vector<std::string> LabelImageViewQT::GetImageNames()
+{
+	std::vector<std::string> channel_names = channelImg->GetChannelNames();
+	std::vector<std::string> image_names;
+
+	std::string preStr = channel_names[0];
+	int imageId = 0;
+	for (int ch=1; ch<(int)channel_names.size(); ++ch)
+	{
+		channelToImageFlag.push_back( imageId);
+		image_names.push_back( preStr);
+		std::string curStr = channel_names[ch];
+		while( preStr == curStr)
+		{
+			channelToImageFlag.push_back( imageId);
+			ch++;
+			if( ch < (int)channel_names.size())
+			{
+				curStr = channel_names[ch];
+			}
+			else
+			{
+				break;
+			}
+		}
+		preStr = curStr;
+		imageId++;
+	}
+
+	return image_names;
+}
+
 void LabelImageViewQT::initChannelFlags()
 {
 	channelFlags.clear();
@@ -697,6 +742,20 @@ void LabelImageViewQT::SetChannelFlags(std::vector<bool> ch_fg)
 	channelFlags = ch_fg;
 	refreshBaseImage();
 }
+
+void LabelImageViewQT::SetImageFlags(std::vector<bool> im_fg)
+{
+	imageFlags = im_fg;
+	channelFlags.clear();
+	for(int i = 0; i < channelToImageFlag.size(); i++) 
+	{
+		int k = channelToImageFlag[i];
+		channelFlags.push_back(imageFlags[k]);
+	}
+	
+	SetChannelFlags(channelFlags);
+}
+
 //*******************************************************************
 // SLOTS: sliderChange and spinChange
 //
@@ -792,6 +851,63 @@ void LabelImageViewQT::keyPressEvent(QKeyEvent *event)
 		{
 			channelFlags.at(num) = !channelFlags.at(num);
 			refreshBaseImage();
+		}
+	}
+	else if( key == Qt::Key_Delete)  // remove the last circle
+	{
+		int numPoints = (int)roiPoints.size();
+		if( numPoints >= 3)
+		{
+			ftk::Object::Point endPt = roiPoints[numPoints - 1];
+			roiPoints.pop_back();
+			int i = numPoints - 2;
+			while( i >= 0 && !(roiPoints[i].x == endPt.x && roiPoints[i].y == endPt.y))
+			{
+				roiPoints.pop_back();
+				i--;
+			}
+			roiPoints.pop_back();
+
+			createROIMask();
+			emit roiDrawn();
+		}
+	}
+	else if( event->modifiers() == Qt::ShiftModifier && key == Qt::Key_Z)
+	{
+		int time = GetCurrentTimeVal();
+		if( time >= 1)
+		{
+			if( roiPoints.size() > 0)
+			{
+				emit roiStatisticsChanged(time);
+			}
+			this->SetCurrentTimeVal(time - 1);
+			roiPoints.clear();
+			SetROIVisible(false);
+		}
+	}
+	else if( key == Qt::Key_Space)
+	{
+		if( channelImg)
+		{
+			int time = GetCurrentTimeVal();
+			if( time < channelImg->GetImageInfo()->numTSlices)
+			{
+				if( roiPoints.size() > 0)
+				{
+					emit roiStatisticsChanged(time);
+					roiPoints.clear();
+					SetROIVisible(false);
+				}
+				if( time < channelImg->GetImageInfo()->numTSlices - 1)
+				{
+					this->SetCurrentTimeVal(time + 1);
+				}
+			}
+		}
+		else
+		{
+			std::cout<< "Channel image does not exist!"<<std::endl;
 		}
 	}
 	else
@@ -1014,7 +1130,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 			origin = QPoint();
 			emit boxDrawn(x1, y1, x2, y2, currentZ);
 		}
-		else	// pointsMode or roiMode
+		else if( pointsMode || roiMode)// pointsMode or roiMode
 		{
 			if( abs(x1-x2) < 5 && abs(y1-y2) < 5 )		//I haven't moved far during this click
 			{
@@ -1054,7 +1170,7 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 							//Erase last point:
 							roiPoints.erase(roiPoints.end()-1);
 							roiMode = false;
-
+							roiPoints.push_back( roiPoints[0]);
 							createROIMask();	//This will call repaint, close the region
 							emit roiDrawn();
 							return;
@@ -1064,12 +1180,13 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 				}
 			}
 		}
-		if( roiCircleMode)
+		else if( roiCircleMode)
 		{
-			roiPoints.clear();
+			//roiPoints.clear();
 			int circlediv = (int)floor(2 * radius); 
 			double angle = 2 * 3.1415926 / circlediv;
 			ftk::Object::Point prePt;
+			ftk::Object::Point startPt;
 			for( int i = 0; i < circlediv; i++)
 			{
 				ftk::Object::Point currentPt;
@@ -1089,9 +1206,11 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 				else
 				{
 					prePt = currentPt;
+					startPt = prePt;
+					roiPoints.push_back( prePt);
 				}
 			}
-
+			roiPoints.push_back( startPt);
 			createROIMask();	//This will call repaint, close the region
 			emit roiDrawn();
 			return;
@@ -1101,31 +1220,57 @@ void LabelImageViewQT::mouseReleaseEvent(QMouseEvent *event)
 
 void LabelImageViewQT::createROIMask()
 {
-	roiPoints.push_back( roiPoints[0] );
 	int numPoints = (int)roiPoints.size();
-
-	//Turn my list of points into a path
-	QPainterPath path;
-	path.moveTo(roiPoints[0].x, roiPoints[0].y);
-	for (int i=0; i < numPoints; i++)
+	if( numPoints > 0)
 	{
-		path.lineTo(roiPoints[i].x, roiPoints[i].y);
+		//Turn my list of points into a path
+		ftk::Object::Point startPt = roiPoints[0];
+		QPainterPath path;
+		for(int ind = 1; ind < numPoints; ind++)
+		{
+			path.moveTo(startPt.x, startPt.y);
+			while ( ind < numPoints && !(roiPoints[ind].x == startPt.x && roiPoints[ind].y == startPt.y))
+			{
+				path.lineTo(roiPoints[ind].x, roiPoints[ind].y);
+				ind++;
+			}
+			if( ind < numPoints)
+			{
+				path.lineTo(roiPoints[ind].x, roiPoints[ind].y);
+				++ind;
+				if( ind < numPoints)
+				{
+					startPt = roiPoints[ind];
+				}
+			}
+			else
+			{
+				std::cout<< "Circle list doesn't match."<<std::endl;
+			}
+		}
+
+		//Draw the path in an image
+		QRect rect = this->displayImage.rect();
+		QImage img(rect.width(),rect.height(),QImage::Format_Mono);
+		img.fill(Qt::black);
+		QPainter painter(&img);
+		painter.setPen(Qt::white);
+		painter.setBrush(Qt::white);
+		painter.drawPath(path);
+		//roiPoints.clear();
+		roiImage = img;
+		this->SetROIVisible(true);
+		//img.save(QString("mask_test.png"));
 	}
-	//Draw the path in an image
-	QRect rect = this->displayImage.rect();
-	QImage img(rect.width(),rect.height(),QImage::Format_Mono);
-	img.fill(Qt::black);
-	QPainter painter(&img);
-	painter.setPen(Qt::white);
-	painter.setBrush(Qt::white);
-	painter.drawPath(path);
+	else
+	{
+		this->SetROIVisible(false);
+	}
+}
 
+void LabelImageViewQT::ClearROIPoints()
+{
 	roiPoints.clear();
-
-	roiImage = img;
-	this->SetROIVisible(true);
-
-	//img.save(QString("mask_test.png"));
 }
 
 QImage * LabelImageViewQT::GetROIMaskImage()

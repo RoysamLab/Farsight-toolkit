@@ -102,7 +102,10 @@ public:
 	QVector<QColor> CreateColorTable(void);
 
 	std::vector<bool> GetChannelFlags(void){ return channelFlags; };
+	std::vector<bool> GetImageFlags(void){ return imageFlags; };
+
 	void SetChannelFlags(std::vector<bool> ch_fg);
+	void SetImageFlags(std::vector<bool> im_fg);
 
 	QImage * GetDisplayImage(){ return &displayImage; };
 	QImage * GetROIMaskImage();
@@ -127,7 +130,7 @@ public:
 	//5D Image;
 	int GetCurrentTimeVal(void);
 	void SetCurrentTimeVal(double time);
-
+	std::vector<std::string> GetImageNames();
 	void clearSettings();
 		
 public slots:
@@ -160,8 +163,7 @@ public slots:
 	void getSnapshots();
 	QImage getSnapshotforID(int id);
 	QImage getSnapshotforID_1(int id);
-
-
+	void ClearROIPoints();
 
 signals:
 	void mouseAt(int x, int y, int z, int t, std::list<int> v);
@@ -170,6 +172,7 @@ signals:
 	void roiDrawn(void);
 	void autoMerge(void);
 	void emitTimeChanged(void);
+	void roiStatisticsChanged(int t);
 
 protected slots:
 	void refreshBaseImage(void);
@@ -193,8 +196,9 @@ protected slots:
 	void updateVSlider(void);
 	void updateHSlider(void);
 	void initChannelFlags(void);
+	void initImageFlags();
+	
 	void createROIMask(void);
-
 
 protected:
 	void moveEvent (QMoveEvent * event);
@@ -236,6 +240,7 @@ protected:
 	QLabel *hLabel;
 
 	std::vector<bool> channelFlags;	//is channel is visible or not
+	std::vector<bool> imageFlags;	//is channel is visible or not
 
 	QImage displayImage;				//Currently displayed image
 	QImage baseImage;					//The intensity image (2D)
@@ -290,6 +295,7 @@ protected:
 	double radius;
 	std::vector<int> origin3;	//a 3D origin for points mode!!
 	std::vector< ftk::Object::Point > roiPoints;
+	std::vector< int> channelToImageFlag;
 	QImage roiImage;					//Image containing ROI (2D)
 
 	//For Getting a Box:

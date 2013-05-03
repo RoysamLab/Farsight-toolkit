@@ -58,6 +58,7 @@ public:
 	typedef Image Self;
 	typedef itk::SmartPointer<Self> Pointer;
 	typedef itk::SmartPointer<const Self> ConstPointer;
+	std::vector< std::vector< double > > backgroundValues;
 
 	/** Methods for creation through the object factory. */
 	itkNewMacro(Self);								
@@ -93,7 +94,7 @@ public:
 	void SetPixel(itk::SizeValueType T, itk::SizeValueType Ch, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C, double newValue); // Casts from double to image pixel type and sets pixel
 	double GetPixel(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);				// Casts the value to double and returns it
 	std::vector< std::string > GetChannelNames(void){ return m_Info.channelNames; };
-
+	
 	//Also have templated functions
 	template <typename rType> rType GetPixelT(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);	//Casts the value to rType and returns it
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
@@ -112,7 +113,6 @@ public:
 
 		std::vector< std::vector <unsigned char> > channelColors;	//Holds the color components of each channel
 		std::vector< std::string > channelNames;					//Holds the name of each channel
-
 		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
 		itk::SizeValueType BytesPerChunk(void)

@@ -185,8 +185,8 @@ protected slots:
 	void toggleCrosshairs();
 	void toggleNucAdjacency();
 	void toggleCellAdjacency();
-	void toggleChannel(int chNum );
-	void DisplayChannelsMenu();
+	void toggleImage(int imNum);
+	void DisplayImagesMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -249,6 +249,7 @@ protected slots:
 	void startCircleROI();
 	void setROICircleRadius();
 	void endROI(void);
+	void updateCircleROIStatistics(int time);
 	void updateROIinTable(void);
 	void loadROI(void);
 	void saveROI(void);
@@ -347,9 +348,8 @@ protected:
 	QMenu *zoomMenu;
 	QAction *zoomInAction;
 	QAction *zoomOutAction;
-	QMenu *displayChannelMenu;
-	QSignalMapper *chSignalMapper;
-	QVector<QAction *> displayChannelAction;
+	QMenu *displayImageMenu;
+	QSignalMapper *imSignalMapper;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
@@ -362,7 +362,7 @@ protected:
 	QMenu *toolMenu;
 	QAction *getCentroidAction;
 	QMenu *roiMenu;
-	QAction *drawROIAction;
+	//QAction *drawROIAction;
 	QAction *drawCircleROIAction;
 	QAction *setRadiusAction;
 	QAction *loadROIAction;
