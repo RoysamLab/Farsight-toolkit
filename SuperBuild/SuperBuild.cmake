@@ -69,9 +69,8 @@ endif()
 # VXL
 #
 ExternalProject_Add(VXL
-  SVN_REPOSITORY "http://svn.code.sf.net/p/vxl/svn/trunk"
-  SVN_REVISION -r "36611"
-  SVN_TRUST_CERT 1
+  GIT_REPOSITORY "http://git.code.sf.net/p/vxl/git"
+  GIT_TAG "d8aee93ce8bfc88765fff8ffe5c364d636be8a97"
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX:PATH=${install_dir}/VXL
