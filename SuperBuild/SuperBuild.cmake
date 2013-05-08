@@ -179,7 +179,7 @@ endif()
 # ITK
 #
 ExternalProject_Add(ITK
-  GIT_REPOSITORY "git://vtk.org/VTK.git"
+  GIT_REPOSITORY "git://itk.org/ITK.git"
   GIT_TAG "v4.3.2"
   DOWNLOAD_DIR ${ITK_DOWNLOAD_DIR}
   SOURCE_DIR ${ITK_SOURCE_DIR}
