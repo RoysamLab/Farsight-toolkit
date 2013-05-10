@@ -1352,45 +1352,63 @@ bool NucleusEditor::saveProject()
 		projectFiles.inputSaved = false;
 	}
 
-	if(projectFiles.input != "" && !projectFiles.inputSaved && projectFiles.type != "multi" )
-	{
-		this->saveImage();
-	}
-	else
-	{
-		ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
-		this->saveImage();
 
-	}
-	if(projectFiles.output != "" && !projectFiles.outputSaved && projectFiles.type != "multi")
+	if(projectFiles.input != "")
 	{
-		this->saveResult();
+		if(!projectFiles.inputSaved && projectFiles.type != "multi" )
+		{
+			this->saveImage();
+		}
+		else
+		{
+			ftk::SaveImageSeries(projectFiles.input, myImg,projectFiles.path);
+			this->saveImage();
+
+		}
 	}
-	else
+
+	if(projectFiles.output != "")
 	{
-		ftk::SaveLabelSeries(projectFiles.output, labImg, projectFiles.path);
-		this->saveResult();
+		if(!projectFiles.outputSaved && projectFiles.type != "multi")
+		{
+			this->saveResult();
+		}
+		else
+		{
+			ftk::SaveLabelSeries(projectFiles.output, labImg, projectFiles.path);
+			this->saveResult();
+		}
 	}
-	if(projectFiles.definition != "" && !projectFiles.definitionSaved && projectFiles.type != "multi")
+
+	if(projectFiles.definition != "")
 	{
-		if( projectDefinition.Write(projectFiles.GetFullDef()) )
-			projectFiles.definitionSaved = true;
+		if(!projectFiles.definitionSaved && projectFiles.type != "multi")
+		{
+			if( projectDefinition.Write(projectFiles.GetFullDef()) )
+				projectFiles.definitionSaved = true;
+		}
 	}
 	//if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type!="multi")
-	if(projectFiles.table != "" && !projectFiles.tableSaved && projectFiles.type != "multi")
+	if(projectFiles.table != "")
 	{
-		this->saveTable();
-	}
-	else
-	{
-		ftk::SaveTableSeries("TableSeries.xml",nucSeg->table4DImage, projectFiles.path);
-		std::string tablename = projectFiles.path+"megaTable.txt";
-		ftk::SaveTable(tablename,nucSeg->megaTable);
+		if(!projectFiles.tableSaved && projectFiles.type != "multi")
+		{
+			this->saveTable();
+		}
+		else
+		{
+			ftk::SaveTableSeries("TableSeries.xml",nucSeg->table4DImage, projectFiles.path);
+			std::string tablename = projectFiles.path+"megaTable.txt";
+			ftk::SaveTable(tablename,nucSeg->megaTable);
+		}
 	}
 
-	if(projectFiles.adjTables != "" && !projectFiles.adjTablesSaved)
+	if(projectFiles.adjTables != "")
 	{
-		this->saveAdjTables();
+		if(!projectFiles.adjTablesSaved)
+		{
+			this->saveAdjTables();
+		}
 	}
 
 	return true;
@@ -2481,6 +2499,9 @@ void NucleusEditor::BackgroundSubtraction()
 	std::vector<int> selChannelId;
 	segView->GetSelChannelId(selImageId,  selChannelId);
 
+	std::string name;
+	std::vector< std::vector <std::string> > FileNames = myImg->GetTimeChannelFilenames();
+
 	for(int time = 0; time < myImg->GetImageInfo()->numTSlices; ++time)
 	{
 		for(int c=0; c < selChannelId.size(); ++c)
@@ -2508,49 +2529,15 @@ void NucleusEditor::BackgroundSubtraction()
 			}
 			myImg->backgroundValues[time][ch] = 0;  // after subtraction, set back to zero.
 
-			if( !outputDirectoryForBackgroundSubtract.isEmpty())
-			{
-				std::vector<std::string> image_names = segView->GetImageNames();
-				std::stringstream ss2;
-				ss2 << time;
-				std::string timeStr = ss2.str();
-				std::string str = outputDirectoryForBackgroundSubtract.toStdString() + "/" + timeStr + "_" + image_names[ch] + std::string(".tif");
-				std::cout<<  "Save at "<<str<<std::endl;
-				myImg->WriteImageITK<unsigned char>(str, time, ch);
-			}
+			//myImg->WriteImageITK<unsigned char>(str, time, ch);
+
+			std::cout<< FileNames.at(time).at(ch)<<std::endl;
+			name = ftk::SetExtension(FileNames.at(time).at(ch),"tif");
+			myImg->WriteImageITK<unsigned char>(name, time, ch);
 		}
 	}
 
 	segView->update();
-}
-
-void NucleusEditor::SaveSelectedChannel()
-{
-	if( selImageId.size() <= 0)
-	{
-		std::cout<< "No channel has been selected for background subtraction!"<<std::endl;
-		return;
-	}
-
-	std::vector<int> selChannelId;
-	segView->GetSelChannelId(selImageId,  selChannelId);
-	for(int time = 0; time < myImg->GetImageInfo()->numTSlices; ++time)
-	{
-		for(int c=0; c < selChannelId.size(); ++c)
-		{
-			int ch = selChannelId[c];
-			if( !outputDirectoryForBackgroundSubtract.isEmpty())
-			{
-				std::vector<std::string> image_names = segView->GetImageNames();
-				std::stringstream ss2;
-				ss2 << time;
-				std::string timeStr = ss2.str();
-				std::string str = outputDirectoryForBackgroundSubtract.toStdString() + "/" + timeStr + "_" + image_names[ch] + std::string(".tif");
-				std::cout<<  "Save at "<<str<<std::endl;
-				myImg->WriteImageITK<unsigned char>(str, time, ch);
-			}
-		}
-	}
 }
 
 void NucleusEditor::chooseChannelForBackgroundSubtraction()
@@ -2561,7 +2548,6 @@ void NucleusEditor::chooseChannelForBackgroundSubtraction()
 	if(imageSelDialog->exec())
 	{
 		int num = imageSelDialog->GetSelectedImages(selImageId);
-		outputDirectoryForBackgroundSubtract = imageSelDialog->directoryName->text();
 		std::cout<< "SubTract Background: "<<std::endl;
 		for( int i = 0; i < num; i++)
 		{
@@ -2578,10 +2564,6 @@ ImageSelectionDialog::ImageSelectionDialog(std::vector<std::string> imageNames, 
 :QDialog(parent)
 {
 	imageLabel = new QLabel("Choose Image Channel for Background Subtraction: ", this);
-	outputDirLabel = new QLabel("Choose Output Folder: ", this);
-	directoryName = new QLabel(this);
-	int frameStyle = QFrame::Sunken | QFrame::Panel;
-	directoryName->setFrameStyle(frameStyle);
 
 	imageListWidget = new QListWidget(this);
 	for(int v = 0; v < imageNames.size(); ++v)
@@ -2600,15 +2582,10 @@ ImageSelectionDialog::ImageSelectionDialog(std::vector<std::string> imageNames, 
 	
 	cancelButton = new QPushButton(tr("Cancel"),this);
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
-	layout->addWidget(cancelButton,12,2);
+	layout->addWidget(cancelButton,10,2);
 	okButton = new QPushButton(tr("OK"),this);
 	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-	layout->addWidget(okButton,12,1);
-	browseButton = new QPushButton(tr("Browse"), this);
-	connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
-	layout->addWidget( outputDirLabel, 10, 0);
-	layout->addWidget(browseButton,11,2);
-	layout->addWidget(directoryName, 11, 0, 1, 2);
+	layout->addWidget(okButton,10,1);
 }
 
 int ImageSelectionDialog::GetSelectedImages(std::vector<int> &selImageId)
@@ -2623,23 +2600,6 @@ int ImageSelectionDialog::GetSelectedImages(std::vector<int> &selImageId)
 		 }  
 	}
 	return selImageId.size();
-}
-
-void ImageSelectionDialog::browse()
-{
-	QFileDialog dirDialog(this);
-	dirDialog.setFileMode(QFileDialog::Directory);
-	QStringList dir;
-	if (dirDialog.exec())
-		dir = dirDialog.selectedFiles();
-	else
-		return;
-
-    if (!dir.isEmpty())
-    {
-		this->directory = static_cast<QString>(dir.at(0));
-		directoryName->setText( this->directory);
-    }
 }
 
 void NucleusEditor::setROICircleRadius(void)

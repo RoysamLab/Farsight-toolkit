@@ -252,7 +252,6 @@ protected slots:
 	void endROI(void);
 	void updateCircleROIStatistics(int time);
 	void chooseChannelForBackgroundSubtraction();
-	void SaveSelectedChannel();
 	void updateROIinTable(void);
 	void loadROI(void);
 	void saveROI(void);
@@ -715,20 +714,11 @@ public:
 	ImageSelectionDialog(std::vector<std::string> imageNames, QWidget *parent = 0);
 	int GetSelectedImages(std::vector<int> &selImageId);
 
-public: 
-	QLabel *directoryName;
-
-private slots:
-	void browse();
-
 private:
 	QLabel *imageLabel;
-	QLabel *outputDirLabel;
 	QListWidget *imageListWidget;
 	
 	QPushButton *okButton;
 	QPushButton *cancelButton;
-	QString directory;
-	QPushButton *browseButton;
 };
 #endif
