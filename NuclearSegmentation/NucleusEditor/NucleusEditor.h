@@ -52,6 +52,7 @@
 #include <QtGui/QLabel>
 #include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
+#include <QtGui/QListWidget>
 
 #include "ProjectFilenamesDialog.h"
 #include "ExclusionDialog.h"
@@ -250,6 +251,8 @@ protected slots:
 	void setROICircleRadius();
 	void endROI(void);
 	void updateCircleROIStatistics(int time);
+	void chooseChannelForBackgroundSubtraction();
+	void SaveSelectedChannel();
 	void updateROIinTable(void);
 	void loadROI(void);
 	void saveROI(void);
@@ -308,6 +311,7 @@ protected:
 	bool askSaveChanges(QString text);
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
 	QVector<QString> getChannelStrings(void);
+	void BackgroundSubtraction();
 
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
@@ -529,7 +533,8 @@ protected:
 	// Loads all the tables of the time series
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	std::vector<std::string> imageNames;
-
+	std::vector<int> selImageId;
+	QString outputDirectoryForBackgroundSubtract;
 	std::vector<std::pair<int,int> > ground_truth;
 
 	bool saveSettingsOnExit;
@@ -703,4 +708,27 @@ private:
 	QPushButton *cancelButton;
 };
 
+class ImageSelectionDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ImageSelectionDialog(std::vector<std::string> imageNames, QWidget *parent = 0);
+	int GetSelectedImages(std::vector<int> &selImageId);
+
+public: 
+	QLabel *directoryName;
+
+private slots:
+	void browse();
+
+private:
+	QLabel *imageLabel;
+	QLabel *outputDirLabel;
+	QListWidget *imageListWidget;
+	
+	QPushButton *okButton;
+	QPushButton *cancelButton;
+	QString directory;
+	QPushButton *browseButton;
+};
 #endif

@@ -25,7 +25,7 @@ Version:   $Revision: 0.00 $
 =========================================================================*/
 #include "../exe/SomaExtraction.h"
 #include "NucleusEditor.h"
-
+#include <itkImageRegionIterator.h>
 //*******************************************************************************
 // NucleusEditor
 //
@@ -2382,7 +2382,16 @@ void NucleusEditor::startCircleROI(void)
 {
 	bool bchecked = segView->GetCircleROI();
 	drawCircleROIAction->setChecked(bchecked);
-	connect(segView, SIGNAL(roiStatisticsChanged(int)), this, SLOT(updateCircleROIStatistics(int)));
+	if(bchecked)
+	{
+		connect(segView, SIGNAL(roiStatisticsChanged(int)), this, SLOT(updateCircleROIStatistics(int)));
+		connect(segView, SIGNAL(backgroundSelFinished()), this, SLOT(chooseChannelForBackgroundSubtraction()));
+	}
+	else
+	{
+		disconnect(segView, SIGNAL(roiStatisticsChanged(int)), this, SLOT(updateCircleROIStatistics(int)));
+		disconnect(segView, SIGNAL(backgroundSelFinished()), this, SLOT(chooseChannelForBackgroundSubtraction()));
+	}
 }
 
 void NucleusEditor::updateCircleROIStatistics(int time)
@@ -2421,6 +2430,7 @@ void NucleusEditor::updateCircleROIStatistics(int time)
 
 	if( myImg->backgroundValues.size() != myImg->GetImageInfo()->numTSlices)
 	{
+		std::cout<< "Background values initialized!"<<std::endl;
 		myImg->backgroundValues.resize(myImg->GetImageInfo()->numTSlices);
 		for(unsigned int i = 0; i < myImg->backgroundValues.size(); i++)
 		{
@@ -2458,6 +2468,178 @@ void NucleusEditor::updateCircleROIStatistics(int time)
 		std::cout << "mean:"<< mean << std::endl;
 		myImg->backgroundValues[time][c] = mean;
 	}
+}
+
+void NucleusEditor::BackgroundSubtraction()
+{
+	if( selImageId.size() <= 0)
+	{
+		std::cout<< "No channel has been selected for background subtraction!"<<std::endl;
+		return;
+	}
+
+	std::vector<int> selChannelId;
+	segView->GetSelChannelId(selImageId,  selChannelId);
+
+	for(int time = 0; time < myImg->GetImageInfo()->numTSlices; ++time)
+	{
+		for(int c=0; c < selChannelId.size(); ++c)
+		{
+			int ch = selChannelId[c];
+			double backgroundValue = myImg->backgroundValues[time][ch];
+
+			ImageType::Pointer chImg = myImg->GetItkPtr<unsigned char>(time, ch);
+
+			typedef itk::ImageRegionIterator< ImageType> IteratorType;
+			IteratorType imgIt(chImg, chImg->GetRequestedRegion());
+			
+			imgIt.GoToBegin();
+			while( !imgIt.IsAtEnd())
+			{
+				if( imgIt.Get() > backgroundValue)
+				{
+					imgIt.Set(imgIt.Get() - backgroundValue);
+				}
+				else
+				{
+					imgIt.Set(0);
+				}
+				++imgIt;
+			}
+			myImg->backgroundValues[time][ch] = 0;  // after subtraction, set back to zero.
+
+			if( !outputDirectoryForBackgroundSubtract.isEmpty())
+			{
+				std::vector<std::string> image_names = segView->GetImageNames();
+				std::stringstream ss2;
+				ss2 << time;
+				std::string timeStr = ss2.str();
+				std::string str = outputDirectoryForBackgroundSubtract.toStdString() + "/" + timeStr + "_" + image_names[ch] + std::string(".tif");
+				std::cout<<  "Save at "<<str<<std::endl;
+				myImg->WriteImageITK<unsigned char>(str, time, ch);
+			}
+		}
+	}
+
+	segView->update();
+}
+
+void NucleusEditor::SaveSelectedChannel()
+{
+	if( selImageId.size() <= 0)
+	{
+		std::cout<< "No channel has been selected for background subtraction!"<<std::endl;
+		return;
+	}
+
+	std::vector<int> selChannelId;
+	segView->GetSelChannelId(selImageId,  selChannelId);
+	for(int time = 0; time < myImg->GetImageInfo()->numTSlices; ++time)
+	{
+		for(int c=0; c < selChannelId.size(); ++c)
+		{
+			int ch = selChannelId[c];
+			if( !outputDirectoryForBackgroundSubtract.isEmpty())
+			{
+				std::vector<std::string> image_names = segView->GetImageNames();
+				std::stringstream ss2;
+				ss2 << time;
+				std::string timeStr = ss2.str();
+				std::string str = outputDirectoryForBackgroundSubtract.toStdString() + "/" + timeStr + "_" + image_names[ch] + std::string(".tif");
+				std::cout<<  "Save at "<<str<<std::endl;
+				myImg->WriteImageITK<unsigned char>(str, time, ch);
+			}
+		}
+	}
+}
+
+void NucleusEditor::chooseChannelForBackgroundSubtraction()
+{
+	std::vector<std::string> image_names = segView->GetImageNames();
+	ImageSelectionDialog *imageSelDialog = new ImageSelectionDialog(image_names, this);
+	imageSelDialog->show();
+	if(imageSelDialog->exec())
+	{
+		int num = imageSelDialog->GetSelectedImages(selImageId);
+		outputDirectoryForBackgroundSubtract = imageSelDialog->directoryName->text();
+		std::cout<< "SubTract Background: "<<std::endl;
+		for( int i = 0; i < num; i++)
+		{
+			std::cout<< image_names[selImageId[i] ]<<std::endl;
+		}
+		std::cout<<std::endl;
+		BackgroundSubtraction();
+	}
+	delete imageSelDialog;
+}
+
+/// Channel Selection Dialog
+ImageSelectionDialog::ImageSelectionDialog(std::vector<std::string> imageNames, QWidget *parent)
+:QDialog(parent)
+{
+	imageLabel = new QLabel("Choose Image Channel for Background Subtraction: ", this);
+	outputDirLabel = new QLabel("Choose Output Folder: ", this);
+	directoryName = new QLabel(this);
+	int frameStyle = QFrame::Sunken | QFrame::Panel;
+	directoryName->setFrameStyle(frameStyle);
+
+	imageListWidget = new QListWidget(this);
+	for(int v = 0; v < imageNames.size(); ++v)
+	{
+		QListWidgetItem *listItem = new QListWidgetItem(QString::fromStdString(imageNames[v]),imageListWidget);
+		listItem->setCheckState(Qt::Unchecked);
+		imageListWidget->addItem(listItem);
+	}
+
+	QGridLayout *layout = new QGridLayout(this);
+	this->setLayout(layout);
+	this->setWindowTitle(tr("Select Image Channel for Background Subtraction"));
+
+	layout->addWidget(imageLabel,0,0);
+	layout->addWidget(imageListWidget,1,0,8,3);
+	
+	cancelButton = new QPushButton(tr("Cancel"),this);
+	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
+	layout->addWidget(cancelButton,12,2);
+	okButton = new QPushButton(tr("OK"),this);
+	connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	layout->addWidget(okButton,12,1);
+	browseButton = new QPushButton(tr("Browse"), this);
+	connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
+	layout->addWidget( outputDirLabel, 10, 0);
+	layout->addWidget(browseButton,11,2);
+	layout->addWidget(directoryName, 11, 0, 1, 2);
+}
+
+int ImageSelectionDialog::GetSelectedImages(std::vector<int> &selImageId)
+{
+	selImageId.clear();
+	for(int row = 0; row < imageListWidget->count(); row++)
+	{
+         QListWidgetItem *item = imageListWidget->item(row);
+		 if( item->checkState() == Qt::Checked)
+		 {
+			 selImageId.push_back(row);
+		 }  
+	}
+	return selImageId.size();
+}
+
+void ImageSelectionDialog::browse()
+{
+	QFileDialog dirDialog(this);
+	dirDialog.setFileMode(QFileDialog::Directory);
+	QStringList dir;
+	if (dirDialog.exec())
+		dir = dirDialog.selectedFiles();
+	else
+		return;
+
+    if (!dir.isEmpty())
+    {
+		this->directory = static_cast<QString>(dir.at(0));
+		directoryName->setText( this->directory);
+    }
 }
 
 void NucleusEditor::setROICircleRadius(void)

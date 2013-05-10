@@ -100,6 +100,7 @@ public:
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
 	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode = DEFAULT);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
 	template <typename pixelType> pixelType * GetSlicePtr(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
+	template<typename TPixel> bool WriteImageITK(std::string fullFilename, itk::SizeValueType T, itk::SizeValueType CH);
 
 	typedef struct 
 	{
@@ -165,8 +166,7 @@ private:
 	template<typename pixelType> DataType GetDataType();
 
 	template<typename TPixel> bool WriteImageITK(itk::SizeValueType channel, std::string baseName, std::string ext);
-	template<typename TPixel> bool WriteImageITK(std::string fullFilename, itk::SizeValueType T, itk::SizeValueType CH);
-
+	
 	template<typename TComp> void LoadImageITK(std::string fileName, itk::SizeValueType numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp> void LoadImageITK(std::string filename, itk::SizeValueType numChannels, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp, itk::SizeValueType channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);

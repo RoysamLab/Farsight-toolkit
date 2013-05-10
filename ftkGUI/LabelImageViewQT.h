@@ -132,7 +132,8 @@ public:
 	void SetCurrentTimeVal(double time);
 	std::vector<std::string> GetImageNames();
 	void clearSettings();
-		
+	void GetSelChannelId(std::vector<int> &imageId, std::vector<int> &channelId);
+
 public slots:
 	void SaveDisplayImageToFile(QString fileName);
 	void SaveCompositeImageToFile(QString fileName);
@@ -173,6 +174,7 @@ signals:
 	void autoMerge(void);
 	void emitTimeChanged(void);
 	void roiStatisticsChanged(int t);
+	void backgroundSelFinished(void);
 
 protected slots:
 	void refreshBaseImage(void);

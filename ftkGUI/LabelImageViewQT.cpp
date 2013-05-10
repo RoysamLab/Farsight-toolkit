@@ -686,7 +686,6 @@ void LabelImageViewQT::updateHSlider(void)
 void LabelImageViewQT::initImageFlags()
 {
 	imageFlags.clear();
-	channelToImageFlag.clear();
 	std::vector<std::string> image_names = GetImageNames();
 
 	for (int im=0; im<(int)image_names.size(); ++im)
@@ -699,6 +698,7 @@ std::vector<std::string> LabelImageViewQT::GetImageNames()
 {
 	std::vector<std::string> channel_names = channelImg->GetChannelNames();
 	std::vector<std::string> image_names;
+	channelToImageFlag.clear();
 
 	std::string preStr = channel_names[0];
 	int imageId = 0;
@@ -722,9 +722,30 @@ std::vector<std::string> LabelImageViewQT::GetImageNames()
 		}
 		preStr = curStr;
 		imageId++;
+		if( ch == (int)channel_names.size() - 1)
+		{
+			channelToImageFlag.push_back( imageId);
+			image_names.push_back( preStr);
+		}
 	}
 
 	return image_names;
+}
+
+void LabelImageViewQT::GetSelChannelId(std::vector<int> &imageId, std::vector<int> &channelId)
+{
+	channelId.clear();
+	for(int i = 0; i < channelToImageFlag.size(); i++) 
+	{
+		int k = channelToImageFlag[i];
+		for( int j = 0; j < imageId.size(); j++)
+		{
+			if( k == imageId[j])
+			{
+				channelId.push_back(i);
+			}
+		}
+	}
 }
 
 void LabelImageViewQT::initChannelFlags()
@@ -902,6 +923,10 @@ void LabelImageViewQT::keyPressEvent(QKeyEvent *event)
 				if( time < channelImg->GetImageInfo()->numTSlices - 1)
 				{
 					this->SetCurrentTimeVal(time + 1);
+				}
+				else if( time == channelImg->GetImageInfo()->numTSlices - 1)
+				{
+					emit backgroundSelFinished();
 				}
 			}
 		}
