@@ -52,6 +52,7 @@
 #include <QtGui/QLabel>
 #include <QtGui/QComboBox>
 #include <QtGui/QPushButton>
+#include <QtGui/QListWidget>
 
 #include "ProjectFilenamesDialog.h"
 #include "ExclusionDialog.h"
@@ -185,8 +186,8 @@ protected slots:
 	void toggleCrosshairs();
 	void toggleNucAdjacency();
 	void toggleCellAdjacency();
-	void toggleChannel(int chNum );
-	void DisplayChannelsMenu();
+	void toggleImage(int imNum);
+	void DisplayImagesMenu();
 	void CreateNewPlotWindow();
 	void CreateNewTableWindow();
 	void CreateNewHistoWindow();
@@ -249,6 +250,8 @@ protected slots:
 	void startCircleROI();
 	void setROICircleRadius();
 	void endROI(void);
+	void updateCircleROIStatistics(int time);
+	void chooseChannelForBackgroundSubtraction();
 	void updateROIinTable(void);
 	void loadROI(void);
 	void saveROI(void);
@@ -307,6 +310,7 @@ protected:
 	bool askSaveChanges(QString text);
 	int requestChannel(ftk::Image::Pointer img);	//Request a channel from this image
 	QVector<QString> getChannelStrings(void);
+	void BackgroundSubtraction();
 
 	LabelImageViewQT *segView;
 	std::vector<PlotWindow *> pltWin;
@@ -347,9 +351,8 @@ protected:
 	QMenu *zoomMenu;
 	QAction *zoomInAction;
 	QAction *zoomOutAction;
-	QMenu *displayChannelMenu;
-	QSignalMapper *chSignalMapper;
-	QVector<QAction *> displayChannelAction;
+	QMenu *displayImageMenu;
+	QSignalMapper *imSignalMapper;
 	QAction *newTableAction;
 	QAction *newScatterAction;
 	QAction *newHistoAction;
@@ -362,7 +365,7 @@ protected:
 	QMenu *toolMenu;
 	QAction *getCentroidAction;
 	QMenu *roiMenu;
-	QAction *drawROIAction;
+	//QAction *drawROIAction;
 	QAction *drawCircleROIAction;
 	QAction *setRadiusAction;
 	QAction *loadROIAction;
@@ -529,7 +532,8 @@ protected:
 	// Loads all the tables of the time series
 	std::vector< vtkSmartPointer<vtkTable> > tableVector;
 	std::vector<std::string> imageNames;
-
+	std::vector<int> selImageId;
+	QString outputDirectoryForBackgroundSubtract;
 	std::vector<std::pair<int,int> > ground_truth;
 
 	bool saveSettingsOnExit;
@@ -703,4 +707,18 @@ private:
 	QPushButton *cancelButton;
 };
 
+class ImageSelectionDialog : public QDialog
+{
+	Q_OBJECT
+public:
+	ImageSelectionDialog(std::vector<std::string> imageNames, QWidget *parent = 0);
+	int GetSelectedImages(std::vector<int> &selImageId);
+
+private:
+	QLabel *imageLabel;
+	QListWidget *imageListWidget;
+	
+	QPushButton *okButton;
+	QPushButton *cancelButton;
+};
 #endif
