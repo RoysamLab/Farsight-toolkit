@@ -219,7 +219,11 @@ template <typename TPixel> bool Image::WriteImageITK(itk::SizeValueType channel,
 {
 	if(m_Info.numTSlices == 1)
 	{
-		std::string fullname = baseName + "." + ext;
+		std::string fullname = baseName;
+		if( ext.length() > 0)
+		{
+			fullname = fullname + "." + ext;
+		}
 		if(!WriteImageITK<TPixel>(fullname, 0, channel))
 			return false;
 	}
