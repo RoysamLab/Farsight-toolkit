@@ -218,7 +218,7 @@ template <typename InputPixelType, typename LabelPixelType>  void
 			}
 			else
 			{
-				if( CroppedIter.Get() ) //Needed for the computation of the shared boundary
+				if( ConstLabelIter.Get() ) //Needed for the computation of the shared boundary
 					CopyLabelIter.Set( 2 );
 				else
 					CopyLabelIter.Set( 0 );
