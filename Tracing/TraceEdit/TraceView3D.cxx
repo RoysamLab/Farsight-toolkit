@@ -7741,7 +7741,7 @@ void View3D::ShowKMutualGraph(unsigned int k)
 }
 void View3D::ComputeVoronoi()
 {
-	QString labelDir = this->TraceEditSettings.value("traceDir", ".").toString();
+	QString labelDir = this->TraceEditSettings.value("imageDir", ".").toString();
 	QString labelFile = QFileDialog::getOpenFileName(this, "Load Label Image", labelDir,
 		tr("Label Image (*.nrrd *.tiff *.tif *.pic *.PIC *.mhd" ));
 	if (!labelFile.isEmpty())
@@ -7751,7 +7751,7 @@ void View3D::ComputeVoronoi()
 		std::cout << "Reading done" << std::endl;
 		std::cout << "Calculating voronoi..." << std::endl;
 		this->VOIType->CalculateVoronoiLabelImage();
-		this->VOIType->GetVoronoiBoundingBox();
+		this->VOIType->GetVoronoiBoundingBox(labelDir.toStdString(),ImageActors->GetitkImageData(-1));
 		//std::cout << "Writing to file..." << std::endl;
 		//this->VOIType->WriteVoronoiLabelImage(labelFile.toStdString());
 		std::cout << "Finished" << std::endl;
