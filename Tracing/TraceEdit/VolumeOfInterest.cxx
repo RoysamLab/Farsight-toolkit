@@ -266,11 +266,11 @@ void VolumeOfInterest::CalculateVoronoiLabelImage()
 	voronoiImage = voronoiFilter->GetVoronoiMap();
 	voronoiDistMapImage = voronoiFilter->GetDistanceMap();
 }
-void VolumeOfInterest::GetVoronoiBoundingBox()
+void VolumeOfInterest::GetVoronoiBoundingBox(std::string filename, ImageType::Pointer intensityImage)
 {
 	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
 	labelGeometryImageFilter->SetInput( voronoiImage );
-	labelGeometryImageFilter->CalculateOrientedBoundingBoxOn();
+	labelGeometryImageFilter->CalculateOrientedBoundingBoxOff();
 	labelGeometryImageFilter->Update();
 
 	LabelGeometryImageFilterType::LabelsType allLabels = labelGeometryImageFilter->GetLabels();
@@ -278,17 +278,63 @@ void VolumeOfInterest::GetVoronoiBoundingBox()
 	std::cout << "Number of labels: " << labelGeometryImageFilter->GetNumberOfLabels() << std::endl;
 	std::cout << std::endl;
 
+	ofstream myfile;
+	myfile.open("C:\\Lab\\Data\\Yanbin-given\\Crop\\Voronoi_xyz\\BoxSize.txt");
+	myfile << "Number of labels: " << labelGeometryImageFilter->GetNumberOfLabels() << "\n";
+	myfile << "Bounding Box Size\n";
+
+	unsigned int cell_Index = 1;
+
 	for( allLabelsIt = allLabels.begin(); allLabelsIt != allLabels.end(); allLabelsIt++ )
 	{
 		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
-		std::cout << "\tCentroid: " << labelGeometryImageFilter->GetOrientedBoundingBoxOrigin(labelValue) << std::endl;
-		std::cout << "\tSize: " << labelGeometryImageFilter->GetOrientedBoundingBoxSize(labelValue) << std::endl;
-		std::cout << "\tVertices 1: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[0] << std::endl;
-		std::cout << "\tVertices 2: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[1] << std::endl;
-		std::cout << "\tVertices 3: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[2] << std::endl;
-		std::cout << "\tVertices 4: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[3] << std::endl;
-		std::cout << "\tVolume: " << labelGeometryImageFilter->GetOrientedBoundingBoxVolume(labelValue) << std::endl;
-		std::cout << "\tRegion: " << labelGeometryImageFilter->GetOrientedLabelImage(labelValue) << std::endl;
+
+		std::cout << "Bounding Box" << std::endl;
+		std::cout << "\tSize: " << labelGeometryImageFilter->GetBoundingBoxSize(labelValue) << std::endl;
+		std::cout << "\tVertices 1: " << labelGeometryImageFilter->GetBoundingBox(labelValue)[0] << std::endl;
+		std::cout << "\tVertices 2: " << labelGeometryImageFilter->GetBoundingBox(labelValue)[1] << std::endl;
+		std::cout << "\tVertices 3: " << labelGeometryImageFilter->GetBoundingBox(labelValue)[2] << std::endl;
+		std::cout << "\tVertices 4: " << labelGeometryImageFilter->GetBoundingBox(labelValue)[3] << std::endl;
+		std::cout << "\tVolume: " << labelGeometryImageFilter->GetBoundingBoxVolume(labelValue) << std::endl;
+		std::cout << "\tRegion index: " << labelGeometryImageFilter->GetRegion(labelValue).GetIndex() << std::endl;
+		std::cout << "\tRegion size: " << labelGeometryImageFilter->GetRegion(labelValue).GetSize() << std::endl;
+		//std::cout << "\tRegion: " << labelGeometryImageFilter->GetOrientedLabelImage(labelValue) << std::endl;
+		myfile << labelGeometryImageFilter->GetBoundingBoxSize(labelValue) << "\n";
+		myfile << "\tRegion index: " << labelGeometryImageFilter->GetRegion(labelValue).GetIndex() << "\n";
+		myfile << "\tRegion size: " << labelGeometryImageFilter->GetRegion(labelValue).GetSize() << "\n";
+		
+		//std::cout << "Oriented Bounding Box" << std::endl;
+		//std::cout << "\tCentroid: " << labelGeometryImageFilter->GetOrientedBoundingBoxOrigin(labelValue) << std::endl;
+		//std::cout << "\tSize: " << labelGeometryImageFilter->GetOrientedBoundingBoxSize(labelValue) << std::endl;
+		//std::cout << "\tVertices 1: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[0] << std::endl;
+		//std::cout << "\tVertices 2: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[1] << std::endl;
+		//std::cout << "\tVertices 3: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[2] << std::endl;
+		//std::cout << "\tVertices 4: " << labelGeometryImageFilter->GetOrientedBoundingBoxVertices(labelValue)[3] << std::endl;
+		//std::cout << "\tVolume: " << labelGeometryImageFilter->GetOrientedBoundingBoxVolume(labelValue) << std::endl;
+		//std::cout << "\tRegion: " << labelGeometryImageFilter->GetOrientedLabelImage(labelValue) << std::endl;
+
+		ExtractImageFilterType::Pointer extractFilter = ExtractImageFilterType::New();
+		extractFilter->SetExtractionRegion(labelGeometryImageFilter->GetRegion(labelValue));
+		extractFilter->SetInput(intensityImage);
+		extractFilter->SetDirectionCollapseToIdentity();
+		extractFilter->Update();
+
+		std::stringstream ss;
+		ss << "C:\\Lab\\Data\\Yanbin-given\\Crop\\Voronoi_xyz\\intensity_" << cell_Index++ << ".tif";
+		std::string saveExtractImageFile = ss.str();
+		std::cout << "Filename: " << saveExtractImageFile << std::endl;
+
+		WriterType::Pointer extractImageWriter = WriterType::New();
+		extractImageWriter->SetFileName(saveExtractImageFile);
+		extractImageWriter->SetInput(extractFilter->GetOutput());
+		try {
+			extractImageWriter->Update();
+		}
+		catch (itk::ExceptionObject & excp )
+		{
+			std::cerr << excp << std::endl;
+		}
+
 
 		//std::cout << "\tVolume: " << labelGeometryImageFilter->GetVolume(labelValue) << std::endl;
 		//std::cout << "\tIntegrated Intensity: " << labelGeometryImageFilter->GetIntegratedIntensity(labelValue) << std::endl;
@@ -305,6 +351,7 @@ void VolumeOfInterest::GetVoronoiBoundingBox()
 		std::cout << std::endl << std::endl;
 
 	}
+	myfile.close();
 }
 void VolumeOfInterest::WriteVoronoiLabelImage(std::string filename)
 {
