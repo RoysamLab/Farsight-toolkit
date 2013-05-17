@@ -637,24 +637,35 @@ bool ProjectProcessor::PixLevAnalysis(void){
 		return false;
 
 	bool success_run=false;
-	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait ){
+	for(std::vector<ftk::PixelAnalysisDefinitions>::iterator pait=definition->pixelLevelRules.begin(); pait!=definition->pixelLevelRules.end(); ++pait )
+	{
 		ftk::PixelLevelAnalysis *PAn = new ftk::PixelLevelAnalysis();
-		if( ((*pait).mode == 1) || ((*pait).mode == 5) ){
+		if( ((*pait).mode == 1) || ((*pait).mode == 5) )
+		{
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, 0, (*pait).mode, (*pait).erodeRadius );
 			success_run = PAn->RunAnalysis1();
 		}
-		else if( ((*pait).mode == 2) || ((*pait).mode == 6) ){
+		else if( ((*pait).mode == 2) || ((*pait).mode == 6) )
+		{
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius, (*pait).mode, (*pait).erodeRadius );
 			success_run = PAn->RunAnalysis2();
 		}
-		else if( ((*pait).mode == 3) || ((*pait).mode == 7) || ((*pait).mode == 4) || ((*pait).mode == 8) ){
+		else if( ((*pait).mode == 3) || ((*pait).mode == 7) || ((*pait).mode == 4) || ((*pait).mode == 8) )
+		{
 			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius, (*pait).mode, (*pait).erodeRadius );
 			success_run = PAn->RunAnalysis3();
 		}
-		else if( !success_run ){
+		else if( ((*pait).mode == 9) || ((*pait).mode == 10) )
+		{
+			PAn->SetInputs( (*pait).regionChannelName, (*pait).targetChannelName, (*pait).outputFilename, (*pait).radius, (*pait).mode, (*pait).erodeRadius );
+			success_run = PAn->RunAnalysis4();
+		}
+		else if( !success_run )
+		{
 			std::cerr<<"ERROR: Run Failed, Check Definitions\n";
 		}
-		else{
+		else
+		{
 			std::cerr<<"ERROR: Check Pixel Anaysis Mode\n";
 		}
 		delete PAn;

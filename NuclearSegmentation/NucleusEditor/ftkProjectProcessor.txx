@@ -217,7 +217,12 @@ template <typename InputPixelType, typename LabelPixelType>  void
 				CopyLabelIter.Set( 1 );
 			}
 			else
-				CopyLabelIter.Set( 0 );
+			{
+				if( ConstLabelIter.Get() ) //Needed for the computation of the shared boundary
+					CopyLabelIter.Set( 2 );
+				else
+					CopyLabelIter.Set( 0 );
+			}
 			CopyIntensityIter.Set( ConstIntensityIter.Get() );
 		}
 

@@ -58,6 +58,7 @@ public:
 	typedef Image Self;
 	typedef itk::SmartPointer<Self> Pointer;
 	typedef itk::SmartPointer<const Self> ConstPointer;
+	std::vector< std::vector< double > > backgroundValues;
 
 	/** Methods for creation through the object factory. */
 	itkNewMacro(Self);								
@@ -93,12 +94,13 @@ public:
 	void SetPixel(itk::SizeValueType T, itk::SizeValueType Ch, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C, double newValue); // Casts from double to image pixel type and sets pixel
 	double GetPixel(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);				// Casts the value to double and returns it
 	std::vector< std::string > GetChannelNames(void){ return m_Info.channelNames; };
-
+	
 	//Also have templated functions
 	template <typename rType> rType GetPixelT(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z, itk::SizeValueType R, itk::SizeValueType C);	//Casts the value to rType and returns it
 	template <typename newType> void Cast();	//Cast the Image to newType (does not scale)
 	template <typename pixelType> typename itk::Image<pixelType, 3>::Pointer GetItkPtr(itk::SizeValueType T, itk::SizeValueType CH, PtrMode mode = DEFAULT);	//IF pixelType agrees with image pixel type, PtrMode defaults to DEFAULT
 	template <typename pixelType> pixelType * GetSlicePtr(itk::SizeValueType T, itk::SizeValueType CH, itk::SizeValueType Z,PtrMode mode = DEFAULT);	// IF pixelType agrees with image pixel type (NOTE MEMORY MANAGER DOES NOT CHANGE)
+	template<typename TPixel> bool WriteImageITK(std::string fullFilename, itk::SizeValueType T, itk::SizeValueType CH);
 
 	typedef struct 
 	{
@@ -112,7 +114,6 @@ public:
 
 		std::vector< std::vector <unsigned char> > channelColors;	//Holds the color components of each channel
 		std::vector< std::string > channelNames;					//Holds the name of each channel
-
 		std::vector<float> spacing;		//Holds the spacing of the image (defaults to 1,1,1 (x,y,z) )
 
 		itk::SizeValueType BytesPerChunk(void)
@@ -165,8 +166,7 @@ private:
 	template<typename pixelType> DataType GetDataType();
 
 	template<typename TPixel> bool WriteImageITK(itk::SizeValueType channel, std::string baseName, std::string ext);
-	template<typename TPixel> bool WriteImageITK(std::string fullFilename, itk::SizeValueType T, itk::SizeValueType CH);
-
+	
 	template<typename TComp> void LoadImageITK(std::string fileName, itk::SizeValueType numChannels, itkPixelType pixType, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp> void LoadImageITK(std::string filename, itk::SizeValueType numChannels, bool stacksAreForTime, bool appendChannels);
 	template<typename TComp, itk::SizeValueType channels> void LoadImageITK(std::string fileName, bool stacksAreForTime, bool appendChannels);

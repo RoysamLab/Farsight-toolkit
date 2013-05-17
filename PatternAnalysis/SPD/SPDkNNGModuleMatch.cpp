@@ -37,7 +37,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
     browseButton = new QPushButton(tr("Browse"), this);
     loadButton = new QPushButton(tr("Load"), this);
-	//loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
+	loadTestButton = new QPushButton(tr("Raw Data Heatmap"), this);
 
     featureNumLabel = new QLabel(tr("Feature size:"), this);
     featureNum = new QLabel(this);
@@ -48,13 +48,13 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
     clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
     clusterCoherenceBox = new QDoubleSpinBox(this);
-	clusterCoherenceBox->setValue(0.8);
+	clusterCoherenceBox->setValue(0.95);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
     kNearestNeighborLabel = new QLabel(tr("Nearest Neighbor Number:"), this);
     kNearestNeighborBox = new QSpinBox(this);
-	kNearestNeighborBox->setValue(2);
+	kNearestNeighborBox->setValue(5);
 	kNearestNeighborBox->setMinimum (0);
 	kNearestNeighborBox->setSingleStep(1);
 
@@ -183,7 +183,6 @@ void SPDkNNGModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 	{
 		browseButton->setEnabled(TRUE);
 		loadButton->setEnabled(TRUE);
-		//loadTestButton->setEnabled(TRUE);
 	}
 	else
 	{
@@ -194,7 +193,6 @@ void SPDkNNGModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 		
 		browseButton->setEnabled(FALSE);
 		loadButton->setEnabled(FALSE);
-		//loadTestButton->setEnabled(TRUE);
 	}
 
 	if(this->simHeatmap)
@@ -267,7 +265,7 @@ void SPDkNNGModuleMatch::showOriginalHeatmap()
 		sampleOrder.push_back(i);
 	}
 	std::vector< int> selOrder;
-	for( int i = 0; i < tableAfterCellCluster->GetNumberOfColumns(); i++)
+	for( int i = 0; i < tableAfterCellCluster->GetNumberOfColumns() - 1; i++)
 	{
 		selOrder.push_back(i);
 	}
@@ -342,7 +340,6 @@ void SPDkNNGModuleMatch::editNearestNeighbor()
 void SPDkNNGModuleMatch::showPSM()
 {
 	clusterFunction();
-
 	std::string kNeighbor = this->kNearestNeighborBox->text().toStdString();
 	std::string nBin = this->nBinBox->text().toStdString();
 	this->SPDModel->ModuleCorrelationMatrixMatch(atoi(kNeighbor.c_str()), atoi(nBin.c_str()));
@@ -361,6 +358,8 @@ void SPDkNNGModuleMatch::showPSM()
 		optimalleaforder[i] = clus1->optimalleaforder[i];
 		clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
 	}
+	std::cout<< "Optimal order:"<<std::endl;
+	std::cout<< optimalleaforder<<std::endl;
 
 	this->simHeatmap->setModels();
 	this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
@@ -400,6 +399,11 @@ void SPDkNNGModuleMatch::viewProgression()
 	unselOrder.clear();
 
 	split( selectModulesID, ',', selModuleID);
+	for( size_t i = 0; i < selModuleID.size(); i++)
+	{
+		std::cout<< selModuleID[i]<< "\t";
+	}
+	std::cout<<std::endl;
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
@@ -443,8 +447,11 @@ void SPDkNNGModuleMatch::split(std::string& s, char delim, std::vector< unsigned
 
 	for( int i = 0; i < stringVec.size(); i++)
 	{
-		unsigned int index = atoi( stringVec[i].c_str());
-		indexVec.push_back( index);
+		if( stringVec[i].length() > 0)
+		{
+			unsigned int index = atoi( stringVec[i].c_str());
+			indexVec.push_back( index);
+		}
 	}
 } 
 
@@ -529,8 +536,11 @@ void SPDkNNGModuleMatch::regenerateProgressionTree()
 		selection->clear();
 		std::vector< std::vector< long int> > sampleIndex;
 		selection->GetSampleIndex( sampleIndex);
-        std::vector< std::vector< long int> > clusIndex;
-        selection->GetClusterIndex( clusIndex);
+        //std::vector< std::vector< long int> > clusIndex;
+        //selection->GetClusterIndex( clusIndex);
+
+		double homogeneity = SPDModel->GetANOVA(sampleIndex, selFeatureID);
+		std::cout<< "Homogeneity evaluation: "<< homogeneity<<std::endl;
 
 		vnl_matrix<double> clusAverageMat;
 		std::vector< double> colorVec;
@@ -622,6 +632,7 @@ void SPDkNNGModuleMatch::UpdateConnectedNum()
 {
 	std::string selectModulesID = this->psdModuleSelectBox->text().toStdString();
 	std::vector< unsigned int> selModuleID;
+	split( selectModulesID, ',', selModuleID);
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 
 	connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);

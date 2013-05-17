@@ -120,10 +120,13 @@ public:
 	void GetComponentMinDistance(std::vector< unsigned int> selFeatureID, std::vector<int> &component, int connectedNum, vnl_matrix<double> &dis);
     bool SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules);
 	void WriteKNNGConnectionMatrix(const char *filename, std::vector< unsigned int> selFeatureID);
+	double GetANOVA(std::vector< std::vector< long int> > &index, std::vector< unsigned int> &selFeatureId);
+	void GetSubFeatureMatrix(vnl_matrix<double> &mat, std::vector< unsigned int> &featureId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
+	void GetSubSampleMatrix(vnl_matrix<double> &mat, std::vector< int> &sampleId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
-	double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_matrix<double> &mat1, vnl_matrix<double> &mat2, bool debug = false);
+	static double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
     static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
 	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
 protected:
@@ -194,6 +197,7 @@ protected:
 	void ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance);
 	bool GenerateMST( vnl_matrix<double> &mat, bool bfirst);
 	void RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind);
+	void GetDiagnalMinMax(vnl_matrix<double> &mat, double &min, double &max);
 
 public:
 	std::vector< Tree> PublicTreeData;
@@ -261,6 +265,7 @@ private:
 	std::set< long int> selectedFeatureIDs;
 	vnl_vector<double> DistanceEMDVector;
 	unsigned int m_kNeighbor;
+	std::set< int> excludeModule;
 
 	// for heatmap
 	vnl_matrix<double> heatmapMatrix;

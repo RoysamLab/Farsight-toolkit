@@ -59,7 +59,7 @@ private:
     QLabel *dataFileName;
     QPushButton *browseButton;
     QPushButton *loadButton;
-	//QPushButton *loadTestButton;
+	QPushButton *loadTestButton;
 	
     QLabel *featureNumLabel;
     QLabel *featureNum;
