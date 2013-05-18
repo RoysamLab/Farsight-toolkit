@@ -5,6 +5,10 @@ if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0005 OLD)
 endif(COMMAND CMAKE_POLICY)
 
+
+
+message("${CMAKE_MODULE_PATH}")
+
 ###################################
 # set project's name
 ###################################
@@ -17,6 +21,10 @@ if("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
   message(FATAL_ERROR "Farsight must be built with separate source and binary directories.")
 endif("${Farsight_BINARY_DIR}" MATCHES "^${Farsight_SOURCE_DIR}$")
 
+#########################################
+# TO FIND EXTRA MODULES (CPLEX)
+#########################################
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_ROOT}/Modules ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
 #########################################
 # ADD NEW MODULES HERE
