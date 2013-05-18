@@ -36,7 +36,7 @@ public:
   typedef boost::graph_traits<RAGraph>::edge_descriptor Edge;
   typedef boost::property_map<RAGraph, boost::vertex_name_t>::type node_name;  
   typedef boost::graph_traits<RAGraph>::adjacency_iterator AdjVertIt;
-  typedef boost::property_map<MTreeType,boost::vertex_name_t>::type nodes_new; 
+  // typedef boost::property_map<MTreeType,boost::vertex_name_t>::type nodes_new; 
   typedef boost::graph_traits<MTreeType>::vertex_descriptor node_mt;
   typedef ftk::IntrinsicFeatures FeaturesType;	
 
