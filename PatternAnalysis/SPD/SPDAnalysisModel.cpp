@@ -12,6 +12,7 @@
 #include "ftkUtils.h"
 #include "transportSimplex.h"
 #include <iomanip>
+#include "ClusClus/Biclustering.h"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -350,7 +351,7 @@ void SPDAnalysisModel::ParseTraceFile(vtkSmartPointer<vtkTable> table, bool bCon
 
 #else 
 		//std::cout<< "Layer Data"<<std::endl;
-		ConvertTableToMatrixForLayerData(this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, clusNo);
+		ConvertTableToMatrixForValidation(this->DataTable, this->DataMatrix, this->indMapFromIndToVertex, clusNo);
 #endif
 		UNMatrixAfterCellCluster = this->DataMatrix;
 		maxVertexId = 0;
@@ -453,7 +454,7 @@ void SPDAnalysisModel::ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl
 	}
 }
 
-void SPDAnalysisModel::ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, 
+void SPDAnalysisModel::ConvertTableToMatrixForValidation(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, 
         std::vector<int> &index, vnl_vector<int> &clusNo)
 {
 	std::cout<< "Table input: "<<table->GetNumberOfRows()<<"\t"<<table->GetNumberOfColumns()<<std::endl;
@@ -464,34 +465,25 @@ void SPDAnalysisModel::ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable
 		clusNo[i] = 0;
 	}
 
-	vtkVariantArray *distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("prediction_active"));
-	if( distanceArray == NULL)
-	{
-		distanceArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("prediction_active"));
-	}
+	vtkVariantArray *tmpArray = vtkVariantArray::SafeDownCast(table->GetColumnByName("Label"));
+	vtkDoubleArray *tmpDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("Label"));
 
-	vtkDoubleArray *distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("prediction_active"));
-	if( distanceDoubleArray == NULL)
+	if( tmpArray)
 	{
-		distanceDoubleArray = vtkDoubleArray::SafeDownCast(table->GetColumnByName("prediction_active"));
-	}
-
-	if( distanceArray)
-	{
-		for( int i = 0; i < distanceArray->GetNumberOfValues(); i++)
+		for( int i = 0; i < tmpArray->GetNumberOfValues(); i++)
 		{
-			clusNo[i] = distanceArray->GetValue(i).ToDouble();
+			clusNo[i] = tmpArray->GetValue(i).ToDouble();
 		}
 	}
-	else if( distanceDoubleArray)
+	else if( tmpDoubleArray)
 	{
-		for( int i = 0; i < distanceDoubleArray->GetNumberOfTuples(); i++)
+		for( int i = 0; i < tmpDoubleArray->GetNumberOfTuples(); i++)
 		{
-			clusNo[i] = distanceDoubleArray->GetValue(i);
+			clusNo[i] = tmpDoubleArray->GetValue(i);
 		}
 	}
 
-	table->RemoveColumnByName("prediction_active");
+	table->RemoveColumnByName("Label");
 
 	std::cout<< "Table input: "<<table->GetNumberOfRows()<<"\t"<<table->GetNumberOfColumns()<<std::endl;
 
@@ -1415,6 +1407,19 @@ void SPDAnalysisModel::GetSubSampleMatrix(vnl_matrix<double> &mat, std::vector< 
 	}
 }
 
+void SPDAnalysisModel::ConvertClusIndexToSampleIndex(std::vector< std::vector< long int> > &clusIndex, std::vector< std::vector< long int> > &sampleIndex)
+{
+	sampleIndex.resize(clusIndex.size());
+	for( int i = 0; i < clusIndex.size(); i++)
+	{
+		for( int j = 0; j < clusIndex[i].size(); j++)
+		{
+			long int id = clusIndex[i][j];
+			sampleIndex[i].push_back((long int)indMapFromIndToVertex[id]);
+		}
+	}
+}
+
 void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat)  // after single linkage clustering
 {
 	clusAverageMat.set_size( index.size(), MatrixAfterCellCluster.cols());
@@ -1431,6 +1436,19 @@ void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< 
 		}
 		tmp = tmp / index[i].size();
 		clusAverageMat.set_row(i, tmp);
+	}
+}
+
+void SPDAnalysisModel::GetArrangedMatrixByConnectedComponent(std::vector< std::vector< long int> > &index, vnl_matrix<double> &mat)
+{
+	mat.set_size(MatrixAfterCellCluster.rows(), MatrixAfterCellCluster.cols());
+	unsigned int count = 0;
+	for( int i = 0; i < index.size(); i++)
+	{
+		for( int j = 0; j < index[i].size(); j++)
+		{
+			mat.set_row( count++,MatrixAfterCellCluster.get_row(index[i][j]));
+		}
 	}
 }
 
@@ -1807,6 +1825,7 @@ bool SPDAnalysisModel::IsConnected(std::multimap<int, int> &neighborGraph, std::
     return false;
 }
 
+// clusterNum: for connected component
 vtkSmartPointer<vtkTable> SPDAnalysisModel::GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum)
 {
 	std::vector<int> nstartRow;
@@ -2842,12 +2861,142 @@ void SPDAnalysisModel::GetClusClusDataMST(clusclus *c1, double threshold, std::v
 	ofSimatrix.close();	
 }
 
+void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
+{
+	if( c1 == NULL)
+	{
+		return;
+	}
+	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+
+	std::vector<std::vector<double > > points;
+	points.resize(this->EMDMatrix.rows());
+	for(int i = 0; i < this->EMDMatrix.rows(); i++)
+		for(int j = 0; j < this->EMDMatrix.cols(); j++)
+			points[i].push_back(this->EMDMatrix(i,j));
+	Bicluster* bicluster = new Bicluster();
+	int k1 = 10;
+	if( this->EMDMatrix.rows() < 10)
+	{
+		k1 = this->EMDMatrix.rows();
+	}
+	bicluster->Setparameter(k1,k1);
+	bicluster->setDataToBicluster(points);
+	bicluster->bispectralclustering();
+
+	for(unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		c1->optimalleaforder[i] = bicluster->order1[i];
+	}
+
+	if(diagVec)
+	{
+		diagVec->set_size(this->EMDMatrix.rows());
+		for(unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+		{
+			(*diagVec)[i] = 1;
+		}
+	}
+}
+
+/// Find largest fully connected component in EMDMatrix.
+void SPDAnalysisModel::GetSelectedFeaturesModulesTest(double selThreshold, std::vector<unsigned int> &selModules, std::vector<unsigned int> &size)
+{
+	selModules.clear();
+	size.clear();
+	unsigned int maxSize = 0;
+	std::vector< std::vector<unsigned int> > tmpSelModules;
+	std::set< unsigned int> processedModules;
+	std::vector< unsigned int> tmpModules;
+
+	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		if(processedModules.find(i) == processedModules.end())
+		{
+			processedModules.insert(i);
+			tmpModules.clear();
+			tmpModules.push_back(i);
+			for( unsigned int j = i + 1; j < this->EMDMatrix.cols(); j++)
+			{
+				if( this->EMDMatrix(i,j) >= selThreshold)
+				{
+					tmpModules.push_back(j);
+					processedModules.insert(j);
+				}
+			}
+			if( tmpModules.size() > maxSize)
+			{
+				selModules = tmpModules;
+				maxSize = tmpModules.size();
+			}
+			tmpSelModules.push_back(tmpModules);
+			size.push_back(tmpModules.size());
+		}
+	}
+	
+	//std::ofstream ofs("SelectedFeaturesModulesTest.txt");
+	//for( unsigned int i = 0; i < tmpSelModules.size(); i++)
+	//{
+	//	std::vector<unsigned int> selModules = tmpSelModules[i];
+	//	for( unsigned int j = 0; j < selModules.size(); j++)
+	//	{
+	//		ofs<< selModules[j]<< "\t";
+	//	}
+	//	ofs<< std::endl;
+	//}
+	//ofs.close();
+}
+
+double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_vector<double> &accuracyVec)
+{
+	if( clusNo.size() <= 0)
+	{
+		std::cout<< "Validation information not available"<<std::endl;
+		return -1;
+	}
+
+	vtkAbstractArray *arrayID1 = treeTable->GetColumnByName((this->headers)[0].c_str());
+	vtkAbstractArray *arrayID2 = treeTable->GetColumnByName((this->headers)[1].c_str());
+	vnl_matrix<int> connectionCount( clusNo.max_value(),2); //first row count correct connection, second row count wrong connection
+	connectionCount.fill(0);
+	for( vtkIdType i = 0; i < treeTable->GetNumberOfRows(); i++) 
+	{
+		int ver1 = arrayID1->GetVariantValue(i).ToInt();
+		int ver2 = arrayID2->GetVariantValue(i).ToInt();
+		int tag1 = clusNo[ver1];
+		int tag2 = clusNo[ver2];
+		if( abs(tag1 - tag2) == 1)
+		{
+			connectionCount(tag1-1,0) += 1;
+			connectionCount(tag2-1,0) += 1;
+		}
+		else if( abs(clusNo[ver1] - clusNo[ver2]) >= 2)
+		{
+			connectionCount(tag1-1,1) += 1;
+			connectionCount(tag2-1,1) += 1;
+		}
+	}
+
+	accuracyVec.set_size(clusNo.size());
+	double rtnVal = 0;
+	for( vtkIdType i = 0; i < accuracyVec.size(); i++)
+	{
+		accuracyVec[i] = (double)(connectionCount(i,0) - connectionCount(i,1))/(connectionCount(i,0) + connectionCount(i,1));
+		rtnVal += accuracyVec[i];
+	}
+	rtnVal = rtnVal / accuracyVec.size();
+	return rtnVal;
+}
+
 void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
 {
 	//QString filenameSM = this->filename + "similarity_matrix.txt";
 	//std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
 	//ofSimatrix.precision(4);
-
+	if( c1 == NULL)
+	{
+		return;
+	}
 	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 	c1->RunClusClus();
 
@@ -3211,6 +3360,30 @@ void SPDAnalysisModel::SaveSelectedFeatureNames(QString filename, std::vector<un
 		ofs<< selectedFeatures[i]<<"\t"<<featureName<<endl;
 	}
 	ofs.close();
+}
+
+void SPDAnalysisModel::SaveNormalizedTableAfterFeatureSelection(std::string filename, std::vector<int>& selectedFeatures)
+{
+	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+	//for(int i = 0; i < selectedFeatures.size(); i++)
+	//{		
+	//	vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+	//	column->SetName( DataTable->GetColumn(selectedFeatures[i] + 1)->GetName());
+	//	table->AddColumn(column);
+	//}
+
+	std::string fileNameOri = filename + "_ori.txt";
+	std::string fileNameSel = filename + ".txt";
+
+	vtkSmartPointer<vtkTable> normalTable = GetDataTableAfterCellCluster();
+	ftk::SaveTable(fileNameOri,normalTable);
+
+	table->AddColumn(normalTable->GetColumn(0));
+	for(int i = 0; i < selectedFeatures.size(); i++)
+	{		
+		table->AddColumn(normalTable->GetColumn(selectedFeatures[i] + 1));
+	}
+	ftk::SaveTable(fileNameSel,table);
 }
 
 double SPDAnalysisModel::GetEMDSelectedPercentage(double thres)

@@ -37,9 +37,6 @@ protected:
 	vtkSmartPointer<vtkTable> GetSubTableExcludeItems( vtkSmartPointer<vtkTable> table, std::set<long int> &selItems);
 
 protected slots:
-    void browse();
-    void load();
-	void loadContrastData();
 	void showOriginalHeatmap();
     void clusterFunction();
 	void showPSM();
@@ -51,15 +48,12 @@ protected slots:
 	void ReRunSPDAnlysis();
 	void ReColorProgressionTree(int nfeature);
 	void UpdateConnectedNum();
+	void TestProgression();
 
 private:
 	SPDAnalysisModel *SPDModel;
-    QLabel *dataFileLabel;
 
-    QLabel *dataFileName;
-    QPushButton *browseButton;
-    QPushButton *loadButton;
-	QPushButton *loadTestButton;
+	QPushButton *rawHeatmapButton;
 	
     QLabel *featureNumLabel;
     QLabel *featureNum;
@@ -73,6 +67,7 @@ private:
 	QLabel *nBinLabel;
     QSpinBox *nBinBox;
     QPushButton *psmButton;
+	QPushButton *testButton;
 
 	QLabel *continSelectLabel;   
 	QCheckBox *continSelectCheck;
