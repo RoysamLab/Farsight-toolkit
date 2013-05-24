@@ -75,7 +75,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
     psdtButton = new QPushButton(tr("View Progression"), this);
 	//heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
 	heatmapButton = new QPushButton(tr("Heatmap"), this);
-	testButton = new QPushButton(tr("Test"), this);
+	//testButton = new QPushButton(tr("Test"), this);
 	
 	psmButton->setEnabled(TRUE);
 	psdtButton->setEnabled(FALSE);
@@ -88,7 +88,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
 	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
-	connect( testButton, SIGNAL(clicked()), this, SLOT(TestProgression()));
+	//connect( testButton, SIGNAL(clicked()), this, SLOT(TestProgression()));
 	
     QGridLayout *mainLayout = new QGridLayout(this);
 
@@ -132,7 +132,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 	mainLayout->addWidget(connectedGraphEdit, 8, 1);
 	mainLayout->addWidget(updateConnectedNumButton, 8, 2);
 
-	mainLayout->addWidget(testButton, 10, 0);
+	//mainLayout->addWidget(testButton, 10, 0);
 	mainLayout->addWidget(psdtButton, 10, 1);
 	mainLayout->addWidget(heatmapButton, 10, 2);
 
@@ -315,6 +315,9 @@ void SPDkNNGModuleMatch::showPSM()
 
 	delete clus1;
 	delete clus2;
+
+	psdtButton->setEnabled(TRUE);
+	updateConnectedNumButton->setEnabled(TRUE);
 }
 
 void SPDkNNGModuleMatch::viewProgression()
@@ -346,12 +349,40 @@ void SPDkNNGModuleMatch::viewProgression()
 	unselOrder.clear();
 
 	split( selectModulesID, ',', selModuleID);
-	//for( size_t i = 0; i < selModuleID.size(); i++)
+	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
+		//for( size_t i = 0; i < selModuleID.size(); i++)
 	//{
 	//	std::cout<< selModuleID[i]<< "\t";
 	//}
 	//std::cout<<std::endl;
-	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
+
+	// For validation:
+	vnl_vector<int> validationVec;
+	SPDModel->GetValidationVec(validationVec);
+	if( validationVec.max_value() > 0)
+	{
+		vnl_matrix<double> clusAverageMat;
+		SPDModel->GetDataMatrix(clusAverageMat);
+		std::vector<int> clusterNum(1);
+		clusterNum[0] = clusAverageMat.rows();
+		vtkSmartPointer<vtkTable> treeTable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+
+		vnl_matrix<double> betweenDis;
+		vnl_vector<double> accVec;
+		vnl_vector<double> aggDegree;
+
+		GraphWindow::GetTreeNodeBetweenDistance(treeTable, headers[0], headers[1], headers[2], betweenDis);
+		double aggDegreeValue = 0;
+		double averConnectionAccuracy = SPDModel->GetConnectionAccuracy(treeTable, betweenDis, accVec, aggDegree, aggDegreeValue, 1, 0);
+		std::cout<< "ConnectionAccuracy: "<< averConnectionAccuracy<<std::endl;
+		std::cout<< accVec<<std::endl;
+		std::cout<< "ClusteringAccuracy: "<< aggDegreeValue<<std::endl;
+		std::cout<< aggDegree<<std::endl;
+	}
+	// end valdiation
 
 	GetFeatureOrder( selFeatureID, selOrder, unselOrder);
 
@@ -495,8 +526,12 @@ void SPDkNNGModuleMatch::regenerateProgressionTree()
 		std::vector< double> percentVec;
         SPDModel->GetSingleLinkageClusterAverage(sampleIndex, clusAverageMat);
 
-		std::vector<int> clusterNum;
-		this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
+		//std::vector<int> clusterNum;
+		//this->HeatmapWin->GetSubTreeClusterNum(clusterNum);
+
+		std::vector<int> clusterNum(1);
+		clusterNum[0] = clusAverageMat.rows();
+
 		vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
         //vtkSmartPointer<vtkTable> newtable = SPDModel->GenerateSubGraph( clusAverageMat, clusIndex, selFeatureID, clusterNum);
 
@@ -740,10 +775,16 @@ vtkSmartPointer<vtkTable> SPDkNNGModuleMatch::NormalizeTable(vtkSmartPointer<vtk
 
 void SPDkNNGModuleMatch::TestProgression()
 {
-	std::ofstream ofs("TestLog.txt");
-	std::ofstream acc("Accuracy.txt");
+	QString str = featureNum->text() + "_" + sampleNum->text() + "_" + clusterCoherenceBox->text() + "_" + kNearestNeighborBox->text();
+	std::string logName = "TestLog1_"+ str.toStdString() + ".txt";
+	std::string accName = "Accuracy1_" + str.toStdString() + ".txt";
+
+	std::ofstream ofs(logName.c_str(), std::ofstream::out);
+	std::ofstream acc(accName.c_str(), std::ofstream::out);
+	acc<< "Threshold"<< "\t"<<"Module_size"<<"\t"<<"Coonection_Accuracy"<<"\t"<<"Aggregation_Degree"<<std::endl;
 	for(double selThreshold = 0.9; selThreshold >= 0.3; selThreshold -= 0.01)
 	{
+		std::cout<< selThreshold<<std::endl;
 		std::vector<unsigned int> modID;
 		std::vector<unsigned int> size;
 		std::vector<int> connectedComponent;
@@ -759,30 +800,30 @@ void SPDkNNGModuleMatch::TestProgression()
 		ofs<<std::endl;
 
 		SPDModel->GetFeatureIdbyModId(modID, selFeatureID);
-		int connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
 
 		vnl_matrix<double> clusAverageMat;
-		std::vector< std::vector< long int> > clusIndex(connectedNum); 
-		std::vector<int> clusterNum(connectedNum);
-		for( unsigned int i = 0; i < clusterNum.size(); i++)
-		{
-			clusterNum[i] = 0;
-		}
+		SPDModel->GetDataMatrix(clusAverageMat);
+		std::vector<int> clusterNum(1);
+		clusterNum[0] = clusAverageMat.rows();
 
-		for( unsigned int i = 0; i < connectedComponent.size(); i++)
-		{
-			unsigned int k = connectedComponent[i];
-			clusIndex[k].push_back((long int)i);
-			clusterNum[k] += 1;
-		}
-
-		SPDModel->GetArrangedMatrixByConnectedComponent(clusIndex, clusAverageMat);
 		vtkSmartPointer<vtkTable> treeTable = SPDModel->GenerateMST( clusAverageMat, selFeatureID, clusterNum);
+	
+		std::vector<std::string> headers;
+		SPDModel->GetTableHeaders( headers);
+
+		vnl_matrix<double> betweenDis;
 		vnl_vector<double> accVec;
-		double averConnectionAccuracy = SPDModel->GetConnectionAccuracy(treeTable, accVec);
+		vnl_vector<double> aggDegree;
+
+		GraphWindow::GetTreeNodeBetweenDistance(treeTable, headers[0], headers[1], headers[2], betweenDis);
+		double aggDegreeValue = 0;
+		double averConnectionAccuracy = SPDModel->GetConnectionAccuracy(treeTable, betweenDis, accVec, aggDegree, aggDegreeValue, 1, 0);
+		std::cout<< accVec<<std::endl;
+
 		ofs<< averConnectionAccuracy<<std::endl;
-		ofs<< accVec<<std::endl<<std::endl;
-		acc<< selThreshold<< "\t"<<modID.size()<<"\t"<<averConnectionAccuracy<<std::endl;
+		ofs<< accVec<<std::endl;
+		ofs<< aggDegree<<std::endl<<std::endl;
+		acc<< selThreshold<< "\t"<<modID.size()<<"\t"<<averConnectionAccuracy<<"\t"<<aggDegreeValue<<std::endl;
 	}
 	ofs.close();
 	acc.close();

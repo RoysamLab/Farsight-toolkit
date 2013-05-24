@@ -1439,6 +1439,11 @@ void SPDAnalysisModel::GetSingleLinkageClusterAverage(std::vector< std::vector< 
 	}
 }
 
+void SPDAnalysisModel::GetDataMatrix( vnl_matrix<double> &mat)
+{
+	mat = MatrixAfterCellCluster;
+}
+
 void SPDAnalysisModel::GetArrangedMatrixByConnectedComponent(std::vector< std::vector< long int> > &index, vnl_matrix<double> &mat)
 {
 	mat.set_size(MatrixAfterCellCluster.rows(), MatrixAfterCellCluster.cols());
@@ -2637,7 +2642,10 @@ void SPDAnalysisModel::RunEMDAnalysis(int numBin)
 
 	for( int i = 0; i < moduleDistance.size(); i++)
 	{
-		std::cout<< "matching module " << i<<endl;
+		if( i % 100 == 0)
+		{
+			std::cout<< "matching module " << i<<endl;
+		}
 		vnl_vector<double> hist_interval;
 		vnl_vector<unsigned int> moduleHist;
 		Hist( moduleDistance[i], numBin, hist_interval, moduleHist);
@@ -2869,24 +2877,106 @@ void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
 	}
 	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
 
-	std::vector<std::vector<double > > points;
-	points.resize(this->EMDMatrix.rows());
-	for(int i = 0; i < this->EMDMatrix.rows(); i++)
-		for(int j = 0; j < this->EMDMatrix.cols(); j++)
-			points[i].push_back(this->EMDMatrix(i,j));
-	Bicluster* bicluster = new Bicluster();
-	int k1 = 10;
-	if( this->EMDMatrix.rows() < 10)
-	{
-		k1 = this->EMDMatrix.rows();
-	}
-	bicluster->Setparameter(k1,k1);
-	bicluster->setDataToBicluster(points);
-	bicluster->bispectralclustering();
+	double max = this->EMDMatrix.max_value();
+	double min = this->EMDMatrix.min_value();
 
-	for(unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	std::set< unsigned int> mIds;
+	std::vector< std::vector< unsigned int> > order;
+	std::vector< std::vector< unsigned int> > tmpOrder;
+
+	for(double selThreshold = max; selThreshold >= min; selThreshold -= 0.01)
 	{
-		c1->optimalleaforder[i] = bicluster->order1[i];
+		std::vector<std::vector<unsigned int> > modID;
+
+		GetSelectedFeaturesModulesForBlockVisualization(selThreshold, modID); // the opposite way, output include the previous!!
+
+		for( size_t i = 0; i < modID.size(); i++)
+		{
+			bool tag = false;
+			std::vector<unsigned int> tmp;
+			for( size_t j = 0; j < order.size(); j++)
+			{
+				if( IsExist(modID[i], order[j][0]))
+				{
+					tag = true;
+					
+					for( size_t k = 0; k< order[j].size(); k++) 
+					{
+						tmp.push_back(order[j][k]);
+					}
+				}
+			}
+
+			if( modID[i].size() > tmp.size())
+			{
+				for( size_t k = 0; k < modID[i].size(); k++)
+				{
+					if( !IsExist(tmp, modID[i][k]))
+					{
+						tmp.push_back( modID[i][k]);
+					}
+				}
+			}
+		
+			tmpOrder.push_back(tmp);
+		}
+		order = tmpOrder;
+		tmpOrder.clear();
+	}
+
+	std::vector< unsigned int> lastVec;
+
+	if( order[0].size() < this->EMDMatrix.rows())
+	{
+		std::cout<< "Last searching for the missed component."<<std::endl;
+		for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+		{
+			
+			bool bexist = false;
+			for( size_t j = 0; j < order.size(); j++)
+			{
+				if( IsExist(order[j], i))
+				{
+					bexist = true;
+					break;
+				}
+			}
+			if( false == bexist)
+			{
+				lastVec.push_back(i);
+			}
+		}
+	}
+
+	int count = 0;
+	for( size_t i = 0; i < order.size(); i++)
+	{
+		for( size_t j = 0; j < order[i].size(); j++)
+		{
+			if( count < this->EMDMatrix.rows())
+			{
+				c1->optimalleaforder[count++] = order[i][j];
+			}
+			else
+			{
+				std::cout<< "Exceed matrix dim!!"<<std::endl;
+			}
+		}
+	}
+
+	if( count <  this->EMDMatrix.rows())
+	{
+		for( size_t k = 0; k < lastVec.size(); k++)
+		{
+			if( count < this->EMDMatrix.rows())
+			{
+				c1->optimalleaforder[count++] = lastVec[k];
+			}
+			else
+			{
+				std::cout<< "Exceed matrix dim!!"<<std::endl;
+			}
+		}
 	}
 
 	if(diagVec)
@@ -2924,32 +3014,62 @@ void SPDAnalysisModel::GetSelectedFeaturesModulesTest(double selThreshold, std::
 					processedModules.insert(j);
 				}
 			}
-			if( tmpModules.size() > maxSize)
-			{
-				selModules = tmpModules;
-				maxSize = tmpModules.size();
-			}
 			tmpSelModules.push_back(tmpModules);
 			size.push_back(tmpModules.size());
 		}
 	}
 	
 	//std::ofstream ofs("SelectedFeaturesModulesTest.txt");
-	//for( unsigned int i = 0; i < tmpSelModules.size(); i++)
-	//{
-	//	std::vector<unsigned int> selModules = tmpSelModules[i];
-	//	for( unsigned int j = 0; j < selModules.size(); j++)
-	//	{
-	//		ofs<< selModules[j]<< "\t";
-	//	}
-	//	ofs<< std::endl;
-	//}
+	//std::cout<< "Module size > 2:"<<std::endl;
+	for( unsigned int i = 0; i < tmpSelModules.size(); i++)
+	{
+		std::vector<unsigned int> module = tmpSelModules[i];
+		if( module.size() > 2)
+		{
+			std::cout<< module.size()<< "\t";
+			for( unsigned int j = 0; j < module.size(); j++)
+			{
+				selModules.push_back(module[j]);			
+			}
+		}
+	}
+	std::cout<< std::endl;
 	//ofs.close();
 }
 
-double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_vector<double> &accuracyVec)
+void SPDAnalysisModel::GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules)
 {
-	if( clusNo.size() <= 0)
+	tmpSelModules.clear();
+	std::set< unsigned int> processedModules;
+	std::vector< unsigned int> tmpModules;
+
+	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		if(processedModules.find(i) == processedModules.end())
+		{
+			processedModules.insert(i);
+			tmpModules.clear();
+			tmpModules.push_back(i);
+			for( unsigned int j = i + 1; j < this->EMDMatrix.cols(); j++)
+			{
+				if( this->EMDMatrix(i,j) >= selThreshold)
+				{
+					tmpModules.push_back(j);
+					processedModules.insert(j);
+				}
+			}
+			if( tmpModules.size() >= 2)
+			{
+				tmpSelModules.push_back(tmpModules);
+			}
+		}
+	}
+}
+
+double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_matrix<double> &disMat, vnl_vector<double> &accuracyVec,
+											    vnl_vector<double> &aggDegree, double &aggDegreeValue, int neighborScope = 1, int clusterScope = 0)
+{
+	if( clusNo.max_value() <= 0)
 	{
 		std::cout<< "Validation information not available"<<std::endl;
 		return -1;
@@ -2959,33 +3079,156 @@ double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTa
 	vtkAbstractArray *arrayID2 = treeTable->GetColumnByName((this->headers)[1].c_str());
 	vnl_matrix<int> connectionCount( clusNo.max_value(),2); //first row count correct connection, second row count wrong connection
 	connectionCount.fill(0);
+
+	std::vector< std::vector<int> > connectionNode( 2 * clusNo.max_value());
+	std::vector< std::vector<int> > ncNode( clusNo.max_value());
+
+	Graph graph(treeTable->GetNumberOfRows() + 1);
+
 	for( vtkIdType i = 0; i < treeTable->GetNumberOfRows(); i++) 
 	{
 		int ver1 = arrayID1->GetVariantValue(i).ToInt();
 		int ver2 = arrayID2->GetVariantValue(i).ToInt();
 		int tag1 = clusNo[ver1];
 		int tag2 = clusNo[ver2];
-		if( abs(tag1 - tag2) == 1)
+		
+		if( abs(tag1 - tag2) <= clusterScope)
 		{
-			connectionCount(tag1-1,0) += 1;
-			connectionCount(tag2-1,0) += 1;
+			boost::add_edge( ver1, ver2, graph);
 		}
-		else if( abs(clusNo[ver1] - clusNo[ver2]) >= 2)
+
+		if( abs(tag1 - tag2) == 0)
 		{
-			connectionCount(tag1-1,1) += 1;
-			connectionCount(tag2-1,1) += 1;
+			ncNode[tag1-1].push_back(ver1);
+			ncNode[tag2-1].push_back(ver2);
+		}
+		else
+		{
+			if( abs(tag1 - tag2) <= neighborScope) // right connection
+			{
+				connectionCount(tag1-1,0) += 1;
+				connectionCount(tag2-1,0) += 1;	
+				connectionNode[ 2 * (tag1-1)].push_back(ver1);
+				connectionNode[ 2 * (tag2-1)].push_back(ver2);
+			}
+			else if( abs(tag1 - tag2) > neighborScope) // wrong connection
+			{
+				connectionCount(tag1-1,1) += 1;
+				connectionCount(tag2-1,1) += 1;
+				connectionNode[ 2 * (tag1-1) + 1].push_back(ver1);
+				connectionNode[ 2 * (tag2-1) + 1].push_back(ver2);
+			}
 		}
 	}
 
-	accuracyVec.set_size(clusNo.size());
-	double rtnVal = 0;
+	for( size_t i = 0; i < ncNode.size(); i++) 
+	{
+		std::vector<int> nodes = ncNode[i];
+		for( size_t j = 0; j < nodes.size(); j++)
+		{
+			int ucn = nodes[j];
+			double minDis = 1e9;
+			bool brightConnection = true;
+			for( size_t k = 0; k < connectionNode[2*i].size(); k++)
+			{
+				int cn = connectionNode[2*i][k];
+				if( cn != ucn && disMat(ucn, cn) < minDis)   // probably problem here~~
+				{
+					minDis = disMat(ucn, cn);
+					brightConnection = true;
+				}
+			}
+			for(size_t k = 0; k < connectionNode[2*i + 1].size(); k++)
+			{
+				int cn = connectionNode[2*i + 1][k];
+				if( cn != ucn && disMat(ucn, cn) < minDis)
+				{
+					minDis = disMat(ucn, cn);
+					brightConnection = false;
+					break;
+				}
+			}
+			if( brightConnection)
+			{
+				connectionCount(i,0) += 1;
+			}
+			else
+			{
+				connectionCount(i,1) += 1;
+			}
+		}
+	}
+
+	std::cout<< connectionCount<<std::endl;
+
+	accuracyVec.set_size(clusNo.max_value());
+	double totalConnection = 0;
+	double accurateConnection = 0;
 	for( vtkIdType i = 0; i < accuracyVec.size(); i++)
 	{
 		accuracyVec[i] = (double)(connectionCount(i,0) - connectionCount(i,1))/(connectionCount(i,0) + connectionCount(i,1));
-		rtnVal += accuracyVec[i];
+		accurateConnection += connectionCount(i,0);
+		totalConnection += (connectionCount(i,0) + connectionCount(i,1));
 	}
-	rtnVal = rtnVal / accuracyVec.size();
+	double rtnVal = accurateConnection / totalConnection;
+
+	aggDegree.set_size(clusNo.max_value());
+	aggDegree.fill(0);
+	
+	if( boost::num_vertices(graph) > 0)
+	{
+		std::vector< int> component;
+		component.resize(boost::num_vertices(graph));
+		int num = boost::connected_components(graph, &component[0]);
+		std::cout<< "Connected clusters: "<< num<<std::endl;
+		std::vector< std::vector< int> > connectedNodes(num);
+		vnl_vector< int> state(num);
+		state.fill(-1);
+		for( size_t i = 0; i < component.size(); i++)
+		{
+			int index = component[i];
+			connectedNodes[index].push_back(i);
+			if( state[index] == -1)
+			{
+				state[index] = clusNo[i] - 1;   /// problem!!!!
+			}
+		}
+
+		vnl_vector<double> size(clusNo.max_value());
+		size.fill(0);
+		vnl_vector<double> maxAgg(clusNo.max_value());
+		maxAgg.fill(1);
+		for( size_t i = 0; i < connectedNodes.size(); i++)
+		{
+			int clus = state[ i];
+			size[clus] += connectedNodes[i].size();
+			if( connectedNodes[i].size() > maxAgg[clus])
+			{
+				maxAgg[clus] = connectedNodes[i].size();	
+			}
+		}
+		std::cout<< "Size: "<<size<<std::endl;
+		double totalSize = 0;
+		double aggSize = 0;
+		for( unsigned int i = 0; i < aggDegree.size(); i++)
+		{
+			aggDegree[i] = maxAgg[i] / size[i];
+			aggSize += maxAgg[i];
+			totalSize += size[i];
+		}
+		aggDegreeValue = aggSize / totalSize;
+	}
+	else
+	{
+		aggDegreeValue = 1;
+	}
+	
 	return rtnVal;
+}
+
+void SPDAnalysisModel::GetValidationVec(vnl_vector<int> &validationVec)
+{
+	validationVec = clusNo;
 }
 
 void SPDAnalysisModel::GetClusClusDataKNNG(clusclus *c1,vnl_vector<double> *diagVec, std::vector< unsigned int> *disModIndex)
@@ -3705,7 +3948,10 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			row.set_size(featureClusterIndex.size());
 			row.fill(0);
 
-			std::cout<< "Matching module "<<i<<std::endl; 
+			if( i % 100 == 0)
+			{
+				std::cout<< "Matching module "<<i<<std::endl; 
+			}
 			double min = 0;
 			double max = 0;
 			GetDiagnalMinMax(disMatrixPtList[i], min, max);

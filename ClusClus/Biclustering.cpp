@@ -291,6 +291,4 @@ void Bicluster::Setparameter(int k1, int k2)
 {
 	this->K1 = k1;
 	this->K2 = k2;
-	std::cout<<"****..."<<K1<<"kkkkkkkkkkkkkkkkkkkkkk1111111111111111111111"<<std::endl;
-	std::cout<<"****..."<<K2<<"kkkkkkkkkkkkkkkkkkkkkk222222222222222222222222222222"<<std::endl;
 }

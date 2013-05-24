@@ -126,8 +126,11 @@ public:
 	void GetSubFeatureMatrix(vnl_matrix<double> &mat, std::vector< unsigned int> &featureId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
 	void GetSubSampleMatrix(vnl_matrix<double> &mat, std::vector< int> &sampleId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
 	void GetSelectedFeaturesModulesTest(double selThreshold, std::vector<unsigned int> &selModules, std::vector<unsigned int> &size);
+	void GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules);
 	void ConvertClusIndexToSampleIndex(std::vector< std::vector< long int> > &clusIndex, std::vector< std::vector< long int> > &sampleIndex);
-	double GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_vector<double> &accuracyVec);
+	double GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_matrix<double> &disMat, vnl_vector<double> &accuracyVec, vnl_vector<double> &aggDegree, double &aggDegreeValue, int neighborScope, int clusterScope);
+	void GetDataMatrix( vnl_matrix<double> &mat);
+	void GetValidationVec(vnl_vector<int> &validationVec);
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
