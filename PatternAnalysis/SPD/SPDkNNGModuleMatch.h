@@ -67,7 +67,7 @@ private:
 	QLabel *nBinLabel;
     QSpinBox *nBinBox;
     QPushButton *psmButton;
-	QPushButton *testButton;
+	//QPushButton *testButton;
 
 	QLabel *continSelectLabel;   
 	QCheckBox *continSelectCheck;
