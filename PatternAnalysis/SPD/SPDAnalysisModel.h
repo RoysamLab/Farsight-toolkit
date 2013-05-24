@@ -70,7 +70,7 @@ public:
 	void GetSingleLinkageClusterAverage(std::vector< std::vector< long int> > &index, vnl_matrix<double> &clusAverageMat);  // after single linkage clustering
 	void GetClusterMapping( std::map< int, int> &index);
 	void GetSingleLinkageClusterMapping(std::vector< std::vector< long int> > &index, std::vector<int> &newIndex);   
-
+	void GetArrangedMatrixByConnectedComponent(std::vector< std::vector< long int> > &index, vnl_matrix<double> &mat);
 	void GenerateMST();
 	vtkSmartPointer<vtkTable> GenerateMST( vnl_matrix<double> &mat, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
     vtkSmartPointer<vtkTable> GenerateSubGraph( vnl_matrix<double> &mat, std::vector< std::vector< long int> > &clusIndex, std::vector< unsigned int> &selFeatures, std::vector<int> &clusterNum);
@@ -82,12 +82,14 @@ public:
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
 	void GetClusClusDataMST(clusclus *c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	void GetClusClusDataKNNG(clusclus *c1, vnl_vector<double> *diagVec = NULL, std::vector< unsigned int> *disModIndex = NULL);
+	void GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec);
 	void GetClusClusPSCWithoutIterData(clusclus* c1, double threshold);
 	void GetClusClusPSCData(clusclus* c1);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<unsigned int>& selectedFeatures);
+	void SaveNormalizedTableAfterFeatureSelection(std::string filename, std::vector<int>& selectedFeatures);
 	double GetEMDSelectedPercentage(double thres);
 	double GetEMDSelectedThreshold( double per);
 	void GetMatrixData(vnl_matrix<double> &mat);
@@ -111,7 +113,7 @@ public:
 	void GetClusterFeatureValue(std::vector< std::vector< long int> > &clusIndex, int nfeature, vnl_vector<double> &featureValue, std::string &featureName);
 	vtkSmartPointer<vtkTable> GetAverModuleTable(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &TreeOrder, std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
 	void ConvertTableToMatrix(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<double> &distance);
-	void ConvertTableToMatrixForLayerData(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
+	void ConvertTableToMatrixForValidation(vtkSmartPointer<vtkTable> table, vnl_matrix<double> &mat, std::vector<int> &index, vnl_vector<int> &clusNo);
 	vtkSmartPointer<vtkTable> GetTableForHist(std::vector< int> &selFeatureOrder, std::vector< int> &unselFeatureOrder);
 	int GetConnectedComponent(std::vector< unsigned int> &selFeatureID, std::vector<int> &component);
 	unsigned int GetKNeighborNum();
@@ -123,12 +125,19 @@ public:
 	double GetANOVA(std::vector< std::vector< long int> > &index, std::vector< unsigned int> &selFeatureId);
 	void GetSubFeatureMatrix(vnl_matrix<double> &mat, std::vector< unsigned int> &featureId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
 	void GetSubSampleMatrix(vnl_matrix<double> &mat, std::vector< int> &sampleId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
+	void GetSelectedFeaturesModulesTest(double selThreshold, std::vector<unsigned int> &selModules, std::vector<unsigned int> &size);
+	void GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules);
+	void ConvertClusIndexToSampleIndex(std::vector< std::vector< long int> > &clusIndex, std::vector< std::vector< long int> > &sampleIndex);
+	double GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_matrix<double> &disMat, vnl_vector<double> &accuracyVec, vnl_vector<double> &aggDegree, double &aggDegreeValue, int neighborScope, int clusterScope);
+	void GetDataMatrix( vnl_matrix<double> &mat);
+	void GetValidationVec(vnl_vector<int> &validationVec);
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
     static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
 	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
+
 protected:
 	bool DiagnalIteration(vnl_matrix<double> &mat, vnl_vector<int> &order, vnl_vector<double> &vec);
 	static void NormalizeData(vnl_matrix<double> &mat);
@@ -282,7 +291,7 @@ private:
 	int nFeatureSize;
 	int nBinNum;
 
-	// for layer data
-	vnl_vector<int> clusNo;
+	// for validation
+	vnl_vector<int> clusNo; // start from 1
 };
 #endif

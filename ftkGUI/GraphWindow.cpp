@@ -2145,6 +2145,59 @@ void GraphWindow::UpdateGraphView()
 	}
 }
 
+void GraphWindow::GetTreeNodeBetweenDistance(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, vnl_matrix<double> &disMat)
+{
+	unsigned int nodesNumber = table->GetNumberOfRows() + 1;
+	vtkAbstractArray *arrayID1 = table->GetColumnByName( ID1.c_str());
+	vtkAbstractArray *arrayID2 = table->GetColumnByName( ID2.c_str());
+	vtkAbstractArray *arrayID3 = table->GetColumnByName( edgeLabel.c_str());
+
+	disMat.set_size( nodesNumber, nodesNumber); // edge weight matrix
+	vnl_matrix<unsigned char> tagMat(nodesNumber, nodesNumber);
+	disMat.fill(0);
+	tagMat.fill(0);
+
+	for( int i = 0; i < table->GetNumberOfRows(); i++) 
+	{
+		int ver1 = arrayID1->GetVariantValue(i).ToInt();
+		int ver2 = arrayID2->GetVariantValue(i).ToInt();
+		double weight = arrayID3->GetVariantValue(i).ToDouble();
+
+		disMat( ver1, ver2) = weight;
+		disMat( ver2, ver1) = weight;
+		tagMat( ver1, ver2) = 1;
+		tagMat( ver2, ver1) = 1;
+	}
+
+	/// Generate between distance matrix
+	bool bchanged = true;
+	while( bchanged)
+	{
+		bchanged = false;
+		for( unsigned int i = 0; i < disMat.rows(); i++)
+		{
+			for( unsigned int j = i + 1; j < disMat.cols(); j++)
+			{
+				if( tagMat(i,j) == 0)
+				{
+					bchanged = true;
+					for( unsigned int k = 0; k < disMat.cols(); k++)
+					{
+						if( k != i && k != j && tagMat(i,k) == 1 && tagMat(k,j) == 1)
+						{
+							disMat(i, j) = disMat(i,k) + disMat(k,j);
+							disMat(j, i) = disMat(i, j);
+							tagMat(i, j) = 1;
+							tagMat(j, i) = 1;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void GraphWindow::CalculateCoordinates(vnl_matrix<long int>& adj_matrix, std::vector<Point>& pointList)
 {
 	shortest_hop.set_size(adj_matrix.rows(), adj_matrix.cols());
@@ -2723,12 +2776,12 @@ void GraphWindow::ColorTreeAccordingToFeatures(vnl_vector<double> &feature, cons
 	
 	for( int i = 0; i < colorVector.size(); i++)               
 	{
-		int k = int( featureColorVector[i] * COLOR_MAP2_SIZE + 0.5);
-		if( k >= COLOR_MAP2_SIZE)
+		int k = int( featureColorVector[i] * COLOR_MAP_SIZE + 0.5);
+		if( k >= COLOR_MAP_SIZE)
 		{
-			k = COLOR_MAP2_SIZE - 1;
+			k = COLOR_MAP_SIZE - 1;
 		}
-		this->lookupTable->SetTableValue(i, COLORMAP2[k].r, COLORMAP2[k].g, COLORMAP2[k].b); 
+		this->lookupTable->SetTableValue(i, COLORMAP[k].r, COLORMAP[k].g, COLORMAP[k].b); 
 	}
 	lookupTable->Build();
 

@@ -59,7 +59,8 @@ public:
 	ObjectSelection * GetSelection();
 	void GetProgressionTreeOrder(std::vector<long int> &order);
 	void ColorTreeAccordingToFeatures(vnl_vector<double> &feature, const char *featureName);
-	
+	static void GetTreeNodeBetweenDistance(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, vnl_matrix<double> &disMat);
+
 protected:
 	void SetSelectedIds(std::set<long int>& IDs);
 	void SetSelectedIds2();
