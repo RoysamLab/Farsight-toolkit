@@ -586,7 +586,75 @@ void ProgressionHeatmap::showSimilarMatrixGraph()
 	this->mapper->SetScalarRange(0, this->num_samples*this->num_features - 1);
 	this->mapper->SetLookupTable(lookuptable);
 	this->actor->SetMapper(mapper);
-	
+
+	if( table != NULL && this->num_features == table->GetNumberOfColumns() - 1)
+	{
+		std::cout<< "Show feature names. "<<this->num_features<<table->GetNumberOfColumns()<<std::endl;
+		vtkSmartPointer<vtkPolyData> pd = vtkSmartPointer<vtkPolyData>::New();
+		vtkSmartPointer<vtkCellArray> verts = vtkSmartPointer<vtkCellArray>::New();
+		verts->SetNumberOfCells(1);
+		
+		vtkSmartPointer<vtkDoubleArray> orient = vtkSmartPointer<vtkDoubleArray>::New();
+		orient->SetNumberOfComponents(1);
+		orient->SetName("orientation");
+		
+		vtkSmartPointer<vtkStringArray> label = vtkSmartPointer<vtkStringArray>::New();
+		label->SetNumberOfComponents(1);
+		label->SetName("label");
+		
+		vtkSmartPointer<vtkPoints> ptsCol = vtkSmartPointer<vtkPoints>::New();
+		double inter = 1.0 / this->num_features;
+		double startCol = inter / 2.0 - 0.5;
+		for(int i=0; i<this->num_features;i++)
+		{
+			ptsCol->InsertNextPoint( startCol + i * inter, 0.5, 0);
+		}
+		
+		for(int i=0; i<this->num_features;i++)
+		{
+			verts->InsertNextCell(1);
+			verts->InsertCellPoint(i);
+			orient->InsertNextValue(0.0);
+			vtkIdType id = Optimal_Leaf_Order1[i] + 1;
+			label->InsertNextValue(this->table->GetColumn(id)->GetName());
+		}
+		
+		pd->SetPoints(ptsCol);
+		pd->SetVerts(verts);
+		pd->GetPointData()->AddArray(label);
+		pd->GetPointData()->AddArray(orient);
+		
+		vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
+		hier->SetInput(pd);
+		hier->SetOrientationArrayName("orientation");
+		hier->SetLabelArrayName("label");
+		hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
+		hier->GetTextProperty()->SetFontSize(20);
+		
+		vtkSmartPointer<vtkLabelPlacementMapper> lmapper = vtkSmartPointer<vtkLabelPlacementMapper>::New();
+		lmapper->SetInputConnection(hier->GetOutputPort());
+		
+		vtkSmartPointer<vtkQtLabelRenderStrategy> strategy = vtkSmartPointer<vtkQtLabelRenderStrategy>::New();
+		lmapper->SetRenderStrategy(strategy);
+		lmapper->SetShapeToNone();
+		lmapper->SetBackgroundOpacity(0.0);
+		lmapper->SetMargin(0);
+
+		vtkSmartPointer<vtkActor2D> lactor = vtkSmartPointer<vtkActor2D>::New();
+		lactor->SetMapper(lmapper);
+
+		vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+		rmapper->SetInput(pd);
+
+		vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
+		ractor->SetMapper(rmapper);
+
+		this->view->GetRenderer()->AddActor(lactor);
+		this->view->GetRenderer()->AddActor(ractor);
+	}
+	this->view->GetRenderer()->GradientBackgroundOff();
+	this->view->GetRenderer()->SetBackground(1,1,1);
+
 	this->mainQTRenderWidget.SetRenderWindow(view->GetRenderWindow());
 	this->mainQTRenderWidget.resize(600, 600);
 	this->mainQTRenderWidget.show();

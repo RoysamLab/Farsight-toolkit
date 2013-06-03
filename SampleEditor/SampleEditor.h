@@ -99,6 +99,7 @@ private slots:
 
 	void CreateClusterSelection();
 	void DumpClusterSelections();
+	void AddLabel();
 
 signals:
     void selectionChanged(void);
@@ -151,6 +152,7 @@ private:
 	QMenu *SPDMenu;
 	QAction *SPDAction1;
 	QAction *SPDAction2;
+	QAction *AddLabelAction;
 	SPDMSTModuleMatch *spdMSTWin;
 	SPDkNNGModuleMatch *spdkNNGWin;
 	int flag;

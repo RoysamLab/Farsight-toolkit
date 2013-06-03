@@ -308,6 +308,7 @@ void SPDkNNGModuleMatch::showPSM()
 		clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
 	}
 
+	//vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 	this->simHeatmap->setModels();
 	this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
 	this->simHeatmap->creatDataForSimilarMatrixHeatmap(diagnalVec.data_block());
@@ -389,7 +390,7 @@ void SPDkNNGModuleMatch::viewProgression()
 	// write graph to gdf file.
 	//SPDModel->WriteGraphToGDF(selFeatureID);
 	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
-	//SPDModel->SaveNormalizedTableAfterFeatureSelection("NormalizeFeatureTable", selOrder);
+	SPDModel->SaveNormalizedTableAfterFeatureSelection("NormalizeFeatureTable", selOrder);
 	//SPDModel->WriteKNNGConnectionMatrix( "kNNGC.txt", selFeatureID);
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();

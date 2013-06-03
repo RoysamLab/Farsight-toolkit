@@ -169,6 +169,11 @@ void SampleEditor::createMenus()
 	connect(SPDAction2, SIGNAL(triggered()), this, SLOT(SPDkNNGAnalysis()));
 	SPDMenu->addAction(SPDAction2);
 
+	AddLabelAction = new QAction("Add Label", this);
+	AddLabelAction->setShortcut(Qt::CTRL + Qt::Key_L);
+	connect (AddLabelAction, SIGNAL(triggered()), this, SLOT(AddLabel()));
+	SPDMenu->addAction(AddLabelAction);
+
 	ClusClusMenu = editMenu->addMenu(tr("&ClusClus"));
 	sampleDendroAction = new QAction(tr("SampleDendrogram"), this);
 	sampleDendroAction->setStatusTip(tr("SampleDandrogram"));
@@ -547,6 +552,46 @@ void SampleEditor::SPDkNNGAnalysis()
 		spdkNNGWin->setModels( this->data, selection);
 	}
 	spdkNNGWin->show();
+}
+
+void SampleEditor::AddLabel()
+{
+	std::cout<< "AddLabel."<<std::endl;
+	std::set<long int> IDs = selection->getSelections();  // be cautious here
+	std::cout<< IDs.size()<<std::endl;
+
+	if( IDs.size() <= 0)
+	{
+		return;
+	}
+
+	if(this->data->GetColumnByName("prediction") == NULL)
+	{
+		std::cout<< "Adding label."<<std::endl;
+		vtkSmartPointer<vtkDoubleArray> column = vtkSmartPointer<vtkDoubleArray>::New();
+		column->SetName( "prediction");
+		for(vtkIdType id = 0; id < this->data->GetNumberOfRows(); id++)
+		{
+			column->InsertNextValue(0);
+		}
+		this->data->AddColumn(column);
+		std::cout<< "Adding label done."<<std::endl;
+	}
+
+	bool ok1;
+	int label = QInputDialog::getInt(this, tr("Label"),tr("Label:"), 1, 1, 100, 1, &ok1);
+	if(ok1)
+	{
+		std::cout<< "Set label."<<std::endl;
+		std::set<long int>::iterator iter = IDs.begin();
+		vtkIdType coln = this->data->GetNumberOfColumns();
+		while( iter != IDs.end())
+		{
+			this->data->SetValue((vtkIdType)*iter, coln - 1, label);	
+			iter++;
+		}
+	}
+	ftk::SaveTable( "LabeledTableFromSampleEditor.txt", this->data);
 }
 
 void SampleEditor::sampledendrogram()
