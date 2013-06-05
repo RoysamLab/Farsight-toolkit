@@ -652,6 +652,7 @@ void SPDkNNGModuleMatch::showProgressionHeatmap()
 	selection->GetClusterIndex( clusIndex);
 	std::vector< int> clusterOrder;
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
+	//SPDModel->GetValidationOrder(clusterOrder);
 
 	vtkSmartPointer<vtkTable> tableForAverModulePlot = SPDModel->GetAverModuleTable(clusIndex, TreeOrder, selOrder, unselOrder);
 	if( plot)
@@ -661,12 +662,6 @@ void SPDkNNGModuleMatch::showProgressionHeatmap()
 	plot = new PlotWindow(this);
 	plot->setModels(tableForAverModulePlot, selection);
 	plot->show();
-
-	std::vector< std::vector< long int> > clusIndexByTreeOrder;
-	for( int i = 0; i < TreeOrder.size(); i++)
-	{
-		clusIndexByTreeOrder.push_back(clusIndex[ TreeOrder[i] ]);
-	}
 
 	// progression heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();

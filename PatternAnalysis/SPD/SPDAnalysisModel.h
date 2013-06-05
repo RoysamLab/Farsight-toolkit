@@ -98,6 +98,7 @@ public:
 	bool GetProgressionType();
 	void GetDistanceOrder(std::vector<long int> &order);
 	void GetClusterOrder(std::vector< std::vector< long int> > &clusIndex, std::vector<long int> &treeOrder, std::vector< int> &clusterOrder);
+	void GetValidationOrder(std::vector< int> &clusterOrder);
 
 	void ModuleCoherenceMatchAnalysis();
 	void ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int nbins);

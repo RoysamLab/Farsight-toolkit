@@ -3707,6 +3707,28 @@ void SPDAnalysisModel::GetClusterOrder(std::vector< std::vector< long int> > &cl
 	}
 }
 
+void SPDAnalysisModel::GetValidationOrder(std::vector< int> &clusterOrder)
+{
+	if(clusNo.max_value() >= 1)
+	{
+		clusterOrder.clear();
+		std::vector< std::vector<int> > index;
+		index.resize(clusNo.max_value());
+		for(unsigned int i = 0; i < clusNo.size(); i++)
+		{
+			int clus = clusNo[i] - 1;
+			index[clus].push_back(i);
+		}
+		for(size_t i = 0; i < index.size(); i++)
+		{
+			for( size_t j = 0; j < index[i].size(); j++)
+			{
+				clusterOrder.push_back(index[i][j]);
+			}
+		}
+	}
+}
+
 /// for spdtestwindow
 void SPDAnalysisModel::ModuleCoherenceMatchAnalysis()
 {
