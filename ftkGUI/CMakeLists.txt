@@ -51,8 +51,7 @@ SET( NONQT_GUI_HDRS
 )
 
 SET( GUI_LIBS
-  ${QT_LIBRARIES} QVTK ftkCommon ftkPreprocess ftkImage TinyXML libSVM
-  vtkVolumeRendering vtkHybrid vtkCharts vnl)
+  ${QT_LIBRARIES} ftkCommon ftkPreprocess ftkImage TinyXML libSVM vnl)
 
 IF(QtTestingFound)
   CONFIGURE_FILE(

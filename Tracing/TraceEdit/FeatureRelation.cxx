@@ -27,7 +27,7 @@ void FeatureRelation::FeatureGraph()
 
 	vtkSmartPointer<vtkTableToTreeFilter> tableToTree = vtkSmartPointer<vtkTableToTreeFilter>::New();
 	//vtkTableToTree * tableToTree = vtkTableToTreeFilter::New();
-	tableToTree->SetInput(table);
+	tableToTree->SetInputData(table);
 	tableToTree->Update();
 
 	vtkTree * tree = tableToTree->GetOutput();

@@ -35,7 +35,7 @@ void ConvexHull3D::setPoints(std::vector<TraceBit> &pts)
 	// Generate a tetrahedral mesh from the input points. By
 	// default, the generated volume is the convex hull of the points.
 	delaunay3D = vtkSmartPointer<vtkDelaunay3D>::New();
-	delaunay3D->SetInput(polydata);
+	delaunay3D->SetInputData(polydata);
 	delaunay3D->SetTolerance(0.01);
 	delaunay3D->Update();
 

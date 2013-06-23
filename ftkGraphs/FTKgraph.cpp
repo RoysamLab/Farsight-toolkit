@@ -195,7 +195,7 @@ void FTKgraph::DisplayGraph(vtkSmartPointer<vtkTable> graphtable)
     if(!graphtable)
 		return;
 	vtkSmartPointer<vtkTableToGraph> TTG = vtkSmartPointer<vtkTableToGraph>::New();
-    TTG->SetInput(0, graphtable);
+    TTG->SetInputData(0, graphtable);
     TTG->AddLinkVertex("Source", "Vertex", false);
     TTG->AddLinkVertex("Target", "Vertex", false);
     TTG->AddLinkEdge("Source", "Target");

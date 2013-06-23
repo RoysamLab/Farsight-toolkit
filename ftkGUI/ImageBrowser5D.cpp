@@ -267,12 +267,12 @@ void ImageBrowser5D::UpdateImageActors(void)
 	{
 		vtkSmartPointer<vtkImageMapToColors> color = vtkSmartPointer<vtkImageMapToColors>::New();
 		vtkSmartPointer<vtkImageData> channel = img->GetVtkPtr(m_T,i);
-		color->SetInput( channel );
+		color->SetInputData( channel );
 		color->SetLookupTable( m_lookuptable.at(i) );
 
 		//Create the actor and set its input to the image
 		ImageActorPointerType actor = ImageActorPointerType::New();
-		actor->SetInput( color->GetOutput() );
+		actor->SetInputData( color->GetOutput() );
 		actor->SetDisplayExtent(0, img->GetImageInfo()->numColumns - 1, 0, img->GetImageInfo()->numRows - 1, 0, 0 );
 		actor->SetZSlice( this->vSlider->value() );
 		actor->SetVisibility( m_chflag.at(i) );
@@ -303,7 +303,7 @@ void ImageBrowser5D::UpdateImageVolumes(void)
 		vMapper->SetInput(img->GetVtkPtr(m_T,i));
 		*/
 		vtkSmartPointer<vtkFixedPointVolumeRayCastMapper> vMapper = vtkSmartPointer<vtkFixedPointVolumeRayCastMapper>::New();
-		vMapper->SetInput(img->GetVtkPtr(m_T,i));
+		vMapper->SetInputData(img->GetVtkPtr(m_T,i));
 		/*
 		vtkSmartPointer<vtkVolumeTextureMapper2D> vMapper = vtkSmartPointer<vtkVolumeTextureMapper2D>::New();
 		vMapper->SetMaximumNumberOfPlanes(50);

@@ -876,7 +876,7 @@ void HeatmapForNewSelection::showDendrogram1()
 	this->denlinesPolyData1->GetCellData()->SetScalars(dencolors1);
 
 	
-	this->denmapper1->SetInput(denlinesPolyData1);
+	this->denmapper1->SetInputData(denlinesPolyData1);
 	this->denmapper1->SetScalarRange(0, 3*this->num_samples-1);
 
 	this->denactor1 = vtkSmartPointer<vtkActor>::New();
@@ -952,7 +952,7 @@ void HeatmapForNewSelection::showDendrogram2()
 	this->denlinesPolyData2->SetLines(denlines2);
 	this->denlinesPolyData2->GetCellData()->SetScalars(dencolors2);
 
-	this->denmapper2->SetInput(denlinesPolyData2);
+	this->denmapper2->SetInputData(denlinesPolyData2);
 	this->denmapper2->SetScalarRange(0, 3*this->num_features-1);
 	
 	this->denactor2->SetMapper(denmapper2);
@@ -1035,15 +1035,15 @@ void HeatmapForNewSelection::GetSelecectedIDs()
 	selection->AddNode(selectionNode);
 	 
 	vtkSmartPointer<vtkExtractSelection> extractSelection = vtkSmartPointer<vtkExtractSelection>::New();
-	extractSelection->SetInput(0, this->aPlane->GetOutput());
-	extractSelection->SetInput(1, selection);
+	extractSelection->SetInputData(0, this->aPlane->GetOutput());
+	extractSelection->SetInputData(1, selection);
 	extractSelection->Update();
 	 
 	vtkSmartPointer<vtkUnstructuredGrid> selected = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	selected->ShallowCopy(extractSelection->GetOutput());
 	
 	vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	selectedMapper->SetInputConnection(selected->GetProducerPort());
+	selectedMapper->SetInputData(selected);
 	 
 	vtkSmartPointer<vtkActor> selectedActor = vtkSmartPointer<vtkActor>::New();
 	selectedActor->SetMapper(selectedMapper);
@@ -1194,7 +1194,7 @@ void HeatmapForNewSelection::drawPoints1()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(1.0, 1.0, 1.0);
@@ -1212,7 +1212,7 @@ void HeatmapForNewSelection::drawPoints1()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);
@@ -1313,7 +1313,7 @@ void HeatmapForNewSelection::drawPoints3()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
@@ -1331,7 +1331,7 @@ void HeatmapForNewSelection::drawPoints3()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);
@@ -1440,7 +1440,7 @@ void HeatmapForNewSelection::drawPointsForSPD()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
@@ -1458,7 +1458,7 @@ void HeatmapForNewSelection::drawPointsForSPD()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);
@@ -1509,7 +1509,7 @@ void HeatmapForNewSelection::drawPointsForOrderHeatmap()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
@@ -1527,7 +1527,7 @@ void HeatmapForNewSelection::drawPointsForOrderHeatmap()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);
@@ -1763,7 +1763,7 @@ void HeatmapForNewSelection::SetdenSelectedIds1(std::set<long int>& IDs, bool bf
 			for(int i = 0; i<this->dencolors1->GetSize() ; i++)
 				this->dencolors1->SetValue(i, 0);
 			denlinesPolyData1->Modified();
-			denlinesPolyData1->Update();
+			//denlinesPolyData1->Update();
 			denmapper1->Modified();
 			denmapper1->Update();
 			denactor1->Modified();
@@ -1773,7 +1773,7 @@ void HeatmapForNewSelection::SetdenSelectedIds1(std::set<long int>& IDs, bool bf
 			for(int i = 0; i<this->dencolors2->GetSize() ; i++)
 			this->dencolors2->SetValue(i, 0);
 			denlinesPolyData2->Modified();
-			denlinesPolyData2->Update();
+			//denlinesPolyData2->Update();
 			denmapper2->Modified();
 			denmapper2->Update();
 			denactor2->Modified();
@@ -1830,7 +1830,7 @@ void HeatmapForNewSelection::SetdenSelectedIds1(std::set<long int>& IDs, bool bf
 
 		denmapper1->ScalarVisibilityOn();
 		denlinesPolyData1->Modified();
-		denlinesPolyData1->Update();
+		//denlinesPolyData1->Update();
 		denmapper1->Modified();
 		denmapper1->Update();
 		denactor1->Modified();
@@ -1869,7 +1869,7 @@ void HeatmapForNewSelection::SetdenSelectedIds1(std::set<long int>& IDs, bool bf
 
 		denmapper2->ScalarVisibilityOn();
 		denlinesPolyData2->Modified();
-		denlinesPolyData2->Update();
+		//denlinesPolyData2->Update();
 		denmapper2->Modified();
 		denmapper2->Update();
 		denactor2->Modified();
@@ -1984,7 +1984,7 @@ void HeatmapForNewSelection::setselectedCellIds()
 				this->dencolors1->SetValue(i, 0);
 			denmapper1->ScalarVisibilityOn();
 			denlinesPolyData1->Modified();
-			denlinesPolyData1->Update();
+			//denlinesPolyData1->Update();
 			denmapper1->Modified();
 			denmapper1->Update();
 			denactor1->Modified();
@@ -1999,7 +1999,7 @@ void HeatmapForNewSelection::setselectedCellIds()
 
 			denmapper2->ScalarVisibilityOn();
 			denlinesPolyData2->Modified();
-			denlinesPolyData2->Update();
+			//denlinesPolyData2->Update();
 			denmapper2->Modified();
 			denmapper2->Update();
 			denactor2->Modified();
@@ -2625,7 +2625,7 @@ void HeatmapForNewSelection::SetdenSelectedIdsForSPD(std::set<long int>& IDs)
 			for(int i = 0; i<this->dencolors1->GetSize() ; i++)
 				this->dencolors1->SetValue(i, 0);
 			denlinesPolyData1->Modified();
-			denlinesPolyData1->Update();
+			//denlinesPolyData1->Update();
 			denmapper1->Modified();
 			denmapper1->Update();
 			denactor1->Modified();
@@ -2649,7 +2649,7 @@ void HeatmapForNewSelection::SetdenSelectedIdsForSPD(std::set<long int>& IDs)
 	{
 		denmapper1->ScalarVisibilityOn();
 		denlinesPolyData1->Modified();
-		denlinesPolyData1->Update();
+		//denlinesPolyData1->Update();
 		denmapper1->Modified();
 		denmapper1->Update();
 		denactor1->Modified();
@@ -2713,15 +2713,15 @@ void HeatmapForNewSelection::GetSelecectedIDsForSPD(std::set<long int> &selected
 	selection->AddNode(selectionNode);
 	 
 	vtkSmartPointer<vtkExtractSelection> extractSelection = vtkSmartPointer<vtkExtractSelection>::New();
-	extractSelection->SetInput(0, this->aPlane->GetOutput());
-	extractSelection->SetInput(1, selection);
+	extractSelection->SetInputData(0, this->aPlane->GetOutput());
+	extractSelection->SetInputData(1, selection);
 	extractSelection->Update();
 	 
 	vtkSmartPointer<vtkUnstructuredGrid> selected = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	selected->ShallowCopy(extractSelection->GetOutput());
 	
 	vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	selectedMapper->SetInputConnection(selected->GetProducerPort());
+	selectedMapper->SetInputData(selected);
 	 
 	vtkSmartPointer<vtkActor> selectedActor = vtkSmartPointer<vtkActor>::New();
 	selectedActor->SetMapper(selectedMapper);
@@ -2928,7 +2928,7 @@ void HeatmapForNewSelection::drawPointsforNe()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
@@ -2946,7 +2946,7 @@ void HeatmapForNewSelection::drawPointsforNe()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);

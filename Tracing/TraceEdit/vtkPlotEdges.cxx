@@ -626,7 +626,7 @@ void vtkPlotEdges::ExtractSegments(vtkPolyData* input,
 {
   vtkSmartPointer<vtkCleanPolyData> cleanPolyData = 
     vtkSmartPointer<vtkCleanPolyData>::New();
-  cleanPolyData->SetInput (input);
+  cleanPolyData->SetInputData (input);
   // set the tolerance at 0 to use vtkMergePoints (faster)
   cleanPolyData->SetTolerance (0.0);
   cleanPolyData->Update();
@@ -1090,7 +1090,7 @@ void vtkPlotEdges::SaveToPolyData(vtkCollection* segments, vtkPolyData* output)
       arcLength->SetName("PlotEdges arc_length");
       }
     pd->GetPointData()->AddArray(arcLength);
-    append->AddInput(pd);
+    append->AddInputData(pd);
     }
   append->Update();
   output->DeepCopy(append->GetOutput());

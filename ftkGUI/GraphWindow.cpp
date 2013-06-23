@@ -124,7 +124,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table)
 {
 	//graphTable->Dump(8);	//debug dump
 	this->TTG->ClearLinkVertices();
-	this->TTG->SetInput(0, table);
+	this->TTG->SetInputData(0, table);
 	this->TTG->AddLinkEdge("Source", "Target"); 
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	
@@ -150,7 +150,7 @@ void GraphWindow::SetGraphTable(vtkSmartPointer<vtkTable> table, std::string ID1
 {
 	//graphTable->Dump(8);	//debug dump
 	this->TTG->ClearLinkVertices();
-	this->TTG->SetInput(0, table);
+	this->TTG->SetInputData(0, table);
 	this->TTG->AddLinkEdge(ID1.c_str(), ID2.c_str()); 
 	vtkSmartPointer<vtkViewTheme> theme = vtkSmartPointer<vtkViewTheme>::New();
 	

@@ -123,7 +123,7 @@ int ImageRenderActors::loadImage(std::string ImageSource, std::string tag, doubl
 	newImage->connector->SetInput( newImage->Rescale->GetOutput() );
 	newImage->itkImageData = newImage->reader->GetOutput();
 	newImage->ImageData = newImage->connector->GetOutput();
-	newImage->ImageData->Update();
+	newImage->connector->Update();
 	newImage->ImageData->GetBounds(bounds);
 	newImage->projectionConnector = ConnectorType::New();
 	newImage->projectionConnector->SetInput( newImage->reader->GetOutput() );
@@ -159,11 +159,11 @@ vtkSmartPointer<vtkActor> ImageRenderActors::ContourActor(int i)
 		i = int (this->LoadedImages.size() - 1);
 	}
 	this->LoadedImages[i]->ContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-	this->LoadedImages[i]->ContourFilter->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->ContourFilter->SetInputData(this->LoadedImages[i]->ImageData);
 	this->LoadedImages[i]->ContourFilter->SetValue(0,10);
 	this->LoadedImages[i]->ContourFilter->Update();
 	this->LoadedImages[i]->ContourMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->LoadedImages[i]->ContourMapper->SetInput(this->LoadedImages[i]->ContourFilter->GetOutput());
+	this->LoadedImages[i]->ContourMapper->SetInputData(this->LoadedImages[i]->ContourFilter->GetOutput());
 	this->LoadedImages[i]->ContourActor = vtkSmartPointer<vtkActor>::New();
 	this->LoadedImages[i]->ContourActor->SetMapper(this->LoadedImages[i]->ContourMapper);
 	this->LoadedImages[i]->ContourActor->GetProperty()->SetOpacity(.5);
@@ -187,7 +187,7 @@ void ImageRenderActors::CreateVolumeMapper(int i)
 {
 	double max_memory = (5.0 * 1024 * 1024 * 1024) / LoadedImages.size();
 	this->LoadedImages[i]->volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
-	this->LoadedImages[i]->volumeMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->volumeMapper->SetInputData(this->LoadedImages[i]->ImageData);
 	this->LoadedImages[i]->volumeMapper->SetMaxMemoryInBytes(std::min(max_memory, 1.9 * 1024 * 1024 * 1024));
 	this->LoadedImages[i]->volumeMapper->SetMaxMemoryFraction(1.0);
 	this->LoadedImages[i]->volumeMapper->SetBlendModeToComposite();
@@ -695,7 +695,7 @@ void ImageRenderActors::syncOpacityTransferFunction(int id)
 void ImageRenderActors::CreateImageResliceMapper(int i)
 {
 	this->LoadedImages[i]->imageResliceMapper = vtkSmartPointer<vtkImageResliceMapper>::New();
-	this->LoadedImages[i]->imageResliceMapper->SetInput(this->LoadedImages[i]->ImageData);
+	this->LoadedImages[i]->imageResliceMapper->SetInputData(this->LoadedImages[i]->ImageData);
 	//this->LoadedImages[i]->imageResliceMapper->SliceFacesCameraOn();
 	this->LoadedImages[i]->imageResliceMapper->SliceAtFocalPointOn();
 	//this->LoadedImages[i]->imageResliceMapper->SetSlicePlane(...);
@@ -1141,7 +1141,7 @@ vtkSmartPointer<vtkImageActor> ImageRenderActors::createProjection(int i, int me
 	}
 
 	//this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->reslice->GetOutput());
-	this->LoadedImages[i]->ProjectionActor->SetInput(this->LoadedImages[i]->projectionConnector->GetOutput());
+	this->LoadedImages[i]->ProjectionActor->SetInputData(this->LoadedImages[i]->projectionConnector->GetOutput());
 	this->LoadedImages[i]->ProjectionActor->SetPosition(this->LoadedImages[i]->x, this->LoadedImages[i]->y, this->LoadedImages[i]->z);
 	this->LoadedImages[i]->ProjectionActor->SetPickable(0);
 	this->LoadedImages[i]->ProjectionActor->SetDisplayExtent(minXBound,maxXBound,minYBound,maxYBound,minZBound,maxZBound);

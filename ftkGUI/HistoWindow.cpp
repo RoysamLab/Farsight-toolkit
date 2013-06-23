@@ -20,9 +20,8 @@ limitations under the License.
 #include <vtkSelectionNode.h>
 #include <vtkIdTypeArray.h>
 #include <vtkSelection.h>
-#include <vtkQtChartMouseSelectionHandler.h>
-#include <vtkQtChartArea.h>
-#include <vtkQtChartArea.h>
+//#include <vtkQtChartMouseSelectionHandler.h>
+//#include <vtkQtChartArea.h>
 #include <math.h>
 #include <QFileDialog>
 
@@ -59,21 +58,21 @@ HistoWindow::HistoWindow(QWidget *parent)
 	menuBar()->addMenu(logMenu);
 
   //Setup ChartView:
-  chartView = vtkSmartPointer<vtkQtBarChartView>::New();
-  chartView->SetupDefaultInteractor();
+  //chartView = vtkSmartPointer<vtkQtBarChartView>::New();
+  //chartView->SetupDefaultInteractor();
   //Set the title of the histogram
-  chartView->SetTitle("  ");
-  chartView->SetAxisTitle(0,"Frequency");
-  chartView->SetAxisTitle(1, columnName.c_str() );
+  //chartView->SetTitle("  ");
+  //chartView->SetAxisTitle(0,"Frequency");
+  //chartView->SetAxisTitle(1, columnName.c_str() );
 
-#if(CHART_IS_WIDGET)
-		setCentralWidget( chartView->GetWidget() );
-#else
+//#if(CHART_IS_WIDGET)
+//		setCentralWidget( chartView->GetWidget() );
+//#else
 		QLabel *label = new QLabel(tr("Use this window to select options for the histogram"));
 		label->setWordWrap(true);
 		label->setAlignment(Qt::AlignCenter);
 		setCentralWidget( label );
-#endif
+//#endif
 
   setWindowTitle(tr("Histogram"));
   this->resize(700,500);
@@ -105,8 +104,8 @@ void HistoWindow::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * s
 	this->selectionCallback = vtkSmartPointer<vtkCallbackCommand>::New();
 	this->selectionCallback->SetClientData(this);
     this->selectionCallback->SetCallback ( SelectionCallbackFunction);
-	vtkAnnotationLink *link = chartView->GetRepresentation()->GetAnnotationLink();
-	link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
+	//vtkAnnotationLink *link = chartView->GetRepresentation()->GetAnnotationLink();
+	//link->AddObserver(vtkCommand::AnnotationChangedEvent, this->selectionCallback);
 	//chartView->SetupDefaultInteractor();
 }
 
@@ -222,7 +221,7 @@ void HistoWindow::columnChange(QAction *action)
 {
   columnNum = action->toolTip().toInt();
   columnName = action->text().toStdString();
-  chartView->SetAxisTitle(1, columnName.c_str() );
+  //chartView->SetAxisTitle(1, columnName.c_str() );
   this->SyncModel();
   //this->Normalize();
   this->SetNumofBins(numofbins);
@@ -505,13 +504,14 @@ void HistoWindow::ConstructBarChart()
 		//chartView->SetAxisTitle(0,"Frequency");
 		//chartView->SetAxisTitle(1,"Feature");
 		//chartView->SetAxisTitle(1,feature);
-		chartView->RemoveAllRepresentations();
-		chartView->AddRepresentationFromInput(hisTable);
-		chartView->Update();
 
-		#if(!CHART_IS_WIDGET)
+		//chartView->RemoveAllRepresentations();
+		//chartView->AddRepresentationFromInput(hisTable);
+		//chartView->Update();
+
+	/*	#if(!CHART_IS_WIDGET)
 			chartView->Show();
-		#endif
+		#endif*/
 	}
 }
 
@@ -571,5 +571,5 @@ void HistoWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 		//histWin->SetSelectedIds( IDs);
 		//histWin->SetSelectedIds2();  // only select the selected feature columns
 	}
-	histWin->chartView->Update();
+	//histWin->chartView->Update();
 }
