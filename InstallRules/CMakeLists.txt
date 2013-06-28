@@ -10,13 +10,14 @@ set(BUNDLE_LIB_DIRS
 )
 
 #plugins loaded by TraceEdit at runtime
-get_filename_component(qgif_plugin ${QT_QGIF_PLUGIN_RELEASE} NAME)
-get_filename_component(qico_plugin ${QT_QICO_PLUGIN_RELEASE} NAME)
-get_filename_component(qjpeg_plugin ${QT_QJPEG_PLUGIN_RELEASE} NAME)
-get_filename_component(qmng_plugin ${QT_QMNG_PLUGIN_RELEASE} NAME)
-get_filename_component(qsvg_plugin ${QT_QSVG_PLUGIN_RELEASE} NAME)
-get_filename_component(qtiff_plugin ${QT_QTIFF_PLUGIN_RELEASE} NAME)
-
+if (${QT_QGIF_PLUGIN_RELEASE}) #If QT is built in static, there are no plugins
+  get_filename_component(qgif_plugin ${QT_QGIF_PLUGIN_RELEASE} NAME)
+  get_filename_component(qico_plugin ${QT_QICO_PLUGIN_RELEASE} NAME)
+  get_filename_component(qjpeg_plugin ${QT_QJPEG_PLUGIN_RELEASE} NAME)
+  get_filename_component(qmng_plugin ${QT_QMNG_PLUGIN_RELEASE} NAME)
+  get_filename_component(qsvg_plugin ${QT_QSVG_PLUGIN_RELEASE} NAME)
+  get_filename_component(qtiff_plugin ${QT_QTIFF_PLUGIN_RELEASE} NAME)
+endif()
   
 #specify where TraceEdit's required Qt plugins should be installed
 if(APPLE)
