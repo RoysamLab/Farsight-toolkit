@@ -13,6 +13,10 @@
 #include "transportSimplex.h"
 #include <iomanip>
 #include "ClusClus/Biclustering.h"
+#include "itkImageFileWriter.h"
+#include <itkImage.h>
+#include <itkShanbhagThresholdImageFilter.h>
+#include <itkIntermodesThresholdImageFilter.h>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -3001,10 +3005,9 @@ void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
 }
 
 /// Find largest fully connected component in EMDMatrix.
-void SPDAnalysisModel::GetSelectedFeaturesModulesTest(double selThreshold, std::vector<unsigned int> &selModules, std::vector<unsigned int> &size)
+void SPDAnalysisModel::GetSelectedFeaturesModulesTest(double selThreshold, std::vector<std::vector<unsigned int> > &selModules)
 {
 	selModules.clear();
-	size.clear();
 	unsigned int maxSize = 0;
 	std::vector< std::vector<unsigned int> > tmpSelModules;
 	std::set< unsigned int> processedModules;
@@ -3026,26 +3029,62 @@ void SPDAnalysisModel::GetSelectedFeaturesModulesTest(double selThreshold, std::
 				}
 			}
 			tmpSelModules.push_back(tmpModules);
-			size.push_back(tmpModules.size());
 		}
 	}
 	
 	//std::ofstream ofs("SelectedFeaturesModulesTest.txt");
 	//std::cout<< "Module size > 2:"<<std::endl;
+
 	for( unsigned int i = 0; i < tmpSelModules.size(); i++)
 	{
 		std::vector<unsigned int> module = tmpSelModules[i];
-		if( module.size() > 2)
+		if( module.size() >= 3)
 		{
-			std::cout<< module.size()<< "\t";
-			for( unsigned int j = 0; j < module.size(); j++)
-			{
-				selModules.push_back(module[j]);			
-			}
+			selModules.push_back(module);
 		}
 	}
 	std::cout<< std::endl;
 	//ofs.close();
+}
+
+int SPDAnalysisModel::GetSelectedFeaturesModulesByConnectedComponent(double selThreshold, std::vector<std::vector<unsigned int> > &selModules)
+{
+	Graph graph;
+	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	{
+		for( unsigned int j = i + 1; j < this->EMDMatrix.cols(); j++)
+		{
+			if( this->EMDMatrix(i,j) >= selThreshold)
+			{
+				boost::add_edge( i, j, graph);
+			}
+		}
+	}
+
+	if( boost::num_vertices(graph) > 0)
+	{
+		std::vector< int> component(boost::num_vertices(graph));
+		int num = boost::connected_components(graph, &component[0]);
+		std::vector<std::vector<unsigned int> > tmpModules(num);
+		for( size_t i = 0; i < component.size(); i++)
+		{
+			int num = component[i];
+			tmpModules[num].push_back(i);
+		}
+		selModules.clear();
+		for( size_t i = 0; i < tmpModules.size(); i++)
+		{
+			if( tmpModules[i].size() >= 3)
+			{
+				selModules.push_back(tmpModules[i]);
+			}
+		}
+		return num;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void SPDAnalysisModel::GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules)
@@ -3170,7 +3209,7 @@ double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTa
 		}
 	}
 
-	std::cout<< connectionCount<<std::endl;
+	//std::cout<< connectionCount<<std::endl;
 
 	accuracyVec.set_size(clusNo.max_value());
 	double totalConnection = 0;
@@ -3191,7 +3230,7 @@ double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTa
 		std::vector< int> component;
 		component.resize(boost::num_vertices(graph));
 		int num = boost::connected_components(graph, &component[0]);
-		std::cout<< "Connected clusters: "<< num<<std::endl;
+		//std::cout<< "Connected clusters: "<< num<<std::endl;
 		std::vector< std::vector< int> > connectedNodes(num);
 		vnl_vector< int> state(num);
 		state.fill(-1);
@@ -3218,7 +3257,7 @@ double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTa
 				maxAgg[clus] = connectedNodes[i].size();	
 			}
 		}
-		std::cout<< "Size: "<<size<<std::endl;
+		//std::cout<< "Size: "<<size<<std::endl;
 		double totalSize = 0;
 		double aggSize = 0;
 		for( unsigned int i = 0; i < aggDegree.size(); i++)
@@ -4116,7 +4155,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 				std::cout<< "1 Remove module "<<i<<std::endl;
 				state[i] = 0;
 			}
-			else
+	/*		else
 			{
 				unsigned int zeroSum = 0;
 				for( unsigned int s = 0; s < histMean.size(); s++)
@@ -4133,7 +4172,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 						excludeModule.insert(i);
 					omp_unset_lock(&my_lock);
 				}
-			}
+			}*/
 
 			if(state[i])
 			{
@@ -4250,6 +4289,109 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 	ofs<< this->EMDMatrix<< std::endl;
 	ofs.close();
 	std::cout<< "EMD matrix has been built successfully"<<endl;
+}
+
+double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
+{
+	typedef itk::Image< float, 2> ImageType;
+	typedef itk::ImageFileWriter< ImageType> WriterType;
+
+	ImageType::Pointer imgPtr = ImageType::New();
+	ImageType::SizeType size;
+	size[0] = this->EMDMatrix.rows();
+	size[1] = this->EMDMatrix.cols();
+
+	ImageType::IndexType start;
+	start.Fill(0);
+	ImageType::RegionType region;
+	region.SetIndex( start);
+	region.SetSize( size);
+
+	imgPtr->SetLargestPossibleRegion( region);
+	imgPtr->SetBufferedRegion( region);
+	imgPtr->SetRequestedRegion( region);
+	imgPtr->Allocate();
+	imgPtr->FillBuffer(0);
+	ImageType::PixelType * imBuffer = imgPtr->GetBufferPointer();
+
+	for( int jj = 0; jj< size[1]; ++jj)
+	{
+		for( int ii = 0; ii < size[0]; ++ii)
+		{
+			if( ii != jj)
+			{
+				itk::Index<1> offset;
+				offset[0] = jj * size[0] + ii;
+				double val = this->EMDMatrix(ii,jj);
+				float pixelVal = val * 255;
+				imBuffer[offset[0]] = pixelVal;
+			}
+		}
+	}
+
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName( imageName);
+	writer->SetInput(imgPtr);
+	writer->Update();
+
+	typedef itk::ShanbhagThresholdImageFilter< ImageType, ImageType> ShanbhagThresholdFilter;
+	ShanbhagThresholdFilter::Pointer filter = ShanbhagThresholdFilter::New();
+
+	//typedef itk::IntermodesThresholdImageFilter< ImageType, ImageType> MinimumThresholdFilter;
+	//MinimumThresholdFilter::Pointer filter = MinimumThresholdFilter::New();
+	//filter->SetUseInterMode(false);
+	//filter->SetMaximumSmoothingIterations(100000);
+
+	filter->SetInput(imgPtr);
+	unsigned int bin_num = 256;
+	if( ceil(size[0] * size[1] / 4.0) < 256)
+	{
+		bin_num = 10;
+	}
+
+	std::cout<< "Bin num for auto threshold: "<< bin_num<<std::endl;
+	filter->SetNumberOfHistogramBins( bin_num);
+
+	try
+	{
+		filter->Update();
+	}
+	catch( itk::ExceptionObject &err)
+	{
+		std::cout << "Error in auto thresholding: " << err << std::endl; 
+		return 1;
+	}
+
+	double thresholdMin = filter->GetThreshold() / 255.0;
+	std::cout<< thresholdMin <<std::endl;
+
+	//MinimumThresholdFilter::Pointer filter2 = MinimumThresholdFilter::New();
+	//filter2->SetUseInterMode(true);
+	//filter2->SetMaximumSmoothingIterations(100000);
+	//filter2->SetInput(imgPtr);
+	//filter2->SetNumberOfHistogramBins( bin_num);
+	//try
+	//{
+	//	filter2->Update();
+	//}
+	//catch( itk::ExceptionObject &err)
+	//{
+	//	std::cout << "Error in auto thresholding: " << err << std::endl; 
+	//	return 1;
+	//}
+	//double thresholdInter = filter2->GetThreshold() / 255.0;
+	//std::cout<< thresholdInter <<std::endl;
+
+	////double rtn = 0;
+	////if( thresholdMin > thresholdInter)
+	////{
+	////	thresholdMin -= (thresholdMin - thresholdInter) / 3;
+	////}
+	////else
+	////{
+	////	thresholdMin += (thresholdInter - thresholdMin) / 3;
+	////}
+	return thresholdMin;
 }
 
 bool SPDAnalysisModel::SearchSubsetsOfFeatures(std::vector< unsigned int> &selModules)   // feature id 

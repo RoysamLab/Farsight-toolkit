@@ -1,6 +1,7 @@
 SET( Libraries
     ${VXL_LIBRARIES}
     ${VTK_LIBRARIES}
+    ${ITK_LIBRARIES}
     vcl
     vnl
     mbl

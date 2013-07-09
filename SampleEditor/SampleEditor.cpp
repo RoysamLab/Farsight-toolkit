@@ -167,6 +167,7 @@ void SampleEditor::createMenus()
 	SPDAction2 = new QAction(tr("SPD using kNNG"), this);
 	SPDAction2->setStatusTip(tr("SPD using kNNG matching with module"));
 	connect(SPDAction2, SIGNAL(triggered()), this, SLOT(SPDkNNGAnalysis()));
+	SPDAction2->setShortcut(Qt::CTRL + Qt::Key_S);
 	SPDMenu->addAction(SPDAction2);
 
 	AddLabelAction = new QAction("Add Label", this);

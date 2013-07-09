@@ -15,6 +15,7 @@
 #include "ftkGUI/PlotWindow.h"
 #include "ProgressionHeatmapWindow.h"
 #include "HeatmapWindow.h"
+#include <QListWidget>
 
 class SPDkNNGModuleMatch : public QWidget
 {
@@ -41,7 +42,7 @@ protected slots:
     void clusterFunction();
 	void showPSM();
 	void viewProgression();
-	void updateSelMod();
+	//void updateSelMod();
 	void editNearestNeighbor();
 	void showProgressionHeatmap();
 	void regenerateProgressionTree();
@@ -67,22 +68,23 @@ private:
 	QLabel *nBinLabel;
     QSpinBox *nBinBox;
     QPushButton *psmButton;
-	//QPushButton *testButton;
+	QPushButton *testButton;
 
-	QLabel *continSelectLabel;   
-	QCheckBox *continSelectCheck;
+	//QLabel *continSelectLabel;   
+	//QCheckBox *continSelectCheck;
 
-	QLabel *psdtLable;   // progression sample discovery tree
-	QLineEdit *psdModuleSelectBox;  // select similar modules
+	QLabel *listLable;   
+	//QLineEdit *psdModuleSelectBox;  // select similar modules
 
     QPushButton *psdtButton;
 	QLabel *heatmapLabel;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
 
-	QLabel *connectedGraphLabel;
-	QLineEdit *connectedGraphEdit;
-	QPushButton *updateConnectedNumButton;  // update connected component number
-	
+	//QLabel *connectedGraphLabel;
+	//QLineEdit *connectedGraphEdit;
+	//QPushButton *updateConnectedNumButton;  // update connected component number
+	QListWidget *listbox;
+
 	QString FileName;
 	GraphWindow *graph;
 	ProgressionHeatmap *simHeatmap;
