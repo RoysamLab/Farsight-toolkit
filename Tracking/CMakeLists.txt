@@ -72,7 +72,7 @@ TARGET_LINK_LIBRARIES(anisodiff    trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(contrast_enhancement    trackingHelpers     ${ITK_LIBRARIES} )
 TARGET_LINK_LIBRARIES(medianfilter    trackingHelpers     ${ITK_LIBRARIES} )
 #TARGET_LINK_LIBRARIES(tracklog    trackingHelpers     ${ITK_LIBRARIES} )
-TARGET_LINK_LIBRARIES(render_tracks     trackingHelpers vtkVolumeRendering vtkRendering vtkCommon vtkIO vtksys vtkFiltering vtkHybrid     ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(render_tracks     trackingHelpers  ${ITK_LIBRARIES} )
 
 
 INSTALL(TARGETS unmix RUNTIME DESTINATION ${INSTALL_BIN_DIR})

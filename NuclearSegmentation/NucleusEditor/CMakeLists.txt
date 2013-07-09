@@ -142,8 +142,6 @@ SET (NUCLEUSEDITOR_LIBRARIES
   ftkFeatures
   ftkSpectralUnmixing
   libSVM
-  vtkVolumeRendering
-  QVTK
   NuclearSegmentation
   CytoplasmSegmentation
   PixelLevelAnalysis

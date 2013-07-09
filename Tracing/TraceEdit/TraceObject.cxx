@@ -881,7 +881,7 @@ void TraceObject::ReadFromVTKFile(char * filename)
 	if(this->CombineShortVTKLines)
 	{
 		VTK_CREATE(vtkPlotEdges, plotEdgesFilter);
-		plotEdgesFilter->SetInput(polyReader->GetOutput());
+		plotEdgesFilter->SetInputData(polyReader->GetOutput());
 		this->VTKData = plotEdgesFilter->GetOutput();
 		cout << "Combining small vtkLines, please be patient." << endl;
 		plotEdgesFilter->Update();
@@ -1585,7 +1585,7 @@ void TraceObject::WriteToVTKFile(const char *filename)
 {
 	vtkSmartPointer<vtkPolyDataWriter> writer =
 		vtkSmartPointer<vtkPolyDataWriter>::New();
-	writer->SetInput(this->PolyTraces);
+	writer->SetInputData(this->PolyTraces);
 	writer->SetFileName(filename);
 	writer->Update();
 }
@@ -2402,19 +2402,19 @@ vtkSmartPointer<vtkPolyData> TraceObject::generateBranchIllustrator()
 	poly1->SetVerts(cells1);
 	poly1->GetPointData()->SetVectors(da);
 
-	glyphs2->SetInput(poly1);
-	glyphs2->SetSource(arrow_src->GetOutput());
+	glyphs2->SetInputData(poly1);
+	glyphs2->SetSourceData(arrow_src->GetOutput());
 	glyphs2->SetVectorModeToUseVector();
 	glyphs2->SetScaleFactor(5);
 
-	glyphs1->SetInput(poly);
-	glyphs1->SetSource(s_src->GetOutput());
+	glyphs1->SetInputData(poly);
+	glyphs1->SetSourceData(s_src->GetOutput());
 	glyphs1->Update();
 	glyphs2->Update();
 
 	VTK_CREATE(vtkAppendPolyData, app_poly);
-	app_poly->AddInput(glyphs1->GetOutput());
-	app_poly->AddInput(glyphs2->GetOutput());
+	app_poly->AddInputData(glyphs1->GetOutput());
+	app_poly->AddInputData(glyphs2->GetOutput());
 	app_poly->Update();
 
 	return app_poly->GetOutput();

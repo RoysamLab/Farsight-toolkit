@@ -52,7 +52,7 @@ bool VolumeOfInterest::ExtrudeVOI()
 	
 	//extrude the outline
 	vtkSmartPointer<vtkLinearExtrusionFilter> extrude = vtkSmartPointer<vtkLinearExtrusionFilter>::New();
-	extrude->SetInput( ROIpolydata);
+	extrude->SetInputData( ROIpolydata);
 	extrude->SetExtrusionTypeToNormalExtrusion();
 	extrude->SetScaleFactor (100); //adjust depending upon size of image stack
 	extrude->Update();
@@ -63,7 +63,7 @@ bool VolumeOfInterest::ExtrudeVOI()
 vtkSmartPointer<vtkQuadricLODActor> VolumeOfInterest::GetActor()
 {
 	vtkSmartPointer<vtkPolyDataMapper> VOImapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	VOImapper->SetInput(this->VOIPolyData.back());
+	VOImapper->SetInputData(this->VOIPolyData.back());
 	vtkSmartPointer<vtkQuadricLODActor> VOIactor = vtkSmartPointer<vtkQuadricLODActor>::New();
 	//VOIactor->GetProperty()->SetRepresentationToSurface();
 	VOIactor->SetMapper(VOImapper);
@@ -200,7 +200,7 @@ void VolumeOfInterest::ReadBinaryVOI(std::string filename)
 		ContourFilter->ComputeNormalsOff();
 		ContourFilter->ComputeScalarsOff();
 		ContourFilter->ComputeGradientsOff();
-		ContourFilter->SetInput(connector->GetOutput() );
+		ContourFilter->SetInputData(connector->GetOutput() );
 		ContourFilter->SetNumberOfContours(1);
 	ContourFilter->SetValue(0,1);
 
@@ -235,7 +235,7 @@ void VolumeOfInterest::WriteVTPVOI(std::string filename)
 {  
 	vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
 	writer->SetFileName(filename.c_str());
-	writer->SetInput(this->VOIPolyData.back());
+	writer->SetInputData(this->VOIPolyData.back());
 	writer->Write();
 }
 

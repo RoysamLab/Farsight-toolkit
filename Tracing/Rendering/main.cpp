@@ -61,7 +61,8 @@ limitations under the License.
 #include <vtkPLYWriter.h>
 #include <vtkPLYReader.h>
 #include <vtkPolyDataReader.h>
-#include <vtkPolyDataSource.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkPolyData.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkDecimatePro.h>
 #include <vtkDiscreteMarchingCubes.h>
@@ -207,7 +208,6 @@ void getSmoothed(std::vector<Vec3f> &line)
 
 vtkSmartPointer<vtkPolyData> GetLines(char*filename_microgliatrace)
 {
-
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> cellarray = vtkSmartPointer<vtkCellArray>::New();
 	vtkSmartPointer<vtkPolyData> poly = vtkSmartPointer<vtkPolyData>::New();
@@ -277,7 +277,7 @@ void WriteTraceToPLY(char *filename_trace, char*filename_write)
 	vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
 	writer->SetFileName(filename_write);
 	writer->SetFileTypeToBinary();
-	writer->SetInput(poly);
+	writer->SetInputData(poly);
 	writer->Write();
 	delete tobj;
 	
@@ -294,7 +294,7 @@ void WriteSWCToPLY(char *filename_trace, char*filename_write)
 	vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
 	writer->SetFileName(filename_write);
 	writer->SetFileTypeToBinary();
-	writer->SetInput(poly);
+	writer->SetInputData(poly);
 	writer->Write();
 	delete tobj;
 	
@@ -371,7 +371,7 @@ void WriteLines(char*filename_microgliatrace, char *filename_write)
 	vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
 	writer->SetFileName(filename_write);
 	writer->SetFileTypeToBinary();
-	writer->SetInput(poly);
+	writer->SetInputData(poly);
 	writer->Write();
 
 
@@ -385,9 +385,8 @@ vtkSmartPointer<vtkImageData> allocateImage(int dimensions[3])
 	imdata->SetSpacing(1,1,1);
 	imdata->SetOrigin(0,0,0);
 	imdata->SetDimensions(dimensions[0],dimensions[1],dimensions[2]);
-	imdata->SetScalarTypeToUnsignedChar();
-	imdata->SetNumberOfScalarComponents(1);
-	imdata->AllocateScalars();
+	imdata->SetNumberOfScalarComponents(1, NULL);
+	imdata->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 	printf("Begin memset\n");
 	memset(imdata->GetScalarPointer(),0,dimensions[0]*dimensions[1]*dimensions[2]);
 	printf("End memset\n");
@@ -455,7 +454,7 @@ void generate_stl(const char *filenames_format_string, int min_n, int max_n,int 
 	vtkSmartPointer<vtkPolyDataMapper> mapper;
 	vtkSmartPointer<vtkLODActor> actor;
 	vtkSmartPointer<vtkMarchingCubes> contourf = vtkSmartPointer<vtkMarchingCubes>::New();
-	contourf->SetInput(im);
+	contourf->SetInputData(im);
 	contourf->SetValue(0,127);
 	contourf->ComputeNormalsOff();
 	contourf->ComputeScalarsOff();
@@ -465,17 +464,17 @@ void generate_stl(const char *filenames_format_string, int min_n, int max_n,int 
 	contourf->Update();
 	printf("Contour Generated");
 	vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
-	smoothf->SetInput(contourf->GetOutput());
+	smoothf->SetInputData(contourf->GetOutput());
 	smoothf->SetRelaxationFactor(0.1);
 	smoothf->SetNumberOfIterations(20);
 	smoothf->Update();
 	printf("Contour smoothed\n");
     mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInput(smoothf->GetOutput());
+	mapper->SetInputData(smoothf->GetOutput());
 	printf("Begin updating mapper\n");
 	mapper->Update();
 	vtkSmartPointer<vtkPLYWriter> stlwriter = vtkSmartPointer<vtkPLYWriter>::New();
-	stlwriter->SetInput(smoothf->GetOutput());
+	stlwriter->SetInputData(smoothf->GetOutput());
 	stlwriter->SetFileName(stl_filename);
 	stlwriter->SetFileTypeToBinary();
 	printf("Begin Writing stl file %s\n", stl_filename);
@@ -506,14 +505,14 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 	//	printf("Loading %s\n",filename[counter]);
 		reader->SetFileName(filename[counter]);
 		vtkSmartPointer<vtkPolyDataNormals> polynorm = vtkSmartPointer<vtkPolyDataNormals>::New();
-		polynorm->SetInput(reader->GetOutput());
+		polynorm->SetInputData(reader->GetOutput());
 		
 		/*vtkDecimatePro* decimater = vtkDecimatePro::New();
 		decimater->SetInput(reader->GetOutput());
 		decimater->PreserveTopologyOn();
 		decimater->SetTargetReduction(0.7);*/
 		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper->SetInput(polynorm->GetOutput());
+		mapper->SetInputData(polynorm->GetOutput());
 		mapper->ImmediateModeRenderingOff();
 
 		mapper->Update();
@@ -531,9 +530,9 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 		actor->GetBounds(val);
 		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
 		vtkSmartPointer<vtkOutlineFilter> outlinef = vtkSmartPointer<vtkOutlineFilter>::New();
-		outlinef->SetInput(reader->GetOutput());
+		outlinef->SetInputData(reader->GetOutput());
 		vtkSmartPointer<vtkPolyDataMapper> outlinemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		outlinemap->SetInput(outlinef->GetOutput());
+		outlinemap->SetInputData(outlinef->GetOutput());
 		vtkSmartPointer<vtkActor> outlineact = vtkSmartPointer<vtkActor>::New();
 		outlineact->SetMapper(outlinemap);
 		outlineact->GetProperty()->SetColor(1,1,1);
@@ -596,7 +595,7 @@ void render_stl_file_new(char filename[][256], int n, double colors[500][3], boo
 	renderLarge->SetInput(ren1);
 	renderLarge->SetMagnification(1);
 	vtkTIFFWriter *writer = vtkTIFFWriter::New();
-	writer->SetInput(renderLarge->GetOutput());
+	writer->SetInputData(renderLarge->GetOutput());
 	writer->SetFileName("astrocyte_traces.tif");
 	//writer->Write();
 	iren->Start();
@@ -628,7 +627,7 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		decimater->PreserveTopologyOn();
 		decimater->SetTargetReduction(0.7);*/
 		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper->SetInput(reader->GetOutput());
+		mapper->SetInputData(reader->GetOutput());
 		mapper->ImmediateModeRenderingOn();
 		mapper->Update();
 		vtkSmartPointer<vtkLODActor> actor=vtkSmartPointer<vtkLODActor>::New();
@@ -642,9 +641,9 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		actor->GetBounds(val);
 		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
 		vtkSmartPointer<vtkOutlineFilter> outlinef = vtkSmartPointer<vtkOutlineFilter>::New();
-		outlinef->SetInput(reader->GetOutput());
+		outlinef->SetInputData(reader->GetOutput());
 		vtkSmartPointer<vtkPolyDataMapper> outlinemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		outlinemap->SetInput(outlinef->GetOutput());
+		outlinemap->SetInputData(outlinef->GetOutput());
 		vtkSmartPointer<vtkActor> outlineact = vtkSmartPointer<vtkActor>::New();
 		outlineact->SetMapper(outlinemap);
 		outlineact->GetProperty()->SetColor(1,1,1);
@@ -671,7 +670,7 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		decimater->PreserveTopologyOn();
 		decimater->SetTargetReduction(0.7);*/
 		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper->SetInput(reader->GetOutput());
+		mapper->SetInputData(reader->GetOutput());
 		mapper->ImmediateModeRenderingOn();
 		mapper->Update();
 		vtkSmartPointer<vtkLODActor> actor=vtkSmartPointer<vtkLODActor>::New();
@@ -685,9 +684,9 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 		actor->GetBounds(val);
 		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
 		vtkSmartPointer<vtkOutlineFilter> outlinef = vtkSmartPointer<vtkOutlineFilter>::New();
-		outlinef->SetInput(reader->GetOutput());
+		outlinef->SetInputData(reader->GetOutput());
 		vtkSmartPointer<vtkPolyDataMapper> outlinemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		outlinemap->SetInput(outlinef->GetOutput());
+		outlinemap->SetInputData(outlinef->GetOutput());
 		vtkSmartPointer<vtkActor> outlineact = vtkSmartPointer<vtkActor>::New();
 		outlineact->SetMapper(outlinemap);
 		outlineact->GetProperty()->SetColor(1,1,1);
@@ -747,7 +746,7 @@ void render_stl_file(char filename[][256], int n, double colors[500][3],bool mas
 	renderLarge->SetInput(ren1);
 	renderLarge->SetMagnification(1);
 	vtkTIFFWriter *writer = vtkTIFFWriter::New();
-	writer->SetInput(renderLarge->GetOutput());
+	writer->SetInputData(renderLarge->GetOutput());
 	writer->SetFileName("astrocyte_traces.tif");
 	writer->Write();
 	iren->Start();
@@ -777,7 +776,7 @@ void render_single_stl_file(char filename[],double colors[][3])
 		decimater->PreserveTopologyOn();
 		decimater->SetTargetReduction(0.7);*/
 		vtkSmartPointer<vtkPolyDataMapper> mapper=vtkSmartPointer<vtkPolyDataMapper>::New();
-		mapper->SetInput(reader->GetOutput());
+		mapper->SetInputData(reader->GetOutput());
 		mapper->ImmediateModeRenderingOff();
 		mapper->Update();
 		vtkSmartPointer<vtkLODActor> actor=vtkSmartPointer<vtkLODActor>::New();
@@ -791,9 +790,9 @@ void render_single_stl_file(char filename[],double colors[][3])
 		actor->GetBounds(val);
 		printf("bounds are %lf %lf %lf %lf %lf %lf\n",val[0],val[1],val[2],val[3],val[4],val[5]);
 		vtkSmartPointer<vtkOutlineFilter> outlinef = vtkSmartPointer<vtkOutlineFilter>::New();
-		outlinef->SetInput(reader->GetOutput());
+		outlinef->SetInputData(reader->GetOutput());
 		vtkSmartPointer<vtkPolyDataMapper> outlinemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		outlinemap->SetInput(outlinef->GetOutput());
+		outlinemap->SetInputData(outlinef->GetOutput());
 		vtkSmartPointer<vtkActor> outlineact = vtkSmartPointer<vtkActor>::New();
 		outlineact->SetMapper(outlinemap);
 		outlineact->GetProperty()->SetColor(1,1,1);
@@ -920,13 +919,13 @@ vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(LabelImageType::Pointer label
 			vtkSmartPointer<vtkImageImport> vtkimporter = vtkSmartPointer<vtkImageImport>::New();
 			ConnectPipelines(itkexporter,(vtkImageImport *)vtkimporter);
 			vtkSmartPointer<vtkMarchingCubes> contourf = vtkSmartPointer<vtkMarchingCubes>::New();
-			contourf->SetInput(vtkimporter->GetOutput());
+			contourf->SetInputData(vtkimporter->GetOutput());
 			contourf->SetValue(0,127);
 			contourf->ComputeNormalsOff();
 			contourf->ComputeScalarsOff();
 			contourf->ComputeGradientsOff();
 			vtkSmartPointer<vtkSmoothPolyDataFilter> smoothf = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
-			smoothf->SetInput(contourf->GetOutput());
+			smoothf->SetInputData(contourf->GetOutput());
 			smoothf->SetRelaxationFactor(0.3);
 			smoothf->SetNumberOfIterations(20);
 
@@ -936,7 +935,7 @@ vtkSmartPointer<vtkPolyData> getVTKPolyDataPrecise(LabelImageType::Pointer label
 			transform->Identity();
 			vtkSmartPointer<vtkTransformPolyDataFilter> tf = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 			tf->SetTransform(transform);
-			tf->SetInput(smoothf->GetOutput());
+			tf->SetInputData(smoothf->GetOutput());
 		
 /******************/
 
@@ -1006,7 +1005,7 @@ InputImageType::Pointer t = getEmpty(wx,wy,wz);
 		pol->DeepCopy(tf->GetOutput());
 	//	tf->GetOutput()->Print(std::cout);
 		
-		appendfilter->AddInput(pol);
+		appendfilter->AddInputData(pol);
 		//appendfilter->Update();
 	
 		//appendfilter->SetInputByNumber(counter-1,tf->GetOutput());
@@ -1020,7 +1019,7 @@ InputImageType::Pointer t = getEmpty(wx,wy,wz);
 
 	appendfilter->Update();
 	vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
-	decimate->SetInput(appendfilter->GetOutput());
+	decimate->SetInputData(appendfilter->GetOutput());
 	decimate->SetTargetReduction(0.1);
 	//decimate->SetNumberOfDivisions(32,32,32);
 	printf("Decimating the contours...");
@@ -1029,7 +1028,7 @@ InputImageType::Pointer t = getEmpty(wx,wy,wz);
 	printf("Smoothing the contours after decimation...");
 	vtkSmartPointer<vtkSmoothPolyDataFilter> smoothfinal = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
 	smoothfinal->SetRelaxationFactor(0.2);
-	smoothfinal->SetInput(decimate->GetOutput());
+	smoothfinal->SetInputData(decimate->GetOutput());
 	smoothfinal->SetNumberOfIterations(0);
 	smoothfinal->Update();
 	printf("Done\n");
@@ -1074,11 +1073,11 @@ void generate_stl_from_tif(char *filename_tif,char *stl_filename)
 //	decimate->Update();
 //	printf("Contour decimated\n");
     mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInput(poly);
+	mapper->SetInputData(poly);
 	printf("Begin updating mapper\n");
 	mapper->Update();
 	vtkSmartPointer<vtkPolyDataWriter> stlwriter = vtkSmartPointer<vtkPolyDataWriter>::New();
-	stlwriter->SetInput(poly);
+	stlwriter->SetInputData(poly);
 	stlwriter->SetFileName(stl_filename);
 	stlwriter->SetFileTypeToBinary();
 	printf("Begin Writing stl file %s\n", stl_filename);

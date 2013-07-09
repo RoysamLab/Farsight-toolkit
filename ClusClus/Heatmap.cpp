@@ -404,7 +404,7 @@ void BiHeatmap::showTree1()
 	this->treelinesPolyData1->GetCellData()->SetScalars(this->treecolors1);
 	
 	this->treemapper1 = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->treemapper1->SetInput(this->treelinesPolyData1);
+	this->treemapper1->SetInputData(this->treelinesPolyData1);
 	this->treemapper1->SetScalarRange(0, 255);
 
 	this->treeactor1 = vtkSmartPointer<vtkActor>::New();
@@ -458,7 +458,7 @@ void BiHeatmap::showTree2()
 	this->treelinesPolyData2->GetCellData()->SetScalars(this->treecolors2);
 	
 	this->treemapper2 = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->treemapper2->SetInput(this->treelinesPolyData2);
+	this->treemapper2->SetInputData(this->treelinesPolyData2);
 	this->treemapper2->SetScalarRange(0, 255);
 
 	this->treeactor2 = vtkSmartPointer<vtkActor>::New();
@@ -693,15 +693,15 @@ void BiHeatmap::GetSelecectedIDs()
 	selection->AddNode(selectionNode);
 	 
 	vtkSmartPointer<vtkExtractSelection> extractSelection = vtkSmartPointer<vtkExtractSelection>::New();
-	extractSelection->SetInput(0, this->plane->GetOutput());
-	extractSelection->SetInput(1, selection);
+	extractSelection->SetInputData(0, this->plane->GetOutput());
+	extractSelection->SetInputData(1, selection);
 	extractSelection->Update();
 	 
 	vtkSmartPointer<vtkUnstructuredGrid> selected = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	selected->ShallowCopy(extractSelection->GetOutput());
 	
 	vtkSmartPointer<vtkDataSetMapper> selectedMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-	selectedMapper->SetInputConnection(selected->GetProducerPort());
+	selectedMapper->SetInputData(selected);
 	 
 	vtkSmartPointer<vtkActor> selectedActor = vtkSmartPointer<vtkActor>::New();
 	selectedActor->SetMapper(selectedMapper);
@@ -1161,7 +1161,7 @@ void BiHeatmap::updataTree1()
 {
 	this->treemapper1->ScalarVisibilityOn();
 	this->treelinesPolyData1->Modified();
-	this->treelinesPolyData1->Update();
+	//this->treelinesPolyData1->Update();
 	this->treemapper1->Modified();
 	this->treemapper1->Update();
 	this->treeactor1->Modified();
@@ -1172,7 +1172,7 @@ void BiHeatmap::updataTree2()
 {
 	this->treemapper2->ScalarVisibilityOn();
 	this->treelinesPolyData2->Modified();
-	this->treelinesPolyData2->Update();
+	//this->treelinesPolyData2->Update();
 	this->treemapper2->Modified();
 	this->treemapper2->Update();
 	this->treeactor2->Modified();
@@ -1290,7 +1290,7 @@ void BiHeatmap::showFeatureNames()
 	pd->GetPointData()->AddArray(orient);
 
 	vtkSmartPointer<vtkPointSetToLabelHierarchy> hier = vtkSmartPointer<vtkPointSetToLabelHierarchy>::New();
-	hier->SetInput(pd);
+	hier->SetInputData(pd);
 	hier->SetOrientationArrayName("orientation");
 	hier->SetLabelArrayName("label");
 	hier->GetTextProperty()->SetColor(0.0, 0.0, 0.0);
@@ -1308,7 +1308,7 @@ void BiHeatmap::showFeatureNames()
 	lactor->SetMapper(lmapper);
 
 	vtkSmartPointer<vtkPolyDataMapper> rmapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	rmapper->SetInput(pd);
+	rmapper->SetInputData(pd);
 
 	vtkSmartPointer<vtkActor> ractor = vtkSmartPointer<vtkActor>::New();
 	ractor->SetMapper(rmapper);

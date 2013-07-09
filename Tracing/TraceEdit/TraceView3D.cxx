@@ -3585,7 +3585,7 @@ void View3D::CreateSphereActor()
 	this->Sphere = vtkSmartPointer<vtkSphereSource>::New();
 	this->Sphere->SetRadius(3);
 	this->SphereMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	this->SphereMapper->SetInput(this->Sphere->GetOutput());
+	this->SphereMapper->SetInputData(this->Sphere->GetOutput());
 	this->SphereMapper->GlobalImmediateModeRenderingOn();
 
 	this->SphereActor = vtkSmartPointer<vtkActor>::New();
@@ -4709,7 +4709,7 @@ void View3D::UpdateLineActor()
 	//std::cout <<"updating polydata\n";
 	this->poly_line_data = this->tobj->GetVTKPolyData();
 	this->poly_line_data->Modified();
-	this->LineMapper->SetInput(this->poly_line_data);
+	this->LineMapper->SetInputData(this->poly_line_data);
 	this->LineActor->SetMapper(this->LineMapper);
 	this->LineActor->GetProperty()->SetColor(0,1,0);
 	this->LineActor->GetProperty()->SetPointSize(2);
@@ -4721,7 +4721,7 @@ void View3D::UpdateBranchActor()
 {
 	this->poly = tobj->generateBranchIllustrator();
 	this->polymap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	polymap->SetInput(this->poly);
+	polymap->SetInputData(this->poly);
 	this->BranchActor = vtkSmartPointer<vtkActor>::New();
 	this->BranchActor->SetMapper(this->polymap);
 	this->BranchActor->SetPickable(0);
@@ -4744,10 +4744,10 @@ void View3D::AddPointsAsPoints(std::vector<TraceBit> vec)
 	point_poly->SetPoints(points);
 	point_poly->SetVerts(cells);
 	vtkSmartPointer<vtkGlyph3D> glyphs = vtkSmartPointer<vtkGlyph3D>::New();
-	glyphs->SetSource(sphere_src->GetOutput());
-	glyphs->SetInput(point_poly);
+	glyphs->SetSourceData(sphere_src->GetOutput());
+	glyphs->SetInputData(point_poly);
 	vtkSmartPointer<vtkPolyDataMapper> spheremap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	spheremap->SetInput(glyphs->GetOutput());
+	spheremap->SetInputData(glyphs->GetOutput());
 	spheremap->GlobalImmediateModeRenderingOn();
 	PointsActor = vtkSmartPointer<vtkActor>::New();
 	PointsActor->SetMapper(spheremap);
@@ -4806,11 +4806,11 @@ void View3D::AddDebugPoints(vtkSmartPointer<vtkTable> centroidsTable)
 	glyphs = vtkSmartPointer<vtkGlyph3D>::New();
 	//glyphs->ScalingOn();
 	//glyphs->SetScaleModeToScaleByScalar(); 	
-	glyphs->SetSource(sphere_src->GetOutput());
-	glyphs->SetInput(point_poly);
+	glyphs->SetSourceData(sphere_src->GetOutput());
+	glyphs->SetInputData(point_poly);
 
 	spheremap = vtkSmartPointer<vtkPolyDataMapper>::New();
-	spheremap->SetInput(glyphs->GetOutput());
+	spheremap->SetInputData(glyphs->GetOutput());
 	//spheremap->GlobalImmediateModeRenderingOn();
 	spheremap->ScalarVisibilityOn();
 	spheremap->SetScalarModeToUsePointFieldData();
@@ -5279,8 +5279,8 @@ void View3D::updateSelectionFromCell()
 		point_poly->GetPointData()->RemoveArray("Colors");
 		point_poly->GetPointData()->AddArray(colors);
 
-		glyphs->SetInput(point_poly);
-		spheremap->SetInput(glyphs->GetOutput());
+		glyphs->SetInputData(point_poly);
+		spheremap->SetInputData(glyphs->GetOutput());
 
 		spheremap->ScalarVisibilityOn();
 		spheremap->SetScalarModeToUsePointFieldData();
@@ -6585,7 +6585,7 @@ void View3D::saveRenderWindow(const char *filename)
 		this->WindowToImage->SetMagnification(1);
 
 	this->PNGWriter = vtkSmartPointer<vtkPNGWriter>::New();
-	this->PNGWriter->SetInput(this->WindowToImage->GetOutput());
+	this->PNGWriter->SetInputData(this->WindowToImage->GetOutput());
 	this->PNGWriter->SetFileName(filename);
 	this->PNGWriter->Write();
 }
@@ -7724,7 +7724,7 @@ void View3D::ShowKMutualGraph(unsigned int k)
 		poly_traces->GetCellData()->SetScalars(point_scalars);
 
 		vtkSmartPointer<vtkPolyDataMapper> cubemap = vtkSmartPointer<vtkPolyDataMapper>::New();
-		cubemap->SetInput(poly_traces);
+		cubemap->SetInputData(poly_traces);
 		cubemap->GlobalImmediateModeRenderingOn();
 		// Actor(OpenGL):
 

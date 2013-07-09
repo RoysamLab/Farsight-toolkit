@@ -3,7 +3,6 @@ SET( TracingSysLibraries
     rtvl
     rgtl
     ${VTK_LIBRARIES}
-    QVTK
 )
 
 SET( GUI_RCS

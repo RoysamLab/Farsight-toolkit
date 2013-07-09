@@ -18,8 +18,6 @@ set(qtproject_SRCS
 SET( Libraries
     ${ITK_LIBRARIES}
     ${VTK_LIBRARIES}
-    QVTK
-    QVTKWidgetPlugin
    # TinyXML/home/raghav/macecutter
 )
 

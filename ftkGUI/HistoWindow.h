@@ -35,9 +35,8 @@ limitations under the License.
 
 #include <vtkTable.h>
 #include <vtkSmartPointer.h>
-#include <vtkQtBarChartView.h>
+//#include <vtkQtBarChartView.h>
 #include <vtkDoubleArray.h>
-#include <vtkQtBarChartView.h>
 #include <vtkCallbackCommand.h>
 #include "ObjectSelection.h"
 
@@ -68,7 +67,7 @@ signals:
 	void closing(QWidget *widget);
 
 public:
-	vtkSmartPointer<vtkQtBarChartView> chartView;
+	//vtkSmartPointer<vtkQtBarChartView> chartView;
 
 protected:
 	void closeEvent(QCloseEvent *event);
