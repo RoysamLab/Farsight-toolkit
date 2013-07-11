@@ -3232,31 +3232,37 @@ double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTa
 		int num = boost::connected_components(graph, &component[0]);
 		//std::cout<< "Connected clusters: "<< num<<std::endl;
 		std::vector< std::vector< int> > connectedNodes(num);
-		vnl_vector< int> state(num);
-		state.fill(-1);
 		for( size_t i = 0; i < component.size(); i++)
 		{
 			int index = component[i];
 			connectedNodes[index].push_back(i);
-			if( state[index] == -1)
-			{
-				state[index] = clusNo[i] - 1;   /// problem!!!!
-			}
 		}
 
 		vnl_vector<double> size(clusNo.max_value());
 		size.fill(0);
 		vnl_vector<double> maxAgg(clusNo.max_value());
-		maxAgg.fill(1);
+		maxAgg.fill(0);
+
 		for( size_t i = 0; i < connectedNodes.size(); i++)
 		{
-			int clus = state[ i];
-			size[clus] += connectedNodes[i].size();
-			if( connectedNodes[i].size() > maxAgg[clus])
+			vnl_vector<double> tmpMax(clusNo.max_value());
+			tmpMax.fill(0);
+			for( size_t j = 0; j < connectedNodes[i].size(); j++)
 			{
-				maxAgg[clus] = connectedNodes[i].size();	
+				int nodeInd = connectedNodes[i][j];
+				int clus = clusNo[ nodeInd] - 1;
+				size[clus] += 1;
+				tmpMax[clus] += 1;
+			}
+			for( unsigned int k = 0; k < tmpMax.size(); k++)
+			{
+				if( tmpMax[k] > maxAgg[k])
+				{
+					maxAgg[k] = tmpMax[k];	
+				}
 			}
 		}
+
 		//std::cout<< "Size: "<<size<<std::endl;
 		double totalSize = 0;
 		double aggSize = 0;
