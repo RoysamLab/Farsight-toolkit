@@ -386,6 +386,8 @@ void SPDkNNGModuleMatch::viewProgression()
 	split( selectModulesID, ',', selModuleID);
 	std::cout<< "Selected Module Size:" << selModuleID.size() <<std::endl;
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
+	std::cout<< "Selected Features:" << selFeatureID.size() <<std::endl;
+
 		//for( size_t i = 0; i < selModuleID.size(); i++)
 	//{
 	//	std::cout<< selModuleID[i]<< "\t";

@@ -4272,7 +4272,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			moduleForSelection.push_back(i);
 		}
 	}
-	ofs<< this->EMDMatrix<< std::endl;
+	//ofs<< this->EMDMatrix<< std::endl;
 
 	for(int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
@@ -4304,8 +4304,9 @@ double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
 
 	ImageType::Pointer imgPtr = ImageType::New();
 	ImageType::SizeType size;
-	size[0] = this->EMDMatrix.rows();
-	size[1] = this->EMDMatrix.cols();
+	size[0] = moduleForSelection.size();
+	size[1] = moduleForSelection.size();
+	std::cout<< "Build "<< moduleForSelection.size()<<"square image."<<std::endl;
 
 	ImageType::IndexType start;
 	start.Fill(0);
@@ -4326,9 +4327,11 @@ double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
 		{
 			if( ii != jj)
 			{
+				int nr = moduleForSelection[ii];
+				int nc = moduleForSelection[jj];
 				itk::Index<1> offset;
 				offset[0] = jj * size[0] + ii;
-				double val = this->EMDMatrix(ii,jj);
+				double val = this->EMDMatrix(nr,nc);
 				float pixelVal = val * 255;
 				imBuffer[offset[0]] = pixelVal;
 			}
@@ -4350,9 +4353,9 @@ double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
 
 	filter->SetInput(imgPtr);
 	unsigned int bin_num = 256;
-	if( ceil(size[0] * size[1] / 4.0) < 256)
+	if( size[0] * size[1] < 256)
 	{
-		bin_num = 10;
+		bin_num = 20;
 	}
 
 	std::cout<< "Bin num for auto threshold: "<< bin_num<<std::endl;
@@ -5800,7 +5803,7 @@ bool SPDAnalysisModel::PSCIterationRadius2(vnl_matrix< double> &input, vnl_matri
 	return bchanged;
 }
 
-double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+double SPDAnalysisModel::CaculatePSC(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
 {
 	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
 	{
@@ -5815,15 +5818,10 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 	
 	FindNearestKSample(contextDis, nearIndex, kNeighbor);
 	GetKWeights( contextDis, nearIndex, nearWeights, kNeighbor);
-	
-	double min = contextDis.min_value();
 
-	for( int k = 0; k < contextDis.rows(); k++)
-	{
-		contextDis(k,k) = 0;
-	}
-	
-	double max = contextDis.max_value();
+	double min = 0;
+	double max = 0;
+	GetDiagnalMinMax(contextDis, min, max);
 	double interval = ( max - min) / nbins;
 
 	vnl_vector<unsigned int> histContext;
@@ -5861,29 +5859,10 @@ double SPDAnalysisModel::CaculatePSComplement(unsigned int kNeighbor, unsigned i
 	double ps = 0;
 	vnl_matrix<double> flowMatrix( nbins, nbins);
 	flowMatrix.fill(0);
-	double range = EarthMoverDistance( histContext, histNear, flowMatrix, nbins);
-	double movedEarth = EarthMoverDistance( histContext, hist2, flowMatrix, nbins);
-	double sum = 0;
-	
-	for( unsigned int n = 0; n < flowMatrix.rows(); n++)
-	{
-		for( unsigned int m = n; m < flowMatrix.cols(); m++)
-		{
-			if( flowMatrix(n,m) > 1e-6)
-			{
-				sum += flowMatrix(n,m);
-			}
-		}
-	}
-	//std::cout<< "Moved earth from upper bins to lower bins:"<<sum<<std::endl;
-	if( sum >= 0.5)  
-	{
-		ps = movedEarth / range;
-	}
-	else  
-	{
-		ps = -movedEarth / range;
-	}
+	double range = EarthMoverDistance( histContext, histNear, flowMatrix, nbins, true);
+	double movedEarth = EarthMoverDistance( histContext, hist2, flowMatrix, nbins, true);
+
+	ps = movedEarth / range;
 	
 	if(debug)
 	{

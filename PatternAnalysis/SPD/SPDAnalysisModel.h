@@ -138,7 +138,7 @@ public:
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
-	static double CaculatePSComplement(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+	static double CaculatePSC(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
     static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
 	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
 
@@ -211,7 +211,7 @@ protected:
 	void ComputeDistributionDistance(vnl_matrix<unsigned int> &mat, vnl_vector<double> &moduleDistance);
 	bool GenerateMST( vnl_matrix<double> &mat, bool bfirst);
 	void RunEMDAnalysis( vnl_vector<double> &moduleDistance, int ind);
-	void GetDiagnalMinMax(vnl_matrix<double> &mat, double &min, double &max);
+	static void GetDiagnalMinMax(vnl_matrix<double> &mat, double &min, double &max);
 
 public:
 	std::vector< Tree> PublicTreeData;
