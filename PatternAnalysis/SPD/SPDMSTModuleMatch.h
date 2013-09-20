@@ -13,7 +13,7 @@
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/PlotWindow.h"
-#include "ProgressionHeatmapWindow.h"
+#include "TrendHeatmapWindow.h"
 #include "HeatmapWindow.h"
 
 class SPDMSTModuleMatch : public QWidget
@@ -24,7 +24,7 @@ public:
     SPDMSTModuleMatch(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDMSTModuleMatch();
-	void GetProgressionTreeOrder(std::vector<long int> &order);
+	void GetTrendTreeOrder(std::vector<long int> &order);
 	vtkSmartPointer<vtkTable> NormalizeTable(vtkSmartPointer<vtkTable> table);
 
 protected:
@@ -44,13 +44,13 @@ protected slots:
     void clusterFunction();
 	void emdFunction();
 	void showPSM();
-	void viewProgression();
+	void viewTrend();
 	void updateSelMod();
 	void editThreshold();
-	void showProgressionHeatmap();
-	void regenerateProgressionTree();
+	void showTrendHeatmap();
+	void regenerateTrendTree();
 	void ReRunSPDAnlysis();
-	void ReColorProgressionTree(int nfeature);
+	void ReColorTrendTree(int nfeature);
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -74,22 +74,22 @@ private:
 
 	QLabel *emdLabel;
 	//QLabel *progressionOverDistance;
-	//QCheckBox *bcheckBox;   // progression overall or over distance to device
+	//QCheckBox *bcheckBox;   // Trend overall or over distance to device
 	QPushButton *emdButton;
 	QDoubleSpinBox *emdThresBox;
 	QLineEdit *emdPercentageBox;
 	QLabel *psmLable;
 	QLabel *psmPerLable;
     QPushButton *psmButton;
-	QLabel *psdtLable;   // progression sample discovery tree
+	QLabel *psdtLable;   // Trend sample discovery tree
 	QLineEdit *psdModuleSelectBox;  // select similar modules
     QPushButton *psdtButton;
-	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
+	QPushButton *heatmapButton;  // show Trend heatmap  // now shows the Trend over distance to device
 	QLabel *continSelectLabel;   
 	QCheckBox *continSelectCheck;
 	QString FileName;
 	GraphWindow *graph;
-	ProgressionHeatmap *simHeatmap;
+	TrendHeatmap *simHeatmap;
 	HistoWindow *histo;
 	Heatmap *originalHeatmap;
 	Heatmap *progressionHeatmap;

@@ -7,7 +7,7 @@ SET( Libraries
     mbl
     ${QT_LIBRARIES})
 
-QT4_WRAP_CPP( GUI_MOC_SRCS SPDMSTModuleMatch.h SPDkNNGModuleMatch.h HeatmapWindow.h HeatmapWindowForNewSelection.h ProgressionHeatmapWindow.h)
+QT4_WRAP_CPP( GUI_MOC_SRCS SPDMSTModuleMatch.h SPDkNNGModuleMatch.h HeatmapWindow.h HeatmapWindowForNewSelection.h TrendHeatmapWindow.h)
 
 SET(SPD_SRCS
 	SPDAnalysisModel.h
@@ -17,8 +17,8 @@ SET(SPD_SRCS
 	HeatmapWindow.cpp
 	HeatmapWindowForNewSelection.h
 	HeatmapWindowForNewSelection.cpp
-	ProgressionHeatmapWindow.h
-	ProgressionHeatmapWindow.cpp
+	TrendHeatmapWindow.h
+	TrendHeatmapWindow.cpp
 	SPDkNNGModuleMatch.h
 	SPDkNNGModuleMatch.cpp
 	SPDMSTModuleMatch.h

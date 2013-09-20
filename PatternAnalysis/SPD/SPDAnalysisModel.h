@@ -82,9 +82,9 @@ public:
 	void GetEMDMatrixDivByMax(vnl_matrix<double> &emdMatrix);
 	void GetClusClusDataMST(clusclus *c1, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	void GetClusClusDataKNNG(clusclus *c1, vnl_vector<double> *diagVec = NULL, std::vector< unsigned int> *disModIndex = NULL);
-	void GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec);
-	void GetClusClusPSCWithoutIterData(clusclus* c1, double threshold);
-	void GetClusClusPSCData(clusclus* c1);
+	void GetBiClusData(vnl_matrix<double> &mat,clusclus *c1, vnl_vector<double> *diagVec);
+	void GetClusClusNSWithoutIterData(clusclus* c1, double threshold);
+	void GetClusClusNSData(clusclus* c1);
 	vtkSmartPointer<vtkTable> GenerateProgressionTree( std::string& selectedModules);
 	void GetSelectedFeatures(std::set<long int>& selectedFeatures);
 	void SaveSelectedFeatureNames(QString filename, std::vector<int>& selectedFeatures);
@@ -103,8 +103,8 @@ public:
 	void ModuleCoherenceMatchAnalysis();
 	void ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int nbins);
 	void ModuleCorrelationMatrixMatch2(unsigned int kNeighbor, int nbins);
-	void ModuleCorrelationPSC(unsigned int kNeighbor, int nbins);
-	void EMDMatrixIteration();
+	void ModuleCorrelationNS(unsigned int kNeighbor, int nbins);
+	void EMDMatrixIteration(vnl_matrix<double> &afterIterMat);
 
 	void GetClusClusDataForCorMatrix( clusclus* c1, clusclus* c2, double threshold, std::vector< unsigned int> *disModIndex = NULL);
 	double GetCorMatSelectedPercentage(double thres);
@@ -129,7 +129,7 @@ public:
 	void GetSubSampleMatrix(vnl_matrix<double> &mat, std::vector< int> &sampleId, vnl_matrix<double> &subMat, vnl_vector<double> &mean);
 	void GetSelectedFeaturesModulesTest(double selThreshold, std::vector<std::vector<unsigned int> > &selModules);
 	int GetSelectedFeaturesModulesByConnectedComponent(double selThreshold, std::vector<std::vector<unsigned int> > &selModules);
-	void GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules);
+	int GetSelectedFeaturesModulesForBlockVisualization(vnl_matrix<double> &mat, double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules);
 	void ConvertClusIndexToSampleIndex(std::vector< std::vector< long int> > &clusIndex, std::vector< std::vector< long int> > &sampleIndex);
 	double GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_matrix<double> &disMat, vnl_vector<double> &accuracyVec, vnl_vector<double> &aggDegree, double &aggDegreeValue, int neighborScope, int clusterScope);
 	void GetDataMatrix( vnl_matrix<double> &mat);
@@ -138,8 +138,8 @@ public:
 
 	static double CaculatePS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
 	static double CaculatePSAveragebin(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
-	static double CaculatePSC(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
-    static double CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
+	static double CaculateNS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = false);
+    static double CaculateNSomplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio = 1.2, bool debug = false);
 	static double SimulateVec2(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug = true);
 
 protected:
@@ -203,7 +203,7 @@ protected:
 	static void AvarageBinHistogram(vnl_matrix<double> &disMetric, int nbins, vnl_vector<double> &binInterval);
 	static void AverageHist(vnl_vector<double>&distance, vnl_vector<double>& binInterval, vnl_vector<unsigned int>& histDis);
 	static bool GetKDistanceMetricRatio(vnl_vector<double> &vec1, vnl_vector<double> &vec2, vnl_matrix<double> &shortestPath, unsigned int kNeighbor);
-	bool PSCIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output);
+	bool NSIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output);
 
 	/// for multi-level demo
 	bool RunSPDforFeatureDistributionTable(std::string fileName);

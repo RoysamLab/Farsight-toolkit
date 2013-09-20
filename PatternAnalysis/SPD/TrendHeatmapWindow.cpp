@@ -1,4 +1,4 @@
-#include "ProgressionHeatmapWindow.h"
+#include "TrendHeatmapWindow.h"
 #include <vtkPointData.h>
 #include <vtkTextProperty.h>
 #include <vtkLabelPlacementMapper.h>
@@ -6,7 +6,7 @@
 #include <vtkActor2D.h>
 #include <vtkScalarBarActor.h>
 
-ProgressionHeatmap::ProgressionHeatmap(QWidget *parent)
+TrendHeatmap::TrendHeatmap(QWidget *parent)
 : QMainWindow(parent)
 {
 	this->mainQTRenderWidget;
@@ -59,7 +59,7 @@ ProgressionHeatmap::ProgressionHeatmap(QWidget *parent)
 	 //hoverCallback = vtkSmartPointer<vtkHoverCallback>::New();
 }
 
-ProgressionHeatmap::~ProgressionHeatmap()
+TrendHeatmap::~TrendHeatmap()
 {
 	if(this->mapdata)
 	{
@@ -89,7 +89,7 @@ ProgressionHeatmap::~ProgressionHeatmap()
 	}
 }
 
-void ProgressionHeatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
+void TrendHeatmap::setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
 {
 	this->num_samples = num_samples;
 	this->num_features = num_features;
@@ -111,7 +111,7 @@ void ProgressionHeatmap::setDataForHeatmap(double** features, int* optimalleafor
 		this->Optimal_Leaf_Order1[i] = optimalleaforder2[i];
 }
 
-void ProgressionHeatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
+void TrendHeatmap::setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features)
 {
 	double max = features[0][0];
 	for( int i = 0; i < num_samples; i++)
@@ -144,7 +144,7 @@ void ProgressionHeatmap::setDataForSimilarMatrixHeatmap(double** features, int* 
 	this->num_features = num_features;
 }
 
-void ProgressionHeatmap::creatDataForHeatmap(double powCof)
+void TrendHeatmap::creatDataForHeatmap(double powCof)
 {
 	this->scaleData();
 
@@ -200,7 +200,7 @@ void ProgressionHeatmap::creatDataForHeatmap(double powCof)
 	}
 }
 
-void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
+void TrendHeatmap::creatDataForTrendHeatmap(double powCof)
 {
 	std::vector< double > temp;
 	temp.resize(num_features);
@@ -247,7 +247,7 @@ void ProgressionHeatmap::creatDataForProgressionHeatmap(double powCof)
 	}
 }
 
-void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
+void TrendHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
 {
 	//const char* filename = "heatmapdata.txt";
 	//FILE *fp = fopen(filename,"w");
@@ -295,7 +295,7 @@ void ProgressionHeatmap::creatDataForSimilarMatrixHeatmap(double *diagonal)
 	//fclose(fp);
 }
 
-void ProgressionHeatmap::scaleData()
+void TrendHeatmap::scaleData()
 {
 	for(int i = 0; i<this->num_features; i++)
 	{
@@ -312,7 +312,7 @@ void ProgressionHeatmap::scaleData()
 	}
 }
 
-void ProgressionHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
+void TrendHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelection * sels, ObjectSelection * sels2)
 {
 	this->table = table;
 	this->indMapFromVertexToInd.clear();
@@ -340,7 +340,7 @@ void ProgressionHeatmap::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 	connect(Selection, SIGNAL(changed()), this, SLOT(GetSelecectedIDs()));
 }
 
-void ProgressionHeatmap::runClusclus()
+void TrendHeatmap::runClusclus()
 {
 	double** datas;
 	vtkVariant temp; 
@@ -391,7 +391,7 @@ void ProgressionHeatmap::runClusclus()
 	delete cc2;
 }
 
-void ProgressionHeatmap::showGraph()
+void TrendHeatmap::showGraph()
 {	
 	this->drawPoints1();
     this->aPlane->SetXResolution(this->num_features);
@@ -494,7 +494,7 @@ void ProgressionHeatmap::showGraph()
 	this->view->GetInteractor()->Start();
 }
 
-void ProgressionHeatmap::SetInteractStyle()
+void TrendHeatmap::SetInteractStyle()
 {
 	this->theme->SetCellValueRange(0, this->num_samples*this->num_features - 1);
 	this->theme->SetSelectedCellColor(1,0,1);
@@ -529,7 +529,7 @@ void ProgressionHeatmap::SetInteractStyle()
 	this->mainQTRenderWidget.resize(600, 600);
 	this->mainQTRenderWidget.show();
 }
-void ProgressionHeatmap::showSimilarMatrixGraph()
+void TrendHeatmap::showSimilarMatrixGraph()
 {	
     this->aPlane->SetXResolution(this->num_features);
     this->aPlane->SetYResolution(this->num_samples);
@@ -666,7 +666,7 @@ void ProgressionHeatmap::showSimilarMatrixGraph()
 	this->view->GetInteractor()->Start();
 }
 
-void ProgressionHeatmap::showSPDGraph()
+void TrendHeatmap::showSPDGraph()
 {	
 	drawPoints3();
     this->aPlane->SetXResolution(this->num_features);
@@ -746,7 +746,7 @@ void ProgressionHeatmap::showSPDGraph()
 	this->view->GetInteractor()->Start();
 }
 
-void ProgressionHeatmap::setDataForDendrograms(double** treedata1, double** treedata2)
+void TrendHeatmap::setDataForDendrograms(double** treedata1, double** treedata2)
 {
 	if(treedata1 != NULL)
 	{
@@ -771,7 +771,7 @@ void ProgressionHeatmap::setDataForDendrograms(double** treedata1, double** tree
 	}
 }
 
-void ProgressionHeatmap::createDataForDendogram1(double powCof)
+void TrendHeatmap::createDataForDendogram1(double powCof)
 {
 	this->Processed_Coordinate_Data_Tree1.resize(2*(this->num_samples) - 1);
 	for(int i = 0; i < 2*(this->num_samples) - 1; i++)
@@ -823,7 +823,7 @@ void ProgressionHeatmap::createDataForDendogram1(double powCof)
 	}
 }
 
-void ProgressionHeatmap::createDataForDendogram2(double powCof)
+void TrendHeatmap::createDataForDendogram2(double powCof)
 {
 	this->Processed_Coordinate_Data_Tree2.resize(2*(this->num_features) - 1);
 	for(int i = 0; i < 2*(this->num_features) - 1; i++)
@@ -875,7 +875,7 @@ void ProgressionHeatmap::createDataForDendogram2(double powCof)
 	}
 }
 
-void ProgressionHeatmap::showDendrogram1()
+void TrendHeatmap::showDendrogram1()
 {
 	double p1[3];
 	double p2[3];
@@ -951,7 +951,7 @@ void ProgressionHeatmap::showDendrogram1()
 	//this->view->Render();
 }
 
-void ProgressionHeatmap::showDendrogram2()
+void TrendHeatmap::showDendrogram2()
 {
 	double p1[3];
 	double p2[3];
@@ -1026,7 +1026,7 @@ void ProgressionHeatmap::showDendrogram2()
 	//this->view->Render();
 }
 
-void ProgressionHeatmap::GetSelecectedIDs()
+void TrendHeatmap::GetSelecectedIDs()
 {
 	std::set<long int> selectedIDs2 = this->Selection2->getSelections();
 	std::set<long int> selectedIDs1 = this->Selection->getSelections();	
@@ -1159,7 +1159,7 @@ void ProgressionHeatmap::GetSelecectedIDs()
 	}
 }
 
-void ProgressionHeatmap::drawPoints1()
+void TrendHeatmap::drawPoints1()
 {
 	v1->SetNumberOfValues (2*this->num_samples-1 + 2*this->num_features-1);
 	for(unsigned int i=0; i<2*this->num_samples-1;i++)
@@ -1244,7 +1244,7 @@ void ProgressionHeatmap::drawPoints1()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void ProgressionHeatmap::drawPoints2()
+void TrendHeatmap::drawPoints2()
 {
 	v1->SetNumberOfValues (2*this->num_features - 1);
 
@@ -1294,7 +1294,7 @@ void ProgressionHeatmap::drawPoints2()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void ProgressionHeatmap::drawPoints3()
+void TrendHeatmap::drawPoints3()
 {
 	v1->SetNumberOfValues (this->num_features);
 	for(unsigned int i = 0; i < this->num_features; i++)
@@ -1401,11 +1401,11 @@ void ProgressionHeatmap::drawPoints3()
     this->view->GetRepresentation()->GetAnnotationLink()->AddObserver("AnnotationChangedEvent", this->selectionCallback1);
 }
 
-void ProgressionHeatmap::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+void TrendHeatmap::SelectionCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
 	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
 	vtkSelection* selection = annotationLink->GetCurrentSelection();
-	ProgressionHeatmap* heatmapWin = (ProgressionHeatmap*)clientData;
+	TrendHeatmap* heatmapWin = (TrendHeatmap*)clientData;
 
 	vtkSelectionNode* vertices = NULL;
 	vtkSelectionNode* edges = NULL;
@@ -1454,11 +1454,11 @@ void ProgressionHeatmap::SelectionCallbackFunction(vtkObject* caller, long unsig
 	}
 }
 
-void ProgressionHeatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+void TrendHeatmap::SelectionCallbackFunction1(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
 	vtkAnnotationLink* annotationLink = static_cast<vtkAnnotationLink*>(caller);
 	vtkSelection* selection = annotationLink->GetCurrentSelection();
-	ProgressionHeatmap* heatmapWin = (ProgressionHeatmap*)clientData;
+	TrendHeatmap* heatmapWin = (TrendHeatmap*)clientData;
 
 	vtkSelectionNode* vertices = NULL;
 	vtkSelectionNode* edges = NULL;
@@ -1507,9 +1507,9 @@ void ProgressionHeatmap::SelectionCallbackFunction1(vtkObject* caller, long unsi
 	}
 }
 
-void ProgressionHeatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+void TrendHeatmap::SelectionCallbackFunction2(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
-	ProgressionHeatmap* heatmapWin = (ProgressionHeatmap*)clientData;
+	TrendHeatmap* heatmapWin = (TrendHeatmap*)clientData;
 	int* pos = heatmapWin->view->GetInteractor()->GetEventPosition();
 
 	vtkCellPicker *cell_picker = (vtkCellPicker *)heatmapWin->view->GetInteractor()->GetPicker();
@@ -1532,9 +1532,9 @@ void ProgressionHeatmap::SelectionCallbackFunction2(vtkObject* caller, long unsi
 	}
 }
 
-void ProgressionHeatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+void TrendHeatmap::SelectionCallbackFunction3(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
-	ProgressionHeatmap* heatmapWin = (ProgressionHeatmap*)clientData;
+	TrendHeatmap* heatmapWin = (TrendHeatmap*)clientData;
 	int* pos = heatmapWin->view->GetInteractor()->GetEventPosition();
 
 	vtkCellPicker *cell_picker = (vtkCellPicker *)heatmapWin->view->GetInteractor()->GetPicker();
@@ -1571,9 +1571,9 @@ void ProgressionHeatmap::SelectionCallbackFunction3(vtkObject* caller, long unsi
 	}
 }
 
-void ProgressionHeatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
+void TrendHeatmap::HandleKeyPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData )
 {
-	ProgressionHeatmap* heatmapWin = (ProgressionHeatmap*)clientData;
+	TrendHeatmap* heatmapWin = (TrendHeatmap*)clientData;
 	char key = heatmapWin->view->GetInteractor()->GetKeyCode();
 	switch (key)
 	{
@@ -1592,7 +1592,7 @@ void ProgressionHeatmap::HandleKeyPress(vtkObject* caller, long unsigned int eve
 	}
 }
 
-void ProgressionHeatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
+void TrendHeatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst)
 {
 	std::set<long int> selectedIDs1;
 	std::set<long int> selectedIDs2;
@@ -1721,7 +1721,7 @@ void ProgressionHeatmap::SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst
 	}
 }
 
-void ProgressionHeatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
+void TrendHeatmap::reselectIds1(std::set<long int>& selectedIDs, long int id)
 {
 	if(id < this->num_samples)
 	{
@@ -1748,7 +1748,7 @@ void ProgressionHeatmap::reselectIds1(std::set<long int>& selectedIDs, long int 
 		}
 	}
 }
-void ProgressionHeatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
+void TrendHeatmap::reselectIds2(std::set<long int>& selectedIDs2, long int id)
 {
 	if(id  < this->num_features)
 	{
@@ -1776,7 +1776,7 @@ void ProgressionHeatmap::reselectIds2(std::set<long int>& selectedIDs2, long int
 	}
 }
 
-void ProgressionHeatmap::computeselectedcells()
+void TrendHeatmap::computeselectedcells()
 {
 	this->r1 = id1/this->num_features;
 	this->r2 = id2/this->num_features;
@@ -1792,7 +1792,7 @@ void ProgressionHeatmap::computeselectedcells()
 	}
 }
 
-void ProgressionHeatmap::setselectedCellIds()
+void TrendHeatmap::setselectedCellIds()
 {
 	std::set<long int> selectedIDs1;
 	std::set<long int> selectedIDs2;
@@ -1848,7 +1848,7 @@ void ProgressionHeatmap::setselectedCellIds()
 	}
 }
 
-void ProgressionHeatmap::GetSelRowCol(int &r1, int &c1, int &r2, int &c2)
+void TrendHeatmap::GetSelRowCol(int &r1, int &c1, int &r2, int &c2)
 {
 	r1 = this->r1;
 	r2 = this->r2;
@@ -1856,7 +1856,7 @@ void ProgressionHeatmap::GetSelRowCol(int &r1, int &c1, int &r2, int &c2)
 	c2 = this->c2;
 }
 
-void ProgressionHeatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
+void TrendHeatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 {
 	this->r1 = r1;
 	this->r2 = r2;
@@ -1866,7 +1866,7 @@ void ProgressionHeatmap::SetSelRowCol(int r1, int c1, int r2, int c2)
 	setselectedCellIds();	
 }
 
-void ProgressionHeatmap::closeEvent(QCloseEvent *event)
+void TrendHeatmap::closeEvent(QCloseEvent *event)
 {
 	mainQTRenderWidget.close();
 }

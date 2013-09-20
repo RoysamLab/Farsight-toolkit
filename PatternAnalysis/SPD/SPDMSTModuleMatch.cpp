@@ -60,7 +60,7 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
     //clusterButton = new QPushButton(tr("Feature Cluster"), this);
 	
 	//emdLabel = new QLabel(tr("KNNG based EMD module matching:"), this);
-	//progressionOverDistance = new QLabel(tr("Progression over distance to device:"), this);
+	//progressionOverDistance = new QLabel(tr("Trend over distance to device:"), this);
 	//bcheckBox = new QCheckBox(this);
 	emdButton = new QPushButton(tr("Match"), this);
 
@@ -83,7 +83,7 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
 
 	//searchSubsetsButton = new QPushButton(tr("Search subsets"), this);
 	
-    psdtButton = new QPushButton(tr("View Progression"), this);
+    psdtButton = new QPushButton(tr("View Trend"), this);
 	heatmapButton = new QPushButton(tr("Heatmap"), this);
 	
 	emdButton->setEnabled(TRUE);
@@ -93,11 +93,11 @@ SPDMSTModuleMatch::SPDMSTModuleMatch(QWidget *parent) :
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
-	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
+	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showTrendHeatmap()));
 
 	connect(emdButton, SIGNAL(clicked()), this, SLOT(emdFunction()));
 	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
-	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
+	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewTrend()));
 	connect(emdThresBox, SIGNAL(editingFinished()), this, SLOT(editThreshold()));
 	//connect(emdPercentageBox, SIGNAL(editingFinished()), this, SLOT(editPercentage()));
 	
@@ -204,7 +204,7 @@ void SPDMSTModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelecti
 	{
 		delete this->simHeatmap;
 	}
-	this->simHeatmap = new ProgressionHeatmap( this);
+	this->simHeatmap = new TrendHeatmap( this);
 	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 
 	if(this->graph)
@@ -329,11 +329,11 @@ void SPDMSTModuleMatch::clusterFunction()
 	}
 }
 
-//void SPDMSTModuleMatch::updateProgressionType()
+//void SPDMSTModuleMatch::updateTrendType()
 //{  
 //	if( bcheckBox->isChecked())
 //	{
-//		bool rtn = this->SPDModel->SetProgressionType( true);   // progression over distance to device
+//		bool rtn = this->SPDModel->SetTrendType( true);   // Trend over distance to device
 //		if( rtn == false)
 //		{
 //			QMessageBox mes;
@@ -343,7 +343,7 @@ void SPDMSTModuleMatch::clusterFunction()
 //	}
 //	else
 //	{
-//		this->SPDModel->SetProgressionType( false);  // overall progression
+//		this->SPDModel->SetTrendType( false);  // overall Trend
 //	}
 //}
 
@@ -392,7 +392,7 @@ void SPDMSTModuleMatch::showPSM()
 	clusclus *clus2 = new clusclus();
 
 	std::vector< unsigned int> moduleIDs;
-	//if( SPDModel->GetProgressionType())
+	//if( SPDModel->GetTrendType())
 	//{
 	//	this->SPDModel->GetClusClusData(clus1, atof(emdThres.c_str()), &moduleIDs);
 
@@ -431,7 +431,7 @@ void SPDMSTModuleMatch::showPSM()
 	delete clus2;
 }
 
-void SPDMSTModuleMatch::viewProgression()
+void SPDMSTModuleMatch::viewTrend()
 {	
 	if( this->originalHeatmap)
 	{
@@ -461,9 +461,9 @@ void SPDMSTModuleMatch::viewProgression()
 	SPDModel->SaveSelectedFeatureNames("SelFeatures.txt", selOrder);
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
-	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
+	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateTrendTree()));
 	connect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
-	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorProgressionTree(int)));
+	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorTrendTree(int)));
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
@@ -567,12 +567,12 @@ bool SPDMSTModuleMatch::IsExist(std::vector< unsigned int> vec, unsigned int val
 	return false;
 }
 
-void SPDMSTModuleMatch::regenerateProgressionTree()
+void SPDMSTModuleMatch::regenerateTrendTree()
 {
 	heatmapButton->setEnabled(TRUE);
 	if( selection && this->HeatmapWin)
 	{
-		std::cout<< "rerender progression view"<<endl;
+		std::cout<< "rerender Trend view"<<endl;
 		selection->clear();
 		std::vector< std::vector< long int> > sampleIndex;
 		selection->GetSampleIndex( sampleIndex);
@@ -605,7 +605,7 @@ void SPDMSTModuleMatch::regenerateProgressionTree()
 	}
 }
 
-void SPDMSTModuleMatch::ReColorProgressionTree(int nfeature)
+void SPDMSTModuleMatch::ReColorTrendTree(int nfeature)
 {
 	if( this->graph)
 	{
@@ -659,12 +659,12 @@ void SPDMSTModuleMatch::updateSelMod()
 }
 
 
-void SPDMSTModuleMatch::GetProgressionTreeOrder(std::vector<long int> &order)
+void SPDMSTModuleMatch::GetTrendTreeOrder(std::vector<long int> &order)
 {
-	this->graph->GetProgressionTreeOrder(order);
+	this->graph->GetTrendTreeOrder(order);
 }
 
-void SPDMSTModuleMatch::showProgressionHeatmap()
+void SPDMSTModuleMatch::showTrendHeatmap()
 {
 	//ofstream ofs("SPDHeatmapOptimalOrder.txt");
 	if( this->progressionHeatmap)
@@ -674,10 +674,10 @@ void SPDMSTModuleMatch::showProgressionHeatmap()
 	this->progressionHeatmap = new Heatmap(this);
 	
 	std::vector<long int> TreeOrder;
-	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
+	this->graph->GetTrendTreeOrder(TreeOrder);   // order of the cluster 
 	if( TreeOrder.size() <=0)
 	{          
-		std::cout<< "progression tree hasn't been built yet"<<endl;
+		std::cout<< "Trend tree hasn't been built yet"<<endl;
 		return;
 	}
 
@@ -688,7 +688,7 @@ void SPDMSTModuleMatch::showProgressionHeatmap()
 	std::vector< int> clusterOrder;
 	SPDModel->GetClusterOrder(clusIndex, TreeOrder, clusterOrder);
 
-	// progression heatmap
+	// Trend heatmap
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
 	std::map< int, int> indexMap;
@@ -758,7 +758,7 @@ void SPDMSTModuleMatch::ReRunSPDAnlysis()
 {
 	closeSubWindows();
 	std::set<long int> selItems = this->selection->getSelections();
-	disconnect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
+	disconnect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateTrendTree()));
 	disconnect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
 	this->selection->clear();
 	vtkSmartPointer<vtkTable> table = GetSubTableExcludeItems(data, selItems);

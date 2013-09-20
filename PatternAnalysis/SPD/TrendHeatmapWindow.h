@@ -1,5 +1,5 @@
-#ifndef PROGRESSIONHEATMAPWINDOW_H
-#define PROGRESSIONHEATMAPWINDOW_H
+#ifndef TRENDHEATMAPWINDOW_H
+#define TRENDHEATMAPWINDOW_H
 
 #include <iostream>
 #include <fstream>
@@ -125,18 +125,18 @@
     }
 };*/
 
-class ProgressionHeatmap : public QMainWindow
+class TrendHeatmap : public QMainWindow
 {
     Q_OBJECT;
 
 public:
-	ProgressionHeatmap(QWidget * parent = 0);
-	~ProgressionHeatmap();
+	TrendHeatmap(QWidget * parent = 0);
+	~TrendHeatmap();
 	void setDataForHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForSimilarMatrixHeatmap(double** features, int* optimalleaforder1, int* optimalleaforder2,int num_samples, int num_features);
 	void setDataForDendrograms(double** treedata1, double** treedata2);
 	void creatDataForHeatmap(double powCof);
-	void creatDataForProgressionHeatmap(double powCof);
+	void creatDataForTrendHeatmap(double powCof);
 	void creatDataForSimilarMatrixHeatmap(double *diagonal = NULL);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
 	void runClusclus();
@@ -163,11 +163,11 @@ public:
 	ObjectSelection * Selection;
 	ObjectSelection * Selection2;
 
-protected:
-	virtual void closeEvent(QCloseEvent *event);
-
 signals:
 	void SelChanged();
+
+protected:
+	virtual void closeEvent(QCloseEvent *event);
 
 protected slots:
 	void SetdenSelectedIds1(std::set<long int>& IDs, bool bfirst);

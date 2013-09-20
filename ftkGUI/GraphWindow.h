@@ -57,7 +57,7 @@ public:
 	void AdjustedLayout(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, std::vector<long int> *treeOrder = NULL, std::vector<double> *colorVec = NULL, std::vector<double> *disVec = NULL);
 	void ShowGraphWindow();
 	ObjectSelection * GetSelection();
-	void GetProgressionTreeOrder(std::vector<long int> &order);
+	void GetTrendTreeOrder(std::vector<long int> &order);
 	void ColorTreeAccordingToFeatures(vnl_vector<double> &feature, const char *featureName);
 	static void GetTreeNodeBetweenDistance(vtkSmartPointer<vtkTable> table, std::string ID1, std::string ID2, std::string edgeLabel, vnl_matrix<double> &disMat);
 
@@ -79,10 +79,10 @@ protected:
 	Point GetNewPointFromOldPoint( Point &oldPointFirst, Point &oldPointSecond, Point &newPointFirst, double weight);
 	double GetEdgeWeight(vnl_matrix<double>& vertexList, long firstIndex, long secondIndex);
 	virtual void closeEvent(QCloseEvent *event);
-	void SetUserDefineProgression(long int nodeID);
-	void SetProgressionStartTag(bool bstart);
-	void UpdateProgressionPath();
-	void GetProgressionPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path);
+	void SetUserDefineTrend(long int nodeID);
+	void SetTrendStartTag(bool bstart);
+	void UpdateTrendPath();
+	void GetTrendPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path);
 	void ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, double* color);
 	void RestoreLookupTable();
 
@@ -142,7 +142,7 @@ private:
 	// User Define progression
 	long int progressionStartID;
 	long int progressionEndID;
-	bool bProgressionStart;
+	bool bTrendStart;
 	std::vector< long int> progressionPath;
 };
 

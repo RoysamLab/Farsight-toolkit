@@ -43,7 +43,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
     clusterCoherenceLabel = new QLabel(tr("Feature Coherence(0.0 ~ 1.0):"), this);
     clusterCoherenceBox = new QDoubleSpinBox(this);
-	clusterCoherenceBox->setValue(0.8);
+	clusterCoherenceBox->setValue(0.95);
 	clusterCoherenceBox->setRange(0,1); 
 	clusterCoherenceBox->setSingleStep(0.1);
 
@@ -58,31 +58,37 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 	nBinBox->setValue(20);
 	nBinBox->setMinimum (2);
 	nBinBox->setSingleStep(1);
+	nsmButton = new QPushButton(tr("Generate NS Matrix"), this);
 
-    psmButton = new QPushButton(tr("Show PSM"), this);
+    autoSelButton = new QPushButton(tr("Select"), this);
+	autoSelList = new QLabel(tr("Auto selection:"), this);
+	QFont font1 = autoSelList->font();
+	font1.setBold(true);
+	autoSelList->setFont(font1);
 
-	//continSelectLabel = new QLabel(tr("Continous selections:"), this);
-	//continSelectCheck = new QCheckBox(this);
-
-	listLable = new QLabel(tr("Selected modules(seperate by comma):"), this);
 	listbox = new QListWidget( this);
-	
-    psdtButton = new QPushButton(tr("View Progression"), this);
-	//heatmapLabel = new QLabel(tr("View Progression Heatmap:"), this);
-	heatmapButton = new QPushButton(tr("Heatmap"), this);
-	testButton = new QPushButton(tr("Test"), this);
-	
-	psmButton->setEnabled(TRUE);
-	psdtButton->setEnabled(FALSE);
-	heatmapButton->setEnabled(FALSE);
+    autoTrendButton = new QPushButton(tr("View Auto Trend"), this);
 
-    connect(rawHeatmapButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
-	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
-	//connect( updateConnectedNumButton, SIGNAL(clicked()), this, SLOT(UpdateConnectedNum()));
-	connect(heatmapButton, SIGNAL(clicked()), this, SLOT(showProgressionHeatmap()));
-	connect(psmButton, SIGNAL(clicked()), this, SLOT(showPSM()));
-	connect(psdtButton, SIGNAL(clicked()), this, SLOT(viewProgression()));
-	connect( testButton, SIGNAL(clicked()), this, SLOT(TestProgression()));
+	manualSelectionLabel = new QLabel(tr("Manual selection:"), this);
+	QFont font2 = manualSelectionLabel->font();
+	font2.setBold(true);
+	manualSelectionLabel->setFont(font2);
+
+	continSelectLabel = new QLabel(tr("Continous:"), this);
+	continSelectCheck = new QCheckBox(this);
+	psdModuleSelectBox = new QLineEdit(this);
+	manualSelButton = new QPushButton(tr("Show NSM"), this);
+	manualTrendButton = new QPushButton(tr("View Manual Trend"), this);
+
+	heatmapButton = new QPushButton(tr("MST-ordered Heatmap"), this);
+	testButton = new QPushButton(tr("Test"), this);
+
+	nsmButton->setEnabled(true);
+	autoSelButton->setEnabled(false);
+	manualSelButton->setEnabled(false);
+	autoTrendButton->setEnabled(false);
+	manualTrendButton->setEnabled(false);
+	heatmapButton->setEnabled(false);
 	
     QGridLayout *mainLayout = new QGridLayout(this);
 
@@ -92,7 +98,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
         mainLayout->setColumnStretch(col, 1);
     }
 
-     for ( int row = 1; row <= 10; row++)
+     for ( int row = 0; row <= 13; row++)
     {
         mainLayout->setRowMinimumHeight(row,20);
         mainLayout->setRowStretch(row, 1);
@@ -100,10 +106,10 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 
 	mainLayout->addWidget(rawHeatmapButton, 0, 2);
 
-    mainLayout->addWidget(featureNumLabel, 0, 0);
+    mainLayout->addWidget(featureNumLabel, 0, 0, 1, 1);
     mainLayout->addWidget(featureNum, 0, 1, 1, 1);
 
-    mainLayout->addWidget(sampleNumLabel, 1, 0);
+    mainLayout->addWidget(sampleNumLabel, 1, 0, 1, 1);
     mainLayout->addWidget(sampleNum, 1, 1, 1, 1);
 
 	mainLayout->addWidget(clusterCoherenceLabel, 2, 0);
@@ -114,20 +120,35 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 	
 	mainLayout->addWidget(nBinLabel, 4, 0);
 	mainLayout->addWidget(nBinBox, 4, 1);
-	mainLayout->addWidget(psmButton, 4, 2);
+	mainLayout->addWidget(nsmButton,4, 2);
 
-	mainLayout->addWidget(listLable, 5, 0);
-	//mainLayout->addWidget(continSelectLabel, 6, 0);
-	//mainLayout->addWidget(continSelectCheck, 6, 1);
+	mainLayout->addWidget(autoSelList, 6, 0);
+	mainLayout->addWidget(autoSelButton, 6, 2);
+	mainLayout->addWidget(listbox, 7, 0, 2, 2);
+	mainLayout->addWidget(autoTrendButton, 8, 2);
 
-	//mainLayout->addWidget(psdModuleSelectBox, 7, 0, 1, 2);
-	mainLayout->addWidget(listbox, 6, 0, 3, 2);
+	mainLayout->addWidget(manualSelectionLabel, 9, 0);
+	mainLayout->addWidget(manualSelButton, 9, 2);
+	mainLayout->addWidget(continSelectLabel, 10, 0);
+	mainLayout->addWidget(continSelectCheck, 10, 1);
+	mainLayout->addWidget(psdModuleSelectBox, 11, 0, 1, 2);
+	mainLayout->addWidget(manualTrendButton, 11, 2);
 
-	mainLayout->addWidget(testButton, 10, 0);
-	mainLayout->addWidget(psdtButton, 10, 1);
-	mainLayout->addWidget(heatmapButton, 10, 2);
+	mainLayout->addWidget(testButton, 13, 0);
+	mainLayout->addWidget(heatmapButton, 13, 2);
+
 	mainLayout->setSizeConstraint( QLayout::SetFixedSize);
     setLayout(mainLayout);
+
+	connect(rawHeatmapButton, SIGNAL(clicked()), this, SLOT(showOriginalHeatmap()));
+	connect( kNearestNeighborBox, SIGNAL(editingFinished()), this, SLOT(editNearestNeighbor()));
+	connect( nsmButton, SIGNAL(clicked()), this, SLOT(generateNSM()));
+	connect( autoSelButton, SIGNAL(clicked()), this, SLOT(autoSelection()));
+	connect( autoTrendButton, SIGNAL(clicked()), this, SLOT(viewTrendAuto()));
+	connect( heatmapButton, SIGNAL(clicked()), this, SLOT(showTrendHeatmap()));
+	connect( testButton, SIGNAL(clicked()), this, SLOT(TestTrend()));
+	connect( manualSelButton, SIGNAL(clicked()), this, SLOT(showNSMForManualSelection()));
+	connect( manualTrendButton, SIGNAL(clicked()), this, SLOT(viewTrendAuto(false)));
 
 	SPDModel = new SPDAnalysisModel();
 }
@@ -135,7 +156,7 @@ SPDkNNGModuleMatch::SPDkNNGModuleMatch(QWidget *parent) :
 SPDkNNGModuleMatch::~SPDkNNGModuleMatch()
 {
 	delete(SPDModel);
-	//delete(selection);
+	delete(selection);
 	delete(selection2);
 }
 
@@ -175,8 +196,8 @@ void SPDkNNGModuleMatch::setModels(vtkSmartPointer<vtkTable> table, ObjectSelect
 	{
 		delete this->simHeatmap;
 	}
-	this->simHeatmap = new ProgressionHeatmap( this);
-	//connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
+	this->simHeatmap = new TrendHeatmap( this);
+	connect( simHeatmap, SIGNAL( SelChanged()), this, SLOT( updateSelMod()));
 
 	if(this->graph)
 	{
@@ -271,45 +292,26 @@ void SPDkNNGModuleMatch::editNearestNeighbor()
 	int kNum = this->SPDModel->GetKNeighborNum();
 	if( kNum <= 0 || kNum != numNeighbor)
 	{
-		psmButton->setEnabled(TRUE);
-		psdtButton->setEnabled(FALSE);
+		autoSelButton->setEnabled(TRUE);
+		autoTrendButton->setEnabled(FALSE);
 		heatmapButton->setEnabled(FALSE);
 	}
 }
 
-void SPDkNNGModuleMatch::showPSM()
+void SPDkNNGModuleMatch::generateNSM()
 {
 	clusterFunction();
 	std::string kNeighbor = this->kNearestNeighborBox->text().toStdString();
 	std::string nBin = this->nBinBox->text().toStdString();
 	this->SPDModel->ModuleCorrelationMatrixMatch(atoi(kNeighbor.c_str()), atoi(nBin.c_str()));
-	double threshold = this->SPDModel->WriteModuleCorMatrixImg("SymmetricMat.tif");
+	autoSelButton->setEnabled(true);
+	manualSelButton->setEnabled(true);
+}
+
+void SPDkNNGModuleMatch::autoSelection()
+{
+	double threshold = this->SPDModel->WriteModuleCorMatrixImg("NSMat.tif");
 	std::cout<< "Auto Threshold: "<< threshold<<std::endl;
-
-	//this->SPDModel->WriteModuleCorMatrixImg("AfterIter.tif");
-
-	//clusclus *clus1 = new clusclus();
-	//clusclus *clus2 = new clusclus();
-
-	//vnl_vector<double> diagnalVec;
-	//this->SPDModel->GetBiClusData(clus1, &diagnalVec);
-	//optimalleaforder.set_size(clus1->num_samples);
-	//clus2->optimalleaforder = new int[clus1->num_samples];
-	//clus2->num_samples = clus1->num_samples;
-	//for( int i = 0; i < clus1->num_samples; i++)
-	//{
-	//	optimalleaforder[i] = clus1->optimalleaforder[i];
-	//	clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
-	//}
-
-	////vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
-	//this->simHeatmap->setModels();
-	//this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
-	//this->simHeatmap->creatDataForSimilarMatrixHeatmap(diagnalVec.data_block());
-	//this->simHeatmap->showSimilarMatrixGraph();
-
-	//delete clus1;
-	//delete clus2;
 
 	std::vector<std::vector<unsigned int> > modID;
 	SPDModel->GetSelectedFeaturesModulesByConnectedComponent(threshold, modID);
@@ -350,10 +352,39 @@ void SPDkNNGModuleMatch::showPSM()
 
 	std::cout<< "Current Index: "<< maxIndex<<std::endl;
 	listbox->setCurrentRow(maxIndex);
-	psdtButton->setEnabled(TRUE);
+	autoTrendButton->setEnabled(true);
 }
 
-void SPDkNNGModuleMatch::viewProgression()
+void SPDkNNGModuleMatch::showNSMForManualSelection()
+{
+	clusclus *clus1 = new clusclus();
+	clusclus *clus2 = new clusclus();
+
+	vnl_matrix<double> iterMat;
+	this->SPDModel->EMDMatrixIteration(iterMat);
+
+	vnl_vector<double> diagnalVec;
+	this->SPDModel->GetBiClusData(iterMat, clus1, &diagnalVec);
+	optimalleaforder.set_size(clus1->num_samples);
+	clus2->optimalleaforder = new int[clus1->num_samples];
+	clus2->num_samples = clus1->num_samples;
+	for( int i = 0; i < clus1->num_samples; i++)
+	{
+		optimalleaforder[i] = clus1->optimalleaforder[i];
+		clus2->optimalleaforder[i] = clus1->optimalleaforder[i];
+	}
+
+	//vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
+	this->simHeatmap->setModels();
+	this->simHeatmap->setDataForSimilarMatrixHeatmap(clus1->features, clus1->optimalleaforder, clus2->optimalleaforder, clus1->num_samples, clus2->num_samples);	
+	this->simHeatmap->creatDataForSimilarMatrixHeatmap(diagnalVec.data_block());
+	this->simHeatmap->showSimilarMatrixGraph();
+
+	delete clus1;
+	delete clus2;
+}
+
+void SPDkNNGModuleMatch::viewTrendAuto(bool bAuto)
 {
 	UpdateConnectedNum();  // update connected component
 	std::cout<< connectedNum<<std::endl;
@@ -375,9 +406,18 @@ void SPDkNNGModuleMatch::viewProgression()
 	}
 	this->HeatmapWin = new Heatmap(this);
 
-	std::string selectModulesID = listbox->currentItem()->text().toStdString();
-	std::vector< unsigned int> selModuleID;
+	std::string selectModulesID = "";
 
+	if( bAuto)
+	{
+		selectModulesID = listbox->currentItem()->text().toStdString();
+	}
+	else
+	{
+		selectModulesID = psdModuleSelectBox->text().toStdString();
+	}
+
+	std::vector< unsigned int> selModuleID;
 	std::vector< int> clusterSize;
 	selFeatureID.clear();
 	selOrder.clear();
@@ -388,7 +428,7 @@ void SPDkNNGModuleMatch::viewProgression()
 	SPDModel->GetFeatureIdbyModId(selModuleID, selFeatureID);
 	std::cout<< "Selected Features:" << selFeatureID.size() <<std::endl;
 
-		//for( size_t i = 0; i < selModuleID.size(); i++)
+	//for( size_t i = 0; i < selModuleID.size(); i++)
 	//{
 	//	std::cout<< selModuleID[i]<< "\t";
 	//}
@@ -432,9 +472,9 @@ void SPDkNNGModuleMatch::viewProgression()
 
 	vtkSmartPointer<vtkTable> tableAfterCellCluster = SPDModel->GetDataTableAfterCellCluster();
 
-	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
+	connect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateTrendTree()));
 	connect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
-	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorProgressionTree(int)));
+	connect(HeatmapWin, SIGNAL(columnToColorChanged(int)), this, SLOT( ReColorTrendTree(int)));
 
 	std::map< int, int> indexMap;
 	SPDModel->GetClusterMapping(indexMap);
@@ -544,9 +584,9 @@ bool SPDkNNGModuleMatch::IsExist(std::vector< unsigned int> vec, unsigned int va
 	return false;
 }
 
-void SPDkNNGModuleMatch::regenerateProgressionTree()
+void SPDkNNGModuleMatch::regenerateTrendTree()
 {
-	heatmapButton->setEnabled(TRUE);
+	heatmapButton->setEnabled(true);
 	if( selection && this->HeatmapWin)
 	{
 		std::cout<< "rerender progression view"<<endl;
@@ -595,7 +635,7 @@ void SPDkNNGModuleMatch::regenerateProgressionTree()
 	}
 }
 
-void SPDkNNGModuleMatch::ReColorProgressionTree(int nfeature)
+void SPDkNNGModuleMatch::ReColorTrendTree(int nfeature)
 {
 	if( this->graph)
 	{
@@ -607,47 +647,45 @@ void SPDkNNGModuleMatch::ReColorProgressionTree(int nfeature)
 		this->graph->ColorTreeAccordingToFeatures(featureValue, featureName.c_str());
 	}
 }
-//
-//void SPDkNNGModuleMatch::updateSelMod()   
-//{
-//	int r1 = 0;
-//	int r2 = 0;
-//	int c1 = 0;
-//	int c2 = 0;
-//	int size = optimalleaforder.size();
-//
-//	this->simHeatmap->GetSelRowCol(r1, c1, r2, c2);
-//	//this->simHeatmap->SetSelRowCol(r1, size - 1 - r1, r2, size - 1 - r2);   // make the selection block symetric
-//
-//	int num = abs(r1 - r2) + 1;
-//	int max = r1 > r2 ? r1 : r2;
-//
-//	if( num <= size)   
-//	{
-//		if(!continSelectCheck->isChecked())
-//		{
-//			selMod.clear();
-//		}
-//		for( int i = 0; i < num; i++)
-//		{
-//			int index = size - 1 - max + i;
-//			if( index >= 0 && index < size)
-//			{
-//				selMod.insert(optimalleaforder[index]);
-//			}
-//		}
-//		QString str;
-//		std::set<unsigned int>::iterator iter = selMod.begin();
-//		for(; iter != selMod.end(); iter++)
-//		{
-//			str += QString::number(*iter)+",";
-//		}
-//		psdModuleSelectBox->setText(str);
-//		psdtButton->setEnabled(TRUE);
-//		updateConnectedNumButton->setEnabled(TRUE);
-//		heatmapButton->setEnabled(FALSE);
-//	}
-//}
+
+void SPDkNNGModuleMatch::updateSelMod()   
+{
+	int r1 = 0;
+	int r2 = 0;
+	int c1 = 0;
+	int c2 = 0;
+	int size = optimalleaforder.size();
+
+	this->simHeatmap->GetSelRowCol(r1, c1, r2, c2);
+	//this->simHeatmap->SetSelRowCol(r1, size - 1 - r1, r2, size - 1 - r2);   // make the selection block symetric
+
+	int num = abs(r1 - r2) + 1;
+	int max = r1 > r2 ? r1 : r2;
+
+	if( num <= size)   
+	{
+		if(!continSelectCheck->isChecked())
+		{
+			selMod.clear();
+		}
+		for( int i = 0; i < num; i++)
+		{
+			int index = size - 1 - max + i;
+			if( index >= 0 && index < size)
+			{
+				selMod.insert(optimalleaforder[index]);
+			}
+		}
+		QString str;
+		std::set<unsigned int>::iterator iter = selMod.begin();
+		for(; iter != selMod.end(); iter++)
+		{
+			str += QString::number(*iter)+",";
+		}
+		psdModuleSelectBox->setText(str);
+		manualTrendButton->setEnabled(true);
+	}
+}
 
 void SPDkNNGModuleMatch::UpdateConnectedNum()
 {
@@ -659,12 +697,12 @@ void SPDkNNGModuleMatch::UpdateConnectedNum()
 	connectedNum = this->SPDModel->GetConnectedComponent(selFeatureID, connectedComponent);
 }
 
-void SPDkNNGModuleMatch::GetProgressionTreeOrder(std::vector<long int> &order)
+void SPDkNNGModuleMatch::GetTrendTreeOrder(std::vector<long int> &order)
 {
-	this->graph->GetProgressionTreeOrder(order);
+	this->graph->GetTrendTreeOrder(order);
 }
 
-void SPDkNNGModuleMatch::showProgressionHeatmap()
+void SPDkNNGModuleMatch::showTrendHeatmap()
 {
 	//ofstream ofs("SPDHeatmapOptimalOrder.txt");
 	if( this->progressionHeatmap)
@@ -674,7 +712,7 @@ void SPDkNNGModuleMatch::showProgressionHeatmap()
 	this->progressionHeatmap = new Heatmap(this);
 	
 	std::vector<long int> TreeOrder;
-	this->graph->GetProgressionTreeOrder(TreeOrder);   // order of the cluster 
+	this->graph->GetTrendTreeOrder(TreeOrder);   // order of the cluster 
 	if( TreeOrder.size() <=0)
 	{          
 		std::cout<< "progression tree hasn't been built yet"<<endl;
@@ -768,7 +806,7 @@ void SPDkNNGModuleMatch::ReRunSPDAnlysis()
 {
 	closeSubWindows();
 	std::set<long int> selItems = this->selection->getSelections();
-	disconnect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateProgressionTree()));
+	disconnect(selection, SIGNAL( thresChanged()), this, SLOT( regenerateTrendTree()));
 	disconnect(selection, SIGNAL( ItemDeleted()), this, SLOT( ReRunSPDAnlysis()));
 	this->selection->clear();
 	vtkSmartPointer<vtkTable> table = GetSubTableExcludeItems(data, selItems);
@@ -804,7 +842,7 @@ vtkSmartPointer<vtkTable> SPDkNNGModuleMatch::NormalizeTable(vtkSmartPointer<vtk
 	return normalTable;
 }
 
-void SPDkNNGModuleMatch::TestProgression()
+void SPDkNNGModuleMatch::TestTrend()
 {
 	QString str = featureNum->text() + "_" + sampleNum->text() + "_" + clusterCoherenceBox->text() + "_" + kNearestNeighborBox->text();
 	std::string logName = "TestLog_"+ str.toStdString() + ".txt";

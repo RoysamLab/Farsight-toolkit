@@ -13,7 +13,7 @@
 #include "ftkGUI/GraphWindow.h"
 #include "ftkGUI/HistoWindow.h"
 #include "ftkGUI/PlotWindow.h"
-#include "ProgressionHeatmapWindow.h"
+#include "TrendHeatmapWindow.h"
 #include "HeatmapWindow.h"
 #include <QListWidget>
 
@@ -25,7 +25,7 @@ public:
     SPDkNNGModuleMatch(QWidget *parent = 0);
 	void setModels(vtkSmartPointer<vtkTable> table = NULL, ObjectSelection * sels = NULL, ObjectSelection * sels2 = NULL);
     ~SPDkNNGModuleMatch();
-	void GetProgressionTreeOrder(std::vector<long int> &order);
+	void GetTrendTreeOrder(std::vector<long int> &order);
 	vtkSmartPointer<vtkTable> NormalizeTable(vtkSmartPointer<vtkTable> table);
 
 protected:
@@ -40,16 +40,18 @@ protected:
 protected slots:
 	void showOriginalHeatmap();
     void clusterFunction();
-	void showPSM();
-	void viewProgression();
-	//void updateSelMod();
+	void generateNSM();
+	void autoSelection();
+	void showNSMForManualSelection();
+	void viewTrendAuto(bool bAuto = true);
+	void updateSelMod();
 	void editNearestNeighbor();
-	void showProgressionHeatmap();
-	void regenerateProgressionTree();
+	void showTrendHeatmap();
+	void regenerateTrendTree();
 	void ReRunSPDAnlysis();
-	void ReColorProgressionTree(int nfeature);
+	void ReColorTrendTree(int nfeature);
 	void UpdateConnectedNum();
-	void TestProgression();
+	void TestTrend();
 
 private:
 	SPDAnalysisModel *SPDModel;
@@ -67,18 +69,20 @@ private:
     QSpinBox *kNearestNeighborBox;
 	QLabel *nBinLabel;
     QSpinBox *nBinBox;
-    QPushButton *psmButton;
+	QPushButton *nsmButton;
+
+	QLabel *autoSelList;
+    QPushButton *autoSelButton;
 	QPushButton *testButton;
-
-	//QLabel *continSelectLabel;   
-	//QCheckBox *continSelectCheck;
-
-	QLabel *listLable;   
-	//QLineEdit *psdModuleSelectBox;  // select similar modules
-
-    QPushButton *psdtButton;
-	QLabel *heatmapLabel;
+    QPushButton *autoTrendButton;
 	QPushButton *heatmapButton;  // show progression heatmap  // now shows the progression over distance to device
+
+	QLabel *manualSelectionLabel;   
+	QLabel *continSelectLabel;   
+	QCheckBox *continSelectCheck;
+	QPushButton *manualSelButton;
+	QLineEdit *psdModuleSelectBox;  // select similar modules 
+	QPushButton *manualTrendButton;
 
 	//QLabel *connectedGraphLabel;
 	//QLineEdit *connectedGraphEdit;
@@ -87,7 +91,7 @@ private:
 
 	QString FileName;
 	GraphWindow *graph;
-	ProgressionHeatmap *simHeatmap;
+	TrendHeatmap *simHeatmap;
 	HistoWindow *histo;
 	Heatmap *originalHeatmap;
 	Heatmap *progressionHeatmap;

@@ -2884,67 +2884,92 @@ void SPDAnalysisModel::GetClusClusDataMST(clusclus *c1, double threshold, std::v
 	ofSimatrix.close();	
 }
 
-void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
+void SPDAnalysisModel::GetBiClusData(vnl_matrix<double> &mat, clusclus *c1, vnl_vector<double> *diagVec)
 {
+	std::ofstream ofs("Debug.txt");
+	//ofs<< mat<<std::endl;
+
 	if( c1 == NULL)
 	{
 		return;
 	}
-	c1->Initialize( this->EMDMatrix.data_array(), this->EMDMatrix.rows(), this->EMDMatrix.cols());
+	c1->Initialize( mat.data_array(), mat.rows(), mat.cols());
 
-	double max = this->EMDMatrix.max_value();
-	double min = this->EMDMatrix.min_value();
+	double min = 0;
+	double max = 0;
+
+	GetDiagnalMinMax(mat, min, max);
+	std::cout<< max<< "\t"<< min<<std::endl;
 
 	std::set< unsigned int> mIds;
 	std::vector< std::vector< unsigned int> > order;
-	std::vector< std::vector< unsigned int> > tmpOrder;
-
-	for(double selThreshold = max; selThreshold >= min; selThreshold -= 0.01)
+	for(double selThreshold = max; selThreshold >= min; selThreshold -= 0.02)
 	{
+		ofs<< selThreshold<< std::endl;
 		std::vector<std::vector<unsigned int> > modID;
 
-		GetSelectedFeaturesModulesForBlockVisualization(selThreshold, modID); // the opposite way, output include the previous!!
+		int rtnCount = GetSelectedFeaturesModulesForBlockVisualization(mat, selThreshold, modID); // the opposite way, output include the previous!!
+		std::vector< std::vector< unsigned int> > tmpOrder;
 
 		for( size_t i = 0; i < modID.size(); i++)
 		{
-			bool tag = false;
+			ofs<< "CC:" << i<< std::endl;
+			for(size_t j = 0; j < modID[i].size(); j++)
+			{
+				ofs<< modID[i][j]<<"\t";
+			}
+			ofs<< std::endl;
+
 			std::vector<unsigned int> tmp;
 			for( size_t j = 0; j < order.size(); j++)
 			{
 				if( IsExist(modID[i], order[j][0]))
 				{
-					tag = true;
-					
+					ofs<< j<<std::endl;
 					for( size_t k = 0; k< order[j].size(); k++) 
 					{
-						tmp.push_back(order[j][k]);
+						ofs<< order[j][k]<<"\t";
+						tmp.push_back(order[j][k]);    
 					}
+					ofs<< std::endl;
 				}
 			}
-
+			
 			if( modID[i].size() > tmp.size())
 			{
+				ofs<< "Left over:"<<std::endl;
 				for( size_t k = 0; k < modID[i].size(); k++)
 				{
 					if( !IsExist(tmp, modID[i][k]))
 					{
+						ofs<< modID[i][k]<<"\t";
 						tmp.push_back( modID[i][k]);
 					}
 				}
+				ofs<< std::endl;
 			}
-		
+
+			//ofs<< tmp.size() << "\t"<<modID[i].size()<<std::endl;
 			tmpOrder.push_back(tmp);
+			ofs<<std::endl<<std::endl;
 		}
+
+		order.clear();
 		order = tmpOrder;
-		tmpOrder.clear();
+
+		if( order[0].size() >= moduleForSelection.size())
+		{
+			std::cout<< "All selectable modules found: "<<order[0].size()<<"\t"<<moduleForSelection.size()<<std::endl;
+			break;
+		}
 	}
 
 	std::vector< unsigned int> lastVec;
 
-	if( order[0].size() < this->EMDMatrix.rows())
+	if( order[0].size() < mat.rows())
 	{
 		std::cout<< "Last searching for the missed component."<<std::endl;
-		for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+		for( unsigned int i = 0; i < mat.rows(); i++)
 		{
 			
 			bool bexist = false;
@@ -2968,7 +2993,7 @@ void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
 	{
 		for( size_t j = 0; j < order[i].size(); j++)
 		{
-			if( count < this->EMDMatrix.rows())
+			if( count < mat.rows())
 			{
 				c1->optimalleaforder[count++] = order[i][j];
 			}
@@ -2979,11 +3004,11 @@ void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
 		}
 	}
 
-	if( count <  this->EMDMatrix.rows())
+	if( count <  mat.rows())
 	{
 		for( size_t k = 0; k < lastVec.size(); k++)
 		{
-			if( count < this->EMDMatrix.rows())
+			if( count < mat.rows())
 			{
 				c1->optimalleaforder[count++] = lastVec[k];
 			}
@@ -2996,12 +3021,14 @@ void SPDAnalysisModel::GetBiClusData(clusclus *c1, vnl_vector<double> *diagVec)
 
 	if(diagVec)
 	{
-		diagVec->set_size(this->EMDMatrix.rows());
-		for(unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+		diagVec->set_size(mat.rows());
+		for(unsigned int i = 0; i < mat.rows(); i++)
 		{
 			(*diagVec)[i] = 1;
 		}
 	}
+
+	ofs.close();
 }
 
 /// Find largest fully connected component in EMDMatrix.
@@ -3087,33 +3114,41 @@ int SPDAnalysisModel::GetSelectedFeaturesModulesByConnectedComponent(double selT
 	}
 }
 
-void SPDAnalysisModel::GetSelectedFeaturesModulesForBlockVisualization(double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules)
+int SPDAnalysisModel::GetSelectedFeaturesModulesForBlockVisualization(vnl_matrix<double> &mat, double selThreshold, std::vector< std::vector<unsigned int> > &tmpSelModules)
 {
 	tmpSelModules.clear();
 	std::set< unsigned int> processedModules;
 	std::vector< unsigned int> tmpModules;
-
-	for( unsigned int i = 0; i < this->EMDMatrix.rows(); i++)
+	
+	int totalCount = 0;
+	for( unsigned int i = 0; i < mat.rows(); i++)
 	{
+		int count = 0;
 		if(processedModules.find(i) == processedModules.end())
 		{
 			processedModules.insert(i);
 			tmpModules.clear();
 			tmpModules.push_back(i);
-			for( unsigned int j = i + 1; j < this->EMDMatrix.cols(); j++)
+			++count;
+
+			for( unsigned int j = i + 1; j < mat.cols(); j++)
 			{
-				if( this->EMDMatrix(i,j) >= selThreshold)
+				if( mat(i,j) >= selThreshold)
 				{
 					tmpModules.push_back(j);
 					processedModules.insert(j);
+					++count;
 				}
 			}
+
 			if( tmpModules.size() >= 2)
 			{
+				totalCount += count;
 				tmpSelModules.push_back(tmpModules);
 			}
 		}
 	}
+	return totalCount;
 }
 
 double SPDAnalysisModel::GetConnectionAccuracy( vtkSmartPointer<vtkTable> treeTable, vnl_matrix<double> &disMat, vnl_vector<double> &accuracyVec,
@@ -3413,7 +3448,7 @@ bool SPDAnalysisModel::DiagnalIteration(vnl_matrix<double> &mat, vnl_vector<int>
 	return bstate;
 }
 
-void SPDAnalysisModel::GetClusClusPSCWithoutIterData(clusclus* c1, double threshold)
+void SPDAnalysisModel::GetClusClusNSWithoutIterData(clusclus* c1, double threshold)
 {
 	QString filenameSM = this->filename + "similarity_matrix.txt";
 	std::ofstream ofSimatrix(filenameSM .toStdString().c_str(), std::ofstream::out);
@@ -3455,7 +3490,7 @@ void SPDAnalysisModel::GetClusClusPSCWithoutIterData(clusclus* c1, double thresh
 	ofSimatrix.close();	
 }
 
-void SPDAnalysisModel::GetClusClusPSCData(clusclus* c1)
+void SPDAnalysisModel::GetClusClusNSData(clusclus* c1)
 {
 	if(c1)
 	{
@@ -4161,7 +4196,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 				std::cout<< "1 Remove module "<<i<<std::endl;
 				state[i] = 0;
 			}
-	/*		else
+			else
 			{
 				unsigned int zeroSum = 0;
 				for( unsigned int s = 0; s < histMean.size(); s++)
@@ -4178,7 +4213,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 						excludeModule.insert(i);
 					omp_unset_lock(&my_lock);
 				}
-			}*/
+			}
 
 			if(state[i])
 			{
@@ -4204,16 +4239,16 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 	
 	for( int i = 0; i < featureClusterIndex.size(); i++)
 	{
-		if( state[i] && ((excludeModule.size() > 0 && excludeModule.find(i) != excludeModule.end()) || excludeModule.size() == 0))
+		if( state[i] && ((excludeModule.size() > 0 && excludeModule.find(i) == excludeModule.end()) || excludeModule.size() == 0))
 		{
 			vnl_vector< double> row;
 			row.set_size(featureClusterIndex.size());
 			row.fill(0);
 
-			if( i % 100 == 0)
-			{
+			//if( i % 100 == 0)
+			//{
 				std::cout<< "Matching module "<<i<<std::endl; 
-			}
+			//}
 
 			vnl_matrix< double> modulei(this->MatrixAfterCellCluster.rows(), featureClusterIndex[i].size());
 			GetCombinedMatrix( this->MatrixAfterCellCluster, ClusterIndex, i, i, modulei);
@@ -4239,7 +4274,7 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 				{
 					if(i == j)
 					{
-						row[j] = 1;
+						row[j] = 0;
 					}
 					else
 					{
@@ -4272,7 +4307,8 @@ void SPDAnalysisModel::ModuleCorrelationMatrixMatch(unsigned int kNeighbor, int 
 			moduleForSelection.push_back(i);
 		}
 	}
-	//ofs<< this->EMDMatrix<< std::endl;
+	std::cout<< moduleForSelection.size() <<std::endl;
+	ofs<< this->EMDMatrix<< std::endl;
 
 	for(int i = 0; i < this->EMDMatrix.rows(); i++)
 	{
@@ -4338,10 +4374,10 @@ double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
 		}
 	}
 
-	WriterType::Pointer writer = WriterType::New();
-	writer->SetFileName( imageName);
-	writer->SetInput(imgPtr);
-	writer->Update();
+	WriterType::Pointer writer1 = WriterType::New();
+	writer1->SetFileName( imageName);
+	writer1->SetInput(imgPtr);
+	writer1->Update();
 
 	typedef itk::ShanbhagThresholdImageFilter< ImageType, ImageType> ShanbhagThresholdFilter;
 	ShanbhagThresholdFilter::Pointer filter = ShanbhagThresholdFilter::New();
@@ -4373,6 +4409,11 @@ double SPDAnalysisModel::WriteModuleCorMatrixImg(const char *imageName)
 
 	double thresholdMin = filter->GetThreshold() / 255.0;
 	std::cout<< thresholdMin <<std::endl;
+
+	WriterType::Pointer writer2 = WriterType::New();
+	writer2->SetFileName( "ThresholdSNMat.tif");
+	writer2->SetInput(filter->GetOutput());
+	writer2->Update();
 
 	//MinimumThresholdFilter::Pointer filter2 = MinimumThresholdFilter::New();
 	//filter2->SetUseInterMode(true);
@@ -5598,7 +5639,7 @@ double SPDAnalysisModel::CaculatePS(unsigned int kNeighbor, unsigned int nbins, 
 	return ps;
 }
 
-void SPDAnalysisModel::ModuleCorrelationPSC(unsigned int kNeighbor, int nbins)
+void SPDAnalysisModel::ModuleCorrelationNS(unsigned int kNeighbor, int nbins)
 {
 	m_kNeighbor = kNeighbor;
 	std::cout<< "K equals: "<< m_kNeighbor<<std::endl;
@@ -5728,14 +5769,15 @@ void SPDAnalysisModel::ModuleCorrelationPSC(unsigned int kNeighbor, int nbins)
 
 	std::cout<< "EMD matrix has been built successfully."<<endl;
 
-	std::ofstream ofs("PSCEMD.txt");
+	std::ofstream ofs("NSEMD.txt");
 	ofs<< EMDMatrix<<std::endl<<std::endl;
 	ofs.close();
 }
 
-void SPDAnalysisModel::EMDMatrixIteration()
+void SPDAnalysisModel::EMDMatrixIteration(vnl_matrix<double> &afterIterMat)
 {
-	std::cout<< "Begin PSC iterations."<<endl;
+	std::cout<< "Begin NS iterations."<<endl;
+	afterIterMat = EMDMatrix;
 	vnl_matrix< double> newMatrix;
 	bool changed = true;
 	int count = 0;
@@ -5743,9 +5785,9 @@ void SPDAnalysisModel::EMDMatrixIteration()
 	{
 		std::cout<< "Iteration: "<< count<<std::endl;
 
-		changed = PSCIterationRadius2(EMDMatrix, newMatrix);
+		changed = NSIterationRadius2(afterIterMat, newMatrix);
 		count++;
-		EMDMatrix = newMatrix;
+		afterIterMat = newMatrix;
 		if( count >= 1000)
 		{
 			std::cout<< "Not able to converge"<<std::endl;
@@ -5753,12 +5795,12 @@ void SPDAnalysisModel::EMDMatrixIteration()
 		}
 	}
 	std::cout<< "Converged after "<<count<<" iterations."<<std::endl;
-	std::ofstream ofs("PSCEMDIter.txt");
-	ofs<< EMDMatrix<<std::endl<<std::endl;
+	std::ofstream ofs("NSEMDIter.txt");
+	ofs<< afterIterMat<<std::endl<<std::endl;
 	ofs.close();
 }
 
-bool SPDAnalysisModel::PSCIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output)
+bool SPDAnalysisModel::NSIterationRadius2(vnl_matrix< double> &input, vnl_matrix< double> &output)
 {
 	bool bchanged = false;
 	output.set_size(input.rows(), input.cols());
@@ -5803,7 +5845,7 @@ bool SPDAnalysisModel::PSCIterationRadius2(vnl_matrix< double> &input, vnl_matri
 	return bchanged;
 }
 
-double SPDAnalysisModel::CaculatePSC(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
+double SPDAnalysisModel::CaculateNS(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, bool debug)
 {
 	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
 	{
@@ -5880,7 +5922,7 @@ double SPDAnalysisModel::CaculatePSC(unsigned int kNeighbor, unsigned int nbins,
 	return ps;
 }
 
-double SPDAnalysisModel::CaculatePSComplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio, bool debug)
+double SPDAnalysisModel::CaculateNSomplementUsingShortestPath(unsigned int kNeighbor, unsigned int nbins, vnl_vector<double> &vec1, vnl_vector<double> &vec2, double ratio, bool debug)
 {
 	if( abs(vec1.max_value() - vec1.min_value()) < 1e-6 ||  abs(vec2.max_value() - vec2.min_value()) < 1e-6)
 	{

@@ -49,7 +49,7 @@ GraphWindow::GraphWindow(QWidget *parent)
 	this->observerTag = 0;
 	this->lookupTable = vtkSmartPointer<vtkLookupTable>::New();
 	this->edgeLookupTable = vtkSmartPointer<vtkLookupTable>::New();
-	bProgressionStart = true;
+	bTrendStart = true;
 	progressionStartID = -1;
 	progressionEndID = -1;
 	cornAnnotation = NULL;
@@ -1851,17 +1851,17 @@ void GraphWindow::SelectionCallbackFunction(vtkObject* caller, long unsigned int
 				}
 				graphWin->SetSelectedIds( IDs);
 				graphWin->SetSelectedIds2();  // only select the selected feature columns
-				graphWin->SetProgressionStartTag(true);
+				graphWin->SetTrendStartTag(true);
 			}
 			else
 			{
 				long int value = vertexList->GetValue(0);
-				graphWin->SetUserDefineProgression(value);
+				graphWin->SetUserDefineTrend(value);
 			}
 		}
 		else
 		{
-			graphWin->SetProgressionStartTag(true);
+			graphWin->SetTrendStartTag(true);
 		}
 	}
 	//graphWin->mainQTRenderWidget.GetRenderWindow()->Render();
@@ -1904,25 +1904,25 @@ void GraphWindow::RestoreLookupTable()
 	this->selection->clear();
 }
 
-void GraphWindow::SetProgressionStartTag(bool bstart)
+void GraphWindow::SetTrendStartTag(bool bstart)
 {
-	bProgressionStart = bstart;
+	bTrendStart = bstart;
 }
 
-void GraphWindow::SetUserDefineProgression(long int nodeID)
+void GraphWindow::SetUserDefineTrend(long int nodeID)
 {
-	if( bProgressionStart)
+	if( bTrendStart)
 	{
 		progressionStartID = nodeID;
-		bProgressionStart = false;
+		bTrendStart = false;
 		std::cout<< "progression start: "<<progressionStartID<<endl;
 	}
 	else
 	{
 		progressionEndID = nodeID;
-		bProgressionStart = true;
+		bTrendStart = true;
 		std::cout<< "progression end: "<<progressionEndID<<endl;
-		UpdateProgressionPath();
+		UpdateTrendPath();
 	}
 }
 
@@ -1934,11 +1934,11 @@ void GraphWindow::ResetLookupTable(vtkSmartPointer<vtkLookupTable> lookuptable, 
 	}
 }
 
-void GraphWindow::UpdateProgressionPath()
+void GraphWindow::UpdateTrendPath()
 {
 	progressionPath.clear();
 	ResetLookupTable( edgeLookupTable, edgeDefaultColor);
-	GetProgressionPath(shortest_hop, progressionStartID, progressionEndID, progressionPath);
+	GetTrendPath(shortest_hop, progressionStartID, progressionEndID, progressionPath);
 
 	for( int i = 0; i < progressionPath.size() - 1; i++)
 	{
@@ -1954,7 +1954,7 @@ void GraphWindow::UpdateProgressionPath()
 	this->view->GetRenderer()->Render();
 }
 
-void GraphWindow::GetProgressionPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path)
+void GraphWindow::GetTrendPath(vnl_matrix<long int> &hopMat, long int startNode, long int endNode, std::vector< long int> &path)
 {
 	std::map< long int, long int> tmpChain;  // for ordering 
 	long int maxhop = hopMat( startNode, endNode);
@@ -2718,7 +2718,7 @@ bool GraphWindow::IsExist(std::vector<long int>& vec, long int value)
 	return false;
 }
 
-void GraphWindow::GetProgressionTreeOrder(std::vector<long int> &order)
+void GraphWindow::GetTrendTreeOrder(std::vector<long int> &order)
 {
 	order.clear();
 	for( long int i = 0; i < backbones.size(); i++)
